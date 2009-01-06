@@ -16,6 +16,7 @@ public class JavaClientTest extends TestCase {
     
     public void test1(){
         DBCollection c = _db.getCollection( "test1" );;
+        c.drop();
 
         DBObject m = new BasicDBObject();
         m.put( "name" , "eliot" );
@@ -32,6 +33,7 @@ public class JavaClientTest extends TestCase {
 
     public void test2(){
         DBCollection c = _db.getCollection( "test2" );;
+        c.drop();
         
         DBObject m = new BasicDBObject();
         m.put( "name" , "eliot" );
@@ -52,6 +54,18 @@ public class JavaClientTest extends TestCase {
         Map z = (Map)out.get( "foo" );
         assertNotNull( z );
         assertEquals( "1z" , z.get( "bar" ) );
+    }
+
+    public void testWhere1(){
+        DBCollection c = _db.getCollection( "testWhere1" );
+        c.drop();
+        assertNull( c.findOne() );
+        
+        c.save( BasicDBObjectBuilder.start().add( "a" , 1 ).get() );
+        assertNotNull( c.findOne() != null );
+     
+        assertNotNull( c.findOne( BasicDBObjectBuilder.start().add( "$where" , "this.a == 1" ).get() ) );
+        assertNull( c.findOne( BasicDBObjectBuilder.start().add( "$where" , "this.a == 2" ).get() ) );
     }
 
     final Mongo _db;
