@@ -275,8 +275,11 @@ public abstract class DBCollection {
 
     public void dropIndexes(){
         BasicDBObject res = (BasicDBObject)_base.command( BasicDBObjectBuilder.start().add( "deleteIndexes" , getName() ).add( "index" , "*" ).get() );
-        if ( res.getInt( "ok" , 0 ) != 1 )
+        if ( res.getInt( "ok" , 0 ) != 1 ){
+            if ( res.getString( "errmsg" ).equals( "ns not found" ) )
+                return;
             throw new RuntimeException( "error dropping indexes : " + res );
+        }
 
         resetIndexCache();
     }
@@ -284,8 +287,11 @@ public abstract class DBCollection {
     public void drop(){
         dropIndexes();
         BasicDBObject res = (BasicDBObject)_base.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
-        if ( res.getInt( "ok" , 0 ) != 1 )
+        if ( res.getInt( "ok" , 0 ) != 1 ){
+            if ( res.getString( "errmsg" ).equals( "ns not found" ) )
+                return;
             throw new RuntimeException( "error dropping : " + res );
+        }
     }
 
     // ------
