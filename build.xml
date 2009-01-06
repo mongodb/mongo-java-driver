@@ -1,0 +1,104 @@
+<?xml version='1.0'?>
+<project name="ED" default="compile" basedir=".">
+
+  <property name="targetdir" location="target"/>
+  <property name="testdir" location="${targetdir}/test"/>
+
+
+  <path id="classpath">
+    <fileset dir="include">
+      <include name="**/*.jar"/>
+    </fileset>
+    <pathelement path="conf" />
+    <pathelement path="build" />
+
+  </path>
+
+  <target name="init">
+    <mkdir dir="build" />
+    <mkdir dir="logs" />
+    <mkdir dir="${testdir}" />
+  </target>
+
+  <target name="clean">
+    <delete dir="build"/>
+  </target>
+
+  <target name="compile" depends="init">
+
+    <javac srcdir="src/main/ed"
+           destdir="build"
+           optimize="off"
+           deprecation="off"
+           source="1.5"
+           encoding="ISO-8859-1"
+           memoryMaximumSize="256M"
+           fork="true"
+           debug="on" >
+      <classpath refid="classpath"/>
+    </javac>
+
+    <javac srcdir="src/test"
+           destdir="build"
+           optimize="off"
+           deprecation="off"
+           source="1.5"
+           encoding="ISO-8859-1"
+           debug="on" >
+      <classpath refid="classpath"/>
+    </javac>
+
+  </target>
+
+
+ <target name="javadocs" depends="compile">
+
+   <javadoc packagenames="ed.*"
+            sourcepath="src/main/"
+            defaultexcludes="yes"
+            destdir="docs/"
+            author="true"
+            version="true"
+            source="1.5"
+            use="true"
+            access="package"
+            >
+     <link href="http://java.sun.com/j2se/1.5/docs/api/" />
+     <classpath refid="classpath"/>
+   </javadoc>
+
+ </target>
+
+ <target name="rebuild" depends="clean, compile"/>
+
+ <!-- - - - - - - - - - - - - - - - - - - - - - -->
+ <!--  test stuff                               -->
+ <!-- - - - - - - - - - - - - - - - - - - - - - -->
+
+ <taskdef name="testng"
+          classpathref="classpath"
+          classname="org.testng.TestNGAntTask"
+          >
+ </taskdef>
+ 
+ 
+ <target name="test" depends="compile, test-basic" />
+ 
+ 
+ <target  name="test-basic" depends="init, compile">
+   <testng classpathref="classpath" outputdir="${testdir}" listeners="ed.TestNGListener" haltonfailure="true" >
+     <jvmarg value="-Xmx512M" />
+     <xmlfileset dir="." includes="testng.xml"/>
+     <sysproperty key="TESTNG:CODE_ROOT" value="${codeRoot}"/>
+   </testng>
+   </target>
+ 
+ <target name="test-mql" depends="compile, init">
+   <testng classpathref="classpath"
+           outputDir="${testdir}"
+           haltOnFailure="true" verbose="2">
+     <classfileset dir="build" includes="ed/db/mql/*Test.class" />
+   </testng>
+ </target>
+ 
+</project>

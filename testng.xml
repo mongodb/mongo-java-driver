@@ -1,0 +1,16 @@
+<!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd" >
+
+<suite name="appserver" >
+
+  <test name="main tests">
+    <classes>
+      <class name="ed.util.SimplePoolTest"/>
+      <class name="ed.io.ByteBufferStreamTest"/>
+      <class name="ed.db.ByteTest" />
+      <class name="ed.db.JavaClientTest" />
+
+    </classes>
+  </test>
+
+</suite>
+
