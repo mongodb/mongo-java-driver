@@ -39,10 +39,9 @@ public abstract class DBCollection {
     protected abstract void doapply( DBObject o );
 
     /** Removes an object from the database collection.
-     * @param id The _id of the object to be removed
      * @return -1
      */
-    public abstract int remove( DBObject id );
+    public abstract int remove( DBObject o );
 
     /** Finds an object by its id.
      * @param id the id of the object
@@ -270,6 +269,23 @@ public abstract class DBCollection {
         DBObject q = new BasicDBObject();
         q.put( "_id" , id );
         return update( q , jo , true , false );
+    }
+
+    // ---- DB COMMANDS ----
+
+    public void dropIndexes(){
+        BasicDBObject res = (BasicDBObject)_base.command( BasicDBObjectBuilder.start().add( "deleteIndexes" , getName() ).add( "index" , "*" ).get() );
+        if ( res.getInt( "ok" , 0 ) != 1 )
+            throw new RuntimeException( "error dropping indexes : " + res );
+
+        resetIndexCache();
+    }
+    
+    public void drop(){
+        dropIndexes();
+        BasicDBObject res = (BasicDBObject)_base.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
+        if ( res.getInt( "ok" , 0 ) != 1 )
+            throw new RuntimeException( "error dropping : " + res );
     }
 
     // ------
