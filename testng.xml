@@ -6,8 +6,10 @@
     <classes>
       <class name="ed.util.SimplePoolTest"/>
       <class name="ed.io.ByteBufferStreamTest"/>
+
       <class name="ed.db.ByteTest" />
       <class name="ed.db.JavaClientTest" />
+      <class name="ed.db.ReflectionTest" />
 
     </classes>
   </test>
