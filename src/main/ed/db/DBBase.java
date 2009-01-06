@@ -17,7 +17,7 @@ public abstract class DBBase {
     public abstract DBCollection getCollectionFromFull( String fullNameSpace );
     protected abstract DBCollection doGetCollection( String name );
     public abstract Set<String> getCollectionNames();
-
+    
     public abstract DBAddress getAddress();
     public abstract String getConnectPoint();
     
@@ -42,6 +42,10 @@ public abstract class DBBase {
         if ( foo != null )
             return foo.getCollection( s );
         return getCollection( s );
+    }
+
+    public DBObject command( DBObject cmd ){
+        return getCollection( "$cmd" ).findOne( cmd );
     }
 
     public String getName(){
