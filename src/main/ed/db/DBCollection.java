@@ -512,12 +512,24 @@ public abstract class DBCollection {
         return _name;
     }
 
+    public void setObjectClass( Class c ){
+        if ( ! DBObject.class.isAssignableFrom( c ) )
+            throw new IllegalArgumentException( c.getName() + " is not a DBObject" );
+        _objectClass = c;
+    }
+
+    public Class getObjectClass(){
+        return _objectClass;
+    }
+
     final DBBase _base;
 
     final protected String _name;
     final protected String _fullName;
 
     protected List<DBObject> _hintFields;
+
+    protected Class _objectClass = null;
 
     private boolean _anyUpdateSave = false;
 

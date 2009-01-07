@@ -11,11 +11,11 @@ import ed.util.*;
 
 public class ByteDecoder extends Bytes {
 
-    static protected ByteDecoder get( DBBase base , String ns ){
+    static protected ByteDecoder get( DBBase base , DBCollection coll ){
         ByteDecoder bd = _pool.get();
         bd.reset();
         bd._base = base;
-        bd._ns = ns;
+        bd._collection = coll;
         return bd;
     }
 
@@ -63,7 +63,7 @@ public class ByteDecoder extends Bytes {
         _buf.limit( _buf.capacity() );
         _buf.order( Bytes.ORDER );        
     }
-
+    
     public DBObject readObject(){
         if ( _buf.position() >= _buf.limit() )
             return null;
@@ -85,6 +85,20 @@ public class ByteDecoder extends Bytes {
     }
 
     private DBObject _create(){
+        
+        final Class c = _collection == null ? null : _collection._objectClass;
+        
+        if ( c != null ){
+            try {
+                return (DBObject)c.newInstance();
+            }
+            catch ( InstantiationException ie ){
+                throw new RuntimeException( "can't instantiate a : " + c , ie );
+            }
+            catch ( IllegalAccessException iae ){
+                throw new RuntimeException( "can't instantiate a : " + c , iae );
+            }
+        }
         return new BasicDBObject();
     }
 
@@ -233,7 +247,8 @@ public class ByteDecoder extends Bytes {
     ByteBuffer _buf;
     private final boolean _private;
 
-    String _ns;
     DBBase _base;
+    DBCollection _collection;
+
 }
 
