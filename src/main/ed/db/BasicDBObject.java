@@ -9,11 +9,6 @@ import ed.util.*;
 public class BasicDBObject extends HashMap<String,Object> implements DBObject {
     
     public BasicDBObject(){
-        this( false );
-    }
-    
-    public BasicDBObject( boolean isPartialObject ){
-        _isPartialObject = isPartialObject;
     }
 
     public Object removeField( String key ){
@@ -72,6 +67,10 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
         return buf.toString();
     }
 
-    final Set<String> _keys = new OrderedSet<String>();
-    final boolean _isPartialObject;
+    public void markAsPartialObject(){
+        _isPartialObject = true;
+    }
+
+    private final Set<String> _keys = new OrderedSet<String>();
+    private boolean _isPartialObject = false;
 }

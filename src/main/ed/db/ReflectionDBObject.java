@@ -37,6 +37,10 @@ public abstract class ReflectionDBObject implements DBObject {
         return false;
     }
 
+    public void markAsPartialObject(){
+        throw new RuntimeException( "ReflectionDBObjects can't be partial" );
+    }
+
     public Object removeField( String key ){
         throw new RuntimeException( "can't remove from a ReflectionDBObject" );
     }

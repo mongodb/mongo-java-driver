@@ -57,4 +57,5 @@ public interface DBObject {
     public Set<String> keySet();
 
     public boolean isPartialObject();
+    public void markAsPartialObject();
 }

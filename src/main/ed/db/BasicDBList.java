@@ -7,11 +7,6 @@ import java.util.*;
 public class BasicDBList extends ArrayList<Object> implements DBObject {
     
     public BasicDBList(){
-        this( false );
-    }
-    
-    public BasicDBList( boolean isPartialObject ){
-        _isPartialObject = isPartialObject;
     }
     
     public Object put( String key , Object v ){
@@ -52,5 +47,9 @@ public class BasicDBList extends ArrayList<Object> implements DBObject {
         return _isPartialObject;
     }
 
-    final boolean _isPartialObject;
+    public void markAsPartialObject(){
+        _isPartialObject = true;
+    }
+
+    private boolean _isPartialObject;
 }

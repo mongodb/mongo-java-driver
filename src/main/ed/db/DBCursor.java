@@ -214,7 +214,7 @@ public class DBCursor {
         _num++;
 
         if ( _keysWanted != null && _keysWanted.keySet().size() > 0 ){
-            //_cur.markAsPartialObject();
+            _cur.markAsPartialObject();
             throw new RuntimeException( "need to figure out partial" );
         }
 

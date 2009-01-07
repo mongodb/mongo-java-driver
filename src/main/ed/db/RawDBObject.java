@@ -121,6 +121,11 @@ public class RawDBObject implements DBObject {
         return false;
     }
 
+
+    public void markAsPartialObject(){
+        throw new RuntimeException( "RawDBObject can't be a partial object" );
+    }
+
     public String toString(){
         return "Object";
     }
