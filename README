@@ -1,9 +1,10 @@
 
 
 ISSUES
- - mark as partial
+ X mark as partial
  - count
  - binary
+ X reflection API
 
 Interesting stuff:
         o.put( "$where", "eval( true )" ); isn't supported yet, but o.put( "$where", 5 ); isn't counted as a $where clause (because 5 isn't a string) so it is supported.
