@@ -24,6 +24,11 @@ public class MyAsserts {
             throw new MyAssert( "false" );
     }
 
+    public static void assertTrue( boolean b , String msg ){
+        if ( ! b )
+            throw new MyAssert( "false : " + msg );
+    }
+
     public static void assertFalse( boolean b ){
         if ( b )
             throw new MyAssert( "true" );
