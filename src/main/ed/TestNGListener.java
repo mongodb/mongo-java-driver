@@ -3,23 +3,21 @@
 package ed;
 
 import java.util.*;
+import java.net.*;
+
+import ed.db.*;
 
 import org.testng.*;
 import org.testng.reporters.*;
 
 public class TestNGListener extends TestListenerAdapter {
-    
+    public void onStart( ITestContext context ) {
+        _obj = new BasicDBObject();
+    }    
+
     public void onTestFailure(ITestResult tr) {
         log("F");
     }
-
-//    public void onTestStart(ITestResult tr) {
-//        log("Test : " + tr.getName() + "\n");
-//    }
-//
-//    public void onStart(ITestContext tc) {
-//        log("TestSet :" + tc.getName());
-//    }
 
     public void onTestSkipped(ITestResult tr) {
         log("S");
@@ -43,6 +41,20 @@ public class TestNGListener extends TestListenerAdapter {
             System.out.println(r);
             System.out.println("Exception : ");
             _print( r.getThrowable() );
+        }
+
+        for( ITestResult r : context.getPassedTests().getAllResults() ) {
+            _obj.put( r.getName(), r.getEndMillis()-r.getStartMillis() );
+        }
+        _obj.put( "total", context.getEndDate().getTime()-context.getStartDate().getTime() );
+        _obj.put( "time", System.currentTimeMillis() );
+
+        try {
+            Mongo mongo = new Mongo( "127.0.0.1" , "results" );
+            mongo.getCollection( "testng" ).save( _obj );
+        }
+        catch( Exception e ) {
+            System.err.println( "Unable to save test results to the db." );
         }
     }
     
@@ -81,6 +93,7 @@ public class TestNGListener extends TestListenerAdapter {
 
         System.out.println();
     }
-    
+
+    private DBObject _obj;    
     private int _count = 0;
 } 
