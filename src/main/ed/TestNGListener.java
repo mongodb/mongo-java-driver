@@ -11,9 +11,6 @@ import org.testng.*;
 import org.testng.reporters.*;
 
 public class TestNGListener extends TestListenerAdapter {
-    public void onStart( ITestContext context ) {
-        _obj = new BasicDBObject();
-    }    
 
     public void onTestFailure(ITestResult tr) {
         log("F");
@@ -43,21 +40,27 @@ public class TestNGListener extends TestListenerAdapter {
             _print( r.getThrowable() );
         }
 
+        _recordResults( context );
+    }
+    
+    private void _recordResults( ITestContext context ) {
+        DBObject obj = new BasicDBObject();
         for( ITestResult r : context.getPassedTests().getAllResults() ) {
-            _obj.put( r.getName(), r.getEndMillis()-r.getStartMillis() );
+            obj.put( r.getTestClass().getName() + "." + r.getName(), 
+                     r.getEndMillis()-r.getStartMillis() );
         }
-        _obj.put( "total", context.getEndDate().getTime()-context.getStartDate().getTime() );
-        _obj.put( "time", System.currentTimeMillis() );
+        obj.put( "total", context.getEndDate().getTime()-context.getStartDate().getTime() );
+        obj.put( "time", System.currentTimeMillis() );
 
         try {
             Mongo mongo = new Mongo( "127.0.0.1" , "results" );
-            mongo.getCollection( "testng" ).save( _obj );
+            mongo.getCollection( "testng" ).save( obj );
         }
         catch( Exception e ) {
-            System.err.println( "Unable to save test results to the db." );
+            System.err.println( "\nUnable to save test results to the db." );
         }
     }
-    
+
     private void _print( Throwable t ){
 
         int otcount = 0;
@@ -94,6 +97,5 @@ public class TestNGListener extends TestListenerAdapter {
         System.out.println();
     }
 
-    private DBObject _obj;    
     private int _count = 0;
 } 
