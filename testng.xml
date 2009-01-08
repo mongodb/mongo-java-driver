@@ -10,6 +10,7 @@
       <class name="ed.db.ByteTest" />
       <class name="ed.db.JavaClientTest" />
       <class name="ed.db.ReflectionTest" />
+      <class name="ed.db.DBAddressTest" />
 
     </classes>
   </test>
