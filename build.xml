@@ -49,56 +49,68 @@
     </javac>
 
   </target>
+  
+  <target name="jar" depends="compile">
+    
+    <exec executable="git-log" output="build/git-hash">
+      <arg value="--pretty=format:%H" />
+      <arg value="-1" />
+    </exec>
+    
+    <jar jarfile="10gen-java-driver.jar" >
+      <fileset dir="build" />
+    </jar>
+  </target>
 
+  
+  <target name="javadocs" depends="compile">
+    
+    <javadoc packagenames="ed.*"
+             sourcepath="src/main/"
+             defaultexcludes="yes"
+             destdir="docs/"
+             author="true"
+             version="true"
+             source="1.5"
+             use="true"
+             access="package"
+             >
+      <link href="http://java.sun.com/j2se/1.5/docs/api/" />
+      <classpath refid="classpath"/>
+    </javadoc>
 
- <target name="javadocs" depends="compile">
+  </target>
 
-   <javadoc packagenames="ed.*"
-            sourcepath="src/main/"
-            defaultexcludes="yes"
-            destdir="docs/"
-            author="true"
-            version="true"
-            source="1.5"
-            use="true"
-            access="package"
-            >
-     <link href="http://java.sun.com/j2se/1.5/docs/api/" />
-     <classpath refid="classpath"/>
-   </javadoc>
+  <target name="rebuild" depends="clean, compile"/>
 
- </target>
+  <!-- - - - - - - - - - - - - - - - - - - - - - -->
+  <!--  test stuff                               -->
+  <!-- - - - - - - - - - - - - - - - - - - - - - -->
 
- <target name="rebuild" depends="clean, compile"/>
-
- <!-- - - - - - - - - - - - - - - - - - - - - - -->
- <!--  test stuff                               -->
- <!-- - - - - - - - - - - - - - - - - - - - - - -->
-
- <taskdef name="testng"
-          classpathref="classpath"
-          classname="org.testng.TestNGAntTask"
-          >
- </taskdef>
- 
- 
- <target name="test" depends="compile, test-basic" />
- 
- 
- <target  name="test-basic" depends="init, compile">
-   <testng classpathref="classpath" outputdir="${testdir}" listeners="ed.TestNGListener" haltonfailure="true" >
-     <jvmarg value="-Xmx512M" />
-     <xmlfileset dir="." includes="testng.xml"/>
-     <sysproperty key="TESTNG:CODE_ROOT" value="${codeRoot}"/>
-   </testng>
-   </target>
- 
- <target name="test-mql" depends="compile, init">
-   <testng classpathref="classpath"
-           outputDir="${testdir}"
-           haltOnFailure="true" verbose="2">
-     <classfileset dir="build" includes="ed/db/mql/*Test.class" />
-   </testng>
- </target>
- 
+  <taskdef name="testng"
+           classpathref="classpath"
+           classname="org.testng.TestNGAntTask"
+           >
+  </taskdef>
+  
+  
+  <target name="test" depends="compile, test-basic" />
+  
+  
+  <target  name="test-basic" depends="init, compile">
+    <testng classpathref="classpath" outputdir="${testdir}" listeners="ed.TestNGListener" haltonfailure="true" >
+      <jvmarg value="-Xmx512M" />
+      <xmlfileset dir="." includes="testng.xml"/>
+      <sysproperty key="TESTNG:CODE_ROOT" value="${codeRoot}"/>
+    </testng>
+  </target>
+  
+  <target name="test-mql" depends="compile, init">
+    <testng classpathref="classpath"
+            outputDir="${testdir}"
+            haltOnFailure="true" verbose="2">
+      <classfileset dir="build" includes="ed/db/mql/*Test.class" />
+    </testng>
+  </target>
+  
 </project>
