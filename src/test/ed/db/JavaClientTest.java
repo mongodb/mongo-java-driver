@@ -5,15 +5,18 @@ package ed.db;
 import java.io.*;
 import java.util.*;
 
+import org.testng.annotations.Test;
+
 import ed.*;
 
 public class JavaClientTest extends TestCase {
     
-    JavaClientTest()
+    public JavaClientTest()
         throws IOException {
         _db = new Mongo( "127.0.0.1" , "jtest" );        
     }
-    
+
+    @Test
     public void test1(){
         DBCollection c = _db.getCollection( "test1" );;
         c.drop();
@@ -31,6 +34,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( "ny" , out.get( "state" ) );
     }
 
+    @Test
     public void test2(){
         DBCollection c = _db.getCollection( "test2" );;
         c.drop();
@@ -56,6 +60,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( "1z" , z.get( "bar" ) );
     }
 
+    @Test
     public void testWhere1(){
         DBCollection c = _db.getCollection( "testWhere1" );
         c.drop();
@@ -68,6 +73,16 @@ public class JavaClientTest extends TestCase {
         assertNull( c.findOne( BasicDBObjectBuilder.start().add( "$where" , "this.a == 2" ).get() ) );
     }
 
+    @Test
+    public void testBinary(){
+        DBCollection c = _db.getCollection( "testBinary" );
+        c.save( BasicDBObjectBuilder.start().add( "a" , "eliot".getBytes() ).get() );
+        
+        DBObject out = c.findOne();
+        byte[] b = (byte[])(out.get( "a" ) );
+        assertEquals( "eliot" , new String( b ) );
+    }
+    
     final Mongo _db;
 
     public static void main( String args[] )

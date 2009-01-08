@@ -165,14 +165,14 @@ public class ByteTest extends TestCase {
         }
     }
 
-    // ByteDecoder.get()
+    @Test
     public void testDecoderGet() {
         int max = 6 * Bytes.BUFS_PER_50M;
         int count = 0;
 
         ArrayList<ByteDecoder> be = new ArrayList<ByteDecoder>();
         ByteDecoder b;
-        while( (b = ByteDecoder.get( _db, _db.getCollection( "test" ) )) != null && count < max ) {
+        while( (b = ByteDecoder.get( _db , null ) ) != null && count < max ) {
             be.add( b );
             count++;
         }

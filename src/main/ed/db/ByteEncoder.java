@@ -197,6 +197,8 @@ public class ByteEncoder extends Bytes {
             putMap( name , (Map)val );
         else if ( val instanceof List )
             putList( name , (List)val );
+        else if ( val instanceof byte[] )
+            putBinary( name , (byte[])val );
         else 
             throw new RuntimeException( "can't serialize " + val.getClass() );
         
@@ -291,6 +293,20 @@ public class ByteEncoder extends Bytes {
 	    _buf.putDouble( n.doubleValue() );
 	}
         return _buf.position() - start;
+    }
+
+    protected void putBinary( String name , byte[] data ){
+        
+        _put( BINARY , name );
+        _buf.putInt( 4 + data.length );
+
+        _buf.put( B_BINARY );
+        _buf.putInt( data.length );
+        int before = _buf.position();
+        _buf.put( data );
+        int after = _buf.position();
+        
+        ed.MyAsserts.assertEquals( after - before , data.length );
     }
 
     protected int putString( String name , String s ){
