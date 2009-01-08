@@ -165,6 +165,35 @@ public class ByteTest extends TestCase {
         }
     }
 
+
+    @Test(groups = {"basic"}) 
+    public void testBinary() {
+        byte barray[] = new byte[256];
+        for( int i=0; i<256; i++ ) {
+            barray[i] = (byte)(i-128);
+        }
+
+        DBObject o = new BasicDBObject();
+        o.put( "bytes", barray );
+
+        ByteEncoder encoder = ByteEncoder.get();
+        int pos = encoder.putObject( o );
+        assertEquals( pos, 277 );
+
+        encoder.flip();
+        ByteDecoder decoder = new ByteDecoder( encoder._buf );
+        DBObject read = decoder.readObject();
+        byte[] b = (byte[])read.get( "bytes" );
+        for( int i=0; i<256; i++ ) {
+            assertEquals( b[i], barray[i] );
+        }
+        assertEquals( o.keySet().size() , read.keySet().size() );
+        assertEquals( encoder._buf.limit() , encoder._buf.position() );
+
+        encoder.done();
+        decoder.done();
+    }
+
     @Test
     public void testDecoderGet() {
         int max = 6 * Bytes.BUFS_PER_50M;
