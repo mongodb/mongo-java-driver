@@ -1,9 +1,8 @@
 <?xml version='1.0'?>
-<project name="ED" default="compile" basedir=".">
+<project name="Mongo" default="compile" basedir=".">
 
   <property name="targetdir" location="target"/>
   <property name="testdir" location="${targetdir}/test"/>
-
 
   <path id="classpath">
     <fileset dir="include">
@@ -26,7 +25,7 @@
 
   <target name="compile" depends="init">
 
-    <javac srcdir="src/main/ed"
+    <javac srcdir="src/main"
            destdir="build"
            optimize="off"
            deprecation="off"
@@ -53,8 +52,8 @@
 
  <target name="javadocs" depends="compile">
 
-   <javadoc packagenames="ed.*"
-            sourcepath="src/main/"
+   <javadoc packagenames="com.mongodb.*"
+            sourcepath="src/main"
             defaultexcludes="yes"
             destdir="docs/"
             author="true"
@@ -86,7 +85,7 @@
  
  
  <target  name="test-basic" depends="init, compile">
-   <testng classpathref="classpath" outputdir="${testdir}" listeners="ed.TestNGListener" haltonfailure="true" >
+   <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="true" >
      <jvmarg value="-Xmx512M" />
      <xmlfileset dir="." includes="testng.xml"/>
      <sysproperty key="TESTNG:CODE_ROOT" value="${codeRoot}"/>
@@ -97,7 +96,7 @@
    <testng classpathref="classpath"
            outputDir="${testdir}"
            haltOnFailure="true" verbose="2">
-     <classfileset dir="build" includes="ed/db/mql/*Test.class" />
+     <classfileset dir="build" includes="com/mongodb/mql/*Test.class" />
    </testng>
  </target>
  

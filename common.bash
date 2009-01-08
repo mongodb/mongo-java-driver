@@ -2,7 +2,7 @@
 
 cd `dirname $0`
 
-export ED_HOME=.
+export MONGODB_DRIVER_HOME=.
 # TODO get rid of this?
 export TZ=America/New_York
 
@@ -14,7 +14,7 @@ export CLASSPATH="$CLASSPATH":/opt/java/lib/tools.jar
 
 export java_lib_path="-Djava.library.path=include"
 export headless="-Djava.awt.headless=true"
-export jruby_home="-Djruby.home=$ED_HOME/include/ruby"
+export jruby_home="-Djruby.home=$MONGODB_DRIVER_HOME/include/ruby"
 
 export standard_options="-enableassertions $java_lib_path $headless $jruby_home"
 
