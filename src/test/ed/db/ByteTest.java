@@ -14,7 +14,7 @@ public class ByteTest extends TestCase {
     public ByteTest()
         throws IOException {
         super();
-        _db = new Mongo( "127.0.0.1" , "jtest" );        
+        _db = new Mongo( "127.0.0.1" , "bytetest" );
     }
 
     @Test(groups = {"basic"})
@@ -172,7 +172,7 @@ public class ByteTest extends TestCase {
 
         ArrayList<ByteDecoder> be = new ArrayList<ByteDecoder>();
         ByteDecoder b;
-        while( (b = ByteDecoder.get( _db, "test" )) != null && count < max ) {
+        while( (b = ByteDecoder.get( _db, _db.getCollection( "test" ) )) != null && count < max ) {
             be.add( b );
             count++;
         }
@@ -325,11 +325,12 @@ public class ByteTest extends TestCase {
         assertEquals( threw, true );
     }
 
-    final Mongo _db;
+    final DBBase _db;
 
     public static void main( String args[] )
         throws IOException {
         (new ByteTest()).runConsole();
+
     }
 
 }
