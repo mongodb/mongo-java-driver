@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.regex.*;
 import java.nio.*;
 import java.nio.charset.*;
+import java.lang.reflect.Array;
 
 import com.mongodb.util.*;
 
@@ -41,7 +42,7 @@ public class ByteEncoder extends Bytes {
             || s.equals( "_update" );
     }
 
-    static ByteEncoder get(){
+    public static ByteEncoder get(){
         return _pool.get();
     }
 
@@ -72,6 +73,31 @@ public class ByteEncoder extends Bytes {
     private ByteEncoder(){
         _buf = ByteBuffer.allocateDirect( BUF_SIZE );
         _buf.order( Bytes.ORDER );
+    }
+
+    /**
+     *  Returns the bytes in the bytebuffer.  Attempts to leave the
+     *  bytebuffer in the same state.  Note that mark, if set, is lost.
+     *
+     * @return  array of bytes
+     */
+    public byte[] getBytes() {
+
+        int pos = _buf.position();
+        int limit = _buf.limit();
+
+        flip();
+
+        byte[] arr = new byte[_buf.limit()];
+
+        _buf.get(arr);
+
+        flip();
+
+        _buf.position(pos);
+        _buf.limit(limit);
+
+        return arr;
     }
 
     protected void reset(){
