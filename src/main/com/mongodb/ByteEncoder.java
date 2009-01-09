@@ -368,7 +368,6 @@ public class ByteEncoder extends Bytes {
         _put( REGEX , name );
         _put( p.pattern() );
         _put( patternFlags( p.flags() ) );
-        System.out.println("put: "+_buf);
         return _buf.position() - start;
     }
 
