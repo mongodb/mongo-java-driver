@@ -2,6 +2,8 @@
 
 package com.mongodb;
 
+import com.mongodb.util.OrderedSet;
+
 import java.util.*;
 
 public class BasicDBList extends ArrayList<Object> implements DBObject {
@@ -41,7 +43,7 @@ public class BasicDBList extends ArrayList<Object> implements DBObject {
     }
 
     public Set<String> keySet(){
-        Set<String> s = new HashSet<String>();
+        Set<String> s = new OrderedSet<String>();
         for ( int i=0; i<size(); i++ )
             s.add( String.valueOf( i ) );
         return s;
