@@ -354,6 +354,28 @@ public class ByteTest extends TestCase {
         assertEquals( threw, true );
     }
 
+    @Test(groups = {"basic"})
+    public void testPattern() {
+        Pattern p = Pattern.compile( "([a-zA-Z0-9_-])([a-zA-Z0-9_.-]*)@(((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.))" );
+        DBObject o = new BasicDBObject();
+        o.put( "p", p );
+
+        ByteEncoder encoder = ByteEncoder.get();
+        encoder.putObject( o );
+        encoder.flip();
+
+        ByteDecoder decoder = new ByteDecoder( encoder._buf );
+        DBObject read = decoder.readObject();
+        Pattern p2 = (Pattern)read.get( "p" );
+        assertEquals( p2.pattern(), p.pattern() );
+        assertEquals( o.keySet().size(), read.keySet().size() );
+        assertEquals( encoder._buf.limit() , encoder._buf.position() );
+
+        encoder.done();
+        decoder.done();
+
+    }
+
     final DBBase _db;
 
     public static void main( String args[] )

@@ -193,6 +193,8 @@ public class ByteEncoder extends Bytes {
             putObject(name, (DBObject)val );
         else if ( val instanceof Boolean )
             putBoolean(name, (Boolean)val );
+        else if ( val instanceof Pattern )
+            putPattern(name, (Pattern)val );
         else if ( val instanceof Map )
             putMap( name , (Map)val );
         else if ( val instanceof List )
@@ -334,6 +336,16 @@ public class ByteEncoder extends Bytes {
 
         return _buf.position() - start;
     }
+
+    private int putPattern( String name, Pattern p ) {
+        int start = _buf.position();
+        _put( REGEX , name );
+        _put( p.pattern() );
+        _put( patternFlags( p.flags() ) );
+        System.out.println("put: "+_buf);
+        return _buf.position() - start;
+    }
+
 
     // ----------------------------------------------
     
