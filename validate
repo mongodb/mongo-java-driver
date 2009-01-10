@@ -1,0 +1,14 @@
+#!/bin/bash
+
+#
+#  script for automated bson generation testing
+#  called by the driver testing framework.  Argments
+#  are the input xson file to transform into the 
+#  specified output file
+#
+#  args : 
+#      validate --xtob  inputfile.xson  outputfile.bson
+#
+
+. `dirname $0`/common.bash
+$java_memory_large  com.mongodb.util.XSON --xtob "$@"
