@@ -5,7 +5,7 @@ package com.mongodb;
 import java.nio.*;
 import java.nio.charset.*;
 import java.util.regex.Pattern;
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * <type><name>0<data>
@@ -42,6 +42,8 @@ public class Bytes {
     static final byte SYMBOL = 14;
     static final byte CODE_W_SCOPE = 15;
     static final byte NUMBER_INT = 16;
+
+    private static final int GLOBAL_FLAG = 256;
     
     
     /* 
@@ -109,22 +111,19 @@ public class Bytes {
 
     public static int patternFlags( String flags ){
         flags = flags.toLowerCase();
-        Flag f[] = Flag.values();
         int fint = 0;
-        int count = 0;
 
-        for( Flag flag : f ) {
-            if( flags.indexOf( flag.flagChar ) >= 0 ) {
+        for( int i=0; i<flags.length(); i++ ) {
+            Flag flag = Flag.getByCharacter( flags.charAt( i ) );
+            if( flag != null ) {
                 fint |= flag.javaFlag;
-                count++;
                 if( flag.unsupported != null )
                     _warnUnsupported( flag.unsupported );
             }
+            else {
+                throw new RuntimeException( "unrecognized flag: "+flags.charAt( i ) );
+            }
         }
-
-        if( count < flags.length() )
-            throw new RuntimeException( "some flags could not be converted: "+flags );
-
         return fint;
     }
 
@@ -149,14 +148,26 @@ public class Bytes {
 
     private static enum Flag { 
         CANON_EQ( Pattern.CANON_EQ, 'c', "PATTERN.CANON_EQ" ),
-        DOTALL( Pattern.DOTALL, 'd', "Pattern.DOTALL" ),
+        UNIX_LINES(Pattern.UNIX_LINES, 'd', "Pattern.UNIX_LINES" ),
+        GLOBAL( GLOBAL_FLAG, 'g', null ),
         CASE_INSENSITIVE( Pattern.CASE_INSENSITIVE, 'i', null ),
-        UNIX_LINES( Pattern.UNIX_LINES, 'l', "Pattern.UNIX_LINES" ),
         MULTILINE(Pattern.MULTILINE, 'm', null ),
+        DOTALL( Pattern.DOTALL, 's', "Pattern.DOTALL" ),
         LITERAL( Pattern.LITERAL, 't', "Pattern.LITERAL" ),
         UNICODE_CASE( Pattern.UNICODE_CASE, 'u', "Pattern.UNICODE_CASE" ),
         COMMENTS( Pattern.COMMENTS, 'x', null );
 
+        private static final Map<Character, Flag> byCharacter = new HashMap<Character, Flag>();
+
+        static {
+            for (Flag flag : values()) {
+                byCharacter.put(flag.flagChar, flag);
+            }
+        }
+
+        public static Flag getByCharacter(char ch) {
+            return byCharacter.get(ch);
+        }
         public final int javaFlag;
         public final char flagChar;
         public final String unsupported;

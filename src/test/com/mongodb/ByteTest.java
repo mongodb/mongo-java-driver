@@ -346,7 +346,7 @@ public class ByteTest extends TestCase {
         threw = false;
 
         try {
-            Bytes.patternFlags( 257 );
+            Bytes.patternFlags( 513 );
         }
         catch( RuntimeException e ) {
             threw = true;
@@ -360,7 +360,8 @@ public class ByteTest extends TestCase {
                                               Pattern.MULTILINE &
                                               Pattern.LITERAL &
                                               Pattern.UNICODE_CASE &
-                                              Pattern.COMMENTS );
+                                              Pattern.COMMENTS & 
+                                              256 );
 
         int check = Bytes.patternFlags( Bytes.patternFlags( lotsoflags.flags() ) );
         assertEquals( lotsoflags.flags(), check );
