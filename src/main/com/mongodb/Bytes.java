@@ -4,6 +4,8 @@ package com.mongodb;
 
 import java.nio.*;
 import java.nio.charset.*;
+import java.util.regex.Pattern;
+import java.util.Arrays;
 
 /**
  * <type><name>0<data>
@@ -106,15 +108,67 @@ public class Bytes {
     }
 
     public static int patternFlags( String flags ){
-        if ( flags.length() == 0 )
-            return 0;
-        throw new RuntimeException( "can't convert flags yet" );    
+        flags = flags.toLowerCase();
+        Flag f[] = Flag.values();
+        int fint = 0;
+        int count = 0;
+
+        for( Flag flag : f ) {
+            if( flags.indexOf( flag.flagChar ) >= 0 ) {
+                fint |= flag.javaFlag;
+                count++;
+                if( flag.unsupported != null )
+                    _warnUnsupported( flag.unsupported );
+            }
+        }
+
+        if( count < flags.length() )
+            throw new RuntimeException( "some flags could not be converted: "+flags );
+
+        return fint;
     }
 
     public static String patternFlags( int flags ){
-        if ( flags == 0 )
-            return "";
-        throw new RuntimeException( "can't convert flags yet" );
+        Flag f[] = Flag.values();
+        byte b[] = new byte[ f.length ];
+        int count = 0;
+
+        for( Flag flag : f ) {
+            if( ( flags & flag.javaFlag ) > 0 ) {
+                b[ count++ ] = (byte)flag.flagChar;
+                flags -= flag.javaFlag;
+            }
+        }
+
+        if( flags > 0 )
+            throw new RuntimeException( "some flags could not be recognized." );
+
+        Arrays.sort( b );
+        return new String( b, 0, count );
+    }
+
+    private static enum Flag { 
+        CANON_EQ( Pattern.CANON_EQ, 'c', "PATTERN.CANON_EQ" ),
+        DOTALL( Pattern.DOTALL, 'd', "Pattern.DOTALL" ),
+        CASE_INSENSITIVE( Pattern.CASE_INSENSITIVE, 'i', null ),
+        UNIX_LINES( Pattern.UNIX_LINES, 'l', "Pattern.UNIX_LINES" ),
+        MULTILINE(Pattern.MULTILINE, 'm', null ),
+        LITERAL( Pattern.LITERAL, 't', "Pattern.LITERAL" ),
+        UNICODE_CASE( Pattern.UNICODE_CASE, 'u', "Pattern.UNICODE_CASE" ),
+        COMMENTS( Pattern.COMMENTS, 'x', null );
+
+        public final int javaFlag;
+        public final char flagChar;
+        public final String unsupported;
+        Flag( int f, char ch, String u ) {
+            javaFlag = f;
+            flagChar = ch;
+            unsupported = u;
+        }
+    }
+
+    private static void _warnUnsupported( String flag ) {
+        System.out.println( "flag " + flag + " not supported by db." );
     }
     
     static final String NO_REF_HACK = "_____nodbref_____";

@@ -346,12 +346,24 @@ public class ByteTest extends TestCase {
         threw = false;
 
         try {
-            Bytes.patternFlags( 6 );
+            Bytes.patternFlags( 257 );
         }
         catch( RuntimeException e ) {
             threw = true;
         }
         assertEquals( threw, true );
+
+        Pattern lotsoflags = Pattern.compile( "foo", Pattern.CANON_EQ & 
+                                              Pattern.DOTALL &
+                                              Pattern.CASE_INSENSITIVE &
+                                              Pattern.UNIX_LINES &
+                                              Pattern.MULTILINE &
+                                              Pattern.LITERAL &
+                                              Pattern.UNICODE_CASE &
+                                              Pattern.COMMENTS );
+
+        int check = Bytes.patternFlags( Bytes.patternFlags( lotsoflags.flags() ) );
+        assertEquals( lotsoflags.flags(), check );
     }
 
     @Test(groups = {"basic"})
@@ -373,7 +385,6 @@ public class ByteTest extends TestCase {
 
         encoder.done();
         decoder.done();
-
     }
 
     final DBBase _db;
