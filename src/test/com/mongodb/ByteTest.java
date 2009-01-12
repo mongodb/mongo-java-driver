@@ -353,17 +353,25 @@ public class ByteTest extends TestCase {
         }
         assertEquals( threw, true );
 
-        Pattern lotsoflags = Pattern.compile( "foo", Pattern.CANON_EQ & 
-                                              Pattern.DOTALL &
-                                              Pattern.CASE_INSENSITIVE &
-                                              Pattern.UNIX_LINES &
-                                              Pattern.MULTILINE &
-                                              Pattern.LITERAL &
-                                              Pattern.UNICODE_CASE &
-                                              Pattern.COMMENTS & 
+        Pattern lotsoflags = Pattern.compile( "foo", Pattern.CANON_EQ |
+                                              Pattern.DOTALL |
+                                              Pattern.CASE_INSENSITIVE |
+                                              Pattern.UNIX_LINES |
+                                              Pattern.MULTILINE |
+                                              Pattern.LITERAL |
+                                              Pattern.UNICODE_CASE |
+                                              Pattern.COMMENTS |
                                               256 );
 
-        int check = Bytes.patternFlags( Bytes.patternFlags( lotsoflags.flags() ) );
+        String s = Bytes.patternFlags( lotsoflags.flags() );
+        char prev = s.charAt( 0 );
+        for( int i=1; i<s.length(); i++ ) {
+            char current = s.charAt( i );
+            assertTrue( prev < current );
+            prev = current;
+        }
+
+        int check = Bytes.patternFlags( s );
         assertEquals( lotsoflags.flags(), check );
     }
 

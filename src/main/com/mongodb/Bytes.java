@@ -147,7 +147,7 @@ public class Bytes {
     }
 
     private static enum Flag { 
-        CANON_EQ( Pattern.CANON_EQ, 'c', "PATTERN.CANON_EQ" ),
+        CANON_EQ( Pattern.CANON_EQ, 'c', "Pattern.CANON_EQ" ),
         UNIX_LINES(Pattern.UNIX_LINES, 'd', "Pattern.UNIX_LINES" ),
         GLOBAL( GLOBAL_FLAG, 'g', null ),
         CASE_INSENSITIVE( Pattern.CASE_INSENSITIVE, 'i', null ),
