@@ -8,7 +8,7 @@ import com.mongodb.util.*;
 
 /**
  */
-public class DBCursor {
+public class DBCursor implements Iterator<DBObject> {
 
     /** Initializes a new database cursor
      * @param collection collection to use
