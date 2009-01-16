@@ -188,15 +188,12 @@ public abstract class DBCollection {
      * @param ref object for which to search
      * @return an iterator over the results
      */
-    public final Iterator<DBObject> find( DBObject ref ){
-        return find( ref == null ? new BasicDBObject() : ref , null , 0 , 0 );
+    public final DBCursor find( DBObject ref ){
+        return new DBCursor( this, ref, null );
     }
 
-    public final Iterator<DBObject> find(){
-        Iterator<DBObject> i = find( new BasicDBObject() , null , 0 , 0 );
-        if ( i == null )
-            return (new LinkedList<DBObject>()).iterator();
-        return i;
+    public final DBCursor find(){
+        return new DBCursor( this, new BasicDBObject(), null );
     }
 
     public final DBObject findOne(){
