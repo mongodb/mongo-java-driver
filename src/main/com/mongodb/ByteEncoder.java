@@ -326,9 +326,6 @@ public class ByteEncoder extends Bytes {
     protected void putBinary( String name , byte[] data ){
         
         _put( BINARY , name );
-        _buf.putInt( 4 + data.length );
-
-        _buf.put( B_BINARY );
         _buf.putInt( data.length );
         int before = _buf.position();
         _buf.put( data );
