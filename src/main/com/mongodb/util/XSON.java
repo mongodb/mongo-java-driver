@@ -37,6 +37,7 @@ import com.mongodb.BasicDBList;
 import com.mongodb.ObjectId;
 import com.mongodb.ByteEncoder;
 import com.mongodb.DBRef;
+import com.mongodb.DBSymbol;
 
 
 /**
@@ -61,6 +62,7 @@ public class XSON extends DefaultHandler {
             put("regex", RegexHandler.class);
             put("null", StringHandler.class);
             put("ref", RefHandler.class);
+            put("symbol", SymbolHandler.class);
         }
     };
 
@@ -209,6 +211,15 @@ public class XSON extends DefaultHandler {
             super.endElement(uri, localName, qName);
         }
     }
+
+    public class SymbolHandler extends Handler {
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+            _currentDoc.put(cleanName(), new DBSymbol(_value));
+
+            super.endElement(uri, localName, qName);
+        }
+    }
+
 
     public class RefHandler extends Handler {
 

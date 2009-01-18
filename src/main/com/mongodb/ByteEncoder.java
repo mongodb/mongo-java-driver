@@ -233,6 +233,9 @@ public class ByteEncoder extends Bytes {
             DBRef r = (DBRef) val;
             putDBRef( name , r._ns , r._id );
         }
+        else if (val instanceof DBSymbol) {
+            putSymbol(name, (DBSymbol) val);
+        }
         else 
             throw new RuntimeException( "can't serialize " + val.getClass() );
         
@@ -343,9 +346,17 @@ public class ByteEncoder extends Bytes {
         com.mongodb.util.MyAsserts.assertEquals( after - before , data.length );
     }
 
-    protected int putString( String name , String s ){
+    protected int putSymbol( String name , DBSymbol s ){
+        return _putString(name, s.getSymbol(), SYMBOL);
+    }
+
+    protected int putString(String name, String s) {
+        return _putString(name, s, STRING);
+    }
+
+    private int _putString( String name , String s, byte type ){
         int start = _buf.position();
-        _put( STRING , name );
+        _put( type , name );
         _putValueString( s );
         return _buf.position() - start;
     }
