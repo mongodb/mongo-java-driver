@@ -2,11 +2,21 @@
 
 package com.mongodb;
 
-import java.util.*;
-
 public class DBRef {
     
     static final boolean D = Boolean.getBoolean( "DEBUG.DBREF" );
+
+    /**
+     *  CTOR used for testing BSON encoding.  Otherwise
+     *  non-functional due to a DBRef needing a parent db object,
+     *  a fieldName and a db
+     *
+     * @param ns namespace to point to
+     * @param id value of _id
+     */
+    public DBRef(String ns, ObjectId id) {
+        this (null, null, null, ns, id);
+    }
 
     DBRef( DBObject parent , String fieldName , DBBase db , String ns , ObjectId id ){
     
@@ -19,25 +29,25 @@ public class DBRef {
         _id = id;
     }
 
-    private DBObject fetch(){
-	if ( _loadedPointedTo )
-	    return _pointedTo;
-        
-        if ( _db == null )
-            throw new RuntimeException( "no db" );
+    private DBObject fetch() {
+        if (_loadedPointedTo)
+            return _pointedTo;
 
-	if ( D ){ 
-            System.out.println( "following dbref.  parent.field:" + _fieldName + " ref to ns:" + _ns );
+        if (_db == null)
+            throw new RuntimeException("no db");
+
+        if (D) {
+            System.out.println("following dbref.  parent.field:" + _fieldName + " ref to ns:" + _ns);
             Throwable t = new Throwable();
             t.fillInStackTrace();
             t.printStackTrace();
         }
-        
-        final DBCollection coll = _db.getCollectionFromString( _ns );
-        
-        _pointedTo = coll.find( _id );
-	_loadedPointedTo = true;
-	return _pointedTo;
+
+        final DBCollection coll = _db.getCollectionFromString(_ns);
+
+        _pointedTo = coll.find(_id);
+        _loadedPointedTo = true;
+        return _pointedTo;
     }
 
     final DBObject _parent;
@@ -49,5 +59,4 @@ public class DBRef {
 
     private boolean _loadedPointedTo = false;
     private DBObject _pointedTo;
-
 }
