@@ -239,6 +239,9 @@ public class ByteEncoder extends Bytes {
         else if (val instanceof DBSymbol) {
             putSymbol(name, (DBSymbol) val);
         }
+        else if (val instanceof DBUndefined) {
+            putUndefined(name);
+        }
         else 
             throw new RuntimeException( "can't serialize " + val.getClass() );
         
@@ -307,6 +310,11 @@ public class ByteEncoder extends Bytes {
         return _buf.position() - start;
     }
 
+    protected int putUndefined(String name){
+        int start = _buf.position();
+        _put(UNDEFINED, name);
+        return _buf.position() - start;
+    }
 
     protected int putBoolean( String name , Boolean b ){
         int start = _buf.position();
