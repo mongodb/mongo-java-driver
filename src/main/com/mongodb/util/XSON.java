@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.regex.Pattern;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
@@ -48,6 +49,7 @@ public class XSON extends DefaultHandler {
             put("twonk", TwonkHandler.class);
             put("string", StringHandler.class);
             put("boolean", BooleanHandler.class);
+            put("binary", BinaryHandler.class);
             put("number", NumberHandler.class);
             put("date", DateHandler.class);
             put("code", CodeHandler.class);
@@ -141,6 +143,14 @@ public class XSON extends DefaultHandler {
         String _name = null;
         String _value = null;
 
+        public String cleanName() {
+            if (_name == null) {
+                return "";
+            }
+
+            return _name;
+        }
+
         public void characters(char[] ch, int start, int length) throws SAXException {
             _value = new String(ch, start, length);
         }
@@ -194,6 +204,32 @@ public class XSON extends DefaultHandler {
     public class NumberHandler extends Handler {
         public void endElement(String uri, String localName, String qName) throws SAXException {
             _currentDoc.put(_name, Double.parseDouble(_value));
+            super.endElement(uri, localName, qName);
+        }
+    }
+
+
+    public class BinaryHandler extends Handler {
+
+        StringBuffer buff = new StringBuffer();
+
+        public void characters(char[] ch, int start, int length) throws SAXException {
+
+            String nv = new String(ch, start, length);
+
+            buff.append(nv);
+        }
+
+
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+
+            sun.misc.BASE64Decoder decoder =  new sun.misc.BASE64Decoder();
+
+            try {
+                _currentDoc.put(cleanName(), decoder.decodeBuffer(buff.toString()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             super.endElement(uri, localName, qName);
         }
     }
