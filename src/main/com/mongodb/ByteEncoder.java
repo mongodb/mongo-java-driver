@@ -227,6 +227,12 @@ public class ByteEncoder extends Bytes {
             putList( name , (List)val );
         else if ( val instanceof byte[] )
             putBinary( name , (byte[])val );
+        else if (val instanceof DBRef) {
+
+            // temporary - there's the notion of "special object" , but for simple level 0...
+            DBRef r = (DBRef) val;
+            putDBRef( name , r._ns , r._id );
+        }
         else 
             throw new RuntimeException( "can't serialize " + val.getClass() );
         

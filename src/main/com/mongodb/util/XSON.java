@@ -36,6 +36,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBList;
 import com.mongodb.ObjectId;
 import com.mongodb.ByteEncoder;
+import com.mongodb.DBRef;
 
 
 /**
@@ -59,6 +60,7 @@ public class XSON extends DefaultHandler {
             put("int", IntHandler.class);
             put("regex", RegexHandler.class);
             put("null", StringHandler.class);
+            put("ref", RefHandler.class);
         }
     };
 
@@ -205,6 +207,41 @@ public class XSON extends DefaultHandler {
         public void endElement(String uri, String localName, String qName) throws SAXException {
             _currentDoc.put(_name, Double.parseDouble(_value));
             super.endElement(uri, localName, qName);
+        }
+    }
+
+    public class RefHandler extends Handler {
+
+        String _next = null;
+        Map<String, Object> _data = new HashMap<String,Object>();
+
+        public void startElement(String uri, String localName, String qName, Attributes att) throws SAXException {
+
+            if ("ref".equals(qName)) {
+                super.startElement(uri, localName, qName, att);
+                return;
+            }
+
+            _next = qName;
+        }
+
+        public void characters(char[] ch, int start, int length) throws SAXException {
+            _data.put(_next, new String(ch, start, length));
+        }
+
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+
+            if ("ref".equals(qName)) {
+
+                DBRef br = new DBRef((String) _data.get("ns"), new ObjectId((String) _data.get("oid")));
+
+                _currentDoc.put(cleanName(), br);
+
+                super.endElement(uri, localName, qName);
+            }
+            else {
+                _next = null;
+            }
         }
     }
 
