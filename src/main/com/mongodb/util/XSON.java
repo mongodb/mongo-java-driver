@@ -179,7 +179,7 @@ public class XSON extends DefaultHandler {
 
     public class NullHandler extends Handler {
         public void endElement(String uri, String localName, String qName) throws SAXException {
-            _currentDoc.put(cleanName(),(Object) null);
+            _currentDoc.put(cleanName(), null);
             super.endElement(uri, localName, qName);
         }
     }    
