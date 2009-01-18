@@ -3,6 +3,7 @@
 package com.mongodb;
 
 import java.util.*;
+import java.nio.ByteBuffer;
 
 import com.mongodb.util.*;
 
@@ -79,8 +80,28 @@ public class ObjectId implements Comparable<ObjectId>{
         String baseString = s.substring( 0 , 16 );
         String incString = s.substring( 16 );
 
-        _base = Long.parseLong( baseString , 16 );
-        _inc = Integer.parseInt( incString , 16 );
+        ByteBuffer buf = ByteBuffer.allocate(24);
+
+        for (int i=0; i < baseString.length() / 2; i++) {
+            buf.put((byte) Integer.parseInt(baseString.substring(i*2, i*2 + 2), 16));
+        }
+
+        buf.flip();
+
+        _base = buf.getLong();
+
+        buf.clear();
+
+        for (int i=0; i < incString.length() / 2; i++) {
+            buf.put((byte) Integer.parseInt(incString.substring(i*2, i*2 + 2), 16));
+        }
+
+        buf.flip();
+
+        _inc = buf.getInt();
+
+//        _base = Long.parseLong( baseString , 16 );
+//        _inc = Integer.parseInt( incString , 16 );
 
         _new = false;
     }
