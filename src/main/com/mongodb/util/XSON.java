@@ -60,7 +60,7 @@ public class XSON extends DefaultHandler {
             put("array", ArrayHandler.class);
             put("int", IntHandler.class);
             put("regex", RegexHandler.class);
-            put("null", StringHandler.class);
+            put("null", NullHandler.class);
             put("ref", RefHandler.class);
             put("symbol", SymbolHandler.class);
         }
@@ -176,6 +176,13 @@ public class XSON extends DefaultHandler {
             super.endElement(uri, localName, qName);
         }
     }
+
+    public class NullHandler extends Handler {
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+            _currentDoc.put(cleanName(),(Object) null);
+            super.endElement(uri, localName, qName);
+        }
+    }    
 
     public class IntHandler extends Handler {
         public void endElement(String uri, String localName, String qName) throws SAXException {
@@ -352,10 +359,17 @@ public class XSON extends DefaultHandler {
     }
 
     public class StringHandler extends Handler {
-        
-        public void endElement(String uri, String localName, String qName) throws SAXException {
-            _currentDoc.put(_name, _value);
 
+        StringBuffer _stringValue = new StringBuffer();
+
+        public void characters(char[] ch, int start, int length) throws SAXException {
+             String s = new String(ch, start, length);
+
+            _stringValue.append(s);
+        }
+
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+            _currentDoc.put(cleanName(), _stringValue.toString());
             super.endElement(uri, localName, qName);
         }
     }
