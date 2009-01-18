@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Stack;
 import java.util.Date;
-import java.util.regex.Pattern;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -38,6 +37,7 @@ import com.mongodb.ObjectId;
 import com.mongodb.ByteEncoder;
 import com.mongodb.DBRef;
 import com.mongodb.DBSymbol;
+import com.mongodb.DBRegex;
 
 
 /**
@@ -282,10 +282,11 @@ public class XSON extends DefaultHandler {
         }
     }
 
+
     public class RegexHandler extends Handler {
 
         String _next = null;
-        Map<String, String> _data = new HashMap<String,String>();
+        Map<String, StringBuffer> _data = new HashMap<String,StringBuffer>();
 
         public void startElement(String uri, String localName, String qName, Attributes att) throws SAXException {
 
@@ -293,20 +294,29 @@ public class XSON extends DefaultHandler {
                 super.startElement(uri, localName, qName, att);
                 return;
             }
-            
+
             _next = qName;
+
+            if (_next != null && _data.get(_next) == null) {
+                _data.put(_next, new StringBuffer());
+            }
         }
 
         public void characters(char[] ch, int start, int length) throws SAXException {
-            _data.put(_next, new String(ch, start, length));
+             String s = new String(ch, start, length);
+            if (_next != null) {
+                _data.get(_next).append(s);
+            }
         }
 
 
         public void endElement(String uri, String localName, String qName) throws SAXException {
 
             if ("regex".equals(qName)) {
-                Pattern p = Pattern.compile(_data.get("pattern"));   // TODO - options
-                _currentDoc.put(_name, p);
+
+                DBRegex br = new DBRegex(_data.get("pattern").toString(), _data.get("options").toString());
+                _currentDoc.put(cleanName(), br);
+
                 super.endElement(uri, localName, qName);
             }
             else {

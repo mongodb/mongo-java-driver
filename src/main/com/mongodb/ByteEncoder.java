@@ -221,6 +221,9 @@ public class ByteEncoder extends Bytes {
             putBoolean(name, (Boolean)val );
         else if ( val instanceof Pattern )
             putPattern(name, (Pattern)val );
+        else if (val instanceof DBRegex) {
+            putDBRegex(name, (DBRegex) val);
+        }
         else if ( val instanceof Map )
             putMap( name , (Map)val );
         else if ( val instanceof List )
@@ -380,6 +383,31 @@ public class ByteEncoder extends Bytes {
         return _buf.position() - start;
     }
 
+    private int putDBRegex(String name, DBRegex regex) {
+
+        int start = _buf.position();
+        _put( REGEX , name );
+        _put(regex.getPattern());
+
+        String options = regex.getOptions();
+
+        TreeMap<Character, Character> sm = new TreeMap<Character, Character>();
+
+        for (int i=0; i < options.length(); i++) {
+            sm.put(options.charAt(i), options.charAt(i));
+        }
+
+        StringBuffer sb = new StringBuffer();
+
+        for (char c : sm.keySet()) {
+            sb.append(c);
+        }
+
+        _put( sb.toString());
+        return _buf.position() - start;
+
+    }
+    
     private int putPattern( String name, Pattern p ) {
         int start = _buf.position();
         _put( REGEX , name );
