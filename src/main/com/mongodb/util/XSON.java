@@ -350,14 +350,17 @@ public class XSON extends DefaultHandler {
         }
     }
 
+
     public class DocHandler extends Handler {
 
-        DBObject _oldDoc = null;
-        BasicDBObject _myDoc = new BasicDBObject();
-        
+        boolean first = true;
+        private DBObject _oldDoc = null;
+        private BasicDBObject _myDoc = new BasicDBObject();
+
         public void startElement(String uri, String localName, String qName, Attributes att) throws SAXException {
 
-            if ("doc".equals(qName)) {
+            if (first && "doc".equals(qName)) {
+                first = false;
                 _oldDoc = _currentDoc;
                 _currentDoc = _myDoc;
                 super.startElement(uri, localName, qName, att);
@@ -368,6 +371,9 @@ public class XSON extends DefaultHandler {
             _currentHandler = getHandler(qName);
             _currentHandler.startElement(uri, localName, qName, att);
         }
+
+
+
 
         public void endElement(String uri, String localName, String qName) throws SAXException {
             _currentDoc = _oldDoc;
