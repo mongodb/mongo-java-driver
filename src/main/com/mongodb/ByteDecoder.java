@@ -74,7 +74,7 @@ public class ByteDecoder extends Bytes {
         DBObject created = null;
 
         if ( created == null )
-            created = _create();
+            created = _create( true );
         
         while ( decodeNext( created ) > 1 );
         
@@ -84,9 +84,9 @@ public class ByteDecoder extends Bytes {
         return created;
     }
 
-    private DBObject _create(){
+    private DBObject _create( boolean root ){
         
-        final Class c = _collection == null ? null : _collection._objectClass;
+        final Class c = _collection == null || ! root ? null : _collection._objectClass;
         
         if ( c != null ){
             try {
@@ -178,9 +178,16 @@ public class ByteDecoder extends Bytes {
                 created = new BasicDBList();
         case OBJECT:
             int embeddedSize = _buf.getInt();
+            
+            if ( created == null ){
 
-            if ( created == null )
-                created = _create();
+                Object foo = o.get( name );
+                if ( foo instanceof DBObject )
+                    created = (DBObject)foo;
+                
+                if ( created == null )
+                    created = _create( false );
+            }
             
             while ( decodeNext( created ) > 1 );
             o.put( name , created );
