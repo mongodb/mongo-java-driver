@@ -182,7 +182,9 @@ public abstract class DBApiLayer extends DBBase {
 
             if ( shouldApply ){
                 apply( o );
-                ((ObjectId)o.get( "_id" ) )._new = false;
+                Object id = o.get( "_id" );
+                if ( id instanceof ObjectId )
+                    ((ObjectId)id)._new = false;
             }
 
             ByteEncoder encoder = ByteEncoder.get();

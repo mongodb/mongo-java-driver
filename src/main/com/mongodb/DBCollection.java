@@ -209,7 +209,7 @@ public abstract class DBCollection {
 
     /**
      */
-    public final ObjectId apply( DBObject o ){
+    public final Object apply( DBObject o ){
         return apply( o , true );
     }
     
@@ -219,9 +219,9 @@ public abstract class DBCollection {
      * @return the _id assigned to the object
      * @throws RuntimeException if <tt>o</tt> is not a DBObject
      */
-    public final ObjectId apply( DBObject jo , boolean ensureID ){
-
-        ObjectId id = (ObjectId)jo.get( "_id" );
+    public final Object apply( DBObject jo , boolean ensureID ){
+        
+        Object id = jo.get( "_id" );
         if ( ensureID && id == null ){
             id = ObjectId.get();
             jo.put( "_id" , id );
@@ -245,19 +245,13 @@ public abstract class DBCollection {
         
         //_findSubObject( s , jo , null );
 
-        ObjectId id = null;
-	{ 
-	    Object temp = jo.get( "_id" );
-	    if ( temp != null && ! ( temp instanceof ObjectId ) )
-		throw new RuntimeException( "_id has to be an ObjectId" );
-	    id = (ObjectId)temp;
-	}
+        Object id = jo.get( "_id" );
         if ( DEBUG ) System.out.println( "id : " + id );
 
-        if ( id == null || id._new ){
+        if ( id == null || ( id instanceof ObjectId && ((ObjectId)id)._new ) ){
             if ( DEBUG ) System.out.println( "saving new object" );
-            if ( id != null )
-                id._new = false;
+            if ( id != null && id instanceof ObjectId )
+                ((ObjectId)id)._new = false;
             doSave( jo );
             return jo;
         }
