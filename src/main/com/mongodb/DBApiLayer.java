@@ -392,7 +392,7 @@ public abstract class DBApiLayer extends DBBase {
 
     class SingleResult extends QueryHeader {
         
-        SingleResult( String fullNameSpace , ByteDecoder decoder , Set<ObjectId> seen ){
+        SingleResult( String fullNameSpace , ByteDecoder decoder , Set<Object> seen ){
             super( decoder._buf );
 
             _bytes = decoder.remaining();
@@ -413,7 +413,7 @@ public abstract class DBApiLayer extends DBBase {
                     final DBObject o = decoder.readObject();
 
                     if ( seen != null ){
-                        ObjectId id = (ObjectId)o.get( "_id" );
+                        Object id = o.get( "_id" );
                         if ( id != null ){
                             if ( seen.contains( id ) ) continue;
                             seen.add( id );
@@ -460,7 +460,7 @@ public abstract class DBApiLayer extends DBBase {
 
             _curResult = res;
             for ( DBObject o : res._lst ){
-                ObjectId id = (ObjectId)o.get( "_id" );
+                Object id = o.get( "_id" );
                 if ( id != null )
                     _seen.add( id );
             }
@@ -537,7 +537,7 @@ public abstract class DBApiLayer extends DBBase {
 
         SingleResult _curResult;
         Iterator<DBObject> _cur;
-        final Set<ObjectId> _seen = new HashSet<ObjectId>();
+        final Set<Object> _seen = new HashSet<Object>();
         final MyCollection _collection;
         final int _numToReturn;
 
