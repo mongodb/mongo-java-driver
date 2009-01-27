@@ -22,7 +22,7 @@ public abstract class DBCollection {
      * @param o object to save
      * @return the new database object
      */
-    protected abstract DBObject doSave( DBObject o );
+    protected abstract DBObject insert( DBObject o );
 
     /** Performs an update operation.
      * @param q search query for old object to update
@@ -252,7 +252,7 @@ public abstract class DBCollection {
             if ( DEBUG ) System.out.println( "saving new object" );
             if ( id != null && id instanceof ObjectId )
                 ((ObjectId)id)._new = false;
-            doSave( jo );
+            insert( jo );
             return jo;
         }
 

@@ -172,11 +172,11 @@ public abstract class DBApiLayer extends DBBase {
             return o;
         }
 
-        public DBObject doSave( DBObject o ){
-            return save( o , true );
+        public DBObject insert( DBObject o ){
+            return insert( o , true );
         }
 
-        public DBObject save( DBObject o , boolean shouldApply ){
+        public DBObject insert( DBObject o , boolean shouldApply ){
 
             if ( SHOW ) System.out.println( "save:  " + _fullNameSpace + " " + JSON.serialize( o ) );
 
@@ -357,7 +357,7 @@ public abstract class DBApiLayer extends DBBase {
             o.put( "key" , keys );
 
 	    //dm-system isnow in our database
-	    DBApiLayer.this.doGetCollection( "system.indexes" ).save( o , false );
+	    DBApiLayer.this.doGetCollection( "system.indexes" ).insert( o , false );
         }
 
         final String _fullNameSpace;
