@@ -152,18 +152,8 @@ public class ByteEncoder extends Bytes {
         final int sizePos = _buf.position();
         _buf.putInt( 0 ); // leaving space for this.  set it at the end
 
-	boolean skipId = true;
-        if ( o.containsKey( "_id" ) ){
-            
-            Object possibleId = o.get( "_id" );
-            
-            if ( possibleId == null )
-                putNull( "_id" );
-            else if ( possibleId instanceof ObjectId )
-                putObjectId( "_id" , (ObjectId)possibleId );
-            else
-                skipId = false;
-        }
+        if ( o.containsKey( "_id" ) )
+            _putObjectField( "_id" , o.get( "_id" ) );
             
         List transientFields = null;
         {
@@ -175,7 +165,7 @@ public class ByteEncoder extends Bytes {
 
         for ( String s : o.keySet() ){
 
-            if ( skipId && s.equals( "_id" ) )
+            if ( s.equals( "_id" ) )
                 continue;
             
             if ( transientFields != null && transientFields.contains( s ) )
