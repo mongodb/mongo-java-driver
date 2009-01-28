@@ -22,7 +22,7 @@ public abstract class DBCollection {
      * @param o object to save
      * @return the new database object
      */
-    protected abstract DBObject insert( DBObject o );
+    public abstract DBObject insert( DBObject o );
 
     /** Performs an update operation.
      * @param q search query for old object to update
