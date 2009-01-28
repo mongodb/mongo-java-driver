@@ -529,6 +529,6 @@ public abstract class DBCollection {
     final private Set<String> _createIndexesAfterSave = new HashSet<String>();
 
     private final static DBObject _upsertOptions = BasicDBObjectBuilder.start().add( "upsert" , true ).get();
-    private final static DBObject _idKey = BasicDBObjectBuilder.start().add( "_id" , ObjectId.get() ).get();
+    private final static DBObject _idKey = BasicDBObjectBuilder.start().add( "_id" , 1 ).get();
 
 }
