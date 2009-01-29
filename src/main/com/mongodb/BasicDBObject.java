@@ -56,15 +56,7 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
     }
     
     public String toString(){
-        StringBuilder buf = new StringBuilder();
-        buf.append( "{ " );
-        for ( String s : _keys ){
-            if ( buf.length() > 2 )
-                buf.append( ", " );
-            buf.append( s ).append( ":" ).append( get( s ) ).append( " " );
-        }
-        buf.append( "}" );
-        return buf.toString();
+        return JSON.serialize( this );
     }
 
     public void markAsPartialObject(){
