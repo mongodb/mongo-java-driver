@@ -66,7 +66,7 @@
       <arg value="-1" />
     </exec>
     
-    <jar jarfile="10gen-java-driver.jar" >
+    <jar jarfile="mongo.jar" >
       <fileset dir="build" />
     </jar>
   </target>

@@ -36,6 +36,7 @@ doc
 docs
 target
 include/jython/cachedir
+mongo.jar
 
 TAGS
 
