@@ -5,22 +5,22 @@ package com.mongodb;
 import java.nio.*;
 import java.util.*;
 
-/*import static com.mongodb.Bytes;
-import static com.mongodb.util.MyAsserts;
-*/
+import static com.mongodb.Bytes.*;
+import static com.mongodb.util.MyAsserts.*;
+
 import com.mongodb.util.*;
-/* This object wraps the binary object format ("BSON") used for the transport of serialized objects 
+/** This object wraps the binary object format ("BSON") used for the transport of serialized objects 
    to / from the Mongo database.
 
    http://www.10gen.com/wiki/bson
 */
-public class RawDBObject extends Bytes implements DBObject {
+public class RawDBObject implements DBObject {
 
     static boolean DEBUG = Boolean.getBoolean( "DEBUG.DBJSO" );
 
     RawDBObject( ByteBuffer buf ){
         this( buf , 0 );
-        MyAsserts.assertEquals( _end , _buf.limit() );
+        assertEquals( _end , _buf.limit() );
     }
     
     RawDBObject( ByteBuffer buf , int offset ){
