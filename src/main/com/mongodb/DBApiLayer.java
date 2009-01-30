@@ -9,10 +9,10 @@ import java.util.*;
 import com.mongodb.io.*;
 import com.mongodb.util.*;
 
-/**
- * @expose
- * @docmodule system.database.db
- * */
+/** Database API
+ * This cannot be directly instantiated, but the functions are available
+ * through instances of Mongo.
+ */
 public abstract class DBApiLayer extends DBBase {
 
     /** @unexpose */
@@ -22,48 +22,21 @@ public abstract class DBApiLayer extends DBBase {
     
     static final boolean SHOW = Boolean.getBoolean( "DB.SHOW" );
 
-    /** Initializes a new API layer for a database with a given name.
-     * @param root name of the database
-     */
     protected DBApiLayer( String root ){
         super( root );
 
         _root = root;
     }
 
-    /**
-     * @param buf
-     */
     protected abstract void doInsert( ByteBuffer buf );
-    /**
-     * @param buf
-     */
     protected abstract void doDelete( ByteBuffer buf );
-    /**
-     * @param buf
-     */
     protected abstract void doUpdate( ByteBuffer buf );
-    /**
-     * @param buf
-     */
     protected abstract void doKillCursors( ByteBuffer buf );
-
-    /**
-     * @param out
-     * @param in
-     */
     protected abstract int doQuery( ByteBuffer out , ByteBuffer in );
-    /**
-     * @param out
-     * @param in
-     */
     protected abstract int doGetMore( ByteBuffer out , ByteBuffer in );
 
     public abstract String debugString();
 
-    /**
-     * @param name the name of the collection to find
-     */
     protected MyCollection doGetCollection( String name ){
         MyCollection c = _collections.get( name );
         if ( c != null )
@@ -88,6 +61,14 @@ public abstract class DBApiLayer extends DBBase {
         return ns.substring( _root.length() + 1 );
     }
 
+    /** Get a collection from a &lt;databaseName&gt;.&lt;collectionName&gt;.
+     * If <code>fullNameSpace</code> does not contain any "."s, this will
+     * find a collection called <code>fullNameSpace</code> and return it.
+     * Otherwise, it will find the collecton <code>collectionName</code> and 
+     * return it.
+     * @param fullNameSpace the full name to find
+     * @throws RuntimeException if the database named is not this database
+     */
     public MyCollection getCollectionFromFull( String fullNameSpace ){
         // TOOD security
 
@@ -107,6 +88,9 @@ public abstract class DBApiLayer extends DBBase {
         throw new RuntimeException( "can't get sister dbs yet" );
     }
 
+    /** Returns a set of the names of collections in this database.
+     * @return the names of collections in this database
+     */
     public Set<String> getCollectionNames(){
         
         DBCollection namespaces = getCollection( "system.namespaces" );

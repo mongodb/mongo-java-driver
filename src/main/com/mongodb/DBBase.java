@@ -21,6 +21,11 @@ public abstract class DBBase {
     public abstract DBAddress getAddress();
     public abstract String getConnectPoint();
     
+    /** Gets a collection with a given name.
+     * If the collection does not exist, a new collection is created.
+     * @param name the name of the collection to return
+     * @return the collection
+     */
     public final DBCollection getCollection( String name ){
         DBCollection c = doGetCollection( name );
         if ( c != null ){
@@ -29,6 +34,10 @@ public abstract class DBBase {
         return c;
     }
     
+    /** Returns a collection matching a given string.
+     * @param s the name of the collection
+     * @return the collection
+     */
     public DBCollection getCollectionFromString( String s ){
         DBCollection foo = null;
         
@@ -44,26 +53,45 @@ public abstract class DBBase {
         return getCollection( s );
     }
 
+    /** Execute a database command directly.
+     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/Mongo+Commands">Mongo Commands</a>
+     * @return the result of the command from the database
+     */
     public DBObject command( DBObject cmd ){
         return getCollection( "$cmd" ).findOne( cmd );
     }
 
+    /** Returns the name of this database.
+     * @return the name
+     */
     public String getName(){
 	return _name;
     }
 
+    /** Returns a set of the names of collections in this database.
+     * @return the names of collections in this database
+     */
     public Set<String> keySet( boolean includePrototype ){
         return getCollectionNames();
     }
 
+    /** Makes this database read-only
+     * @param b if the database should be read-only
+     */
     public void setReadOnly( Boolean b ){
         _readOnly = b;
     }
 
+    /** Returns the name of this database.
+     * @return the name
+     */
     public String toString(){
         return _name;
     }
 
+    /** Clears any indices that have not yet been applied to 
+     * the collections in this database.
+     */
     public void resetIndexCache(){
         for ( DBCollection c : _seenCollections )
             c.resetIndexCache();

@@ -5,6 +5,9 @@ ISSUES
  - count
  - binary
  X reflection API
+ - is DBBase.setReadOnly supposed to take a Boolean?
+ - there's no way to create a capped collection, other than using a database command
+ - DBApiLayer.getRootNamespaces() unimplemented on purpose?
 
 Interesting stuff:
         o.put( "$where", "eval( true )" ); isn't supported yet, but o.put( "$where", 5 ); isn't counted as a $where clause (because 5 isn't a string) so it is supported.

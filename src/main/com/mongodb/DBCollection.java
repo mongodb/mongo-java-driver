@@ -7,11 +7,12 @@ import java.lang.reflect.*;
 
 import com.mongodb.util.*;
 
-/** DB Collection
- * 
- * Class for database collection objects.  When you invoke something like:
- *   var my_coll = db.students;
- * you get back a collection which can be used to perform various database operations.
+/** This class provides a skeleton implementation of a database collection.  
+ * <p>A typical invocation sequence is thus
+ * <blockquote><pre>
+ *     Mongo mongo = new Mongo( new DBAddress( "localhost", 127017 ) );
+ *     DBCollection collection = mongo.getCollection( "test" );
+ * </pre></blockquote>
  */
 public abstract class DBCollection {
 
@@ -69,7 +70,7 @@ public abstract class DBCollection {
 
     /** Finds an object by its id.
      * @param id the id of the object
-     * @return the object, if found
+     * @return the object, if found, otherwise <code>null</code>
      */
     public final DBObject find( ObjectId id ){
         ensureIDIndex();
@@ -84,6 +85,11 @@ public abstract class DBCollection {
         return ret;
     }
 
+    /** Finds an object by its id.
+     * @param id a string
+     * @return the object, if found, otherwise <code>null</code>
+     * @throws IllegalArgumentException if the string is not convertible to a valid ObjectId
+     */
     public final DBObject find( String id ){
         if ( ! ObjectId.isValid( id ) )
             throw new IllegalArgumentException( "invalid object id [" + id + "]" );
@@ -158,7 +164,7 @@ public abstract class DBCollection {
             _createIndexesAfterSave.add( name );
     }
 
-    /** Clear all indices on this collection. */
+    /** Clears all indices that have not yet been applied to this collection. */
     public void resetIndexCache(){
         _createIndexes.clear();
     }
@@ -180,6 +186,9 @@ public abstract class DBCollection {
         return name;
     }
 
+    /** Set hint fields for this collection.
+     * @param list a list of <code>DBObject</code>s to be used as hints
+     */
     public void setHintFields( List<DBObject> lst ){
         _hintFields = lst;
     }
@@ -192,14 +201,24 @@ public abstract class DBCollection {
         return new DBCursor( this, ref, null );
     }
 
+    /** Queries for all objects in this collection. 
+     * @return a cursor which will iterate over every object
+     */
     public final DBCursor find(){
         return new DBCursor( this, new BasicDBObject(), null );
     }
 
+    /** Returns a single object from this collection.
+     * @return the object found, or <code>null</code> if the collection is empty
+     */
     public final DBObject findOne(){
         return findOne( new BasicDBObject() );
     }
 
+    /** Returns a single object from this collection matching the query.
+     * @param o the query object
+     * @return the object found, or <code>null</code> if no such object exists
+     */
     public final DBObject findOne( DBObject o ){
         Iterator<DBObject> i = find( o , null , 0 , 1 );
         if ( i == null || ! i.hasNext() )
@@ -207,17 +226,18 @@ public abstract class DBCollection {
         return i.next();
     }
 
-    /**
+    /** Adds the "private" fields _save, _update, and _id to an object.
+     * @param o <code>DBObject</code> to which to add fields
+     * @return the modified parameter object
      */
     public final Object apply( DBObject o ){
         return apply( o , true );
     }
     
-    /** Adds the "private" fields _save, _update, and _id to an object.
+    /** Adds the "private" fields _save, _update, and (optionally) _id to an object.
      * @param o object to which to add fields
-     * @param ensureID if an _id field is needed
-     * @return the _id assigned to the object
-     * @throws RuntimeException if <tt>o</tt> is not a DBObject
+     * @param ensureID whether to add an <code>_id</code> field or not
+     * @return the modified object <code>o</code>
      */
     public final Object apply( DBObject jo , boolean ensureID ){
         
@@ -232,10 +252,9 @@ public abstract class DBCollection {
         return id;
     }
 
-    /** Saves an object to this collection executing the preSave function in a given scope.
-     * @param s scope to use (can be null)
-     * @param o the object to save
-     * @return the new object from the collection
+    /** Saves an object to this collection.
+     * @param o the <code>DBObject</code> to save
+     * @return <code>o</code> with <code>_id</code> field added, if needed
      */
     public final DBObject save( DBObject jo ){
         if ( checkReadOnly( true ) ) 
@@ -263,7 +282,9 @@ public abstract class DBCollection {
     }
 
     // ---- DB COMMANDS ----
-
+    /** Drops all indices from this collection
+     * @throws RuntimeException if an error occurred while dropping indices
+     */
     public void dropIndexes(){
         BasicDBObject res = (BasicDBObject)_base.command( BasicDBObjectBuilder.start().add( "deleteIndexes" , getName() ).add( "index" , "*" ).get() );
         if ( res.getInt( "ok" , 0 ) != 1 ){
@@ -275,6 +296,9 @@ public abstract class DBCollection {
         resetIndexCache();
     }
     
+    /** Drops (deletes) this collection
+     * @throws RuntimeException if an error occurred while dropping indices
+     */
     public void drop(){
         dropIndexes();
         BasicDBObject res = (BasicDBObject)_base.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
@@ -433,6 +457,14 @@ public abstract class DBCollection {
     */
 
     /** Find a collection that is prefixed with this collection's name.
+     * A typical use of this might be 
+     * <blockquote><pre>
+     *    DBCollection users = mongo.getCollection( "wiki" ).getCollection( "users" );
+     * </pre></blockquote>
+     * Which is equilalent to
+     * <pre><blockquote>
+     *   DBCollection users = mongo.getCollection( "wiki.users" );
+     * </pre></blockquote>
      * @param n the name of the collection to find
      * @return the matching collection
      */
@@ -455,6 +487,7 @@ public abstract class DBCollection {
     }
 
     /** Returns the database this collection is a member of.
+     * Same as <code>getBase()</code>.
      * @return this collection's database
      */
     public DBBase getDB(){
@@ -462,14 +495,17 @@ public abstract class DBCollection {
     }
 
     /** Returns the database this collection is a member of.
+     * Same as <code>getBase()</code>.
      * @return this collection's database
      */
     public DBBase getBase(){
         return _base;
     }
 
-    /** Returns if this collection can be modified.
-     * @return if this collection can be modified
+    /** Returns if this collection's database is read-only
+     * @param strict if an exception should be thrown if the database is read-only
+     * @return if this collection's database is read-only
+     * @throws RuntimeException if the database is read-only and <code>strict</code> is set
      */
     protected boolean checkReadOnly( boolean strict ){
         if ( ! _base._readOnly )
@@ -490,7 +526,7 @@ public abstract class DBCollection {
 
     /** Checks if this collection is equal to another object.
      * @param o object with which to compare this collection
-     * @return if the two collections are equal
+     * @return if the two collections are the same object
      */
     public boolean equals( Object o ){
         return o == this;
@@ -503,12 +539,19 @@ public abstract class DBCollection {
         return _name;
     }
 
+    /** Set a default class for objects in this collection
+     * @param c the class
+     * @throws IllegalArgumentException if <code>c</code> is not a DBObject
+     */
     public void setObjectClass( Class c ){
         if ( ! DBObject.class.isAssignableFrom( c ) )
             throw new IllegalArgumentException( c.getName() + " is not a DBObject" );
         _objectClass = c;
     }
 
+    /** Gets the default class for objects in the collection
+     * @return the class
+     */
     public Class getObjectClass(){
         return _objectClass;
     }
