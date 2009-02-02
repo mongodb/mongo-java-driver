@@ -18,7 +18,6 @@
 
 package com.mongodb.util;
 
-/** @expose */
 public final class StringUtil{
 
     /** Given two strings, gives the index of the first substring of the first string that matches the second string.

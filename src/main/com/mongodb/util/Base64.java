@@ -65,9 +65,6 @@ package com.mongodb.util;
  * @author rob@iharder.net
  * @version 2.1
  *
- * @owner eliot
- * @owner avery
- * @expose
  */
 public class Base64 {
 

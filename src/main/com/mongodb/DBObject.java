@@ -20,26 +20,24 @@ package com.mongodb;
 
 import java.util.*;
 
-/** @expose */
+/** A key-value map that can be saved to the database. */
 public interface DBObject {
 
     /** Sets a name/value pair in this object.
-     * @jsset
-     * @param n Name to set
+     * @param key Name to set
      * @param v Corresponding value
      * @return <tt>v</tt>
      */
     public Object put( String key , Object v );
     
     /** Gets a field from this object by a given name.
-     * @jsget
-     * @param n The name of the field fetch
+     * @param key The name of the field fetch
      * @return The field, if found
      */
     public Object get( String key );
 
     /** Remove a field with a given name from this object.
-     * @param n The name of the field to remove
+     * @param key The name of the field to remove
      * @return The value removed from this object
      */
     public Object removeField( String key );
@@ -51,7 +49,6 @@ public interface DBObject {
     public boolean containsKey( String s );
 
     /** Returns this object's fields' names
-     * @jskeyset
      * @return The names of the fields in this object
      */
     public Set<String> keySet();

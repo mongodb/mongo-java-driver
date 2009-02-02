@@ -16,7 +16,6 @@
 
 package com.mongodb.util;
 
-/** @expose */
 public class HtmlEscape {
 
     /** Escapes special HTML characters in a string.  Replaces &amp;, &quot;, &apos;, &lt;, and &gt;.

@@ -40,7 +40,6 @@ import javax.crypto.spec.*;
  *      PBEWithMD5AndTripleDES
  *      TripleDES
  * -----------------------------------------------------------------------------
- * @expose
  */
 public class StringEncrypter {
 
@@ -274,7 +273,6 @@ public class StringEncrypter {
      * Sole entry point to the class and application used for testing the
      * String Encrypter class.
      * @param args Array of String arguments.
-     * @unexpose
      */
     public static void main(String[] args) {
         testUsingSecretKey();

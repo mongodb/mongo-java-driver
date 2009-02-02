@@ -36,7 +36,6 @@ public class DBCursor implements Iterator<DBObject> {
      * @param collection collection to use
      * @param q query to perform
      * @param k keys to return from the query
-     * @param cons the constructor for the collection
      */
     public DBCursor( DBCollection collection , DBObject q , DBObject k ){
         _collection = collection;

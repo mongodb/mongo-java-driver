@@ -20,7 +20,6 @@ package com.mongodb.util;
 
 import java.util.*;
 
-/** @expose */
 public class ThreadUtil {
 
     /** Creates an prints a stack trace */

@@ -18,7 +18,6 @@
 
 package com.mongodb.util;
 
-/** @expose */
 public class Pair<A,B>{
 
     /** Initializes a pair. */

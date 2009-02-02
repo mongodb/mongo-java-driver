@@ -18,7 +18,6 @@
 
 package com.mongodb.util;
 
-/** @expose */
 public final class Hash {
 
     /** Creates a hash for a string.

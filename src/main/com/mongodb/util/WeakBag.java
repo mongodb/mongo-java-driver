@@ -24,7 +24,6 @@ import java.util.*;
 /**
  * if its not obvious what a weak bag should do, then, well...
  * very very not thead safe
- * @expose
  */
 public class WeakBag<T> implements Iterable<T> {
 
@@ -120,6 +119,5 @@ public class WeakBag<T> implements Iterable<T> {
         }
     }
 
-    /** @unexpose */
     private final List<MyRef> _set = new ArrayList<MyRef>();
 }

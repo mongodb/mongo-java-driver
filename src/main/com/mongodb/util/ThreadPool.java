@@ -22,7 +22,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
-/** @expose */
 public abstract class ThreadPool<T> {
 
     /** Initializes a new thread pool with a given name and number of threads.

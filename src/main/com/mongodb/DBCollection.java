@@ -16,7 +16,6 @@ import com.mongodb.util.*;
  */
 public abstract class DBCollection {
 
-    /** @unexpose */
     final static boolean DEBUG = Boolean.getBoolean( "DEBUG.DB" );
 
     /** Saves an object to the database.
@@ -113,7 +112,6 @@ public abstract class DBCollection {
     }
 
     /** Creates an index on the id field, if one does not already exist.
-     * @param key an object with an _id field.
      */
     public void ensureIDIndex(){
         if ( _checkedIdIndex )
@@ -187,7 +185,7 @@ public abstract class DBCollection {
     }
 
     /** Set hint fields for this collection.
-     * @param list a list of <code>DBObject</code>s to be used as hints
+     * @param lst a list of <code>DBObject</code>s to be used as hints
      */
     public void setHintFields( List<DBObject> lst ){
         _hintFields = lst;
@@ -235,7 +233,7 @@ public abstract class DBCollection {
     }
     
     /** Adds the "private" fields _save, _update, and (optionally) _id to an object.
-     * @param o object to which to add fields
+     * @param jo object to which to add fields
      * @param ensureID whether to add an <code>_id</code> field or not
      * @return the modified object <code>o</code>
      */
@@ -253,8 +251,8 @@ public abstract class DBCollection {
     }
 
     /** Saves an object to this collection.
-     * @param o the <code>DBObject</code> to save
-     * @return <code>o</code> with <code>_id</code> field added, if needed
+     * @param jo the <code>DBObject</code> to save
+     * @return <code>jo</code> with <code>_id</code> field added, if needed
      */
     public final DBObject save( DBObject jo ){
         if ( checkReadOnly( true ) ) 

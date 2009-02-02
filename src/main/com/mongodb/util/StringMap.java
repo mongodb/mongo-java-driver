@@ -20,7 +20,6 @@ package com.mongodb.util;
 
 import java.util.*;
 
-/** @expose */
 public class StringMap<T> extends CustomHashMap<String,T>{
 
     /** Initializes a new string hash map. */

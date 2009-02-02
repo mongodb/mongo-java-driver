@@ -21,7 +21,6 @@ package com.mongodb.util;
 import java.util.*;
 import java.io.*;
 
-/** @expose */
 public abstract class CustomHashMap<K,V> implements Map<K,V> , Cloneable , Serializable {
 
     /**
@@ -829,7 +828,7 @@ public abstract class CustomHashMap<K,V> implements Map<K,V> , Cloneable , Seria
      * It does not support the <tt>add</tt> or <tt>addAll</tt> operations.
      *
      * @return a collection view of the mappings contained in this map.
-     * @see Map.Entry
+     * @see java.util.Map.Entry
      */
     public Set<Map.Entry<K,V>> entrySet() {
         Set<Map.Entry<K,V>> es = entrySet;
@@ -1008,7 +1007,7 @@ public abstract class CustomHashMap<K,V> implements Map<K,V> , Cloneable , Seria
      * up the results.
      *
      * @return the hash code value for this map.
-     * @see Map.Entry#hashCode()
+     * @see java.util.Map.Entry#hashCode()
      * @see Object#hashCode()
      * @see Object#equals(Object)
      * @see Set#equals(Object)

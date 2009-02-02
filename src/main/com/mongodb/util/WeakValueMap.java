@@ -21,7 +21,6 @@ package com.mongodb.util;
 import java.lang.ref.*;
 import java.util.*;
 
-/** @expose */
 public class WeakValueMap<K,V> /* implements Map<K,V> */ {
 
     /** Initializes a new values map */
@@ -47,7 +46,7 @@ public class WeakValueMap<K,V> /* implements Map<K,V> */ {
 
     /** Adds an object to this map
      * @param key key of object to add
-     * @param value value of object to add
+     * @param v value of object to add
      * @return value of added object
      */
     public V put( K key , V v ){
@@ -58,6 +57,5 @@ public class WeakValueMap<K,V> /* implements Map<K,V> */ {
         return or.get();
     }
 
-    /** @unexpose */
     final Map<K,WeakReference<V>> _map;
 }

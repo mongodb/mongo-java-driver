@@ -18,7 +18,6 @@
 
 package com.mongodb.util;
 
-/** @expose */
 public final class StringParseUtil {
 
     /** Turns a string into a boolean value and returns a default value if unsuccessful.
@@ -50,7 +49,7 @@ public final class StringParseUtil {
 
     /** Turns a string into an int and returns a default value if unsuccessful.
      * @param s the string to convert
-     * @param d the default value
+     * @param def the default value
      * @return the int value
      */
     public static int parseInt( String s , int def ){
@@ -91,7 +90,7 @@ public final class StringParseUtil {
 
     /** Turns a string into an int and returns a default value if unsuccessful.
      * @param s the string to convert
-     * @param d the default value
+     * @param def the default value
      * @param lastIdx sets lastIdx[0] to the index of the last digit
      * @param allowNegative if negative numbers are valid
      * @return the int value
@@ -133,7 +132,7 @@ public final class StringParseUtil {
 
     /** Turns a string into a Number and returns a default value if unsuccessful.
      * @param s the string to convert
-     * @param d the default value
+     * @param def the default value
      * @return the numeric value
      */
     public static Number parseNumber( String s , Number def ){

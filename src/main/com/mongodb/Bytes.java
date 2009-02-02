@@ -60,7 +60,7 @@ public class Bytes {
     
     /** Gets the type byte for a given object.
      * @param o the object
-     * @returns the byte value associated with the type, or 0 if <code>o</code> was <code>null</code>
+     * @return the byte value associated with the type, or 0 if <code>o</code> was <code>null</code>
      */
     public static byte getType( Object o ){
         if ( o == null )
@@ -103,7 +103,7 @@ public class Bytes {
      * This method is not foolproof, the the object has had its _id or _ns fields since
      * it was fetched, this will return that <code>o</code> did not come from the db.
      * @param o the object to check
-     * @returns if <code>o</code> contains fields that are automatically added by the database on insertion
+     * @return if <code>o</code> contains fields that are automatically added by the database on insertion
      */
     public static boolean cameFromDB( DBObject o ){
         if ( o == null )

@@ -56,7 +56,6 @@ import java.util.TimeZone;
  * @author Bip Thelin
  * @author Dan Sandberg
  * @version $Revision: 1.4 $, $Date: 2004/08/29 16:46:13 $
- * @expose
  */
 public class Strftime {
     protected static Properties translate;
