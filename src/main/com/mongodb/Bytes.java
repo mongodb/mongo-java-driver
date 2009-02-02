@@ -8,15 +8,13 @@ import java.util.regex.Pattern;
 import java.util.*;
 
 /**
- * <type><name>0<data>
- *   <NUMBER><name>0<double>
- *   <STRING><name>0<len><string>0
- 
+ * Handles byte functions for <code>ByteEncoder</code> and <code>ByteDecoder</code>.
  */
 public class Bytes {
 
     static final boolean D = Boolean.getBoolean( "DEBUG.DB" );
 
+    /** Little-endian */
     public static final ByteOrder ORDER = ByteOrder.LITTLE_ENDIAN;
 
     static final int BUF_SIZE = 1024 * 1024 * 5;
@@ -57,8 +55,13 @@ public class Bytes {
 
     
     static protected Charset _utf8 = Charset.forName( "UTF-8" );
+    /** The maximum number of bytes allowed to be sent to the db at a time */
     static protected final int MAX_STRING = 1024 * 512;
     
+    /** Gets the type byte for a given object.
+     * @param o the object
+     * @returns the byte value associated with the type, or 0 if <code>o</code> was <code>null</code>
+     */
     public static byte getType( Object o ){
         if ( o == null )
             return NULL;
@@ -96,6 +99,12 @@ public class Bytes {
         return 0;
     }
 
+    /** Determines whether the given object was once part of a db collection.
+     * This method is not foolproof, the the object has had its _id or _ns fields since
+     * it was fetched, this will return that <code>o</code> did not come from the db.
+     * @param o the object to check
+     * @returns if <code>o</code> contains fields that are automatically added by the database on insertion
+     */
     public static boolean cameFromDB( DBObject o ){
         if ( o == null )
             return false;
@@ -109,6 +118,11 @@ public class Bytes {
         return true;
     }
 
+    /** Converts a string of regular expression flags from the database in Java regular
+     * expression flags.
+     * @param flags flags from database
+     * @return the Java flags
+     */
     public static int patternFlags( String flags ){
         flags = flags.toLowerCase();
         int fint = 0;
@@ -127,6 +141,10 @@ public class Bytes {
         return fint;
     }
 
+    /** Converts Java regular expression flags into a string of flags for the database
+     * @param flags Java flags
+     * @return the flags for the database
+     */
     public static String patternFlags( int flags ){
         Flag f[] = Flag.values();
         byte b[] = new byte[ f.length ];

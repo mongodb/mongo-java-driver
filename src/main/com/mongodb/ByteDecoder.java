@@ -9,8 +9,16 @@ import java.nio.charset.*;
 
 import com.mongodb.util.*;
 
+/** 
+ * Deserializes a string from the database into a <code>DBObject</code>.
+ */
 public class ByteDecoder extends Bytes {
 
+    /** Gets a new <code>ByteDecoder</code> from the pool.
+     * @param base the database
+     * @param coll the collection
+     * @return the new <code>ByteDecoder</code>
+     */
     static protected ByteDecoder get( DBBase base , DBCollection coll ){
         ByteDecoder bd = _pool.get();
         bd.reset();
@@ -19,6 +27,8 @@ public class ByteDecoder extends Bytes {
         return bd;
     }
 
+    /** Returns this decoder to the pool.
+     */
     protected void done(){
         _pool.done( this );
     }
@@ -49,6 +59,10 @@ public class ByteDecoder extends Bytes {
         reset();
     }
 
+    /** Returns this decoder to its starting state with a new <code>ByteBuffer</code> to decode.
+     * @param buf new <code>ByteBuffer</code>
+     * @throws RuntimeException if the decoder is private or the bytes are stored in big-endian form
+     */
     public void reset( ByteBuffer buf ){
         if ( _private )
             throw new RuntimeException( "can't reset private ByteDecoder" );
@@ -64,6 +78,9 @@ public class ByteDecoder extends Bytes {
         _buf.order( Bytes.ORDER );        
     }
     
+    /** Decode an object.
+     * @return the decoded object
+     */
     public DBObject readObject(){
         if ( _buf.position() >= _buf.limit() )
             return null;
@@ -102,6 +119,10 @@ public class ByteDecoder extends Bytes {
         return new BasicDBObject();
     }
 
+    /** Decodes the serialized object into the given <code>DBObject</code>.
+     * @param o object to which to add fields
+     * @return the number of characters decoded
+     */
     protected int decodeNext( DBObject o ){
         final int start = _buf.position();
         final byte type = _buf.get();

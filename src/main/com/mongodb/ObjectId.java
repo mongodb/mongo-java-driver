@@ -8,29 +8,31 @@ import java.nio.ByteBuffer;
 import com.mongodb.util.*;
 
 /**
- * 12 bytes
- * ---
- *  0 time
- *  1
- *  2
- *  3 
- *  4 machine
- *  5 
- *  6 
- *  7 pid
- *  8 
- *  9 inc
- * 10
- * 11
+ * A globally unique identifier for objects.
+ * <p>Consists of 12 bytes, divided as follows:
+ * <blockquote><pre>
+ * <table border="1">
+ * <tr><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td>
+ *     <td>7</td><td>8</td><td>9</td><td>10</td><td>11</td></tr>
+ * <tr><td colspan="4">time</td><td colspan="3">machine</td>
+ *     <td colspan="2">pid</td><td colspan="3">inc</td></tr>
+ * </table>
+ * </pre></blockquote>
  */
 public class ObjectId implements Comparable<ObjectId>{
 
     static final boolean D = false;
     
+    /** Gets a new object id.
+     * @return the new id
+     */
     public static ObjectId get(){
         return new ObjectId();
     }
     
+    /** Checks if a string could be an <code>ObjectId</code>.
+     * @return whether the string could be an object id
+     */
     public static boolean isValid( String s ){
         if ( s == null )
             return false;
@@ -53,8 +55,11 @@ public class ObjectId implements Comparable<ObjectId>{
         return true;
     }
     
-    /**
-     * @return an ObjectId if it can be massages, null otherwise.  if you pass in null get null 
+    /** Turn an object into an <code>ObjectId</code>, if possible.
+     * Strings will be converted into <code>ObjectId</code>s, if possible, and <code>ObjectId</code>s will
+     * be cast and returned.  Passing in <code>null</code> returns <code>null</code>.
+     * @param o the object to convert 
+     * @return an <code>ObjectId</code> if it can be massaged, null otherwise 
      */
     public static ObjectId massageToObjectId( Object o ){
         if ( o == null )
@@ -72,6 +77,10 @@ public class ObjectId implements Comparable<ObjectId>{
         return null;
     }
 
+    /** Creates a new instance from a string.
+     * @param s the string to convert
+     * @throws IllegalArgumentException if the string is not a valid id
+     */
     public ObjectId( String s ){
 
         if ( ! isValid( s ) )
@@ -113,6 +122,8 @@ public class ObjectId implements Comparable<ObjectId>{
         _new = false;
     }
     
+    /** Create a new object id.
+     */
     public ObjectId(){
         _base = ( ((long)_time) << 32) | _machine;
         
