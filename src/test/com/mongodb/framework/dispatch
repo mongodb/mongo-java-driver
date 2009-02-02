@@ -1,0 +1,26 @@
+#!/bin/bash
+
+export CLASSPATH=$CLASSPATH:../../../../../build
+begintime=`date`
+if [[ "$1" = "test1" ]]; then
+    java com.mongodb.framework.Test1
+elif [[ "$1" = "count1" ]]; then
+    java com.mongodb.framework.Count1 > $2
+elif [[ "$1" = "find" ]]; then
+    java com.mongodb.framework.Find
+elif [[ "$1" = "remove" ]]; then
+    java com.mongodb.framework.Remove
+elif [[ "$1" = "capped" ]]; then
+    java com.mongodb.framework.Capped
+elif [[ "$1" = "circular" ]]; then
+    java com.mongodb.framework.Circular
+else
+    echo "dispatcher didn't know what to do with $1" > $2
+fi
+exitval=$?
+endtime=`date`
+
+echo "begintime:$begintime" >> $2
+echo "endtime:$endtime" >> $2
+echo "exit_code:$exitval" >> $2
+
