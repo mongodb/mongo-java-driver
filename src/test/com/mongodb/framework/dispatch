@@ -12,8 +12,8 @@ elif [[ "$1" = "remove" ]]; then
     java com.mongodb.framework.Remove
 elif [[ "$1" = "capped" ]]; then
     java com.mongodb.framework.Capped
-elif [[ "$1" = "circular" ]]; then
-    java com.mongodb.framework.Circular
+#elif [[ "$1" = "circular" ]]; then
+#    java com.mongodb.framework.Circular
 elif [[ "$1" = "dbs" ]]; then
     java com.mongodb.framework.Dbs > $2
 #elif [[ "$1" = "admin" ]]; then

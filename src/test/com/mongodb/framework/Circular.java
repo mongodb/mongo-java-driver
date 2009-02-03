@@ -14,9 +14,21 @@ public class Circular {
 
         Mongo m = new Mongo( new DBAddress( "127.0.0.1:27017/driver_test_framework" ) );
         DBObject foo = new BasicDBObject();
-        m.getCollection( "remove1" ).remove( foo );
+        DBCollection b = m.getCollection( "b" );
+        foo.put( "c", b );
+        m.getCollection( "a" ).save( foo );
 
-        foo.put( "a", 3 );
-        m.getCollection( "remove1" ).remove( foo );
+        foo = new BasicDBObject();
+        foo.put( "c", 1 );
+        b.save( foo );
+
+        ObjectId id = new ObjectId();
+        foo = new BasicDBObject();
+        foo.put( "_id", id );
+        foo.put( "that", 2 );
+        DBRef ref = new DBRef( "c", id );
+        foo.put( "thiz", ref );
+        m.getCollection( "c" ).save( foo );
+
     }
 }
