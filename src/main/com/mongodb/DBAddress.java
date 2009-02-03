@@ -7,12 +7,27 @@ import java.util.*;
 
 import com.mongodb.util.*;
 
+/** Aquires the address of the database(s).
+ */
 public class DBAddress {
     
-    /**
-     * name
-     * <host>/name
-     * <host>:<port>/name
+    /** Creates a new address
+     * Accepts as the parameter format:
+     * <table border="1">
+     * <tr>
+     *   <td><i>name</i></td>
+     *   <td>"127.0.0.1"</td>
+     * </tr>
+     * <tr>
+     *   <td><i>&lt;host&gt;/name</i></td>
+     *   <td>"127.0.0.1/mydb"</td>
+     * </tr>
+     * <tr>
+     *   <td><i>&lt;host&gt;:&lt;port&gt;/name</i></td>
+     *   <td>"127.0.0.1:8080/mydb"</td>
+     * </tr>
+     * </table>
+     * @param urlFormat
      */
     public DBAddress( String urlFormat )
         throws UnknownHostException {
@@ -50,16 +65,29 @@ public class DBAddress {
         return name;
     }
 
+    /** Connects to a given database using the host/port information from an existing <code>DBAddress</code>.
+     * @param other the existing <code>DBAddress</code>
+     * @param name the database to which to connect
+     */
     public DBAddress( DBAddress other , String name )
         throws UnknownHostException {
         this( other._host , other._port , name );
     }
 
+    /** Connects to a database with a given name at a given host.
+     * @param host host name
+     * @param name database name
+     */
     public DBAddress( String host , String name )
         throws UnknownHostException {
         this( host , DBPort.PORT , name );
     }
     
+    /** Connects to a database with a given host, port, and name
+     * @param host host name
+     * @param port database port
+     * @param name database name
+     */
     public DBAddress( String host , int port , String name )
         throws UnknownHostException {
         _check( host , "host" );
@@ -73,6 +101,11 @@ public class DBAddress {
         _addr = _addrs[0];
     }
 
+    /** Connects to a database with a given host, port, and name
+     * @param host host address
+     * @param port database port
+     * @param name database name
+     */
     public DBAddress( InetAddress addr , int port , String name ){
         if ( addr == null )
             throw new IllegalArgumentException( "addr can't be null" );
@@ -110,14 +143,24 @@ public class DBAddress {
         return false;
     }
 
+    /** String representation of address as host:port/dbname.
+     * @return this address
+     */
     public String toString(){
         return _host + ":" + _port + "/" + _name;
     }
 
+    /** Creates an new <code>InetSocketAddress</code> using this address.
+     * @param the socket address
+     */
     public InetSocketAddress getSocketAddress(){
         return new InetSocketAddress( _addr , _port );
     }
 
+    /** Determines whether this address is the same as a given host.
+     * @param host the address to compare
+     * @return if they are the same
+     */
     public boolean sameHost( String host ){
         int idx = host.indexOf( ":" );
         int port = defaultPort();
@@ -131,10 +174,18 @@ public class DBAddress {
             _host.equalsIgnoreCase( host );
     }
 
+    /** Determines if the database at this address is paired.
+     * @return if this address connects to a set of paired databases
+     */
     boolean isPaired(){
         return _addrs.length > 1;
     }
 
+    /** If this is the address of a paired database, returns addresses for
+     * all of the databases with which it is paired.
+     * @return the addresses
+     * @throws RuntimeException if this address is not one of a paired database
+     */
     List<DBAddress> getPairedAddresses(){
         if ( _addrs.length != 2 )
             throw new RuntimeException( "not paired.  num addressed : " + _addrs.length );
@@ -157,10 +208,16 @@ public class DBAddress {
         return InetAddress.getAllByName( host );
     }
 
+    /** Returns the default database host.
+     * @return the db_ip environmental variable, or "127.0.0.1" as a default
+     */
     public static String defaultHost(){
         return Config.get().getTryEnvFirst( "db_ip" , "127.0.0.1" );
     }
 
+    /** Returns the default port that the database runs on.
+     * @return the db_port environmental variable, or 27017 as a default
+     */
     public static int defaultPort(){
         return Integer.parseInt(Config.get().getTryEnvFirst("db_port", Integer.toString(DBPort.PORT)));
     }
