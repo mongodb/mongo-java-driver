@@ -4,6 +4,21 @@ package com.mongodb;
 
 import java.nio.*;
 
+/** Creates a message to send to the database.  
+ * Database messages are of the form:
+ * <blockquote>
+ * &lt;length&gt;&lt;id&gt;&lt;respondingTo&gt;&lt;operation&gt;&lt;data&gt;
+ * </blockquote>
+ * The first four variables are the header and the last is the content.
+ * <table border="1"><tr>
+ * <th>Variable</th><th>Type</th><th>Description</th></tr>
+ * <tr><td>length</td><td><code>int</code></td><td>The length of the entire message</td></tr>
+ * <tr><td>id</td><td><code>int</code></td><td>A unique id generated automatically for the message</td></tr>
+ * <tr><td>respondingTo</td><td><code>int</code></td><td>The id of the message this is in response to, or 0 if it isn't a reponse</td></tr>
+ * <tr><td>operation</td><td><code>int</code></td><td>The database operation desired</td></tr>
+ * <tr><td>data</td><td><code>byte[]</code></td><td>The message body</td></tr>
+ * </table>
+ */
 public class DBMessage {
     
     static int ID = 1;

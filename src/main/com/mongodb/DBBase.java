@@ -14,10 +14,17 @@ public abstract class DBBase {
     public void requestDone(){}
     public void requestEnsureConnection(){}
     
+    /** Returns the collection represented by the string &lt;dbName&gt;.&lt;collectionName&gt;.
+     * @param fullNameSpace the string
+     * @return the collection
+     */
     public abstract DBCollection getCollectionFromFull( String fullNameSpace );
     protected abstract DBCollection doGetCollection( String name );
     public abstract Set<String> getCollectionNames();
     
+    /** Gets the address of this database.
+     * @return the address
+     */
     public abstract DBAddress getAddress();
     public abstract String getConnectPoint();
     

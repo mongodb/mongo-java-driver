@@ -15,7 +15,6 @@ import com.mongodb.util.*;
  */
 public abstract class DBApiLayer extends DBBase {
 
-    /** @unexpose */
     static final boolean D = Boolean.getBoolean( "DEBUG.DB" );
     /** The maximum number of cursors allowed */
     static final int NUM_CURSORS_BEFORE_KILL = 100;
@@ -54,7 +53,6 @@ public abstract class DBApiLayer extends DBBase {
         return c;
     }
 
-    /** @unexpose */
     String _removeRoot( String ns ){
         if ( ! ns.startsWith( _root + "." ) )
             return ns;
