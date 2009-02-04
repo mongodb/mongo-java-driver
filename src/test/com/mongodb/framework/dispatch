@@ -18,6 +18,8 @@ elif [[ "$1" = "capped" ]]; then
 #    java com.mongodb.framework.Circular
 elif [[ "$1" = "dbs" ]]; then
     java com.mongodb.framework.Dbs > $2
+elif [[ "$1" = "stress1" ]]; then
+    java com.mongodb.framework.Stress1
 #elif [[ "$1" = "admin" ]]; then
 #    java com.mongodb.framework.Admin > $2
 else
