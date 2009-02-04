@@ -8,6 +8,8 @@ if [[ "$1" = "test1" ]]; then
 #    java com.mongodb.framework.Count1 > $2
 elif [[ "$1" = "find" ]]; then
     java com.mongodb.framework.Find
+elif [[ "$1" = "find1" ]]; then
+    java com.mongodb.framework.Find1 > $2
 elif [[ "$1" = "remove" ]]; then
     java com.mongodb.framework.Remove
 elif [[ "$1" = "capped" ]]; then
