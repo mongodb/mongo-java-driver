@@ -59,7 +59,7 @@
 
   </target>
   
-  <target name="jar" depends="compile">
+  <target name="jar" depends="compile" description="Create driver jar">
     
     <exec executable="git-log" output="build/git-hash">
       <arg value="--pretty=format:%H" />
@@ -72,7 +72,7 @@
   </target>
 
   
-  <target name="javadocs" depends="compile">
+  <target name="javadocs" depends="compile" description="Generate API docs">
     
     <javadoc packagenames="com.mongodb.*"
              sourcepath="src/main/"
