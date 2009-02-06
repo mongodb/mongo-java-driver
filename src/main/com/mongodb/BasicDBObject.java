@@ -20,9 +20,17 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
     public BasicDBObject(){
     }
 
+
+    /**
+     * Convenience CTOR
+     */
+    public BasicDBObject(String key, Object value){
+        put(key, value);
+    }
+
     /** Deletes a field from this object. 
      * @param key the field name to remove
-     * @param the object removed
+     * @return the object removed
      */
     public Object removeField( String key ){
         return remove( key );
@@ -90,6 +98,18 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
     public Object put( String key , Object val ){
         _keys.add( key );
         return super.put( key , val );
+    }
+
+    /** Add a key/value pair to this object
+     * @param key the field name
+     * @param val the field value
+     * @return the <code>val</code> parameter
+     */
+    public BasicDBObject append( String key , Object val ){
+        _keys.add( key );
+        put( key , val );
+
+        return this;
     }
 
     /** Gets a set of this object's fieldnames
