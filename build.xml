@@ -5,7 +5,7 @@
   <property name="testdir" location="${targetdir}/test"/>
 
   <path id="classpath">
-    <fileset dir="include">
+    <fileset dir="lib">
       <include name="**/*.jar"/>
     </fileset>
     <pathelement path="conf" />
