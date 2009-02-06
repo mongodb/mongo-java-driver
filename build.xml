@@ -1,5 +1,5 @@
 <?xml version='1.0'?>
-<project name="Mongo" default="compile" basedir=".">
+<project name="MongoDB Java Driver" default="compile" basedir=".">
 
   <property name="targetdir" location="target"/>
   <property name="testdir" location="${targetdir}/test"/>
