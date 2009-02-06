@@ -141,6 +141,8 @@ public class GridFS {
 
     /**
      *   Returns a cursor for this filestore
+     *
+     * @return cursor of file objects
      */
     public DBCursor getFileList() {
         return _mongo.getCollection(_metadataCollectionName).find().sort(new BasicDBObject("filename",1));
@@ -175,7 +177,7 @@ public class GridFS {
                 
                 while(cur.hasNext()) {
                     DBObject o = cur.next();
-                    System.out.printf("%-60s %-10d\n", (String) o.get("filename"), ((Double) o.get("length")).longValue());
+                    System.out.printf("%-60s %-10d\n", o.get("filename"), ((Double) o.get("length")).longValue());
                 }
 
             }
