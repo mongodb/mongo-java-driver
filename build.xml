@@ -113,13 +113,5 @@
       <sysproperty key="TESTNG:CODE_ROOT" value="${codeRoot}"/>
     </testng>
   </target>
-  
-  <target name="test-mql" depends="compile, init">
-    <testng classpathref="classpath"
-            outputDir="${testdir}"
-            haltOnFailure="true" verbose="2">
-      <classfileset dir="build" includes="com/mongodb/mql/*Test.class" />
-    </testng>
-  </target>
-  
+    
 </project>
