@@ -74,6 +74,21 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
+    public void testCount(){
+        DBCollection c = _db.getCollection("testCount");
+
+        c.drop();
+        assertNull(c.findOne());
+        assertTrue(c.getCount() == 0);
+
+        for (int i=0; i < 100; i++) {
+            c.insert(new BasicDBObject().append("i", i));
+        }
+
+        assertTrue(c.getCount() == 100);
+    }
+
+    @Test
     public void testBinary(){
         DBCollection c = _db.getCollection( "testBinary" );
         c.save( BasicDBObjectBuilder.start().add( "a" , "eliot".getBytes() ).get() );

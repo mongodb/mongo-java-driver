@@ -307,6 +307,41 @@ public abstract class DBCollection {
         }
     }
 
+    /**
+     *  Returns the number of documents in the collection
+     *  @return number of documents that match query
+     */
+    public long getCount() {
+        return getCount(new BasicDBObject());
+    }
+
+    /**
+     *  Returns the number of documents in the collection
+     *  that match the specified query
+     *
+     *  @param query query to select documents to count
+     *  @return number of documents that match query
+     */
+    public long getCount(DBObject query){
+
+        BasicDBObject cmd = new BasicDBObject();
+        cmd.put("count", getName());
+        cmd.put("query", query);
+
+        BasicDBObject res = (BasicDBObject)_base.command(cmd);
+
+        if (res.getInt("ok" , 0 ) != 1 ){
+            if ( res.getString("errmsg").equals("ns does not exist")) {
+                // for now, return 0 - lets pretend it does exist
+                return 0;
+            }
+            throw new RuntimeException( "error counting : " + res );
+        }
+
+        return res.getLong("n");
+    }
+
+
     // ------
 
     /** Initializes a new collection.
