@@ -95,6 +95,19 @@ public abstract class DBApiLayer extends DBBase {
         return true;
     }
 
+    /**
+     *  Drops this database.  Removes all data on disk.  Use with caution.
+     */
+    public void dropDatabase(){
+
+        BasicDBObject res = (BasicDBObject) command(new BasicDBObject("dropDatabase", 1));
+
+        if (res.getInt("ok") != 1) {
+            throw new RuntimeException("Error - unable to drop database : " + res.toString());
+        }
+
+    }
+
     /** Get a collection from a &lt;databaseName&gt;.&lt;collectionName&gt;.
      * If <code>fullNameSpace</code> does not contain any "."s, this will
      * find a collection called <code>fullNameSpace</code> and return it.

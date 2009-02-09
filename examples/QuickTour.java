@@ -158,13 +158,5 @@ public class QuickTour {
         for (DBObject o : list) {
             System.out.println(o);
         }
-
-
-        MongoAdmin admin = new MongoAdmin();
-
-        for (String s : admin.getDatabaseNames()) {
-            System.out.println(s);
-        }
     }
-
 }
