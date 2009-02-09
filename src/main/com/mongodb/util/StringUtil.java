@@ -20,7 +20,8 @@ package com.mongodb.util;
 
 public final class StringUtil{
 
-    /** Given two strings, gives the index of the first substring of the first string that matches the second string.
+    /**
+     * Given two strings, gives the index of the first substring of the first string that matches the second string.
      * @param big the main string
      * @param small the string to find within the main string
      * @param ignoreCase if the search should be case insensitive
@@ -34,15 +35,16 @@ public final class StringUtil{
         return -1;
     }
 
-    /** Counts the number of non-overlapping substrings that match a given string.
+    /**
+     * Counts the number of non-overlapping substrings that match a given string.
      * @param big the main string
      * @param small the substring to match.
      * @return the number of matches
      */
     public static int count( String big , String small ){
         int c = 0;
-
         int idx = 0;
+
         while ( ( idx = big.indexOf( small , idx ) ) >= 0 ){
             c++;
             idx += small.length();
@@ -50,37 +52,40 @@ public final class StringUtil{
         return c;
     }
 
-    /** Replace a substring with a different string.
+    /**
+     * Replace a substring with a different string.
+     *
      * @param str String on which to do replacement
      * @param from substring to find and replace
      * @param to string with which to replace <tt>from</tt>
+     * @return string w/ replacement if from is found
      */
-    public static final String replace( String str , String from , String to ){
-        if ( from == null || from.length() == 0 )
+    public static String replace(String str, String from, String to) {
+        if (from == null || from.length() == 0)
             return str;
 
-	StringBuffer buf = null;
-	int idx;
-	int start = 0;
-	while ( ( idx = str.indexOf( from , start ) ) >= 0 ){
-	    if ( buf == null )
-		buf = new StringBuffer();
-	    buf.append( str.substring( start , idx ) );
-	    buf.append( to );
-	    start = idx + from.length();
-	}
-	if ( buf == null )
-	    return str;
+        StringBuffer buf = null;
+        int idx;
+        int start = 0;
+        while ((idx = str.indexOf(from, start)) >= 0) {
+            if (buf == null)
+                buf = new StringBuffer();
+            buf.append(str.substring(start, idx));
+            buf.append(to);
+            start = idx + from.length();
+        }
+        if (buf == null)
+            return str;
 
-	buf.append( str.substring( start ) );
+        buf.append(str.substring(start));
 
-	return buf.toString();
+        return buf.toString();
     }
 
-    public static boolean isDigits( final String s ){
-	for ( int i=0; i<s.length(); i++ )
-	    if ( ! Character.isDigit( s.charAt( i ) ) )
-		return false;
-	return true;
+    public static boolean isDigits(final String s) {
+        for (int i = 0; i < s.length(); i++)
+            if (!Character.isDigit(s.charAt(i)))
+                return false;
+        return true;
     }
 }
