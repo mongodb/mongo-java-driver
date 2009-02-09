@@ -115,10 +115,11 @@ public abstract class DBApiLayer extends DBBase {
 
         final String root = fullNameSpace.substring( 0 , idx );
         final String table = fullNameSpace.substring( idx + 1 );
-        
-        if ( _root.equals( root ) )
+
+        if (_root.equals(root)) {
             return doGetCollection( table );
-        
+        }
+
         throw new RuntimeException( "can't get sister dbs yet" );
     }
 
@@ -160,16 +161,12 @@ public abstract class DBApiLayer extends DBBase {
         return new OrderedSet<String>( tables );
     }
 
-    public static Collection<String> getRootNamespaces( String ip ){
-        throw new RuntimeException( "not implemented yet" );
-    }
-
     class MyCollection extends DBCollection {
         MyCollection( String name ){
             super( DBApiLayer.this , name );
             _fullNameSpace = _root + "." + name;
         }
-
+        
         public void doapply( DBObject o ){
             o.put( "_ns" , _removeRoot( _fullNameSpace ) );
         }
