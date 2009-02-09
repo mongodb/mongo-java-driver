@@ -7,9 +7,17 @@ import com.mongodb.DBObject;
 
 import java.util.List;
 
-
+/**
+ *   Helper methods for JSON serialization and de-serialization
+ */
 public class JSON {
 
+    /**
+     *  Serializes an object into it's JSON form
+     *
+     * @param o object to serialize
+     * @return  String containing JSON form of the object
+     */
     public static String serialize( Object o ){
         StringBuilder buf = new StringBuilder();
         serialize( o , buf );
