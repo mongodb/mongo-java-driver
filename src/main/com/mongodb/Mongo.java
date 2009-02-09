@@ -18,6 +18,16 @@ import java.net.UnknownHostException;
 public class Mongo extends DBTCP {
 
     /**
+     *  Connects to the local mongo instance on default port.
+     *
+     *  @param dbname name of database to connect to
+     *  @throws UnknownHostException if the database host cannot be resolved
+     */
+    public Mongo(String dbname) throws UnknownHostException {
+        super(new DBAddress("127.0.0.1", dbname));
+    }
+
+    /**
      * Connects to Mongo using a given host, the default port (27017) and connects to a given database.
      * @param host the database's host address
      * @param dbName the name of the database to which to connect
