@@ -2,7 +2,7 @@
 
 package com.mongodb;
 
-import java.net.*;
+import java.net.UnknownHostException;
 
 /**
  * A database connection and, optionally, database.
