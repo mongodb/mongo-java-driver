@@ -110,7 +110,6 @@
     <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="true" >
       <jvmarg value="-Xmx512M" />
       <xmlfileset dir="." includes="testng.xml"/>
-      <sysproperty key="TESTNG:CODE_ROOT" value="${codeRoot}"/>
     </testng>
   </target>
     
