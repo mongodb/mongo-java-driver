@@ -78,7 +78,19 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
             return def;
         return ((Number)foo).intValue();
     }
-    
+
+    /**
+     * Returns the value of a field as a <code>long</code>.
+     *
+     * @param key the field to return
+     * @return the field value 
+     */
+    public long getLong( String key){
+        Object foo = get( key );
+        return ((Number)foo).longValue();
+    }
+
+
     /** Returns the value of a field as a string
      * @param key the field to look up
      * @return the value of the field, converted to a string
