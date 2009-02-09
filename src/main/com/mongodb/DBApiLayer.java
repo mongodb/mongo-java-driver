@@ -92,6 +92,55 @@ public abstract class DBApiLayer extends DBBase {
     }
 
     /**
+     *  Gets the the error (if there is one) from the previous operation.  The result of
+     *  this command will look like
+     *
+     *  <pre>
+     * { "err" :  errorMessage  , "ok" : 1.0 , "_ns" : "$cmd"}
+     * </pre>
+     *
+     * The value for errorMessage will be null if no error occurred, or a description otherwise.
+     *
+     *  @return DBObject with error and status information
+     */
+    public DBObject getLastError() {
+        return command(new BasicDBObject("getlasterror", 1));
+    }
+
+    /**
+     *  Returns the last error that occurred since start of database or a call to <code>resetError()</code>
+     *
+     *  The return object will look like
+     *
+     *  <pre>
+     * { err : errorMessage, nPrev : countOpsBack, ok : 1 }
+     *  </pre>
+     *
+     * The value for errormMessage will be null of no error has ocurred, or the message.  The value of
+     * countOpsBack will be the number of operations since the error occurred.
+     * 
+     * @return DBObject with error and status information
+     */
+    public DBObject getPreviousError() {
+        return command(new BasicDBObject("getpreverror", 1));
+    }
+
+    /**
+     *  Resets the error memory for this database.  Used to clear all errors such that getPreviousError()
+     *  will return no error.
+     */
+    public void resetError() {
+        command(new BasicDBObject("reseterror", 1));
+    }
+
+    /**
+     *  For testing purposes only - this method forces an error to help test error handling
+     */
+    public void forceError() {
+        command(new BasicDBObject("forceerror", 1));
+    }
+
+    /**
      *  Drops this database.  Removes all data on disk.  Use with caution.
      */
     public void dropDatabase(){
