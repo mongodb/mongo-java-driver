@@ -337,7 +337,7 @@ public class DBCursor implements Iterator<DBObject> {
     /** Converts this cursor to an array.
      * @return an array of elements
      */
-    public List toArray(){
+    public List<DBObject> toArray(){
         return toArray( Integer.MAX_VALUE );
     }
 
@@ -345,7 +345,7 @@ public class DBCursor implements Iterator<DBObject> {
      * @return min the minimum size of the array to return
      * @return an array of elements
      */
-    public List toArray( int min ){
+    public List<DBObject> toArray( int min ){
         _checkType( CursorType.ARRAY );
         _fill( min );
         return Collections.unmodifiableList( _all );
