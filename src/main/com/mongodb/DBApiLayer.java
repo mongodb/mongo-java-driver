@@ -59,6 +59,42 @@ public abstract class DBApiLayer extends DBBase {
         return ns.substring( _root.length() + 1 );
     }
 
+    /**
+     *  Authenticates connection/db with given name and password
+     *
+     * @param username  name of user for this database
+     * @param passwd password of user for this database
+     * @return true if authenticated, false otherwise
+     */
+    public boolean authenticate(String username, String passwd) {
+
+        BasicDBObject res = (BasicDBObject) command(new BasicDBObject("getnonce", 1));
+
+        if (res.getInt("ok") != 1) {
+            throw new RuntimeException("Error - unable to get nonce value for authentication.");
+        }
+
+        String nonce = res.getString("nonce");
+
+        String auth = username + ":mongo:" + passwd;
+        String key = nonce + username + Util.hexMD5(auth.getBytes());
+
+        BasicDBObject cmd = new BasicDBObject();
+
+        cmd.put("authenticate", 1);
+        cmd.put("user", username);
+        cmd.put("nonce", nonce);
+        cmd.put("key", Util.hexMD5(key.getBytes()));
+
+        res = (BasicDBObject) command(cmd);
+
+        if (res.getInt("ok") != 1) {
+            return false;
+        }
+
+        return true;
+    }
+
     /** Get a collection from a &lt;databaseName&gt;.&lt;collectionName&gt;.
      * If <code>fullNameSpace</code> does not contain any "."s, this will
      * find a collection called <code>fullNameSpace</code> and return it.
