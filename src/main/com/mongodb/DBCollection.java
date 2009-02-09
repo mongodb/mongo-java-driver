@@ -341,6 +341,26 @@ public abstract class DBCollection {
         return res.getLong("n");
     }
 
+    /**
+     *   Return a list of the indexes for this collection.  Each object
+     *   in the list is the "info document" from MongoDB
+     *
+     *   @return list of index documents
+     */
+    public List<DBObject> getIndexInfo() {
+        BasicDBObject cmd = new BasicDBObject();
+        cmd.put("ns", getFullName());
+
+        DBCursor cur = _base.getCollection("system.indexes").find(cmd);
+
+        List<DBObject> list = new ArrayList<DBObject>();
+
+        while(cur.hasNext()) {
+            list.add(cur.next());
+        }
+
+        return list;
+    }
 
     // ------
 

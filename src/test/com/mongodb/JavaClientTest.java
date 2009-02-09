@@ -89,6 +89,27 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
+    public void testIndex(){
+        DBCollection c = _db.getCollection("testIndex");
+
+        c.drop();
+        assertNull(c.findOne());
+
+        for (int i=0; i < 100; i++) {
+            c.insert(new BasicDBObject().append("i", i));
+        }
+
+        assertTrue(c.getCount() == 100);
+
+        c.createIndex(new BasicDBObject("i", 1));
+
+        List<DBObject> list = c.getIndexInfo();
+
+        assertTrue(list.size() == 1);
+        assertTrue(list.get(0).get("name").equals("i_1"));
+    }
+
+    @Test
     public void testBinary(){
         DBCollection c = _db.getCollection( "testBinary" );
         c.save( BasicDBObjectBuilder.start().add( "a" , "eliot".getBytes() ).get() );
