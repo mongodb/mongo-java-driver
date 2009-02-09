@@ -3,6 +3,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.DBCursor;
+import com.mongodb.MongoAdmin;
 
 import java.util.Set;
 import java.util.List;
@@ -156,6 +157,13 @@ public class QuickTour {
 
         for (DBObject o : list) {
             System.out.println(o);
+        }
+
+
+        MongoAdmin admin = new MongoAdmin();
+
+        for (String s : admin.getDatabaseNames()) {
+            System.out.println(s);
         }
     }
 
