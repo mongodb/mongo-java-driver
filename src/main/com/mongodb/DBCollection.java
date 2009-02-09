@@ -44,12 +44,6 @@ public abstract class DBCollection {
      */
     public abstract int remove( DBObject o );
 
-    /** Finds an object by its id.
-     * @param id the id of the object
-     * @return the object, if found
-     */
-    protected abstract DBObject dofind( ObjectId id );
-
     /** Finds an object.
      * @param ref query used to search
      * @param fields the fields of matching objects to return
@@ -57,7 +51,7 @@ public abstract class DBCollection {
      * @param numToReturn limit the results to this number
      * @return the objects, if found
      */
-    public abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn );
+    abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn );
 
     /** Ensures an index on this collection (that is, the index will be created if it does not exist).
      * ensureIndex is optimized and is inexpensive if the index already exists.
@@ -68,32 +62,18 @@ public abstract class DBCollection {
 
     // ------
 
-    /** Finds an object by its id.
-     * @param id the id of the object
+    /**
+     *   Finds an object by its id.  This compares the passed in value to the _id field of the document
+     * 
+     * @param obj any valid object
      * @return the object, if found, otherwise <code>null</code>
      */
-    public final DBObject find( ObjectId id ){
+    public final DBObject findOne( Object obj ){
         ensureIDIndex();
 
-        DBObject ret = dofind( id );
+        Iterator<DBObject> iterator =  find(new BasicDBObject("_id", obj), null, 0,1);
 
-        if ( ret == null )
-            return null;
-
-        apply( ret , false );
-
-        return ret;
-    }
-
-    /** Finds an object by its id.
-     * @param id a string
-     * @return the object, if found, otherwise <code>null</code>
-     * @throws IllegalArgumentException if the string is not convertible to a valid ObjectId
-     */
-    public final DBObject find( String id ){
-        if ( ! ObjectId.isValid( id ) )
-            throw new IllegalArgumentException( "invalid object id [" + id + "]" );
-        return find( new ObjectId( id ) );
+        return (iterator != null ? iterator.next() : null);
     }
 
     /** Ensures an index on the id field, if one does not already exist.

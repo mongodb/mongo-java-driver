@@ -29,7 +29,7 @@ public class JavaClientTest extends TestCase {
         
         assert( m.containsKey( "_id" ) );
 
-        Map out = (Map)(c.find( m.get( "_id" ).toString() ));
+        Map out = (Map)(c.findOne( m.get( "_id" )));
         assertEquals( "eliot" , out.get( "name" ) );
         assertEquals( "ny" , out.get( "state" ) );
     }
@@ -51,7 +51,7 @@ public class JavaClientTest extends TestCase {
         
         assert( m.containsKey( "_id" ) );
 
-        Map out = (Map)(c.find( m.get( "_id" ).toString() ));
+        Map out = (Map)(c.findOne( m.get( "_id" )));
         assertEquals( "eliot" , out.get( "name" ) );
         assertEquals( "ny" , out.get( "state" ) );
 

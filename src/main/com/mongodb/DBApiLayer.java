@@ -88,11 +88,7 @@ public abstract class DBApiLayer extends DBBase {
 
         res = (BasicDBObject) command(cmd);
 
-        if (res.getInt("ok") != 1) {
-            return false;
-        }
-
-        return true;
+        return res.getInt("ok") == 1;
     }
 
     /**
@@ -105,7 +101,6 @@ public abstract class DBApiLayer extends DBBase {
         if (res.getInt("ok") != 1) {
             throw new RuntimeException("Error - unable to drop database : " + res.toString());
         }
-
     }
 
     /** Get a collection from a &lt;databaseName&gt;.&lt;collectionName&gt;.
@@ -139,39 +134,38 @@ public abstract class DBApiLayer extends DBBase {
     /** Returns a set of the names of collections in this database.
      * @return the names of collections in this database
      */
-    public Set<String> getCollectionNames(){
-        
-        DBCollection namespaces = getCollection( "system.namespaces" );
-        if ( namespaces == null )
-            throw new RuntimeException( "this is impossible" );
+    public Set<String> getCollectionNames() {
 
-	Iterator<DBObject> i = namespaces.find( new BasicDBObject() , null , 0 , 0 );
-	if ( i == null )
-	    return new HashSet<String>();
+        DBCollection namespaces = getCollection("system.namespaces");
+        if (namespaces == null)
+            throw new RuntimeException("this is impossible");
+
+        Iterator<DBObject> i = namespaces.find(new BasicDBObject(), null, 0, 0);
+        if (i == null)
+            return new HashSet<String>();
 
         List<String> tables = new ArrayList<String>();
 
-        for (  ; i.hasNext() ;  ){
+        for (; i.hasNext();) {
             DBObject o = i.next();
-            String n = o.get( "name" ).toString();
-            int idx = n.indexOf( "." );
+            String n = o.get("name").toString();
+            int idx = n.indexOf(".");
 
-            String root = n.substring( 0 , idx );
-            if ( ! root.equals( _root ) )
+            String root = n.substring(0, idx);
+            if (!root.equals(_root))
                 continue;
 
-	    if ( n.indexOf( "$" ) >= 0 )
-		continue;
+            if (n.indexOf("$") >= 0)
+                continue;
 
-            String table = n.substring( idx + 1 );
+            String table = n.substring(idx + 1);
 
-            tables.add( table );
+            tables.add(table);
         }
 
+        Collections.sort(tables);
 
-        Collections.sort( tables );
-
-        return new OrderedSet<String>( tables );
+        return new OrderedSet<String>(tables);
     }
 
     class MyCollection extends DBCollection {
@@ -184,22 +178,6 @@ public abstract class DBApiLayer extends DBBase {
             o.put( "_ns" , _removeRoot( _fullNameSpace ) );
         }
         
-        public DBObject dofind( ObjectId id ){
-            DBObject lookup = new BasicDBObject();
-            lookup.put( "_id" , id );
-
-            Iterator<DBObject> res = find( lookup );
-            if ( res == null )
-                return null;
-
-            DBObject o = res.next();
-            
-            if ( res.hasNext() )
-		System.out.println( "multiple entries with same _id.  collection:" + _fullNameSpace + " id:" + id );
-
-            return o;
-        }
-
         public DBObject insert( DBObject o ){
             return insert( o , true );
         }
@@ -304,7 +282,7 @@ public abstract class DBApiLayer extends DBBase {
             
         }
 
-        public Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn ){
+        Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn ){
 
             if ( SHOW ) System.out.println( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
 
