@@ -24,7 +24,8 @@ public abstract class DBCollection {
      */
     public abstract DBObject insert( DBObject o );
 
-    /** Performs an update operation.
+    /**
+     * Performs an update operation.
      * @param q search query for old object to update
      * @param o object with which to update <tt>q</tt>
      * @param upsert if the database should create the element if it does not exist
