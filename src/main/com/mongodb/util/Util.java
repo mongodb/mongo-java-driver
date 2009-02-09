@@ -1,6 +1,6 @@
 /**
- *  See the NOTICE.txt file distributed with this work for
- *  information regarding copyright ownership.
+ *
+ *  Copyright (C) 2009  10gen Inc.
  *
  *  The authors license this file to you under the
  *  Apache License, Version 2.0 (the "License"); you may not use
