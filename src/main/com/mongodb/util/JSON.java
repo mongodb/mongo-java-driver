@@ -2,8 +2,11 @@
 
 package com.mongodb.util;
 
-import java.util.*;
-import com.mongodb.*;
+import com.mongodb.ObjectId;
+import com.mongodb.DBObject;
+
+import java.util.List;
+
 
 public class JSON {
 
@@ -51,7 +54,7 @@ public class JSON {
             return;
         }
 
-        if ( o instanceof List ){
+        if ( o instanceof List){
 
             boolean first = true;
             buf.append( "[ " );
@@ -67,8 +70,13 @@ public class JSON {
             return;
         }
 
-        if ( o instanceof DBObject ){
-
+        if ( o instanceof ObjectId) {
+            string(buf, o.toString());
+            return;
+        }
+        
+        if ( o instanceof DBObject){
+ 
             boolean first = true;
             buf.append( "{ " );
             
