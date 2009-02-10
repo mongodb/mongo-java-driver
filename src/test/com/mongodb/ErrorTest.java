@@ -69,5 +69,4 @@ public class ErrorTest {
         assert(_db.getLastError().get("err") == null);
         assert(_db.getPreviousError().get("err") == null);
     }
-
 }

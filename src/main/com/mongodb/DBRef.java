@@ -45,7 +45,7 @@ public class DBRef {
 
         final DBCollection coll = _db.getCollectionFromString(_ns);
 
-        _pointedTo = coll.find(_id);
+        _pointedTo = coll.findOne(_id);
         _loadedPointedTo = true;
         return _pointedTo;
     }
