@@ -61,7 +61,8 @@
   
   <target name="jar" depends="compile" description="Create driver jar">
     
-    <exec executable="git-log" output="build/git-hash">
+    <exec executable="git" output="build/git-hash">
+      <arg value="log" />
       <arg value="--pretty=format:%H" />
       <arg value="-1" />
     </exec>
