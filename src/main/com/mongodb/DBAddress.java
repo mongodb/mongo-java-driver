@@ -221,6 +221,11 @@ public class DBAddress {
     
     private static InetAddress[] _getAddress( String host )
         throws UnknownHostException {
+
+        if (host.toLowerCase().equals("localhost")) {
+            return new InetAddress[] { InetAddress.getLocalHost()};
+        }
+        
         return InetAddress.getAllByName( host );
     }
 
