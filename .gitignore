@@ -42,3 +42,6 @@ TAGS
 
 #test local files
 src/test/ed/webtests/webtest-local.bash
+
+*.ipr
+*.iws
