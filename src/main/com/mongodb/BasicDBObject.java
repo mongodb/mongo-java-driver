@@ -32,13 +32,16 @@ import com.mongodb.util.*;
  */
 public class BasicDBObject extends HashMap<String,Object> implements DBObject {
     
-    /** Creates an empty object. */
+    /**
+     *  Creates an empty object.
+     */
     public BasicDBObject(){
     }
 
-
     /**
      * Convenience CTOR
+     * @param key  key under which to store
+     * @param value value to stor
      */
     public BasicDBObject(String key, Object value){
         put(key, value);
@@ -64,7 +67,7 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
      * @return if the field exists
      */
     public boolean containsKey( String key ){
-        return super.containsKey( (Object)key );
+        return super.containsKey(key);
     }
 
     /** Gets a value from this object
@@ -72,7 +75,7 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
      * @return the value
      */
     public Object get( String key ){
-        return super.get( (Object)key );
+        return super.get(key);
     }
 
     /** Returns the value of a field as an <code>int</code>.
