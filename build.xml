@@ -47,16 +47,6 @@
       <classpath refid="classpath"/>
     </javac>
 
-    <javac srcdir="src/samples"
-           destdir="build"
-           optimize="off"
-           deprecation="off"
-           source="1.5"
-           encoding="ISO-8859-1"
-           debug="on" >
-      <classpath refid="classpath"/>
-    </javac>
-
   </target>
   
   <target name="jar" depends="compile" description="Create driver jar">

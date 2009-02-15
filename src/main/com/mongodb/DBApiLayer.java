@@ -1,12 +1,26 @@
 // DBApiLayer.java
 
+/**
+ *      Copyright (C) 2008 10gen Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
 package com.mongodb;
 
-import java.io.*;
 import java.nio.*;
 import java.util.*;
 
-import com.mongodb.io.*;
 import com.mongodb.util.*;
 
 /** Database API
@@ -345,8 +359,10 @@ public abstract class DBApiLayer extends DBBase {
             encoder._buf.putInt( 0 ); // reserved
 
             encoder._buf.putInt( all.size() );
-            for ( int i=0; i<all.size(); i++ )
-                encoder._buf.putLong( all.get( i  ) );
+
+            for (Long l : all) {
+                encoder._buf.putLong(l);
+            }
             
             try {
                 doKillCursors( encoder._buf );
@@ -354,7 +370,6 @@ public abstract class DBApiLayer extends DBBase {
             finally {
                 encoder.done();
             }
-            
         }
 
         Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn ){
@@ -381,7 +396,7 @@ public abstract class DBApiLayer extends DBBase {
                 int len = doQuery( encoder._buf , decoder._buf );
                 decoder.doneReading( len );
                 
-                SingleResult res = new SingleResult( _fullNameSpace , decoder , null );
+                SingleResult res = new SingleResult( _fullNameSpace , decoder);
                 
                 if ( res._lst.size() == 0 )
                     return null;
@@ -473,7 +488,7 @@ public abstract class DBApiLayer extends DBBase {
 
     class SingleResult extends QueryHeader {
         
-        SingleResult( String fullNameSpace , ByteDecoder decoder , Set<Object> seen ){
+        SingleResult( String fullNameSpace , ByteDecoder decoder){
             super( decoder._buf );
 
             _bytes = decoder.remaining();
@@ -492,14 +507,6 @@ public abstract class DBApiLayer extends DBBase {
 
                 while( decoder.more() && num < _num ){
                     final DBObject o = decoder.readObject();
-
-                    if ( seen != null ){
-                        Object id = o.get( "_id" );
-                        if ( id != null ){
-                            if ( seen.contains( id ) ) continue;
-                            seen.add( id );
-                        }
-                    }
 
                     o.put( "_ns" , _removeRoot( _fullNameSpace ) );
                     _lst.add( o );
@@ -538,13 +545,7 @@ public abstract class DBApiLayer extends DBBase {
 
         private void init( SingleResult res ){
             _totalBytes += res._bytes;
-
             _curResult = res;
-            for ( DBObject o : res._lst ){
-                Object id = o.get( "_id" );
-                if ( id != null )
-                    _seen.add( id );
-            }
             _cur = res._lst.iterator();
         }
 
@@ -553,10 +554,10 @@ public abstract class DBApiLayer extends DBBase {
                 return _cur.next();
 
             if ( ! _curResult.hasGetMore() )
-		throw new RuntimeException( "no more" );
+                throw new RuntimeException( "no more" );
 
-	    _advance();
-	    return next();
+            _advance();
+            return next();
         }
 
         public boolean hasNext(){
@@ -564,40 +565,39 @@ public abstract class DBApiLayer extends DBBase {
                 return true;
 
             if ( ! _curResult.hasGetMore() )
-		return false;
+                return false;
 
-	    _advance();
-	    return hasNext();
+            _advance();
+            return hasNext();
         }
 
-	private void _advance(){
+        private void _advance(){
 
-	    if ( _curResult._cursor <= 0 )
-		throw new RuntimeException( "can't advance a cursor <= 0" );
+            if ( _curResult._cursor <= 0 )
+                throw new RuntimeException( "can't advance a cursor <= 0" );
 
-	    ByteEncoder encoder = ByteEncoder.get();
+            ByteEncoder encoder = ByteEncoder.get();
 
-	    encoder._buf.putInt( 0 ); // reserved
-	    encoder._put( _curResult._fullNameSpace );
-	    encoder._buf.putInt( _numToReturn ); // num to return
-	    encoder._buf.putLong( _curResult._cursor );
-	    encoder.flip();
+            encoder._buf.putInt( 0 ); // reserved
+            encoder._put( _curResult._fullNameSpace );
+            encoder._buf.putInt( _numToReturn ); // num to return
+            encoder._buf.putLong( _curResult._cursor );
+            encoder.flip();
 
-	    ByteDecoder decoder = ByteDecoder.get( DBApiLayer.this , _collection );
+            ByteDecoder decoder = ByteDecoder.get( DBApiLayer.this , _collection );
 
             try {
                 int len = doGetMore( encoder._buf , decoder._buf );
                 decoder.doneReading( len );
-                
-                SingleResult res = new SingleResult( _curResult._fullNameSpace , decoder , _seen );
+
+                SingleResult res = new SingleResult( _curResult._fullNameSpace , decoder);
                 init( res );
             }
             finally {
                 decoder.done();
                 encoder.done();
             }
-
-	}
+        }
 
         public void remove(){
             throw new RuntimeException( "can't remove this way" );
@@ -607,9 +607,10 @@ public abstract class DBApiLayer extends DBBase {
             return "DBCursor";
         }
 
-        protected void finalize(){
+        protected void finalize() throws Throwable {
             if ( _curResult != null && _curResult._cursor > 0 )
                 _deadCursorIds.add( _curResult._cursor );
+            super.finalize();
         }
 
         public long totalBytes(){
@@ -618,20 +619,16 @@ public abstract class DBApiLayer extends DBBase {
 
         SingleResult _curResult;
         Iterator<DBObject> _cur;
-        final Set<Object> _seen = new HashSet<Object>();
         final MyCollection _collection;
         final int _numToReturn;
 
         private long _totalBytes = 0;
-    }
+    }  // class Result
 
-    /** @unexpose */
     final String _root;
     final Map<String,MyCollection> _collections = Collections.synchronizedMap( new HashMap<String,MyCollection>() );
     final Map<String,DBApiLayer> _sisters = Collections.synchronizedMap( new HashMap<String,DBApiLayer>() );
     List<Long> _deadCursorIds = new Vector<Long>();
 
     static final List<DBObject> EMPTY = Collections.unmodifiableList( new LinkedList<DBObject>() );
-
-
 }

@@ -1,13 +1,29 @@
 // ByteDecoder.java
 
+/**
+ *      Copyright (C) 2008 10gen Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
 package com.mongodb;
 
-import java.util.*;
-import java.util.regex.*;
-import java.nio.*;
-import java.nio.charset.*;
+import com.mongodb.util.SimplePool;
 
-import com.mongodb.util.*;
+import java.util.Date;
+import java.util.regex.Pattern;
+import java.nio.ByteBuffer;
+
 
 /** 
  * Deserializes a string from the database into a <code>DBObject</code>.
@@ -39,10 +55,6 @@ public class ByteDecoder extends Bytes {
         protected ByteDecoder createNew(){
 	    if ( D ) System.out.println( "creating new ByteDecoder" );
             return new ByteDecoder();
-        }
-
-        protected long memSize( ByteDecoder d ){
-            return BUF_SIZE + ( 2 * MAX_STRING ) + 1024;
         }
     };
 
@@ -88,12 +100,11 @@ public class ByteDecoder extends Bytes {
         final int start = _buf.position();
         final int len = _buf.getInt();
         
-        DBObject created = null;
-
-        if ( created == null )
-            created = _create( true );
+        DBObject created = _create(true);
         
-        while ( decodeNext( created ) > 1 );
+        while ( decodeNext( created ) > 1 ) {
+            // intentionally empty
+        }
         
         if ( _buf.position() - start != len )
             throw new RuntimeException( "lengths don't match " + (_buf.position() - start) + " != " + len );
@@ -148,11 +159,12 @@ public class ByteDecoder extends Bytes {
             o.put( name , val );
             break;
 	    
-	case NUMBER_INT:
-	    o.put( name , _buf.getInt() );
-	    break;
+        case NUMBER_INT:
+            o.put( name , _buf.getInt() );
+            break;
 	    
         case SYMBOL:
+            // intentional fallthrough
         case STRING:
             int size = _buf.getInt() - 1;
             _buf.get( _namebuf , 0 , size );
@@ -170,7 +182,7 @@ public class ByteDecoder extends Bytes {
             break;
             
         case REF:
-            int stringSize = _buf.getInt();
+            _buf.getInt();  // length of ctring that follows
             String ns = readCStr();
             ObjectId theOID = new ObjectId( _buf.getLong() , _buf.getInt() );
             if ( theOID.equals( Bytes.COLLECTION_REF_ID ) )
@@ -195,10 +207,18 @@ public class ByteDecoder extends Bytes {
             throw new RuntimeException( "can't handle CODE yet" );
 
         case ARRAY:
-            if ( created == null )
-                created = new BasicDBList();
+            created = new BasicDBList();
+            _buf.getInt();  // total size - we don't care....
+
+            while (decodeNext( created ) > 1 ) {
+                // intentionally empty
+            }
+
+            o.put( name , created );
+            break;
+
         case OBJECT:
-            int embeddedSize = _buf.getInt();
+            _buf.getInt();  // total size - we don't care....
             
             if ( created == null ){
 
@@ -210,7 +230,10 @@ public class ByteDecoder extends Bytes {
                     created = _create( false );
             }
             
-            while ( decodeNext( created ) > 1 );
+            while (decodeNext( created ) > 1 ) {
+                // intentionally empty
+            }
+            
             o.put( name , created );
             break;
 
@@ -269,7 +292,6 @@ public class ByteDecoder extends Bytes {
         _buf.flip();
     }
 
-    private final CharsetDecoder _decoder = _utf8.newDecoder();
     private final byte _namebuf[] = new byte[ MAX_STRING ];
 
     ByteBuffer _buf;
