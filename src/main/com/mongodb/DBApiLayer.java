@@ -228,18 +228,42 @@ public abstract class DBApiLayer extends DBBase {
         }
         
         public DBObject insert( DBObject o ){
-            return insert( o , true );
+            DBObject[] arr = new DBObject[1];
+            arr[0] = o;
+            return insert(arr)[0];
         }
 
-        public DBObject insert( DBObject o , boolean shouldApply ){
+        public DBObject[] insert(DBObject[] arr){
+            return insert(arr, true);
+        }
 
-            if ( SHOW ) System.out.println( "save:  " + _fullNameSpace + " " + JSON.serialize( o ) );
+        public List<DBObject> insert(List<DBObject> list){
+            DBObject[] arr = insert(list.toArray(new DBObject[list.size()]) , true);
+
+            return Arrays.asList(arr);
+        }
+
+        protected DBObject insert(DBObject obj, boolean shouldApply ){
+            DBObject[] arr = new DBObject[1];
+            arr[0] = obj;
+            return insert(arr, shouldApply)[0];
+        }
+
+        protected DBObject[] insert(DBObject[] arr, boolean shouldApply ){
+
+            if ( SHOW ) {
+                for (DBObject o : arr) {
+                    System.out.println( "save:  " + _fullNameSpace + " " + JSON.serialize( o ) );
+                }
+            }
 
             if ( shouldApply ){
-                apply( o );
-                Object id = o.get( "_id" );
-                if ( id instanceof ObjectId )
-                    ((ObjectId)id)._new = false;
+                for (DBObject o : arr) {
+                    apply( o );
+                    Object id = o.get( "_id" );
+                    if ( id instanceof ObjectId )
+                        ((ObjectId)id)._new = false;
+                }
             }
 
             ByteEncoder encoder = ByteEncoder.get();
@@ -247,7 +271,9 @@ public abstract class DBApiLayer extends DBBase {
             encoder._buf.putInt( 0 ); // reserved
             encoder._put( _fullNameSpace );
 
-            encoder.putObject( o );
+            for (DBObject o : arr) {
+                encoder.putObject( o );
+            }
             encoder.flip();
             
             try {
@@ -257,7 +283,7 @@ public abstract class DBApiLayer extends DBBase {
                 encoder.done();
             }
 
-            return o;
+            return arr;
         }
 
         public int remove( DBObject o ){

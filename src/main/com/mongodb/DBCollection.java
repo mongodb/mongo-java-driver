@@ -2,10 +2,12 @@
 
 package com.mongodb;
 
-import java.util.*;
-import java.lang.reflect.*;
+import java.util.List;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.ArrayList;
 
-import com.mongodb.util.*;
 
 /** This class provides a skeleton implementation of a database collection.  
  * <p>A typical invocation sequence is thus
@@ -18,11 +20,28 @@ public abstract class DBCollection {
 
     final static boolean DEBUG = Boolean.getBoolean( "DEBUG.DB" );
 
-    /** Saves an object to the database.
-     * @param o object to save
+    /**
+     * Saves an document to the database.
+     * @param doc object to save
      * @return the new database object
      */
-    public abstract DBObject insert( DBObject o );
+    public abstract DBObject insert(DBObject doc);
+
+    /**
+     * Saves an array of documents to the database.
+     *
+     * @param arr  array of documents to save
+     * @return the new database object
+     */
+    public abstract DBObject[] insert(DBObject[] arr);
+
+    /**
+     * Saves an array of documents to the database.
+     *
+     * @param list  list of documents to save
+     * @return the new database object
+     */
+    public abstract List<DBObject> insert(List<DBObject> list);
 
     /**
      * Performs an update operation.
@@ -355,7 +374,7 @@ public abstract class DBCollection {
         _fullName = _base.getName() + "." + name;
     }
 
-    private final DBObject _checkObject( DBObject o , boolean canBeNull , boolean query ){
+    private  DBObject _checkObject( DBObject o , boolean canBeNull , boolean query ){
         if ( o == null ){
             if ( canBeNull )
                 return null;
