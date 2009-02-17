@@ -1,4 +1,4 @@
-h2. Change Log h2.
+## Change Log ##
 
 2009-02-14 : add DBCollection.insert(DBObject[]) and DBCollection.insert(List<DBObject>) methods - doing a bulk insert
 can really boost performance.
