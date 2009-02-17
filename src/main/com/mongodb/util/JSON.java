@@ -6,7 +6,10 @@ import com.mongodb.ObjectId;
 import com.mongodb.DBObject;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 /**
  *   Helper methods for JSON serialization and de-serialization
@@ -108,7 +111,7 @@ public class JSON {
             Date d = (Date) o;
             Calendar cal = new GregorianCalendar();
             cal.setTimeInMillis(d.getTime());
-            buf.append('"').append(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(d)).append('"');
+            buf.append('"').append(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(d)).append('"');
             return;
         }
 
