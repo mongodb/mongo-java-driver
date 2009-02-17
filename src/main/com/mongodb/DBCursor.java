@@ -18,9 +18,13 @@
 
 package com.mongodb;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 
-import com.mongodb.util.*;
 
 /** An iterator over database results.
  * Doing a <code>find()</code> query on a collection returns a 
@@ -48,7 +52,8 @@ import com.mongodb.util.*;
  */
 public class DBCursor implements Iterator<DBObject> {
 
-    /** Initializes a new database cursor
+    /**
+     * Initializes a new database cursor
      * @param collection collection to use
      * @param q query to perform
      * @param k keys to return from the query
@@ -62,23 +67,26 @@ public class DBCursor implements Iterator<DBObject> {
     /** Types of cursors: iterator or array. */
     static enum CursorType { ITERATOR , ARRAY };
 
-    /** Creates a copy of an existing database cursor.
+    /**
+     * Creates a copy of an existing database cursor.
      * The new cursor is an iterator, even if the original 
      * was an array.
+     *
      * @return the new cursor
      */
-    public DBCursor copy(){
-	DBCursor c = new DBCursor( _collection , _query , _keysWanted );
-	c._orderBy = _orderBy;
+    public DBCursor copy() {
+        DBCursor c = new DBCursor(_collection, _query, _keysWanted);
+        c._orderBy = _orderBy;
         c._hint = _hint;
-	c._numWanted = _numWanted;
-	c._skip = _skip;
-	return c;
+        c._numWanted = _numWanted;
+        c._skip = _skip;
+        return c;
     }
 
     // ---- querty modifiers --------
 
-    /** Sorts this cursor's elements.
+    /**
+     * Sorts this cursor's elements.
      * @param orderBy the fields on which to sort
      * @return a cursor pointing to the first element of the sorted results
      * @throws RuntimeException if the iterator exists
@@ -91,8 +99,10 @@ public class DBCursor implements Iterator<DBObject> {
         return this;
     }
 
-    /** Informs the database of indexed fields of the collection in order to improve performance.
+    /**
+     * Informs the database of indexed fields of the collection in order to improve performance.
      * @param indexKeys an <code>DBObject</code> with index names as keys
+     * @return same DBCursort for chaining operations
      */
     public DBCursor hint( DBObject indexKeys ){
         if ( _it != null )
@@ -105,8 +115,10 @@ public class DBCursor implements Iterator<DBObject> {
         return this;
     }
 
-    /** Informs the database of an indexed field of the collection in order to improve performance.
+    /**
+     *  Informs the database of an indexed field of the collection in order to improve performance.
      * @param indexName the name of an index
+     * @return same DBCursort for chaining operations
      */
     public DBCursor hint( String indexName ){
         if ( _it != null )
@@ -116,7 +128,8 @@ public class DBCursor implements Iterator<DBObject> {
         return this;
     }
 
-    /** Returns an object containing basic information about the 
+    /**
+     * Returns an object containing basic information about the
      * exectution of the query that created this cursor
      * This creates a <code>DBObject</code> with the key/value pairs:
      * "cursor" : cursor type
@@ -131,7 +144,8 @@ public class DBCursor implements Iterator<DBObject> {
         return c.next();
     }
 
-    /** Limits the number of elements returned.
+    /**
+     * Limits the number of elements returned.
      * @param n the number of elements to return
      * @return a cursor pointing to the first element of the limited results
      * @throws RuntimeException if the cursor has started to be iterated through
@@ -144,7 +158,8 @@ public class DBCursor implements Iterator<DBObject> {
         return this;
     }
 
-    /** Discards a given number of elements at the beginning of the cursor.
+    /**
+     * Discards a given number of elements at the beginning of the cursor.
      * @param n the number of elements to skip
      * @return a cursor pointing to the new first element of the results
      * @throws RuntimeException if the cursor has started to be iterated through
@@ -176,7 +191,6 @@ public class DBCursor implements Iterator<DBObject> {
                     foo.put( "$explain" , true );
             }
 
-            final long start = System.currentTimeMillis();
             _it = _collection.find( foo , _keysWanted , _skip , -1 * _numWanted );
         }
 
@@ -246,7 +260,6 @@ public class DBCursor implements Iterator<DBObject> {
         o.put( Bytes.NO_REF_HACK , "z" );
     }
 
-    /** @unexpose */
     void _checkType( CursorType type ){
         if ( _cursorType == null ){
             _cursorType = type;
@@ -292,16 +305,18 @@ public class DBCursor implements Iterator<DBObject> {
         return _it.hasNext();
     }
 
-    /** Returns the number of objects through which the cursor has iterated.
+    /**
+     * Returns the number of objects through which the cursor has iterated.
      * @return the number of objects seen
      */
     public int numSeen(){
-	return _num;
+        return _num;
     }
 
     // ----- iterator api -----
 
-    /** Checks if there is another element.
+    /**
+     * Checks if there is another element.
      * @return if there is another element
      */
     public boolean hasNext(){
@@ -309,7 +324,8 @@ public class DBCursor implements Iterator<DBObject> {
         return _hasNext();
     }
 
-    /** Returns the element the cursor is at and moves the cursor ahead by one.
+    /**
+     * Returns the element the cursor is at and moves the cursor ahead by one.
      * @return the next element
      */
     public DBObject next(){
@@ -317,7 +333,8 @@ public class DBCursor implements Iterator<DBObject> {
         return _next();
     }
 
-    /** Returns the element the cursor is at.
+    /**
+     * Returns the element the cursor is at.
      * @return the next element
      */
     public DBObject curr(){
@@ -325,7 +342,8 @@ public class DBCursor implements Iterator<DBObject> {
         return _cur;
     }
 
-    /** Unimplemented.
+    /**
+     * Unimplemented.
      * @throws RuntimeException
      */
     public void remove(){
@@ -357,8 +375,9 @@ public class DBCursor implements Iterator<DBObject> {
         return toArray( Integer.MAX_VALUE );
     }
 
-    /** Converts this cursor to an array.  If there are more than a given number of elements in the resulting array, only return the first <tt>min</tt>.
-     * @return min the minimum size of the array to return
+    /**
+     * Converts this cursor to an array.  If there are more than a given number of elements in the resulting array, only return the first <tt>min</tt>.
+     * @param min the minimum size of the array to return
      * @return an array of elements
      */
     public List<DBObject> toArray( int min ){
@@ -368,7 +387,8 @@ public class DBCursor implements Iterator<DBObject> {
     }
 
 
-    /** Counts the number of elements in this cursor.
+    /**
+     * Counts the number of elements in this cursor.
      * @return the number of elements
      */
     public int count(){
@@ -386,16 +406,16 @@ public class DBCursor implements Iterator<DBObject> {
     final DBObject _query;
     final DBObject _keysWanted;
     
-    private DBObject _orderBy;
-    private String _hint;
+    private DBObject _orderBy = null;
+    private String _hint = null;
     private boolean _explain = false;
     private int _numWanted = 0;
     private int _skip = 0;
 
     // ----  result info ----
-    private Iterator<DBObject> _it;
+    private Iterator<DBObject> _it = null;
 
-    private CursorType _cursorType;
+    private CursorType _cursorType = null;
     private DBObject _cur = null;
     private int _num = 0;
 
