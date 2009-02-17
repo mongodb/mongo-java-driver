@@ -111,10 +111,6 @@ public class ByteEncoder extends Bytes {
             }
         };
 
-    public ByteEncoder( ByteBuffer buf ){
-        _buf = buf;
-        _buf.order( Bytes.ORDER );        
-    }
 
     // ----
     
