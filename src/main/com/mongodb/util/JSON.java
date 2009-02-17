@@ -5,7 +5,8 @@ package com.mongodb.util;
 import com.mongodb.ObjectId;
 import com.mongodb.DBObject;
 
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  *   Helper methods for JSON serialization and de-serialization
@@ -100,6 +101,19 @@ public class JSON {
             }
             
             buf.append( "}" );
+            return;
+        }
+
+        if (o instanceof Date) {
+            Date d = (Date) o;
+            Calendar cal = new GregorianCalendar();
+            cal.setTimeInMillis(d.getTime());
+            buf.append('"').append(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(d)).append('"');
+            return;
+        }
+
+        if (o instanceof Boolean) {
+            buf.append(o);
             return;
         }
 
