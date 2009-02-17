@@ -1,16 +1,13 @@
+h2. Change Log h2.
 
+2009-02-14 : add DBCollection.insert(DBObject[]) and DBCollection.insert(List<DBObject>) methods - doing a bulk insert
+can really boost performance.
 
-ISSUES
- X mark as partial
- - count
- - binary
- X reflection API
- - is DBBase.setReadOnly supposed to take a Boolean?
- - there's no way to create a capped collection, other than using a database command
- - DBApiLayer.getRootNamespaces() unimplemented on purpose?
+2009-02-13 : Make it clear that the license is Apache License 2.0
 
-Interesting stuff:
-        o.put( "$where", "eval( true )" ); isn't supported yet, but o.put( "$where", 5 ); isn't counted as a $where clause (because 5 isn't a string) so it is supported.
+2009-02-12 : remove "seen" to avoid memory overhead on running over large collections.  Downside is that this exposes
+a small bug in MongoDB if you happen to modify a document in a large collection while iterating, but that will soon
+be fixed.
 
 
 
