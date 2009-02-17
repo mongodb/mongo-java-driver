@@ -10,6 +10,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
+import java.util.SimpleTimeZone;
 
 /**
  *   Helper methods for JSON serialization and de-serialization
@@ -109,9 +111,9 @@ public class JSON {
 
         if (o instanceof Date) {
             Date d = (Date) o;
-            Calendar cal = new GregorianCalendar();
-            cal.setTimeInMillis(d.getTime());
-            buf.append('"').append(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(d)).append('"');
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
+            buf.append('"').append(format.format(d)).append('"');
             return;
         }
 
