@@ -105,7 +105,7 @@ public class DBPort {
             _sock.read( response );
         
         if ( response.position() < response.limit() )
-            throw new RuntimeException( "buffer not fully filled" );
+            throw new MongoInternalException( "buffer not fully filled" );
 
         return msgResponse;
     }

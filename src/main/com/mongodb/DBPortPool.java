@@ -57,7 +57,7 @@ class DBPortPool extends SimplePool<DBPort> {
 
     // ----
     
-    public static class NoMoreConnection extends RuntimeException {
+    public static class NoMoreConnection extends MongoInternalException {
 	NoMoreConnection(){
 	    super( "No more DB Connections" );
 	}
@@ -111,12 +111,13 @@ class DBPortPool extends SimplePool<DBPort> {
         return _addr.equals( t._addr );
     }
     
-    protected DBPort createNew(){
+    protected DBPort createNew()
+        throws MongoInternalException{
         try {
             return new DBPort( _addr , this );
         }
         catch ( IOException ioe ){
-            throw new RuntimeException( "can't create port to:" + _addr , ioe );
+            throw new MongoInternalException( "can't create port to:" + _addr , ioe );
         }
     }
 

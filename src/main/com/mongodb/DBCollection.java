@@ -303,10 +303,9 @@ public abstract class DBCollection {
         q.put( "_id" , id );
         return update( q , jo , true , false );
     }
-
+    
     // ---- DB COMMANDS ----
     /** Drops all indices from this collection
-     * @throws RuntimeException if an error occurred while dropping indices
      */
     public void dropIndexes()
         throws MongoException {
@@ -314,14 +313,13 @@ public abstract class DBCollection {
         if ( res.getInt( "ok" , 0 ) != 1 ){
             if ( res.getString( "errmsg" ).equals( "ns not found" ) )
                 return;
-            throw new RuntimeException( "error dropping indexes : " + res );
+            throw new MongoException( "error dropping indexes : " + res );
         }
-
+        
         resetIndexCache();
     }
     
     /** Drops (deletes) this collection
-     * @throws RuntimeException if an error occurred while dropping indices
      */
     public void drop()
         throws MongoException {
@@ -330,7 +328,7 @@ public abstract class DBCollection {
         if ( res.getInt( "ok" , 0 ) != 1 ){
             if ( res.getString( "errmsg" ).equals( "ns not found" ) )
                 return;
-            throw new RuntimeException( "error dropping : " + res );
+            throw new MongoException( "error dropping : " + res );
         }
     }
 
@@ -596,7 +594,7 @@ public abstract class DBCollection {
         if ( ! strict )
             return true;
 
-        throw new RuntimeException( "db is read only" );
+        throw new IllegalStateException( "db is read only" );
     }
 
     /** Calculates the hash code for this collection.
