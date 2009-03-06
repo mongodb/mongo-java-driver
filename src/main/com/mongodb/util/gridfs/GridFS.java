@@ -22,6 +22,7 @@ import com.mongodb.ObjectId;
 import com.mongodb.DBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBAddress;
+import com.mongodb.MongoException;
 
 import java.io.IOException;
 import java.io.File;
@@ -74,8 +75,9 @@ public class GridFS {
      * @param obj object to Save
      * @throws IOException on error reading the stream
      */
-    public void write(GridFSObject obj) throws IOException {
-
+    public void write(GridFSObject obj) 
+        throws IOException , MongoException {
+        
         _mongo.getCollection(_chunkCollectionName).ensureIndex(new BasicDBObject("files_id", 1).append("n", 1));
         _mongo.getCollection(_chunkCollectionName).ensureIndex(new BasicDBObject("n", 1));
 
@@ -98,7 +100,8 @@ public class GridFS {
      * @param filename filename of the object to retrieve
      * @return objec
      */
-    public GridFSObject read(String filename) {
+    public GridFSObject read(String filename)
+        throws MongoException {
         DBObject o = _mongo.getCollection(_metadataCollectionName).findOne(new BasicDBObject("filename", filename));
 
         if (o == null) {
@@ -114,7 +117,8 @@ public class GridFS {
      * @param id id of the object to retrieve
      * @return objec
      */
-    public GridFSObject read(ObjectId id) {
+    public GridFSObject read(ObjectId id)
+        throws MongoException {
 
         DBObject o = _mongo.getCollection(_metadataCollectionName).findOne(new BasicDBObject("_id", id));
 

@@ -45,7 +45,8 @@ public class DBRef {
         _id = id;
     }
 
-    private DBObject fetch() {
+    private DBObject fetch()
+        throws MongoException {
         if (_loadedPointedTo)
             return _pointedTo;
 

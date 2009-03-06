@@ -24,7 +24,8 @@ import com.mongodb.util.*;
 
 public class Stress1 {
 
-    public static void doStuff( DBCollection c, int count ) {
+    public static void doStuff( DBCollection c, int count ) 
+        throws MongoException {
         DBObject obj = new BasicDBObject();
         obj.put( "id", count );
         DBObject x = c.findOne( obj );
@@ -33,7 +34,7 @@ public class Stress1 {
     }
 
     public static void main(String[] args) 
-        throws UnknownHostException {
+        throws UnknownHostException , MongoException {
 
         Mongo m = new Mongo( new DBAddress( "127.0.0.1:27017/driver_test_framework" ) );
         DBCollection c = m.getCollection( "stress1" );

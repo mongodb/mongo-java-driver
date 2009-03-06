@@ -36,7 +36,7 @@ public abstract class DBBase {
      */
     public abstract DBCollection getCollectionFromFull( String fullNameSpace );
     protected abstract DBCollection doGetCollection( String name );
-    public abstract Set<String> getCollectionNames();
+    public abstract Set<String> getCollectionNames() throws MongoException ;
     
     /** Gets the address of this database.
      * @return the address
@@ -80,7 +80,8 @@ public abstract class DBBase {
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/Mongo+Commands">Mongo Commands</a>
      * @return the result of the command from the database
      */
-    public DBObject command( DBObject cmd ){
+    public DBObject command( DBObject cmd )
+        throws MongoException {
         return getCollection( "$cmd" ).findOne( cmd );
     }
 
@@ -89,13 +90,6 @@ public abstract class DBBase {
      */
     public String getName(){
 	return _name;
-    }
-
-    /** Returns a set of the names of collections in this database.
-     * @return the names of collections in this database
-     */
-    public Set<String> keySet( boolean includePrototype ){
-        return getCollectionNames();
     }
 
     /** Makes this database read-only

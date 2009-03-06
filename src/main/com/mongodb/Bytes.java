@@ -151,7 +151,7 @@ public class Bytes {
                     _warnUnsupported( flag.unsupported );
             }
             else {
-                throw new RuntimeException( "unrecognized flag: "+flags.charAt( i ) );
+                throw new IllegalArgumentException( "unrecognized flag: "+flags.charAt( i ) );
             }
         }
         return fint;
@@ -174,7 +174,7 @@ public class Bytes {
         }
 
         if( flags > 0 )
-            throw new RuntimeException( "some flags could not be recognized." );
+            throw new IllegalArgumentException( "some flags could not be recognized." );
 
         Arrays.sort( b );
         return new String( b, 0, count );

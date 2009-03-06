@@ -24,7 +24,7 @@ import com.mongodb.util.*;
 public class Dbs {
 
     public static void main(String[] args) 
-        throws UnknownHostException {
+        throws UnknownHostException , MongoException {
 
         Mongo m = new Mongo( new DBAddress( "127.0.0.1:27017/driver_test_framework" ) );
         DBCollection coll = m.getCollection( "dbs_1" );

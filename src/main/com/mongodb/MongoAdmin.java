@@ -53,7 +53,8 @@ public class MongoAdmin extends Mongo {
      *
      *   @return list of database names
      */
-    public List<String> getDatabaseNames() {
+    public List<String> getDatabaseNames()
+        throws MongoException {
         BasicDBObject cmd = new BasicDBObject();
         cmd.put("listDatabases", 1);
 
@@ -61,7 +62,7 @@ public class MongoAdmin extends Mongo {
         BasicDBObject res = (BasicDBObject) command(cmd);
 
         if (res.getInt("ok" , 0 ) != 1 ){
-            throw new RuntimeException( "error counting : " + res );
+            throw new MongoException( "error counting : " + res );
         }
 
         BasicDBList l = (BasicDBList) res.get("databases");
@@ -79,13 +80,14 @@ public class MongoAdmin extends Mongo {
      *   @param dbName name of database to get a connection to
      *   @return mongo database object
      */
-    public Mongo getDatabase(String dbName) {
+    public Mongo getDatabase(String dbName)
+        throws MongoException {
 
         try {
             DBAddress addr = new DBAddress(_usersDBAddress._host, _usersDBAddress._port, dbName);
             return new Mongo(addr);
         } catch (UnknownHostException e) {
-            throw new RuntimeException("Error : address is no longer valid", e);
+            throw new MongoException("Error : address is no longer valid", e);
         }
     }
 
@@ -94,7 +96,8 @@ public class MongoAdmin extends Mongo {
      *
      * @param dbName name of database to drop
      */
-    public void dropDatabase(String dbName){
+    public void dropDatabase(String dbName)
+        throws MongoException {
 
         Mongo m = getDatabase(dbName);
         m.dropDatabase();

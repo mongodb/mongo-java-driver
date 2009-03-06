@@ -51,7 +51,8 @@ public class ReflectionTest extends TestCase {
     }    
 
     @Test
-    public void test1(){
+    public void test1()
+        throws MongoException {
         DBCollection c = _db.getCollection( "persen.test1" );
         c.drop();
         c.setObjectClass( Person.class );

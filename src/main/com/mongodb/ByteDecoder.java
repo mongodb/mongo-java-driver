@@ -73,15 +73,14 @@ public class ByteDecoder extends Bytes {
 
     /** Returns this decoder to its starting state with a new <code>ByteBuffer</code> to decode.
      * @param buf new <code>ByteBuffer</code>
-     * @throws RuntimeException if the decoder is private or the bytes are stored in big-endian form
      */
     public void reset( ByteBuffer buf ){
         if ( _private )
-            throw new RuntimeException( "can't reset private ByteDecoder" );
+            throw new IllegalStateException( "can't reset private ByteDecoder" );
 
         _buf = buf;
         if ( _buf.order() != Bytes.ORDER )
-            throw new RuntimeException( "this is not correct" );
+            throw new IllegalArgumentException( "byte order of passed in buffer is not correct" );
     }
 
     void reset(){
@@ -107,7 +106,7 @@ public class ByteDecoder extends Bytes {
         }
         
         if ( _buf.position() - start != len )
-            throw new RuntimeException( "lengths don't match " + (_buf.position() - start) + " != " + len );
+            throw new MongoInternalException( "lengths don't match " + (_buf.position() - start) + " != " + len );
         
         return created;
     }
@@ -121,10 +120,10 @@ public class ByteDecoder extends Bytes {
                 return (DBObject)c.newInstance();
             }
             catch ( InstantiationException ie ){
-                throw new RuntimeException( "can't instantiate a : " + c , ie );
+                throw new MongoInternalException( "can't instantiate a : " + c , ie );
             }
             catch ( IllegalAccessException iae ){
-                throw new RuntimeException( "can't instantiate a : " + c , iae );
+                throw new MongoInternalException( "can't instantiate a : " + c , iae );
             }
         }
         return new BasicDBObject();
@@ -172,7 +171,7 @@ public class ByteDecoder extends Bytes {
                 o.put( name , new String( _namebuf , 0 , size , "UTF-8" ) );
             }
             catch ( java.io.UnsupportedEncodingException uee ){
-                throw new RuntimeException( "impossible" , uee );
+                throw new MongoInternalException( "impossible" , uee );
             }
             _buf.get(); // skip over length
             break;
@@ -204,7 +203,7 @@ public class ByteDecoder extends Bytes {
             break;
             
         case CODE:
-            throw new RuntimeException( "can't handle CODE yet" );
+            throw new UnsupportedOperationException( "can't handle CODE yet" );
 
         case ARRAY:
             created = new BasicDBList();
@@ -238,7 +237,7 @@ public class ByteDecoder extends Bytes {
             break;
 
         default:
-            throw new RuntimeException( "can't handle : " + type );
+            throw new UnsupportedOperationException( "can't handle : " + type );
         }
         
         return _buf.position() - start;
@@ -257,7 +256,7 @@ public class ByteDecoder extends Bytes {
             return data;
         }
      
-        throw new RuntimeException( "can't handle binary type : " + bType );
+        throw new UnsupportedOperationException( "can't handle binary type : " + bType );
     }
 
     private String readCStr(){

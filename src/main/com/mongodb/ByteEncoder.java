@@ -166,7 +166,6 @@ public class ByteEncoder extends Bytes {
      * This is for the higher level api calls
      * @param o the object to encode
      * @return the number of characters in the encoding
-     * @throws RuntimeException if <code>o</code> is too large
      */
     public int putObject( DBObject o ){
         try {
@@ -174,7 +173,7 @@ public class ByteEncoder extends Bytes {
         }
         catch ( BufferOverflowException bof ){
             reset();
-            throw new RuntimeException( "tried to save too large of an object.  max size : " + ( _buf.capacity() / 2  ) );
+            throw new IllegalArgumentException( "tried to save too large of an object.  max size : " + ( _buf.capacity() / 2  ) );
         }
     }
 
@@ -188,7 +187,7 @@ public class ByteEncoder extends Bytes {
         if ( DEBUG ) System.out.println( "putObject : " + name + " [" + o.getClass() + "]" + " # keys " + o.keySet().size() );
         
         if ( _flipped )
-            throw new RuntimeException( "already flipped" );
+            throw new IllegalStateException( "already flipped" );
         final int start = _buf.position();
         
         byte myType = OBJECT;
@@ -286,7 +285,7 @@ public class ByteEncoder extends Bytes {
             putUndefined(name);
         }
         else 
-            throw new RuntimeException( "can't serialize " + val.getClass() );
+            throw new IllegalArgumentException( "can't serialize " + val.getClass() );
         
     }
 

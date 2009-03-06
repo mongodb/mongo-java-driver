@@ -89,11 +89,10 @@ public class DBCursor implements Iterator<DBObject> {
      * Sorts this cursor's elements.
      * @param orderBy the fields on which to sort
      * @return a cursor pointing to the first element of the sorted results
-     * @throws RuntimeException if the iterator exists
      */
     public DBCursor sort( DBObject orderBy ){
         if ( _it != null )
-            throw new RuntimeException( "can't sort after executing query" );
+            throw new IllegalStateException( "can't sort after executing query" );
 
         _orderBy = orderBy;
         return this;
@@ -106,7 +105,7 @@ public class DBCursor implements Iterator<DBObject> {
      */
     public DBCursor hint( DBObject indexKeys ){
         if ( _it != null )
-            throw new RuntimeException( "can't hint after executing query" );
+            throw new IllegalStateException( "can't hint after executing query" );
         
         if ( indexKeys == null )
             _hint = null;
@@ -122,7 +121,7 @@ public class DBCursor implements Iterator<DBObject> {
      */
     public DBCursor hint( String indexName ){
         if ( _it != null )
-            throw new RuntimeException( "can't hint after executing query" );
+            throw new IllegalStateException( "can't hint after executing query" );
 
         _hint = indexName;
         return this;
@@ -148,11 +147,10 @@ public class DBCursor implements Iterator<DBObject> {
      * Limits the number of elements returned.
      * @param n the number of elements to return
      * @return a cursor pointing to the first element of the limited results
-     * @throws RuntimeException if the cursor has started to be iterated through
      */
     public DBCursor limit( int n ){
         if ( _it != null )
-            throw new RuntimeException( "can't set limit after executing query" );
+            throw new IllegalStateException( "can't set limit after executing query" );
 
         _numWanted = n;
         return this;
@@ -166,14 +164,15 @@ public class DBCursor implements Iterator<DBObject> {
      */
     public DBCursor skip( int n ){
         if ( _it != null )
-            throw new RuntimeException( "can't set skip after executing query" );
+            throw new IllegalStateException( "can't set skip after executing query" );
         _skip = n;
         return this;
     }
 
     // ----  internal stuff ------
 
-    private void _check(){
+    private void _check()
+        throws MongoException {
         if ( _it != null )
             return;
         
@@ -269,10 +268,11 @@ public class DBCursor implements Iterator<DBObject> {
         if ( type == _cursorType )
             return;
 
-        throw new RuntimeException( "can't switch cursor access methods" );
+        throw new IllegalArgumentException( "can't switch cursor access methods" );
     }
 
-    private DBObject _next(){
+    private DBObject _next()
+        throws MongoException {
         if ( _cursorType == null )
             _checkType( CursorType.ITERATOR );
 
@@ -285,7 +285,7 @@ public class DBCursor implements Iterator<DBObject> {
 
         if ( _keysWanted != null && _keysWanted.keySet().size() > 0 ){
             _cur.markAsPartialObject();
-            throw new RuntimeException( "need to figure out partial" );
+            throw new UnsupportedOperationException( "need to figure out partial" );
         }
 
         if ( _cursorType == CursorType.ARRAY ){
@@ -296,7 +296,8 @@ public class DBCursor implements Iterator<DBObject> {
         return _cur;
     }
 
-    private boolean _hasNext(){
+    private boolean _hasNext()
+        throws MongoException {
         _check();
 
         if ( _numWanted > 0 && _num >= _numWanted )
@@ -321,16 +322,26 @@ public class DBCursor implements Iterator<DBObject> {
      */
     public boolean hasNext(){
         _checkType( CursorType.ITERATOR );
-        return _hasNext();
+        try {
+            return _hasNext();
+        }
+        catch ( MongoException e ){
+            throw new MongoInternalException( "couldn't get next element" , e );
+        }
     }
-
+    
     /**
      * Returns the element the cursor is at and moves the cursor ahead by one.
      * @return the next element
      */
     public DBObject next(){
         _checkType( CursorType.ITERATOR );
-        return _next();
+        try {
+            return _next();
+        }
+        catch ( MongoException e ){
+            throw new MongoInternalException( "couldn't get next element" , e );
+        }
     }
 
     /**
@@ -344,16 +355,16 @@ public class DBCursor implements Iterator<DBObject> {
 
     /**
      * Unimplemented.
-     * @throws RuntimeException
      */
     public void remove(){
-        throw new RuntimeException( "no" );
+        throw new UnsupportedOperationException( "can't remove from a cursor" );
     }
 
 
     //  ---- array api  -----
 
-    void _fill( int n ){
+    void _fill( int n )
+        throws MongoException {
         _checkType( CursorType.ARRAY );
         while ( n >= _all.size() && _hasNext() )
             _next();
@@ -362,7 +373,8 @@ public class DBCursor implements Iterator<DBObject> {
     /** Finds the number of elements in the array.
      * @return the number of elements in the array
      */
-    public int length(){
+    public int length()
+        throws MongoException {
         _checkType( CursorType.ARRAY );
         _fill( Integer.MAX_VALUE );
         return _all.size();
@@ -371,7 +383,8 @@ public class DBCursor implements Iterator<DBObject> {
     /** Converts this cursor to an array.
      * @return an array of elements
      */
-    public List<DBObject> toArray(){
+    public List<DBObject> toArray()
+        throws MongoException {
         return toArray( Integer.MAX_VALUE );
     }
 
@@ -380,7 +393,8 @@ public class DBCursor implements Iterator<DBObject> {
      * @param min the minimum size of the array to return
      * @return an array of elements
      */
-    public List<DBObject> toArray( int min ){
+    public List<DBObject> toArray( int min )
+        throws MongoException {
         _checkType( CursorType.ARRAY );
         _fill( min );
         return Collections.unmodifiableList( _all );
@@ -393,11 +407,11 @@ public class DBCursor implements Iterator<DBObject> {
      */
     public int count(){
         if ( _collection == null )
-            throw new RuntimeException( "why is _collection null" );
+            throw new IllegalArgumentException( "why is _collection null" );
         if ( _collection._base == null )
-            throw new RuntimeException( "why is _collection._base null" );
+            throw new IllegalArgumentException( "why is _collection._base null" );
              
-        throw new RuntimeException( "count isn't implemnented yet" );
+        throw new UnsupportedOperationException( "count isn't implemnented yet" );
     }
 
 

@@ -32,7 +32,8 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
-    public void test1(){
+    public void test1()
+        throws MongoException {
         DBCollection c = _db.getCollection( "test1" );;
         c.drop();
 
@@ -50,7 +51,8 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
-    public void test2(){
+    public void test2()
+        throws MongoException {
         DBCollection c = _db.getCollection( "test2" );;
         c.drop();
         
@@ -76,7 +78,8 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
-    public void testWhere1(){
+    public void testWhere1()
+        throws MongoException {
         DBCollection c = _db.getCollection( "testWhere1" );
         c.drop();
         assertNull( c.findOne() );
@@ -89,7 +92,8 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
-    public void testCount(){
+    public void testCount()
+        throws MongoException {
         DBCollection c = _db.getCollection("testCount");
 
         c.drop();
@@ -104,7 +108,8 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
-    public void testIndex(){
+    public void testIndex()
+        throws MongoException {
         DBCollection c = _db.getCollection("testIndex");
 
         c.drop();
@@ -125,7 +130,8 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
-    public void testBinary(){
+    public void testBinary()
+        throws MongoException {
         DBCollection c = _db.getCollection( "testBinary" );
         c.save( BasicDBObjectBuilder.start().add( "a" , "eliot".getBytes() ).get() );
         

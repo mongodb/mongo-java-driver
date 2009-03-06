@@ -86,14 +86,14 @@ public abstract class DBCollection {
      * @param numToReturn limit the results to this number
      * @return the objects, if found
      */
-    abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn );
+    abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn ) throws MongoException ;
 
     /** Ensures an index on this collection (that is, the index will be created if it does not exist).
      * ensureIndex is optimized and is inexpensive if the index already exists.
      * @param keys fields to use for index
      * @param name an identifier for the index
      */
-    public abstract void ensureIndex( DBObject keys , String name );
+    public abstract void ensureIndex( DBObject keys , String name ) throws MongoException ;
 
     // ------
 
@@ -103,7 +103,8 @@ public abstract class DBCollection {
      * @param obj any valid object
      * @return the object, if found, otherwise <code>null</code>
      */
-    public final DBObject findOne( Object obj ){
+    public final DBObject findOne( Object obj ) 
+        throws MongoException {
         ensureIDIndex();
 
         Iterator<DBObject> iterator =  find(new BasicDBObject("_id", obj), null, 0,1);
@@ -114,7 +115,8 @@ public abstract class DBCollection {
     /** Ensures an index on the id field, if one does not already exist.
      * @param key an object with an _id field.
      */
-    public void checkForIDIndex( DBObject key ){
+    public void checkForIDIndex( DBObject key )
+        throws MongoException {
         if ( _checkedIdIndex ) // we already created it, so who cares
             return;
 
@@ -129,7 +131,8 @@ public abstract class DBCollection {
 
     /** Creates an index on the id field, if one does not already exist.
      */
-    public void ensureIDIndex(){
+    public void ensureIDIndex()
+        throws MongoException {
         if ( _checkedIdIndex )
             return;
 
@@ -140,14 +143,16 @@ public abstract class DBCollection {
     /** Creates an index on a set of fields, if one does not already exist.
      * @param keys an object with a key set of the fields desired for the index
      */
-    public final void ensureIndex( final DBObject keys ){
+    public final void ensureIndex( final DBObject keys )
+        throws MongoException {
         ensureIndex( keys , false );
     }
 
     /** Forces creation of an index on a set of fields, if one does not already exist.
      * @param keys an object with a key set of the fields desired for the index
      */
-    public final void createIndex( final DBObject keys ){
+    public final void createIndex( final DBObject keys )
+        throws MongoException {
         ensureIndex( keys , true );
     }
 
@@ -155,7 +160,8 @@ public abstract class DBCollection {
      * @param keys an object with a key set of the fields desired for the index
      * @param force if index creation should be forced, even if it is unnecessary
      */
-    public final void ensureIndex( final DBObject keys , final boolean force ){
+    public final void ensureIndex( final DBObject keys , final boolean force )
+        throws MongoException {
         if ( checkReadOnly( false ) ) return;
 
         final String name = genIndexName( keys );
@@ -225,7 +231,8 @@ public abstract class DBCollection {
     /** Returns a single object from this collection.
      * @return the object found, or <code>null</code> if the collection is empty
      */
-    public final DBObject findOne(){
+    public final DBObject findOne()
+        throws MongoException {
         return findOne( new BasicDBObject() );
     }
 
@@ -233,7 +240,8 @@ public abstract class DBCollection {
      * @param o the query object
      * @return the object found, or <code>null</code> if no such object exists
      */
-    public final DBObject findOne( DBObject o ){
+    public final DBObject findOne( DBObject o )
+        throws MongoException {
         Iterator<DBObject> i = find( o , null , 0 , 1 );
         if ( i == null || ! i.hasNext() )
             return null;
@@ -299,7 +307,8 @@ public abstract class DBCollection {
     /** Drops all indices from this collection
      * @throws RuntimeException if an error occurred while dropping indices
      */
-    public void dropIndexes(){
+    public void dropIndexes()
+        throws MongoException {
         BasicDBObject res = (BasicDBObject)_base.command( BasicDBObjectBuilder.start().add( "deleteIndexes" , getName() ).add( "index" , "*" ).get() );
         if ( res.getInt( "ok" , 0 ) != 1 ){
             if ( res.getString( "errmsg" ).equals( "ns not found" ) )
@@ -313,7 +322,8 @@ public abstract class DBCollection {
     /** Drops (deletes) this collection
      * @throws RuntimeException if an error occurred while dropping indices
      */
-    public void drop(){
+    public void drop()
+        throws MongoException {
         dropIndexes();
         BasicDBObject res = (BasicDBObject)_base.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
         if ( res.getInt( "ok" , 0 ) != 1 ){
@@ -327,7 +337,8 @@ public abstract class DBCollection {
      *  Returns the number of documents in the collection
      *  @return number of documents that match query
      */
-    public long getCount() {
+    public long getCount()
+        throws MongoException {
         return getCount(new BasicDBObject());
     }
 
@@ -338,7 +349,8 @@ public abstract class DBCollection {
      *  @param query query to select documents to count
      *  @return number of documents that match query
      */
-    public long getCount(DBObject query){
+    public long getCount(DBObject query)
+        throws MongoException {
 
         BasicDBObject cmd = new BasicDBObject();
         cmd.put("count", getName());
@@ -351,7 +363,7 @@ public abstract class DBCollection {
                 // for now, return 0 - lets pretend it does exist
                 return 0;
             }
-            throw new RuntimeException( "error counting : " + res );
+            throw new MongoException( "error counting : " + res );
         }
 
         return res.getLong("n");

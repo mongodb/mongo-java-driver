@@ -80,12 +80,13 @@ public abstract class DBApiLayer extends DBBase {
      * @param passwd password of user for this database
      * @return true if authenticated, false otherwise
      */
-    public boolean authenticate(String username, String passwd) {
+    public boolean authenticate(String username, String passwd)
+        throws MongoException {
 
         BasicDBObject res = (BasicDBObject) command(new BasicDBObject("getnonce", 1));
 
         if (res.getInt("ok") != 1) {
-            throw new RuntimeException("Error - unable to get nonce value for authentication.");
+            throw new MongoException("Error - unable to get nonce value for authentication.");
         }
 
         String nonce = res.getString("nonce");
@@ -117,7 +118,8 @@ public abstract class DBApiLayer extends DBBase {
      *
      *  @return DBObject with error and status information
      */
-    public DBObject getLastError() {
+    public DBObject getLastError()
+        throws MongoException {
         return command(new BasicDBObject("getlasterror", 1));
     }
 
@@ -135,7 +137,8 @@ public abstract class DBApiLayer extends DBBase {
      * 
      * @return DBObject with error and status information
      */
-    public DBObject getPreviousError() {
+    public DBObject getPreviousError()
+        throws MongoException {
         return command(new BasicDBObject("getpreverror", 1));
     }
 
@@ -143,21 +146,24 @@ public abstract class DBApiLayer extends DBBase {
      *  Resets the error memory for this database.  Used to clear all errors such that getPreviousError()
      *  will return no error.
      */
-    public void resetError() {
+    public void resetError()
+        throws MongoException {
         command(new BasicDBObject("reseterror", 1));
     }
 
     /**
      *  For testing purposes only - this method forces an error to help test error handling
      */
-    public void forceError() {
+    public void forceError() 
+        throws MongoException {
         command(new BasicDBObject("forceerror", 1));
     }
 
     /**
      *  Drops this database.  Removes all data on disk.  Use with caution.
      */
-    public void dropDatabase(){
+    public void dropDatabase()
+        throws MongoException {
 
         BasicDBObject res = (BasicDBObject) command(new BasicDBObject("dropDatabase", 1));
 
@@ -197,7 +203,8 @@ public abstract class DBApiLayer extends DBBase {
     /** Returns a set of the names of collections in this database.
      * @return the names of collections in this database
      */
-    public Set<String> getCollectionNames() {
+    public Set<String> getCollectionNames()
+        throws MongoException {
 
         DBCollection namespaces = getCollection("system.namespaces");
         if (namespaces == null)
