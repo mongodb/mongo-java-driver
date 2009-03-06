@@ -25,7 +25,7 @@ import com.mongodb.util.*;
 public class Find1 {
 
     public static void main(String[] args) 
-        throws UnknownHostException {
+        throws Exception {
 
         Mongo m = new Mongo( new DBAddress( "127.0.0.1:27017/driver_test_framework" ) );
         DBObject foo = new BasicDBObject();

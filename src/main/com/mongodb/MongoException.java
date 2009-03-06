@@ -29,13 +29,19 @@ public class MongoException extends Exception {
     }
 
     static Throwable _massage( Throwable t ){
-        if ( t instanceof MongoNetworkException )
-            return ((MongoNetworkException)t)._ioe;
+        if ( t instanceof Network )
+            return ((Network)t)._ioe;
         return t;
     }
 
-    static class MongoNetworkException extends Exception {
-        MongoNetworkException( java.io.IOException ioe ){
+    static class Network extends MongoException {
+
+        Network( String msg , java.io.IOException ioe ){
+            super( msg , ioe );
+            _ioe = ioe;
+        }
+
+        Network( java.io.IOException ioe ){
             super( ioe.toString() , ioe );
             _ioe = ioe;
         }

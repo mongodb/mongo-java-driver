@@ -25,7 +25,7 @@ public class MongoInternalException extends RuntimeException {
     }
 
     public MongoInternalException( String msg , Throwable t ){
-        super( msg , t );
+        super( msg , MongoException._massage( t ) );
     }
 
 }

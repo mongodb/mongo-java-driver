@@ -29,7 +29,8 @@ public class DBTCP extends DBMessageLayer {
     static Logger _logger = Logger.getLogger( "DBTCP" );
     static Logger _createLogger = Logger.getLogger( _logger.getName() + ".connect" );
     
-    public DBTCP( DBAddress addr ){
+    public DBTCP( DBAddress addr )
+        throws MongoException {
         super( _checkAddress( addr )._name );
 
         _createLogger.info( addr.toString() );
@@ -46,7 +47,8 @@ public class DBTCP extends DBMessageLayer {
         }
     }
     
-    public DBTCP( List<DBAddress> all ){
+    public DBTCP( List<DBAddress> all )
+        throws MongoException {
         super( _checkAddress( all )._name );
 
         _validatePairs( all );
@@ -93,7 +95,8 @@ public class DBTCP extends DBMessageLayer {
         _threadPort.get().requestEnsureConnection();
     }
 
-    protected void say( int op , ByteBuffer buf ){
+    protected void say( int op , ByteBuffer buf )
+        throws MongoException {
         MyPort mp = _threadPort.get();
         DBPort port = mp.get( true );
                 
@@ -101,18 +104,20 @@ public class DBTCP extends DBMessageLayer {
             port.say( new DBMessage( op , buf ) );
             mp.done( port );
         }
-        catch ( Exception ioe ){
+        catch ( IOException ioe ){
             mp.error( ioe );
             _error();
-            throw new RuntimeException( "can't say something" , ioe );
+            throw new MongoException.Network( "can't say something" , ioe );
         }
     }
     
-    protected int call( int op , ByteBuffer out , ByteBuffer in ){
+    protected int call( int op , ByteBuffer out , ByteBuffer in )
+        throws MongoException {
         return _call( op , out , in , 2 );
     }
     
-    private int _call( int op , ByteBuffer out , ByteBuffer in , int retries ){
+    private int _call( int op , ByteBuffer out , ByteBuffer in , int retries )
+        throws MongoException {
         MyPort mp = _threadPort.get();
         DBPort port = mp.get( false );
         
@@ -127,7 +132,7 @@ public class DBTCP extends DBMessageLayer {
                 if ( "not master".equals( err ) ){
                     _pickCurrent();
                     if ( retries <= 0 )
-                        throw new RuntimeException( "not talking to master and retries used up" );
+                        throw new MongoException( "not talking to master and retries used up" );
                     in.position( 0 );
                     
                     return _call( op , out , in , retries -1 );
@@ -136,13 +141,13 @@ public class DBTCP extends DBMessageLayer {
 
             return b.dataLen();
         }
-        catch ( Exception ioe ){
+        catch ( IOException ioe ){
             mp.error( ioe );
             if ( _error() && retries > 0 ){
                 in.position( 0 );
                 return _call( op , out , in , retries - 1 );
             }
-            throw new RuntimeException( "can't call something" , ioe );
+            throw new MongoException.Network( "can't call something" , ioe );
         }
     }
     
@@ -154,7 +159,8 @@ public class DBTCP extends DBMessageLayer {
         return _curAddress.toString();
     }
 
-    boolean _error(){
+    boolean _error()
+        throws MongoException {
         if ( _allHosts != null )
             _pickCurrent();
         return true;
@@ -224,7 +230,8 @@ public class DBTCP extends DBMessageLayer {
         boolean _inRequest;
     }
 
-    private void _pickInitial(){
+    private void _pickInitial()
+        throws MongoException {
         assert( _curAddress == null );
         
         // we need to just get a server to query for ismaster
@@ -235,17 +242,17 @@ public class DBTCP extends DBMessageLayer {
             DBCollection collection = getCollection( "$cmd" );
             Iterator<DBObject> i = collection.find( _isMaster , null , 0 , 1 );
             if ( i == null || ! i.hasNext() )
-                throw new RuntimeException( "no result for ismaster query?" );
+                throw new MongoException( "no result for ismaster query?" );
             DBObject res = i.next();
             if ( i.hasNext() )
-                throw new RuntimeException( "what's going on" );
+                throw new MongoException( "what's going on" );
             
             int ismaster = ((Number)res.get( "ismaster" )).intValue();
             if ( 1 == ismaster )
                 return;
             
             if ( res.get( "remote" ) == null )
-                throw new RuntimeException( "remote not sent back!" );
+                throw new MongoException( "remote not sent back!" );
             
             String remote = res.get( "remote" ).toString();
             synchronized ( _allHosts ){
@@ -263,9 +270,10 @@ public class DBTCP extends DBMessageLayer {
         }
     }
     
-    private void _pickCurrent(){
+    private void _pickCurrent()
+        throws MongoException {
         if ( _allHosts == null )
-            throw new RuntimeException( "got master/slave issue but not in master/slave mode on the client side" );
+            throw new MongoException( "got master/slave issue but not in master/slave mode on the client side" );
         
         synchronized ( _allHosts ){
             Collections.shuffle( _allHosts );
@@ -282,7 +290,7 @@ public class DBTCP extends DBMessageLayer {
             }
         }
         
-        throw new RuntimeException( "couldn't find a new host to swtich too" );
+        throw new MongoException( "couldn't find a new host to swtich too" );
     }
 
     private boolean _set( DBAddress addr ){

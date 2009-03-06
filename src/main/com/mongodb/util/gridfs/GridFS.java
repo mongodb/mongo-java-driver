@@ -145,7 +145,8 @@ public class GridFS {
      *
      * @param obj GridFSObject to save
      */
-    protected void saveMetadata(GridFSObject obj) {
+    protected void saveMetadata(GridFSObject obj) 
+        throws MongoException {
         _mongo.getCollection(_metadataCollectionName).insert(obj.getDBObject());
     }
 
@@ -155,7 +156,8 @@ public class GridFS {
      *
      * @param chunk chunk to save
      */
-    protected void saveChunk(GridFSChunk chunk) {
+    protected void saveChunk(GridFSChunk chunk) 
+        throws MongoException {
         _mongo.getCollection(_chunkCollectionName).insert(chunk.getDBObject());
     }
 

@@ -30,19 +30,23 @@ public class MongoAdmin extends Mongo {
 
     protected final DBAddress _usersDBAddress;
 
-    public MongoAdmin() throws UnknownHostException {
+    public MongoAdmin() 
+        throws UnknownHostException , MongoException {
         this("127.0.0.1");
     }
 
-    public MongoAdmin(String host) throws UnknownHostException {
+    public MongoAdmin(String host) 
+        throws UnknownHostException , MongoException {
         this(host, 27017);
     }
-
-    public MongoAdmin(String host, int port) throws UnknownHostException {
+    
+    public MongoAdmin(String host, int port) 
+        throws UnknownHostException , MongoException {
         this(new DBAddress(host, port, DB_NAME));
     }
 
-    public MongoAdmin(DBAddress addr) throws UnknownHostException {
+    public MongoAdmin(DBAddress addr) 
+        throws UnknownHostException , MongoException {
         super(addr);
 
         _usersDBAddress = addr;

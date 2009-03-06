@@ -41,7 +41,7 @@ public abstract class DBCollection {
      * @param doc object to save
      * @return the new database object
      */
-    public abstract DBObject insert(DBObject doc);
+    public abstract DBObject insert(DBObject doc) throws MongoException;
 
     /**
      * Saves an array of documents to the database.
@@ -49,7 +49,7 @@ public abstract class DBCollection {
      * @param arr  array of documents to save
      * @return the new database object
      */
-    public abstract DBObject[] insert(DBObject[] arr);
+    public abstract DBObject[] insert(DBObject[] arr) throws MongoException;
 
     /**
      * Saves an array of documents to the database.
@@ -57,7 +57,7 @@ public abstract class DBCollection {
      * @param list  list of documents to save
      * @return the new database object
      */
-    public abstract List<DBObject> insert(List<DBObject> list);
+    public abstract List<DBObject> insert(List<DBObject> list) throws MongoException;
 
     /**
      * Performs an update operation.
@@ -67,7 +67,7 @@ public abstract class DBCollection {
      * @param apply if an _id field should be added to the new object
      * See www.10gen.com/wiki/db.update
      */
-    public abstract DBObject update( DBObject q , DBObject o , boolean upsert , boolean apply );
+    public abstract DBObject update( DBObject q , DBObject o , boolean upsert , boolean apply ) throws MongoException ;
 
     /** Adds any necessary fields to a given object before saving it to the collection.
      * @param o object to which to add the fields
@@ -77,7 +77,7 @@ public abstract class DBCollection {
     /** Removes an object from the database collection.
      * @return -1
      */
-    public abstract int remove( DBObject o );
+    public abstract int remove( DBObject o ) throws MongoException ;
 
     /** Finds an object.
      * @param ref query used to search
@@ -278,7 +278,8 @@ public abstract class DBCollection {
      * @param jo the <code>DBObject</code> to save
      * @return <code>jo</code> with <code>_id</code> field added, if needed
      */
-    public final DBObject save( DBObject jo ){
+    public final DBObject save( DBObject jo )
+        throws MongoException {
         if ( checkReadOnly( true ) ) 
             return jo;
 
@@ -406,7 +407,7 @@ public abstract class DBCollection {
         if ( o == null ){
             if ( canBeNull )
                 return null;
-            throw new NullPointerException( "can't be null" );
+            throw new IllegalArgumentException( "can't be null" );
         }
 
         if ( o.isPartialObject() && ! query )

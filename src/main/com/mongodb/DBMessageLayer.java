@@ -29,27 +29,33 @@ public abstract class DBMessageLayer extends DBApiLayer {
         super( root );
     }
 
-    protected void doInsert( ByteBuffer buf ){
+    protected void doInsert( ByteBuffer buf )
+        throws MongoException {
         say( 2002 , buf );
     }
-    protected  void doDelete( ByteBuffer buf ){
+    protected  void doDelete( ByteBuffer buf ) 
+        throws MongoException {
         say( 2006 , buf );
     }
-    protected void doUpdate( ByteBuffer buf ){
+    protected void doUpdate( ByteBuffer buf )
+        throws MongoException {
         say( 2001 , buf );
     }
-    protected void doKillCursors( ByteBuffer buf ){
+    protected void doKillCursors( ByteBuffer buf )
+        throws MongoException {
         say( 2007 , buf );
     }
     
-    protected int doQuery( ByteBuffer out , ByteBuffer in ){
+    protected int doQuery( ByteBuffer out , ByteBuffer in )
+        throws MongoException {
         return call( 2004 , out , in );
     }
-    protected int doGetMore( ByteBuffer out , ByteBuffer in ){
+    protected int doGetMore( ByteBuffer out , ByteBuffer in )
+        throws MongoException {
         return call( 2005 , out , in );
     }
     
-    protected abstract void say( int op , ByteBuffer buf );
-    protected abstract int call( int op , ByteBuffer out , ByteBuffer in );
+    protected abstract void say( int op , ByteBuffer buf ) throws MongoException;
+    protected abstract int call( int op , ByteBuffer out , ByteBuffer in ) throws MongoException;
 
 }

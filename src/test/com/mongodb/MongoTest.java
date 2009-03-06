@@ -29,7 +29,7 @@ import com.mongodb.util.*;
 public class MongoTest extends TestCase {
     
     public MongoTest()
-        throws IOException {
+        throws IOException , MongoException {
         _db = new Mongo( "127.0.0.1" , "mongotest" );        
     }
     

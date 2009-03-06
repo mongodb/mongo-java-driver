@@ -25,8 +25,9 @@ import org.testng.annotations.Test;
 import com.mongodb.util.*;
 
 public class ByteTest extends TestCase {
+
     public ByteTest()
-        throws IOException {
+        throws IOException , MongoException {
         super();
         _db = new Mongo( "127.0.0.1" , "bytetest" );
     }
@@ -413,7 +414,7 @@ public class ByteTest extends TestCase {
     final DBBase _db;
 
     public static void main( String args[] )
-        throws IOException {
+        throws Exception {
         (new ByteTest()).runConsole();
 
     }

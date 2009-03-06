@@ -39,7 +39,8 @@ public class Mongo extends DBTCP {
      *  @param dbname name of database to connect to
      *  @throws UnknownHostException if the database host cannot be resolved
      */
-    public Mongo(String dbname) throws UnknownHostException {
+    public Mongo(String dbname) 
+        throws UnknownHostException , MongoException {
         super(new DBAddress("127.0.0.1", dbname));
     }
 
@@ -50,7 +51,7 @@ public class Mongo extends DBTCP {
      * @throws UnknownHostException if the database host cannot be resolved
      */
     public Mongo( String host , String dbName )
-        throws UnknownHostException {
+        throws UnknownHostException , MongoException {
         super( new DBAddress( host , dbName ) );
     }
 
@@ -62,7 +63,7 @@ public class Mongo extends DBTCP {
      * @throws UnknownHostException if the database host cannot be resolved
      */
     public Mongo( String host , int port , String dbName )
-        throws UnknownHostException {
+        throws UnknownHostException , MongoException {
         super( new DBAddress( host , port , dbName ) );
     }
 
@@ -71,7 +72,8 @@ public class Mongo extends DBTCP {
      * @see com.mongodb.DBAddress
      * @param addr the database address
      */
-    public Mongo( DBAddress addr ){
+    public Mongo( DBAddress addr )
+        throws MongoException {
         super( addr );
     }
 }

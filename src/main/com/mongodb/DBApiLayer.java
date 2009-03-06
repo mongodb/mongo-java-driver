@@ -41,12 +41,12 @@ public abstract class DBApiLayer extends DBBase {
         _root = root;
     }
 
-    protected abstract void doInsert( ByteBuffer buf );
-    protected abstract void doDelete( ByteBuffer buf );
-    protected abstract void doUpdate( ByteBuffer buf );
-    protected abstract void doKillCursors( ByteBuffer buf );
-    protected abstract int doQuery( ByteBuffer out , ByteBuffer in );
-    protected abstract int doGetMore( ByteBuffer out , ByteBuffer in );
+    protected abstract void doInsert( ByteBuffer buf ) throws MongoException;
+    protected abstract void doDelete( ByteBuffer buf ) throws MongoException;
+    protected abstract void doUpdate( ByteBuffer buf ) throws MongoException;
+    protected abstract void doKillCursors( ByteBuffer buf ) throws MongoException;
+    protected abstract int doQuery( ByteBuffer out , ByteBuffer in ) throws MongoException;
+    protected abstract int doGetMore( ByteBuffer out , ByteBuffer in ) throws MongoException;
 
     public abstract String debugString();
 
@@ -248,29 +248,34 @@ public abstract class DBApiLayer extends DBBase {
             o.put( "_ns" , _removeRoot( _fullNameSpace ) );
         }
         
-        public DBObject insert( DBObject o ){
+        public DBObject insert( DBObject o )
+            throws MongoException {
             DBObject[] arr = new DBObject[1];
             arr[0] = o;
             return insert(arr)[0];
         }
 
-        public DBObject[] insert(DBObject[] arr){
+        public DBObject[] insert(DBObject[] arr)
+            throws MongoException {
             return insert(arr, true);
         }
 
-        public List<DBObject> insert(List<DBObject> list){
+        public List<DBObject> insert(List<DBObject> list)
+            throws MongoException {
             DBObject[] arr = insert(list.toArray(new DBObject[list.size()]) , true);
 
             return Arrays.asList(arr);
         }
 
-        protected DBObject insert(DBObject obj, boolean shouldApply ){
+        protected DBObject insert(DBObject obj, boolean shouldApply )
+            throws MongoException {
             DBObject[] arr = new DBObject[1];
             arr[0] = obj;
             return insert(arr, shouldApply)[0];
         }
 
-        protected DBObject[] insert(DBObject[] arr, boolean shouldApply ){
+        protected DBObject[] insert(DBObject[] arr, boolean shouldApply )
+            throws MongoException {
 
             if ( SHOW ) {
                 for (DBObject o : arr) {
@@ -307,7 +312,8 @@ public abstract class DBApiLayer extends DBBase {
             return arr;
         }
 
-        public int remove( DBObject o ){
+        public int remove( DBObject o )
+            throws MongoException {
 
             if ( SHOW ) System.out.println( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
 
@@ -337,13 +343,14 @@ public abstract class DBApiLayer extends DBBase {
             return -1;
         }
 
-        void _cleanCursors(){
+        void _cleanCursors()
+            throws MongoException {
             if ( _deadCursorIds.size() == 0 )
                 return;
 
             if ( _deadCursorIds.size() % 20 != 0 && _deadCursorIds.size() < NUM_CURSORS_BEFORE_KILL )
                 return;
-
+            
             List<Long> l = _deadCursorIds;
             _deadCursorIds = new Vector<Long>();
 
@@ -358,7 +365,8 @@ public abstract class DBApiLayer extends DBBase {
             }
         }
 
-        void killCursors( List<Long> all ){
+        void killCursors( List<Long> all )
+            throws MongoException {
             if ( all == null || all.size() == 0 )
                 return;
 
@@ -379,7 +387,8 @@ public abstract class DBApiLayer extends DBBase {
             }
         }
 
-        Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn ){
+        Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn ) 
+            throws MongoException {
 
             if ( SHOW ) System.out.println( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
 
@@ -422,7 +431,8 @@ public abstract class DBApiLayer extends DBBase {
             }
         }
         
-        public DBObject update( DBObject query , DBObject o , boolean upsert , boolean apply ){
+        public DBObject update( DBObject query , DBObject o , boolean upsert , boolean apply ) 
+            throws MongoException {
 
             if ( SHOW ) System.out.println( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
 
@@ -453,7 +463,8 @@ public abstract class DBApiLayer extends DBBase {
             return o;
         }
 
-        public void ensureIndex( DBObject keys , String name ){
+        public void ensureIndex( DBObject keys , String name )
+            throws MongoException {
             DBObject o = new BasicDBObject();
             o.put( "name" , name );
             o.put( "ns" , _fullNameSpace );
@@ -596,9 +607,12 @@ public abstract class DBApiLayer extends DBBase {
             try {
                 int len = doGetMore( encoder._buf , decoder._buf );
                 decoder.doneReading( len );
-
+                
                 SingleResult res = new SingleResult( _curResult._fullNameSpace , decoder);
                 init( res );
+            }
+            catch ( MongoException me ){
+                throw new MongoInternalException( "can't do getmore" , me );
             }
             finally {
                 decoder.done();

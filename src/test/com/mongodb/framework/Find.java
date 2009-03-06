@@ -23,7 +23,7 @@ import com.mongodb.*;
 public class Find {
 
     public static void main(String[] args) 
-        throws UnknownHostException {
+        throws Exception {
 
         Mongo m = new Mongo( new DBAddress( "127.0.0.1:27017/driver_test_framework" ) );
         DBCollection c = m.getCollection( "test" );
