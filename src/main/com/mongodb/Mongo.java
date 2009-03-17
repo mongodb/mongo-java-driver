@@ -76,4 +76,14 @@ public class Mongo extends DBTCP {
         throws MongoException {
         super( addr );
     }
+
+    /**
+       creates a Mongo connection in paired mode
+       * @param left left side of the pair
+       * @param right right side of the pair
+     */
+    public Mongo( DBAddress left , DBAddress right )
+        throws MongoException {
+        super( java.util.Arrays.asList( left , right ) );
+    }
 }

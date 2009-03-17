@@ -47,6 +47,11 @@ public class DBTCP extends DBMessageLayer {
         }
     }
     
+    public DBTCP( DBAddress ... all )
+        throws MongoException {
+        this( Arrays.asList( all ) );
+    }
+
     public DBTCP( List<DBAddress> all )
         throws MongoException {
         super( _checkAddress( all )._name );
