@@ -85,14 +85,20 @@ public abstract class DBBase {
         return getCollection( "$cmd" ).findOne( cmd );
     }
 
-    public Object eval( String code , Object ... args )
+    public DBObject doEval( String code , Object ... args )
         throws MongoException {
 
-        DBObject res = command( BasicDBObjectBuilder.start()
-                                .add( "$eval" , code )
-                                .add( "args" , args )
-                                .get() );
+        return command( BasicDBObjectBuilder.start()
+                        .add( "$eval" , code )
+                        .add( "args" , args )
+                        .get() );
+    }
 
+    public Object eval( String code , Object ... args )
+        throws MongoException {
+        
+        DBObject res = doEval( code , args );
+        
         if ( res.get( "ok" ) instanceof Number && 
              ((Number)res.get( "ok" ) ).intValue() == 1 ){
             return res.get( "retval" );
