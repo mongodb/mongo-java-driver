@@ -358,7 +358,9 @@ public abstract class DBCollection {
         BasicDBObject res = (BasicDBObject)_base.command(cmd);
 
         if (res.getInt("ok" , 0 ) != 1 ){
-            if ( res.getString("errmsg").equals("ns does not exist")) {
+            String errmsg = res.getString( "errmsg" );
+            if ( errmsg.equals("ns does not exist") || 
+                 errmsg.equals("ns missing" ) ){
                 // for now, return 0 - lets pretend it does exist
                 return 0;
             }
