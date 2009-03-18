@@ -268,10 +268,14 @@ public class ByteEncoder extends Bytes {
         }
         else if ( val instanceof Map )
             putMap( name , (Map)val );
+
         else if ( val instanceof List )
             putList( name , (List)val );
         else if ( val instanceof byte[] )
             putBinary( name , (byte[])val );
+        else if ( val.getClass().isArray() )
+            putList( name , Arrays.asList( (Object[])val ) );
+
         else if (val instanceof DBRef) {
 
             // temporary - there's the notion of "special object" , but for simple level 0...

@@ -85,6 +85,22 @@ public abstract class DBBase {
         return getCollection( "$cmd" ).findOne( cmd );
     }
 
+    public Object eval( String code , Object ... args )
+        throws MongoException {
+
+        DBObject res = command( BasicDBObjectBuilder.start()
+                                .add( "$eval" , code )
+                                .add( "args" , args )
+                                .get() );
+
+        if ( res.get( "ok" ) instanceof Number && 
+             ((Number)res.get( "ok" ) ).intValue() == 1 ){
+            return res.get( "retval" );
+        }
+        
+        throw new MongoException( "eval failed: " + res );
+    }
+
     /** Returns the name of this database.
      * @return the name
      */

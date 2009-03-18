@@ -139,6 +139,13 @@ public class JavaClientTest extends TestCase {
         byte[] b = (byte[])(out.get( "a" ) );
         assertEquals( "eliot" , new String( b ) );
     }
+
+    @Test
+    public void testEval()
+        throws MongoException {
+        assertEquals( 17 , ((Number)(_db.eval( "return 17" ))).intValue() );
+        assertEquals( 18 , ((Number)(_db.eval( "function(x){ return 17 + x; }" , 1 ))).intValue() );
+    }    
     
     final Mongo _db;
 
