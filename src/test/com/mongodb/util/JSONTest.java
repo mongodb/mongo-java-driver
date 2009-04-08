@@ -24,26 +24,92 @@ public class JSONTest extends com.mongodb.util.TestCase {
 
     @org.testng.annotations.Test(groups = {"basic"})
     public void testNumbers(){
-        JSON.parse("{'x' : 5. }");
-        JSON.parse("{'x' : 5.0 }");
-        JSON.parse("{'x' : 0 }");
-        JSON.parse("{'x' : 500 }");
-        JSON.parse("{'x' : 0.500 }");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 5. }")), "{ \"x\" : 5.0}");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 5.0 }")), "{ \"x\" : 5.0}");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 0 }")), "{ \"x\" : 0.0}");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 500 }")), "{ \"x\" : 500.0}");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 0.500 }")), "{ \"x\" : 0.5}");
     }
 
     @org.testng.annotations.Test(groups = {"basic"})
     public void testSimple() {
-        JSON.parse("{'csdf' : true}");
-        JSON.parse("{'csdf' : false}");
-        JSON.parse("{'csdf' : null}");
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : true}")), "{ \"csdf\" : true}");
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : false}")), "{ \"csdf\" : false}");
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : null}")), "{ \"csdf\" :  null }");
+    }
+    
+    @org.testng.annotations.Test(groups = {"basic"})
+    public void testString() {
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : \"foo\"}")), "{ \"csdf\" : \"foo\"}") ;
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : \'foo\'}")), "{ \"csdf\" : \"foo\"}") ;
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : \"\\\"\"}")), "{ \"csdf\" : \"\\\\\\\"\"}");
+    }
+    
+    @org.testng.annotations.Test(groups = {"basic"})
+    public void testArray() {
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : [\"foo\"]}")), "{ \"csdf\" : [ \"foo\"]}") ;
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : [3, 5, \'foo\', null]}")), "{ \"csdf\" : [ 3.0 , 5.0 , \"foo\" ,  null ]}") ;
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : [[],[[]],false]}")), "{ \"csdf\" : [ [ ] , [ [ ]] , false]}");
     }
 
     @org.testng.annotations.Test(groups = {"basic"})
-    public void testString() {
-        JSON.parse("{'csdf' : \"foo\"}");
-        JSON.parse("{'csdf' : \"\\\"\"}");
+    public void testObject() {
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : {}}")), "{ \"csdf\" : { }}") ;
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : {\"foo\":\"bar\"}}")), "{ \"csdf\" : { \"foo\" : \"bar\"}}") ;
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : {\'hi\':{\'hi\':[{}]}}}")), "{ \"csdf\" : { \"hi\" : { \"hi\" : [ { }]}}}");
     }
-    
+
+    @org.testng.annotations.Test(groups = {"basic"})
+    public void testMulti() {
+        assertEquals(JSON.serialize(JSON.parse("{\'\' : \"\", \"34\" : -52.5}")), "{ \"\" : \"\" , \"34\" : -52.5}") ;
+    }    
+
+
+    @org.testng.annotations.Test(groups = {"basic"})
+    public void testErrors(){
+        boolean threw = false;
+        try {
+            JSON.parse("{\"x\" : \"");
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+        try {
+            JSON.parse("{\"x\" : \"\\");
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+        try {
+            JSON.parse("{\"x\" : 5.2");
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+        try {
+            JSON.parse("{\"x\" : 5");
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+        try {
+            JSON.parse("{\"x\" : 5,");
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+    }
+
     @org.testng.annotations.Test(groups = {"basic"})
     public void testBasic(){
         assertEquals( JSON.serialize(JSON.parse("{}")), "{ }");
@@ -77,6 +143,16 @@ public class JSONTest extends com.mongodb.util.TestCase {
             threw = true;
         }
         assertEquals(threw, true);
+        threw = false;
+
+        try {
+            JSON.parse("4");
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
     }
 
 

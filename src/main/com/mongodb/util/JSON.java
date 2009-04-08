@@ -8,6 +8,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.MongoException;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Calendar;
@@ -148,6 +149,9 @@ public class JSON {
 
 /**
  * Parser for JSON objects.
+ *
+ * Supports all types described at www.json.org, except for
+ * numbers with "e" or "E" in them.
  */
 class JSONParser {
 
@@ -164,50 +168,58 @@ class JSONParser {
 
     /**
      * Parse an unknown type.
+     *
+     * @return Object the next item
+     * @throws JSONParseException if invalid JSON is found
      */
     public Object parse() {
         Object value = null;
         char current = get();
 
         switch(current) {
-            // null
+        // null
         case 'n':
             read('n'); read('u'); read('l'); read('l');
             break;
-            // true
+        // true
         case 't':
             read('t'); read('r'); read('u'); read('e');
             value = true;
             break;
-            // false
+        // false
         case 'f':
             read('f'); read('a'); read('l'); read('s'); read('e');
             value = false;
             break;
-            // string
+        // string
         case '\'':
         case '\"':
             value = parseString();
             break;
-            // number
+        // number
         case '0': case '1': case '2': case '3': case '4': case '5':
         case '6': case '7': case '8': case '9': case '+': case '-':
             value = parseNumber();
             break;
-            // array
+        // array
         case '[':
             value = parseArray();
             break;
-            // object
+        // object
         case '{':
             value = parseObject();
             break;
+        default:
+            throw new JSONParseException(s, pos);
         }
         return value;
     }
 
     /**
-     * Parses an object for the form 
+     * Parses an object for the form <i>{}</i> and <i>{ members }</i>.
+     *
+     * @return DBObject the next object
+     * @throws JSONParseException if invalid JSON is found
      */
     public DBObject parseObject() {
         DBObject obj = new BasicDBObject();
@@ -225,14 +237,22 @@ class JSONParser {
                 read(',');
             }
             else {
-                read('}');
                 break;
             }
         }
+        read('}');
 
         return obj;
     }
 
+    /**
+     * Read the current character, making sure that it is the expected character.
+     * Advances the pointer to the next character.
+     *
+     * @param ch the character expected
+     *
+     * @throws JSONParseException if the current character does not match the given character
+     */
     public void read(char ch) {
         if(!check(ch)) {
             throw new JSONParseException(s, pos);
@@ -240,16 +260,32 @@ class JSONParser {
         pos++;
     }
 
+    /**
+     * Checks the current character, making sure that it is the expected character.
+     *
+     * @param ch the character expected
+     *
+     * @throws JSONParseException if the current character does not match the given character
+     */
     public boolean check(char ch) {
         return get() == ch;
     }
 
+    /**
+     * Advances the position in the string past any whitespace.
+     */
     public void skipWS() {
         while(pos < s.length() && s.charAt(pos) == ' ') {
             pos++;
         }
     }
 
+    /**
+     * Returns the current character.
+     * Returns -1 if there are no more characters.
+     *
+     * @return the next character
+     */
     public char get() {
         skipWS();
         if(pos < s.length())
@@ -257,6 +293,12 @@ class JSONParser {
         return (char)-1;
     }
 
+    /**
+     * Parses a string.
+     *
+     * @return the next string.
+     * @throws JSONParseException if invalid JSON is found
+     */
     public String parseString() {
         char quot;
         if(check('\''))
@@ -270,17 +312,21 @@ class JSONParser {
 
         read(quot);
         int start = pos;
-        while((current = s.charAt(pos)) != quot) {
+        while(pos < s.length() && 
+              (current = s.charAt(pos)) != quot) {
             if(current == '\\')
-                s.charAt(pos++);
-            s.charAt(pos++);
+                pos++;
+            pos++;
         }
         read(quot);
         return s.substring(start, pos-1);
     }
 
     /**
-     * Parses a number (only an int, for now)
+     * Parses a number.
+     *
+     * @return the next double.
+     * @throws JSONParseException if invalid JSON is found
      */
     public double parseNumber() {
 
@@ -292,7 +338,7 @@ class JSONParser {
         }
 
         outer:
-        while(true) {
+        while(pos < s.length()) {
             switch(s.charAt(pos)) {
             case '0': case '1': case '2': case '3': case '4': 
             case '5': case '6': case '7': case '8': case '9':
@@ -310,22 +356,18 @@ class JSONParser {
     }
 
     /** 
-     * Parses <i>.digits</i>
+     * Advances the pointed through <i>.digits</i>.
      */
     public void parseFraction() {
         // get past .
         pos++;
 
         outer:
-        while(true) {
+        while(pos < s.length()) {
             switch(s.charAt(pos)) {
             case '0': case '1': case '2': case '3': case '4': 
             case '5': case '6': case '7': case '8': case '9':
                 pos++;
-                break;
-            case 'e':
-            case 'E':
-                parseExponent();
                 break;
             default:
                 break outer;
@@ -333,53 +375,47 @@ class JSONParser {
         }
     }
 
-
-    /** 
-     * Parses <i>e digits</i>
+    /**
+     * Parses the next array.
+     *
+     * @return the array
+     * @throws JSONParseException if invalid JSON is found
      */
-    public void parseExponent() {
-        // get past E
-        pos++;
-
-        if(check('-') || check('+')) {
-            pos++;
-        }
-
-        outer:
-        while(true) {
-            switch(s.charAt(pos)) {
-            case '0': case '1': case '2': case '3': case '4': 
-            case '5': case '6': case '7': case '8': case '9':
-                pos++;
-                break;
-            default:
-                break outer;
-            }
-        }
-    }
-
-
-    public DBObject parseArray() {
+    public List parseArray() {
         read('[');
-        DBObject obj = new BasicDBObject();
+        List list = new ArrayList();
 
-        int count = 0;
         char current = get();
         while( current != ']' ) {
-            String key = "" + count;
-            Object value = parse();
-            obj.put(key, value);
+            list.add(parse());
 
-            count++;
+            if((current = get()) == ',') {
+                read(',');
+            }
+            else if(current == ']') {
+                break;
+            }
+            else {
+                throw new JSONParseException(s, pos);
+            }
         }
 
         read(']');
-        return obj;
+        return list;
     }
 
 }
 
-
+/**
+ * Exeception throw when invalid JSON is passed to JSONParser.
+ * 
+ * This exception creates a message that points to the first 
+ * offending character in the JSON string:
+ * <pre>
+ * { "x" : 3, "y" : 4, some invalid json.... }
+ *                     ^
+ * </pre>
+ */
 class JSONParseException extends RuntimeException { 
 
     String s;
