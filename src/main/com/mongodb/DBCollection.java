@@ -323,7 +323,6 @@ public abstract class DBCollection {
      */
     public void drop()
         throws MongoException {
-        dropIndexes();
         BasicDBObject res = (BasicDBObject)_base.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
         if ( res.getInt( "ok" , 0 ) != 1 ){
             if ( res.getString( "errmsg" ).equals( "ns not found" ) )
