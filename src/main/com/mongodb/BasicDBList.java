@@ -80,6 +80,16 @@ public class BasicDBList extends ArrayList<Object> implements DBObject {
         return s;
     }
 
+    public Map toMap() {
+        Map m = new HashMap();
+        Iterator i = this.keySet().iterator();
+        while (i.hasNext()) {
+            Object s = i.next();
+            m.put(s, this.get(s+""));
+        }
+        return m;
+    }
+
     int _getInt( String s ){
         try {
             return Integer.parseInt( s );

@@ -61,12 +61,11 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
 
     /**
      * Converts a DBObject to a map.
-     * @param obj object to convert
      * @return the DBObject
      */
-    public static Map toMap(DBObject obj) {
+    public Map toMap() {
         Map m = new HashMap();
-        m.putAll((HashMap)obj);
+        m.putAll((HashMap)this);
         return m;
     }
 

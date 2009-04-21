@@ -52,6 +52,15 @@ public class RawDBObject implements DBObject {
         return e.getObject();
     }
 
+    public Map toMap() {
+        Map m = new HashMap();
+        Iterator i = this.keySet().iterator();
+        while (i.hasNext()) {
+            Object s = i.next();
+            m.put(s, this.get(s+""));
+        }
+        return m;
+    }
 
     public Object put( String key , Object v ){
         throw new RuntimeException( "read only" );

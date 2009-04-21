@@ -52,6 +52,13 @@ public class DBObjectTest extends TestCase {
 
     }
 
+    @Test(groups = {"basic"})
+    public void testToMap() {
+        Map m = BasicDBObjectBuilder.start().add("y", "z").add("z","a").get().toMap();
+        assertEquals(m.get("y"), "z");
+        assertEquals(m.get("z"), "a");
+    }
+
     public static void main( String args[] ) {
         (new DBObjectTest()).runConsole();
     }

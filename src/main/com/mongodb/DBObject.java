@@ -36,6 +36,12 @@ public interface DBObject {
      */
     public Object get( String key );
 
+    /**
+     * Returns a map representing this DBObject.
+     * @return the map
+     */
+    public Map toMap();
+
     /** Remove a field with a given name from this object.
      * @param key The name of the field to remove
      * @return The value removed from this object

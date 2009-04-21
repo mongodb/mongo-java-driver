@@ -53,6 +53,16 @@ public abstract class ReflectionDBObject implements DBObject {
         return false;
     }
 
+    public Map toMap() {
+       Map m = new HashMap();
+       Iterator i = this.keySet().iterator();
+       while (i.hasNext()) {
+           Object s = i.next();
+           m.put(s, this.get(s+""));
+       }
+       return m;
+    }
+
     public void markAsPartialObject(){
         throw new RuntimeException( "ReflectionDBObjects can't be partial" );
     }
