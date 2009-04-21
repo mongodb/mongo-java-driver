@@ -18,10 +18,28 @@
 
 package com.mongodb;
 
+import java.util.Map;
+import java.util.Iterator;
+
 public class BasicDBObjectBuilder {
     
     public static BasicDBObjectBuilder start(){
         return new BasicDBObjectBuilder();
+    }
+
+    /**
+     * Creates an object builder from an existing map.
+     * @param m map to use
+     * @return the new builder
+     */
+    public static BasicDBObjectBuilder start(Map m){
+        BasicDBObjectBuilder b = new BasicDBObjectBuilder();
+        Iterator<Map.Entry> i = m.entrySet().iterator();
+        while (i.hasNext()) {
+            Map.Entry entry = i.next();
+            b.add(entry.getKey().toString(), entry.getValue());
+        }
+        return b;
     }
 
     public BasicDBObjectBuilder add( String key , Object val ){

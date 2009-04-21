@@ -47,6 +47,29 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
         put(key, value);
     }
 
+    /**
+     * Creates a DBObject from a map.
+     * @param m map to convert
+     */
+    public BasicDBObject(Map m) {
+        Iterator<Map.Entry> i = m.entrySet().iterator();
+        while (i.hasNext()) {
+            Map.Entry entry = i.next();
+            put(entry.getKey().toString(), entry.getValue());
+        }
+    }
+
+    /**
+     * Converts a DBObject to a map.
+     * @param obj object to convert
+     * @return the DBObject
+     */
+    public static Map toMap(DBObject obj) {
+        Map m = new HashMap();
+        m.putAll((HashMap)obj);
+        return m;
+    }
+
     /** Deletes a field from this object. 
      * @param key the field name to remove
      * @return the object removed
