@@ -56,6 +56,7 @@ public class Bytes {
     static final byte SYMBOL = 14;
     static final byte CODE_W_SCOPE = 15;
     static final byte NUMBER_INT = 16;
+    static final byte TIMESTAMP = 17;
 
     private static final int GLOBAL_FLAG = 256;
     

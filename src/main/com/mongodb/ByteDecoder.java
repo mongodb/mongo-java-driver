@@ -236,6 +236,13 @@ public class ByteDecoder extends Bytes {
             o.put( name , created );
             break;
 
+        case TIMESTAMP:
+            int i = _buf.getInt();
+            int time = _buf.getInt();
+
+            o.put( name, new DBTimestamp(time, i) );
+            break;
+
         default:
             throw new UnsupportedOperationException( "can't handle : " + type );
         }

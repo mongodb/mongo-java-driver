@@ -206,6 +206,9 @@ public class RawDBObject implements DBObject {
 		int second = _cStrLength( _dataStart + first );
 		size += first + second;
 		break;
+            case TIMESTAMP:
+                size += 8;
+                break;
             default:
                 throw new RuntimeException( "can't handle type " + _type );
             }
