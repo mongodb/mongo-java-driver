@@ -21,6 +21,12 @@ package com.mongodb;
 import java.util.Map;
 import java.util.Iterator;
 
+
+/**
+ * utility for building objects
+ * example:
+ *  BasicDBObjectBuilder.start().add( "name" , "eliot" ).add( "number" , 17 ).get()
+ */
 public class BasicDBObjectBuilder {
     
     public static BasicDBObjectBuilder start(){
@@ -42,6 +48,9 @@ public class BasicDBObjectBuilder {
         return b;
     }
 
+    /**
+     * @return returns itself so you can chain  .add( "a" , 1 ).add( "b" , 1 )
+     */
     public BasicDBObjectBuilder add( String key , Object val ){
         _it.put( key , val );
         return this;
