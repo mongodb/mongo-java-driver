@@ -465,10 +465,17 @@ public abstract class DBApiLayer extends DBBase {
 
         public void ensureIndex( DBObject keys , String name )
             throws MongoException {
+            ensureIndex(keys, name, false);
+        }
+
+        public void ensureIndex( DBObject keys, String name, boolean unique) 
+            throws MongoException {
+
             DBObject o = new BasicDBObject();
             o.put( "name" , name );
             o.put( "ns" , _fullNameSpace );
             o.put( "key" , keys );
+            o.put( "unique", unique);
 
 	    //dm-system isnow in our database
 	    DBApiLayer.this.doGetCollection( "system.indexes" ).insert( o , false );

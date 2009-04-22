@@ -95,6 +95,13 @@ public abstract class DBCollection {
      */
     public abstract void ensureIndex( DBObject keys , String name ) throws MongoException ;
 
+    /** Ensures an optionally unique index on this collection.
+     * @param keys fields to use for index
+     * @param name an identifier for the index
+     * @param unique if the index should be unique
+     */
+    public abstract void ensureIndex( DBObject keys , String name , boolean unique ) throws MongoException ;
+
     // ------
 
     /**
@@ -162,6 +169,12 @@ public abstract class DBCollection {
      */
     public final void ensureIndex( final DBObject keys , final boolean force )
         throws MongoException {
+        ensureIndex( keys , force, false );
+    }
+
+    public final void ensureIndex( final DBObject keys , final boolean force , final boolean unique )
+        throws MongoException {
+
         if ( checkReadOnly( false ) ) return;
 
         final String name = genIndexName( keys );
@@ -177,7 +190,7 @@ public abstract class DBCollection {
         if ( ! ( force || doEnsureIndex ) )
             return;
 
-        ensureIndex( keys , name );
+        ensureIndex( keys , name , unique );
 
         _createIndexes.add( name );
         if ( _anyUpdateSave )
