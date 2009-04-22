@@ -125,8 +125,8 @@ public class JavaClientTest extends TestCase {
 
         List<DBObject> list = c.getIndexInfo();
 
-        assertTrue(list.size() == 1);
-        assertTrue(list.get(0).get("name").equals("i_1"));
+        assertTrue(list.size() == 2);
+        assertTrue(list.get(1).get("name").equals("i_1"));
     }
 
     @Test
