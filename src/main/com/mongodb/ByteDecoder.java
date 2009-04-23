@@ -243,6 +243,14 @@ public class ByteDecoder extends Bytes {
             o.put( name, new DBTimestamp(time, i) );
             break;
 
+        case MINKEY:
+            o.put( name, "MinKey" );
+            break;
+
+        case MAXKEY:
+            o.put( name, "MaxKey" );
+            break;
+
         default:
             throw new UnsupportedOperationException( "can't handle : " + type );
         }

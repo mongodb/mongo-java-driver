@@ -39,7 +39,6 @@ public class Bytes {
     static final int BUFS_PER_50M = ( 1024 * 1024 * 50 ) / BUF_SIZE;
 
     static final byte EOO = 0;    
-    static final byte MAXKEY = -1;
     static final byte NUMBER = 1;
     static final byte STRING = 2;
     static final byte OBJECT = 3;    
@@ -57,6 +56,9 @@ public class Bytes {
     static final byte CODE_W_SCOPE = 15;
     static final byte NUMBER_INT = 16;
     static final byte TIMESTAMP = 17;
+
+    static final byte MINKEY = -1;
+    static final byte MAXKEY = 127;
 
     private static final int GLOBAL_FLAG = 256;
     

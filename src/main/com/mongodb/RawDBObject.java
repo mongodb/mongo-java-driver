@@ -169,6 +169,7 @@ public class RawDBObject implements DBObject {
 
             switch ( _type ){
             case MAXKEY:
+            case MINKEY:
             case EOO:
             case UNDEFINED:
             case NULL:
@@ -262,6 +263,7 @@ public class RawDBObject implements DBObject {
 	    case NULL:
             case EOO:
 	    case MAXKEY:
+            case MINKEY:
 	    case UNDEFINED:
                 return null;
             }
