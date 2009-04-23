@@ -48,23 +48,23 @@
     </javac>
 
   </target>
-  
+
   <target name="jar" depends="compile" description="Create driver jar">
-    
+
     <exec executable="git" output="build/git-hash">
       <arg value="log" />
       <arg value="--pretty=format:%H" />
       <arg value="-1" />
     </exec>
-    
+
     <jar jarfile="mongo.jar" >
       <fileset dir="build" />
     </jar>
   </target>
 
-  
+
   <target name="javadocs" depends="compile" description="Generate API docs">
-    
+
     <javadoc packagenames="com.mongodb.*"
              sourcepath="src/main/"
              defaultexcludes="yes"
@@ -92,16 +92,16 @@
            classname="org.testng.TestNGAntTask"
            >
   </taskdef>
-  
-  
+
+
   <target name="test" depends="compile, test-basic" />
-  
-  
+
+
   <target  name="test-basic" depends="init, compile">
     <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="true" >
       <jvmarg value="-Xmx512M" />
       <xmlfileset dir="." includes="testng.xml"/>
     </testng>
   </target>
-    
+
 </project>
