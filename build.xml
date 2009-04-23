@@ -1,6 +1,7 @@
 <?xml version='1.0'?>
 <project name="MongoDB Java Driver" default="compile" basedir=".">
 
+  <property name="version" value="0.2"/>
   <property name="targetdir" location="target"/>
   <property name="testdir" location="${targetdir}/test"/>
 
@@ -64,11 +65,11 @@
 
 
   <target name="javadocs" depends="compile" description="Generate API docs">
-
+    <delete dir="docs/"/>
     <javadoc packagenames="com.mongodb.*"
              sourcepath="src/main/"
              defaultexcludes="yes"
-             destdir="docs/"
+             destdir="docs/${version}"
              author="true"
              version="true"
              source="1.5"
