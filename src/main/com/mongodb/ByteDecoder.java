@@ -252,7 +252,7 @@ public class ByteDecoder extends Bytes {
             break;
 
         default:
-            throw new UnsupportedOperationException( "can't handle : " + type );
+            throw new UnsupportedOperationException( "ByteDecoder can't handle type : " + type );
         }
         
         return _buf.position() - start;

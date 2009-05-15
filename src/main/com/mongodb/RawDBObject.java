@@ -94,7 +94,7 @@ public class RawDBObject implements DBObject {
     String _readCStr( final int start , final int[] end ){
         synchronized ( _cStrBuf ){
             int pos = 0;
-            while ( _buf.get( pos + start ) > 0 ){
+            while ( _buf.get( pos + start ) != 0 ){
                 _cStrBuf[pos] = _buf.get( pos + start );
                 pos++;
             }
@@ -128,7 +128,7 @@ public class RawDBObject implements DBObject {
      */
     int _cStrLength( final int start ){
 	int end = start;
-	while ( _buf.get( end ) > 0 )
+	while ( _buf.get( end ) != 0 )
 	    end++;
 	return 1 + ( end - start );
     }
@@ -160,11 +160,12 @@ public class RawDBObject implements DBObject {
         Element( final int start ){
             _start = start;
             _type = _buf.get( _start );
-            _name = eoo() ? "" : _readCStr( _start + 1 );
+            int end[] = new int[1];
+            _name = eoo() ? "" : _readCStr( _start + 1 , end );
             
 	    if ( DEBUG ) System.out.println( "name [" + _name + "] type [" + _type + "]" );
 	    
-            int size = 1 + _name.length() + 1; // 1 for the start byte, end for end of string
+            int size = 1 + ( end[0] - _start); // 1 for the end of the string
             _dataStart = _start + size;
 
             switch ( _type ){
@@ -211,7 +212,7 @@ public class RawDBObject implements DBObject {
                 size += 8;
                 break;
             default:
-                throw new RuntimeException( "can't handle type " + _type );
+                throw new RuntimeException( "RawDBObject can't size type " + _type );
             }
             _size = size;
         }
