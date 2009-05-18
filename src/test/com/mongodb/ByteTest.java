@@ -160,26 +160,6 @@ public class ByteTest extends TestCase {
         assertTrue( (new ObjectId(0 , 0 )).compareTo( new ObjectId() ) < 0 );
     }
 
-    // ByteEncoder.get()
-    @Test(groups = {"basic"})
-    public void testEncoderGet() {
-        int max = Math.min( Bytes.CONNECTIONS_PER_HOST, 2 * Bytes.BUFS_PER_50M );
-        int count = 0;
-
-        ArrayList<ByteEncoder> be = new ArrayList<ByteEncoder>();
-        ByteEncoder b;
-        while( (b = ByteEncoder.get()) != null && count < max ) {
-            be.add( b );
-            count++;
-        }
-        assertEquals( count, max );
-        assertEquals( be.size(), max );
-
-        for( ByteEncoder bee : be ) {
-            bee.done();
-        }
-    }
-
 
     @Test(groups = {"basic"}) 
     public void testBinary() {
@@ -208,26 +188,6 @@ public class ByteTest extends TestCase {
         encoder.done();
         decoder.done();
     }
-
-    @Test
-    public void testDecoderGet() {
-        int max = 6 * Bytes.BUFS_PER_50M;
-        int count = 0;
-
-        ArrayList<ByteDecoder> be = new ArrayList<ByteDecoder>();
-        ByteDecoder b;
-        while( (b = ByteDecoder.get( _db , null ) ) != null && count < max ) {
-            be.add( b );
-            count++;
-        }
-        assertEquals( count, max );
-        assertEquals( be.size(), max );
-
-        for( ByteDecoder bd : be ) {
-            bd.done();
-        }
-    }
-
 
     private void go( DBObject o , int serialized_len ) {
         go( o, serialized_len, 0 );
