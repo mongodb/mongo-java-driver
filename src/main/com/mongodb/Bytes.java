@@ -34,9 +34,21 @@ public class Bytes {
     public static final ByteOrder ORDER = ByteOrder.LITTLE_ENDIAN;
 
     static final int BUF_SIZE = 1024 * 1024 * 5;
-    
     static final int CONNECTIONS_PER_HOST = 10;
-    static final int BUFS_PER_50M = ( 1024 * 1024 * 50 ) / BUF_SIZE;
+    static final int NUM_ENCODERS;
+
+    static {
+        Runtime r = Runtime.getRuntime();
+        int numBufs = (int)(r.maxMemory() / BUF_SIZE);
+        numBufs = numBufs / 5;
+        if ( numBufs > CONNECTIONS_PER_HOST ){
+            numBufs = CONNECTIONS_PER_HOST;
+        }
+        if ( numBufs == 0 )
+            throw new IllegalStateException( "the mongo driver doesn't have enough memory to create its buffers" );
+
+        NUM_ENCODERS = numBufs;
+    }
 
     static final byte EOO = 0;    
     static final byte NUMBER = 1;
