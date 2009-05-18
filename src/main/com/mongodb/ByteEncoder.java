@@ -99,7 +99,7 @@ public class ByteEncoder extends Bytes {
         _pool.done( this );
     }
     
-    final static SimplePool<ByteEncoder> _pool = new SimplePool<ByteEncoder>( "ByteEncoders" , NUM_ENCODERS , -1 ){
+    final static SimplePool<ByteEncoder> _pool = new SimplePool<ByteEncoder>( "ByteEncoders" , NUM_ENCODERS , NUM_ENCODERS * 2 ){
             protected ByteEncoder createNew(){
 		if ( D ) System.out.println( "creating new ByteEncoder" );
                 return new ByteEncoder();
