@@ -195,6 +195,12 @@ public abstract class SimplePool<T> {
         return _all.getAll().iterator();
     }
 
+    public int available(){
+        if ( _maxTotal <= 0 )
+            throw new IllegalStateException( "this pool has an infinite number of things available" );
+        return _maxTotal - inUse();
+    }
+
     public int everCreated(){
         return _everCreated;
     }
@@ -202,6 +208,10 @@ public abstract class SimplePool<T> {
     private void _debug( String msg ){
         if( _debug )
             System.out.println( "SimplePool [" + _name + "] : " + msg );
+    }
+
+    public int maxToKeep(){
+        return _maxToKeep;
     }
 
     protected final String _name;
