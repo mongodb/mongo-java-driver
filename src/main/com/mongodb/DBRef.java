@@ -45,7 +45,7 @@ public class DBRef {
         _id = id;
     }
 
-    private DBObject fetch()
+    public DBObject fetch()
         throws MongoException {
         if (_loadedPointedTo)
             return _pointedTo;
@@ -65,6 +65,10 @@ public class DBRef {
         _pointedTo = coll.findOne(_id);
         _loadedPointedTo = true;
         return _pointedTo;
+    }
+
+    public String toString(){
+        return "DBREF " + _ns + ":" + _id;
     }
 
     final DBObject _parent;
