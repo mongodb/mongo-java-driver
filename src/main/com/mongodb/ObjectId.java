@@ -19,7 +19,7 @@
 package com.mongodb;
 
 import java.util.*;
-import java.nio.ByteBuffer;
+import java.nio.*;
 
 import com.mongodb.util.*;
 
@@ -98,36 +98,48 @@ public class ObjectId implements Comparable<ObjectId>{
      * @throws IllegalArgumentException if the string is not a valid id
      */
     public ObjectId( String s ){
+        this( s , false );
+    }
+
+    public ObjectId( String s , boolean babble ){
 
         if ( ! isValid( s ) )
             throw new IllegalArgumentException( "invalid ObjectId [" + s + "]" );
 
-        String baseString = s.substring( 0 , 16 );
-        String incString = s.substring( 16 );
-
-        ByteBuffer buf = ByteBuffer.allocate(24);
-
-        for (int i=0; i < baseString.length() / 2; i++) {
-            buf.put((byte) Integer.parseInt(baseString.substring(i*2, i*2 + 2), 16));
+        if ( babble ){
+            String baseString = s.substring( 0 , 16 );
+            String incString = s.substring( 16 );
+            
+            ByteBuffer buf = ByteBuffer.allocate(24);
+            
+            for (int i=0; i < baseString.length() / 2; i++) {
+                buf.put((byte) Integer.parseInt(baseString.substring(i*2, i*2 + 2), 16));
+            }
+            
+            buf.flip();
+            
+            _base = buf.getLong();
+            
+            buf.clear();
+            
+            for (int i=0; i < incString.length() / 2; i++) {
+                buf.put((byte) Integer.parseInt(incString.substring(i*2, i*2 + 2), 16));
+            }
+            
+            buf.flip();
+            
+            _inc = buf.getInt();
         }
+        else {
+            byte b[] = new byte[12];
+            for ( int i=0; i<b.length; i++ ){
+                b[b.length-(i+1)] = (byte)Integer.parseInt( s.substring( i*2 , i*2 + 2) , 16 );
+            }
+            ByteBuffer bb = ByteBuffer.wrap( b );
 
-        buf.flip();
-
-        _base = buf.getLong();
-
-        buf.clear();
-
-        for (int i=0; i < incString.length() / 2; i++) {
-            buf.put((byte) Integer.parseInt(incString.substring(i*2, i*2 + 2), 16));
+            _inc = bb.getInt();            
+            _base = bb.getLong();
         }
-
-        buf.flip();
-
-        _inc = buf.getInt();
-
-//        _base = Long.parseLong( baseString , 16 );
-//        _inc = Integer.parseInt( incString , 16 );
-
         _new = false;
     }
     
@@ -176,7 +188,7 @@ public class ObjectId implements Comparable<ObjectId>{
             _inc == other._inc;
     }
 
-    public String toString(){
+    public String toStringBabble(){
         String a = Long.toHexString( _base );
         String b = Integer.toHexString( _inc );
         
@@ -191,6 +203,29 @@ public class ObjectId implements Comparable<ObjectId>{
         buf.append( b );
         
         return buf.toString();
+    }
+
+    public String toStringMongod(){
+        byte b[] = new byte[12];
+        ByteBuffer bb = ByteBuffer.wrap( b );
+        bb.putInt( _inc );
+        bb.putLong( _base );
+
+        StringBuilder buf = new StringBuilder(24);
+        
+        for ( int i=b.length-1; i>=0; i-- ){
+            int x = b[i] & 0xFF;
+            String s = Integer.toHexString( x );
+            if ( s.length() == 1 )
+                buf.append( "0" );
+            buf.append( s );
+        }
+
+        return buf.toString();
+    }
+
+    public String toString(){
+        return toStringMongod();
     }
 
     public int compareTo( ObjectId id ){
@@ -212,6 +247,14 @@ public class ObjectId implements Comparable<ObjectId>{
             return 1;
 
         return 0;
+    }
+
+    public long getBase(){
+        return _base;
+    }
+    
+    public int getInc(){
+        return _inc;
     }
 
     final long _base;

@@ -12,6 +12,7 @@
       <class name="com.mongodb.ReflectionTest" />
       <class name="com.mongodb.DBAddressTest" />
       <class name="com.mongodb.DBObjectTest" />
+      <class name="com.mongodb.ObjectIdTest" />
 
       <class name="com.mongodb.ErrorTest" />
 
