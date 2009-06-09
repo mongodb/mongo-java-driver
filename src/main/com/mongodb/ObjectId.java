@@ -224,6 +224,23 @@ public class ObjectId implements Comparable<ObjectId>{
         return buf.toString();
     }
 
+    static String _pos( String s , int p ){
+        return s.substring( p * 2 , ( p * 2 ) + 2 );
+    }
+    
+    public static String babbleToMongod( String b ){
+        if ( ! isValid( b ) )
+            throw new IllegalArgumentException( "invalid object id: " + b );
+        
+        StringBuilder buf = new StringBuilder( 24 );
+        for ( int i=7; i>=0; i-- )
+            buf.append( _pos( b , i ) );
+        for ( int i=11; i>=8; i-- )
+            buf.append( _pos( b , i ) );
+        
+        return buf.toString();
+    }
+
     public String toString(){
         return toStringMongod();
     }

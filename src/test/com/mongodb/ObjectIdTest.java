@@ -41,8 +41,12 @@ public class ObjectIdTest extends TestCase {
         assertEquals( a.toStringMongod() , (new ObjectId( a.toStringMongod() ) ).toStringMongod() );
         assertEquals( a.toString() , (new ObjectId( a.toString() , false ) ).toString() );
     }
-    
-    
+
+    @Test(groups = {"basic"})
+    public void testBabbleToMongo(){
+        ObjectId a = new ObjectId();
+        assertEquals( a.toStringMongod() , ObjectId.babbleToMongod( a.toStringBabble() ) );
+    }
 
     public static void main( String args[] )
         throws Exception {
