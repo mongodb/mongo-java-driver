@@ -234,6 +234,14 @@ public abstract class DBCollection {
         return new DBCursor( this, ref, null );
     }
 
+    /** Queries for an object in this collection.
+     * @param ref object for which to search
+     * @return a cursor which will iterate over every object
+     */
+    public final DBCursor find( DBObject ref , DBObject keys ){
+        return new DBCursor( this, ref, keys );
+    }
+
     /** Queries for all objects in this collection. 
      * @return a cursor which will iterate over every object
      */
