@@ -48,11 +48,11 @@ public class DBCursorTest extends TestCase {
 
             BasicDBObject query = new BasicDBObject();
 
-            /*
+            
             BasicDBObject fields = new BasicDBObject();
             fields.put("y", 1);
             assertEquals(c.find(query,fields).count(), 0);
-            */
+            
 
             query.put("x", "bar");
             assertEquals(c.find(query).count(), 0);

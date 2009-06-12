@@ -412,7 +412,7 @@ public class DBCursor implements Iterator<DBObject> {
         if ( _collection._base == null )
             throw new IllegalArgumentException( "why is _collection._base null" );
         
-        return (int)_collection.getCount(this._query);
+        return (int)_collection.getCount(this._query, this._keysWanted);
     }
 
 
