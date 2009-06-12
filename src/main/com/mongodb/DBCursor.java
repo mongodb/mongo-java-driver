@@ -405,13 +405,14 @@ public class DBCursor implements Iterator<DBObject> {
      * Counts the number of elements in this cursor.
      * @return the number of elements
      */
-    public int count(){
+    public int count() 
+        throws MongoException {
         if ( _collection == null )
             throw new IllegalArgumentException( "why is _collection null" );
         if ( _collection._base == null )
             throw new IllegalArgumentException( "why is _collection._base null" );
-             
-        throw new UnsupportedOperationException( "count isn't implemnented yet" );
+        
+        return (int)_collection.getCount(this._query);
     }
 
 
