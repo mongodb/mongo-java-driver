@@ -41,6 +41,18 @@ public abstract class ReflectionDBObject implements DBObject {
         return getWrapper().set( this , key , v );
     }
 
+    public void putAll( Map m ){
+        for ( Object k : m.keySet() ){
+            put( k.toString() , m.get( k ) );
+        }
+    } 
+    
+    public void putAll( DBObject o ){
+        for ( String k : o.keySet() ){
+            put( k , o.get( k ) );
+        }
+    }
+
     public ObjectId get_id(){
         return _id;
     }

@@ -29,6 +29,9 @@ public interface DBObject {
      * @return <tt>v</tt>
      */
     public Object put( String key , Object v );
+
+    public void putAll( DBObject o );
+    public void putAll( Map m );
     
     /** Gets a field from this object by a given name.
      * @param key The name of the field fetch

@@ -66,6 +66,14 @@ public class RawDBObject implements DBObject {
         throw new RuntimeException( "read only" );
     }
 
+    public void putAll( DBObject o ){
+        throw new RuntimeException( "read only" );
+    }
+    
+    public void putAll( Map m ){
+        throw new RuntimeException( "read only" );
+    }
+
     public Object removeField( String key ){
         throw new RuntimeException( "read only" );
     }

@@ -49,6 +49,18 @@ public class BasicDBList extends ArrayList<Object> implements DBObject {
         set( i , v );
         return v;
     }
+
+    public void putAll( Map m ){
+        for ( Object k : m.keySet() ){
+            put( k.toString() , m.get( k ) );
+        }
+    } 
+    
+    public void putAll( DBObject o ){
+        for ( String k : o.keySet() ){
+            put( k , o.get( k ) );
+        }
+    }
     
     public Object get( String key ){
         int i = _getInt( key );

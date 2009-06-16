@@ -153,6 +153,18 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
         return super.put( key , val );
     }
 
+    public void putAll( Map m ){
+        for ( Object k : m.keySet() ){
+            put( k.toString() , m.get( k ) );
+        }
+    } 
+    
+    public void putAll( DBObject o ){
+        for ( String k : o.keySet() ){
+            put( k , o.get( k ) );
+        }
+   } 
+
     /** Add a key/value pair to this object
      * @param key the field name
      * @param val the field value

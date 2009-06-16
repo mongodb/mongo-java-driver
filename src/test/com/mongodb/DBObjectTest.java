@@ -59,6 +59,22 @@ public class DBObjectTest extends TestCase {
         assertEquals(m.get("z"), "a");
     }
 
+    @Test(groups = {"basic"})
+    public void testPutAll() {
+        DBObject start = BasicDBObjectBuilder.start().add( "a" , 1 ).add( "b" , 2 ).get();
+
+        assertEquals( 1 , start.get( "a" ) );
+
+        BasicDBObject next = new BasicDBObject();
+        next.put( "a" , 3 );
+        assertEquals( 3 , next.get( "a" ) );
+        next.putAll( start );
+        assertEquals( 2 , next.get( "b" ) );
+        assertEquals( 1 , next.get( "a" ) );
+
+    }
+
+    
     public static void main( String args[] ) {
         (new DBObjectTest()).runConsole();
     }
