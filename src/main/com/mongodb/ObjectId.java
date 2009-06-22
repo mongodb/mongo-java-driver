@@ -318,7 +318,7 @@ public class ObjectId implements Comparable<ObjectId>{
         while ( true ){
             ObjectId i = get();
             if ( s.contains( i ) )
-                throw new RuntimeException( "fuck" );
+                throw new RuntimeException( "ObjectId() generated a repeat" );
             s.add( i );
 
             ObjectId o = new ObjectId( i.toString() );
