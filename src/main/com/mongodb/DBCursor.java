@@ -190,7 +190,7 @@ public class DBCursor implements Iterator<DBObject> {
                     foo.put( "$explain" , true );
             }
 
-            _it = _collection.find( foo , _keysWanted , _skip , -1 * _numWanted );
+            _it = _collection.find( foo , _keysWanted , _skip , _numWanted );
         }
 
         if ( _it == null )
