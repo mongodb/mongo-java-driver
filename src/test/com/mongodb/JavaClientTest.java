@@ -146,6 +146,28 @@ public class JavaClientTest extends TestCase {
         assertEquals( 17 , ((Number)(_db.eval( "return 17" ))).intValue() );
         assertEquals( 18 , ((Number)(_db.eval( "function(x){ return 17 + x; }" , 1 ))).intValue() );
     }    
+
+    @Test
+    public void testPartial1()
+        throws MongoException {
+        DBCollection c = _db.getCollection( "partial1" );
+        c.drop();
+
+        c.save( BasicDBObjectBuilder.start().add( "a" , 1 ).add( "b" , 2 ).get() );
+
+        DBObject out = c.find().next();
+        assertEquals( 1 , out.get( "a" ) );
+        assertEquals( 2 , out.get( "b" ) );
+
+        out = c.find( new BasicDBObject() , BasicDBObjectBuilder.start().add( "a" , 1 ).get() ).next();
+        assertEquals( 1 , out.get( "a" ) );
+        assertNull( out.get( "b" ) );
+
+        out = c.find( null , BasicDBObjectBuilder.start().add( "a" , 1 ).get() ).next();
+        assertEquals( 1 , out.get( "a" ) );
+        assertNull( out.get( "b" ) );
+
+    }
     
     final Mongo _db;
 

@@ -60,7 +60,7 @@ public class DBCursor implements Iterator<DBObject> {
      */
     public DBCursor( DBCollection collection , DBObject q , DBObject k ){
         _collection = collection;
-        _query = q;
+        _query = q == null ? new BasicDBObject() : q;
         _keysWanted = k;
     }
 
@@ -285,7 +285,7 @@ public class DBCursor implements Iterator<DBObject> {
 
         if ( _keysWanted != null && _keysWanted.keySet().size() > 0 ){
             _cur.markAsPartialObject();
-            throw new UnsupportedOperationException( "need to figure out partial" );
+            //throw new UnsupportedOperationException( "need to figure out partial" );
         }
 
         if ( _cursorType == CursorType.ARRAY ){
