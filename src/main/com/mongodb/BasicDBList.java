@@ -107,7 +107,7 @@ public class BasicDBList extends ArrayList<Object> implements DBObject {
             return Integer.parseInt( s );
         }
         catch ( Exception e ){
-            return -1;
+            throw new IllegalArgumentException( "BasicDBList can only work with numeric keys, not: [" + s + "]" );
         }
     }
 
