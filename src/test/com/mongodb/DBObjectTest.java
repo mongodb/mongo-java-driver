@@ -44,7 +44,7 @@ public class DBObjectTest extends TestCase {
         m.put("key", new DBRef("foo", new ObjectId("123456789012123456789012")));
 
         DBObject obj = new BasicDBObject(m);
-        assertEquals(obj.get("key").toString(), "{ $ref : \"foo\", $id : ObjectId(\"123456789012123456789012\") }");
+        assertEquals(obj.get("key").toString(), "{ \"$ref\" : \"foo\", \"$id\" : ObjectId(\"123456789012123456789012\") }");
     }
 
     @Test(groups = {"basic"})
