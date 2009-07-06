@@ -68,7 +68,7 @@ public class DBRef {
     }
 
     public String toString(){
-        return "DBREF " + _ns + ":" + _id;
+        return "{ $ref : \"" + _ns + "\", $id : ObjectId(\"" + _id + "\") }";
     }
 
     final DBObject _parent;

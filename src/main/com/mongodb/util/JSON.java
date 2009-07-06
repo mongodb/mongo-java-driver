@@ -4,6 +4,7 @@ package com.mongodb.util;
 
 import com.mongodb.ObjectId;
 import com.mongodb.DBObject;
+import com.mongodb.DBRef;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoException;
 
@@ -120,7 +121,8 @@ public class JSON {
             return;
         }
 
-        if (o instanceof Boolean) {
+        if (o instanceof Boolean || 
+            o instanceof DBRef) {
             buf.append(o);
             return;
         }

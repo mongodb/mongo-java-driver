@@ -39,6 +39,15 @@ public class DBObjectTest extends TestCase {
     }
 
     @Test(groups = {"basic"})
+    public void testBasicDBObjectToString()  {
+        Map m = new HashMap();
+        m.put("key", new DBRef("foo", new ObjectId("123456789012123456789012")));
+
+        DBObject obj = new BasicDBObject(m);
+        assertEquals(obj.get("key").toString(), "{ $ref : \"foo\", $id : ObjectId(\"123456789012123456789012\") }");
+    }
+
+    @Test(groups = {"basic"})
     public void testDBObjectBuilder() {
         Map m = new HashMap();
         m.put("foo", "bar");
