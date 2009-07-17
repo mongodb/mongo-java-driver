@@ -98,9 +98,9 @@ public class ByteDecoder extends Bytes {
         final int start = _buf.position();
         final int len = _buf.getInt();
         
-        DBObject created = _create(true);
+        DBObject created = _create("");
         
-        while ( decodeNext( created ) > 1 ) {
+        while ( decodeNext( created , "" ) > 1 ) {
             // intentionally empty
         }
         
@@ -110,18 +110,30 @@ public class ByteDecoder extends Bytes {
         return created;
     }
 
-    private DBObject _create( boolean root ){
+    private DBObject _create( String path ){
         
-        final Class c = _collection == null || ! root ? null : _collection._objectClass;
+        Class c = null;
+
+        if ( _collection != null && _collection._objectClass != null){
+            if ( path.length() == 0 ){
+                c = _collection._objectClass;
+            }
+            else {
+                c = _collection.getInternalClass( path );
+            }
+            
+        }
         
         if ( c != null ){
             try {
                 return (DBObject)c.newInstance();
             }
             catch ( InstantiationException ie ){
+                ie.printStackTrace();
                 throw new MongoInternalException( "can't instantiate a : " + c , ie );
             }
             catch ( IllegalAccessException iae ){
+                iae.printStackTrace();
                 throw new MongoInternalException( "can't instantiate a : " + c , iae );
             }
         }
@@ -132,7 +144,7 @@ public class ByteDecoder extends Bytes {
      * @param o object to which to add fields
      * @return the number of characters decoded
      */
-    protected int decodeNext( DBObject o ){
+    protected int decodeNext( DBObject o , String path ){
         final int start = _buf.position();
         final byte type = _buf.get();
 
@@ -140,6 +152,11 @@ public class ByteDecoder extends Bytes {
             return 1;
         
         String name = readCStr();
+        
+        if ( path.length() == 0 ) 
+            path = name;
+        else
+            path = path + "." + name;
 
         DBObject created = null;
 
@@ -208,7 +225,7 @@ public class ByteDecoder extends Bytes {
             created = new BasicDBList();
             _buf.getInt();  // total size - we don't care....
 
-            while (decodeNext( created ) > 1 ) {
+            while (decodeNext( created , path ) > 1 ) {
                 // intentionally empty
             }
 
@@ -225,10 +242,10 @@ public class ByteDecoder extends Bytes {
                     created = (DBObject)foo;
                 
                 if ( created == null )
-                    created = _create( false );
+                    created = _create( path );
             }
             
-            while (decodeNext( created ) > 1 ) {
+            while (decodeNext( created , path ) > 1 ) {
                 // intentionally empty
             }
             

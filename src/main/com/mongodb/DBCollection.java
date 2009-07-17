@@ -18,12 +18,7 @@
 
 package com.mongodb;
 
-import java.util.List;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.ArrayList;
-
+import java.util.*;
 
 /** This class provides a skeleton implementation of a database collection.  
  * <p>A typical invocation sequence is thus
@@ -665,8 +660,12 @@ public abstract class DBCollection {
         if ( ! DBObject.class.isAssignableFrom( c ) )
             throw new IllegalArgumentException( c.getName() + " is not a DBObject" );
         _objectClass = c;
+        if ( ReflectionDBObject.class.isAssignableFrom( c ) )
+            _wrapper = ReflectionDBObject.getWrapper( c );
+        else 
+            _wrapper = null;
     }
-
+    
     /** Gets the default class for objects in the collection
      * @return the class
      */
@@ -674,6 +673,20 @@ public abstract class DBCollection {
         return _objectClass;
     }
 
+    public void setInternalClass( String path , Class c ){
+        _internalClass.put( path , c );
+    }
+
+    protected Class getInternalClass( String path ){
+        Class c = _internalClass.get( path );
+        if ( c != null )
+            return c;
+
+        if ( _wrapper == null )
+            return null;
+        return _wrapper.getInternalClass( path );
+    }
+    
     final DBBase _base;
 
     final protected String _name;
@@ -682,6 +695,8 @@ public abstract class DBCollection {
     protected List<DBObject> _hintFields;
 
     protected Class _objectClass = null;
+    private Map<String,Class> _internalClass = Collections.synchronizedMap( new HashMap<String,Class>() );
+    private ReflectionDBObject.JavaWrapper _wrapper = null;
 
     private boolean _anyUpdateSave = false;
 
