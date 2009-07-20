@@ -108,9 +108,11 @@ public abstract class ReflectionDBObject implements DBObject {
                 if ( name.length() == 0 || IGNORE_FIELDS.contains( name ) )
                     continue;
 
+                Class type = m.getName().startsWith( "get" ) ? m.getReturnType() : m.getParameterTypes()[0];
+
                 FieldInfo fi = _fields.get( name );
                 if ( fi == null ){
-                    fi = new FieldInfo( name );
+                    fi = new FieldInfo( name , type );
                     _fields.put( name , fi );
                 }
                 
@@ -161,6 +163,28 @@ public abstract class ReflectionDBObject implements DBObject {
                 throw new RuntimeException( "could not invoke setter for [" + name + "] on [" + _name + "]" , e );
             }
         }
+
+        Class getInternalClass( String path ){
+            String cur = path;
+            String next = null;
+            final int idx = path.indexOf( "." );
+            if ( idx >= 0 ){
+                cur = path.substring( 0 , idx );
+                next = path.substring( idx + 1 );
+            }
+            
+            FieldInfo fi = _fields.get( cur );
+            if ( fi == null )
+                return null;
+            
+            if ( next == null )
+                return fi._class;
+            
+            JavaWrapper w = getWrapperIfReflectionObject( fi._class );
+            if ( w == null )
+                return null;
+            return w.getInternalClass( next );
+        }
         
         final Class _class;
         final String _name;
@@ -169,8 +193,9 @@ public abstract class ReflectionDBObject implements DBObject {
     }
     
     static class FieldInfo {
-        FieldInfo( String name ){
+        FieldInfo( String name , Class c ){
             _name = name;
+            _class = c;
         }
 
         boolean ok(){
@@ -180,8 +205,15 @@ public abstract class ReflectionDBObject implements DBObject {
         }
         
         final String _name;
+        final Class _class;
         Method _getter;
         Method _setter;
+    }
+        
+    public static JavaWrapper getWrapperIfReflectionObject( Class c ){
+        if ( ReflectionDBObject.class.isAssignableFrom( c ) )
+            return getWrapper( c );
+        return null;
     }
 
     public static JavaWrapper getWrapper( Class c ){
