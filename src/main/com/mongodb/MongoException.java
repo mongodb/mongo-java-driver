@@ -18,7 +18,7 @@
 
 package com.mongodb;
 
-public class MongoException extends Exception {
+public class MongoException extends RuntimeException {
 
     public MongoException( String msg ){
         super( msg );
