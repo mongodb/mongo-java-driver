@@ -43,10 +43,13 @@ public class BasicDBList extends ArrayList<Object> implements DBObject {
      * @throws IndexOutOfBoundsException if <code>key</code> cannot be parsed into an <code>int</code>
      */ 
     public Object put( String key , Object v ){
-        int i = _getInt( key );
-        while ( i >= size() )
+        return put(_getInt( key ), v);
+    }
+
+    public Object put( int key, Object v ) {
+        while ( key >= size() )
             add( null );
-        set( i , v );
+        set( key , v );
         return v;
     }
 

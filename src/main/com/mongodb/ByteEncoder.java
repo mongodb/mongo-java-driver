@@ -203,14 +203,17 @@ public class ByteEncoder extends Bytes {
         final int sizePos = _buf.position();
         _buf.putInt( 0 ); // leaving space for this.  set it at the end
 
-        if ( o.containsKey( "_id" ) )
-            _putObjectField( "_id" , o.get( "_id" ) );
-            
         List transientFields = null;
-        {
-            Object temp = o.get( "_transientFields" );
-            if ( temp instanceof List )
-                transientFields = (List)temp;
+
+        if ( myType == OBJECT ) {
+            if ( o.containsKey( "_id" ) )
+                _putObjectField( "_id" , o.get( "_id" ) );
+            
+            {
+                Object temp = o.get( "_transientFields" );
+                if ( temp instanceof List )
+                    transientFields = (List)temp;
+            }
         }
         
 
@@ -334,13 +337,14 @@ public class ByteEncoder extends Bytes {
             return true;
         }
         
-        if ( o.get( Bytes.NO_REF_HACK ) != null ){
+        if ( !(o instanceof List) && o.get( Bytes.NO_REF_HACK ) != null ){
             o.removeField( Bytes.NO_REF_HACK );
             return false;
         }
 
         if ( ! _dontRefContains( o ) && 
 	     name != null && 
+             !(o instanceof List) &&
              cameFromDB( o ) ){
             putDBRef( name , o.get( "_ns" ).toString() , (ObjectId)(o.get( "_id" ) ) );
             return true;

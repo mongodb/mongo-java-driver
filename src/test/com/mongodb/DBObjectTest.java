@@ -69,6 +69,29 @@ public class DBObjectTest extends TestCase {
     }
 
     @Test(groups = {"basic"})
+    public void testBasicDBList() {
+        BasicDBList l = new BasicDBList();
+        l.put(10, "x");
+        assertEquals(l.get("10"), "x");
+        assertEquals(l.get(3), null);
+        l.put("10", "y");
+        assertEquals(l.get("10"), "y");
+
+        Mongo db;
+        try {
+            db = new Mongo( "127.0.0.1" , "test" );
+        } 
+        catch (UnknownHostException e2) {
+            return;
+        }
+        DBCollection c = db.getCollection("dblist");
+        c.drop();
+        c.insert(BasicDBObjectBuilder.start().add("array", l).get());
+        DBObject obj = c.findOne();
+        assertEquals(obj.get("array") instanceof List, true);
+    }
+
+    @Test(groups = {"basic"})
     public void testPutAll() {
         DBObject start = BasicDBObjectBuilder.start().add( "a" , 1 ).add( "b" , 2 ).get();
 
