@@ -60,7 +60,7 @@ public abstract class DBCollection {
      * @param o object with which to update <tt>q</tt>
      * @param upsert if the database should create the element if it does not exist
      * @param apply if an _id field should be added to the new object
-     * See www.10gen.com/wiki/db.update
+     * See http://www.mongodb.org/display/DOCS/Atomic+Operations
      */
     public abstract DBObject update( DBObject q , DBObject o , boolean upsert , boolean apply ) throws MongoException ;
 
