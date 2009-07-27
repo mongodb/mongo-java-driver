@@ -88,10 +88,28 @@ public class DBTCP extends DBMessageLayer {
         return addrs.get(0);
     }
 
+    /**
+     * Start a "request".
+     *
+     * A "request" is a group of operations in which order matters. Examples
+     * include inserting a document and then performing a query which expects
+     * that document to have been inserted, or performing an operation and
+     * then using com.mongodb.Mongo.getLastError to perform error-checking
+     * on that operation. When a thread performs operations in a "request", all
+     * operations will be performed on the same socket, so they will be
+     * correctly ordered.
+     */
     public void requestStart(){
         _threadPort.get().requestStart();
     }
 
+    /**
+     * End the current "request", if this thread is in one.
+     *
+     * By ending a request when it is safe to do so the built-in connection-
+     * pool is allowed to reassign requests to different sockets in order to
+     * more effectively balance load. See requestStart for more information.
+     */
     public void requestDone(){
         _threadPort.get().requestDone();
     }

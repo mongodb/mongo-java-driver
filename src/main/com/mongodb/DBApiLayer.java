@@ -116,6 +116,9 @@ public abstract class DBApiLayer extends DBBase {
      *
      * The value for errorMessage will be null if no error occurred, or a description otherwise.
      *
+     * Care must be taken to ensure that calls to getLastError go to the same connection as that
+     * of the previous operation. See com.mongodb.Mongo.requestStart for more information.
+     *
      *  @return DBObject with error and status information
      */
     public DBObject getLastError()
@@ -134,6 +137,9 @@ public abstract class DBApiLayer extends DBBase {
      *
      * The value for errormMessage will be null of no error has ocurred, or the message.  The value of
      * countOpsBack will be the number of operations since the error occurred.
+     *
+     * Care must be taken to ensure that calls to getPreviousError go to the same connection as that
+     * of the previous operation. See com.mongodb.Mongo.requestStart for more information.
      *
      * @return DBObject with error and status information
      */

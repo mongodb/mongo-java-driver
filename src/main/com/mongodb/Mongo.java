@@ -22,7 +22,7 @@ import java.net.UnknownHostException;
 
 /**
  * A database connection and, optionally, database.
- * The following are equivalent, and all connect to the 
+ * The following are equivalent, and all connect to the
  * local database called "dev", running on the default port:
  *
  * <blockquote><pre>
@@ -30,6 +30,9 @@ import java.net.UnknownHostException;
  * Mongo mongo2 = new Mongo( "127.0.0.1", 27017, "dev" );
  * Mongo mongo3 = new Mongo( new DBAddress( "127.0.0.1:27017", "dev" ) )
  * </pre></blockquote>
+ *
+ * Mongo instances have connection pooling built in - see the requestStart
+ * and requestDone methods for more information.
  */
 public class Mongo extends DBTCP {
 
@@ -39,7 +42,7 @@ public class Mongo extends DBTCP {
      *  @param dbname name of database to connect to
      *  @throws UnknownHostException if the database host cannot be resolved
      */
-    public Mongo(String dbname) 
+    public Mongo(String dbname)
         throws UnknownHostException , MongoException {
         super(new DBAddress("127.0.0.1", dbname));
     }
@@ -68,7 +71,7 @@ public class Mongo extends DBTCP {
     }
 
     /**
-     * Connects to Mongo using a given DBAddress 
+     * Connects to Mongo using a given DBAddress
      * @see com.mongodb.DBAddress
      * @param addr the database address
      */
