@@ -32,7 +32,7 @@ public abstract class DBApiLayer extends DBBase {
     static final boolean D = Boolean.getBoolean( "DEBUG.DB" );
     /** The maximum number of cursors allowed */
     static final int NUM_CURSORS_BEFORE_KILL = 100;
-    
+
     static final boolean SHOW = Boolean.getBoolean( "DB.SHOW" );
 
     protected DBApiLayer( String root ){
@@ -134,7 +134,7 @@ public abstract class DBApiLayer extends DBBase {
      *
      * The value for errormMessage will be null of no error has ocurred, or the message.  The value of
      * countOpsBack will be the number of operations since the error occurred.
-     * 
+     *
      * @return DBObject with error and status information
      */
     public DBObject getPreviousError()
@@ -154,7 +154,7 @@ public abstract class DBApiLayer extends DBBase {
     /**
      *  For testing purposes only - this method forces an error to help test error handling
      */
-    public void forceError() 
+    public void forceError()
         throws MongoException {
         command(new BasicDBObject("forceerror", 1));
     }
@@ -175,7 +175,7 @@ public abstract class DBApiLayer extends DBBase {
     /** Get a collection from a &lt;databaseName&gt;.&lt;collectionName&gt;.
      * If <code>fullNameSpace</code> does not contain any "."s, this will
      * find a collection called <code>fullNameSpace</code> and return it.
-     * Otherwise, it will find the collecton <code>collectionName</code> and 
+     * Otherwise, it will find the collecton <code>collectionName</code> and
      * return it.
      * @param fullNameSpace the full name to find
      * @throws RuntimeException if the database named is not this database
@@ -243,11 +243,11 @@ public abstract class DBApiLayer extends DBBase {
             super( DBApiLayer.this , name );
             _fullNameSpace = _root + "." + name;
         }
-        
+
         public void doapply( DBObject o ){
             o.put( "_ns" , _removeRoot( _fullNameSpace ) );
         }
-        
+
         public DBObject insert( DBObject o )
             throws MongoException {
             DBObject[] arr = new DBObject[1];
@@ -301,7 +301,7 @@ public abstract class DBApiLayer extends DBBase {
                 encoder.putObject( o );
             }
             encoder.flip();
-            
+
             try {
                 doInsert( encoder._buf );
             }
@@ -332,7 +332,7 @@ public abstract class DBApiLayer extends DBBase {
 
             encoder.putObject( o );
             encoder.flip();
-            
+
             try {
                 doDelete( encoder._buf );
             }
@@ -350,7 +350,7 @@ public abstract class DBApiLayer extends DBBase {
 
             if ( _deadCursorIds.size() % 20 != 0 && _deadCursorIds.size() < NUM_CURSORS_BEFORE_KILL )
                 return;
-            
+
             List<Long> l = _deadCursorIds;
             _deadCursorIds = new Vector<Long>();
 
@@ -378,7 +378,7 @@ public abstract class DBApiLayer extends DBBase {
             for (Long l : all) {
                 encoder._buf.putLong(l);
             }
-            
+
             try {
                 doKillCursors( encoder._buf );
             }
@@ -387,7 +387,7 @@ public abstract class DBApiLayer extends DBBase {
             }
         }
 
-        Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn ) 
+        Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn )
             throws MongoException {
 
             if ( SHOW ) System.out.println( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
@@ -411,18 +411,18 @@ public abstract class DBApiLayer extends DBBase {
             try {
                 int len = doQuery( encoder._buf , decoder._buf );
                 decoder.doneReading( len );
-                
+
                 SingleResult res = new SingleResult( _fullNameSpace , decoder);
-                
+
                 if ( res._lst.size() == 0 )
                     return null;
-                
+
                 if ( res._lst.size() == 1 ){
                     Object err = res._lst.get(0).get( "$err" );
                     if ( err != null )
                         throw new RuntimeException( "db error [" + err + "]" );
                 }
-                
+
                 return new Result( this , res , numToReturn );
             }
             finally {
@@ -430,8 +430,8 @@ public abstract class DBApiLayer extends DBBase {
                 encoder.done();
             }
         }
-        
-        public DBObject update( DBObject query , DBObject o , boolean upsert , boolean apply ) 
+
+        public DBObject update( DBObject query , DBObject o , boolean upsert , boolean apply )
             throws MongoException {
 
             if ( SHOW ) System.out.println( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
@@ -441,7 +441,7 @@ public abstract class DBApiLayer extends DBBase {
                 ObjectId id = ((ObjectId)o.get( "_id" ));
                 id._new = false;
             }
-            
+
             ByteEncoder encoder = ByteEncoder.get();
             encoder._buf.putInt( 0 ); // reserved
             encoder._put( _fullNameSpace );
@@ -468,7 +468,7 @@ public abstract class DBApiLayer extends DBBase {
             ensureIndex(keys, name, false);
         }
 
-        public void ensureIndex( DBObject keys, String name, boolean unique) 
+        public void ensureIndex( DBObject keys, String name, boolean unique)
             throws MongoException {
 
             DBObject o = new BasicDBObject();
@@ -477,15 +477,15 @@ public abstract class DBApiLayer extends DBBase {
             o.put( "key" , keys );
             o.put( "unique", unique);
 
-	    //dm-system isnow in our database
-	    DBApiLayer.this.doGetCollection( "system.indexes" ).insert( o , false );
+        //dm-system isnow in our database
+        DBApiLayer.this.doGetCollection( "system.indexes" ).insert( o , false );
         }
 
         final String _fullNameSpace;
     }
 
     class QueryHeader {
-        
+
         QueryHeader( ByteBuffer buf ){
             this( buf , buf.position() );
         }
@@ -512,14 +512,14 @@ public abstract class DBApiLayer extends DBBase {
     }
 
     class SingleResult extends QueryHeader {
-        
+
         SingleResult( String fullNameSpace , ByteDecoder decoder){
             super( decoder._buf );
 
             _bytes = decoder.remaining();
             _fullNameSpace = fullNameSpace;
             skipPastHeader( decoder._buf );
-            
+
             if ( _num == 0 )
                 _lst = EMPTY;
             else if ( _num < 3 )
@@ -614,7 +614,7 @@ public abstract class DBApiLayer extends DBBase {
             try {
                 int len = doGetMore( encoder._buf , decoder._buf );
                 decoder.doneReading( len );
-                
+
                 SingleResult res = new SingleResult( _curResult._fullNameSpace , decoder);
                 init( res );
             }
