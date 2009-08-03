@@ -68,6 +68,7 @@ public class Bytes {
     static final byte CODE_W_SCOPE = 15;
     static final byte NUMBER_INT = 16;
     static final byte TIMESTAMP = 17;
+    static final byte NUMBER_LONG = 18;
 
     static final byte MINKEY = -1;
     static final byte MAXKEY = 127;

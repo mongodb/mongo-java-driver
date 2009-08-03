@@ -385,6 +385,10 @@ public class ByteEncoder extends Bytes {
 	    _put( NUMBER_INT , name );
 	    _buf.putInt( n.intValue() );
 	}
+        else if (n instanceof Long ) {
+            _put( NUMBER_LONG , name );
+            _buf.putLong( n.longValue() );
+        }
 	else {
 	    _put( NUMBER , name );
 	    _buf.putDouble( n.doubleValue() );

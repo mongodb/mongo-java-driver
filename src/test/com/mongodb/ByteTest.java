@@ -371,6 +371,24 @@ public class ByteTest extends TestCase {
         decoder.done();
     }
 
+    @Test(groups = {"basic"})
+    public void testLong() {
+        long s = -9223372036854775808l;
+        long m = 1l;
+        long l = 9223372036854775807l;
+
+        DBObject obj = BasicDBObjectBuilder.start().add("s", s).add("m", m).add("l", l).get();
+        DBCollection c = _db.getCollection("test");
+        c.drop();
+
+        c.insert(obj);
+        DBObject r = c.findOne();
+
+        assertEquals(r.get("s"), -9223372036854775808l);
+        assertEquals(r.get("m"), 1l);
+        assertEquals(r.get("l"), 9223372036854775807l);
+    }
+
     final DBBase _db;
 
     public static void main( String args[] )

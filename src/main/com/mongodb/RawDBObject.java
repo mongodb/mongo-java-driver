@@ -190,6 +190,7 @@ public class RawDBObject implements DBObject {
                 break;
             case DATE:
             case NUMBER:
+            case NUMBER_LONG:
                 size += 8;
                 break;
 	    case NUMBER_INT:
