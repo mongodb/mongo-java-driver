@@ -28,7 +28,7 @@ import com.mongodb.util.*;
 /** This object wraps the binary object format ("BSON") used for the transport of serialized objects 
    to / from the Mongo database.
 
-   http://www.10gen.com/wiki/bson
+   http://www.mongodb.org/display/DOCS/BSON
 */
 public class RawDBObject implements DBObject {
 
