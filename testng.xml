@@ -5,6 +5,7 @@
   <test name="main tests">
     <classes>
       <class name="com.mongodb.util.SimplePoolTest"/>
+      <class name="com.mongodb.util.JSONTest"/>
       <class name="com.mongodb.io.ByteBufferStreamTest"/>
 
       <class name="com.mongodb.ByteTest" />

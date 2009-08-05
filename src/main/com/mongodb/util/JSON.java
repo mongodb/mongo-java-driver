@@ -262,6 +262,23 @@ class JSONParser {
         pos++;
     }
 
+    /** 
+     * Read the current character, making sure that it is a hexidecimal character.
+     *
+     * @throws JSONParseException if the current character is not a hexidecimal character
+     */
+    public void readHex() {
+        if (pos < s.length() && 
+            ((s.charAt(pos) >= '0' && s.charAt(pos) <= '9') ||
+             (s.charAt(pos) >= 'A' && s.charAt(pos) <= 'F') ||
+             (s.charAt(pos) >= 'a' && s.charAt(pos) <= 'f'))) {
+            pos++;
+        }
+        else {
+            throw new JSONParseException(s, pos);
+        }
+    }
+
     /**
      * Checks the current character, making sure that it is the expected character.
      *
@@ -313,15 +330,37 @@ class JSONParser {
         char current;
 
         read(quot);
+        StringBuffer buf = new StringBuffer();
         int start = pos;
         while(pos < s.length() && 
               (current = s.charAt(pos)) != quot) {
-            if(current == '\\')
+            if(current == '\\') {
                 pos++;
+
+                // decode unicode
+                if (check('u')) {
+                    buf.append(s.substring(start, pos-1));
+                    pos++;
+                    int tempPos = pos;
+
+                    readHex();
+                    readHex();
+                    readHex();
+                    readHex();
+
+                    int codePoint = Integer.parseInt(s.substring(tempPos, tempPos+4), 16);
+                    buf.append((char)codePoint);
+
+                    start = pos;
+                    continue;
+                }
+            }
             pos++;
         }
         read(quot);
-        return s.substring(start, pos-1);
+
+        buf.append(s.substring(start, pos-1));
+        return buf.toString();
     }
 
     /**
