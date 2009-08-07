@@ -278,11 +278,11 @@ public class ByteEncoder extends Bytes {
         else if ( val.getClass().isArray() )
             putList( name , Arrays.asList( (Object[])val ) );
 
-        else if (val instanceof DBRef) {
+        else if (val instanceof DBPointer) {
 
             // temporary - there's the notion of "special object" , but for simple level 0...
-            DBRef r = (DBRef) val;
-            putDBRef( name , r._ns , r._id );
+            DBPointer r = (DBPointer) val;
+            putDBPointer( name , r._ns , (ObjectId)r._id );
         }
         else if (val instanceof DBSymbol) {
             putSymbol(name, (DBSymbol) val);
@@ -327,13 +327,13 @@ public class ByteEncoder extends Bytes {
 
         if ( o instanceof DBCollection ){
             DBCollection c = (DBCollection)o;
-            putDBRef( name , c.getName() , Bytes.COLLECTION_REF_ID );
+            putDBPointer( name , c.getName() , Bytes.COLLECTION_REF_ID );
             return true;
         }
         
-        if ( ! _dontRefContains( o ) && name != null && o instanceof DBRef ){
-            DBRef r = (DBRef)o;
-            putDBRef( name , r._ns , r._id );
+        if ( ! _dontRefContains( o ) && name != null && o instanceof DBPointer ){
+            DBPointer r = (DBPointer)o;
+            putDBPointer( name , r._ns , (ObjectId)r._id );
             return true;
         }
         
@@ -346,7 +346,7 @@ public class ByteEncoder extends Bytes {
 	     name != null && 
              !(o instanceof List) &&
              cameFromDB( o ) ){
-            putDBRef( name , o.get( "_ns" ).toString() , (ObjectId)(o.get( "_id" ) ) );
+            putDBPointer( name , o.get( "_ns" ).toString() , (ObjectId)(o.get( "_id" ) ) );
             return true;
         }
         
@@ -433,7 +433,7 @@ public class ByteEncoder extends Bytes {
         return _buf.position() - start;
     }
     
-    protected int putDBRef( String name , String ns , ObjectId oid ){
+    protected int putDBPointer( String name , String ns , ObjectId oid ){
         int start = _buf.position();
         _put( REF , name );
         

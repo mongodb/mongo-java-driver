@@ -207,7 +207,7 @@ public class ByteDecoder extends Bytes {
             if ( theOID.equals( Bytes.COLLECTION_REF_ID ) )
                 o.put( name , _base.getCollectionFromFull( ns ) );
             else 
-                o.put( name , new DBRef( o , name , _base , ns , theOID ) );
+                o.put( name , new DBPointer( o , name , _base , ns , theOID ) );
             break;
             
         case DATE:

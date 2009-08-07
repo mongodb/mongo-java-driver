@@ -41,7 +41,7 @@ public class Circular {
         foo = new BasicDBObject();
         foo.put( "_id", id );
         foo.put( "that", 2 );
-        DBRef ref = new DBRef( "c", id );
+        DBPointer ref = new DBPointer( "c", id );
         foo.put( "thiz", ref );
         m.getCollection( "c" ).save( foo );
 

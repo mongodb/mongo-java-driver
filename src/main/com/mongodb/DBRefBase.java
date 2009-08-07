@@ -1,4 +1,4 @@
-// DBRef.java
+// DBRefBase.java
 
 /**
  *      Copyright (C) 2008 10gen Inc.
@@ -18,35 +18,21 @@
 
 package com.mongodb;
 
-public class DBRef {
+/**
+ * Base class for DBRefs.
+ */
+public class DBRefBase {
     
     static final boolean D = Boolean.getBoolean( "DEBUG.DBREF" );
 
-    /**
-     *  CTOR used for testing BSON encoding.  Otherwise
-     *  non-functional due to a DBRef needing a parent db object,
-     *  a fieldName and a db
-     *
-     * @param ns namespace to point to
-     * @param id value of _id
-     */
-    public DBRef(String ns, ObjectId id) {
-        this (null, null, null, ns, id);
-    }
-
-    DBRef( DBObject parent , String fieldName , DBBase db , String ns , ObjectId id ){
-    
-        _parent = parent;
-        _fieldName = fieldName;
-
+    public DBRefBase(DBBase db , String ns , ObjectId id) {
         _db = db;
         
         _ns = ns;
         _id = id;
     }
 
-    public DBObject fetch()
-        throws MongoException {
+    public DBObject fetch() {
         if (_loadedPointedTo)
             return _pointedTo;
 
@@ -54,7 +40,7 @@ public class DBRef {
             throw new RuntimeException("no db");
 
         if (D) {
-            System.out.println("following dbref.  parent.field:" + _fieldName + " ref to ns:" + _ns);
+            System.out.println("following db pointer. ref to ns:" + _ns);
             Throwable t = new Throwable();
             t.fillInStackTrace();
             t.printStackTrace();
@@ -68,13 +54,10 @@ public class DBRef {
     }
 
     public String toString(){
-        return "{ \"$ref\" : \"" + _ns + "\", \"$id\" : ObjectId(\"" + _id + "\") }";
+        return "{ \"$ref\" : \"" + _ns + "\", \"$id\" : " + _id + " }";
     }
 
-    final DBObject _parent;
-    final String _fieldName;
-
-    final ObjectId _id;
+    final Object _id;
     final String _ns;
     final DBBase _db;
 

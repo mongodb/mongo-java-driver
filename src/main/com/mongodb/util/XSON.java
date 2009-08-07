@@ -35,7 +35,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBList;
 import com.mongodb.ObjectId;
 import com.mongodb.ByteEncoder;
-import com.mongodb.DBRef;
+import com.mongodb.DBPointer;
 import com.mongodb.DBSymbol;
 import com.mongodb.DBRegex;
 import com.mongodb.DBUndefined;
@@ -259,7 +259,7 @@ public class XSON extends DefaultHandler {
 
             if ("ref".equals(qName)) {
 
-                DBRef br = new DBRef((String) _data.get("ns"), new ObjectId((String) _data.get("oid")));
+                DBPointer br = new DBPointer((String) _data.get("ns"), new ObjectId((String) _data.get("oid")));
 
                 _currentDoc.put(cleanName(), br);
 

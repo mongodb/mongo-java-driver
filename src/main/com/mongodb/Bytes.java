@@ -98,7 +98,7 @@ public class Bytes {
         if ( o == null )
             return NULL;
 
-        if ( o instanceof DBRef )
+        if ( o instanceof DBPointer )
             return REF;
 
         if ( o instanceof Number )
