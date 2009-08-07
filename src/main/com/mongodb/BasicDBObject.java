@@ -74,6 +74,7 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
      * @return the object removed
      */
     public Object removeField( String key ){
+        _keys.remove(key);
         return remove( key );
     }
 

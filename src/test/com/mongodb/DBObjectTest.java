@@ -106,6 +106,28 @@ public class DBObjectTest extends TestCase {
 
     }
 
+    @Test(groups = {"basic"})
+    public void testRemoveField() {
+        BasicDBObject obj = new BasicDBObject();
+        obj.put("x", "y");
+        obj.put("y", "z");
+
+        assertTrue(obj.containsKey("x"));
+        assertTrue(obj.containsKey("y"));
+        assertEquals(obj.toString(), "{ \"x\" : \"y\" , \"y\" : \"z\"}");
+
+        obj.removeField("x");
+
+        assertFalse(obj.containsKey("x"));
+        assertTrue(obj.containsKey("y"));
+        assertEquals(obj.toString(), "{ \"y\" : \"z\"}");
+
+        obj.put("x", "y");
+
+        assertTrue(obj.containsKey("x"));
+        assertTrue(obj.containsKey("y"));
+        assertEquals(obj.toString(), "{ \"y\" : \"z\" , \"x\" : \"y\"}");
+    }
     
     public static void main( String args[] ) {
         (new DBObjectTest()).runConsole();
