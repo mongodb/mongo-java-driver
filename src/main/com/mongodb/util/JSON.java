@@ -127,6 +127,11 @@ public class JSON {
             return;
         }
 
+        if (o instanceof byte[]) {
+            buf.append("<Binary Data>");
+            return;
+        }
+
         throw new RuntimeException( "can't serialize type : " + o.getClass() );
     }
 
