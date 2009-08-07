@@ -84,9 +84,16 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
         return _isPartialObject;
     }
 
-    /** Checks if this object contains a given key
+    /** Checks if this object contains a given field
      * @param key field name
      * @return if the field exists
+     */
+    public boolean containsField( String field ){
+        return super.containsKey(field);
+    }
+
+    /**
+     * @deprecated
      */
     public boolean containsKey( String key ){
         return super.containsKey(key);

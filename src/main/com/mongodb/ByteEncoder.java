@@ -206,7 +206,7 @@ public class ByteEncoder extends Bytes {
         List transientFields = null;
 
         if ( myType == OBJECT ) {
-            if ( o.containsKey( "_id" ) )
+            if ( o.containsField( "_id" ) )
                 _putObjectField( "_id" , o.get( "_id" ) );
             
             {

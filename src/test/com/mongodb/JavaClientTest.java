@@ -43,7 +43,7 @@ public class JavaClientTest extends TestCase {
         
         c.save( m );
         
-        assert( m.containsKey( "_id" ) );
+        assert( m.containsField( "_id" ) );
 
         Map out = (Map)(c.findOne( m.get( "_id" )));
         assertEquals( "eliot" , out.get( "name" ) );
@@ -66,7 +66,7 @@ public class JavaClientTest extends TestCase {
 
         c.save( m );
         
-        assert( m.containsKey( "_id" ) );
+        assert( m.containsField( "_id" ) );
 
         Map out = (Map)(c.findOne( m.get( "_id" )));
         assertEquals( "eliot" , out.get( "name" ) );

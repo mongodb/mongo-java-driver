@@ -46,7 +46,7 @@ import java.util.Collections;
  * <p>For example, to get an array of the 1000-1100th elements of a cursor, use 
  *
  * <blockquote><pre>
- * DBObject obj[] = collection.find( query ).skip( 1000 ).limit( 100 ).toArray();
+ * List<DBObject> obj = collection.find( query ).skip( 1000 ).limit( 100 ).toArray();
  * </pre></blockquote>
  *
  */

@@ -83,7 +83,15 @@ public class BasicDBList extends ArrayList<Object> implements DBObject {
         return remove( i );        
     }
 
+    /**
+     * @deprecated
+     */
     public boolean containsKey( String key ){
+        int i = _getInt( key );
+        return i >= 0 && i < size();
+    }
+
+    public boolean containsField( String key ){
         int i = _getInt( key );
         return i >= 0 && i < size();
     }

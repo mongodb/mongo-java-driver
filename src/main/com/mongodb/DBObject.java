@@ -51,11 +51,16 @@ public interface DBObject {
      */
     public Object removeField( String key );
 
+    /** 
+     * @deprecated
+     */
+    public boolean containsKey( String s );
+
     /** Checks if this object contains a field with the given name.
      * @param s Field name for which to check
      * @return if this object contains a field with the given name
      */
-    public boolean containsKey( String s );
+    public boolean containsField(String s);
 
     /** Returns this object's fields' names
      * @return The names of the fields in this object
