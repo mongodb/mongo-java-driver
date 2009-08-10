@@ -82,7 +82,7 @@ public class RawDBObject implements DBObject {
      * @deprecated
      */
     public boolean containsKey( String key ){
-        return findElement( key ) != null;
+        return containsField(key);
     }
 
     public boolean containsField( String field ){

@@ -97,7 +97,7 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
      * @deprecated
      */
     public boolean containsKey( String key ){
-        return super.containsKey(key);
+        return containsField(key);
     }
 
     /** Gets a value from this object

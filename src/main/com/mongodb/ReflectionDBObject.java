@@ -37,7 +37,7 @@ public abstract class ReflectionDBObject implements DBObject {
      * @deprecated
      */
     public boolean containsKey( String s ){
-        return getWrapper().containsKey( s );
+        return containsField( s );
     }
 
     public boolean containsField( String s ){
