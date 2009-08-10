@@ -87,8 +87,7 @@ public class BasicDBList extends ArrayList<Object> implements DBObject {
      * @deprecated
      */
     public boolean containsKey( String key ){
-        int i = _getInt( key );
-        return i >= 0 && i < size();
+        return containsField(key);
     }
 
     public boolean containsField( String key ){
