@@ -62,6 +62,13 @@ public class DBCursorTest extends TestCase {
         }
     }
 
+    @Test(groups = {"basic"})
+    public void testSnapshot() {
+        DBCollection c = _db.getCollection("foo");
+        DBCursor cursor = c.find().snapshot().limit(4);
+    }
+
+
     final DBBase _db;
 
     public static void main( String args[] )

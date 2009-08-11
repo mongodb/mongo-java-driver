@@ -101,7 +101,7 @@ public class DBCursor implements Iterator<DBObject> {
     /**
      * Informs the database of indexed fields of the collection in order to improve performance.
      * @param indexKeys an <code>DBObject</code> with index names as keys
-     * @return same DBCursort for chaining operations
+     * @return same DBCursor for chaining operations
      */
     public DBCursor hint( DBObject indexKeys ){
         if ( _it != null )
@@ -113,6 +113,25 @@ public class DBCursor implements Iterator<DBObject> {
             _hint = DBCollection.genIndexName( indexKeys );
         return this;
     }
+
+    /**
+     * Use snapshot mode for the query.  Snapshot mode assures no duplicates are 
+     * returned, or objects missed, which were present at both the start and end 
+     * of the query's execution (if an object is new during the query, or deleted 
+     * during the query, it may or may not be returned, even with snapshot mode).
+     * Note that short query responses (less than 1MB) are always effectively snapshotted.
+     * Currently, snapshot mode may not be used with sorting or explicit hints.
+     * @return same DBCursor for chaining operations
+     */
+    public DBCursor snapshot() {
+        if (_it != null)
+            throw new IllegalStateException("can't snapshot after executing the query");
+
+        _snapshot = true;
+
+        return this;
+    }
+
 
     /**
      *  Informs the database of an indexed field of the collection in order to improve performance.
@@ -188,6 +207,8 @@ public class DBCursor implements Iterator<DBObject> {
                 _addToQueryObject( foo , "$hint" , _hint );
                 if ( _explain )
                     foo.put( "$explain" , true );
+                if ( _snapshot )
+                    foo.put( "$snapshot", true );
             }
 
             _it = _collection.find( foo , _keysWanted , _skip , _numWanted );
@@ -426,6 +447,7 @@ public class DBCursor implements Iterator<DBObject> {
     private boolean _explain = false;
     private int _numWanted = 0;
     private int _skip = 0;
+    private boolean _snapshot = false;
 
     // ----  result info ----
     private Iterator<DBObject> _it = null;
