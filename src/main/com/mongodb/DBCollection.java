@@ -69,10 +69,10 @@ public abstract class DBCollection {
      */
     protected abstract void doapply( DBObject o );
 
-    /** Removes an object from the database collection.
-     * @return -1
+    /** Removes objects from the database collection.
+     * @param the object that documents to be removed must match
      */
-    public abstract int remove( DBObject o ) throws MongoException ;
+    public abstract void remove( DBObject o ) throws MongoException ;
 
     /** Finds an object.
      * @param ref query used to search

@@ -318,7 +318,7 @@ public abstract class DBApiLayer extends DBBase {
             return arr;
         }
 
-        public int remove( DBObject o )
+        public void remove( DBObject o )
             throws MongoException {
 
             if ( SHOW ) System.out.println( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
@@ -345,8 +345,6 @@ public abstract class DBApiLayer extends DBBase {
             finally {
                 encoder.done();
             }
-
-            return -1;
         }
 
         void _cleanCursors()
