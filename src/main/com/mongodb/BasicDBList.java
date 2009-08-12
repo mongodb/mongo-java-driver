@@ -42,8 +42,8 @@ import java.util.*;
  * IllegalArgumentException.
  * <blockquote><pre>
  * BasicDBList list = new BasicDBList();
- * list.add(new BasicDBObject("1", "bar")); // ok
- * list.add(new BasicDBObject("1E1", "bar")); // throws exception
+ * list.put("1", "bar"); // ok
+ * list.put("1E1", "bar"); // throws exception
  * </pre></blockquote>
  * </p>
  */
