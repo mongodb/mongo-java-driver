@@ -22,30 +22,55 @@ import com.mongodb.util.OrderedSet;
 
 import java.util.*;
 
-/** Utility class to allow array <code>DBObject</code>s to be created.
+/** 
+ * Utility class to allow array <code>DBObject</code>s to be created.
+ * <p>
+ * Note: MongoDB will also create arrays from <code>java.util.List</code>s.
+ * </p>
+ * <p>
  * <blockquote><pre>
  * DBObject obj = new BasicDBList();
  * obj.put( "0", value1 );
  * obj.put( "4", value2 );
+ * obj.put( 2, value3 );
  * </pre></blockquote>
- * This simulates the array [ value1, null, null, null, value2 ] by creating the 
- * <code>DBObject</code> <code>{ "0" : value1, "1" : null, "2" : null, "3" : null, "4" : value2 }</code>.
+ * This simulates the array [ value1, null, value3, null, value2 ] by creating the 
+ * <code>DBObject</code> <code>{ "0" : value1, "1" : null, "2" : value3, "3" : null, "4" : value2 }</code>.
+ * </p>
+ * <p>
+ * BasicDBList only supports numeric keys.  Passing strings that cannot be converted to ints will cause an
+ * IllegalArgumentException.
+ * <blockquote><pre>
+ * BasicDBList list = new BasicDBList();
+ * list.add(new BasicDBObject("1", "bar")); // ok
+ * list.add(new BasicDBObject("1E1", "bar")); // throws exception
+ * </pre></blockquote>
+ * </p>
  */
 public class BasicDBList extends ArrayList<Object> implements DBObject {
     
     public BasicDBList(){
     }
     
-    /** Put a value at an index.
+    /** 
+     * Puts a value at an index.
+     * For interface compatibility.  Must be passed a String that is parsable to an int.
      * @param key the index at which to insert the value
      * @param v the value to insert
      * @return the value
-     * @throws IndexOutOfBoundsException if <code>key</code> cannot be parsed into an <code>int</code>
+     * @throws IllegalArgumentException if <code>key</code> cannot be parsed into an <code>int</code>
      */ 
     public Object put( String key , Object v ){
         return put(_getInt( key ), v);
     }
 
+    /** 
+     * Puts a value at an index.
+     * This will fill any unset indexes less than <code>index</code> with <code>null</code>.
+     * @param key the index at which to insert the value
+     * @param v the value to insert
+     * @return the value
+     */ 
     public Object put( int key, Object v ) {
         while ( key >= size() )
             add( null );
@@ -65,6 +90,13 @@ public class BasicDBList extends ArrayList<Object> implements DBObject {
         }
     }
     
+    /** 
+     * Gets a value at an index.
+     * For interface compatibility.  Must be passed a String that is parsable to an int.
+     * @param key the index
+     * @return the value, if found, or null
+     * @throws IllegalArgumentException if <code>key</code> cannot be parsed into an <code>int</code>
+     */ 
     public Object get( String key ){
         int i = _getInt( key );
         if ( i < 0 )
