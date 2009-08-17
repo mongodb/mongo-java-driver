@@ -54,7 +54,7 @@ public class DBRefBase {
     }
 
     public String toString(){
-        return "{ \"$ref\" : \"" + _ns + "\", \"$id\" : " + _id + " }";
+        return "{ \"$ref\" : \"" + _ns + "\", \"$id\" : \"" + _id + "\" }";
     }
 
     final Object _id;
