@@ -418,7 +418,7 @@ public class DBCursor implements Iterator<DBObject> {
         throws MongoException {
         _checkType( CursorType.ARRAY );
         _fill( min );
-        return Collections.unmodifiableList( _all );
+        return _all;
     }
 
 
