@@ -402,6 +402,27 @@ public abstract class DBCollection {
     }
 
     /**
+     * @param key - { a : true }
+     * @param cond - optional condition on query 
+     * @param reduce javascript reduce function 
+     * @param initial initial value for first match on a key
+     */
+    public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce )
+        throws MongoException {
+        DBObject ret =  _base.command( new BasicDBObject( "group" , 
+                                                          BasicDBObjectBuilder.start()
+                                                          .add( "ns" , getName() )
+                                                          .add( "key" , key )
+                                                          .add( "cond" , cond )
+                                                          .add( "$reduce" , reduce )
+                                                          .add( "initial" , initial )
+                                                          .get() ) );
+        if ( ((Number)(ret.get( "ok" ))).intValue() == 1 )
+            return (DBObject)ret.get( "retval" );
+        throw new MongoException( "group failed: " + ret.toString() );
+    }
+
+    /**
      *   Return a list of the indexes for this collection.  Each object
      *   in the list is the "info document" from MongoDB
      *

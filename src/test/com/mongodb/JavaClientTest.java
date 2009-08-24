@@ -168,6 +168,24 @@ public class JavaClientTest extends TestCase {
         assertNull( out.get( "b" ) );
 
     }
+
+    @Test
+    public void testGroup()
+        throws MongoException {
+        
+        DBCollection c = _db.getCollection( "group1" );
+        c.drop();
+        c.save( BasicDBObjectBuilder.start().add( "x" , "a" ).get() );
+        c.save( BasicDBObjectBuilder.start().add( "x" , "a" ).get() );
+        c.save( BasicDBObjectBuilder.start().add( "x" , "a" ).get() );
+        c.save( BasicDBObjectBuilder.start().add( "x" , "b" ).get() );
+
+        DBObject g = c.group( new BasicDBObject( "x" , 1 ) , null , new BasicDBObject( "count" , 0 ) , 
+                              "function( o , p ){ p.count++; }" );
+
+        List l = (List)g;
+        assertEquals( 2 , l.size() );
+    }
     
     final Mongo _db;
 
