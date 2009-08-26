@@ -35,7 +35,8 @@ package com.mongodb;
  */
 
 /**
- *  Because this isn't your father's Regex anymore...
+ * Use java.util.regex.Pattern for regular expressions.
+ * @deprecated
  */
 public class DBRegex {
 

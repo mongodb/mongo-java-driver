@@ -230,8 +230,25 @@ public abstract class DBCollection {
     }
 
     /** Queries for an object in this collection.
+     *
+     * <p>
+     * An empty DBObject will match every document in the collection.
+     * Regardless of fields specified, the _id and _ns fields are always returned.
+     * </p>
+     * <p>
+     * An example that returns the "x", "_id", and "_ns" fields for every document 
+     * in the collection that has an "x" field:
+     * </p>
+     * <blockquote><pre>
+     * BasicDBObject keys = new BasicDBObject();
+     * keys.put("x", 1);
+     *
+     * DBCursor cursor = collection.find(new BasicDBObject(), keys); 
+     * </pre></blockquote>
+     *
      * @param ref object for which to search
-     * @return a cursor which will iterate over every object
+     * @param keys fields to return
+     * @return a cursor to iterate over results
      */
     public final DBCursor find( DBObject ref , DBObject keys ){
         return new DBCursor( this, ref, keys );
