@@ -186,6 +186,22 @@ public class JavaClientTest extends TestCase {
         List l = (List)g;
         assertEquals( 2 , l.size() );
     }
+
+    @Test
+    public void testSet()
+        throws MongoException {
+
+        DBCollection c = _db.getCollection( "group1" );
+        c.drop();
+        c.save( BasicDBObjectBuilder.start().add( "id" , 1 ).add( "x" , true ).get() );
+        assertEquals( Boolean.class , c.findOne().get( "x" ).getClass() );
+
+        c.update( new BasicDBObject( "id" , 1 ) , 
+                  new BasicDBObject( "$set" , 
+                                     new BasicDBObject( "x" , 5.5 ) ) , false , false );
+        assertEquals( Double.class , c.findOne().get( "x" ).getClass() );        
+        
+    }
     
     final Mongo _db;
 
