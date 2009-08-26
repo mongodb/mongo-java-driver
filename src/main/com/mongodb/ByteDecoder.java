@@ -302,7 +302,12 @@ public class ByteDecoder extends Bytes {
                 break;
             _namebuf[pos++] = b;
         }
-        return new String( _namebuf , 0 , pos );
+        try {
+            return new String( _namebuf , 0 , pos , "UTF-8" );
+        }
+        catch ( java.io.UnsupportedEncodingException use ){
+            throw new MongoInternalException( "impossible" );
+        }
     }
 
     int getInt(){

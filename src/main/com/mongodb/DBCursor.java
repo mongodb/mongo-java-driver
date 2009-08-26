@@ -176,6 +176,15 @@ public class DBCursor implements Iterator<DBObject> {
     }
 
     /**
+     * Limits the number of elements returned in one batch
+     * @param n the number of elements to return in a batch
+     */
+    public DBCursor batchSize( int n ){
+        _batchSize = n;
+        return this;
+    }
+
+    /**
      * Discards a given number of elements at the beginning of the cursor.
      * @param n the number of elements to skip
      * @return a cursor pointing to the new first element of the results
@@ -211,7 +220,14 @@ public class DBCursor implements Iterator<DBObject> {
                     foo.put( "$snapshot", true );
             }
 
-            _it = _collection.find( foo , _keysWanted , _skip , _numWanted );
+            int bs = _numWanted;
+            if ( _batchSize > 0 ){
+                if ( _numWanted == 0 )
+                    bs = _batchSize;
+                else
+                    bs = Math.min( bs , _batchSize );
+            }
+            _it = _collection.find( foo , _keysWanted , _skip , bs );
         }
 
         if ( _it == null )
@@ -418,7 +434,7 @@ public class DBCursor implements Iterator<DBObject> {
         throws MongoException {
         _checkType( CursorType.ARRAY );
         _fill( min );
-        return Collections.unmodifiableList( _all );
+        return _all;
     }
 
 
@@ -446,6 +462,7 @@ public class DBCursor implements Iterator<DBObject> {
     private String _hint = null;
     private boolean _explain = false;
     private int _numWanted = 0;
+    private int _batchSize = 0;
     private int _skip = 0;
     private boolean _snapshot = false;
 
