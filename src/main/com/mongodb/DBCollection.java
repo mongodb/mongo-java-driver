@@ -100,16 +100,29 @@ public abstract class DBCollection {
     // ------
 
     /**
-     *   Finds an object by its id.  This compares the passed in value to the _id field of the document
+     * Finds an object by its id.  
+     * This compares the passed in value to the _id field of the document
      * 
      * @param obj any valid object
      * @return the object, if found, otherwise <code>null</code>
      */
     public final DBObject findOne( Object obj ) 
         throws MongoException {
+        return findOne(obj, null);
+    }
+
+    /**
+     * Finds an object by its id.  
+     * This compares the passed in value to the _id field of the document
+     * 
+     * @param obj any valid object
+     * @param fields fields to return
+     * @return the object, if found, otherwise <code>null</code>
+     */
+    public final DBObject findOne( Object obj, DBObject fields ) {
         ensureIDIndex();
 
-        Iterator<DBObject> iterator =  find(new BasicDBObject("_id", obj), null, 0,1);
+        Iterator<DBObject> iterator =  find(new BasicDBObject("_id", obj), fields, 0, -1);
 
         return (iterator != null ? iterator.next() : null);
     }
@@ -261,7 +274,8 @@ public abstract class DBCollection {
         return new DBCursor( this, new BasicDBObject(), null );
     }
 
-    /** Returns a single object from this collection.
+    /** 
+     * Returns a single object from this collection.
      * @return the object found, or <code>null</code> if the collection is empty
      */
     public final DBObject findOne()
@@ -269,13 +283,24 @@ public abstract class DBCollection {
         return findOne( new BasicDBObject() );
     }
 
-    /** Returns a single object from this collection matching the query.
+    /** 
+     * Returns a single object from this collection matching the query.
      * @param o the query object
      * @return the object found, or <code>null</code> if no such object exists
      */
     public final DBObject findOne( DBObject o )
         throws MongoException {
-        Iterator<DBObject> i = find( o , null , 0 , 1 );
+        return findOne(o, null);
+    }
+
+    /** 
+     * Returns a single object from this collection matching the query.
+     * @param o the query object
+     * @param fields fields to return
+     * @return the object found, or <code>null</code> if no such object exists
+     */
+    public final DBObject findOne( DBObject o, DBObject fields ) {
+        Iterator<DBObject> i = find( o , fields , 0 , -1 );
         if ( i == null || ! i.hasNext() )
             return null;
         return i.next();
