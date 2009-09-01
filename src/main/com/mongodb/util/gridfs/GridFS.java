@@ -71,7 +71,7 @@ public class GridFS {
     }
 
     /**
-     *  Returns an object via a stream
+     * Returns an object via a stream
      * @param obj object to Save
      * @throws IOException on error reading the stream
      */

@@ -20,11 +20,13 @@ import com.mongodb.ObjectId;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.DBCursor;
+import com.mongodb.MongoException;
 
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.InputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -41,7 +43,7 @@ public class GridFSObject {
     protected int _chunkSize = GridFS.DEFAULT_CHUNKSIZE;
     protected Date _uploadDate = new Date();
     protected List<String> _aliases = new ArrayList<String>();
-    protected BasicDBObject _metadata = new BasicDBObject();
+    protected DBObject _metadata;
     protected byte[] _myBuffer = new byte[GridFS.DEFAULT_CHUNKSIZE];
     protected InputStream _inStream;
     protected int _nextChunkID = 0;
@@ -61,21 +63,28 @@ public class GridFSObject {
         _inStream  = inStream;
     }
 
-    protected GridFSObject(GridFS gridfs,  DBObject o) {
+    public GridFSObject(GridFS gridfs,  DBObject o) {
         _gridfs = gridfs;
 
         _id = (ObjectId) o.get("_id");
         _filename = (String) o.get("filename");
+        try {
+            _inStream = new FileInputStream(_filename);
+        }
+        catch(IOException e) {
+            throw new MongoException("Couldn't create input stream\n");
+        }
+
         _contentType = (String) o.get("contentType");
 
-        Double d = (Double) o.get("length");
+        Object len = o.get("length");
+        Double d = ((Number) (len == null ? 0 : len)).doubleValue(); 
 
-        _length = d.longValue();
-        _chunkSize = (Integer) o.get("chunkSize");
+        _length = d == null ? 0 : d.longValue();
+        _chunkSize = o.containsField("chunkSize") ? (Integer) o.get("chunkSize") : GridFS.DEFAULT_CHUNKSIZE;
         _uploadDate = (Date) o.get("uploadDate");
 
-//        TODO  _metadata, _aliases
-
+        _metadata = o;
 
         _chunkCursor = gridfs.getChunkCursorForFile(_id);
 
@@ -121,6 +130,10 @@ public class GridFSObject {
 
     public ObjectId getID() {
         return _id;
+    }
+
+    public DBObject getMetadata() {
+        return _metadata;
     }
 
     /**
