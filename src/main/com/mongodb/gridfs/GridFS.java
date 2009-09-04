@@ -163,6 +163,8 @@ public class GridFS {
 
     /**
      * after calling this method, you have to call save() on the GridFSInputFile file
+     * on that, you can call setFilename, setContentType and control meta data by modifying the 
+     *   result of getMetaData
      */
     public GridFSInputFile createFile( InputStream in , String filename ){
         return new GridFSInputFile( this , in , filename );

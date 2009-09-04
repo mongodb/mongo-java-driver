@@ -42,6 +42,14 @@ public class GridFSInputFile extends GridFSFile {
             _metadata = new BasicDBObject();
         return _metadata;
     }
+
+    public void setFilename( String fn ){
+        _filename = fn;
+    }
+
+    public String setContentType( String ct ){
+        _contentType = ct;
+    }
     
     public void save() {
         if ( ! _saved ){
