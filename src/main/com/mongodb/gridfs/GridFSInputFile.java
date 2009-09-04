@@ -47,7 +47,7 @@ public class GridFSInputFile extends GridFSFile {
         _filename = fn;
     }
 
-    public String setContentType( String ct ){
+    public void setContentType( String ct ){
         _contentType = ct;
     }
     
