@@ -26,19 +26,16 @@ import java.util.*;
 
 public abstract class GridFSFile implements DBObject {
 
+    
     // ------------------------------
-    // --------- io           -------
+    // --------- db           -------
     // ------------------------------
 
-    public abstract InputStream getInputStream();
-
-    public long writeTo( String filename ) throws IOException {
-        return writeTo( new File( filename ) );
+    public void save(){
+        if ( _fs == null )
+            throw new MongoException( "need _fs" );
+        _fs._filesCollection.save( this );
     }
-    public long writeTo( File f ) throws IOException {
-        return writeTo( new FileOutputStream( f ) );
-    }
-    public abstract long writeTo( OutputStream out ) throws IOException ;
 
     public int numChunks(){
         double d = _length;
@@ -98,17 +95,22 @@ public abstract class GridFSFile implements DBObject {
         else if ( key.equals( "filename" ) )
             _filename = v.toString();
         else if ( key.equals( "contentType" ) )
-            _contentType = v.toString();
+            _contentType = (String)v;
         else if ( key.equals( "length" ) )
             _length = ((Number)v).longValue();
         else if ( key.equals( "chunkSize" ) )
             _chunkSize = ((Number)v).longValue();
-        else if ( key.equals( "uplodateDate" ) )
+        else if ( key.equals( "uploadDate" ) )
             _uploadDate = (Date)v;
         else if ( key.equals( "metadata" ) )
             _metadata = (DBObject)v;
         else if ( key.equals( "md5" ) )
-            _md5 = v.toString();
+            _md5 = (String)v;
+        else if ( key.equals( "aliases" ) ){
+            if ( v != null ){
+                throw new MongoException( "can't handle aliases yet" );
+            }
+        }
         else 
             throw new MongoException( "GridFSFile don't know about key [" + key + "] converting to metadata " );
         return v;

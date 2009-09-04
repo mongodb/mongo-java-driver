@@ -96,24 +96,24 @@ public class GridFS {
     // ------ reading     -------
     // --------------------------
 
-    public GridFSFile find( ObjectId id ){
+    public GridFSDBFile find( ObjectId id ){
         return findOne( id );
     }
-    public GridFSFile findOne( ObjectId id ){
+    public GridFSDBFile findOne( ObjectId id ){
         return findOne( new BasicDBObject( "_id" , id ) );
     }
-    public GridFSFile findOne( String filename ){
+    public GridFSDBFile findOne( String filename ){
         return findOne( new BasicDBObject( "filename" , filename ) );
     }
-    public GridFSFile findOne( DBObject query ){
+    public GridFSDBFile findOne( DBObject query ){
         return _fix( _filesCollection.findOne( query ) );
     }
 
-    public List<GridFSFile> find( String filename ){
+    public List<GridFSDBFile> find( String filename ){
         return find( new BasicDBObject( "filename" , filename ) );
     }
-    public List<GridFSFile> find( DBObject query ){
-        List<GridFSFile> files = new ArrayList<GridFSFile>();
+    public List<GridFSDBFile> find( DBObject query ){
+        List<GridFSDBFile> files = new ArrayList<GridFSDBFile>();
         
         DBCursor c = _filesCollection.find( query );
         while ( c.hasNext() ){
@@ -122,14 +122,14 @@ public class GridFS {
         return files;
     }
 
-    private GridFSFile _fix( Object o ){
+    private GridFSDBFile _fix( Object o ){
         if ( o == null )
             return null;
         
-        if ( ! ( o instanceof GridFSFile ) )
-            throw new RuntimeException( "somehow didn't get a GridFSFile" );
+        if ( ! ( o instanceof GridFSDBFile ) )
+            throw new RuntimeException( "somehow didn't get a GridFSDBFile" );
         
-        GridFSFile f = (GridFSFile)o;
+        GridFSDBFile f = (GridFSDBFile)o;
         f._fs = this;
         return f;
     }
@@ -137,6 +137,37 @@ public class GridFS {
     // --------------------------
     // ------ writing     -------
     // --------------------------
+    
+    /**
+     * after calling this method, you have to call save() on the GridFSInputFile file
+     */
+    public GridFSInputFile createFile( byte[] data ){
+        return createFile( new ByteArrayInputStream( data ) );
+    }
+        
+
+    /**
+     * after calling this method, you have to call save() on the GridFSInputFile file
+     */
+    public GridFSInputFile createFile( File f )
+        throws IOException {
+        return createFile( new FileInputStream( f ) , f.getName() );
+    }
+
+    /**
+     * after calling this method, you have to call save() on the GridFSInputFile file
+     */
+    public GridFSInputFile createFile( InputStream in ){
+        return createFile( in , null );
+    }
+
+    /**
+     * after calling this method, you have to call save() on the GridFSInputFile file
+     */
+    public GridFSInputFile createFile( InputStream in , String filename ){
+        return new GridFSInputFile( this , in , filename );
+    }
+
 
 
 

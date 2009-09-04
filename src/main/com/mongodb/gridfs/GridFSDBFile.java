@@ -31,6 +31,14 @@ public class GridFSDBFile extends GridFSFile {
         return new MyInputStream();
     }
 
+
+    public long writeTo( String filename ) throws IOException {
+        return writeTo( new File( filename ) );
+    }
+    public long writeTo( File f ) throws IOException {
+        return writeTo( new FileOutputStream( f ) );
+    }
+
     public long writeTo( OutputStream out )
         throws IOException {
         final int nc = numChunks();

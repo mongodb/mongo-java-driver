@@ -107,7 +107,7 @@ public class CLI {
             if ( s.equals( "get" ) ){
                 GridFS fs = getGridFS();
                 String fn = args[i+1];
-                GridFSFile f = fs.findOne( fn );
+                GridFSDBFile f = fs.findOne( fn );
                 if ( f == null ){
                     System.err.println( "can't find file: " + fn );
                     return;
@@ -117,10 +117,19 @@ public class CLI {
                 return;
             }
 
+            if ( s.equals( "put" ) ){
+                GridFS fs = getGridFS();
+                String fn = args[i+1];
+                GridFSInputFile f = fs.createFile( new File( fn ) );
+                f.save();
+                return;
+            }
+
+
             if ( s.equals( "md5" ) ){
                 GridFS fs = getGridFS();
                 String fn = args[i+1];
-                GridFSFile f = fs.findOne( fn );
+                GridFSDBFile f = fs.findOne( fn );
                 if ( f == null ){
                     System.err.println( "can't find file: " + fn );
                     return;
@@ -132,7 +141,10 @@ public class CLI {
                 int read = 0;
                 while ( is.read() >= 0 ){ 
                     read++;
-                    is.read( new byte[17] ); 
+                    int r = is.read( new byte[17] ); 
+                    if ( r < 0 )
+                        break;
+                    read += r;
                 }
                 byte[] digest = md5.digest();
                 System.out.println( "length: " + read + " md5: " + Util.toHex( digest ) );
