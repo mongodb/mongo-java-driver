@@ -29,7 +29,7 @@ import com.mongodb.*;
  *  <a href="http://www.mongodb.org/display/DOCS/GridFS+Specification">GridFS 1.0 spec</a>
  */
 public class GridFS {
-    
+
     public static final int DEFAULT_CHUNKSIZE = 256 * 1024;
     public static final String DEFAULT_BUCKET = "fs";
 
@@ -48,7 +48,7 @@ public class GridFS {
     }
 
     /**
-     * Creates a GridFS instance for the specified
+     * Creates a GridFS instance for the specified bucket
      * in the given database.
      *
      * @param mongo database to work with
@@ -57,7 +57,7 @@ public class GridFS {
     public GridFS(Mongo mongo, String bucket) {
         _mongo = mongo;
         _bucketName = bucket;
-        
+
         _filesCollection = _mongo.getCollection( _bucketName + ".files" );
         _chunkCollection = _mongo.getCollection( _bucketName + ".chunks" );
 
@@ -84,7 +84,7 @@ public class GridFS {
     /**
      *   Returns a cursor for this filestore
      *
-     * @param query filter to apply 
+     * @param query filter to apply
      * @return cursor of file objects
      */
     public DBCursor getFileList( DBObject query ){
@@ -114,7 +114,7 @@ public class GridFS {
     }
     public List<GridFSDBFile> find( DBObject query ){
         List<GridFSDBFile> files = new ArrayList<GridFSDBFile>();
-        
+
         DBCursor c = _filesCollection.find( query );
         while ( c.hasNext() ){
             files.add( _fix( c.next() ) );
@@ -125,26 +125,26 @@ public class GridFS {
     private GridFSDBFile _fix( Object o ){
         if ( o == null )
             return null;
-        
+
         if ( ! ( o instanceof GridFSDBFile ) )
             throw new RuntimeException( "somehow didn't get a GridFSDBFile" );
-        
+
         GridFSDBFile f = (GridFSDBFile)o;
         f._fs = this;
         return f;
     }
-    
+
     // --------------------------
     // ------ writing     -------
     // --------------------------
-    
+
     /**
      * after calling this method, you have to call save() on the GridFSInputFile file
      */
     public GridFSInputFile createFile( byte[] data ){
         return createFile( new ByteArrayInputStream( data ) );
     }
-        
+
 
     /**
      * after calling this method, you have to call save() on the GridFSInputFile file
