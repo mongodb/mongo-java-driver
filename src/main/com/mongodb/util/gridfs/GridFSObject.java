@@ -32,7 +32,7 @@ import java.io.OutputStream;
 
 /**
  *  Binary object managed by the GridFS system
- * 
+ * @deprecated
  */
 public class GridFSObject {
 

@@ -22,7 +22,7 @@ import com.mongodb.DBObject;
 
 /**
  *  Represents a chunk of data in a GridFS object.
- * 
+ * @deprecated
  */
 class GridFSChunk {
 
