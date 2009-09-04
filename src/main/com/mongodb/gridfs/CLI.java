@@ -93,12 +93,10 @@ public class CLI {
             
             if ( s.equals( "list" ) ){
                 GridFS fs = getGridFS();
-                DBCursor cur = fs.getFileList();
                 
                 System.out.printf("%-60s %-10s\n", "Filename", "Length");
                 
-                while(cur.hasNext()) {
-                    DBObject o = cur.next();
+                for ( DBObject o : fs.getFileList() ){
                     System.out.printf("%-60s %-10d\n", o.get("filename"), ((Number) o.get("length")).longValue());
                 }
                 return;
