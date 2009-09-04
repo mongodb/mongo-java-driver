@@ -79,7 +79,6 @@ public class GridFS {
         throws IOException , MongoException {
         
         _mongo.getCollection(_chunkCollectionName).ensureIndex(new BasicDBObject("files_id", 1).append("n", 1));
-        _mongo.getCollection(_chunkCollectionName).ensureIndex(new BasicDBObject("n", 1));
 
         GridFSChunk chunk;
         long len = 0;

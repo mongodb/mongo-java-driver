@@ -36,20 +36,20 @@ import java.io.OutputStream;
  */
 public class GridFSObject {
 
-    protected ObjectId _id;
-    protected String _filename;
-    protected String _contentType = GridFS.DEFAULT_MIMETYPE;
-    protected long _length = 0;
-    protected int _chunkSize = GridFS.DEFAULT_CHUNKSIZE;
-    protected Date _uploadDate = new Date();
-    protected List<String> _aliases = new ArrayList<String>();
-    protected DBObject _metadata;
-    protected byte[] _myBuffer = new byte[GridFS.DEFAULT_CHUNKSIZE];
-    protected InputStream _inStream;
-    protected int _nextChunkID = 0;
-    protected GridFS _gridfs;
+    private ObjectId _id;
+    private String _filename;
+    private String _contentType = GridFS.DEFAULT_MIMETYPE;
+    private long _length = 0;
+    private int _chunkSize = GridFS.DEFAULT_CHUNKSIZE;
+    private Date _uploadDate = new Date();
+    private List<String> _aliases = new ArrayList<String>();
+    private DBObject _metadata;
+    private byte[] _myBuffer = new byte[GridFS.DEFAULT_CHUNKSIZE];
+    private InputStream _inStream;
+    private int _nextChunkID = 0;
+    private GridFS _gridfs;
 
-    protected DBCursor _chunkCursor;
+    private DBCursor _chunkCursor;
     /**
      *  Creates a new object out of a stream.
      *
@@ -63,17 +63,16 @@ public class GridFSObject {
         _inStream  = inStream;
     }
 
-    public GridFSObject(GridFS gridfs,  DBObject o) {
+    public GridFSObject(GridFS gridfs, DBObject o ){
+        this( gridfs , o , (DBObject)(o.get( "metadata" ) ) );
+    } 
+
+    public GridFSObject(GridFS gridfs, DBObject o , DBObject metadata ) {
         _gridfs = gridfs;
 
         _id = (ObjectId) o.get("_id");
         _filename = (String) o.get("filename");
-        try {
-            _inStream = new FileInputStream(_filename);
-        }
-        catch(IOException e) {
-            throw new MongoException("Couldn't create input stream\n");
-        }
+        _inStream = null;
 
         _contentType = (String) o.get("contentType");
 
@@ -84,7 +83,7 @@ public class GridFSObject {
         _chunkSize = o.containsField("chunkSize") ? (Integer) o.get("chunkSize") : GridFS.DEFAULT_CHUNKSIZE;
         _uploadDate = (Date) o.get("uploadDate");
 
-        _metadata = o;
+        _metadata = metadata;
 
         _chunkCursor = gridfs.getChunkCursorForFile(_id);
 
@@ -104,6 +103,11 @@ public class GridFSObject {
     }
 
     protected GridFSChunk getNextChunkFromStream() throws IOException {
+        if ( _inStream == null ){
+            if ( _filename == null )
+                throw new RuntimeException( "no input stream of filename" );
+            _inStream = new FileInputStream( _filename );
+        }
         int len = _inStream.read(_myBuffer);
         return (len <= 0 ? null : new GridFSChunk(_id, _myBuffer, len, _nextChunkID++));
     }
@@ -140,7 +144,7 @@ public class GridFSObject {
      * Returns this chunk as a DBObject suitable for DB insertion
      * @return this as DB Object
      */
-    protected DBObject getDBObject() {
+    public DBObject getDBObject() {
 
         BasicDBObject o = new BasicDBObject();
 

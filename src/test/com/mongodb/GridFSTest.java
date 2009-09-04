@@ -37,25 +37,30 @@ public class GridFSTest extends TestCase {
     public void testMetadata() {
         GridFS fs = new GridFS(_db);
 
-        DBObject metadata = BasicDBObjectBuilder
+        DBObject info = BasicDBObjectBuilder
             .start()
             .add("filename", "src/main/com/mongodb/Mongo.java")
+            .get();
+        
+        DBObject metadata = BasicDBObjectBuilder
+            .start()
             .add("foo","bar")
             .add("something","else")
             .get();
 
-        GridFSObject obj = new GridFSObject(fs, metadata);
+
+        GridFSObject obj = new GridFSObject(fs, info , metadata );
         try {
             fs.write(obj);
         }
         catch (IOException e) {
             assertEquals(0,1);
         }
-
+        
         GridFSObject ret = fs.read("src/main/com/mongodb/Mongo.java");
         DBObject check = ret.getMetadata();
-        assertEquals(((DBObject)check.get("metadata")).get("foo"), "bar");
-        assertEquals(((DBObject)check.get("metadata")).get("something"), "else");
+        assertEquals( check.get("foo"), "bar");
+        assertEquals( check.get("something"), "else");
     }
 
     final Mongo _db;
