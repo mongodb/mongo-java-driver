@@ -175,6 +175,13 @@ public class GridFS {
     // ------ members     -------
     // --------------------------
 
+    public String getBucketName(){
+        return _bucketName;
+    }
+
+    public Mongo getMongo(){
+        return _mongo;
+    }
 
     protected final Mongo _mongo;
     protected final String _bucketName;
