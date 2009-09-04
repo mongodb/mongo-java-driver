@@ -23,6 +23,7 @@ import com.mongodb.util.*;
 
 import java.io.*;
 import java.util.*;
+import java.security.*;
 
 public class GridFSInputFile extends GridFSFile {
     
@@ -73,11 +74,15 @@ public class GridFSInputFile extends GridFSFile {
         long total = 0;
         int cn = 0;
         
+        MessageDigest md = _md5Pool.get();
+        md.reset();
+        DigestInputStream in = new DigestInputStream( _in , md );
+        
         while ( true ){
             int start =0;
             
             while ( start < b.length ){
-                int r = _in.read( b , start , b.length - start );
+                int r = in.read( b , start , b.length - start );
                 if ( r == 0 )
                     throw new RuntimeException( "i'm doing something wrong" );
                 if ( r < 0 )
@@ -105,8 +110,11 @@ public class GridFSInputFile extends GridFSFile {
             if ( start < b.length )
                 break;
         }
+        
+        _md5 = Util.toHex( md.digest() );
+        _md5Pool.done( md );
+        
         _length = total;
-        System.out.println( "length: " + _length );
         _saved = true;
         return cn;
     }
@@ -114,4 +122,14 @@ public class GridFSInputFile extends GridFSFile {
     final InputStream _in;
     boolean _saved = false;
 
+    static SimplePool<MessageDigest> _md5Pool = new SimplePool( "md5" , 10 , -1 , false , false ){
+            protected MessageDigest createNew(){
+                try {
+                    return MessageDigest.getInstance("MD5");
+                }
+                catch ( java.security.NoSuchAlgorithmException e ){
+                    throw new RuntimeException( "your system doesn't have md5!" );
+                }
+            }
+        };
 }

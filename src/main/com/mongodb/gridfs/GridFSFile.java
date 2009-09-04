@@ -37,6 +37,20 @@ public abstract class GridFSFile implements DBObject {
         _fs._filesCollection.save( this );
     }
 
+    public void validate(){
+        if ( _fs == null )
+            throw new MongoException( "no _fs" );
+        if ( _md5 == null )
+            throw new MongoException( "no _md5 stored" );
+        
+        DBObject res = _fs._mongo.command( new BasicDBObject( "filemd5" , _id ) );
+        String m = res.get( "md5" ).toString();
+        if ( m.equals( _md5 ) )
+            return;
+
+        throw new MongoException( "md5 differ.  mine [" + _md5 + "] theirs [" + m + "]" );
+    }
+
     public int numChunks(){
         double d = _length;
         d = d / _chunkSize;
@@ -89,7 +103,9 @@ public abstract class GridFSFile implements DBObject {
     // ------------------------------
     
     public Object put( String key , Object v ){
-        if ( key.equals( "_id" ) )
+        if ( key == null )
+            throw new RuntimeException( "key should never be null" );
+        else if ( key.equals( "_id" ) )
             _id = v;
         else if ( key.equals( "_ns"  ) );
         else if ( key.equals( "filename" ) )
@@ -117,7 +133,9 @@ public abstract class GridFSFile implements DBObject {
     }
 
     public Object get( String key ){
-        if ( key.equals( "_id" ) )
+        if ( key == null )
+            throw new RuntimeException( "key should never be null" );
+        else if ( key.equals( "_id" ) )
             return _id;
         else if ( key.equals( "filename" ) )
             return _filename;

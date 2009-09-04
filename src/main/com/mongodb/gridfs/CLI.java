@@ -120,9 +120,10 @@ public class CLI {
                 String fn = args[i+1];
                 GridFSInputFile f = fs.createFile( new File( fn ) );
                 f.save();
+                f.validate();
                 return;
             }
-
+            
 
             if ( s.equals( "md5" ) ){
                 GridFS fs = getGridFS();
