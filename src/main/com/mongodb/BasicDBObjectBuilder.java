@@ -33,6 +33,10 @@ public class BasicDBObjectBuilder {
         return new BasicDBObjectBuilder();
     }
 
+    public static BasicDBObjectBuilder start( String k , Object val ){
+        return (new BasicDBObjectBuilder()).add( k , val );
+    }
+
     /**
      * Creates an object builder from an existing map.
      * @param m map to use
@@ -47,6 +51,15 @@ public class BasicDBObjectBuilder {
         }
         return b;
     }
+
+    /**
+     * @return returns itself so you can chain .append( "a" , 1 ).add( "b" , 1 )
+     */
+    public BasicDBObjectBuilder append( String key , Object val ){
+        _it.put( key , val );
+        return this;
+    }
+
 
     /**
      * @return returns itself so you can chain  .add( "a" , 1 ).add( "b" , 1 )

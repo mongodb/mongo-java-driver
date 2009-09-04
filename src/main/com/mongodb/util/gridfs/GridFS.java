@@ -34,6 +34,8 @@ import java.io.FileOutputStream;
  *  Implementation of GridFS v1.0
  *
  *  <a href="http://www.mongodb.org/display/DOCS/GridFS+Specification">GridFS 1.0 spec</a>
+ * 
+ * @deprecated
  */
 public class GridFS {
 
