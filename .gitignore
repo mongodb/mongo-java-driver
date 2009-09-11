@@ -23,12 +23,12 @@
 
 src/main/Foo.java
 src/main/Eliot.java
-.zeuspw
+settings.py
+foo.java
 
 10gen.properties
 logs
 test-output
-oplog.*
 build
 crap
 hs_err_*
@@ -37,6 +37,8 @@ docs
 target
 include/jython/cachedir
 mongo.jar
+mongo-*.jar
+org
 
 TAGS
 
