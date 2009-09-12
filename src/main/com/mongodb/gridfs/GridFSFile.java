@@ -109,7 +109,7 @@ public abstract class GridFSFile implements DBObject {
             _id = v;
         else if ( key.equals( "_ns"  ) );
         else if ( key.equals( "filename" ) )
-            _filename = v.toString();
+            _filename = v == null ? null : v.toString();
         else if ( key.equals( "contentType" ) )
             _contentType = (String)v;
         else if ( key.equals( "length" ) )
