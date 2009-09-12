@@ -18,9 +18,7 @@
 
 package com.mongodb;
 
-import java.util.Map;
-import java.util.Iterator;
-
+import java.util.*;
 
 /**
  * utility for building objects
@@ -29,6 +27,11 @@ import java.util.Iterator;
  */
 public class BasicDBObjectBuilder {
     
+    public BasicDBObjectBuilder(){
+        _stack = new LinkedList<DBObject>();
+        _stack.add( new BasicDBObject() );
+    }
+
     public static BasicDBObjectBuilder start(){
         return new BasicDBObjectBuilder();
     }
@@ -56,23 +59,41 @@ public class BasicDBObjectBuilder {
      * @return returns itself so you can chain .append( "a" , 1 ).add( "b" , 1 )
      */
     public BasicDBObjectBuilder append( String key , Object val ){
-        _it.put( key , val );
+        _cur().put( key , val );
         return this;
     }
-
+    
 
     /**
      * @return returns itself so you can chain  .add( "a" , 1 ).add( "b" , 1 )
      */
     public BasicDBObjectBuilder add( String key , Object val ){
-        _it.put( key , val );
+        _cur().put( key , val );
+        return this;
+    }
+
+    public BasicDBObjectBuilder push( String key ){
+        BasicDBObject o = new BasicDBObject();
+        _cur().put( key , o );
+        _stack.addLast( o );
+        return this;
+    }
+    
+    public BasicDBObjectBuilder pop(){
+        if ( _stack.size() <= 1 )
+            throw new IllegalArgumentException( "can't pop last element" );
+        _stack.removeLast();
         return this;
     }
     
     public DBObject get(){
-        return _it;
+        return _stack.getFirst();
     }
 
-    DBObject _it = new BasicDBObject();
+    private DBObject _cur(){
+        return _stack.getLast();
+    }
+
+    private final LinkedList<DBObject> _stack;
 
 }
