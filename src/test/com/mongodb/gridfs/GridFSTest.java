@@ -46,7 +46,6 @@ public class GridFSTest extends TestCase {
         out.writeTo( bout );
         String outString = new String( bout.toByteArray() );
         assert( outString.equals( s ) );
-        assert( false );
     }
     
     @Test(groups = {"basic"})
