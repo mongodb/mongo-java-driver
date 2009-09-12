@@ -372,13 +372,14 @@ class JSONParser {
     /**
      * Parses a number.
      *
-     * @return the next double.
+     * @return the next number (int or double).
      * @throws JSONParseException if invalid JSON is found
      */
-    public double parseNumber() {
+    public Number parseNumber() {
 
         char current = get();
         int start = this.pos;
+        boolean isDouble = false;
 
         if(check('-') || check('+')) {
             pos++;
@@ -392,6 +393,7 @@ class JSONParser {
                 pos++;
                 break;
             case '.':
+                isDouble = true;
                 parseFraction();
                 break;
             default:
@@ -399,7 +401,10 @@ class JSONParser {
             }
         }
 
-        return Double.parseDouble(s.substring(start, pos));
+        if (isDouble)
+          return Double.parseDouble(s.substring(start, pos));
+        else
+          return Integer.parseInt(s.substring(start, pos));
     }
 
     /** 
