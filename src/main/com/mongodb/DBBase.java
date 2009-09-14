@@ -22,6 +22,8 @@ import java.util.*;
 
 public abstract class DBBase {
 
+    static enum WriteConcern { NONE, NORMAL, STRICT };
+
     public DBBase( String name ){
     	_name = name;
     }

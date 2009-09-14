@@ -29,21 +29,21 @@ public abstract class DBMessageLayer extends DBApiLayer {
         super( root );
     }
 
-    protected void doInsert( ByteBuffer buf )
+    protected void doInsert( ByteBuffer buf , WriteConcern concern )
         throws MongoException {
-        say( 2002 , buf );
+        say( 2002 , buf , concern );
     }
-    protected  void doDelete( ByteBuffer buf ) 
+    protected  void doDelete( ByteBuffer buf , WriteConcern concern ) 
         throws MongoException {
-        say( 2006 , buf );
+        say( 2006 , buf , concern );
     }
-    protected void doUpdate( ByteBuffer buf )
+    protected void doUpdate( ByteBuffer buf , WriteConcern concern )
         throws MongoException {
-        say( 2001 , buf );
+        say( 2001 , buf , concern );
     }
     protected void doKillCursors( ByteBuffer buf )
         throws MongoException {
-        say( 2007 , buf );
+        say( 2007 , buf , WriteConcern.NORMAL );
     }
     
     protected int doQuery( ByteBuffer out , ByteBuffer in )
@@ -55,7 +55,7 @@ public abstract class DBMessageLayer extends DBApiLayer {
         return call( 2005 , out , in );
     }
     
-    protected abstract void say( int op , ByteBuffer buf ) throws MongoException;
+    protected abstract void say( int op , ByteBuffer buf , WriteConcern concern ) throws MongoException;
     protected abstract int call( int op , ByteBuffer out , ByteBuffer in ) throws MongoException;
 
 }

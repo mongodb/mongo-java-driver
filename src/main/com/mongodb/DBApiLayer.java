@@ -41,9 +41,9 @@ public abstract class DBApiLayer extends DBBase {
         _root = root;
     }
 
-    protected abstract void doInsert( ByteBuffer buf ) throws MongoException;
-    protected abstract void doDelete( ByteBuffer buf ) throws MongoException;
-    protected abstract void doUpdate( ByteBuffer buf ) throws MongoException;
+    protected abstract void doInsert( ByteBuffer buf , WriteConcern concern ) throws MongoException;
+    protected abstract void doDelete( ByteBuffer buf , WriteConcern concern ) throws MongoException;
+    protected abstract void doUpdate( ByteBuffer buf , WriteConcern concern ) throws MongoException;
     protected abstract void doKillCursors( ByteBuffer buf ) throws MongoException;
     protected abstract int doQuery( ByteBuffer out , ByteBuffer in ) throws MongoException;
     protected abstract int doGetMore( ByteBuffer out , ByteBuffer in ) throws MongoException;
@@ -289,7 +289,7 @@ public abstract class DBApiLayer extends DBBase {
             encoder.flip();
 
             try {
-                doInsert( encoder._buf );
+                doInsert( encoder._buf , _concern );
             }
             finally {
                 encoder.done();
@@ -320,7 +320,7 @@ public abstract class DBApiLayer extends DBBase {
             encoder.flip();
 
             try {
-                doDelete( encoder._buf );
+                doDelete( encoder._buf , _concern );
             }
             finally {
                 encoder.done();
@@ -438,7 +438,7 @@ public abstract class DBApiLayer extends DBBase {
             encoder.flip();
 
             try {
-                doUpdate( encoder._buf );
+                doUpdate( encoder._buf , _concern );
             }
             finally {
                 encoder.done();
