@@ -186,6 +186,8 @@ public class ByteDecoder extends Bytes {
             // intentional fallthrough
         case STRING:
             int size = _buf.getInt() - 1;
+            if ( size > _buf.remaining() )
+                throw new MongoException( "invalid bson? size:" + size + " remaining: " + _buf.remaining() );
             _buf.get( _namebuf , 0 , size );
             try {
                 o.put( name , new String( _namebuf , 0 , size , "UTF-8" ) );

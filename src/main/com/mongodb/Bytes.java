@@ -34,7 +34,7 @@ public class Bytes {
     public static final ByteOrder ORDER = ByteOrder.LITTLE_ENDIAN;
 
     static final int BUF_SIZE = 1024 * 1024 * 5;
-    static final int CONNECTIONS_PER_HOST = 10;
+    static final int CONNECTIONS_PER_HOST = Integer.parseInt( System.getProperty( "MONGO.POOLSIZE" , "10" ) );
     static final int NUM_ENCODERS;
 
     static {

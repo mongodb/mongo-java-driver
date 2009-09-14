@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <project name="MongoDB Java Driver" default="compile" basedir=".">
 
-  <property name="version" value="0.6"/>
+  <property name="version" value="0.9"/>
   <property name="targetdir" location="target"/>
   <property name="testdir" location="${targetdir}/test"/>
 
@@ -10,12 +10,15 @@
       <include name="**/*.jar"/>
     </fileset>
     <pathelement path="conf" />
-    <pathelement path="build" />
+    <pathelement path="build/main" />
+    <pathelement path="build/test" />
 
   </path>
 
   <target name="init">
     <mkdir dir="build" />
+    <mkdir dir="build/main" />
+    <mkdir dir="build/test" />
     <mkdir dir="logs" />
     <mkdir dir="${testdir}" />
   </target>
@@ -27,7 +30,7 @@
   <target name="compile" depends="init">
 
     <javac srcdir="src/main"
-           destdir="build"
+           destdir="build/main"
            optimize="off"
            deprecation="off"
            source="1.5"
@@ -39,7 +42,7 @@
     </javac>
 
     <javac srcdir="src/test"
-           destdir="build"
+           destdir="build/test"
            optimize="off"
            deprecation="off"
            source="1.5"
@@ -52,14 +55,14 @@
 
   <target name="jar" depends="compile" description="Create driver jar">
 
-    <exec executable="git" output="build/git-hash">
+    <exec executable="git" output="build/main/git-hash">
       <arg value="log" />
       <arg value="--pretty=format:%H" />
       <arg value="-1" />
     </exec>
 
     <jar jarfile="mongo.jar" >
-      <fileset dir="build" />
+      <fileset dir="build/main" />
     </jar>
   </target>
 

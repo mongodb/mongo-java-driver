@@ -206,6 +206,31 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
         _isPartialObject = true;
     }
 
+    public boolean equals( Object o ){
+        if ( ! ( o instanceof DBObject ) )
+            return false;
+        
+        DBObject other = (DBObject)o;
+        if ( ! _keys.equals( other.keySet() ) )
+            return false;
+
+        for ( String key : _keys ){
+            Object a = get( key );
+            Object b = other.get( key );
+
+            if ( a instanceof Number && b instanceof Number ){
+                if ( ((Number)a).doubleValue() != 
+                     ((Number)b).doubleValue() )
+                    return false;
+            }
+            else {
+                if ( ! a.equals( b ) )
+                    return false;
+            }
+        }
+        return true;
+    }
+
     private final Set<String> _keys = new OrderedSet<String>();
     private boolean _isPartialObject = false;
 }

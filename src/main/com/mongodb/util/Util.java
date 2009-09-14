@@ -24,6 +24,22 @@ import java.security.NoSuchAlgorithmException;
  */
 public class Util {
 
+    public static String toHex( byte b[] ){
+        StringBuffer sb = new StringBuffer();
+        
+        for ( int i=0; i<b.length; i++ ){
+            String s = Integer.toHexString(0xff & b[i]);
+            
+            if (s.length() < 2) {
+                sb.append("0");
+            }
+                sb.append(s);
+        }
+        
+        return sb.toString();
+
+    }
+
     /**
      *  Produce hex representation of the MD5 digest of a byte array
      *
@@ -38,20 +54,8 @@ public class Util {
             md5.reset();
             md5.update(data);
             byte digest[] = md5.digest();
-
-            StringBuffer sb = new StringBuffer();
-
-            for (byte aDigest : digest) {
-                String s = Integer.toHexString(0xff & aDigest);
-
-                if (s.length() < 2) {
-                    sb.append("0");
-                }
-                sb.append(s);
-            }
-
-            return sb.toString();
-
+            
+            return toHex( digest );
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Error - this implementation of Java doesn't support MD5.");
         }

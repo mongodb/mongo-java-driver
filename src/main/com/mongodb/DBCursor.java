@@ -50,7 +50,7 @@ import java.util.Collections;
  * </pre></blockquote>
  *
  */
-public class DBCursor implements Iterator<DBObject> {
+public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
     /**
      * Initializes a new database cursor
@@ -81,6 +81,10 @@ public class DBCursor implements Iterator<DBObject> {
         c._numWanted = _numWanted;
         c._skip = _skip;
         return c;
+    }
+
+    public Iterator<DBObject> iterator(){
+        return this.copy();
     }
 
     // ---- querty modifiers --------

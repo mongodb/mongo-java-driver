@@ -9,6 +9,7 @@
       <class name="com.mongodb.io.ByteBufferStreamTest"/>
 
       <class name="com.mongodb.ByteTest" />
+      <class name="com.mongodb.BasicDBObjectTest" />
       <class name="com.mongodb.JavaClientTest" />
       <class name="com.mongodb.ReflectionTest" />
       <class name="com.mongodb.DBAddressTest" />
@@ -16,7 +17,7 @@
       <class name="com.mongodb.DBCollectionTest" />
       <class name="com.mongodb.ObjectIdTest" />
       <class name="com.mongodb.DBRefTest" />
-      <class name="com.mongodb.GridFSTest" />
+      <class name="com.mongodb.gridfs.GridFSTest" />
 
       <class name="com.mongodb.ErrorTest" />
 

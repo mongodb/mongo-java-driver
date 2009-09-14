@@ -107,26 +107,6 @@ public abstract class DBApiLayer extends DBBase {
     }
 
     /**
-     *  Gets the the error (if there is one) from the previous operation.  The result of
-     *  this command will look like
-     *
-     *  <pre>
-     * { "err" :  errorMessage  , "ok" : 1.0 , "_ns" : "$cmd"}
-     * </pre>
-     *
-     * The value for errorMessage will be null if no error occurred, or a description otherwise.
-     *
-     * Care must be taken to ensure that calls to getLastError go to the same connection as that
-     * of the previous operation. See com.mongodb.Mongo.requestStart for more information.
-     *
-     *  @return DBObject with error and status information
-     */
-    public DBObject getLastError()
-        throws MongoException {
-        return command(new BasicDBObject("getlasterror", 1));
-    }
-
-    /**
      *  Returns the last error that occurred since start of database or a call to <code>resetError()</code>
      *
      *  The return object will look like

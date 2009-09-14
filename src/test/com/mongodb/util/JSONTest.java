@@ -26,11 +26,14 @@ public class JSONTest extends com.mongodb.util.TestCase {
 
     @org.testng.annotations.Test(groups = {"basic"})
     public void testNumbers(){
-        assertEquals(JSON.serialize(JSON.parse("{'x' : 5. }")), "{ \"x\" : 5.0}");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 5 }")), "{ \"x\" : 5}");
         assertEquals(JSON.serialize(JSON.parse("{'x' : 5.0 }")), "{ \"x\" : 5.0}");
-        assertEquals(JSON.serialize(JSON.parse("{'x' : 0 }")), "{ \"x\" : 0.0}");
-        assertEquals(JSON.serialize(JSON.parse("{'x' : 500 }")), "{ \"x\" : 500.0}");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 0 }")), "{ \"x\" : 0}");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 0.0 }")), "{ \"x\" : 0.0}");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 500 }")), "{ \"x\" : 500}");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 500.0 }")), "{ \"x\" : 500.0}");
         assertEquals(JSON.serialize(JSON.parse("{'x' : 0.500 }")), "{ \"x\" : 0.5}");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 5. }")), "{ \"x\" : 5.0}");
     }
 
     @org.testng.annotations.Test(groups = {"basic"})
@@ -50,7 +53,8 @@ public class JSONTest extends com.mongodb.util.TestCase {
     @org.testng.annotations.Test(groups = {"basic"})
     public void testArray() {
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : [\"foo\"]}")), "{ \"csdf\" : [ \"foo\"]}") ;
-        assertEquals(JSON.serialize(JSON.parse("{'csdf' : [3, 5, \'foo\', null]}")), "{ \"csdf\" : [ 3.0 , 5.0 , \"foo\" ,  null ]}") ;
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : [3, 5, \'foo\', null]}")), "{ \"csdf\" : [ 3 , 5 , \"foo\" ,  null ]}") ;
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : [3.0, 5.0, \'foo\', null]}")), "{ \"csdf\" : [ 3.0 , 5.0 , \"foo\" ,  null ]}") ;
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : [[],[[]],false]}")), "{ \"csdf\" : [ [ ] , [ [ ]] , false]}");
     }
 
