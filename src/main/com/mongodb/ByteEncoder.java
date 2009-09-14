@@ -480,8 +480,15 @@ public class ByteEncoder extends Bytes {
 
     // ----------------------------------------------
     
+    /**
+     * Encodes the type and key.
+     * 
+     */
     private void _put( byte type , String name ){
         _buf.put( type );
+        if ( name.indexOf('.') != -1 ) {
+            throw new MongoException("can't have . in field names ["+name+"]");
+        }
         _put( name );
     }
 

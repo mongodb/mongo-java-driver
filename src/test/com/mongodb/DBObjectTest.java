@@ -25,6 +25,16 @@ import com.mongodb.util.*;
 
 public class DBObjectTest extends TestCase {
 
+    public DBObjectTest() {
+        super();
+        try {
+            _db = new Mongo( "127.0.0.1" , "objtest" );
+        }
+        catch(UnknownHostException e) {
+            throw new MongoException("couldn't connect");
+        }
+    }
+
     @Test(groups = {"basic"})
     public void testBasicDBObjectCTOR()  {
         Map m = new HashMap();
@@ -77,14 +87,7 @@ public class DBObjectTest extends TestCase {
         l.put("10", "y");
         assertEquals(l.get("10"), "y");
 
-        Mongo db;
-        try {
-            db = new Mongo( "127.0.0.1" , "test" );
-        } 
-        catch (UnknownHostException e2) {
-            return;
-        }
-        DBCollection c = db.getCollection("dblist");
+        DBCollection c = _db.getCollection("dblist");
         c.drop();
         c.insert(BasicDBObjectBuilder.start().add("array", l).get());
         DBObject obj = c.findOne();
@@ -128,6 +131,29 @@ public class DBObjectTest extends TestCase {
         assertTrue(obj.containsKey("y"));
         assertEquals(obj.toString(), "{ \"y\" : \"z\" , \"x\" : \"y\"}");
     }
+
+
+    @Test(groups = {"basic"})
+    public void testInnerDot() {
+        DBCollection _colTest = _db.getCollection("test_collection");
+
+        BasicDBObject dbObject = new BasicDBObject("test", "value");
+        BasicDBObject innerObject = new BasicDBObject("test.member.name", true);
+        dbObject.put("inner", innerObject);
+
+        boolean thrown = false;
+        try {
+            _colTest.save(dbObject);
+        }
+        catch (MongoException e) {
+            if (e.getMessage().equals("can't have . in field names [test.member.name]")) {
+                thrown = true;
+            }
+        }
+        assertTrue(thrown);
+    }
+
+    private DBBase _db;
     
     public static void main( String args[] ) {
         (new DBObjectTest()).runConsole();
