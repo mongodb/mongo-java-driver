@@ -118,7 +118,7 @@ public class DBTCP extends DBMessageLayer {
         _threadPort.get().requestEnsureConnection();
     }
 
-    protected void say( int op , ByteBuffer buf )
+    protected void say( int op , ByteBuffer buf , WriteConcern concern )
         throws MongoException {
         MyPort mp = _threadPort.get();
         DBPort port = mp.get( true );
@@ -126,14 +126,19 @@ public class DBTCP extends DBMessageLayer {
         try {
             port.say( new DBMessage( op , buf ) );
             mp.done( port );
+            if ( concern == WriteConcern.STRICT ){
+                throw new RuntimeException( "STRICT not implemented yet" );
+            }
         }
         catch ( IOException ioe ){
             mp.error( ioe );
             _error();
+            if ( concern == WriteConcern.NONE )
+                return;
             throw new MongoException.Network( "can't say something" , ioe );
         }
     }
-
+    
     protected int call( int op , ByteBuffer out , ByteBuffer in )
         throws MongoException {
         return _call( op , out , in , 2 );
