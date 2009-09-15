@@ -508,15 +508,28 @@ public abstract class DBCollection {
             throw new IllegalArgumentException( "can't save partial objects" );
         
         if ( ! query ){
-            for ( String s : o.keySet() ){
-                if ( s.contains( "." ) )
-                    throw new IllegalArgumentException( "fields stored in the db can't have . in them" );
-                if ( s.contains( "$" ) )
-                    throw new IllegalArgumentException( "fields stored in the db can't have $ in them" );
-            }
+            _checkKeys(o);
         }
         return o;
     }
+
+    /**
+     * Checks key strings for invalid characters.
+     */
+    private void _checkKeys( DBObject o ) {
+        for ( String s : o.keySet() ){
+            if ( s.contains( "." ) )
+                throw new IllegalArgumentException( "fields stored in the db can't have . in them" );
+            if ( s.contains( "$" ) )
+                throw new IllegalArgumentException( "fields stored in the db can't have $ in them" );
+
+            Object inner;
+            if ( (inner = o.get( s )) instanceof DBObject ) {
+                _checkKeys( (DBObject)inner );
+            }
+        }
+    }
+
     /*
     private void _findSubObject( Scope scope , DBObject jo , IdentitySet seenSubs ){
         if ( seenSubs == null )

@@ -145,8 +145,8 @@ public class DBObjectTest extends TestCase {
         try {
             _colTest.save(dbObject);
         }
-        catch (MongoException e) {
-            if (e.getMessage().equals("can't have . in field names [test.member.name]")) {
+        catch (IllegalArgumentException e) {
+            if (e.getMessage().equals("fields stored in the db can't have . in them")) {
                 thrown = true;
             }
         }
