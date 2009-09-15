@@ -284,6 +284,9 @@ public class ByteEncoder extends Bytes {
             DBPointer r = (DBPointer) val;
             putDBPointer( name , r._ns , (ObjectId)r._id );
         }
+        else if (val instanceof DBRefBase ) {
+            putDBRef( name, (DBRefBase)val );
+        }
         else if (val instanceof DBSymbol) {
             putSymbol(name, (DBSymbol) val);
         }
@@ -442,6 +445,18 @@ public class ByteEncoder extends Bytes {
         _buf.putInt( oid._inc );
 
         return _buf.position() - start;
+    }
+
+    protected void putDBRef( String name, DBRefBase ref ){
+        _put( OBJECT , name );
+        final int sizePos = _buf.position();
+        _buf.putInt( 0 );
+        
+        _putObjectField( "$ref" , ref._ns );
+        _putObjectField( "$id" , ref._id );
+
+        _buf.put( EOO );
+        _buf.putInt( sizePos , _buf.position() - sizePos );
     }
 
     private int putDBRegex(String name, DBRegex regex) {
