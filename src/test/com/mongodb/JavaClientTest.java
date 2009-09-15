@@ -202,6 +202,21 @@ public class JavaClientTest extends TestCase {
         assertEquals( Double.class , c.findOne().get( "x" ).getClass() );        
         
     }
+
+    @Test
+    public void testKeys1()
+        throws MongoException {
+
+        DBCollection c = _db.getCollection( "keys1" );
+        c.drop();
+        c.save( BasicDBObjectBuilder.start().push( "a" ).add( "x" , 1 ).get() );
+        
+        assertEquals( 1, ((DBObject)c.findOne().get("a")).get("x" ) );
+        c.update( new BasicDBObject() , BasicDBObjectBuilder.start().push( "$set" ).add( "a.x" , 2 ).get() , false , false );
+        assertEquals( 1 , c.find().count() );
+        assertEquals( 2, ((DBObject)c.findOne().get("a")).get("x" ) );
+        
+    }
     
     final Mongo _db;
 
