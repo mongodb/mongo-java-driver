@@ -58,8 +58,29 @@ public class DBRefBase {
         return "{ \"$ref\" : \"" + _ns + "\", \"$id\" : \"" + _id + "\" }";
     }
 
-    public final Object _id;
-    public final String _ns;
+    /**
+     * Get this ref's $id.
+     */
+    public Object getId() {
+        return _id;
+    }
+
+    /**
+     * Get this ref's $ref (the collection name).
+     */
+    public String getRef() {
+        return _ns;
+    }
+
+    /**
+     * Get this ref's database.
+     */
+    public DBBase getDB() {
+        return _db;
+    }
+
+    final Object _id;
+    final String _ns;
     final DBBase _db;
 
     private boolean _loadedPointedTo = false;

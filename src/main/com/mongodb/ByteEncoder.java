@@ -452,8 +452,8 @@ public class ByteEncoder extends Bytes {
         final int sizePos = _buf.position();
         _buf.putInt( 0 );
         
-        _putObjectField( "$ref" , ref._ns );
-        _putObjectField( "$id" , ref._id );
+        _putObjectField( "$ref" , ref.getRef() );
+        _putObjectField( "$id" , ref.getId() );
 
         _buf.put( EOO );
         _buf.putInt( sizePos , _buf.position() - sizePos );

@@ -48,6 +48,10 @@ public class DBPointer extends DBRefBase {
         return "{ \"$ref\" : \"" + _ns + "\", \"$id\" : ObjectId(\"" + _id + "\") }";
     }
 
+    public ObjectId getId() {
+        return (ObjectId)_id;
+    }
+
     final DBObject _parent;
     final String _fieldName;
 }
