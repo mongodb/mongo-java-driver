@@ -185,6 +185,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * @param n the number of elements to return in a batch
      */
     public DBCursor batchSize( int n ){
+        if ( _it != null )
+            throw new IllegalStateException( "can't set batch size after executing query" );
         _batchSize = n;
         return this;
     }
@@ -235,8 +237,10 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
             _it = _collection.find( foo , _keysWanted , _skip , bs );
         }
 
-        if ( _it == null )
+        if ( _it == null ){
             _it = (new LinkedList<DBObject>()).iterator();
+            _fake = true;
+        }
     }
     
     /**
@@ -338,6 +342,26 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         return _cur;
     }
 
+    public int numGetMores(){
+        if ( _fake )
+            return 0;
+
+        if ( _it instanceof DBApiLayer.Result )
+            return ((DBApiLayer.Result)_it).numGetMores();
+
+        throw new IllegalArgumentException("_it not a real result" );
+    }
+
+    public List<Integer> getSizes(){
+        if ( _fake )
+            return new LinkedList<Integer>();
+
+        if ( _it instanceof DBApiLayer.Result )
+            return ((DBApiLayer.Result)_it).getSizes();
+
+        throw new IllegalArgumentException("_it not a real result" );
+    }
+    
     private boolean _hasNext()
         throws MongoException {
         _check();
@@ -486,6 +510,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
     // ----  result info ----
     private Iterator<DBObject> _it = null;
+    private boolean _fake = false;
 
     private CursorType _cursorType = null;
     private DBObject _cur = null;

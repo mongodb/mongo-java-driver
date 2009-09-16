@@ -90,7 +90,6 @@ public class DBCursorTest extends TestCase {
         }
         
         int numToInsert = ( 15 * 1024 * 1024 ) / bigString.length();
-        System.out.println( "numToInsert: " + numToInsert );
 
         for ( int i=0; i<numToInsert; i++ )
             c.save( BasicDBObjectBuilder.start().add( "x" , i ).add( "s" , bigString ).get() );
@@ -101,7 +100,20 @@ public class DBCursorTest extends TestCase {
         assertEquals( numToInsert , c.find().toArray().size() );
         assertEquals( numToInsert , c.find().limit(800).count() );
         assertEquals( 800 , c.find().limit(800).toArray().size() );
-        assertLess( c.find().limit(-800).toArray().size() , 800 );
+
+        int x = c.find().limit(-800).toArray().size();
+        assertLess( x , 800 );
+        
+        DBCursor a = c.find();
+        assertEquals( numToInsert , a.itcount() );
+
+        DBCursor b = c.find().batchSize( 10 );
+        assertEquals( numToInsert , b.itcount() );
+        assertEquals( 10 , b.getSizes().get(0).intValue() );
+
+        assertLess( a.numGetMores() , b.numGetMores() );
+        
+        
     }
 
     @Test

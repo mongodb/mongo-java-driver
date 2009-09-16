@@ -556,6 +556,7 @@ public abstract class DBApiLayer extends DBBase {
             _totalBytes += res._bytes;
             _curResult = res;
             _cur = res._lst.iterator();
+            _sizes.add( res._lst.size() );
         }
 
         public DBObject next(){
@@ -598,6 +599,7 @@ public abstract class DBApiLayer extends DBBase {
             try {
                 int len = doGetMore( encoder._buf , decoder._buf );
                 decoder.doneReading( len );
+                _numGetMores++;
 
                 SingleResult res = new SingleResult( _curResult._fullNameSpace , decoder);
                 init( res );
@@ -628,13 +630,23 @@ public abstract class DBApiLayer extends DBBase {
         public long totalBytes(){
             return _totalBytes;
         }
+        
+        int numGetMores(){
+            return _numGetMores;
+        }
 
+        List<Integer> getSizes(){
+            return Collections.unmodifiableList( _sizes );
+        }
+        
         SingleResult _curResult;
         Iterator<DBObject> _cur;
         final MyCollection _collection;
         final int _numToReturn;
-
+        
         private long _totalBytes = 0;
+        private int _numGetMores = 0;
+        private List<Integer> _sizes = new ArrayList<Integer>();
     }  // class Result
 
     final String _root;
