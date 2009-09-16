@@ -64,11 +64,46 @@ public class DBCursorTest extends TestCase {
 
     @Test(groups = {"basic"})
     public void testSnapshot() {
-        DBCollection c = _db.getCollection("foo");
-        DBCursor cursor = c.find().snapshot().limit(4);
+        DBCollection c = _db.getCollection("snapshot1");
+        c.drop();
+        for ( int i=0; i<100; i++ )
+            c.save( new BasicDBObject( "x" , i ) );
+        assertEquals( 100 , c.find().count() );
+        assertEquals( 100 , c.find().toArray().size() );
+        assertEquals( 100 , c.find().snapshot().count() );
+        assertEquals( 100 , c.find().snapshot().toArray().size() );
+        assertEquals( 100 , c.find().snapshot().limit(50).count() );
+        assertEquals( 50 , c.find().snapshot().limit(50).toArray().size() );
     }
 
+    @Test
+    public void testBig(){
+        DBCollection c = _db.getCollection("big1");
+        c.drop();
 
+        String bigString;
+        {
+            StringBuilder buf = new StringBuilder( 16000 );
+            for ( int i=0; i<16000; i++ )
+                buf.append( "x" );
+            bigString = buf.toString();
+        }
+        
+        int numToInsert = ( 15 * 1024 * 1024 ) / bigString.length();
+        System.out.println( "numToInsert: " + numToInsert );
+
+        for ( int i=0; i<numToInsert; i++ )
+            c.save( BasicDBObjectBuilder.start().add( "x" , i ).add( "s" , bigString ).get() );
+        
+        assert( 800 < numToInsert );
+        
+        assertEquals( numToInsert , c.find().count() );
+        assertEquals( numToInsert , c.find().toArray().size() );
+        assertEquals( numToInsert , c.find().limit(800).count() );
+        assertEquals( 800 , c.find().limit(800).toArray().size() );
+        assertLess( c.find().limit(-800).toArray().size() , 800 );
+    }
+    
     final DBBase _db;
 
     public static void main( String args[] )
