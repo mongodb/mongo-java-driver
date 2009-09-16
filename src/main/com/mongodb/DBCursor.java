@@ -163,6 +163,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     public DBObject explain(){
         DBCursor c = copy();
         c._explain = true;
+        c._numWanted = c._numWanted * -1;
         return c.next();
     }
 
@@ -428,7 +429,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         throws MongoException {
         return toArray( Integer.MAX_VALUE );
     }
-
+    
     /**
      * Converts this cursor to an array.  If there are more than a given number of elements in the resulting array, only return the first <tt>min</tt>.
      * @param min the minimum size of the array to return
@@ -440,7 +441,20 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         _fill( min );
         return _all;
     }
-
+    
+    /**
+     * for testing only!
+     * iterates cursor and counts objects
+     * @return num objects
+     */
+    public int itcount(){
+        int n = 0;
+        while ( this.hasNext() ){
+            this.next();
+            n++;
+        }
+        return n;
+    }
 
     /**
      * Counts the number of elements in this cursor.

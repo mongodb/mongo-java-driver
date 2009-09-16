@@ -103,6 +103,36 @@ public class DBCursorTest extends TestCase {
         assertEquals( 800 , c.find().limit(800).toArray().size() );
         assertLess( c.find().limit(-800).toArray().size() , 800 );
     }
+
+    @Test
+    public void testExplain(){
+        DBCollection c = _db.getCollection( "explain1" );
+        c.drop();
+        
+        for ( int i=0; i<100; i++ )
+            c.save( new BasicDBObject( "x" , i ) );
+
+        DBObject q = BasicDBObjectBuilder.start().push( "x" ).add( "$gt" , 50 ).get();
+
+        assertEquals( 49 , c.find( q ).count() );
+        assertEquals( 49 , c.find( q ).toArray().size() );
+        assertEquals( 49 , c.find( q ).itcount() );
+        assertEquals( 20 , c.find( q ).limit(20).itcount() );
+        
+        c.ensureIndex( new BasicDBObject( "x" , 1 ) );
+
+        assertEquals( 49 , c.find( q ).count() );
+        assertEquals( 49 , c.find( q ).toArray().size() );
+        assertEquals( 49 , c.find( q ).itcount() );
+        assertEquals( 20 , c.find( q ).limit(20).itcount() );
+
+        assertEquals( 49 , c.find( q ).explain().get("n") );
+
+        // these 2 are 'reversed' b/c we want the user case to make sense
+        assertEquals( 20 , c.find( q ).limit(20).explain().get("n") ); 
+        assertEquals( 49 , c.find( q ).limit(-20).explain().get("n") );
+        
+    }
     
     final DBBase _db;
 
