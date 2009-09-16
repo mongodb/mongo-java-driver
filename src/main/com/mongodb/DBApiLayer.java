@@ -421,11 +421,17 @@ public abstract class DBApiLayer extends DBBase {
             if ( SHOW ) System.out.println( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
 
             if ( apply ){
+
+                for ( String s : o.keySet() ){
+                    if ( s.startsWith( "$" ) )
+                        throw new IllegalArgumentException( "when using $ modifiers, apply has to be false" );
+                }
+                
                 apply( o );
                 ObjectId id = ((ObjectId)o.get( "_id" ));
                 id._new = false;
             }
-
+            
             ByteEncoder encoder = ByteEncoder.get();
             encoder._buf.putInt( 0 ); // reserved
             encoder._put( _fullNameSpace );
