@@ -106,7 +106,7 @@ public class ByteEncoder extends Bytes {
             }
 
             protected long memSize( ByteEncoder d ){
-                return BUF_SIZE + ( 2 * MAX_STRING ) + 1024;
+                return d._buf.capacity() + ( 2 * MAX_STRING ) + 1024;
             }
         };
 
@@ -114,7 +114,7 @@ public class ByteEncoder extends Bytes {
     // ----
     
     private ByteEncoder(){
-        _buf = ByteBuffer.allocateDirect( BUF_SIZE );
+        _buf = ByteBuffer.allocateDirect( MAX_OBJECT_SIZE + 2048 );
         _buf.order( Bytes.ORDER );
     }
 
