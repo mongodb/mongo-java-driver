@@ -113,6 +113,8 @@ public class DBCursorTest extends TestCase {
 
         assertLess( a.numGetMores() , b.numGetMores() );
         
+        DBCursor d = c.find().batchSize( 1 );
+        assertEquals( numToInsert , d.itcount() );
         
     }
 

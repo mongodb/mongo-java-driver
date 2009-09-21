@@ -217,6 +217,19 @@ public class JavaClientTest extends TestCase {
         assertEquals( 2, ((DBObject)c.findOne().get("a")).get("x" ) );
         
     }
+
+    @Test
+    public void testTimestamp()
+        throws MongoException {
+        
+        DBCollection c = _db.getCollection( "ts1" );
+        c.drop();
+        c.save( BasicDBObjectBuilder.start().add( "y" , new DBTimestamp() ).get() );
+        
+        DBTimestamp t = (DBTimestamp)c.findOne().get("y");
+        assert( t.getTime() > 0 );
+        assert( t.getInc() > 0 );
+    }
     
     final Mongo _db;
 
