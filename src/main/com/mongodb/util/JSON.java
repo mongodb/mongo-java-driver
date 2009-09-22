@@ -143,13 +143,13 @@ public class JSON {
      * @param s the string to serialize
      * @return DBObject the object
      */
-    public static DBObject parse( String s ){
+    public static Object parse( String s ){
         if (s == null || (s=s.trim()).equals("")) {
             return (DBObject)null;
         }
 
         JSONParser p = new JSONParser(s);
-        return p.parseObject();
+        return p.parse();
     }
 
 }

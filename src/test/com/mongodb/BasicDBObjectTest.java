@@ -34,7 +34,7 @@ public class BasicDBObjectTest extends TestCase {
         BasicDBObject b = new BasicDBObject( "x" , 1 );
         assert( a.equals( b ) );
         
-        DBObject x = JSON.parse( "{ 'x' : 1 }" );
+        Object x = JSON.parse( "{ 'x' : 1 }" );
         assert( a.equals( x ) );
     }
 
@@ -59,8 +59,8 @@ public class BasicDBObjectTest extends TestCase {
         b.append( "b" , 3 );
         
 
-        DBObject x = b.get();
-        DBObject y = JSON.parse( "{ 'x' : 1 , 'y' : { 'a' : 2 } , 'z' : { 'b' : 3 } }" );
+        Object x = b.get();
+        Object y = JSON.parse( "{ 'x' : 1 , 'y' : { 'a' : 2 } , 'z' : { 'b' : 3 } }" );
 
         assert( x.equals( y ) );
     }
