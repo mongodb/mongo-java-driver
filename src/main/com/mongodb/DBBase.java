@@ -52,12 +52,38 @@ public abstract class DBBase {
      * @return the collection
      */
     public final DBCollection getCollection( String name ){
+        return getCollection(name, null);
+    }
+
+    /** Gets a collection with a given name and options.
+     * If the collection does not exist, a new collection is created.
+     * Possible options:
+     * <dl>
+     * <dt>capped</dt><dd><i>boolean</i>: if the collection is capped</dd>
+     * <dt>size</dt><dd><i>int</i>: collection size</dd>
+     * <dt>max</dt><dd><i>int</i>: max number of documents</dd>
+     * </dl>
+     * @param name the name of the collection to return
+     * @param collection options
+     * @return the collection
+     */
+    public final DBCollection getCollection( String name, DBObject o ){
+        if ( o != null ){
+            DBObject createCmd = new BasicDBObject("create", name);
+            createCmd.putAll(o);
+            DBObject result = command(createCmd);
+            if ( ((Number)(result.get( "ok" ))).intValue() != 1 ) {
+                throw new MongoException( "getCollection failed: " + result.toString() );
+            }
+        }
+
         DBCollection c = doGetCollection( name );
         if ( c != null ){
             _seenCollections.add( c );
 	}
         return c;
     }
+
     
     /** Returns a collection matching a given string.
      * @param s the name of the collection

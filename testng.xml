@@ -13,6 +13,7 @@
       <class name="com.mongodb.JavaClientTest" />
       <class name="com.mongodb.ReflectionTest" />
       <class name="com.mongodb.DBAddressTest" />
+      <class name="com.mongodb.DBBaseTest" />
       <class name="com.mongodb.DBObjectTest" />
       <class name="com.mongodb.DBCollectionTest" />
       <class name="com.mongodb.ObjectIdTest" />
