@@ -128,8 +128,13 @@ public class DBTCP extends DBMessageLayer {
             if ( concern == WriteConcern.STRICT ){
                 DBObject e = getLastError();
                 Object foo = e.get( "err" );
-                if ( foo != null )
-                    throw new MongoException.DuplicateKey( foo.toString() );
+                if ( foo != null ){
+                    String s = foo.toString();
+                    if ( s.startsWith( "E11000" ) ||
+                         s.startsWith( "E11001" ) )
+                        throw new MongoException.DuplicateKey( s );
+                    throw new MongoException( s );
+                }
             }
             mp.done( port );
         }
