@@ -766,6 +766,12 @@ public abstract class DBCollection {
     public void setWriteConcern( DBBase.WriteConcern concern ){
         _concern = concern;
     }
+
+    public DBBase.WriteConcern getWriteConcern(){
+        if ( _concern != null )
+            return _concern;
+        return _base.getWriteConcern();
+    }
     
     final DBBase _base;
 
@@ -773,7 +779,7 @@ public abstract class DBCollection {
     final protected String _fullName;
 
     protected List<DBObject> _hintFields;
-    protected DBBase.WriteConcern _concern = DBBase.WriteConcern.NORMAL;
+    private DBBase.WriteConcern _concern = null;
 
     protected Class _objectClass = null;
     private Map<String,Class> _internalClass = Collections.synchronizedMap( new HashMap<String,Class>() );
