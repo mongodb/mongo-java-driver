@@ -230,11 +230,31 @@ public class JavaClientTest extends TestCase {
         assert( t.getTime() > 0 );
         assert( t.getInc() > 0 );
     }
+
+    @Test
+    public void testStrictWrite(){
+        DBCollection c = _db.getCollection( "write1" );
+        c.drop();
+        c.setWriteConcern( DBBase.WriteConcern.STRICT );
+        c.insert( new BasicDBObject( "_id" , 1 ) );
+        boolean gotError = false;
+        try {
+            c.insert( new BasicDBObject( "_id" , 1 ) );
+        }
+        catch ( MongoException.DuplicateKey e ){
+            gotError = true;
+        }
+        assertEquals( true , gotError );
+        
+        assertEquals( 1 , c.find().count() );
+    }
     
     final Mongo _db;
 
     public static void main( String args[] )
         throws Exception {
-        (new JavaClientTest()).runConsole();
+        JavaClientTest ct = new JavaClientTest();
+        //ct.runConsole();
+        ct.testStrictWrite();
     }
 }

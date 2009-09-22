@@ -125,10 +125,13 @@ public class DBTCP extends DBMessageLayer {
 
         try {
             port.say( new DBMessage( op , buf ) );
-            mp.done( port );
             if ( concern == WriteConcern.STRICT ){
-                throw new RuntimeException( "STRICT not implemented yet" );
+                DBObject e = getLastError();
+                Object foo = e.get( "err" );
+                if ( foo != null )
+                    throw new MongoException.DuplicateKey( foo.toString() );
             }
+            mp.done( port );
         }
         catch ( IOException ioe ){
             mp.error( ioe );
@@ -210,25 +213,48 @@ public class DBTCP extends DBMessageLayer {
     class MyPort {
 
         DBPort get( boolean keep ){
+            _internalStack++;
+
+            if ( _internalStack > 1 ){
+                if ( _last == null ){
+                    System.err.println( "_internalStack > 1 and _last is null!" );
+                }
+                else {
+                    return _last;
+                }
+            }
             if ( _port != null )
                 return _port;
-
+            
             DBPort p = _curPortPool.get();
             if ( keep && _inRequest )
                 _port = p;
+            
+            _last = p;
             return p;
         }
-
+        
         void done( DBPort p ){
-            if ( p != _port )
+
+            _internalStack--;
+
+            if ( p != _port && _internalStack <=0 )
                 _curPortPool.done( p );
+
+            if ( _internalStack < 0 ){
+                System.err.println( "_internalStack < 0 : " + _internalStack );
+                _internalStack = 0;
+            }
         }
 
         void error( Exception e ){
             _port = null;
             _curPortPool.gotError( e );
-        }
 
+            _internalStack = 0;
+            _last = null;
+        }
+        
         void requestEnsureConnection(){
             if ( ! _inRequest )
                 return;
@@ -252,12 +278,19 @@ public class DBTCP extends DBMessageLayer {
                 _curPortPool.done( _port );
             _port = null;
             _inRequest = false;
+            if ( _internalStack > 0 ){
+                System.err.println( "_internalStack in requestDone should be 0" );
+                _internalStack = 0;
+            }
         }
+        
+        int _internalStack = 0;
 
         DBPort _port;
+        DBPort _last;
         boolean _inRequest;
     }
-
+    
     private void _pickInitial()
         throws MongoException {
         assert( _curAddress == null );
