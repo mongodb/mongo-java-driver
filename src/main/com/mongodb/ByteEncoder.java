@@ -106,7 +106,7 @@ public class ByteEncoder extends Bytes {
             }
 
             protected long memSize( ByteEncoder d ){
-                return BUF_SIZE + ( 2 * MAX_STRING ) + 1024;
+                return d._buf.capacity() + ( 2 * MAX_STRING ) + 1024;
             }
         };
 
@@ -114,7 +114,7 @@ public class ByteEncoder extends Bytes {
     // ----
     
     private ByteEncoder(){
-        _buf = ByteBuffer.allocateDirect( BUF_SIZE );
+        _buf = ByteBuffer.allocateDirect( MAX_OBJECT_SIZE + 2048 );
         _buf.order( Bytes.ORDER );
     }
 
@@ -293,6 +293,9 @@ public class ByteEncoder extends Bytes {
         else if (val instanceof DBUndefined) {
             putUndefined(name);
         }
+        else if (val instanceof DBTimestamp) {
+            putTimestamp( name , (DBTimestamp)val );
+        }
         else 
             throw new IllegalArgumentException( "can't serialize " + val.getClass() );
         
@@ -366,6 +369,14 @@ public class ByteEncoder extends Bytes {
         int start = _buf.position();
         _put(UNDEFINED, name);
         return _buf.position() - start;
+    }
+
+    protected int putTimestamp(String name, DBTimestamp ts ){
+        int start = _buf.position();
+        _put( TIMESTAMP , name );
+        _buf.putInt( ts.getTime() );
+        _buf.putInt( ts.getInc() );
+        return _buf.position() - start;        
     }
 
     protected int putBoolean( String name , Boolean b ){

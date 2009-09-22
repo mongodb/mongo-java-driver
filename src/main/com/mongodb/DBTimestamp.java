@@ -23,13 +23,31 @@ import java.util.Date;
 public class DBTimestamp {
     
     static final boolean D = Boolean.getBoolean( "DEBUG.DBTIMESTAMP" );
-
-    public int i;
-    public Date time;
-
-    public DBTimestamp(int time, int i) {
-        this.time = new Date(time);
-        this.i = i;
+    
+    public DBTimestamp(){
+        _inc = 0;
+        _time = null;
     }
 
+    public DBTimestamp(int time, int i) {
+        _time = new Date( time * 1000L );
+        _inc = i;
+    }
+    
+    public int getTime(){
+        if ( _time == null )
+            return 0;
+        return (int)(_time.getTime() / 1000);
+    }
+    
+    public int getInc(){
+        return _inc;
+    }
+
+    public String toString(){
+        return "TS time:" + _time + " inc:" + _inc;
+    }
+    
+    final int _inc;
+    final Date _time;
 }

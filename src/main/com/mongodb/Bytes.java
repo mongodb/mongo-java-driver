@@ -32,14 +32,15 @@ public class Bytes {
 
     /** Little-endian */
     public static final ByteOrder ORDER = ByteOrder.LITTLE_ENDIAN;
-
-    static final int BUF_SIZE = 1024 * 1024 * 5;
+    
+    static final int MAX_OBJECT_SIZE = 1024 * 1024 * 4;
+    
     static final int CONNECTIONS_PER_HOST = Integer.parseInt( System.getProperty( "MONGO.POOLSIZE" , "10" ) );
     static final int NUM_ENCODERS;
 
     static {
         Runtime r = Runtime.getRuntime();
-        int numBufs = (int)(r.maxMemory() / BUF_SIZE);
+        int numBufs = (int)(r.maxMemory() / MAX_OBJECT_SIZE);
         numBufs = numBufs / 5;
         if ( numBufs > CONNECTIONS_PER_HOST ){
             numBufs = CONNECTIONS_PER_HOST;
