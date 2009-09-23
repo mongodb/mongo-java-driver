@@ -35,11 +35,11 @@ public class DBBaseTest extends TestCase {
     @Test(groups = {"basic"})
     public void testCreateCollection() {
         BasicDBObject o1 = new BasicDBObject("capped", false);
-        DBCollection c = _db.getCollection("foo1", o1);
+        DBCollection c = _db.createCollection("foo1", o1);
 
         DBObject o2 = BasicDBObjectBuilder.start().add("capped", true)
             .add("size", 100).get();
-        c = _db.getCollection("foo2", o2);
+        c = _db.createCollection("foo2", o2);
         for (int i=0; i<30; i++) {
             c.insert(new BasicDBObject("x", i));
         }
@@ -47,7 +47,7 @@ public class DBBaseTest extends TestCase {
 
         DBObject o3 = BasicDBObjectBuilder.start().add("capped", true)
             .add("size", 1000).add("max", 2).get();
-        c = _db.getCollection("foo3", o3);
+        c = _db.createCollection("foo3", o3);
         for (int i=0; i<30; i++) {
             c.insert(new BasicDBObject("x", i));
         }
@@ -56,7 +56,7 @@ public class DBBaseTest extends TestCase {
         try {
             DBObject o4 = BasicDBObjectBuilder.start().add("capped", true)
                 .add("size", -20).get();
-            c = _db.getCollection("foo4", o4);
+            c = _db.createCollection("foo4", o4);
         }
         catch(MongoException e) {
             return;

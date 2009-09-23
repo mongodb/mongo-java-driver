@@ -52,10 +52,14 @@ public abstract class DBBase {
      * @return the collection
      */
     public final DBCollection getCollection( String name ){
-        return getCollection(name, null);
+        DBCollection c = doGetCollection( name );
+        if ( c != null ){
+            _seenCollections.add( c );
+	}
+        return c;
     }
 
-    /** Gets a collection with a given name and options.
+    /** Creates a collection with a given name and options.
      * If the collection does not exist, a new collection is created.
      * Possible options:
      * <dl>
@@ -67,7 +71,7 @@ public abstract class DBBase {
      * @param collection options
      * @return the collection
      */
-    public final DBCollection getCollection( String name, DBObject o ){
+    public final DBCollection createCollection( String name, DBObject o ){
         if ( o != null ){
             DBObject createCmd = new BasicDBObject("create", name);
             createCmd.putAll(o);
@@ -76,12 +80,7 @@ public abstract class DBBase {
                 throw new MongoException( "getCollection failed: " + result.toString() );
             }
         }
-
-        DBCollection c = doGetCollection( name );
-        if ( c != null ){
-            _seenCollections.add( c );
-	}
-        return c;
+        return getCollection(name);
     }
 
     
