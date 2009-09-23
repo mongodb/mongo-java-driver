@@ -171,10 +171,12 @@ public class JSONTest extends com.mongodb.util.TestCase {
         catch(JSONParseException e) {
             threw = true;
         }
-        assertEquals(threw, true);
+        assertEquals(threw, false);
         threw = false;
+        
+        assertEquals( 4 , JSON.parse( "4" ) );
     }
-
+    
 
 
     public static void main( String args[] ){
