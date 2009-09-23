@@ -34,6 +34,11 @@ public class DBBaseTest extends TestCase {
 
     @Test(groups = {"basic"})
     public void testCreateCollection() {
+        _db.getCollection( "foo1" ).drop();
+        _db.getCollection( "foo2" ).drop();
+        _db.getCollection( "foo3" ).drop();
+        _db.getCollection( "foo4" ).drop();
+
         BasicDBObject o1 = new BasicDBObject("capped", false);
         DBCollection c = _db.createCollection("foo1", o1);
 
