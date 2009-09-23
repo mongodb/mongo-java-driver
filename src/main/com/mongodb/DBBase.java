@@ -182,11 +182,20 @@ public abstract class DBBase {
         throws MongoException {
         return command(new BasicDBObject("getlasterror", 1));
     }
+    
+    public void setWriteConcern( DBBase.WriteConcern concern ){
+        _concern = concern;
+    }
+
+    public DBBase.WriteConcern getWriteConcern(){
+        return _concern;
+    }
 
     
     final String _name;
     final Set<DBCollection> _seenCollections = new HashSet<DBCollection>();
 
     protected boolean _readOnly = false;
+    private DBBase.WriteConcern _concern = DBBase.WriteConcern.NORMAL;
 
 }
