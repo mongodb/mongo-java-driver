@@ -31,13 +31,15 @@ public class Bytes {
     
     static Logger LOGGER = Logger.getLogger( "com.mongodb" );
     
-    static final boolean D = Boolean.getBoolean( "DEBUG.DB" );
+    static final boolean D = Boolean.getBoolean( "DEBUG.MONGO" );
 
     static {
-        if ( D )
-            LOGGER.setLevel( Level.ALL );
-        else
-            LOGGER.setLevel( Level.WARNING );
+        if ( LOGGER.getLevel() == null ){
+            if ( D )
+                LOGGER.setLevel( Level.ALL );
+            else
+                LOGGER.setLevel( Level.WARNING );
+        }
     }
 
     /** Little-endian */
