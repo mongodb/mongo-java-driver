@@ -23,7 +23,7 @@ import com.mongodb.util.SimplePool;
 import java.util.Date;
 import java.util.regex.Pattern;
 import java.nio.ByteBuffer;
-
+import java.util.logging.*;
 
 /** 
  * Deserializes a string from the database into a <code>DBObject</code>.
@@ -129,11 +129,11 @@ public class ByteDecoder extends Bytes {
                 return (DBObject)c.newInstance();
             }
             catch ( InstantiationException ie ){
-                ie.printStackTrace();
+                LOGGER.log( Level.FINE , "can't create a: " + c , ie );
                 throw new MongoInternalException( "can't instantiate a : " + c , ie );
             }
             catch ( IllegalAccessException iae ){
-                iae.printStackTrace();
+                LOGGER.log( Level.FINE , "can't create a: " + c , iae );
                 throw new MongoInternalException( "can't instantiate a : " + c , iae );
             }
         }

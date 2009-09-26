@@ -22,13 +22,23 @@ import java.nio.*;
 import java.nio.charset.*;
 import java.util.regex.Pattern;
 import java.util.*;
+import java.util.logging.*;
 
 /**
  * Handles byte functions for <code>ByteEncoder</code> and <code>ByteDecoder</code>.
  */
 public class Bytes {
-
+    
+    static Logger LOGGER = Logger.getLogger( "com.mongodb" );
+    
     static final boolean D = Boolean.getBoolean( "DEBUG.DB" );
+
+    static {
+        if ( D )
+            LOGGER.setLevel( Level.ALL );
+        else
+            LOGGER.setLevel( Level.WARNING );
+    }
 
     /** Little-endian */
     public static final ByteOrder ORDER = ByteOrder.LITTLE_ENDIAN;

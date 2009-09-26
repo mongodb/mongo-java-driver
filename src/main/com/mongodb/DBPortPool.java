@@ -24,6 +24,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.logging.*;
 
 class DBPortPool extends SimplePool<DBPort> {
 
@@ -102,8 +103,7 @@ class DBPortPool extends SimplePool<DBPort> {
             return;
         }
 
-        System.out.println( "emptying DBPortPool b/c of error" );
-        e.printStackTrace();
+        Bytes.LOGGER.log( Level.INFO , "emptying DBPortPool b/c of error" , e );
         clear();
     }
 

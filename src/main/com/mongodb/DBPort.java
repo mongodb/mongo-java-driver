@@ -144,8 +144,8 @@ public class DBPort {
             }
             catch ( IOException ioe ){
 //  TODO  - erh to fix                lastError = new IOException( "couldn't connect to [" + _addr + "] bc:" + lastError , lastError );
-                lastError = new IOException( "couldn't connect to [" + _addr + "] bc:" + ioe);
-                _logger.log( Level.SEVERE , "connect fail to : " + _addr , ioe );
+                lastError = new IOException( "couldn't connect to [" + _addr + "] bc:" + ioe , ioe );
+                _logger.log( Level.INFO , "connect fail to : " + _addr , ioe );
             }
             
             if ( _pool != null && ! _pool._everWorked )
@@ -202,5 +202,5 @@ public class DBPort {
     private SocketChannel _sock;
     
 
-    private static Logger _rootLogger = Logger.getLogger( "db.port" );
+    private static Logger _rootLogger = Logger.getLogger( "com.mongodb.port" );
 }

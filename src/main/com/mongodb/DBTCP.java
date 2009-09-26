@@ -26,7 +26,7 @@ import java.util.logging.*;
 
 public class DBTCP extends DBMessageLayer {
 
-    static Logger _logger = Logger.getLogger( "DBTCP" );
+    static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
     static Logger _createLogger = Logger.getLogger( _logger.getName() + ".connect" );
 
     public DBTCP( DBAddress addr )

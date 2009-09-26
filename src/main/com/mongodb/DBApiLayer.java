@@ -20,6 +20,7 @@ package com.mongodb;
 
 import java.nio.*;
 import java.util.*;
+import java.util.logging.*;
 
 import com.mongodb.util.*;
 
@@ -344,7 +345,7 @@ public abstract class DBApiLayer extends DBBase {
                 killCursors( l );
             }
             catch ( Throwable t ){
-                t.printStackTrace();
+                Bytes.LOGGER.log( Level.WARNING , "can't clean cursors" , t );
                 _deadCursorIds.addAll( l );
             }
         }
