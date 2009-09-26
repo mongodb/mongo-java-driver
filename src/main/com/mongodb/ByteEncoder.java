@@ -293,6 +293,9 @@ public class ByteEncoder extends Bytes {
         else if (val instanceof DBUndefined) {
             putUndefined(name);
         }
+        else if (val instanceof DBTimestamp) {
+            putTimestamp( name , (DBTimestamp)val );
+        }
         else 
             throw new IllegalArgumentException( "can't serialize " + val.getClass() );
         
@@ -366,6 +369,14 @@ public class ByteEncoder extends Bytes {
         int start = _buf.position();
         _put(UNDEFINED, name);
         return _buf.position() - start;
+    }
+
+    protected int putTimestamp(String name, DBTimestamp ts ){
+        int start = _buf.position();
+        _put( TIMESTAMP , name );
+        _buf.putInt( ts.getTime() );
+        _buf.putInt( ts.getInc() );
+        return _buf.position() - start;        
     }
 
     protected int putBoolean( String name , Boolean b ){

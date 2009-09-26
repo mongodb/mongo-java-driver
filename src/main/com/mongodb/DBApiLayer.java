@@ -290,7 +290,7 @@ public abstract class DBApiLayer extends DBBase {
             encoder.flip();
 
             try {
-                doInsert( encoder._buf , _concern );
+                doInsert( encoder._buf , getWriteConcern() );
             }
             finally {
                 encoder.done();
@@ -321,7 +321,7 @@ public abstract class DBApiLayer extends DBBase {
             encoder.flip();
 
             try {
-                doDelete( encoder._buf , _concern );
+                doDelete( encoder._buf , getWriteConcern() );
             }
             finally {
                 encoder.done();
@@ -445,7 +445,7 @@ public abstract class DBApiLayer extends DBBase {
             encoder.flip();
 
             try {
-                doUpdate( encoder._buf , _concern );
+                doUpdate( encoder._buf , getWriteConcern() );
             }
             finally {
                 encoder.done();

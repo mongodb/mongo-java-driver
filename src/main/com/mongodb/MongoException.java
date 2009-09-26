@@ -49,4 +49,9 @@ public class MongoException extends RuntimeException {
         final java.io.IOException _ioe;
     }
 
+    static class DuplicateKey extends MongoException {
+        DuplicateKey( String msg ){
+            super( msg );
+        }
+    }
 }

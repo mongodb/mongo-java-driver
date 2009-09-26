@@ -58,6 +58,31 @@ public abstract class DBBase {
 	}
         return c;
     }
+
+    /** Creates a collection with a given name and options.
+     * If the collection does not exist, a new collection is created.
+     * Possible options:
+     * <dl>
+     * <dt>capped</dt><dd><i>boolean</i>: if the collection is capped</dd>
+     * <dt>size</dt><dd><i>int</i>: collection size</dd>
+     * <dt>max</dt><dd><i>int</i>: max number of documents</dd>
+     * </dl>
+     * @param name the name of the collection to return
+     * @param collection options
+     * @return the collection
+     */
+    public final DBCollection createCollection( String name, DBObject o ){
+        if ( o != null ){
+            DBObject createCmd = new BasicDBObject("create", name);
+            createCmd.putAll(o);
+            DBObject result = command(createCmd);
+            if ( ((Number)(result.get( "ok" ))).intValue() != 1 ) {
+                throw new MongoException( "getCollection failed: " + result.toString() );
+            }
+        }
+        return getCollection(name);
+    }
+
     
     /** Returns a collection matching a given string.
      * @param s the name of the collection
@@ -157,11 +182,20 @@ public abstract class DBBase {
         throws MongoException {
         return command(new BasicDBObject("getlasterror", 1));
     }
+    
+    public void setWriteConcern( DBBase.WriteConcern concern ){
+        _concern = concern;
+    }
+
+    public DBBase.WriteConcern getWriteConcern(){
+        return _concern;
+    }
 
     
     final String _name;
     final Set<DBCollection> _seenCollections = new HashSet<DBCollection>();
 
     protected boolean _readOnly = false;
+    private DBBase.WriteConcern _concern = DBBase.WriteConcern.NORMAL;
 
 }
