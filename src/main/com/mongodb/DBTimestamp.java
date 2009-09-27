@@ -20,6 +20,10 @@ package com.mongodb;
 
 import java.util.Date;
 
+/**
+   this is used for internal increment values.
+   for storing normal dates in MongoDB, you should use java.util.Date
+ */
 public class DBTimestamp {
     
     static final boolean D = Boolean.getBoolean( "DEBUG.DBTIMESTAMP" );
