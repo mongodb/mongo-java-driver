@@ -27,7 +27,7 @@ public class DBRefTest extends TestCase {
 
     public DBRefTest() {
         try {
-            _db = new Mongo( "127.0.0.1" , "test" );
+            _db = new Mongo( "127.0.0.1" ).getDB( "test" );
         }
         catch(UnknownHostException e) {
             throw new MongoException("couldn't connect");

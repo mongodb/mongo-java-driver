@@ -47,7 +47,7 @@ public class ReflectionTest extends TestCase {
 
     public ReflectionTest()
         throws IOException , MongoException {
-        _db = new Mongo( "127.0.0.1" , "reflectiontest" );        
+        _db = new Mongo().getDB( "reflectiontest" );        
     }    
 
     @Test
@@ -109,7 +109,7 @@ public class ReflectionTest extends TestCase {
         assertEquals( 17 , o.getInner().getNumber() );
     }
 
-    final Mongo _db;
+    final DB _db;
     
     public static void main( String args[] )
         throws Exception {

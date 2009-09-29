@@ -53,8 +53,8 @@ public class TestNGListener extends TestListenerAdapter {
         obj.put( "time", System.currentTimeMillis() );
 
         try {
-            Mongo mongo = new Mongo( "127.0.0.1" , "results" );
-            mongo.getCollection( "testng" ).save( obj );
+            Mongo mongo = new Mongo();
+            mongo.getDB( "results" ).getCollection( "testng" ).save( obj );
         }
         catch( Exception e ) {
             System.err.println( "\nUnable to save test results to the db." );

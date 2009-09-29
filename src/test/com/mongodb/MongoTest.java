@@ -30,10 +30,10 @@ public class MongoTest extends TestCase {
     
     public MongoTest()
         throws IOException , MongoException {
-        _db = new Mongo( "127.0.0.1" , "mongotest" );        
+        _db = new Mongo().getDB( "mongotest" );        
     }
     
-    final Mongo _db;
+    final DB _db;
     
     public static void main( String args[] )
         throws Exception {

@@ -29,7 +29,7 @@ public class DBCollectionTest extends TestCase {
     public DBCollectionTest()
         throws IOException , MongoException {
         super();
-        _db = new Mongo( "127.0.0.1" , "cursortest" );
+        _db = new Mongo( "127.0.0.1" ).getDB( "cursortest" );
     }
 
     @Test(groups = {"basic"})

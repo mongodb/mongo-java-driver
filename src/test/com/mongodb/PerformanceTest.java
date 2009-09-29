@@ -221,7 +221,7 @@ public class PerformanceTest {
 
     public static void main(String[] args) {
         try {
-            _db = new Mongo( "127.0.0.1" , "performance" );        
+            _db = new Mongo().getDB( "performance" );        
         } 
         catch (MongoException e) {
             return;
@@ -275,5 +275,5 @@ public class PerformanceTest {
         */
     }
 
-    private static Mongo _db;
+    private static DB _db;
 }

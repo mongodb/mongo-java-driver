@@ -108,4 +108,26 @@
     </testng>
   </target>
 
+  <target name="examples" depends="compile">
+
+    <javac srcdir="examples"
+           destdir="build/test"
+           optimize="off"
+           deprecation="off"
+           source="1.5"
+           encoding="ISO-8859-1"
+           debug="on" >
+      <classpath refid="classpath"/>
+    </javac>
+    
+    <java classname="QuickTour" >
+      <classpath refid="classpath"/>
+    </java>
+
+    <java classname="QuickTourAdmin" >
+      <classpath refid="classpath"/>
+    </java>
+    
+  </target>
+
 </project>

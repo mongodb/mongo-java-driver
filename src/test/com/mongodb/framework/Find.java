@@ -25,8 +25,8 @@ public class Find {
     public static void main(String[] args) 
         throws Exception {
 
-        Mongo m = new Mongo( new DBAddress( "127.0.0.1:27017/driver_test_framework" ) );
-        DBCollection c = m.getCollection( "test" );
+        DB db = new Mongo().getDB( "driver_test_framework" );
+        DBCollection c = db.getCollection( "test" );
 
         DBObject foo = new BasicDBObject();
         foo.put( "a", 2 );

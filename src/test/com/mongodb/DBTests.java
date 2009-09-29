@@ -16,9 +16,9 @@ public class DBTests {
     @Test
     public void testConcurrentUpdate()  throws Exception {
 
-        Mongo m = new Mongo("com_mongodb_DBTests");
+        DB db = new Mongo().getDB("com_mongodb_DBTests");
 
-        DBCollection coll = m.getCollection("concurrentUpdate");
+        DBCollection coll = db.getCollection("concurrentUpdate");
 
         coll.drop();
 

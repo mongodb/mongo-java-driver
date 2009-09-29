@@ -31,7 +31,7 @@ public class GridFSTest extends TestCase {
     public GridFSTest()
         throws IOException , MongoException {
         super();
-        _db = new Mongo( "127.0.0.1" , "cursortest" );
+        _db = new Mongo( "127.0.0.1" ).getDB( "cursortest" );
         _fs = new GridFS( _db );
     }
     
@@ -65,7 +65,7 @@ public class GridFSTest extends TestCase {
         testInOut( s );
     }
     
-    final Mongo _db;
+    final DB _db;
     final GridFS _fs;
     
     public static void main( String args[] )

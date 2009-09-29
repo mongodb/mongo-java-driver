@@ -26,19 +26,18 @@ public class Dbs {
     public static void main(String[] args) 
         throws UnknownHostException , MongoException {
 
-        Mongo m = new Mongo( new DBAddress( "127.0.0.1:27017/driver_test_framework" ) );
-        DBCollection coll = m.getCollection( "dbs_1" );
+        DB db = new Mongo().getDB( "driver_test_framework" );
+        DBCollection coll = db.getCollection( "dbs_1" );
         DBObject o = new BasicDBObject();
         o.put( "foo", "bar" );
         coll.save( o );
 
-        coll = m.getCollection( "dbs_2" );
+        coll = db.getCollection( "dbs_2" );
         o = new BasicDBObject();
         o.put( "psi", "phi" );
         coll.save( o );
 
-        System.out.println( m.getName() );
-        Set<String> set = m.getCollectionNames();
+        Set<String> set = db.getCollectionNames();
         String[] strs = set.toArray( new String[0] );
         Arrays.sort( strs );
         for( String s : strs ) {
@@ -47,12 +46,12 @@ public class Dbs {
             }
         }
 
-        m.getCollection( "dbs_1" ).drop();
+        db.getCollection( "dbs_1" ).drop();
         o = new BasicDBObject();
         o.put( "create", "dbs_3" );
-        m.command( o );
+        db.command( o );
 
-        set = m.getCollectionNames();
+        set = db.getCollectionNames();
         strs = set.toArray( new String[0] );
         Arrays.sort( strs );
         for( String s : strs ) {

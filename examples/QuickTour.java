@@ -3,7 +3,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.DBCursor;
-import com.mongodb.MongoAdmin;
+import com.mongodb.DB;
 
 import java.util.Set;
 import java.util.List;
@@ -15,8 +15,10 @@ public class QuickTour {
         /*
          *   connect to the local database server for the 'mydb' database
          */
-        Mongo db = new Mongo("127.0.0.1", "mydb");
+        Mongo m = new Mongo();
 
+        DB db = m.getDB( "mydb" );
+    
         /*
          *  Authenticate - optional
          */

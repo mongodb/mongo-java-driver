@@ -50,7 +50,7 @@ public class CLI {
     private static Mongo getMongo()
         throws Exception {
         if ( _mongo == null )
-            _mongo = new Mongo( host ,  db );
+            _mongo = new Mongo( host );
         return _mongo;
     }
     
@@ -58,7 +58,7 @@ public class CLI {
     private static GridFS getGridFS()
         throws Exception {
         if ( _gridfs == null )
-            _gridfs = new GridFS( getMongo() );
+            _gridfs = new GridFS( getMongo().getDB( db ) );
         return _gridfs;
     }
 

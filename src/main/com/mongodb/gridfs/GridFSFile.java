@@ -43,7 +43,7 @@ public abstract class GridFSFile implements DBObject {
         if ( _md5 == null )
             throw new MongoException( "no _md5 stored" );
         
-        DBObject res = _fs._mongo.command( new BasicDBObject( "filemd5" , _id ) );
+        DBObject res = _fs._db.command( new BasicDBObject( "filemd5" , _id ) );
         String m = res.get( "md5" ).toString();
         if ( m.equals( _md5 ) )
             return;

@@ -20,6 +20,8 @@ package com.mongodb;
 
 import java.util.*;
 
+import com.mongodb.util.*;
+
 public abstract class DB {
 
     static enum WriteConcern { NONE, NORMAL, STRICT };
@@ -191,7 +193,92 @@ public abstract class DB {
         return _concern;
     }
 
-    
+    /**
+     *  Drops this database.  Removes all data on disk.  Use with caution.
+     */
+    public void dropDatabase()
+        throws MongoException {
+
+        BasicDBObject res = (BasicDBObject) command(new BasicDBObject("dropDatabase", 1));
+
+        if (res.getInt("ok") != 1) {
+            throw new RuntimeException("Error - unable to drop database : " + res.toString());
+        }
+    }
+
+
+    /**
+     *  Authenticates connection/db with given name and password
+     *
+     * @param username  name of user for this database
+     * @param passwd password of user for this database
+     * @return true if authenticated, false otherwise
+     */
+    public boolean authenticate(String username, String passwd)
+        throws MongoException {
+
+        BasicDBObject res = (BasicDBObject) command(new BasicDBObject("getnonce", 1));
+
+        if (res.getInt("ok") != 1) {
+            throw new MongoException("Error - unable to get nonce value for authentication.");
+        }
+
+        String nonce = res.getString("nonce");
+
+        String auth = username + ":mongo:" + passwd;
+        String key = nonce + username + Util.hexMD5(auth.getBytes());
+
+        BasicDBObject cmd = new BasicDBObject();
+
+        cmd.put("authenticate", 1);
+        cmd.put("user", username);
+        cmd.put("nonce", nonce);
+        cmd.put("key", Util.hexMD5(key.getBytes()));
+
+        res = (BasicDBObject) command(cmd);
+
+        return res.getInt("ok") == 1;
+    }
+
+    /**
+     *  Returns the last error that occurred since start of database or a call to <code>resetError()</code>
+     *
+     *  The return object will look like
+     *
+     *  <pre>
+     * { err : errorMessage, nPrev : countOpsBack, ok : 1 }
+     *  </pre>
+     *
+     * The value for errormMessage will be null of no error has ocurred, or the message.  The value of
+     * countOpsBack will be the number of operations since the error occurred.
+     *
+     * Care must be taken to ensure that calls to getPreviousError go to the same connection as that
+     * of the previous operation. See com.mongodb.Mongo.requestStart for more information.
+     *
+     * @return DBObject with error and status information
+     */
+    public DBObject getPreviousError()
+        throws MongoException {
+        return command(new BasicDBObject("getpreverror", 1));
+    }
+
+    /**
+     *  Resets the error memory for this database.  Used to clear all errors such that getPreviousError()
+     *  will return no error.
+     */
+    public void resetError()
+        throws MongoException {
+        command(new BasicDBObject("reseterror", 1));
+    }
+
+    /**
+     *  For testing purposes only - this method forces an error to help test error handling
+     */
+    public void forceError()
+        throws MongoException {
+        command(new BasicDBObject("forceerror", 1));
+    }
+
     final String _name;
     final Set<DBCollection> _seenCollections = new HashSet<DBCollection>();
 

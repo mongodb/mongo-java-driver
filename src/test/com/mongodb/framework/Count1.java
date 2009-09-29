@@ -27,10 +27,10 @@ public class Count1 {
     public static void main(String[] args) 
         throws Exception {
 
-        Mongo m = new Mongo( new DBAddress( "127.0.0.1:27017/driver_test_framework" ) );
-        System.out.println( m.getCollection( "test1" ).find().count() );
-        System.out.println( m.getCollection( "test2" ).find().count() );
-        DBCollection coll = m.getCollection( "test3" );
+        DB db = new Mongo().getDB( "driver_test_framework" );
+        System.out.println( db.getCollection( "test1" ).find().count() );
+        System.out.println( db.getCollection( "test2" ).find().count() );
+        DBCollection coll = db.getCollection( "test3" );
 
         DBObject foo = new BasicDBObject();
         foo.put( "i", "a" );

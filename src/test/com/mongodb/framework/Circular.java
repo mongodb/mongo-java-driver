@@ -27,11 +27,11 @@ public class Circular {
     public static void main(String[] args) 
         throws Exception {
 
-        Mongo m = new Mongo( new DBAddress( "127.0.0.1:27017/driver_test_framework" ) );
+        DB db = new Mongo().getDB( "driver_test_framework" );
         DBObject foo = new BasicDBObject();
-        DBCollection b = m.getCollection( "b" );
+        DBCollection b = db.getCollection( "b" );
         foo.put( "c", b );
-        m.getCollection( "a" ).save( foo );
+        db.getCollection( "a" ).save( foo );
 
         foo = new BasicDBObject();
         foo.put( "c", 1 );
@@ -43,7 +43,7 @@ public class Circular {
         foo.put( "that", 2 );
         DBPointer ref = new DBPointer( "c", id );
         foo.put( "thiz", ref );
-        m.getCollection( "c" ).save( foo );
+        db.getCollection( "c" ).save( foo );
 
     }
 }

@@ -43,8 +43,8 @@ public class GridFS {
      *
      * @param mongo database to work with
      */
-    public GridFS(Mongo mongo) {
-        this(mongo, DEFAULT_BUCKET);
+    public GridFS(DB db) {
+        this(db, DEFAULT_BUCKET);
     }
 
     /**
@@ -54,12 +54,12 @@ public class GridFS {
      * @param mongo database to work with
      * @param bucket bucket to use in the given database
      */
-    public GridFS(Mongo mongo, String bucket) {
-        _mongo = mongo;
+    public GridFS(DB db, String bucket) {
+        _db = db;
         _bucketName = bucket;
 
-        _filesCollection = _mongo.getCollection( _bucketName + ".files" );
-        _chunkCollection = _mongo.getCollection( _bucketName + ".chunks" );
+        _filesCollection = _db.getCollection( _bucketName + ".files" );
+        _chunkCollection = _db.getCollection( _bucketName + ".chunks" );
 
         _chunkCollection.ensureIndex( BasicDBObjectBuilder.start().add( "files_id" , 1 ).add( "n" , 1 ).get() );
 
@@ -181,11 +181,11 @@ public class GridFS {
         return _bucketName;
     }
 
-    public Mongo getMongo(){
-        return _mongo;
+    public DB getDB(){
+        return _db;
     }
 
-    protected final Mongo _mongo;
+    protected final DB _db;
     protected final String _bucketName;
     protected final DBCollection _filesCollection;
     protected final DBCollection _chunkCollection;

@@ -212,6 +212,15 @@ public class DBAddress {
         }
         return l;
     }
+
+    public DBAddress getSister( String name ){
+        try {
+            return new DBAddress( _host , _port , name );
+        }
+        catch ( UnknownHostException uh ){
+            throw new MongoInternalException( "shouldn't be possible" , uh );
+        }
+    }
     
     final String _host;
     final int _port;

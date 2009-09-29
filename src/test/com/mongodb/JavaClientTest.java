@@ -28,7 +28,7 @@ public class JavaClientTest extends TestCase {
     
     public JavaClientTest()
         throws IOException , MongoException {
-        _db = new Mongo( "127.0.0.1" , "jtest" );        
+        _db = new Mongo( "127.0.0.1" ).getDB( "jtest" );        
     }
 
     @Test
@@ -249,7 +249,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , c.find().count() );
     }
     
-    final Mongo _db;
+    final DB _db;
 
     public static void main( String args[] )
         throws Exception {

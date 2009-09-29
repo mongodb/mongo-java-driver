@@ -24,11 +24,11 @@ import org.testng.annotations.BeforeClass;
  */
 public class ErrorTest {
 
-    Mongo _db;
+    DB _db;
 
     @BeforeClass
     public void setUp() throws Exception{
-        _db = new Mongo("com_mongodb_ErrorTest");
+        _db = new Mongo().getDB("com_mongodb_ErrorTest");
     }
 
     @Test
