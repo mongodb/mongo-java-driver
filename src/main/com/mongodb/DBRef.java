@@ -25,11 +25,11 @@ public class DBRef extends DBRefBase {
     
     static final boolean D = Boolean.getBoolean( "DEBUG.DBREF" );
 
-    public DBRef(DBBase db , String ns , Object id) {
+    public DBRef(DB db , String ns , Object id) {
         super(db, ns, id);
     }
 
-    public static DBObject fetch(DBBase db, DBObject ref) {
+    public static DBObject fetch(DB db, DBObject ref) {
         String ns;
         Object id;
 

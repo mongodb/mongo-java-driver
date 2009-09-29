@@ -63,7 +63,7 @@ public class DBCollectionTest extends TestCase {
         assertEquals(obj.get("y"), 2);
     }
 
-    final DBBase _db;
+    final DB _db;
 
     public static void main( String args[] )
         throws Exception {

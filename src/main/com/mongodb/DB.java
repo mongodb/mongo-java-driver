@@ -1,4 +1,4 @@
-// DBBase.java
+// DB.java
 
 /**
  *      Copyright (C) 2008 10gen Inc.
@@ -20,11 +20,11 @@ package com.mongodb;
 
 import java.util.*;
 
-public abstract class DBBase {
+public abstract class DB {
 
     static enum WriteConcern { NONE, NORMAL, STRICT };
 
-    public DBBase( String name ){
+    public DB( String name ){
     	_name = name;
     }
 
@@ -183,11 +183,11 @@ public abstract class DBBase {
         return command(new BasicDBObject("getlasterror", 1));
     }
     
-    public void setWriteConcern( DBBase.WriteConcern concern ){
+    public void setWriteConcern( WriteConcern concern ){
         _concern = concern;
     }
 
-    public DBBase.WriteConcern getWriteConcern(){
+    public WriteConcern getWriteConcern(){
         return _concern;
     }
 
@@ -196,6 +196,6 @@ public abstract class DBBase {
     final Set<DBCollection> _seenCollections = new HashSet<DBCollection>();
 
     protected boolean _readOnly = false;
-    private DBBase.WriteConcern _concern = DBBase.WriteConcern.NORMAL;
+    private WriteConcern _concern = WriteConcern.NORMAL;
 
 }

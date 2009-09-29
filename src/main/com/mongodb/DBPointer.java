@@ -37,7 +37,7 @@ public class DBPointer extends DBRefBase {
         this (null, null, null, ns, id);
     }
 
-    DBPointer( DBObject parent , String fieldName , DBBase db , String ns , ObjectId id ){
+    DBPointer( DBObject parent , String fieldName , DB db , String ns , ObjectId id ){
         super(db, ns, (Object)id);
     
         _parent = parent;

@@ -389,7 +389,7 @@ public class ByteTest extends TestCase {
         assertEquals(r.get("l"), 9223372036854775807l);
     }
 
-    final DBBase _db;
+    final DB _db;
 
     public static void main( String args[] )
         throws Exception {

@@ -26,7 +26,7 @@ public class DBRefBase {
     static final boolean D = Boolean.getBoolean( "DEBUG.DBREF" );
 
 
-    public DBRefBase(DBBase db , String ns , Object id) {
+    public DBRefBase(DB db , String ns , Object id) {
         _db = db;
         
         _ns = ns;
@@ -75,13 +75,13 @@ public class DBRefBase {
     /**
      * Get this ref's database.
      */
-    public DBBase getDB() {
+    public DB getDB() {
         return _db;
     }
 
     final Object _id;
     final String _ns;
-    final DBBase _db;
+    final DB _db;
 
     private boolean _loadedPointedTo = false;
     private DBObject _pointedTo;

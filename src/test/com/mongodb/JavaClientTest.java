@@ -235,7 +235,7 @@ public class JavaClientTest extends TestCase {
     public void testStrictWrite(){
         DBCollection c = _db.getCollection( "write1" );
         c.drop();
-        c.setWriteConcern( DBBase.WriteConcern.STRICT );
+        c.setWriteConcern( DB.WriteConcern.STRICT );
         c.insert( new BasicDBObject( "_id" , 1 ) );
         boolean gotError = false;
         try {

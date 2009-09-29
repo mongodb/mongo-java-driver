@@ -153,7 +153,7 @@ public class DBObjectTest extends TestCase {
         assertTrue(thrown);
     }
 
-    private DBBase _db;
+    private DB _db;
     
     public static void main( String args[] ) {
         (new DBObjectTest()).runConsole();

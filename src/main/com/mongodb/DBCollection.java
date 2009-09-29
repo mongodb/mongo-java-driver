@@ -491,7 +491,7 @@ public abstract class DBCollection {
      * @param base database in which to create the collection
      * @param name the name of the collection
      */
-    protected DBCollection( DBBase base , String name ){
+    protected DBCollection( DB base , String name ){
         _base = base;
         _name = name;
         _fullName = _base.getName() + "." + name;
@@ -577,7 +577,7 @@ public abstract class DBCollection {
 		    continue;
                 
                 if ( foo instanceof DBCollection || 
-                     foo instanceof DBBase )
+                     foo instanceof DB )
                     continue;
                 
                 DBObject e = (DBObject)foo;
@@ -679,7 +679,7 @@ public abstract class DBCollection {
      * Same as <code>getBase()</code>.
      * @return this collection's database
      */
-    public DBBase getDB(){
+    public DB getDB(){
         return _base;
     }
 
@@ -687,7 +687,7 @@ public abstract class DBCollection {
      * Same as <code>getBase()</code>.
      * @return this collection's database
      */
-    public DBBase getBase(){
+    public DB getBase(){
         return _base;
     }
 
@@ -763,23 +763,23 @@ public abstract class DBCollection {
         return _wrapper.getInternalClass( path );
     }
 
-    public void setWriteConcern( DBBase.WriteConcern concern ){
+    public void setWriteConcern( DB.WriteConcern concern ){
         _concern = concern;
     }
 
-    public DBBase.WriteConcern getWriteConcern(){
+    public DB.WriteConcern getWriteConcern(){
         if ( _concern != null )
             return _concern;
         return _base.getWriteConcern();
     }
     
-    final DBBase _base;
+    final DB _base;
 
     final protected String _name;
     final protected String _fullName;
 
     protected List<DBObject> _hintFields;
-    private DBBase.WriteConcern _concern = null;
+    private DB.WriteConcern _concern = null;
 
     protected Class _objectClass = null;
     private Map<String,Class> _internalClass = Collections.synchronizedMap( new HashMap<String,Class>() );

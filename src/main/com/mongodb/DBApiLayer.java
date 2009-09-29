@@ -28,7 +28,7 @@ import com.mongodb.util.*;
  * This cannot be directly instantiated, but the functions are available
  * through instances of Mongo.
  */
-public abstract class DBApiLayer extends DBBase {
+public abstract class DBApiLayer extends DB {
 
     static final boolean D = Boolean.getBoolean( "DEBUG.DB" );
     /** The maximum number of cursors allowed */

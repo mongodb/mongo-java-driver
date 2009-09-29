@@ -82,7 +82,7 @@ public class DBRefTest extends TestCase {
         assertEquals(321325243, ((Number)deref.get("_id")).intValue());
     }
 
-    DBBase _db;
+    DB _db;
 
     public static void main( String args[] ) {
         (new DBRefTest()).runConsole();

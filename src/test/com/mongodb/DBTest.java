@@ -24,9 +24,9 @@ import org.testng.annotations.Test;
 
 import com.mongodb.util.*;
 
-public class DBBaseTest extends TestCase {
+public class DBTest extends TestCase {
     
-    public DBBaseTest() 
+    public DBTest() 
         throws UnknownHostException {
         super();
         _db = new Mongo( "127.0.0.1" , "dbbasetest" );
@@ -90,7 +90,7 @@ public class DBBaseTest extends TestCase {
         String _name;
     }
 
-    public DBBaseTest()
+    public DBTest()
         throws IOException {
         _db = new Mongo( "127.0.0.1" , "dbbasetest" );        
     }
@@ -115,6 +115,6 @@ public class DBBaseTest extends TestCase {
     
     public static void main( String args[] )
         throws Exception {
-        (new DBBaseTest()).runConsole();
+        (new DBTest()).runConsole();
     }
 }

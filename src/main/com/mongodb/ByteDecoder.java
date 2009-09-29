@@ -35,7 +35,7 @@ public class ByteDecoder extends Bytes {
      * @param coll the collection
      * @return the new <code>ByteDecoder</code>
      */
-    static protected ByteDecoder get( DBBase base , DBCollection coll ){
+    static protected ByteDecoder get( DB base , DBCollection coll ){
         ByteDecoder bd = _pool.get();
         bd.reset();
         bd._base = base;
@@ -338,7 +338,7 @@ public class ByteDecoder extends Bytes {
     ByteBuffer _buf;
     private final boolean _private;
 
-    DBBase _base;
+    DB _base;
     DBCollection _collection;
 
 }
