@@ -19,6 +19,7 @@ package com.mongodb;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
 
 import org.testng.annotations.Test;
 
@@ -248,13 +249,26 @@ public class JavaClientTest extends TestCase {
         
         assertEquals( 1 , c.find().count() );
     }
+
+    @Test
+    public void testPattern(){
+        DBCollection c = _db.getCollection( "jp1" );
+        c.drop();
+        
+        c.insert( new BasicDBObject( "x" , "a" ) );
+        c.insert( new BasicDBObject( "x" , "A" ) );
+
+        assertEquals( 1 , c.find( new BasicDBObject( "x" , Pattern.compile( "a" ) ) ).itcount() );
+        assertEquals( 1 , c.find( new BasicDBObject( "x" , Pattern.compile( "A" ) ) ).itcount() );
+        assertEquals( 2 , c.find( new BasicDBObject( "x" , Pattern.compile( "a" , Pattern.CASE_INSENSITIVE ) ) ).itcount() );
+        assertEquals( 2 , c.find( new BasicDBObject( "x" , Pattern.compile( "A" , Pattern.CASE_INSENSITIVE ) ) ).itcount() );
+    }
     
     final DB _db;
 
     public static void main( String args[] )
         throws Exception {
         JavaClientTest ct = new JavaClientTest();
-        //ct.runConsole();
-        ct.testStrictWrite();
+        ct.runConsole();
     }
 }
