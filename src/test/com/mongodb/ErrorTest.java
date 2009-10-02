@@ -35,6 +35,7 @@ public class ErrorTest {
     public void testLastError()
         throws MongoException {
 
+        _db.resetError();
         assert(_db.getLastError().get("err") == null);
 
         _db.forceError();
