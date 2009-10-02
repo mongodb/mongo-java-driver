@@ -234,7 +234,7 @@ class JSONParser {
         read('{');
 
         char current = get();
-        while(current != '}') {
+        while(get() != '}') {
             String key = parseString();
             read(':');
             Object value = parse();
@@ -300,7 +300,7 @@ class JSONParser {
      * Advances the position in the string past any whitespace.
      */
     public void skipWS() {
-        while(pos < s.length() && s.charAt(pos) == ' ') {
+        while(pos < s.length() && Character.isWhitespace(s.charAt(pos))) {
             pos++;
         }
     }

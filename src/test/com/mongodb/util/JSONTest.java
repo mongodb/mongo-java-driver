@@ -48,6 +48,8 @@ public class JSONTest extends com.mongodb.util.TestCase {
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : \"foo\"}")), "{ \"csdf\" : \"foo\"}") ;
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : \'foo\'}")), "{ \"csdf\" : \"foo\"}") ;
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : \"\\\"\"}")), "{ \"csdf\" : \"\\\\\\\"\"}");
+        assertEquals(JSON.serialize(JSON.parse("{\n\t\"id\":\"1689c12eb234c54a84ebd100\",\n}")),
+            "{ \"id\" : \"1689c12eb234c54a84ebd100\"}");
     }
     
     @org.testng.annotations.Test(groups = {"basic"})
