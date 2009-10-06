@@ -48,6 +48,12 @@ public class ObjectIdTest extends TestCase {
         assertEquals( a.toStringMongod() , ObjectId.babbleToMongod( a.toStringBabble() ) );
     }
 
+    @Test
+    public void testBytes(){
+        ObjectId a = new ObjectId();
+        assertEquals( a , new ObjectId( a.toByteArray() ) );
+    }
+
     public static void main( String args[] )
         throws Exception {
         (new ObjectIdTest()).runConsole();
