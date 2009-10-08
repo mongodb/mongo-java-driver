@@ -263,6 +263,20 @@ public class JavaClientTest extends TestCase {
         assertEquals( 2 , c.find( new BasicDBObject( "x" , Pattern.compile( "a" , Pattern.CASE_INSENSITIVE ) ) ).itcount() );
         assertEquals( 2 , c.find( new BasicDBObject( "x" , Pattern.compile( "A" , Pattern.CASE_INSENSITIVE ) ) ).itcount() );
     }
+
+
+    @Test
+    public void testDates(){
+        DBCollection c = _db.getCollection( "dates1" );
+        c.drop();
+        
+        DBObject in = new BasicDBObject( "x" , new java.util.Date() );
+        c.insert( in );
+        DBObject out = c.findOne();
+        assertEquals( java.util.Date.class , in.get("x").getClass() );
+        assertEquals( in.get( "x" ).getClass() , out.get( "x" ).getClass() );
+    }
+
     
     final DB _db;
 
