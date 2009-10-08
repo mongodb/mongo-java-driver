@@ -367,7 +367,17 @@ public abstract class DBCollection {
      */
     public void dropIndexes()
         throws MongoException {
-        BasicDBObject res = (BasicDBObject)_base.command( BasicDBObjectBuilder.start().add( "deleteIndexes" , getName() ).add( "index" , "*" ).get() );
+        dropIndexes( "*" );
+    }
+        
+
+    public void dropIndexes( String name )
+        throws MongoException {
+        DBObject cmd = BasicDBObjectBuilder.start()
+            .add( "deleteIndexes" , getName() )
+            .add( "index" , name )
+            .get();
+        BasicDBObject res = (BasicDBObject)_base.command( cmd );
         if ( res.getInt( "ok" , 0 ) != 1 ){
             if ( res.getString( "errmsg" ).equals( "ns not found" ) )
                 return;
@@ -483,6 +493,16 @@ public abstract class DBCollection {
         }
 
         return list;
+    }
+
+    public void dropIndex( DBObject keys )
+        throws MongoException {
+        dropIndexes( genIndexName( keys ) );
+    }
+
+    public void dropIndex( String name )
+        throws MongoException {
+        dropIndexes( name );
     }
 
     // ------
