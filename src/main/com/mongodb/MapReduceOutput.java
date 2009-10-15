@@ -13,6 +13,10 @@ public class MapReduceOutput {
     public DBCursor results(){
         return _coll.find();
     }
+
+    public void drop(){
+        _coll.drop();
+    }
     
     final String _collname;
     final DBCollection _coll;
