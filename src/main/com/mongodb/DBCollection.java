@@ -473,7 +473,38 @@ public abstract class DBCollection {
             return (DBObject)ret.get( "retval" );
         throw new MongoException( "group failed: " + ret.toString() );
     }
+    
+    /**
+       performs a map reduce operation
+       * @param outputCollection optional - leave null if want to use temp collection
+       * @param query optional - leave null if you want all objects
+     */
+    public MapReduceOutput mapReduce( String map , String reduce , String outputCollection , DBObject query )
+        throws MongoException {
+        BasicDBObjectBuilder b = BasicDBObjectBuilder.start()
+            .add( "mapreduce" , _name )
+            .add( "map" , map )
+            .add( "reduce" , reduce );
 
+        if ( outputCollection != null )
+            b.add( "out" , outputCollection );
+        
+        if ( query != null )
+            b.add( "query" , query );
+
+        return mapReduce( b.get() );
+    }
+    
+    public MapReduceOutput mapReduce( DBObject command )
+        throws MongoException {
+        if ( command.get( "mapreduce" ) == null )
+            throw new IllegalArgumentException( "need mapreduce arg" );
+        BasicDBObject res = (BasicDBObject)(_base.command( command ));
+        if ( res.getInt("ok") != 1 )
+            throw new MongoException( "mapreduce failed: " + res );
+        return new MapReduceOutput( this , res );
+    }
+    
     /**
      *   Return a list of the indexes for this collection.  Each object
      *   in the list is the "info document" from MongoDB

@@ -277,6 +277,32 @@ public class JavaClientTest extends TestCase {
         assertEquals( in.get( "x" ).getClass() , out.get( "x" ).getClass() );
     }
 
+    @Test
+    public void testMapReduce(){
+        DBCollection c = _db.getCollection( "jmr1" );
+        c.drop();
+
+        c.save( new BasicDBObject( "x" , new String[]{ "a" , "b" } ) );
+        c.save( new BasicDBObject( "x" , new String[]{ "b" , "c" } ) );
+        c.save( new BasicDBObject( "x" , new String[]{ "c" , "d" } ) );
+        
+        MapReduceOutput out = 
+            c.mapReduce( "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }" ,
+                         "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" ,
+                         null , null );
+        
+        Map<String,Integer> m = new HashMap<String,Integer>();
+        for ( DBObject r : out.results() ){
+            m.put( r.get( "_id" ).toString() , ((Number)(r.get( "value" ))).intValue() );
+        }
+        
+        assertEquals( 4 , m.size() );
+        assertEquals( 1 , m.get( "a" ).intValue() );
+        assertEquals( 2 , m.get( "b" ).intValue() );
+        assertEquals( 2 , m.get( "c" ).intValue() );
+        assertEquals( 1 , m.get( "d" ).intValue() );
+                        
+    }
     
     final DB _db;
 
