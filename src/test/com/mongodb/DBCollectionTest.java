@@ -62,6 +62,31 @@ public class DBCollectionTest extends TestCase {
         assertEquals(obj.containsField("x"), false);
         assertEquals(obj.get("y"), 2);
     }
+    
+    @Test
+    public void testDropIndex(){
+        DBCollection c = _db.getCollection( "dropindex1" );
+        c.drop();
+
+        c.save( new BasicDBObject( "x" , 1 ) );
+        assertEquals( 1 , c.getIndexInfo().size() );
+
+        c.ensureIndex( new BasicDBObject( "x" , 1 ) );
+        assertEquals( 2 , c.getIndexInfo().size() );
+
+        c.dropIndexes();
+        assertEquals( 1 , c.getIndexInfo().size() );
+
+        c.ensureIndex( new BasicDBObject( "x" , 1 ) );
+        assertEquals( 2 , c.getIndexInfo().size() );
+
+        c.ensureIndex( new BasicDBObject( "y" , 1 ) );
+        assertEquals( 3 , c.getIndexInfo().size() );
+        
+        c.dropIndex( new BasicDBObject( "x" , 1 ) );
+        assertEquals( 2 , c.getIndexInfo().size() );
+        
+    }
 
     final DB _db;
 

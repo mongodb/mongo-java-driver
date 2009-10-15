@@ -191,13 +191,11 @@ public class Bytes {
      * @return the flags for the database
      */
     public static String patternFlags( int flags ){
-        Flag f[] = Flag.values();
-        byte b[] = new byte[ f.length ];
-        int count = 0;
-
-        for( Flag flag : f ) {
+        StringBuilder buf = new StringBuilder();
+        
+        for( Flag flag : Flag.values() ) {
             if( ( flags & flag.javaFlag ) > 0 ) {
-                b[ count++ ] = (byte)flag.flagChar;
+                buf.append( flag.flagChar );
                 flags -= flag.javaFlag;
             }
         }
@@ -205,8 +203,7 @@ public class Bytes {
         if( flags > 0 )
             throw new IllegalArgumentException( "some flags could not be recognized." );
 
-        Arrays.sort( b );
-        return new String( b, 0, count );
+        return buf.toString();
     }
 
     private static enum Flag { 

@@ -142,6 +142,17 @@ public class ObjectId implements Comparable<ObjectId>{
         }
         _new = false;
     }
+
+    public ObjectId( byte[] b ){
+        if ( b.length != 12 )
+            throw new IllegalArgumentException( "need 12 bytes" );
+        reverse( b );
+        ByteBuffer bb = ByteBuffer.wrap( b );
+        
+        _inc = bb.getInt();            
+        _base = bb.getLong();
+    }
+    
     
     ObjectId( long base , int inc ){
         _base = base;
@@ -206,14 +217,11 @@ public class ObjectId implements Comparable<ObjectId>{
     }
 
     public String toStringMongod(){
-        byte b[] = new byte[12];
-        ByteBuffer bb = ByteBuffer.wrap( b );
-        bb.putInt( _inc );
-        bb.putLong( _base );
+        byte b[] = toByteArray();
 
         StringBuilder buf = new StringBuilder(24);
         
-        for ( int i=b.length-1; i>=0; i-- ){
+        for ( int i=0; i<b.length; i++ ){
             int x = b[i] & 0xFF;
             String s = Integer.toHexString( x );
             if ( s.length() == 1 )
@@ -223,7 +231,24 @@ public class ObjectId implements Comparable<ObjectId>{
 
         return buf.toString();
     }
+    
+    public byte[] toByteArray(){
+        byte b[] = new byte[12];
+        ByteBuffer bb = ByteBuffer.wrap( b );
+        bb.putInt( _inc );
+        bb.putLong( _base );
+        reverse( b );
+        return b;
+    }
 
+    static void reverse( byte[] b ){
+        for ( int i=0; i<b.length/2; i++ ){
+            byte t = b[i];
+            b[i] = b[ b.length-(i+1) ];
+            b[b.length-(i+1)] = t;
+        }
+    }
+    
     static String _pos( String s , int p ){
         return s.substring( p * 2 , ( p * 2 ) + 2 );
     }
