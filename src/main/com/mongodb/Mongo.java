@@ -22,14 +22,14 @@ import java.net.*;
 import java.util.*;
 
 /**
- * A database connection and, optionally, database.
+ * A database connection.
  * The following are equivalent, and all connect to the
- * local database called "dev", running on the default port:
+ * local database running on the default port:
  *
  * <blockquote><pre>
- * Mongo mongo1 = new Mongo( "127.0.0.1", "dev" );
- * Mongo mongo2 = new Mongo( "127.0.0.1", 27017, "dev" );
- * Mongo mongo3 = new Mongo( new DBAddress( "127.0.0.1:27017", "dev" ) )
+ * Mongo mongo1 = new Mongo( "127.0.0.1" );
+ * Mongo mongo2 = new Mongo( "127.0.0.1", 27017 );
+ * Mongo mongo3 = new Mongo( new DBAddress( "127.0.0.1:27017", "test" ) )
  * </pre></blockquote>
  *
  * Mongo instances have connection pooling built in - see the requestStart
