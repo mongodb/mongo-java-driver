@@ -2,21 +2,9 @@
 
 package com.mongodb.util;
 
-import com.mongodb.ObjectId;
-import com.mongodb.DBObject;
-import com.mongodb.DBRefBase;
-import com.mongodb.DBPointer;
-import com.mongodb.BasicDBObject;
-import com.mongodb.MongoException;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.TimeZone;
-import java.util.SimpleTimeZone;
+import com.mongodb.*;
+import java.text.*;
+import java.util.*;
 
 /**
  *   Helper methods for JSON serialization and de-serialization
@@ -114,6 +102,27 @@ public class JSON {
             return;
         }
 
+        if ( o instanceof Map ){
+ 
+            boolean first = true;
+            buf.append( "{ " );
+            
+            Map m = (Map)o;
+            
+            for ( Object name : m.keySet() ){
+                if ( first ) first = false;
+                else buf.append( " , " );
+                
+                string( buf , name.toString() );
+                buf.append( " : " );
+                serialize( m.get( name ) , buf );
+            }
+            
+            buf.append( "}" );
+            return;
+        }
+
+
         if (o instanceof Date) {
             Date d = (Date) o;
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -133,7 +142,7 @@ public class JSON {
             return;
         }
 
-        throw new RuntimeException( "can't serialize type : " + o.getClass() );
+        throw new RuntimeException( "json can't serialize type : " + o.getClass() );
     }
 
 
