@@ -288,9 +288,12 @@ public abstract class DBApiLayer extends DB {
             }
         }
 
-        Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn )
+        public Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize )
             throws MongoException {
-
+            
+            if ( ref == null )
+                ref = new BasicDBObject();
+            
             if ( SHOW ) System.out.println( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
 
             _cleanCursors();
@@ -301,7 +304,7 @@ public abstract class DBApiLayer extends DB {
             encoder._put( _fullNameSpace );
 
             encoder._buf.putInt( numToSkip );
-            encoder._buf.putInt( numToReturn );
+            encoder._buf.putInt( batchSize );
             encoder.putObject( ref ); // ref
             if ( fields != null )
                 encoder.putObject( fields ); // fields to return
@@ -324,7 +327,7 @@ public abstract class DBApiLayer extends DB {
                         throw new RuntimeException( "db error [" + err + "]" );
                 }
 
-                return new Result( this , res , numToReturn );
+                return new Result( this , res , batchSize );
             }
             finally {
                 decoder.done();

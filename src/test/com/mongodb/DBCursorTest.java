@@ -45,17 +45,6 @@ public class DBCursorTest extends TestCase {
             c.insert(obj);
 
             assertEquals(c.find().count(), 1);
-
-            BasicDBObject query = new BasicDBObject();
-
-            
-            BasicDBObject fields = new BasicDBObject();
-            fields.put("y", 1);
-            assertEquals(c.find(query,fields).count(), 0);
-            
-
-            query.put("x", "bar");
-            assertEquals(c.find(query).count(), 0);
         }
         catch (MongoException e) {
             assertTrue(false);
@@ -116,6 +105,17 @@ public class DBCursorTest extends TestCase {
         assertEquals( numToInsert , c.find().batchSize(2).itcount() );
         assertEquals( numToInsert , c.find().batchSize(1).itcount() );
         
+        assertEquals( numToInsert , _count( c.find( null , null , 0 , 5 ) ) );
+        assertEquals( 5 , _count( c.find( null , null , 0 , -5 ) ) );
+    }
+
+    int _count( Iterator i ){
+        int c = 0;
+        while ( i.hasNext() ){
+            i.next();
+            c++;
+        }
+        return c;
     }
 
     @Test

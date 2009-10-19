@@ -78,10 +78,10 @@ public abstract class DBCollection {
      * @param ref query used to search
      * @param fields the fields of matching objects to return
      * @param numToSkip will not return the first <tt>numToSkip</tt> matches
-     * @param numToReturn limit the results to this number
+     * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
      * @return the objects, if found
      */
-    abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int numToReturn ) throws MongoException ;
+    public abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) throws MongoException ;
 
     /** Ensures an index on this collection (that is, the index will be created if it does not exist).
      * ensureIndex is optimized and is inexpensive if the index already exists.
