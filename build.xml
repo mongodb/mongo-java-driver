@@ -97,11 +97,7 @@
            >
   </taskdef>
 
-
-  <target name="test" depends="compile, test-basic" />
-
-
-  <target  name="test-basic" depends="init, compile">
+  <target name="test" depends="compile">
     <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="true" >
       <jvmarg value="-Xmx512M" />
       <xmlfileset dir="." includes="testng.xml"/>
