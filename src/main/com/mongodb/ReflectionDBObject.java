@@ -60,11 +60,11 @@ public abstract class ReflectionDBObject implements DBObject {
         }
     }
 
-    public ObjectId get_id(){
+    public Object get_id(){
         return _id;
     }
 
-    public void set_id( ObjectId id ){
+    public void set_id( Object id ){
         _id = id;
     }
 
@@ -99,7 +99,7 @@ public abstract class ReflectionDBObject implements DBObject {
     }
 
     JavaWrapper _wrapper;
-    ObjectId _id;
+    Object _id;
 
     public static class JavaWrapper {
         JavaWrapper( Class c ){
