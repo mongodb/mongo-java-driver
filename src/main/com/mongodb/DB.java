@@ -18,6 +18,7 @@
 
 package com.mongodb;
 
+import java.io.*;
 import java.util.*;
 
 import com.mongodb.util.*;
@@ -214,7 +215,7 @@ public abstract class DB {
      * @param passwd password of user for this database
      * @return true if authenticated, false otherwise
      */
-    public boolean authenticate(String username, String passwd)
+    public boolean authenticate(String username, char[] passwd )
         throws MongoException {
 
         BasicDBObject res = (BasicDBObject) command(new BasicDBObject("getnonce", 1));
@@ -224,10 +225,8 @@ public abstract class DB {
         }
 
         String nonce = res.getString("nonce");
-
-        String auth = username + ":mongo:" + passwd;
-        String key = nonce + username + Util.hexMD5(auth.getBytes());
-
+        String key = nonce + username + _hash( username , passwd );
+        
         BasicDBObject cmd = new BasicDBObject();
 
         cmd.put("authenticate", 1);
@@ -238,6 +237,32 @@ public abstract class DB {
         res = (BasicDBObject) command(cmd);
 
         return res.getInt("ok") == 1;
+    }
+
+    public void addUser( String username , char[] passwd ){
+        DBCollection c = getCollection( "system.users" );
+        DBObject o = c.findOne( new BasicDBObject( "user" , username ) );
+        if ( o == null )
+            o = new BasicDBObject( "user" , username );
+        o.put( "pwd" , _hash( username , passwd ) );
+        c.save( o );
+    }
+
+    String _hash( String username , char[] passwd ){
+        ByteArrayOutputStream bout = new ByteArrayOutputStream( username.length() + 20 + passwd.length );
+        try {
+            bout.write( username.getBytes() );
+            bout.write( ":mongo:".getBytes() );
+            for ( int i=0; i<passwd.length; i++ ){
+                if ( passwd[i] >= 128 )
+                    throw new IllegalArgumentException( "can't handle non-ascii passwords yet" );
+                bout.write( (byte)passwd[i] );
+            }
+        }
+        catch ( IOException ioe ){
+            throw new RuntimeException( "impossible" , ioe );
+        }
+        return Util.hexMD5( bout.toByteArray() );
     }
 
     /**

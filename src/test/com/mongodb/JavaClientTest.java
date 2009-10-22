@@ -29,7 +29,8 @@ public class JavaClientTest extends TestCase {
     
     public JavaClientTest()
         throws IOException , MongoException {
-        _db = new Mongo( "127.0.0.1" ).getDB( "jtest" );        
+        _mongo = new Mongo( "127.0.0.1" );
+        _db = _mongo.getDB( "jtest" );    
     }
 
     @Test
@@ -334,7 +335,26 @@ public class JavaClientTest extends TestCase {
         assertEquals( "3,7" , _testMulti( c ) );
         
     }
+
+    @Test
+    public void testAuth(){
+        DBCollection u = _db.getCollection( "system.users" );
+        try {
+            assertEquals( 0 , u.find().count() );
+            
+            _db.addUser( "xx" , new char[]{ 'e' } );
+            assertEquals( 1 , u.find().count() );
+            
+            assertEquals( false , _db.authenticate( "xx" , new char[]{ 'f' } ) );
+            assertEquals( true , _db.authenticate( "xx" , new char[]{ 'e' } ) );
+        }
+        finally {
+            u.remove( new BasicDBObject() );
+            assertEquals( 0 , u.find().count() );        
+        }
+    }
     
+    final Mongo _mongo;
     final DB _db;
 
     public static void main( String args[] )
