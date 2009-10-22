@@ -35,7 +35,7 @@ public class DBTests {
 
             if (count++ == 0) {
                 o.put("woog", "12-3012-30123-0123-012312312-0312-012-01-203-012-0psaoija-0sid-as0daoisasoidas=0dias=0diapsodjasd");
-                coll.update(new BasicDBObject("_id", o.get("_id")), o, false, false);
+                coll.update(new BasicDBObject("_id", o.get("_id")), o);
             }
         }
 

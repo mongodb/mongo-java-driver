@@ -335,28 +335,19 @@ public abstract class DBApiLayer extends DB {
             }
         }
 
-        public DBObject update( DBObject query , DBObject o , boolean upsert , boolean apply )
+        public DBObject update( DBObject query , DBObject o , boolean upsert , boolean multi )
             throws MongoException {
 
             if ( SHOW ) System.out.println( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
 
-            if ( apply ){
-
-                for ( String s : o.keySet() ){
-                    if ( s.startsWith( "$" ) )
-                        throw new IllegalArgumentException( "when using $ modifiers, apply has to be false" );
-                }
-                
-                apply( o );
-                ObjectId id = ((ObjectId)o.get( "_id" ));
-                id._new = false;
-            }
-            
             ByteEncoder encoder = ByteEncoder.get();
             encoder._buf.putInt( 0 ); // reserved
             encoder._put( _fullNameSpace );
 
-            encoder._buf.putInt( upsert ? 1 : 0 );
+            int flags = 0;
+            if ( upsert ) flags |= 1;
+            if ( multi ) flags |= 2;
+            encoder._buf.putInt( flags );
 
             encoder.putObject( query );
             encoder.putObject( o );

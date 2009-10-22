@@ -59,10 +59,18 @@ public abstract class DBCollection {
      * @param q search query for old object to update
      * @param o object with which to update <tt>q</tt>
      * @param upsert if the database should create the element if it does not exist
-     * @param apply if an _id field should be added to the new object
+     * @param multi if the update should be applied to all objects matching (db version 1.1.3 and above)
      * See http://www.mongodb.org/display/DOCS/Atomic+Operations
      */
-    public abstract DBObject update( DBObject q , DBObject o , boolean upsert , boolean apply ) throws MongoException ;
+    public abstract DBObject update( DBObject q , DBObject o , boolean upsert , boolean multi ) throws MongoException ;
+
+    public DBObject update( DBObject q , DBObject o ) throws MongoException {
+        return update( q , o , false , false );
+    }
+
+    public DBObject updateMulti( DBObject q , DBObject o ) throws MongoException {
+        return update( q , o , false , true );
+    }
 
     /** Adds any necessary fields to a given object before saving it to the collection.
      * @param o object to which to add the fields

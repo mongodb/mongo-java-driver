@@ -199,7 +199,7 @@ public class JavaClientTest extends TestCase {
 
         c.update( new BasicDBObject( "id" , 1 ) , 
                   new BasicDBObject( "$set" , 
-                                     new BasicDBObject( "x" , 5.5 ) ) , false , false );
+                                     new BasicDBObject( "x" , 5.5 ) ) );
         assertEquals( Double.class , c.findOne().get( "x" ).getClass() );        
         
     }
@@ -213,7 +213,7 @@ public class JavaClientTest extends TestCase {
         c.save( BasicDBObjectBuilder.start().push( "a" ).add( "x" , 1 ).get() );
         
         assertEquals( 1, ((DBObject)c.findOne().get("a")).get("x" ) );
-        c.update( new BasicDBObject() , BasicDBObjectBuilder.start().push( "$set" ).add( "a.x" , 2 ).get() , false , false );
+        c.update( new BasicDBObject() , BasicDBObjectBuilder.start().push( "$set" ).add( "a.x" , 2 ).get() );
         assertEquals( 1 , c.find().count() );
         assertEquals( 2, ((DBObject)c.findOne().get("a")).get("x" ) );
         
@@ -302,6 +302,37 @@ public class JavaClientTest extends TestCase {
         assertEquals( 2 , m.get( "c" ).intValue() );
         assertEquals( 1 , m.get( "d" ).intValue() );
                         
+    }
+    
+    String _testMulti( DBCollection c ){
+        String s = "";
+        for ( DBObject z : c.find().sort( new BasicDBObject( "_id" , 1 ) ) ){
+            if ( s.length() > 0 )
+                s += ",";
+            s += z.get( "x" );
+        }
+        return s;
+    }
+    
+    @Test
+    public void testMulti(){
+        DBCollection c = _db.getCollection( "multi1" );
+        c.drop();
+
+        c.insert( BasicDBObjectBuilder.start( "_id" , 1 ).add( "x" , 1 ).get() );
+        c.insert( BasicDBObjectBuilder.start( "_id" , 2 ).add( "x" , 5 ).get() );
+
+        assertEquals( "1,5" , _testMulti( c ) );
+
+        c.update( new BasicDBObject() , BasicDBObjectBuilder.start().push( "$inc" ).add( "x" , 1 ).get() );
+        assertEquals( "2,5" , _testMulti( c ) );
+
+        c.update( new BasicDBObject( "_id" , 2 ) , BasicDBObjectBuilder.start().push( "$inc" ).add( "x" , 1 ).get() );
+        assertEquals( "2,6" , _testMulti( c ) );
+
+        c.updateMulti( new BasicDBObject() , BasicDBObjectBuilder.start().push( "$inc" ).add( "x" , 1 ).get() );
+        assertEquals( "3,7" , _testMulti( c ) );
+        
     }
     
     final DB _db;
