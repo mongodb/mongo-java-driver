@@ -18,8 +18,8 @@
 
 package com.mongodb.util;
 
-import com.mongodb.DBObject;
-import com.mongodb.BasicDBObjectBuilder;
+import com.mongodb.*;
+
 import org.testng.annotations.Test;
 
 public class JSONTest extends com.mongodb.util.TestCase {
@@ -178,8 +178,18 @@ public class JSONTest extends com.mongodb.util.TestCase {
         
         assertEquals( 4 , JSON.parse( "4" ) );
     }
-    
 
+    @org.testng.annotations.Test    
+    public void testNumbers2(){
+        DBObject x = new BasicDBObject( "x" , 123 );
+        assertEquals( x , JSON.parse( x.toString() ) );
+
+        x = new BasicDBObject( "x" , 123123123123L );
+        assertEquals( x , JSON.parse( x.toString() ) );
+
+        x = new BasicDBObject( "x" , 123123123 );
+        assertEquals( x , JSON.parse( x.toString() ) );
+    }
 
     public static void main( String args[] ){
         (new JSONTest()).runConsole();
