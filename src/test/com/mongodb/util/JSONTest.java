@@ -191,6 +191,21 @@ public class JSONTest extends com.mongodb.util.TestCase {
         assertEquals( x , JSON.parse( x.toString() ) );
     }
 
+    @org.testng.annotations.Test    
+    public void testEscape1(){
+        String raw = "a\nb";
+
+        DBObject x = new BasicDBObject( "x" , raw );
+        assertEquals( "\"a\\nb\"" , JSON.serialize( raw ) );
+        assertEquals( x , JSON.parse( x.toString() ) );
+        assertEquals( raw , ((DBObject)JSON.parse( x.toString() ) ).get( "x" ) );
+
+        x = new BasicDBObject( "x" , "a\nb\bc\td" );
+        assertEquals( x , JSON.parse( x.toString() ) );
+    }
+
+
+
     public static void main( String args[] ){
         (new JSONTest()).runConsole();
     }

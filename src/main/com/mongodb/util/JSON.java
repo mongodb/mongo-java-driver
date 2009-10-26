@@ -27,9 +27,7 @@ public class JSON {
         a.append("\"");
         for(int i = 0; i < s.length(); ++i){
             char c = s.charAt(i);
-            if ( c < 32 )
-                continue;
-            if(c == '\\')
+            if (c == '\\')
                 a.append("\\\\");
             else if(c == '"')
                 a.append("\\\"");
@@ -39,6 +37,8 @@ public class JSON {
                 a.append("\\r");
             else if(c == '\t')
                 a.append("\\t");
+            else if ( c < 32 )
+                continue;
             else
                 a.append(c);
         }
@@ -351,24 +351,43 @@ class JSONParser {
               (current = s.charAt(pos)) != quot) {
             if(current == '\\') {
                 pos++;
+                
+                char x = get();
+                
+                char special = 0;
 
-                // decode unicode
-                if (check('u')) {
+                switch ( x ){
+
+                case 'u':
+                    { // decode unicode
+                        buf.append(s.substring(start, pos-1));
+                        pos++;
+                        int tempPos = pos;
+                        
+                        readHex();
+                        readHex();
+                        readHex();
+                        readHex();
+                        
+                        int codePoint = Integer.parseInt(s.substring(tempPos, tempPos+4), 16);
+                        buf.append((char)codePoint);
+                        
+                        start = pos;
+                        continue;
+                    }
+                case 'n': special = '\n'; break;
+                case 't': special = '\t'; break;
+                case 'b': special = '\b'; break;
+                }
+                
+                if ( special != 0 ){
                     buf.append(s.substring(start, pos-1));
                     pos++;
-                    int tempPos = pos;
-
-                    readHex();
-                    readHex();
-                    readHex();
-                    readHex();
-
-                    int codePoint = Integer.parseInt(s.substring(tempPos, tempPos+4), 16);
-                    buf.append((char)codePoint);
-
+                    buf.append( special );
                     start = pos;
                     continue;
                 }
+
             }
             pos++;
         }
