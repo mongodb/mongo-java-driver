@@ -37,6 +37,8 @@ public class JSON {
                 a.append("\\r");
             else if(c == '\t')
                 a.append("\\t");
+            else if(c == '\b')
+                a.append("\\b");
             else if ( c < 32 )
                 continue;
             else
@@ -376,6 +378,7 @@ class JSONParser {
                         continue;
                     }
                 case 'n': special = '\n'; break;
+                case 'r': special = '\r'; break;
                 case 't': special = '\t'; break;
                 case 'b': special = '\b'; break;
                 }

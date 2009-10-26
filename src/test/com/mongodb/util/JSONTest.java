@@ -200,7 +200,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
         assertEquals( x , JSON.parse( x.toString() ) );
         assertEquals( raw , ((DBObject)JSON.parse( x.toString() ) ).get( "x" ) );
 
-        x = new BasicDBObject( "x" , "a\nb\bc\td" );
+        x = new BasicDBObject( "x" , "a\nb\bc\td\re" );
         assertEquals( x , JSON.parse( x.toString() ) );
     }
 
