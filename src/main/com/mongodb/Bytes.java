@@ -260,7 +260,7 @@ public class Bytes {
         l.add( t );
     }
 
-    public static Object _applyEncodingHooks( Object o ){
+    public static Object applyEncodingHooks( Object o ){
         if ( _encodingHooks.size() == 0 || o == null )
             return o;
         List<Transformer> l = _encodingHooks.get( o.getClass() );
@@ -270,7 +270,7 @@ public class Bytes {
         return o;
     }
 
-    public static Object _applyDecodingHooks( byte b , Object o ){
+    public static Object applyDecodingHooks( byte b , Object o ){
         List<Transformer> l = _decodingHooks.get( b );
         if ( l != null )
             for ( Transformer t : l )

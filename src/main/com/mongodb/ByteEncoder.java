@@ -249,7 +249,7 @@ public class ByteEncoder extends Bytes {
             return;
         }
         
-        val = Bytes._applyEncodingHooks( val );
+        val = Bytes.applyEncodingHooks( val );
 
         if ( val == null )
             putNull(name);

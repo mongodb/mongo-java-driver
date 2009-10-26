@@ -48,11 +48,13 @@ public class JSON {
     }
     public static void serialize( Object o , StringBuilder buf ){
         
+        o = Bytes.applyEncodingHooks( o );
+
         if ( o == null ){
             buf.append( " null " );
             return;
         }
-
+        
         if ( o instanceof Number ){
             buf.append( o );
             return;

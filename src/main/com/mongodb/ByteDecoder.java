@@ -273,7 +273,7 @@ public class ByteDecoder extends Bytes {
             throw new UnsupportedOperationException( "ByteDecoder can't handle type : " + type );
         }
         
-        o.put( name , Bytes._applyDecodingHooks( type , created ) );
+        o.put( name , Bytes.applyDecodingHooks( type , created ) );
 
         return _buf.position() - start;
     }
