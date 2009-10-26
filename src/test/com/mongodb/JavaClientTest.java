@@ -352,6 +352,39 @@ public class JavaClientTest extends TestCase {
             u.remove( new BasicDBObject() );
             assertEquals( 0 , u.find().count() );        
         }
+
+    }
+
+    @Test
+    public void testTransformers(){
+        
+        DBCollection c = _db.getCollection( "tt" );
+        c.drop();
+        
+        c.save( BasicDBObjectBuilder.start( "_id" , 1 ).add( "x" , 1.1 ).get() );
+        assertEquals( Double.class , c.findOne().get( "x" ).getClass() );
+
+        Bytes.addEncodingHook( Double.class , new Transformer(){
+            public Object transform( Object o ){
+                return o.toString();
+            }
+        } );
+
+        c.save( BasicDBObjectBuilder.start( "_id" , 1 ).add( "x" , 1.1 ).get() );
+        assertEquals( String.class , c.findOne().get( "x" ).getClass() );
+
+        Bytes.clearAllHooks();
+        c.save( BasicDBObjectBuilder.start( "_id" , 1 ).add( "x" , 1.1 ).get() );
+        assertEquals( Double.class , c.findOne().get( "x" ).getClass() );
+
+        Bytes.addDecodingHook( Bytes.NUMBER , new Transformer(){
+            public Object transform( Object o ){
+                return o.toString();
+            }
+        } );
+        assertEquals( String.class , c.findOne().get( "x" ).getClass() );
+        Bytes.clearAllHooks();
+        assertEquals( Double.class , c.findOne().get( "x" ).getClass() );        
     }
     
     final Mongo _mongo;

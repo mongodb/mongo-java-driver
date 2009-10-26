@@ -158,28 +158,26 @@ public class ByteDecoder extends Bytes {
         else
             path = path + "." + name;
 
-        DBObject created = null;
+        Object created = null;
 
         switch ( type ){
         case NULL:
-            o.put( name , null );
             break;
 
         case BOOLEAN:
-            o.put( name , _buf.get() > 0 );
+            created =_buf.get() > 0;
             break;
 
         case NUMBER:
-            double val = _buf.getDouble();
-            o.put( name , val );
+            created = _buf.getDouble();
             break;
 	    
         case NUMBER_INT:
-            o.put( name , _buf.getInt() );
+            created = _buf.getInt();
             break;
 
         case NUMBER_LONG:
-            o.put( name , _buf.getLong() );
+            created = _buf.getLong();
             break;	    
 
         case SYMBOL:
@@ -190,7 +188,7 @@ public class ByteDecoder extends Bytes {
                 throw new MongoException( "invalid bson? size:" + size + " remaining: " + _buf.remaining() );
             _buf.get( _namebuf , 0 , size );
             try {
-                o.put( name , new String( _namebuf , 0 , size , "UTF-8" ) );
+                created = new String( _namebuf , 0 , size , "UTF-8" );
             }
             catch ( java.io.UnsupportedEncodingException uee ){
                 throw new MongoInternalException( "impossible" , uee );
@@ -199,7 +197,7 @@ public class ByteDecoder extends Bytes {
             break;
 
         case OID:
-            o.put( name , new ObjectId( _buf.getLong() , _buf.getInt() ) );
+            created = new ObjectId( _buf.getLong() , _buf.getInt() );
             break;
             
         case REF:
@@ -207,21 +205,21 @@ public class ByteDecoder extends Bytes {
             String ns = readCStr();
             ObjectId theOID = new ObjectId( _buf.getLong() , _buf.getInt() );
             if ( theOID.equals( Bytes.COLLECTION_REF_ID ) )
-                o.put( name , _base.getCollectionFromFull( ns ) );
+                created = _base.getCollectionFromFull( ns );
             else 
-                o.put( name , new DBPointer( o , name , _base , ns , theOID ) );
+                created = new DBPointer( o , name , _base , ns , theOID );
             break;
             
         case DATE:
-            o.put( name , new Date( _buf.getLong() ) );
+            created = new Date( _buf.getLong() );
             break;
             
         case REGEX:
-            o.put( name , Pattern.compile( readCStr() , Bytes.patternFlags( readCStr() ) ) );
+            created = Pattern.compile( readCStr() , Bytes.patternFlags( readCStr() ) );
             break;
 
         case BINARY:
-            o.put( name , parseBinary() );
+            created = parseBinary();
             break;
             
         case CODE:
@@ -231,11 +229,10 @@ public class ByteDecoder extends Bytes {
             created = new BasicDBList();
             _buf.getInt();  // total size - we don't care....
 
-            while (decodeNext( created , path ) > 1 ) {
+            while (decodeNext( (DBObject)created , path ) > 1 ) {
                 // intentionally empty
             }
 
-            o.put( name , created );
             break;
 
         case OBJECT:
@@ -251,32 +248,33 @@ public class ByteDecoder extends Bytes {
                     created = _create( path );
             }
             
-            while (decodeNext( created , path ) > 1 ) {
+            while (decodeNext( (DBObject)created , path ) > 1 ) {
                 // intentionally empty
             }
             
-            o.put( name , created );
             break;
 
         case TIMESTAMP:
             int i = _buf.getInt();
             int time = _buf.getInt();
 
-            o.put( name, new DBTimestamp(time, i) );
+            created = new DBTimestamp(time, i);
             break;
 
         case MINKEY:
-            o.put( name, "MinKey" );
+            created = "MinKey";
             break;
 
         case MAXKEY:
-            o.put( name, "MaxKey" );
+            created = "MaxKey";
             break;
 
         default:
             throw new UnsupportedOperationException( "ByteDecoder can't handle type : " + type );
         }
         
+        o.put( name , Bytes._applyDecodingHooks( type , created ) );
+
         return _buf.position() - start;
     }
     

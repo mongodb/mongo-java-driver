@@ -249,6 +249,8 @@ public class ByteEncoder extends Bytes {
             return;
         }
         
+        val = Bytes._applyEncodingHooks( val );
+
         if ( val == null )
             putNull(name);
         else if ( val instanceof Date )

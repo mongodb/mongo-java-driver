@@ -242,6 +242,51 @@ public class Bytes {
         System.out.println( "flag " + flag + " not supported by db." );
     }
     
+    public static void addEncodingHook( Class c , Transformer t ){
+        List<Transformer> l = _encodingHooks.get( c );
+        if ( l == null ){
+            l = new Vector<Transformer>();
+            _encodingHooks.put( c , l );
+        }
+        l.add( t );
+    }
+    
+    public static void addDecodingHook( byte type , Transformer t ){
+        List<Transformer> l = _decodingHooks.get( type );
+        if ( l == null ){
+            l = new Vector<Transformer>();
+            _decodingHooks.put( type , l );
+        }
+        l.add( t );
+    }
+
+    public static Object _applyEncodingHooks( Object o ){
+        if ( _encodingHooks.size() == 0 || o == null )
+            return o;
+        List<Transformer> l = _encodingHooks.get( o.getClass() );
+        if ( l != null )
+            for ( Transformer t : l )
+                o = t.transform( o );
+        return o;
+    }
+
+    public static Object _applyDecodingHooks( byte b , Object o ){
+        List<Transformer> l = _decodingHooks.get( b );
+        if ( l != null )
+            for ( Transformer t : l )
+                o = t.transform( o );
+        return o;
+    }
+
+
+    public static void clearAllHooks(){
+        _encodingHooks.clear();
+        _decodingHooks.clear();
+    }
+    
+    static Map<Class,List<Transformer>> _encodingHooks = Collections.synchronizedMap( new HashMap<Class,List<Transformer>>() );
+    static Map<Byte,List<Transformer>> _decodingHooks = Collections.synchronizedMap( new HashMap<Byte,List<Transformer>>() );
+    
     static final String NO_REF_HACK = "_____nodbref_____";
     static final ObjectId COLLECTION_REF_ID = new ObjectId( -1 , -1 );
 }
