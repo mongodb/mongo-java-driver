@@ -134,6 +134,27 @@ public class GridFS {
         return f;
     }
 
+
+    // --------------------------
+    // ------ remove      -------
+    // --------------------------
+
+    public void remove( ObjectId id ){
+        _filesCollection.remove( new BasicDBObject( "_id" , id ) );
+        _chunkCollection.remove( new BasicDBObject( "files_id" , id ) );
+    }
+    
+    public void remove( String filename ){
+        remove( new BasicDBObject( "filename" , filename ) );
+    }
+
+    public void remove( DBObject query ){
+        for ( GridFSDBFile f : find( query ) ){
+            f.remove();
+        }
+    }
+    
+
     // --------------------------
     // ------ writing     -------
     // --------------------------

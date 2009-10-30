@@ -34,9 +34,19 @@ public class GridFSTest extends TestCase {
         _db = new Mongo( "127.0.0.1" ).getDB( "cursortest" );
         _fs = new GridFS( _db );
     }
+
+    int[] _get(){
+        int[] i = new int[2];
+        i[0] = _fs._filesCollection.find().count();
+        i[1] = _fs._chunkCollection.find().count();
+        return i;
+    }
     
     void testInOut( String s )
         throws Exception {
+        
+        int[] start = _get();
+
         GridFSInputFile in = _fs.createFile( s.getBytes() );
         in.save();
         GridFSDBFile out = _fs.findOne( new BasicDBObject( "_id" , in.getId() ) );
@@ -46,6 +56,11 @@ public class GridFSTest extends TestCase {
         out.writeTo( bout );
         String outString = new String( bout.toByteArray() );
         assert( outString.equals( s ) );
+
+        out.remove();
+        int[] end = _get();
+        assertEquals( start[0] , end[0] );
+        assertEquals( start[1] , end[1] );
     }
     
     @Test(groups = {"basic"})

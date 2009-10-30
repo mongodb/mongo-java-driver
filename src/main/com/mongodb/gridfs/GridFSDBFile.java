@@ -120,4 +120,9 @@ public class GridFSDBFile extends GridFSFile {
         int _offset;
         byte[] _data = null;
     }
+    
+    void remove(){
+        _fs._filesCollection.remove( new BasicDBObject( "_id" , _id ) );
+        _fs._chunkCollection.remove( new BasicDBObject( "files_id" , _id ) );
+    }
 }
