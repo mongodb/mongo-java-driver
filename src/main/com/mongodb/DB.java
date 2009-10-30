@@ -25,7 +25,7 @@ import com.mongodb.util.*;
 
 public abstract class DB {
 
-    static enum WriteConcern { NONE, NORMAL, STRICT };
+    public static enum WriteConcern { NONE, NORMAL, STRICT };
 
     public DB( String name ){
     	_name = name;
