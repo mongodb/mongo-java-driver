@@ -20,6 +20,7 @@ package com.mongodb;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
+import java.nio.*;
 
 import org.testng.annotations.Test;
 
@@ -135,11 +136,33 @@ public class JavaClientTest extends TestCase {
     public void testBinary()
         throws MongoException {
         DBCollection c = _db.getCollection( "testBinary" );
+        c.drop();
         c.save( BasicDBObjectBuilder.start().add( "a" , "eliot".getBytes() ).get() );
         
         DBObject out = c.findOne();
         byte[] b = (byte[])(out.get( "a" ) );
         assertEquals( "eliot" , new String( b ) );
+        
+        {
+            byte[] raw = new byte[9];
+            ByteBuffer bb = ByteBuffer.wrap( raw );
+            bb.order( Bytes.ORDER );
+            bb.putInt( 5 );
+            bb.put( "eliot".getBytes() );
+            out.put( "a" , new DBBinary( (byte)2 , raw ) );
+            c.save( out );
+            
+            out = c.findOne();
+            b = (byte[])(out.get( "a" ) );
+            assertEquals( "eliot" , new String( b ) );
+
+            out.put( "a" , new DBBinary( (byte)111 , raw ) );
+            c.save( out );
+            DBBinary blah = (DBBinary)c.findOne().get( "a" );
+            assertEquals( 111 , blah.getType() );
+            assertEquals( Util.toHex( raw ) , Util.toHex( blah.getData() ) );
+        }
+        
     }
 
     @Test

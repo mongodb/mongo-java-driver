@@ -278,22 +278,26 @@ public class ByteDecoder extends Bytes {
         return _buf.position() - start;
     }
     
-    byte[] parseBinary(){
+    Object parseBinary(){
         final int totalLen = _buf.getInt();
         final byte bType = _buf.get();
         
         switch ( bType ){
         case B_BINARY:
             final int len = _buf.getInt();
+            if ( len + 4 != totalLen )
+                throw new MongoInternalException( "bad data size got subtype 2 len: " + len + " totalLen: " + totalLen );
 	    if ( D ) System.out.println( "got binary of size : " + len );
             final byte[] data = new byte[len];
             _buf.get( data );
             return data;
         }
-     
-        throw new UnsupportedOperationException( "can't handle binary type : " + bType );
+        
+        byte[] data = new byte[totalLen];
+        _buf.get( data );
+        return new DBBinary( bType , data );
     }
-
+    
     private String readCStr(){
         int pos = 0;
         while ( true ){

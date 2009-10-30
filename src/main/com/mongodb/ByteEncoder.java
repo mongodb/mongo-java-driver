@@ -277,6 +277,8 @@ public class ByteEncoder extends Bytes {
             putList( name , (List)val );
         else if ( val instanceof byte[] )
             putBinary( name , (byte[])val );
+        else if ( val instanceof DBBinary )
+            putBinary( name , (DBBinary)val );
         else if ( val.getClass().isArray() )
             putList( name , Arrays.asList( (Object[])val ) );
 
@@ -425,6 +427,14 @@ public class ByteEncoder extends Bytes {
         
         com.mongodb.util.MyAsserts.assertEquals( after - before , data.length );
     }
+
+    protected void putBinary( String name , DBBinary val ){
+        _put( BINARY , name );
+        _buf.putInt( val._data.length );
+        _buf.put( val._type );
+        _buf.put( val._data );
+    }
+    
 
     protected int putSymbol( String name , DBSymbol s ){
         return _putString(name, s.getSymbol(), SYMBOL);
