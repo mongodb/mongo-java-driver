@@ -255,7 +255,7 @@ public abstract class DBApiLayer extends DB {
             List<Long> l = _deadCursorIds;
             _deadCursorIds = new Vector<Long>();
 
-            System.out.println( "trying to kill cursors : " + l.size() );
+            Bytes.LOGGER.info( "trying to kill cursors : " + l.size() );
 
             try {
                 killCursors( l );
