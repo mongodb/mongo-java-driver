@@ -37,6 +37,10 @@ import java.util.*;
  */
 public class Mongo {
 
+    public static final int MAJOR_VERSION = 1;
+    public static final int MINOR_VERSION = 0;
+    
+
     public Mongo()
         throws UnknownHostException , MongoException {
         this( new DBAddress( "test" ) );
@@ -129,6 +133,10 @@ public class Mongo {
         throws MongoException {
         
         getDB( dbName ).dropDatabase();
+    }
+
+    public String getVersion(){
+        return MAJOR_VERSION + "." + MINOR_VERSION;
     }
 
     final DBAddress _addr;
