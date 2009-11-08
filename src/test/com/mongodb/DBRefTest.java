@@ -58,7 +58,9 @@ public class DBRefTest extends TestCase {
         ByteDecoder decoder = new ByteDecoder( encoder._buf );
         DBObject read = decoder.readObject();
         
-        assertEquals("{ \"!\" : { \"$ref\" : \"hello\" , \"$id\" : \"world\"}}", read.toString());
+        String correct = "{\"!\":{\"$ref\":\"hello\",\"$id\":\"world\"}}";
+        String got = read.toString().replaceAll( " +" , "" );
+        assertEquals( correct , got );
     }
 
     @Test(groups = {"basic"})
@@ -80,6 +82,22 @@ public class DBRefTest extends TestCase {
 
         assertTrue(deref != null);
         assertEquals(321325243, ((Number)deref.get("_id")).intValue());
+    }
+
+    @Test
+    public void testRoundTrip(){
+        DBCollection a = _db.getCollection( "refroundtripa" );
+        DBCollection b = _db.getCollection( "refroundtripb" );
+        a.drop();
+        b.drop();
+
+        a.save( BasicDBObjectBuilder.start( "_id" , 17 ).add( "n" , 111 ).get() );
+        b.save( BasicDBObjectBuilder.start( "n" , 12 ).add( "l" , new DBRef( _db , "refroundtripa" , 17 ) ).get() );
+        
+        assertEquals( 12 , b.findOne().get( "n" ) );
+        assertEquals( DBRef.class , b.findOne().get( "l" ).getClass() );
+        assertEquals( 111 , ((DBRef)(b.findOne().get( "l" ))).fetch().get( "n" ) );
+        
     }
 
     DB _db;

@@ -252,8 +252,14 @@ public class ByteDecoder extends Bytes {
                 // intentionally empty
             }
             
-            break;
+            DBObject theObject = (DBObject)created;
+            if ( theObject.containsKey( "$ref" ) && 
+                 theObject.containsKey( "$id" ) ){
+                created = new DBRef( _base , theObject.get( "$ref" ).toString() , theObject.get( "$id" ) );
+            }
 
+            break;
+            
         case TIMESTAMP:
             int i = _buf.getInt();
             int time = _buf.getInt();
