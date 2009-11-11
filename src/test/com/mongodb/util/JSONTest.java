@@ -47,9 +47,9 @@ public class JSONTest extends com.mongodb.util.TestCase {
     public void testString() {
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : \"foo\"}")), "{ \"csdf\" : \"foo\"}") ;
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : \'foo\'}")), "{ \"csdf\" : \"foo\"}") ;
-        assertEquals(JSON.serialize(JSON.parse("{'csdf' : \"\\\"\"}")), "{ \"csdf\" : \"\\\\\\\"\"}");
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : \"a\\\"b\"}")), "{ \"csdf\" : \"a\\\"b\"}");
         assertEquals(JSON.serialize(JSON.parse("{\n\t\"id\":\"1689c12eb234c54a84ebd100\",\n}")),
-            "{ \"id\" : \"1689c12eb234c54a84ebd100\"}");
+                     "{ \"id\" : \"1689c12eb234c54a84ebd100\"}");
     }
     
     @org.testng.annotations.Test(groups = {"basic"})
@@ -191,6 +191,20 @@ public class JSONTest extends com.mongodb.util.TestCase {
         assertEquals( x , JSON.parse( x.toString() ) );
     }
 
+    void _escapeChar( String s ){
+        String thingy = "va" + s + "lue";
+        DBObject x = new BasicDBObject( "name" , thingy );
+        x = (DBObject)JSON.parse( x.toString() );
+        assertEquals( thingy , x.get( "name" ) );
+
+        thingy = "va" + s + s + s + "lue" + s;
+        x = new BasicDBObject( "name" , thingy );
+        x = (DBObject)JSON.parse( x.toString() );
+        assertEquals( thingy , x.get( "name" ) );
+    }
+
+
+
     @org.testng.annotations.Test    
     public void testEscape1(){
         String raw = "a\nb";
@@ -202,6 +216,25 @@ public class JSONTest extends com.mongodb.util.TestCase {
 
         x = new BasicDBObject( "x" , "a\nb\bc\td\re" );
         assertEquals( x , JSON.parse( x.toString() ) );
+
+        
+        String thingy = "va\"lue";
+        x = new BasicDBObject( "name" , thingy );
+        x = (DBObject)JSON.parse( x.toString() );
+        assertEquals( thingy , x.get( "name" ) );
+
+        thingy = "va\\lue";
+        x = new BasicDBObject( "name" , thingy );
+        x = (DBObject)JSON.parse( x.toString() );
+        assertEquals( thingy , x.get( "name" ) );
+
+        _escapeChar( "\t" );
+        _escapeChar( "\b" );
+        _escapeChar( "\n" );
+        _escapeChar( "\r" );
+        _escapeChar( "\'" );
+        _escapeChar( "\"" );
+        _escapeChar( "\\" );
     }
 
 

@@ -383,6 +383,8 @@ class JSONParser {
                 case 'r': special = '\r'; break;
                 case 't': special = '\t'; break;
                 case 'b': special = '\b'; break;
+                case '"': special = '\"'; break;
+                case '\\': special = '\\'; break;
                 }
                 
                 if ( special != 0 ){
