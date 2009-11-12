@@ -32,7 +32,15 @@ public class DBPort {
     static final boolean USE_NAGLE = false;
     
     static final long CONN_RETRY_TIME_MS = 15000;
-    
+
+    private static boolean _retryConnect = false;
+
+    /**
+       this controls whether or not on a connect, the system retries automatically 
+     */
+    public static void setConnectRetry( boolean retry ){
+        _retryConnect = retry;
+    }
 
     public DBPort( InetSocketAddress addr )
         throws IOException {
@@ -148,7 +156,7 @@ public class DBPort {
                 _logger.log( Level.INFO , "connect fail to : " + _addr , ioe );
             }
             
-            if ( _pool != null && ! _pool._everWorked )
+            if ( ! _retryConnect || ( _pool != null && ! _pool._everWorked ) )
                 throw lastError;
             
             long sleptSoFar = System.currentTimeMillis() - start;
