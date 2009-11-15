@@ -90,15 +90,30 @@ public class Mongo {
         _addr = null;
         _addrs = Arrays.asList( left , right );
     }
-
-    public DB getDB( String db ){
-        if ( _addr != null )
-            return new DBTCP( _addr.getSister( db ) );
+    
+    public DB getDB( String dbname ){
         
-        List<DBAddress> l = new ArrayList<DBAddress>();
-        for ( DBAddress a : _addrs )
-            l.add( a.getSister( db ) );
-        return new DBTCP( l );
+        DB db = _dbs.get( dbname );
+        if ( db != null )
+            return db;
+        
+        synchronized ( _dbs ){
+            db = _dbs.get( dbname );
+            if ( db != null )
+                return db;
+            
+            if ( _addr != null )
+                db = new DBTCP( _addr.getSister( dbname ) );
+            else {
+                List<DBAddress> l = new ArrayList<DBAddress>();
+                for ( DBAddress a : _addrs )
+                    l.add( a.getSister( dbname ) );
+                db = new DBTCP( l );
+            }
+            
+            _dbs.put( dbname , db );
+            return db;
+        }
     }
     
     public List<String> getDatabaseNames()
@@ -141,4 +156,5 @@ public class Mongo {
 
     final DBAddress _addr;
     final List<DBAddress> _addrs;
+    final Map<String,DB> _dbs = new HashMap<String,DB>();
 }
