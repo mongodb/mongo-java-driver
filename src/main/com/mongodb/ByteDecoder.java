@@ -162,6 +162,7 @@ public class ByteDecoder extends Bytes {
 
         switch ( type ){
         case NULL:
+        case UNDEFINED:
             break;
 
         case BOOLEAN:
