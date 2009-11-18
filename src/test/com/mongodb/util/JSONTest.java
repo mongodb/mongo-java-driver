@@ -37,6 +37,13 @@ public class JSONTest extends com.mongodb.util.TestCase {
     }
 
     @org.testng.annotations.Test(groups = {"basic"})
+    public void testLongValues() {
+        Long val = Integer.MAX_VALUE + 1L; 
+        String test = String.format("{ \"x\" : %d}", val);
+        assertEquals(JSON.serialize(JSON.parse(test)), test);
+    }
+
+    @org.testng.annotations.Test(groups = {"basic"})
     public void testSimple() {
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : true}")), "{ \"csdf\" : true}");
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : false}")), "{ \"csdf\" : false}");

@@ -438,7 +438,7 @@ class JSONParser {
 
         if (isDouble)
           return Double.parseDouble(s.substring(start, pos));
-        if ( pos - start > 10 )
+        if ( pos - start >= 10 )
           return Long.parseLong(s.substring(start, pos));
         return Integer.parseInt(s.substring(start, pos));
     }
