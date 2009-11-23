@@ -243,6 +243,7 @@ public class Bytes {
     }
     
     public static void addEncodingHook( Class c , Transformer t ){
+        _anyHooks = true;
         List<Transformer> l = _encodingHooks.get( c );
         if ( l == null ){
             l = new Vector<Transformer>();
@@ -252,6 +253,7 @@ public class Bytes {
     }
     
     public static void addDecodingHook( byte type , Transformer t ){
+        _anyHooks = true;
         List<Transformer> l = _decodingHooks.get( type );
         if ( l == null ){
             l = new Vector<Transformer>();
@@ -261,6 +263,9 @@ public class Bytes {
     }
 
     public static Object applyEncodingHooks( Object o ){
+        if ( ! _anyHooks )
+            return o;
+
         if ( _encodingHooks.size() == 0 || o == null )
             return o;
         List<Transformer> l = _encodingHooks.get( o.getClass() );
@@ -271,6 +276,9 @@ public class Bytes {
     }
 
     public static Object applyDecodingHooks( byte b , Object o ){
+        if ( ! _anyHooks )
+            return o;
+
         List<Transformer> l = _decodingHooks.get( b );
         if ( l != null )
             for ( Transformer t : l )
@@ -280,10 +288,12 @@ public class Bytes {
 
 
     public static void clearAllHooks(){
+        _anyHooks = false;
         _encodingHooks.clear();
         _decodingHooks.clear();
     }
-    
+
+    private static boolean _anyHooks = false;
     static Map<Class,List<Transformer>> _encodingHooks = Collections.synchronizedMap( new HashMap<Class,List<Transformer>>() );
     static Map<Byte,List<Transformer>> _decodingHooks = Collections.synchronizedMap( new HashMap<Byte,List<Transformer>>() );
     

@@ -40,6 +40,7 @@ public abstract class DBApiLayer extends DB {
         super( root );
 
         _root = root;
+        _rootPlusDot = _root + ".";
     }
 
     protected abstract void doInsert( ByteBuffer buf , WriteConcern concern ) throws MongoException;
@@ -69,7 +70,7 @@ public abstract class DBApiLayer extends DB {
     }
 
     String _removeRoot( String ns ){
-        if ( ! ns.startsWith( _root + "." ) )
+        if ( ! ns.startsWith( _rootPlusDot ) )
             return ns;
         return ns.substring( _root.length() + 1 );
     }
@@ -419,6 +420,7 @@ public abstract class DBApiLayer extends DB {
 
             _bytes = decoder.remaining();
             _fullNameSpace = fullNameSpace;
+            _shortNameSpace = _removeRoot( _fullNameSpace );
             skipPastHeader( decoder._buf );
 
             if ( _num == 0 )
@@ -434,7 +436,7 @@ public abstract class DBApiLayer extends DB {
                 while( decoder.more() && num < _num ){
                     final DBObject o = decoder.readObject();
 
-                    o.put( "_ns" , _removeRoot( _fullNameSpace ) );
+                    o.put( "_ns" , _shortNameSpace );
                     _lst.add( o );
                     num++;
 
@@ -457,6 +459,7 @@ public abstract class DBApiLayer extends DB {
 
         final long _bytes;
         final String _fullNameSpace;
+        final String _shortNameSpace;
 
         final List<DBObject> _lst;
     }
@@ -567,6 +570,7 @@ public abstract class DBApiLayer extends DB {
     }  // class Result
 
     final String _root;
+    final String _rootPlusDot;
     final Map<String,MyCollection> _collections = Collections.synchronizedMap( new HashMap<String,MyCollection>() );
     final Map<String,DBApiLayer> _sisters = Collections.synchronizedMap( new HashMap<String,DBApiLayer>() );
     List<Long> _deadCursorIds = new Vector<Long>();
