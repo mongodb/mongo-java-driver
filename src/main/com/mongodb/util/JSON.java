@@ -5,6 +5,7 @@ package com.mongodb.util;
 import com.mongodb.*;
 import java.text.*;
 import java.util.*;
+import java.util.regex.*;
 
 /**
  *   Helper methods for JSON serialization and de-serialization
@@ -146,6 +147,11 @@ public class JSON {
             return;
         }
 
+        if (o instanceof Pattern) {
+            buf.append("/").append(o.toString()).append("/").append(Bytes.patternFlags( ((Pattern)o).flags() ));
+            return;
+        }
+
         throw new RuntimeException( "json can't serialize type : " + o.getClass() );
     }
 
@@ -230,6 +236,9 @@ class JSONParser {
         case '{':
             value = parseObject();
             break;
+        case '/':
+            value = parsePatter();
+            break;
         default:
             throw new JSONParseException(s, pos);
         }
@@ -265,6 +274,31 @@ class JSONParser {
 
         return obj;
     }
+    
+    public Pattern parsePatter(){
+        read( '/' );
+        
+        StringBuilder buf = new StringBuilder();
+        
+        char current = read();
+        while( current != '/'){
+            buf.append( current );
+            current = read();
+        }
+
+        int flags = 0;
+
+        while ( pos < s.length() ){
+            current = s.charAt( pos );
+            if ( Character.isWhitespace( current ) ||
+                 ! Character.isLetter( current ) )
+                break;
+            flags |= Bytes.getFlag( current );
+            current = read();
+        }
+
+        return Pattern.compile( buf.toString() , flags );
+    }
 
     /**
      * Read the current character, making sure that it is the expected character.
@@ -279,6 +313,12 @@ class JSONParser {
             throw new JSONParseException(s, pos);
         }
         pos++;
+    }
+
+    public char read(){
+        if ( pos >= s.length() )
+            throw new IllegalStateException( "string done" );
+        return s.charAt( pos++ );
     }
 
     /** 

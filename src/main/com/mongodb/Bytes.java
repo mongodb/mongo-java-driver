@@ -186,6 +186,19 @@ public class Bytes {
         return fint;
     }
 
+    public static int getFlag( char c ){
+        Flag flag = Flag.getByCharacter( c );
+        if ( flag == null )
+            throw new IllegalArgumentException( "unrecognized flag: " + c );
+
+        if ( flag.unsupported != null ){
+            _warnUnsupported( flag.unsupported );
+            return 0;
+        }
+        
+        return flag.javaFlag;
+    }
+
     /** Converts Java regular expression flags into a string of flags for the database
      * @param flags Java flags
      * @return the flags for the database

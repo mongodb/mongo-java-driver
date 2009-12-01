@@ -18,6 +18,8 @@
 
 package com.mongodb.util;
 
+import java.util.regex.*;
+
 import com.mongodb.*;
 
 import org.testng.annotations.Test;
@@ -243,6 +245,21 @@ public class JSONTest extends com.mongodb.util.TestCase {
         _escapeChar( "\"" );
         _escapeChar( "\\" );
     }
+
+   @org.testng.annotations.Test
+   public void testPattern() {
+       String x = "^Hello$";
+       String y = "/" + x + "/i";
+
+       Pattern pattern = Pattern.compile( x , Pattern.CASE_INSENSITIVE);
+       assertEquals( y , JSON.serialize(pattern));
+
+       BasicDBObject a = new BasicDBObject( "x" , pattern );
+       assertEquals( "{ \"x\" : " + y + "}" , a.toString() );
+
+       DBObject b = (DBObject)JSON.parse( a.toString() );
+       assertEquals( a.toString() , b.toString() );
+   }
 
 
 
