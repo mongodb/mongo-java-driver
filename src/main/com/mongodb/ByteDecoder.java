@@ -198,13 +198,13 @@ public class ByteDecoder extends Bytes {
             break;
 
         case OID:
-            created = new ObjectId( _buf.getLong() , _buf.getInt() );
+            created = new ObjectId( _buf.getInt() , _buf.getInt() , _buf.getInt() );
             break;
             
         case REF:
             _buf.getInt();  // length of ctring that follows
             String ns = readCStr();
-            ObjectId theOID = new ObjectId( _buf.getLong() , _buf.getInt() );
+            ObjectId theOID = new ObjectId( _buf.getInt() , _buf.getInt() , _buf.getInt() );
             if ( theOID.equals( Bytes.COLLECTION_REF_ID ) )
                 created = _base.getCollectionFromFull( ns );
             else 

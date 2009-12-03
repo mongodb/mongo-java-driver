@@ -157,7 +157,7 @@ public class ByteTest extends TestCase {
     @Test(groups = {"basic"})
     public void testObjcetId(){
         assertTrue( (new ObjectId()).compareTo( new ObjectId() ) < 0 );
-        assertTrue( (new ObjectId(0 , 0 )).compareTo( new ObjectId() ) < 0 );
+        assertTrue( (new ObjectId(0 , 0 , 0 )).compareTo( new ObjectId() ) < 0 );
     }
 
 

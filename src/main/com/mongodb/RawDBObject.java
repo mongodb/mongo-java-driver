@@ -258,7 +258,7 @@ public class RawDBObject implements DBObject {
 	    case NUMBER_INT:
 		return _buf.getInt( _dataStart );
 	    case OID:
-		return new ObjectId( _buf.getLong( _dataStart ) , _buf.getInt( _dataStart + 8 ) );
+		return new ObjectId( _buf.getInt( _dataStart ) , _buf.getInt( _dataStart + 4 ) , _buf.getInt( _dataStart + 8 ) );
 	    case CODE:
             case CODE_W_SCOPE:
                 throw new RuntimeException( "can't handle code" );

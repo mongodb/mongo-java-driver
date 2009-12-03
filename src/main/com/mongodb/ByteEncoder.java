@@ -454,7 +454,8 @@ public class ByteEncoder extends Bytes {
     protected int putObjectId( String name , ObjectId oid ){
         int start = _buf.position();
         _put( OID , name );
-        _buf.putLong( oid._base );
+        _buf.putInt( oid._time );
+        _buf.putInt( oid._machine );
         _buf.putInt( oid._inc );
         return _buf.position() - start;
     }
@@ -464,7 +465,8 @@ public class ByteEncoder extends Bytes {
         _put( REF , name );
         
         _putValueString( ns );
-        _buf.putLong( oid._base );
+        _buf.putInt( oid._time );
+        _buf.putInt( oid._machine );
         _buf.putInt( oid._inc );
 
         return _buf.position() - start;

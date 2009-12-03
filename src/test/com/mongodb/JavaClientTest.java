@@ -410,6 +410,38 @@ public class JavaClientTest extends TestCase {
         assertEquals( Double.class , c.findOne().get( "x" ).getClass() );        
     }
     
+
+    @Test
+    public void testObjectIdCompat(){
+        DBCollection c = _db.getCollection( "oidc" );
+        c.drop();
+
+        c.save( new BasicDBObject( "x" , 1 ) );
+        _db.eval( "db.oidc.insert( { x : 2 } );" );
+        
+        List<DBObject> l = c.find().toArray();
+        assertEquals( 2 , l.size() );
+        
+        ObjectId a = (ObjectId)(l.get(0).get("_id"));
+        ObjectId b = (ObjectId)(l.get(1).get("_id"));
+        
+        assertLess( Math.abs( a.getTime() - b.getTime() ) , 10000 );
+    }
+
+    @Test
+    public void testObjectIdCompat2(){
+        DBCollection c = _db.getCollection( "oidc" );
+        c.drop();
+
+        c.save( new BasicDBObject( "x" , 1 ) );
+        
+        Object o = _db.eval( "return db.oidc.findOne()._id.toString()" );
+        String x = c.findOne().get( "_id" ).toString();
+        assertEquals( x , o );
+    }
+       
+ 
+
     final Mongo _mongo;
     final DB _db;
 

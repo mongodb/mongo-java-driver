@@ -20,6 +20,7 @@ package com.mongodb;
 
 import java.util.*;
 import java.nio.*;
+import java.net.*;
 
 import com.mongodb.util.*;
 
@@ -115,8 +116,9 @@ public class ObjectId implements Comparable<ObjectId>{
         }
         ByteBuffer bb = ByteBuffer.wrap( b );
         
-        _inc = bb.getInt();            
-        _base = bb.getLong();
+        _inc = bb.getInt(); 
+        _machine = bb.getInt();
+        _time = bb.getInt();
 
         _new = false;
     }
@@ -128,12 +130,14 @@ public class ObjectId implements Comparable<ObjectId>{
         ByteBuffer bb = ByteBuffer.wrap( b );
         
         _inc = bb.getInt();            
-        _base = bb.getLong();
+        _machine = bb.getInt();
+        _time = bb.getInt();
     }
     
     
-    ObjectId( long base , int inc ){
-        _base = base;
+    ObjectId( int time , int machine , int inc ){
+        _time = time;
+        _machine = machine;
         _inc = inc;
         
         _new = false;
@@ -142,18 +146,11 @@ public class ObjectId implements Comparable<ObjectId>{
     /** Create a new object id.
      */
     public ObjectId(){
-        _base = ( ((long)_time) << 32) | _machine;
-        
-        if ( D ) System.out.println( "base : " + Long.toHexString( _base ) );
+        _time = _gentime;
+        _machine = _genmachine;
         
         synchronized ( _incLock ){
-            if ( _nextShort == Short.MAX_VALUE )
-                _nextByte++;
-
-            int myb = ( ((int)_nextByte) << 16 ) & 0xFF0000;
-            int myi = ( _nextShort++ ) & 0xFFFF;
-            
-            _inc = myb | myi;
+            _inc = _nextInc++;
         }
         
         _new = true;
@@ -173,7 +170,8 @@ public class ObjectId implements Comparable<ObjectId>{
             return false;
         
         return 
-            _base == other._base && 
+            _time == other._time && 
+            _machine == other._machine && 
             _inc == other._inc;
     }
 
@@ -201,7 +199,8 @@ public class ObjectId implements Comparable<ObjectId>{
         byte b[] = new byte[12];
         ByteBuffer bb = ByteBuffer.wrap( b );
         bb.putInt( _inc );
-        bb.putLong( _base );
+        bb.putInt( _machine );
+        bb.putInt( _time );
         reverse( b );
         return b;
     }
@@ -239,53 +238,86 @@ public class ObjectId implements Comparable<ObjectId>{
         if ( id == null )
             return -1;
         
-        if ( id._base == _base ){
-            if ( _inc < id._inc )
-                return -1;
-            if ( _inc > id._inc )
-                return 1;
-            return 0;
-        }
+        int x = id._time - _time;
+        if ( x != 0 )
+            return x;
 
-        if ( _base < id._base )
-            return -1;
+        x = id._machine - _machine;
+        if ( x != 0 )
+            return -x;
 
-        if ( _base > id._base )
-            return 1;
+        x = id._inc - _inc;
+        if ( x != 0 )
+            return -x;
 
         return 0;
     }
 
-    public long getBase(){
-        return _base;
+    public int getMachine(){
+        return _machine;
     }
     
+    public long getTime(){
+        long z = _flip( _time );
+        return z * 1000;
+    }
+
     public int getInc(){
         return _inc;
     }
 
-    final long _base;
+    final int _time;
+    final int _machine;
     final int _inc;
     
     boolean _new;
+
+    static int _flip( int x ){
+        if ( true ){
+            byte b[] = new byte[4];
+            ByteBuffer bb = ByteBuffer.wrap( b );
+            bb.order( ByteOrder.LITTLE_ENDIAN );
+            bb.putInt( x );
+            bb.flip();
+            bb.order( ByteOrder.BIG_ENDIAN );
+            return bb.getInt();
+        }
+        int z = 0;
+        z |= ( x & 0xFF ) << 24;
+        z |= ( x & 0xFF00 ) << 8;
+        z |= ( x & 0xFF00000 ) >> 8;
+        z |= ( x & 0xFF000000 ) >> 24;
+        return z;
+    }
     
-    private static byte _nextByte = (byte)(new java.util.Random()).nextInt();
-    private static short _nextShort = (short)(new java.util.Random()).nextInt();
+    private static int _nextInc = (new java.util.Random()).nextInt();
     private static final String _incLock = new String( "ObjectId._incLock" );
 
-    private static int _time = (int)(System.currentTimeMillis()/1000);
+    private static int _gentime = _flip( (int)(System.currentTimeMillis()/1000) );
     
     static final Thread _timeFixer;
-    private static final long _machine;
-    private static final int _bottomTop;
+    private static final int _genmachine;
     static {
+
         try {
-            int startTime = (int)( java.lang.management.ManagementFactory.getRuntimeMXBean().getStartTime() & 0xFFFF );
-            _bottomTop = ( startTime & 0xFF ) << 24;
-            if ( D ) System.out.println( "top of last piece : " + Integer.toHexString( _bottomTop ) );
-            int machinePiece = ( java.net.InetAddress.getLocalHost().getHostName().hashCode() & 0xFFFFFF ) << 8;
-            _machine = ( ( startTime >> 8 ) | machinePiece ) & 0x7FFFFFFF;
-            if ( D ) System.out.println( "machine piece : " + Long.toHexString( _machine ) );
+            
+            final int machinePiece;
+            {
+                StringBuilder sb = new StringBuilder();
+                Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
+                while ( e.hasMoreElements() ){
+                    NetworkInterface ni = e.nextElement();
+                    sb.append( ni.toString() );
+                }
+                machinePiece = sb.toString().hashCode() << 16;
+                if ( D ) System.out.println( "machine piece post: " + Integer.toHexString( machinePiece ) );
+            }
+            
+            final int processPiece = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode() & 0xFFFF;
+            if ( D ) System.out.println( "process piece: " + Integer.toHexString( processPiece ) );
+
+            _genmachine = machinePiece | processPiece;
+            if ( D ) System.out.println( "machine : " + Integer.toHexString( _genmachine ) );
         }
         catch ( java.io.IOException ioe ){
             throw new RuntimeException( ioe );
@@ -295,7 +327,7 @@ public class ObjectId implements Comparable<ObjectId>{
                 public void run(){
                     while ( true ){
                         ThreadUtil.sleep( 499 );
-                        _time = (int)(System.currentTimeMillis()/1000);
+                        _gentime = _flip( (int)(System.currentTimeMillis()/1000) );
                     }
                 }
             };
@@ -304,16 +336,36 @@ public class ObjectId implements Comparable<ObjectId>{
     }
 
     public static void main( String args[] ){
-        Set<ObjectId> s = new HashSet<ObjectId>();
-        while ( true ){
-            ObjectId i = get();
-            if ( s.contains( i ) )
-                throw new RuntimeException( "ObjectId() generated a repeat" );
-            s.add( i );
+        
+        if ( true ){
+            int z = _nextInc;
+            System.out.println( Integer.toHexString( z ) );
+            System.out.println( Integer.toHexString( _flip( z ) ) );
+            System.out.println( Integer.toHexString( _flip( _flip( z ) ) ) );
+            return;
+        }
 
-            ObjectId o = new ObjectId( i.toString() );
-            if ( ! i.equals( o ) )
-                throw new RuntimeException( o.toString() + " != " + i.toString() );
+        ObjectId x = new ObjectId();
+
+        double num = 5000000.0;
+        
+        long start = System.currentTimeMillis();
+        for ( double i=0; i<num; i++ ){
+            ObjectId id = get();
+        }
+        long end = System.currentTimeMillis();
+        System.out.println( ( ( num * 1000.0 ) / ( end - start ) ) + " oid/sec" );
+        
+        Set<ObjectId> s = new HashSet<ObjectId>();
+        for ( double i=0; i<num/10; i++ ){
+            ObjectId id = get();
+            if ( s.contains( id ) )
+                throw new RuntimeException( "ObjectId() generated a repeat" );
+            s.add( id );
+
+            ObjectId o = new ObjectId( id.toString() );
+            if ( ! id.equals( o ) )
+                throw new RuntimeException( o.toString() + " != " + id.toString() );
         }
 
     }

@@ -24,6 +24,7 @@ import com.mongodb.util.*;
 
 public class ObjectIdTest extends TestCase {
     
+    /*
     @Test(groups = {"basic"})
     public void testTSM(){
 
@@ -32,6 +33,7 @@ public class ObjectIdTest extends TestCase {
         assertEquals( "250516e3e2c3264a8dfddc23" , a.toStringBabble() );
         assertEquals( "4a26c3e2e316052523dcfd8d" , a.toString() );
     }
+    */
 
     @Test(groups = {"basic"})
     public void testRT1(){
@@ -60,6 +62,20 @@ public class ObjectIdTest extends TestCase {
         a = new ObjectId( b );
         assertEquals( a , new ObjectId( a.toByteArray() ) );        
         assertEquals( "41d91c58988b09375cc1fe9f" , a.toString() );
+    }
+
+    @Test
+    public void testTime(){
+        long a = System.currentTimeMillis();
+        long b = (new ObjectId()).getTime();
+        assertLess( Math.abs( b - a ) , 3000 );
+    }
+
+    @Test
+    public void testBasics(){
+        ObjectId a = new ObjectId();
+        ObjectId b = new ObjectId();
+        assertNotEquals( a , b );
     }
 
     public static void main( String args[] )
