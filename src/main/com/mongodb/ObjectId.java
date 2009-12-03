@@ -106,40 +106,18 @@ public class ObjectId implements Comparable<ObjectId>{
         if ( ! isValid( s ) )
             throw new IllegalArgumentException( "invalid ObjectId [" + s + "]" );
 
-        if ( babble ){
-            String baseString = s.substring( 0 , 16 );
-            String incString = s.substring( 16 );
-            
-            ByteBuffer buf = ByteBuffer.allocate(24);
-            
-            for (int i=0; i < baseString.length() / 2; i++) {
-                buf.put((byte) Integer.parseInt(baseString.substring(i*2, i*2 + 2), 16));
-            }
-            
-            buf.flip();
-            
-            _base = buf.getLong();
-            
-            buf.clear();
-            
-            for (int i=0; i < incString.length() / 2; i++) {
-                buf.put((byte) Integer.parseInt(incString.substring(i*2, i*2 + 2), 16));
-            }
-            
-            buf.flip();
-            
-            _inc = buf.getInt();
+        if ( babble )
+            s = babbleToMongod( s );
+        
+        byte b[] = new byte[12];
+        for ( int i=0; i<b.length; i++ ){
+            b[b.length-(i+1)] = (byte)Integer.parseInt( s.substring( i*2 , i*2 + 2) , 16 );
         }
-        else {
-            byte b[] = new byte[12];
-            for ( int i=0; i<b.length; i++ ){
-                b[b.length-(i+1)] = (byte)Integer.parseInt( s.substring( i*2 , i*2 + 2) , 16 );
-            }
-            ByteBuffer bb = ByteBuffer.wrap( b );
+        ByteBuffer bb = ByteBuffer.wrap( b );
+        
+        _inc = bb.getInt();            
+        _base = bb.getLong();
 
-            _inc = bb.getInt();            
-            _base = bb.getLong();
-        }
         _new = false;
     }
 
@@ -200,20 +178,7 @@ public class ObjectId implements Comparable<ObjectId>{
     }
 
     public String toStringBabble(){
-        String a = Long.toHexString( _base );
-        String b = Integer.toHexString( _inc );
-        
-        StringBuilder buf = new StringBuilder( 16 );
-
-        for ( int i=0; i<(16-a.length()); i++ )
-            buf.append( "0" );
-        buf.append( a );
-
-        for ( int i=0; i<(8-b.length()); i++ )
-            buf.append( "0" );
-        buf.append( b );
-        
-        return buf.toString();
+        return babbleToMongod( toStringMongod() );
     }
 
     public String toStringMongod(){

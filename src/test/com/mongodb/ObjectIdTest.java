@@ -52,6 +52,14 @@ public class ObjectIdTest extends TestCase {
     public void testBytes(){
         ObjectId a = new ObjectId();
         assertEquals( a , new ObjectId( a.toByteArray() ) );
+        
+        byte b[] = new byte[12];
+        java.util.Random r = new java.util.Random( 17 );
+        for ( int i=0; i<b.length; i++ )
+            b[i] = (byte)(r.nextInt());
+        a = new ObjectId( b );
+        assertEquals( a , new ObjectId( a.toByteArray() ) );        
+        assertEquals( "41d91c58988b09375cc1fe9f" , a.toString() );
     }
 
     public static void main( String args[] )
