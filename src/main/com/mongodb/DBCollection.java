@@ -483,6 +483,30 @@ public abstract class DBCollection {
     }
     
     /**
+     * find distinct values for a key
+     */
+    public List distinct( String key ){
+        return distinct( key , new BasicDBObject() );
+    }
+    
+    /**
+     * find distinct values for a key
+     * @param query query to apply on collection
+     */
+    public List distinct( String key , DBObject query ){
+        DBObject c = BasicDBObjectBuilder.start()
+            .add( "distinct" , getName() )
+            .add( "key" , key )
+            .add( "query" , query )
+            .get();
+        
+        DBObject res = _base.command( c );
+        if ( ! new Double(1.0).equals( res.get( "ok" ) ) )
+            throw new MongoException( "distinct failed: " + res );
+        return (List)(res.get( "values" ));
+    }
+
+    /**
        performs a map reduce operation
        * @param outputCollection optional - leave null if want to use temp collection
        * @param query optional - leave null if you want all objects

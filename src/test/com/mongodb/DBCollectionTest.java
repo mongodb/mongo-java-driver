@@ -88,6 +88,26 @@ public class DBCollectionTest extends TestCase {
         
     }
 
+    @Test
+    public void testDistinct(){
+        DBCollection c = _db.getCollection( "distinct1" );
+        c.drop();
+
+        for ( int i=0; i<100; i++ ){
+            BasicDBObject o = new BasicDBObject();
+            o.put( "_id" , i );
+            o.put( "x" , i % 10 );
+            c.save( o );
+        }
+
+        List l = c.distinct( "x" );
+        assertEquals( 10 , l.size() );
+
+        l = c.distinct( "x" , new BasicDBObject( "_id" , new BasicDBObject( "$gt" , 95 ) ) );
+        assertEquals( 4 , l.size() );
+
+    }
+
     final DB _db;
 
     public static void main( String args[] )
