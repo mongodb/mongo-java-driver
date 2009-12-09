@@ -34,6 +34,7 @@
            optimize="off"
            deprecation="off"
            source="1.5"
+           target="1.5"
            encoding="ISO-8859-1"
            memoryMaximumSize="256M"
            fork="true"
