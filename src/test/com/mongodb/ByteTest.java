@@ -158,6 +158,12 @@ public class ByteTest extends TestCase {
     public void testObjcetId(){
         assertTrue( (new ObjectId()).compareTo( new ObjectId() ) < 0 );
         assertTrue( (new ObjectId(0 , 0 , 0 )).compareTo( new ObjectId() ) < 0 );
+        assertTrue( (new ObjectId(0 , 0 , 0 )).compareTo( new ObjectId( 0 , 0 , 1 ) ) < 0 );
+
+        assertTrue( (new ObjectId(5 , 5 , 5 )).compareTo( new ObjectId( 5 , 5 , 6 ) ) < 0 );
+        assertTrue( (new ObjectId(5 , 5 , 5 )).compareTo( new ObjectId( 5 , 6 , 5 ) ) < 0 );
+        assertTrue( (new ObjectId(5 , 5 , 5 )).compareTo( new ObjectId( 6 , 5 , 5 ) ) < 0 );
+
     }
 
 

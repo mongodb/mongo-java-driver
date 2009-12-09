@@ -238,11 +238,13 @@ public class ObjectId implements Comparable<ObjectId>{
         if ( id == null )
             return -1;
         
-        int x = id._time - _time;
-        if ( x != 0 )
-            return x;
+        long xx = id.getTime() - getTime();
+        if ( xx > 0 )
+            return -1;
+        else if ( xx < 0 )
+            return 1;
 
-        x = id._machine - _machine;
+        int x = id._machine - _machine;
         if ( x != 0 )
             return -x;
 
