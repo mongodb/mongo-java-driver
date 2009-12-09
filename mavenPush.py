@@ -3,14 +3,14 @@
 import os
 import sys
 import shutil
-import simples3
 import subprocess
-import settings
 
 if len( sys.argv ) == 1:
     raise Exception( "need version number for now" )
 
 version = sys.argv[1]
+
+root = "/ebs/maven/"
 
 p = subprocess.Popen( [ "/usr/bin/ant" , "jar" ] , stdout=subprocess.PIPE ).communicate()
 
@@ -19,7 +19,7 @@ if p[0].find( "SUCCESSFUL" ) < 0:
     print( p[1] )
     raise( "build failed" )
 
-dir = "org/mongodb/mongo-java-driver/" + version
+dir = root + "/org/mongodb/mongo-java-driver/" + version
 if not os.path.exists( dir ):
     os.makedirs( dir )
 
@@ -27,21 +27,18 @@ root = dir + "/mongo-java-driver-" + version + "."
 
 shutil.copy2( "mongo.jar" , root + "jar" )
 
-pom  = "<project>\n"
-pom += "  <modelVersion>4.0.0</modelVersion>\n"
-pom += "  <groupId>org.mongodb</groupId>\n"
-pom += "  <artifactId>mongo-java-driver</artifactId>\n"
-pom += "  <name>MongoDB Java Driver</name>\n"
-pom += "  <version>" + version + "</version>\n"
-pom += "  <url>http://mongodb.org/</url>\n"
-pom += "</project>\n"
+pom = open( "maven.xml" , "r" ).read()
+pom = pom.replace( "$VERSION" , version )
 
 out = open( root + "pom" , 'w' )
 out.write( pom )
 out.close()
 
+p = subprocess.Popen( [ "sha1sum" , root + "jar" ] , stdout=subprocess.PIPE ).communicate()
+sha1 = p[0].split( ' ' )[0]
+out = open( root + "jar.sha1" , 'w' )
+out.write( sha1 )
+out.close()
 
-s = simples3.S3Bucket( settings.bucket , settings.id , settings.key )
-mavenRoot = "maven/" + root
-s.put( mavenRoot + "jar" , open( "mongo.jar" , "rb" ).read() , acl="public-read" )
-s.put( mavenRoot + "pom" , pom , acl="public-read" )
+
+
