@@ -78,6 +78,7 @@ public class Mongo {
         throws MongoException {
         _addr = addr;
         _addrs = null;
+        _connector = new DBTCPConnector( this , _addr );
     }
 
     /**
@@ -89,6 +90,7 @@ public class Mongo {
         throws MongoException {
         _addr = null;
         _addrs = Arrays.asList( left , right );
+        _connector = new DBTCPConnector( this , _addrs );
     }
     
     public DB getDB( String dbname ){
@@ -102,15 +104,8 @@ public class Mongo {
             if ( db != null )
                 return db;
             
-            if ( _addr != null )
-                db = new DBTCP( _addr.getSister( dbname ) );
-            else {
-                List<DBAddress> l = new ArrayList<DBAddress>();
-                for ( DBAddress a : _addrs )
-                    l.add( a.getSister( dbname ) );
-                db = new DBTCP( l );
-            }
-            
+            db = new DBMessageLayer( dbname , _connector );
+
             _dbs.put( dbname , db );
             return db;
         }
@@ -154,7 +149,23 @@ public class Mongo {
         return MAJOR_VERSION + "." + MINOR_VERSION;
     }
 
+    public String debugString(){
+        return _connector.debugString();
+    }
+
+    public String getConnectPoint(){
+        return _connector.getConnectPoint();
+    }
+
+    /** Gets the address of this database.
+     * @return the address
+     */
+    public DBAddress getAddress(){
+        return _connector.getAddress();
+    }
+    
     final DBAddress _addr;
     final List<DBAddress> _addrs;
+    final DBTCPConnector _connector;
     final Map<String,DB> _dbs = new HashMap<String,DB>();
 }

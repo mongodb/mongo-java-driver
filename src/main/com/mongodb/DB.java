@@ -43,12 +43,6 @@ public abstract class DB {
     protected abstract DBCollection doGetCollection( String name );
     public abstract Set<String> getCollectionNames() throws MongoException ;
     
-    /** Gets the address of this database.
-     * @return the address
-     */
-    public abstract DBAddress getAddress();
-    public abstract String getConnectPoint();
-    
     /** Gets a collection with a given name.
      * If the collection does not exist, a new collection is created.
      * @param name the name of the collection to return

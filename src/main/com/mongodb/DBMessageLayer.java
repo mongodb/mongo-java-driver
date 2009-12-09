@@ -23,39 +23,39 @@ import java.net.*;
 import java.nio.*;
 import java.util.*;
 
-public abstract class DBMessageLayer extends DBApiLayer {
+public class DBMessageLayer extends DBApiLayer {
     
-    DBMessageLayer( String root ){
+    DBMessageLayer( String root , DBConnector connector ){
         super( root );
+        _connector = connector;
     }
-
+    
     protected void doInsert( ByteBuffer buf , WriteConcern concern )
         throws MongoException {
-        say( 2002 , buf , concern );
+        _connector.say( 2002 , buf , concern );
     }
     protected  void doDelete( ByteBuffer buf , WriteConcern concern ) 
         throws MongoException {
-        say( 2006 , buf , concern );
+        _connector.say( 2006 , buf , concern );
     }
     protected void doUpdate( ByteBuffer buf , WriteConcern concern )
         throws MongoException {
-        say( 2001 , buf , concern );
+        _connector.say( 2001 , buf , concern );
     }
     protected void doKillCursors( ByteBuffer buf )
         throws MongoException {
-        say( 2007 , buf , WriteConcern.NORMAL );
+        _connector.say( 2007 , buf , WriteConcern.NORMAL );
     }
     
     protected int doQuery( ByteBuffer out , ByteBuffer in )
         throws MongoException {
-        return call( 2004 , out , in );
+        return _connector.call( 2004 , out , in );
     }
     protected int doGetMore( ByteBuffer out , ByteBuffer in )
         throws MongoException {
-        return call( 2005 , out , in );
+        return _connector.call( 2005 , out , in );
     }
-    
-    protected abstract void say( int op , ByteBuffer buf , WriteConcern concern ) throws MongoException;
-    protected abstract int call( int op , ByteBuffer out , ByteBuffer in ) throws MongoException;
+
+    final DBConnector _connector;
 
 }

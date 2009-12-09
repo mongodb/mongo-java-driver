@@ -50,8 +50,6 @@ public abstract class DBApiLayer extends DB {
     protected abstract int doQuery( ByteBuffer out , ByteBuffer in ) throws MongoException;
     protected abstract int doGetMore( ByteBuffer out , ByteBuffer in ) throws MongoException;
 
-    public abstract String debugString();
-
     protected MyCollection doGetCollection( String name ){
         MyCollection c = _collections.get( name );
         if ( c != null )
@@ -386,7 +384,7 @@ public abstract class DBApiLayer extends DB {
         final String _fullNameSpace;
     }
 
-    class QueryHeader {
+    static class QueryHeader {
 
         QueryHeader( ByteBuffer buf ){
             this( buf , buf.position() );

@@ -1,4 +1,4 @@
-// DBTCP.java
+// DBTCPConnector.java
 
 /**
  *      Copyright (C) 2008 10gen Inc.
@@ -24,14 +24,15 @@ import java.nio.*;
 import java.util.*;
 import java.util.logging.*;
 
-public class DBTCP extends DBMessageLayer {
+class DBTCPConnector implements DBConnector {
 
     static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
     static Logger _createLogger = Logger.getLogger( _logger.getName() + ".connect" );
 
-    public DBTCP( DBAddress addr )
+    public DBTCPConnector( Mongo m , DBAddress addr )
         throws MongoException {
-        super( _checkAddress( addr )._name );
+        _mongo = m;
+        _checkAddress( addr );
 
         _createLogger.info( addr.toString() );
 
@@ -47,14 +48,15 @@ public class DBTCP extends DBMessageLayer {
         }
     }
 
-    public DBTCP( DBAddress ... all )
+    public DBTCPConnector( Mongo m , DBAddress ... all )
         throws MongoException {
-        this( Arrays.asList( all ) );
+        this( m , Arrays.asList( all ) );
     }
 
-    public DBTCP( List<DBAddress> all )
+    public DBTCPConnector( Mongo m , List<DBAddress> all )
         throws MongoException {
-        super( _checkAddress( all )._name );
+        _mongo = m;
+        _checkAddress( all );
 
         _validatePairs( all );
 
@@ -118,15 +120,15 @@ public class DBTCP extends DBMessageLayer {
         _threadPort.get().requestEnsureConnection();
     }
 
-    protected void say( int op , ByteBuffer buf , WriteConcern concern )
+    public void say( int op , ByteBuffer buf , DB.WriteConcern concern )
         throws MongoException {
         MyPort mp = _threadPort.get();
         DBPort port = mp.get( true );
 
         try {
             port.say( new DBMessage( op , buf ) );
-            if ( concern == WriteConcern.STRICT ){
-                DBObject e = getLastError();
+            if ( concern == DB.WriteConcern.STRICT ){
+                DBObject e = _mongo.getDB( "admin" ).getLastError();
                 Object foo = e.get( "err" );
                 if ( foo != null ){
                     String s = foo.toString();
@@ -141,13 +143,13 @@ public class DBTCP extends DBMessageLayer {
         catch ( IOException ioe ){
             mp.error( ioe );
             _error();
-            if ( concern == WriteConcern.NONE )
+            if ( concern == DB.WriteConcern.NONE )
                 return;
             throw new MongoException.Network( "can't say something" , ioe );
         }
     }
     
-    protected int call( int op , ByteBuffer out , ByteBuffer in )
+    public int call( int op , ByteBuffer out , ByteBuffer in )
         throws MongoException {
         return _call( op , out , in , 2 );
     }
@@ -203,7 +205,7 @@ public class DBTCP extends DBMessageLayer {
     }
 
     String _getError( ByteBuffer buf ){
-        QueryHeader header = new QueryHeader( buf , 0 );
+        DBApiLayer.QueryHeader header = new DBApiLayer.QueryHeader( buf , 0 );
         if ( header._num != 1 )
             return null;
 
@@ -305,7 +307,7 @@ public class DBTCP extends DBMessageLayer {
 
         try {
             System.out.println( _curAddress );
-            DBCollection collection = getCollection( "$cmd" );
+            DBCollection collection = _mongo.getDB( "admin" ).getCollection( "$cmd" );
             Iterator<DBObject> i = collection.find( _isMaster , null , 0 , 1 );
             if ( i == null || ! i.hasNext() )
                 throw new MongoException( "no result for ismaster query?" );
@@ -368,8 +370,7 @@ public class DBTCP extends DBMessageLayer {
     }
 
     public String debugString(){
-        StringBuilder buf = new StringBuilder( _root );
-        buf.append( " DBTCP: " );
+        StringBuilder buf = new StringBuilder( "DBTCPConnector: " );
         if ( _allHosts != null )
             buf.append( "paired : " ).append( _allHosts );
         else
@@ -378,6 +379,7 @@ public class DBTCP extends DBMessageLayer {
         return buf.toString();
     }
 
+    final Mongo _mongo;
     private DBAddress _curAddress;
     private DBPortPool _curPortPool;
     private final List<DBAddress> _allHosts;
