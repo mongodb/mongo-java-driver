@@ -33,22 +33,14 @@ public class DBPort {
     
     static final long CONN_RETRY_TIME_MS = 15000;
 
-    private static boolean _retryConnect = false;
-
-    /**
-       this controls whether or not on a connect, the system retries automatically 
-     */
-    public static void setConnectRetry( boolean retry ){
-        _retryConnect = retry;
-    }
-
     public DBPort( InetSocketAddress addr )
         throws IOException {
-        this( addr , null );
+        this( addr , null , new MongoOptions() );
     }
     
-    DBPort( InetSocketAddress addr  , DBPortPool pool )
+    DBPort( InetSocketAddress addr  , DBPortPool pool , MongoOptions options )
         throws IOException {
+        _options = options;
         _addr = addr;
         _pool = pool;
 
@@ -144,9 +136,11 @@ public class DBPort {
 
             try {
                 _sock = SocketChannel.open();
-                _sock.connect( _addr );
+                //_sock.connect( _addr , _options.connectTimeout );
+                _sock.socket().connect( _addr , _options.connectTimeout );
                 
                 _sock.socket().setTcpNoDelay( ! USE_NAGLE );
+                _sock.socket().setSoTimeout( _options.socketTimeout );
                 
                 return;
             }
@@ -156,7 +150,7 @@ public class DBPort {
                 _logger.log( Level.INFO , "connect fail to : " + _addr , ioe );
             }
             
-            if ( ! _retryConnect || ( _pool != null && ! _pool._everWorked ) )
+            if ( ! _options.autoConnectRetry || ( _pool != null && ! _pool._everWorked ) )
                 throw lastError;
             
             long sleptSoFar = System.currentTimeMillis() - start;
@@ -204,8 +198,9 @@ public class DBPort {
     final int _hashCode;
     final InetSocketAddress _addr;
     final DBPortPool _pool;
+    final MongoOptions _options;
     final Logger _logger;
-
+    
     private final ByteBuffer[] _array = new ByteBuffer[]{ ByteBuffer.allocateDirect( DBMessage.HEADER_LENGTH ) , null };
     private SocketChannel _sock;
     

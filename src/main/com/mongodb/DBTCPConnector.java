@@ -32,6 +32,7 @@ class DBTCPConnector implements DBConnector {
     public DBTCPConnector( Mongo m , DBAddress addr )
         throws MongoException {
         _mongo = m;
+        _portHolder = new DBPortPool.Holder( m._options );
         _checkAddress( addr );
 
         _createLogger.info( addr.toString() );
@@ -46,6 +47,7 @@ class DBTCPConnector implements DBConnector {
             _set( addr );
             _allHosts = null;
         }
+
     }
 
     public DBTCPConnector( Mongo m , DBAddress ... all )
@@ -56,6 +58,7 @@ class DBTCPConnector implements DBConnector {
     public DBTCPConnector( Mongo m , List<DBAddress> all )
         throws MongoException {
         _mongo = m;
+        _portHolder = new DBPortPool.Holder( m._options );
         _checkAddress( all );
 
         _validatePairs( all );
@@ -365,7 +368,7 @@ class DBTCPConnector implements DBConnector {
         if ( _curAddress == addr )
             return false;
         _curAddress = addr;
-        _curPortPool = DBPortPool.get( _curAddress );
+        _curPortPool = _portHolder.get( _curAddress.getSocketAddress() );
         return true;
     }
 
@@ -382,6 +385,7 @@ class DBTCPConnector implements DBConnector {
     final Mongo _mongo;
     private DBAddress _curAddress;
     private DBPortPool _curPortPool;
+    private DBPortPool.Holder _portHolder;
     private final List<DBAddress> _allHosts;
 
     private final ThreadLocal<MyPort> _threadPort = new ThreadLocal<MyPort>(){

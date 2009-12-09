@@ -221,6 +221,19 @@ public class DBAddress {
             throw new MongoInternalException( "shouldn't be possible" , uh );
         }
     }
+
+    public String getHost(){
+        return _host;
+    }
+    
+    public int getPort(){
+        return _port;
+    }
+    
+    public String getDBName(){
+        return _name;
+    }
+       
     
     final String _host;
     final int _port;

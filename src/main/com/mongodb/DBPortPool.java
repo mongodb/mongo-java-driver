@@ -30,31 +30,35 @@ class DBPortPool extends SimplePool<DBPort> {
 
     public final long _maxWaitTime = 1000 * 60 * 2;
 
-    static DBPortPool get( DBAddress addr ){
-        return get( addr.getSocketAddress() );
-    }
-
-    static DBPortPool get( InetSocketAddress addr ){
+    static class Holder {
         
-        DBPortPool p = _pools.get( addr );
+        Holder( MongoOptions options ){
+            _options = options;
+        }
         
-        if (p != null) 
-            return p;
-        
-        synchronized (_pools) {
-            p = _pools.get( addr );
-            if (p != null) {
+        DBPortPool get( InetSocketAddress addr ){
+            
+            DBPortPool p = _pools.get( addr );
+            
+            if (p != null) 
                 return p;
+            
+            synchronized (_pools) {
+                p = _pools.get( addr );
+                if (p != null) {
+                    return p;
+                }
+                
+                p = new DBPortPool( addr , _options );
+                _pools.put( addr , p);
             }
             
-            p = new DBPortPool( addr );
-            _pools.put( addr , p);
+            return p;
         }
-
-        return p;
+        
+        final MongoOptions _options;
+        final Map<InetSocketAddress,DBPortPool> _pools = Collections.synchronizedMap( new HashMap<InetSocketAddress,DBPortPool>() );
     }
-
-    private static final Map<InetSocketAddress,DBPortPool> _pools = Collections.synchronizedMap( new HashMap<InetSocketAddress,DBPortPool>() );
 
     // ----
     
@@ -66,10 +70,11 @@ class DBPortPool extends SimplePool<DBPort> {
 
     // ----
     
-    DBPortPool( InetSocketAddress addr ){
-        super( "DBPortPool-" + addr.toString() , Bytes.CONNECTIONS_PER_HOST , Bytes.CONNECTIONS_PER_HOST );
+    DBPortPool( InetSocketAddress addr , MongoOptions options ){
+        super( "DBPortPool-" + addr.toString() , options.connectionsPerHost , options.connectionsPerHost );
+        _options = options;
         _addr = addr;
-	_waitingSem = new Semaphore( Bytes.CONNECTIONS_PER_HOST * 5 );
+	_waitingSem = new Semaphore( _options.connectionsPerHost * _options.threadsAllowedToBlockForConnectionMultiplier );
     }
 
     protected long memSize( DBPort p ){
@@ -114,13 +119,14 @@ class DBPortPool extends SimplePool<DBPort> {
     protected DBPort createNew()
         throws MongoInternalException{
         try {
-            return new DBPort( _addr , this );
+            return new DBPort( _addr , this , _options );
         }
         catch ( IOException ioe ){
             throw new MongoInternalException( "can't create port to:" + _addr , ioe );
         }
     }
 
+    final MongoOptions _options;
     final private Semaphore _waitingSem;
     final InetSocketAddress _addr;
     boolean _everWorked = false;

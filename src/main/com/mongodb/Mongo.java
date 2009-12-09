@@ -39,7 +39,10 @@ public class Mongo {
 
     public static final int MAJOR_VERSION = 1;
     public static final int MINOR_VERSION = 0;
-    
+
+    public static DB connect( DBAddress addr ){
+        return new Mongo( addr ).getDB( addr._name );
+    }
 
     public Mongo()
         throws UnknownHostException , MongoException {
@@ -76,8 +79,20 @@ public class Mongo {
      */
     public Mongo( DBAddress addr )
         throws MongoException {
+        this( addr , new MongoOptions() );
+    }
+
+
+    /**
+     * Connects to Mongo using a given DBAddress
+     * @see com.mongodb.DBAddress
+     * @param addr the database address
+     */
+    public Mongo( DBAddress addr , MongoOptions options )
+        throws MongoException {
         _addr = addr;
         _addrs = null;
+        _options = options;
         _connector = new DBTCPConnector( this , _addr );
     }
 
@@ -88,8 +103,18 @@ public class Mongo {
      */
     public Mongo( DBAddress left , DBAddress right )
         throws MongoException {
+        this( left , right , new MongoOptions() );
+    }
+    /**
+       creates a Mongo connection in paired mode
+       * @param left left side of the pair
+       * @param right right side of the pair
+     */
+    public Mongo( DBAddress left , DBAddress right , MongoOptions options )
+        throws MongoException {
         _addr = null;
         _addrs = Arrays.asList( left , right );
+        _options = options;
         _connector = new DBTCPConnector( this , _addrs );
     }
     
@@ -166,6 +191,7 @@ public class Mongo {
     
     final DBAddress _addr;
     final List<DBAddress> _addrs;
+    final MongoOptions _options;
     final DBTCPConnector _connector;
     final Map<String,DB> _dbs = new HashMap<String,DB>();
 }
