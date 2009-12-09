@@ -492,8 +492,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         throws MongoException {
         if ( _collection == null )
             throw new IllegalArgumentException( "why is _collection null" );
-        if ( _collection._base == null )
-            throw new IllegalArgumentException( "why is _collection._base null" );
+        if ( _collection._db == null )
+            throw new IllegalArgumentException( "why is _collection._db null" );
         
         return (int)_collection.getCount(this._query, this._keysWanted);
     }

@@ -385,7 +385,7 @@ public abstract class DBCollection {
             .add( "deleteIndexes" , getName() )
             .add( "index" , name )
             .get();
-        BasicDBObject res = (BasicDBObject)_base.command( cmd );
+        BasicDBObject res = (BasicDBObject)_db.command( cmd );
         if ( res.getInt( "ok" , 0 ) != 1 ){
             if ( res.getString( "errmsg" ).equals( "ns not found" ) )
                 return;
@@ -399,7 +399,7 @@ public abstract class DBCollection {
      */
     public void drop()
         throws MongoException {
-        BasicDBObject res = (BasicDBObject)_base.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
+        BasicDBObject res = (BasicDBObject)_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
         if ( res.getInt( "ok" , 0 ) != 1 ){
             if ( res.getString( "errmsg" ).equals( "ns not found" ) )
                 return;
@@ -446,7 +446,7 @@ public abstract class DBCollection {
             cmd.put("fields", fields);
         }
 
-        BasicDBObject res = (BasicDBObject)_base.command(cmd);
+        BasicDBObject res = (BasicDBObject)_db.command(cmd);
 
         if (res.getInt("ok" , 0 ) != 1 ){
             String errmsg = res.getString( "errmsg" );
@@ -469,7 +469,7 @@ public abstract class DBCollection {
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce )
         throws MongoException {
-        DBObject ret =  _base.command( new BasicDBObject( "group" , 
+        DBObject ret =  _db.command( new BasicDBObject( "group" , 
                                                           BasicDBObjectBuilder.start()
                                                           .add( "ns" , getName() )
                                                           .add( "key" , key )
@@ -500,7 +500,7 @@ public abstract class DBCollection {
             .add( "query" , query )
             .get();
         
-        DBObject res = _base.command( c );
+        DBObject res = _db.command( c );
         if ( ! new Double(1.0).equals( res.get( "ok" ) ) )
             throw new MongoException( "distinct failed: " + res );
         return (List)(res.get( "values" ));
@@ -531,7 +531,7 @@ public abstract class DBCollection {
         throws MongoException {
         if ( command.get( "mapreduce" ) == null )
             throw new IllegalArgumentException( "need mapreduce arg" );
-        BasicDBObject res = (BasicDBObject)(_base.command( command ));
+        BasicDBObject res = (BasicDBObject)(_db.command( command ));
         if ( res.getInt("ok") != 1 )
             throw new MongoException( "mapreduce failed: " + res );
         return new MapReduceOutput( this , res );
@@ -547,7 +547,7 @@ public abstract class DBCollection {
         BasicDBObject cmd = new BasicDBObject();
         cmd.put("ns", getFullName());
 
-        DBCursor cur = _base.getCollection("system.indexes").find(cmd);
+        DBCursor cur = _db.getCollection("system.indexes").find(cmd);
 
         List<DBObject> list = new ArrayList<DBObject>();
 
@@ -575,9 +575,9 @@ public abstract class DBCollection {
      * @param name the name of the collection
      */
     protected DBCollection( DB base , String name ){
-        _base = base;
+        _db = base;
         _name = name;
-        _fullName = _base.getName() + "." + name;
+        _fullName = _db.getName() + "." + name;
     }
 
     private  DBObject _checkObject( DBObject o , boolean canBeNull , boolean query ){
@@ -671,7 +671,7 @@ public abstract class DBCollection {
                     continue;
 
                 if ( e instanceof JSFileChunk ){
-                    _base.getCollection( "_chunks" ).apply( e );
+                    _db.getCollection( "_chunks" ).apply( e );
                 }
 
                 if ( e.get( "_ns" ) == null ){
@@ -741,7 +741,7 @@ public abstract class DBCollection {
      * @return the matching collection
      */
     public DBCollection getCollection( String n ){
-        return _base.getCollection( _name + "." + n );
+        return _db.getCollection( _name + "." + n );
     }
 
     /** Returns the name of this collection.
@@ -759,19 +759,10 @@ public abstract class DBCollection {
     }
 
     /** Returns the database this collection is a member of.
-     * Same as <code>getBase()</code>.
      * @return this collection's database
      */
     public DB getDB(){
-        return _base;
-    }
-
-    /** Returns the database this collection is a member of.
-     * Same as <code>getBase()</code>.
-     * @return this collection's database
-     */
-    public DB getBase(){
-        return _base;
+        return _db;
     }
 
     /** Returns if this collection's database is read-only
@@ -780,7 +771,7 @@ public abstract class DBCollection {
      * @throws RuntimeException if the database is read-only and <code>strict</code> is set
      */
     protected boolean checkReadOnly( boolean strict ){
-        if ( ! _base._readOnly )
+        if ( ! _db._readOnly )
             return false;
 
         if ( ! strict )
@@ -853,10 +844,10 @@ public abstract class DBCollection {
     public DB.WriteConcern getWriteConcern(){
         if ( _concern != null )
             return _concern;
-        return _base.getWriteConcern();
+        return _db.getWriteConcern();
     }
     
-    final DB _base;
+    final DB _db;
 
     final protected String _name;
     final protected String _fullName;

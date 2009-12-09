@@ -6,7 +6,7 @@ public class MapReduceOutput {
 
     MapReduceOutput( DBCollection from , BasicDBObject raw ){
         _collname = raw.getString( "result" );
-        _coll = from._base.getCollection( _collname );
+        _coll = from._db.getCollection( _collname );
         _counts = (BasicDBObject)raw.get( "counts" );
     }
 
