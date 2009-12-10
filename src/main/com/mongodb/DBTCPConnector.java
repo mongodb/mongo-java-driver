@@ -40,7 +40,6 @@ class DBTCPConnector implements DBConnector {
         if ( addr.isPaired() ){
             _allHosts = new ArrayList<DBAddress>( addr.getPairedAddresses() );
             _validatePairs( _allHosts );
-            _pickInitial();
             _createLogger.info( "switch to paired mode : " + _allHosts + " -> " + _curAddress  );
         }
         else {
@@ -64,7 +63,6 @@ class DBTCPConnector implements DBConnector {
         _validatePairs( all );
 
         _allHosts = new ArrayList<DBAddress>( all ); // make a copy so it can't be modified
-        _pickInitial();
 
         _createLogger.info( all  + " -> " + _curAddress );
     }
@@ -301,9 +299,10 @@ class DBTCPConnector implements DBConnector {
         boolean _inRequest;
     }
     
-    private void _pickInitial()
+    void _pickInitial()
         throws MongoException {
-        assert( _curAddress == null );
+        if ( _curAddress != null )
+            return;
 
         // we need to just get a server to query for ismaster
         _pickCurrent();

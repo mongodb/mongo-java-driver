@@ -94,6 +94,7 @@ public class Mongo {
         _addrs = null;
         _options = options;
         _connector = new DBTCPConnector( this , _addr );
+        _connector._pickInitial();
     }
 
     /**
@@ -116,6 +117,7 @@ public class Mongo {
         _addrs = Arrays.asList( left , right );
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
+        _connector._pickInitial();
     }
     
     public DB getDB( String dbname ){
