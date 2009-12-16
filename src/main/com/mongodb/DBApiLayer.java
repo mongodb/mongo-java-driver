@@ -102,44 +102,6 @@ public abstract class DBApiLayer extends DB {
         throw new RuntimeException( "can't get sister dbs yet" );
     }
 
-    /** Returns a set of the names of collections in this database.
-     * @return the names of collections in this database
-     */
-    public Set<String> getCollectionNames()
-        throws MongoException {
-
-        DBCollection namespaces = getCollection("system.namespaces");
-        if (namespaces == null)
-            throw new RuntimeException("this is impossible");
-
-        Iterator<DBObject> i = namespaces.find(new BasicDBObject(), null, 0, 0);
-        if (i == null)
-            return new HashSet<String>();
-
-        List<String> tables = new ArrayList<String>();
-
-        for (; i.hasNext();) {
-            DBObject o = i.next();
-            String n = o.get("name").toString();
-            int idx = n.indexOf(".");
-
-            String root = n.substring(0, idx);
-            if (!root.equals(_root))
-                continue;
-
-            if (n.indexOf("$") >= 0)
-                continue;
-
-            String table = n.substring(idx + 1);
-
-            tables.add(table);
-        }
-
-        Collections.sort(tables);
-
-        return new OrderedSet<String>(tables);
-    }
-
     class MyCollection extends DBCollection {
         MyCollection( String name ){
             super( DBApiLayer.this , name );

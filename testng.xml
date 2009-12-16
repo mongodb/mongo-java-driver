@@ -14,6 +14,7 @@
       <class name="com.mongodb.ReflectionTest" />
       <class name="com.mongodb.DBAddressTest" />
       <class name="com.mongodb.DBTest" />
+      <class name="com.mongodb.DBTests" />
       <class name="com.mongodb.DBObjectTest" />
       <class name="com.mongodb.DBCollectionTest" />
       <class name="com.mongodb.DBCursorTest" />

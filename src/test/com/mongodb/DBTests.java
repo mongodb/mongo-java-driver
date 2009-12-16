@@ -1,47 +1,34 @@
 package com.mongodb;
 
+import java.util.*;
+
 import org.testng.annotations.Test;
+
+import com.mongodb.util.*;
 
 /**
  *  Tests aspect of the DB - not really driver tests
  */
-public class DBTests {
+public class DBTests extends MyAsserts {
 
-    /**
-     *   This test will fail now.  Waiting for fix in DB.  Originally done to show the
-     *   effect of removing "seen" in DBApiLayer
-     * 
-     * @throws Exception
-     */
-    @Test
-    public void testConcurrentUpdate()  throws Exception {
+    final Mongo _mongo;
+    final DB _db;
 
-        DB db = new Mongo().getDB("com_mongodb_DBTests");
-
-        DBCollection coll = db.getCollection("concurrentUpdate");
-
-        coll.drop();
-
-        for (int i = 0; i < 10000; i++) {
-            coll.insert(new BasicDBObject("i", i).append("flarg", "ASDASDASDASDASDA)DA_)ASD_)IASD_OJASD_)AS_D)IAS_D)IAS_D)IA_S)DIA_S)DIA_S)DIA_S)DIA_S)DIA_S)DIA_S)DIA_S)DIA_S)DIA_S)DIA_S)"));
-        }
-        int count = 0;
-
-        DBCursor c = coll.find();
-
-        while(c.hasNext()) {
-
-            DBObject o = c.next();
-
-            if (count++ == 0) {
-                o.put("woog", "12-3012-30123-0123-012312312-0312-012-01-203-012-0psaoija-0sid-as0daoisasoidas=0dias=0diapsodjasd");
-                coll.update(new BasicDBObject("_id", o.get("_id")), o);
-            }
-        }
-
-        System.out.println(count);
-        assert(count == 10000);
+    public DBTests()
+        throws Exception {
+        _mongo = new Mongo();
+        _db = _mongo.getDB( "java_com_mongodb_DBTests" );
     }
 
+    @Test
+    public void testGetCollectionNames() throws MongoException {
+        String name = "testGetCollectionNames";
+        DBCollection c = _db.getCollection( name );
+        c.drop();
+        assertFalse( _db.getCollectionNames().contains( name ) );
+        c.save( new BasicDBObject( "x" , 1 ) );
+        assertTrue( _db.getCollectionNames().contains( name ) );
+        
+    }
 
 }

@@ -41,7 +41,6 @@ public abstract class DB {
      */
     public abstract DBCollection getCollectionFromFull( String fullNameSpace );
     protected abstract DBCollection doGetCollection( String name );
-    public abstract Set<String> getCollectionNames() throws MongoException ;
     
     /** Gets a collection with a given name.
      * If the collection does not exist, a new collection is created.
@@ -144,6 +143,45 @@ public abstract class DB {
     public void setReadOnly( Boolean b ){
         _readOnly = b;
     }
+
+    /** Returns a set of the names of collections in this database.
+     * @return the names of collections in this database
+     */
+    public Set<String> getCollectionNames()
+        throws MongoException {
+
+        DBCollection namespaces = getCollection("system.namespaces");
+        if (namespaces == null)
+            throw new RuntimeException("this is impossible");
+
+        Iterator<DBObject> i = namespaces.find(new BasicDBObject(), null, 0, 0);
+        if (i == null)
+            return new HashSet<String>();
+
+        List<String> tables = new ArrayList<String>();
+
+        for (; i.hasNext();) {
+            DBObject o = i.next();
+            String n = o.get("name").toString();
+            int idx = n.indexOf(".");
+
+            String root = n.substring(0, idx);
+            if (!root.equals(_name))
+                continue;
+
+            if (n.indexOf("$") >= 0)
+                continue;
+
+            String table = n.substring(idx + 1);
+
+            tables.add(table);
+        }
+
+        Collections.sort(tables);
+
+        return new OrderedSet<String>(tables);
+    }
+
 
     /** Returns the name of this database.
      * @return the name
