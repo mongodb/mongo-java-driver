@@ -462,6 +462,25 @@ public abstract class DBCollection {
     }
 
     /**
+     * does a rename of this collection to newName
+     * @param newName new collection name (not a full namespace)
+     */
+    public void rename( String newName ) 
+        throws MongoException {
+        
+        DBObject ret = 
+            _db.getSisterDB( "admin" )
+            .command( BasicDBObjectBuilder.start()
+                      .add( "renameCollection" , _fullName )
+                      .add( "to" , _db._name + "." + newName )
+                      .get() );
+        Number n = (Number)ret.get("ok");
+        if ( n.intValue() == 1 )
+            return;
+        throw new MongoException( "rename failed: " + ret );
+    }
+
+    /**
      * @param key - { a : true }
      * @param cond - optional condition on query 
      * @param reduce javascript reduce function 

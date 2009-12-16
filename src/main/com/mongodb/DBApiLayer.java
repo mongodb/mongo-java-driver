@@ -28,7 +28,7 @@ import com.mongodb.util.*;
  * This cannot be directly instantiated, but the functions are available
  * through instances of Mongo.
  */
-public abstract class DBApiLayer extends DB {
+public class DBApiLayer extends DB {
 
     static final boolean D = Boolean.getBoolean( "DEBUG.DB" );
     /** The maximum number of cursors allowed */
@@ -36,19 +36,41 @@ public abstract class DBApiLayer extends DB {
 
     static final boolean SHOW = Boolean.getBoolean( "DB.SHOW" );
 
-    protected DBApiLayer( String root ){
+    protected DBApiLayer( String root , DBConnector connector ){
         super( root );
 
         _root = root;
         _rootPlusDot = _root + ".";
+
+        _connector = connector;
     }
 
-    protected abstract void doInsert( ByteBuffer buf , WriteConcern concern ) throws MongoException;
-    protected abstract void doDelete( ByteBuffer buf , WriteConcern concern ) throws MongoException;
-    protected abstract void doUpdate( ByteBuffer buf , WriteConcern concern ) throws MongoException;
-    protected abstract void doKillCursors( ByteBuffer buf ) throws MongoException;
-    protected abstract int doQuery( ByteBuffer out , ByteBuffer in ) throws MongoException;
-    protected abstract int doGetMore( ByteBuffer out , ByteBuffer in ) throws MongoException;
+    protected void doInsert( ByteBuffer buf , WriteConcern concern )
+        throws MongoException {
+        _connector.say( 2002 , buf , concern );
+    }
+    protected  void doDelete( ByteBuffer buf , WriteConcern concern ) 
+        throws MongoException {
+        _connector.say( 2006 , buf , concern );
+    }
+    protected void doUpdate( ByteBuffer buf , WriteConcern concern )
+        throws MongoException {
+        _connector.say( 2001 , buf , concern );
+    }
+    protected void doKillCursors( ByteBuffer buf )
+        throws MongoException {
+        _connector.say( 2007 , buf , WriteConcern.NORMAL );
+    }
+    
+    protected int doQuery( ByteBuffer out , ByteBuffer in )
+        throws MongoException {
+        return _connector.call( 2004 , out , in );
+    }
+    protected int doGetMore( ByteBuffer out , ByteBuffer in )
+        throws MongoException {
+        return _connector.call( 2005 , out , in );
+    }
+
 
     protected MyCollection doGetCollection( String name ){
         MyCollection c = _collections.get( name );
@@ -82,7 +104,7 @@ public abstract class DBApiLayer extends DB {
      * @param fullNameSpace the full name to find
      * @throws RuntimeException if the database named is not this database
      */
-    public MyCollection getCollectionFromFull( String fullNameSpace ){
+    public DBCollection getCollectionFromFull( String fullNameSpace ){
         // TOOD security
 
         if ( fullNameSpace.indexOf( "." ) < 0 ) {
@@ -98,8 +120,12 @@ public abstract class DBApiLayer extends DB {
         if (_root.equals(root)) {
             return doGetCollection( table );
         }
+        
+        return getSisterDB( root ).getCollection( table );
+    }
 
-        throw new RuntimeException( "can't get sister dbs yet" );
+    public DB getSisterDB( String dbName ){
+        return new DBApiLayer( dbName , _connector );
     }
 
     class MyCollection extends DBCollection {
@@ -531,6 +557,7 @@ public abstract class DBApiLayer extends DB {
 
     final String _root;
     final String _rootPlusDot;
+    final DBConnector _connector;
     final Map<String,MyCollection> _collections = Collections.synchronizedMap( new HashMap<String,MyCollection>() );
     final Map<String,DBApiLayer> _sisters = Collections.synchronizedMap( new HashMap<String,DBApiLayer>() );
     List<Long> _deadCursorIds = new Vector<Long>();

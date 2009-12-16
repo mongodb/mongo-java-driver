@@ -31,4 +31,27 @@ public class DBTests extends MyAsserts {
         
     }
 
+
+    @Test
+    public void testRename() throws MongoException {
+        String namea = "testRenameA";
+        String nameb = "testRenameB";
+        DBCollection a = _db.getCollection( namea );
+        DBCollection b = _db.getCollection( nameb );
+        
+        a.drop();
+        b.drop();
+
+        assertEquals( 0 , a.find().count() );
+        assertEquals( 0 , b.find().count() );
+
+        a.save( new BasicDBObject( "x" , 1 ) );
+        assertEquals( 1 , a.find().count() );
+        assertEquals( 0 , b.find().count() );
+        
+        a.rename( nameb );
+        assertEquals( 0 , a.find().count() );
+        assertEquals( 1 , b.find().count() );
+        
+    }
 }

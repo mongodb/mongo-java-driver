@@ -41,6 +41,8 @@ public abstract class DB {
      */
     public abstract DBCollection getCollectionFromFull( String fullNameSpace );
     protected abstract DBCollection doGetCollection( String name );
+    public abstract DB getSisterDB( String dbName );
+    
     
     /** Gets a collection with a given name.
      * If the collection does not exist, a new collection is created.

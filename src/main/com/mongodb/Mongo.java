@@ -131,7 +131,7 @@ public class Mongo {
             if ( db != null )
                 return db;
             
-            db = new DBMessageLayer( dbname , _connector );
+            db = new DBApiLayer( dbname , _connector );
 
             _dbs.put( dbname , db );
             return db;
