@@ -22,7 +22,7 @@ import java.net.*;
 import java.util.*;
 
 /**
- * A database connection.
+ * A database connection with internal pooling.
  * The following are equivalent, and all connect to the
  * local database running on the default port:
  *
@@ -34,6 +34,7 @@ import java.util.*;
  *
  * Mongo instances have connection pooling built in - see the requestStart
  * and requestDone methods for more information.
+ * http://www.mongodb.org/display/DOCS/Java+Driver+Concurrency
  */
 public class Mongo {
 
@@ -52,7 +53,7 @@ public class Mongo {
     /**
      *  Connects to the local mongo instance on default port.
      *
-     *  @param dbname name of database to connect to
+     *  @param host server to connect to
      *  @throws UnknownHostException if the database host cannot be resolved
      */
     public Mongo( String host )
@@ -64,7 +65,6 @@ public class Mongo {
      * Connects to Mongo using a given host, port, and database.
      * @param host the database's host address
      * @param port the port on which the database is running
-     * @param dbName the name of the database to which to connect
      * @throws UnknownHostException if the database host cannot be resolved
      */
     public Mongo( String host , int port )
@@ -106,6 +106,7 @@ public class Mongo {
         throws MongoException {
         this( left , right , new MongoOptions() );
     }
+
     /**
        creates a Mongo connection in paired mode
        * @param left left side of the pair

@@ -24,7 +24,8 @@ import java.util.*;
  * <p>A typical invocation sequence is thus
  * <blockquote><pre>
  *     Mongo mongo = new Mongo( new DBAddress( "localhost", 127017 ) );
- *     DBCollection collection = mongo.getCollection( "test" );
+ *     DB db = mongo.getDB( "mydb" );
+ *     DBCollection collection = db.getCollection( "test" );
  * </pre></blockquote>
  */
 public abstract class DBCollection {
@@ -78,7 +79,7 @@ public abstract class DBCollection {
     protected abstract void doapply( DBObject o );
 
     /** Removes objects from the database collection.
-     * @param the object that documents to be removed must match
+     * @param o the object that documents to be removed must match
      */
     public abstract void remove( DBObject o ) throws MongoException ;
 

@@ -41,7 +41,7 @@ public class GridFS {
      * Creates a GridFS instance for the default bucket "fs"
      * in the given database.
      *
-     * @param mongo database to work with
+     * @param db database to work with
      */
     public GridFS(DB db) {
         this(db, DEFAULT_BUCKET);
@@ -51,7 +51,7 @@ public class GridFS {
      * Creates a GridFS instance for the specified bucket
      * in the given database.
      *
-     * @param mongo database to work with
+     * @param db database to work with
      * @param bucket bucket to use in the given database
      */
     public GridFS(DB db, String bucket) {

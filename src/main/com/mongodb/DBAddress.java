@@ -118,7 +118,7 @@ public class DBAddress {
     }
 
     /** Connects to a database with a given host, port, and name
-     * @param host host address
+     * @param addr host address
      * @param port database port
      * @param name database name
      */
@@ -167,7 +167,6 @@ public class DBAddress {
     }
 
     /** Creates an new <code>InetSocketAddress</code> using this address.
-     * @param the socket address
      */
     public InetSocketAddress getSocketAddress(){
         return new InetSocketAddress( _addr , _port );

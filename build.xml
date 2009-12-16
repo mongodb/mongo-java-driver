@@ -70,7 +70,7 @@
 
   <target name="javadocs" depends="compile" description="Generate API docs">
     <delete dir="docs/"/>
-    <javadoc packagenames="com.mongodb.*"
+    <javadoc packagenames="com.mongodb,com.mongodb.gridfs"
              sourcepath="src/main/"
              defaultexcludes="yes"
              destdir="docs/${version}"
@@ -78,7 +78,7 @@
              version="true"
              source="1.5"
              use="true"
-             access="package"
+             access="protected"
              >
       <link href="http://java.sun.com/j2se/1.5/docs/api/" />
       <classpath refid="classpath"/>

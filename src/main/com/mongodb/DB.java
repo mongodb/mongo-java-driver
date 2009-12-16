@@ -66,7 +66,7 @@ public abstract class DB {
      * <dt>max</dt><dd><i>int</i>: max number of documents</dd>
      * </dl>
      * @param name the name of the collection to return
-     * @param collection options
+     * @param o options
      * @return the collection
      */
     public final DBCollection createCollection( String name, DBObject o ){

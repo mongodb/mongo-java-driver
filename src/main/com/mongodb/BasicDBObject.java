@@ -86,7 +86,7 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
     }
 
     /** Checks if this object contains a given field
-     * @param key field name
+     * @param field field name
      * @return if the field exists
      */
     public boolean containsField( String field ){
