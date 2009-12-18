@@ -19,6 +19,7 @@ package com.mongodb;
 import java.net.*;
 import java.util.*;
 
+
 import org.testng.annotations.Test;
 
 import com.mongodb.util.*;
@@ -151,6 +152,24 @@ public class DBObjectTest extends TestCase {
             }
         }
         assertTrue(thrown);
+    }
+
+    @Test(groups = {"basic"})
+    public void testEntrySetOrder() {
+        final List<String> expectedKeys = new ArrayList<String>();
+        final BasicDBObject o = new BasicDBObject();
+        for (int i = 1; i < 1000; i++) {
+            final String key = String.valueOf(i);
+            expectedKeys.add(key);
+            o.put(key, "Test" + key);
+        }
+        final List<String> keysFromKeySet = new ArrayList<String>(o.keySet());
+        final List<String> keysFromEntrySet = new ArrayList<String>();
+        for (final Map.Entry<String, Object> entry : o.entrySet()) {
+            keysFromEntrySet.add(entry.getKey());
+        }
+        assertEquals(keysFromKeySet, expectedKeys);
+        assertEquals(keysFromEntrySet, expectedKeys);
     }
 
     private DB _db;

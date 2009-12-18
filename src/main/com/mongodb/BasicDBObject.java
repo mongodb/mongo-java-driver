@@ -30,7 +30,7 @@ import com.mongodb.util.*;
  * obj.put( "foo", "bar" );
  * </pre></blockquote>
  */
-public class BasicDBObject extends HashMap<String,Object> implements DBObject {
+public class BasicDBObject extends LinkedHashMap<String,Object> implements DBObject {
     
     /**
      *  Creates an empty object.
@@ -52,11 +52,7 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
      * @param m map to convert
      */
     public BasicDBObject(Map m) {
-        Iterator<Map.Entry> i = m.entrySet().iterator();
-        while (i.hasNext()) {
-            Map.Entry entry = i.next();
-            put(entry.getKey().toString(), entry.getValue());
-        }
+        super(m);
     }
 
     /**
@@ -64,9 +60,7 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
      * @return the DBObject
      */
     public Map toMap() {
-        Map m = new HashMap();
-        m.putAll((HashMap)this);
-        return m;
+        return new LinkedHashMap<String,Object>(this);
     }
 
     /** Deletes a field from this object. 
@@ -74,7 +68,6 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
      * @return the object removed
      */
     public Object removeField( String key ){
-        _keys.remove(key);
         return remove( key );
     }
 
@@ -86,7 +79,7 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
     }
 
     /** Checks if this object contains a given field
-     * @param field field name
+     * @param key field name
      * @return if the field exists
      */
     public boolean containsField( String field ){
@@ -157,7 +150,6 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
      * @return the <code>val</code> parameter
      */
     public Object put( String key , Object val ){
-        _keys.add( key );
         return super.put( key , val );
     }
 
@@ -179,18 +171,9 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
      * @return the <code>val</code> parameter
      */
     public BasicDBObject append( String key , Object val ){
-        _keys.add( key );
         put( key , val );
 
         return this;
-    }
-
-    /** Gets a set of this object's fieldnames
-     * @return the fieldnames
-     */
-    public Set<String> keySet(){
-        assert( _keys.size() == size() );
-        return _keys;
     }
 
     /** Returns a JSON serialization of this object
@@ -211,10 +194,10 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
             return false;
         
         DBObject other = (DBObject)o;
-        if ( ! _keys.equals( other.keySet() ) )
+        if ( ! keySet().equals( other.keySet() ) )
             return false;
 
-        for ( String key : _keys ){
+        for ( String key : keySet() ){
             Object a = get( key );
             Object b = other.get( key );
 
@@ -231,6 +214,5 @@ public class BasicDBObject extends HashMap<String,Object> implements DBObject {
         return true;
     }
 
-    private final Set<String> _keys = new OrderedSet<String>();
     private boolean _isPartialObject = false;
 }
