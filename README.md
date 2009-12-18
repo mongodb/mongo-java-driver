@@ -12,3 +12,8 @@ v1.1 - 2009-12-10
     
 
 
+Authors:
+ Eliot Horowitz       eliot@10gen.com
+ Kristina Chodorow    kristina@10gen.com
+ Geir Magnusson       geir@pobox.com
+ 
