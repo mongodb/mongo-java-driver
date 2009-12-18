@@ -66,7 +66,17 @@ public interface DBObject {
      * @return The names of the fields in this object
      */
     public Set<String> keySet();
-
-    public boolean isPartialObject();
+    
+    /**
+     * if this object was loaded with only some fields (using a field filter)
+     * this method will be called to notify 
+     */
     public void markAsPartialObject();
+
+    /**
+     * whether markAsPartialObject was ever called
+     * only matters if you are going to upsert and dont' want to risk losing fields
+     */
+    public boolean isPartialObject();
+
 }
