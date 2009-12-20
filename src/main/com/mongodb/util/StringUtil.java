@@ -64,12 +64,12 @@ public final class StringUtil{
         if (from == null || from.length() == 0)
             return str;
 
-        StringBuffer buf = null;
+        StringBuilder buf = null;
         int idx;
         int start = 0;
         while ((idx = str.indexOf(from, start)) >= 0) {
             if (buf == null)
-                buf = new StringBuffer();
+                buf = new StringBuilder();
             buf.append(str.substring(start, idx));
             buf.append(to);
             start = idx + from.length();

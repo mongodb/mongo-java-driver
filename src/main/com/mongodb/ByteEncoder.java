@@ -498,7 +498,7 @@ public class ByteEncoder extends Bytes {
             sm.put(options.charAt(i), options.charAt(i));
         }
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         for (char c : sm.keySet()) {
             sb.append(c);

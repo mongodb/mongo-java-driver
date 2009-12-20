@@ -274,7 +274,7 @@ public class XSON extends DefaultHandler {
 
     public class BinaryHandler extends Handler {
 
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
 
         public void characters(char[] ch, int start, int length) throws SAXException {
 
@@ -301,7 +301,7 @@ public class XSON extends DefaultHandler {
     public class RegexHandler extends Handler {
 
         String _next = null;
-        Map<String, StringBuffer> _data = new HashMap<String,StringBuffer>();
+        Map<String, StringBuilder> _data = new HashMap<String,StringBuilder>();
 
         public void startElement(String uri, String localName, String qName, Attributes att) throws SAXException {
 
@@ -313,7 +313,7 @@ public class XSON extends DefaultHandler {
             _next = qName;
 
             if (_next != null && _data.get(_next) == null) {
-                _data.put(_next, new StringBuffer());
+                _data.put(_next, new StringBuilder());
             }
         }
 
@@ -368,7 +368,7 @@ public class XSON extends DefaultHandler {
 
     public class StringHandler extends Handler {
 
-        StringBuffer _stringValue = new StringBuffer();
+        StringBuilder _stringValue = new StringBuilder();
 
         public void characters(char[] ch, int start, int length) throws SAXException {
              String s = new String(ch, start, length);

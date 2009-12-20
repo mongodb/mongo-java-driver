@@ -389,7 +389,7 @@ class JSONParser {
         char current;
 
         read(quot);
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         int start = pos;
         while(pos < s.length() && 
               (current = s.charAt(pos)) != quot) {
@@ -550,7 +550,7 @@ class JSONParseException extends RuntimeException {
     int pos;
 
     public String getMessage() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("\n");
         sb.append(s);
         sb.append("\n");

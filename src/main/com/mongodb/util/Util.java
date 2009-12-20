@@ -25,7 +25,7 @@ import java.security.NoSuchAlgorithmException;
 public class Util {
 
     public static String toHex( byte b[] ){
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         
         for ( int i=0; i<b.length; i++ ){
             String s = Integer.toHexString(0xff & b[i]);

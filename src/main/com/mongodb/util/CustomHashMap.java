@@ -1040,7 +1040,7 @@ public abstract class CustomHashMap<K,V> implements Map<K,V> , Cloneable , Seria
      * @return a String representation of this map.
      */
     public String toString() {
-	StringBuffer buf = new StringBuffer();
+	StringBuilder buf = new StringBuilder();
 	buf.append("{");
 
 	Iterator<Map.Entry<K,V>> i = entrySet().iterator();
