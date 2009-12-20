@@ -17,5 +17,7 @@ Authors:
  Kristina Chodorow    kristina@10gen.com
  Geir Magnusson       geir@pobox.com
  Keith Branton        mongoDBjira@branton.co.uk
+ Dave Brosius         dbrosius@mebigfatguy.com
+
 
  
