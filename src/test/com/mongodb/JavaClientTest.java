@@ -441,6 +441,40 @@ public class JavaClientTest extends TestCase {
     }
        
  
+    @Test
+    public void testLargeBulkInsert(){
+        DBCollection c = _db.getCollection( "largebulk" );
+        c.drop();
+        String s = "asdasdasd";
+        while ( s.length() < 10000 )
+            s += s;
+        List<DBObject> l = new ArrayList<DBObject>();
+        final int num = 3 * ( Bytes.MAX_OBJECT_SIZE / s.length() );
+
+        for ( int i=0; i<num; i++ ){
+            l.add( BasicDBObjectBuilder.start()
+                   .add( "_id" , i )
+                   .add( "x" , s )
+                   .get() );
+        }
+        assertEquals( 0 , c.find().count() );
+        c.insert( l );
+        assertEquals( num , c.find().count() );
+
+        s = l.toString();
+        assertTrue( s.length() > Bytes.MAX_OBJECT_SIZE );
+        
+        boolean worked = false;
+        try {
+            c.save( new BasicDBObject( "foo" , s ) );
+            worked = true;
+        }
+        catch ( IllegalArgumentException ie ){}
+        assertFalse( worked );
+
+        assertEquals( num , c.find().count() );
+    }
+
 
     final Mongo _mongo;
     final DB _db;

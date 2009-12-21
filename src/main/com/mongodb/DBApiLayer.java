@@ -181,27 +181,42 @@ public class DBApiLayer extends DB {
                         ((ObjectId)id)._new = false;
                 }
             }
-
-            ByteEncoder encoder = ByteEncoder.get();
-
-            encoder._buf.putInt( 0 ); // reserved
-            encoder._put( _fullNameSpace );
-
-            for (DBObject o : arr) {
-                encoder.putObject( o );
-            }
-            encoder.flip();
-
-            try {
-                doInsert( encoder._buf , getWriteConcern() );
-            }
-            finally {
-                encoder.done();
+            
+            int cur = 0;
+            while ( cur < arr.length ){
+                ByteEncoder encoder = ByteEncoder.get();
+                
+                encoder._buf.putInt( 0 ); // reserved
+                encoder._put( _fullNameSpace );
+                
+                int n=0;
+                for ( ; cur<arr.length; cur++ ){
+                    DBObject o = arr[cur];
+                    int pos = encoder._buf.position();
+                    try {
+                        encoder.putObject( null , o );
+                        n++;
+                    }
+                    catch ( BufferOverflowException e ){
+                        if ( n == 0 )
+                            throw encoder.getTooLargeException();
+                        encoder._buf.position( pos );
+                        break;
+                    }
+                }
+                encoder.flip();
+                
+                try {
+                    doInsert( encoder._buf , getWriteConcern() );
+                }
+                finally {
+                    encoder.done();
+                }
             }
 
             return arr;
         }
-
+        
         public void remove( DBObject o )
             throws MongoException {
 

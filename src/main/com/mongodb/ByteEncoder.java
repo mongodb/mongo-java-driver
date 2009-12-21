@@ -172,14 +172,19 @@ public class ByteEncoder extends Bytes {
         }
         catch ( BufferOverflowException bof ){
             reset();
-            throw new IllegalArgumentException( "tried to save too large of an object.  max size : " + ( _buf.capacity() / 2  ) );
+            throw getTooLargeException();
         }
+    }
+
+    RuntimeException getTooLargeException(){
+        return new IllegalArgumentException( "tried to save too large of an object.  " + 
+                                             " max size : " + ( _buf.capacity() / 2  ) );
     }
 
     /**
      * this is really for embedded objects
      */
-    private int putObject( String name , DBObject o ){
+    int putObject( String name , DBObject o ){
         if ( o == null )
             throw new NullPointerException( "can't save a null object" );
 
