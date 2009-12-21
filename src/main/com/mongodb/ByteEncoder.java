@@ -322,8 +322,8 @@ public class ByteEncoder extends Bytes {
         final int sizePos = _buf.position();
         _buf.putInt( 0 );
         
-        for ( Object key : m.keySet() )
-            _putObjectField( key.toString() , m.get( key ) );
+        for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() )
+            _putObjectField( entry.getKey().toString() , entry.getValue() );
 
         _buf.put( EOO );
         _buf.putInt( sizePos , _buf.position() - sizePos );

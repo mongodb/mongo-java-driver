@@ -114,13 +114,13 @@ public class JSON {
             
             Map m = (Map)o;
             
-            for ( Object name : m.keySet() ){
+            for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() ){
                 if ( first ) first = false;
                 else buf.append( " , " );
                 
-                string( buf , name.toString() );
+                string( buf , entry.getKey().toString() );
                 buf.append( " : " );
-                serialize( m.get( name ) , buf );
+                serialize( entry.getValue() , buf );
             }
             
             buf.append( "}" );

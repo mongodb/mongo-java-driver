@@ -79,8 +79,8 @@ public class BasicDBList extends ArrayList<Object> implements DBObject {
     }
 
     public void putAll( Map m ){
-        for ( Object k : m.keySet() ){
-            put( k.toString() , m.get( k ) );
+    	for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() ){
+            put( entry.getKey().toString() , entry.getValue() );
         }
     } 
     
