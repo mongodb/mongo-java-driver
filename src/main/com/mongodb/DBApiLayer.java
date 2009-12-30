@@ -47,28 +47,28 @@ public class DBApiLayer extends DB {
 
     protected void doInsert( ByteBuffer buf , WriteConcern concern )
         throws MongoException {
-        _connector.say( 2002 , buf , concern );
+        _connector.say( this , 2002 , buf , concern );
     }
     protected  void doDelete( ByteBuffer buf , WriteConcern concern ) 
         throws MongoException {
-        _connector.say( 2006 , buf , concern );
+        _connector.say( this , 2006 , buf , concern );
     }
     protected void doUpdate( ByteBuffer buf , WriteConcern concern )
         throws MongoException {
-        _connector.say( 2001 , buf , concern );
+        _connector.say( this , 2001 , buf , concern );
     }
     protected void doKillCursors( ByteBuffer buf )
         throws MongoException {
-        _connector.say( 2007 , buf , WriteConcern.NORMAL );
+        _connector.say( this , 2007 , buf , WriteConcern.NORMAL );
     }
     
     protected int doQuery( ByteBuffer out , ByteBuffer in )
         throws MongoException {
-        return _connector.call( 2004 , out , in );
+        return _connector.call( this , 2004 , out , in );
     }
     protected int doGetMore( ByteBuffer out , ByteBuffer in )
         throws MongoException {
-        return _connector.call( 2005 , out , in );
+        return _connector.call( this , 2005 , out , in );
     }
 
 

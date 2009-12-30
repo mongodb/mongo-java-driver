@@ -121,10 +121,11 @@ class DBTCPConnector implements DBConnector {
         _threadPort.get().requestEnsureConnection();
     }
 
-    public void say( int op , ByteBuffer buf , DB.WriteConcern concern )
+    public void say( DB db , int op , ByteBuffer buf , DB.WriteConcern concern )
         throws MongoException {
         MyPort mp = _threadPort.get();
         DBPort port = mp.get( true );
+        port.checkAuth( db );
 
         try {
             port.say( new DBMessage( op , buf ) );
@@ -150,15 +151,16 @@ class DBTCPConnector implements DBConnector {
         }
     }
     
-    public int call( int op , ByteBuffer out , ByteBuffer in )
+    public int call( DB db , int op , ByteBuffer out , ByteBuffer in )
         throws MongoException {
-        return _call( op , out , in , 2 );
+        return _call( db , op , out , in , 2 );
     }
 
-    private int _call( int op , ByteBuffer out , ByteBuffer in , int retries )
+    private int _call( DB db , int op , ByteBuffer out , ByteBuffer in , int retries )
         throws MongoException {
         MyPort mp = _threadPort.get();
         DBPort port = mp.get( false );
+        port.checkAuth( db );
 
         try {
             DBMessage a = new DBMessage( op , out );
@@ -174,7 +176,7 @@ class DBTCPConnector implements DBConnector {
                         throw new MongoException( "not talking to master and retries used up" );
                     in.position( 0 );
 
-                    return _call( op , out , in , retries -1 );
+                    return _call( db , op , out , in , retries -1 );
                 }
             }
 
@@ -184,7 +186,7 @@ class DBTCPConnector implements DBConnector {
             mp.error( ioe );
             if ( _error() && retries > 0 ){
                 in.position( 0 );
-                return _call( op , out , in , retries - 1 );
+                return _call( db , op , out , in , retries - 1 );
             }
             throw new MongoException.Network( "can't call something" , ioe );
         }

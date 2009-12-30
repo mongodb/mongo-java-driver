@@ -251,7 +251,21 @@ public abstract class DB {
      */
     public boolean authenticate(String username, char[] passwd )
         throws MongoException {
+        String hash = _hash( username , passwd );
+        if ( ! _doauth( username , hash.getBytes() ) )
+            return false;
+        _username = username;
+        _authhash = hash.getBytes();
+        return true;
+    }
 
+    boolean reauth(){
+        if ( _username == null || _authhash == null )
+            throw new IllegalStateException( "no auth info!" );
+        return _doauth( _username , _authhash );
+    }
+
+    private boolean _doauth( String username , byte[] hash ){
         BasicDBObject res = (BasicDBObject) command(new BasicDBObject("getnonce", 1));
 
         if (res.getInt("ok") != 1) {
@@ -259,7 +273,7 @@ public abstract class DB {
         }
 
         String nonce = res.getString("nonce");
-        String key = nonce + username + _hash( username , passwd );
+        String key = nonce + username + new String( hash );
         
         BasicDBObject cmd = new BasicDBObject();
 
@@ -268,8 +282,8 @@ public abstract class DB {
         cmd.put("nonce", nonce);
         cmd.put("key", Util.hexMD5(key.getBytes()));
 
-        res = (BasicDBObject) command(cmd);
-
+        res = (BasicDBObject)command(cmd);
+        
         return res.getInt("ok") == 1;
     }
 
@@ -343,5 +357,8 @@ public abstract class DB {
 
     protected boolean _readOnly = false;
     private WriteConcern _concern = WriteConcern.NORMAL;
+
+    String _username;
+    byte[] _authhash = null;
 
 }

@@ -22,6 +22,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
+import java.util.*;
 import java.util.logging.*;
 
 import com.mongodb.util.*;
@@ -194,6 +195,29 @@ public class DBPort {
         }
 
     }
+
+    void checkAuth( DB db ){
+        if ( db._username == null )
+            return;
+        if ( _authed.containsKey( db ) )
+            return;
+        
+        if ( _inauth )
+            return;
+        
+        _inauth = true;
+        try {
+            if ( db.reauth() ){
+                _authed.put( db , true );
+                return;
+            }
+        }
+        finally {
+            _inauth = false;
+        }
+
+        throw new MongoInternalException( "can't reauth!" );
+    }
     
     final int _hashCode;
     final InetSocketAddress _addr;
@@ -203,7 +227,9 @@ public class DBPort {
     
     private final ByteBuffer[] _array = new ByteBuffer[]{ ByteBuffer.allocateDirect( DBMessage.HEADER_LENGTH ) , null };
     private SocketChannel _sock;
-    
+
+    private boolean _inauth = false;
+    private Map<DB,Boolean> _authed = Collections.synchronizedMap( new WeakHashMap<DB,Boolean>() );
 
     private static Logger _rootLogger = Logger.getLogger( "com.mongodb.port" );
 }
