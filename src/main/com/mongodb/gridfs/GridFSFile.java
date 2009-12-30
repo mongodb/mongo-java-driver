@@ -145,7 +145,7 @@ public abstract class GridFSFile implements DBObject {
             return _length;
         else if ( key.equals( "chunkSize" ) )
             return _chunkSize;
-        else if ( key.equals( "uplodateDate" ) )
+        else if ( key.equals( "uploadDate" ) )
             return _uploadDate;
         else if ( key.equals( "metadata" ) )
             return _metadata;
