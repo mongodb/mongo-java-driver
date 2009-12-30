@@ -1,16 +1,17 @@
 ## MongoDB Java Driver ##
 
-latest code: http://github.com/mongodb/mongo-java-driver
+driver home: http://github.com/mongodb/mongo-java-driver
 
-for bug reports and questions, either
+mongodb home: http://www.mongodb.org/
+
+#### Questions and Bug Reports
  * mailing list: http://groups.google.com/group/mongodb-user
  * jira: http://jira.mongodb.org/
 
 ## Change Log ##
 
-v1.1 - 2009-12-10
-  MAJOR:
-    connections are pooled per Mongo
+##### v1.1 - 2009-12-10
+* connections are pooled per Mongo
 
 for full history, see: http://jira.mongodb.org/browse/JAVA
 
