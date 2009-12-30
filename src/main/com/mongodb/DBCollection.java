@@ -35,17 +35,15 @@ public abstract class DBCollection {
     /**
      * Saves an document to the database.
      * @param doc object to save
-     * @return the new database object
      */
-    public abstract DBObject insert(DBObject doc) throws MongoException;
+    public abstract void insert(DBObject doc) throws MongoException;
 
     /**
      * Saves an array of documents to the database.
      *
      * @param arr  array of documents to save
-     * @return the new database object
      */
-    public abstract DBObject[] insert(DBObject[] arr) throws MongoException;
+    public abstract void insert(DBObject[] arr) throws MongoException;
 
     /**
      * Saves an array of documents to the database.
@@ -53,7 +51,7 @@ public abstract class DBCollection {
      * @param list  list of documents to save
      * @return the new database object
      */
-    public abstract List<DBObject> insert(List<DBObject> list) throws MongoException;
+    public abstract void insert(List<DBObject> list) throws MongoException;
 
     /**
      * Performs an update operation.
@@ -63,14 +61,14 @@ public abstract class DBCollection {
      * @param multi if the update should be applied to all objects matching (db version 1.1.3 and above)
      * See http://www.mongodb.org/display/DOCS/Atomic+Operations
      */
-    public abstract DBObject update( DBObject q , DBObject o , boolean upsert , boolean multi ) throws MongoException ;
+    public abstract void update( DBObject q , DBObject o , boolean upsert , boolean multi ) throws MongoException ;
 
-    public DBObject update( DBObject q , DBObject o ) throws MongoException {
-        return update( q , o , false , false );
+    public void update( DBObject q , DBObject o ) throws MongoException {
+        update( q , o , false , false );
     }
 
-    public DBObject updateMulti( DBObject q , DBObject o ) throws MongoException {
-        return update( q , o , false , true );
+    public void updateMulti( DBObject q , DBObject o ) throws MongoException {
+        update( q , o , false , true );
     }
 
     /** Adds any necessary fields to a given object before saving it to the collection.
@@ -343,12 +341,12 @@ public abstract class DBCollection {
 
     /** Saves an object to this collection.
      * @param jo the <code>DBObject</code> to save
-     * @return <code>jo</code> with <code>_id</code> field added, if needed
+     *        will add <code>_id</code> field to jo if needed
      */
-    public final DBObject save( DBObject jo )
+    public final void save( DBObject jo )
         throws MongoException {
         if ( checkReadOnly( true ) ) 
-            return jo;
+            return;
 
         _checkObject( jo , false , false );
         
@@ -362,13 +360,13 @@ public abstract class DBCollection {
             if ( id != null && id instanceof ObjectId )
                 ((ObjectId)id)._new = false;
             insert( jo );
-            return jo;
+            return;
         }
 
         if ( DEBUG ) System.out.println( "doing implicit upsert : " + jo.get( "_id" ) );
         DBObject q = new BasicDBObject();
         q.put( "_id" , id );
-        return update( q , jo , true , false );
+        update( q , jo , true , false );
     }
     
     // ---- DB COMMANDS ----

@@ -138,33 +138,27 @@ public class DBApiLayer extends DB {
             o.put( "_ns" , _removeRoot( _fullNameSpace ) );
         }
 
-        public DBObject insert( DBObject o )
+        public void insert( DBObject o )
             throws MongoException {
-            DBObject[] arr = new DBObject[1];
-            arr[0] = o;
-            return insert(arr)[0];
+            insert( new DBObject[]{ o } );
         }
 
-        public DBObject[] insert(DBObject[] arr)
+        public void insert(DBObject[] arr)
             throws MongoException {
-            return insert(arr, true);
+            insert(arr, true);
         }
 
-        public List<DBObject> insert(List<DBObject> list)
+        public void insert(List<DBObject> list)
             throws MongoException {
-            DBObject[] arr = insert(list.toArray(new DBObject[list.size()]) , true);
-
-            return Arrays.asList(arr);
+            insert(list.toArray(new DBObject[list.size()]) , true);
         }
 
-        protected DBObject insert(DBObject obj, boolean shouldApply )
+        protected void insert(DBObject obj, boolean shouldApply )
             throws MongoException {
-            DBObject[] arr = new DBObject[1];
-            arr[0] = obj;
-            return insert(arr, shouldApply)[0];
+            insert( new DBObject[]{ obj } , shouldApply );
         }
 
-        protected DBObject[] insert(DBObject[] arr, boolean shouldApply )
+        protected void insert(DBObject[] arr, boolean shouldApply )
             throws MongoException {
 
             if ( SHOW ) {
@@ -214,7 +208,6 @@ public class DBApiLayer extends DB {
                 }
             }
 
-            return arr;
         }
         
         public void remove( DBObject o )
@@ -337,7 +330,7 @@ public class DBApiLayer extends DB {
             }
         }
 
-        public DBObject update( DBObject query , DBObject o , boolean upsert , boolean multi )
+        public void update( DBObject query , DBObject o , boolean upsert , boolean multi )
             throws MongoException {
 
             if ( SHOW ) System.out.println( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
@@ -363,7 +356,6 @@ public class DBApiLayer extends DB {
                 encoder.done();
             }
 
-            return o;
         }
 
         public void ensureIndex( DBObject keys , String name )
