@@ -12,6 +12,7 @@ version = sys.argv[1]
 
 root = "/ebs/maven/"
 
+p = subprocess.Popen( [ "/usr/bin/ant" , "clean" ] , stdout=subprocess.PIPE ).communicate()
 p = subprocess.Popen( [ "/usr/bin/ant" , "alljars" ] , stdout=subprocess.PIPE ).communicate()
 
 if p[0].find( "SUCCESSFUL" ) < 0:
