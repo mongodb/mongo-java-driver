@@ -66,12 +66,12 @@ public class JSON {
             return;
         }
 
-        if ( o instanceof List){
+        if ( o instanceof Collection){
 
             boolean first = true;
             buf.append( "[ " );
             
-            for ( Object n : (List)o ){
+            for ( Object n : (Collection)o ){
                 if ( first ) first = false;
                 else buf.append( " , " );
                 
