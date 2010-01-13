@@ -251,6 +251,13 @@ public abstract class DB {
      */
     public boolean authenticate(String username, char[] passwd )
         throws MongoException {
+        
+        if ( username == null )
+            throw new NullPointerException( "username can't be null" );
+        
+        if ( _username != null )
+            throw new IllegalStateException( "can't call authenticate twice on the same DBObject" );
+        
         String hash = _hash( username , passwd );
         if ( ! _doauth( username , hash.getBytes() ) )
             return false;
