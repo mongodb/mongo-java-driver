@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# http://repo1.maven.org/maven2/org/mongodb/mongo-java-driver/
+
 import os
 import sys
 import shutil
