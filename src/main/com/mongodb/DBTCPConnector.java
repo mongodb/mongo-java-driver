@@ -312,7 +312,7 @@ class DBTCPConnector implements DBConnector {
         try {
             System.out.println( _curAddress );
             DBCollection collection = _mongo.getDB( "admin" ).getCollection( "$cmd" );
-            Iterator<DBObject> i = collection.find( _isMaster , null , 0 , 1 );
+            Iterator<DBObject> i = collection.find( _isMaster , null , 0 , 1 , 0 );
             if ( i == null || ! i.hasNext() )
                 throw new MongoException( "no result for ismaster query?" );
             DBObject res = i.next();

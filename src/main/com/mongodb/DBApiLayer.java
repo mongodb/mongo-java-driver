@@ -283,7 +283,7 @@ public class DBApiLayer extends DB {
             }
         }
 
-        public Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize )
+        public Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options )
             throws MongoException {
             
             if ( ref == null )
@@ -295,7 +295,7 @@ public class DBApiLayer extends DB {
 
             ByteEncoder encoder = ByteEncoder.get();
 
-            encoder._buf.putInt( 0 ); // options
+            encoder._buf.putInt( options ); // options
             encoder._put( _fullNameSpace );
 
             encoder._buf.putInt( numToSkip );

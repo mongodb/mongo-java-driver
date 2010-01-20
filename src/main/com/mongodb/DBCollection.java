@@ -86,9 +86,22 @@ public abstract class DBCollection {
      * @param fields the fields of matching objects to return
      * @param numToSkip will not return the first <tt>numToSkip</tt> matches
      * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
+     * @param query options - see Bytes QUERYOPTION_*
      * @return the objects, if found
      */
-    public abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) throws MongoException ;
+    public abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException ;
+
+    /** Finds an object.
+     * @param ref query used to search
+     * @param fields the fields of matching objects to return
+     * @param numToSkip will not return the first <tt>numToSkip</tt> matches
+     * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
+     * @return the objects, if found
+     */
+    public Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) 
+        throws MongoException {
+        return find( ref , fields , numToSkip , batchSize , 0 );
+    }
 
     /** Ensures an index on this collection (that is, the index will be created if it does not exist).
      * ensureIndex is optimized and is inexpensive if the index already exists.
@@ -129,7 +142,7 @@ public abstract class DBCollection {
     public final DBObject findOne( Object obj, DBObject fields ) {
         ensureIDIndex();
 
-        Iterator<DBObject> iterator =  find(new BasicDBObject("_id", obj), fields, 0, -1);
+        Iterator<DBObject> iterator =  find(new BasicDBObject("_id", obj), fields, 0, -1, 0);
 
         return (iterator != null ? iterator.next() : null);
     }
@@ -307,7 +320,7 @@ public abstract class DBCollection {
      * @return the object found, or <code>null</code> if no such object exists
      */
     public final DBObject findOne( DBObject o, DBObject fields ) {
-        Iterator<DBObject> i = find( o , fields , 0 , -1 );
+        Iterator<DBObject> i = find( o , fields , 0 , -1 , 0 );
         if ( i == null || ! i.hasNext() )
             return null;
         return i.next();

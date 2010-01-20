@@ -80,6 +80,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         c._hint = _hint;
         c._numWanted = _numWanted;
         c._skip = _skip;
+        c._options = _options;
         return c;
     }
 
@@ -208,6 +209,14 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         return this;
     }
 
+    /**
+     * adds an option - see Bytes.QUERYOPTION_* for list
+     */
+    public DBCursor addOption( int option ){
+        _options |= option;
+        return this;
+    }
+
     // ----  internal stuff ------
 
     private void _check()
@@ -238,7 +247,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
                 else
                     bs = Math.min( bs , _batchSize );
             }
-            _it = _collection.find( foo , _keysWanted , _skip , bs );
+            _it = _collection.find( foo , _keysWanted , _skip , bs , _options );
         }
 
         if ( _it == null ){
@@ -511,7 +520,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     private int _batchSize = 0;
     private int _skip = 0;
     private boolean _snapshot = false;
-
+    private int _options = 0;
+    
     // ----  result info ----
     private Iterator<DBObject> _it = null;
     private boolean _fake = false;

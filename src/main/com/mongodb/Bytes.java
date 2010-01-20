@@ -98,7 +98,11 @@ public class Bytes {
     static final byte B_FUNC = 1;
     static final byte B_BINARY = 2;
 
-    
+    public static final int QUERYOPTION_TAILABLE = 1 << 1;
+    public static final int QUERYOPTION_SLAVEOK = 1 << 2;
+    public static final int QUERYOPTION_OPLOGREPLAY = 1 << 3;
+    public static final int QUERYOPTION_NOTIMEOUT = 1 << 4;
+
     static protected Charset _utf8 = Charset.forName( "UTF-8" );
     /** The maximum number of bytes allowed to be sent to the db at a time */
     static protected final int MAX_STRING = MAX_OBJECT_SIZE - 1024;
