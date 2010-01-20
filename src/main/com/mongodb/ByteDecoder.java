@@ -65,7 +65,8 @@ public class ByteDecoder extends Bytes {
     }
 
     private ByteDecoder(){
-        _buf = ByteBuffer.allocateDirect( 1024 + ( MAX_OBJECT_SIZE * 2 ) );
+        //_buf = ByteBuffer.allocateDirect( 1024 + ( MAX_OBJECT_SIZE * 2 ) );
+        _buf = ByteBuffer.wrap( new byte[ 1024 + ( MAX_OBJECT_SIZE * 2 ) ] );
         _private = true;
         reset();
     }

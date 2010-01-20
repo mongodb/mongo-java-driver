@@ -86,7 +86,7 @@ public class DBPort {
             return null;
 
         _reset( _array[0] );
-        _sock.read( _array[0] );
+        _read( _array[0] );
         _array[0].flip();
         DBMessage msgResponse = new DBMessage( _array[0] , response );
         
@@ -103,7 +103,7 @@ public class DBPort {
 
         response.limit( bodySize );
         while ( response.remaining() > 0 )
-            _sock.read( response );
+            _read( response );
         
         if ( response.position() < response.limit() )
             throw new MongoInternalException( "buffer not fully filled" );
@@ -137,12 +137,12 @@ public class DBPort {
 
             try {
                 _sock = SocketChannel.open();
-                //_sock.connect( _addr , _options.connectTimeout );
-                _sock.socket().connect( _addr , _options.connectTimeout );
+                _socket = _sock.socket();
+                _socket.connect( _addr , _options.connectTimeout );
                 
-                _sock.socket().setTcpNoDelay( ! USE_NAGLE );
-                _sock.socket().setSoTimeout( _options.socketTimeout );
-                
+                _socket.setTcpNoDelay( ! USE_NAGLE );
+                _socket.setSoTimeout( _options.socketTimeout );
+                _in = _socket.getInputStream();
                 return;
             }
             catch ( IOException ioe ){
@@ -191,6 +191,8 @@ public class DBPort {
                 // don't care
             }
             
+            _in = null;
+            _socket = null;
             _sock = null;            
         }
 
@@ -218,6 +220,13 @@ public class DBPort {
 
         throw new MongoInternalException( "can't reauth!" );
     }
+
+    private void _read( ByteBuffer buf )
+        throws IOException {
+        int x = _in.read( buf.array() , buf.position() , buf.remaining() );
+        buf.position( buf.position() + x );
+    }
+    
     
     final int _hashCode;
     final InetSocketAddress _addr;
@@ -225,8 +234,11 @@ public class DBPort {
     final MongoOptions _options;
     final Logger _logger;
     
-    private final ByteBuffer[] _array = new ByteBuffer[]{ ByteBuffer.allocateDirect( DBMessage.HEADER_LENGTH ) , null };
+    private final ByteBuffer[] _array = new ByteBuffer[]{ ByteBuffer.wrap( new byte[ DBMessage.HEADER_LENGTH ] ) , null };
+    
     private SocketChannel _sock;
+    private Socket _socket;
+    private InputStream _in;
 
     private boolean _inauth = false;
     private Map<DB,Boolean> _authed = Collections.synchronizedMap( new WeakHashMap<DB,Boolean>() );
