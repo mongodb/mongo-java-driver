@@ -200,8 +200,16 @@ public class BasicDBObject extends LinkedHashMap<String,Object> implements DBObj
         for ( String key : keySet() ){
             Object a = get( key );
             Object b = other.get( key );
-
-            if ( a instanceof Number && b instanceof Number ){
+            
+            if ( a == null ){
+                if ( b != null )
+                    return false;
+            }
+            if ( b == null ){
+                if ( a != null )
+                    return false;
+            }
+            else if ( a instanceof Number && b instanceof Number ){
                 if ( ((Number)a).doubleValue() != 
                      ((Number)b).doubleValue() )
                     return false;

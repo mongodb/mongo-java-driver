@@ -64,6 +64,45 @@ public class BasicDBObjectTest extends TestCase {
 
         assert( x.equals( y ) );
     }
+
+    void _equal( BasicDBObject x , BasicDBObject y ){
+        assert( x.equals( y ) );
+        assert( y.equals( x ) );
+    }
+
+    void _notequal( BasicDBObject x , BasicDBObject y ){
+        assert( ! x.equals( y ) );
+        assert( ! y.equals( x ) );
+    }
+
+    @Test
+    public void testEquals(){
+        BasicDBObject a = new BasicDBObject();
+        BasicDBObject b = new BasicDBObject();
+        
+        
+        _equal( a , b );
+        
+        a.put( "x" , 1 );
+        _notequal( a , b );
+        
+        b.put( "x" , 1 );
+        _equal( a , b );
+        
+        a.removeField( "x" );
+        _notequal( a , b );
+        
+        b.removeField( "x" );
+        _equal( a , b );        
+
+        a.put( "x" , null );
+        b.put( "x" , 2 );
+        _notequal( a , b );
+
+        a.put( "x" , 2 );
+        b.put( "x" , null );
+        _notequal( a , b );
+    }
     
     
     public static void main( String args[] )
