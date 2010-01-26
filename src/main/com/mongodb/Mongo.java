@@ -62,6 +62,18 @@ public class Mongo {
     }
 
     /**
+     *  Connects to the local mongo instance on default port.
+     *
+     *  @param host server to connect to
+     *  @param options options to use
+     *  @throws UnknownHostException if the database host cannot be resolved
+     */
+    public Mongo( String host , MongoOptions options )
+        throws UnknownHostException , MongoException {
+        this( new DBAddress( host , "test" ) , options );
+    }
+
+    /**
      * Connects to Mongo using a given host, port, and database.
      * @param host the database's host address
      * @param port the port on which the database is running
