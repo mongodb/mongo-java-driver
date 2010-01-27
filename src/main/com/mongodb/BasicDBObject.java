@@ -79,7 +79,7 @@ public class BasicDBObject extends LinkedHashMap<String,Object> implements DBObj
     }
 
     /** Checks if this object contains a given field
-     * @param key field name
+     * @param field field name
      * @return if the field exists
      */
     public boolean containsField( String field ){

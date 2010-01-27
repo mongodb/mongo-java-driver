@@ -48,8 +48,7 @@ public abstract class DBCollection {
     /**
      * Saves an array of documents to the database.
      *
-     * @param list  list of documents to save
-     * @return the new database object
+     * @param list list of documents to save
      */
     public abstract void insert(List<DBObject> list) throws MongoException;
 
@@ -86,7 +85,7 @@ public abstract class DBCollection {
      * @param fields the fields of matching objects to return
      * @param numToSkip will not return the first <tt>numToSkip</tt> matches
      * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
-     * @param query options - see Bytes QUERYOPTION_*
+     * @param options - see Bytes QUERYOPTION_*
      * @return the objects, if found
      */
     public abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException ;
@@ -107,6 +106,7 @@ public abstract class DBCollection {
      * ensureIndex is optimized and is inexpensive if the index already exists.
      * @param keys fields to use for index
      * @param name an identifier for the index
+     * @mongodb.apitool indexing
      */
     public abstract void ensureIndex( DBObject keys , String name ) throws MongoException ;
 

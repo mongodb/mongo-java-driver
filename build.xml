@@ -19,6 +19,7 @@
     <mkdir dir="build" />
     <mkdir dir="build/main" />
     <mkdir dir="build/test" />
+    <mkdir dir="build/util" />
     <mkdir dir="logs" />
     <mkdir dir="${testdir}" />
   </target>
@@ -54,6 +55,23 @@
 
   </target>
 
+  <target name="utilcompile" depends="compile">
+
+    <javac srcdir="src/util"
+           destdir="build/util"
+           optimize="off"
+           deprecation="off"
+           source="1.5"
+           target="1.5"
+           encoding="ISO-8859-1"
+           memoryMaximumSize="256M"
+           fork="true"
+           debug="on" >
+      <classpath refid="classpath"/>
+    </javac>
+  </target>
+
+
   <target name="jar" depends="compile" description="Create driver jar">
 
     <exec executable="git" output="build/main/git-hash">
@@ -67,8 +85,8 @@
     </jar>
   </target>
 
+  <target name="javadocs" depends="compile,utilcompile" description="Generate API docs">
 
-  <target name="javadocs" depends="compile" description="Generate API docs">
     <delete dir="docs/"/>
     <javadoc packagenames="com.mongodb,com.mongodb.gridfs"
              sourcepath="src/main/"
@@ -82,6 +100,7 @@
              >
       <link href="http://java.sun.com/j2se/1.5/docs/api/" />
       <classpath refid="classpath"/>
+      <taglet name="ApiToolsTaglet" path="build/util" />
     </javadoc>
 
   </target>
