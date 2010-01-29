@@ -87,6 +87,7 @@ public abstract class DBCollection {
      * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
      * @param options - see Bytes QUERYOPTION_*
      * @return the objects, if found
+     * @dochub find
      */
     public abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException ;
 
@@ -96,6 +97,7 @@ public abstract class DBCollection {
      * @param numToSkip will not return the first <tt>numToSkip</tt> matches
      * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
      * @return the objects, if found
+     * @dochub find
      */
     public Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) 
         throws MongoException {
@@ -106,7 +108,7 @@ public abstract class DBCollection {
      * ensureIndex is optimized and is inexpensive if the index already exists.
      * @param keys fields to use for index
      * @param name an identifier for the index
-     * @mongodb.apitool indexing
+     * @dochub indexing
      */
     public abstract void ensureIndex( DBObject keys , String name ) throws MongoException ;
 
@@ -138,6 +140,7 @@ public abstract class DBCollection {
      * @param obj any valid object
      * @param fields fields to return
      * @return the object, if found, otherwise <code>null</code>
+     * @dochub find
      */
     public final DBObject findOne( Object obj, DBObject fields ) {
         ensureIDIndex();
@@ -257,6 +260,7 @@ public abstract class DBCollection {
     /** Queries for an object in this collection.
      * @param ref object for which to search
      * @return an iterator over the results
+     * @dochub find
      */
     public final DBCursor find( DBObject ref ){
         return new DBCursor( this, ref, null );
@@ -282,6 +286,7 @@ public abstract class DBCollection {
      * @param ref object for which to search
      * @param keys fields to return
      * @return a cursor to iterate over results
+     * @dochub find
      */
     public final DBCursor find( DBObject ref , DBObject keys ){
         return new DBCursor( this, ref, keys );
@@ -289,6 +294,7 @@ public abstract class DBCollection {
 
     /** Queries for all objects in this collection. 
      * @return a cursor which will iterate over every object
+     * @dochub find
      */
     public final DBCursor find(){
         return new DBCursor( this, new BasicDBObject(), null );
@@ -318,6 +324,7 @@ public abstract class DBCollection {
      * @param o the query object
      * @param fields fields to return
      * @return the object found, or <code>null</code> if no such object exists
+     * @dochub find
      */
     public final DBObject findOne( DBObject o, DBObject fields ) {
         Iterator<DBObject> i = find( o , fields , 0 , -1 , 0 );

@@ -12,7 +12,7 @@ public class ApiToolsTaglet implements Taglet {
     }
     
     public String getName(){
-        return "mongodb.apitool";
+        return "dochub";
     }
     
     public boolean inConstructor(){ return true; }
@@ -26,7 +26,7 @@ public class ApiToolsTaglet implements Taglet {
 
     String genLink( String name ){
         return new StringBuilder()
-            .append( "<a href='http://apitools.mongodb.org/" ).append( name ).append( "' " )
+            .append( "<a href='http://dochub.mongodb.org/core/" ).append( name ).append( "' " )
             .append( "name='" ).append( name ).append( "' " )
             .append( ">").append( name ).append( "</a>" )
             .toString();
@@ -43,7 +43,6 @@ public class ApiToolsTaglet implements Taglet {
         StringBuilder buf = new StringBuilder( "\n<br><DT><B>MongoDB Doc Links</B><DD>" );
         buf.append( "<ul>" );
         for ( Tag t : tags ){
-            System.out.println( "YO: " + t.holder().name() );
             buf.append( "<li>" ).append( genLink( t.text() ) ).append( "</li>" );
         }
         buf.append( "</ul>" );
