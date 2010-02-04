@@ -506,7 +506,10 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         
         return (int)_collection.getCount(this._query, this._keysWanted);
     }
-
+    
+    public DBObject getKeysWanted(){
+        return _keysWanted;
+    }
 
     // ----  query setup ----
     final DBCollection _collection;
