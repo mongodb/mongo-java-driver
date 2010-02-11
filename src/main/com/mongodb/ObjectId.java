@@ -94,6 +94,23 @@ public class ObjectId implements Comparable<ObjectId>{
         return null;
     }
 
+    public ObjectId( Date time ){
+        _time = _flip( (int)(time.getTime() / 1000) );
+        _machine = _genmachine;
+        synchronized ( _incLock ){
+            _inc = _nextInc++;
+        }     
+        _new = false;
+    }
+
+    public ObjectId( Date time , int inc ){
+        _time = _flip( (int)(time.getTime() / 1000) );
+        _machine = _genmachine;
+        _inc = inc;
+        _new = false;
+    }
+
+
     /** Creates a new instance from a string.
      * @param s the string to convert
      * @throws IllegalArgumentException if the string is not a valid id

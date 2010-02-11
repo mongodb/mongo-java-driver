@@ -77,6 +77,13 @@ public class ObjectIdTest extends TestCase {
         ObjectId b = new ObjectId();
         assertNotEquals( a , b );
     }
+    
+    @Test
+    public void testDateCons(){
+        java.util.Date d = new java.util.Date();
+        ObjectId a = new ObjectId( d );
+        assertEquals( d.getTime() / 1000 , a.getTime() / 1000 );
+    }
 
     public static void main( String args[] )
         throws Exception {
