@@ -114,6 +114,17 @@ public class RawDBObject implements DBObject {
                 pos++;
                 if ( pos >= _cStrBuf.length )
                     throw new IllegalArgumentException( "c string too big for RawDBObject.  so far[" + new String( _cStrBuf ) + "]" );
+
+                if ( pos + start >= _buf.capacity() ){
+                    StringBuilder sb = new StringBuilder();
+                    for ( int x=0; x<10; x++ ){
+                        int y = start + x;
+                        if ( y >= _buf.capacity() )
+                            break;
+                        sb.append( (char)_buf.get( y ) );
+                    }
+                    throw new IllegalArgumentException( "can't find end of cstring.  start:" + start + " pos: " + pos + " [" + sb + "]" );
+                }
             }
             if ( end != null && end.length > 0 )
                 end[0] = start + pos;
