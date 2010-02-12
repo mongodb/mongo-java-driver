@@ -20,6 +20,7 @@ package com.mongodb;
 
 /**
  * Database reference class.
+ * @dochub dbrefs
  */
 public class DBRef extends DBRefBase {
     

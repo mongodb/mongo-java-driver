@@ -27,6 +27,7 @@ import java.util.*;
  *     DB db = mongo.getDB( "mydb" );
  *     DBCollection collection = db.getCollection( "test" );
  * </pre></blockquote>
+ * @dochub collections
  */
 public abstract class DBCollection {
 
@@ -37,6 +38,7 @@ public abstract class DBCollection {
      * if doc doesn't have an _id, one will be added
      * you can get the _id that was added from doc after the insert
      * @param doc object to save
+     * @dochub insert
      */
     public abstract void insert(DBObject doc) throws MongoException;
 
@@ -44,6 +46,7 @@ public abstract class DBCollection {
      * Saves an array of documents to the database.
      *
      * @param arr  array of documents to save
+     * @dochub insert
      */
     public abstract void insert(DBObject[] arr) throws MongoException;
 
@@ -51,6 +54,7 @@ public abstract class DBCollection {
      * Saves an array of documents to the database.
      *
      * @param list list of documents to save
+     * @dochub insert
      */
     public abstract void insert(List<DBObject> list) throws MongoException;
 
@@ -61,13 +65,20 @@ public abstract class DBCollection {
      * @param upsert if the database should create the element if it does not exist
      * @param multi if the update should be applied to all objects matching (db version 1.1.3 and above)
      * See http://www.mongodb.org/display/DOCS/Atomic+Operations
+     * @dochub update
      */
     public abstract void update( DBObject q , DBObject o , boolean upsert , boolean multi ) throws MongoException ;
 
+    /**
+     * @dochub update
+     */
     public void update( DBObject q , DBObject o ) throws MongoException {
         update( q , o , false , false );
     }
 
+    /**
+     * @dochub update
+     */
     public void updateMulti( DBObject q , DBObject o ) throws MongoException {
         update( q , o , false , true );
     }
@@ -79,6 +90,7 @@ public abstract class DBCollection {
 
     /** Removes objects from the database collection.
      * @param o the object that documents to be removed must match
+     * @dochub remove
      */
     public abstract void remove( DBObject o ) throws MongoException ;
 
@@ -110,7 +122,7 @@ public abstract class DBCollection {
      * ensureIndex is optimized and is inexpensive if the index already exists.
      * @param keys fields to use for index
      * @param name an identifier for the index
-     * @dochub indexing
+     * @dochub indexes
      */
     public abstract void ensureIndex( DBObject keys , String name ) throws MongoException ;
 
@@ -550,6 +562,7 @@ public abstract class DBCollection {
        performs a map reduce operation
        * @param outputCollection optional - leave null if want to use temp collection
        * @param query optional - leave null if you want all objects
+       * @dochub mapreduce
      */
     public MapReduceOutput mapReduce( String map , String reduce , String outputCollection , DBObject query )
         throws MongoException {

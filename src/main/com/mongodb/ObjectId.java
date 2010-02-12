@@ -35,6 +35,8 @@ import com.mongodb.util.*;
  *     <td colspan="2">pid</td><td colspan="3">inc</td></tr>
  * </table>
  * </pre></blockquote>
+ * 
+ * @dochub objectids
  */
 public class ObjectId implements Comparable<ObjectId>{
 

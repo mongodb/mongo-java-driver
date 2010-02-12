@@ -23,6 +23,10 @@ import java.util.*;
 
 import com.mongodb.util.*;
 
+/**
+ * a logical database on a server
+ * @dochub databases
+ */
 public abstract class DB {
 
     public static enum WriteConcern { NONE, NORMAL, STRICT };
@@ -104,6 +108,7 @@ public abstract class DB {
     /** Execute a database command directly.
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/Mongo+Commands">Mongo Commands</a>
      * @return the result of the command from the database
+     * @dochub commands
      */
     public DBObject command( DBObject cmd )
         throws MongoException {
@@ -248,6 +253,7 @@ public abstract class DB {
      * @param username  name of user for this database
      * @param passwd password of user for this database
      * @return true if authenticated, false otherwise
+     * @dochub authenticate
      */
     public boolean authenticate(String username, char[] passwd )
         throws MongoException {

@@ -49,6 +49,7 @@ import java.util.Collections;
  * List<DBObject> obj = collection.find( query ).skip( 1000 ).limit( 100 ).toArray();
  * </pre></blockquote>
  *
+ * @dochub cursors
  */
 public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
@@ -160,6 +161,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * "n" : the number of records that the database returned
      * "millis" : how long it took the database to execute the query
      * @return a <code>DBObject</code>
+     * @dochub explain
      */
     public DBObject explain(){
         DBCursor c = copy();
@@ -172,6 +174,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * Limits the number of elements returned.
      * @param n the number of elements to return
      * @return a cursor pointing to the first element of the limited results
+     * @dochub limit
      */
     public DBCursor limit( int n ){
         if ( _it != null )
