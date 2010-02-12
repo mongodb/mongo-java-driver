@@ -209,9 +209,11 @@ public class ByteEncoder extends Bytes {
         _buf.putInt( 0 ); // leaving space for this.  set it at the end
 
         List transientFields = null;
+        boolean rewriteID = myType == OBJECT && name == null;
+        
 
         if ( myType == OBJECT ) {
-            if ( o.containsField( "_id" ) )
+            if ( rewriteID && o.containsField( "_id" ) )
                 _putObjectField( "_id" , o.get( "_id" ) );
             
             {
@@ -224,7 +226,7 @@ public class ByteEncoder extends Bytes {
 
         for ( String s : o.keySet() ){
 
-            if ( s.equals( "_id" ) )
+            if ( rewriteID && s.equals( "_id" ) )
                 continue;
             
             if ( transientFields != null && transientFields.contains( s ) )

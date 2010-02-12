@@ -395,6 +395,37 @@ public class ByteTest extends TestCase {
         assertEquals(r.get("l"), 9223372036854775807l);
     }
 
+    @Test(groups = {"basic"})
+    public void testIdOrder() {
+        
+        DBCollection c = _db.getCollection( "testidorder" );
+        c.drop();
+        
+        BasicDBObject x = new BasicDBObject();
+        x.put( "a" , 5 );
+        x.put( "_id" , 6 );
+        BasicDBObject y = new BasicDBObject();
+        y.put( "b" , 7 );
+        y.put( "_id" , 8 );
+        x.put( "c" , y );
+        
+        c.insert( x );
+        
+        DBObject out = c.findOne();
+        _testKeys( new String[]{ "_id" , "a" , "c" } , out.keySet() );
+        _testKeys( new String[]{ "b" , "_id" } , ((DBObject)out.get( "c" )).keySet() );
+    }
+
+
+    void _testKeys( String[] want , Set<String> got ){
+        got.remove( "_ns" );
+        assertEquals( want.length , got.size() );
+        int pos = 0;
+        for ( String s : got ){
+            assertEquals( want[pos++] , s );
+        }
+    }
+
     final DB _db;
 
     public static void main( String args[] )
