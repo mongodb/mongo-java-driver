@@ -32,7 +32,7 @@ public class DBAddress {
      * <table border="1">
      * <tr>
      *   <td><i>name</i></td>
-     *   <td>"127.0.0.1"</td>
+     *   <td>"mydb"</td>
      * </tr>
      * <tr>
      *   <td><i>&lt;host&gt;/name</i></td>

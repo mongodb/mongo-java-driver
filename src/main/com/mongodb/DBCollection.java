@@ -34,6 +34,8 @@ public abstract class DBCollection {
 
     /**
      * Saves an document to the database.
+     * if doc doesn't have an _id, one will be added
+     * you can get the _id that was added from doc after the insert
      * @param doc object to save
      */
     public abstract void insert(DBObject doc) throws MongoException;
