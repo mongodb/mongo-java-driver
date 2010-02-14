@@ -21,6 +21,8 @@
       <class name="com.mongodb.ObjectIdTest" />
       <class name="com.mongodb.DBRefTest" />
       <class name="com.mongodb.gridfs.GridFSTest" />
+      
+      <class name="com.mongodb.QueryBuilderTest" />
 
       <class name="com.mongodb.ErrorTest" />
 
