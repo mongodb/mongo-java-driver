@@ -426,6 +426,13 @@ public class ByteTest extends TestCase {
         }
     }
 
+    @Test(groups = {"basic"})
+    public void testBytes2(){
+        DBObject x = BasicDBObjectBuilder.start( "x" , 1 ).add( "y" , "asdasd" ).get();
+        byte[] b = Bytes.encode( x );
+        assertEquals( x , Bytes.decode( b ) );
+    }
+
     final DB _db;
 
     public static void main( String args[] )

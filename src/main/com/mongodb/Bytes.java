@@ -310,6 +310,21 @@ public class Bytes {
         _decodingHooks.clear();
     }
 
+    public static byte[] encode( DBObject o ){
+        ByteEncoder e = ByteEncoder.get();
+        e.putObject( o );
+        byte b[] = e.getBytes();
+        e.done();
+        return b;
+    }
+    
+    public static DBObject decode( byte[] b ){
+        ByteBuffer bb = ByteBuffer.wrap( b );
+        bb.order( Bytes.ORDER );
+        ByteDecoder d = new ByteDecoder( bb );
+        return d.readObject();
+    }
+
     private static boolean _anyHooks = false;
     static Map<Class,List<Transformer>> _encodingHooks = Collections.synchronizedMap( new HashMap<Class,List<Transformer>>() );
     static Map<Byte,List<Transformer>> _decodingHooks = Collections.synchronizedMap( new HashMap<Byte,List<Transformer>>() );
