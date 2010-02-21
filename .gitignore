@@ -11,6 +11,7 @@
 *.class*
 .cvsignore*
 .svn
+.project
 .#*
 .git
 *#
