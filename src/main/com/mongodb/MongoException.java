@@ -34,7 +34,7 @@ public class MongoException extends RuntimeException {
         return t;
     }
 
-    static class Network extends MongoException {
+    public static class Network extends MongoException {
 
         Network( String msg , java.io.IOException ioe ){
             super( msg , ioe );
@@ -49,7 +49,7 @@ public class MongoException extends RuntimeException {
         final java.io.IOException _ioe;
     }
 
-    static class DuplicateKey extends MongoException {
+    public static class DuplicateKey extends MongoException {
         DuplicateKey( String msg ){
             super( msg );
         }
