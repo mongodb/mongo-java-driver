@@ -22,10 +22,22 @@ public class MongoException extends RuntimeException {
 
     public MongoException( String msg ){
         super( msg );
+        _code = -3;
+    }
+
+    public MongoException( int code , String msg ){
+        super( msg );
+        _code = code;
     }
 
     public MongoException( String msg , Throwable t ){
         super( msg , _massage( t ) );
+        _code = -4;
+    }
+
+    public MongoException( int code , String msg , Throwable t ){
+        super( msg , _massage( t ) );
+        _code = code;
     }
 
     static Throwable _massage( Throwable t ){
@@ -37,7 +49,7 @@ public class MongoException extends RuntimeException {
     public static class Network extends MongoException {
 
         Network( String msg , java.io.IOException ioe ){
-            super( msg , ioe );
+            super( -2 , msg , ioe );
             _ioe = ioe;
         }
 
@@ -50,8 +62,14 @@ public class MongoException extends RuntimeException {
     }
 
     public static class DuplicateKey extends MongoException {
-        DuplicateKey( String msg ){
-            super( msg );
+        DuplicateKey( int code , String msg ){
+            super( code , msg );
         }
     }
+
+    public int getCode(){
+        return _code;
+    }
+
+    final int _code;
 }

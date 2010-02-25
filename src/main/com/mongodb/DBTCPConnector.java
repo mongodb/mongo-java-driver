@@ -133,11 +133,15 @@ class DBTCPConnector implements DBConnector {
                 DBObject e = _mongo.getDB( "admin" ).getLastError();
                 Object foo = e.get( "err" );
                 if ( foo != null ){
+                    int code = -1;
+                    if ( e.get( "code" ) instanceof Number )
+                        code = ((Number)e.get("code")).intValue();
                     String s = foo.toString();
-                    if ( s.startsWith( "E11000" ) ||
+                    if ( code == 11000 || code == 11001 ||
+                         s.startsWith( "E11000" ) ||
                          s.startsWith( "E11001" ) )
-                        throw new MongoException.DuplicateKey( s );
-                    throw new MongoException( s );
+                        throw new MongoException.DuplicateKey( code , s );
+                    throw new MongoException( code , s );
                 }
             }
             mp.done( port );
