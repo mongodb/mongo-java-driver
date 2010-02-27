@@ -310,6 +310,5 @@ public class Bytes {
     static Map<Class,List<Transformer>> _encodingHooks = Collections.synchronizedMap( new HashMap<Class,List<Transformer>>() );
     static Map<Byte,List<Transformer>> _decodingHooks = Collections.synchronizedMap( new HashMap<Byte,List<Transformer>>() );
     
-    static final String NO_REF_HACK = "_____nodbref_____";
     static final ObjectId COLLECTION_REF_ID = new ObjectId( -1 , -1 , -1 );
 }

@@ -327,11 +327,6 @@ public class ByteEncoder extends Bytes {
             return true;
         }
         
-        if ( !(o instanceof List) && o.get( Bytes.NO_REF_HACK ) != null ){
-            o.removeField( Bytes.NO_REF_HACK );
-            return false;
-        }
-        
         return false;
     }
 

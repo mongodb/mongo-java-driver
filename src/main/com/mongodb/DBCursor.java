@@ -301,8 +301,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         if ( ! sendEmpty && thing.keySet().size() == 0 )
             return;
     
-        _noRefCheck( thing );
-    
         _addToQueryObject( query , field , thing );
     }
 
@@ -312,13 +310,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
             return;
         
         query.put( field , thing );
-    }
-
-    void _noRefCheck( DBObject o ){
-        if ( ! false /*Bytes.cameFromDB( o ) */)
-            return;
-        
-        o.put( Bytes.NO_REF_HACK , "z" );
     }
 
     void _checkType( CursorType type ){
