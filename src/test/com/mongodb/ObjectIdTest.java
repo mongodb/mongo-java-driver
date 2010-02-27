@@ -24,6 +24,15 @@ import com.mongodb.util.*;
 
 public class ObjectIdTest extends TestCase {
     
+    final Mongo _mongo;
+    final DB _db;
+
+    public ObjectIdTest()
+        throws Exception {
+        _mongo = new Mongo();
+        _db = _mongo.getDB( "jtest" );
+    }
+
     /*
     @Test(groups = {"basic"})
     public void testTSM(){
@@ -83,6 +92,13 @@ public class ObjectIdTest extends TestCase {
         java.util.Date d = new java.util.Date();
         ObjectId a = new ObjectId( d );
         assertEquals( d.getTime() / 1000 , a.getTime() / 1000 );
+    }
+
+    @Test
+    public void testStringOnServer(){
+        ObjectId oid = new ObjectId();
+        DBObject res = _db.command( new BasicDBObject( "driverOIDTest" , oid ) );
+        assertEquals( oid.toString() , res.get( "str" ).toString() );
     }
 
     public static void main( String args[] )

@@ -115,6 +115,11 @@ public abstract class DB {
         return getCollection( "$cmd" ).findOne( cmd );
     }
 
+    public DBObject command( String cmd )
+        throws MongoException {
+        return command( new BasicDBObject( cmd , Boolean.TRUE ) );
+    }
+
     public DBObject doEval( String code , Object ... args )
         throws MongoException {
 

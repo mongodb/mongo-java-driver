@@ -47,7 +47,7 @@ public class Mongo {
 
     public Mongo()
         throws UnknownHostException , MongoException {
-        this( new DBAddress( "test" ) );
+        this( "127.0.0.1" );
     }
 
     /**
