@@ -107,7 +107,6 @@ public abstract class GridFSFile implements DBObject {
             throw new RuntimeException( "key should never be null" );
         else if ( key.equals( "_id" ) )
             _id = v;
-        else if ( key.equals( "_ns"  ) );
         else if ( key.equals( "filename" ) )
             _filename = v == null ? null : v.toString();
         else if ( key.equals( "contentType" ) )

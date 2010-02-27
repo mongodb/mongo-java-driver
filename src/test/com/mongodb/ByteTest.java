@@ -299,19 +299,6 @@ public class ByteTest extends TestCase {
     }
 
     @Test(groups = {"basic"})
-    public void testCameFromDB() {
-        
-        assertEquals( Bytes.cameFromDB( (DBObject)null ), false );
-        DBObject o = new BasicDBObject();
-        assertEquals( Bytes.cameFromDB( o ), false );
-        o.put( "_id", new ObjectId() );
-        assertEquals( Bytes.cameFromDB( o ), false );
-        o.put( "_ns", "foo" );
-        assertEquals( Bytes.cameFromDB( o ), true );
-    }
-
-
-    @Test(groups = {"basic"})
     public void testPatternFlags() {
         boolean threw = false;
         assertEquals( 0, Bytes.patternFlags( "" ) );
@@ -418,7 +405,6 @@ public class ByteTest extends TestCase {
 
 
     void _testKeys( String[] want , Set<String> got ){
-        got.remove( "_ns" );
         assertEquals( want.length , got.size() );
         int pos = 0;
         for ( String s : got ){

@@ -284,10 +284,10 @@ public abstract class DBCollection {
      *
      * <p>
      * An empty DBObject will match every document in the collection.
-     * Regardless of fields specified, the _id and _ns fields are always returned.
+     * Regardless of fields specified, the _id fields are always returned.
      * </p>
      * <p>
-     * An example that returns the "x", "_id", and "_ns" fields for every document 
+     * An example that returns the "x" and "_id" fields for every document 
      * in the collection that has an "x" field:
      * </p>
      * <blockquote><pre>

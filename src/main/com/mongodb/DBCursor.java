@@ -315,7 +315,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     }
 
     void _noRefCheck( DBObject o ){
-        if ( ! Bytes.cameFromDB( o ) )
+        if ( ! false /*Bytes.cameFromDB( o ) */)
             return;
         
         o.put( Bytes.NO_REF_HACK , "z" );

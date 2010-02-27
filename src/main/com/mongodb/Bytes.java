@@ -148,25 +148,6 @@ public class Bytes {
         return 0;
     }
 
-    /** Determines whether the given object was once part of a db collection.
-     * This method is not foolproof, the the object has had its _id or _ns fields since
-     * it was fetched, this will return that <code>o</code> did not come from the db.
-     * @param o the object to check
-     * @return if <code>o</code> contains fields that are automatically added by the database on insertion
-     */
-    public static boolean cameFromDB( DBObject o ){
-        if ( o == null )
-            return false;
-
-        if ( o.get( "_id" ) == null )
-            return false;
-
-        if ( o.get( "_ns" ) == null )
-            return false;
-        
-        return true;
-    }
-
     /** Converts a string of regular expression flags from the database in Java regular
      * expression flags.
      * @param flags flags from database

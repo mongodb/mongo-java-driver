@@ -158,8 +158,6 @@ public abstract class ReflectionDBObject implements DBObject {
         }
 
         public Object set( ReflectionDBObject t , String name , Object val ){
-            if ( IGNORE_SETS.contains( name ) )
-                return null;
             FieldInfo i = _fields.get( name );
             if ( i == null )
                 throw new IllegalArgumentException( "no field [" + name + "] on [" + _name + "]" );
@@ -238,10 +236,4 @@ public abstract class ReflectionDBObject implements DBObject {
         IGNORE_FIELDS.add( "Int" );
     }
 
-    private static final Set<String> IGNORE_SETS = new HashSet<String>();
-    static {
-        IGNORE_SETS.add( "_ns" );
-    }
-
-    
 }

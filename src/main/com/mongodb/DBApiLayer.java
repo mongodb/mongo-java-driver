@@ -135,7 +135,6 @@ public class DBApiLayer extends DB {
         }
 
         public void doapply( DBObject o ){
-            o.put( "_ns" , _removeRoot( _fullNameSpace ) );
         }
 
         public void insert( DBObject o )
@@ -429,7 +428,6 @@ public class DBApiLayer extends DB {
                 while( decoder.more() && num < _num ){
                     final DBObject o = decoder.readObject();
 
-                    o.put( "_ns" , _shortNameSpace );
                     _lst.add( o );
                     num++;
 
