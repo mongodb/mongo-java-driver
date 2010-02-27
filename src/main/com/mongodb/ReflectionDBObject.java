@@ -240,8 +240,6 @@ public abstract class ReflectionDBObject implements DBObject {
 
     private static final Set<String> IGNORE_SETS = new HashSet<String>();
     static {
-        IGNORE_SETS.add( "_save" );
-        IGNORE_SETS.add( "_update" );
         IGNORE_SETS.add( "_ns" );
     }
 

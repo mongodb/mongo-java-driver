@@ -347,7 +347,7 @@ public abstract class DBCollection {
         return i.next();
     }
 
-    /** Adds the "private" fields _save, _update, and _id to an object.
+    /** Adds the "private" fields _id to an object.
      * @param o <code>DBObject</code> to which to add fields
      * @return the modified parameter object
      */
@@ -355,7 +355,7 @@ public abstract class DBCollection {
         return apply( o , true );
     }
     
-    /** Adds the "private" fields _save, _update, and (optionally) _id to an object.
+    /** Adds the "private" fields _id to an object.
      * @param jo object to which to add fields
      * @param ensureID whether to add an <code>_id</code> field or not
      * @return the modified object <code>o</code>
@@ -665,121 +665,6 @@ public abstract class DBCollection {
             }
         }
     }
-
-    /*
-    private void _findSubObject( Scope scope , DBObject jo , IdentitySet seenSubs ){
-        if ( seenSubs == null )
-            seenSubs = new IdentitySet();
-
-        if ( seenSubs.contains( jo ) )
-            return;
-        seenSubs.add( jo );
-        
-
-        if ( DEBUG ) System.out.println( "_findSubObject on : " + jo.get( "_id" ) );
-
-        LinkedList<DBObject> toSearch = new LinkedList();
-        Map<DBObject,String> seen = new IdentityHashMap<DBObject,String>();
-        toSearch.add( jo );
-
-        while ( toSearch.size() > 0 ){
-            
-            Map<DBObject,String> seenNow = new IdentityHashMap<DBObject,String>( seen );
-            
-            DBObject n = toSearch.remove(0);
-            for ( String name : n.keySet() ){
-
-                Object foo = Bytes.safeGet( n , name );
-                
-                if ( foo == null )
-                    continue;
-                
-                if ( ! ( foo instanceof DBObject ) )
-                    continue;
-                
-                if ( foo instanceof DBRef ){
-                    DBRef ref = (DBRef)foo;
-                    if ( ! ref.isDirty() )
-                        continue;
-                    foo = ref.getRealObject();
-                }
-
-                if ( foo instanceof JSFunction )
-                    continue;
-
-		if ( foo instanceof JSString 
-                     || foo instanceof JSRegex
-                     || foo instanceof JSDate )
-		    continue;
-                
-                if ( foo instanceof DBCollection || 
-                     foo instanceof DB )
-                    continue;
-                
-                DBObject e = (DBObject)foo;
-                if ( e instanceof BasicDBObject )
-                    ((BasicDBObject)e).prefunc();
-
-                if ( n.get( name ) == null )
-                    continue;
-
-                if ( e instanceof JSFileChunk ){
-                    _db.getCollection( "_chunks" ).apply( e );
-                }
-
-                if ( e.get( "_ns" ) == null ){
-                    if ( seen.containsKey( e ) )
-                        throw new RuntimeException( "you have a loop. key : " + name + " from a " + n.getClass()  + " which is a : " + e.getClass() );
-                    seenNow.put( e , "a" );
-                    toSearch.add( e );
-                    continue;
-                }
-
-
-                // ok - now we knows its a reference
-                
-                if ( e instanceof BasicDBObject &&
-                     ((BasicDBObject)e).isPartialObject() ){
-                    // TODO: i think this is correct
-                    // this means you have a reference to an object that was retrieved with only some objects
-                    // maybe this should do a extend, or throw an exception
-                    // but certainly shouldn't overwrite
-                    continue;
-                }
-
-                if ( e.get( "_id" ) == null ){ // new object, lets save it
-                    JSFunction otherSave = e.getFunction( "_save" );
-                    if ( otherSave == null )
-                        throw new RuntimeException( "no save :(" );
-                    otherSave.call( scope , e , null );
-                    continue;
-                }
-
-                // old object, lets update TODO: dirty tracking
-                DBObject lookup = new BasicDBObject();
-                lookup.set( "_id" , e.get( "_id" ) );
-
-                JSFunction otherUpdate = e.getFunction( "_update" );
-                if ( otherUpdate == null ){
-
-                    // already taken care of
-                    if ( e instanceof DBRef )
-                        continue;
-
-                    throw new RuntimeException( "_update is null class: " + e.getClass().getName() + "  keyset : " + e.keySet() + " ns:" + e.get( "_ns" ) );
-                }
-
-                if ( e instanceof BasicDBObject && ! ((BasicDBObject)e).isDirty() )
-                    continue;
-
-                otherUpdate.call( scope , lookup , e , _upsertOptions , seenSubs );
-
-            }
-            
-            seen.putAll( seenNow );
-        }
-    }
-    */
 
     /** Find a collection that is prefixed with this collection's name.
      * A typical use of this might be 

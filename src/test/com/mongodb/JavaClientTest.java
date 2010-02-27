@@ -45,7 +45,7 @@ public class JavaClientTest extends TestCase {
         m.put( "state" , "ny" );
         
         c.save( m );
-        
+        System.out.println( m.keySet() );
         assert( m.containsField( "_id" ) );
 
         Map out = (Map)(c.findOne( m.get( "_id" )));

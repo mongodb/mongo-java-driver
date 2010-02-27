@@ -79,10 +79,7 @@ public class ByteEncoder extends Bytes {
      * @return whether the string is a db field
      */    
     public static boolean dbOnlyField( String s ){
-        return 
-            s.equals( "_ns" )  
-            || s.equals( "_save" )
-            || s.equals( "_update" );
+        return s.equals( "_ns" );
     }
 
     /** Fetches a new <code>ByteEncoder</code> from the pool of available <code>ByteEncoder</code>s.
