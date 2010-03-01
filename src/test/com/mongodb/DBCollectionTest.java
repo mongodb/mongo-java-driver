@@ -108,6 +108,20 @@ public class DBCollectionTest extends TestCase {
 
     }
 
+    @Test
+    public void testEnsureIndex(){
+        DBCollection c = _db.getCollection( "ensureIndex1" );
+        c.drop();
+        
+        c.save( new BasicDBObject( "x" , 1 ) );
+        assertEquals( 1 , c.getIndexInfo().size() );
+
+        c.ensureIndex( new BasicDBObject( "x" , 1 ) , new BasicDBObject( "unique" , true ) );
+        assertEquals( 2 , c.getIndexInfo().size() );
+        assertEquals( Boolean.TRUE , c.getIndexInfo().get(1).get( "unique" ) );
+    }
+
+
     final DB _db;
 
     public static void main( String args[] )

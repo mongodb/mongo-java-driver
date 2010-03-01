@@ -357,22 +357,15 @@ public class DBApiLayer extends DB {
 
         }
 
-        public void ensureIndex( DBObject keys , String name )
+        protected void createIndex( final DBObject keys, final DBObject options )
             throws MongoException {
-            ensureIndex(keys, name, false);
-        }
+            
+            DBObject full = new BasicDBObject();
+            for ( String k : options.keySet() )
+                full.put( k , options.get( k ) );
+            full.put( "key" , keys );
 
-        public void ensureIndex( DBObject keys, String name, boolean unique)
-            throws MongoException {
-
-            DBObject o = new BasicDBObject();
-            o.put( "name" , name );
-            o.put( "ns" , _fullNameSpace );
-            o.put( "key" , keys );
-            o.put( "unique", unique);
-
-        //dm-system isnow in our database
-        DBApiLayer.this.doGetCollection( "system.indexes" ).insert( o , false );
+            DBApiLayer.this.doGetCollection( "system.indexes" ).insert( full , false );
         }
 
         final String _fullNameSpace;

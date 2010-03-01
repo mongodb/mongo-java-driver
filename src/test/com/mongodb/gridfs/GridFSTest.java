@@ -27,12 +27,30 @@ import com.mongodb.gridfs.*;
 import com.mongodb.util.*;
 
 public class GridFSTest extends TestCase {
-
+    
     public GridFSTest()
         throws IOException , MongoException {
         super();
-        _db = new Mongo( "127.0.0.1" ).getDB( "cursortest" );
-        _fs = new GridFS( _db );
+        try {
+            _db = new Mongo( "127.0.0.1" ).getDB( "cursortest" );
+            _fs = new GridFS( _db );
+        }
+        catch ( MongoException e ){
+            e.printStackTrace();
+            throw e;
+        }
+        catch ( IOException io ){
+            io.printStackTrace();
+            throw io;
+        }
+        catch ( RuntimeException re ){
+            re.printStackTrace();
+            throw re;
+        }
+        catch ( Throwable t ){
+            t.printStackTrace();
+            throw new RuntimeException( t );
+        }
     }
 
     int[] _get(){

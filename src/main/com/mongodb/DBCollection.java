@@ -118,20 +118,8 @@ public abstract class DBCollection {
         return find( ref , fields , numToSkip , batchSize , 0 );
     }
 
-    /** Ensures an index on this collection (that is, the index will be created if it does not exist).
-     * ensureIndex is optimized and is inexpensive if the index already exists.
-     * @param keys fields to use for index
-     * @param name an identifier for the index
-     * @dochub indexes
-     */
-    public abstract void ensureIndex( DBObject keys , String name ) throws MongoException ;
+    protected abstract void createIndex( DBObject keys , DBObject options ) throws MongoException ;
 
-    /** Ensures an optionally unique index on this collection.
-     * @param keys fields to use for index
-     * @param name an identifier for the index
-     * @param unique if the index should be unique
-     */
-    public abstract void ensureIndex( DBObject keys , String name , boolean unique ) throws MongoException ;
 
     // ------
 
@@ -161,37 +149,59 @@ public abstract class DBCollection {
         return (iterator != null ? iterator.next() : null);
     }
 
-    /** Creates an index on a set of fields, if one does not already exist.
-     * @param keys an object with a key set of the fields desired for the index
-     */
-    public final void ensureIndex( final DBObject keys )
-        throws MongoException {
-        ensureIndex( keys , false );
-    }
+    // --- START INDEX CODE ---
 
     /** Forces creation of an index on a set of fields, if one does not already exist.
      * @param keys an object with a key set of the fields desired for the index
      */
     public final void createIndex( final DBObject keys )
         throws MongoException {
-        ensureIndex( keys , true );
+        createIndex( keys , defaultOptions( keys ) );
     }
 
     /** Creates an index on a set of fields, if one does not already exist.
      * @param keys an object with a key set of the fields desired for the index
-     * @param force if index creation should be forced, even if it is unnecessary
      */
-    public final void ensureIndex( final DBObject keys , final boolean force )
+    public final void ensureIndex( final DBObject keys )
         throws MongoException {
-        ensureIndex( keys , force, false );
+        ensureIndex( keys , defaultOptions( keys ) );
     }
 
-    public final void ensureIndex( final DBObject keys , final boolean force , final boolean unique )
+    /** Ensures an index on this collection (that is, the index will be created if it does not exist).
+     * ensureIndex is optimized and is inexpensive if the index already exists.
+     * @param keys fields to use for index
+     * @param name an identifier for the index
+     * @dochub indexes
+     */
+    public void ensureIndex( DBObject keys , String name ) 
+        throws MongoException {
+        ensureIndex( keys , name , false );
+    }
+
+    /** Ensures an optionally unique index on this collection.
+     * @param keys fields to use for index
+     * @param name an identifier for the index
+     * @param unique if the index should be unique
+     */
+    public void ensureIndex( DBObject keys , String name , boolean unique ) 
+        throws MongoException {
+        DBObject options = defaultOptions( keys );
+        options.put( "name" , name );
+        if ( unique )
+            options.put( "unique" , Boolean.TRUE );
+        ensureIndex( keys , options );
+    }
+
+    public final void ensureIndex( final DBObject keys , final DBObject optionsIN )
         throws MongoException {
 
         if ( checkReadOnly( false ) ) return;
 
-        final String name = genIndexName( keys );
+        final DBObject options = defaultOptions( keys );
+        for ( String k : optionsIN.keySet() )
+            options.put( k , optionsIN.get( k ) );
+
+        final String name = options.get( "name" ).toString();
 
         boolean doEnsureIndex = false;
         if ( Math.random() > 0.999 )
@@ -201,10 +211,10 @@ public abstract class DBCollection {
         else if ( _anyUpdateSave && ! _createIndexesAfterSave.contains( name ) )
             doEnsureIndex = true;
 
-        if ( ! ( force || doEnsureIndex ) )
+        if ( ! doEnsureIndex )
             return;
 
-        ensureIndex( keys , name , unique );
+        createIndex( keys , options );
 
         _createIndexes.add( name );
         if ( _anyUpdateSave )
@@ -214,6 +224,13 @@ public abstract class DBCollection {
     /** Clears all indices that have not yet been applied to this collection. */
     public void resetIndexCache(){
         _createIndexes.clear();
+    }
+
+    DBObject defaultOptions( DBObject keys ){
+        DBObject o = new BasicDBObject();
+        o.put( "name" , genIndexName( keys ) );
+        o.put( "ns" , _fullName );
+        return o;
     }
 
     /** Generate an index name from the set of fields it is over.
@@ -232,6 +249,8 @@ public abstract class DBCollection {
         }
         return name;
     }
+
+    // --- END INDEX CODE ---
 
     /** Set hint fields for this collection.
      * @param lst a list of <code>DBObject</code>s to be used as hints
