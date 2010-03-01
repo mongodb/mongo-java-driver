@@ -157,39 +157,8 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( Object obj, DBObject fields ) {
-        ensureIDIndex();
-
-        Iterator<DBObject> iterator =  find(new BasicDBObject("_id", obj), fields, 0, -1, 0);
-
+        Iterator<DBObject> iterator = find(new BasicDBObject("_id", obj), fields, 0, -1, 0);
         return (iterator != null ? iterator.next() : null);
-    }
-
-    /** Ensures an index on the id field, if one does not already exist.
-     * @param key an object with an _id field.
-     */
-    public void checkForIDIndex( DBObject key )
-        throws MongoException {
-        if ( _checkedIdIndex ) // we already created it, so who cares
-            return;
-
-        if ( key.get( "_id" ) == null )
-            return;
-
-        if ( key.keySet().size() > 1 )
-            return;
-
-        ensureIDIndex();
-    }
-
-    /** Creates an index on the id field, if one does not already exist.
-     */
-    public void ensureIDIndex()
-        throws MongoException {
-        if ( _checkedIdIndex )
-            return;
-
-        ensureIndex( _idKey );
-        _checkedIdIndex = true;
     }
 
     /** Creates an index on a set of fields, if one does not already exist.
@@ -799,11 +768,9 @@ public abstract class DBCollection {
 
     private boolean _anyUpdateSave = false;
 
-    private boolean _checkedIdIndex = false;
     final private Set<String> _createIndexes = new HashSet<String>();
     final private Set<String> _createIndexesAfterSave = new HashSet<String>();
 
     private final static DBObject _upsertOptions = BasicDBObjectBuilder.start().add( "upsert" , true ).get();
-    private final static DBObject _idKey = BasicDBObjectBuilder.start().add( "_id" , 1 ).get();
 
 }
