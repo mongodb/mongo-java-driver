@@ -204,9 +204,7 @@ public abstract class DBCollection {
         final String name = options.get( "name" ).toString();
 
         boolean doEnsureIndex = false;
-        if ( Math.random() > 0.999 )
-            doEnsureIndex = true;
-        else if ( ! _createIndexes.contains( name ) )
+        if ( ! _createIndexes.contains( name ) )
             doEnsureIndex = true;
         else if ( _anyUpdateSave && ! _createIndexesAfterSave.contains( name ) )
             doEnsureIndex = true;
