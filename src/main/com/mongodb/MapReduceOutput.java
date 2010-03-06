@@ -18,6 +18,10 @@ public class MapReduceOutput {
         _coll.drop();
     }
     
+    public DBCollection getOutputCollection(){
+        return _coll;
+    }
+
     final String _collname;
     final DBCollection _coll;
     final BasicDBObject _counts;
