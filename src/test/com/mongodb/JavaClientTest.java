@@ -95,6 +95,21 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
+    public void testCodeWScope()
+        throws MongoException {
+        DBCollection c = _db.getCollection( "testCodeWScope" );
+        c.drop();
+        assertNull( c.findOne() );
+        
+        c.save( BasicDBObjectBuilder.start().add( "a" , 1 ).get() );
+        assertNotNull( c.findOne() != null );
+     
+        assertNotNull( c.findOne( BasicDBObjectBuilder.start().add( "$where" , new CodeWScope( "this.a == x" , new BasicDBObject( "x" , 1 )  ) ).get() ) );
+        assertNull( c.findOne( BasicDBObjectBuilder.start().add( "$where" , new CodeWScope( "this.a == x" , new BasicDBObject( "x" , 2 )  ) ).get() ) );
+    }
+
+
+    @Test
     public void testCount()
         throws MongoException {
         DBCollection c = _db.getCollection("testCount");

@@ -280,6 +280,9 @@ public class ByteEncoder extends Bytes {
         else if (val instanceof DBTimestamp) {
             putTimestamp( name , (DBTimestamp)val );
         }
+        else if (val instanceof CodeWScope) {
+            putCodeWScope( name , (CodeWScope)val );
+        }
         else 
             throw new IllegalArgumentException( "can't serialize " + val.getClass() );
         
@@ -347,6 +350,17 @@ public class ByteEncoder extends Bytes {
         _put( TIMESTAMP , name );
         _buf.putInt( ts.getTime() );
         _buf.putInt( ts.getInc() );
+        return _buf.position() - start;        
+    }
+
+    protected int putCodeWScope( String name , CodeWScope code ){
+        final int start = _buf.position();
+        _put( CODE_W_SCOPE , name );
+        int temp = _buf.position();
+        _buf.putInt( 0 );
+        _putValueString( code._code );
+        putObject( code._scope );
+        _buf.putInt( temp , _buf.position() - start );
         return _buf.position() - start;        
     }
 
