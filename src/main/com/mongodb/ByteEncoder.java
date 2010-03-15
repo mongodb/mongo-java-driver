@@ -360,7 +360,7 @@ public class ByteEncoder extends Bytes {
         _buf.putInt( 0 );
         _putValueString( code._code );
         putObject( code._scope );
-        _buf.putInt( temp , _buf.position() - start );
+        _buf.putInt( temp , _buf.position() - temp );
         return _buf.position() - start;        
     }
 
