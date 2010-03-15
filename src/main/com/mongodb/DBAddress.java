@@ -25,7 +25,7 @@ import com.mongodb.util.*;
 
 /** Aquires the address of the database(s).
  */
-public class DBAddress {
+public class DBAddress extends ServerAddress {
     
     /** Creates a new address
      * Accepts as the parameter format:
@@ -47,33 +47,31 @@ public class DBAddress {
      */
     public DBAddress( String urlFormat )
         throws UnknownHostException {
+        super( _getHostSection( urlFormat ) );
+
         _check( urlFormat , "urlFormat" );
-        
-        int idx = urlFormat.indexOf( "/" );
-        if ( idx < 0 ){
-            _host = defaultHost();
-            _port = defaultPort();
-            _name = _fixName( urlFormat );
-        }
-        else {
-            _name = _fixName( urlFormat.substring( idx + 1 ).trim() );
-            urlFormat = urlFormat.substring( 0 , idx ).trim();
-            idx = urlFormat.indexOf( ":" );
-            if ( idx < 0 ){
-                _host = urlFormat.trim();
-                _port = defaultPort();
-            }
-            else {
-                _host = urlFormat.substring( 0 , idx );
-                _port = Integer.parseInt( urlFormat.substring( idx + 1 ) );
-            }
-        }
+        _db = _fixName( _getDBSection( urlFormat ) );
         
         _check( _host , "host" );
-        _check( _name , "name" );
-        
-        _addrs = _getAddress( _host );
-        _addr = _addrs[0];
+        _check( _db , "db" );
+    }
+
+    static String _getHostSection( String urlFormat ){
+        if ( urlFormat == null )
+            throw new NullPointerException( "urlFormat can't be null" );
+        int idx = urlFormat.indexOf( "/" );
+        if ( idx >= 0 )
+            return urlFormat.substring( 0 , idx );
+        return null;
+    }
+
+    static String _getDBSection( String urlFormat ){
+        if ( urlFormat == null )
+            throw new NullPointerException( "urlFormat can't be null" );
+        int idx = urlFormat.indexOf( "/" );
+        if ( idx >= 0 )
+            return urlFormat.substring( idx + 1 );
+        return urlFormat;
     }
     
     static String _fixName( String name ){
@@ -85,18 +83,18 @@ public class DBAddress {
      * @param other the existing <code>DBAddress</code>
      * @param name the database to which to connect
      */
-    public DBAddress( DBAddress other , String name )
+    public DBAddress( DBAddress other , String dbname )
         throws UnknownHostException {
-        this( other._host , other._port , name );
+        this( other._host , other._port , dbname );
     }
 
     /** Connects to a database with a given name at a given host.
      * @param host host name
      * @param name database name
      */
-    public DBAddress( String host , String name )
+    public DBAddress( String host , String dbname )
         throws UnknownHostException {
-        this( host , DBPort.PORT , name );
+        this( host , DBPort.PORT , dbname );
     }
     
     /** Connects to a database with a given host, port, and name
@@ -104,17 +102,10 @@ public class DBAddress {
      * @param port database port
      * @param name database name
      */
-    public DBAddress( String host , int port , String name )
+    public DBAddress( String host , int port , String dbname )
         throws UnknownHostException {
-        _check( host , "host" );
-        _check( name , "name" );
-        
-        _host = host.trim();
-        _port = port;
-        _name = name.trim();
-
-        _addrs = _getAddress( _host );
-        _addr = _addrs[0];
+        super( host , port );
+        _db = dbname.trim();
     }
 
     /** Connects to a database with a given host, port, and name
@@ -122,17 +113,10 @@ public class DBAddress {
      * @param port database port
      * @param name database name
      */
-    public DBAddress( InetAddress addr , int port , String name ){
-        if ( addr == null )
-            throw new IllegalArgumentException( "addr can't be null" );
-        _check( name , "name" );
-        
-        _host = addr.getHostName();
-        _port = port;
-        _name = name.trim();
-        
-        _addr = addr;
-        _addrs = new InetAddress[]{ addr };
+    public DBAddress( InetAddress addr , int port , String dbname ){
+        super( addr , port );
+        _check( dbname , "name" );
+        _db = dbname.trim();
     }
 
     static void _check( String thing , String name ){
@@ -145,7 +129,7 @@ public class DBAddress {
     }
 
     public int hashCode(){
-        return _host.hashCode() + _port + _name.hashCode();
+        return super.hashCode() + _db.hashCode();
     }
 
     public boolean equals( Object other ){
@@ -153,64 +137,12 @@ public class DBAddress {
             DBAddress a = (DBAddress)other;
             return 
                 a._port == _port &&
-                a._name.equals( _name ) &&
+                a._db.equals( _db ) &&
                 a._host.equals( _host );
         }
         return false;
     }
 
-    /** String representation of address as host:port/dbname.
-     * @return this address
-     */
-    public String toString(){
-        return _host + ":" + _port + "/" + _name;
-    }
-
-    /** Creates an new <code>InetSocketAddress</code> using this address.
-     */
-    public InetSocketAddress getSocketAddress(){
-        return new InetSocketAddress( _addr , _port );
-    }
-
-    /** Determines whether this address is the same as a given host.
-     * @param host the address to compare
-     * @return if they are the same
-     */
-    public boolean sameHost( String host ){
-        int idx = host.indexOf( ":" );
-        int port = defaultPort();
-        if ( idx > 0 ){
-            port = Integer.parseInt( host.substring( idx + 1 ) );
-            host = host.substring( 0 , idx );
-        }
-
-        return 
-            _port == port &&
-            _host.equalsIgnoreCase( host );
-    }
-
-    /** Determines if the database at this address is paired.
-     * @return if this address connects to a set of paired databases
-     */
-    boolean isPaired(){
-        return _addrs.length > 1;
-    }
-
-    /** If this is the address of a paired database, returns addresses for
-     * all of the databases with which it is paired.
-     * @return the addresses
-     * @throws RuntimeException if this address is not one of a paired database
-     */
-    List<DBAddress> getPairedAddresses(){
-        if ( _addrs.length != 2 )
-            throw new RuntimeException( "not paired.  num addressed : " + _addrs.length );
-        
-        List<DBAddress> l = new ArrayList<DBAddress>();
-        for ( int i=0; i<_addrs.length; i++ ){
-            l.add( new DBAddress( _addrs[i] , _port , _name ) );
-        }
-        return l;
-    }
 
     public DBAddress getSister( String name ){
         try {
@@ -220,48 +152,17 @@ public class DBAddress {
             throw new MongoInternalException( "shouldn't be possible" , uh );
         }
     }
-
-    public String getHost(){
-        return _host;
-    }
-    
-    public int getPort(){
-        return _port;
-    }
     
     public String getDBName(){
-        return _name;
-    }
-       
-    
-    final String _host;
-    final int _port;
-    final String _name;
-    final InetAddress _addr;
-    final InetAddress[] _addrs;
-    
-    private static InetAddress[] _getAddress( String host )
-        throws UnknownHostException {
-
-        if (host.toLowerCase().equals("localhost")) {
-            return new InetAddress[] { InetAddress.getLocalHost()};
-        }
-        
-        return InetAddress.getAllByName( host );
+        return _db;
     }
 
-    /** Returns the default database host.
-     * @return the db_ip environmental variable, or "127.0.0.1" as a default
+    /** String representation of address as host:port/dbname.
+     * @return this address
      */
-    public static String defaultHost(){
-        return Config.get().getTryEnvFirst( "db_ip" , "127.0.0.1" );
-    }
-
-    /** Returns the default port that the database runs on.
-     * @return the db_port environmental variable, or 27017 as a default
-     */
-    public static int defaultPort(){
-        return Integer.parseInt(Config.get().getTryEnvFirst("db_port", Integer.toString(DBPort.PORT)));
+    public String toString(){
+        return super.toString() + "/" + _db;
     }
     
+    final String _db;
 }

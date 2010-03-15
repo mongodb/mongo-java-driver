@@ -29,7 +29,7 @@ class DBTCPConnector implements DBConnector {
     static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
     static Logger _createLogger = Logger.getLogger( _logger.getName() + ".connect" );
 
-    public DBTCPConnector( Mongo m , DBAddress addr )
+    public DBTCPConnector( Mongo m , ServerAddress addr )
         throws MongoException {
         _mongo = m;
         _portHolder = new DBPortPool.Holder( m._options );
@@ -38,8 +38,7 @@ class DBTCPConnector implements DBConnector {
         _createLogger.info( addr.toString() );
 
         if ( addr.isPaired() ){
-            _allHosts = new ArrayList<DBAddress>( addr.getPairedAddresses() );
-            _validatePairs( _allHosts );
+            _allHosts = new ArrayList<ServerAddress>( addr.explode() );
             _createLogger.info( "switch to paired mode : " + _allHosts + " -> " + _curAddress  );
         }
         else {
@@ -49,41 +48,29 @@ class DBTCPConnector implements DBConnector {
 
     }
 
-    public DBTCPConnector( Mongo m , DBAddress ... all )
+    public DBTCPConnector( Mongo m , ServerAddress ... all )
         throws MongoException {
         this( m , Arrays.asList( all ) );
     }
 
-    public DBTCPConnector( Mongo m , List<DBAddress> all )
+    public DBTCPConnector( Mongo m , List<ServerAddress> all )
         throws MongoException {
         _mongo = m;
         _portHolder = new DBPortPool.Holder( m._options );
         _checkAddress( all );
 
-        _validatePairs( all );
-
-        _allHosts = new ArrayList<DBAddress>( all ); // make a copy so it can't be modified
+        _allHosts = new ArrayList<ServerAddress>( all ); // make a copy so it can't be modified
 
         _createLogger.info( all  + " -> " + _curAddress );
     }
 
-    private void _validatePairs( List<DBAddress> all ){
-
-        final String name = all.get(0)._name;
-        for ( int i=1; i<all.size(); i++ ){
-            if ( ! all.get(i)._name.equals( name ) )
-                throw new IllegalArgumentException( " names don't match [" + all.get(i)._name + "] != [" + name + "]" );
-        }
-
-    }
-
-    private static DBAddress _checkAddress( DBAddress addr ){
+    private static ServerAddress _checkAddress( ServerAddress addr ){
         if ( addr == null )
             throw new NullPointerException( "address can't be null" );
         return addr;
     }
 
-    private static DBAddress _checkAddress( List<DBAddress> addrs ){
+    private static ServerAddress _checkAddress( List<ServerAddress> addrs ){
         if ( addrs == null )
             throw new NullPointerException( "addresses can't be null" );
         if ( addrs.size() == 0 )
@@ -196,7 +183,7 @@ class DBTCPConnector implements DBConnector {
         }
     }
 
-    public DBAddress getAddress(){
+    public ServerAddress getAddress(){
         return _curAddress;
     }
 
@@ -332,7 +319,7 @@ class DBTCPConnector implements DBConnector {
 
             String remote = res.get( "remote" ).toString();
             synchronized ( _allHosts ){
-                for ( DBAddress a : _allHosts ){
+                for ( ServerAddress a : _allHosts ){
                     if ( ! a.sameHost( remote ) )
                         continue;
                     System.out.println( "remote [" + remote + "] -> [" + a + "]" );
@@ -354,7 +341,7 @@ class DBTCPConnector implements DBConnector {
         synchronized ( _allHosts ){
             Collections.shuffle( _allHosts );
             for ( int i=0; i<_allHosts.size(); i++ ){
-                DBAddress a = _allHosts.get( i );
+                ServerAddress a = _allHosts.get( i );
                 if ( a == _curAddress )
                     continue;
 
@@ -369,7 +356,7 @@ class DBTCPConnector implements DBConnector {
         throw new MongoException( "couldn't find a new host to swtich too" );
     }
 
-    private boolean _set( DBAddress addr ){
+    private boolean _set( ServerAddress addr ){
         if ( _curAddress == addr )
             return false;
         _curAddress = addr;
@@ -388,10 +375,10 @@ class DBTCPConnector implements DBConnector {
     }
 
     final Mongo _mongo;
-    private DBAddress _curAddress;
+    private ServerAddress _curAddress;
     private DBPortPool _curPortPool;
     private DBPortPool.Holder _portHolder;
-    private final List<DBAddress> _allHosts;
+    private final List<ServerAddress> _allHosts;
 
     private final ThreadLocal<MyPort> _threadPort = new ThreadLocal<MyPort>(){
         protected MyPort initialValue(){

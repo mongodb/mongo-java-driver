@@ -57,6 +57,16 @@ public class DBAddressTest extends TestCase {
         threw = false;
     }
 
+    @Test
+    public void testBasics()
+        throws UnknownHostException {
+        assertEquals( 27017 , new ServerAddress().getPort() );
+        assertEquals( 27017 , new ServerAddress( "localhost" ).getPort() );
+        assertEquals( 9999 , new ServerAddress( "localhost:9999" ).getPort() );
+
+        assertEquals( false , new ServerAddress( "localhost:9999" ).isPaired() );
+    }
+    
     public static void main( String args[] ) {
         (new DBAddressTest()).runConsole();
     }

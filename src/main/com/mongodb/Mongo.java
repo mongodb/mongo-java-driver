@@ -68,12 +68,12 @@ public class Mongo {
     public static final int MINOR_VERSION = 3;
 
     public static DB connect( DBAddress addr ){
-        return new Mongo( addr ).getDB( addr._name );
+        return new Mongo( addr ).getDB( addr.getDBName() );
     }
 
     public Mongo()
         throws UnknownHostException , MongoException {
-        this( "127.0.0.1" );
+        this( new ServerAddress() );
     }
 
     /**
@@ -84,7 +84,7 @@ public class Mongo {
      */
     public Mongo( String host )
         throws UnknownHostException , MongoException {
-        this( new DBAddress( host , "test" ) );
+        this( new ServerAddress( host ) );
     }
 
     /**
@@ -96,7 +96,7 @@ public class Mongo {
      */
     public Mongo( String host , MongoOptions options )
         throws UnknownHostException , MongoException {
-        this( new DBAddress( host , "test" ) , options );
+        this( new ServerAddress( host ) , options );
     }
 
     /**
@@ -107,7 +107,7 @@ public class Mongo {
      */
     public Mongo( String host , int port )
         throws UnknownHostException , MongoException {
-        this( new DBAddress( host , port , "test" ) );
+        this( new ServerAddress( host , port ) );
     }
 
     /**
@@ -115,7 +115,7 @@ public class Mongo {
      * @see com.mongodb.DBAddress
      * @param addr the database address
      */
-    public Mongo( DBAddress addr )
+    public Mongo( ServerAddress addr )
         throws MongoException {
         this( addr , new MongoOptions() );
     }
@@ -126,7 +126,7 @@ public class Mongo {
      * @see com.mongodb.DBAddress
      * @param addr the database address
      */
-    public Mongo( DBAddress addr , MongoOptions options )
+    public Mongo( ServerAddress addr , MongoOptions options )
         throws MongoException {
         _addr = addr;
         _addrs = null;
@@ -140,7 +140,7 @@ public class Mongo {
        * @param left left side of the pair
        * @param right right side of the pair
      */
-    public Mongo( DBAddress left , DBAddress right )
+    public Mongo( ServerAddress left , ServerAddress right )
         throws MongoException {
         this( left , right , new MongoOptions() );
     }
@@ -150,7 +150,7 @@ public class Mongo {
        * @param left left side of the pair
        * @param right right side of the pair
      */
-    public Mongo( DBAddress left , DBAddress right , MongoOptions options )
+    public Mongo( ServerAddress left , ServerAddress right , MongoOptions options )
         throws MongoException {
         _addr = null;
         _addrs = Arrays.asList( left , right );
@@ -226,12 +226,12 @@ public class Mongo {
     /** Gets the address of this database.
      * @return the address
      */
-    public DBAddress getAddress(){
+    public ServerAddress getAddress(){
         return _connector.getAddress();
     }
     
-    final DBAddress _addr;
-    final List<DBAddress> _addrs;
+    final ServerAddress _addr;
+    final List<ServerAddress> _addrs;
     final MongoOptions _options;
     final DBTCPConnector _connector;
     final Map<String,DB> _dbs = new HashMap<String,DB>();
