@@ -135,7 +135,7 @@ class DBTCPConnector implements DBConnector {
         }
         catch ( IOException ioe ){
             mp.error( ioe );
-            _error();
+            _error( ioe );
             if ( concern == DB.WriteConcern.NONE )
                 return;
             throw new MongoException.Network( "can't say something" , ioe );
@@ -175,7 +175,7 @@ class DBTCPConnector implements DBConnector {
         }
         catch ( IOException ioe ){
             mp.error( ioe );
-            if ( _error() && retries > 0 ){
+            if ( _error( ioe ) && retries > 0 ){
                 in.position( 0 );
                 return _call( db , op , out , in , retries - 1 );
             }
@@ -191,10 +191,13 @@ class DBTCPConnector implements DBConnector {
         return _curAddress.toString();
     }
 
-    boolean _error()
+    boolean _error( Throwable t )
         throws MongoException {
-        if ( _allHosts != null )
+        if ( _allHosts != null ){
+            System.out.println( "paired mode, switching master b/c of: " + t );
+            t.printStackTrace();
             _pickCurrent();
+        }
         return true;
     }
 
