@@ -72,6 +72,18 @@ public class DBApiLayer extends DB {
     }
 
 
+    public void requestStart(){
+        _connector.requestStart();
+    }
+
+    public void requestDone(){
+        _connector.requestDone();
+    }
+    
+    public void requestEnsureConnection(){
+        _connector.requestEnsureConnection();
+    }
+
     protected MyCollection doGetCollection( String name ){
         MyCollection c = _collections.get( name );
         if ( c != null )

@@ -24,6 +24,11 @@ import java.nio.*;
 import java.util.*;
 
 public interface DBConnector {
+
+    public void requestStart();
+    public void requestDone();
+    public void requestEnsureConnection();
+    
     public void say( DB db , int op , ByteBuffer buf , DB.WriteConcern concern ) throws MongoException;
     public int call( DB db , int op , ByteBuffer out , ByteBuffer in ) throws MongoException;
 }

@@ -35,9 +35,9 @@ public abstract class DB {
     	_name = name;
     }
 
-    public void requestStart(){}
-    public void requestDone(){}
-    public void requestEnsureConnection(){}
+    public abstract void requestStart();
+    public abstract void requestDone();
+    public abstract void requestEnsureConnection();
     
     /** Returns the collection represented by the string &lt;dbName&gt;.&lt;collectionName&gt;.
      * @param fullNameSpace the string
