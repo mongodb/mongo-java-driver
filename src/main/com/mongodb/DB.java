@@ -29,7 +29,29 @@ import com.mongodb.util.*;
  */
 public abstract class DB {
 
-    public static enum WriteConcern { NONE, NORMAL, STRICT };
+    /**
+     * Settings for strictness of error checking on writes (inserts,
+     * updates, and removes).
+     */
+    public static enum WriteConcern {
+        /**
+         * Don't check for or report any errors on writes.
+         */
+        NONE,
+        /**
+         * Use the default level of error checking on writes. Don't
+         * send a getLastError command or wait for a response, but do
+         * raise an exception on socket errors.
+         */
+        NORMAL,
+        /**
+         * Send a getLastError command following all writes. The write
+         * will wait for a response from the server and raise an
+         * exception on any error. Equivalent to the "safe mode" that
+         * is present in some other MongoDB drivers.
+         */
+        STRICT
+    };
 
     public DB( String name ){
     	_name = name;
@@ -229,11 +251,21 @@ public abstract class DB {
         throws MongoException {
         return command(new BasicDBObject("getlasterror", 1));
     }
-    
+
+    /**
+     * Set the write concern for this database. Will be used for
+     * writes to any collection in this database. See the
+     * documentation for WriteConcern for more information.
+     *
+     * @param concern write concern to use
+     */
     public void setWriteConcern( WriteConcern concern ){
         _concern = concern;
     }
 
+    /**
+     * Get the write concern for this database.
+     */
     public WriteConcern getWriteConcern(){
         return _concern;
     }

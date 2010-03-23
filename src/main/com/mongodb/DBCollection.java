@@ -761,10 +761,21 @@ public abstract class DBCollection {
         return _wrapper.getInternalClass( path );
     }
 
+    /**
+     * Set the write concern for this collection. Will be used for
+     * writes to this collection. Overrides any setting of write
+     * concern at the DB level. See the documentation for WriteConcern
+     * for more information.
+     *
+     * @param concern write concern to use
+     */
     public void setWriteConcern( DB.WriteConcern concern ){
         _concern = concern;
     }
 
+    /**
+     * Get the write concern for this collection.
+     */
     public DB.WriteConcern getWriteConcern(){
         if ( _concern != null )
             return _concern;
