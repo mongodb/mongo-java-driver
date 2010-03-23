@@ -50,7 +50,7 @@ public abstract class DB {
          * exception on any error. Equivalent to the "safe mode" that
          * is present in some other MongoDB drivers.
          */
-        STRICT
+        STRICT;
     };
 
     public DB( String name ){
@@ -255,7 +255,7 @@ public abstract class DB {
     /**
      * Set the write concern for this database. Will be used for
      * writes to any collection in this database. See the
-     * documentation for WriteConcern for more information.
+     * documentation for {@link WriteConcern} for more information.
      *
      * @param concern write concern to use
      */

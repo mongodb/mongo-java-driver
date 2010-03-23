@@ -764,8 +764,8 @@ public abstract class DBCollection {
     /**
      * Set the write concern for this collection. Will be used for
      * writes to this collection. Overrides any setting of write
-     * concern at the DB level. See the documentation for WriteConcern
-     * for more information.
+     * concern at the DB level. See the documentation for
+     * {@link DB.WriteConcern} for more information.
      *
      * @param concern write concern to use
      */
