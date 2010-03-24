@@ -224,6 +224,8 @@ public class DBPort {
     private void _read( ByteBuffer buf )
         throws IOException {
         int x = _in.read( buf.array() , buf.position() , buf.remaining() );
+        if ( x < 0 )
+            throw new IOException( "connection to server closed unexpectedly" );
         buf.position( buf.position() + x );
     }
     

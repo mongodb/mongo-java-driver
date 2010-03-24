@@ -68,7 +68,7 @@ public class DBApiLayer extends DB {
     }
     protected int doGetMore( ByteBuffer out , ByteBuffer in )
         throws MongoException {
-        return _connector.call( this , 2005 , out , in );
+        return _connector.call( this , 2005 , out , in , 0 );
     }
 
 

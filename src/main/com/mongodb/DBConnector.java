@@ -31,4 +31,5 @@ public interface DBConnector {
     
     public void say( DB db , int op , ByteBuffer buf , DB.WriteConcern concern ) throws MongoException;
     public int call( DB db , int op , ByteBuffer out , ByteBuffer in ) throws MongoException;
+    public int call( DB db , int op , ByteBuffer out , ByteBuffer in , int retries ) throws MongoException;
 }

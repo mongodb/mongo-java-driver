@@ -144,10 +144,10 @@ class DBTCPConnector implements DBConnector {
     
     public int call( DB db , int op , ByteBuffer out , ByteBuffer in )
         throws MongoException {
-        return _call( db , op , out , in , 2 );
+        return call( db , op , out , in , 2 );
     }
 
-    private int _call( DB db , int op , ByteBuffer out , ByteBuffer in , int retries )
+    public int call( DB db , int op , ByteBuffer out , ByteBuffer in , int retries )
         throws MongoException {
         MyPort mp = _threadPort.get();
         DBPort port = mp.get( false );
@@ -167,7 +167,7 @@ class DBTCPConnector implements DBConnector {
                         throw new MongoException( "not talking to master and retries used up" );
                     in.position( 0 );
 
-                    return _call( db , op , out , in , retries -1 );
+                    return call( db , op , out , in , retries -1 );
                 }
             }
 
@@ -177,7 +177,7 @@ class DBTCPConnector implements DBConnector {
             mp.error( ioe );
             if ( _error( ioe ) && retries > 0 ){
                 in.position( 0 );
-                return _call( db , op , out , in , retries - 1 );
+                return call( db , op , out , in , retries - 1 );
             }
             throw new MongoException.Network( "can't call something" , ioe );
         }
