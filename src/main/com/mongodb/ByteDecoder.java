@@ -105,8 +105,9 @@ public class ByteDecoder extends Bytes {
             // intentionally empty
         }
         
-        if ( _buf.position() - start != len )
-            throw new MongoInternalException( "lengths don't match " + (_buf.position() - start) + " != " + len );
+        if ( _buf.position() - start != len ){
+            throw new MongoInternalException( "lengths don't match " + (_buf.position() - start) + " != " + len + " object: " + created );
+        }
         
         return created;
     }
