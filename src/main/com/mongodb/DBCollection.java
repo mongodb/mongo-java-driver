@@ -242,7 +242,7 @@ public abstract class DBCollection {
                 name += "_";
             name += s + "_";
             Object val = keys.get( s );
-            if ( val instanceof Number )
+            if ( val instanceof Number || val instanceof String )
                 name += val.toString().replace( ' ' , '_' );
         }
         return name;

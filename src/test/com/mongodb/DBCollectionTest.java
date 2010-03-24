@@ -89,6 +89,22 @@ public class DBCollectionTest extends TestCase {
     }
 
     @Test
+    public void testGenIndexName(){
+        BasicDBObject o = new BasicDBObject();
+        o.put( "x" , 1 );
+        assertEquals("x_1", DBCollection.genIndexName(o));
+
+        o.put( "x" , "1" );
+        assertEquals("x_1", DBCollection.genIndexName(o));
+
+        o.put( "x" , "2d" );
+        assertEquals("x_2d", DBCollection.genIndexName(o));
+
+        o.put( "y" , -1 );
+        assertEquals("x_2d_y_-1", DBCollection.genIndexName(o));
+    }
+
+    @Test
     public void testDistinct(){
         DBCollection c = _db.getCollection( "distinct1" );
         c.drop();
