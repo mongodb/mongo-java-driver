@@ -20,6 +20,7 @@ package com.mongodb;
 
 import java.util.*;
 import java.util.regex.*;
+import java.util.concurrent.atomic.*;
 import java.nio.*;
 import java.nio.charset.*;
 import java.lang.reflect.Array;
@@ -380,11 +381,15 @@ public class ByteEncoder extends Bytes {
 
     protected int putNumber( String name , Number n ){
         int start = _buf.position();
-	if ( n instanceof Integer ){
+	if ( n instanceof Integer ||
+             n instanceof Short ||
+             n instanceof Byte ||
+             n instanceof AtomicInteger ){
 	    _put( NUMBER_INT , name );
 	    _buf.putInt( n.intValue() );
 	}
-        else if (n instanceof Long ) {
+        else if ( n instanceof Long || 
+                  n instanceof AtomicLong ) {
             _put( NUMBER_LONG , name );
             _buf.putLong( n.longValue() );
         }
