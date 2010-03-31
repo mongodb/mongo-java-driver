@@ -35,4 +35,5 @@ public class QueryOperators {
 	public static final String SIZE = "$size";
 	public static final String EXISTS = "$exists";
 	public static final String WHERE = "$where";
+	public static final String NEAR = "$near";
 }
