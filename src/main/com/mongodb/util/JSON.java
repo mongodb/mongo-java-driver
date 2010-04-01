@@ -82,6 +82,21 @@ public class JSON {
             return;
         }
 
+        if ( o.getClass().isArray() ){
+            Object[] arr = (Object[])o;
+
+            buf.append( "[ " );
+            
+            for ( int i=0; i<arr.length; i++) {
+                if ( i > 0 ) buf.append( " , " );
+                serialize( arr[i] , buf );
+            }
+            
+            buf.append( "]" );
+            return;
+        }
+
+
         if ( o instanceof ObjectId) {
             string(buf, o.toString());
             return;
