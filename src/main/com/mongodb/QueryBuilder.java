@@ -199,6 +199,13 @@ public class QueryBuilder {
         return this;
     }
 
+    public QueryBuilder near( double x , double y  ){
+        addOperand( "$near" , 
+                    new Double[]{ x , y } );
+        return this;
+    }
+
+
     /**
      * Creates a <code>DBObject</code> query to be used for the driver's find operations
      * @return Returns a DBObject query instance
