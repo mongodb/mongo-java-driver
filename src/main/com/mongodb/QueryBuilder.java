@@ -193,6 +193,12 @@ public class QueryBuilder {
         return this;
     }
 	
+    public QueryBuilder withinCenter( double x , double y , double radius ){
+        addOperand( "$within" , 
+                    new BasicDBObject( "$center" , new Object[]{ new Double[]{ x , y } , radius } ) );
+        return this;
+    }
+
     /**
      * Creates a <code>DBObject</code> query to be used for the driver's find operations
      * @return Returns a DBObject query instance
