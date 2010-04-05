@@ -19,6 +19,7 @@
 package com.mongodb;
 
 import java.nio.*;
+import java.util.concurrent.atomic.*;
 
 /** Creates a message to send to the database.  
  * Database messages are of the form:
@@ -37,11 +38,11 @@ import java.nio.*;
  */
 public class DBMessage {
     
-    static int ID = 1;
+    static AtomicInteger ID = new AtomicInteger(1);
     static int HEADER_LENGTH = 16;
 
     DBMessage( int operation , ByteBuffer data ){
-        _id = ID++;
+        _id = ID.getAndIncrement();
         _responseTo = 0;
         _operation = operation;
         _data = data;
@@ -74,6 +75,11 @@ public class DBMessage {
 
     int dataLen(){
         return _len - HEADER_LENGTH;
+    }
+
+    public String toString(){
+        return "DBMessage len: " + _len + " id: " + _id +
+            " responseTo: " + _responseTo + " operation: "  + _operation;
     }
 
     final int _len;    
