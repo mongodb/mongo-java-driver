@@ -45,8 +45,6 @@ public class DBPort {
         _addr = addr;
         _pool = pool;
 
-        _array[0].order( Bytes.ORDER );
-
         _hashCode = _addr.hashCode();
 
         _logger = Logger.getLogger( _rootLogger.getName() + "." + addr.toString() );
@@ -55,9 +53,9 @@ public class DBPort {
     /**
      * @param response will get wiped
      */
-    DBMessage call( DBMessage msg , ByteBuffer response )
+    DBMessage call( DBMessage msg , ByteDecoder decoder )
         throws IOException {
-        return go( msg , response );
+        return go( msg , decoder );
     }
     
     void say( DBMessage msg )
@@ -65,60 +63,55 @@ public class DBPort {
         go( msg , null );
     }
 
-    private synchronized DBMessage go( DBMessage msg , ByteBuffer response )
+    private synchronized DBMessage go( DBMessage msg , ByteDecoder decoder )
         throws IOException {
         
         if ( _sock == null )
             _open();
-
-        _reset( _array[0] );
-        msg.putHeader( _array[0] );
-        _array[0].flip();
         
-        _array[1] = msg.getData();
-        
-        _sock.write( _array );
+        {
+            ByteBuffer out = msg.prepare();
+            while ( out.remaining() > 0 )
+                _sock.write( out );
+        }            
         
         if ( _pool != null )
             _pool._everWorked = true;
 
-        if ( response == null )
+        if ( decoder == null )
             return null;
 
-        _reset( _array[0] );
-        _read( _array[0] );
-        _array[0].flip();
-        DBMessage msgResponse = new DBMessage( _array[0] , response );
+        ByteBuffer response = decoder._buf;
         
-        _reset( response );
+        if ( response.position() != 0 )
+            throw new IllegalArgumentException();
 
-        if ( msgResponse._len <= DBMessage.HEADER_LENGTH )
-            throw new IllegalArgumentException( "db sent invalid length : " + msgResponse._len );
+        int read = 0;
+        while ( read < DBMessage.HEADER_LENGTH )
+            read += _read( response );
+
+        int len = response.getInt(0);
+        if ( len <= DBMessage.HEADER_LENGTH )
+            throw new IllegalArgumentException( "db sent invalid length: " + len );
+
+        if ( len > response.capacity() )
+            throw new IllegalArgumentException( "db message size is too big (" + len + ") " +
+                                                "max is (" + response.capacity() + ")" );
         
-
-        final int bodySize = msgResponse._len - DBMessage.HEADER_LENGTH;
-
-        if ( bodySize > response.capacity() )
-            throw new IllegalArgumentException( "db message size is too big (" + bodySize + ") max is (" + response.capacity() + ")" );
-
-        response.limit( bodySize );
-        while ( response.remaining() > 0 )
-            _read( response );
+        response.limit( len );
+        while ( read < len )
+            read += _read( response );
         
-        if ( response.position() < response.limit() )
-            throw new MongoInternalException( "buffer not fully filled" );
+        if ( read != len )
+            throw new RuntimeException( "something is wrong" );
 
-        return msgResponse;
+        response.flip();
+        return new DBMessage( response );
     }
 
-    void _reset( ByteBuffer buf ){
-        buf.position( 0 );
-        buf.limit( buf.capacity() );
-    }
-    
-    public void ensureOpen()
+    public synchronized void ensureOpen()
         throws IOException {
-
+        
         if ( _sock != null )
             return;
         
@@ -221,12 +214,13 @@ public class DBPort {
         throw new MongoInternalException( "can't reauth!" );
     }
 
-    private void _read( ByteBuffer buf )
+    private int _read( ByteBuffer buf )
         throws IOException {
         int x = _in.read( buf.array() , buf.position() , buf.remaining() );
         if ( x < 0 )
             throw new IOException( "connection to server closed unexpectedly" );
         buf.position( buf.position() + x );
+        return x;
     }
     
     
@@ -235,8 +229,6 @@ public class DBPort {
     final DBPortPool _pool;
     final MongoOptions _options;
     final Logger _logger;
-    
-    private final ByteBuffer[] _array = new ByteBuffer[]{ ByteBuffer.wrap( new byte[ DBMessage.HEADER_LENGTH ] ) , null };
     
     private SocketChannel _sock;
     private Socket _socket;

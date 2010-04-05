@@ -45,33 +45,6 @@ public class DBApiLayer extends DB {
         _connector = connector;
     }
 
-    protected void doInsert( ByteBuffer buf , WriteConcern concern )
-        throws MongoException {
-        _connector.say( this , 2002 , buf , concern );
-    }
-    protected  void doDelete( ByteBuffer buf , WriteConcern concern ) 
-        throws MongoException {
-        _connector.say( this , 2006 , buf , concern );
-    }
-    protected void doUpdate( ByteBuffer buf , WriteConcern concern )
-        throws MongoException {
-        _connector.say( this , 2001 , buf , concern );
-    }
-    protected void doKillCursors( ByteBuffer buf )
-        throws MongoException {
-        _connector.say( this , 2007 , buf , WriteConcern.NORMAL );
-    }
-    
-    protected int doQuery( ByteBuffer out , ByteBuffer in )
-        throws MongoException {
-        return _connector.call( this , 2004 , out , in );
-    }
-    protected int doGetMore( ByteBuffer out , ByteBuffer in )
-        throws MongoException {
-        return _connector.call( this , 2005 , out , in , 0 );
-    }
-
-
     public void requestStart(){
         _connector.requestStart();
     }
@@ -189,7 +162,8 @@ public class DBApiLayer extends DB {
             
             int cur = 0;
             while ( cur < arr.length ){
-                ByteEncoder encoder = ByteEncoder.get();
+                DBMessage m = new DBMessage( 2002 );
+                ByteEncoder encoder = m._encoder;
                 
                 encoder._buf.putInt( 0 ); // reserved
                 encoder._put( _fullNameSpace );
@@ -209,10 +183,9 @@ public class DBApiLayer extends DB {
                         break;
                     }
                 }
-                encoder.flip();
                 
                 try {
-                    doInsert( encoder._buf , getWriteConcern() );
+                    _connector.say( _db , m , getWriteConcern() );
                 }
                 finally {
                     encoder.done();
@@ -226,7 +199,8 @@ public class DBApiLayer extends DB {
 
             if ( SHOW ) System.out.println( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
 
-            ByteEncoder encoder = ByteEncoder.get();
+            DBMessage m = new DBMessage( 2006 );
+            ByteEncoder encoder = m._encoder;
             encoder._buf.putInt( 0 ); // reserved
             encoder._put( _fullNameSpace );
 
@@ -240,10 +214,9 @@ public class DBApiLayer extends DB {
                 encoder._buf.putInt( 0 );
 
             encoder.putObject( o );
-            encoder.flip();
 
             try {
-                doDelete( encoder._buf , getWriteConcern() );
+                _connector.say( _db , m , getWriteConcern() );
             }
             finally {
                 encoder.done();
@@ -277,9 +250,10 @@ public class DBApiLayer extends DB {
             if ( all == null || all.size() == 0 )
                 return;
 
-            ByteEncoder encoder = ByteEncoder.get();
+            DBMessage m = new DBMessage( 2007 );
+            ByteEncoder encoder = m._encoder;
             encoder._buf.putInt( 0 ); // reserved
-
+            
             encoder._buf.putInt( all.size() );
 
             for (Long l : all) {
@@ -287,7 +261,7 @@ public class DBApiLayer extends DB {
             }
 
             try {
-                doKillCursors( encoder._buf );
+                _connector.say( _db , m , WriteConcern.NONE );
             }
             finally {
                 encoder.done();
@@ -303,8 +277,9 @@ public class DBApiLayer extends DB {
             if ( SHOW ) System.out.println( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
 
             _cleanCursors();
-
-            ByteEncoder encoder = ByteEncoder.get();
+            
+            DBMessage query = new DBMessage( 2004 );
+            ByteEncoder encoder = query._encoder;
 
             encoder._buf.putInt( options ); // options
             encoder._put( _fullNameSpace );
@@ -314,13 +289,11 @@ public class DBApiLayer extends DB {
             encoder.putObject( ref ); // ref
             if ( fields != null )
                 encoder.putObject( fields ); // fields to return
-            encoder.flip();
 
             ByteDecoder decoder = ByteDecoder.get( DBApiLayer.this , this );
 
             try {
-                int len = doQuery( encoder._buf , decoder._buf );
-                decoder.doneReading( len );
+                DBMessage response = _connector.call( _db , query , decoder , 2 );
 
                 SingleResult res = new SingleResult( _fullNameSpace , decoder);
 
@@ -346,7 +319,8 @@ public class DBApiLayer extends DB {
 
             if ( SHOW ) System.out.println( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
 
-            ByteEncoder encoder = ByteEncoder.get();
+            DBMessage m = new DBMessage( 2001 );
+            ByteEncoder encoder = m._encoder;
             encoder._buf.putInt( 0 ); // reserved
             encoder._put( _fullNameSpace );
 
@@ -358,10 +332,8 @@ public class DBApiLayer extends DB {
             encoder.putObject( query );
             encoder.putObject( o );
 
-            encoder.flip();
-
             try {
-                doUpdate( encoder._buf , getWriteConcern() );
+                _connector.say( _db , m , getWriteConcern() );
             }
             finally {
                 encoder.done();
@@ -393,7 +365,7 @@ public class DBApiLayer extends DB {
             _reserved = buf.getInt( start );
             _cursor = buf.getLong( start + 4 );
             _startingFrom = buf.getInt( start + 12 );
-            _num = buf.getInt( 16 );
+            _num = buf.getInt( start + 16 );
         }
 
         int headerSize(){
@@ -501,20 +473,19 @@ public class DBApiLayer extends DB {
 
             if ( _curResult._cursor <= 0 )
                 throw new RuntimeException( "can't advance a cursor <= 0" );
-
-            ByteEncoder encoder = ByteEncoder.get();
+            
+            DBMessage m = new DBMessage( 2005 );
+            ByteEncoder encoder = m._encoder;
 
             encoder._buf.putInt( 0 ); // reserved
             encoder._put( _curResult._fullNameSpace );
             encoder._buf.putInt( _numToReturn ); // num to return
             encoder._buf.putLong( _curResult._cursor );
-            encoder.flip();
-
+            
             ByteDecoder decoder = ByteDecoder.get( DBApiLayer.this , _collection );
 
             try {
-                int len = doGetMore( encoder._buf , decoder._buf );
-                decoder.doneReading( len );
+                _connector.call( DBApiLayer.this , m , decoder );
                 _numGetMores++;
 
                 SingleResult res = new SingleResult( _curResult._fullNameSpace , decoder);

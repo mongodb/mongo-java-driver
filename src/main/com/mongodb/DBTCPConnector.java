@@ -108,14 +108,14 @@ class DBTCPConnector implements DBConnector {
         _threadPort.get().requestEnsureConnection();
     }
 
-    public void say( DB db , int op , ByteBuffer buf , DB.WriteConcern concern )
+    public void say( DB db , DBMessage m , DB.WriteConcern concern )
         throws MongoException {
         MyPort mp = _threadPort.get();
         DBPort port = mp.get( true );
         port.checkAuth( db );
 
         try {
-            port.say( new DBMessage( op , buf ) );
+            port.say( m );
             if ( concern == DB.WriteConcern.STRICT ){
                 DBObject e = _mongo.getDB( "admin" ).getLastError();
                 Object foo = e.get( "err" );
@@ -142,20 +142,20 @@ class DBTCPConnector implements DBConnector {
         }
     }
     
-    public int call( DB db , int op , ByteBuffer out , ByteBuffer in )
+    public DBMessage call( DB db , DBMessage m , ByteDecoder decoder )
         throws MongoException {
-        return call( db , op , out , in , 2 );
+        return call( db , m , decoder , 2 );
     }
 
-    public int call( DB db , int op , ByteBuffer out , ByteBuffer in , int retries )
+    public DBMessage call( DB db , DBMessage m , ByteDecoder decoder , int retries )
         throws MongoException {
+        ByteBuffer in = decoder._buf;
         MyPort mp = _threadPort.get();
         DBPort port = mp.get( false );
         port.checkAuth( db );
 
         try {
-            DBMessage a = new DBMessage( op , out );
-            DBMessage b = port.call( a , in );
+            DBMessage res = port.call( m , decoder );
             mp.done( port );
 
             String err = _getError( in );
@@ -167,17 +167,17 @@ class DBTCPConnector implements DBConnector {
                         throw new MongoException( "not talking to master and retries used up" );
                     in.position( 0 );
 
-                    return call( db , op , out , in , retries -1 );
+                    return call( db , m , decoder , retries -1 );
                 }
             }
 
-            return b.dataLen();
+            return res;
         }
         catch ( IOException ioe ){
             mp.error( ioe );
             if ( _error( ioe ) && retries > 0 ){
                 in.position( 0 );
-                return call( db , op , out , in , retries - 1 );
+                return call( db , m , decoder , retries - 1 );
             }
             throw new MongoException.Network( "can't call something" , ioe );
         }

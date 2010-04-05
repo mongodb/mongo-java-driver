@@ -129,6 +129,7 @@ public class DBCursorTest extends TestCase {
         DBObject q = BasicDBObjectBuilder.start().push( "x" ).add( "$gt" , 50 ).get();
 
         assertEquals( 49 , c.find( q ).count() );
+        assertEquals( 49 , c.find( q ).itcount() );
         assertEquals( 49 , c.find( q ).toArray().size() );
         assertEquals( 49 , c.find( q ).itcount() );
         assertEquals( 20 , c.find( q ).limit(20).itcount() );

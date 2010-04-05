@@ -37,56 +37,84 @@ import java.util.concurrent.atomic.*;
  * </table>
  */
 public class DBMessage {
+
+    enum State { BUILDING , SENDING , READABLE , DONE }
     
     static AtomicInteger ID = new AtomicInteger(1);
     static int HEADER_LENGTH = 16;
 
-    DBMessage( int operation , ByteBuffer data ){
+    DBMessage( int operation ){
+        _len = 0;
         _id = ID.getAndIncrement();
         _responseTo = 0;
         _operation = operation;
-        _data = data;
+
+        _encoder = ByteEncoder.get();
+        _buf = _encoder._buf;
+
+        _buf.putInt( 0 ); // saving space for len
+        _buf.putInt( _id );
+        _buf.putInt( _responseTo );
+        _buf.putInt( _operation );
         
-        if ( _data.position() > 0 )
-            _data.flip();
-        
-        _len = HEADER_LENGTH + data.limit();
+        _state = State.BUILDING;
     }
     
-    DBMessage( ByteBuffer buf , ByteBuffer dataBuffer ){
+    DBMessage( ByteBuffer buf ){
+        _buf = buf;
+        
         _len = buf.getInt();
         _id = buf.getInt();
         _responseTo = buf.getInt();
         _operation = buf.getInt();
-
-        _data = dataBuffer;
+        
+        _state = State.READABLE;
+        _encoder = null;
     }
 
-    void putHeader( ByteBuffer buf ){
-        buf.putInt( _len );
-        buf.putInt( _id ) ;
-        buf.putInt( _responseTo );
-        buf.putInt( _operation );
+    ByteBuffer forBuilding(){
+        if ( _state != State.BUILDING )
+            throw new IllegalStateException();
+        if ( _buf.position() != HEADER_LENGTH )
+            throw new IllegalStateException();
+        return _buf;
     }
 
-    ByteBuffer getData(){
-        return _data;
+    ByteBuffer prepare(){
+        if ( _state != State.BUILDING )
+            throw new IllegalStateException();
+        if ( _buf.position() <= HEADER_LENGTH )
+            throw new IllegalStateException();
+        
+        _state = State.SENDING;
+        _len = _buf.position();
+        _buf.putInt( 0 , _len );
+        _buf.flip();
+        return _buf;
     }
 
-    int dataLen(){
-        return _len - HEADER_LENGTH;
+    ByteBuffer forReading(){
+        if ( _state != State.READABLE )
+            throw new IllegalStateException();
+        if ( _buf.position() != HEADER_LENGTH )
+            throw new IllegalStateException();
+        _state = State.DONE;
+        return _buf;
     }
+
 
     public String toString(){
         return "DBMessage len: " + _len + " id: " + _id +
             " responseTo: " + _responseTo + " operation: "  + _operation;
     }
 
-    final int _len;    
+    private State _state;
+
+    private int _len;
     final int _id;
     final int _responseTo;
     final int _operation;
 
-    
-    final ByteBuffer _data;
+    final ByteEncoder _encoder;
+    final ByteBuffer _buf;
 }

@@ -339,8 +339,7 @@ public class ByteDecoder extends Bytes {
         return _buf.remaining();
     }
 
-    void doneReading( int len ){
-        _buf.position( len );
+    void doneReading(){
         _buf.flip();
     }
 
