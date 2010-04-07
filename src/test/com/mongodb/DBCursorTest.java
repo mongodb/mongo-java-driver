@@ -148,6 +148,19 @@ public class DBCursorTest extends TestCase {
         assertEquals( 49 , c.find( q ).limit(-20).explain().get("n") );
         
     }
+
+    @Test
+    public void testBatchWithLimit(){
+        DBCollection c = _db.getCollection( "batchWithLimit1" );
+        c.drop();
+
+        for ( int i=0; i<100; i++ )
+            c.save( new BasicDBObject( "x" , i ) );
+
+        assertEquals( 50 , c.find().limit(50).itcount() );
+        assertEquals( 50 , c.find().batchSize( 5 ).limit(50).itcount() );
+    }
+
     
     final DB _db;
 
