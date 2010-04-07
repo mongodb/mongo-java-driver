@@ -150,9 +150,10 @@ public class DBApiLayer extends DB {
                     System.out.println( "save:  " + _fullNameSpace + " " + JSON.serialize( o ) );
                 }
             }
-
+            
             if ( shouldApply ){
-                for (DBObject o : arr) {
+                for ( int i=0; i<arr.length; i++ ){
+                    DBObject o=arr[i];
                     apply( o );
                     Object id = o.get( "_id" );
                     if ( id instanceof ObjectId )
