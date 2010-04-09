@@ -349,8 +349,8 @@ public class ByteEncoder extends Bytes {
     protected int putTimestamp(String name, DBTimestamp ts ){
         int start = _buf.position();
         _put( TIMESTAMP , name );
-        _buf.putInt( ts.getTime() );
         _buf.putInt( ts.getInc() );
+        _buf.putInt( ts.getTime() );
         return _buf.position() - start;        
     }
 

@@ -102,6 +102,12 @@ public class Bytes {
     public static final int QUERYOPTION_SLAVEOK = 1 << 2;
     public static final int QUERYOPTION_OPLOGREPLAY = 1 << 3;
     public static final int QUERYOPTION_NOTIMEOUT = 1 << 4;
+    public static final int QUERYOPTION_AWAITDATA = 1 << 5;
+
+    public static final int RESULTFLAG_CURSORNOTFOUND = 1;
+    public static final int RESULTFLAG_ERRSET = 2;
+    public static final int RESULTFLAG_SHARDCONFIGSTALE = 4;
+    public static final int RESULTFLAG_AWAITCAPABLE = 8;
 
     static protected Charset _utf8 = Charset.forName( "UTF-8" );
     /** The maximum number of bytes allowed to be sent to the db at a time */

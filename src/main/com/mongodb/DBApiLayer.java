@@ -295,8 +295,8 @@ public class DBApiLayer extends DB {
 
             try {
                 DBMessage response = _connector.call( _db , query , decoder , 2 );
-
-                SingleResult res = new SingleResult( _fullNameSpace , decoder);
+                
+                SingleResult res = new SingleResult( _fullNameSpace , decoder , options );
 
                 if ( res._lst.size() == 0 )
                     return null;
@@ -307,7 +307,7 @@ public class DBApiLayer extends DB {
                         throw new RuntimeException( "db error [" + err + "]" );
                 }
 
-                return new Result( this , res , batchSize );
+                return new Result( this , res , batchSize , options );
             }
             finally {
                 decoder.done();
@@ -363,7 +363,7 @@ public class DBApiLayer extends DB {
         }
 
         QueryHeader( ByteBuffer buf , int start ){
-            _reserved = buf.getInt( start );
+            _flags = buf.getInt( start );
             _cursor = buf.getLong( start + 4 );
             _startingFrom = buf.getInt( start + 12 );
             _num = buf.getInt( start + 16 );
@@ -377,7 +377,7 @@ public class DBApiLayer extends DB {
             buf.position( buf.position() + headerSize() );
         }
 
-        final int _reserved;
+        final int _flags;
         final long _cursor;
         final int _startingFrom;
         final int _num;
@@ -385,12 +385,13 @@ public class DBApiLayer extends DB {
 
     class SingleResult extends QueryHeader {
 
-        SingleResult( String fullNameSpace , ByteDecoder decoder){
+        SingleResult( String fullNameSpace , ByteDecoder decoder , int options ){
             super( decoder._buf );
 
             _bytes = decoder.remaining();
             _fullNameSpace = fullNameSpace;
             _shortNameSpace = _removeRoot( _fullNameSpace );
+            _options = options;
             skipPastHeader( decoder._buf );
 
             if ( _num == 0 )
@@ -419,26 +420,47 @@ public class DBApiLayer extends DB {
         }
 
         boolean hasGetMore(){
-            return _num > 0 && _cursor > 0;
-        }
+            if ( _cursor <= 0 )
+                return false;
+            
+            if ( _num > 0 )
+                return true;
 
+            if ( ( _options & Bytes.QUERYOPTION_TAILABLE ) == 0 )
+                return false;
+            
+            // have a tailable cursor
+            if ( ( _flags & Bytes.RESULTFLAG_AWAITCAPABLE ) > 0 )
+                return true;
+
+            try {
+                System.out.println( "sleep" );
+                Thread.sleep( 1000 );
+            }
+            catch ( Exception e ){}
+
+            return true;
+        }
+        
         public String toString(){
-            return "reserved:" + _reserved + " _cursor:" + _cursor + " _startingFrom:" + _startingFrom + " _num:" + _num ;
+            return "flags:" + _flags + " _cursor:" + _cursor + " _startingFrom:" + _startingFrom + " _num:" + _num ;
         }
 
         final long _bytes;
         final String _fullNameSpace;
         final String _shortNameSpace;
+        final int _options;
 
         final List<DBObject> _lst;
     }
 
     class Result implements Iterator<DBObject> {
 
-        Result( MyCollection coll , SingleResult res , int numToReturn ){
+        Result( MyCollection coll , SingleResult res , int numToReturn , int options ){
             init( res );
             _collection = coll;
             _numToReturn = numToReturn;
+            _options = options;
         }
 
         private void init( SingleResult res ){
@@ -478,7 +500,7 @@ public class DBApiLayer extends DB {
             DBMessage m = new DBMessage( 2005 );
             ByteEncoder encoder = m._encoder;
 
-            encoder._buf.putInt( 0 ); // reserved
+            encoder._buf.putInt( 0 ); 
             encoder._put( _curResult._fullNameSpace );
             encoder._buf.putInt( _numToReturn ); // num to return
             encoder._buf.putLong( _curResult._cursor );
@@ -489,7 +511,7 @@ public class DBApiLayer extends DB {
                 _connector.call( DBApiLayer.this , m , decoder );
                 _numGetMores++;
 
-                SingleResult res = new SingleResult( _curResult._fullNameSpace , decoder);
+                SingleResult res = new SingleResult( _curResult._fullNameSpace , decoder , _options );
                 init( res );
             }
             catch ( MongoException me ){
@@ -531,6 +553,7 @@ public class DBApiLayer extends DB {
         Iterator<DBObject> _cur;
         final MyCollection _collection;
         final int _numToReturn;
+        final int _options;
         
         private long _totalBytes = 0;
         private int _numGetMores = 0;

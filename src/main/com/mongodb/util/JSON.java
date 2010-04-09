@@ -167,6 +167,12 @@ public class JSON {
             return;
         }
 
+        if ( o instanceof DBTimestamp ){
+            DBTimestamp t = (DBTimestamp)o;
+            buf.append( t.getTime() + "|" + t.getInc() );
+            return;
+        }
+
         throw new RuntimeException( "json can't serialize type : " + o.getClass() );
     }
 
