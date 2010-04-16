@@ -205,6 +205,12 @@ public class QueryBuilder {
         return this;
     }
 
+    public QueryBuilder near( double x , double y , double maxDistance ){
+        addOperand( "$near" , 
+                    new Double[]{ x , y , maxDistance } );
+        return this;
+    }
+
 
     /**
      * Creates a <code>DBObject</code> query to be used for the driver's find operations
