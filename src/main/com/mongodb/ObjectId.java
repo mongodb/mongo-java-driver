@@ -38,7 +38,7 @@ import com.mongodb.util.*;
  * 
  * @dochub objectids
  */
-public class ObjectId implements Comparable<ObjectId>{
+public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
     static final boolean D = false;
     
