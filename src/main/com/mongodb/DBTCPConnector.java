@@ -304,31 +304,29 @@ class DBTCPConnector implements DBConnector {
         _pickCurrent();
 
         try {
-            System.out.println( _curAddress );
-            DBCollection collection = _mongo.getDB( "admin" ).getCollection( "$cmd" );
-            Iterator<DBObject> i = collection.find( _isMaster , null , 0 , 1 , 0 );
-            if ( i == null || ! i.hasNext() )
-                throw new MongoException( "no result for ismaster query?" );
-            DBObject res = i.next();
-            if ( i.hasNext() )
-                throw new MongoException( "what's going on" );
+            _logger.info( "current address beginning of _pickInitial: " + _curAddress );
 
-            int ismaster = ((Number)res.get( "ismaster" )).intValue();
-            if ( 1 == ismaster )
+            DBObject im = isMasterCmd();
+            if ( _isMaster( im ) ) 
                 return;
-
-            if ( res.get( "remote" ) == null )
-                throw new MongoException( "remote not sent back!" );
-
-            String remote = res.get( "remote" ).toString();
+            
             synchronized ( _allHosts ){
+                Collections.shuffle( _allHosts );
                 for ( ServerAddress a : _allHosts ){
-                    if ( ! a.sameHost( remote ) )
+                    if ( _curAddress == a )
                         continue;
-                    System.out.println( "remote [" + remote + "] -> [" + a + "]" );
+
+                    _logger.info( "remote [" + _curAddress + "] -> [" + a + "]" );
                     _set( a );
-                    return;
+                    
+                    im = isMasterCmd();
+                    if ( _isMaster( im ) )
+                        return;
+                    
+                    _logger.severe( "switched to: " + a + " but isn't master" );
                 }
+                
+                throw new MongoException( "can't find master" );
             }
         }
         catch ( Exception e ){
@@ -377,6 +375,34 @@ class DBTCPConnector implements DBConnector {
         return buf.toString();
     }
 
+    DBObject isMasterCmd(){
+        DBCollection collection = _mongo.getDB( "admin" ).getCollection( "$cmd" );
+        
+        Iterator<DBObject> i = collection.find( _isMaster , null , 0 , 1 , 0 );
+        if ( i == null || ! i.hasNext() )
+            throw new MongoException( "no result for ismaster query?" );
+        
+        DBObject res = i.next();
+        if ( i.hasNext() )
+            throw new MongoException( "what's going on" );
+        
+        return res;
+    }
+
+    boolean _isMaster( DBObject res ){
+        Object x = res.get( "ismaster" );
+        if ( x == null )
+            throw new IllegalStateException( "ismaster shouldn't be null: " + res );
+        
+        if ( x instanceof Boolean )
+            return (Boolean)x;
+        
+        if ( x instanceof Number )
+            return ((Number)x).intValue() == 1;
+        
+        throw new IllegalArgumentException( "invalid ismaster [" + x + "] : " + x.getClass().getName() );
+    }
+    
     final Mongo _mongo;
     private ServerAddress _curAddress;
     private DBPortPool _curPortPool;
