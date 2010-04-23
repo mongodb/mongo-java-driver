@@ -81,6 +81,12 @@ public class DBMessage {
     }
 
     ByteBuffer prepare(){
+        if ( _state == State.SENDING ){
+            // retry
+            _buf.position(0);
+            return _buf;
+        }
+        
         if ( _state != State.BUILDING )
             throw new IllegalStateException();
         if ( _buf.position() <= HEADER_LENGTH )
