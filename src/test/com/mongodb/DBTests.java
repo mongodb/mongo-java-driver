@@ -9,7 +9,7 @@ import com.mongodb.util.*;
 /**
  *  Tests aspect of the DB - not really driver tests
  */
-public class DBTests extends MyAsserts {
+public class DBTests extends TestCase {
 
     final Mongo _mongo;
     final DB _db;
@@ -17,7 +17,9 @@ public class DBTests extends MyAsserts {
     public DBTests()
         throws Exception {
         _mongo = new Mongo();
-        _db = _mongo.getDB( "java_com_mongodb_DBTests" );
+	cleanupMongo = new Mongo( "127.0.0.1" );
+	cleanupDB = "java_com_mongodb_unittest_DBTests";
+	_db = cleanupMongo.getDB( cleanupDB );
     }
 
     @Test

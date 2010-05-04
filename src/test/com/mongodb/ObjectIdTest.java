@@ -30,7 +30,9 @@ public class ObjectIdTest extends TestCase {
     public ObjectIdTest()
         throws Exception {
         _mongo = new Mongo();
-        _db = _mongo.getDB( "jtest" );
+	cleanupMongo = _mongo;
+	cleanupDB = "com_mongodb_unittest_ObjectIdTest";
+        _db = cleanupMongo.getDB(cleanupDB);
     }
 
     /*

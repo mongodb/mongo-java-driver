@@ -47,7 +47,9 @@ public class ReflectionTest extends TestCase {
 
     public ReflectionTest()
         throws IOException , MongoException {
-        _db = new Mongo().getDB( "reflectiontest" );        
+	cleanupMongo = new Mongo( "127.0.0.1" );
+	cleanupDB = "com_mongodb_unittest_ReflectionTest";
+	_db = cleanupMongo.getDB( cleanupDB );
     }    
 
     @Test

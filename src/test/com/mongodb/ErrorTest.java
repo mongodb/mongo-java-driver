@@ -19,16 +19,20 @@ package com.mongodb;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
 
+import com.mongodb.util.*;
+
 /**
  *
  */
-public class ErrorTest {
+public class ErrorTest extends TestCase {
 
     DB _db;
 
     @BeforeClass
     public void setUp() throws Exception{
-        _db = new Mongo().getDB("com_mongodb_ErrorTest");
+	cleanupMongo = new Mongo( "127.0.0.1" );
+	cleanupDB = "com_mongodb_unittest_ErrorTest";
+        _db = cleanupMongo.getDB(cleanupDB);
     }
 
     @Test

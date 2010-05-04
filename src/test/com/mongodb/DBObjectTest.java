@@ -29,7 +29,9 @@ public class DBObjectTest extends TestCase {
     public DBObjectTest() {
         super();
         try {
-            _db = new Mongo( "127.0.0.1" ).getDB( "objtest" );
+	    cleanupMongo = new Mongo( "127.0.0.1" );
+	    cleanupDB = "com_monogodb_unittest_DBObjectTest";
+	    _db = cleanupMongo.getDB( cleanupDB );
         }
         catch(UnknownHostException e) {
             throw new MongoException("couldn't connect");

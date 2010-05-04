@@ -32,7 +32,9 @@ public class GridFSTest extends TestCase {
         throws IOException , MongoException {
         super();
         try {
-            _db = new Mongo( "127.0.0.1" ).getDB( "cursortest" );
+	    cleanupMongo = new Mongo( "127.0.0.1" );
+	    cleanupDB = "com_mongodb_unittest_GridFSTest";
+	    _db = cleanupMongo.getDB( cleanupDB );
             _fs = new GridFS( _db );
         }
         catch ( MongoException e ){

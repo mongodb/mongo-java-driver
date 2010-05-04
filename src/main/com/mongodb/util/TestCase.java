@@ -6,6 +6,8 @@ import java.io.*;
 import java.util.*;
 import java.lang.reflect.*;
 
+import com.mongodb.*;
+
 public class TestCase extends MyAsserts {
     
     static class Test {
@@ -109,6 +111,14 @@ public class TestCase extends MyAsserts {
     public void add( TestCase tc ){
         _tests.addAll( tc._tests );
     }
+    public String cleanupDB = null;
+    public Mongo cleanupMongo = null;
+    @org.testng.annotations.AfterClass
+    public void cleanup(){
+	if ((cleanupMongo != null) && (cleanupDB != null)) {
+	    cleanupMongo.dropDatabase(cleanupDB);
+	}
+    }
 
     /**
      * @return true if everything succeeds
@@ -134,7 +144,7 @@ public class TestCase extends MyAsserts {
             else
                 errors.add( r );
         }
-        
+	cleanup();
         System.out.println( "\n----" );
 
         int pass = _tests.size() - ( errors.size() + fails.size() );

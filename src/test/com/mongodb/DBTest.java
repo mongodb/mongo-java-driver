@@ -29,7 +29,9 @@ public class DBTest extends TestCase {
     public DBTest() 
         throws UnknownHostException {
         super();
-        _db = new Mongo( "127.0.0.1" ).getDB( "dbbasetest" );
+	cleanupMongo = new Mongo( "127.0.0.1" );
+	cleanupDB = "com_mongodb_unittest_DBTest";
+	_db = cleanupMongo.getDB( cleanupDB );
     }
 
     @Test(groups = {"basic"})

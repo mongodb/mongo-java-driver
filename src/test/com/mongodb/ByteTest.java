@@ -29,7 +29,11 @@ public class ByteTest extends TestCase {
     public ByteTest()
         throws IOException , MongoException {
         super();
-        _db = new Mongo( "127.0.0.1" ).getDB( "bytetest" );
+	cleanupMongo = new Mongo( "127.0.0.1" );
+	cleanupDB = "com_mongodb_unittest_ByteTest";
+        _db = cleanupMongo.getDB( cleanupDB );
+
+
     }
 
     @Test(groups = {"basic"})
