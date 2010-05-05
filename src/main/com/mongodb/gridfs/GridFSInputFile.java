@@ -18,6 +18,9 @@
 
 package com.mongodb.gridfs;
 
+import org.bson.*;
+import org.bson.types.*;
+
 import com.mongodb.*;
 import com.mongodb.util.*;
 

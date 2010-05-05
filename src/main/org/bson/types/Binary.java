@@ -1,4 +1,4 @@
-// DBBinary.java
+// Binary.java
 
 /**
  *  See the NOTICE.txt file distributed with this work for
@@ -19,14 +19,14 @@
  * under the License.
  */
 
-package com.mongodb;
+package org.bson.types;
 
 /**
    generic binary holder
  */
-public class DBBinary {
+public class Binary {
 
-    public DBBinary( byte type , byte[] data ){
+    public Binary( byte type , byte[] data ){
         _type = type;
         _data = data;
     }
@@ -37,6 +37,10 @@ public class DBBinary {
 
     public byte[] getData(){
         return _data;
+    }
+
+    public int length(){
+        return _data.length;
     }
 
     final byte _type;

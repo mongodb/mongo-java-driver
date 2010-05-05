@@ -26,6 +26,9 @@ import org.testng.annotations.Test;
 
 import com.mongodb.util.*;
 
+import org.bson.*;
+import org.bson.types.*;
+
 public class JavaClientTest extends TestCase {
     
     public JavaClientTest()
@@ -121,7 +124,7 @@ public class JavaClientTest extends TestCase {
         assertTrue(c.getCount() == 0);
 
         for (int i=0; i < 100; i++) {
-            c.insert(new BasicDBObject().append("i", i));
+            c.insert(new BasicDBObject("i", i));
         }
 
         assertTrue(c.getCount() == 100);
@@ -136,7 +139,7 @@ public class JavaClientTest extends TestCase {
         assertNull(c.findOne());
 
         for (int i=0; i < 100; i++) {
-            c.insert(new BasicDBObject().append("i", i));
+            c.insert(new BasicDBObject("i", i));
         }
 
         assertTrue(c.getCount() == 100);
@@ -166,16 +169,16 @@ public class JavaClientTest extends TestCase {
             bb.order( Bytes.ORDER );
             bb.putInt( 5 );
             bb.put( "eliot".getBytes() );
-            out.put( "a" , new DBBinary( (byte)2 , raw ) );
+            out.put( "a" , new Binary( (byte)2 , raw ) );
             c.save( out );
             
             out = c.findOne();
             b = (byte[])(out.get( "a" ) );
             assertEquals( "eliot" , new String( b ) );
 
-            out.put( "a" , new DBBinary( (byte)111 , raw ) );
+            out.put( "a" , new Binary( (byte)111 , raw ) );
             c.save( out );
-            DBBinary blah = (DBBinary)c.findOne().get( "a" );
+            Binary blah = (Binary)c.findOne().get( "a" );
             assertEquals( 111 , blah.getType() );
             assertEquals( Util.toHex( raw ) , Util.toHex( blah.getData() ) );
         }
@@ -266,9 +269,9 @@ public class JavaClientTest extends TestCase {
         
         DBCollection c = _db.getCollection( "ts1" );
         c.drop();
-        c.save( BasicDBObjectBuilder.start().add( "y" , new DBTimestamp() ).get() );
+        c.save( BasicDBObjectBuilder.start().add( "y" , new BSONTimestamp() ).get() );
         
-        DBTimestamp t = (DBTimestamp)c.findOne().get("y");
+        BSONTimestamp t = (BSONTimestamp)c.findOne().get("y");
         assert( t.getTime() > 0 );
         assert( t.getInc() > 0 );
     }

@@ -32,7 +32,15 @@ public class BSON {
     public static final byte MINKEY = -1;
     public static final byte MAXKEY = 127;
 
-
+    // --- binary types
+    /* 
+       these are binary types
+       so the format would look like
+       <BINARY><name><BINARY_TYPE><...>
+    */
+    
+    public static final byte B_FUNC = 1;
+    public static final byte B_BINARY = 2;
 
     // ---- regular expression handling ----
     
@@ -130,6 +138,66 @@ public class BSON {
     }
 
     private static final int GLOBAL_FLAG = 256;
+
+    // --- (en|de)coding hooks -----
+
+    public static void addEncodingHook( Class c , Transformer t ){
+        _anyHooks = true;
+        List<Transformer> l = _encodingHooks.get( c );
+        if ( l == null ){
+            l = new Vector<Transformer>();
+            _encodingHooks.put( c , l );
+        }
+        l.add( t );
+    }
     
+    public static void addDecodingHook( byte type , Transformer t ){
+        _anyHooks = true;
+        List<Transformer> l = _decodingHooks.get( type );
+        if ( l == null ){
+            l = new Vector<Transformer>();
+            _decodingHooks.put( type , l );
+        }
+        l.add( t );
+    }
+
+    public static Object applyEncodingHooks( Object o ){
+        if ( ! _anyHooks )
+            return o;
+
+        if ( _encodingHooks.size() == 0 || o == null )
+            return o;
+        List<Transformer> l = _encodingHooks.get( o.getClass() );
+        if ( l != null )
+            for ( Transformer t : l )
+                o = t.transform( o );
+        return o;
+    }
+
+    public static Object applyDecodingHooks( byte b , Object o ){
+        if ( ! _anyHooks )
+            return o;
+
+        List<Transformer> l = _decodingHooks.get( b );
+        if ( l != null )
+            for ( Transformer t : l )
+                o = t.transform( o );
+        return o;
+    }
+
+
+    public static void clearAllHooks(){
+        _anyHooks = false;
+        _encodingHooks.clear();
+        _decodingHooks.clear();
+    }
+
+    private static boolean _anyHooks = false;
+    static Map<Class,List<Transformer>> _encodingHooks = 
+        Collections.synchronizedMap( new HashMap<Class,List<Transformer>>() );
+    static Map<Byte,List<Transformer>> _decodingHooks = 
+        Collections.synchronizedMap( new HashMap<Byte,List<Transformer>>() );
+    
+
 
 }

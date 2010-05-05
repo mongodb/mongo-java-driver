@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.logging.*;
 
 import org.bson.*;
+import org.bson.types.*;
 
 /**
  * Handles byte functions for <code>ByteEncoder</code> and <code>ByteDecoder</code>.
@@ -65,14 +66,7 @@ public class Bytes extends BSON {
         NUM_ENCODERS = numBufs;
     }
 
-    /* 
-       these are binary types
-       so the format would look like
-       <BINARY><name><BINARY_TYPE><...>
-    */
-
-    static final byte B_FUNC = 1;
-    static final byte B_BINARY = 2;
+    // --- network protocol options
 
     public static final int QUERYOPTION_TAILABLE = 1 << 1;
     public static final int QUERYOPTION_SLAVEOK = 1 << 2;
@@ -84,6 +78,8 @@ public class Bytes extends BSON {
     public static final int RESULTFLAG_ERRSET = 2;
     public static final int RESULTFLAG_SHARDCONFIGSTALE = 4;
     public static final int RESULTFLAG_AWAITCAPABLE = 8;
+
+
 
     static protected Charset _utf8 = Charset.forName( "UTF-8" );
     /** The maximum number of bytes allowed to be sent to the db at a time */
@@ -130,57 +126,6 @@ public class Bytes extends BSON {
         return 0;
     }
 
-    public static void addEncodingHook( Class c , Transformer t ){
-        _anyHooks = true;
-        List<Transformer> l = _encodingHooks.get( c );
-        if ( l == null ){
-            l = new Vector<Transformer>();
-            _encodingHooks.put( c , l );
-        }
-        l.add( t );
-    }
-    
-    public static void addDecodingHook( byte type , Transformer t ){
-        _anyHooks = true;
-        List<Transformer> l = _decodingHooks.get( type );
-        if ( l == null ){
-            l = new Vector<Transformer>();
-            _decodingHooks.put( type , l );
-        }
-        l.add( t );
-    }
-
-    public static Object applyEncodingHooks( Object o ){
-        if ( ! _anyHooks )
-            return o;
-
-        if ( _encodingHooks.size() == 0 || o == null )
-            return o;
-        List<Transformer> l = _encodingHooks.get( o.getClass() );
-        if ( l != null )
-            for ( Transformer t : l )
-                o = t.transform( o );
-        return o;
-    }
-
-    public static Object applyDecodingHooks( byte b , Object o ){
-        if ( ! _anyHooks )
-            return o;
-
-        List<Transformer> l = _decodingHooks.get( b );
-        if ( l != null )
-            for ( Transformer t : l )
-                o = t.transform( o );
-        return o;
-    }
-
-
-    public static void clearAllHooks(){
-        _anyHooks = false;
-        _encodingHooks.clear();
-        _decodingHooks.clear();
-    }
-
     public static byte[] encode( DBObject o ){
         ByteEncoder e = ByteEncoder.get();
         e.putObject( o );
@@ -196,9 +141,5 @@ public class Bytes extends BSON {
         return d.readObject();
     }
 
-    private static boolean _anyHooks = false;
-    static Map<Class,List<Transformer>> _encodingHooks = Collections.synchronizedMap( new HashMap<Class,List<Transformer>>() );
-    static Map<Byte,List<Transformer>> _decodingHooks = Collections.synchronizedMap( new HashMap<Byte,List<Transformer>>() );
-    
     static final ObjectId COLLECTION_REF_ID = new ObjectId( -1 , -1 , -1 );
 }

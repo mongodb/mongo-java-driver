@@ -27,6 +27,8 @@ import java.lang.reflect.Array;
 
 import com.mongodb.util.*;
 
+import org.bson.types.*;
+
 /** 
  * Serializes a <code>DBObject</code> into a string that can be sent to the database.
  * <p>There is a pool of available encoders.  Create a new one as follows:
@@ -238,9 +240,6 @@ public class ByteEncoder extends Bytes {
             putBoolean(name, (Boolean)val );
         else if ( val instanceof Pattern )
             putPattern(name, (Pattern)val );
-        else if (val instanceof DBRegex) {
-            putDBRegex(name, (DBRegex) val);
-        }
         else if ( val instanceof Map )
             putMap( name , (Map)val );
 
@@ -248,8 +247,8 @@ public class ByteEncoder extends Bytes {
             putList( name , (List)val );
         else if ( val instanceof byte[] )
             putBinary( name , (byte[])val );
-        else if ( val instanceof DBBinary )
-            putBinary( name , (DBBinary)val );
+        else if ( val instanceof Binary )
+            putBinary( name , (Binary)val );
         else if ( val.getClass().isArray() )
             putList( name , Arrays.asList( (Object[])val ) );
 
@@ -262,14 +261,11 @@ public class ByteEncoder extends Bytes {
         else if (val instanceof DBRefBase ) {
             putDBRef( name, (DBRefBase)val );
         }
-        else if (val instanceof DBSymbol) {
-            putSymbol(name, (DBSymbol) val);
+        else if (val instanceof Symbol) {
+            putSymbol(name, (Symbol) val);
         }
-        else if (val instanceof DBUndefined) {
-            putUndefined(name);
-        }
-        else if (val instanceof DBTimestamp) {
-            putTimestamp( name , (DBTimestamp)val );
+        else if (val instanceof BSONTimestamp) {
+            putTimestamp( name , (BSONTimestamp)val );
         }
         else if (val instanceof CodeWScope) {
             putCodeWScope( name , (CodeWScope)val );
@@ -336,7 +332,7 @@ public class ByteEncoder extends Bytes {
         return _buf.position() - start;
     }
 
-    protected int putTimestamp(String name, DBTimestamp ts ){
+    protected int putTimestamp(String name, BSONTimestamp ts ){
         int start = _buf.position();
         _put( TIMESTAMP , name );
         _buf.putInt( ts.getInc() );
@@ -349,8 +345,8 @@ public class ByteEncoder extends Bytes {
         _put( CODE_W_SCOPE , name );
         int temp = _buf.position();
         _buf.putInt( 0 );
-        _putValueString( code._code );
-        putObject( code._scope );
+        _putValueString( code.getCode() );
+        putObject( (DBObject)(code.getScope()) );
         _buf.putInt( temp , _buf.position() - temp );
         return _buf.position() - start;        
     }
@@ -404,15 +400,15 @@ public class ByteEncoder extends Bytes {
         com.mongodb.util.MyAsserts.assertEquals( after - before , data.length );
     }
 
-    protected void putBinary( String name , DBBinary val ){
+    protected void putBinary( String name , Binary val ){
         _put( BINARY , name );
-        _buf.putInt( val._data.length );
-        _buf.put( val._type );
-        _buf.put( val._data );
+        _buf.putInt( val.length() );
+        _buf.put( val.getType() );
+        _buf.put( val.getData() );
     }
     
 
-    protected int putSymbol( String name , DBSymbol s ){
+    protected int putSymbol( String name , Symbol s ){
         return _putString(name, s.getSymbol(), SYMBOL);
     }
 
@@ -430,9 +426,9 @@ public class ByteEncoder extends Bytes {
     protected int putObjectId( String name , ObjectId oid ){
         int start = _buf.position();
         _put( OID , name );
-        _buf.putInt( oid._time );
-        _buf.putInt( oid._machine );
-        _buf.putInt( oid._inc );
+        _buf.putInt( oid._time() );
+        _buf.putInt( oid._machine() );
+        _buf.putInt( oid._inc() );
         return _buf.position() - start;
     }
     
@@ -441,9 +437,9 @@ public class ByteEncoder extends Bytes {
         _put( REF , name );
         
         _putValueString( ns );
-        _buf.putInt( oid._time );
-        _buf.putInt( oid._machine );
-        _buf.putInt( oid._inc );
+        _buf.putInt( oid._time() );
+        _buf.putInt( oid._machine() );
+        _buf.putInt( oid._inc() );
 
         return _buf.position() - start;
     }
@@ -460,31 +456,6 @@ public class ByteEncoder extends Bytes {
         _buf.putInt( sizePos , _buf.position() - sizePos );
     }
 
-    private int putDBRegex(String name, DBRegex regex) {
-
-        int start = _buf.position();
-        _put( REGEX , name );
-        _put(regex.getPattern());
-
-        String options = regex.getOptions();
-
-        TreeMap<Character, Character> sm = new TreeMap<Character, Character>();
-
-        for (int i=0; i < options.length(); i++) {
-            sm.put(options.charAt(i), options.charAt(i));
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        for (char c : sm.keySet()) {
-            sb.append(c);
-        }
-
-        _put( sb.toString());
-        return _buf.position() - start;
-
-    }
-    
     private int putPattern( String name, Pattern p ) {
         int start = _buf.position();
         _put( REGEX , name );

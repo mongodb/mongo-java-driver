@@ -22,6 +22,7 @@ import java.nio.*;
 import java.util.*;
 
 import org.bson.*;
+import org.bson.types.*;
 
 import static com.mongodb.Bytes.*;
 import static com.mongodb.util.MyAsserts.*;

@@ -21,6 +21,8 @@ package com.mongodb;
 import org.testng.annotations.Test;
 
 import com.mongodb.util.*;
+import org.bson.*;
+import org.bson.types.*;
 
 public class ObjectIdTest extends TestCase {
     

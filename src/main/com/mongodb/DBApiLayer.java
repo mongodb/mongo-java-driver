@@ -24,6 +24,9 @@ import java.util.logging.*;
 
 import com.mongodb.util.*;
 
+import org.bson.*;
+import org.bson.types.*;
+
 /** Database API
  * This cannot be directly instantiated, but the functions are available
  * through instances of Mongo.
@@ -156,8 +159,9 @@ public class DBApiLayer extends DB {
                     DBObject o=arr[i];
                     apply( o );
                     Object id = o.get( "_id" );
-                    if ( id instanceof ObjectId )
-                        ((ObjectId)id)._new = false;
+                    if ( id instanceof ObjectId ){
+                        ((ObjectId)id).notNew();
+                    }
                 }
             }
             

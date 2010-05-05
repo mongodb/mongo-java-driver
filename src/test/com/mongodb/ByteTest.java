@@ -24,6 +24,10 @@ import org.testng.annotations.Test;
 
 import com.mongodb.util.*;
 
+import org.bson.*;
+import org.bson.types.*;
+
+
 public class ByteTest extends TestCase {
 
     public ByteTest()

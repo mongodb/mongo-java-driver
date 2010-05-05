@@ -1,6 +1,6 @@
 // Transformer.java
 
-package com.mongodb;
+package org.bson;
 
 public interface Transformer {
 

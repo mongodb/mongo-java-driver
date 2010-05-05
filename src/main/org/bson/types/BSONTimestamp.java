@@ -1,4 +1,4 @@
-// DBTimestamp.java
+// BSONTimestamp.java
 
 /**
  *      Copyright (C) 2008 10gen Inc.
@@ -16,7 +16,7 @@
  *   limitations under the License.
  */
 
-package com.mongodb;
+package org.bson.types;
 
 import java.util.Date;
 
@@ -24,16 +24,16 @@ import java.util.Date;
    this is used for internal increment values.
    for storing normal dates in MongoDB, you should use java.util.Date
  */
-public class DBTimestamp {
+public class BSONTimestamp {
     
     static final boolean D = Boolean.getBoolean( "DEBUG.DBTIMESTAMP" );
     
-    public DBTimestamp(){
+    public BSONTimestamp(){
         _inc = 0;
         _time = null;
     }
 
-    public DBTimestamp(int time, int i) {
+    public BSONTimestamp(int time, int i) {
         _time = new Date( time * 1000L );
         _inc = i;
     }

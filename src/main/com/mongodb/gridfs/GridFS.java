@@ -23,6 +23,9 @@ import java.util.*;
 
 import com.mongodb.*;
 
+import org.bson.*;
+import org.bson.types.*;
+
 /**
  *  Implementation of GridFS v1.0
  *

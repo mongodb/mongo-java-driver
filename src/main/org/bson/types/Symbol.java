@@ -1,14 +1,14 @@
-// CodeWScope.java
+// Symbol.java
 
 /**
- *      Copyright (C) 2008 10gen Inc.
- *  
+ *      Copyright (C) 2009 10gen Inc.
+ *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
  *   You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *   Unless required by applicable law or agreed to in writing, software
  *   distributed under the License is distributed on an "AS IS" BASIS,
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,29 +16,24 @@
  *   limitations under the License.
  */
 
-package com.mongodb;
+package org.bson.types;
 
-import java.util.*;
-
-/** 
- * for using the CodeWScope type
+/**
+ *  Class to hold a BSON symbol object, which is an interned string in Ruby
  */
-public class CodeWScope {
+public class Symbol {
 
-    public CodeWScope( String code , DBObject scope ){
-        _code = code;
-        _scope = scope;
+    public Symbol(String s) {
+        _symbol = s;
     }
 
-    public String getCode(){
-        return _code;
+    public String getSymbol(){
+        return _symbol;
     }
 
-    public DBObject getScope(){
-        return _scope;
+    public String toString(){
+        return _symbol;
     }
 
-    final String _code;
-    final DBObject _scope;
+    private final String _symbol;
 }
-

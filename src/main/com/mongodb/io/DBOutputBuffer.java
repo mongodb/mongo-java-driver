@@ -26,14 +26,6 @@ public class DBOutputBuffer extends OutputBuffer {
         _fromPool.clear();
     }
 
-    public void close(){
-        throw new RuntimeException( "don't think this should ever be called" );        
-    }
-
-    public void flush(){
-        throw new RuntimeException( "don't think this should ever be called" );
-    }
-
     public int getPosition(){
         return _cur.pos();
     }

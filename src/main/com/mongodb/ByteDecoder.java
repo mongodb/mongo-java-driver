@@ -25,6 +25,8 @@ import java.util.regex.Pattern;
 import java.nio.ByteBuffer;
 import java.util.logging.*;
 
+import org.bson.types.*;
+
 /** 
  * Deserializes a string from the database into a <code>DBObject</code>.
  */
@@ -267,7 +269,7 @@ public class ByteDecoder extends Bytes {
             int i = _buf.getInt();
             int time = _buf.getInt();
 
-            created = new DBTimestamp(time, i);
+            created = new BSONTimestamp(time, i);
             break;
 
         case MINKEY:
@@ -304,7 +306,7 @@ public class ByteDecoder extends Bytes {
         
         byte[] data = new byte[totalLen];
         _buf.get( data );
-        return new DBBinary( bType , data );
+        return new Binary( bType , data );
     }
     
     private String readCStr(){

@@ -16,13 +16,11 @@
  *   limitations under the License.
  */
 
-package com.mongodb;
+package org.bson.types;
 
 import java.util.*;
 import java.nio.*;
 import java.net.*;
-
-import com.mongodb.util.*;
 
 /**
  * A globally unique identifier for objects.
@@ -154,7 +152,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
     
     
-    ObjectId( int time , int machine , int inc ){
+    public ObjectId( int time , int machine , int inc ){
         _time = time;
         _machine = machine;
         _inc = inc;
@@ -286,6 +284,24 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     public int getInc(){
         return _inc;
     }
+    
+    public int _time(){
+        return _time;
+    }
+    public int _machine(){
+        return _machine;
+    }
+    public int _inc(){
+        return _inc;
+    }
+
+    public boolean isNew(){
+        return _new;
+    }
+
+    public void notNew(){
+        _new = false;
+    }
 
     final int _time;
     final int _machine;
@@ -347,7 +363,10 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         _timeFixer = new Thread("ObjectId-TimeFixer"){
                 public void run(){
                     while ( true ){
-                        ThreadUtil.sleep( 499 );
+                        try {
+                            Thread.sleep( 499 );
+                        }
+                        catch ( Exception e ){}
                         _gentime = _flip( (int)(System.currentTimeMillis()/1000) );
                     }
                 }

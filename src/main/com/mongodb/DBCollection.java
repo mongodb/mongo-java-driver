@@ -18,6 +18,9 @@
 
 package com.mongodb;
 
+import org.bson.*;
+import org.bson.types.*;
+
 import java.util.*;
 
 /** This class provides a skeleton implementation of a database collection.  
@@ -375,10 +378,10 @@ public abstract class DBCollection {
         Object id = jo.get( "_id" );
         if ( DEBUG ) System.out.println( "id : " + id );
 
-        if ( id == null || ( id instanceof ObjectId && ((ObjectId)id)._new ) ){
+        if ( id == null || ( id instanceof ObjectId && ((ObjectId)id).isNew() ) ){
             if ( DEBUG ) System.out.println( "saving new object" );
             if ( id != null && id instanceof ObjectId )
-                ((ObjectId)id)._new = false;
+                ((ObjectId)id).notNew();
             insert( jo );
             return;
         }

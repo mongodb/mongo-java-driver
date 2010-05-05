@@ -18,6 +18,8 @@
 
 package com.mongodb;
 
+import org.bson.types.*;
+
 /**
  * @deprecated
  */

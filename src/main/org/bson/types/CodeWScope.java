@@ -1,12 +1,14 @@
+// CodeWScope.java
+
 /**
- *      Copyright (C) 2009 10gen Inc.
- *
+ *      Copyright (C) 2008 10gen Inc.
+ *  
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
  *   You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *   Unless required by applicable law or agreed to in writing, software
  *   distributed under the License is distributed on an "AS IS" BASIS,
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,10 +16,31 @@
  *   limitations under the License.
  */
 
-package com.mongodb;
+package org.bson.types;
 
-/**
- *  Class to represent BSON 'undefined' type
+import java.util.*;
+
+import org.bson.*;
+
+/** 
+ * for using the CodeWScope type
  */
-public class DBUndefined {
+public class CodeWScope {
+
+    public CodeWScope( String code , BSONObject scope ){
+        _code = code;
+        _scope = scope;
+    }
+
+    public String getCode(){
+        return _code;
+    }
+
+    public BSONObject getScope(){
+        return _scope;
+    }
+
+    final String _code;
+    final BSONObject _scope;
 }
+

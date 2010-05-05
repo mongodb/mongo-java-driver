@@ -3,6 +3,8 @@
 package com.mongodb.util;
 
 import com.mongodb.*;
+import org.bson.types.*;
+
 import java.text.*;
 import java.util.*;
 import java.util.regex.*;
@@ -167,8 +169,8 @@ public class JSON {
             return;
         }
 
-        if ( o instanceof DBTimestamp ){
-            DBTimestamp t = (DBTimestamp)o;
+        if ( o instanceof BSONTimestamp ){
+            BSONTimestamp t = (BSONTimestamp)o;
             buf.append( t.getTime() + "|" + t.getInc() );
             return;
         }

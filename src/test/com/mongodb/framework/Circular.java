@@ -21,6 +21,8 @@ import java.net.*;
 import com.mongodb.*;
 import com.mongodb.util.*;
 
+import org.bson.*;
+import org.bson.types.*;
 
 public class Circular {
 
