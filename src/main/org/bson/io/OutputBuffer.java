@@ -3,6 +3,7 @@
 package org.bson.io;
 
 import java.io.*;
+import java.security.*;
 
 public abstract class OutputBuffer {
 
@@ -26,43 +27,98 @@ public abstract class OutputBuffer {
      */
     public abstract int pipe( OutputStream out )
         throws IOException;
-
+    
     /**
      * mostly for testing
      */
-    public String asString(){
+    public byte[] toByteArray(){
         try {
             ByteArrayOutputStream bout = new ByteArrayOutputStream( size() );
             pipe( bout );
-            return bout.toString();
+            return bout.toByteArray();
         }
         catch ( IOException ioe ){
             throw new RuntimeException( "should be impossible" , ioe );
         }
     }
 
+    public String asString(){
+        return new String( toByteArray() );
+    }
+
+    public String hex(){
+        final StringBuilder buf = new StringBuilder();
+        try {
+            pipe( new OutputStream(){
+                    public void write( int b ){
+                        String s = Integer.toHexString(0xff & b);
+                        
+                        if (s.length() < 2) 
+                            buf.append("0");
+                        buf.append(s);
+                    }
+                } 
+                );
+        }
+        catch ( IOException ioe ){
+            throw new RuntimeException( "impossible" );
+        }
+        return buf.toString();
+    }
+
+    public String md5(){
+        final MessageDigest md5 ;
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error - this implementation of Java doesn't support MD5.");
+        }        
+        md5.reset();
+
+        final StringBuilder buf = new StringBuilder();
+        try {
+            pipe( new OutputStream(){
+                    public void write( byte[] b , int off , int len ){
+                        md5.update( b , off , len );
+                    }
+
+                    public void write( int b ){
+                        md5.update( (byte)(b&0xFF) );
+                    }
+                } 
+                );
+        }
+        catch ( IOException ioe ){
+            throw new RuntimeException( "impossible" );
+        }
+        
+        return com.mongodb.util.Util.toHex( md5.digest() );
+    }
+    
     public void writeInt( int x ){
-        write( 0xFF & ( x << 24 ) );
-        write( 0xFF & ( x << 16 ) );
-        write( 0xFF & ( x << 8 ) );
-        write( 0xFF & ( x << 0 ) );
+        write( x >> 0 );
+        write( x >> 8 );
+        write( x >> 16 );
+        write( x >> 24 );
     }
 
     public void writeInt( int pos , int x ){
         final int save = getPosition();
+        setPosition( pos );
         writeInt( x );
         setPosition( save );
     }
 
     public void writeLong( long x ){
-        write( (byte)(0xFFL & ( x << 56 ) ) );
-        write( (byte)(0xFFL & ( x << 48 ) ) );
-        write( (byte)(0xFFL & ( x << 40 ) ) );
-        write( (byte)(0xFFL & ( x << 32 ) ) );
-        write( (byte)(0xFFL & ( x << 24 ) ) );
-        write( (byte)(0xFFL & ( x << 16 ) ) );
-        write( (byte)(0xFFL & ( x << 8 ) ) );
-        write( (byte)(0xFFL & ( x << 0 ) ) );
+        write( (byte)(0xFFL & ( x >> 0 ) ) );
+        write( (byte)(0xFFL & ( x >> 8 ) ) );
+        write( (byte)(0xFFL & ( x >> 16 ) ) );
+        write( (byte)(0xFFL & ( x >> 24 ) ) );
+        write( (byte)(0xFFL & ( x >> 32 ) ) );
+        write( (byte)(0xFFL & ( x >> 40 ) ) );
+        write( (byte)(0xFFL & ( x >> 48 ) ) );
+        write( (byte)(0xFFL & ( x >> 56 ) ) );
     }
 
     public void writeDouble( double x ){

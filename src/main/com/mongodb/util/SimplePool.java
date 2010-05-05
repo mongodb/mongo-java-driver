@@ -22,6 +22,7 @@ import java.util.*;
 
 public abstract class SimplePool<T> {
 
+    static final boolean TRACK_LEAKS = Boolean.getBoolean( "MONGO-TRACKLEAKS" );
     static long _sleepTime = 15;
     
     /** 
@@ -41,7 +42,7 @@ public abstract class SimplePool<T> {
         _name = name;
         _maxToKeep = maxToKeep;
         _maxTotal = maxTotal;
-        _trackLeaks = trackLeaks;
+        _trackLeaks = trackLeaks || TRACK_LEAKS;
         _debug = debug;
         
     }
@@ -66,7 +67,11 @@ public abstract class SimplePool<T> {
      * @param t Object to add
      */
     public void done( T t ){
-        _where.remove( _hash( t ) );
+        if ( _trackLeaks ){
+            synchronized ( _where ){
+                _where.remove( _hash( t ) );
+            }
+        }
         
         if ( ! ok( t ) ){
             synchronized ( _avail ){
@@ -109,7 +114,9 @@ public abstract class SimplePool<T> {
             if ( _trackLeaks ){
                 Throwable stack = new Throwable();
                 stack.fillInStackTrace();
-                _where.put( _hash( t ) , stack );
+                synchronized ( _where ){
+                    _where.put( _hash( t ) , stack );
+                }
             }
         }
         return t;
@@ -164,15 +171,16 @@ public abstract class SimplePool<T> {
     }
 
     private void _wherePrint(){
-        StringBuilder buf = new StringBuilder( "Pool : " + _name + " waiting b/c of\n" );
-        for ( Throwable t : _where.values() ){
-            buf.append( "--\n" );
-            final StackTraceElement[] st = t.getStackTrace();
-            for ( int i=0; i<st.length; i++ )
-                buf.append( "  " ).append( st[i] ).append( "\n" );
-            buf.append( "----\n" );
+        StringBuilder buf = new StringBuilder( toString() ).append( " waiting \n" );
+        synchronized ( _where ){
+            for ( Throwable t : _where.values() ){
+                buf.append( "--\n" );
+                final StackTraceElement[] st = t.getStackTrace();
+                for ( int i=0; i<st.length; i++ )
+                    buf.append( "  " ).append( st[i] ).append( "\n" );
+                buf.append( "----\n" );
+            }
         }
-
         System.out.println( buf );
     }
 
@@ -180,7 +188,9 @@ public abstract class SimplePool<T> {
     protected void clear(){
         _avail.clear();
         _all.clear();
-        _where.clear(); // is this correct
+        synchronized ( _where ){
+            _where.clear(); // is this correct
+        }
     }
 
     public int total(){
@@ -212,6 +222,18 @@ public abstract class SimplePool<T> {
 
     public int maxToKeep(){
         return _maxToKeep;
+    }
+
+    public String toString(){
+        StringBuilder buf = new StringBuilder();
+        buf.append( "pool: " ).append( _name )
+            .append( " maxToKeep: " ).append( _maxToKeep )
+            .append( " maxTotal: " ).append( _maxToKeep )
+            .append( " where " ).append( _where.size() )
+            .append( " avail " ).append( _avail.size() )
+            .append( " all " ).append( _all.size() )
+            ;
+        return buf.toString();
     }
 
     protected final String _name;

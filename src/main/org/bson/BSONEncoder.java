@@ -10,6 +10,9 @@ import java.util.*;
 import java.util.regex.*;
 import java.util.concurrent.atomic.*;
 
+import java.nio.*;
+import java.nio.charset.*;
+
 /**
  * this is meant to be pooled or cached
  * there is some per instance memory for string conversion, etc...
@@ -314,20 +317,57 @@ public class BSONEncoder {
         _buf.writeInt( lenPos , strLen );
     }
     
-    protected int _put( String name ){
-        throw new RuntimeException( "not done" );
-        /*
-        _cbuf.position( 0 );
-        _cbuf.limit( _cbuf.capacity() );
-        _cbuf.append( name );
-        
-        _cbuf.flip();
+    void _reset( Buffer b ){
+        b.position(0);
+        b.limit( b.capacity() );
+    }
 
-        _encoder.encode( _cbuf , _buf , false );
+    /**
+     * puts as utf-8 string
+     */
+    protected int _put( String str ){
+        int total = 0;
+
+        final int len = str.length();
+        int pos = 0;
+        while ( pos < len ){
+            _reset( _stringC );
+            _reset( _stringB );
+
+            int toEncode = Math.min( _stringC.capacity() , len - pos );
+            _stringC.put( str , pos , toEncode );
+            _stringC.flip();
+            
+            CoderResult cr = _encoder.encode( _stringC , _stringB , false );
+            
+            if ( cr.isMalformed() || cr.isUnmappable() )
+                throw new IllegalArgumentException( "malforumed string" );
+            
+            if ( cr.isOverflow() )
+                throw new RuntimeException( "overflor should be impossible" );
+            
+            if ( cr.isError() )
+                throw new RuntimeException( "should never get here" );
+
+            if ( ! cr.isUnderflow() )
+                throw new RuntimeException( "this should always be true" );
+
+            total += _stringB.position();
+            _buf.write( _stringB.array() , 0 , _stringB.position() );
+
+            pos += toEncode;
+        }
 
         _buf.write( (byte)0 );
-        */
+        total++;
+
+        return total;
     }
 
     protected OutputBuffer _buf;
+    
+    private CharBuffer _stringC = CharBuffer.wrap( new char[256] );
+    private ByteBuffer _stringB = ByteBuffer.wrap( new byte[1024 + 1] );
+    private CharsetEncoder _encoder = BSON._utf8.newEncoder();
+
 }

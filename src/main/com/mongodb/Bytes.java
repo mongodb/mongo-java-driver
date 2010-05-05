@@ -81,7 +81,6 @@ public class Bytes extends BSON {
 
 
 
-    static protected Charset _utf8 = Charset.forName( "UTF-8" );
     /** The maximum number of bytes allowed to be sent to the db at a time */
     static protected final int MAX_STRING = MAX_OBJECT_SIZE - 1024;
     

@@ -4,6 +4,7 @@ package org.bson;
 
 import java.util.*;
 import java.util.regex.*;
+import java.nio.charset.*;
 
 public class BSON {
 
@@ -198,6 +199,6 @@ public class BSON {
     static Map<Byte,List<Transformer>> _decodingHooks = 
         Collections.synchronizedMap( new HashMap<Byte,List<Transformer>>() );
     
-
+    static protected Charset _utf8 = Charset.forName( "UTF-8" );
 
 }
