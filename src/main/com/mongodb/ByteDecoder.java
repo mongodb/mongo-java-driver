@@ -218,7 +218,7 @@ public class ByteDecoder extends Bytes {
             break;
             
         case REGEX:
-            created = Pattern.compile( readCStr() , Bytes.patternFlags( readCStr() ) );
+            created = Pattern.compile( readCStr() , Bytes.regexFlags( readCStr() ) );
             break;
 
         case BINARY:

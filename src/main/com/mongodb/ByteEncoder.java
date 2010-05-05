@@ -490,7 +490,7 @@ public class ByteEncoder extends Bytes {
         int start = _buf.position();
         _put( REGEX , name );
         _put( p.pattern() );
-        _put( patternFlags( p.flags() ) );
+        _put( regexFlags( p.flags() ) );
         return _buf.position() - start;
     }
 

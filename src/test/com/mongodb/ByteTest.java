@@ -305,11 +305,11 @@ public class ByteTest extends TestCase {
     @Test(groups = {"basic"})
     public void testPatternFlags() {
         boolean threw = false;
-        assertEquals( 0, Bytes.patternFlags( "" ) );
-        assertEquals( "", Bytes.patternFlags( 0 ) );
+        assertEquals( 0, Bytes.regexFlags( "" ) );
+        assertEquals( "", Bytes.regexFlags( 0 ) );
 
         try {
-            Bytes.patternFlags( "f" );
+            Bytes.regexFlags( "f" );
         }
         catch( RuntimeException e ) {
             threw = true;
@@ -318,7 +318,7 @@ public class ByteTest extends TestCase {
         threw = false;
 
         try {
-            Bytes.patternFlags( 513 );
+            Bytes.regexFlags( 513 );
         }
         catch( RuntimeException e ) {
             threw = true;
@@ -335,7 +335,7 @@ public class ByteTest extends TestCase {
                                               Pattern.COMMENTS |
                                               256 );
 
-        String s = Bytes.patternFlags( lotsoflags.flags() );
+        String s = Bytes.regexFlags( lotsoflags.flags() );
         char prev = s.charAt( 0 );
         for( int i=1; i<s.length(); i++ ) {
             char current = s.charAt( i );
@@ -343,7 +343,7 @@ public class ByteTest extends TestCase {
             prev = current;
         }
 
-        int check = Bytes.patternFlags( s );
+        int check = Bytes.regexFlags( s );
         assertEquals( lotsoflags.flags(), check );
     }
 

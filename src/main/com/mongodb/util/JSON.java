@@ -149,7 +149,7 @@ public class JSON {
         }
 
         if (o instanceof Pattern) {
-            buf.append("/").append(o.toString()).append("/").append(Bytes.patternFlags( ((Pattern)o).flags() ));
+            buf.append("/").append(o.toString()).append("/").append(Bytes.regexFlags( ((Pattern)o).flags() ));
             return;
         }
 
@@ -314,7 +314,7 @@ class JSONParser {
             if ( Character.isWhitespace( current ) ||
                  ! Character.isLetter( current ) )
                 break;
-            flags |= Bytes.getFlag( current );
+            flags |= Bytes.regexFlag( current );
             current = read();
         }
 
