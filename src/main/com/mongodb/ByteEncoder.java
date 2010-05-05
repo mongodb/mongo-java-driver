@@ -115,7 +115,6 @@ public class ByteEncoder extends Bytes {
         _buf.position( 0 );
         _buf.limit( _buf.capacity() );
         _flipped = false;
-	_dontRef.clear();
     }
 
     /**
@@ -316,7 +315,7 @@ public class ByteEncoder extends Bytes {
             return true;
         }
         
-        if ( ! _dontRefContains( o ) && name != null && o instanceof DBPointer ){
+        if ( name != null && o instanceof DBPointer ){
             DBPointer r = (DBPointer)o;
             putDBPointer( name , r._ns , (ObjectId)r._id );
             return true;
@@ -528,15 +527,8 @@ public class ByteEncoder extends Bytes {
         return _buf.position() - start;
     }
 
-    boolean _dontRefContains( Object o ){
-        if ( _dontRef.size() == 0 )
-            return false;
-        return _dontRef.peek().contains( o );
-    }
-    
     private final CharBuffer _cbuf = CharBuffer.allocate( MAX_STRING );
     private final CharsetEncoder _encoder = _utf8.newEncoder();
-    private Stack<IdentitySet> _dontRef = new Stack<IdentitySet>();
     
     private boolean _flipped = false;
     final ByteBuffer _buf;
