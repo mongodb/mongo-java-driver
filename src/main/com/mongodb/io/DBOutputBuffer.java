@@ -4,6 +4,7 @@ package com.mongodb.io;
 
 import org.bson.*;
 import org.bson.io.*;
+import org.bson.util.*;
 
 import java.io.*;
 import java.util.*;
@@ -20,7 +21,8 @@ public class DBOutputBuffer extends OutputBuffer {
         _cur.reset();
         _end.reset();
 
-        // TODO: pool
+        for ( int i=0; i<_fromPool.size(); i++ )
+            _extra.done( _fromPool.get(i) );
         _fromPool.clear();
     }
 
@@ -90,7 +92,7 @@ public class DBOutputBuffer extends OutputBuffer {
         if ( _end.y < BUF_SIZE )
             return;
         
-        _fromPool.add( new byte[BUF_SIZE] ); // TODO: pool
+        _fromPool.add( _extra.get() );
         _end.nextBuffer();
         _cur.reset( _end );
     }
@@ -180,5 +182,10 @@ public class DBOutputBuffer extends OutputBuffer {
     
     private final Position _cur = new Position();
     private final Position _end = new Position();
-
+    
+    private static SimplePool<byte[]> _extra = new SimplePool<byte[]>( ( 1024 * 1024 * 10 ) / BUF_SIZE ){
+        protected byte[] createNew(){
+            return new byte[BUF_SIZE];
+        }
+    };
 }
