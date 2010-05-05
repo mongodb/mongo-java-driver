@@ -27,6 +27,7 @@
 
       <class name="com.mongodb.ErrorTest" />
 
+      <class name="org.bson.BSONTest" />
     </classes>
   </test>
 

@@ -38,6 +38,7 @@ public class DBOutputBufferTest extends TestCase {
         }
     }
 
+    @Test
     public void testBasic1(){
         DBOutputBuffer buf = new DBOutputBuffer();
         buf.write( "eliot".getBytes() );
@@ -60,6 +61,7 @@ public class DBOutputBufferTest extends TestCase {
 
     }
 
+    @Test
     public void testBig1(){
         DBOutputBuffer a = new DBOutputBuffer();
         StringBuilder b = new StringBuilder();

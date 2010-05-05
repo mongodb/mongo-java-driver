@@ -51,7 +51,8 @@ public class BSONTest extends TestCase {
         assertEquals( size , buf.size() );
         assertEquals( hash , buf.md5() );
     }
-    
+
+    @Test
     public void testBasic1(){
         BSONObject o = new BasicBSONObject();
 
@@ -70,7 +71,7 @@ public class BSONTest extends TestCase {
         _test( new BasicBSONObject( "x" , 4 ) , 12 , "d1ed8dbf79b78fa215e2ded74548d89d" );
     }
 
-
+    @Test
     public void testOB1(){
         BasicOutputBuffer buf = new BasicOutputBuffer();
         buf.write( "eliot".getBytes() );
@@ -93,6 +94,7 @@ public class BSONTest extends TestCase {
 
     }
 
+    @Test
     public void testOBBig1(){
         BasicOutputBuffer a = new BasicOutputBuffer();
         StringBuilder b = new StringBuilder();
