@@ -39,6 +39,8 @@ target
 include/jython/cachedir
 mongo.jar
 mongo-*.jar
+bson.jar
+bson-*.jar
 org
 
 TAGS

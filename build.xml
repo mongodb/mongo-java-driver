@@ -83,6 +83,16 @@
     <jar jarfile="mongo.jar" >
       <fileset dir="build/main" />
     </jar>
+
+    <jar jarfile="bson.jar" >
+      <fileset dir="build/main" >
+        <not>
+          <filename name="com/"/>
+        </not>
+      </fileset>
+    </jar>
+
+
   </target>
 
   <target name="javadocs" depends="compile,utilcompile" description="Generate API docs">
