@@ -20,6 +20,8 @@ package com.mongodb;
 
 import com.mongodb.util.OrderedSet;
 
+import org.bson.*;
+
 import java.util.*;
 
 /** 
@@ -84,7 +86,7 @@ public class BasicDBList extends ArrayList<Object> implements DBObject {
         }
     } 
     
-    public void putAll( DBObject o ){
+    public void putAll( BSONObject o ){
         for ( String k : o.keySet() ){
             put( k , o.get( k ) );
         }

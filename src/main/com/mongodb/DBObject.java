@@ -20,52 +20,10 @@ package com.mongodb;
 
 import java.util.*;
 
+import org.bson.*;
+
 /** A key-value map that can be saved to the database. */
-public interface DBObject {
-
-    /** Sets a name/value pair in this object.
-     * @param key Name to set
-     * @param v Corresponding value
-     * @return <tt>v</tt>
-     */
-    public Object put( String key , Object v );
-
-    public void putAll( DBObject o );
-    public void putAll( Map m );
-    
-    /** Gets a field from this object by a given name.
-     * @param key The name of the field fetch
-     * @return The field, if found
-     */
-    public Object get( String key );
-
-    /**
-     * Returns a map representing this DBObject.
-     * @return the map
-     */
-    public Map toMap();
-
-    /** Remove a field with a given name from this object.
-     * @param key The name of the field to remove
-     * @return The value removed from this object
-     */
-    public Object removeField( String key );
-
-    /** 
-     * @deprecated
-     */
-    public boolean containsKey( String s );
-
-    /** Checks if this object contains a field with the given name.
-     * @param s Field name for which to check
-     * @return if this object contains a field with the given name
-     */
-    public boolean containsField(String s);
-
-    /** Returns this object's fields' names
-     * @return The names of the fields in this object
-     */
-    public Set<String> keySet();
+public interface DBObject extends BSONObject {
     
     /**
      * if this object was loaded with only some fields (using a field filter)

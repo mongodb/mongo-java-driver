@@ -22,6 +22,8 @@ import java.util.*;
 
 import com.mongodb.util.*;
 
+import org.bson.*;
+
 /**
  * A simple implementation of <code>DBObject</code>.  
  * A <code>DBObject</code> can be created as follows, using this class:
@@ -159,7 +161,7 @@ public class BasicDBObject extends LinkedHashMap<String,Object> implements DBObj
         }
     } 
     
-    public void putAll( DBObject o ){
+    public void putAll( BSONObject o ){
         for ( String k : o.keySet() ){
             put( k , o.get( k ) );
         }

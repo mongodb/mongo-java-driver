@@ -21,6 +21,8 @@ package com.mongodb.gridfs;
 import com.mongodb.*;
 import com.mongodb.util.*;
 
+import org.bson.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -156,7 +158,7 @@ public abstract class GridFSFile implements DBObject {
     }
 
 
-    public void putAll( DBObject o ){
+    public void putAll( BSONObject o ){
         throw new UnsupportedOperationException();
     }
     public void putAll( Map m ){

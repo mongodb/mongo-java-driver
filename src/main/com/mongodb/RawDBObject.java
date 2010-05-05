@@ -21,6 +21,8 @@ package com.mongodb;
 import java.nio.*;
 import java.util.*;
 
+import org.bson.*;
+
 import static com.mongodb.Bytes.*;
 import static com.mongodb.util.MyAsserts.*;
 
@@ -66,7 +68,7 @@ public class RawDBObject implements DBObject {
         throw new RuntimeException( "read only" );
     }
 
-    public void putAll( DBObject o ){
+    public void putAll( BSONObject o ){
         throw new RuntimeException( "read only" );
     }
     

@@ -21,6 +21,8 @@ package com.mongodb;
 import java.util.*;
 import java.lang.reflect.*;
 
+import org.bson.*;
+
 import com.mongodb.util.*;
 
 public abstract class ReflectionDBObject implements DBObject {
@@ -54,7 +56,7 @@ public abstract class ReflectionDBObject implements DBObject {
         }
     } 
     
-    public void putAll( DBObject o ){
+    public void putAll( BSONObject o ){
         for ( String k : o.keySet() ){
             put( k , o.get( k ) );
         }
