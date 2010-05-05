@@ -29,7 +29,7 @@ import com.mongodb.util.*;
 
 public class DBOutputBufferTest extends TestCase {
 
-    DBOutputBufferTest(){
+    public DBOutputBufferTest(){
         for ( int x = 8; x<(DBOutputBuffer.BUF_SIZE*3); x*=2 ){
             StringBuilder buf = new StringBuilder();
             while ( buf.length() < x )

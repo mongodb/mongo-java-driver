@@ -49,15 +49,6 @@ public class ByteEncoder extends Bytes {
 
     static final boolean DEBUG = Boolean.getBoolean( "DEBUG.BE" );
 
-    // things that won't get sent in the scope
-    static final Set<String> BAD_GLOBALS = new HashSet<String>(); 
-    static {
-	BAD_GLOBALS.add( "db" );
-	BAD_GLOBALS.add( "local" );
-	BAD_GLOBALS.add( "core" );
-        BAD_GLOBALS.add( "args" ); // TODO: should we get rid of this
-        BAD_GLOBALS.add( "obj" ); // TODO: get rid of this
-    }
     
     /** Fetches a new <code>ByteEncoder</code> from the pool of available <code>ByteEncoder</code>s.
      * @return a new <code>ByteEncoder</code>
