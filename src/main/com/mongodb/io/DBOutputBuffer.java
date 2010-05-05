@@ -11,7 +11,7 @@ import java.util.*;
 
 public class DBOutputBuffer extends OutputBuffer {
     
-    public static final int BUF_SIZE = 1024;
+    public static final int BUF_SIZE = 1024 * 16;
 
     public DBOutputBuffer(){
         reset();
@@ -183,9 +183,12 @@ public class DBOutputBuffer extends OutputBuffer {
     private final Position _cur = new Position();
     private final Position _end = new Position();
     
-    private static SimplePool<byte[]> _extra = new SimplePool<byte[]>( ( 1024 * 1024 * 10 ) / BUF_SIZE ){
+    private static org.bson.util.SimplePool<byte[]> _extra = 
+        new org.bson.util.SimplePool<byte[]>( ( 1024 * 1024 * 10 ) / BUF_SIZE ){
+        
         protected byte[] createNew(){
             return new byte[BUF_SIZE];
         }
+
     };
 }
