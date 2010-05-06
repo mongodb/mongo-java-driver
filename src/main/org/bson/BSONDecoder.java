@@ -5,6 +5,7 @@ package org.bson;
 import java.io.*;
 
 import static org.bson.BSON.*;
+import org.bson.io.*;
 
 public class BSONDecoder {
     
@@ -33,78 +34,83 @@ public class BSONDecoder {
     
     int decode()
         throws IOException {
-        
-        int read = 0;
 
+        final int start = _in._read;
+        
         final int len = _in.readInt();
-        read += 4;
 
         _callback.objectStart();
+        while ( decodeElement() );
+        _callback.objectDone();
         
-        while ( true ){
-            int z = decodeElement();
-            read += z;
-            
-            if ( z <= 0 )
-                throw new IllegalArgumentException( "error" );
-            if ( z == 1 )
-                break;
+        final int read = _in._read - start;
+
+        if ( read != len ){
+            //throw new IllegalArgumentException( "bad data.  lengths don't match " + read + " != " + len );
         }
 
-        _callback.objectDone();
-        if ( read != len )
-            throw new IllegalArgumentException( "bad data.  lengths don't match " + read + " != " + len );
-        return read;
+        return len;
     }
-
-    int decodeElement()
+    
+    boolean decodeElement()
         throws IOException {
 
         final byte type = _in.read();
         if ( type == EOO )
-            return 1;
+            return false;
         
-        
+        String name = _in.readCStr();
         
         switch ( type ){
-            /*
         case NULL:
+            _callback.gotNull( name ); 
+            break;
             
         case UNDEFINED:
+            _callback.gotUndefined( name ); 
             break;
 
         case BOOLEAN:
-            created =_buf.get() > 0;
+            _callback.gotBoolean( name , _in.read() > 0 );
             break;
 
         case NUMBER:
-            created = _buf.getDouble();
+            _callback.gotDouble( name , _in.readDouble() );
             break;
 	    
         case NUMBER_INT:
-            created = _buf.getInt();
+            _callback.gotInt( name , _in.readInt() );
             break;
 
         case NUMBER_LONG:
-            created = _buf.getLong();
+            _callback.gotLong( name , _in.readLong() );
             break;	    
 
+            
         case SYMBOL:
             // intentional fallthrough
         case STRING:
-            int size = _buf.getInt() - 1;
-            if ( size > _buf.remaining() )
-                throw new MongoException( "invalid bson? size:" + size + " remaining: " + _buf.remaining() );
-            _buf.get( _namebuf , 0 , size );
+            int size = _in.readInt();
+            if ( size < 0 || size > ( 3 * 1024 * 1024 ) )
+                throw new RuntimeException( "bad string size: " + size );
+            byte[] b = size < _random.length ? _random : new byte[size];
+
+            _in.fill( b , size );
+            
             try {
-                created = new String( _namebuf , 0 , size , "UTF-8" );
+                String s = new String( b , 0 , size - 1 , "UTF-8" );
+                if ( type == SYMBOL )
+                    _callback.gotSymbol( name , s );
+                else 
+                    _callback.gotString( name , s );
             }
             catch ( java.io.UnsupportedEncodingException uee ){
-                throw new MongoInternalException( "impossible" , uee );
+                throw new RuntimeException( "impossible" , uee );
             }
-            _buf.get(); // skip over length
+
             break;
 
+            /*
         case OID:
             created = new ObjectId( _buf.getInt() , _buf.getInt() , _buf.getInt() );
             break;
@@ -134,89 +140,125 @@ public class BSONDecoder {
         case CODE:
             throw new UnsupportedOperationException( "can't handle CODE yet" );
 
+            */
         case ARRAY:
-            created = new BasicDBList();
-            _buf.getInt();  // total size - we don't care....
+            _in.readInt();  // total size - we don't care....
 
-            while (decodeNext( (DBObject)created , path ) > 1 ) {
-                // intentionally empty
-            }
+            _callback.arrayStart( name );
+            while ( decodeElement() );
+            _callback.arrayDone();
 
             break;
-
+            
+            
         case OBJECT:
-            _buf.getInt();  // total size - we don't care....
+            _in.readInt();  // total size - we don't care....
             
-            if ( created == null ){
-
-                Object foo = o.get( name );
-                if ( foo instanceof DBObject )
-                    created = (DBObject)foo;
-                
-                if ( created == null )
-                    created = _create( path );
-            }
-            
-            while (decodeNext( (DBObject)created , path ) > 1 ) {
-                // intentionally empty
-            }
-            
-            DBObject theObject = (DBObject)created;
-            if ( theObject.containsKey( "$ref" ) && 
-                 theObject.containsKey( "$id" ) ){
-                created = new DBRef( _base , theObject.get( "$ref" ).toString() , theObject.get( "$id" ) );
-            }
+            _callback.objectStart( name );
+            while ( decodeElement() );
+            _callback.objectDone();
 
             break;
             
         case TIMESTAMP:
-            int i = _buf.getInt();
-            int time = _buf.getInt();
-
-            created = new BSONTimestamp(time, i);
+            int i = _in.readInt();
+            int time = _in.readInt();
+            _callback.gotTimestamp( name , time , i );
             break;
 
         case MINKEY:
-            created = "MinKey";
+            _callback.gotMinKey( name );
             break;
 
         case MAXKEY:
-            created = "MaxKey";
+            _callback.gotMaxKey( name );
             break;
-            */
-        default:
-            throw new UnsupportedOperationException( "BSONDecoder doesn't understand type : " + type );
-        }
 
+        default:
+            throw new UnsupportedOperationException( "BSONDecoder doesn't understand type : " + type + " name: " + name  );
+        }
+        
+        return true;
     }
     
     class Input {
         Input( InputStream in ){
             _in = in;
+            _read = 0;
         }
         
         int readInt()
             throws IOException {
             int x = 0;
-            x |= ( 0xFF & _in.read() ) >> 0;
-            x |= ( 0xFF & _in.read() ) >> 8;
-            x |= ( 0xFF & _in.read() ) >> 16;
-            x |= ( 0xFF & _in.read() ) >> 24;
+            x |= ( 0xFF & _in.read() ) << 0;
+            x |= ( 0xFF & _in.read() ) << 8;
+            x |= ( 0xFF & _in.read() ) << 16;
+            x |= ( 0xFF & _in.read() ) << 24;
+            _read += 4;
             return x;
+        }
+
+        long readLong()
+            throws IOException {
+            long x = 0;
+            x |= (long)( 0xFFL & _in.read() ) << 0;
+            x |= (long)( 0xFFL & _in.read() ) << 8;
+            x |= (long)( 0xFFL & _in.read() ) << 16;
+            x |= (long)( 0xFFL & _in.read() ) << 24;
+            x |= (long)( 0xFFL & _in.read() ) << 32;
+            x |= (long)( 0xFFL & _in.read() ) << 40;
+            x |= (long)( 0xFFL & _in.read() ) << 48;
+            x |= (long)( 0xFFL & _in.read() ) << 56;
+            _read += 8;
+            return x;
+        }
+
+        double readDouble()
+            throws IOException {
+            return Double.longBitsToDouble( readLong() );
         }
 
         byte read()
             throws IOException {
+            _read++;
             return (byte)(_in.read() & 0xFF);
+        }
+
+        void fill( byte b[] , int len )
+            throws IOException {
+            int off = 0;
+            while ( len > 0 ){
+                int x = _in.read( b , off , len );
+                _read += x;
+                off += x;
+                len -= x;
+            }
         }
 
         String readCStr()
             throws IOException {
             
-            throw new RuntimeException( "not done" );
-
+            _stringBuffer.reset();
+            
+            while ( true ){
+                byte b = read();
+                if ( b == 0 )
+                    break;
+                _stringBuffer.write( b );
+            }
+            
+            String out = null;
+            try {
+                out = _stringBuffer.asString( "UTF-8" );
+            }
+            catch ( UnsupportedOperationException e ){
+                throw new RuntimeException( "impossible" , e );
+            }
+            _stringBuffer.reset();
+            return out;
         }
-
+        
+        int _read;
         final InputStream _in;
     }
 
@@ -224,4 +266,6 @@ public class BSONDecoder {
     private Input _in;
     private BSONCallback _callback;
     private byte[] _random = new byte[1024];
+
+    private PoolOutputBuffer _stringBuffer = new PoolOutputBuffer();
 }

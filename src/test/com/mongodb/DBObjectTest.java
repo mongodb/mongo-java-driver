@@ -86,8 +86,8 @@ public class DBObjectTest extends TestCase {
     }
 
     @Test(groups = {"basic"})
-    public void testBasicDBList() {
-        BasicDBList l = new BasicDBList();
+    public void testBasicBSONList() {
+        BasicBSONList l = new BasicBSONList();
         l.put(10, "x");
         assertEquals(l.get("10"), "x");
         assertEquals(l.get(3), null);

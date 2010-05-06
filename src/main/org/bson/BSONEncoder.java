@@ -31,7 +31,11 @@ public class BSONEncoder {
         
         _buf = out;
     }
-    
+ 
+    public void done(){
+        _buf = null;
+    }
+   
     /**
      * @return true if object was handled
      */

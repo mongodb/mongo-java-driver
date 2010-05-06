@@ -3,6 +3,8 @@ package com.mongodb;
 import java.util.*;
 import java.net.UnknownHostException;
 
+import org.bson.types.*;
+
 public class PerformanceTest {
 
     public static final int batchSize = 100;
@@ -15,7 +17,7 @@ public class PerformanceTest {
     private static void setup() {
         small = new BasicDBObject();
 
-        BasicDBList a = new BasicDBList();
+        BasicBSONList a = new BasicBSONList();
         a.put("0", "test");
         a.put("1", "benchmark");
         medium = BasicDBObjectBuilder.start()
@@ -25,7 +27,7 @@ public class PerformanceTest {
             .add("array", a)
             .get();
 
-        BasicDBList harvest = new BasicDBList();
+        BasicBSONList harvest = new BasicBSONList();
         for (int i=0; i<20; i++) {
             harvest.put(i*14+0, "10gen");
             harvest.put(i*14+1, "web");

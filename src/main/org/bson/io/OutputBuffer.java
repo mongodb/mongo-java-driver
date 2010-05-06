@@ -46,6 +46,12 @@ public abstract class OutputBuffer {
         return new String( toByteArray() );
     }
 
+    public String asString( String encoding )
+        throws UnsupportedEncodingException {
+        return new String( toByteArray() , encoding );
+    }
+
+
     public String hex(){
         final StringBuilder buf = new StringBuilder();
         try {

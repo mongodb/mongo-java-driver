@@ -51,9 +51,19 @@ public class BSONTest extends TestCase {
         e.putObject( o );
         assertEquals( size , buf.size() );
         assertEquals( hash , buf.md5() );
-
+        e.done();
+        
         BSONDecoder d = new BSONDecoder();
-        //d.decode( new ByteArrayInputStream( buf.toByteArray() ) , new BasicBSONCallback() );
+        BasicBSONCallback cb = new BasicBSONCallback();
+        int s = d.decode( new ByteArrayInputStream( buf.toByteArray() ) , cb );
+        assertEquals( size , s );
+
+        OutputBuffer buf2 = new BasicOutputBuffer();
+        e.set( buf2 );
+        e.putObject( cb.get() );
+        assertEquals( size , buf2.size() );
+        assertEquals( hash , buf2.md5() );        
+        
     }
     
     @Test

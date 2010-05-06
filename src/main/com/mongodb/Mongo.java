@@ -189,7 +189,7 @@ public class Mongo {
         if (res.getInt("ok" , 0 ) != 1 )
             throw new MongoException( "error listing databases : " + res );
 
-        BasicDBList l = (BasicDBList)res.get("databases");
+        List l = (List)res.get("databases");
 
         List<String> list = new ArrayList<String>();
 
