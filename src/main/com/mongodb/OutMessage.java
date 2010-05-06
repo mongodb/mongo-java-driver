@@ -32,8 +32,6 @@ import static org.bson.BSON.*;
 
 class OutMessage extends BSONEncoder {
 
-    enum State { READY , BUILDING , PREPARED }
-    
     static AtomicInteger ID = new AtomicInteger(1);
     
     private static ThreadLocal<OutMessage> TL = new ThreadLocal<OutMessage>(){
@@ -50,19 +48,14 @@ class OutMessage extends BSONEncoder {
     
     
     private OutMessage(){
-        _state = State.READY;
     }
     
     private void reset( int op ){
-        if ( _state == State.BUILDING )
-            throw new IllegalStateException( "something is wrong state is:" + _state );
-        
         done();
         _buffer.reset();
         set( _buffer );
         
         _id = ID.getAndIncrement();
-        _state = State.BUILDING;
 
         writeInt( 0 ); // will set this later
         writeInt( _id );
@@ -71,14 +64,7 @@ class OutMessage extends BSONEncoder {
     }
 
     void prepare(){
-        if ( _state == State.PREPARED )
-            return; // this should be ok
-            
-        if ( _state == State.READY )
-            throw new IllegalStateException( "something is wrong, preparing a READY buffer" );
-        
         _buffer.writeInt( 0 , _buffer.size() );
-        _state = State.PREPARED;
     }
     
     protected boolean handleSpecialObjects( String name , BSONObject o ){
@@ -142,7 +128,10 @@ class OutMessage extends BSONEncoder {
         _buffer.pipe( out );
     }
 
+    int size(){
+        return _buffer.size();
+    }
+    
     private PoolOutputBuffer _buffer = new PoolOutputBuffer();
     private int _id;
-    private State _state;
 }

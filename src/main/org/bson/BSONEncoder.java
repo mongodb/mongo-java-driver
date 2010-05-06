@@ -338,8 +338,8 @@ public class BSONEncoder {
             _reset( _stringC );
             _reset( _stringB );
 
-            int toEncode = Math.min( _stringC.capacity() , len - pos );
-            _stringC.put( str , pos , toEncode );
+            int toEncode = Math.min( _stringC.capacity() - 1, len - pos );
+            _stringC.put( str , pos , pos + toEncode );
             _stringC.flip();
             
             CoderResult cr = _encoder.encode( _stringC , _stringB , false );
@@ -371,6 +371,10 @@ public class BSONEncoder {
     public void writeInt( int x ){
         _buf.writeInt( x );
     }
+
+    public void writeLong( long x ){
+        _buf.writeLong( x );
+    }
     
     public void writeCString( String s ){
         _put( s );
@@ -378,7 +382,7 @@ public class BSONEncoder {
 
     protected OutputBuffer _buf;
     
-    private CharBuffer _stringC = CharBuffer.wrap( new char[256] );
+    private CharBuffer _stringC = CharBuffer.wrap( new char[256 + 1] );
     private ByteBuffer _stringB = ByteBuffer.wrap( new byte[1024 + 1] );
     private CharsetEncoder _encoder = BSON._utf8.newEncoder();
 

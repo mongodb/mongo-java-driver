@@ -167,36 +167,27 @@ public class DBApiLayer extends DB {
             
             int cur = 0;
             while ( cur < arr.length ){
-                DBMessage m = new DBMessage( 2002 );
-                ByteEncoder encoder = m._encoder;
+                OutMessage om = OutMessage.get( 2002 );
                 
-                encoder._buf.putInt( 0 ); // reserved
-                encoder._put( _fullNameSpace );
+                om.writeInt( 0 ); // reserved
+                om.writeCString( _fullNameSpace );
                 
-                int n=0;
                 for ( ; cur<arr.length; cur++ ){
                     DBObject o = arr[cur];
-                    int pos = encoder._buf.position();
-                    try {
-                        encoder.putObject( null , o );
-                        n++;
-                    }
-                    catch ( BufferOverflowException e ){
-                        if ( n == 0 )
-                            throw encoder.getTooLargeException();
-                        encoder._buf.position( pos );
+                    int sz = om.putObject( o );
+                    if ( sz > Bytes.MAX_OBJECT_SIZE )
+                        throw new IllegalArgumentException( "object too big: " + sz );
+                    
+                    if ( om.size() > ( 4 * 1024 * 1024 ) ){
+                        cur++;
                         break;
                     }
                 }
                 
-                try {
-                    _connector.say( _db , m , getWriteConcern() );
-                }
-                finally {
-                    encoder.done();
-                }
+                om.prepare();
+                _connector.say( _db , om , getWriteConcern() );
+                
             }
-
         }
         
         public void remove( DBObject o )
@@ -204,28 +195,24 @@ public class DBApiLayer extends DB {
 
             if ( SHOW ) System.out.println( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
 
-            DBMessage m = new DBMessage( 2006 );
-            ByteEncoder encoder = m._encoder;
-            encoder._buf.putInt( 0 ); // reserved
-            encoder._put( _fullNameSpace );
+            OutMessage om = OutMessage.get( 2006 );
 
+            om.writeInt( 0 ); // reserved
+            om.writeCString( _fullNameSpace );
+            
             Collection<String> keys = o.keySet();
 
             if ( keys.size() == 1 &&
                  keys.iterator().next().equals( "_id" ) &&
                  o.get( keys.iterator().next() ) instanceof ObjectId )
-                encoder._buf.putInt( 1 );
+                om.writeInt( 1 );
             else
-                encoder._buf.putInt( 0 );
+                om.writeInt( 0 );
 
-            encoder.putObject( o );
-
-            try {
-                _connector.say( _db , m , getWriteConcern() );
-            }
-            finally {
-                encoder.done();
-            }
+            om.putObject( o );
+            
+            om.prepare();
+            _connector.say( _db , om , getWriteConcern() );
         }
 
         void _cleanCursors()
@@ -255,22 +242,17 @@ public class DBApiLayer extends DB {
             if ( all == null || all.size() == 0 )
                 return;
 
-            DBMessage m = new DBMessage( 2007 );
-            ByteEncoder encoder = m._encoder;
-            encoder._buf.putInt( 0 ); // reserved
+            OutMessage om = OutMessage.get( 2007 );
+            om.writeInt( 0 ); // reserved
             
-            encoder._buf.putInt( all.size() );
+            om.writeInt( all.size() );
 
             for (Long l : all) {
-                encoder._buf.putLong(l);
+                om.writeLong(l);
             }
 
-            try {
-                _connector.say( _db , m , WriteConcern.NONE );
-            }
-            finally {
-                encoder.done();
-            }
+            om.prepare();
+            _connector.say( _db , om , WriteConcern.NONE );
         }
 
         public Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options )
