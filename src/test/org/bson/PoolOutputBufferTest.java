@@ -1,4 +1,4 @@
-// DBOutputBufferTest.java
+// PoolOutputBufferTest.java
 
 /**
  *      Copyright (C) 2008 10gen Inc.
@@ -16,7 +16,7 @@
  *   limitations under the License.
  */
 
-package com.mongodb.io;
+package org.bson;
 
 import java.io.*;
 import java.nio.*;
@@ -26,11 +26,12 @@ import java.util.zip.*;
 import org.testng.annotations.Test;
 
 import com.mongodb.util.*;
+import org.bson.io.*;
 
-public class DBOutputBufferTest extends TestCase {
+public class PoolOutputBufferTest extends TestCase {
 
-    public DBOutputBufferTest(){
-        for ( int x = 8; x<(DBOutputBuffer.BUF_SIZE*3); x*=2 ){
+    public PoolOutputBufferTest(){
+        for ( int x = 8; x<(PoolOutputBuffer.BUF_SIZE*3); x*=2 ){
             StringBuilder buf = new StringBuilder();
             while ( buf.length() < x )
                 buf.append( x );
@@ -40,7 +41,7 @@ public class DBOutputBufferTest extends TestCase {
 
     @Test
     public void testBasic1(){
-        DBOutputBuffer buf = new DBOutputBuffer();
+        PoolOutputBuffer buf = new PoolOutputBuffer();
         buf.write( "eliot".getBytes() );
         assertEquals( 5 , buf.getPosition() );
         assertEquals( 5 , buf.size() );
@@ -63,7 +64,7 @@ public class DBOutputBufferTest extends TestCase {
 
     @Test
     public void testBig1(){
-        DBOutputBuffer a = new DBOutputBuffer();
+        PoolOutputBuffer a = new PoolOutputBuffer();
         StringBuilder b = new StringBuilder();
         for ( String x : _data ){
             a.write( x.getBytes() );
@@ -75,7 +76,7 @@ public class DBOutputBufferTest extends TestCase {
     List<String> _data = new ArrayList<String>();
     
     public static void main( String args[] ){
-        (new DBOutputBufferTest()).runConsole();
+        (new PoolOutputBufferTest()).runConsole();
     }
     
 }

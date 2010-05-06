@@ -1,6 +1,6 @@
-// DBOutputBuffer.java
+// PoolOutputBuffer.java
 
-package com.mongodb.io;
+package org.bson.io;
 
 import org.bson.*;
 import org.bson.io.*;
@@ -9,11 +9,11 @@ import org.bson.util.*;
 import java.io.*;
 import java.util.*;
 
-public class DBOutputBuffer extends OutputBuffer {
+public class PoolOutputBuffer extends OutputBuffer {
     
     public static final int BUF_SIZE = 1024 * 16;
 
-    public DBOutputBuffer(){
+    public PoolOutputBuffer(){
         reset();
     }
 

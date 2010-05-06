@@ -7,7 +7,7 @@
       <class name="com.mongodb.util.SimplePoolTest"/>
       <class name="com.mongodb.util.JSONTest"/>
       <class name="com.mongodb.io.ByteBufferStreamTest"/>
-      <class name="com.mongodb.io.DBOutputBufferTest"/>
+      <class name="org.bson.PoolOutputBufferTest"/>
 
       <class name="com.mongodb.ByteTest" />
       <class name="com.mongodb.BasicDBObjectTest" />
