@@ -43,17 +43,22 @@ public class BSONTest extends TestCase {
     }
 
     
-    void _test( BSONObject o , int size , String hash ){
+    void _test( BSONObject o , int size , String hash )
+        throws IOException {
         BSONEncoder e = new BSONEncoder();
         OutputBuffer buf = new BasicOutputBuffer();
         e.set( buf );
         e.putObject( o );
         assertEquals( size , buf.size() );
         assertEquals( hash , buf.md5() );
-    }
 
+        BSONDecoder d = new BSONDecoder();
+        //d.decode( new ByteArrayInputStream( buf.toByteArray() ) , new BasicBSONCallback() );
+    }
+    
     @Test
-    public void testBasic1(){
+    public void testBasic1()
+        throws IOException {
         BSONObject o = new BasicBSONObject();
 
         _test( new BasicBSONObject( "x" , true ) , 9 , "6fe24623e4efc5cf07f027f9c66b5456" );    
