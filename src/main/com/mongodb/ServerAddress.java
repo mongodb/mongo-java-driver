@@ -138,7 +138,7 @@ public class ServerAddress {
         return _host.hashCode() + _port;
     }
 
-    public String geHost(){
+    public String getHost(){
         return _host;
     }
 
