@@ -149,28 +149,6 @@ class DBTCPConnector implements DBConnector {
 
     }
     
-    public void say( DB db , DBMessage m , DB.WriteConcern concern )
-        throws MongoException {
-        MyPort mp = _threadPort.get();
-        DBPort port = mp.get( true );
-        port.checkAuth( db );
-
-        try {
-            port.say( m );
-            if ( concern == DB.WriteConcern.STRICT ){
-                _checkWriteError();
-            }
-            mp.done( port );
-        }
-        catch ( IOException ioe ){
-            mp.error( ioe );
-            _error( ioe );
-            if ( concern == DB.WriteConcern.NONE )
-                return;
-            throw new MongoException.Network( "can't say something" , ioe );
-        }
-    }
-    
     public DBMessage call( DB db , DBMessage m , ByteDecoder decoder )
         throws MongoException {
         return call( db , m , decoder , 2 );
