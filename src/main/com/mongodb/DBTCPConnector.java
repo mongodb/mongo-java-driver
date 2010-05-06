@@ -196,6 +196,10 @@ class DBTCPConnector implements DBConnector {
         return _curAddress;
     }
 
+    public List<ServerAddress> getAllAddress() {
+        return _allHosts;
+    }
+
     public String getConnectPoint(){
         return _curAddress.toString();
     }

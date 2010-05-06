@@ -229,6 +229,14 @@ public class Mongo {
     public ServerAddress getAddress(){
         return _connector.getAddress();
     }
+
+    public List<ServerAddress> getAllAddress() {
+        List<ServerAddress> result = _connector.getAllAddress();
+        if (result == null) {
+            return Arrays.asList(getAddress());
+        }
+        return result;
+    }
     
     final ServerAddress _addr;
     final List<ServerAddress> _addrs;
