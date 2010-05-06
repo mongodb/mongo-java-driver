@@ -125,7 +125,9 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
     }
 
     public boolean containsField( String key ){
-        int i = _getInt( key );
+        int i = _getInt( key , false );
+        if ( i < 0 )
+            return false;
         return i >= 0 && i < size();
     }
 
@@ -147,11 +149,17 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
     }
 
     int _getInt( String s ){
+        return _getInt( s , true );
+    }
+
+    int _getInt( String s , boolean err ){
         try {
             return Integer.parseInt( s );
         }
         catch ( Exception e ){
-            throw new IllegalArgumentException( "BasicBSONList can only work with numeric keys, not: [" + s + "]" );
+            if ( err )
+                throw new IllegalArgumentException( "BasicBSONList can only work with numeric keys, not: [" + s + "]" );
+            return -1;
         }
     }
 

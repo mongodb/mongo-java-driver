@@ -136,12 +136,6 @@ public class BSONDecoder {
             String ns = _in.readCStr();
             ObjectId theOID = new ObjectId( _in.readInt() , _in.readInt() , _in.readInt() );
             _callback.gotDBRef( name , ns , theOID );
-            /* TODO: make sure to handle somewhere
-            if ( theOID.equals( BSON.COLLECTION_REF_ID ) )
-                created = _base.getCollectionFromFull( ns );
-            else 
-                created = new DBPointer( o , name , _base , ns , theOID );
-            */
             break;
             
         case DATE:

@@ -41,12 +41,13 @@ public class BasicBSONCallback implements BSONCallback {
         _stack.addLast( o );
     }
     
-    public void objectDone(){
-        _stack.removeLast();
+    public BSONObject objectDone(){
+        BSONObject o =_stack.removeLast();
         if ( _nameStack.size() > 0 )
             _nameStack.removeLast();
         else if ( _stack.size() > 0 )
             throw new IllegalStateException( "something is wrong" );
+        return o;
     }
 
     public void arrayStart(String name){
@@ -119,7 +120,7 @@ public class BasicBSONCallback implements BSONCallback {
         cur().put( name , new Binary( type , data ) );
     }
     
-    BSONObject cur(){
+    protected BSONObject cur(){
         return _stack.getLast();
     }
     

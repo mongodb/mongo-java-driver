@@ -18,6 +18,8 @@
 
 package com.mongodb;
 
+import org.bson.*;
+
 /**
  * Database reference class.
  * @dochub dbrefs
@@ -25,6 +27,10 @@ package com.mongodb;
 public class DBRef extends DBRefBase {
     
     static final boolean D = Boolean.getBoolean( "DEBUG.DBREF" );
+
+    public DBRef(DB db , BSONObject o ){
+        super( db , o.get( "$ref" ).toString() , o.get( "$id" ) );
+    }
 
     public DBRef(DB db , String ns , Object id) {
         super(db, ns, id);
