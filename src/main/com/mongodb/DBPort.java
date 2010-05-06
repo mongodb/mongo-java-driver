@@ -53,27 +53,24 @@ public class DBPort {
     /**
      * @param response will get wiped
      */
-    DBMessage call( DBMessage msg , ByteDecoder decoder )
+    DBMessage call( OutMessage msg , ByteDecoder decoder )
         throws IOException {
         return go( msg , decoder );
     }
     
-    void say( DBMessage msg )
+    void say( OutMessage msg )
         throws IOException {
         go( msg , null );
     }
 
-    private synchronized DBMessage go( DBMessage msg , ByteDecoder decoder )
+    private synchronized DBMessage go( OutMessage msg , ByteDecoder decoder )
         throws IOException {
         
         if ( _sock == null )
             _open();
         
-        {
-            ByteBuffer out = msg.prepare();
-            while ( out.remaining() > 0 )
-                _sock.write( out );
-        }            
+        msg.prepare();
+        msg.pipe( _out );
         
         if ( _pool != null )
             _pool._everWorked = true;
@@ -103,19 +100,10 @@ public class DBPort {
             read += _read( response );
         
         if ( read != len )
-            throw new RuntimeException( "something is wrong" );
+            throw new RuntimeException( "something is wrong read:" + read + " len: " + len );
 
         response.flip();
         return new DBMessage( response );
-    }
-
-    synchronized void say( OutMessage out )
-        throws IOException {
-        
-        if ( _sock == null )
-            _open();
-        
-        out.pipe( _out );
     }
 
     public synchronized void ensureOpen()
@@ -212,6 +200,8 @@ public class DBPort {
             return;
         
         _inauth = true;
+        OutMessage real = OutMessage.TL.get();
+        OutMessage.TL.set( new OutMessage() );
         try {
             if ( db.reauth() ){
                 _authed.put( db , true );
@@ -220,6 +210,7 @@ public class DBPort {
         }
         finally {
             _inauth = false;
+            OutMessage.TL.set( real );
         }
 
         throw new MongoInternalException( "can't reauth!" );

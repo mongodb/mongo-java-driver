@@ -384,6 +384,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( "26e3d12bd197368526409177b3e8aab6" , _db._hash( "e" , new char[]{ 'j' } ) );
 
         DBCollection u = _db.getCollection( "system.users" );
+
         try {
             assertEquals( 0 , u.find().count() );
             

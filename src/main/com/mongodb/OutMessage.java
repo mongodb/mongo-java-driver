@@ -34,7 +34,7 @@ class OutMessage extends BSONEncoder {
 
     static AtomicInteger ID = new AtomicInteger(1);
     
-    private static ThreadLocal<OutMessage> TL = new ThreadLocal<OutMessage>(){
+    static ThreadLocal<OutMessage> TL = new ThreadLocal<OutMessage>(){
         protected OutMessage initialValue(){
             return new OutMessage();
         }
@@ -46,8 +46,7 @@ class OutMessage extends BSONEncoder {
         return m;
     }
     
-    
-    private OutMessage(){
+    OutMessage(){
     }
     
     private void reset( int op ){

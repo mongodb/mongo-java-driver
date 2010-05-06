@@ -184,7 +184,6 @@ public class DBApiLayer extends DB {
                     }
                 }
                 
-                om.prepare();
                 _connector.say( _db , om , getWriteConcern() );
                 
             }
@@ -211,7 +210,6 @@ public class DBApiLayer extends DB {
 
             om.putObject( o );
             
-            om.prepare();
             _connector.say( _db , om , getWriteConcern() );
         }
 
@@ -251,7 +249,6 @@ public class DBApiLayer extends DB {
                 om.writeLong(l);
             }
 
-            om.prepare();
             _connector.say( _db , om , WriteConcern.NONE );
         }
 
@@ -265,18 +262,17 @@ public class DBApiLayer extends DB {
 
             _cleanCursors();
             
-            DBMessage query = new DBMessage( 2004 );
-            ByteEncoder encoder = query._encoder;
+            OutMessage query = OutMessage.get( 2004 );
 
-            encoder._buf.putInt( options ); // options
-            encoder._put( _fullNameSpace );
+            query.writeInt( options ); // options
+            query.writeCString( _fullNameSpace );
 
-            encoder._buf.putInt( numToSkip );
-            encoder._buf.putInt( batchSize );
-            encoder.putObject( ref ); // ref
+            query.writeInt( numToSkip );
+            query.writeInt( batchSize );
+            query.putObject( ref ); // ref
             if ( fields != null )
-                encoder.putObject( fields ); // fields to return
-
+                query.putObject( fields ); // fields to return
+            
             ByteDecoder decoder = ByteDecoder.get( DBApiLayer.this , this );
 
             try {
@@ -297,7 +293,6 @@ public class DBApiLayer extends DB {
             }
             finally {
                 decoder.done();
-                encoder.done();
             }
         }
 
@@ -318,8 +313,6 @@ public class DBApiLayer extends DB {
             om.putObject( query );
             om.putObject( o );
             
-            om.prepare();
-
             _connector.say( _db , om , getWriteConcern() );
         }
 
@@ -478,13 +471,12 @@ public class DBApiLayer extends DB {
             if ( _curResult._cursor <= 0 )
                 throw new RuntimeException( "can't advance a cursor <= 0" );
             
-            DBMessage m = new DBMessage( 2005 );
-            ByteEncoder encoder = m._encoder;
+            OutMessage m = OutMessage.get( 2005 );
 
-            encoder._buf.putInt( 0 ); 
-            encoder._put( _curResult._fullNameSpace );
-            encoder._buf.putInt( _numToReturn ); // num to return
-            encoder._buf.putLong( _curResult._cursor );
+            m.writeInt( 0 ); 
+            m.writeCString( _curResult._fullNameSpace );
+            m.writeInt( _numToReturn ); // num to return
+            m.writeLong( _curResult._cursor );
             
             ByteDecoder decoder = ByteDecoder.get( DBApiLayer.this , _collection );
 
@@ -500,7 +492,7 @@ public class DBApiLayer extends DB {
             }
             finally {
                 decoder.done();
-                encoder.done();
+
             }
         }
 

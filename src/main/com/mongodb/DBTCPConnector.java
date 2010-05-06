@@ -149,12 +149,12 @@ class DBTCPConnector implements DBConnector {
 
     }
     
-    public DBMessage call( DB db , DBMessage m , ByteDecoder decoder )
+    public DBMessage call( DB db , OutMessage m , ByteDecoder decoder )
         throws MongoException {
         return call( db , m , decoder , 2 );
     }
 
-    public DBMessage call( DB db , DBMessage m , ByteDecoder decoder , int retries )
+    public DBMessage call( DB db , OutMessage m , ByteDecoder decoder , int retries )
         throws MongoException {
         ByteBuffer in = decoder._buf;
         MyPort mp = _threadPort.get();
