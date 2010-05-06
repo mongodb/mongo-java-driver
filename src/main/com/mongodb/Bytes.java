@@ -27,9 +27,6 @@ import java.util.logging.*;
 import org.bson.*;
 import org.bson.types.*;
 
-/**
- * Handles byte functions for <code>ByteEncoder</code> and <code>ByteDecoder</code>.
- */
 public class Bytes extends BSON {
     
     static Logger LOGGER = Logger.getLogger( "com.mongodb" );
