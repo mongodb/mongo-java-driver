@@ -18,6 +18,8 @@
 
 package com.mongodb;
 
+import org.bson.*;
+
 public class MongoException extends RuntimeException {
 
     public MongoException( String msg ){
@@ -39,6 +41,31 @@ public class MongoException extends RuntimeException {
         super( msg , _massage( t ) );
         _code = code;
     }
+    
+    public MongoException( BSONObject o ){
+        this( _getCode( o ) , _getMsg( o ) );
+    }
+
+    static int _getCode( BSONObject o ){
+        Object c = o.get( "code" );
+        if ( c == null )
+            c = o.get( "$code" );
+        
+        if ( c == null )
+            return -5;
+        
+        return ((Number)c).intValue();
+    }
+
+    static String _getMsg( BSONObject o ){
+        Object e = o.get( "$err" );
+        if ( e == null )
+            e = o.get( "err" );
+        if ( e == null )
+            return "UNKNOWN";
+        return e.toString();
+    }
+
 
     static Throwable _massage( Throwable t ){
         if ( t instanceof Network )

@@ -273,27 +273,23 @@ public class DBApiLayer extends DB {
             if ( fields != null )
                 query.putObject( fields ); // fields to return
             
-            ByteDecoder decoder = ByteDecoder.get( DBApiLayer.this , this );
 
-            try {
-                DBMessage response = _connector.call( _db , query , decoder , 2 );
-                
-                SingleResult res = new SingleResult( _fullNameSpace , decoder , options );
+            Response raw = _connector.call( _db , this , query , 2 );
+            SingleResult res = new SingleResult( _fullNameSpace , options , raw );
 
-                if ( res._lst.size() == 0 )
-                    return null;
-
-                if ( res._lst.size() == 1 ){
-                    Object err = res._lst.get(0).get( "$err" );
-                    if ( err != null )
-                        throw new RuntimeException( "db error [" + err + "]" );
-                }
-
-                return new Result( this , res , batchSize , options );
+            if ( res._lst.size() != raw._num )
+                throw new RuntimeException( "something is wrong have:" + res._lst.size() + " should have:" + raw._num );
+            if ( res._lst.size() == 0 )
+                return null;
+            
+            if ( res._lst.size() == 1 ){
+                BSONObject foo = res._lst.get(0);
+                Object err = foo.get( "$err" );
+                if ( err != null )
+                    throw new MongoException( foo );
             }
-            finally {
-                decoder.done();
-            }
+            
+            return new Result( this , res , batchSize , options );
         }
 
         public void update( DBObject query , DBObject o , boolean upsert , boolean multi )
@@ -330,81 +326,37 @@ public class DBApiLayer extends DB {
         final String _fullNameSpace;
     }
 
-    static class QueryHeader {
+    class SingleResult {
 
-        QueryHeader( ByteBuffer buf ){
-            this( buf , buf.position() );
-        }
-
-        QueryHeader( ByteBuffer buf , int start ){
-            _flags = buf.getInt( start );
-            _cursor = buf.getLong( start + 4 );
-            _startingFrom = buf.getInt( start + 12 );
-            _num = buf.getInt( start + 16 );
-        }
-
-        int headerSize(){
-            return 20;
-        }
-
-        void skipPastHeader( ByteBuffer buf ){
-            buf.position( buf.position() + headerSize() );
-        }
-
-        final int _flags;
-        final long _cursor;
-        final int _startingFrom;
-        final int _num;
-    }
-
-    class SingleResult extends QueryHeader {
-
-        SingleResult( String fullNameSpace , ByteDecoder decoder , int options ){
-            super( decoder._buf );
-
-            _bytes = decoder.remaining();
+        SingleResult( String fullNameSpace , int options , Response res ){
+            _res = res;
             _fullNameSpace = fullNameSpace;
-            _shortNameSpace = _removeRoot( _fullNameSpace );
             _options = options;
-            skipPastHeader( decoder._buf );
-
-            if ( _num == 0 )
+            
+            if ( res._num == 0 )
                 _lst = EMPTY;
-            else if ( _num < 3 )
+            else if ( res._num < 3 )
                 _lst = new LinkedList<DBObject>();
             else
-                _lst = new ArrayList<DBObject>( _num );
-
-            if ( _num > 0 ){
-                int num = 0;
-
-                while( decoder.more() && num < _num ){
-                    final DBObject o = decoder.readObject();
-
-                    _lst.add( o );
-                    num++;
-
-                    if ( D ) {
-                        System.out.println( "-- : " + o.keySet().size() );
-                        for ( String s : o.keySet() )
-                            System.out.println( "\t " + s + " : " + o.get( s ) );
-                    }
-                }
+                _lst = new ArrayList<DBObject>( res._num );
+            
+            while ( res.more() ){
+                _lst.add( res.next() );
             }
         }
 
         boolean hasGetMore(){
-            if ( _cursor <= 0 )
+            if ( _res._cursor <= 0 )
                 return false;
             
-            if ( _num > 0 )
+            if ( _res._num > 0 )
                 return true;
 
             if ( ( _options & Bytes.QUERYOPTION_TAILABLE ) == 0 )
                 return false;
             
             // have a tailable cursor
-            if ( ( _flags & Bytes.RESULTFLAG_AWAITCAPABLE ) > 0 )
+            if ( ( _res._flags & Bytes.RESULTFLAG_AWAITCAPABLE ) > 0 )
                 return true;
 
             try {
@@ -416,15 +368,17 @@ public class DBApiLayer extends DB {
             return true;
         }
         
-        public String toString(){
-            return "flags:" + _flags + " _cursor:" + _cursor + " _startingFrom:" + _startingFrom + " _num:" + _num ;
+        long cursor(){
+            return _res._cursor;
         }
-
-        final long _bytes;
+        
+        public String toString(){
+            return _res.toString();
+        }
+        
         final String _fullNameSpace;
-        final String _shortNameSpace;
+        final Response _res;
         final int _options;
-
         final List<DBObject> _lst;
     }
 
@@ -438,7 +392,7 @@ public class DBApiLayer extends DB {
         }
 
         private void init( SingleResult res ){
-            _totalBytes += res._bytes;
+            _totalBytes += res._res._len;
             _curResult = res;
             _cur = res._lst.iterator();
             _sizes.add( res._lst.size() );
@@ -468,7 +422,7 @@ public class DBApiLayer extends DB {
 
         private void _advance(){
 
-            if ( _curResult._cursor <= 0 )
+            if ( _curResult.cursor() <= 0 )
                 throw new RuntimeException( "can't advance a cursor <= 0" );
             
             OutMessage m = OutMessage.get( 2005 );
@@ -476,23 +430,17 @@ public class DBApiLayer extends DB {
             m.writeInt( 0 ); 
             m.writeCString( _curResult._fullNameSpace );
             m.writeInt( _numToReturn ); // num to return
-            m.writeLong( _curResult._cursor );
+            m.writeLong( _curResult.cursor() );
             
-            ByteDecoder decoder = ByteDecoder.get( DBApiLayer.this , _collection );
-
             try {
-                _connector.call( DBApiLayer.this , m , decoder );
+                Response raw = _connector.call( DBApiLayer.this , _collection , m );
                 _numGetMores++;
 
-                SingleResult res = new SingleResult( _curResult._fullNameSpace , decoder , _options );
+                SingleResult res = new SingleResult( _curResult._fullNameSpace , _options , raw );
                 init( res );
             }
             catch ( MongoException me ){
                 throw new MongoInternalException( "can't do getmore" , me );
-            }
-            finally {
-                decoder.done();
-
             }
         }
 
@@ -505,8 +453,8 @@ public class DBApiLayer extends DB {
         }
 
         protected void finalize() throws Throwable {
-            if ( _curResult != null && _curResult._cursor > 0 )
-                _deadCursorIds.add( _curResult._cursor );
+            if ( _curResult != null && _curResult.cursor() > 0 )
+                _deadCursorIds.add( _curResult.cursor() );
             super.finalize();
         }
 

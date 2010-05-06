@@ -23,6 +23,9 @@ import java.net.*;
 import java.nio.*;
 import java.util.*;
 import java.util.logging.*;
+
+import org.bson.*;
+
 class DBTCPConnector implements DBConnector {
 
     static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
@@ -149,32 +152,32 @@ class DBTCPConnector implements DBConnector {
 
     }
     
-    public DBMessage call( DB db , OutMessage m , ByteDecoder decoder )
+    public Response call( DB db , DBCollection coll , OutMessage m )
         throws MongoException {
-        return call( db , m , decoder , 2 );
+        return call( db , coll , m , 2 );
     }
 
-    public DBMessage call( DB db , OutMessage m , ByteDecoder decoder , int retries )
+    public Response call( DB db , DBCollection coll , OutMessage m , int retries )
         throws MongoException {
-        ByteBuffer in = decoder._buf;
-        MyPort mp = _threadPort.get();
-        DBPort port = mp.get( false );
+
+        final MyPort mp = _threadPort.get();
+        final DBPort port = mp.get( false );
+
         port.checkAuth( db );
-
+        
         try {
-            DBMessage res = port.call( m , decoder );
-            mp.done( port );
-
-            String err = _getError( in );
+            Response res = port.call( m , coll );
+            res.addHook( new MyDoneHook( mp , port ) );
+            
+            String err = _getError( res.peek() );
 
             if ( err != null ){
                 if ( "not master".equals( err ) ){
                     _pickCurrent();
                     if ( retries <= 0 )
                         throw new MongoException( "not talking to master and retries used up" );
-                    in.position( 0 );
 
-                    return call( db , m , decoder , retries -1 );
+                    return call( db , coll , m , retries -1 );
                 }
             }
 
@@ -183,8 +186,7 @@ class DBTCPConnector implements DBConnector {
         catch ( IOException ioe ){
             mp.error( ioe );
             if ( _error( ioe ) && retries > 0 ){
-                in.position( 0 );
-                return call( db , m , decoder , retries - 1 );
+                return call( db , coll , m , retries - 1 );
             }
             throw new MongoException.Network( "can't call something" , ioe );
         }
@@ -208,12 +210,10 @@ class DBTCPConnector implements DBConnector {
         return true;
     }
 
-    String _getError( ByteBuffer buf ){
-        DBApiLayer.QueryHeader header = new DBApiLayer.QueryHeader( buf , 0 );
-        if ( header._num != 1 )
+    String _getError( BSONObject obj ){
+        if ( obj == null )
             return null;
 
-        DBObject obj = new RawDBObject( buf , header.headerSize() );
         Object err = obj.get( "$err" );
         if ( err == null )
             return null;
@@ -408,6 +408,24 @@ class DBTCPConnector implements DBConnector {
             return ((Number)x).intValue() == 1;
         
         throw new IllegalArgumentException( "invalid ismaster [" + x + "] : " + x.getClass().getName() );
+    }
+
+    static class MyDoneHook implements Response.DoneHook {
+        MyDoneHook( MyPort mp , DBPort dp ){
+            _mp = mp;
+            _dp = dp;
+        }
+        
+        public void done(){
+            _mp.done( _dp );
+        }
+
+        public void error( IOException ioe ){
+            _mp.error( ioe );
+        }
+
+        final MyPort _mp;
+        final DBPort _dp;
     }
     
     final Mongo _mongo;

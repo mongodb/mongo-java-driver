@@ -231,28 +231,14 @@ public class BSONDecoder {
         
         int readInt()
             throws IOException {
-            int x = 0;
-            x |= ( 0xFF & _in.read() ) << 0;
-            x |= ( 0xFF & _in.read() ) << 8;
-            x |= ( 0xFF & _in.read() ) << 16;
-            x |= ( 0xFF & _in.read() ) << 24;
             _read += 4;
-            return x;
+            return Bits.readInt( _in );
         }
 
         long readLong()
             throws IOException {
-            long x = 0;
-            x |= (long)( 0xFFL & _in.read() ) << 0;
-            x |= (long)( 0xFFL & _in.read() ) << 8;
-            x |= (long)( 0xFFL & _in.read() ) << 16;
-            x |= (long)( 0xFFL & _in.read() ) << 24;
-            x |= (long)( 0xFFL & _in.read() ) << 32;
-            x |= (long)( 0xFFL & _in.read() ) << 40;
-            x |= (long)( 0xFFL & _in.read() ) << 48;
-            x |= (long)( 0xFFL & _in.read() ) << 56;
             _read += 8;
-            return x;
+            return Bits.readLong( _in );
         }
 
         double readDouble()

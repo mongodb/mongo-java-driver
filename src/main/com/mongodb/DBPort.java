@@ -21,7 +21,6 @@ package com.mongodb;
 import java.io.*;
 import java.net.*;
 import java.nio.*;
-import java.nio.channels.*;
 import java.util.*;
 import java.util.logging.*;
 
@@ -53,9 +52,9 @@ public class DBPort {
     /**
      * @param response will get wiped
      */
-    DBMessage call( OutMessage msg , ByteDecoder decoder )
+    Response call( OutMessage msg , DBCollection coll )
         throws IOException {
-        return go( msg , decoder );
+        return go( msg , coll );
     }
     
     void say( OutMessage msg )
@@ -63,10 +62,10 @@ public class DBPort {
         go( msg , null );
     }
 
-    private synchronized DBMessage go( OutMessage msg , ByteDecoder decoder )
+    private synchronized Response go( OutMessage msg , DBCollection coll )
         throws IOException {
         
-        if ( _sock == null )
+        if ( _socket == null )
             _open();
         
         msg.prepare();
@@ -75,41 +74,16 @@ public class DBPort {
         if ( _pool != null )
             _pool._everWorked = true;
 
-        if ( decoder == null )
+        if ( coll == null )
             return null;
 
-        ByteBuffer response = decoder._buf;
-        
-        if ( response.position() != 0 )
-            throw new IllegalArgumentException();
-
-        int read = 0;
-        while ( read < DBMessage.HEADER_LENGTH )
-            read += _read( response );
-
-        int len = response.getInt(0);
-        if ( len <= DBMessage.HEADER_LENGTH )
-            throw new IllegalArgumentException( "db sent invalid length: " + len );
-
-        if ( len > response.capacity() )
-            throw new IllegalArgumentException( "db message size is too big (" + len + ") " +
-                                                "max is (" + response.capacity() + ")" );
-        
-        response.limit( len );
-        while ( read < len )
-            read += _read( response );
-        
-        if ( read != len )
-            throw new RuntimeException( "something is wrong read:" + read + " len: " + len );
-
-        response.flip();
-        return new DBMessage( response );
+        return new Response( coll , _in );
     }
 
     public synchronized void ensureOpen()
         throws IOException {
         
-        if ( _sock != null )
+        if ( _socket != null )
             return;
         
         _open();
@@ -126,13 +100,12 @@ public class DBPort {
             IOException lastError = null;
 
             try {
-                _sock = SocketChannel.open();
-                _socket = _sock.socket();
+                _socket = new Socket();
                 _socket.connect( _addr , _options.connectTimeout );
                 
                 _socket.setTcpNoDelay( ! USE_NAGLE );
                 _socket.setSoTimeout( _options.socketTimeout );
-                _in = _socket.getInputStream();
+                _in = new BufferedInputStream( _socket.getInputStream() );
                 _out = _socket.getOutputStream();
                 return;
             }
@@ -174,9 +147,9 @@ public class DBPort {
     }
     
     protected void finalize(){
-        if ( _sock != null ){
+        if ( _socket != null ){
             try {
-                _sock.close();
+                _socket.close();
             }
             catch ( Exception e ){
                 // don't care
@@ -185,7 +158,6 @@ public class DBPort {
             _in = null;
             _out = null;
             _socket = null;
-            _sock = null;            
         }
 
     }
@@ -216,27 +188,16 @@ public class DBPort {
         throw new MongoInternalException( "can't reauth!" );
     }
 
-    private int _read( ByteBuffer buf )
-        throws IOException {
-        int x = _in.read( buf.array() , buf.position() , buf.remaining() );
-        if ( x < 0 )
-            throw new IOException( "connection to server closed unexpectedly" );
-        buf.position( buf.position() + x );
-        return x;
-    }
-    
-    
     final int _hashCode;
     final InetSocketAddress _addr;
     final DBPortPool _pool;
     final MongoOptions _options;
     final Logger _logger;
     
-    private SocketChannel _sock;
     private Socket _socket;
     private InputStream _in;
     private OutputStream _out;
-
+    
     private boolean _inauth = false;
     private Map<DB,Boolean> _authed = Collections.synchronizedMap( new WeakHashMap<DB,Boolean>() );
 
