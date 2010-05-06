@@ -60,6 +60,16 @@ public class BasicOutputBuffer extends OutputBuffer {
         _buffer = n;
     }
 
+    public String asString(){
+        return new String( _buffer , 0 , _size );
+    }
+
+    public String asString( String encoding )
+        throws UnsupportedEncodingException {
+        return new String( _buffer , 0 , _size , encoding );
+    }
+
+
     private int _cur;
     private int _size;
     private byte[] _buffer = new byte[512];

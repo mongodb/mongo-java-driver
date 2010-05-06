@@ -169,6 +169,20 @@ public class PoolOutputBuffer extends OutputBuffer {
         int y; // position in buffer
     }
     
+    public String asString(){
+        if ( _fromPool.size() > 0 )
+            return super.asString();
+        return new String( _mine , 0 , size() );
+    }
+
+    public String asString( String encoding )
+        throws UnsupportedEncodingException {
+        if ( _fromPool.size() > 0 )
+            return super.asString( encoding );
+        return new String( _mine , 0 , size() , encoding );
+    }
+
+    
     final byte[] _mine = new byte[BUF_SIZE];
     final List<byte[]> _fromPool = new ArrayList<byte[]>();
     
