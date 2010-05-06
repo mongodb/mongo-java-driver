@@ -125,20 +125,5 @@ public class Bytes extends BSON {
         return 0;
     }
 
-    public static byte[] encode( DBObject o ){
-        ByteEncoder e = ByteEncoder.get();
-        e.putObject( o );
-        byte b[] = e.getBytes();
-        e.done();
-        return b;
-    }
-    
-    public static DBObject decode( byte[] b ){
-        ByteBuffer bb = ByteBuffer.wrap( b );
-        bb.order( Bytes.ORDER );
-        ByteDecoder d = new ByteDecoder( bb );
-        return d.readObject();
-    }
-
     static final ObjectId COLLECTION_REF_ID = new ObjectId( -1 , -1 , -1 );
 }

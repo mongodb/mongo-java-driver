@@ -42,23 +42,6 @@ public class DBMessage {
     
     static AtomicInteger ID = new AtomicInteger(1);
     static int HEADER_LENGTH = 16;
-
-    DBMessage( int operation ){
-        _len = 0;
-        _id = ID.getAndIncrement();
-        _responseTo = 0;
-        _operation = operation;
-
-        _encoder = ByteEncoder.get();
-        _buf = _encoder._buf;
-
-        _buf.putInt( 0 ); // saving space for len
-        _buf.putInt( _id );
-        _buf.putInt( _responseTo );
-        _buf.putInt( _operation );
-        
-        _state = State.BUILDING;
-    }
     
     DBMessage( ByteBuffer buf ){
         _buf = buf;
@@ -69,7 +52,6 @@ public class DBMessage {
         _operation = buf.getInt();
         
         _state = State.READABLE;
-        _encoder = null;
     }
 
     ByteBuffer forBuilding(){
@@ -121,6 +103,5 @@ public class DBMessage {
     final int _responseTo;
     final int _operation;
 
-    final ByteEncoder _encoder;
     final ByteBuffer _buf;
 }

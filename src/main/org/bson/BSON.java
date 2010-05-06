@@ -6,6 +6,8 @@ import java.util.*;
 import java.util.regex.*;
 import java.nio.charset.*;
 
+import org.bson.io.*;
+
 public class BSON {
 
     // ---- basics ----
@@ -200,5 +202,29 @@ public class BSON {
         Collections.synchronizedMap( new HashMap<Byte,List<Transformer>>() );
     
     static protected Charset _utf8 = Charset.forName( "UTF-8" );
+    
+    // ----- static encode/decode -----
+    
+    public static byte[] encode( BSONObject o ){
+        BSONEncoder e = _staticEncoder.get();
+        return e.encode( o );
+    }
+    
+    public static BSONObject decode( byte[] b ){
+        BSONDecoder d = _staticDecoder.get();
+        return d.readObject( b );
+    }
+
+    static ThreadLocal<BSONEncoder> _staticEncoder = new ThreadLocal<BSONEncoder>(){
+        protected BSONEncoder initialValue(){
+            return new BSONEncoder();
+        }
+    };
+
+    static ThreadLocal<BSONDecoder> _staticDecoder = new ThreadLocal<BSONDecoder>(){
+        protected BSONDecoder initialValue(){
+            return new BSONDecoder();
+        }
+    };
 
 }

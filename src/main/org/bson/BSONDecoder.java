@@ -10,6 +10,22 @@ import org.bson.types.*;
 
 public class BSONDecoder {
     
+    public BSONObject readObject( byte[] b ){
+        try {
+            return readObject( new ByteArrayInputStream( b ) );
+        }
+        catch ( IOException ioe ){
+            throw new RuntimeException( "should be impossible" , ioe );
+        }
+    }
+
+    public BSONObject readObject( InputStream in )
+        throws IOException {
+        BasicBSONCallback c = new BasicBSONCallback();
+        decode( in , c );
+        return c.get();
+    }
+
     public int decode( InputStream in , BSONCallback callback )
         throws IOException {
         return decode( new Input( in ) , callback );

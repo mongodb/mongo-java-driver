@@ -25,6 +25,14 @@ public class BSONEncoder {
 
     }
 
+    public byte[] encode( BSONObject o ){
+        BasicOutputBuffer buf = new BasicOutputBuffer();
+        set( buf );
+        putObject( o );
+        done();
+        return buf.toByteArray();
+    }
+
     public void set( OutputBuffer out ){
         if ( _buf != null )
             throw new IllegalStateException( "in the middle of something" );
