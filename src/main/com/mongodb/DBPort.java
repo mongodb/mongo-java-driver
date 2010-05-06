@@ -109,6 +109,15 @@ public class DBPort {
         return new DBMessage( response );
     }
 
+    synchronized void say( OutMessage out )
+        throws IOException {
+        
+        if ( _sock == null )
+            _open();
+        
+        out.pipe( _out );
+    }
+
     public synchronized void ensureOpen()
         throws IOException {
         
@@ -136,6 +145,7 @@ public class DBPort {
                 _socket.setTcpNoDelay( ! USE_NAGLE );
                 _socket.setSoTimeout( _options.socketTimeout );
                 _in = _socket.getInputStream();
+                _out = _socket.getOutputStream();
                 return;
             }
             catch ( IOException ioe ){
@@ -185,6 +195,7 @@ public class DBPort {
             }
             
             _in = null;
+            _out = null;
             _socket = null;
             _sock = null;            
         }
@@ -233,6 +244,7 @@ public class DBPort {
     private SocketChannel _sock;
     private Socket _socket;
     private InputStream _in;
+    private OutputStream _out;
 
     private boolean _inauth = false;
     private Map<DB,Boolean> _authed = Collections.synchronizedMap( new WeakHashMap<DB,Boolean>() );

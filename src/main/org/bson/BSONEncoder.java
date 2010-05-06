@@ -368,6 +368,14 @@ public class BSONEncoder {
         return total;
     }
 
+    public void writeInt( int x ){
+        _buf.writeInt( x );
+    }
+    
+    public void writeCString( String s ){
+        _put( s );
+    }
+
     protected OutputBuffer _buf;
     
     private CharBuffer _stringC = CharBuffer.wrap( new char[256] );

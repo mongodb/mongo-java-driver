@@ -23,7 +23,6 @@ import java.net.*;
 import java.nio.*;
 import java.util.*;
 import java.util.logging.*;
-
 class DBTCPConnector implements DBConnector {
 
     static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
@@ -108,6 +107,48 @@ class DBTCPConnector implements DBConnector {
         _threadPort.get().requestEnsureConnection();
     }
 
+    void _checkWriteError()
+        throws MongoException {
+
+        DBObject e = _mongo.getDB( "admin" ).getLastError();
+        Object foo = e.get( "err" );
+        if ( foo == null )
+            return;
+        
+        int code = -1;
+        if ( e.get( "code" ) instanceof Number )
+            code = ((Number)e.get("code")).intValue();
+        String s = foo.toString();
+        if ( code == 11000 || code == 11001 ||
+             s.startsWith( "E11000" ) ||
+             s.startsWith( "E11001" ) )
+            throw new MongoException.DuplicateKey( code , s );
+        throw new MongoException( code , s );
+    }
+
+    public void say( DB db , OutMessage m , DB.WriteConcern concern )
+        throws MongoException {
+        MyPort mp = _threadPort.get();
+        DBPort port = mp.get( true );
+        port.checkAuth( db );
+
+        try {
+            port.say( m );
+            if ( concern == DB.WriteConcern.STRICT ){
+                _checkWriteError();
+            }
+            mp.done( port );
+        }
+        catch ( IOException ioe ){
+            mp.error( ioe );
+            _error( ioe );
+            if ( concern == DB.WriteConcern.NONE )
+                return;
+            throw new MongoException.Network( "can't say something" , ioe );
+        }
+
+    }
+    
     public void say( DB db , DBMessage m , DB.WriteConcern concern )
         throws MongoException {
         MyPort mp = _threadPort.get();
@@ -117,19 +158,7 @@ class DBTCPConnector implements DBConnector {
         try {
             port.say( m );
             if ( concern == DB.WriteConcern.STRICT ){
-                DBObject e = _mongo.getDB( "admin" ).getLastError();
-                Object foo = e.get( "err" );
-                if ( foo != null ){
-                    int code = -1;
-                    if ( e.get( "code" ) instanceof Number )
-                        code = ((Number)e.get("code")).intValue();
-                    String s = foo.toString();
-                    if ( code == 11000 || code == 11001 ||
-                         s.startsWith( "E11000" ) ||
-                         s.startsWith( "E11001" ) )
-                        throw new MongoException.DuplicateKey( code , s );
-                    throw new MongoException( code , s );
-                }
+                _checkWriteError();
             }
             mp.done( port );
         }

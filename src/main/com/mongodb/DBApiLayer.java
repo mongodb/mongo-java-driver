@@ -323,27 +323,22 @@ public class DBApiLayer extends DB {
             throws MongoException {
 
             if ( SHOW ) System.out.println( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
-
-            DBMessage m = new DBMessage( 2001 );
-            ByteEncoder encoder = m._encoder;
-            encoder._buf.putInt( 0 ); // reserved
-            encoder._put( _fullNameSpace );
-
+            
+            OutMessage om = OutMessage.get( 2001 );
+            om.writeInt( 0 ); // reserved
+            om.writeCString( _fullNameSpace );
+            
             int flags = 0;
             if ( upsert ) flags |= 1;
             if ( multi ) flags |= 2;
-            encoder._buf.putInt( flags );
+            om.writeInt( flags );
 
-            encoder.putObject( query );
-            encoder.putObject( o );
+            om.putObject( query );
+            om.putObject( o );
+            
+            om.prepare();
 
-            try {
-                _connector.say( _db , m , getWriteConcern() );
-            }
-            finally {
-                encoder.done();
-            }
-
+            _connector.say( _db , om , getWriteConcern() );
         }
 
         protected void createIndex( final DBObject keys, final DBObject options )
