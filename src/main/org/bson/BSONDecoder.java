@@ -6,6 +6,7 @@ import java.io.*;
 
 import static org.bson.BSON.*;
 import org.bson.io.*;
+import org.bson.types.*;
 
 public class BSONDecoder {
     
@@ -110,37 +111,38 @@ public class BSONDecoder {
 
             break;
 
-            /*
         case OID:
-            created = new ObjectId( _buf.getInt() , _buf.getInt() , _buf.getInt() );
+            _callback.gotObjectId( name , new ObjectId( _in.readInt() , _in.readInt() , _in.readInt() ) );
             break;
             
         case REF:
-            _buf.getInt();  // length of ctring that follows
-            String ns = readCStr();
-            ObjectId theOID = new ObjectId( _buf.getInt() , _buf.getInt() , _buf.getInt() );
-            if ( theOID.equals( Bytes.COLLECTION_REF_ID ) )
+            _in.readInt();  // length of ctring that follows
+            String ns = _in.readCStr();
+            ObjectId theOID = new ObjectId( _in.readInt() , _in.readInt() , _in.readInt() );
+            _callback.gotDBRef( name , ns , theOID );
+            /* TODO: make sure to handle somewhere
+            if ( theOID.equals( BSON.COLLECTION_REF_ID ) )
                 created = _base.getCollectionFromFull( ns );
             else 
                 created = new DBPointer( o , name , _base , ns , theOID );
+            */
             break;
             
         case DATE:
-            created = new Date( _buf.getLong() );
+            _callback.gotDate( name , _in.readLong() );
             break;
             
         case REGEX:
-            created = Pattern.compile( readCStr() , Bytes.regexFlags( readCStr() ) );
+            _callback.gotRegex( name , _in.readCStr() , _in.readCStr() );
             break;
 
         case BINARY:
-            created = parseBinary();
+            _binary( name );
             break;
             
         case CODE:
             throw new UnsupportedOperationException( "can't handle CODE yet" );
 
-            */
         case ARRAY:
             _in.readInt();  // total size - we don't care....
 
@@ -180,6 +182,30 @@ public class BSONDecoder {
         
         return true;
     }
+
+    void _binary( String name )
+        throws IOException {
+        final int totalLen = _in.readInt();
+        final byte bType = _in.read();
+        
+        switch ( bType ){
+        case B_BINARY:
+            final int len = _in.readInt();
+            if ( len + 4 != totalLen )
+                throw new IllegalArgumentException( "bad data size subtype 2 len: " + len + " totalLen: " + totalLen );
+            
+            final byte[] data = new byte[len];
+            _in.fill( data );
+            _callback.gotBinaryArray( name , data );
+            return;
+        }
+        
+        byte[] data = new byte[totalLen];
+        _in.fill( data );
+
+        _callback.gotBinary( name , bType , data );
+    }
+
     
     class Input {
         Input( InputStream in ){
@@ -222,6 +248,11 @@ public class BSONDecoder {
             throws IOException {
             _read++;
             return (byte)(_in.read() & 0xFF);
+        }
+
+        void fill( byte b[] )
+            throws IOException {
+            fill( b , b.length );
         }
 
         void fill( byte b[] , int len )

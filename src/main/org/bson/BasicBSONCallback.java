@@ -4,6 +4,7 @@ package org.bson;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
 
 import org.bson.types.*;
 
@@ -86,6 +87,13 @@ public class BasicBSONCallback implements BSONCallback {
         cur().put( name , v );
     }
 
+    public void gotDate( String name , long millis ){
+        cur().put( name , new Date( millis ) );
+    }
+    public void gotRegex( String name , String pattern , String flags ){
+        cur().put( name , Pattern.compile( pattern , BSON.regexFlags( flags ) ) );
+    }
+    
     public void gotString( String name , String v ){
         cur().put( name , v );
     }
@@ -96,7 +104,20 @@ public class BasicBSONCallback implements BSONCallback {
     public void gotTimestamp( String name , int time , int inc ){
         cur().put( name , new BSONTimestamp( time , inc ) );
     }
+    public void gotObjectId( String name , ObjectId id ){
+        cur().put( name , id );
+    }
+    public void gotDBRef( String name , String ns , ObjectId id ){
+        cur().put( name , new BasicBSONObject( "$ns" , ns ).append( "$id" , id ) );
+    }
 
+    public void gotBinaryArray( String name , byte[] b ){
+        cur().put( name , b );
+    }
+    
+    public void gotBinary( String name , byte type , byte[] data ){
+        cur().put( name , new Binary( type , data ) );
+    }
     
     BSONObject cur(){
         return _stack.getLast();
