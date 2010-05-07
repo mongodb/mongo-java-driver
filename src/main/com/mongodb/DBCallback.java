@@ -9,8 +9,20 @@ import org.bson.*;
 import org.bson.types.*;
 
 public class DBCallback extends BasicBSONCallback {
+    
+    public static interface Factory {
+        public DBCallback create( DBCollection collection );
+    }
 
-    DBCallback( DBCollection coll ){
+    static class DefaultFactory implements Factory {
+        public DBCallback create( DBCollection collection ){
+            return new DBCallback( collection );
+        }
+    }
+
+    public static Factory FACTORY = new DefaultFactory();
+
+    public DBCallback( DBCollection coll ){
         _collection = coll;
         _db = _collection == null ? null : _collection.getDB();
     }

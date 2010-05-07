@@ -83,7 +83,7 @@ class Response {
         if ( _readSoFar >= _num )
             throw new IllegalStateException( "already finished" );
 
-        DBCallback c = new DBCallback( _collection );
+        DBCallback c = DBCallback.FACTORY.create( _collection );
         try {
             _decoder.decode( _user , c );
         }
