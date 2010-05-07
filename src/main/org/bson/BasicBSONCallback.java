@@ -73,51 +73,55 @@ public class BasicBSONCallback implements BSONCallback {
     }
     
     public void gotBoolean( String name , boolean v ){
-        cur().put( name , v );
+        _put( name , v );
     }
     
     public void gotDouble( String name , double v ){
-        cur().put( name , v );
+        _put( name , v );
     }
     
     public void gotInt( String name , int v ){
-        cur().put( name , v );
+        _put( name , v );
     }
     
     public void gotLong( String name , long v ){
-        cur().put( name , v );
+        _put( name , v );
     }
 
     public void gotDate( String name , long millis ){
-        cur().put( name , new Date( millis ) );
+        _put( name , new Date( millis ) );
     }
     public void gotRegex( String name , String pattern , String flags ){
-        cur().put( name , Pattern.compile( pattern , BSON.regexFlags( flags ) ) );
+        _put( name , Pattern.compile( pattern , BSON.regexFlags( flags ) ) );
     }
     
     public void gotString( String name , String v ){
-        cur().put( name , v );
+        _put( name , v );
     }
     public void gotSymbol( String name , String v ){
-        cur().put( name , v );
+        _put( name , v );
     }
 
     public void gotTimestamp( String name , int time , int inc ){
-        cur().put( name , new BSONTimestamp( time , inc ) );
+        _put( name , new BSONTimestamp( time , inc ) );
     }
     public void gotObjectId( String name , ObjectId id ){
-        cur().put( name , id );
+        _put( name , id );
     }
     public void gotDBRef( String name , String ns , ObjectId id ){
-        cur().put( name , new BasicBSONObject( "$ns" , ns ).append( "$id" , id ) );
+        _put( name , new BasicBSONObject( "$ns" , ns ).append( "$id" , id ) );
     }
 
     public void gotBinaryArray( String name , byte[] b ){
-        cur().put( name , b );
+        _put( name , b );
     }
     
     public void gotBinary( String name , byte type , byte[] data ){
-        cur().put( name , new Binary( type , data ) );
+        _put( name , new Binary( type , data ) );
+    }
+
+    protected void _put( String name , Object o ){
+        cur().put( name , BSON.applyDecodingHooks( o ) );
     }
     
     protected BSONObject cur(){

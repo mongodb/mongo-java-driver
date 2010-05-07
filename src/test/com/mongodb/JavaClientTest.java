@@ -403,7 +403,6 @@ public class JavaClientTest extends TestCase {
 
     @Test
     public void testTransformers(){
-        /*
         DBCollection c = _db.getCollection( "tt" );
         c.drop();
         
@@ -423,7 +422,7 @@ public class JavaClientTest extends TestCase {
         c.save( BasicDBObjectBuilder.start( "_id" , 1 ).add( "x" , 1.1 ).get() );
         assertEquals( Double.class , c.findOne().get( "x" ).getClass() );
 
-        Bytes.addDecodingHook( Bytes.NUMBER , new Transformer(){
+        Bytes.addDecodingHook( Double.class , new Transformer(){
             public Object transform( Object o ){
                 return o.toString();
             }
@@ -431,7 +430,6 @@ public class JavaClientTest extends TestCase {
         assertEquals( String.class , c.findOne().get( "x" ).getClass() );
         Bytes.clearAllHooks();
         assertEquals( Double.class , c.findOne().get( "x" ).getClass() );        
-        */
     }
     
 

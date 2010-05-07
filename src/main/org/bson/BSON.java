@@ -154,12 +154,12 @@ public class BSON {
         l.add( t );
     }
     
-    public static void addDecodingHook( byte type , Transformer t ){
+    public static void addDecodingHook( Class c , Transformer t ){
         _anyHooks = true;
-        List<Transformer> l = _decodingHooks.get( type );
+        List<Transformer> l = _decodingHooks.get( c );
         if ( l == null ){
             l = new Vector<Transformer>();
-            _decodingHooks.put( type , l );
+            _decodingHooks.put( c , l );
         }
         l.add( t );
     }
@@ -177,11 +177,11 @@ public class BSON {
         return o;
     }
 
-    public static Object applyDecodingHooks( byte b , Object o ){
-        if ( ! _anyHooks )
+    public static Object applyDecodingHooks( Object o ){
+        if ( ! _anyHooks || o == null )
             return o;
 
-        List<Transformer> l = _decodingHooks.get( b );
+        List<Transformer> l = _decodingHooks.get( o.getClass() );
         if ( l != null )
             for ( Transformer t : l )
                 o = t.transform( o );
@@ -198,8 +198,8 @@ public class BSON {
     private static boolean _anyHooks = false;
     static Map<Class,List<Transformer>> _encodingHooks = 
         Collections.synchronizedMap( new HashMap<Class,List<Transformer>>() );
-    static Map<Byte,List<Transformer>> _decodingHooks = 
-        Collections.synchronizedMap( new HashMap<Byte,List<Transformer>>() );
+    static Map<Class,List<Transformer>> _decodingHooks = 
+        Collections.synchronizedMap( new HashMap<Class,List<Transformer>>() );
     
     static protected Charset _utf8 = Charset.forName( "UTF-8" );
     
