@@ -48,20 +48,7 @@ public class Bytes extends BSON {
     static final int MAX_OBJECT_SIZE = 1024 * 1024 * 4;
     
     static final int CONNECTIONS_PER_HOST = Integer.parseInt( System.getProperty( "MONGO.POOLSIZE" , "10" ) );
-    static final int NUM_ENCODERS;
 
-    static {
-        Runtime r = Runtime.getRuntime();
-        int numBufs = (int)(r.maxMemory() / MAX_OBJECT_SIZE);
-        numBufs = numBufs / 5;
-        if ( numBufs > CONNECTIONS_PER_HOST ){
-            numBufs = CONNECTIONS_PER_HOST;
-        }
-        if ( numBufs == 0 )
-            throw new IllegalStateException( "the mongo driver doesn't have enough memory to create its buffers" );
-
-        NUM_ENCODERS = numBufs;
-    }
 
     // --- network protocol options
 
@@ -77,10 +64,6 @@ public class Bytes extends BSON {
     public static final int RESULTFLAG_AWAITCAPABLE = 8;
 
 
-
-    /** The maximum number of bytes allowed to be sent to the db at a time */
-    static protected final int MAX_STRING = MAX_OBJECT_SIZE - 1024;
-    
     /** Gets the type byte for a given object.
      * @param o the object
      * @return the byte value associated with the type, or 0 if <code>o</code> was <code>null</code>
