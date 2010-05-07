@@ -26,6 +26,16 @@ public class BSONDecoder {
         return c.get();
     }
 
+    public int decode( byte[] b , BSONCallback callback ){
+        try {
+            return decode( new Input( new ByteArrayInputStream(b) ) , callback );
+        }
+        catch ( IOException ioe ){
+            throw new RuntimeException( "should be impossible" , ioe );
+        }
+    }
+
+
     public int decode( InputStream in , BSONCallback callback )
         throws IOException {
         return decode( new Input( in ) , callback );

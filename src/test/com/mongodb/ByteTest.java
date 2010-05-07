@@ -42,29 +42,20 @@ public class ByteTest extends TestCase {
 
     @Test(groups = {"basic"})
     public void testObject1(){
-        ByteEncoder encoder = ByteEncoder.get();
-        
         DBObject o = new BasicDBObject();
         o.put( "eliot" , "horowitz" );
         o.put( "num" , 517 );
         
-        encoder.putObject( o );
         
-        encoder.flip();
-        
-        ByteDecoder decoder = new ByteDecoder( encoder._buf );
-        DBObject read = decoder.readObject();
+        BSONObject read = BSON.decode( BSON.encode( o ) );
         
         assertEquals( "horowitz" , read.get( "eliot" ).toString() );
         assertEquals( 517.0 , ((Integer)read.get( "num" )).doubleValue() );
-        
-        assertEquals( encoder._buf.limit() , encoder._buf.position() );
     }
 
     @Test(groups = {"basic"})
     public void testString()
         throws Exception {
-        ByteEncoder encoder = ByteEncoder.get();
         
         String eliot = java.net.URLDecoder.decode( "horowitza%C3%BCa" , "UTF-8" );
 
@@ -72,23 +63,15 @@ public class ByteTest extends TestCase {
         o.put( "eliot" , eliot );
         o.put( "num" , 517 );
         
-        encoder.putObject( o );
-        
-        encoder.flip();
-        
-        ByteDecoder decoder = new ByteDecoder( encoder._buf );
-        DBObject read = decoder.readObject();
+        BSONObject read = BSON.decode( BSON.encode( o ) );
         
         assertEquals( eliot , read.get( "eliot" ).toString() );
         assertEquals( 517.0 , ((Integer)read.get( "num" )).doubleValue() );
-        
-        assertEquals( encoder._buf.limit() , encoder._buf.position() );
-    }
 
+    }
+    
     @Test(groups = {"basic"})
     public void testObject2(){
-        ByteEncoder encoder = ByteEncoder.get();
-        
         DBObject o = new BasicDBObject();
         o.put( "eliot" , "horowitz" );
         o.put( "num" , 517.3 );
@@ -100,27 +83,19 @@ public class ByteTest extends TestCase {
         o2.put( "b" , "a" );
         o.put( "next" , o2 );
         
-        encoder.putObject( o );
-
-        encoder.flip();
-        
-        ByteDecoder decoder = new ByteDecoder( encoder._buf );
-        DBObject read = decoder.readObject();
+        BSONObject read = BSON.decode( BSON.encode( o ) );
         
         assertEquals( "horowitz" , read.get( "eliot" ).toString() );
         assertEquals( 517.3 , ((Double)read.get( "num" )).doubleValue() );
-        assertEquals( "b" , ((DBObject)read.get( "next" ) ).get( "a" ).toString() );
-        assertEquals( "a" , ((DBObject)read.get( "next" ) ).get( "b" ).toString() );
+        assertEquals( "b" , ((BSONObject)read.get( "next" ) ).get( "a" ).toString() );
+        assertEquals( "a" , ((BSONObject)read.get( "next" ) ).get( "b" ).toString() );
         assertEquals( "y" , read.get( "z" ).toString() );
         assertEquals( o.keySet().size() , read.keySet().size() );
 
-        assertEquals( encoder._buf.limit() , encoder._buf.position() );
     }
 
     @Test(groups = {"basic"})
     public void testArray1(){
-        ByteEncoder encoder = ByteEncoder.get();
-        
         DBObject o = new BasicDBObject();
         o.put( "eliot" , "horowitz" );
         o.put( "num" , 517 );
@@ -138,12 +113,7 @@ public class ByteTest extends TestCase {
         o.put( "d" , new Date() );
         //o.put( "r" , Pattern.compile( "\\d+" , "i" ) );
 
-        encoder.putObject( o );
-        
-        encoder.flip();
-        
-        ByteDecoder decoder = new ByteDecoder( encoder._buf );
-        DBObject read = decoder.readObject();
+        BSONObject read = BSON.decode( BSON.encode( o ) );
         
         assertEquals( "horowitz" , read.get( "eliot" ).toString() );
         assertEquals( 517 , ((Integer)read.get( "num" )).intValue() );
@@ -159,7 +129,6 @@ public class ByteTest extends TestCase {
         assertEquals( false , (Boolean)o.get("myf") );
         //assertEquals( o.get( "r" ).toString() , read.get("r").toString() );
 
-        assertEquals( encoder._buf.limit() , encoder._buf.position() );
     }
 
     @Test(groups = {"basic"})
@@ -185,22 +154,15 @@ public class ByteTest extends TestCase {
         DBObject o = new BasicDBObject();
         o.put( "bytes", barray );
 
-        ByteEncoder encoder = ByteEncoder.get();
-        int pos = encoder.putObject( o );
-        assertEquals( pos, 277 );
+        byte[] encoded = BSON.encode( o );
+        assertEquals( 277 , encoded.length );
 
-        encoder.flip();
-        ByteDecoder decoder = new ByteDecoder( encoder._buf );
-        DBObject read = decoder.readObject();
+        BSONObject read = BSON.decode( encoded );
         byte[] b = (byte[])read.get( "bytes" );
         for( int i=0; i<256; i++ ) {
             assertEquals( b[i], barray[i] );
         }
         assertEquals( o.keySet().size() , read.keySet().size() );
-        assertEquals( encoder._buf.limit() , encoder._buf.position() );
-
-        encoder.done();
-        decoder.done();
     }
 
     private void go( DBObject o , int serialized_len ) {
@@ -208,18 +170,11 @@ public class ByteTest extends TestCase {
     }
 
     private void go( DBObject o , int serialized_len, int transient_fields ) {
-        ByteEncoder encoder = ByteEncoder.get();
-        int pos = encoder.putObject( o );
-        assertEquals( pos, serialized_len );
+        byte[] encoded = BSON.encode( o );
+        assertEquals( serialized_len , encoded.length );
 
-        encoder.flip();
-        ByteDecoder decoder = new ByteDecoder( encoder._buf );
-        DBObject read = decoder.readObject();
+        BSONObject read = BSON.decode( encoded );
         assertEquals( o.keySet().size() - transient_fields, read.keySet().size() );
-        assertEquals( encoder._buf.limit() , encoder._buf.position() );
-
-        encoder.done();
-        decoder.done();
     }
 
     @Test(groups = {"basic"})
@@ -357,19 +312,11 @@ public class ByteTest extends TestCase {
         DBObject o = new BasicDBObject();
         o.put( "p", p );
 
-        ByteEncoder encoder = ByteEncoder.get();
-        encoder.putObject( o );
-        encoder.flip();
-
-        ByteDecoder decoder = new ByteDecoder( encoder._buf );
-        DBObject read = decoder.readObject();
+        BSONObject read = BSON.decode( BSON.encode( o ) );
         Pattern p2 = (Pattern)read.get( "p" );
         assertEquals( p2.pattern(), p.pattern() );
         assertEquals( o.keySet().size(), read.keySet().size() );
-        assertEquals( encoder._buf.limit() , encoder._buf.position() );
 
-        encoder.done();
-        decoder.done();
     }
 
     @Test(groups = {"basic"})

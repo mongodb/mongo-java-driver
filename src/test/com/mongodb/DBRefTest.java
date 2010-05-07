@@ -51,17 +51,16 @@ public class DBRefTest extends TestCase {
     @Test(groups = {"basic"})
     public void testDBRef(){
 
-        ByteEncoder encoder = ByteEncoder.get();
-        
         DBRef ref = new DBRef(_db, "hello", (Object)"world");
         DBObject o = new BasicDBObject("!", ref);
         
-        encoder.putObject( o );
+        OutMessage out = new OutMessage();
+        out.putObject( o );
         
-        encoder.flip();
-        
-        ByteDecoder decoder = new ByteDecoder( encoder._buf );
-        DBObject read = decoder.readObject();
+        DBCallback cb = new DBCallback( null );
+        BSONDecoder decoder = new BSONDecoder();
+        decoder.decode( out.toByteArray() , cb );
+        DBObject read = cb.dbget();
         
         String correct = "{\"!\":{\"$ref\":\"hello\",\"$id\":\"world\"}}";
         String got = read.toString().replaceAll( " +" , "" );
@@ -70,11 +69,11 @@ public class DBRefTest extends TestCase {
 
     @Test(groups = {"basic"})
     public void testDBRefFetches(){
-
-        ByteEncoder encoder = ByteEncoder.get();
+        DBCollection coll = _db.getCollection("x");
+        coll.drop();
         
         BasicDBObject obj = new BasicDBObject("_id", 321325243);
-        _db.getCollection("x").save(obj);
+        coll.save(obj);
 
         DBRef ref = new DBRef(_db, "x", 321325243);
         DBObject deref = ref.fetch();

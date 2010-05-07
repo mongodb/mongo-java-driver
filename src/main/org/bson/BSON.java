@@ -207,7 +207,12 @@ public class BSON {
     
     public static byte[] encode( BSONObject o ){
         BSONEncoder e = _staticEncoder.get();
-        return e.encode( o );
+        try {
+            return e.encode( o );
+        }
+        finally {
+            e.done();
+        }
     }
     
     public static BSONObject decode( byte[] b ){

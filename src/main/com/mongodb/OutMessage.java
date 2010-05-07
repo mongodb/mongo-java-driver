@@ -47,6 +47,7 @@ class OutMessage extends BSONEncoder {
     }
     
     OutMessage(){
+        set( _buffer );
     }
     
     private void reset( int op ){
@@ -129,6 +130,10 @@ class OutMessage extends BSONEncoder {
 
     int size(){
         return _buffer.size();
+    }
+
+    byte[] toByteArray(){
+        return _buffer.toByteArray();
     }
     
     private PoolOutputBuffer _buffer = new PoolOutputBuffer();

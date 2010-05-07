@@ -12,13 +12,14 @@ public class DBCallback extends BasicBSONCallback {
 
     DBCallback( DBCollection coll ){
         _collection = coll;
+        _db = _collection == null ? null : _collection.getDB();
     }
 
     public void gotDBRef( String name , String ns , ObjectId id ){
         if ( id.equals( Bytes.COLLECTION_REF_ID ) )
             cur().put( name , _collection );
         else
-            cur().put( name , new DBPointer( (DBObject)cur() , name , _collection.getDB() , ns , id ) );
+            cur().put( name , new DBPointer( (DBObject)cur() , name , _db , ns , id ) );
     }
     
     public void objectStart(boolean array, String name){
@@ -32,7 +33,7 @@ public class DBCallback extends BasicBSONCallback {
         if ( ! _lastArray && 
              o.containsKey( "$ref" ) && 
              o.containsKey( "$id" ) ){
-            cur().put( _lastName , new DBRef( _collection.getDB() , o ) );
+            cur().put( _lastName , new DBRef( _db , o ) );
         }
         
         return o;
@@ -92,5 +93,6 @@ public class DBCallback extends BasicBSONCallback {
     private String _lastName;
     private boolean _lastArray = false;
     final DBCollection _collection;
+    final DB _db;
     static final Logger LOGGER = Logger.getLogger( "com.mongo.DECODING" );
 }
