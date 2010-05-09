@@ -18,7 +18,13 @@
 
 package com.mongodb.util;
 
+import java.util.*;
+
 import java.util.regex.*;
+
+import java.text.*;
+
+import org.bson.types.*;
 
 import com.mongodb.*;
 
@@ -249,19 +255,37 @@ public class JSONTest extends com.mongodb.util.TestCase {
    @org.testng.annotations.Test
    public void testPattern() {
        String x = "^Hello$";
-       String y = "/" + x + "/i";
-
+       String serializedPattern = 
+	   "{ \"$regex\" : \"" + x + "\" , \"$options\" : \"" + "i\"}";
+       
        Pattern pattern = Pattern.compile( x , Pattern.CASE_INSENSITIVE);
-       assertEquals( y , JSON.serialize(pattern));
+       assertEquals( serializedPattern, JSON.serialize(pattern));
 
        BasicDBObject a = new BasicDBObject( "x" , pattern );
-       assertEquals( "{ \"x\" : " + y + "}" , a.toString() );
+       assertEquals( "{ \"x\" : " + serializedPattern + "}" , a.toString() );
 
        DBObject b = (DBObject)JSON.parse( a.toString() );
        assertEquals( a.toString() , b.toString() );
    }
 
+   @org.testng.annotations.Test
+   public void testObjectId() {
+       ObjectId oid = new ObjectId(new Date());
 
+       String serialized = JSON.serialize(oid);
+       assertEquals("{ \"$oid\" : \"" + oid + "\"}", serialized);
+   }
+
+   @org.testng.annotations.Test
+   public void testDate() {
+       Date d = new Date();
+       SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+       format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
+       String formattedDate = format.format(d);
+
+       String serialized = JSON.serialize(d);
+       assertEquals("{ \"$date\" : \"" + formattedDate + "\"}", serialized);
+   }
 
     public static void main( String args[] ){
         (new JSONTest()).runConsole();

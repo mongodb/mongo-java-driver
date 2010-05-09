@@ -86,7 +86,7 @@ public class JSON {
 
 
         if ( o instanceof ObjectId) {
-            string(buf, o.toString());
+	    serialize(new BasicDBObject("$oid", o.toString()), buf);
             return;
         }
         
@@ -133,17 +133,22 @@ public class JSON {
 
         if (o instanceof Date) {
             Date d = (Date) o;
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            SimpleDateFormat format = 
+		new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
             format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
-            buf.append('"').append(format.format(d)).append('"');
+	    serialize(new BasicDBObject("$date", format.format(d)), buf);
             return;
         }
 
-        if (o instanceof Boolean || 
-            o instanceof DBRefBase) {
+        if (o instanceof DBRefBase) {
             buf.append(o);
             return;
         }
+
+        if (o instanceof Boolean) {
+            buf.append(o);
+            return;
+	}
 
         if (o instanceof byte[]) {
             buf.append("<Binary Data>");
@@ -151,7 +156,10 @@ public class JSON {
         }
 
         if (o instanceof Pattern) {
-            buf.append("/").append(o.toString()).append("/").append(Bytes.regexFlags( ((Pattern)o).flags() ));
+	    DBObject externalForm = new BasicDBObject();
+	    externalForm.put("$regex", o.toString());
+	    externalForm.put("$options", Bytes.regexFlags( ((Pattern)o).flags() ) );
+	    serialize(externalForm, buf);
             return;
         }
 

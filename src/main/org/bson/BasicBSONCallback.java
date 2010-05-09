@@ -26,7 +26,7 @@ public class BasicBSONCallback implements BSONCallback {
     public void objectStart(){
         if ( _stack.size() > 0 )
             throw new IllegalStateException( "something is wrong" );
-        _root = create();
+        _root = (BSONObject)BSON.applyDecodingHooks( create() );
         _stack.add( _root );
     }
     
@@ -37,7 +37,7 @@ public class BasicBSONCallback implements BSONCallback {
     public void objectStart(boolean array, String name){
         _nameStack.addLast( name );
         BSONObject o = create( array , _nameStack );
-        _stack.getLast().put( name , o );
+        _stack.getLast().put( name , BSON.applyDecodingHooks( o ) );
         _stack.addLast( o );
     }
     
