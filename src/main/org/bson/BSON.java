@@ -7,6 +7,7 @@ import java.util.regex.*;
 import java.nio.charset.*;
 
 import org.bson.io.*;
+import org.bson.util.*;
 
 public class BSON {
 
@@ -196,10 +197,11 @@ public class BSON {
     }
 
     private static boolean _anyHooks = false;
-    static Map<Class,List<Transformer>> _encodingHooks = 
-        Collections.synchronizedMap( new HashMap<Class,List<Transformer>>() );
-    static Map<Class,List<Transformer>> _decodingHooks = 
-        Collections.synchronizedMap( new HashMap<Class,List<Transformer>>() );
+    static ClassMap<List<Transformer>> _encodingHooks = 
+	new ClassMap<List<Transformer>>();
+        
+    static ClassMap<List<Transformer>> _decodingHooks = 
+        new ClassMap<List<Transformer>>();
     
     static protected Charset _utf8 = Charset.forName( "UTF-8" );
     
