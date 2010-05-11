@@ -49,6 +49,7 @@
            deprecation="off"
            source="1.5"
            encoding="ISO-8859-1"
+           fork="true"
            debug="on" >
       <classpath refid="classpath"/>
     </javac>
