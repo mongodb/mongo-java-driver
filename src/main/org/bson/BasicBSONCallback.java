@@ -24,10 +24,15 @@ public class BasicBSONCallback implements BSONCallback {
     }
 
     public void objectStart(){
-        if ( _stack.size() > 0 )
-            throw new IllegalStateException( "something is wrong" );
-        _root = create();
-        _stack.add( _root );
+        if ( _stack.size() > 0 ) {
+	    throw new IllegalStateException( "something is wrong" );
+	}
+	objectStart(false);
+    }
+
+    public void objectStart(boolean array){
+        _root = create(array, null);
+        _stack.add( (BSONObject)_root );
     }
     
     public void objectStart(String name){
@@ -41,21 +46,26 @@ public class BasicBSONCallback implements BSONCallback {
         _stack.addLast( o );
     }
     
-    public BSONObject objectDone(){
+    public Object objectDone(){
         BSONObject o =_stack.removeLast();
         if ( _nameStack.size() > 0 )
             _nameStack.removeLast();
-        else if ( _stack.size() > 0 )
-            throw new IllegalStateException( "something is wrong" );
+        else if ( _stack.size() > 0 ) {
+	    throw new IllegalStateException( "something is wrong" );
+	}
         return (BSONObject)BSON.applyDecodingHooks(o);
+    }
+
+    public void arrayStart(){
+	objectStart( true );
     }
 
     public void arrayStart(String name){
         objectStart( true , name );
     }
 
-    public void arrayDone(){
-        objectDone();
+    public Object arrayDone(){
+        return objectDone();
     }
 
     public void gotNull( String name ){
@@ -128,11 +138,19 @@ public class BasicBSONCallback implements BSONCallback {
         return _stack.getLast();
     }
     
-    public BSONObject get(){
-        return _root;
+    public Object get(){
+	return _root;
     }
 
-    private BSONObject _root;
+    protected void setRoot(Object o) {
+	_root = o;
+    }
+
+    protected boolean isStackEmpty() {
+	return _stack.size() < 1;
+    }    
+
+    private Object _root;
     private final LinkedList<BSONObject> _stack = new LinkedList<BSONObject>();
     private final LinkedList<String> _nameStack = new LinkedList<String>();
 }

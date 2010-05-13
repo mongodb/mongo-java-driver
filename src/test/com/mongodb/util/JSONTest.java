@@ -265,6 +265,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
        assertEquals( "{ \"x\" : " + serializedPattern + "}" , a.toString() );
 
        DBObject b = (DBObject)JSON.parse( a.toString() );
+       assertEquals( b.get("x").getClass(), Pattern.class );
        assertEquals( a.toString() , b.toString() );
    }
 
@@ -274,6 +275,9 @@ public class JSONTest extends com.mongodb.util.TestCase {
 
        String serialized = JSON.serialize(oid);
        assertEquals("{ \"$oid\" : \"" + oid + "\"}", serialized);
+       
+       ObjectId oid2 = (ObjectId)JSON.parse(serialized);
+       assertEquals(oid, oid2);
    }
 
    @org.testng.annotations.Test
@@ -285,6 +289,9 @@ public class JSONTest extends com.mongodb.util.TestCase {
 
        String serialized = JSON.serialize(d);
        assertEquals("{ \"$date\" : \"" + formattedDate + "\"}", serialized);
+
+       Date d2 = (Date)JSON.parse(serialized);
+       assertEquals(d.toString(), d2.toString());
    }
 
     public static void main( String args[] ){

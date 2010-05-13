@@ -23,7 +23,7 @@ public class BSONDecoder {
         throws IOException {
         BasicBSONCallback c = new BasicBSONCallback();
         decode( in , c );
-        return c.get();
+        return (BSONObject)c.get();
     }
 
     public int decode( byte[] b , BSONCallback callback ){

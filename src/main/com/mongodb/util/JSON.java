@@ -3,6 +3,7 @@
 package com.mongodb.util;
 
 import com.mongodb.*;
+import org.bson.*;
 import org.bson.types.*;
 
 import java.text.*;
@@ -194,11 +195,21 @@ public class JSON {
      * @return DBObject the object
      */
     public static Object parse( String s ){
+	return parse( s, null );
+    }
+
+    /**
+     *  Parses a JSON string into a DBObject.
+     *
+     * @param s the string to serialize
+     * @return DBObject the object
+     */
+    public static Object parse( String s, BSONCallback c ){
         if (s == null || (s=s.trim()).equals("")) {
             return (DBObject)null;
         }
 
-        JSONParser p = new JSONParser(s);
+        JSONParser p = new JSONParser(s, c);
         return p.parse();
     }
 
@@ -215,12 +226,21 @@ class JSONParser {
 
     String s;
     int pos = 0;
+    BSONCallback _callback;
 
     /**
      * Create a new parser.
      */
     public JSONParser(String s) {
+	this(s, null);
+    }
+
+    /**
+     * Create a new parser.
+     */
+    public JSONParser(String s, BSONCallback callback) {
         this.s = s;
+	_callback = (callback == null) ? new JSONCallback() : callback;
     }
 
 
@@ -231,6 +251,16 @@ class JSONParser {
      * @throws JSONParseException if invalid JSON is found
      */
     public Object parse() {
+	return parse(null);
+    }
+
+    /**
+     * Parse an unknown type.
+     *
+     * @return Object the next item
+     * @throws JSONParseException if invalid JSON is found
+     */
+    protected Object parse(String name) {
         Object value = null;
         char current = get();
 
@@ -238,6 +268,7 @@ class JSONParser {
         // null
         case 'n':
             read('n'); read('u'); read('l'); read('l');
+	    value = null;
             break;
         // true
         case 't':
@@ -261,11 +292,11 @@ class JSONParser {
             break;
         // array
         case '[':
-            value = parseArray();
+            value = parseArray(name);
             break;
         // object
         case '{':
-            value = parseObject();
+            value = parseObject(name);
             break;
         case '/':
             value = parsePatter();
@@ -282,17 +313,30 @@ class JSONParser {
      * @return DBObject the next object
      * @throws JSONParseException if invalid JSON is found
      */
-    public DBObject parseObject() {
-        DBObject obj = new BasicDBObject();
-        read('{');
+    public Object parseObject() {
+	return parseObject(null);
+    }
 
+    /**
+     * Parses an object for the form <i>{}</i> and <i>{ members }</i>.
+     *
+     * @return DBObject the next object
+     * @throws JSONParseException if invalid JSON is found
+     */
+    protected Object parseObject(String name){
+	if (name != null) {
+	    _callback.objectStart(name);
+	} else {
+	    _callback.objectStart();
+	}
+
+        read('{');
         char current = get();
         while(get() != '}') {
             String key = parseString();
             read(':');
-            Object value = parse();
-
-            obj.put(key, value);
+            Object value = parse(key);
+	    doCallback(key, value);
 
             if((current = get()) == ',') {
                 read(',');
@@ -303,9 +347,25 @@ class JSONParser {
         }
         read('}');
 
-        return obj;
+        return _callback.objectDone();
     }
     
+    protected void doCallback(String name, Object value) {
+	if (value == null) {
+	    _callback.gotNull(name);
+	} else if (value instanceof String) {
+	    _callback.gotString(name, (String)value);
+	} else if (value instanceof Boolean) {
+	    _callback.gotBoolean(name, (Boolean)value);
+	} else if (value instanceof Integer) {
+	    _callback.gotInt(name, (Integer)value);
+	} else if (value instanceof Long) {
+	    _callback.gotLong(name, (Long)value);
+	} else if (value instanceof Double) {
+	    _callback.gotDouble(name, (Double)value);
+	} 
+    }
+    // XXX kill parsePattern?
     public Pattern parsePatter(){
         read( '/' );
         
@@ -540,13 +600,31 @@ class JSONParser {
      * @return the array
      * @throws JSONParseException if invalid JSON is found
      */
-    public List parseArray() {
-        read('[');
-        List list = new ArrayList();
+    public Object parseArray() {
+	return parseArray(null);
+    }
 
+    /**
+     * Parses the next array.
+     *
+     * @return the array
+     * @throws JSONParseException if invalid JSON is found
+     */
+    protected Object parseArray(String name) {
+	if (name != null) {
+	    _callback.arrayStart(name);
+	} else {
+	    _callback.arrayStart();
+	}
+
+        read('[');
+
+	int i = 0;
         char current = get();
         while( current != ']' ) {
-            list.add(parse());
+	    String elemName = "" + i++;
+            Object elem = parse(elemName);
+	    doCallback(elemName, elem);
 
             if((current = get()) == ',') {
                 read(',');
@@ -560,7 +638,8 @@ class JSONParser {
         }
 
         read(']');
-        return list;
+
+        return _callback.arrayDone();
     }
 
 }

@@ -40,12 +40,12 @@ public class DBCallback extends BasicBSONCallback {
         super.objectStart( array , name );
     }
     
-    public BSONObject objectDone(){
-        BSONObject o = super.objectDone();
+    public Object objectDone(){
+        BSONObject o = (BSONObject)super.objectDone();
         if ( ! _lastArray && 
              o.containsKey( "$ref" ) && 
              o.containsKey( "$id" ) ){
-            cur().put( _lastName , new DBRef( _db , o ) );
+            o = (BSONObject)cur().put( _lastName , new DBRef( _db, o ) );
         }
         
         return o;

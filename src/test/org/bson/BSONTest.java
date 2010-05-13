@@ -60,7 +60,7 @@ public class BSONTest extends TestCase {
 
         OutputBuffer buf2 = new BasicOutputBuffer();
         e.set( buf2 );
-        e.putObject( cb.get() );
+        e.putObject( (BSONObject)cb.get() );
         assertEquals( size , buf2.size() );
         assertEquals( hash , buf2.md5() );        
         
