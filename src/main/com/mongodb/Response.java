@@ -110,16 +110,19 @@ class Response {
 
         public int read()
             throws IOException {
-            
-            if ( _toGo <= 0 ){
+
+            if ( _toGo <= 0 )
+                return -1;
+                
+            int val = _in.read();
+            _toGo--;
+
+            if ( _toGo == 0 ){
                 for ( DoneHook h : _hooks )
                     h.done();
                 _hooks.clear();
-                return -1;
             }
 
-            int val = _in.read();
-            _toGo--;
             return val;
         }
         

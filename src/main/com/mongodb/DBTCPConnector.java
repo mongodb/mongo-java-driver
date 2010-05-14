@@ -173,14 +173,17 @@ class DBTCPConnector implements DBConnector {
 
             if ( err != null ){
                 if ( "not master".equals( err ) ){
+                    mp.done( port );
+                    
                     _pickCurrent();
-                    if ( retries <= 0 )
+                    if ( retries <= 0 ){
                         throw new MongoException( "not talking to master and retries used up" );
-
+                    }
+                    
                     return call( db , coll , m , retries -1 );
                 }
             }
-
+            
             return res;
         }
         catch ( IOException ioe ){
@@ -238,6 +241,7 @@ class DBTCPConnector implements DBConnector {
                     return _last;
                 }
             }
+
             if ( _port != null )
                 return _port;
             
@@ -372,7 +376,7 @@ class DBTCPConnector implements DBConnector {
         if ( _curAddress == addr )
             return false;
         _curAddress = addr;
-        _curPortPool = _portHolder.get( _curAddress.getSocketAddress() );
+        _curPortPool = _portHolder.get( addr.getSocketAddress() );
         return true;
     }
 

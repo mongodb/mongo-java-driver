@@ -64,7 +64,6 @@ public class DBPort {
 
     private synchronized Response go( OutMessage msg , DBCollection coll )
         throws IOException {
-        
         if ( _socket == null )
             _open();
         
