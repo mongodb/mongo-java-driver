@@ -77,5 +77,13 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
         _isPartialObject = true;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public BasicDBObject append( String key , Object val ){
+        put( key , val );
+        return this;
+    }
+
+
     private boolean _isPartialObject = false;
 }
