@@ -10,10 +10,11 @@ public interface BSONCallback {
     
     void objectStart();
     void objectStart(String name);
-    BSONObject objectDone();
+    Object objectDone();
 
+    void arrayStart();
     void arrayStart(String name);
-    void arrayDone();
+    Object arrayDone();
 
     
     void gotNull( String name );
