@@ -111,9 +111,13 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         Object foo = get( key );
         if ( foo == null )
             return def;
+
+        if ( foo instanceof Boolean )
+            return ((Boolean)foo) ? 1 : 0;
+            
         return ((Number)foo).intValue();
     }
-
+    
     /**
      * Returns the value of a field as a <code>long</code>.
      *
