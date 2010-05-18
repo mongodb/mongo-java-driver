@@ -234,4 +234,18 @@ public class BSON {
         }
     };
 
+    // --- coercing ---
+
+    public static int toInt( Object o ){
+        if ( o == null )
+            throw new NullPointerException( "can't be null" );
+        
+                if ( o instanceof Number )
+            return ((Number)o).intValue();
+        
+        if ( o instanceof Boolean )
+            return ((Boolean)o) ? 1 : 0;
+        
+        throw new IllegalArgumentException( "can't convert: " + o.getClass().getName() + " to int for key: " + key );
+    }
 }
