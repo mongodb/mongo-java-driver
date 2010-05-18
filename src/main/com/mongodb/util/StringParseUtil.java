@@ -81,7 +81,7 @@ public final class StringParseUtil {
 
         try {
             // Remember: all numbers in JS are 64-bit
-            return Long.parseLong( s.substring( 0, i ) , radix );
+            return Long.valueOf( s.substring( 0, i ) , radix );
         }
         catch (Exception e) {
             return Double.NaN;
@@ -189,13 +189,13 @@ public final class StringParseUtil {
 	final String actual = s.substring( firstDigit , lastDigit );
 
         if ( isDouble || actual.length() > 17  )
-            return Double.parseDouble( actual );
+            return Double.valueOf( actual );
 
 
 	if ( actual.length() > 10 )
-	    return Long.parseLong(  actual );
+	    return Long.valueOf(  actual );
 
-        return Integer.parseInt( actual );
+        return Integer.valueOf( actual );
     }
 
     /** Use Java's "strict parsing" methods Integer.parseInt and  Double.parseDouble to parse s "strictly". i.e. if it's neither a double or an integer, fail.
@@ -218,7 +218,7 @@ public final class StringParseUtil {
         }
         else if( s.indexOf('.') != -1 || 
                  s.equals( "-0" ) ) {
-            return Double.parseDouble(s);
+            return Double.valueOf(s);
         }
         // parse hex
         else if( s.toLowerCase().indexOf( "0x" ) > -1 ) {
@@ -230,8 +230,8 @@ public final class StringParseUtil {
             // if coef == 1: (coef * -.5 + 2.5) == 2
             // e.g., 0xf00 (start substring at 2)
             if( s.length() > 9 )
-                return coef * Long.parseLong( s.substring( (int)(coef * -.5 + 2.5) ) , 16 );
-            return coef * Integer.parseInt( s.substring( (int)(coef * -.5 + 2.5) ) , 16 );
+                return coef * Long.valueOf( s.substring( (int)(coef * -.5 + 2.5) ) , 16 );
+            return coef * Integer.valueOf( s.substring( (int)(coef * -.5 + 2.5) ) , 16 );
         }
 
         int e = s.toLowerCase().indexOf( 'e' );
@@ -244,10 +244,10 @@ public final class StringParseUtil {
 
         // parse with smallest possible precision
         if ( s.length() > 17 )
-            return Double.parseDouble( s );
+            return Double.valueOf( s );
         else if ( s.length() > 9  )
-            return Long.parseLong(s);
-        return Integer.parseInt(s);
+            return Long.valueOf(s);
+        return Integer.valueOf(s);
     }
 
     public static int parseIfInt( String s , int def ){

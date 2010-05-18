@@ -12,15 +12,23 @@ import org.testng.reporters.*;
 
 public class TestNGListener extends TestListenerAdapter {
 
+    public void onConfigurationFailure(ITestResult itr){
+        super.onConfigurationFailure( itr );
+        _print( itr.getThrowable() );
+    }
+
     public void onTestFailure(ITestResult tr) {
+        super.onTestFailure( tr );
         log("F");
     }
 
     public void onTestSkipped(ITestResult tr) {
+        super.onTestSkipped( tr );
         log("S");
     }
     
     public void onTestSuccess(ITestResult tr) {
+        super.onTestSuccess( tr );
         log(".");
     }
 
@@ -34,9 +42,15 @@ public class TestNGListener extends TestListenerAdapter {
 
     public void onFinish(ITestContext context){
         System.out.println();
+
         for ( ITestResult r : context.getFailedTests().getAllResults() ){
             System.out.println(r);
             System.out.println("Exception : ");
+            _print( r.getThrowable() );
+        }
+
+        for ( ITestResult r : context.getSkippedTests().getAllResults() ){
+            System.out.println( "Skipped: " + r );
             _print( r.getThrowable() );
         }
 
