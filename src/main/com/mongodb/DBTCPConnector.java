@@ -167,13 +167,15 @@ class DBTCPConnector implements DBConnector {
         
         try {
             Response res = port.call( m , coll );
-            res.addHook( new MyDoneHook( mp , port ) );
+            final MyDoneHook hook = new MyDoneHook( mp , port );
+            res.addHook( hook );
             
             String err = _getError( res.peek() );
 
             if ( err != null ){
                 if ( "not master".equals( err ) ){
-                    mp.done( port );
+                    if ( ! hook._done )
+                        mp.done( port );
                     
                     _pickCurrent();
                     if ( retries <= 0 ){
@@ -254,10 +256,16 @@ class DBTCPConnector implements DBConnector {
         }
         
         void done( DBPort p ){
-
+            
+            if ( _internalStack <= 0 ){
+                int prev = _internalStack;
+                _reset();
+                throw new IllegalStateException( "done called and _internalStack was: " + _internalStack );
+            }
+            
             _internalStack--;
 
-            if ( p != _port && _internalStack <=0 )
+            if ( p != _port && _internalStack == 0 )
                 _curPortPool.done( p );
 
             if ( _internalStack < 0 ){
@@ -301,6 +309,12 @@ class DBTCPConnector implements DBConnector {
                 System.err.println( "_internalStack in requestDone should be 0" );
                 _internalStack = 0;
             }
+        }
+
+        void _reset(){
+            _internalStack = 0;
+            _port = null;
+            _last = null;
         }
         
         int _internalStack = 0;
@@ -361,8 +375,9 @@ class DBTCPConnector implements DBConnector {
                 if ( a == _curAddress )
                     continue;
 
-                if ( _curAddress != null )
+                if ( _curAddress != null ){
                     _logger.info( "switching from [" + _curAddress + "] to [" + a + "]" );
+                }
 
                 _set( a );
                 return;
@@ -426,14 +441,17 @@ class DBTCPConnector implements DBConnector {
         
         public void done(){
             _mp.done( _dp );
+            _done = true;
         }
 
         public void error( IOException ioe ){
             _mp.error( ioe );
+            _done = true;
         }
 
         final MyPort _mp;
         final DBPort _dp;
+        boolean _done = false;
     }
     
     public void close(){

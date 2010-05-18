@@ -427,6 +427,17 @@ public abstract class DBCollection {
         throw new MongoException( "error dropping : " + res );
     }
 
+    public long count()
+        throws MongoException {
+        return getCount(new BasicDBObject(), null);
+    }
+
+    public long count(DBObject query)
+        throws MongoException {
+        return getCount(query, null);
+    }
+
+
     /**
      *  Returns the number of documents in the collection
      *  @return number of documents that match query

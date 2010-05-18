@@ -35,7 +35,10 @@ class Response {
         byte[] b = new byte[16];
         int x = 0;
         while ( x<b.length ){
-            x += in.read( b , x , b.length - x );
+            int temp = in.read( b , x , b.length - x );
+            if ( temp < 0 )
+                throw new IOException( "socket closed but didn't finish reading message" );
+            x += temp;
         }
         
         ByteArrayInputStream bin = new ByteArrayInputStream( b );
