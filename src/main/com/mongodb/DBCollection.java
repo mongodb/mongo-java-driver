@@ -407,26 +407,24 @@ public abstract class DBCollection {
             .add( "deleteIndexes" , getName() )
             .add( "index" , name )
             .get();
-        BasicDBObject res = (BasicDBObject)_db.command( cmd );
-        if ( res.getInt( "ok" , 0 ) != 1 ){
-            if ( res.getString( "errmsg" ).equals( "ns not found" ) )
-                return;
-            throw new MongoException( "error dropping indexes : " + res );
+        
+        CommandResult res = _db.command( cmd );
+        if ( res.ok() || res.getErrorMessage().equals( "ns not found" ) ){
+            resetIndexCache();
+            return;
         }
         
-        resetIndexCache();
+        throw new MongoException( "error dropping indexes : " + res );
     }
     
     /** Drops (deletes) this collection
      */
     public void drop()
         throws MongoException {
-        BasicDBObject res = (BasicDBObject)_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
-        if ( res.getInt( "ok" , 0 ) != 1 ){
-            if ( res.getString( "errmsg" ).equals( "ns not found" ) )
-                return;
-            throw new MongoException( "error dropping : " + res );
-        }
+        CommandResult res =_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
+        if ( res.ok() || res.getErrorMessage().equals( "ns not found" ) )
+            return;
+        throw new MongoException( "error dropping : " + res );
     }
 
     /**
@@ -468,15 +466,17 @@ public abstract class DBCollection {
             cmd.put("fields", fields);
         }
 
-        BasicDBObject res = (BasicDBObject)_db.command(cmd);
+        CommandResult res = _db.command(cmd);
 
-        if (res.getInt("ok" , 0 ) != 1 ){
-            String errmsg = res.getString( "errmsg" );
+        if ( ! res.ok() ){
+            String errmsg = res.getErrorMessage();
+            
             if ( errmsg.equals("ns does not exist") || 
                  errmsg.equals("ns missing" ) ){
                 // for now, return 0 - lets pretend it does exist
                 return 0;
             }
+            
             throw new MongoException( "error counting : " + res );
         }
 
@@ -490,16 +490,13 @@ public abstract class DBCollection {
     public void rename( String newName ) 
         throws MongoException {
         
-        DBObject ret = 
+        CommandResult ret = 
             _db.getSisterDB( "admin" )
             .command( BasicDBObjectBuilder.start()
                       .add( "renameCollection" , _fullName )
                       .add( "to" , _db._name + "." + newName )
                       .get() );
-        Number n = (Number)ret.get("ok");
-        if ( n.intValue() == 1 )
-            return;
-        throw new MongoException( "rename failed: " + ret );
+        ret.throwOnError();
     }
 
     /**
@@ -510,17 +507,16 @@ public abstract class DBCollection {
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce )
         throws MongoException {
-        DBObject ret =  _db.command( new BasicDBObject( "group" , 
-                                                          BasicDBObjectBuilder.start()
-                                                          .add( "ns" , getName() )
-                                                          .add( "key" , key )
-                                                          .add( "cond" , cond )
-                                                          .add( "$reduce" , reduce )
-                                                          .add( "initial" , initial )
-                                                          .get() ) );
-        if ( ((Number)(ret.get( "ok" ))).intValue() == 1 )
-            return (DBObject)ret.get( "retval" );
-        throw new MongoException( "group failed: " + ret.toString() );
+        CommandResult res =  _db.command( new BasicDBObject( "group" , 
+                                                             BasicDBObjectBuilder.start()
+                                                             .add( "ns" , getName() )
+                                                             .add( "key" , key )
+                                                             .add( "cond" , cond )
+                                                             .add( "$reduce" , reduce )
+                                                             .add( "initial" , initial )
+                                                             .get() ) );
+        res.throwOnError();
+        return (DBObject)res.get( "retval" );
     }
     
     /**
@@ -541,9 +537,8 @@ public abstract class DBCollection {
             .add( "query" , query )
             .get();
         
-        DBObject res = _db.command( c );
-        if ( ! new Double(1.0).equals( res.get( "ok" ) ) )
-            throw new MongoException( "distinct failed: " + res );
+        CommandResult res = _db.command( c );
+        res.throwOnError();
         return (List)(res.get( "values" ));
     }
 
@@ -573,9 +568,8 @@ public abstract class DBCollection {
         throws MongoException {
         if ( command.get( "mapreduce" ) == null )
             throw new IllegalArgumentException( "need mapreduce arg" );
-        BasicDBObject res = (BasicDBObject)(_db.command( command ));
-        if ( res.getInt("ok") != 1 )
-            throw new MongoException( "mapreduce failed: " + res );
+        CommandResult res = _db.command( command );
+        res.throwOnError();
         return new MapReduceOutput( this , res );
     }
     

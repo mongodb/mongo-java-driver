@@ -49,11 +49,6 @@ public class TestNGListener extends TestListenerAdapter {
             _print( r.getThrowable() );
         }
 
-        for ( ITestResult r : context.getSkippedTests().getAllResults() ){
-            System.out.println( "Skipped: " + r );
-            _print( r.getThrowable() );
-        }
-
         _recordResults( context );
     }
     

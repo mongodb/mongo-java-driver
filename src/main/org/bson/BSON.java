@@ -246,6 +246,6 @@ public class BSON {
         if ( o instanceof Boolean )
             return ((Boolean)o) ? 1 : 0;
         
-        throw new IllegalArgumentException( "can't convert: " + o.getClass().getName() + " to int for key: " + key );
+        throw new IllegalArgumentException( "can't convert: " + o.getClass().getName() + " to int" );
     }
 }

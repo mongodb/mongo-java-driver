@@ -99,10 +99,8 @@ public abstract class DB {
         if ( o != null ){
             DBObject createCmd = new BasicDBObject("create", name);
             createCmd.putAll(o);
-            DBObject result = command(createCmd);
-            if ( ((Number)(result.get( "ok" ))).intValue() != 1 ) {
-                throw new MongoException( "getCollection failed: " + result.toString() );
-            }
+            CommandResult result = command(createCmd);
+            result.throwOnError();
         }
         return getCollection(name);
     }
@@ -132,17 +130,19 @@ public abstract class DB {
      * @return the result of the command from the database
      * @dochub commands
      */
-    public DBObject command( DBObject cmd )
+    public CommandResult command( DBObject cmd )
         throws MongoException {
-        return getCollection( "$cmd" ).findOne( cmd );
+        CommandResult res = (CommandResult)getCollection( "$cmd" ).findOne( cmd );
+        res._cmd = cmd;
+        return res;
     }
 
-    public DBObject command( String cmd )
+    public CommandResult command( String cmd )
         throws MongoException {
         return command( new BasicDBObject( cmd , Boolean.TRUE ) );
     }
 
-    public DBObject doEval( String code , Object ... args )
+    public CommandResult doEval( String code , Object ... args )
         throws MongoException {
 
         return command( BasicDBObjectBuilder.start()
@@ -154,10 +154,9 @@ public abstract class DB {
     public Object eval( String code , Object ... args )
         throws MongoException {
         
-        DBObject res = doEval( code , args );
+        CommandResult res = doEval( code , args );
         
-        if ( res.get( "ok" ) instanceof Number && 
-             ((Number)res.get( "ok" ) ).intValue() == 1 ){
+        if ( res.ok() ){
             return res.get( "retval" );
         }
         
@@ -247,7 +246,7 @@ public abstract class DB {
      *
      *  @return DBObject with error and status information
      */
-    public DBObject getLastError()
+    public CommandResult getLastError()
         throws MongoException {
         return command(new BasicDBObject("getlasterror", 1));
     }
@@ -276,11 +275,9 @@ public abstract class DB {
     public void dropDatabase()
         throws MongoException {
 
-        BasicDBObject res = (BasicDBObject) command(new BasicDBObject("dropDatabase", 1));
+        CommandResult res = command(new BasicDBObject("dropDatabase", 1));
+        res.throwOnError();
 
-        if (res.getInt("ok") != 1) {
-            throw new RuntimeException("Error - unable to drop database : " + res.toString());
-        }
     }
 
 
@@ -316,9 +313,9 @@ public abstract class DB {
     }
 
     private boolean _doauth( String username , byte[] hash ){
-        BasicDBObject res = (BasicDBObject) command(new BasicDBObject("getnonce", 1));
+        CommandResult res = command(new BasicDBObject("getnonce", 1));
 
-        if (res.getInt("ok") != 1) {
+        if ( ! res.ok() ){
             throw new MongoException("Error - unable to get nonce value for authentication.");
         }
 
@@ -332,9 +329,9 @@ public abstract class DB {
         cmd.put("nonce", nonce);
         cmd.put("key", Util.hexMD5(key.getBytes()));
 
-        res = (BasicDBObject)command(cmd);
+        res = command(cmd);
         
-        return res.getInt("ok") == 1;
+        return res.ok();
     }
 
     public void addUser( String username , char[] passwd ){
@@ -380,7 +377,7 @@ public abstract class DB {
      *
      * @return DBObject with error and status information
      */
-    public DBObject getPreviousError()
+    public CommandResult getPreviousError()
         throws MongoException {
         return command(new BasicDBObject("getpreverror", 1));
     }

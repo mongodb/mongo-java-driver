@@ -94,6 +94,9 @@ public class DBCallback extends BasicBSONCallback {
                 throw new MongoInternalException( "can't instantiate a : " + c , iae );
             }
         }
+        
+        if ( _collection != null && _collection._name.equals( "$cmd" ) )
+            return new CommandResult();
         return new BasicDBObject();
     }
 
