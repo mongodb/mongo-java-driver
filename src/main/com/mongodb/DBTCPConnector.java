@@ -436,6 +436,10 @@ class DBTCPConnector implements DBConnector {
         final DBPort _dp;
     }
     
+    public void close(){
+        _portHolder.close();
+    }
+
     final Mongo _mongo;
     private ServerAddress _curAddress;
     private DBPortPool _curPortPool;

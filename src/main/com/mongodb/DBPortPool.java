@@ -55,6 +55,14 @@ class DBPortPool extends SimplePool<DBPort> {
             
             return p;
         }
+
+        void close(){
+            synchronized ( _pools ){
+                for ( DBPortPool p : _pools.values() ){
+                    p.close();
+                }
+            }
+        }
         
         final MongoOptions _options;
         final Map<InetSocketAddress,DBPortPool> _pools = Collections.synchronizedMap( new HashMap<InetSocketAddress,DBPortPool>() );
@@ -113,6 +121,10 @@ class DBPortPool extends SimplePool<DBPort> {
             return;
         }
         Bytes.LOGGER.log( Level.INFO , "emptying DBPortPool b/c of error" , e );
+        clear();
+    }
+
+    void close(){
         clear();
     }
 

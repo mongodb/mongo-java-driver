@@ -237,6 +237,14 @@ public class Mongo {
         }
         return result;
     }
+
+    /**
+     * closes all open connections
+     * this Mongo instance can be re-used however
+     */
+    public void close(){
+        _connector.close();
+    }
     
     final ServerAddress _addr;
     final List<ServerAddress> _addrs;
