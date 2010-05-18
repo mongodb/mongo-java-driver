@@ -486,8 +486,9 @@ public abstract class DBCollection {
     /**
      * does a rename of this collection to newName
      * @param newName new collection name (not a full namespace)
+     * @return the new collection
      */
-    public void rename( String newName ) 
+    public DBCollection rename( String newName ) 
         throws MongoException {
         
         CommandResult ret = 
@@ -497,6 +498,7 @@ public abstract class DBCollection {
                       .add( "to" , _db._name + "." + newName )
                       .get() );
         ret.throwOnError();
+        return _db.getCollection( newName );
     }
 
     /**

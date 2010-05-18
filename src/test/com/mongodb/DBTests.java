@@ -51,9 +51,12 @@ public class DBTests extends TestCase {
         assertEquals( 1 , a.find().count() );
         assertEquals( 0 , b.find().count() );
         
-        a.rename( nameb );
+        DBCollection b2 = a.rename( nameb );
         assertEquals( 0 , a.find().count() );
         assertEquals( 1 , b.find().count() );
+        assertEquals( 1 , b2.find().count() );
+        
+        assertEquals( b.getName() , b2.getName() );
         
     }
 }
