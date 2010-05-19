@@ -73,6 +73,10 @@ class Response {
     boolean more(){
         return _peek != null || _readSoFar < _num;
     }
+
+    int bytesLeft(){
+        return _user._toGo;
+    }
     
     DBObject peek(){
         if ( _peek == null && more() ){

@@ -438,6 +438,10 @@ public class DBApiLayer extends DB {
 
                 SingleResult res = new SingleResult( _curResult._fullNameSpace , _options , raw );
                 init( res );
+                
+                if ( raw.more() || raw.bytesLeft() > 0 ){
+                    throw new RuntimeException( "uh oh" );
+                }
             }
             catch ( MongoException me ){
                 throw new MongoInternalException( "can't do getmore" , me );

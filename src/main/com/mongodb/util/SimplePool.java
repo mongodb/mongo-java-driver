@@ -19,11 +19,12 @@
 package com.mongodb.util;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 public abstract class SimplePool<T> {
 
     static final boolean TRACK_LEAKS = Boolean.getBoolean( "MONGO-TRACKLEAKS" );
-    static final long _sleepTime = 15;
+    static final long _sleepTime = 2;
     
     /** 
      * See full constructor docs
@@ -87,8 +88,10 @@ public abstract class SimplePool<T> {
                         throw new RuntimeException( "trying to put something back in the pool that's already there" );
                 
                 // if all doesn't contain it, it probably means this was cleared, so we don't want it
-                if ( _all.contains( t ) )
+                if ( _all.contains( t ) ){
                     _avail.add( t );
+                    _waiting.release();
+                }
             }
         }
     }
@@ -166,7 +169,13 @@ public abstract class SimplePool<T> {
 
             _consecutiveSleeps++;
 	    totalSlept += _sleepTime;
-            ThreadUtil.sleep( _sleepTime );
+            
+            try {
+                _waiting.tryAcquire( _sleepTime , TimeUnit.MILLISECONDS );
+            }
+            catch ( InterruptedException ie ){
+            }
+
         }
     }
 
@@ -245,6 +254,8 @@ public abstract class SimplePool<T> {
     private final List<T> _avail = new ArrayList<T>();
     private final WeakBag<T> _all = new WeakBag<T>();
     private final Map<Integer,Throwable> _where = new HashMap<Integer,Throwable>();
+
+    private final Semaphore _waiting = new Semaphore(0);
 
     private int _everCreated = 0;
     private int _trackPrintCount = 0;
