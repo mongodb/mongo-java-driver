@@ -25,10 +25,9 @@ import org.bson.*;
 import org.bson.io.*;
 
 class Response {
-
+    
     Response( DBCollection collection ,  InputStream in )
         throws IOException {
-        
         _collection = collection;
         _raw = in;
         
@@ -63,7 +62,12 @@ class Response {
     }
 
     void addHook( DoneHook h ){
-        _hooks.add( h );
+        if ( _user._toGo == 0 ){
+            h.done();
+        }
+        else {
+            _hooks.add( h );
+        }
     }
 
     boolean more(){
@@ -119,7 +123,7 @@ class Response {
                 
             int val = _in.read();
             _toGo--;
-
+            
             if ( _toGo == 0 ){
                 for ( DoneHook h : _hooks )
                     h.done();
@@ -159,7 +163,7 @@ class Response {
     private DBObject _peek;
     private int _readSoFar;
     private List<DoneHook> _hooks = new LinkedList<DoneHook>();
-    
+
     static interface DoneHook {
         void done();
         void error( IOException ioe );
