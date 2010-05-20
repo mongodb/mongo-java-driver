@@ -99,7 +99,18 @@ public class GridFSTest extends TestCase {
         String s = buf.toString();
         testInOut( s );
     }
-    
+
+    @Test(groups = {"basic"})
+    public void testMetadata()
+        throws Exception {
+
+        GridFSInputFile in = _fs.createFile( "foo".getBytes() );
+        in.put("meta", 5);
+        in.save();
+        GridFSDBFile out = _fs.findOne( new BasicDBObject( "_id" , in.getId() ) );
+        assert( out.get("meta").equals( 5 ) );
+    }
+
     final DB _db;
     final GridFS _fs;
     

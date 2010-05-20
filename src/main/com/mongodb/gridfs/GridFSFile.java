@@ -89,11 +89,11 @@ public abstract class GridFSFile implements DBObject {
     }
 
     public List<String> getAliases(){
-        return _aliases;
+        return (List<String>)_metadata.get( "aliases" );
     }
 
     public DBObject getMetaData(){
-        return _metadata;
+        return (DBObject)_metadata.get( "metadata" );
     }
     
     public String getMD5(){
@@ -119,17 +119,10 @@ public abstract class GridFSFile implements DBObject {
             _chunkSize = ((Number)v).longValue();
         else if ( key.equals( "uploadDate" ) )
             _uploadDate = (Date)v;
-        else if ( key.equals( "metadata" ) )
-            _metadata = (DBObject)v;
         else if ( key.equals( "md5" ) )
             _md5 = (String)v;
-        else if ( key.equals( "aliases" ) ){
-            if ( v != null ){
-                throw new MongoException( "can't handle aliases yet" );
-            }
-        }
-        else 
-            throw new MongoException( "GridFSFile don't know about key [" + key + "] converting to metadata " );
+        else
+            _metadata.put( key , v );
         return v;
     }
 
@@ -148,13 +141,9 @@ public abstract class GridFSFile implements DBObject {
             return _chunkSize;
         else if ( key.equals( "uploadDate" ) )
             return _uploadDate;
-        else if ( key.equals( "metadata" ) )
-            return _metadata;
         else if ( key.equals( "md5" ) )
             return _md5;
-        
-
-        return null;
+        return _metadata.get( key );
     }
 
 
@@ -175,11 +164,14 @@ public abstract class GridFSFile implements DBObject {
         return containsField( s );
     }
     public boolean containsField(String s){
-        return VALID_FIELDS.contains( s );
+        return keySet().contains( s );
     }
 
     public Set<String> keySet(){
-        return VALID_FIELDS;
+        Set<String> keys = new HashSet();
+        keys.addAll(VALID_FIELDS);
+        keys.addAll(_metadata.keySet());
+        return keys;
     }
 
     public boolean isPartialObject(){
@@ -210,11 +202,11 @@ public abstract class GridFSFile implements DBObject {
     long _chunkSize;
     Date _uploadDate;
     List<String> _aliases;
-    DBObject _metadata;
+    DBObject _metadata = new BasicDBObject();
     String _md5;
 
     final static Set<String> VALID_FIELDS = Collections.unmodifiableSet( new HashSet( Arrays.asList( new String[]{ 
-                    "_id" , "filename" , "contentType" , "length" , "chunkSize" , 
-                    "uploadDate" , "aliases" , "metadata" , "md5" 
+                    "_id" , "filename" , "contentType" , "length" , "chunkSize" ,
+                    "uploadDate" , "aliases" , "md5"
                 } ) ) );
 }
