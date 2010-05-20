@@ -162,6 +162,10 @@ public abstract class DBCollection {
         createIndex( keys , defaultOptions( keys ) );
     }
 
+    public final void ensureIndex( final String name ){
+        ensureIndex( new BasicDBObject( name , 1 ) );
+    }
+
     /** Creates an index on a set of fields, if one does not already exist.
      * @param keys an object with a key set of the fields desired for the index
      */
