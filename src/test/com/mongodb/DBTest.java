@@ -71,6 +71,28 @@ public class DBTest extends TestCase {
         assertEquals(0, 1);
     }
 
+    @Test(groups = {"basic"})
+    public void testForCollectionExistence()
+    {
+        _db.getCollection( "foo1" ).drop();
+        _db.getCollection( "foo2" ).drop();
+        _db.getCollection( "foo3" ).drop();
+        _db.getCollection( "foo4" ).drop();
+
+        assertFalse(_db.collectionExists( "foo1" ));
+
+        BasicDBObject o1 = new BasicDBObject("capped", false);
+        DBCollection c = _db.createCollection("foo1", o1);
+
+        assertTrue(_db.collectionExists( "foo1" ), "Collection 'foo' was supposed to be created, but 'collectionExists' did not return true.");
+        assertTrue(_db.collectionExists( "FOO1" ));
+        assertTrue(_db.collectionExists( "fOo1" ));
+
+        _db.getCollection( "foo1" ).drop();
+
+        assertFalse(_db.collectionExists( "foo1" ));
+    }
+
     /*public static class Person extends DBObject {
         
         public Person(){

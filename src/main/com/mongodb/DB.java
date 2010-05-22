@@ -215,6 +215,29 @@ public abstract class DB {
         return new OrderedSet<String>(tables);
     }
 
+    /**
+     * Checks to see if a collection by name %lt;name&gt; exists.
+     * @param collectionName The collection to test for existence
+     * @return false if no collection by that name exists, true if a match to an existing collection was found
+     */
+    public boolean collectionExists(String collectionName)
+    {
+        if (collectionName == null || "".equals(collectionName))
+            return false;
+
+        Set<String> collections = getCollectionNames();
+        if (collections.size() == 0)
+            return false;
+
+        for (String collection : collections)
+        {
+            if (collectionName.equalsIgnoreCase(collection))
+                return true;
+        }
+
+        return false;
+    }
+
 
     /** Returns the name of this database.
      * @return the name
