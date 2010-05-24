@@ -11,6 +11,7 @@ import org.bson.types.*;
 public class BasicBSONCallback implements BSONCallback {
 
     public BasicBSONCallback(){
+        reset();
     }
     
     public BSONObject create(){
@@ -149,6 +150,12 @@ public class BasicBSONCallback implements BSONCallback {
     protected boolean isStackEmpty() {
 	return _stack.size() < 1;
     }    
+    
+    public void reset(){
+        _root = null;
+        _stack.clear();
+        _nameStack.clear();
+    }
 
     private Object _root;
     private final LinkedList<BSONObject> _stack = new LinkedList<BSONObject>();

@@ -104,6 +104,12 @@ public class DBCallback extends BasicBSONCallback {
         DBObject o = (DBObject)get();
         return o;
     }
+    
+    public void reset(){
+        _lastName = null;
+        _lastArray = false;
+        super.reset();
+    }
 
     private String _lastName;
     private boolean _lastArray = false;

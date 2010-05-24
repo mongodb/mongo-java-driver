@@ -50,7 +50,7 @@ public class CommandResult extends BasicDBObject {
 
     static class CommandFailure extends MongoException {
         CommandFailure( CommandResult res , String msg ){
-            super( MongoException._getCode( res ) , msg );
+            super( ServerError._getCode( res ) , msg );
         }
     }
 }

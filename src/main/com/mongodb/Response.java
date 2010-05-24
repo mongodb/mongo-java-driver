@@ -29,7 +29,6 @@ class Response {
     Response( DBCollection collection ,  InputStream in )
         throws IOException {
         _collection = collection;
-        _raw = in;
         
         byte[] b = new byte[16];
         int x = 0;
@@ -46,66 +45,89 @@ class Response {
         _responseTo = Bits.readInt( bin );
         _operation = Bits.readInt( bin );
 
-        if ( _len > ( 12 * 1024 * 1024 ) )
+        if ( _len > ( 32 * 1024 * 1024 ) )
             throw new IllegalArgumentException( "response too long: " + _len );
 
-        _user = new MyInputStream( in , _len - 16 );
+        MyInputStream user = new MyInputStream( in , _len - 16 );
 
-        _flags = Bits.readInt( _user );
-        _cursor = Bits.readLong( _user );
-        _startingFrom = Bits.readInt( _user );
-        _num = Bits.readInt( _user );
+        _flags = Bits.readInt( user );
+        _cursor = Bits.readLong( user );
+        _startingFrom = Bits.readInt( user );
+        _num = Bits.readInt( user );
         
-        _readSoFar = 0;
-
-        _decoder = TL.get();
-    }
-
-    void addHook( DoneHook h ){
-        if ( _user._toGo == 0 ){
-            h.done();
-        }
-        else {
-            _hooks.add( h );
-        }
-    }
-
-    boolean more(){
-        return _peek != null || _readSoFar < _num;
-    }
-
-    int bytesLeft(){
-        return _user._toGo;
-    }
-    
-    DBObject peek(){
-        if ( _peek == null && more() ){
-            _peek = next();
-        }
-        return _peek;
-    }
-    
-    DBObject next(){
-        if ( _peek != null ){
-            DBObject foo = _peek;
-            _peek = null;
-            return foo;
-        }
-        if ( _readSoFar >= _num )
-            throw new IllegalStateException( "already finished" );
+        if ( _num < 2 )
+            _objects = new LinkedList<DBObject>();
+        else
+            _objects = new ArrayList<DBObject>( _num );
 
         DBCallback c = DBCallback.FACTORY.create( _collection );
+        BSONDecoder decoder = TL.get();
+        
+        for ( int i=0; i<_num; i++ ){
+            if ( user._toGo < 5 )
+                throw new IOException( "should have more obejcts, but only " + user._toGo + " bytes left" );
+            c.reset();
+            decoder.decode( user , c );
+            _objects.add( c.dbget() );
+        }
+
+        if ( user._toGo != 0 )
+            throw new IOException( "finished reading objects but still have: " + user._toGo + " bytes to read!' " );
+
+        if ( _num != _objects.size() )
+            throw new RuntimeException( "something is really broken" );
+    }
+
+    public int size(){
+        return _num;
+    }
+    
+    public DBObject get( int i ){
+        return _objects.get( i );
+    }
+
+    public Iterator<DBObject> iterator(){
+        return _objects.iterator();
+    }
+    
+    public boolean hasGetMore( int queryOptions ){
+        if ( _cursor <= 0 )
+            return false;
+        
+        if ( _num > 0 )
+            return true;
+
+        if ( ( queryOptions & Bytes.QUERYOPTION_TAILABLE ) == 0 )
+            return false;
+            
+        // have a tailable cursor
+        if ( ( _flags & Bytes.RESULTFLAG_AWAITCAPABLE ) > 0 )
+            return true;
+        
         try {
-            _decoder.decode( _user , c );
+            System.out.println( "sleep" );
+            Thread.sleep( 1000 );
         }
-        catch ( IOException ioe ){
-            for ( DoneHook h : _hooks )
-                h.error( ioe );
-            _hooks.clear();
-            throw new MongoException.Network( "can't read response" , ioe );
-        }
-        _readSoFar++;
-        return (DBObject)(c.dbget());
+        catch ( Exception e ){}
+        
+        return true;
+    }
+    
+    public long cursor(){
+        return _cursor;
+    }
+
+    public ServerError getError(){
+        if ( _num != 1 )
+            return null;
+        
+        DBObject obj = get(0);
+        
+        Object err = obj.get( "$err" );
+        if ( err == null )
+            return null;
+        
+        return new ServerError( obj );
     }
     
     class MyInputStream extends InputStream {
@@ -128,12 +150,6 @@ class Response {
             int val = _in.read();
             _toGo--;
             
-            if ( _toGo == 0 ){
-                for ( DoneHook h : _hooks )
-                    h.done();
-                _hooks.clear();
-            }
-
             return val;
         }
         
@@ -150,9 +166,6 @@ class Response {
     }
 
     final DBCollection _collection;
-    final InputStream _raw;
-    final MyInputStream _user;
-    final BSONDecoder _decoder;
     
     final int _len;
     final int _id;
@@ -163,16 +176,9 @@ class Response {
     final long _cursor;
     final int _startingFrom;
     final int _num;
-
-    private DBObject _peek;
-    private int _readSoFar;
-    private List<DoneHook> _hooks = new LinkedList<DoneHook>();
-
-    static interface DoneHook {
-        void done();
-        void error( IOException ioe );
-    }
     
+    final List<DBObject> _objects;
+
     static ThreadLocal<BSONDecoder> TL = new ThreadLocal<BSONDecoder>(){
         protected BSONDecoder initialValue(){
             return new BSONDecoder();

@@ -167,23 +167,15 @@ class DBTCPConnector implements DBConnector {
         
         try {
             Response res = port.call( m , coll );
-            final MyDoneHook hook = new MyDoneHook( mp , port );
-            res.addHook( hook );
-            
-            String err = _getError( res.peek() );
+            ServerError err = res.getError();
 
-            if ( err != null ){
-                if ( "not master".equals( err ) ){
-                    if ( ! hook._done )
-                        mp.done( port );
-                    
-                    _pickCurrent();
-                    if ( retries <= 0 ){
-                        throw new MongoException( "not talking to master and retries used up" );
-                    }
-                    
-                    return call( db , coll , m , retries -1 );
+            if ( err != null && err.isNotMasterError() ){
+                _pickCurrent();
+                if ( retries <= 0 ){
+                    throw new MongoException( "not talking to master and retries used up" );
                 }
+                
+                return call( db , coll , m , retries -1 );
             }
             
             return res;
@@ -217,17 +209,6 @@ class DBTCPConnector implements DBConnector {
             _pickCurrent();
         }
         return true;
-    }
-
-    String _getError( BSONObject obj ){
-        if ( obj == null )
-            return null;
-
-        Object err = obj.get( "$err" );
-        if ( err == null )
-            return null;
-
-        return err.toString();
     }
 
     class MyPort {
@@ -433,27 +414,6 @@ class DBTCPConnector implements DBConnector {
         throw new IllegalArgumentException( "invalid ismaster [" + x + "] : " + x.getClass().getName() );
     }
 
-    static class MyDoneHook implements Response.DoneHook {
-        MyDoneHook( MyPort mp , DBPort dp ){
-            _mp = mp;
-            _dp = dp;
-        }
-        
-        public void done(){
-            _mp.done( _dp );
-            _done = true;
-        }
-
-        public void error( IOException ioe ){
-            _mp.error( ioe );
-            _done = true;
-        }
-
-        final MyPort _mp;
-        final DBPort _dp;
-        boolean _done = false;
-    }
-    
     public void close(){
         _portHolder.close();
     }

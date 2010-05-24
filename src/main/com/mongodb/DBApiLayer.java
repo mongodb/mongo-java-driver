@@ -274,16 +274,13 @@ public class DBApiLayer extends DB {
                 query.putObject( fields ); // fields to return
             
 
-            Response raw = _connector.call( _db , this , query , 2 );
-            SingleResult res = new SingleResult( _fullNameSpace , options , raw );
+            Response res = _connector.call( _db , this , query , 2 );
 
-            if ( res._lst.size() != raw._num )
-                throw new RuntimeException( "something is wrong have:" + res._lst.size() + " should have:" + raw._num );
-            if ( res._lst.size() == 0 )
+            if ( res.size() == 0 )
                 return null;
             
-            if ( res._lst.size() == 1 ){
-                BSONObject foo = res._lst.get(0);
+            if ( res.size() == 1 ){
+                BSONObject foo = res.get(0);
                 Object err = foo.get( "$err" );
                 if ( err != null )
                     throw new MongoException( foo );
@@ -326,83 +323,27 @@ public class DBApiLayer extends DB {
         final String _fullNameSpace;
     }
 
-    class SingleResult {
-
-        SingleResult( String fullNameSpace , int options , Response res ){
-            _res = res;
-            _fullNameSpace = fullNameSpace;
-            _options = options;
-            
-            if ( res._num == 0 )
-                _lst = EMPTY;
-            else if ( res._num < 3 )
-                _lst = new LinkedList<DBObject>();
-            else
-                _lst = new ArrayList<DBObject>( res._num );
-            
-            while ( res.more() ){
-                _lst.add( res.next() );
-            }
-        }
-
-        boolean hasGetMore(){
-            if ( _res._cursor <= 0 )
-                return false;
-            
-            if ( _res._num > 0 )
-                return true;
-
-            if ( ( _options & Bytes.QUERYOPTION_TAILABLE ) == 0 )
-                return false;
-            
-            // have a tailable cursor
-            if ( ( _res._flags & Bytes.RESULTFLAG_AWAITCAPABLE ) > 0 )
-                return true;
-
-            try {
-                System.out.println( "sleep" );
-                Thread.sleep( 1000 );
-            }
-            catch ( Exception e ){}
-
-            return true;
-        }
-        
-        long cursor(){
-            return _res._cursor;
-        }
-        
-        public String toString(){
-            return _res.toString();
-        }
-        
-        final String _fullNameSpace;
-        final Response _res;
-        final int _options;
-        final List<DBObject> _lst;
-    }
-
     class Result implements Iterator<DBObject> {
 
-        Result( MyCollection coll , SingleResult res , int numToReturn , int options ){
+        Result( MyCollection coll , Response res , int numToReturn , int options ){
             init( res );
             _collection = coll;
             _numToReturn = numToReturn;
             _options = options;
         }
 
-        private void init( SingleResult res ){
-            _totalBytes += res._res._len;
+        private void init( Response res ){
+            _totalBytes += res._len;
             _curResult = res;
-            _cur = res._lst.iterator();
-            _sizes.add( res._lst.size() );
+            _cur = res.iterator();
+            _sizes.add( res.size() );
         }
 
         public DBObject next(){
             if ( _cur.hasNext() )
                 return _cur.next();
 
-            if ( ! _curResult.hasGetMore() )
+            if ( ! _curResult.hasGetMore( _options ) )
                 throw new RuntimeException( "no more" );
 
             _advance();
@@ -413,7 +354,7 @@ public class DBApiLayer extends DB {
             if ( _cur.hasNext() )
                 return true;
 
-            if ( ! _curResult.hasGetMore() )
+            if ( ! _curResult.hasGetMore( _options ) )
                 return false;
 
             _advance();
@@ -428,20 +369,14 @@ public class DBApiLayer extends DB {
             OutMessage m = OutMessage.get( 2005 );
 
             m.writeInt( 0 ); 
-            m.writeCString( _curResult._fullNameSpace );
+            m.writeCString( _collection._fullNameSpace );
             m.writeInt( _numToReturn ); // num to return
             m.writeLong( _curResult.cursor() );
             
             try {
-                Response raw = _connector.call( DBApiLayer.this , _collection , m );
+                Response res = _connector.call( DBApiLayer.this , _collection , m );
                 _numGetMores++;
-
-                SingleResult res = new SingleResult( _curResult._fullNameSpace , _options , raw );
                 init( res );
-                
-                if ( raw.more() || raw.bytesLeft() > 0 ){
-                    throw new RuntimeException( "uh oh" );
-                }
             }
             catch ( MongoException me ){
                 throw new MongoInternalException( "can't do getmore" , me );
@@ -474,7 +409,7 @@ public class DBApiLayer extends DB {
             return Collections.unmodifiableList( _sizes );
         }
         
-        SingleResult _curResult;
+        Response _curResult;
         Iterator<DBObject> _cur;
         final MyCollection _collection;
         final int _numToReturn;
