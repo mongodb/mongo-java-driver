@@ -149,6 +149,13 @@ class DBTCPConnector implements DBConnector {
                 return;
             throw new MongoException.Network( "can't say something" , ioe );
         }
+        catch ( MongoException me ){
+            throw me;
+        }
+        catch ( RuntimeException re ){
+            mp.error( re );
+            throw re;
+        }
 
     }
     
@@ -186,6 +193,13 @@ class DBTCPConnector implements DBConnector {
                 return call( db , coll , m , retries - 1 );
             }
             throw new MongoException.Network( "can't call something" , ioe );
+        }
+        catch ( MongoException me ){
+            throw me;
+        }
+        catch ( RuntimeException re ){
+            mp.error( re );
+            throw re;
         }
     }
 
