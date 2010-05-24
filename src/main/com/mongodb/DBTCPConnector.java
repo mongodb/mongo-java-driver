@@ -174,6 +174,7 @@ class DBTCPConnector implements DBConnector {
         
         try {
             Response res = port.call( m , coll );
+            mp.done( port );
             ServerError err = res.getError();
 
             if ( err != null && err.isNotMasterError() ){
@@ -242,12 +243,18 @@ class DBTCPConnector implements DBConnector {
             if ( _port != null )
                 return _port;
             
-            DBPort p = _curPortPool.get();
-            if ( keep && _inRequest )
-                _port = p;
-            
-            _last = p;
-            return p;
+            try {
+                DBPort p = _curPortPool.get();
+                if ( keep && _inRequest )
+                    _port = p;
+                
+                _last = p;
+                return p;
+            }
+            catch ( DBPortPool.NoMoreConnection nmc ){
+                _internalStack = 0;
+                throw nmc;
+            }
         }
         
         void done( DBPort p ){

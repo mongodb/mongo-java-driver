@@ -91,7 +91,6 @@ class DBPortPool extends SimplePool<DBPort> {
     
     public DBPort get(){
 	DBPort port = null;
-	
 	if ( ! _waitingSem.tryAcquire() )
 	    throw new NoMoreConnection();
 
