@@ -656,8 +656,8 @@ public abstract class DBCollection {
         for ( String s : o.keySet() ){
             if ( s.contains( "." ) )
                 throw new IllegalArgumentException( "fields stored in the db can't have . in them" );
-            if ( s.contains( "$" ) )
-                throw new IllegalArgumentException( "fields stored in the db can't have $ in them" );
+            if ( s.charAt( 0 ) == '$' )
+                throw new IllegalArgumentException( "fields stored in the db can't start with '$'" );
 
             Object inner;
             if ( (inner = o.get( s )) instanceof DBObject ) {
