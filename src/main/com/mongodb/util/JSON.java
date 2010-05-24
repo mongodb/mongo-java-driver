@@ -298,9 +298,6 @@ class JSONParser {
         case '{':
             value = parseObject(name);
             break;
-        case '/':
-            value = parsePatter();
-            break;
         default:
             throw new JSONParseException(s, pos);
         }
@@ -364,31 +361,6 @@ class JSONParser {
 	} else if (value instanceof Double) {
 	    _callback.gotDouble(name, (Double)value);
 	} 
-    }
-    // XXX kill parsePattern?
-    public Pattern parsePatter(){
-        read( '/' );
-        
-        StringBuilder buf = new StringBuilder();
-        
-        char current = read();
-        while( current != '/'){
-            buf.append( current );
-            current = read();
-        }
-
-        int flags = 0;
-
-        while ( pos < s.length() ){
-            current = s.charAt( pos );
-            if ( Character.isWhitespace( current ) ||
-                 ! Character.isLetter( current ) )
-                break;
-            flags |= Bytes.regexFlag( current );
-            current = read();
-        }
-
-        return Pattern.compile( buf.toString() , flags );
     }
 
     /**
