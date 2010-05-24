@@ -68,13 +68,17 @@ public abstract class SimplePool<T> {
      * @param t Object to add
      */
     public void done( T t ){
+        done( t , ok( t ) );
+    }
+
+    void done( T t , boolean ok ){
         if ( _trackLeaks ){
             synchronized ( _where ){
                 _where.remove( _hash( t ) );
             }
         }
         
-        if ( ! ok( t ) ){
+        if ( ! ok ){
             synchronized ( _avail ){
                 _all.remove( t );
             }
@@ -94,6 +98,10 @@ public abstract class SimplePool<T> {
                 }
             }
         }
+    }
+
+    public void remove( T t ){
+        done( t , false );
     }
 
     /** Gets an object from the pool - will block if none are available

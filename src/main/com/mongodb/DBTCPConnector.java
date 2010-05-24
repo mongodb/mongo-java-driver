@@ -256,7 +256,7 @@ class DBTCPConnector implements DBConnector {
         }
 
         void error( Exception e ){
-            _port = null;
+            _curPortPool.remove( _port );
             _curPortPool.gotError( e );
 
             _internalStack = 0;

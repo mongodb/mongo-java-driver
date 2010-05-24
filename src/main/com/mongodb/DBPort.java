@@ -64,19 +64,26 @@ public class DBPort {
 
     private synchronized Response go( OutMessage msg , DBCollection coll )
         throws IOException {
+        
         if ( _socket == null )
             _open();
         
-        msg.prepare();
-        msg.pipe( _out );
-        
-        if ( _pool != null )
-            _pool._everWorked = true;
-
-        if ( coll == null )
-            return null;
-
-        return new Response( coll , _in );
+        try {
+            msg.prepare();
+            msg.pipe( _out );
+            
+            if ( _pool != null )
+                _pool._everWorked = true;
+            
+            if ( coll == null )
+                return null;
+            
+            return new Response( coll , _in );
+        }
+        catch ( IOException ioe ){
+            close();
+            throw ioe;
+        }
     }
 
     public synchronized void ensureOpen()
@@ -146,19 +153,23 @@ public class DBPort {
     }
     
     protected void finalize(){
-        if ( _socket != null ){
-            try {
-                _socket.close();
-            }
-            catch ( Exception e ){
-                // don't care
-            }
-            
-            _in = null;
-            _out = null;
-            _socket = null;
-        }
+        close();
+    }
 
+    protected void close(){
+        if ( _socket == null )
+            return;
+        
+        try {
+            _socket.close();
+        }
+        catch ( Exception e ){
+            // don't care
+        }
+        
+        _in = null;
+        _out = null;
+        _socket = null;
     }
 
     void checkAuth( DB db ){
