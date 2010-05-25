@@ -73,6 +73,12 @@ class DBPortPool extends SimplePool<DBPort> {
 	    super( "No more DB Connections" );
 	}
     }
+    
+    public static class ConnectionWaitTimeOut extends MongoInternalException {
+      ConnectionWaitTimeOut(int timeout) {
+        super("Connection wait timeout after " + timeout + " ms");
+      }
+    }
 
     // ----
     
@@ -100,7 +106,7 @@ class DBPortPool extends SimplePool<DBPort> {
 	}
 
 	if ( port == null )
-	    throw new NoMoreConnection();
+	    throw new ConnectionWaitTimeOut( _options.maxWaitTime );
 	
 	return port;
     }
