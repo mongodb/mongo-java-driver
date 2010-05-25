@@ -30,6 +30,7 @@ public class MongoOptions {
     public void reset(){
         connectionsPerHost = Bytes.CONNECTIONS_PER_HOST;
         threadsAllowedToBlockForConnectionMultiplier = 5;
+        maxWaitTime = 1000 * 60 * 2;
         connectTimeout = 0;
         socketTimeout = 0;
         autoConnectRetry = false;
@@ -48,6 +49,11 @@ public class MongoOptions {
        more than that and an exception will be throw
      */
     public int threadsAllowedToBlockForConnectionMultiplier;
+    
+    /**
+     * max wait time of a blocking thread for a connection
+     */
+    public int maxWaitTime;
 
     /**
        connect timeout in milliseconds. 0 is default and infinite
@@ -63,4 +69,6 @@ public class MongoOptions {
        this controls whether or not on a connect, the system retries automatically 
     */
     public boolean autoConnectRetry;
+    
+
 }

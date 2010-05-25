@@ -28,8 +28,6 @@ import java.util.logging.*;
 
 class DBPortPool extends SimplePool<DBPort> {
 
-    public final long _maxWaitTime = 1000 * 60 * 2;
-
     static class Holder {
         
         Holder( MongoOptions options ){
@@ -95,7 +93,7 @@ class DBPortPool extends SimplePool<DBPort> {
 	    throw new NoMoreConnection();
 
 	try {
-	    port = get( _maxWaitTime );
+	    port = get( _options.maxWaitTime );
 	}
 	finally {
 	    _waitingSem.release();
