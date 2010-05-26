@@ -308,7 +308,7 @@ class DBTCPConnector implements DBConnector {
             _port = null;
             _inRequest = false;
             if ( _internalStack > 0 ){
-                System.err.println( "_internalStack in requestDone should be 0" );
+                System.err.println( "_internalStack in requestDone should be 0 is: " + _internalStack );
                 _internalStack = 0;
             }
         }
