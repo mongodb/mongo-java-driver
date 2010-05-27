@@ -8,11 +8,17 @@ import shutil
 import subprocess
 
 if len( sys.argv ) == 1:
-    raise Exception( "need version number for now" )
+    print "Usage: mavenPush.py VERSION [PUBDIR]"
+    print "VERSION - version you want to publish"
+    print "PUBDIR - directory to publish to. default = /ebs/maven/"
+    sys.exit()
 
 version = sys.argv[1]
 
-root = "/ebs/maven/"
+if len( sys.argv ) > 2:
+    root = os.path.expanduser( sys.argv[2] )
+else:
+    root = "/ebs/maven/"
 
 p = subprocess.Popen( [ "/usr/bin/ant" , "clean" ] , stdout=subprocess.PIPE ).communicate()
 p = subprocess.Popen( [ "/usr/bin/ant" , "alljars" ] , stdout=subprocess.PIPE ).communicate()

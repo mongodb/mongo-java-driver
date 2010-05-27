@@ -158,7 +158,7 @@
            debug="on" >
       <classpath refid="classpath"/>
     </javac>
-    
+
     <java classname="QuickTour" >
       <classpath refid="classpath"/>
     </java>
@@ -166,7 +166,23 @@
     <java classname="QuickTourAdmin" >
       <classpath refid="classpath"/>
     </java>
-    
+
+  </target>
+
+  <target name="publish">
+    <exec dir="." executable="python">
+      <arg value="mavenPush.py"/>
+      <arg value="${version}"/>
+      <arg value="/ebs/maven/"/>
+    </exec>
+  </target>
+
+  <target name="publish-local">
+    <exec dir="." executable="python">
+      <arg value="mavenPush.py"/>
+      <arg value="${version}"/>
+      <arg value="~/.m2/repository/"/>
+    </exec>
   </target>
 
 </project>
