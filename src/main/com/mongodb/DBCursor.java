@@ -18,12 +18,11 @@
 
 package com.mongodb;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Set;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Set;
 
 
 /** An iterator over database results.
@@ -504,11 +503,15 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     public DBObject getKeysWanted(){
         return _keysWanted;
     }
+    
+    public DBObject getQuery(){
+        return _query;
+    }
 
     // ----  query setup ----
-    final DBCollection _collection;
-    final DBObject _query;
-    final DBObject _keysWanted;
+    private final DBCollection _collection;
+    private final DBObject _query;
+    private final DBObject _keysWanted;
     
     private DBObject _orderBy = null;
     private String _hint = null;
