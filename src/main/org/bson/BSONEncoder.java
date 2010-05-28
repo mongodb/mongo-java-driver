@@ -2,21 +2,22 @@
 
 package org.bson;
 
-import org.bson.io.*;
-import org.bson.types.*;
 import static org.bson.BSON.*;
-
-import java.util.*;
-import java.util.regex.*;
-import java.util.concurrent.atomic.*;
 
 import java.nio.*;
 import java.nio.charset.*;
+import java.util.*;
+import java.util.concurrent.atomic.*;
+import java.util.regex.*;
+
+import org.bson.io.*;
+import org.bson.types.*;
 
 /**
  * this is meant to be pooled or cached
  * there is some per instance memory for string conversion, etc...
  */
+@SuppressWarnings("unchecked")
 public class BSONEncoder {
     
     static final boolean DEBUG = false;
@@ -124,7 +125,7 @@ public class BSONEncoder {
         return _buf.getPosition() - start;
     }
 
-    protected void _putObjectField( String name , Object val ){
+	protected void _putObjectField( String name , Object val ){
 
         if ( name.equals( "_transientFields" ) )
             return;
@@ -157,14 +158,14 @@ public class BSONEncoder {
             putPattern(name, (Pattern)val );
         else if ( val instanceof Map )
             putMap( name , (Map)val );
-        else if ( val instanceof List )
-            putList( name , (List)val );
+        else if ( val instanceof Iterable)
+            putIterable( name , (Iterable)val );
         else if ( val instanceof byte[] )
             putBinary( name , (byte[])val );
         else if ( val instanceof Binary )
             putBinary( name , (Binary)val );
         else if ( val.getClass().isArray() )
-            putList( name , Arrays.asList( (Object[])val ) );
+            putIterable( name , Arrays.asList( (Object[])val ) );
 
         else if (val instanceof Symbol) {
             putSymbol(name, (Symbol) val);
@@ -184,13 +185,17 @@ public class BSONEncoder {
         
     }
 
-    private void putList( String name , List l ){
+    private void putIterable( String name , Iterable l ){
         _put( ARRAY , name );
         final int sizePos = _buf.getPosition();
         _buf.writeInt( 0 );
         
-        for ( int i=0; i<l.size(); i++ )
-            _putObjectField( String.valueOf( i ) , l.get( i ) );
+        int i=0;
+        for ( Object obj: l ) {
+            _putObjectField( String.valueOf( i ) , obj );
+            i++;
+        }
+        	
 
         _buf.write( EOO );
         _buf.writeInt( sizePos , _buf.getPosition() - sizePos );        
@@ -233,13 +238,11 @@ public class BSONEncoder {
     }
 
     protected void putBoolean( String name , Boolean b ){
-        int start = _buf.getPosition();
         _put( BOOLEAN , name );
         _buf.write( b ? (byte)0x1 : (byte)0x0 );
     }
 
     protected void putDate( String name , Date d ){
-        int start = _buf.getPosition();
         _put( DATE , name );
         _buf.writeLong( d.getTime() );
     }
