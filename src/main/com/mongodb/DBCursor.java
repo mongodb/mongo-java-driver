@@ -18,11 +18,7 @@
 
 package com.mongodb;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 /** An iterator over database results.
@@ -193,7 +189,9 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         if ( n == 1 )
             n = 2;
         if ( _it != null )
-            throw new IllegalStateException( "can't set batch size after executing query" );
+        	if (_it instanceof DBApiLayer.Result)
+        		((DBApiLayer.Result)_it).setNumberToReturn(n);
+
         _batchSize = n;
         return this;
     }

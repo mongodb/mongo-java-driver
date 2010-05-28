@@ -16,9 +16,8 @@
 
 package com.mongodb;
 
+import java.io.*;
 import java.util.*;
-import java.util.regex.*;
-import java.io.IOException;
 
 import org.testng.annotations.Test;
 
@@ -111,7 +110,8 @@ public class DBCursorTest extends TestCase {
         assertEquals( 5 , _count( c.find( null , null , 0 , -5 ) ) );
     }
 
-    int _count( Iterator i ){
+    @SuppressWarnings("unchecked")
+	int _count( Iterator i ){
         int c = 0;
         while ( i.hasNext() ){
             i.next();
@@ -151,6 +151,37 @@ public class DBCursorTest extends TestCase {
         
     }
 
+    @Test
+    public void testBatchWithActiveCursor(){
+        DBCollection c = _db.getCollection( "testBatchWithActiveCursor" );
+        c.drop();
+
+        for ( int i=0; i<100; i++ )
+            c.save( new BasicDBObject( "x" , i ) );
+
+        try {
+	        DBCursor cursor = c.find().batchSize(2); // setting to 1, actually sets to 2 (why, oh why?)
+	        cursor.next(); //creates real cursor on server.
+	        cursor.next();
+	        assertEquals(0, cursor.numGetMores());
+	        cursor.next();
+	        assertEquals(1, cursor.numGetMores());
+	        cursor.next();
+	        cursor.next();
+	        assertEquals(2, cursor.numGetMores());
+	        cursor.next();
+	        cursor.next();
+	        assertEquals(3, cursor.numGetMores());
+	        cursor.batchSize(20);
+	        cursor.next();
+	        cursor.next();
+	        cursor.next();
+	        assertEquals(4, cursor.numGetMores());	        
+        } catch (IllegalStateException e) {
+        	assertNotNull(e); // there must be a better way to detect this.
+        }
+    }
+    
     @Test
     public void testBatchWithLimit(){
         DBCollection c = _db.getCollection( "batchWithLimit1" );
