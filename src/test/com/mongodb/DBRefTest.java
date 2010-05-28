@@ -16,15 +16,13 @@
 
 package com.mongodb;
 
-import java.net.*;
-import java.util.*;
+import java.net.UnknownHostException;
 
+import org.bson.BSONDecoder;
+import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
 
-import com.mongodb.util.*;
-
-import org.bson.*;
-import org.bson.types.*;
+import com.mongodb.util.TestCase;
 
 public class DBRefTest extends TestCase {
 
@@ -104,6 +102,25 @@ public class DBRefTest extends TestCase {
         assertEquals( DBRef.class , b.findOne().get( "l" ).getClass() );
         assertEquals( 111 , ((DBRef)(b.findOne().get( "l" ))).fetch().get( "n" ) );
         
+    }
+
+    @Test
+    public void testFindByDBRef(){
+        DBCollection b = _db.getCollection( "b" );
+        b.drop();
+        DBRef ref = new DBRef( _db , "fake" , 17 );
+
+        b.save( BasicDBObjectBuilder.start( "n" , 12 ).add( "l" , ref ).get() );
+        
+        assertEquals( 12 , b.findOne().get( "n" ) );
+        assertEquals( DBRef.class , b.findOne().get( "l" ).getClass() );
+        
+        DBObject loaded = b.findOne(BasicDBObjectBuilder.start( "l" , ref ).get() );
+        assertEquals( 12 , loaded.get( "n" ) );
+        assertEquals( DBRef.class , loaded.get( "l" ).getClass() );
+        assertEquals( ref.getId(), ((DBRef)loaded.get( "l" )).getId());
+        assertEquals( ref.getRef(), ((DBRef)loaded.get( "l" )).getRef());
+        assertEquals( ref.getDB(), ((DBRef)loaded.get( "l" )).getDB());        
     }
 
     DB _db;
