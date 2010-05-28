@@ -18,10 +18,9 @@
 
 package com.mongodb;
 
-import org.bson.*;
-import org.bson.types.*;
-
 import java.util.*;
+
+import org.bson.types.*;
 
 /** This class provides a skeleton implementation of a database collection.  
  * <p>A typical invocation sequence is thus
@@ -32,6 +31,7 @@ import java.util.*;
  * </pre></blockquote>
  * @dochub collections
  */
+@SuppressWarnings("unchecked")
 public abstract class DBCollection {
 
     final static boolean DEBUG = Boolean.getBoolean( "DEBUG.DB" );
@@ -106,7 +106,7 @@ public abstract class DBCollection {
      * @return the objects, if found
      * @dochub find
      */
-    public abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException ;
+    abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException ;
 
     /** Finds an object.
      * @param ref query used to search
@@ -116,7 +116,7 @@ public abstract class DBCollection {
      * @return the objects, if found
      * @dochub find
      */
-    public Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) 
+    Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) 
         throws MongoException {
         return find( ref , fields , numToSkip , batchSize , 0 );
     }
@@ -547,7 +547,7 @@ public abstract class DBCollection {
      * find distinct values for a key
      * @param query query to apply on collection
      */
-    public List distinct( String key , DBObject query ){
+	public List distinct( String key , DBObject query ){
         DBObject c = BasicDBObjectBuilder.start()
             .add( "distinct" , getName() )
             .add( "key" , key )
@@ -812,7 +812,4 @@ public abstract class DBCollection {
 
     final private Set<String> _createIndexes = new HashSet<String>();
     final private Set<String> _createIndexesAfterSave = new HashSet<String>();
-
-    private final static DBObject _upsertOptions = BasicDBObjectBuilder.start().add( "upsert" , true ).get();
-
 }
