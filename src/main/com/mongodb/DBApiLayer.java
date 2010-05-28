@@ -18,7 +18,6 @@
 
 package com.mongodb;
 
-import java.nio.*;
 import java.util.*;
 import java.util.logging.*;
 
@@ -26,7 +25,6 @@ import com.mongodb.util.*;
 
 import org.bson.*;
 import org.bson.types.*;
-
 /** Database API
  * This cannot be directly instantiated, but the functions are available
  * through instances of Mongo.
@@ -386,6 +384,14 @@ public class DBApiLayer extends DB {
         public void remove(){
             throw new RuntimeException( "can't remove this way" );
         }
+        
+        public int getNumberToReturn(){
+        	return _numToReturn;
+        }
+
+        public void setNumberToReturn(int num){
+        	_numToReturn = num;
+        }
 
         public String toString(){
             return "DBCursor";
@@ -409,10 +415,12 @@ public class DBApiLayer extends DB {
             return Collections.unmodifiableList( _sizes );
         }
         
+        
+        
         Response _curResult;
         Iterator<DBObject> _cur;
+        int _numToReturn;
         final MyCollection _collection;
-        final int _numToReturn;
         final int _options;
         
         private long _totalBytes = 0;
