@@ -106,7 +106,21 @@ public abstract class DBCollection {
      * @return the objects, if found
      * @dochub find
      */
-    abstract Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException ;
+    abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException ;
+    
+    /** Finds an object.
+     * @param ref query used to search
+     * @param fields the fields of matching objects to return
+     * @param numToSkip will not return the first <tt>numToSkip</tt> matches
+     * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
+     * @param options - see Bytes QUERYOPTION_*
+     * @return the objects, if found
+     * @dochub find
+     */
+    public final DBCursor find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException{
+    	return new DBCursor(this, ref, fields).skip(numToSkip).batchSize(batchSize).addOption(options);
+    }
+    
 
     /** Finds an object.
      * @param ref query used to search
@@ -116,9 +130,21 @@ public abstract class DBCollection {
      * @return the objects, if found
      * @dochub find
      */
-    Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) 
+    public final DBCursor find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) {
+    	return find(ref, fields).skip(numToSkip).batchSize(batchSize);
+    }
+
+    /** Finds an object.
+     * @param ref query used to search
+     * @param fields the fields of matching objects to return
+     * @param numToSkip will not return the first <tt>numToSkip</tt> matches
+     * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
+     * @return the objects, if found
+     * @dochub find
+     */
+    Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) 
         throws MongoException {
-        return find( ref , fields , numToSkip , batchSize , 0 );
+        return __find( ref , fields , numToSkip , batchSize , 0 );
     }
 
     protected abstract void createIndex( DBObject keys , DBObject options ) throws MongoException ;
@@ -148,7 +174,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( Object obj, DBObject fields ) {
-        Iterator<DBObject> iterator = find(new BasicDBObject("_id", obj), fields, 0, -1, 0);
+        Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, 0);
         return (iterator != null ? iterator.next() : null);
     }
 
@@ -334,7 +360,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( DBObject o, DBObject fields ) {
-        Iterator<DBObject> i = find( o , fields , 0 , -1 , 0 );
+        Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0 );
         if ( i == null || ! i.hasNext() )
             return null;
         return i.next();

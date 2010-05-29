@@ -247,7 +247,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
                 else
                     bs = Math.min( bs , _batchSize );
             }
-            _it = _collection.find( foo , _keysWanted , _skip , bs , _options );
+            _it = _collection.__find( foo , _keysWanted , _skip , bs , _options );
         }
 
         if ( _it == null ){

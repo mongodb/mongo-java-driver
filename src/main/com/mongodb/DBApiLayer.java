@@ -251,7 +251,7 @@ public class DBApiLayer extends DB {
         }
 
         @Override
-        Iterator<DBObject> find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options )
+        Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options )
             throws MongoException {
             
             if ( ref == null )
