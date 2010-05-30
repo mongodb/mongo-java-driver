@@ -20,6 +20,7 @@ package com.mongodb;
 
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * A database connection with internal pooling.
@@ -166,8 +167,9 @@ public class Mongo {
             return db;
         
         db = new DBApiLayer( dbname , _connector );
-        
-        _dbs.put( dbname , db );
+        DB temp = _dbs.putIfAbsent( dbname , db );
+        if ( temp != null )
+            return temp;
         return db;
     }
     
@@ -244,5 +246,5 @@ public class Mongo {
     final List<ServerAddress> _addrs;
     final MongoOptions _options;
     final DBTCPConnector _connector;
-    final Map<String,DB> _dbs = Collections.synchronizedMap( new HashMap<String,DB>() );
+    final ConcurrentMap<String,DB> _dbs = new ConcurrentHashMap<String,DB>();
 }
