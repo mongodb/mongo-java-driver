@@ -165,16 +165,10 @@ public class Mongo {
         if ( db != null )
             return db;
         
-        synchronized ( _dbs ){
-            db = _dbs.get( dbname );
-            if ( db != null )
-                return db;
-            
-            db = new DBApiLayer( dbname , _connector );
-
-            _dbs.put( dbname , db );
-            return db;
-        }
+        db = new DBApiLayer( dbname , _connector );
+        
+        _dbs.put( dbname , db );
+        return db;
     }
     
     public List<String> getDatabaseNames()
@@ -250,5 +244,5 @@ public class Mongo {
     final List<ServerAddress> _addrs;
     final MongoOptions _options;
     final DBTCPConnector _connector;
-    final Map<String,DB> _dbs = new HashMap<String,DB>();
+    final Map<String,DB> _dbs = Collections.synchronizedMap( new HashMap<String,DB>() );
 }
