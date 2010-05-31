@@ -184,8 +184,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * @param n the number of elements to return in a batch
      */
     public DBCursor batchSize( int n ){
-        if ( n < 1 )
-            throw new IllegalArgumentException( "batchSize has to be >= 1" );
+//        if ( n < 1 )
+//            throw new IllegalArgumentException( "batchSize has to be >= 1" );
         if ( n == 1 )
             n = 2;
         if ( _it != null )

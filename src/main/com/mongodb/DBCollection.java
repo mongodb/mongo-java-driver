@@ -118,7 +118,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBCursor find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException{
-    	return new DBCursor(this, ref, fields).skip(numToSkip).batchSize(batchSize).addOption(options);
+    	return find(ref, fields, numToSkip, batchSize).addOption(options);
     }
     
 
@@ -131,7 +131,10 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBCursor find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) {
-    	return find(ref, fields).skip(numToSkip).batchSize(batchSize);
+    	DBCursor cursor = find(ref, fields).skip(numToSkip).batchSize(batchSize);
+    	if ( batchSize < 0 ) 
+    		cursor.limit( Math.abs(batchSize) );
+    	return cursor;
     }
 
     /** Finds an object.
