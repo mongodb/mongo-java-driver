@@ -69,15 +69,21 @@ class DBPortPool extends SimplePool<DBPort> {
     // ----
     
     public static class NoMoreConnection extends MongoInternalException {
-	NoMoreConnection(){
-	    super( "No more DB Connections" );
+	NoMoreConnection( String msg ){
+	    super( msg );
 	}
     }
     
-    public static class ConnectionWaitTimeOut extends MongoInternalException {
-      ConnectionWaitTimeOut(int timeout) {
-        super("Connection wait timeout after " + timeout + " ms");
-      }
+    public static class SemaphoresOut extends NoMoreConnection {
+        SemaphoresOut(){
+            super( "Out of semaphores to get db connection" );
+        }
+    }
+
+    public static class ConnectionWaitTimeOut extends NoMoreConnection {
+        ConnectionWaitTimeOut(int timeout) {
+            super("Connection wait timeout after " + timeout + " ms");
+        }
     }
 
     // ----
@@ -96,7 +102,7 @@ class DBPortPool extends SimplePool<DBPort> {
     public DBPort get(){
 	DBPort port = null;
 	if ( ! _waitingSem.tryAcquire() )
-	    throw new NoMoreConnection();
+	    throw new SemaphoresOut();
 
 	try {
 	    port = get( _options.maxWaitTime );

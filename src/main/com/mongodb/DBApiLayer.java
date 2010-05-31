@@ -25,6 +25,7 @@ import org.bson.*;
 import org.bson.types.*;
 
 import com.mongodb.util.*;
+
 /** Database API
  * This cannot be directly instantiated, but the functions are available
  * through instances of Mongo.

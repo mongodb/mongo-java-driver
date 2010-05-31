@@ -176,21 +176,10 @@ class DBTCPConnector implements DBConnector {
 
         port.checkAuth( db );
         
+        Response res = null;
         try {
-            Response res = port.call( m , coll );
+            res = port.call( m , coll );
             mp.done( port );
-            ServerError err = res.getError();
-
-            if ( err != null && err.isNotMasterError() ){
-                _pickCurrent();
-                if ( retries <= 0 ){
-                    throw new MongoException( "not talking to master and retries used up" );
-                }
-                
-                return call( db , coll , m , retries -1 );
-            }
-            
-            return res;
         }
         catch ( IOException ioe ){
             mp.error( ioe );
@@ -199,13 +188,22 @@ class DBTCPConnector implements DBConnector {
             }
             throw new MongoException.Network( "can't call something" , ioe );
         }
-        catch ( MongoException me ){
-            throw me;
-        }
         catch ( RuntimeException re ){
             mp.error( re );
             throw re;
         }
+
+        ServerError err = res.getError();
+        
+        if ( err != null && err.isNotMasterError() ){
+            _pickCurrent();
+            if ( retries <= 0 ){
+                throw new MongoException( "not talking to master and retries used up" );
+            }
+            return call( db , coll , m , retries -1 );
+        }
+        
+        return res;
     }
 
     public ServerAddress getAddress(){
