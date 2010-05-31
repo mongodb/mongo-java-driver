@@ -16,13 +16,14 @@
 
 package com.mongodb;
 
-import java.net.UnknownHostException;
+import java.net.*;
+import java.util.*;
 
-import org.bson.BSONDecoder;
-import org.bson.types.ObjectId;
-import org.testng.annotations.Test;
+import org.bson.*;
+import org.bson.types.*;
+import org.testng.annotations.*;
 
-import com.mongodb.util.TestCase;
+import com.mongodb.util.*;
 
 public class DBRefTest extends TestCase {
 
@@ -88,6 +89,29 @@ public class DBRefTest extends TestCase {
         assertEquals(321325243, ((Number)deref.get("_id")).intValue());
     }
 
+    @SuppressWarnings("unchecked")
+	@Test
+    public void testRefListRoundTrip(){
+        DBCollection a = _db.getCollection( "reflistfield" );
+        List<DBRef> refs = new ArrayList<DBRef>();
+        refs.add(new DBRef(_db, "other", 12));
+        refs.add(new DBRef(_db, "other", 14));
+        refs.add(new DBRef(_db, "other", 16));
+        a.save( BasicDBObjectBuilder.start( "refs" , refs).get() );
+        
+        DBObject loaded = a.findOne();
+        assertNotNull( loaded );
+        List<DBRef> refsLoaded = (List<DBRef>) loaded.get("refs");
+        assertNotNull( refsLoaded );
+        assertEquals(3, refsLoaded.size());
+        assertEquals(DBRef.class, refsLoaded.get(0).getClass());
+        assertEquals(12, refsLoaded.get(0).getId());
+        assertEquals(14, refsLoaded.get(1).getId());
+        assertEquals(16, refsLoaded.get(2).getId());
+        
+    }
+
+    
     @Test
     public void testRoundTrip(){
         DBCollection a = _db.getCollection( "refroundtripa" );
