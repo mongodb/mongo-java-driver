@@ -62,6 +62,13 @@ public abstract class SimplePool<T> {
         return true;
     }
 
+    /**
+     * @return >= 0 the one to use, -1 don't use any
+     */
+    protected int pick( int iThink , boolean couldCreate ){
+        return iThink;
+    }
+
     /** 
      * call done when you are done with an object form the pool
      * if there is room and the object is ok will get added
@@ -141,19 +148,28 @@ public abstract class SimplePool<T> {
 	long totalSlept = 0;
         while ( true ){
             synchronized ( _avail ){
+                
+                boolean couldCreate = _maxTotal <= 0 || _all.size() < _maxTotal;
 
                 while ( _avail.size() > 0 ){
-                    T t = _avail.remove( _avail.size() - 1 );
-                    if ( ok( t ) ){
-                        _debug( "got an old one" );
-                        return t;
+                    int toTake = _avail.size() - 1;
+                    toTake = pick( toTake, couldCreate );
+                    if ( toTake >= 0 ){
+                        T t = _avail.remove( toTake );
+                        if ( ok( t ) ){
+                            _debug( "got an old one" );
+                            return t;
+                        }
+                        _debug( "old one was not ok" );
+                        _all.remove( t );
+                        continue;
                     }
-                    _debug( "old one was not ok" );
-                    _all.remove( t );
-                    continue;
+                    else if ( ! couldCreate ) {
+                        throw new IllegalStateException( "can't pick nothing if can't create" );
+                    }
                 }
-
-                if ( _maxTotal <= 0 || _all.size() < _maxTotal ){
+                
+                if ( couldCreate ){
                     _everCreated++;
                     T t = createNew();
                     _all.add( t );
@@ -260,6 +276,7 @@ public abstract class SimplePool<T> {
     protected final boolean _debug;
 
     private final List<T> _avail = new ArrayList<T>();
+    protected final List<T> _availSafe = Collections.unmodifiableList( _avail );
     private final WeakBag<T> _all = new WeakBag<T>();
     private final Map<Integer,Throwable> _where = new HashMap<Integer,Throwable>();
 

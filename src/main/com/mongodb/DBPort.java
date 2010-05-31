@@ -210,6 +210,7 @@ public class DBPort {
     
     private boolean _inauth = false;
     private Map<DB,Boolean> _authed = Collections.synchronizedMap( new WeakHashMap<DB,Boolean>() );
+    int _lastThread;
 
     private static Logger _rootLogger = Logger.getLogger( "com.mongodb.port" );
 }

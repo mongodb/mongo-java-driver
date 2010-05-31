@@ -98,6 +98,20 @@ class DBPortPool extends SimplePool<DBPort> {
     protected long memSize( DBPort p ){
         return 0;
     }
+
+    protected int pick( int iThink , boolean couldCreate ){
+        final int id = Thread.currentThread().hashCode();
+        final int s = _availSafe.size();
+        for ( int i=0; i<s; i++ ){
+            DBPort p = _availSafe.get(i);
+            if ( p._lastThread == id )
+                return i;
+        }
+
+        if ( couldCreate )
+            return -1;
+        return iThink;
+    }
     
     public DBPort get(){
 	DBPort port = null;
@@ -114,6 +128,7 @@ class DBPortPool extends SimplePool<DBPort> {
 	if ( port == null )
 	    throw new ConnectionWaitTimeOut( _options.maxWaitTime );
 	
+        port._lastThread = Thread.currentThread().hashCode();
 	return port;
     }
 
