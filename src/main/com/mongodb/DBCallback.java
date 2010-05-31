@@ -45,7 +45,7 @@ public class DBCallback extends BasicBSONCallback {
         if ( ! _lastArray && 
              o.containsKey( "$ref" ) && 
              o.containsKey( "$id" ) ){
-            o = (BSONObject)cur().put( _lastName , new DBRef( _db, o ) );
+            return cur().put( _lastName , new DBRef( _db, o ) );
         }
         
         return o;
