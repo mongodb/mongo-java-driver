@@ -164,6 +164,8 @@ public class BSONEncoder {
             putBinary( name , (byte[])val );
         else if ( val instanceof Binary )
             putBinary( name , (Binary)val );
+        else if ( val instanceof UUID )
+            putUUID( name , (UUID)val );
         else if ( val.getClass().isArray() )
             putIterable( name , Arrays.asList( (Object[])val ) );
 
@@ -286,6 +288,13 @@ public class BSONEncoder {
         _buf.write( val.getData() );
     }
     
+    protected void putUUID( String name , UUID val ){
+        _put( BINARY , name );
+        _buf.writeInt( 4 + 64*2);
+        _buf.write( B_UUID );
+        _buf.writeLong( val.getMostSignificantBits());
+        _buf.writeLong( val.getLeastSignificantBits());
+    }
 
     protected void putSymbol( String name , Symbol s ){
         _putString(name, s.getSymbol(), SYMBOL);

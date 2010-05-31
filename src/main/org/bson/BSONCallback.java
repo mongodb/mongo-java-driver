@@ -2,8 +2,6 @@
 
 package org.bson;
 
-import java.io.*;
-
 import org.bson.types.*;
 
 public interface BSONCallback {
@@ -41,4 +39,8 @@ public interface BSONCallback {
      */
     void gotBinaryArray( String name , byte[] b );
     void gotBinary( String name , byte type , byte[] data );
+    /**
+     * subtype 3
+     */
+    void gotUUID( String name , long part1, long part2);
 }

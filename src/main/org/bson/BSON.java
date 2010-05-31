@@ -2,11 +2,10 @@
 
 package org.bson;
 
+import java.nio.charset.*;
 import java.util.*;
 import java.util.regex.*;
-import java.nio.charset.*;
 
-import org.bson.io.*;
 import org.bson.util.*;
 
 public class BSON {
@@ -45,6 +44,7 @@ public class BSON {
     
     public static final byte B_FUNC = 1;
     public static final byte B_BINARY = 2;
+    public static final byte B_UUID = 3;
 
     // ---- regular expression handling ----
     

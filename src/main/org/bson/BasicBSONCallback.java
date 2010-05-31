@@ -2,7 +2,6 @@
 
 package org.bson;
 
-import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
@@ -129,6 +128,10 @@ public class BasicBSONCallback implements BSONCallback {
     
     public void gotBinary( String name , byte type , byte[] data ){
         _put( name , new Binary( type , data ) );
+    }
+    
+    public void gotUUID( String name , long part1, long part2){
+        _put( name , new UUID(part1, part2) );
     }
 
     protected void _put( String name , Object o ){

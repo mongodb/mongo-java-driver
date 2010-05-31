@@ -18,16 +18,15 @@
 package com.mongodb;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.regex.*;
-import java.nio.*;
-
-import org.testng.annotations.Test;
-
-import com.mongodb.util.*;
 
 import org.bson.*;
 import org.bson.types.*;
+import org.testng.annotations.*;
+
+import com.mongodb.util.*;
 
 public class JavaClientTest extends TestCase {
     
@@ -183,6 +182,17 @@ public class JavaClientTest extends TestCase {
             assertEquals( Util.toHex( raw ) , Util.toHex( blah.getData() ) );
         }
         
+    }
+    @Test
+    public void testUUID()
+        throws MongoException {
+        DBCollection c = _db.getCollection( "testUUID" );
+        c.drop();
+        c.save( BasicDBObjectBuilder.start().add( "a" , new UUID(1,2)).get() );
+        
+        DBObject out = c.findOne();
+        UUID b = (UUID)(out.get( "a" ) );
+        assertEquals( new UUID(1,2), b);
     }
 
     @Test
