@@ -170,6 +170,7 @@ public abstract class SimplePool<T> implements DynamicMBean {
                     else if ( ! couldCreate ) {
                         throw new IllegalStateException( "can't pick nothing if can't create" );
                     }
+                    break;
                 }
                 
                 if ( couldCreate ){
