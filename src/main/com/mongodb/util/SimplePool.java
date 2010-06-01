@@ -21,7 +21,10 @@ package com.mongodb.util;
 import java.util.*;
 import java.util.concurrent.*;
 
-public abstract class SimplePool<T> {
+import java.lang.management.*;
+import javax.management.*;
+
+public abstract class SimplePool<T> implements DynamicMBean {
 
     static final boolean TRACK_LEAKS = Boolean.getBoolean( "MONGO-TRACKLEAKS" );
     static final long _sleepTime = 2;
@@ -256,6 +259,55 @@ public abstract class SimplePool<T> {
     public int maxToKeep(){
         return _maxToKeep;
     }
+
+    public Object getAttribute(String attribute){
+        if ( attribute.equals( "name" ) )
+            return _name;
+        if ( attribute.equals( "size" ) )
+            return _maxToKeep;
+        if ( attribute.equals( "available" ) )
+            return available();
+        if ( attribute.equals( "inUse" ) )
+            return inUse();
+        if ( attribute.equals( "everCreated" ) )
+            return _everCreated;
+        
+        System.err.println( "com.mongo.util.SimplePool unknown attribute: " + attribute );
+        throw new RuntimeException( "unknown attribute: " + attribute );
+    }
+    
+    public AttributeList getAttributes(String[] attributes){
+        AttributeList l = new AttributeList();
+        for ( int i=0; i<attributes.length; i++ ){
+            String name = attributes[i];
+            l.add( new Attribute( name , getAttribute( name ) ) );
+        }
+        return l;
+    }
+
+    public MBeanInfo getMBeanInfo(){
+        return new MBeanInfo( this.getClass().getName() , _name , 
+                              new MBeanAttributeInfo[]{
+                                  new MBeanAttributeInfo( "name" , "java.lang.String" , "name of pool" , true , false , false ) , 
+                                  new MBeanAttributeInfo( "size" , "java.lang.Integer" , "total size of pool" , true , false , false ) , 
+                                  new MBeanAttributeInfo( "available" , "java.lang.Integer" , "total connections available" , true , false , false ) , 
+                                  new MBeanAttributeInfo( "inUse" , "java.lang.Integer" , "number connections in use right now" , true , false , false ) , 
+                                  new MBeanAttributeInfo( "everCreated" , "java.lang.Integer" , "numbe connections ever created" , true , false , false ) 
+                              } , null , null , null );
+    }
+
+    public Object invoke(String actionName, Object[] params, String[] signature){
+        throw new RuntimeException( "not allowed to invoke anything" );
+    }
+
+    public void setAttribute(Attribute attribute){
+        throw new RuntimeException( "not allowed to set anything" );
+    }
+    
+    public AttributeList setAttributes(AttributeList attributes){
+        throw new RuntimeException( "not allowed to set anything" );
+    }
+
 
     public String toString(){
         StringBuilder buf = new StringBuilder();

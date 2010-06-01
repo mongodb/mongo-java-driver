@@ -26,6 +26,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.*;
 
+import java.lang.management.*;
+import javax.management.*;
+
 class DBPortPool extends SimplePool<DBPort> {
 
     static class Holder {
@@ -49,6 +52,15 @@ class DBPortPool extends SimplePool<DBPort> {
                 
                 p = new DBPortPool( addr , _options );
                 _pools.put( addr , p);
+                String name = "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ':' , '_' );
+                if ( _num > 0 )
+                    name += ",instance=" + _num;
+                try {
+                    _server.registerMBean( p , new ObjectName( name ) );
+                }
+                catch ( JMException e ){
+                    e.printStackTrace();
+                }
             }
             
             return p;
@@ -64,6 +76,10 @@ class DBPortPool extends SimplePool<DBPort> {
         
         final MongoOptions _options;
         final Map<InetSocketAddress,DBPortPool> _pools = Collections.synchronizedMap( new HashMap<InetSocketAddress,DBPortPool>() );
+        final MBeanServer _server = ManagementFactory.getPlatformMBeanServer();
+
+        static int NUM = 0;
+        final int _num = NUM++;
     }
 
     // ----
