@@ -6,8 +6,12 @@
     <classes>
       <class name="com.mongodb.util.SimplePoolTest"/>
       <class name="com.mongodb.util.JSONTest"/>
+
       <class name="com.mongodb.io.ByteBufferStreamTest"/>
+
       <class name="org.bson.PoolOutputBufferTest"/>
+      <class name="org.bson.BSONTest" />
+
       <class name="org.bson.util.ClassMapTest"/>
 
       <class name="com.mongodb.ByteTest" />
@@ -22,13 +26,12 @@
       <class name="com.mongodb.DBCursorTest" />
       <class name="com.mongodb.ObjectIdTest" />
       <class name="com.mongodb.DBRefTest" />
-      <class name="com.mongodb.gridfs.GridFSTest" />
-      
       <class name="com.mongodb.QueryBuilderTest" />
-
       <class name="com.mongodb.ErrorTest" />
+      <class name="com.mongodb.ThreadingTest" />
 
-      <class name="org.bson.BSONTest" />
+      <class name="com.mongodb.gridfs.GridFSTest" />
+
     </classes>
   </test>
 

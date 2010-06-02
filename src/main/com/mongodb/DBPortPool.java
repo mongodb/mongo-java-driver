@@ -53,10 +53,14 @@ class DBPortPool extends SimplePool<DBPort> {
                 p = new DBPortPool( addr , _options );
                 _pools.put( addr , p);
                 String name = "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ':' , '_' );
-                if ( _num > 0 )
-                    name += ",instance=" + _num;
+                
                 try {
-                    _server.registerMBean( p , new ObjectName( name ) );
+                    ObjectName on = new ObjectName( name );
+                    if ( _server.isRegistered( on ) ){
+                        _server.unregisterMBean( on );
+                        Bytes.LOGGER.log( Level.INFO , "multiple Mongo instances for same host, jmx numbers might be off" );
+                    }
+                    _server.registerMBean( p , on );
                 }
                 catch ( JMException e ){
                     e.printStackTrace();
@@ -77,9 +81,6 @@ class DBPortPool extends SimplePool<DBPort> {
         final MongoOptions _options;
         final Map<InetSocketAddress,DBPortPool> _pools = Collections.synchronizedMap( new HashMap<InetSocketAddress,DBPortPool>() );
         final MBeanServer _server = ManagementFactory.getPlatformMBeanServer();
-
-        static int NUM = 0;
-        final int _num = NUM++;
     }
 
     // ----
