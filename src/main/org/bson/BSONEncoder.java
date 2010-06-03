@@ -250,22 +250,24 @@ public class BSONEncoder {
     }
 
     protected void putNumber( String name , Number n ){
-	if ( n instanceof Integer ||
-             n instanceof Short ||
-             n instanceof Byte ||
-             n instanceof AtomicInteger ){
-	    _put( NUMBER_INT , name );
-	    _buf.writeInt( n.intValue() );
-	}
-        else if ( n instanceof Long || 
-                  n instanceof AtomicLong ) {
-            _put( NUMBER_LONG , name );
-            _buf.writeLong( n.longValue() );
-        }
-	else {
-	    _put( NUMBER , name );
-	    _buf.writeDouble( n.doubleValue() );
-	}
+		if ( n instanceof Integer ||
+	             n instanceof Short ||
+	             n instanceof Byte ||
+	             n instanceof AtomicInteger ){
+		    _put( NUMBER_INT , name );
+		    _buf.writeInt( n.intValue() );
+		}
+	    else if ( n instanceof Long || n instanceof AtomicLong ) {
+	        _put( NUMBER_LONG , name );
+	        _buf.writeLong( n.longValue() );
+	    }
+	    else if ( n instanceof Float || n instanceof Double) {
+	      _put( NUMBER_LONG , name );
+	      _buf.writeDouble( n.longValue() );
+	    }
+		else {
+	        throw new IllegalArgumentException( "can't serialize " + n.getClass() );
+		}
     }
     
     protected void putBinary( String name , byte[] data ){
