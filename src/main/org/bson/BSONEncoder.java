@@ -262,7 +262,7 @@ public class BSONEncoder {
 	        _buf.writeLong( n.longValue() );
 	    }
 	    else if ( n instanceof Float || n instanceof Double) {
-	      _put( NUMBER_LONG , name );
+	      _put( NUMBER , name );
 	      _buf.writeDouble( n.longValue() );
 	    }
 		else {
