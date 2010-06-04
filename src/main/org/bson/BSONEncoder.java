@@ -257,13 +257,15 @@ public class BSONEncoder {
 		    _put( NUMBER_INT , name );
 		    _buf.writeInt( n.intValue() );
 		}
-	    else if ( n instanceof Long || n instanceof AtomicLong ) {
+	    else if ( n instanceof Long || n instanceof AtomicLong || n.getClass().equals(long.class) ) {
 	        _put( NUMBER_LONG , name );
 	        _buf.writeLong( n.longValue() );
 	    }
-	    else if ( n instanceof Float || n instanceof Double) {
+	    else if ( n instanceof Float || n instanceof Double || 
+	    		n.getClass().equals(double.class) ||
+	    		n.getClass().equals(float.class)) {
 	      _put( NUMBER , name );
-	      _buf.writeDouble( n.longValue() );
+	      _buf.writeDouble( n.doubleValue() );
 	    }
 		else {
 	        throw new IllegalArgumentException( "can't serialize " + n.getClass() );

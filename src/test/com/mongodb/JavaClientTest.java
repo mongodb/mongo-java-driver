@@ -516,7 +516,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( Integer.class , c.findOne().get("x").getClass() );
         assertEquals( new Integer(5) , c.findOne().get("x") );
 
-        c.update( new BasicDBObject() , new BasicDBObject( "$set" , new BasicDBObject( "x" , 5.6 ) ) );
+        c.update( new BasicDBObject() , new BasicDBObject( "$set" , new BasicDBObject( "x" , 5.6D ) ) );
         assertEquals( Double.class , c.findOne().get("x").getClass() );
         assertEquals( 5.6 , c.findOne().get("x") );
         
