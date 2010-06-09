@@ -220,13 +220,13 @@ public class BSONDecoder {
             _callback.gotBinaryArray( name , data );
             return;
         case B_UUID:
-        	if ( totalLen != 132 )
+            if ( totalLen != 16 )
                 throw new IllegalArgumentException( "bad data size subtype 3 len: " + totalLen + " != 16");
-        		
-        	long part1 = _in.readLong();
-        	long part2 = _in.readLong();
-        	_callback.gotUUID(name, part1, part2);
-        	return;	
+            
+            long part1 = _in.readLong();
+            long part2 = _in.readLong();
+            _callback.gotUUID(name, part1, part2);
+            return;	
         }
         
         byte[] data = new byte[totalLen];

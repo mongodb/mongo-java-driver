@@ -1,2 +1,2 @@
 
-ant && javac -cp build/main foo.java && java -cp build/main:build/test:. $1Test
+ant && javac -cp build/main foo.java && java -cp build/main:build/test:. -Xmx256m $1Test

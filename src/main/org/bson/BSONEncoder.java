@@ -292,7 +292,7 @@ public class BSONEncoder {
     
     protected void putUUID( String name , UUID val ){
         _put( BINARY , name );
-        _buf.writeInt( 4 + 64*2);
+        _buf.writeInt( 16 );
         _buf.write( B_UUID );
         _buf.writeLong( val.getMostSignificantBits());
         _buf.writeLong( val.getLeastSignificantBits());

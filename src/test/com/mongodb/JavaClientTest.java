@@ -188,11 +188,12 @@ public class JavaClientTest extends TestCase {
         throws MongoException {
         DBCollection c = _db.getCollection( "testUUID" );
         c.drop();
-        c.save( BasicDBObjectBuilder.start().add( "a" , new UUID(1,2)).get() );
+        c.save( BasicDBObjectBuilder.start().add( "a" , new UUID(1,2)).add("x",5).get() );
         
         DBObject out = c.findOne();
         UUID b = (UUID)(out.get( "a" ) );
         assertEquals( new UUID(1,2), b);
+        assertEquals( 5 , out.get("x" ) );
     }
 
     @Test
