@@ -523,7 +523,21 @@ public class JavaClientTest extends TestCase {
         
         
     }
+    
+    @Test
+    public void testIn(){
+        DBCollection c = _db.getCollection( "in1" );
+        c.drop();
 
+        c.insert( new BasicDBObject( "x" , 1 ) );
+        c.insert( new BasicDBObject( "x" , 2 ) );
+        c.insert( new BasicDBObject( "x" , 3 ) );
+        c.insert( new BasicDBObject( "x" , 4 ) );
+
+        List<DBObject> a = c.find( new BasicDBObject( "x" , new BasicDBObject( "$in" , new Integer[]{ 2 , 3 } ) ) ).toArray();
+        assertEquals( 2 , a.size() );
+    }
+    
     final Mongo _mongo;
     final DB _db;
 
