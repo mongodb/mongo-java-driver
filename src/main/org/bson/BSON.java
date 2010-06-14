@@ -42,6 +42,7 @@ public class BSON {
        <BINARY><name><BINARY_TYPE><...>
     */
     
+    public static final byte B_GENERAL = 0;
     public static final byte B_FUNC = 1;
     public static final byte B_BINARY = 2;
     public static final byte B_UUID = 3;
