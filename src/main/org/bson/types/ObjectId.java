@@ -104,8 +104,12 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
     public ObjectId( Date time , int inc ){
+        this( time , _genmachine , inc );
+    }
+
+    public ObjectId( Date time , int machine , int inc ){
         _time = _flip( (int)(time.getTime() / 1000) );
-        _machine = _genmachine;
+        _machine = machine;
         _inc = inc;
         _new = false;
     }
