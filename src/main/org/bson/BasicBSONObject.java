@@ -130,7 +130,17 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return ((Number)foo).longValue();
     }
 
-
+    /**
+     * Returns the value of a field as a <code>double</code>.
+     *
+     * @param key the field to return
+     * @return the field value 
+     */
+    public double getDouble( String key){
+        Object foo = get( key );
+        return ((Number)foo).doubleValue();
+    }
+    
     /** Returns the value of a field as a string
      * @param key the field to look up
      * @return the value of the field, converted to a string
