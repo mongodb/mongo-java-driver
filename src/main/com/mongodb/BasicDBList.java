@@ -19,8 +19,17 @@
 package com.mongodb;
 
 import org.bson.types.*;
+import com.mongodb.util.*;
 
 public class BasicDBList extends BasicBSONList implements DBObject {
+
+    /** Returns a JSON serialization of this object
+     * @return JSON serialization
+     */    
+    public String toString(){
+        return JSON.serialize( this );
+    }
+
     public boolean isPartialObject(){
         return _isPartialObject;
     }
