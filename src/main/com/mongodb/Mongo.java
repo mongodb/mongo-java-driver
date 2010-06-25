@@ -24,6 +24,8 @@ import java.util.concurrent.*;
 
 /**
  * A database connection with internal pooling.
+ * For most application, you should have 1 Mongo instance for the entire JVM.
+ * 
  * The following are equivalent, and all connect to the
  * local database running on the default port:
  *
