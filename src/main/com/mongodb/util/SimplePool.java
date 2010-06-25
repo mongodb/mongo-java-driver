@@ -66,6 +66,11 @@ public abstract class SimplePool<T> implements DynamicMBean {
     }
 
     /**
+     * override this if you need to do any cleanup
+     */
+    public void cleanup( T t ){}
+
+    /**
      * @return >= 0 the one to use, -1 don't use any
      */
     protected int pick( int iThink , boolean couldCreate ){
@@ -106,6 +111,9 @@ public abstract class SimplePool<T> implements DynamicMBean {
                     _avail.add( t );
                     _waiting.release();
                 }
+            }
+            else {
+                cleanup( t );
             }
         }
     }
@@ -223,10 +231,14 @@ public abstract class SimplePool<T> implements DynamicMBean {
 
     /** Clears the pool of all objects. */
     protected void clear(){
-        _avail.clear();
-        _all.clear();
-        synchronized ( _where ){
-            _where.clear(); // is this correct
+        synchronized( _avail ){
+            for ( T t : _avail )
+                cleanup( t );
+            _avail.clear();
+            _all.clear();
+            synchronized ( _where ){
+                _where.clear(); // is this correct
+            }
         }
     }
 

@@ -169,6 +169,10 @@ class DBPortPool extends SimplePool<DBPort> {
         clear();
     }
 
+    public void cleanup( DBPort p ){
+        p.close();
+    }
+
     public boolean ok( DBPort t ){
         return _addr.equals( t._addr );
     }
