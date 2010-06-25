@@ -43,7 +43,7 @@ public abstract class DBCollection {
      * @param doc object to save
      * @dochub insert
      */
-    public abstract void insert(DBObject doc) throws MongoException;
+    public abstract WriteResult insert(DBObject doc) throws MongoException;
 
     /**
      * Saves an array of documents to the database.
@@ -51,7 +51,7 @@ public abstract class DBCollection {
      * @param arr  array of documents to save
      * @dochub insert
      */
-    public abstract void insert(DBObject[] arr) throws MongoException;
+    public abstract WriteResult insert(DBObject[] arr) throws MongoException;
 
     /**
      * Saves an array of documents to the database.
@@ -59,7 +59,7 @@ public abstract class DBCollection {
      * @param list list of documents to save
      * @dochub insert
      */
-    public abstract void insert(List<DBObject> list) throws MongoException;
+    public abstract WriteResult insert(List<DBObject> list) throws MongoException;
 
     /**
      * Performs an update operation.
@@ -70,20 +70,20 @@ public abstract class DBCollection {
      * See http://www.mongodb.org/display/DOCS/Atomic+Operations
      * @dochub update
      */
-    public abstract void update( DBObject q , DBObject o , boolean upsert , boolean multi ) throws MongoException ;
+    public abstract WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi ) throws MongoException ;
 
     /**
      * @dochub update
      */
-    public void update( DBObject q , DBObject o ) throws MongoException {
-        update( q , o , false , false );
+    public WriteResult update( DBObject q , DBObject o ) throws MongoException {
+        return update( q , o , false , false );
     }
 
     /**
      * @dochub update
      */
-    public void updateMulti( DBObject q , DBObject o ) throws MongoException {
-        update( q , o , false , true );
+    public WriteResult updateMulti( DBObject q , DBObject o ) throws MongoException {
+        return update( q , o , false , true );
     }
 
     /** Adds any necessary fields to a given object before saving it to the collection.
@@ -95,7 +95,7 @@ public abstract class DBCollection {
      * @param o the object that documents to be removed must match
      * @dochub remove
      */
-    public abstract void remove( DBObject o ) throws MongoException ;
+    public abstract WriteResult remove( DBObject o ) throws MongoException ;
 
     /** Finds an object.
      * @param ref query used to search
@@ -399,10 +399,10 @@ public abstract class DBCollection {
      * @param jo the <code>DBObject</code> to save
      *        will add <code>_id</code> field to jo if needed
      */
-    public final void save( DBObject jo )
+    public final WriteResult save( DBObject jo )
         throws MongoException {
         if ( checkReadOnly( true ) ) 
-            return;
+            return null;
 
         _checkObject( jo , false , false );
         
@@ -415,14 +415,13 @@ public abstract class DBCollection {
             if ( DEBUG ) System.out.println( "saving new object" );
             if ( id != null && id instanceof ObjectId )
                 ((ObjectId)id).notNew();
-            insert( jo );
-            return;
+            return insert( jo );
         }
 
         if ( DEBUG ) System.out.println( "doing implicit upsert : " + jo.get( "_id" ) );
         DBObject q = new BasicDBObject();
         q.put( "_id" , id );
-        update( q , jo , true , false );
+        return update( q , jo , true , false );
     }
     
     // ---- DB COMMANDS ----

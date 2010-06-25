@@ -29,7 +29,7 @@ public interface DBConnector {
     public void requestDone();
     public void requestEnsureConnection();
     
-    public void say( DB db , OutMessage m , DB.WriteConcern concern ) throws MongoException;
+    public WriteResult say( DB db , OutMessage m , DB.WriteConcern concern ) throws MongoException;
     
     public Response call( DB db , DBCollection coll , OutMessage m ) throws MongoException;
     public Response call( DB db , DBCollection coll , OutMessage m , int retries ) throws MongoException;

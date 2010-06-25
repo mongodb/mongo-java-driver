@@ -61,10 +61,12 @@ public class DBPort {
         throws IOException {
         go( msg , null );
     }
-
+    
     private synchronized Response go( OutMessage msg , DBCollection coll )
         throws IOException {
-        
+    
+        _calls++;
+    
         if ( _socket == null )
             _open();
         
@@ -84,6 +86,28 @@ public class DBPort {
             close();
             throw ioe;
         }
+    }
+
+    synchronized BasicDBObject getLastError( DB db ){
+
+        OutMessage msg = OutMessage.query( 0 , db.getName() + ".$cmd" , 0 , -1 , new BasicDBObject( "getlasterror" , 1 ) , null );
+        
+        try {
+            Response res = go( msg , db.getCollection( "$cmd" ) );
+            if ( res.size() != 1 )
+                throw new MongoInternalException( "something is wrong.  size:" + res.size() );
+            return (BasicDBObject)res.get(0);
+        }
+        catch ( IOException ioe ){
+            throw new MongoInternalException( "getlasterror failed: " + ioe.toString() , ioe );
+        }
+    }
+    
+    synchronized BasicDBObject tryGetLastError( DB db , long last ){
+        if ( last != _calls )
+            return null;
+        
+        return getLastError( db );
     }
 
     public synchronized void ensureOpen()
@@ -211,6 +235,7 @@ public class DBPort {
     private boolean _inauth = false;
     private Map<DB,Boolean> _authed = Collections.synchronizedMap( new WeakHashMap<DB,Boolean>() );
     int _lastThread;
+    long _calls = 0;
 
     private static Logger _rootLogger = Logger.getLogger( "com.mongodb.port" );
 }

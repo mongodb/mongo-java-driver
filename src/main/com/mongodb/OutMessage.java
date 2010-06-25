@@ -46,6 +46,22 @@ class OutMessage extends BSONEncoder {
         return m;
     }
     
+    static OutMessage query( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
+        OutMessage out = get( 2004 );
+
+        out.writeInt( options );
+        out.writeCString( ns );
+
+        out.writeInt( numToSkip );
+        out.writeInt( batchSize );
+        
+        out.putObject( query );
+        if ( fields != null )
+            out.putObject( fields );
+
+        return out;
+    }
+
     OutMessage(){
         set( _buffer );
     }

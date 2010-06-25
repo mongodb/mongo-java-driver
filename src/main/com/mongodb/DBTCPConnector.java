@@ -110,7 +110,7 @@ class DBTCPConnector implements DBConnector {
         _threadPort.get().requestEnsureConnection();
     }
 
-    void _checkWriteError( MyPort mp , DBPort port )
+    WriteResult _checkWriteError( MyPort mp , DBPort port )
         throws MongoException {
 
         DBObject e = _mongo.getDB( "admin" ).getLastError();
@@ -118,7 +118,7 @@ class DBTCPConnector implements DBConnector {
         
         Object foo = e.get( "err" );
         if ( foo == null )
-            return;
+            return new WriteResult( (BasicDBObject)e );
         
         int code = -1;
         if ( e.get( "code" ) instanceof Number )
@@ -131,7 +131,7 @@ class DBTCPConnector implements DBConnector {
         throw new MongoException( code , s );
     }
 
-    public void say( DB db , OutMessage m , DB.WriteConcern concern )
+    public WriteResult say( DB db , OutMessage m , DB.WriteConcern concern )
         throws MongoException {
         MyPort mp = _threadPort.get();
         DBPort port = mp.get( true );
@@ -140,17 +140,18 @@ class DBTCPConnector implements DBConnector {
         try {
             port.say( m );
             if ( concern == DB.WriteConcern.STRICT ){
-                _checkWriteError( mp , port );
+                return _checkWriteError( mp , port );
             }
             else {
                 mp.done( port );
+                return new WriteResult( db , port );
             }
         }
         catch ( IOException ioe ){
             mp.error( ioe );
             _error( ioe );
             if ( concern == DB.WriteConcern.NONE )
-                return;
+                return new WriteResult( new BasicDBObject( "$err" , "NETWORK ERROR" ) );
             throw new MongoException.Network( "can't say something" , ioe );
         }
         catch ( MongoException me ){

@@ -537,6 +537,22 @@ public class JavaClientTest extends TestCase {
         List<DBObject> a = c.find( new BasicDBObject( "x" , new BasicDBObject( "$in" , new Integer[]{ 2 , 3 } ) ) ).toArray();
         assertEquals( 2 , a.size() );
     }
+
+    @Test
+    public void testWriteResult(){
+        DBCollection c = _db.getCollection( "writeresult1" );
+        c.drop();
+        
+        WriteResult res = c.insert( new BasicDBObject( "_id" , 1 ) );
+        res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
+        assertEquals( 1 , res.getN() );
+        assertTrue( res.isLazy() );
+
+        c.setWriteConcern( DB.WriteConcern.STRICT );
+        res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
+        assertEquals( 1 , res.getN() );
+        assertFalse( res.isLazy() );
+    }
     
     final Mongo _mongo;
     final DB _db;
