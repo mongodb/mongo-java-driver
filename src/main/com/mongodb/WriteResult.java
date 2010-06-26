@@ -28,7 +28,7 @@ package com.mongodb;
  */
 public class WriteResult {
     
-    WriteResult( BasicDBObject o ){
+    WriteResult( CommandResult o ){
         _lastErrorResult = o;
         _lazy = false;
     }
@@ -40,7 +40,7 @@ public class WriteResult {
         _lazy = true;
     }
     
-    public synchronized BasicDBObject getLastError(){
+    public synchronized CommandResult getLastError(){
         if ( _lastErrorResult != null )
             return _lastErrorResult;
         
@@ -84,7 +84,7 @@ public class WriteResult {
     DBPort _port;
     long _lastCall;
 
-    BasicDBObject _lastErrorResult;
+    CommandResult _lastErrorResult;
 
     final boolean _lazy;
 }

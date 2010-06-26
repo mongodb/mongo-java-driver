@@ -113,12 +113,12 @@ class DBTCPConnector implements DBConnector {
     WriteResult _checkWriteError( MyPort mp , DBPort port )
         throws MongoException {
 
-        DBObject e = _mongo.getDB( "admin" ).getLastError();
+        CommandResult e = _mongo.getDB( "admin" ).getLastError();
         mp.done( port );
         
         Object foo = e.get( "err" );
         if ( foo == null )
-            return new WriteResult( (BasicDBObject)e );
+            return new WriteResult( e );
         
         int code = -1;
         if ( e.get( "code" ) instanceof Number )
@@ -150,8 +150,12 @@ class DBTCPConnector implements DBConnector {
         catch ( IOException ioe ){
             mp.error( ioe );
             _error( ioe );
-            if ( concern == DB.WriteConcern.NONE )
-                return new WriteResult( new BasicDBObject( "$err" , "NETWORK ERROR" ) );
+            if ( concern == DB.WriteConcern.NONE ){
+                CommandResult res = new CommandResult();
+                res.put( "ok" , false );
+                res.put( "$err" , "NETWORK ERROR" );
+                return new WriteResult( res );
+            }
             throw new MongoException.Network( "can't say something" , ioe );
         }
         catch ( MongoException me ){

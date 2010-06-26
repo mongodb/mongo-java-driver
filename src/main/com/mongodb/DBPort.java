@@ -88,7 +88,7 @@ public class DBPort {
         }
     }
 
-    synchronized BasicDBObject getLastError( DB db ){
+    synchronized CommandResult getLastError( DB db ){
 
         OutMessage msg = OutMessage.query( 0 , db.getName() + ".$cmd" , 0 , -1 , new BasicDBObject( "getlasterror" , 1 ) , null );
         
@@ -96,14 +96,14 @@ public class DBPort {
             Response res = go( msg , db.getCollection( "$cmd" ) );
             if ( res.size() != 1 )
                 throw new MongoInternalException( "something is wrong.  size:" + res.size() );
-            return (BasicDBObject)res.get(0);
+            return (CommandResult)res.get(0);
         }
         catch ( IOException ioe ){
             throw new MongoInternalException( "getlasterror failed: " + ioe.toString() , ioe );
         }
     }
     
-    synchronized BasicDBObject tryGetLastError( DB db , long last ){
+    synchronized CommandResult tryGetLastError( DB db , long last ){
         if ( last != _calls )
             return null;
         
