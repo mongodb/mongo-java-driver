@@ -16,8 +16,7 @@
 
 package com.mongodb;
 
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.*;
 
 import com.mongodb.util.*;
 
@@ -48,6 +47,26 @@ public class ErrorTest extends TestCase {
 
         _db.resetError();
         assert(_db.getLastError().get("err") == null);
+    }
+
+    @Test
+    public void testLastErrorWithConcern()
+        throws MongoException {
+
+        _db.resetError();
+        CommandResult cr = _db.getLastError(WriteConcern.FSYNC_STRICT);
+        assert(cr.get("err") == null);
+        assert(cr.containsField("fsyncFiles"));
+    }
+
+    @Test
+    public void testLastErrorWithConcernAndW()
+        throws MongoException {
+
+        _db.resetError();
+        CommandResult cr = _db.getLastError(WriteConcern.REPLICAS_STRICT);
+        assert(cr.get("err") == null);
+        assert(cr.containsField("wtime"));
     }
 
     @Test
