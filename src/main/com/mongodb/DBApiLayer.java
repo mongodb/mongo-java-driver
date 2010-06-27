@@ -86,13 +86,13 @@ public class DBApiLayer extends DB {
     /** Get a collection from a &lt;databaseName&gt;.&lt;collectionName&gt;.
      * If <code>fullNameSpace</code> does not contain any "."s, this will
      * find a collection called <code>fullNameSpace</code> and return it.
-     * Otherwise, it will find the collecton <code>collectionName</code> and
+     * Otherwise, it will find the collection <code>collectionName</code> and
      * return it.
      * @param fullNameSpace the full name to find
      * @throws RuntimeException if the database named is not this database
      */
     public DBCollection getCollectionFromFull( String fullNameSpace ){
-        // TOOD security
+        // TODO security
 
         if ( fullNameSpace.indexOf( "." ) < 0 ) {
             // assuming local
