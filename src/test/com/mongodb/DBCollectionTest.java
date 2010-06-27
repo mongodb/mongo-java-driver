@@ -16,11 +16,10 @@
 
 package com.mongodb;
 
+import java.io.*;
 import java.util.*;
-import java.util.regex.*;
-import java.io.IOException;
 
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.mongodb.util.*;
 
@@ -33,7 +32,19 @@ public class DBCollectionTest extends TestCase {
 	cleanupDB = "com_mongodb_unittest_DBCollectionTest";
         _db = cleanupMongo.getDB( cleanupDB );
     }
+    @Test(groups = {"basic"})
+    public void testMultiInsert() {
+        DBCollection c = _db.getCollection("testmultiinsert");
+        c.drop();
+        
+        DBObject obj = c.findOne();
+        assertEquals(obj, null);
 
+        DBObject inserted1 = BasicDBObjectBuilder.start().add("x",1).add("y",2).get();
+        DBObject inserted2 = BasicDBObjectBuilder.start().add("x",3).add("y",3).get();
+        c.insert(inserted1,inserted2);
+        c.insert(new DBObject[] {inserted1,inserted2});
+    }
     @Test(groups = {"basic"})
     public void testFindOne() {
         DBCollection c = _db.getCollection("test");
