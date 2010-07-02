@@ -65,6 +65,10 @@ class DBPortPool extends SimplePool<DBPort> {
                 catch ( JMException e ){
                     Bytes.LOGGER.log( Level.WARNING , "jmx registration error, continuing" , e );
                 }
+                catch ( java.security.AccessControlException e ){
+                    Bytes.LOGGER.log( Level.WARNING , "jmx registration error, continuing" , e );
+                }
+
             }
             
             return p;
