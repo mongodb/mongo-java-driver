@@ -195,6 +195,9 @@ public abstract class DB {
 
         for (; i.hasNext();) {
             DBObject o = i.next();
+            if ( o.get( "name" ) == null ){
+                throw new MongoException( "how is name null : " + o );
+            }
             String n = o.get("name").toString();
             int idx = n.indexOf(".");
 
