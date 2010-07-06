@@ -45,6 +45,10 @@ class OutMessage extends BSONEncoder {
         m.reset( op );
         return m;
     }
+
+    static void newTL(){
+        TL.set( new OutMessage() );
+    }
     
     static OutMessage query( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
         OutMessage out = get( 2004 );

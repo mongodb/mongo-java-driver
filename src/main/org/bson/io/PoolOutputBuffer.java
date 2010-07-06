@@ -102,6 +102,9 @@ public class PoolOutputBuffer extends OutputBuffer {
     public int pipe( OutputStream out )
         throws IOException {
         
+        if ( out == null )
+            throw new NullPointerException( "out is null" );
+
         int total = 0;
         
         for ( int i=-1; i<_fromPool.size(); i++ ){

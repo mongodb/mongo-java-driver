@@ -64,12 +64,15 @@ public class DBPort {
     
     private synchronized Response go( OutMessage msg , DBCollection coll )
         throws IOException {
-    
+
         _calls++;
     
         if ( _socket == null )
             _open();
         
+        if ( _out == null )
+            throw new IllegalStateException( "_out shouldn't be null" );
+
         try {
             msg.prepare();
             msg.pipe( _out );
@@ -88,9 +91,8 @@ public class DBPort {
         }
     }
 
-    synchronized CommandResult getLastError( DB db ){
-
-        OutMessage msg = OutMessage.query( 0 , db.getName() + ".$cmd" , 0 , -1 , new BasicDBObject( "getlasterror" , 1 ) , null );
+    synchronized CommandResult runCommand( DB db , DBObject cmd ){
+        OutMessage msg = OutMessage.query( 0 , db.getName() + ".$cmd" , 0 , -1 , cmd , null );
         
         try {
             Response res = go( msg , db.getCollection( "$cmd" ) );
@@ -99,8 +101,13 @@ public class DBPort {
             return (CommandResult)res.get(0);
         }
         catch ( IOException ioe ){
-            throw new MongoInternalException( "getlasterror failed: " + ioe.toString() , ioe );
+            throw new MongoInternalException( "cmd failed: " + ioe.toString() , ioe );
         }
+        
+    }
+
+    synchronized CommandResult getLastError( DB db ){
+        return runCommand( db , new BasicDBObject( "getlasterror" , 1 ) );
     }
     
     synchronized CommandResult tryGetLastError( DB db , long last ){
@@ -119,7 +126,7 @@ public class DBPort {
         _open();
     }
 
-    void _open()
+    boolean _open()
         throws IOException {
         
         long sleepTime = 100;
@@ -130,7 +137,6 @@ public class DBPort {
             IOException lastError = null;
 
             try {
-                _authed.clear();
                 _socket = new Socket();
                 _socket.connect( _addr , _options.connectTimeout );
                 
@@ -138,12 +144,13 @@ public class DBPort {
                 _socket.setSoTimeout( _options.socketTimeout );
                 _in = new BufferedInputStream( _socket.getInputStream() );
                 _out = _socket.getOutputStream();
-                return;
+                return true;
             }
             catch ( IOException ioe ){
 //  TODO  - erh to fix                lastError = new IOException( "couldn't connect to [" + _addr + "] bc:" + lastError , lastError );
                 lastError = new IOException( "couldn't connect to [" + _addr + "] bc:" + ioe );
                 _logger.log( Level.INFO , "connect fail to : " + _addr , ioe );
+                close();
             }
             
             if ( ! _options.autoConnectRetry || ( _pool != null && ! _pool._everWorked ) )
@@ -162,7 +169,6 @@ public class DBPort {
             sleepTime *= 2;
             
         }
-        
     }
 
     public int hashCode(){
@@ -182,47 +188,42 @@ public class DBPort {
     }
 
     protected void close(){
-        if ( _socket == null )
-            return;
-        
-        try {
-            _socket.close();
-        }
-        catch ( Exception e ){
-            // don't care
+        _authed.clear();
+                
+        if ( _socket != null ){
+            try {
+                _socket.close();
+            }
+            catch ( Exception e ){
+                // don't care
+            }
         }
         
         _in = null;
         _out = null;
         _socket = null;
     }
-
+    
     void checkAuth( DB db ){
         if ( db._username == null )
             return;
         if ( _authed.containsKey( db ) )
             return;
         
-        if ( _inauth )
-            return;
+        OutMessage.newTL();
         
-        _inauth = true;
-        OutMessage real = OutMessage.TL.get();
-        OutMessage.TL.set( new OutMessage() );
-        try {
-            if ( db.reauth() ){
-                _authed.put( db , true );
-                return;
-            }
-        }
-        finally {
-            _inauth = false;
-            OutMessage.TL.set( real );
-        }
+        CommandResult res = runCommand( db , new BasicDBObject( "getnonce" , 1 ) );
+        res.throwOnError();
+        
+        DBObject temp = db._authCommand( res.getString( "nonce" ) );
+        
+        res = runCommand( db , temp );
 
-        throw new MongoInternalException( "can't reauth!" );
+        if ( ! res.ok() )
+            throw new MongoInternalException( "couldn't re-auth" );
+        _authed.put( db , true );
     }
-
+    
     final int _hashCode;
     final InetSocketAddress _addr;
     final DBPortPool _pool;
@@ -233,7 +234,6 @@ public class DBPort {
     private InputStream _in;
     private OutputStream _out;
     
-    private boolean _inauth = false;
     private Map<DB,Boolean> _authed = Collections.synchronizedMap( new WeakHashMap<DB,Boolean>() );
     int _lastThread;
     long _calls = 0;

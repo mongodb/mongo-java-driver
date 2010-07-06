@@ -331,11 +331,32 @@ public abstract class DB {
         _authhash = hash.getBytes();
         return true;
     }
-
+    /*
     boolean reauth(){
         if ( _username == null || _authhash == null )
             throw new IllegalStateException( "no auth info!" );
         return _doauth( _username , _authhash );
+    }
+    */
+
+    DBObject _authCommand( String nonce ){
+        if ( _username == null || _authhash == null )
+            throw new IllegalStateException( "no auth info!" );
+
+        return _authCommand( nonce , _username , _authhash );
+    }
+
+    static DBObject _authCommand( String nonce , String username , byte[] hash ){
+        String key = nonce + username + new String( hash );
+        
+        BasicDBObject cmd = new BasicDBObject();
+
+        cmd.put("authenticate", 1);
+        cmd.put("user", username);
+        cmd.put("nonce", nonce);
+        cmd.put("key", Util.hexMD5(key.getBytes()));
+        
+        return cmd;
     }
 
     private boolean _doauth( String username , byte[] hash ){
@@ -345,15 +366,7 @@ public abstract class DB {
             throw new MongoException("Error - unable to get nonce value for authentication.");
         }
 
-        String nonce = res.getString("nonce");
-        String key = nonce + username + new String( hash );
-        
-        BasicDBObject cmd = new BasicDBObject();
-
-        cmd.put("authenticate", 1);
-        cmd.put("user", username);
-        cmd.put("nonce", nonce);
-        cmd.put("key", Util.hexMD5(key.getBytes()));
+        DBObject cmd = _authCommand( res.getString( "nonce" ) , username , hash );
 
         res = command(cmd);
         
