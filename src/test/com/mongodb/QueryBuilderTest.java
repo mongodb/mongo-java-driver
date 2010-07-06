@@ -33,12 +33,12 @@ public class QueryBuilderTest extends TestCase {
     private static TestDB _testDB;
 	
     @BeforeClass
-	public static void setup() {
+    public static void setup() {
         _testDB = new TestDB("queryBuilderTest");
     }
 	
     @Test
-	public void greaterThanTest() {
+    public void greaterThanTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("gt-test");
         saveTestDocument(collection, key, 0);
@@ -51,7 +51,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test
-	public void greaterThanEqualsTest() {
+    public void greaterThanEqualsTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("gte-test");
         saveTestDocument(collection, key, 0);
@@ -68,7 +68,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test
-	public void lessThanTest() {
+    public void lessThanTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("lt-test");
         saveTestDocument(collection, key, 0);
@@ -82,7 +82,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test
-	public void lessThanEqualsTest() {
+    public void lessThanEqualsTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("lte-test");
         saveTestDocument(collection, key, 0);
@@ -98,7 +98,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test
-	public void isTest() {
+    public void isTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("is-test");
         saveTestDocument(collection, key, "test");
@@ -111,7 +111,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test
-	public void notEqualsTest() {
+    public void notEqualsTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("ne-test");
         saveTestDocument(collection, key, "test");
@@ -125,7 +125,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test    
-	public void inTest() {
+    public void inTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("in-test");
         saveTestDocument(collection, key, 1);
@@ -138,7 +138,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test
-	public void notInTest() {
+    public void notInTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("nin-test");
         saveTestDocument(collection, key, 1);
@@ -151,7 +151,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test
-	public void modTest() {
+    public void modTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("mod-test");
         saveTestDocument(collection, key, 9);
@@ -164,7 +164,7 @@ public class QueryBuilderTest extends TestCase {
     }	
 	
     @Test
-	public void allTest() {
+    public void allTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("all-test");
         saveTestDocument(collection, key, Arrays.asList(1, 2, 3));
@@ -177,7 +177,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test
-	public void sizeTest() {
+    public void sizeTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("size-test");
         saveTestDocument(collection, key, Arrays.asList(1, 2, 3));
@@ -193,7 +193,7 @@ public class QueryBuilderTest extends TestCase {
     }
 
     @Test
-	public void existsTest() {
+    public void existsTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("exists-test");
         saveTestDocument(collection, key, "test");
@@ -206,7 +206,7 @@ public class QueryBuilderTest extends TestCase {
     }
 
     @Test
-	public void regexTest() {
+    public void regexTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("regex-test");
         saveTestDocument(collection, key, "test");
@@ -216,7 +216,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test
-	public void rangeChainTest() {
+    public void rangeChainTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("range-test");
         saveTestDocument(collection, key, 2);
@@ -226,7 +226,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test
-	public void compoundChainTest() {
+    public void compoundChainTest() {
         String key = "x";
         String key2 = "y";
         String value = key;
@@ -241,7 +241,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test
-	public void arrayChainTest() {
+    public void arrayChainTest() {
         String key = "x";
         DBCollection collection = _testDB.getCollection("array-test");
         saveTestDocument(collection, key, Arrays.asList(1, 2, 3));
@@ -251,7 +251,7 @@ public class QueryBuilderTest extends TestCase {
     }
 	
     @Test
-	public void failureTest() {
+    public void failureTest() {
         boolean thrown = false;
         try {
             QueryBuilder.start("x").get();
@@ -276,9 +276,9 @@ public class QueryBuilderTest extends TestCase {
         }
         assertTrue(thrown3);
     }
-		
+    
     @AfterClass
-	public static void tearDown() {
+    public static void tearDown() {
         _testDB.cleanup();
     }
 	
