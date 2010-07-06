@@ -130,6 +130,7 @@ public class DBPort {
             IOException lastError = null;
 
             try {
+                _authed.clear();
                 _socket = new Socket();
                 _socket.connect( _addr , _options.connectTimeout );
                 
