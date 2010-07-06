@@ -18,6 +18,7 @@
 
 package com.mongodb;
 
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -29,6 +30,10 @@ public class QueryBuilder {
 	
     public QueryBuilder() {
         _query = new BasicDBObject();
+    }
+
+    public static QueryBuilder start() {
+        return new QueryBuilder();
     }
 	
     /**
@@ -211,6 +216,17 @@ public class QueryBuilder {
         return this;
     }
 
+
+    public QueryBuilder or( DBObject ... ors ){
+        List l = (List)_query.get( "$or" );
+        if ( l == null ){
+            l = new ArrayList();
+            _query.put( "$or" , l );
+        }
+        for ( DBObject o : ors )
+            l.add( o );
+        return this;
+    }
 
     /**
      * Creates a <code>DBObject</code> query to be used for the driver's find operations

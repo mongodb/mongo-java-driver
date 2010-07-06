@@ -276,6 +276,21 @@ public class QueryBuilderTest extends TestCase {
         }
         assertTrue(thrown3);
     }
+
+    @Test
+    public void testOr() {
+        DBCollection c = _testDB.getCollection( "or1" );
+        c.drop();
+        c.insert( new BasicDBObject( "a" , 1 ) );
+        c.insert( new BasicDBObject( "b" , 1 ) );
+        
+        DBObject q = QueryBuilder.start()
+            .or( new BasicDBObject( "a" , 1 ) , 
+                 new BasicDBObject( "b" , 1 ) )
+            .get();
+        
+        assertEquals( 2 , c.find( q ).itcount() );
+    }
     
     @AfterClass
     public static void tearDown() {
