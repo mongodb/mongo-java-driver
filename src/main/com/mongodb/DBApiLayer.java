@@ -330,6 +330,10 @@ public class DBApiLayer extends DB {
             _curResult = res;
             _cur = res.iterator();
             _sizes.add( res.size() );
+
+            if ( ( res._flags & Bytes.RESULTFLAG_CURSORNOTFOUND ) > 0 ){
+                throw new MongoException.CursorNotFound();
+            }
         }
 
         public DBObject next(){

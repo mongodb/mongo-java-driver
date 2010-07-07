@@ -83,6 +83,12 @@ public class MongoException extends RuntimeException {
         }
     }
 
+    public static class CursorNotFound extends MongoException {
+        CursorNotFound(){
+            super( -5 , "cursor not found on server" );
+        }
+    }
+
     public int getCode(){
         return _code;
     }
