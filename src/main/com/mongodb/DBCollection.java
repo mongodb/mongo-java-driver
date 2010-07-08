@@ -235,10 +235,36 @@ public abstract class DBCollection {
     /**
      * Finds the first document in the query (sorted) and updates it. 
      * If remove is specified it will be removed. If new is specified then the updated 
-     * document will be returned otherwise the old document is returned (or it would be lost forever).
+     * document will be returned, otherwise the old document is returned (or it would be lost forever).
+     * You can also specify the fields to return in the document, optionally.
      * @return the found document (before, or after the update)
      */
-    public abstract DBObject findAndModify(DBObject query, DBObject sort, boolean remove, DBObject update, boolean returnNew);
+    public abstract DBObject findAndModify( DBObject query , DBObject fields , DBObject sort , boolean remove , DBObject update , boolean returnNew );
+
+    
+    /**
+     * Finds the first document in the query (sorted) and updates it. 
+     * @return the old document
+     */
+    public DBObject findAndModify( DBObject query , DBObject sort , DBObject update){ 
+    	return findAndModify( query, null, null, false, update, false );
+    }
+
+    /**
+     * Finds the first document in the query and updates it. 
+     * @return the old document
+     */
+    public DBObject findAndModify( DBObject query , DBObject update ) { 
+    	return findAndModify( query, null, null, false, update, false );
+    }
+
+    /**
+     * Finds the first document in the query and removes it. 
+     * @return the removed document
+     */
+    public DBObject findAndRemove( DBObject query ) { 
+    	return findAndModify( query, null, null, true, null, false );
+    }
 
     // --- START INDEX CODE ---
 

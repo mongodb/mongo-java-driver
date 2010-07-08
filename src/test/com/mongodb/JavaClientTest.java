@@ -592,18 +592,18 @@ public class JavaClientTest extends TestCase {
         
         c.insert( new BasicDBObject( "_id" , 1 ) );
         //return old one
-        DBObject dbObj = c.findAndModify( new BasicDBObject( "_id" , 1 ) , null, false, new BasicDBObject( "x", 1), false);
+        DBObject dbObj = c.findAndModify( new BasicDBObject( "_id" , 1 ) , null, new BasicDBObject( "x", 1));
         assertEquals( 1 , dbObj.keySet().size());
         assertEquals( 1 , c.findOne(new BasicDBObject( "_id" , 1 ) ).get( "x" ));
         
         //return new one
-        dbObj = c.findAndModify( new BasicDBObject( "_id" , 1 ) , null, false, new BasicDBObject( "x", 5), true);
+        dbObj = c.findAndModify( new BasicDBObject( "_id" , 1 ) , null, null, false, new BasicDBObject( "x", 5), true);
         assertEquals( 2 , dbObj.keySet().size());
         assertEquals( 5 , dbObj.get( "x" ));
         assertEquals( 5 , c.findOne(new BasicDBObject( "_id" , 1 ) ).get( "x" ));
         
         //remove it, and return old one
-        dbObj = c.findAndModify( new BasicDBObject( "_id" , 1 ) , null, true, null, false);
+        dbObj = c.findAndRemove( new BasicDBObject( "_id" , 1 ) );
         assertEquals( 2 , dbObj.keySet().size());
         assertEquals( 5 , dbObj.get( "x" ));
         assertNull( c.findOne(new BasicDBObject( "_id" , 1 ) ));

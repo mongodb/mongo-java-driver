@@ -257,7 +257,7 @@ public class DBApiLayer extends DB {
         }
         
         @Override
-        public DBObject findAndModify(DBObject query, DBObject sort, boolean remove, DBObject update, boolean returnNew) {
+        public DBObject findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update, boolean returnNew) {
 	
 	        if ( SHOW ) System.out.println( "findAndModify: " + _fullNameSpace + " query:" + JSON.serialize( query ) + 
 	        										" sort:" + JSON.serialize( sort )+ 
@@ -266,20 +266,22 @@ public class DBApiLayer extends DB {
 	        										" returnNew:" + returnNew);
 	        
 	        BasicDBObject cmd = new BasicDBObject( "findandmodify", _name);
-	        if (query != null && !query.keySet().isEmpty())
-	        	cmd.append( "query", query );
-	        if (sort != null && !sort.keySet().isEmpty())
-	        	cmd.append( "sort", sort );
-	        
-	        if (remove)
-	        	cmd.append( "remove", remove);
-	        else {
-		        if (update != null && !update.keySet().isEmpty())
-		        	cmd.append( "update", update);
-		        if (returnNew)
-		        	cmd.append( "new", returnNew);
-	        }
-	        
+			if (query != null && !query.keySet().isEmpty())
+				cmd.append( "query", query );
+			if (fields != null && !fields.keySet().isEmpty())
+				cmd.append( "fields", fields );
+			if (sort != null && !sort.keySet().isEmpty())
+				cmd.append( "sort", sort );
+			
+			if (remove)
+				cmd.append( "remove", remove );
+			else {
+				if (update != null && !update.keySet().isEmpty())
+					cmd.append( "update", update );
+				if (returnNew)
+					cmd.append( "new", returnNew );
+			}
+
 	        if (remove && !(update == null || update.keySet().isEmpty() || returnNew))
 	        	throw new MongoException("FindAndModify: Remove cannot be mixed with the Update, or returnNew params!");
 	        		
