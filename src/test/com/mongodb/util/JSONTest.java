@@ -243,6 +243,10 @@ public class JSONTest extends com.mongodb.util.TestCase {
         x = (DBObject)JSON.parse( x.toString() );
         assertEquals( thingy , x.get( "name" ) );
 
+        assertEquals( "va/lue" , (String)JSON.parse("\"va\\/lue\"") );
+        assertEquals( "value" , (String)JSON.parse("\"va\\lue\"") );
+        assertEquals( "va\\lue" , (String)JSON.parse("\"va\\\\lue\"") );
+
         _escapeChar( "\t" );
         _escapeChar( "\b" );
         _escapeChar( "\n" );

@@ -489,15 +489,14 @@ class JSONParser {
                 case '"': special = '\"'; break;
                 case '\\': special = '\\'; break;
                 }
-                
+
+                buf.append(s.substring(start, pos-1));
                 if ( special != 0 ){
-                    buf.append(s.substring(start, pos-1));
                     pos++;
                     buf.append( special );
-                    start = pos;
-                    continue;
                 }
-
+                start = pos;
+                continue;
             }
             pos++;
         }
