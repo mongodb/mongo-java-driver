@@ -291,7 +291,7 @@ public class JavaClientTest extends TestCase {
     public void testStrictWrite(){
         DBCollection c = _db.getCollection( "write1" );
         c.drop();
-        c.setWriteConcern( DB.WriteConcern.STRICT );
+        c.setWriteConcern( WriteConcern.STRICT );
         c.insert( new BasicDBObject( "_id" , 1 ) );
         boolean gotError = false;
         try {
@@ -548,7 +548,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , res.getN() );
         assertTrue( res.isLazy() );
 
-        c.setWriteConcern( DB.WriteConcern.STRICT );
+        c.setWriteConcern( WriteConcern.STRICT );
         res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
         assertEquals( 1 , res.getN() );
         assertFalse( res.isLazy() );

@@ -802,18 +802,18 @@ public abstract class DBCollection {
      * Set the write concern for this collection. Will be used for
      * writes to this collection. Overrides any setting of write
      * concern at the DB level. See the documentation for
-     * {@link DB.WriteConcern} for more information.
+     * {@link WriteConcern} for more information.
      *
      * @param concern write concern to use
      */
-    public void setWriteConcern( DB.WriteConcern concern ){
+    public void setWriteConcern( WriteConcern concern ){
         _concern = concern;
     }
 
     /**
      * Get the write concern for this collection.
      */
-    public DB.WriteConcern getWriteConcern(){
+    public WriteConcern getWriteConcern(){
         if ( _concern != null )
             return _concern;
         return _db.getWriteConcern();
@@ -825,7 +825,7 @@ public abstract class DBCollection {
     final protected String _fullName;
 
     protected List<DBObject> _hintFields;
-    private DB.WriteConcern _concern = null;
+    private WriteConcern _concern = null;
 
     protected Class _objectClass = null;
     private Map<String,Class> _internalClass = Collections.synchronizedMap( new HashMap<String,Class>() );

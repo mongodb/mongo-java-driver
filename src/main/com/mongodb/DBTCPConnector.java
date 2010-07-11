@@ -110,10 +110,10 @@ class DBTCPConnector implements DBConnector {
         _threadPort.get().requestEnsureConnection();
     }
 
-    WriteResult _checkWriteError( MyPort mp , DBPort port )
+    WriteResult _checkWriteError( MyPort mp , DBPort port , WriteConcern concern )
         throws MongoException {
 
-        CommandResult e = _mongo.getDB( "admin" ).getLastError();
+        CommandResult e = _mongo.getDB( "admin" ).command( concern.getCommand() );
         mp.done( port );
         
         Object foo = e.get( "err" );
@@ -131,7 +131,7 @@ class DBTCPConnector implements DBConnector {
         throw new MongoException( code , s );
     }
 
-    public WriteResult say( DB db , OutMessage m , DB.WriteConcern concern )
+    public WriteResult say( DB db , OutMessage m , WriteConcern concern )
         throws MongoException {
         MyPort mp = _threadPort.get();
         DBPort port = mp.get( true );
@@ -139,8 +139,8 @@ class DBTCPConnector implements DBConnector {
 
         try {
             port.say( m );
-            if ( concern == DB.WriteConcern.STRICT ){
-                return _checkWriteError( mp , port );
+            if ( concern.callGetLastError() ){
+                return _checkWriteError( mp , port , concern );
             }
             else {
                 mp.done( port );
@@ -150,13 +150,14 @@ class DBTCPConnector implements DBConnector {
         catch ( IOException ioe ){
             mp.error( ioe );
             _error( ioe );
-            if ( concern == DB.WriteConcern.NONE ){
-                CommandResult res = new CommandResult();
-                res.put( "ok" , false );
-                res.put( "$err" , "NETWORK ERROR" );
-                return new WriteResult( res );
-            }
-            throw new MongoException.Network( "can't say something" , ioe );
+            
+            if ( concern.raiseNetworkErrors() )
+                throw new MongoException.Network( "can't say something" , ioe );
+            
+            CommandResult res = new CommandResult();
+            res.put( "ok" , false );
+            res.put( "$err" , "NETWORK ERROR" );
+            return new WriteResult( res );
         }
         catch ( MongoException me ){
             throw me;

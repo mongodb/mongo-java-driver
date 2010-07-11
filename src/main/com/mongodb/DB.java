@@ -32,25 +32,28 @@ public abstract class DB {
     /**
      * Settings for strictness of error checking on writes (inserts,
      * updates, and removes).
+     * @deprecated 
      */
-    public static enum WriteConcern {
+    public static class WriteConcern {
         /**
          * Don't check for or report any errors on writes.
          */
-        NONE,
+        public final static com.mongodb.WriteConcern NONE = com.mongodb.WriteConcern.NONE;
+
         /**
          * Use the default level of error checking on writes. Don't
          * send a getLastError command or wait for a response, but do
          * raise an exception on socket errors.
          */
-        NORMAL,
+        public final static com.mongodb.WriteConcern NORMAL = com.mongodb.WriteConcern.NORMAL;
+        
         /**
          * Send a getLastError command following all writes. The write
          * will wait for a response from the server and raise an
          * exception on any error. Equivalent to the "safe mode" that
          * is present in some other MongoDB drivers.
          */
-        STRICT;
+        public final static com.mongodb.WriteConcern STRICT = com.mongodb.WriteConcern.STRICT;
     };
 
     public DB( String name ){
@@ -284,14 +287,14 @@ public abstract class DB {
      *
      * @param concern write concern to use
      */
-    public void setWriteConcern( WriteConcern concern ){
+    public void setWriteConcern( com.mongodb.WriteConcern concern ){
         _concern = concern;
     }
 
     /**
      * Get the write concern for this database.
      */
-    public WriteConcern getWriteConcern(){
+    public com.mongodb.WriteConcern getWriteConcern(){
         return _concern;
     }
 
@@ -442,7 +445,7 @@ public abstract class DB {
     final Set<DBCollection> _seenCollections = new HashSet<DBCollection>();
 
     protected boolean _readOnly = false;
-    private WriteConcern _concern = WriteConcern.NORMAL;
+    private com.mongodb.WriteConcern _concern = WriteConcern.NORMAL;
 
     String _username;
     byte[] _authhash = null;
