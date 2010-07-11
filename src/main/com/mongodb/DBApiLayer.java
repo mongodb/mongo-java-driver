@@ -124,12 +124,7 @@ public class DBApiLayer extends DB {
         public void doapply( DBObject o ){
         }
 
-        public WriteResult insert( DBObject o )
-            throws MongoException {
-            return insert( new DBObject[]{ o } );
-        }
-
-        public WriteResult insert(DBObject[] arr)
+        public WriteResult insert(DBObject ... arr)
             throws MongoException {
             return insert(arr, true);
         }

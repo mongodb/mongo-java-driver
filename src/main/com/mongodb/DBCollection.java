@@ -37,24 +37,19 @@ public abstract class DBCollection {
     final static boolean DEBUG = Boolean.getBoolean( "DEBUG.DB" );
 
     /**
-     * Saves an document to the database.
+     * Saves document(s) to the database.
      * if doc doesn't have an _id, one will be added
      * you can get the _id that was added from doc after the insert
-     * @param doc object to save
-     * @dochub insert
-     */
-    public abstract WriteResult insert(DBObject doc) throws MongoException;
-
-    /**
-     * Saves an array of documents to the database.
      *
      * @param arr  array of documents to save
      * @dochub insert
      */
-    public abstract WriteResult insert(DBObject[] arr) throws MongoException;
+    public abstract WriteResult insert(DBObject ... arr) throws MongoException;
 
     /**
-     * Saves an array of documents to the database.
+     * Saves document(s) to the database.
+     * if doc doesn't have an _id, one will be added
+     * you can get the _id that was added from doc after the insert
      *
      * @param list list of documents to save
      * @dochub insert
