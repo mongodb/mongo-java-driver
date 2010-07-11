@@ -161,7 +161,23 @@ public class Mongo {
         _connector = new DBTCPConnector( this , _addrs );
         _connector._pickInitial();
     }
+
+    public Mongo( List<ServerAddress> replicaSetSeeds )
+        throws MongoException {
+        this( replicaSetSeeds , new MongoOptions() );
+    }
     
+    public Mongo( List<ServerAddress> replicaSetSeeds , MongoOptions options )
+        throws MongoException {
+        
+        _addr = null;
+        _addrs = replicaSetSeeds;
+        _options = options;
+        _connector = new DBTCPConnector( this , _addrs );
+        _connector._pickInitial();
+
+    }
+
     public DB getDB( String dbname ){
         
         DB db = _dbs.get( dbname );

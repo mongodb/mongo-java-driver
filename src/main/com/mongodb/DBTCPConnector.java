@@ -333,6 +333,41 @@ class DBTCPConnector implements DBConnector {
         boolean _inRequest;
     }
     
+    /**
+     * @return next to try
+     */
+    ServerAddress _addAllFromSet( DBObject o ){
+        Object foo = o.get( "hosts" );
+        if ( ! ( foo instanceof List ) )
+            return null;
+
+        String primary = (String)o.get("primary");
+        
+        ServerAddress primaryAddress = null;
+
+        synchronized ( _allHosts ){
+            for ( Object x : (List)foo){
+                try {
+                    String s = x.toString();
+                    
+                    ServerAddress a = new ServerAddress( s );
+                    if ( ! _allHosts.contains( a ) )
+                        _allHosts.add( a );
+
+                    if ( s.equals( primary ) ){
+                        int i = _allHosts.indexOf( a );
+                        primaryAddress = _allHosts.get(i);
+                    }
+                }
+                catch ( UnknownHostException un ){
+                    _logger.severe( "unknown host [" + un + "]" );
+                }
+            }
+        }
+
+        return primaryAddress;
+    }
+    
     void _pickInitial()
         throws MongoException {
         if ( _curAddress != null )
@@ -343,10 +378,23 @@ class DBTCPConnector implements DBConnector {
 
         try {
             _logger.info( "current address beginning of _pickInitial: " + _curAddress );
-
+            
             DBObject im = isMasterCmd();
+            
+            ServerAddress other = _addAllFromSet( im );
+            
             if ( _isMaster( im ) ) 
                 return;
+
+            if ( other != null ){
+                _set( other );
+                im = isMasterCmd();
+                _addAllFromSet( im );                
+                if ( _isMaster( im ) )
+                    return;
+
+                _logger.severe( "primary given was wrong: " + other + " going to scan" );
+            }
             
             synchronized ( _allHosts ){
                 Collections.shuffle( _allHosts );
@@ -358,10 +406,12 @@ class DBTCPConnector implements DBConnector {
                     _set( a );
                     
                     im = isMasterCmd();
+                    _addAllFromSet( im );
                     if ( _isMaster( im ) )
                         return;
                     
-                    _logger.severe( "switched to: " + a + " but isn't master" );
+                    if ( _allHosts.size() == 2 )
+                        _logger.severe( "switched to: " + a + " but isn't master" );
                 }
                 
                 throw new MongoException( "can't find master" );
