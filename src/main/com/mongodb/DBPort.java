@@ -205,8 +205,12 @@ public class DBPort {
     }
     
     void checkAuth( DB db ){
-        if ( db._username == null )
+        if ( db._username == null ){
+            if ( db._name.equals( "admin" ) )
+                return;
+            checkAuth( db._mongo.getDB( "admin" ) );
             return;
+        }
         if ( _authed.containsKey( db ) )
             return;
         
