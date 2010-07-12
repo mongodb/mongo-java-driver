@@ -69,10 +69,7 @@ public abstract class DB {
      * @param fullNameSpace the string
      * @return the collection
      */
-    public abstract DBCollection getCollectionFromFull( String fullNameSpace );
     protected abstract DBCollection doGetCollection( String name );
-    public abstract DB getSisterDB( String dbName );
-    
     
     /** Gets a collection with a given name.
      * If the collection does not exist, a new collection is created.
@@ -453,6 +450,14 @@ public abstract class DB {
     public void forceError()
         throws MongoException {
         command(new BasicDBObject("forceerror", 1));
+    }
+
+    public Mongo getMongo(){
+        return _mongo;
+    }
+
+    public DB getSisterDB( String name ){
+        return _mongo.getDB( name );
     }
 
     final Mongo _mongo;

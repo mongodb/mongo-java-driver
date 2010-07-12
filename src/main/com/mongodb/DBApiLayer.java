@@ -83,38 +83,6 @@ public class DBApiLayer extends DB {
     }
 
 
-    /** Get a collection from a &lt;databaseName&gt;.&lt;collectionName&gt;.
-     * If <code>fullNameSpace</code> does not contain any "."s, this will
-     * find a collection called <code>fullNameSpace</code> and return it.
-     * Otherwise, it will find the collection <code>collectionName</code> and
-     * return it.
-     * @param fullNameSpace the full name to find
-     * @throws RuntimeException if the database named is not this database
-     */
-    public DBCollection getCollectionFromFull( String fullNameSpace ){
-        // TODO security
-
-        if ( fullNameSpace.indexOf( "." ) < 0 ) {
-            // assuming local
-            return doGetCollection( fullNameSpace );
-        }
-
-        final int idx = fullNameSpace.indexOf( "." );
-
-        final String root = fullNameSpace.substring( 0 , idx );
-        final String table = fullNameSpace.substring( idx + 1 );
-
-        if (_root.equals(root)) {
-            return doGetCollection( table );
-        }
-        
-        return getSisterDB( root ).getCollection( table );
-    }
-
-    public DB getSisterDB( String dbName ){
-        return _mongo.getDB( dbName );
-    }
-
     class MyCollection extends DBCollection {
         MyCollection( String name ){
             super( DBApiLayer.this , name );
