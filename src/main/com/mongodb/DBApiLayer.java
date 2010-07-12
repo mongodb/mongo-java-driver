@@ -38,8 +38,8 @@ public class DBApiLayer extends DB {
 
     static final boolean SHOW = Boolean.getBoolean( "DB.SHOW" );
 
-    protected DBApiLayer( String root , DBConnector connector ){
-        super( root );
+    protected DBApiLayer( Mongo mongo , String root , DBConnector connector ){
+        super( mongo , root );
 
         _root = root;
         _rootPlusDot = _root + ".";
@@ -112,7 +112,7 @@ public class DBApiLayer extends DB {
     }
 
     public DB getSisterDB( String dbName ){
-        return new DBApiLayer( dbName , _connector );
+        return _mongo.getDB( dbName );
     }
 
     class MyCollection extends DBCollection {
@@ -426,7 +426,6 @@ public class DBApiLayer extends DB {
     final String _rootPlusDot;
     final DBConnector _connector;
     final Map<String,MyCollection> _collections = Collections.synchronizedMap( new HashMap<String,MyCollection>() );
-    final Map<String,DBApiLayer> _sisters = Collections.synchronizedMap( new HashMap<String,DBApiLayer>() );
     List<Long> _deadCursorIds = new Vector<Long>();
 
     static final List<DBObject> EMPTY = Collections.unmodifiableList( new LinkedList<DBObject>() );

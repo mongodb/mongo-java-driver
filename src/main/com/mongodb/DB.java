@@ -56,7 +56,8 @@ public abstract class DB {
         public final static com.mongodb.WriteConcern STRICT = com.mongodb.WriteConcern.STRICT;
     };
 
-    public DB( String name ){
+    public DB( Mongo mongo , String name ){
+        _mongo = mongo;
     	_name = name;
     }
 
@@ -306,7 +307,9 @@ public abstract class DB {
      * Get the write concern for this database.
      */
     public com.mongodb.WriteConcern getWriteConcern(){
-        return _concern;
+        if ( _concern != null )
+            return _concern;
+        return _mongo.getWriteConcern();
     }
 
     /**
@@ -452,11 +455,12 @@ public abstract class DB {
         command(new BasicDBObject("forceerror", 1));
     }
 
+    final Mongo _mongo;
     final String _name;
     final Set<DBCollection> _seenCollections = new HashSet<DBCollection>();
 
     protected boolean _readOnly = false;
-    private com.mongodb.WriteConcern _concern = WriteConcern.NORMAL;
+    private com.mongodb.WriteConcern _concern;
 
     String _username;
     byte[] _authhash = null;

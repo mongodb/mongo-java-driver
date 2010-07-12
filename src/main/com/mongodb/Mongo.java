@@ -184,7 +184,7 @@ public class Mongo {
         if ( db != null )
             return db;
         
-        db = new DBApiLayer( dbname , _connector );
+        db = new DBApiLayer( this , dbname , _connector );
         DB temp = _dbs.putIfAbsent( dbname , db );
         if ( temp != null )
             return temp;
@@ -259,10 +259,30 @@ public class Mongo {
     public void close(){
         _connector.close();
     }
+
+    /**
+     * Set the write concern for this database. Will be used for
+     * writes to any collection in this database. See the
+     * documentation for {@link WriteConcern} for more information.
+     *
+     * @param concern write concern to use
+     */
+    public void setWriteConcern( WriteConcern concern ){
+        _concern = concern;
+    }
+
+    /**
+     * Get the write concern for this database.
+     */
+    public WriteConcern getWriteConcern(){
+        return _concern;
+    }
+
     
     final ServerAddress _addr;
     final List<ServerAddress> _addrs;
     final MongoOptions _options;
     final DBTCPConnector _connector;
     final ConcurrentMap<String,DB> _dbs = new ConcurrentHashMap<String,DB>();
+    private WriteConcern _concern = WriteConcern.NORMAL;
 }
