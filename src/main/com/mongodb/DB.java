@@ -280,6 +280,17 @@ public abstract class DB {
         return command(new BasicDBObject("getlasterror", 1));
     }
 
+    public CommandResult getLastError( com.mongodb.WriteConcern concern )
+        throws MongoException {
+        return command( concern.getCommand() );
+    }
+
+    public CommandResult getLastError( int w , int wtimeout , boolean fsync )
+        throws MongoException {
+        return command( (new com.mongodb.WriteConcern( w, wtimeout , fsync )).getCommand() );
+    }
+
+
     /**
      * Set the write concern for this database. Will be used for
      * writes to any collection in this database. See the
