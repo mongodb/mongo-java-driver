@@ -320,6 +320,15 @@ public abstract class DB {
 
     }
 
+    /**
+     * Returns true iff this DB is authenticated
+     *
+     * @return true if authenticated, false otherwise
+     * @dochub authenticate
+     */
+    public boolean isAuthenticated() {
+	return ( _username != null );
+    }
 
     /**
      *  Authenticates connection/db with given name and password
@@ -336,7 +345,7 @@ public abstract class DB {
             throw new NullPointerException( "username can't be null" );
         
         if ( _username != null )
-            throw new IllegalStateException( "can't call authenticate twice on the same DBObject" );
+	    throw new IllegalStateException( "can't call authenticate twice on the same DBObject" );
         
         String hash = _hash( username , passwd );
         if ( ! _doauth( username , hash.getBytes() ) )
