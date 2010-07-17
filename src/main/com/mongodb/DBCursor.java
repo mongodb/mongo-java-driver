@@ -166,7 +166,9 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     }
 
     /**
-     * Limits the number of elements returned.
+     * <p>Limits the number of elements returned.</p> 
+     * <p><b>Note</b>: Specifying a <i>negative number</i> instructs the server to return that number of items 
+     * and to close the cursor. It will only return what can fit in a <i>single 4mb response</i>.</p>
      * @param n the number of elements to return
      * @return a cursor pointing to the first element of the limited results
      * @dochub limit
