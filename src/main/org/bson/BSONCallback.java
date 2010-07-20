@@ -43,4 +43,7 @@ public interface BSONCallback {
      * subtype 3
      */
     void gotUUID( String name , long part1, long part2);
+
+    void gotCode( String name , String code );
+    void gotCodeWScope( String name , String code , BSONObject scope );
 }

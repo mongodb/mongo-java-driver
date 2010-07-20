@@ -134,6 +134,14 @@ public class BasicBSONCallback implements BSONCallback {
         _put( name , new UUID(part1, part2) );
     }
 
+    public void gotCode( String name , String code ){
+        _put( name , new Code( code ) );
+    }
+    
+    public void gotCodeWScope( String name , String code , BSONObject scope ){
+        _put( name , new CodeWScope( code, scope ) );
+    }
+
     protected void _put( String name , Object o ){
         cur().put( name , BSON.applyDecodingHooks( o ) );
     }

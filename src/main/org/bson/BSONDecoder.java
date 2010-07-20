@@ -116,26 +116,12 @@ public class BSONDecoder {
 
             
         case SYMBOL:
-            // intentional fallthrough
-        case STRING:
-            int size = _in.readInt();
-            if ( size < 0 || size > ( 3 * 1024 * 1024 ) )
-                throw new RuntimeException( "bad string size: " + size );
-            byte[] b = size < _random.length ? _random : new byte[size];
-
-            _in.fill( b , size );
+            _callback.gotSymbol( name , _in.readUTF8String() );
+            break;
             
-            try {
-                String s = new String( b , 0 , size - 1 , "UTF-8" );
-                if ( type == SYMBOL )
-                    _callback.gotSymbol( name , s );
-                else 
-                    _callback.gotString( name , s );
-            }
-            catch ( java.io.UnsupportedEncodingException uee ){
-                throw new RuntimeException( "impossible" , uee );
-            }
 
+        case STRING:
+            _callback.gotString( name , _in.readUTF8String() );
             break;
 
         case OID:
@@ -162,7 +148,13 @@ public class BSONDecoder {
             break;
             
         case CODE:
-            throw new UnsupportedOperationException( "can't handle CODE yet" );
+            _callback.gotCode( name , _in.readUTF8String() );
+            break;
+
+        case CODE_W_SCOPE:
+            _in.readInt();
+            _callback.gotCodeWScope( name , _in.readUTF8String() , _readBasicObject() );
+            break;
 
         case ARRAY:
             _in.readInt();  // total size - we don't care....
@@ -241,7 +233,20 @@ public class BSONDecoder {
 
         _callback.gotBinary( name , bType , data );
     }
-
+    
+    BSONObject _readBasicObject()
+        throws IOException {
+        _in.readInt();
+        
+        BSONCallback save = _callback;
+        _callback = _basic;
+        _basic.reset();
+        _basic.objectStart(false);
+        
+        while( decodeElement() );
+        _callback = save;
+        return (BSONObject)(_basic.get());
+    }
     
     class Input {
         Input( InputStream in ){
@@ -310,6 +315,23 @@ public class BSONDecoder {
             _stringBuffer.reset();
             return out;
         }
+
+        String readUTF8String()
+            throws IOException {
+            int size = readInt();
+            if ( size < 0 || size > ( 3 * 1024 * 1024 ) )
+                throw new RuntimeException( "bad string size: " + size );
+            byte[] b = size < _random.length ? _random : new byte[size];
+
+            fill( b , size );
+            
+            try {
+                return new String( b , 0 , size - 1 , "UTF-8" );
+            }
+            catch ( java.io.UnsupportedEncodingException uee ){
+                throw new RuntimeException( "impossible" , uee );
+            }
+        }
         
         int _read;
         final InputStream _in;
@@ -321,4 +343,6 @@ public class BSONDecoder {
     private byte[] _random = new byte[1024];
 
     private PoolOutputBuffer _stringBuffer = new PoolOutputBuffer();
+
+    private final BasicBSONCallback _basic = new BasicBSONCallback();
 }

@@ -183,7 +183,22 @@ public class JSON {
             buf.append( t.getTime() + "|" + t.getInc() );
             return;
         }
+        
+        if ( o instanceof CodeWScope ){
+            CodeWScope c = (CodeWScope)o;
+            
+            BasicDBObject temp = new BasicDBObject();
+            temp.put( "$code" , c.getCode() );
+            temp.put( "$scope" , c.getScope() );
+            serialize( temp, buf );
+            return;
+        }
 
+        if ( o instanceof Code ){
+            string( buf , ((Code)o).getCode() );
+            return;
+        }
+        
         throw new RuntimeException( "json can't serialize type : " + o.getClass() );
     }
 

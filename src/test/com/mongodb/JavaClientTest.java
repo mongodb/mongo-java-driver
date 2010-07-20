@@ -110,6 +110,18 @@ public class JavaClientTest extends TestCase {
      
         assertNotNull( c.findOne( BasicDBObjectBuilder.start().add( "$where" , new CodeWScope( "this.a == x" , new BasicDBObject( "x" , 1 )  ) ).get() ) );
         assertNull( c.findOne( BasicDBObjectBuilder.start().add( "$where" , new CodeWScope( "this.a == x" , new BasicDBObject( "x" , 2 )  ) ).get() ) );
+
+
+        c.drop();
+        BasicDBObject in = new BasicDBObject();
+        in.put( "_id" , 1 );
+        in.put( "a" , new Code("x=5") );
+        in.put( "b" , new CodeWScope( "x=5" , new BasicDBObject( "x" , 2 ) ) );
+        c.insert( in );
+        
+        DBObject out = c.findOne();
+
+        assertEquals( in , out );
     }
 
 

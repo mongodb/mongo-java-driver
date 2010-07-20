@@ -178,6 +178,9 @@ public class BSONEncoder {
         else if (val instanceof CodeWScope) {
             putCodeWScope( name , (CodeWScope)val );
         }
+        else if (val instanceof Code) {
+            putCode( name , (Code)val );
+        }
         else if ( putSpecial( name , val ) ){
             // no-op
         }
@@ -237,6 +240,12 @@ public class BSONEncoder {
         _putValueString( code.getCode() );
         putObject( code.getScope() );
         _buf.writeInt( temp , _buf.getPosition() - temp );
+    }
+
+    protected void putCode( String name , Code code ){
+        _put( CODE , name );
+        int temp = _buf.getPosition();
+        _putValueString( code.getCode() );
     }
 
     protected void putBoolean( String name , Boolean b ){

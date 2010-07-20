@@ -1,4 +1,4 @@
-// CodeWScope.java
+// Code.java
 
 /**
  *      Copyright (C) 2008 10gen Inc.
@@ -23,28 +23,27 @@ import java.util.*;
 import org.bson.*;
 
 /** 
- * for using the CodeWScope type
+ * for using the Code type
  */
-public class CodeWScope extends Code {
+public class Code {
 
-    public CodeWScope( String code , BSONObject scope ){
-        super( code );
-        _scope = scope;
+    public Code( String code ){
+        _code = code;
     }
 
-    public BSONObject getScope(){
-        return _scope;
+    public String getCode(){
+        return _code;
     }
 
     public boolean equals( Object o ){
-        if ( ! ( o instanceof CodeWScope ) )
+        if ( ! ( o instanceof Code ) )
             return false;
         
-        CodeWScope c = (CodeWScope)o;
-        return _code.equals( c._code ) && _scope.equals( c._scope );
+        Code c = (Code)o;
+        return _code.equals( c._code );
     }
+    
+    final String _code;
 
-
-    final BSONObject _scope;
 }
 
