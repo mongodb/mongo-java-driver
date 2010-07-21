@@ -13,6 +13,10 @@ public class BasicBSONCallback implements BSONCallback {
         reset();
     }
 
+    public BSONObject create(){
+        return new BasicBSONObject();
+    }
+
     public BSONCallback createBSONCallback(){
         return new BasicBSONCallback();
     }
