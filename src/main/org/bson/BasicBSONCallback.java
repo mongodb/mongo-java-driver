@@ -12,9 +12,9 @@ public class BasicBSONCallback implements BSONCallback {
     public BasicBSONCallback(){
         reset();
     }
-    
-    public BSONObject create(){
-        return new BasicBSONObject();
+
+    public BSONCallback createBSONCallback(){
+        return new BasicBSONCallback();
     }
 
     public BSONObject create( boolean array , List<String> path ){

@@ -154,6 +154,7 @@ public class BSONDecoder {
         case CODE_W_SCOPE:
             _in.readInt();
             _callback.gotCodeWScope( name , _in.readUTF8String() , _readBasicObject() );
+
             break;
 
         case ARRAY:
@@ -239,10 +240,11 @@ public class BSONDecoder {
         _in.readInt();
         
         BSONCallback save = _callback;
+        BSONCallback _basic = _callback.createBSONCallback();
         _callback = _basic;
         _basic.reset();
         _basic.objectStart(false);
-        
+
         while( decodeElement() );
         _callback = save;
         return (BSONObject)(_basic.get());
@@ -343,6 +345,4 @@ public class BSONDecoder {
     private byte[] _random = new byte[1024];
 
     private PoolOutputBuffer _stringBuffer = new PoolOutputBuffer();
-
-    private final BasicBSONCallback _basic = new BasicBSONCallback();
 }

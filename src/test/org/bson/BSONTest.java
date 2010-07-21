@@ -28,6 +28,7 @@ import com.mongodb.util.*;
 
 import org.testng.annotations.Test;
 
+import org.bson.types.CodeWScope;
 import org.bson.io.*;
 
 public class BSONTest extends TestCase {
@@ -70,7 +71,6 @@ public class BSONTest extends TestCase {
     public void testBasic1()
         throws IOException {
         BSONObject o = new BasicBSONObject();
-
         _test( new BasicBSONObject( "x" , true ) , 9 , "6fe24623e4efc5cf07f027f9c66b5456" );    
 
         _test( new BasicBSONObject( "x" , null ) , 8 , "12d43430ff6729af501faf0638e68888" );
@@ -107,6 +107,15 @@ public class BSONTest extends TestCase {
         buf.write( "bar".getBytes() );
         assertEquals( "barotfoo" , buf.asString() );
 
+    }
+
+    @Test
+    public void testCode()
+      throws IOException{
+        BSONObject scope = new BasicBSONObject( "x", 1 );
+        CodeWScope c = new CodeWScope( "function() { x += 1; }" , scope );
+        BSONObject code_object = new BasicBSONObject( "map" , c);
+        _test( code_object , 53 , "52918d2367533165bfc617df50335cbb" );
     }
 
     @Test

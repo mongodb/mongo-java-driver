@@ -8,12 +8,16 @@ public interface BSONCallback {
     
     void objectStart();
     void objectStart(String name);
+    void objectStart(boolean array);
     Object objectDone();
+
+    void reset();
+    Object get();
+    BSONCallback createBSONCallback();
 
     void arrayStart();
     void arrayStart(String name);
     Object arrayDone();
-
     
     void gotNull( String name );
     void gotUndefined( String name );
