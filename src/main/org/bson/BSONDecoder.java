@@ -235,7 +235,7 @@ public class BSONDecoder {
         _callback.gotBinary( name , bType , data );
     }
     
-    BSONObject _readBasicObject()
+    Object _readBasicObject()
         throws IOException {
         _in.readInt();
         
@@ -247,7 +247,7 @@ public class BSONDecoder {
 
         while( decodeElement() );
         _callback = save;
-        return (BSONObject)(_basic.get());
+        return _basic.get();
     }
     
     class Input {

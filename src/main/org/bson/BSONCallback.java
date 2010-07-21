@@ -49,5 +49,5 @@ public interface BSONCallback {
     void gotUUID( String name , long part1, long part2);
 
     void gotCode( String name , String code );
-    void gotCodeWScope( String name , String code , BSONObject scope );
+    void gotCodeWScope( String name , String code , Object scope );
 }

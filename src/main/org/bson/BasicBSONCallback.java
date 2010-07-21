@@ -142,8 +142,8 @@ public class BasicBSONCallback implements BSONCallback {
         _put( name , new Code( code ) );
     }
     
-    public void gotCodeWScope( String name , String code , BSONObject scope ){
-        _put( name , new CodeWScope( code, scope ) );
+    public void gotCodeWScope( String name , String code , Object scope ){
+        _put( name , new CodeWScope( code, (BSONObject)scope ) );
     }
 
     protected void _put( String name , Object o ){
