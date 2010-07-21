@@ -28,7 +28,7 @@ import com.mongodb.util.*;
 
 import org.testng.annotations.Test;
 
-import org.bson.types.CodeWScope;
+import org.bson.types.*;
 import org.bson.io.*;
 
 public class BSONTest extends TestCase {
@@ -116,6 +116,17 @@ public class BSONTest extends TestCase {
         CodeWScope c = new CodeWScope( "function() { x += 1; }" , scope );
         BSONObject code_object = new BasicBSONObject( "map" , c);
         _test( code_object , 53 , "52918d2367533165bfc617df50335cbb" );
+    }
+
+    @Test
+    public void testBinary()
+      throws IOException{
+        byte[] data = new byte[10000];
+        for(int i=0; i<10000; i++) {
+          data[i] = 1;
+        }
+        BSONObject binary_object = new BasicBSONObject( "bin" , data);
+        _test( binary_object , 10019 , "682d9a636619b135fa9801ac42c48a10" );
     }
 
     @Test
