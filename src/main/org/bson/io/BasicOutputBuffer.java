@@ -53,9 +53,15 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     void _ensure( int more ){
-        if ( _cur + more < _buffer.length )
+        final int need = _cur + more;
+        if ( need < _buffer.length )
             return;
-        byte[] n = new byte[_buffer.length*2];
+
+        int newSize = _buffer.length*2;
+        if ( newSize <= need )
+            newSize = need + 128;
+        
+        byte[] n = new byte[newSize];
         System.arraycopy( _buffer , 0 , n , 0 , _size );
         _buffer = n;
     }
