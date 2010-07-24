@@ -644,6 +644,16 @@ public abstract class DBCollection {
         dropIndexes( name );
     }
 
+    public CommandResult getStats() {
+	return(getDB().command(new BasicDBObject("collstats", getName())));
+    }
+
+    public boolean isCapped() {
+	CommandResult stats = getStats();
+	Object capped = stats.get("capped");
+	return(capped != null && (Integer)capped == 1);
+    }
+
     // ------
 
     /** Initializes a new collection.

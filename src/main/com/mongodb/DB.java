@@ -164,6 +164,10 @@ public abstract class DB {
         throw new MongoException( "eval failed: " + res );
     }
 
+    public CommandResult getStats() {
+	return command("dbstats");
+    }
+
     /** Returns the name of this database.
      * @return the name
      */
