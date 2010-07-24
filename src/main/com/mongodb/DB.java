@@ -165,7 +165,7 @@ public abstract class DB {
     }
 
     public CommandResult getStats() {
-	return command("dbstats");
+        return command("dbstats");
     }
 
     /** Returns the name of this database.
