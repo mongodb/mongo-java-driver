@@ -643,15 +643,15 @@ public abstract class DBCollection {
         throws MongoException {
         dropIndexes( name );
     }
-
+    
     public CommandResult getStats() {
-	return(getDB().command(new BasicDBObject("collstats", getName())));
+        return(getDB().command(new BasicDBObject("collstats", getName())));
     }
 
     public boolean isCapped() {
-	CommandResult stats = getStats();
-	Object capped = stats.get("capped");
-	return(capped != null && (Integer)capped == 1);
+        CommandResult stats = getStats();
+        Object capped = stats.get("capped");
+        return(capped != null && (Integer)capped == 1);
     }
 
     // ------
