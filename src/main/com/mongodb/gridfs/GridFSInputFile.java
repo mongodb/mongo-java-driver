@@ -18,15 +18,14 @@
 
 package com.mongodb.gridfs;
 
-import org.bson.*;
+import java.io.*;
+import java.security.*;
+import java.util.*;
+
 import org.bson.types.*;
 
 import com.mongodb.*;
 import com.mongodb.util.*;
-
-import java.io.*;
-import java.util.*;
-import java.security.*;
 
 public class GridFSInputFile extends GridFSFile {
     
@@ -54,11 +53,14 @@ public class GridFSInputFile extends GridFSFile {
     public void setContentType( String ct ){
         _contentType = ct;
     }
-    
     public void save() {
+    	save(GridFS.DEFAULT_CHUNKSIZE);
+    }
+    
+    public void save( int chunkSize ) {
         if ( ! _saved ){
             try {
-                saveChunks();
+                saveChunks(chunkSize);
             }
             catch ( IOException ioe ){
                 throw new MongoException( "couldn't save chunks" , ioe );
@@ -66,13 +68,16 @@ public class GridFSInputFile extends GridFSFile {
         }
         super.save();
     }
-
-    public int saveChunks()
+    
+    public int saveChunks( int chunkSize )
         throws IOException {
         if ( _saved )
             throw new RuntimeException( "already saved!" );
         
-        byte[] b = new byte[GridFS.DEFAULT_CHUNKSIZE];
+        if ( chunkSize > 3.5 * 1000 * 1000 )
+            throw new RuntimeException( "chunkSize must be less than 3.5MiB!" );
+        
+        byte[] b = new byte[chunkSize];
 
         long total = 0;
         int cn = 0;

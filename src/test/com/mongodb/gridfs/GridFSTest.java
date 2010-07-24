@@ -16,14 +16,11 @@
 
 package com.mongodb.gridfs;
 
-import java.util.*;
-import java.util.regex.*;
 import java.io.*;
 
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.mongodb.*;
-import com.mongodb.gridfs.*;
 import com.mongodb.util.*;
 
 public class GridFSTest extends TestCase {
@@ -71,6 +68,7 @@ public class GridFSTest extends TestCase {
         in.save();
         GridFSDBFile out = _fs.findOne( new BasicDBObject( "_id" , in.getId() ) );
         assert( out.getId().equals( in.getId() ) );
+        assert( out.getChunkSize() == (long)GridFS.DEFAULT_CHUNKSIZE );
         
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         out.writeTo( bout );
