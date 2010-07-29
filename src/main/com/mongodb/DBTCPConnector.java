@@ -285,11 +285,17 @@ class DBTCPConnector implements DBConnector {
         }
 
         void error( Exception e ){
-            _curPortPool.remove( _port );
+            if ( _last == null )
+                throw new IllegalStateException( "this should be impossible" );
+
             _curPortPool.gotError( e );
 
-            _internalStack = 0;
+            _curPortPool.done( _last );
+            _last.close();
+
             _last = null;
+            _port = null;
+            _internalStack = 0;
         }
         
         void requestEnsureConnection(){

@@ -166,7 +166,22 @@ class DBPortPool extends SimplePool<DBPort> {
             return;
         }
         Bytes.LOGGER.log( Level.INFO , "emptying DBPortPool b/c of error" , e );
-        clear();
+
+        // force close all sockets 
+
+        List<DBPort> all = new ArrayList<DBPort>();
+        while ( true ){
+            DBPort temp = get(0);
+            if ( temp == null )
+                break;
+            all.add( temp );
+        }
+        
+        for ( DBPort p : all ){
+            p.close();
+            done(p);
+        }
+
     }
 
     void close(){
