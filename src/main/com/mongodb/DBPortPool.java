@@ -52,10 +52,9 @@ class DBPortPool extends SimplePool<DBPort> {
                 
                 p = new DBPortPool( addr , _options );
                 _pools.put( addr , p);
-                String name = "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ':' , '_' );
-                
+
                 try {
-                    ObjectName on = new ObjectName( name );
+                    ObjectName on = createObjectName( addr );
                     if ( _server.isRegistered( on ) ){
                         _server.unregisterMBean( on );
                         Bytes.LOGGER.log( Level.INFO , "multiple Mongo instances for same host, jmx numbers might be off" );
@@ -78,10 +77,23 @@ class DBPortPool extends SimplePool<DBPort> {
             synchronized ( _pools ){
                 for ( DBPortPool p : _pools.values() ){
                     p.close();
+
+                    try {
+                        ObjectName on = createObjectName( p._addr );
+                        if ( _server.isRegistered( on ) ){
+                            _server.unregisterMBean( on );
+                        }
+                    } catch ( JMException e ){
+                        Bytes.LOGGER.log( Level.WARNING , "jmx de-registration error, continuing" , e );
+                    }
                 }
             }
         }
-        
+
+        private ObjectName createObjectName( InetSocketAddress addr ) throws MalformedObjectNameException {
+            return new ObjectName( "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ':' , '_' ) );
+        }
+
         final MongoOptions _options;
         final Map<InetSocketAddress,DBPortPool> _pools = Collections.synchronizedMap( new HashMap<InetSocketAddress,DBPortPool>() );
         final MBeanServer _server = ManagementFactory.getPlatformMBeanServer();
