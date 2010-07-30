@@ -21,6 +21,7 @@ package org.bson.types;
 import java.util.*;
 import java.nio.*;
 import java.net.*;
+import java.util.concurrent.atomic.*;
 
 /**
  * A globally unique identifier for objects.
@@ -97,9 +98,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     public ObjectId( Date time ){
         _time = _flip( (int)(time.getTime() / 1000) );
         _machine = _genmachine;
-        synchronized ( _incLock ){
-            _inc = _nextInc++;
-        }     
+        _inc = _nextInc.getAndIncrement();
         _new = false;
     }
 
@@ -167,13 +166,9 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     /** Create a new object id.
      */
     public ObjectId(){
-        _time = _gentime;
+        _time = _curtime();
         _machine = _genmachine;
-        
-        synchronized ( _incLock ){
-            _inc = _nextInc++;
-        }
-        
+        _inc = _nextInc.getAndIncrement();
         _new = true;
     }
 
@@ -312,31 +307,23 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     final int _inc;
     
     boolean _new;
-
-    static int _flip( int x ){
-        if ( true ){
-            byte b[] = new byte[4];
-            ByteBuffer bb = ByteBuffer.wrap( b );
-            bb.order( ByteOrder.LITTLE_ENDIAN );
-            bb.putInt( x );
-            bb.flip();
-            bb.order( ByteOrder.BIG_ENDIAN );
-            return bb.getInt();
-        }
+    
+    public static int _flip( int x ){
         int z = 0;
-        z |= ( x & 0xFF ) << 24;
-        z |= ( x & 0xFF00 ) << 8;
-        z |= ( x & 0xFF00000 ) >> 8;
-        z |= ( x & 0xFF000000 ) >> 24;
+        z |= ( ( x << 24 ) & 0xFF000000 );
+        z |= ( ( x << 8 )  & 0x00FF0000 );
+        z |= ( ( x >> 8 )  & 0x0000FF00 );
+        z |= ( ( x >> 24 ) & 0x000000FF );
         return z;
     }
     
-    private static int _nextInc = (new java.util.Random()).nextInt();
+    private static int _curtime(){
+        return _flip( (int)(System.currentTimeMillis()/1000) );
+    }
+
+    private static AtomicInteger _nextInc = new AtomicInteger( (new java.util.Random()).nextInt() );
     private static final String _incLock = new String( "ObjectId._incLock" );
 
-    private static int _gentime = _flip( (int)(System.currentTimeMillis()/1000) );
-    
-    static final Thread _timeFixer;
     private static final int _genmachine;
     static {
 
@@ -364,25 +351,12 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
             throw new RuntimeException( ioe );
         }
 
-        _timeFixer = new Thread("ObjectId-TimeFixer"){
-                public void run(){
-                    while ( true ){
-                        try {
-                            Thread.sleep( 499 );
-                        }
-                        catch ( Exception e ){}
-                        _gentime = _flip( (int)(System.currentTimeMillis()/1000) );
-                    }
-                }
-            };
-        _timeFixer.setDaemon( true );
-        _timeFixer.start();
     }
 
     public static void main( String args[] ){
         
         if ( true ){
-            int z = _nextInc;
+            int z = _nextInc.getAndIncrement();
             System.out.println( Integer.toHexString( z ) );
             System.out.println( Integer.toHexString( _flip( z ) ) );
             System.out.println( Integer.toHexString( _flip( _flip( z ) ) ) );

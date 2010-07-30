@@ -18,6 +18,8 @@
 
 package com.mongodb;
 
+import java.util.*;
+
 import org.testng.annotations.Test;
 
 import com.mongodb.util.*;
@@ -105,6 +107,28 @@ public class ObjectIdTest extends TestCase {
         assertEquals( oid.toString() , res.get( "str" ).toString() );
     }
 
+    void _testFlip( int x , int Y ){
+        int y = ObjectId._flip( x );
+        int z = ObjectId._flip( y );
+        assertEquals( x , z );
+        if ( Y > 0 )
+            assertEquals( Y , y );
+    }
+
+    @Test
+    public void testFlip(){
+
+        _testFlip( 1 , 16777216 );
+        _testFlip( 1231231 , 2143883776 );
+        _testFlip( 0x12345678 , 0x78563412 );
+        
+        Random r = new Random( 12312312 );
+        for ( int i=0; i<1000; i++ ){
+            int x = r.nextInt();
+            _testFlip( r.nextInt() , 0 );
+        }
+        
+    }
     public static void main( String args[] )
         throws Exception {
         (new ObjectIdTest()).runConsole();
