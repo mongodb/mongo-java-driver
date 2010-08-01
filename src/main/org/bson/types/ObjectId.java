@@ -18,9 +18,9 @@
 
 package org.bson.types;
 
-import java.util.*;
-import java.nio.*;
 import java.net.*;
+import java.nio.*;
+import java.util.*;
 import java.util.concurrent.atomic.*;
 
 /**
@@ -55,7 +55,8 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         if ( s == null )
             return false;
         
-        if ( s.length() < 18 )
+        int len = s.length();
+        if ( len < 18 || len > 24 )
             return false;
 
         for ( int i=0; i<s.length(); i++ ){
