@@ -487,7 +487,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     }
 
     /**
-     * Counts the number of elements in this cursor.
+     * Counts the number of elements matching the query
+     * this does not take limit/skip into consideration
      * @return the number of elements
      */
     public int count() 
@@ -499,6 +500,22 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         
         return (int)_collection.getCount(this._query, this._keysWanted);
     }
+
+    /**
+     * Counts the number of elements matching the query that would be returned
+     * this does take limit/skip into consideration
+     * @return the number of elements
+     */
+    public int size() 
+        throws MongoException {
+        if ( _collection == null )
+            throw new IllegalArgumentException( "why is _collection null" );
+        if ( _collection._db == null )
+            throw new IllegalArgumentException( "why is _collection._db null" );
+        
+        return (int)_collection.getCount(this._query, this._keysWanted, this._numWanted, this._skip );
+    }
+
     
     public DBObject getKeysWanted(){
         return _keysWanted;

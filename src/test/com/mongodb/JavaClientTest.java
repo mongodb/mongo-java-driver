@@ -138,7 +138,11 @@ public class JavaClientTest extends TestCase {
             c.insert(new BasicDBObject("i", i));
         }
 
-        assertTrue(c.getCount() == 100);
+        assertEquals( 100 , c.getCount() );
+        assertEquals( 100 , c.find().count() );
+        assertEquals( 100 , c.find().limit(10).count() );
+        assertEquals( 10 , c.find().limit(10).size() );
+        assertEquals( 90 , c.find().skip(10).size() );
     }
 
     @Test

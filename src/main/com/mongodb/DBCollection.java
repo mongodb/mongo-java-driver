@@ -496,6 +496,19 @@ public abstract class DBCollection {
      */
     public long getCount(DBObject query, DBObject fields)
         throws MongoException {
+        return getCount( query , fields , 0 , 0 );
+    }
+
+    /**
+     *  Returns the number of documents in the collection
+     *  that match the specified query
+     *
+     *  @param query query to select documents to count
+     *  @param fields fields to return
+     *  @return number of documents that match query and fields
+     */
+    public long getCount(DBObject query, DBObject fields, long limit, long skip )
+        throws MongoException {
 
         BasicDBObject cmd = new BasicDBObject();
         cmd.put("count", getName());
@@ -503,6 +516,11 @@ public abstract class DBCollection {
         if (fields != null) {
             cmd.put("fields", fields);
         }
+        
+        if ( limit > 0 )
+            cmd.put( "limit" , limit );
+        if ( skip > 0 )
+            cmd.put( "skip" , skip );
 
         CommandResult res = _db.command(cmd);
 
