@@ -29,32 +29,25 @@ class Response {
     Response( DBCollection collection ,  InputStream in )
         throws IOException {
         _collection = collection;
-        
-        byte[] b = new byte[16];
-        int x = 0;
-        while ( x<b.length ){
-            int temp = in.read( b , x , b.length - x );
-            if ( temp < 0 )
-                throw new IOException( "socket closed but didn't finish reading message" );
-            x += temp;
-        }
-        
+
+        byte[] b = new byte[36];
+        Bits.readFully(in, b);
+
         ByteArrayInputStream bin = new ByteArrayInputStream( b );
         _len = Bits.readInt( bin );
+        if ( _len > ( 32 * 1024 * 1024 ) )
+        	throw new IllegalArgumentException( "response too long: " + _len );
+
         _id = Bits.readInt( bin );
         _responseTo = Bits.readInt( bin );
         _operation = Bits.readInt( bin );
+        _flags = Bits.readInt( bin );
+        _cursor = Bits.readLong( bin );
+        _startingFrom = Bits.readInt( bin );
+        _num = Bits.readInt( bin );
 
-        if ( _len > ( 32 * 1024 * 1024 ) )
-            throw new IllegalArgumentException( "response too long: " + _len );
+        MyInputStream user = new MyInputStream( in , _len - b.length );
 
-        MyInputStream user = new MyInputStream( in , _len - 16 );
-
-        _flags = Bits.readInt( user );
-        _cursor = Bits.readLong( user );
-        _startingFrom = Bits.readInt( user );
-        _num = Bits.readInt( user );
-        
         if ( _num < 2 )
             _objects = new LinkedList<DBObject>();
         else
