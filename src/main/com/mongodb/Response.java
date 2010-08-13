@@ -145,7 +145,18 @@ class Response {
             
             return val;
         }
-        
+
+        public int read(byte[] b, int off, int len)
+            throws IOException {
+
+            if ( _toGo <= 0 )
+                return -1;
+
+            int n = _in.read(b, off, Math.min(_toGo, len));
+            _toGo -= n;
+            return n;
+        }
+
         public void close(){
             throw new RuntimeException( "can't close thos" );
         }
