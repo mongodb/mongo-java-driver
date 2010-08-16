@@ -52,17 +52,7 @@ class OutMessage extends BSONEncoder {
     
     static OutMessage query( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
         OutMessage out = get( 2004 );
-
-        out.writeInt( options );
-        out.writeCString( ns );
-
-        out.writeInt( numToSkip );
-        out.writeInt( batchSize );
-        
-        out.putObject( query );
-        if ( fields != null )
-            out.putObject( fields );
-
+        out._appendQuery( options , ns , numToSkip , batchSize , query , fields );
         return out;
     }
 
@@ -70,6 +60,19 @@ class OutMessage extends BSONEncoder {
         set( _buffer );
     }
     
+    private void _appendQuery( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
+        writeInt( options );
+        writeCString( ns );
+
+        writeInt( numToSkip );
+        writeInt( batchSize );
+        
+        putObject( query );
+        if ( fields != null )
+            putObject( fields );
+
+    }
+
     private void reset( int op ){
         done();
         _buffer.reset();
@@ -141,6 +144,20 @@ class OutMessage extends BSONEncoder {
 
         _buf.write( EOO );
         _buf.writeInt( sizePos , _buf.getPosition() - sizePos );
+    }
+
+    void append( String db , WriteConcern c ){
+
+        _id = ID.getAndIncrement();
+
+        int loc = size();
+
+        writeInt( 0 ); // will set this later
+        writeInt( _id );
+        writeInt( 0 ); // response to
+        writeInt( 2004 );
+        _appendQuery( 0 , db + ".$cmd" , 0 , -1 , c.getCommand() , null );
+        _buf.writeInt( loc , size() - loc );
     }
 
     void pipe( OutputStream out )
