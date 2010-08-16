@@ -99,7 +99,7 @@
   <target name="javadocs" depends="compile,utilcompile" description="Generate API docs">
 
     <delete dir="docs/"/>
-    <javadoc packagenames="com.mongodb,com.mongodb.gridfs,org.bson,org.bson.types,org.bson.io,org.bson.util"
+    <javadoc packagenames="com.mongodb,com.mongodb.gridfs,com.mongodb.util,org.bson,org.bson.types,org.bson.io,org.bson.util"
              sourcepath="src/main/"
              defaultexcludes="yes"
              destdir="docs/${version}"
