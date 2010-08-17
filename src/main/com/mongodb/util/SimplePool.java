@@ -204,13 +204,15 @@ public abstract class SimplePool<T> implements DynamicMBean {
                 _gcIfNeeded();
 
             _consecutiveSleeps++;
-	    totalSlept += _sleepTime;
             
+            long start = System.currentTimeMillis();
             try {
                 _waiting.tryAcquire( _sleepTime , TimeUnit.MILLISECONDS );
             }
             catch ( InterruptedException ie ){
             }
+
+	    totalSlept += ( System.currentTimeMillis() - start );
 
         }
     }
