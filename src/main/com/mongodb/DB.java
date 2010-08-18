@@ -127,7 +127,7 @@ public abstract class DB {
     }
 
     /** Execute a database command directly.
-     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/Mongo+Commands">Mongo Commands</a>
+     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      * @return the result of the command from the database
      * @dochub commands
      */

@@ -231,6 +231,14 @@ public abstract class DBCollection {
         Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, 0);
         return (iterator != null ? iterator.next() : null);
     }
+    
+    /**
+     * Finds the first document in the query (sorted) and updates it. 
+     * If remove is specified it will be removed. If new is specified then the updated 
+     * document will be returned otherwise the old document is returned (or it would be lost forever).
+     * @return the found document (before, or after the update)
+     */
+    public abstract DBObject findAndModify(DBObject query, DBObject sort, boolean remove, DBObject update, boolean returnNew);
 
     // --- START INDEX CODE ---
 

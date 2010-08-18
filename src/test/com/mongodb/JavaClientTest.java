@@ -569,6 +569,46 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , res.getN() );
         assertFalse( res.isLazy() );
     }
+
+    @Test
+    public void testWriteResultMethodLevelWriteConcern(){
+        DBCollection c = _db.getCollection( "writeresult2" );
+        c.drop();
+        
+        WriteResult res = c.insert( new BasicDBObject( "_id" , 1 ) );
+        res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
+        assertEquals( 1 , res.getN() );
+        assertTrue( res.isLazy() );
+
+        res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) , false , false , WriteConcern.STRICT );
+        assertEquals( 1 , res.getN() );
+        assertFalse( res.isLazy() );
+    }
+
+    @Test
+    public void testFindAndModify(){
+        DBCollection c = _db.getCollection( "findandmodify" );
+        c.drop();
+        
+        c.insert( new BasicDBObject( "_id" , 1 ) );
+        //return old one
+        DBObject dbObj = c.findAndModify( new BasicDBObject( "_id" , 1 ) , null, false, new BasicDBObject( "x", 1), false);
+        assertEquals( 1 , dbObj.keySet().size());
+        assertEquals( 1 , c.findOne(new BasicDBObject( "_id" , 1 ) ).get( "x" ));
+        
+        //return new one
+        dbObj = c.findAndModify( new BasicDBObject( "_id" , 1 ) , null, false, new BasicDBObject( "x", 5), true);
+        assertEquals( 2 , dbObj.keySet().size());
+        assertEquals( 5 , dbObj.get( "x" ));
+        assertEquals( 5 , c.findOne(new BasicDBObject( "_id" , 1 ) ).get( "x" ));
+        
+        //remove it, and return old one
+        dbObj = c.findAndModify( new BasicDBObject( "_id" , 1 ) , null, true, null, false);
+        assertEquals( 2 , dbObj.keySet().size());
+        assertEquals( 5 , dbObj.get( "x" ));
+        assertNull( c.findOne(new BasicDBObject( "_id" , 1 ) ));
+        
+    }
     
     final Mongo _mongo;
     final DB _db;
