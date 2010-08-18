@@ -144,7 +144,7 @@ class DBTCPConnector implements DBConnector {
             }
             else {
                 mp.done( port );
-                return new WriteResult( db , port );
+                return new WriteResult( db , port , concern );
             }
         }
         catch ( IOException ioe ){
@@ -157,7 +157,7 @@ class DBTCPConnector implements DBConnector {
             CommandResult res = new CommandResult();
             res.put( "ok" , false );
             res.put( "$err" , "NETWORK ERROR" );
-            return new WriteResult( res , null );
+            return new WriteResult( res , concern );
         }
         catch ( MongoException me ){
             throw me;

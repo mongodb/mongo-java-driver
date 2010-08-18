@@ -34,10 +34,11 @@ public class WriteResult {
         _lazy = false;
     }
     
-    WriteResult( DB db , DBPort p ){
+    WriteResult( DB db , DBPort p , WriteConcern concern ){
         _db = db;
         _port = p;
         _lastCall = p._calls;
+        _lastConcern = concern;
         _lazy = true;
     }
 
@@ -95,6 +96,7 @@ public class WriteResult {
     DB _db;
     DBPort _port;
     long _lastCall;
+    WriteConcern _lastConcern;
 
     CommandResult _lastErrorResult;
 
