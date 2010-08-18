@@ -39,8 +39,12 @@ public class WriteConcern {
 
     public final static WriteConcern NONE = new WriteConcern(-1);
     public final static WriteConcern NORMAL = new WriteConcern(0);
-    public final static WriteConcern STRICT = new WriteConcern(1);
+
+    public final static WriteConcern STRICT = new WriteConcern(1); //  STRICT is deprecated should use SAFE
+
     public final static WriteConcern SAFE = new WriteConcern(1);
+    public final static WriteConcern FSYNC_SAFE = new WriteConcern(1,0,true);
+    public final static WriteConcern REPLICAS_SAFE = new WriteConcern(2);
 
     public WriteConcern(){
         this(0);
