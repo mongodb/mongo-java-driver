@@ -569,7 +569,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , res.getN() );
         assertFalse( res.isLazy() );
     }
-
+    
     @Test
     public void testWriteResultMethodLevelWriteConcern(){
         DBCollection c = _db.getCollection( "writeresult2" );
