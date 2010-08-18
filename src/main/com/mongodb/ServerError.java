@@ -7,15 +7,24 @@ import org.bson.*;
 public class ServerError {
     
     ServerError( DBObject o ){
-        Object foo = o.get( "$err" );
-        if ( foo == null )
+        _err = getMsg( o , null );
+        if ( _err == null )
             throw new IllegalArgumentException( "need to have $err" );
-
-        _err = foo.toString();
-        _code = _getCode( o );
+        _code = getCode( o );
+    }
+    
+    static String getMsg( BSONObject o , String def ){
+        Object e = o.get( "$err" );
+        if ( e == null )
+            e = o.get( "err" );
+        if ( e == null )
+            e = o.get( "errmsg" );
+        if ( e == null )
+            return def;
+        return e.toString();
     }
 
-    static int _getCode( BSONObject o ){
+    static int getCode( BSONObject o ){
         Object c = o.get( "code" );
         if ( c == null )
             c = o.get( "$code" );
@@ -35,12 +44,17 @@ public class ServerError {
     }
 
     public boolean isNotMasterError(){
-        return 
-            _err.equals( "not master" ) || 
-            _code == 10054 || 
-            _code == 10056 ||
-            _code == 10058 ||
-            _code == 10107;
+        switch ( _code ){
+        case 10054:
+        case 10056:
+        case 10058:
+        case 10107:
+        case 13435:
+        case 13436:
+            return true;
+        }
+        
+        return _err.startsWith( "not master" );
     }
 
     public String toString(){
@@ -51,4 +65,5 @@ public class ServerError {
 
     final String _err;
     final int _code;
+
 }

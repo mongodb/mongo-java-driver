@@ -43,16 +43,14 @@ public class MongoException extends RuntimeException {
     }
     
     public MongoException( BSONObject o ){
-        this( ServerError._getCode( o ) , _getMsg( o ) );
+        this( ServerError.getCode( o ) , ServerError.getMsg( o , "UNKNOWN" ) );
     }
 
-    static String _getMsg( BSONObject o ){
-        Object e = o.get( "$err" );
-        if ( e == null )
-            e = o.get( "err" );
-        if ( e == null )
-            return "UNKNOWN";
-        return e.toString();
+    static MongoException parse( BSONObject o ){
+        String s = ServerError.getMsg( o , null );
+        if ( s == null )
+            return null;
+        return new MongoException( ServerError.getCode( o ) , s );
     }
 
 

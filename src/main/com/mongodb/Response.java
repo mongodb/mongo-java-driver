@@ -116,8 +116,7 @@ class Response {
         
         DBObject obj = get(0);
         
-        Object err = obj.get( "$err" );
-        if ( err == null )
+        if ( ServerError.getMsg( obj , null ) == null )
             return null;
         
         return new ServerError( obj );
