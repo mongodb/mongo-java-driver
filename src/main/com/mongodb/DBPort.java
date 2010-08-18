@@ -142,6 +142,7 @@ public class DBPort {
                 
                 _socket.setTcpNoDelay( ! USE_NAGLE );
                 _socket.setSoTimeout( _options.socketTimeout );
+                _socket.setSoLinger(true,0);
                 _in = new BufferedInputStream( _socket.getInputStream() );
                 _out = _socket.getOutputStream();
                 return true;
