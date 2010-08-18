@@ -28,8 +28,9 @@ package com.mongodb;
  */
 public class WriteResult {
     
-    WriteResult( CommandResult o ){
+    WriteResult( CommandResult o , WriteConcern concern ){
         _lastErrorResult = o;
+        _lastConcern = concern;
         _lazy = false;
     }
     
@@ -38,6 +39,17 @@ public class WriteResult {
         _port = p;
         _lastCall = p._calls;
         _lazy = true;
+    }
+
+    /** @return the last result from getLastError()*/
+    public CommandResult getCachedLastError(){
+    	return _lastErrorResult;
+    	
+    }
+    /** @return the last {@link WriteConcern} used when calling getLastError() */
+    public WriteConcern getLastConcern(){
+    	return _lastConcern;
+    	
     }
     
     public synchronized CommandResult getLastError(){

@@ -118,7 +118,7 @@ class DBTCPConnector implements DBConnector {
         
         Object foo = e.get( "err" );
         if ( foo == null )
-            return new WriteResult( e );
+            return new WriteResult( e , concern );
         
         int code = -1;
         if ( e.get( "code" ) instanceof Number )
@@ -150,14 +150,14 @@ class DBTCPConnector implements DBConnector {
         catch ( IOException ioe ){
             mp.error( ioe );
             _error( ioe );
-            
+
             if ( concern.raiseNetworkErrors() )
                 throw new MongoException.Network( "can't say something" , ioe );
             
             CommandResult res = new CommandResult();
             res.put( "ok" , false );
             res.put( "$err" , "NETWORK ERROR" );
-            return new WriteResult( res );
+            return new WriteResult( res , null );
         }
         catch ( MongoException me ){
             throw me;
