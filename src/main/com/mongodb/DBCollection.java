@@ -44,7 +44,34 @@ public abstract class DBCollection {
      * @param arr  array of documents to save
      * @dochub insert
      */
-    public abstract WriteResult insert(DBObject ... arr) throws MongoException;
+    public abstract WriteResult insert(DBObject[] arr , WriteConcern concern ) throws MongoException;
+
+    /**
+     * Inserts a document into the database.
+     * if doc doesn't have an _id, one will be added
+     * you can get the _id that was added from doc after the insert
+     *
+     * @param arr  array of documents to save
+     * @dochub insert
+     */
+    public WriteResult insert(DBObject o , WriteConcern concern )
+        throws MongoException {
+        return insert( new DBObject[]{ o } , concern );
+    }
+
+
+    /**
+     * Saves document(s) to the database.
+     * if doc doesn't have an _id, one will be added
+     * you can get the _id that was added from doc after the insert
+     *
+     * @param arr  array of documents to save
+     * @dochub insert
+     */
+    public WriteResult insert(DBObject ... arr) 
+        throws MongoException {
+        return insert( arr , getWriteConcern() );
+    }
 
     /**
      * Saves document(s) to the database.
@@ -54,7 +81,10 @@ public abstract class DBCollection {
      * @param list list of documents to save
      * @dochub insert
      */
-    public abstract WriteResult insert(List<DBObject> list) throws MongoException;
+    public WriteResult insert(List<DBObject> list) 
+        throws MongoException {
+        return insert( list.toArray( new DBObject[list.size()] ) , getWriteConcern() );
+    }
 
     /**
      * Performs an update operation.
@@ -62,10 +92,25 @@ public abstract class DBCollection {
      * @param o object with which to update <tt>q</tt>
      * @param upsert if the database should create the element if it does not exist
      * @param multi if the update should be applied to all objects matching (db version 1.1.3 and above)
-     * See http://www.mongodb.org/display/DOCS/Atomic+Operations
+     *              See http://www.mongodb.org/display/DOCS/Atomic+Operations
+     * @param concern WriteConcern for this operation
      * @dochub update
      */
-    public abstract WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi ) throws MongoException ;
+    public abstract WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi , WriteConcern concern ) throws MongoException ;
+
+    /**
+     * Performs an update operation.
+     * @param q search query for old object to update
+     * @param o object with which to update <tt>q</tt>
+     * @param upsert if the database should create the element if it does not exist
+     * @param multi if the update should be applied to all objects matching (db version 1.1.3 and above)
+     *              See http://www.mongodb.org/display/DOCS/Atomic+Operations
+     * @dochub update
+     */
+    public WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi ) 
+        throws MongoException {
+        return update( q , o , upsert , multi , getWriteConcern() );
+    }
 
     /**
      * @dochub update
@@ -88,9 +133,20 @@ public abstract class DBCollection {
 
     /** Removes objects from the database collection.
      * @param o the object that documents to be removed must match
+     * @param concern WriteConcern for this operation
      * @dochub remove
      */
-    public abstract WriteResult remove( DBObject o ) throws MongoException ;
+    public abstract WriteResult remove( DBObject o , WriteConcern concern ) throws MongoException ;
+
+    /** Removes objects from the database collection.
+     * @param o the object that documents to be removed must match
+     * @dochub remove
+     */
+    public WriteResult remove( DBObject o ) 
+        throws MongoException {
+        return remove( o , getWriteConcern() );
+    }
+
 
     /** Finds an object.
      * @param ref query used to search

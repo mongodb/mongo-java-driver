@@ -92,22 +92,12 @@ public class DBApiLayer extends DB {
         public void doapply( DBObject o ){
         }
 
-        public WriteResult insert(DBObject ... arr)
+        public WriteResult insert(DBObject[] arr, com.mongodb.WriteConcern concern )
             throws MongoException {
-            return insert(arr, true);
+            return insert( arr , true , concern );
         }
 
-        public WriteResult insert(List<DBObject> list)
-            throws MongoException {
-            return insert(list.toArray(new DBObject[list.size()]) , true);
-        }
-
-        protected WriteResult insert(DBObject obj, boolean shouldApply )
-            throws MongoException {
-            return insert( new DBObject[]{ obj } , shouldApply );
-        }
-
-        protected WriteResult insert(DBObject[] arr, boolean shouldApply )
+        protected WriteResult insert(DBObject[] arr, boolean shouldApply , com.mongodb.WriteConcern concern )
             throws MongoException {
 
             if ( SHOW ) {
@@ -148,13 +138,13 @@ public class DBApiLayer extends DB {
                     }
                 }
                 
-                last = _connector.say( _db , om , getWriteConcern() );
+                last = _connector.say( _db , om , concern );
             }
             
             return last;
         }
         
-        public WriteResult remove( DBObject o )
+        public WriteResult remove( DBObject o , com.mongodb.WriteConcern concern )
             throws MongoException {
 
             if ( SHOW ) System.out.println( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
@@ -175,7 +165,7 @@ public class DBApiLayer extends DB {
 
             om.putObject( o );
             
-            return _connector.say( _db , om , getWriteConcern() );
+            return _connector.say( _db , om , concern );
         }
 
         void _cleanCursors()
@@ -214,7 +204,7 @@ public class DBApiLayer extends DB {
                 om.writeLong(l);
             }
 
-            _connector.say( _db , om , WriteConcern.NONE );
+            _connector.say( _db , om ,com.mongodb.WriteConcern.NONE );
         }
 
         @Override
@@ -245,7 +235,7 @@ public class DBApiLayer extends DB {
             return new Result( this , res , batchSize , options );
         }
 
-        public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi )
+        public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , com.mongodb.WriteConcern concern )
             throws MongoException {
 
             if ( SHOW ) System.out.println( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
@@ -262,7 +252,7 @@ public class DBApiLayer extends DB {
             om.putObject( query );
             om.putObject( o );
             
-            return _connector.say( _db , om , getWriteConcern() );
+            return _connector.say( _db , om , concern );
         }
 
         protected void createIndex( final DBObject keys, final DBObject options )
@@ -273,7 +263,7 @@ public class DBApiLayer extends DB {
                 full.put( k , options.get( k ) );
             full.put( "key" , keys );
 
-            DBApiLayer.this.doGetCollection( "system.indexes" ).insert( full , false );
+            DBApiLayer.this.doGetCollection( "system.indexes" ).insert( new DBObject[]{ full } , false , getWriteConcern() );
         }
 
         final String _fullNameSpace;
