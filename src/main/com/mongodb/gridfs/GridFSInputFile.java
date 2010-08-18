@@ -68,6 +68,11 @@ public class GridFSInputFile extends GridFSFile {
         }
         super.save();
     }
+
+    public int saveChunks() 
+        throws IOException {
+    	return saveChunks(GridFS.DEFAULT_CHUNKSIZE);
+    }
     
     public int saveChunks( int chunkSize )
         throws IOException {
