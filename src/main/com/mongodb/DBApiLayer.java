@@ -238,7 +238,7 @@ public class DBApiLayer extends DB {
             if ( res.size() == 1 ){
                 BSONObject foo = res.get(0);
                 MongoException e = MongoException.parse( foo );
-                if ( e != null )
+                if ( e != null && ! _name.equals( "$cmd" ) )
                     throw e;
             }
             
