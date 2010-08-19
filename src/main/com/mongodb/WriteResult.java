@@ -21,7 +21,7 @@ package com.mongodb;
 
 
 /**
- * This class lets you access the results of the previous write
+ * This class lets you access the results of the previous write.
  * if you have STRICT mode on, this just stores the result of that getLastError call
  * if you don't, then this will actually to the getlasterror call.  
  * if another op has been done on this connection in the interim, this will fail
@@ -32,6 +32,8 @@ public class WriteResult {
         _lastErrorResult = o;
         _lastConcern = concern;
         _lazy = false;
+        _port = null;
+        _db = null;
     }
     
     WriteResult( DB db , DBPort p , WriteConcern concern ){
@@ -53,19 +55,32 @@ public class WriteResult {
     	
     }
     
+    /**
+     * <p>Calling this will either return the cache result if getLastError has been called,
+     * or execute a new getLastError command on the sever.</p>
+     * @throws MongoInternalException if the connection has been used since the last write operation.
+     * @return {@link CommandResult} from the last write operation.
+     */
     public synchronized CommandResult getLastError(){
+	return getLastError(null);
+
+    }
+
+    public synchronized CommandResult getLastError(WriteConcern concern){
+	//if the concern hasn't changed and it is cached.
         if ( _lastErrorResult != null )
-            return _lastErrorResult;
+		if ( ( _lastConcern != null && _lastConcern.equals( concern ) ) || ( concern != null && concern.equals( _lastConcern ) ) )
+			return _lastErrorResult;
         
         if ( _port != null ){
-            _lastErrorResult = _port.tryGetLastError( _db , _lastCall );
-            _port = null;
-            _db = null;
+            _lastErrorResult = _port.tryGetLastError( _db , _lastCall , (concern == null) ? new WriteConcern() : concern  );
+            _lastConcern = concern;
         }
         
         if ( _lastErrorResult == null )
-            throw new IllegalStateException( "this port has been used since the last call, can't call getLastError anymore" );
+            throw new IllegalStateException( "The connection has been used since the last call, can't call getLastError anymore" );
         
+        _lastCall++;
         return _lastErrorResult;
     }
 
@@ -93,12 +108,10 @@ public class WriteResult {
         return getLastError().toString();
     }
 
-    DB _db;
-    DBPort _port;
-    long _lastCall;
-    WriteConcern _lastConcern;
-
-    CommandResult _lastErrorResult;
-
-    final boolean _lazy;
+    private long _lastCall;
+    private WriteConcern _lastConcern;
+    private CommandResult _lastErrorResult;
+    final private DB _db;
+    final private DBPort _port;
+    final private boolean _lazy;
 }

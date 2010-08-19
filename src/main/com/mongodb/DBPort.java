@@ -20,7 +20,6 @@ package com.mongodb;
 
 import java.io.*;
 import java.net.*;
-import java.nio.*;
 import java.util.*;
 import java.util.logging.*;
 
@@ -91,7 +90,12 @@ public class DBPort {
         }
     }
 
-    synchronized CommandResult runCommand( DB db , DBObject cmd ){
+    synchronized CommandResult getLastError( DB db , WriteConcern concern){
+	DBApiLayer dbAL = (DBApiLayer) db;
+	return runCommand( dbAL , concern.getCommand() );
+    }
+
+    synchronized CommandResult runCommand( DB db , DBObject cmd ) {
         OutMessage msg = OutMessage.query( 0 , db.getName() + ".$cmd" , 0 , -1 , cmd , null );
         
         try {
@@ -106,15 +110,11 @@ public class DBPort {
         
     }
 
-    synchronized CommandResult getLastError( DB db ){
-        return runCommand( db , new BasicDBObject( "getlasterror" , 1 ) );
-    }
-    
-    synchronized CommandResult tryGetLastError( DB db , long last ){
+    synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern){
         if ( last != _calls )
             return null;
         
-        return getLastError( db );
+        return getLastError( db , concern );
     }
 
     public synchronized void ensureOpen()

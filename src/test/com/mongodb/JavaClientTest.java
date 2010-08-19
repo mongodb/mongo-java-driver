@@ -304,7 +304,7 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
-    public void testStrictWrite(){
+    public void testStrictWriteSetInCollection(){
         DBCollection c = _db.getCollection( "write1" );
         c.drop();
         c.setWriteConcern( WriteConcern.STRICT );
@@ -318,6 +318,23 @@ public class JavaClientTest extends TestCase {
         }
         assertEquals( true , gotError );
         
+        assertEquals( 1 , c.find().count() );
+    }
+
+    @Test
+    public void testStrictWriteSetInMethod(){
+        DBCollection c = _db.getCollection( "write1" );
+        c.drop();
+        c.insert( new BasicDBObject( "_id" , 1 ));
+        boolean gotError = false;
+        try {
+            c.insert( new BasicDBObject( "_id" , 1 ) , WriteConcern.STRICT);
+        }
+        catch ( MongoException.DuplicateKey e ){
+            gotError = true;
+        }
+        assertEquals( true , gotError );
+
         assertEquals( 1 , c.find().count() );
     }
 
@@ -552,6 +569,28 @@ public class JavaClientTest extends TestCase {
 
         List<DBObject> a = c.find( new BasicDBObject( "x" , new BasicDBObject( "$in" , new Integer[]{ 2 , 3 } ) ) ).toArray();
         assertEquals( 2 , a.size() );
+    }
+
+    @Test
+    public void testWriteResultWithGetLastErrorWithDifferentConcerns(){
+        DBCollection c = _db.getCollection( "writeresultwfle1" );
+        c.drop();
+
+        WriteResult res = c.insert( new BasicDBObject( "_id" , 1 ) );
+        res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
+        assertEquals( 1 , res.getN() );
+        assertTrue( res.isLazy() );
+
+        CommandResult cr = res.getLastError( WriteConcern.FSYNC_SAFE );
+        assertEquals( 1 , cr.getInt( "n" ) );
+        assertTrue( cr.containsField( "fsyncFiles" ));
+
+        CommandResult cr2 = res.getLastError( WriteConcern.FSYNC_SAFE );
+        assertTrue( cr == cr2 );
+
+        CommandResult cr3 = res.getLastError( WriteConcern.NONE );
+        assertTrue( cr != cr3 && cr2 != cr3 );
+
     }
 
     @Test
