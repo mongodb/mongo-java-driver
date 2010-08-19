@@ -18,10 +18,6 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.net.*;
-import java.nio.*;
-import java.util.*;
 
 public interface DBConnector {
 

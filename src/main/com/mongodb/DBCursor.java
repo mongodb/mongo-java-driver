@@ -332,7 +332,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
         _cur = null;
         _cur = _it.next();
-        _collection.apply( _cur , false );
         _num++;
 
         if ( _keysWanted != null && _keysWanted.keySet().size() > 0 ){

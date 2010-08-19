@@ -80,7 +80,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      * @param o the object to convert 
      * @return an <code>ObjectId</code> if it can be massaged, null otherwise 
      */
-    public static ObjectId massageToObjectId( Object o ){
+    protected static ObjectId massageToObjectId( Object o ){
         if ( o == null )
             return null;
         

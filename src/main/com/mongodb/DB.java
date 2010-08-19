@@ -34,6 +34,7 @@ public abstract class DB {
      * updates, and removes).
      * @deprecated 
      */
+	@Deprecated
     public static class WriteConcern {
         /**
          * Don't check for or report any errors on writes.
@@ -301,6 +302,7 @@ public abstract class DB {
      * @param concern write concern to use
      */
     public void setWriteConcern( com.mongodb.WriteConcern concern ){
+	if (concern == null) throw new IllegalArgumentException();
         _concern = concern;
     }
 

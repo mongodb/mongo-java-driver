@@ -20,7 +20,6 @@ package com.mongodb;
 
 import java.io.*;
 import java.net.*;
-import java.nio.*;
 import java.util.*;
 import java.util.logging.*;
 
@@ -268,7 +267,6 @@ class DBTCPConnector implements DBConnector {
         void done( DBPort p ){
             
             if ( _internalStack <= 0 ){
-                int prev = _internalStack;
                 _reset();
                 throw new IllegalStateException( "done called and _internalStack was: " + _internalStack );
             }
