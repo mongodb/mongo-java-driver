@@ -636,7 +636,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , c.findOne(new BasicDBObject( "_id" , 1 ) ).get( "x" ));
         
         //return new one
-        dbObj = c.findAndModify( new BasicDBObject( "_id" , 1 ) , null, null, false, new BasicDBObject( "x", 5), true);
+        dbObj = c.findAndModify( new BasicDBObject( "_id" , 1 ) , null, null, false, new BasicDBObject( "x", 5), true, false);
         assertEquals( 2 , dbObj.keySet().size());
         assertEquals( 5 , dbObj.get( "x" ));
         assertEquals( 5 , c.findOne(new BasicDBObject( "_id" , 1 ) ).get( "x" ));

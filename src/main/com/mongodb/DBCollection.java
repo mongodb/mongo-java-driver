@@ -241,13 +241,14 @@ public abstract class DBCollection {
      * You can also specify the fields to return in the document, optionally.
      * @return the found document (before, or after the update)
      */
-    public DBObject findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update, boolean returnNew) {
+    public DBObject findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update, boolean returnNew, boolean upsert) {
 
         if ( DEBUG ) System.out.println( "findAndModify: " + _fullName + 
                                          " query:" + JSON.serialize( query ) + 
                                          " sort:" + JSON.serialize( sort )+ 
                                          " remove:" + remove + 
                                          " update: " + JSON.serialize( update )+ 
+                                         " upsert: " + upsert+ 
                                          " returnNew:" + returnNew);
         
         BasicDBObject cmd = new BasicDBObject( "findandmodify", _name);
@@ -265,6 +266,8 @@ public abstract class DBCollection {
                 cmd.append( "update", update );
             if (returnNew)
                 cmd.append( "new", returnNew );
+            if (upsert)
+                cmd.append( "upsert", returnNew );
         }
         
         if (remove && !(update == null || update.keySet().isEmpty() || returnNew))
@@ -279,7 +282,7 @@ public abstract class DBCollection {
      * @return the old document
      */
     public DBObject findAndModify( DBObject query , DBObject sort , DBObject update){ 
-    	return findAndModify( query, null, null, false, update, false );
+    	return findAndModify( query, null, null, false, update, false, false);
     }
 
     /**
@@ -287,7 +290,7 @@ public abstract class DBCollection {
      * @return the old document
      */
     public DBObject findAndModify( DBObject query , DBObject update ) { 
-    	return findAndModify( query, null, null, false, update, false );
+    	return findAndModify( query, null, null, false, update, false, false );
     }
 
     /**
@@ -295,7 +298,7 @@ public abstract class DBCollection {
      * @return the removed document
      */
     public DBObject findAndRemove( DBObject query ) { 
-    	return findAndModify( query, null, null, true, null, false );
+    	return findAndModify( query, null, null, true, null, false, false );
     }
 
     // --- START INDEX CODE ---
