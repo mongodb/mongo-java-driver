@@ -519,7 +519,15 @@ public abstract class DBCollection {
      * @param jo the <code>DBObject</code> to save
      *        will add <code>_id</code> field to jo if needed
      */
-    public final WriteResult save( DBObject jo )
+    public final WriteResult save( DBObject jo ) {
+    	return save(jo, null);
+    }
+    
+    /** Saves an object to this collection.
+     * @param jo the <code>DBObject</code> to save
+     *        will add <code>_id</code> field to jo if needed
+     */
+    public final WriteResult save( DBObject jo, WriteConcern concern )
         throws MongoException {
         if ( checkReadOnly( true ) ) 
             return null;
@@ -535,13 +543,20 @@ public abstract class DBCollection {
             if ( DEBUG ) System.out.println( "saving new object" );
             if ( id != null && id instanceof ObjectId )
                 ((ObjectId)id).notNew();
-            return insert( jo );
+            if ( concern == null )
+            	return insert( jo );
+            else
+            	return insert( jo, concern );
         }
 
         if ( DEBUG ) System.out.println( "doing implicit upsert : " + jo.get( "_id" ) );
         DBObject q = new BasicDBObject();
         q.put( "_id" , id );
-        return update( q , jo , true , false );
+        if ( concern == null )
+        	return update( q , jo , true , false );
+        else
+        	return update( q , jo , true , false , concern );
+        	
     }
     
     // ---- DB COMMANDS ----
