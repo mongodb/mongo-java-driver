@@ -534,8 +534,6 @@ public abstract class DBCollection {
 
         _checkObject( jo , false , false );
         
-        //_findSubObject( s , jo , null );
-
         Object id = jo.get( "_id" );
         if ( DEBUG ) System.out.println( "id : " + id );
 
