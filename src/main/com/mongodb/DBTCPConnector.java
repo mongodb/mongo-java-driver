@@ -283,13 +283,15 @@ class DBTCPConnector implements DBConnector {
         }
 
         void error( Exception e ){
-            if ( _last == null )
-                throw new IllegalStateException( "this should be impossible" );
-
             _curPortPool.gotError( e );
 
-            _curPortPool.done( _last );
-            _last.close();
+            if ( _last == null ){
+                _logger.log( Level.SEVERE , "MyPort.error called but _last is null  called b/c of" , e );
+            }
+            else {
+                _curPortPool.done( _last );
+                _last.close();
+            }
 
             _last = null;
             _port = null;
