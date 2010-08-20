@@ -64,6 +64,16 @@ public class DBPort {
     private synchronized Response go( OutMessage msg , DBCollection coll )
         throws IOException {
 
+        if ( _processingResponse ){
+            if ( coll == null ){
+                // this could be a pipeline and should be safe
+            }
+            else {
+                // this could cause issues since we're reading data off the wire
+                throw new IllegalStateException( "DBPort.go called and expecting a response while processing another response" );
+            }
+        }
+
         _calls++;
     
         if ( _socket == null )
@@ -82,11 +92,15 @@ public class DBPort {
             if ( coll == null )
                 return null;
             
+            _processingResponse = true;
             return new Response( coll , _in );
         }
         catch ( IOException ioe ){
             close();
             throw ioe;
+        }
+        finally {
+            _processingResponse = false;
         }
     }
 
@@ -236,7 +250,9 @@ public class DBPort {
     private Socket _socket;
     private InputStream _in;
     private OutputStream _out;
-    
+
+    private boolean _processingResponse;
+
     private Map<DB,Boolean> _authed = Collections.synchronizedMap( new WeakHashMap<DB,Boolean>() );
     int _lastThread;
     long _calls = 0;
