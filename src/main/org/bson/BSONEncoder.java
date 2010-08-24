@@ -7,6 +7,7 @@ import static org.bson.BSON.*;
 import java.nio.*;
 import java.nio.charset.*;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.*;
 import java.util.regex.*;
 
@@ -105,19 +106,33 @@ public class BSONEncoder {
             }
         }
         
-
-        for ( String s : o.keySet() ){
-
-            if ( rewriteID && s.equals( "_id" ) )
-                continue;
-            
-            if ( transientFields != null && transientFields.contains( s ) )
-                continue;
-            
-            Object val = o.get( s );
-
-            _putObjectField( s , val );
-
+        //TODO: reduce repeated code below.
+        if ( o instanceof Map ){
+	        for ( Entry<String, Object> e : ((Map<String, Object>)o).entrySet() ){
+	        	
+	            if ( rewriteID && e.getKey().equals( "_id" ) )
+	                continue;
+	            
+	            if ( transientFields != null && transientFields.contains( e.getKey() ) )
+	                continue;
+	            
+	            _putObjectField( e.getKey() , e.getValue() );
+	
+	        }        	
+        } else {
+	        for ( String s : o.keySet() ){
+	
+	            if ( rewriteID && s.equals( "_id" ) )
+	                continue;
+	            
+	            if ( transientFields != null && transientFields.contains( s ) )
+	                continue;
+	            
+	            Object val = o.get( s );
+	
+	            _putObjectField( s , val );
+	
+	        }
         }
         _buf.write( EOO );
         
