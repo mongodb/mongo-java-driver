@@ -20,46 +20,76 @@ package com.mongodb;
 /**
  * <p>WriteConcern control the write behavior for with various options, as well as exception raising on error conditions.</p>
  * 
- * w
- *   -1 = don't even report network errors
- *    0 = default, don't call getLastError by default
- *    1 = basic, call getLastError, but don't wait for slaves
- *    2+= wait for slaves
- *
- * wtimeout
- *   how long to wait for slaves before failing
- *   0 = indefinite
- *   > 0 = ms to wait
- *
- * fsync
- *   force fsync to disk
+ * <p>
+ * <b>w</b>
+ * <ul>
+ * 	<li>-1 = don't even report network errors </li>
+ *  <li> 0 = default, don't call getLastError by default </li>
+ *  <li> 1 = basic, call getLastError, but don't wait for slaves</li>
+ *  <li> 2+= wait for slaves </li>
+ * </ul>
+ * <b>wtimeout</b> how long to wait for slaves before failing
+ * <ul>
+ *   <li>0 = indefinite </li>
+ *   <li>> 0 = ms to wait </li>
+ * </ul>
+ * </p>
+ * <p><b>fsync</b> force fsync to disk </p>
+ * 
  * @dochub databases
  */
 public class WriteConcern {
 
+	/** No exceptions are raised, even for network issues */
     public final static WriteConcern NONE = new WriteConcern(-1);
+	/** Exceptions are raised for network issues, but not server errors */
     public final static WriteConcern NORMAL = new WriteConcern(0);
 
+	/** Exceptions are raised for network issues, and server errors; waits on a server for the write operation */
     public final static WriteConcern SAFE = new WriteConcern(1);
 
     @Deprecated /** use SAFE */
     public final static WriteConcern STRICT = SAFE;
 
-    public final static WriteConcern FSYNC_SAFE = new WriteConcern(1,0,true);
+	/** Exceptions are raised for network issues, and server errors and the write operation waits for the server to flush the data to disk*/
+    public final static WriteConcern FSYNC_SAFE = new WriteConcern(true);
+	/** Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation*/
     public final static WriteConcern REPLICAS_SAFE = new WriteConcern(2);
 
     public WriteConcern(){
         this(0);
     }
 
+	/** <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
+	 *	<p> w represents # of servers:
+	 * 		<ul>
+	 * 			<li>{@code w=-1} None, no checking is done</li>
+	 * 			<li>{@code w=0} None, network socket errors raised</li>
+	 * 			<li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
+	 * 			<li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
+	 * 		</ul>
+	 * 	</p>
+	 * 
+	 **/
     public WriteConcern( int w ){
         this( w , 0 , false );
     }
 
+	/** <p>Specifies the number of servers to wait for on the write operation, and the amount of time (ms) to wait.</p>
+	 *	<p> Note: w should be > 1 </p>
+	 * 
+	 **/
     public WriteConcern( int w , int wtimeout ){
         this( w , wtimeout , false );
     }
 
+    public WriteConcern( boolean fsync ){
+        this( 1 , 0 , fsync);
+    }
+
+	/** <p>Specifies the number of servers to wait for on the write operation, and the amount of time (ms) to wait.</p>
+	 *	<p> Note: w should be > 1 </p>
+	 **/
     public WriteConcern( int w , int wtimeout , boolean fsync ){
         _w = w;
         _wtimeout = wtimeout;
