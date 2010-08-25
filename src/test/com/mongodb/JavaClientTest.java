@@ -648,6 +648,22 @@ public class JavaClientTest extends TestCase {
         assertNull( c.findOne(new BasicDBObject( "_id" , 1 ) ));
         
     }
+
+    @Test
+    public void testGetCollectionFromString(){
+        DBCollection c = _db.getCollectionFromString( "foo" );
+        assertEquals( "foo" , c.getName() );
+
+        c = _db.getCollectionFromString( "foo.bar" );
+        assertEquals( "foo.bar" , c.getName() );
+
+        c = _db.getCollectionFromString( "foo.bar.zoo" );
+        assertEquals( "foo.bar.zoo" , c.getName() );
+
+        c = _db.getCollectionFromString( "foo.bar.zoo.dork" );
+        assertEquals( "foo.bar.zoo.dork" , c.getName() );
+        
+    }
     
     final Mongo _mongo;
     final DB _db;

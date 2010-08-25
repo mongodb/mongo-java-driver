@@ -119,7 +119,10 @@ public abstract class DB {
             int idx = s.indexOf( "." );
             String b = s.substring( 0 , idx );
             s = s.substring( idx + 1 );
-            foo = getCollection( b );
+            if ( foo == null )
+                foo = getCollection( b );
+            else
+                foo = foo.getCollection( b );
         }
 
         if ( foo != null )
