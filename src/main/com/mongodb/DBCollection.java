@@ -267,7 +267,7 @@ public abstract class DBCollection {
             if (returnNew)
                 cmd.append( "new", returnNew );
             if (upsert)
-                cmd.append( "upsert", returnNew );
+                cmd.append( "upsert", upsert );
         }
         
         if (remove && !(update == null || update.keySet().isEmpty() || returnNew))
