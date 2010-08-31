@@ -74,6 +74,26 @@ public class Mongo {
         return new Mongo( addr ).getDB( addr.getDBName() );
     }
 
+    public static Mongo getStaticMongo( String host )
+        throws UnknownHostException , MongoException {
+        return getStaticMongo( host , new MongoOptions() );
+    }
+
+    public static Mongo getStaticMongo( String host , MongoOptions options )
+        throws UnknownHostException , MongoException {
+        Mongo m = _mongos.get( host );
+        if ( m != null )
+            return m;
+        
+        m = new Mongo( host , options );
+        Mongo temp = _mongos.putIfAbsent( host , m );
+        if ( temp != null ){
+            m.close();
+            return temp;
+        }
+        return m;
+    }
+
     public Mongo()
         throws UnknownHostException , MongoException {
         this( new ServerAddress() );
@@ -285,4 +305,6 @@ public class Mongo {
     final DBTCPConnector _connector;
     final ConcurrentMap<String,DB> _dbs = new ConcurrentHashMap<String,DB>();
     private WriteConcern _concern = WriteConcern.NORMAL;
+
+    private static final ConcurrentMap<String,Mongo> _mongos = new ConcurrentHashMap<String,Mongo>();
 }
