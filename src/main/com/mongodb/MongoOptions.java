@@ -70,5 +70,15 @@ public class MongoOptions {
     */
     public boolean autoConnectRetry;
     
-
+    public String toString(){
+        StringBuilder buf = new StringBuilder();
+        buf.append( "connectionsPerHost: " ).append( connectionsPerHost ).append( " " );
+        buf.append( "threadsAllowedToBlockForConnectionMultiplier: " ).append( threadsAllowedToBlockForConnectionMultiplier ).append( " " );
+        buf.append( "maxWaitTime: " ).append( maxWaitTime ).append( " " );
+        buf.append( "connectTimeout: " ).append( connectTimeout ).append( " " );
+        buf.append( "socketTimeout: " ).append( socketTimeout ).append( " " );
+        buf.append( "autoConnectRetry: " ).append( autoConnectRetry ).append( " " );
+        return buf.toString();
+    }
+    
 }
