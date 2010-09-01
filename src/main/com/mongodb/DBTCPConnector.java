@@ -226,8 +226,7 @@ class DBTCPConnector implements DBConnector {
     boolean _error( Throwable t )
         throws MongoException {
         if ( _allHosts != null ){
-            System.out.println( "paired mode, switching master b/c of: " + t );
-            t.printStackTrace();
+            _logger.log( Level.WARNING , "paired mode, switching master" , t );
             _pickCurrent();
         }
         return true;
