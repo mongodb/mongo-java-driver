@@ -2,13 +2,14 @@
 
 package com.mongodb.util;
 
-import com.mongodb.*;
-import org.bson.*;
-import org.bson.types.*;
-
 import java.text.*;
 import java.util.*;
 import java.util.regex.*;
+
+import org.bson.*;
+import org.bson.types.*;
+
+import com.mongodb.*;
 
 /**
  *   Helper methods for JSON serialization and de-serialization
@@ -69,12 +70,12 @@ public class JSON {
             return;
         }
 
-        if ( o instanceof Collection){
+        if ( o instanceof Iterable){
 
             boolean first = true;
             buf.append( "[ " );
             
-            for ( Object n : (Collection)o ){
+            for ( Object n : (Iterable)o ){
                 if ( first ) first = false;
                 else buf.append( " , " );
                 
