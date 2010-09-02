@@ -147,7 +147,7 @@ class DBTCPConnector implements DBConnector {
             }
         }
         catch ( IOException ioe ){
-            mp.error( ioe );
+            mp.error( ioe , true );
             _error( ioe );
 
             if ( concern.raiseNetworkErrors() )
@@ -162,7 +162,7 @@ class DBTCPConnector implements DBConnector {
             throw me;
         }
         catch ( RuntimeException re ){
-            mp.error( re );
+            mp.error( re , true );
             throw re;
         }
 
@@ -187,14 +187,15 @@ class DBTCPConnector implements DBConnector {
             mp.done( port );
         }
         catch ( IOException ioe ){
-            mp.error( ioe );
-            if ( _error( ioe ) && retries > 0 ){
+            boolean shoulRetry = _error( ioe ) && retries > 0;
+            mp.error( ioe , ! shoulRetry );
+            if ( shoulRetry ){
                 return call( db , coll , m , retries - 1 );
             }
             throw new MongoException.Network( "can't call something" , ioe );
         }
         catch ( RuntimeException re ){
-            mp.error( re );
+            mp.error( re , true );
             throw re;
         }
 
@@ -239,7 +240,7 @@ class DBTCPConnector implements DBConnector {
 
             if ( _internalStack > 1 ){
                 if ( _last == null ){
-                    System.err.println( "_internalStack > 1 and _last is null!" );
+                    // this means there was an error on a previous connection
                 }
                 else {
                     return _last;
@@ -271,17 +272,16 @@ class DBTCPConnector implements DBConnector {
             }
             
             _internalStack--;
-
+            
             if ( p != _port && _internalStack == 0 )
                 _curPortPool.done( p );
 
             if ( _internalStack < 0 ){
-                System.err.println( "_internalStack < 0 : " + _internalStack );
                 _internalStack = 0;
             }
         }
 
-        void error( Exception e ){
+        void error( Exception e , boolean resetStack ){
             _curPortPool.gotError( e );
 
             if ( _last == null ){
@@ -294,7 +294,10 @@ class DBTCPConnector implements DBConnector {
 
             _last = null;
             _port = null;
-            _internalStack = 0;
+            if ( resetStack )
+                _internalStack = 0;
+
+            _logger.log( Level.SEVERE , "MyPort.error called" , e );            
         }
         
         void requestEnsureConnection(){
@@ -311,7 +314,7 @@ class DBTCPConnector implements DBConnector {
             _inRequest = true;
             if ( _port != null ){
                 _port = null;
-                System.err.println( "ERROR.  somehow _port was not null at requestStart" );
+                _logger.log( Level.WARNING , "somehow _port was not null at requestStart" );
             }
         }
 
@@ -321,7 +324,7 @@ class DBTCPConnector implements DBConnector {
             _port = null;
             _inRequest = false;
             if ( _internalStack > 0 ){
-                System.err.println( "_internalStack in requestDone should be 0 is: " + _internalStack );
+                _logger.log( Level.WARNING , "_internalStack in requestDone should be 0 is: " + _internalStack );
                 _internalStack = 0;
             }
         }
