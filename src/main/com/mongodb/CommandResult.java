@@ -21,7 +21,7 @@ package com.mongodb;
 /** A simple wrapper for the result of getLastError() calls, and network (socket) errors. */
 public class CommandResult extends BasicDBObject {
 
-	CommandResult(){
+    CommandResult(){
     }
 
     public boolean ok(){
@@ -64,12 +64,12 @@ public class CommandResult extends BasicDBObject {
     
 
     DBObject _cmd;
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	static class CommandFailure extends MongoException {
-		private static final long serialVersionUID = 1L;
+    static class CommandFailure extends MongoException {
+        private static final long serialVersionUID = 1L;
 
-		CommandFailure( CommandResult res , String msg ){
+        CommandFailure( CommandResult res , String msg ){
             super( ServerError.getCode( res ) , msg );
         }
     }
