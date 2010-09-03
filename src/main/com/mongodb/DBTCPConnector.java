@@ -187,7 +187,7 @@ class DBTCPConnector implements DBConnector {
             mp.done( port );
         }
         catch ( IOException ioe ){
-            boolean shoulRetry = _error( ioe ) && retries > 0;
+            boolean shoulRetry = _error( ioe ) && ! coll._name.equals( "$cmd" ) && retries > 0;
             mp.error( ioe , ! shoulRetry );
             if ( shoulRetry ){
                 return call( db , coll , m , retries - 1 );
