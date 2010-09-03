@@ -236,6 +236,9 @@ class DBTCPConnector implements DBConnector {
     class MyPort {
 
         DBPort get( boolean keep ){
+            if ( _internalStack > 0 ){
+                _logger.log( Level.SEVERE , "if you get this, please post to mongodb-user :)" );
+            }
             _internalStack++;
 
             if ( _internalStack > 1 ){
