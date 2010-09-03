@@ -109,10 +109,10 @@ class DBTCPConnector implements DBConnector {
         _threadPort.get().requestEnsureConnection();
     }
 
-    WriteResult _checkWriteError( MyPort mp , DBPort port , WriteConcern concern )
+    WriteResult _checkWriteError( DB db , MyPort mp , DBPort port , WriteConcern concern )
         throws MongoException {
 
-        CommandResult e = _mongo.getDB( "admin" ).command( concern.getCommand() );
+        CommandResult e = port.runCommand( db , concern.getCommand() );
         mp.done( port );
         
         Object foo = e.get( "err" );
@@ -139,7 +139,7 @@ class DBTCPConnector implements DBConnector {
         try {
             port.say( m );
             if ( concern.callGetLastError() ){
-                return _checkWriteError( mp , port , concern );
+                return _checkWriteError( db , mp , port , concern );
             }
             else {
                 mp.done( port );
