@@ -187,11 +187,21 @@ public class Mongo {
         _connector._pickInitial();
     }
 
+    /**
+     * creates a Mongo connection to a replica set
+     * @pair replicaSetSeeds put as many servers as you can in the list. 
+     *                       the system will figure the rest out
+     */
     public Mongo( List<ServerAddress> replicaSetSeeds )
         throws MongoException {
         this( replicaSetSeeds , new MongoOptions() );
     }
-    
+
+    /**
+     * creates a Mongo connection to a replica set
+     * @pair replicaSetSeeds put as many servers as you can in the list. 
+     *                       the system will figure the rest out
+     */    
     public Mongo( List<ServerAddress> replicaSetSeeds , MongoOptions options )
         throws MongoException {
         

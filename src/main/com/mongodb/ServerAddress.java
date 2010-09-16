@@ -93,7 +93,7 @@ public class ServerAddress {
      */
     List<ServerAddress> explode(){
         if ( _all == null || _all.length <= 1 )
-            throw new RuntimeException( "not paired.  num addresses : " + _all.length );
+            throw new RuntimeException( "not replica set mode.  num addresses : " + _all.length );
         
         List<ServerAddress> s = new ArrayList<ServerAddress>();
         for ( int i=0; i<_all.length; i++ ){
