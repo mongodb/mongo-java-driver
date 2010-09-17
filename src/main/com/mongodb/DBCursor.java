@@ -441,7 +441,11 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
             _next();
     }
 
-    /** Finds the number of elements in the array.
+    /** 
+     * pulls back all items into an array
+     * this is slow
+     * @see count()
+     * @see size()
      * @return the number of elements in the array
      */
     public int length()
@@ -474,6 +478,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     /**
      * for testing only!
      * iterates cursor and counts objects
+     * very slow
+     * @see count()
      * @return num objects
      */
     public int itcount(){
@@ -488,6 +494,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     /**
      * Counts the number of elements matching the query
      * this does not take limit/skip into consideration
+     * @see size()
      * @return the number of elements
      */
     public int count() 
@@ -503,6 +510,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     /**
      * Counts the number of elements matching the query that would be returned
      * this does take limit/skip into consideration
+     * @see count()
      * @return the number of elements
      */
     public int size() 
