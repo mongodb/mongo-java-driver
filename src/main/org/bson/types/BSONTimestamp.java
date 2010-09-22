@@ -21,8 +21,10 @@ package org.bson.types;
 import java.util.Date;
 
 /**
-   this is used for internal increment values.
-   for storing normal dates in MongoDB, you should use java.util.Date
+ * this is used for internal increment values.
+ * for storing normal dates in MongoDB, you should use java.util.Date
+ * <b>time</b> is seconds since epoch
+ * <b>inc<b> is an ordinal
  */
 public class BSONTimestamp {
     
@@ -33,11 +35,14 @@ public class BSONTimestamp {
         _time = null;
     }
 
-    public BSONTimestamp(int time, int i) {
+    public BSONTimestamp(int time, int inc ){
         _time = new Date( time * 1000L );
-        _inc = i;
+        _inc = inc;
     }
-    
+
+    /**
+     * @return get time in seconds since epoch
+     */
     public int getTime(){
         if ( _time == null )
             return 0;
