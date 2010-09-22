@@ -302,14 +302,15 @@ public class DBApiLayer extends DB {
         }
 
         public boolean hasNext(){
-            if ( _cur.hasNext() )
-                return true;
-
-            if ( ! _curResult.hasGetMore( _options ) )
-                return false;
-
-            _advance();
-            return hasNext();
+            while ( true ){
+                if ( _cur.hasNext() )
+                    return true;
+                
+                if ( ! _curResult.hasGetMore( _options ) )
+                    return false;
+                
+                _advance();
+            }
         }
 
         private void _advance(){
