@@ -169,6 +169,26 @@
 
   </target>
 
+  <target name="readoplog" depends="compile">
+
+    <javac srcdir="examples"
+           destdir="build/test"
+           optimize="off"
+           deprecation="off"
+           source="1.5"
+           encoding="ISO-8859-1"
+           debug="on" >
+      <classpath refid="classpath"/>
+    </javac>
+
+    <java classname="examples.ReadOplog" 
+          fork="true">
+      <classpath refid="classpath"/>
+    </java>
+
+  </target>
+
+
   <target name="publish">
     <exec dir="." executable="python">
       <arg value="mavenPush.py"/>
