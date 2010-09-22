@@ -1,5 +1,7 @@
 // ReadOplog.java
 
+package examples;
+
 import com.mongodb.*;
 import org.bson.types.*;
 import java.util.*;
@@ -28,7 +30,7 @@ public class ReadOplog {
         System.out.println( "starting point: " + ts );
         
         while ( true ){
-            System.out.println( "ts: " + ts );
+            System.out.println( "starting at ts: " + ts );
             DBCursor cursor = oplog.find( new BasicDBObject( "ts" , new BasicDBObject( "$gt" , ts ) ) );
             cursor.addOption( Bytes.QUERYOPTION_TAILABLE );
             cursor.addOption( Bytes.QUERYOPTION_AWAITDATA );
@@ -38,6 +40,7 @@ public class ReadOplog {
                 System.out.println( "\t" + x );
             }
             
+            Thread.sleep( 1000 );
         }
     }
 }
