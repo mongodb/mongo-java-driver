@@ -94,12 +94,12 @@ class Response {
             return false;
             
         // have a tailable cursor
-        if ( ( _flags & Bytes.RESULTFLAG_AWAITCAPABLE ) > 0 )
+
+        if ( ( _flags & Bytes.RESULTFLAG_AWAITCAPABLE ) > 0 && ( queryOptions & Bytes.QUERYOPTION_AWAITDATA ) > 0 )
             return true;
         
         try {
-            System.out.println( "sleep" );
-            Thread.sleep( 1000 );
+            Thread.sleep( 500 );
         }
         catch ( Exception e ){}
         
