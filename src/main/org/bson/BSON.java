@@ -5,10 +5,13 @@ package org.bson;
 import java.nio.charset.*;
 import java.util.*;
 import java.util.regex.*;
+import java.util.logging.*;
 
 import org.bson.util.*;
 
 public class BSON {
+
+    static final Logger LOGGER = Logger.getLogger( "org.bson.BSON" );
 
     // ---- basics ----
 
@@ -139,7 +142,7 @@ public class BSON {
     }
 
     private static void _warnUnsupportedRegex( String flag ) {
-        System.out.println( "flag " + flag + " not supported by db." );
+        LOGGER.info( "flag " + flag + " not supported by db." );
     }
 
     private static final int GLOBAL_FLAG = 256;

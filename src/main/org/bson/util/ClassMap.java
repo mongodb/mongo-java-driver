@@ -34,8 +34,8 @@ import java.util.*;
  * ClassMap<String> m = new ClassMap<String>();
  * m.put(Animal.class, "Animal");
  * m.put(Fox.class, "Fox");
- * System.out.println(m.get(Fox.class)) // --> "Fox"
- * System.out.println(m.get(Dog.class)) // --> "Animal"
+ * m.Fox.class) --> "Fox"
+ * m.get(Dog.class) --> "Animal"
  *
  * (assuming Dog.class &lt; Animal.class)
  * 
