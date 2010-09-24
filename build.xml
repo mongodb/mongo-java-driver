@@ -126,6 +126,16 @@
       <fileset dir="docs/${version}" />
     </jar>
 
+    <jar jarfile="bson-sources.jar" >
+      <fileset dir="src/main" />
+    </jar>
+
+    <jar jarfile="bson-javadoc.jar" >
+      <fileset dir="docs/${version}" />
+    </jar>
+
+
+
   </target>
 
   <target name="rebuild" depends="clean, compile"/>
