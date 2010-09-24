@@ -149,7 +149,18 @@ public class DBCollectionTest extends TestCase {
         assertEquals( 2 , c.getIndexInfo().size() );
         assertEquals( Boolean.TRUE , c.getIndexInfo().get(1).get( "unique" ) );
     }
-
+    
+    @Test
+    public void testUpsert(){
+        DBCollection c = _db.getCollection( "upsert1" );
+        c.drop();
+        
+        c.update( new BasicDBObject( "page" , "/" ), new BasicDBObject("$inc", new BasicDBObject( "count" , 1 )), true, false );
+        c.update( new BasicDBObject( "page" , "/" ), new BasicDBObject("$inc", new BasicDBObject( "count" , 1 )), true, false );
+        
+        assertEquals( 1 , c.getCount() );
+        assertEquals( 2 , c.findOne().get("count") );
+    }
 
     final DB _db;
 
