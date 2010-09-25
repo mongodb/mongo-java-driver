@@ -175,7 +175,10 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
     public int hashCode(){
-        return _inc;
+        int x = _time;
+        x += ( _machine * 111 );
+        x += ( _inc * 17 );
+        return x;
     }
 
     public boolean equals( Object o ){
