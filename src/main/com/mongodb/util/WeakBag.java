@@ -35,12 +35,12 @@ public class WeakBag<T> implements Iterable<T> {
      * @param t Element to add
      */
     public void add( T t ){
-        _set.add( new MyRef( t ) );
+        _refs.add( new MyRef( t ) );
     }
 
     public boolean remove( T t ){
 
-        for ( Iterator<MyRef> i = _set.iterator(); i.hasNext(); ){
+        for ( Iterator<MyRef> i = _refs.iterator(); i.hasNext(); ){
             MyRef ref = i.next();
             if( ref == null )
                 continue;
@@ -62,7 +62,7 @@ public class WeakBag<T> implements Iterable<T> {
 
     public boolean contains( T t ){
         
-        for ( Iterator<MyRef> i = _set.iterator(); i.hasNext(); ){
+        for ( Iterator<MyRef> i = _refs.iterator(); i.hasNext(); ){
             MyRef ref = i.next();
             T me = ref.get();
             if ( me == t )
@@ -76,17 +76,17 @@ public class WeakBag<T> implements Iterable<T> {
      */
     public int size(){
         clean();
-        return _set.size();
+        return _refs.size();
     }
 
     /** Removes all object from the bag. */
     public void clear(){
-        _set.clear();
+        _refs.clear();
     }
     
     /** Removes any null objects from the bag. */
     public void clean(){
-        for ( Iterator<MyRef> i = _set.iterator(); i.hasNext(); ){
+        for ( Iterator<MyRef> i = _refs.iterator(); i.hasNext(); ){
             MyRef ref = i.next();
             if ( ref.get() == null )
                 i.remove();
@@ -101,7 +101,7 @@ public class WeakBag<T> implements Iterable<T> {
     
         List<T> l = new ArrayList<T>();
         
-        for ( Iterator<MyRef> i = _set.iterator(); i.hasNext(); ){
+        for ( Iterator<MyRef> i = _refs.iterator(); i.hasNext(); ){
             MyRef ref = i.next();
             T t = ref.get();
             if ( t == null )
@@ -119,5 +119,5 @@ public class WeakBag<T> implements Iterable<T> {
         }
     }
 
-    private final List<MyRef> _set = new ArrayList<MyRef>();
+    private final List<MyRef> _refs = new LinkedList<MyRef>();
 }

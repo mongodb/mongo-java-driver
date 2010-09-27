@@ -22,6 +22,7 @@ import java.net.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
+import java.util.logging.*;
 
 /**
  * A globally unique identifier for objects.
@@ -39,8 +40,8 @@ import java.util.concurrent.atomic.*;
  */
 public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
-    static final boolean D = false;
-    
+    static final Logger LOGGER = Logger.getLogger( "org.bson.ObjectId" );
+
     /** Gets a new object id.
      * @return the new id
      */
@@ -174,7 +175,10 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
     public int hashCode(){
-        return _inc;
+        int x = _time;
+        x += ( _machine * 111 );
+        x += ( _inc * 17 );
+        return x;
     }
 
     public boolean equals( Object o ){
@@ -339,14 +343,14 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
                     sb.append( ni.toString() );
                 }
                 machinePiece = sb.toString().hashCode() << 16;
-                if ( D ) System.out.println( "machine piece post: " + Integer.toHexString( machinePiece ) );
+                LOGGER.fine( "machine piece post: " + Integer.toHexString( machinePiece ) );
             }
             
             final int processPiece = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode() & 0xFFFF;
-            if ( D ) System.out.println( "process piece: " + Integer.toHexString( processPiece ) );
+            LOGGER.fine( "process piece: " + Integer.toHexString( processPiece ) );
 
             _genmachine = machinePiece | processPiece;
-            if ( D ) System.out.println( "machine : " + Integer.toHexString( _genmachine ) );
+            LOGGER.fine( "machine : " + Integer.toHexString( _genmachine ) );
         }
         catch ( java.io.IOException ioe ){
             throw new RuntimeException( ioe );
