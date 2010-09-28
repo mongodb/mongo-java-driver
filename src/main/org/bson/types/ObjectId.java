@@ -56,11 +56,11 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         if ( s == null )
             return false;
         
-        int len = s.length();
-        if ( len < 18 || len > 24 )
+        final int len = s.length();
+        if ( len != 24 )
             return false;
 
-        for ( int i=0; i<s.length(); i++ ){
+        for ( int i=0; i<len; i++ ){
             char c = s.charAt( i );
             if ( c >= '0' && c <= '9' )
                 continue;
