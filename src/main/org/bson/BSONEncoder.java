@@ -4,6 +4,7 @@ package org.bson;
 
 import static org.bson.BSON.*;
 
+import java.lang.reflect.*;
 import java.nio.*;
 import java.nio.charset.*;
 import java.util.*;
@@ -182,7 +183,7 @@ public class BSONEncoder {
         else if ( val instanceof UUID )
             putUUID( name , (UUID)val );
         else if ( val.getClass().isArray() )
-            putIterable( name , Arrays.asList( (Object[])val ) );
+        	putArray( name , val );
 
         else if (val instanceof Symbol) {
             putSymbol(name, (Symbol) val);
@@ -204,7 +205,20 @@ public class BSONEncoder {
         }
         
     }
+	
+    private void putArray( String name , Object array ) {
+        _put( ARRAY , name );
+        final int sizePos = _buf.getPosition();
+        _buf.writeInt( 0 );
+                	        
+        int size = Array.getLength(array);
+        for ( int i = 0; i < size; i++ )
+            _putObjectField( String.valueOf( i ) , Array.get( array, i ) );
 
+        _buf.write( EOO );
+        _buf.writeInt( sizePos , _buf.getPosition() - sizePos ); 
+    }
+	
     private void putIterable( String name , Iterable l ){
         _put( ARRAY , name );
         final int sizePos = _buf.getPosition();

@@ -19,17 +19,13 @@
 package org.bson;
 
 import java.io.*;
-import java.nio.*;
 import java.util.*;
-import java.util.zip.*;
 
-import com.mongodb.*;
-import com.mongodb.util.*;
-
-import org.testng.annotations.Test;
-
-import org.bson.types.*;
 import org.bson.io.*;
+import org.bson.types.*;
+import org.testng.annotations.*;
+
+import com.mongodb.util.*;
 
 public class BSONTest extends TestCase {
 
@@ -70,7 +66,7 @@ public class BSONTest extends TestCase {
     @Test
     public void testBasic1()
         throws IOException {
-        BSONObject o = new BasicBSONObject();
+//        BSONObject o = new BasicBSONObject();
         _test( new BasicBSONObject( "x" , true ) , 9 , "6fe24623e4efc5cf07f027f9c66b5456" );    
 
         _test( new BasicBSONObject( "x" , null ) , 8 , "12d43430ff6729af501faf0638e68888" );
@@ -84,6 +80,12 @@ public class BSONTest extends TestCase {
         _test( new BasicBSONObject( "x" , 5.2 ).append( "y" , new Object[]{ "a" , "eliot" , "b" , true } ).append( "z" , null ) , 62 , "cb7bad5697714ba0cbf51d113b6a0ee8" );
         
         _test( new BasicBSONObject( "x" , 4 ) , 12 , "d1ed8dbf79b78fa215e2ded74548d89d" );
+    }
+    
+    @Test
+    public void testArray()
+    	throws IOException {
+        _test( new BasicBSONObject( "x" , new int[]{ 1 , 2 , 3 , 4} ) , 41 , "e63397fe37de1349c50e1e4377a45e2d" );
     }
 
     @Test
