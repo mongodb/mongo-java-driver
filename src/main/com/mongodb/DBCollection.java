@@ -36,8 +36,6 @@ import com.mongodb.util.*;
 @SuppressWarnings("unchecked")
 public abstract class DBCollection {
 
-    final static boolean DEBUG = Boolean.getBoolean( "DEBUG.DB" );
-
     /**
      * Saves document(s) to the database.
      * if doc doesn't have an _id, one will be added
@@ -243,14 +241,6 @@ public abstract class DBCollection {
      */
     public DBObject findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update, boolean returnNew, boolean upsert) {
 
-        if ( DEBUG ) System.out.println( "findAndModify: " + _fullName + 
-                                         " query:" + JSON.serialize( query ) + 
-                                         " sort:" + JSON.serialize( sort )+ 
-                                         " remove:" + remove + 
-                                         " update: " + JSON.serialize( update )+ 
-                                         " upsert: " + upsert+ 
-                                         " returnNew:" + returnNew);
-        
         BasicDBObject cmd = new BasicDBObject( "findandmodify", _name);
         if (query != null && !query.keySet().isEmpty())
             cmd.append( "query", query );
@@ -535,10 +525,8 @@ public abstract class DBCollection {
         _checkObject( jo , false , false );
         
         Object id = jo.get( "_id" );
-        if ( DEBUG ) System.out.println( "id : " + id );
 
         if ( id == null || ( id instanceof ObjectId && ((ObjectId)id).isNew() ) ){
-            if ( DEBUG ) System.out.println( "saving new object" );
             if ( id != null && id instanceof ObjectId )
                 ((ObjectId)id).notNew();
             if ( concern == null )
@@ -547,7 +535,6 @@ public abstract class DBCollection {
             	return insert( jo, concern );
         }
 
-        if ( DEBUG ) System.out.println( "doing implicit upsert : " + jo.get( "_id" ) );
         DBObject q = new BasicDBObject();
         q.put( "_id" , id );
         if ( concern == null )
