@@ -194,6 +194,21 @@ public class DBCursorTest extends TestCase {
         assertEquals( 50 , c.find().batchSize( 5 ).limit(50).itcount() );
     }
 
+    @Test
+    public void testSpecial(){
+        DBCollection c = _db.getCollection( "testSpecial" );
+        c.insert( new BasicDBObject( "x" , 1 ) );
+        c.insert( new BasicDBObject( "x" , 2 ) );
+        c.insert( new BasicDBObject( "x" , 3 ) );
+        c.ensureIndex( "x" );
+        
+        for ( DBObject o : c.find().sort( new BasicDBObject( "x" , 1 ) ).addSpecial( "$returnKey" , 1 ) )
+            assertTrue( o.get("_id") == null );
+
+        for ( DBObject o : c.find().sort( new BasicDBObject( "x" , 1 ) ) )
+            assertTrue( o.get("_id") != null );
+
+    }
     
     final DB _db;
 
