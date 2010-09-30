@@ -23,6 +23,7 @@ import java.net.*;
 import java.util.*;
 import java.util.logging.*;
 
+import org.bson.*;
 import com.mongodb.util.*;
 
 public class DBPort {
@@ -93,7 +94,7 @@ public class DBPort {
                 return null;
             
             _processingResponse = true;
-            return new Response( coll , _in );
+            return new Response( coll , _in , _decoder);
         }
         catch ( IOException ioe ){
             close();
@@ -246,6 +247,7 @@ public class DBPort {
     final DBPortPool _pool;
     final MongoOptions _options;
     final Logger _logger;
+    final BSONDecoder _decoder = new BSONDecoder();
     
     private Socket _socket;
     private InputStream _in;
