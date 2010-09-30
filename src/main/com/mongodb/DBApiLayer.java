@@ -35,6 +35,7 @@ public class DBApiLayer extends DB {
     static final boolean D = Boolean.getBoolean( "DEBUG.DB" );
     /** The maximum number of cursors allowed */
     static final int NUM_CURSORS_BEFORE_KILL = 100;
+    static final int NUM_CURSORS_PER_BATCH = 20000;
 
     //  --- show
 
@@ -182,16 +183,23 @@ public class DBApiLayer extends DB {
 
         void _cleanCursors()
             throws MongoException {
-            if ( _deadCursorIds.size() == 0 )
-                return;
 
-            if ( _deadCursorIds.size() % 20 != 0 && _deadCursorIds.size() < NUM_CURSORS_BEFORE_KILL )
-                return;
+            List<Long> l = null;
+            
+            synchronized ( _deadCursorIdsLock ){
+                int sz = _deadCursorIds.size();
 
-            List<Long> l = _deadCursorIds;
-            _deadCursorIds = new Vector<Long>();
+                if ( _deadCursorIds.size() == 0 )
+                    return;
+                
+                if ( sz % 20 != 0 && sz < NUM_CURSORS_BEFORE_KILL )
+                    return;
 
-            Bytes.LOGGER.info( "trying to kill cursors : " + l.size() );
+                l = _deadCursorIds;
+                _deadCursorIds = new Vector<Long>();
+            }
+
+            Bytes.LOGGER.info( "going to kill cursors : " + l.size() );
 
             try {
                 killCursors( l );
@@ -210,10 +218,23 @@ public class DBApiLayer extends DB {
             OutMessage om = OutMessage.get( 2007 );
             om.writeInt( 0 ); // reserved
             
-            om.writeInt( all.size() );
+            om.writeInt( Math.min( NUM_CURSORS_PER_BATCH , all.size() ) );
 
+            int soFar = 0;
+            int totalSoFar = 0;
             for (Long l : all) {
                 om.writeLong(l);
+
+                totalSoFar++;
+                soFar++;
+
+                if ( soFar >= NUM_CURSORS_PER_BATCH ){
+                    _connector.say( _db , om ,com.mongodb.WriteConcern.NONE );
+                    om = OutMessage.get( 2007 );
+                    om.writeInt( 0 ); // reserved
+                    om.writeInt( Math.min( NUM_CURSORS_PER_BATCH , all.size() - totalSoFar ) );
+                    soFar = 0;
+                }
             }
 
             _connector.say( _db , om ,com.mongodb.WriteConcern.NONE );
@@ -364,8 +385,11 @@ public class DBApiLayer extends DB {
         }
 
         protected void finalize() throws Throwable {
-            if ( _curResult != null && _curResult.cursor() > 0 )
-                _deadCursorIds.add( _curResult.cursor() );
+            if ( _curResult != null && _curResult.cursor() != 0 ){
+                synchronized ( _deadCursorIdsLock ){
+                    _deadCursorIds.add( _curResult.cursor() );
+                }
+            }
             super.finalize();
         }
 
@@ -398,7 +422,9 @@ public class DBApiLayer extends DB {
     final String _rootPlusDot;
     final DBConnector _connector;
     final Map<String,MyCollection> _collections = Collections.synchronizedMap( new HashMap<String,MyCollection>() );
-    List<Long> _deadCursorIds = new Vector<Long>();
+    
+    final String _deadCursorIdsLock = "DBApiLayer-_deadCursorIdsLock-" + Math.random();
+    List<Long> _deadCursorIds = new LinkedList<Long>();
 
     static final List<DBObject> EMPTY = Collections.unmodifiableList( new LinkedList<DBObject>() );
 }
