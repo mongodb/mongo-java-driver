@@ -36,7 +36,19 @@ public class DBApiLayer extends DB {
     /** The maximum number of cursors allowed */
     static final int NUM_CURSORS_BEFORE_KILL = 100;
 
-    static final boolean SHOW = Boolean.getBoolean( "DB.SHOW" );
+    //  --- show
+
+    static final Logger TRACE_LOGGER = Logger.getLogger( "com.mongodb.TRACE" );
+    static final Level TRACE_LEVEL = Boolean.getBoolean( "DB.TRACE" ) ? Level.INFO : Level.FINEST;
+
+    static final boolean willTrace(){
+        return TRACE_LOGGER.isLoggable( TRACE_LEVEL );
+    }
+    
+    static final void trace( String s ){
+        TRACE_LOGGER.log( TRACE_LEVEL , s );
+    }
+    
 
     protected DBApiLayer( Mongo mongo , String root , DBConnector connector ){
         super( mongo , root );
@@ -100,9 +112,9 @@ public class DBApiLayer extends DB {
         protected WriteResult insert(DBObject[] arr, boolean shouldApply , com.mongodb.WriteConcern concern )
             throws MongoException {
 
-            if ( SHOW ) {
+            if ( willTrace() ) {
                 for (DBObject o : arr) {
-                    System.out.println( "save:  " + _fullNameSpace + " " + JSON.serialize( o ) );
+                    trace( "save:  " + _fullNameSpace + " " + JSON.serialize( o ) );
                 }
             }
             
@@ -147,7 +159,7 @@ public class DBApiLayer extends DB {
         public WriteResult remove( DBObject o , com.mongodb.WriteConcern concern )
             throws MongoException {
 
-            if ( SHOW ) System.out.println( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
+            if ( willTrace() ) trace( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
 
             OutMessage om = OutMessage.get( 2006 );
 
@@ -214,7 +226,7 @@ public class DBApiLayer extends DB {
             if ( ref == null )
                 ref = new BasicDBObject();
             
-            if ( SHOW ) System.out.println( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
+            if ( willTrace() ) trace( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
 
             _cleanCursors();
             
@@ -239,7 +251,7 @@ public class DBApiLayer extends DB {
         public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , com.mongodb.WriteConcern concern )
             throws MongoException {
 
-            if ( SHOW ) System.out.println( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
+            if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
             
             OutMessage om = OutMessage.get( 2001 );
             om.writeInt( 0 ); // reserved
