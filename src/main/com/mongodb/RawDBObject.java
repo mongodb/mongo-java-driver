@@ -35,8 +35,6 @@ import com.mongodb.util.*;
 */
 public class RawDBObject implements DBObject {
 
-    static boolean DEBUG = Boolean.getBoolean( "DEBUG.DBJSO" );
-
     RawDBObject( ByteBuffer buf ){
         this( buf , 0 );
         assertEquals( _end , _buf.limit() );
@@ -194,8 +192,6 @@ public class RawDBObject implements DBObject {
             int end[] = new int[1];
             _name = eoo() ? "" : _readCStr( _start + 1 , end );
             
-	    if ( DEBUG ) System.out.println( "name [" + _name + "] type [" + _type + "]" );
-	    
             int size = 1 + ( end[0] - _start); // 1 for the end of the string
             _dataStart = _start + size;
 
