@@ -15,9 +15,11 @@ javadoc: http://api.mongodb.org/java/
 http://jira.mongodb.org/browse/JAVA
 
 
-### Contributors:
+### Maintainers
 * Eliot Horowitz       eliot@10gen.com
 * Kristina Chodorow    kristina@10gen.com
+
+### Contributors:
 * Geir Magnusson       geir@pobox.com
 * Keith Branton        mongoDBjira@branton.co.uk
 * Dave Brosius         dbrosius@mebigfatguy.com
