@@ -111,7 +111,7 @@ public class DBPort {
     }
 
     synchronized CommandResult runCommand( DB db , DBObject cmd ) {
-        OutMessage msg = OutMessage.query( 0 , db.getName() + ".$cmd" , 0 , -1 , cmd , null );
+        OutMessage msg = OutMessage.query( db._mongo , 0 , db.getName() + ".$cmd" , 0 , -1 , cmd , null );
         
         try {
             Response res = go( msg , db.getCollection( "$cmd" ) );
@@ -227,8 +227,6 @@ public class DBPort {
         }
         if ( _authed.containsKey( db ) )
             return;
-        
-        OutMessage.newTL();
         
         CommandResult res = runCommand( db , new BasicDBObject( "getnonce" , 1 ) );
         res.throwOnError();

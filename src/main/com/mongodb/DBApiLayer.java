@@ -134,7 +134,7 @@ public class DBApiLayer extends DB {
 
             int cur = 0;
             while ( cur < arr.length ){
-                OutMessage om = OutMessage.get( 2002 );
+                OutMessage om = new OutMessage( _mongo , 2002 );
                 
                 om.writeInt( 0 ); // reserved
                 om.writeCString( _fullNameSpace );
@@ -162,7 +162,7 @@ public class DBApiLayer extends DB {
 
             if ( willTrace() ) trace( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
 
-            OutMessage om = OutMessage.get( 2006 );
+            OutMessage om = new OutMessage( _mongo , 2006 );
 
             om.writeInt( 0 ); // reserved
             om.writeCString( _fullNameSpace );
@@ -215,7 +215,7 @@ public class DBApiLayer extends DB {
             if ( all == null || all.size() == 0 )
                 return;
 
-            OutMessage om = OutMessage.get( 2007 );
+            OutMessage om = new OutMessage( _mongo , 2007 );
             om.writeInt( 0 ); // reserved
             
             om.writeInt( Math.min( NUM_CURSORS_PER_BATCH , all.size() ) );
@@ -230,7 +230,7 @@ public class DBApiLayer extends DB {
 
                 if ( soFar >= NUM_CURSORS_PER_BATCH ){
                     _connector.say( _db , om ,com.mongodb.WriteConcern.NONE );
-                    om = OutMessage.get( 2007 );
+                    om = new OutMessage( _mongo , 2007 );
                     om.writeInt( 0 ); // reserved
                     om.writeInt( Math.min( NUM_CURSORS_PER_BATCH , all.size() - totalSoFar ) );
                     soFar = 0;
@@ -251,7 +251,7 @@ public class DBApiLayer extends DB {
 
             _cleanCursors();
             
-            OutMessage query = OutMessage.query( options , _fullNameSpace , numToSkip , batchSize , ref , fields );
+            OutMessage query = OutMessage.query( _mongo , options , _fullNameSpace , numToSkip , batchSize , ref , fields );
 
             Response res = _connector.call( _db , this , query , 2 );
 
@@ -274,7 +274,7 @@ public class DBApiLayer extends DB {
 
             if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
             
-            OutMessage om = OutMessage.get( 2001 );
+            OutMessage om = new OutMessage( _mongo , 2001 );
             om.writeInt( 0 ); // reserved
             om.writeCString( _fullNameSpace );
             
@@ -351,7 +351,7 @@ public class DBApiLayer extends DB {
             if ( _curResult.cursor() <= 0 )
                 throw new RuntimeException( "can't advance a cursor <= 0" );
             
-            OutMessage m = OutMessage.get( 2005 );
+            OutMessage m = new OutMessage( _mongo , 2005 );
 
             m.writeInt( 0 ); 
             m.writeCString( _collection._fullNameSpace );

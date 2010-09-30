@@ -34,30 +34,21 @@ class OutMessage extends BSONEncoder {
 
     static AtomicInteger ID = new AtomicInteger(1);
     
-    static ThreadLocal<OutMessage> TL = new ThreadLocal<OutMessage>(){
-        protected OutMessage initialValue(){
-            return new OutMessage();
-        }
-    };
-
-    static OutMessage get( int op ){
-        OutMessage m = TL.get();
-        m.reset( op );
-        return m;
-    }
-
-    static void newTL(){
-        TL.set( new OutMessage() );
-    }
-    
-    static OutMessage query( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
-        OutMessage out = get( 2004 );
+    static OutMessage query( Mongo m , int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
+        OutMessage out = new OutMessage( m , 2004 );
         out._appendQuery( options , ns , numToSkip , batchSize , query , fields );
         return out;
     }
 
-    OutMessage(){
+    OutMessage( Mongo m ){
+        _mongo = m;
+        _buffer = m._bufferPool.get();
         set( _buffer );
+    }
+
+    OutMessage( Mongo m , int op ){
+        this( m );
+        reset( op );
     }
     
     private void _appendQuery( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
@@ -172,7 +163,18 @@ class OutMessage extends BSONEncoder {
     byte[] toByteArray(){
         return _buffer.toByteArray();
     }
-    
-    private PoolOutputBuffer _buffer = new PoolOutputBuffer();
+
+    void doneWithMessage(){
+        if ( _buffer != null ){
+            _mongo._bufferPool.done( _buffer );
+            _buffer = null;
+            _mongo = null;
+        }
+    }
+
+    private Mongo _mongo;
+    private PoolOutputBuffer _buffer;
     private int _id;
+
+
 }
