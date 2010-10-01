@@ -23,8 +23,6 @@ package com.mongodb;
  */
 public class DBRefBase {
     
-    static final boolean D = Boolean.getBoolean( "DEBUG.DBREF" );
-
 
     public DBRefBase(DB db , String ns , Object id) {
         _db = db;
@@ -39,13 +37,6 @@ public class DBRefBase {
 
         if (_db == null)
             throw new RuntimeException("no db");
-
-        if (D) {
-            System.out.println("following db pointer. ref to ns:" + _ns);
-            Throwable t = new Throwable();
-            t.fillInStackTrace();
-            t.printStackTrace();
-        }
 
         final DBCollection coll = _db.getCollectionFromString(_ns);
 

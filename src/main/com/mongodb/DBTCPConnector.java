@@ -165,7 +165,9 @@ class DBTCPConnector implements DBConnector {
             mp.error( re , true );
             throw re;
         }
-
+        finally {
+            m.doneWithMessage();
+        }
     }
     
     public Response call( DB db , DBCollection coll , OutMessage m )
@@ -198,7 +200,7 @@ class DBTCPConnector implements DBConnector {
             mp.error( re , true );
             throw re;
         }
-
+        
         ServerError err = res.getError();
         
         if ( err != null && err.isNotMasterError() ){
@@ -209,6 +211,7 @@ class DBTCPConnector implements DBConnector {
             return call( db , coll , m , retries -1 );
         }
         
+        m.doneWithMessage();
         return res;
     }
 

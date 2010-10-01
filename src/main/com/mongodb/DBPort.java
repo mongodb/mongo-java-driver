@@ -23,6 +23,7 @@ import java.net.*;
 import java.util.*;
 import java.util.logging.*;
 
+import org.bson.*;
 import com.mongodb.util.*;
 
 public class DBPort {
@@ -93,7 +94,7 @@ public class DBPort {
                 return null;
             
             _processingResponse = true;
-            return new Response( coll , _in );
+            return new Response( coll , _in , _decoder);
         }
         catch ( IOException ioe ){
             close();
@@ -110,7 +111,7 @@ public class DBPort {
     }
 
     synchronized CommandResult runCommand( DB db , DBObject cmd ) {
-        OutMessage msg = OutMessage.query( 0 , db.getName() + ".$cmd" , 0 , -1 , cmd , null );
+        OutMessage msg = OutMessage.query( db._mongo , 0 , db.getName() + ".$cmd" , 0 , -1 , cmd , null );
         
         try {
             Response res = go( msg , db.getCollection( "$cmd" ) );
@@ -227,8 +228,6 @@ public class DBPort {
         if ( _authed.containsKey( db ) )
             return;
         
-        OutMessage.newTL();
-        
         CommandResult res = runCommand( db , new BasicDBObject( "getnonce" , 1 ) );
         res.throwOnError();
         
@@ -246,6 +245,7 @@ public class DBPort {
     final DBPortPool _pool;
     final MongoOptions _options;
     final Logger _logger;
+    final BSONDecoder _decoder = new BSONDecoder();
     
     private Socket _socket;
     private InputStream _in;

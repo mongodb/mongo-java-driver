@@ -35,8 +35,21 @@ public class DBApiLayer extends DB {
     static final boolean D = Boolean.getBoolean( "DEBUG.DB" );
     /** The maximum number of cursors allowed */
     static final int NUM_CURSORS_BEFORE_KILL = 100;
+    static final int NUM_CURSORS_PER_BATCH = 20000;
 
-    static final boolean SHOW = Boolean.getBoolean( "DB.SHOW" );
+    //  --- show
+
+    static final Logger TRACE_LOGGER = Logger.getLogger( "com.mongodb.TRACE" );
+    static final Level TRACE_LEVEL = Boolean.getBoolean( "DB.TRACE" ) ? Level.INFO : Level.FINEST;
+
+    static final boolean willTrace(){
+        return TRACE_LOGGER.isLoggable( TRACE_LEVEL );
+    }
+    
+    static final void trace( String s ){
+        TRACE_LOGGER.log( TRACE_LEVEL , s );
+    }
+    
 
     protected DBApiLayer( Mongo mongo , String root , DBConnector connector ){
         super( mongo , root );
@@ -100,9 +113,9 @@ public class DBApiLayer extends DB {
         protected WriteResult insert(DBObject[] arr, boolean shouldApply , com.mongodb.WriteConcern concern )
             throws MongoException {
 
-            if ( SHOW ) {
+            if ( willTrace() ) {
                 for (DBObject o : arr) {
-                    System.out.println( "save:  " + _fullNameSpace + " " + JSON.serialize( o ) );
+                    trace( "save:  " + _fullNameSpace + " " + JSON.serialize( o ) );
                 }
             }
             
@@ -121,7 +134,7 @@ public class DBApiLayer extends DB {
 
             int cur = 0;
             while ( cur < arr.length ){
-                OutMessage om = OutMessage.get( 2002 );
+                OutMessage om = new OutMessage( _mongo , 2002 );
                 
                 om.writeInt( 0 ); // reserved
                 om.writeCString( _fullNameSpace );
@@ -147,9 +160,9 @@ public class DBApiLayer extends DB {
         public WriteResult remove( DBObject o , com.mongodb.WriteConcern concern )
             throws MongoException {
 
-            if ( SHOW ) System.out.println( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
+            if ( willTrace() ) trace( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
 
-            OutMessage om = OutMessage.get( 2006 );
+            OutMessage om = new OutMessage( _mongo , 2006 );
 
             om.writeInt( 0 ); // reserved
             om.writeCString( _fullNameSpace );
@@ -170,16 +183,23 @@ public class DBApiLayer extends DB {
 
         void _cleanCursors()
             throws MongoException {
-            if ( _deadCursorIds.size() == 0 )
-                return;
 
-            if ( _deadCursorIds.size() % 20 != 0 && _deadCursorIds.size() < NUM_CURSORS_BEFORE_KILL )
-                return;
+            List<Long> l = null;
+            
+            synchronized ( _deadCursorIdsLock ){
+                int sz = _deadCursorIds.size();
 
-            List<Long> l = _deadCursorIds;
-            _deadCursorIds = new Vector<Long>();
+                if ( _deadCursorIds.size() == 0 )
+                    return;
+                
+                if ( sz % 20 != 0 && sz < NUM_CURSORS_BEFORE_KILL )
+                    return;
 
-            Bytes.LOGGER.info( "trying to kill cursors : " + l.size() );
+                l = _deadCursorIds;
+                _deadCursorIds = new Vector<Long>();
+            }
+
+            Bytes.LOGGER.info( "going to kill cursors : " + l.size() );
 
             try {
                 killCursors( l );
@@ -195,13 +215,26 @@ public class DBApiLayer extends DB {
             if ( all == null || all.size() == 0 )
                 return;
 
-            OutMessage om = OutMessage.get( 2007 );
+            OutMessage om = new OutMessage( _mongo , 2007 );
             om.writeInt( 0 ); // reserved
             
-            om.writeInt( all.size() );
+            om.writeInt( Math.min( NUM_CURSORS_PER_BATCH , all.size() ) );
 
+            int soFar = 0;
+            int totalSoFar = 0;
             for (Long l : all) {
                 om.writeLong(l);
+
+                totalSoFar++;
+                soFar++;
+
+                if ( soFar >= NUM_CURSORS_PER_BATCH ){
+                    _connector.say( _db , om ,com.mongodb.WriteConcern.NONE );
+                    om = new OutMessage( _mongo , 2007 );
+                    om.writeInt( 0 ); // reserved
+                    om.writeInt( Math.min( NUM_CURSORS_PER_BATCH , all.size() - totalSoFar ) );
+                    soFar = 0;
+                }
             }
 
             _connector.say( _db , om ,com.mongodb.WriteConcern.NONE );
@@ -214,11 +247,11 @@ public class DBApiLayer extends DB {
             if ( ref == null )
                 ref = new BasicDBObject();
             
-            if ( SHOW ) System.out.println( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
+            if ( willTrace() ) trace( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
 
             _cleanCursors();
             
-            OutMessage query = OutMessage.query( options , _fullNameSpace , numToSkip , batchSize , ref , fields );
+            OutMessage query = OutMessage.query( _mongo , options , _fullNameSpace , numToSkip , batchSize , ref , fields );
 
             Response res = _connector.call( _db , this , query , 2 );
 
@@ -239,9 +272,9 @@ public class DBApiLayer extends DB {
         public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , com.mongodb.WriteConcern concern )
             throws MongoException {
 
-            if ( SHOW ) System.out.println( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
+            if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
             
-            OutMessage om = OutMessage.get( 2001 );
+            OutMessage om = new OutMessage( _mongo , 2001 );
             om.writeInt( 0 ); // reserved
             om.writeCString( _fullNameSpace );
             
@@ -318,7 +351,7 @@ public class DBApiLayer extends DB {
             if ( _curResult.cursor() <= 0 )
                 throw new RuntimeException( "can't advance a cursor <= 0" );
             
-            OutMessage m = OutMessage.get( 2005 );
+            OutMessage m = new OutMessage( _mongo , 2005 );
 
             m.writeInt( 0 ); 
             m.writeCString( _collection._fullNameSpace );
@@ -352,8 +385,11 @@ public class DBApiLayer extends DB {
         }
 
         protected void finalize() throws Throwable {
-            if ( _curResult != null && _curResult.cursor() > 0 )
-                _deadCursorIds.add( _curResult.cursor() );
+            if ( _curResult != null && _curResult.cursor() != 0 ){
+                synchronized ( _deadCursorIdsLock ){
+                    _deadCursorIds.add( _curResult.cursor() );
+                }
+            }
             super.finalize();
         }
 
@@ -386,7 +422,9 @@ public class DBApiLayer extends DB {
     final String _rootPlusDot;
     final DBConnector _connector;
     final Map<String,MyCollection> _collections = Collections.synchronizedMap( new HashMap<String,MyCollection>() );
-    List<Long> _deadCursorIds = new Vector<Long>();
+    
+    final String _deadCursorIdsLock = "DBApiLayer-_deadCursorIdsLock-" + Math.random();
+    List<Long> _deadCursorIds = new LinkedList<Long>();
 
     static final List<DBObject> EMPTY = Collections.unmodifiableList( new LinkedList<DBObject>() );
 }

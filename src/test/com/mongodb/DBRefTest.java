@@ -53,7 +53,7 @@ public class DBRefTest extends TestCase {
         DBRef ref = new DBRef(_db, "hello", (Object)"world");
         DBObject o = new BasicDBObject("!", ref);
         
-        OutMessage out = new OutMessage();
+        OutMessage out = new OutMessage( cleanupMongo );
         out.putObject( o );
         
         DBCallback cb = new DBCallback( null );

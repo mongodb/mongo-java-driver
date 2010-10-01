@@ -131,6 +131,27 @@ public class ByteTest extends TestCase {
 
     }
 
+    @Test
+    public void testArray2(){
+        DBObject x = new BasicDBObject();
+        x.put( "a" , new String[]{ "a" , "b" , "c" } );
+        x.put( "b" , new int[]{ 1 , 2 , 3 } );
+        
+        BSONObject y = BSON.decode( BSON.encode( x ) );
+        
+        List l = (List)y.get("a");
+        assertEquals( 3 , l.size() );
+        assertEquals( "a" , l.get(0) );
+        assertEquals( "b" , l.get(1) );
+        assertEquals( "c" , l.get(2) );
+
+        l = (List)y.get("b");
+        assertEquals( 3 , l.size() );
+        assertEquals( 1 , l.get(0) );
+        assertEquals( 2 , l.get(1) );
+        assertEquals( 3 , l.get(2) );
+    }
+
     @Test(groups = {"basic"})
     public void testObjcetId(){
         assertTrue( (new ObjectId()).compareTo( new ObjectId() ) < 0 );

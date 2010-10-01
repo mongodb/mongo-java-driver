@@ -4,6 +4,7 @@ package org.bson;
 
 import static org.bson.BSON.*;
 
+import java.lang.reflect.*;
 import java.nio.*;
 import java.nio.charset.*;
 import java.util.*;
@@ -70,6 +71,7 @@ public class BSONEncoder {
      * this is really for embedded objects
      */
     int putObject( String name , BSONObject o ){
+
         if ( o == null )
             throw new NullPointerException( "can't save a null object" );
 
@@ -182,7 +184,7 @@ public class BSONEncoder {
         else if ( val instanceof UUID )
             putUUID( name , (UUID)val );
         else if ( val.getClass().isArray() )
-            putIterable( name , Arrays.asList( (Object[])val ) );
+        	putArray( name , val );
 
         else if (val instanceof Symbol) {
             putSymbol(name, (Symbol) val);
@@ -204,7 +206,20 @@ public class BSONEncoder {
         }
         
     }
+	
+    private void putArray( String name , Object array ) {
+        _put( ARRAY , name );
+        final int sizePos = _buf.getPosition();
+        _buf.writeInt( 0 );
+                	        
+        int size = Array.getLength(array);
+        for ( int i = 0; i < size; i++ )
+            _putObjectField( String.valueOf( i ) , Array.get( array, i ) );
 
+        _buf.write( EOO );
+        _buf.writeInt( sizePos , _buf.getPosition() - sizePos ); 
+    }
+	
     private void putIterable( String name , Iterable l ){
         _put( ARRAY , name );
         final int sizePos = _buf.getPosition();
@@ -376,41 +391,41 @@ public class BSONEncoder {
      * puts as utf-8 string
      */
     protected int _put( String str ){
-        int total = 0;
 
         final int len = str.length();
-        int pos = 0;
-        while ( pos < len ){
-            _reset( _stringC );
-            _reset( _stringB );
+        int total = 0;
 
-            int toEncode = Math.min( _stringC.capacity() - 1, len - pos );
-            _stringC.put( str , pos , pos + toEncode );
-            _stringC.flip();
+        for ( int i=0; i<len; ){
+            int c = Character.codePointAt( str , i );
+
+            if ( c < 0x80 ){
+                _buf.write( (byte)c );
+                total += 1;
+            }
+            else if ( c < 0x800 ){
+                _buf.write( (byte)(0xc0 + (c >> 6) ) );
+                _buf.write( (byte)(0x80 + (c & 0x3f) ) );
+                total += 2;
+            }
+            else if (c < 0x10000){
+                _buf.write( (byte)(0xe0 + (c >> 12) ) );
+                _buf.write( (byte)(0x80 + ((c >> 6) & 0x3f) ) );
+                _buf.write( (byte)(0x80 + (c & 0x3f) ) );
+                total += 3;
+            }
+            else {
+                _buf.write( (byte)(0xf0 + (c >> 18)) );
+                _buf.write( (byte)(0x80 + ((c >> 12) & 0x3f)) );
+                _buf.write( (byte)(0x80 + ((c >> 6) & 0x3f)) );
+                _buf.write( (byte)(0x80 + (c & 0x3f)) );
+                total += 4;
+            }
             
-            CoderResult cr = _encoder.encode( _stringC , _stringB , false );
-            
-            if ( cr.isMalformed() || cr.isUnmappable() )
-                throw new IllegalArgumentException( "malforumed string" );
-            
-            if ( cr.isOverflow() )
-                throw new RuntimeException( "overflor should be impossible" );
-            
-            if ( cr.isError() )
-                throw new RuntimeException( "should never get here" );
-
-            if ( ! cr.isUnderflow() )
-                throw new RuntimeException( "this should always be true" );
-
-            total += _stringB.position();
-            _buf.write( _stringB.array() , 0 , _stringB.position() );
-
-            pos += toEncode;
-        }
-
+            i += Character.charCount(c);
+        }  
+        
         _buf.write( (byte)0 );
         total++;
-
         return total;
     }
 
@@ -427,9 +442,5 @@ public class BSONEncoder {
     }
 
     protected OutputBuffer _buf;
-    
-    private CharBuffer _stringC = CharBuffer.wrap( new char[256 + 1] );
-    private ByteBuffer _stringB = ByteBuffer.wrap( new byte[1024 + 1] );
-    private CharsetEncoder _encoder = BSON._utf8.newEncoder();
 
 }

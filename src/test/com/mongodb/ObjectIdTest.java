@@ -132,6 +132,17 @@ public class ObjectIdTest extends TestCase {
     public static void main( String args[] )
         throws Exception {
         (new ObjectIdTest()).runConsole();
+
+        long num = 5000000;
+
+        long start = System.currentTimeMillis();
+        for ( long i=0; i<num; i++ ){
+            ObjectId id = new ObjectId();
+        }
+        long end = System.currentTimeMillis();
+
+        System.out.println( ( ( num / 1000L ) / ( end - start ) ) + "M ObjectId gen/sec" );
+
     }
 
 }

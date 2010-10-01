@@ -56,11 +56,11 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         if ( s == null )
             return false;
         
-        int len = s.length();
-        if ( len < 18 || len > 24 )
+        final int len = s.length();
+        if ( len != 24 )
             return false;
 
-        for ( int i=0; i<s.length(); i++ ){
+        for ( int i=0; i<len; i++ ){
             char c = s.charAt( i );
             if ( c >= '0' && c <= '9' )
                 continue;
@@ -354,41 +354,6 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         }
         catch ( java.io.IOException ioe ){
             throw new RuntimeException( ioe );
-        }
-
-    }
-
-    public static void main( String args[] ){
-        
-        if ( true ){
-            int z = _nextInc.getAndIncrement();
-            System.out.println( Integer.toHexString( z ) );
-            System.out.println( Integer.toHexString( _flip( z ) ) );
-            System.out.println( Integer.toHexString( _flip( _flip( z ) ) ) );
-            return;
-        }
-
-        ObjectId x = new ObjectId();
-
-        double num = 5000000.0;
-        
-        long start = System.currentTimeMillis();
-        for ( double i=0; i<num; i++ ){
-            ObjectId id = get();
-        }
-        long end = System.currentTimeMillis();
-        System.out.println( ( ( num * 1000.0 ) / ( end - start ) ) + " oid/sec" );
-        
-        Set<ObjectId> s = new HashSet<ObjectId>();
-        for ( double i=0; i<num/10; i++ ){
-            ObjectId id = get();
-            if ( s.contains( id ) )
-                throw new RuntimeException( "ObjectId() generated a repeat" );
-            s.add( id );
-
-            ObjectId o = new ObjectId( id.toString() );
-            if ( ! id.equals( o ) )
-                throw new RuntimeException( o.toString() + " != " + id.toString() );
         }
 
     }
