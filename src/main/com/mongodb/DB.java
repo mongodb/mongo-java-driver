@@ -34,13 +34,13 @@ public abstract class DB {
      * updates, and removes).
      * @deprecated 
      */
-	@Deprecated
+    @Deprecated
     public static class WriteConcern {
         /**
          * Don't check for or report any errors on writes.
          */
         public final static com.mongodb.WriteConcern NONE = com.mongodb.WriteConcern.NONE;
-
+        
         /**
          * Use the default level of error checking on writes. Don't
          * send a getLastError command or wait for a response, but do
