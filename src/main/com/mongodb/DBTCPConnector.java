@@ -91,7 +91,7 @@ class DBTCPConnector implements DBConnector {
      * correctly ordered.
      */
     public void requestStart(){
-        _threadPort.get().requestStart();
+        _myPort.get().requestStart();
     }
 
     /**
@@ -102,11 +102,11 @@ class DBTCPConnector implements DBConnector {
      * more effectively balance load. See requestStart for more information.
      */
     public void requestDone(){
-        _threadPort.get().requestDone();
+        _myPort.get().requestDone();
     }
 
     public void requestEnsureConnection(){
-        _threadPort.get().requestEnsureConnection();
+        _myPort.get().requestEnsureConnection();
     }
 
     WriteResult _checkWriteError( DB db , MyPort mp , DBPort port , WriteConcern concern )
@@ -132,7 +132,7 @@ class DBTCPConnector implements DBConnector {
 
     public WriteResult say( DB db , OutMessage m , WriteConcern concern )
         throws MongoException {
-        MyPort mp = _threadPort.get();
+        MyPort mp = _myPort.get();
         DBPort port = mp.get( true );
         port.checkAuth( db );
 
@@ -178,7 +178,7 @@ class DBTCPConnector implements DBConnector {
     public Response call( DB db , DBCollection coll , OutMessage m , int retries )
         throws MongoException {
 
-        final MyPort mp = _threadPort.get();
+        final MyPort mp = _myPort.get();
         final DBPort port = mp.get( false );
 
         port.checkAuth( db );
@@ -405,7 +405,7 @@ class DBTCPConnector implements DBConnector {
         if ( _curAddress == addr )
             return false;
         _curAddress = addr;
-        _curPortPool = _portHolder.get( addr.getSocketAddress() );
+        _curPortPool = _portHolder.get( addr );
         return true;
     }
 
@@ -457,7 +457,7 @@ class DBTCPConnector implements DBConnector {
     private DBPortPool.Holder _portHolder;
     private final List<ServerAddress> _allHosts;
 
-    private final ThreadLocal<MyPort> _threadPort = new ThreadLocal<MyPort>(){
+    private final ThreadLocal<MyPort> _myPort = new ThreadLocal<MyPort>(){
         protected MyPort initialValue(){
             return new MyPort();
         }
