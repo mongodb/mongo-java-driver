@@ -147,7 +147,7 @@ class DBTCPConnector implements DBConnector {
             }
         }
         catch ( IOException ioe ){
-            mp.error( ioe , true );
+            mp.error( port , ioe );
             _error( ioe );
 
             if ( concern.raiseNetworkErrors() )
@@ -162,7 +162,7 @@ class DBTCPConnector implements DBConnector {
             throw me;
         }
         catch ( RuntimeException re ){
-            mp.error( re , true );
+            mp.error( port , re );
             throw re;
         }
         finally {
@@ -190,14 +190,14 @@ class DBTCPConnector implements DBConnector {
         }
         catch ( IOException ioe ){
             boolean shoulRetry = _error( ioe ) && ! coll._name.equals( "$cmd" ) && retries > 0;
-            mp.error( ioe , ! shoulRetry );
+            mp.error( port , ioe );
             if ( shoulRetry ){
                 return call( db , coll , m , retries - 1 );
             }
             throw new MongoException.Network( "can't call something" , ioe );
         }
         catch ( RuntimeException re ){
-            mp.error( re , true );
+            mp.error( port , re );
             throw re;
         }
         
@@ -239,69 +239,26 @@ class DBTCPConnector implements DBConnector {
     class MyPort {
 
         DBPort get( boolean keep ){
-            if ( _internalStack > 0 ){
-                _logger.log( Level.SEVERE , "if you get this, please post to mongodb-user :)" );
-            }
-            _internalStack++;
-
-            if ( _internalStack > 1 ){
-                if ( _last == null ){
-                    // this means there was an error on a previous connection
-                }
-                else {
-                    return _last;
-                }
-            }
-
             if ( _port != null )
                 return _port;
             
-            try {
-                DBPort p = _curPortPool.get();
-                if ( keep && _inRequest )
-                    _port = p;
-                
-                _last = p;
-                return p;
-            }
-            catch ( DBPortPool.NoMoreConnection nmc ){
-                _internalStack = 0;
-                throw nmc;
-            }
+            DBPort p = _curPortPool.get();
+            if ( keep && _inRequest )
+                _port = p;
+
+            return p;
         }
         
         void done( DBPort p ){
-            
-            if ( _internalStack <= 0 ){
-                _reset();
-                throw new IllegalStateException( "done called and _internalStack was: " + _internalStack );
-            }
-            
-            _internalStack--;
-            
-            if ( p != _port && _internalStack == 0 )
+            if ( p != _port )
                 _curPortPool.done( p );
-
-            if ( _internalStack < 0 ){
-                _internalStack = 0;
-            }
         }
 
-        void error( Exception e , boolean resetStack ){
-            _curPortPool.gotError( e );
+        void error( DBPort p , Exception e ){
+            _curPortPool.done( p );
+            p.close();
 
-            if ( _last == null ){
-                _logger.log( Level.SEVERE , "MyPort.error called but _last is null  called b/c of" , e );
-            }
-            else {
-                _curPortPool.done( _last );
-                _last.close();
-            }
-
-            _last = null;
             _port = null;
-            if ( resetStack )
-                _internalStack = 0;
 
             _logger.log( Level.SEVERE , "MyPort.error called" , e );            
         }
@@ -318,10 +275,6 @@ class DBTCPConnector implements DBConnector {
 
         void requestStart(){
             _inRequest = true;
-            if ( _port != null ){
-                _port = null;
-                _logger.log( Level.WARNING , "somehow _port was not null at requestStart" );
-            }
         }
 
         void requestDone(){
@@ -329,22 +282,9 @@ class DBTCPConnector implements DBConnector {
                 _curPortPool.done( _port );
             _port = null;
             _inRequest = false;
-            if ( _internalStack > 0 ){
-                _logger.log( Level.WARNING , "_internalStack in requestDone should be 0 is: " + _internalStack );
-                _internalStack = 0;
-            }
         }
-
-        void _reset(){
-            _internalStack = 0;
-            _port = null;
-            _last = null;
-        }
-        
-        int _internalStack = 0;
 
         DBPort _port;
-        DBPort _last;
         boolean _inRequest;
     }
     
