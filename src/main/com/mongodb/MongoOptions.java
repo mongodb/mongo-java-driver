@@ -66,7 +66,7 @@ public class MongoOptions {
     public int socketTimeout;
     
     /**
-       this controls whether or not on a connect, the system retries automatically 
+       this controls whether or not on a connect, the system retries automatically.  defaults to false
     */
     public boolean autoConnectRetry;
     
