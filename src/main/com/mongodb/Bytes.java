@@ -63,6 +63,37 @@ public class Bytes extends BSON {
     public static final int RESULTFLAG_SHARDCONFIGSTALE = 4;
     public static final int RESULTFLAG_AWAITCAPABLE = 8;
 
+    static class OptionHolder {
+        OptionHolder( OptionHolder parent ){
+            _parent = parent;
+        }
+
+        void set( int options ){
+            _options = options;
+            _hasOptions = true;
+        }
+        
+        int get(){
+            if ( _hasOptions )
+                return _options;
+            if ( _parent == null )
+                return 0;
+            return _parent.get();
+        }
+        
+        void add( int option ){
+            set( get() | option );
+        }
+
+        void reset(){
+            _hasOptions = false;
+        }
+
+        final OptionHolder _parent;
+        
+        int _options = 0;
+        boolean _hasOptions = false;
+    }
 
     /** Gets the type byte for a given object.
      * @param o the object

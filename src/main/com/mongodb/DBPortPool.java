@@ -36,6 +36,10 @@ class DBPortPool extends SimplePool<DBPort> {
         Holder( MongoOptions options ){
             _options = options;
         }
+
+        DBPortPool get( ServerAddress addr ){
+            return get( addr.getSocketAddress() );
+        }
         
         DBPortPool get( InetSocketAddress addr ){
             

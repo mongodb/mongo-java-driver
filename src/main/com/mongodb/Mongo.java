@@ -163,7 +163,7 @@ public class Mongo {
         _addrs = null;
         _options = options;
         _connector = new DBTCPConnector( this , _addr );
-        _connector._pickInitial();
+        _connector._findMaster( false );
     }
 
     /**
@@ -187,7 +187,7 @@ public class Mongo {
         _addrs = Arrays.asList( left , right );
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
-        _connector._pickInitial();
+        _connector._findMaster( false );
     }
 
     /**
@@ -212,8 +212,7 @@ public class Mongo {
         _addrs = replicaSetSeeds;
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
-        _connector._pickInitial();
-
+        _connector._findMaster( false );
     }
 
     public DB getDB( String dbname ){
@@ -316,6 +315,29 @@ public class Mongo {
         return _concern;
     }
 
+    /**
+     * makes thisq query ok to run on a slave node
+     */
+    public void slaveOk(){
+        addOption( Bytes.QUERYOPTION_SLAVEOK );
+    }
+
+    public void addOption( int option ){
+        _netOptions.add( option );
+    }
+
+    public void setOptions( int options ){
+        _netOptions.set( options );
+    }
+
+    public void resetOptions(){
+        _netOptions.reset();
+    }
+   
+    public int getOptions(){
+        return _netOptions.get();
+    }
+
     
     final ServerAddress _addr;
     final List<ServerAddress> _addrs;
@@ -323,7 +345,8 @@ public class Mongo {
     final DBTCPConnector _connector;
     final ConcurrentMap<String,DB> _dbs = new ConcurrentHashMap<String,DB>();
     private WriteConcern _concern = WriteConcern.NORMAL;
-
+    final Bytes.OptionHolder _netOptions = new Bytes.OptionHolder( null );
+    
     org.bson.util.SimplePool<PoolOutputBuffer> _bufferPool = 
         new org.bson.util.SimplePool<PoolOutputBuffer>( 1000 ){
         

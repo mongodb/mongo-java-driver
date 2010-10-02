@@ -40,7 +40,7 @@ class DBTCPConnector implements DBConnector {
 
         if ( addr.isPaired() ){
             _allHosts = new ArrayList<ServerAddress>( addr.explode() );
-            _createLogger.info( "switching to replica set mode : " + _allHosts + " -> " + _curAddress  );
+            _createLogger.info( "switching to replica set mode : " + _allHosts + " -> " + _curMaster  );
         }
         else {
             _set( addr );
@@ -62,7 +62,7 @@ class DBTCPConnector implements DBConnector {
 
         _allHosts = new ArrayList<ServerAddress>( all ); // make a copy so it can't be modified
 
-        _createLogger.info( all  + " -> " + _curAddress );
+        _createLogger.info( all  + " -> " + _curMaster );
     }
 
     private static ServerAddress _checkAddress( ServerAddress addr ){
@@ -91,7 +91,7 @@ class DBTCPConnector implements DBConnector {
      * correctly ordered.
      */
     public void requestStart(){
-        _threadPort.get().requestStart();
+        _myPort.get().requestStart();
     }
 
     /**
@@ -102,11 +102,11 @@ class DBTCPConnector implements DBConnector {
      * more effectively balance load. See requestStart for more information.
      */
     public void requestDone(){
-        _threadPort.get().requestDone();
+        _myPort.get().requestDone();
     }
 
     public void requestEnsureConnection(){
-        _threadPort.get().requestEnsureConnection();
+        _myPort.get().requestEnsureConnection();
     }
 
     WriteResult _checkWriteError( DB db , MyPort mp , DBPort port , WriteConcern concern )
@@ -132,7 +132,7 @@ class DBTCPConnector implements DBConnector {
 
     public WriteResult say( DB db , OutMessage m , WriteConcern concern )
         throws MongoException {
-        MyPort mp = _threadPort.get();
+        MyPort mp = _myPort.get();
         DBPort port = mp.get( true );
         port.checkAuth( db );
 
@@ -147,7 +147,7 @@ class DBTCPConnector implements DBConnector {
             }
         }
         catch ( IOException ioe ){
-            mp.error( ioe , true );
+            mp.error( port , ioe );
             _error( ioe );
 
             if ( concern.raiseNetworkErrors() )
@@ -162,7 +162,7 @@ class DBTCPConnector implements DBConnector {
             throw me;
         }
         catch ( RuntimeException re ){
-            mp.error( re , true );
+            mp.error( port , re );
             throw re;
         }
         finally {
@@ -178,7 +178,7 @@ class DBTCPConnector implements DBConnector {
     public Response call( DB db , DBCollection coll , OutMessage m , int retries )
         throws MongoException {
 
-        final MyPort mp = _threadPort.get();
+        final MyPort mp = _myPort.get();
         final DBPort port = mp.get( false );
 
         port.checkAuth( db );
@@ -190,21 +190,21 @@ class DBTCPConnector implements DBConnector {
         }
         catch ( IOException ioe ){
             boolean shoulRetry = _error( ioe ) && ! coll._name.equals( "$cmd" ) && retries > 0;
-            mp.error( ioe , ! shoulRetry );
+            mp.error( port , ioe );
             if ( shoulRetry ){
                 return call( db , coll , m , retries - 1 );
             }
             throw new MongoException.Network( "can't call something" , ioe );
         }
         catch ( RuntimeException re ){
-            mp.error( re , true );
+            mp.error( port , re );
             throw re;
         }
         
         ServerError err = res.getError();
         
         if ( err != null && err.isNotMasterError() ){
-            _pickCurrent();
+            _findMaster( true );
             if ( retries <= 0 ){
                 throw new MongoException( "not talking to master and retries used up" );
             }
@@ -216,7 +216,7 @@ class DBTCPConnector implements DBConnector {
     }
 
     public ServerAddress getAddress(){
-        return _curAddress;
+        return _curMaster;
     }
 
     public List<ServerAddress> getAllAddress() {
@@ -224,14 +224,14 @@ class DBTCPConnector implements DBConnector {
     }
 
     public String getConnectPoint(){
-        return _curAddress.toString();
+        return _curMaster.toString();
     }
 
     boolean _error( Throwable t )
         throws MongoException {
         if ( _allHosts != null ){
             _logger.log( Level.WARNING , "replica set mode, switching master" , t );
-            _pickCurrent();
+            _findMaster( true );
         }
         return true;
     }
@@ -239,69 +239,34 @@ class DBTCPConnector implements DBConnector {
     class MyPort {
 
         DBPort get( boolean keep ){
-            if ( _internalStack > 0 ){
-                _logger.log( Level.SEVERE , "if you get this, please post to mongodb-user :)" );
-            }
-            _internalStack++;
+            _findMaster( false );
 
-            if ( _internalStack > 1 ){
-                if ( _last == null ){
-                    // this means there was an error on a previous connection
-                }
-                else {
-                    return _last;
-                }
+            if ( _port != null ){
+                if ( _pool == _curPortPool )
+                    return _port;
+                _pool.done( _port );
+                _port = null;
+                _pool = null;
             }
-
-            if ( _port != null )
-                return _port;
             
-            try {
-                DBPort p = _curPortPool.get();
-                if ( keep && _inRequest )
-                    _port = p;
-                
-                _last = p;
-                return p;
-            }
-            catch ( DBPortPool.NoMoreConnection nmc ){
-                _internalStack = 0;
-                throw nmc;
-            }
+            _pool = _curPortPool;
+            DBPort p = _pool.get();
+            if ( keep && _inRequest )
+                _port = p;
+
+            return p;
         }
         
         void done( DBPort p ){
-            
-            if ( _internalStack <= 0 ){
-                _reset();
-                throw new IllegalStateException( "done called and _internalStack was: " + _internalStack );
-            }
-            
-            _internalStack--;
-            
-            if ( p != _port && _internalStack == 0 )
-                _curPortPool.done( p );
-
-            if ( _internalStack < 0 ){
-                _internalStack = 0;
-            }
+            if ( p != _port )
+                _pool.done( p );
         }
 
-        void error( Exception e , boolean resetStack ){
-            _curPortPool.gotError( e );
+        void error( DBPort p , Exception e ){
+            _pool.done( p );
+            p.close();
 
-            if ( _last == null ){
-                _logger.log( Level.SEVERE , "MyPort.error called but _last is null  called b/c of" , e );
-            }
-            else {
-                _curPortPool.done( _last );
-                _last.close();
-            }
-
-            _last = null;
             _port = null;
-            if ( resetStack )
-                _internalStack = 0;
 
             _logger.log( Level.SEVERE , "MyPort.error called" , e );            
         }
@@ -313,50 +278,37 @@ class DBTCPConnector implements DBConnector {
             if ( _port != null )
                 return;
 
-            _port = _curPortPool.get();
+            _port = _pool.get();
         }
 
         void requestStart(){
             _inRequest = true;
-            if ( _port != null ){
-                _port = null;
-                _logger.log( Level.WARNING , "somehow _port was not null at requestStart" );
-            }
         }
 
         void requestDone(){
             if ( _port != null )
-                _curPortPool.done( _port );
+                _pool.done( _port );
             _port = null;
             _inRequest = false;
-            if ( _internalStack > 0 ){
-                _logger.log( Level.WARNING , "_internalStack in requestDone should be 0 is: " + _internalStack );
-                _internalStack = 0;
-            }
         }
-
-        void _reset(){
-            _internalStack = 0;
-            _port = null;
-            _last = null;
-        }
-        
-        int _internalStack = 0;
 
         DBPort _port;
-        DBPort _last;
+        DBPortPool _pool;
         boolean _inRequest;
     }
     
     /**
      * @return next to try
      */
-    ServerAddress _addAllFromSet( DBObject o ){
-        Object foo = o.get( "hosts" );
+    ServerAddress _addAllFromSet( CommandResult res ){
+        if ( res == null )
+            return null;
+        
+        Object foo = res.get( "hosts" );
         if ( ! ( foo instanceof List ) )
             return null;
 
-        String primary = (String)o.get("primary");
+        String primary = (String)res.get("primary");
         
         ServerAddress primaryAddress = null;
 
@@ -382,90 +334,87 @@ class DBTCPConnector implements DBConnector {
 
         return primaryAddress;
     }
-    
-    void _pickInitial()
-        throws MongoException {
-        if ( _curAddress != null )
-            return;
 
-        // we need to just get a server to query for ismaster
-        _pickCurrent();
 
+    /**
+     * this will update set meta data
+     * @return if addr should be the new master
+     */
+    boolean _findMasterLoop( ServerAddress addr , ServerAddress[] outPrimary ){
         try {
-            _logger.info( "current address beginning of _pickInitial: " + _curAddress );
+            CommandResult res = _isMasterCmd( addr );
+            if ( res == null )
+                return false;
             
-            DBObject im = isMasterCmd();
-            
-            ServerAddress other = _addAllFromSet( im );
-            
-            if ( _isMaster( im ) ) 
-                return;
+            ServerAddress prim = _addAllFromSet( res );
+            if ( outPrimary != null )
+                outPrimary[0] = prim;
 
-            if ( other != null ){
-                _set( other );
-                im = isMasterCmd();
-                _addAllFromSet( im );                
-                if ( _isMaster( im ) )
-                    return;
-
-                _logger.severe( "primary given was wrong: " + other + " going to scan" );
-            }
-            
-            synchronized ( _allHosts ){
-                Collections.shuffle( _allHosts );
-                for ( ServerAddress a : _allHosts ){
-                    if ( _curAddress == a )
-                        continue;
-
-                    _logger.info( "remote [" + _curAddress + "] -> [" + a + "]" );
-                    _set( a );
-                    
-                    im = isMasterCmd();
-                    _addAllFromSet( im );
-                    if ( _isMaster( im ) )
-                        return;
-                    
-                    if ( _allHosts.size() == 2 )
-                        _logger.severe( "switched to: " + a + " but isn't master" );
-                }
-                
-                throw new MongoException( "can't find master" );
-            }
+            return _isMaster( res );
         }
         catch ( Exception e ){
-            _logger.log( Level.SEVERE , "can't pick initial master, using random one" , e );
+            _logger.warning( "can't do _findMasterLoop " + addr + "\t" + e );
+            return false;
         }
+            
     }
-
-    private void _pickCurrent()
+    
+    void _findMaster( boolean reset )
         throws MongoException {
+        
         if ( _allHosts == null )
-            throw new MongoException( "got master/slave issue but not in master/slave mode on the client side" );
-
+            return;
+        
+        if ( ! reset && _curMaster != null )
+            return;
+        
         synchronized ( _allHosts ){
-            Collections.shuffle( _allHosts );
-            for ( int i=0; i<_allHosts.size(); i++ ){
-                ServerAddress a = _allHosts.get( i );
-                if ( a == _curAddress )
-                    continue;
+            if ( _curMaster != null ){
+                if ( _findMasterLoop( _curMaster , null  ) )
+                    return;
+                
+                _curMaster = null;
+                _curPortPool = null;
+            }
+            
+            for ( int loopNumber=0; loopNumber<3; loopNumber++ ){
+                
+                Collections.shuffle( _allHosts );
 
-                if ( _curAddress != null ){
-                    _logger.info( "switching from [" + _curAddress + "] to [" + a + "]" );
+                ServerAddress newPrimary[] = new ServerAddress[1];
+
+                for ( int i=0; i<_allHosts.size(); i++ ){
+                    ServerAddress addr = _allHosts.get(i);
+                    _logger.config( "_findMaster looking at : " + addr );
+                    newPrimary[0] = null;
+                    
+                    if ( _findMasterLoop( addr , newPrimary ) ){
+                        _set( addr );
+                        return;
+                    }
+                    
+                    if ( newPrimary[0] != null ){
+                        addr = newPrimary[0];
+                        if ( _findMasterLoop( addr , null ) ){
+                            _set( addr );
+                            return;
+                        }
+                    }
                 }
 
-                _set( a );
-                return;
             }
+            // sleep - waiting for system to recover
+            try { Thread.sleep( 1000 ); } catch ( Exception e ){}
         }
-
-        throw new MongoException( "couldn't find a new host to swtich too" );
+                
+        throw new MongoException( "can't find master" );
     }
 
     private boolean _set( ServerAddress addr ){
-        if ( _curAddress == addr )
+        if ( _curMaster == addr )
             return false;
-        _curAddress = addr;
-        _curPortPool = _portHolder.get( addr.getSocketAddress() );
+        _curMaster = addr;
+        _curPortPool = _portHolder.get( addr );
         return true;
     }
 
@@ -474,26 +423,34 @@ class DBTCPConnector implements DBConnector {
         if ( _allHosts != null )
             buf.append( "replica set : " ).append( _allHosts );
         else
-            buf.append( _curAddress ).append( " " ).append( _curAddress._addr );
+            buf.append( _curMaster ).append( " " ).append( _curMaster._addr );
 
         return buf.toString();
     }
 
-    DBObject isMasterCmd(){
-        DBCollection collection = _mongo.getDB( "admin" ).getCollection( "$cmd" );
-        
-        Iterator<DBObject> i = collection.__find( _isMaster , null , 0 , 1 , 0 );
-        if ( i == null || ! i.hasNext() )
-            throw new MongoException( "no result for ismaster query?" );
-        
-        DBObject res = i.next();
-        if ( i.hasNext() )
-            throw new MongoException( "what's going on" );
-        
-        return res;
+    CommandResult _isMasterCmd( ServerAddress addr ){
+        DBPortPool pool = _portHolder.get( addr );
+        DBPort p = null;
+        try {
+            p = pool.get();
+            CommandResult res = p.runCommand( _mongo.getDB( "admin" ) , _isMaster );
+            return res;
+        }
+        catch ( Exception e ){
+            _logger.log( Level.INFO , "can't run ismaster on : " + addr + "\t" + e );
+            return null;
+        }
+        finally {
+            if ( p != null ){
+                pool.done( p );
+            }
+        }
     }
 
-    boolean _isMaster( DBObject res ){
+    boolean _isMaster( CommandResult res ){
+        if ( res == null )
+            return false;
+
         Object x = res.get( "ismaster" );
         if ( x == null )
             throw new IllegalStateException( "ismaster shouldn't be null: " + res );
@@ -512,12 +469,12 @@ class DBTCPConnector implements DBConnector {
     }
 
     final Mongo _mongo;
-    private ServerAddress _curAddress;
+    private ServerAddress _curMaster;
     private DBPortPool _curPortPool;
     private DBPortPool.Holder _portHolder;
     private final List<ServerAddress> _allHosts;
 
-    private final ThreadLocal<MyPort> _threadPort = new ThreadLocal<MyPort>(){
+    private final ThreadLocal<MyPort> _myPort = new ThreadLocal<MyPort>(){
         protected MyPort initialValue(){
             return new MyPort();
         }
