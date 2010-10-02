@@ -39,6 +39,47 @@ class ReplicaSetStatus {
         return _setName != null;
     }
 
+    /**
+     * @return master or null if don't have one
+     */
+    ServerAddress getMaster(){
+        for ( int i=0; i<_all.size(); i++ ){
+            Node n = _all.get(i);
+            if ( n.master() )
+                return n._addr;
+        }
+        return null;
+    }
+
+    /**
+     * @return a good secondary or null if can't find one
+     */
+    ServerAddress getASecondary(){
+        Node best = null;
+
+        int start = _random.nextInt( _all.size() );
+
+        for ( int i=0; i<_all.size(); i++ ){
+            Node n = _all.get( ( start + i ) % _all.size() );
+            
+            if ( ! n.secondary() )
+                continue;
+            
+            if ( best == null ){
+                best = n;
+                continue;
+            }
+            
+            long diff = best._pingTime - n._pingTime;
+            if ( diff > 15 )
+                best = n;
+        }
+        
+        if ( best == null )
+            return null;
+        return best._addr;
+    }
+
     class Node {
         
         Node( ServerAddress addr ){
@@ -105,6 +146,14 @@ class ReplicaSetStatus {
                 
         }
 
+        public boolean master(){
+            return _ok && _isMaster;
+        }
+
+        public boolean secondary(){
+            return _ok && _isSecondary;
+        }
+
         public String toString(){
             StringBuilder buf = new StringBuilder();
             buf.append( "Replica Set Node: " ).append( _addr ).append( "\n" );
@@ -118,7 +167,6 @@ class ReplicaSetStatus {
 
             return buf.toString();
         }
-        
         
         final ServerAddress _addr;
         final Set<String> _names = Collections.synchronizedSet( new HashSet<String>() );
@@ -200,6 +248,8 @@ class ReplicaSetStatus {
     String _setName = null; // null until init
     Logger _logger = _rootLogger; // will get changed to use set name once its found
 
+    final Random _random = new Random();
+
     static final MongoOptions _mongoOptions = new MongoOptions();
     static {
         _mongoOptions.connectTimeout = 20000;
@@ -218,11 +268,13 @@ class ReplicaSetStatus {
 
         while ( true ){
             System.out.println( status.ready() );
-            if ( status.ready() )
+            if ( status.ready() ){
                 status.printStatus();
+                System.out.println( "master: " + status.getMaster() + "\t secondary: " + status.getASecondary() );
+            }
             System.out.println( "-----------------------" );
             Thread.sleep( 5000 );
         }
-
+        
     }
 }
