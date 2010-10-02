@@ -33,13 +33,11 @@ public class DBPort {
     
     static final long CONN_RETRY_TIME_MS = 15000;
 
-    public DBPort( InetSocketAddress addr )
-        throws IOException {
+    public DBPort( InetSocketAddress addr ){
         this( addr , null , new MongoOptions() );
     }
     
-    DBPort( InetSocketAddress addr  , DBPortPool pool , MongoOptions options )
-        throws IOException {
+    DBPort( InetSocketAddress addr  , DBPortPool pool , MongoOptions options ){
         _options = options;
         _addr = addr;
         _pool = pool;
@@ -110,19 +108,23 @@ public class DBPort {
 	return runCommand( dbAL , concern.getCommand() );
     }
 
-    synchronized CommandResult runCommand( DB db , DBObject cmd ) {
-        OutMessage msg = OutMessage.query( db._mongo , 0 , db.getName() + ".$cmd" , 0 , -1 , cmd , null );
+    synchronized DBObject findOne( DB db , String coll , DBObject q ){
+        OutMessage msg = OutMessage.query( db._mongo , 0 , db.getName() + "." + coll , 0 , -1 , q , null );
         
         try {
-            Response res = go( msg , db.getCollection( "$cmd" ) );
+            Response res = go( msg , db.getCollection( coll ) );
             if ( res.size() != 1 )
                 throw new MongoInternalException( "something is wrong.  size:" + res.size() );
-            return (CommandResult)res.get(0);
+            return res.get(0);
         }
         catch ( IOException ioe ){
-            throw new MongoInternalException( "cmd failed: " + ioe.toString() , ioe );
+            throw new MongoInternalException( "DBPort.findOne failed" , ioe );
         }
         
+    }
+
+    synchronized CommandResult runCommand( DB db , DBObject cmd ) {
+        return (CommandResult)findOne( db , "$cmd" , cmd );
     }
 
     synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern){

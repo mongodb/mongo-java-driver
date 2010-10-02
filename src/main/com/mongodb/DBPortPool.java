@@ -212,14 +212,8 @@ class DBPortPool extends SimplePool<DBPort> {
         return _addr.equals( t._addr );
     }
     
-    protected DBPort createNew()
-        throws MongoInternalException{
-        try {
-            return new DBPort( _addr , this , _options );
-        }
-        catch ( IOException ioe ){
-            throw new MongoInternalException( "can't create port to:" + _addr , ioe );
-        }
+    protected DBPort createNew(){
+        return new DBPort( _addr , this , _options );
     }
 
     final MongoOptions _options;
