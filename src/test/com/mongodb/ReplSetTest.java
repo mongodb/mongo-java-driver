@@ -22,6 +22,9 @@ public class ReplSetTest {
                     Thread.sleep( 500 );
                     _coll.findOne();
                 }
+                catch ( NullPointerException n ){
+                    n.printStackTrace();
+                }
                 catch ( Exception e ){
                     System.out.println( _a + "\t" + e );
                 }
