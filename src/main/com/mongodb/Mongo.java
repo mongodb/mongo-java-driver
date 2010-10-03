@@ -291,7 +291,7 @@ public class Mongo {
 
     /**
      * closes all open connections
-     * this Mongo instance can be re-used however
+     * this Mongo cannot be re-used
      */
     public void close(){
         _connector.close();

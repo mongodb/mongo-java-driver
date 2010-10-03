@@ -38,6 +38,11 @@ class ReplicaSetStatus {
         return _setName != null;
     }
 
+    void _checkClosed(){
+        if ( _closed )
+            throw new IllegalStateException( "ReplicaSetStatus closed" );
+    }
+
     /**
      * @return master or null if don't have one
      */
@@ -49,6 +54,7 @@ class ReplicaSetStatus {
     }
 
     Node getMasterNode(){
+        _checkClosed();
         for ( int i=0; i<_all.size(); i++ ){
             Node n = _all.get(i);
             if ( n.master() )
@@ -62,6 +68,7 @@ class ReplicaSetStatus {
      * @return a good secondary or null if can't find one
      */
     ServerAddress getASecondary(){
+        _checkClosed();
         Node best = null;
 
         int start = _random.nextInt( _all.size() );
@@ -199,7 +206,7 @@ class ReplicaSetStatus {
         }
         
         public void run(){
-            while ( true ){
+            while ( ! _closed ){
                 try {
                     updateAll();
                 }
@@ -286,7 +293,7 @@ class ReplicaSetStatus {
     }
 
     void close(){
-        // TODO
+        _closed = false;
     }
 
     final Mongo _mongo;
@@ -298,7 +305,8 @@ class ReplicaSetStatus {
     Logger _logger = _rootLogger; // will get changed to use set name once its found
 
     String _lastPrimarySignal;
-
+    boolean _closed = false;
+    
     final Random _random = new Random();
 
     static final MongoOptions _mongoOptions = new MongoOptions();

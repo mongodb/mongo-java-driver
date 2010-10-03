@@ -112,6 +112,11 @@ class DBTCPConnector implements DBConnector {
         _myPort.get().requestEnsureConnection();
     }
 
+    void _checkClosed(){
+        if ( _closed )
+            throw new IllegalStateException( "this Mongo has been closed" );
+    }
+
     WriteResult _checkWriteError( DB db , MyPort mp , DBPort port , WriteConcern concern )
         throws MongoException {
 
@@ -135,6 +140,9 @@ class DBTCPConnector implements DBConnector {
 
     public WriteResult say( DB db , OutMessage m , WriteConcern concern )
         throws MongoException {
+
+        _checkClosed();
+
         MyPort mp = _myPort.get();
         DBPort port = mp.get( true , false );
         port.checkAuth( db );
@@ -181,6 +189,8 @@ class DBTCPConnector implements DBConnector {
     public Response call( DB db , DBCollection coll , OutMessage m , int retries )
         throws MongoException {
         
+        _checkClosed();
+
         final MyPort mp = _myPort.get();
         final DBPort port = mp.get( false , m.hasOption( Bytes.QUERYOPTION_SLAVEOK ) );
         
@@ -337,6 +347,7 @@ class DBTCPConnector implements DBConnector {
     }
 
     public void close(){
+        _closed = true;
         _portHolder.close();
         _rsStatus.close();
     }
@@ -347,6 +358,7 @@ class DBTCPConnector implements DBConnector {
     private DBPortPool.Holder _portHolder;
     private final List<ServerAddress> _allHosts;
     private final ReplicaSetStatus _rsStatus;
+    private boolean _closed = false;
 
     private final ThreadLocal<MyPort> _myPort = new ThreadLocal<MyPort>(){
         protected MyPort initialValue(){
