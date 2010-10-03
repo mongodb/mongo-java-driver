@@ -43,13 +43,21 @@ class ReplicaSetStatus {
      * @return master or null if don't have one
      */
     ServerAddress getMaster(){
+        Node n = getMasterNode();
+        if ( n == null )
+            return null;
+        return n._addr;
+    }
+
+    Node getMasterNode(){
         for ( int i=0; i<_all.size(); i++ ){
             Node n = _all.get(i);
             if ( n.master() )
-                return n._addr;
+                return n;
         }
         return null;
     }
+
 
     /**
      * @return a good secondary or null if can't find one
@@ -91,7 +99,7 @@ class ReplicaSetStatus {
         synchronized void update(){
             try {
                 long start = System.currentTimeMillis();
-                CommandResult res = _port.runCommand( _adminDB , DBTCPConnector._isMaster );
+                CommandResult res = _port.runCommand( _adminDB , _isMasterCmd );
                 _lastCheck = System.currentTimeMillis();
                 _pingTime = _lastCheck - start;
                 
@@ -103,7 +111,8 @@ class ReplicaSetStatus {
                 _ok = true;
                 _isMaster = res.getBoolean( "ismaster" , false );
                 _isSecondary = res.getBoolean( "secondary" , false );
-                
+                _lastPrimarySignal = res.getString( "primary" );
+
                 if ( res.containsKey( "hosts" ) ){
                     for ( Object x : (List)res.get("hosts") ){
                         _addIfNotHere( x.toString() );
@@ -113,7 +122,9 @@ class ReplicaSetStatus {
                 if ( _isMaster ){
                     DBObject config = _port.findOne( _mongo.getDB( "local" ) , "system.replset" , new BasicDBObject() );
                     if ( config == null ){
-                        _logger.log( Level.SEVERE , "no replset config!" );
+                        // probbaly a replica pair
+                        // TODO: add this in when pairs are really gone
+                        //_logger.log( Level.SEVERE , "no replset config!" );
                     }
                     else {
                         
@@ -191,10 +202,7 @@ class ReplicaSetStatus {
         public void run(){
             while ( true ){
                 try {
-                    for ( int i=0; i<_all.size(); i++ ){
-                        Node n = _all.get(i);
-                        n.update();
-                    }
+                    updateAll();
                 }
                 catch ( Exception e ){
                     _logger.log( Level.WARNING , "couldn't do update pass" , e );
@@ -211,10 +219,48 @@ class ReplicaSetStatus {
         }
     }
 
+    Node ensureMaster(){
+        Node n = getMasterNode();
+        if ( n != null ){
+            n.update();
+            if ( n._isMaster )
+                return n;
+        }
+
+        if ( _lastPrimarySignal != null ){
+            n = findNode( _lastPrimarySignal );
+            n.update();
+            if ( n._isMaster )
+                return n;
+        }
+        
+        updateAll();
+        return getMasterNode();
+    }
+
+    void updateAll(){
+        for ( int i=0; i<_all.size(); i++ ){
+            Node n = _all.get(i);
+            n.update();
+        }        
+    }
+
     void _addIfNotHere( String host ){
+        Node n = findNode( host );
+        if ( n == null ){
+            try {
+                _all.add( new Node( new ServerAddress( host ) ) );
+            }
+            catch ( UnknownHostException un ){
+                _logger.log( Level.WARNING , "couldn't resolve host [" + host + "]" );
+            }
+        }
+    }
+
+    Node findNode( String host ){
         for ( int i=0; i<_all.size(); i++ )
             if ( _all.get(i)._names.contains( host ) )
-                return;
+                return _all.get(i);
         
         ServerAddress addr = null;
         try {
@@ -222,17 +268,17 @@ class ReplicaSetStatus {
         }
         catch ( UnknownHostException un ){
             _logger.log( Level.WARNING , "couldn't resolve host [" + host + "]" );
-            return;
+            return null;
         }
 
         for ( int i=0; i<_all.size(); i++ ){
             if ( _all.get(i)._addr.equals( addr ) ){
                 _all.get(i)._names.add( host );
-                return;        
+                return _all.get(i);
             }
         }
 
-        _all.add( new Node( addr ) );
+        return null;
     }
     
     void printStatus(){
@@ -248,6 +294,8 @@ class ReplicaSetStatus {
     String _setName = null; // null until init
     Logger _logger = _rootLogger; // will get changed to use set name once its found
 
+    String _lastPrimarySignal;
+
     final Random _random = new Random();
 
     static final MongoOptions _mongoOptions = new MongoOptions();
@@ -255,6 +303,8 @@ class ReplicaSetStatus {
         _mongoOptions.connectTimeout = 20000;
         _mongoOptions.socketTimeout = 20000;
     }
+
+    static final DBObject _isMasterCmd = new BasicDBObject( "ismaster" , 1 );
 
     public static void main( String args[] )
         throws Exception {
@@ -265,6 +315,7 @@ class ReplicaSetStatus {
         Mongo m = new Mongo( addrs );
 
         ReplicaSetStatus status = new ReplicaSetStatus( m , addrs );
+        System.out.println( status.ensureMaster()._addr );
 
         while ( true ){
             System.out.println( status.ready() );
