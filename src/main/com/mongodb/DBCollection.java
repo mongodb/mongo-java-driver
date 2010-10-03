@@ -201,7 +201,7 @@ public abstract class DBCollection {
         return __find( ref , fields , numToSkip , batchSize , getOptions() );
     }
 
-    protected abstract void createIndex( DBObject keys , DBObject options ) throws MongoException ;
+    public abstract void createIndex( DBObject keys , DBObject options ) throws MongoException ;
 
 
     // ------
@@ -573,6 +573,7 @@ public abstract class DBCollection {
      */
     public void drop()
         throws MongoException {
+        resetIndexCache();
         CommandResult res =_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
         if ( res.ok() || res.getErrorMessage().equals( "ns not found" ) )
             return;
@@ -679,6 +680,7 @@ public abstract class DBCollection {
                       .add( "to" , _db._name + "." + newName )
                       .get() );
         ret.throwOnError();
+        resetIndexCache();
         return _db.getCollection( newName );
     }
 

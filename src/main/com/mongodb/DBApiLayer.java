@@ -289,7 +289,7 @@ public class DBApiLayer extends DB {
             return _connector.say( _db , om , concern );
         }
         
-        protected void createIndex( final DBObject keys, final DBObject options )
+        public void createIndex( final DBObject keys, final DBObject options )
             throws MongoException {
             
             DBObject full = new BasicDBObject();
