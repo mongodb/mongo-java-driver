@@ -15,7 +15,6 @@ import java.util.logging.*;
  *  pull config to get
  *      priority
  *      slave delay
- *      set name
  *      tags (when we do it)
  */
 class ReplicaSetStatus {
@@ -284,6 +283,10 @@ class ReplicaSetStatus {
     void printStatus(){
         for ( int i=0; i<_all.size(); i++ )
             System.out.println( _all.get(i) );
+    }
+
+    void close(){
+        // TODO
     }
 
     final Mongo _mongo;

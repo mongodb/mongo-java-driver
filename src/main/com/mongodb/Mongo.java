@@ -163,7 +163,7 @@ public class Mongo {
         _addrs = null;
         _options = options;
         _connector = new DBTCPConnector( this , _addr );
-        _connector._findMaster( false );
+        _connector.checkMaster();
     }
 
     /**
@@ -187,7 +187,7 @@ public class Mongo {
         _addrs = Arrays.asList( left , right );
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
-        _connector._findMaster( false );
+        _connector.checkMaster();
     }
 
     /**
@@ -212,7 +212,7 @@ public class Mongo {
         _addrs = replicaSetSeeds;
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
-        _connector._findMaster( false );
+        _connector.checkMaster();
     }
 
     public DB getDB( String dbname ){
