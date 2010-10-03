@@ -136,7 +136,7 @@ class DBTCPConnector implements DBConnector {
     public WriteResult say( DB db , OutMessage m , WriteConcern concern )
         throws MongoException {
         MyPort mp = _myPort.get();
-        DBPort port = mp.get( true );
+        DBPort port = mp.get( true , false );
         port.checkAuth( db );
 
         try {
@@ -180,10 +180,10 @@ class DBTCPConnector implements DBConnector {
 
     public Response call( DB db , DBCollection coll , OutMessage m , int retries )
         throws MongoException {
-
+        
         final MyPort mp = _myPort.get();
-        final DBPort port = mp.get( false );
-
+        final DBPort port = mp.get( false , m.hasOption( Bytes.QUERYOPTION_SLAVEOK ) );
+        
         port.checkAuth( db );
         
         Response res = null;
@@ -241,7 +241,17 @@ class DBTCPConnector implements DBConnector {
 
     class MyPort {
 
-        DBPort get( boolean keep ){
+        DBPort get( boolean keep , boolean slaveOk ){
+            
+            if ( slaveOk && _rsStatus != null ){
+                ServerAddress slave = _rsStatus.getASecondary();
+                if ( slave != null ){
+                    _pool = _portHolder.get( slave );
+                    _port = _pool.get();
+                    return _port;
+                }
+            }
+
             if ( _port != null ){
                 if ( _pool == _curPortPool )
                     return _port;
@@ -302,7 +312,6 @@ class DBTCPConnector implements DBConnector {
         if ( _rsStatus == null )
             return;
         
-        System.out.println( "checkMaster called" );
         ReplicaSetStatus.Node n = _rsStatus.ensureMaster();
         if ( n == null )
             throw new MongoInternalException( "can't find a master" );

@@ -173,6 +173,10 @@ class OutMessage extends BSONEncoder {
         }
     }
 
+    boolean hasOption( int option ){
+        return ( _queryOptions & option ) != 0;
+    }
+
     private Mongo _mongo;
     private PoolOutputBuffer _buffer;
     private int _id;
