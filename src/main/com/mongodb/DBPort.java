@@ -113,7 +113,9 @@ public class DBPort {
         
         try {
             Response res = go( msg , db.getCollection( coll ) );
-            if ( res.size() != 1 )
+            if ( res.size() == 0 )
+                return null;
+            if ( res.size() > 1 )
                 throw new MongoInternalException( "something is wrong.  size:" + res.size() );
             return res.get(0);
         }
@@ -124,7 +126,10 @@ public class DBPort {
     }
 
     synchronized CommandResult runCommand( DB db , DBObject cmd ) {
-        return (CommandResult)findOne( db , "$cmd" , cmd );
+        DBObject res = findOne( db , "$cmd" , cmd );
+        if ( res == null )
+            throw new MongoInternalException( "something is wrong, no command result" );
+        return (CommandResult)res;
     }
 
     synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern){
