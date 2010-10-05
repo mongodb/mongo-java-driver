@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <project name="MongoDB Java Driver" default="compile" basedir=".">
 
-  <property name="version" value="2.1"/>
+  <property name="version" value="2.2"/>
   <property name="targetdir" location="target"/>
   <property name="testdir" location="${targetdir}/test"/>
 
