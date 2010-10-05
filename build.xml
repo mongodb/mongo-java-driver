@@ -81,7 +81,7 @@
       <arg value="-1" />
     </exec>
 
-    <jar jarfile="mongo.jar" >
+    <jar jarfile="mongo.jar" manifest="src/main/META-INF/MANIFEST.MF" >
       <fileset dir="build/main" />
     </jar>
 
