@@ -20,8 +20,6 @@ package org.bson;
 
 import java.util.*;
 
-import org.bson.*;
-
 /**
  * A simple implementation of <code>DBObject</code>.  
  * A <code>DBObject</code> can be created as follows, using this class:
@@ -36,6 +34,10 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
      *  Creates an empty object.
      */
     public BasicBSONObject(){
+    }
+
+    public BasicBSONObject(int size){
+    	super(size);
     }
 
     /**
