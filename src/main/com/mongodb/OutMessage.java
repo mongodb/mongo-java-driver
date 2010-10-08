@@ -52,6 +52,7 @@ class OutMessage extends BSONEncoder {
     }
     
     private void _appendQuery( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
+        _queryOptions = options;
         writeInt( options );
         writeCString( ns );
 
@@ -71,7 +72,7 @@ class OutMessage extends BSONEncoder {
         
         _id = ID.getAndIncrement();
 
-        writeInt( 0 ); // will set this later
+        writeInt( 0 ); // length: will set this later
         writeInt( _id );
         writeInt( 0 ); // response to
         writeInt( op );
@@ -172,9 +173,13 @@ class OutMessage extends BSONEncoder {
         }
     }
 
+    boolean hasOption( int option ){
+        return ( _queryOptions & option ) != 0;
+    }
+
     private Mongo _mongo;
     private PoolOutputBuffer _buffer;
     private int _id;
-
+    private int _queryOptions = 0;
 
 }

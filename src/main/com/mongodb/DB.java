@@ -34,13 +34,13 @@ public abstract class DB {
      * updates, and removes).
      * @deprecated 
      */
-	@Deprecated
+    @Deprecated
     public static class WriteConcern {
         /**
          * Don't check for or report any errors on writes.
          */
         public final static com.mongodb.WriteConcern NONE = com.mongodb.WriteConcern.NONE;
-
+        
         /**
          * Use the default level of error checking on writes. Don't
          * send a getLastError command or wait for a response, but do
@@ -60,6 +60,7 @@ public abstract class DB {
     public DB( Mongo mongo , String name ){
         _mongo = mongo;
     	_name = name;
+        _options = new Bytes.OptionHolder( _mongo._netOptions );
     }
 
     public abstract void requestStart();
@@ -478,12 +479,36 @@ public abstract class DB {
         return _mongo.getDB( name );
     }
 
+    /**
+     * makes thisq query ok to run on a slave node
+     */
+    public void slaveOk(){
+        addOption( Bytes.QUERYOPTION_SLAVEOK );
+    }
+
+    public void addOption( int option ){
+        _options.add( option );
+    }
+
+    public void setOptions( int options ){
+        _options.set( options );
+    }
+
+    public void resetOptions(){
+        _options.reset();
+    }
+   
+    public int getOptions(){
+        return _options.get();
+    }
+
     final Mongo _mongo;
     final String _name;
     final Set<DBCollection> _seenCollections = new HashSet<DBCollection>();
 
     protected boolean _readOnly = false;
     private com.mongodb.WriteConcern _concern;
+    final Bytes.OptionHolder _options;
 
     String _username;
     byte[] _authhash = null;

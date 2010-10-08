@@ -152,6 +152,17 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return foo.toString();
     }
 
+    public boolean getBoolean( String key , boolean def ){
+        Object foo = get( key );
+        if ( foo == null )
+            return def;
+        if ( foo instanceof Number )
+            return ((Number)foo).intValue() > 0;
+        if ( foo instanceof Boolean )
+            return ((Boolean)foo).booleanValue();
+        throw new IllegalArgumentException( "can't coerce to bool:" + foo.getClass() );
+    }
+
     /** Add a key/value pair to this object
      * @param key the field name
      * @param val the field value

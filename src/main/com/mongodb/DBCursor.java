@@ -58,6 +58,9 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         _collection = collection;
         _query = q == null ? new BasicDBObject() : q;
         _keysWanted = k;
+        if ( _collection != null ){
+            _options = _collection.getOptions();
+        }
     }
 
     /** Types of cursors: iterator or array. */
@@ -224,6 +227,13 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
             throw new IllegalStateException( "can't set skip after executing query" );
         _skip = n;
         return this;
+    }
+
+    /**
+     * makes thisq query ok to run on a slave node
+     */
+    public void slaveOk(){
+        addOption( Bytes.QUERYOPTION_SLAVEOK );
     }
 
     /**

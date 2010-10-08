@@ -198,10 +198,10 @@ public abstract class DBCollection {
      */
     Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) 
         throws MongoException {
-        return __find( ref , fields , numToSkip , batchSize , 0 );
+        return __find( ref , fields , numToSkip , batchSize , getOptions() );
     }
 
-    protected abstract void createIndex( DBObject keys , DBObject options ) throws MongoException ;
+    public abstract void createIndex( DBObject keys , DBObject options ) throws MongoException ;
 
 
     // ------
@@ -228,7 +228,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( Object obj, DBObject fields ) {
-        Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, 0);
+        Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, getOptions() );
         return (iterator != null ? iterator.next() : null);
     }
     
@@ -349,20 +349,11 @@ public abstract class DBCollection {
 
         final String name = options.get( "name" ).toString();
 
-        boolean doEnsureIndex = false;
-        if ( ! _createIndexes.contains( name ) )
-            doEnsureIndex = true;
-        else if ( _anyUpdateSave && ! _createIndexesAfterSave.contains( name ) )
-            doEnsureIndex = true;
-
-        if ( ! doEnsureIndex )
+        if ( _createIndexes.contains( name ) )
             return;
 
         createIndex( keys , options );
-
         _createIndexes.add( name );
-        if ( _anyUpdateSave )
-            _createIndexesAfterSave.add( name );
     }
 
     /** Clears all indices that have not yet been applied to this collection. */
@@ -473,7 +464,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( DBObject o, DBObject fields ) {
-        Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0 );
+        Iterator<DBObject> i = __find( o , fields , 0 , -1 , getOptions() );
         if ( i == null || ! i.hasNext() )
             return null;
         return i.next();
@@ -573,6 +564,7 @@ public abstract class DBCollection {
      */
     public void drop()
         throws MongoException {
+        resetIndexCache();
         CommandResult res =_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
         if ( res.ok() || res.getErrorMessage().equals( "ns not found" ) )
             return;
@@ -679,6 +671,7 @@ public abstract class DBCollection {
                       .add( "to" , _db._name + "." + newName )
                       .get() );
         ret.throwOnError();
+        resetIndexCache();
         return _db.getCollection( newName );
     }
 
@@ -807,6 +800,7 @@ public abstract class DBCollection {
         _db = base;
         _name = name;
         _fullName = _db.getName() + "." + name;
+        _options = new Bytes.OptionHolder( _db._options );
     }
 
     private  DBObject _checkObject( DBObject o , boolean canBeNull , boolean query ){
@@ -971,6 +965,29 @@ public abstract class DBCollection {
             return _concern;
         return _db.getWriteConcern();
     }
+
+    /**
+     * makes thisq query ok to run on a slave node
+     */
+    public void slaveOk(){
+        addOption( Bytes.QUERYOPTION_SLAVEOK );
+    }
+
+    public void addOption( int option ){
+        _options.add( option );
+    }
+
+    public void setOptions( int options ){
+        _options.set( options );
+    }
+
+    public void resetOptions(){
+        _options.reset();
+    }
+   
+    public int getOptions(){
+        return _options.get();
+    }
     
     final DB _db;
 
@@ -979,13 +996,11 @@ public abstract class DBCollection {
 
     protected List<DBObject> _hintFields;
     private WriteConcern _concern = null;
+    final Bytes.OptionHolder _options;
 
     protected Class _objectClass = null;
     private Map<String,Class> _internalClass = Collections.synchronizedMap( new HashMap<String,Class>() );
     private ReflectionDBObject.JavaWrapper _wrapper = null;
 
-    private boolean _anyUpdateSave = false;
-
     final private Set<String> _createIndexes = new HashSet<String>();
-    final private Set<String> _createIndexesAfterSave = new HashSet<String>();
 }
