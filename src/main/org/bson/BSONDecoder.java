@@ -298,15 +298,34 @@ public class BSONDecoder {
         String readCStr()
             throws IOException {
             
-            _stringBuffer.reset();
-            
+            // short circuit 1 byte strings
+            {
+                _random[0] = read();
+                if ( _random[0] == 0 )
+                    return "";
+                
+                _random[1] = read();
+                if ( _random[1] == 0 ){
+                    String out = ONE_BYTE_STRINGS[_random[0]];
+                    if ( out != null )
+                        return out;
+                    return new String( _random , 0 , 1 , "UTF-8" );
+                }
+
+                _stringBuffer.reset();
+                _stringBuffer.write( _random[0] );
+                _stringBuffer.write( _random[1] );
+
+            }
+
+
             while ( true ){
                 byte b = read();
                 if ( b == 0 )
                     break;
                 _stringBuffer.write( b );
             }
-            
+
             String out = null;
             try {
                 out = _stringBuffer.asString( "UTF-8" );
@@ -342,7 +361,22 @@ public class BSONDecoder {
 
     private Input _in;
     private BSONCallback _callback;
-    private byte[] _random = new byte[1024];
+    private byte[] _random = new byte[1024]; // has to be used within a single function
 
     private PoolOutputBuffer _stringBuffer = new PoolOutputBuffer();
+
+    static final String[] ONE_BYTE_STRINGS = new String[128];
+    static void _fillRange( byte min, byte max ){
+        while ( min < max ){
+            String s = "";
+            s += (char)min;
+            ONE_BYTE_STRINGS[(int)min] = s;
+            min++;
+        }
+    }
+    static {
+        _fillRange( (byte)'0' , (byte)'9' );
+        _fillRange( (byte)'a' , (byte)'z' );
+        _fillRange( (byte)'A' , (byte)'Z' );
+    }
 }
