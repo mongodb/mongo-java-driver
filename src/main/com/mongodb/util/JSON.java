@@ -549,6 +549,10 @@ class JSONParser {
                 isDouble = true;
                 parseFraction();
                 break;
+            case 'e': case 'E':
+                isDouble = true;
+                parseExponent();
+                break;
             default:
                 break outer;
             }
@@ -567,6 +571,33 @@ class JSONParser {
     public void parseFraction() {
         // get past .
         pos++;
+
+        outer:
+        while(pos < s.length()) {
+            switch(s.charAt(pos)) {
+            case '0': case '1': case '2': case '3': case '4': 
+            case '5': case '6': case '7': case '8': case '9':
+                pos++;
+                break;
+            case 'e': case 'E':
+                parseExponent();
+                break;
+            default:
+                break outer;
+            }
+        }
+    }
+
+    /** 
+     * Advances the pointer through the exponent.
+     */
+    public void parseExponent() {
+        // get past E
+        pos++;
+
+        if(check('-') || check('+')) {
+            pos++;
+        }
 
         outer:
         while(pos < s.length()) {
