@@ -348,8 +348,10 @@ class DBTCPConnector implements DBConnector {
 
     public void close(){
         _closed = true;
-        _portHolder.close();
-        _rsStatus.close();
+        if ( _portHolder != null )
+        	_portHolder.close();
+        if ( _rsStatus != null )
+        	_rsStatus.close();
     }
 
     final Mongo _mongo;
