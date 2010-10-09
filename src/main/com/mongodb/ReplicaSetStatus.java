@@ -293,7 +293,7 @@ class ReplicaSetStatus {
     }
 
     void close(){
-        _closed = false;
+        _closed = true;
     }
 
     final Mongo _mongo;
