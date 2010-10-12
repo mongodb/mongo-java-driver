@@ -18,20 +18,14 @@
 
 package com.mongodb.gridfs;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.security.MessageDigest;
-import java.util.Date;
+import java.io.*;
+import java.security.*;
+import java.util.*;
 
-import org.bson.types.ObjectId;
+import org.bson.types.*;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.BasicDBObjectBuilder;
-import com.mongodb.DBObject;
-import com.mongodb.MongoException;
-import com.mongodb.util.SimplePool;
-import com.mongodb.util.Util;
+import com.mongodb.*;
+import com.mongodb.util.*;
 
 /**
  * Class implementation for writing data to GridFS.
@@ -51,7 +45,7 @@ public class GridFSInputFile extends GridFSFile {
      * @param filename
      *            Name of the file to be created.
      */
-    GridFSInputFile(GridFS fs , InputStream in , String filename) {
+    GridFSInputFile( GridFS fs , InputStream in , String filename ) {
         _fs = fs;
         _in = in;
         _filename = filename;
@@ -75,7 +69,7 @@ public class GridFSInputFile extends GridFSFile {
      * @param filename
      *            Name of the file to be created.
      */
-    GridFSInputFile(GridFS fs , String filename) {
+    GridFSInputFile( GridFS fs , String filename ) {
         this( fs , null , filename );
     }
     
@@ -87,7 +81,7 @@ public class GridFSInputFile extends GridFSFile {
      * @param fs
      *            The GridFS connection handle.
      */
-    GridFSInputFile(GridFS fs) {
+    GridFSInputFile( GridFS fs ) {
         this( fs , null , null );
     }
     
@@ -97,7 +91,7 @@ public class GridFSInputFile extends GridFSFile {
      * @see com.mongodb.gridfs.GridFSFile#getMetaData()
      */
     public DBObject getMetaData() {
-        if (_metadata == null) {
+        if ( _metadata == null ) {
             _metadata = new BasicDBObject();
         }
         return _metadata;
@@ -109,7 +103,7 @@ public class GridFSInputFile extends GridFSFile {
      * @param fn
      *            File name.
      */
-    public void setFilename(String fn) {
+    public void setFilename( String fn ) {
         _filename = fn;
     }
     
@@ -119,7 +113,7 @@ public class GridFSInputFile extends GridFSFile {
      * @param ct
      *            Content type.
      */
-    public void setContentType(String ct) {
+    public void setContentType( String ct ) {
         _contentType = ct;
     }
     
@@ -138,16 +132,16 @@ public class GridFSInputFile extends GridFSFile {
      * @param chunkSize
      *            Size of chunks for file in bytes.
      */
-    public void save(int chunkSize) {
+    public void save( int chunkSize ) {
         if (!_saved) {
             try {
                 saveChunks( chunkSize );
-            } catch (IOException ioe) {
+            } catch ( IOException ioe ) {
                 throw new MongoException( "couldn't save chunks" , ioe );
             }
         }
         
-        if (_outputStream == null) {
+        if ( _outputStream == null ) {
             _close();
         }
     }
@@ -183,27 +177,27 @@ public class GridFSInputFile extends GridFSFile {
      *             on problems reading the new entry's
      *             {@link java.io.InputStream}.
      */
-    public int saveChunks(int chunkSize) throws IOException {
-        if (_chunkSize != chunkSize) {
+    public int saveChunks( int chunkSize ) throws IOException {
+        if ( _chunkSize != chunkSize ) {
             _chunkSize = chunkSize;
             _buffer = new byte[(int) _chunkSize];
         }
-        if (_saved) {
+        if ( _saved ) {
             throw new RuntimeException( "already saved!" );
         }
         
-        if (chunkSize > 3.5 * 1000 * 1000) {
+        if ( chunkSize > 3.5 * 1000 * 1000 ) {
             throw new RuntimeException( "chunkSize must be less than 3.5MiB!" );
         }
         
         int bytesRead = 0;
-        while (bytesRead >= 0) {
+        while ( bytesRead >= 0 ) {
             _currentBufferPosition = 0;
             bytesRead = _readStream2Buffer();
             _dumpBuffer( _outputStream == null );
         }
         
-        if (_outputStream == null) {
+        if ( _outputStream == null ) {
             _close();
         }
         return _currentChunkNumber;
@@ -223,7 +217,7 @@ public class GridFSInputFile extends GridFSFile {
      * @return Writable stream object.
      */
     public OutputStream getOutputStream() {
-        if (_outputStream == null) {
+        if ( _outputStream == null ) {
             _outputStream = new MyOutputStream();
         }
         return _outputStream;
@@ -238,13 +232,13 @@ public class GridFSInputFile extends GridFSFile {
      * @param writePartial
      *            Write also partial buffers full.
      */
-    private void _dumpBuffer(boolean writePartial) {
-        if ((_currentBufferPosition < _chunkSize) && !writePartial) {
+    private void _dumpBuffer( boolean writePartial ) {
+        if ( ( _currentBufferPosition < _chunkSize ) && !writePartial ) {
             // Bail out, nothing to write (yet).
             return;
         }
         byte[] writeBuffer = _buffer;
-        if (_currentBufferPosition != _chunkSize) {
+        if ( _currentBufferPosition != _chunkSize ) {
             writeBuffer = new byte[_currentBufferPosition];
             System.arraycopy( _buffer, 0, writeBuffer, 0, _currentBufferPosition );
         }
@@ -269,12 +263,12 @@ public class GridFSInputFile extends GridFSFile {
      */
     private int _readStream2Buffer() throws IOException {
         int bytesRead = 0;
-        while (_currentBufferPosition < _chunkSize && bytesRead >= 0) {
+        while ( _currentBufferPosition < _chunkSize && bytesRead >= 0 ) {
             bytesRead = _in.read( _buffer, _currentBufferPosition,
                                  (int) _chunkSize - _currentBufferPosition );
-            if (bytesRead > 0) {
+            if ( bytesRead > 0 ) {
                 _currentBufferPosition += bytesRead;
-            } else if (bytesRead == 0) {
+            } else if ( bytesRead == 0 ) {
                 throw new RuntimeException( "i'm doing something wrong" );
             }
         }
@@ -317,7 +311,7 @@ public class GridFSInputFile extends GridFSFile {
         protected MessageDigest createNew() {
             try {
                 return MessageDigest.getInstance( "MD5" );
-            } catch (java.security.NoSuchAlgorithmException e) {
+            } catch ( java.security.NoSuchAlgorithmException e ) {
                 throw new RuntimeException( "your system doesn't have md5!" );
             }
         }
@@ -337,7 +331,7 @@ public class GridFSInputFile extends GridFSFile {
          * @see java.io.OutputStream#write(int)
          */
         @Override
-        public void write(int b) throws IOException {
+        public void write( int b ) throws IOException {
             byte[] byteArray = new byte[1];
             byteArray[0] = (byte) (b & 0xff);
             write( byteArray, 0, 1 );
@@ -349,20 +343,20 @@ public class GridFSInputFile extends GridFSFile {
          * @see java.io.OutputStream#write(byte[], int, int)
          */
         @Override
-        public void write(byte[] b , int off , int len) throws IOException {
+        public void write( byte[] b , int off , int len ) throws IOException {
             int offset = off;
             int length = len;
             int toCopy = 0;
-            while (length > 0) {
+            while ( length > 0 ) {
                 toCopy = length;
-                if (toCopy > _chunkSize - _currentBufferPosition) {
+                if ( toCopy > _chunkSize - _currentBufferPosition ) {
                     toCopy = (int) _chunkSize - _currentBufferPosition;
                 }
                 System.arraycopy( b, offset, _buffer, _currentBufferPosition, toCopy );
                 _currentBufferPosition += toCopy;
                 offset += toCopy;
                 length -= toCopy;
-                if (_currentBufferPosition == _chunkSize) {
+                if ( _currentBufferPosition == _chunkSize ) {
                     _dumpBuffer( false );
                 }
             }
