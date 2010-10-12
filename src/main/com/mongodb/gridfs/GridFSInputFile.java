@@ -133,7 +133,7 @@ public class GridFSInputFile extends GridFSFile {
      *            Size of chunks for file in bytes.
      */
     public void save( int chunkSize ) {
-        if (!_saved) {
+        if ( ! _saved ) {
             try {
                 saveChunks( chunkSize );
             } catch ( IOException ioe ) {
