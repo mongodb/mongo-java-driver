@@ -129,29 +129,6 @@ class ReplicaSetStatus {
                     }
                 }
                 
-                if ( _isMaster ){
-                    DBObject config = _port.findOne( _mongo.getDB( "local" ) , "system.replset" , new BasicDBObject() );
-                    if ( config == null ){
-                        // probbaly a replica pair
-                        // TODO: add this in when pairs are really gone
-                        //_logger.log( Level.SEVERE , "no replset config!" );
-                    }
-                    else {
-                        
-                        String setName = config.get( "_id" ).toString();
-                        if ( _setName == null ){
-                            _setName = setName;
-                            _logger = Logger.getLogger( _rootLogger.getName() + "." + setName );
-                        }
-                        else if ( !_setName.equals( setName ) ){
-                            _logger.log( Level.SEVERE , "mis match set name old: " + _setName + " new: " + setName );
-                            return;
-                        } 
-
-                        // TODO: look at members
-                    }
-                }
-                
             }
             catch ( MongoInternalException e ){
                 Throwable root = e;
@@ -164,6 +141,45 @@ class ReplicaSetStatus {
                 _logger.log( Level.SEVERE , "can't update node: " + _addr , e );
                 _ok = false;
             }
+
+            if ( ! _isMaster )
+                return;
+            
+            try {
+                DBObject config = _port.findOne( _mongo.getDB( "local" ) , "system.replset" , new BasicDBObject() );
+                if ( config == null ){
+                    // probbaly a replica pair
+                    // TODO: add this in when pairs are really gone
+                    //_logger.log( Level.SEVERE , "no replset config!" );
+                }
+                else {
+                    
+                    String setName = config.get( "_id" ).toString();
+                    if ( _setName == null ){
+                        _setName = setName;
+                        _logger = Logger.getLogger( _rootLogger.getName() + "." + setName );
+                    }
+                    else if ( !_setName.equals( setName ) ){
+                        _logger.log( Level.SEVERE , "mis match set name old: " + _setName + " new: " + setName );
+                        return;
+                    } 
+                    
+                    // TODO: look at members
+                }
+            }
+
+            catch ( MongoInternalException e ){
+                if ( _setName != null ){
+                    // this probably means the master is busy, so going to ignore
+                }
+                else {
+                    _logger.log( Level.SEVERE , "can't get intial config from node: " + _addr , e );
+                }
+            }
+            catch ( Exception e ){
+                _logger.log( Level.SEVERE , "unexpected error getting config from node: " + _addr , e );
+            }
+
                 
         }
 
