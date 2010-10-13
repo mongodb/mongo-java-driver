@@ -21,9 +21,13 @@ class ReplicaSetStatus {
 
     static final Logger _rootLogger = Logger.getLogger( "com.mongodb.ReplicaSetStatus" );
     
-    ReplicaSetStatus( Mongo m , List<ServerAddress> initial ){
+    ReplicaSetStatus( Mongo m , List<ServerAddress> initial , DBConnector connector ){
         _mongo = m;
-        _adminDB = _mongo.getDB( "admin" );
+        
+        if ( connector == null )
+            _adminDB = m.getDB( "admin" );
+        else
+            _adminDB = new DBApiLayer( m , "admin" , connector );
 
         _all = Collections.synchronizedList( new ArrayList<Node>() );
         for ( ServerAddress addr : initial ){
@@ -325,7 +329,7 @@ class ReplicaSetStatus {
 
         Mongo m = new Mongo( addrs );
 
-        ReplicaSetStatus status = new ReplicaSetStatus( m , addrs );
+        ReplicaSetStatus status = new ReplicaSetStatus( m , addrs , null );
         System.out.println( status.ensureMaster()._addr );
 
         while ( true ){

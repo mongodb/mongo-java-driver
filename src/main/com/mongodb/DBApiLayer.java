@@ -54,6 +54,9 @@ public class DBApiLayer extends DB {
     protected DBApiLayer( Mongo mongo , String root , DBConnector connector ){
         super( mongo , root );
 
+        if ( connector == null )
+            throw new IllegalArgumentException( "need a connector: " + root );
+        
         _root = root;
         _rootPlusDot = _root + ".";
 

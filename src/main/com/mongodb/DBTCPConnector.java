@@ -40,7 +40,7 @@ class DBTCPConnector implements DBConnector {
 
         if ( addr.isPaired() ){
             _allHosts = new ArrayList<ServerAddress>( addr.explode() );
-            _rsStatus = new ReplicaSetStatus( m , _allHosts );
+            _rsStatus = new ReplicaSetStatus( m , _allHosts , this );
             _createLogger.info( "switching to replica set mode : " + _allHosts + " -> " + _curMaster  );
         }
         else {
@@ -63,7 +63,7 @@ class DBTCPConnector implements DBConnector {
         _checkAddress( all );
 
         _allHosts = new ArrayList<ServerAddress>( all ); // make a copy so it can't be modified
-        _rsStatus = new ReplicaSetStatus( m , _allHosts );
+        _rsStatus = new ReplicaSetStatus( m , _allHosts , this );
 
         _createLogger.info( all  + " -> " + _curMaster );
     }
@@ -257,8 +257,7 @@ class DBTCPConnector implements DBConnector {
                 ServerAddress slave = _rsStatus.getASecondary();
                 if ( slave != null ){
                     _pool = _portHolder.get( slave );
-                    _port = _pool.get();
-                    return _port;
+                    return _pool.get();
                 }
             }
 
