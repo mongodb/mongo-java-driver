@@ -42,7 +42,7 @@ class OutMessage extends BSONEncoder {
 
     OutMessage( Mongo m ){
         _mongo = m;
-        _buffer = m._bufferPool.get();
+        _buffer = _mongo == null ? new PoolOutputBuffer() : _mongo._bufferPool.get();
         set( _buffer );
     }
 
@@ -166,11 +166,11 @@ class OutMessage extends BSONEncoder {
     }
 
     void doneWithMessage(){
-        if ( _buffer != null ){
+        if ( _buffer != null && _mongo != null )
             _mongo._bufferPool.done( _buffer );
-            _buffer = null;
-            _mongo = null;
-        }
+        
+        _buffer = null;
+        _mongo = null;
     }
 
     boolean hasOption( int option ){

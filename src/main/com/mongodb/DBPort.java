@@ -62,6 +62,11 @@ public class DBPort {
     
     private synchronized Response go( OutMessage msg , DBCollection coll )
         throws IOException {
+        return go( msg , coll , false );
+    }
+
+    private synchronized Response go( OutMessage msg , DBCollection coll , boolean forceReponse )
+        throws IOException {
 
         if ( _processingResponse ){
             if ( coll == null ){
@@ -88,7 +93,7 @@ public class DBPort {
             if ( _pool != null )
                 _pool._everWorked = true;
             
-            if ( coll == null )
+            if ( coll == null && ! forceReponse )
                 return null;
             
             _processingResponse = true;
@@ -131,6 +136,33 @@ public class DBPort {
             throw new MongoInternalException( "something is wrong, no command result" );
         return (CommandResult)res;
     }
+
+    synchronized DBObject findOne( String ns , DBObject q ){
+        OutMessage msg = OutMessage.query( null , 0 , ns , 0 , -1 , q , null );
+        
+        try {
+            Response res = go( msg , null , true );
+            if ( res.size() == 0 )
+                return null;
+            if ( res.size() > 1 )
+                throw new MongoInternalException( "something is wrong.  size:" + res.size() );
+            return res.get(0);
+        }
+        catch ( IOException ioe ){
+            throw new MongoInternalException( "DBPort.findOne failed" , ioe );
+        }
+        
+    }
+
+    synchronized CommandResult runCommand( String db , DBObject cmd ) {
+        DBObject res = findOne( db + ".$cmd" , cmd );
+        if ( res == null )
+            throw new MongoInternalException( "something is wrong, no command result" );
+        CommandResult cr = new CommandResult();
+        cr.putAll( res );
+        return cr;
+    }
+
 
     synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern){
         if ( last != _calls )
