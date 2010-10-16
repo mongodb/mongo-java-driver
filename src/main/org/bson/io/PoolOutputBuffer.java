@@ -182,13 +182,23 @@ public class PoolOutputBuffer extends OutputBuffer {
         throws UnsupportedEncodingException {
         if ( _fromPool.size() > 0 )
             return super.asString( encoding );
+
+        if ( encoding.equals( "UTF8" ) || encoding.equals( "UTF-8" ) ){
+            try {
+                return _encoding.decode( _mine , 0 , size() );
+            }
+            catch ( IOException ioe ){
+                // we failed, fall back
+            }
+        }
         return new String( _mine , 0 , size() , encoding );
     }
-
+    
     
     final byte[] _mine = new byte[BUF_SIZE];
     final List<byte[]> _fromPool = new ArrayList<byte[]>();
-    
+    final UTF8Encoding _encoding = new UTF8Encoding();
+
     private final Position _cur = new Position();
     private final Position _end = new Position();
     

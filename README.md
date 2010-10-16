@@ -40,3 +40,5 @@ http://jira.mongodb.org/browse/JAVA
 * Richard Kreuter      richard@10gen.com
 * Matthew Foemmel      git@foemmel.com
 * Jim Dickinson        jdickinson@shopwiki.com
+* Jorge Ortiz          jorge.ortiz@gmail.com
+

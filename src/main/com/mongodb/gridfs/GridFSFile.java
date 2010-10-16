@@ -90,6 +90,9 @@ public abstract class GridFSFile implements DBObject {
         return _uploadDate;
     }
 
+    /**
+     * note: to set aliases, call put( "aliases" , List<String> )
+     */
     public List<String> getAliases(){
         return (List<String>)_metadata.get( "aliases" );
     }

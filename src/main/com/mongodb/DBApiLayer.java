@@ -54,6 +54,9 @@ public class DBApiLayer extends DB {
     protected DBApiLayer( Mongo mongo , String root , DBConnector connector ){
         super( mongo , root );
 
+        if ( connector == null )
+            throw new IllegalArgumentException( "need a connector: " + root );
+        
         _root = root;
         _rootPlusDot = _root + ".";
 
@@ -289,7 +292,7 @@ public class DBApiLayer extends DB {
             return _connector.say( _db , om , concern );
         }
         
-        protected void createIndex( final DBObject keys, final DBObject options )
+        public void createIndex( final DBObject keys, final DBObject options )
             throws MongoException {
             
             DBObject full = new BasicDBObject();

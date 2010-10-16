@@ -504,7 +504,7 @@ public abstract class DB {
 
     final Mongo _mongo;
     final String _name;
-    final Set<DBCollection> _seenCollections = new HashSet<DBCollection>();
+    final Set<DBCollection> _seenCollections = Collections.synchronizedSet( new HashSet<DBCollection>() );
 
     protected boolean _readOnly = false;
     private com.mongodb.WriteConcern _concern;

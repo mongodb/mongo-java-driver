@@ -201,7 +201,7 @@ public abstract class DBCollection {
         return __find( ref , fields , numToSkip , batchSize , getOptions() );
     }
 
-    protected abstract void createIndex( DBObject keys , DBObject options ) throws MongoException ;
+    public abstract void createIndex( DBObject keys , DBObject options ) throws MongoException ;
 
 
     // ------
@@ -349,20 +349,11 @@ public abstract class DBCollection {
 
         final String name = options.get( "name" ).toString();
 
-        boolean doEnsureIndex = false;
-        if ( ! _createIndexes.contains( name ) )
-            doEnsureIndex = true;
-        else if ( _anyUpdateSave && ! _createIndexesAfterSave.contains( name ) )
-            doEnsureIndex = true;
-
-        if ( ! doEnsureIndex )
+        if ( _createIndexes.contains( name ) )
             return;
 
         createIndex( keys , options );
-
         _createIndexes.add( name );
-        if ( _anyUpdateSave )
-            _createIndexesAfterSave.add( name );
     }
 
     /** Clears all indices that have not yet been applied to this collection. */
@@ -573,6 +564,7 @@ public abstract class DBCollection {
      */
     public void drop()
         throws MongoException {
+        resetIndexCache();
         CommandResult res =_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
         if ( res.ok() || res.getErrorMessage().equals( "ns not found" ) )
             return;
@@ -679,6 +671,7 @@ public abstract class DBCollection {
                       .add( "to" , _db._name + "." + newName )
                       .get() );
         ret.throwOnError();
+        resetIndexCache();
         return _db.getCollection( newName );
     }
 
@@ -1009,8 +1002,5 @@ public abstract class DBCollection {
     private Map<String,Class> _internalClass = Collections.synchronizedMap( new HashMap<String,Class>() );
     private ReflectionDBObject.JavaWrapper _wrapper = null;
 
-    private boolean _anyUpdateSave = false;
-
     final private Set<String> _createIndexes = new HashSet<String>();
-    final private Set<String> _createIndexesAfterSave = new HashSet<String>();
 }

@@ -42,6 +42,8 @@ public class JSONTest extends com.mongodb.util.TestCase {
         assertEquals(JSON.serialize(JSON.parse("{'x' : 500.0 }")), "{ \"x\" : 500.0}");
         assertEquals(JSON.serialize(JSON.parse("{'x' : 0.500 }")), "{ \"x\" : 0.5}");
         assertEquals(JSON.serialize(JSON.parse("{'x' : 5. }")), "{ \"x\" : 5.0}");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 5.0e+1 }")), "{ \"x\" : 50.0}");
+        assertEquals(JSON.serialize(JSON.parse("{'x' : 5.0E-1 }")), "{ \"x\" : 0.5}");
     }
 
     @org.testng.annotations.Test(groups = {"basic"})

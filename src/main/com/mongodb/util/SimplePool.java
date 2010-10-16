@@ -139,7 +139,6 @@ public abstract class SimplePool<T> implements DynamicMBean {
     public T get( long waitTime ){
         final T t = _get( waitTime );
         if ( t != null ){
-            _consecutiveSleeps = 0;
             if ( _trackLeaks ){
                 Throwable stack = new Throwable();
                 stack.fillInStackTrace();
@@ -200,11 +199,6 @@ public abstract class SimplePool<T> implements DynamicMBean {
 	    if ( waitTime > 0 && totalSlept >= waitTime )
 		return null;
 	    
-            if ( _consecutiveSleeps > 100 && totalSlept > _sleepTime * 2 )
-                _gcIfNeeded();
-
-            _consecutiveSleeps++;
-            
             long start = System.currentTimeMillis();
             try {
                 _waiting.tryAcquire( _sleepTime , TimeUnit.MILLISECONDS );
@@ -351,17 +345,5 @@ public abstract class SimplePool<T> implements DynamicMBean {
 
     private int _everCreated = 0;
     private int _trackPrintCount = 0;
-    private int _consecutiveSleeps = 0;
-
-
-    private static void _gcIfNeeded(){
-        final long now = System.currentTimeMillis();
-        if ( now < _nextGC )
-            return;
-
-        _nextGC = now + 5000;
-        System.gc();
-    }
-    private static long _nextGC = 0;
     
 }

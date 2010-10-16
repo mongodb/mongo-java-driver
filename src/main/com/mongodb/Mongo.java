@@ -71,7 +71,7 @@ import org.bson.io.*;
 public class Mongo {
 
     public static final int MAJOR_VERSION = 2;
-    public static final int MINOR_VERSION = 1;
+    public static final int MINOR_VERSION = 2;
 
     public static DB connect( DBAddress addr ){
         return new Mongo( addr ).getDB( addr.getDBName() );
@@ -163,7 +163,7 @@ public class Mongo {
         _addrs = null;
         _options = options;
         _connector = new DBTCPConnector( this , _addr );
-        _connector._findMaster( false );
+        _connector.checkMaster();
     }
 
     /**
@@ -187,7 +187,7 @@ public class Mongo {
         _addrs = Arrays.asList( left , right );
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
-        _connector._findMaster( false );
+        _connector.checkMaster();
     }
 
     /**
@@ -212,7 +212,7 @@ public class Mongo {
         _addrs = replicaSetSeeds;
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
-        _connector._findMaster( false );
+        _connector.checkMaster();
     }
 
     public DB getDB( String dbname ){
@@ -291,7 +291,7 @@ public class Mongo {
 
     /**
      * closes all open connections
-     * this Mongo instance can be re-used however
+     * this Mongo cannot be re-used
      */
     public void close(){
         _connector.close();
