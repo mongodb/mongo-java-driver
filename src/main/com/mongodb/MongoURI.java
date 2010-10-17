@@ -117,8 +117,6 @@ public class MongoURI {
         return _options;
     }
 
-    // ---------------------------------
-
     public Mongo connect() 
         throws MongoException , UnknownHostException {
         // TODO caching?
@@ -131,9 +129,17 @@ public class MongoURI {
         return connect().getDB( _database );
     }
 
-    public DBCollection connectCollection()
-        throws MongoException , UnknownHostException {
-        return connectDB().getCollection( _collection );
+    public DB connectDB( Mongo m ){
+        // TODO auth
+        return m.getDB( _database );
+    }
+
+    public DBCollection connectCollection( DB db ){
+        return db.getCollection( _collection );
+    }
+
+    public DBCollection connectCollection( Mongo m ){
+        return connectDB( m ).getCollection( _collection );
     }
 
     // ---------------------------------

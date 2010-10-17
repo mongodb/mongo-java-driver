@@ -356,5 +356,49 @@ public class Mongo {
     };
 
 
-    private static final ConcurrentMap<String,Mongo> _mongos = new ConcurrentHashMap<String,Mongo>();
+    // -------   
+
+    
+    /**
+     * Mongo.Holder is if you want to have a static place to hold instances of Mongo
+     * security is not enforced at this level, so need to do on your side
+     */
+    public static class Holder {
+        
+        public Mongo connect( MongoURI uri )
+            throws MongoException , UnknownHostException {
+
+            String key = _toKey( uri );
+            
+            Mongo m = _mongos.get(key);
+            if ( m != null )
+                return m;
+
+            m = new Mongo( uri );
+            
+            Mongo temp = _mongos.putIfAbsent( key , m );
+            if ( temp == null ){
+                // ours got in
+                return m;
+            }
+            
+            // there was a race and we lost
+            // close ours and return the other one
+            m.close();
+            return temp;
+        }
+
+        String _toKey( MongoURI uri ){
+            StringBuilder buf = new StringBuilder();
+            for ( String h : uri.getHosts() )
+                buf.append( h ).append( "," );
+            buf.append( uri.getOptions() );
+            buf.append( uri.getUsername() );
+            return buf.toString();
+        }
+
+        
+        private static final ConcurrentMap<String,Mongo> _mongos = new ConcurrentHashMap<String,Mongo>();
+
+    }
 }
