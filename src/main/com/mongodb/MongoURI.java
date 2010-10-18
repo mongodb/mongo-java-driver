@@ -2,6 +2,7 @@
 
 package com.mongodb;
 
+import java.net.*;
 import java.util.*;
 
 public class MongoURI {
@@ -112,6 +113,35 @@ public class MongoURI {
         return _collection;
     }
 
+    public MongoOptions getOptions(){
+        return _options;
+    }
+
+    public Mongo connect() 
+        throws MongoException , UnknownHostException {
+        // TODO caching?
+        return new Mongo( this );
+    }
+
+    public DB connectDB()
+        throws MongoException , UnknownHostException {
+        // TODO auth
+        return connect().getDB( _database );
+    }
+
+    public DB connectDB( Mongo m ){
+        // TODO auth
+        return m.getDB( _database );
+    }
+
+    public DBCollection connectCollection( DB db ){
+        return db.getCollection( _collection );
+    }
+
+    public DBCollection connectCollection( Mongo m ){
+        return connectDB( m ).getCollection( _collection );
+    }
+
     // ---------------------------------
 
     final String _username;
@@ -119,4 +149,6 @@ public class MongoURI {
     final List<String> _hosts;
     final String _database;
     final String _collection;
+
+    final MongoOptions _options = new MongoOptions();
 }

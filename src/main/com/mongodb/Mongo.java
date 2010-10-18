@@ -77,31 +77,6 @@ public class Mongo {
         return new Mongo( addr ).getDB( addr.getDBName() );
     }
 
-    public static Mongo getStaticMongo( String host )
-        throws UnknownHostException , MongoException {
-        return getStaticMongo( host , null );
-    }
-
-    private static final MongoOptions _defaultOptions = new MongoOptions();
-
-    public static Mongo getStaticMongo( String host , MongoOptions options )
-        throws UnknownHostException , MongoException {
-
-        final String key = host + "-" + options;
-        
-        Mongo m = _mongos.get( key );
-        if ( m != null )
-            return m;
-        
-        m = new Mongo( host , options == null ? _defaultOptions : options );
-        Mongo temp = _mongos.putIfAbsent( key , m );
-        if ( temp != null ){
-            m.close();
-            return temp;
-        }
-        return m;
-    }
-
     public Mongo()
         throws UnknownHostException , MongoException {
         this( new ServerAddress() );
@@ -213,6 +188,30 @@ public class Mongo {
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
         _connector.checkMaster();
+    }
+
+    public Mongo( MongoURI uri )
+        throws MongoException , UnknownHostException {
+
+        _options = uri.getOptions();
+        
+        if ( uri.getHosts().size() == 1 ){
+            _addr = new ServerAddress( uri.getHosts().get(0) );
+            _addrs = null;
+            _connector = new DBTCPConnector( this , _addr );
+        }
+        else {
+            List<ServerAddress> replicaSetSeeds = new ArrayList<ServerAddress>( uri.getHosts().size() );
+            for ( String host : uri.getHosts() )
+                replicaSetSeeds.add( new ServerAddress( host ) );
+            _addr = null;
+            _addrs = replicaSetSeeds;
+            _connector = new DBTCPConnector( this , replicaSetSeeds );
+        }
+
+        _connector.checkMaster();
+
+
     }
 
     public DB getDB( String dbname ){
@@ -357,5 +356,49 @@ public class Mongo {
     };
 
 
-    private static final ConcurrentMap<String,Mongo> _mongos = new ConcurrentHashMap<String,Mongo>();
+    // -------   
+
+    
+    /**
+     * Mongo.Holder is if you want to have a static place to hold instances of Mongo
+     * security is not enforced at this level, so need to do on your side
+     */
+    public static class Holder {
+        
+        public Mongo connect( MongoURI uri )
+            throws MongoException , UnknownHostException {
+
+            String key = _toKey( uri );
+            
+            Mongo m = _mongos.get(key);
+            if ( m != null )
+                return m;
+
+            m = new Mongo( uri );
+            
+            Mongo temp = _mongos.putIfAbsent( key , m );
+            if ( temp == null ){
+                // ours got in
+                return m;
+            }
+            
+            // there was a race and we lost
+            // close ours and return the other one
+            m.close();
+            return temp;
+        }
+
+        String _toKey( MongoURI uri ){
+            StringBuilder buf = new StringBuilder();
+            for ( String h : uri.getHosts() )
+                buf.append( h ).append( "," );
+            buf.append( uri.getOptions() );
+            buf.append( uri.getUsername() );
+            return buf.toString();
+        }
+
+        
+        private static final ConcurrentMap<String,Mongo> _mongos = new ConcurrentHashMap<String,Mongo>();
+
+    }
 }
