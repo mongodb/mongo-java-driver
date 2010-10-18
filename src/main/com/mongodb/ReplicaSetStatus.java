@@ -2,9 +2,9 @@
 
 package com.mongodb;
 
-import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.logging.*;
 
 /**
@@ -29,7 +29,7 @@ class ReplicaSetStatus {
         else
             _adminDB = new DBApiLayer( m , "admin" , connector );
 
-        _all = Collections.synchronizedList( new ArrayList<Node>() );
+        _all = new CopyOnWriteArrayList<Node>();
         for ( ServerAddress addr : initial ){
             _all.add( new Node( addr ) );
         }
@@ -59,8 +59,7 @@ class ReplicaSetStatus {
 
     Node getMasterNode(){
         _checkClosed();
-        for ( int i=0; i<_all.size(); i++ ){
-            Node n = _all.get(i);
+        for ( Node n : _all ) {
             if ( n.master() )
                 return n;
         }
@@ -74,12 +73,9 @@ class ReplicaSetStatus {
     ServerAddress getASecondary(){
         _checkClosed();
         Node best = null;
+        // since we iterate over all nodes to find out the one with the best ping, no random magic should be necessary
+        for ( Node n : _all ) {
 
-        int start = _random.nextInt( _all.size() );
-
-        for ( int i=0; i<_all.size(); i++ ){
-            Node n = _all.get( ( start + i ) % _all.size() );
-            
             if ( ! n.secondary() )
                 continue;
             
@@ -123,9 +119,21 @@ class ReplicaSetStatus {
                 _isSecondary = res.getBoolean( "secondary" , false );
                 _lastPrimarySignal = res.getString( "primary" );
 
-                if ( res.containsKey( "hosts" ) ){
-                    for ( Object x : (List)res.get("hosts") ){
-                        _addIfNotHere( x.toString() );
+                if ( _isMaster ){
+                	// check the master node for active hosts
+                	if ( res.containsField( "hosts" ) ){
+                		Set<Node> tmpNodeList = new HashSet<Node>();
+                        for ( Object x : (List)res.get("hosts") ){
+                            tmpNodeList.add(_addIfNotHere( x.toString() ));
+                        }
+                        // see if we can remove something ( maybe the mongodb admin removed a node )
+                        if (! tmpNodeList.containsAll(_all) ) {
+                        	for ( Node n : _all ) {
+                        		if (! tmpNodeList.contains(n) ) {
+                        			_all.remove(n);
+                        		}
+                        	}
+                        }
                     }
                 }
                 
@@ -205,6 +213,18 @@ class ReplicaSetStatus {
             return buf.toString();
         }
         
+        public boolean equals(Object obj) {
+        	if ( obj instanceof Node ) {
+        		Node other = (Node) obj;
+        		return other._addr.equals(_addr);
+        	}
+        	return false;
+        }
+        
+        public int hashCode() {
+        	return _addr.hashCode();
+        }
+        
         final ServerAddress _addr;
         final Set<String> _names = Collections.synchronizedSet( new HashSet<String>() );
         final DBPort _port; // we have our own port so we can set different socket options and don't have to owrry about the pool
@@ -265,28 +285,28 @@ class ReplicaSetStatus {
     }
 
     void updateAll(){
-        for ( int i=0; i<_all.size(); i++ ){
-            Node n = _all.get(i);
+    	for ( Node n : _all ) {
             n.update();
         }        
     }
 
-    void _addIfNotHere( String host ){
+    Node _addIfNotHere( String host ){
         Node n = findNode( host );
         if ( n == null ){
             try {
-                _all.add( new Node( new ServerAddress( host ) ) );
+                _all.add( n = new Node( new ServerAddress( host ) ) );
             }
             catch ( UnknownHostException un ){
                 _logger.log( Level.WARNING , "couldn't resolve host [" + host + "]" );
             }
         }
+        return n;
     }
 
     Node findNode( String host ){
-        for ( int i=0; i<_all.size(); i++ )
-            if ( _all.get(i)._names.contains( host ) )
-                return _all.get(i);
+    	for ( Node n : _all )
+            if ( n._names.contains( host ) )
+                return n;
         
         ServerAddress addr = null;
         try {
@@ -297,10 +317,10 @@ class ReplicaSetStatus {
             return null;
         }
 
-        for ( int i=0; i<_all.size(); i++ ){
-            if ( _all.get(i)._addr.equals( addr ) ){
-                _all.get(i)._names.add( host );
-                return _all.get(i);
+        for ( Node n : _all ) {
+            if ( n._addr.equals( addr ) ){
+                n._names.add( host );
+                return n;
             }
         }
 
@@ -308,8 +328,7 @@ class ReplicaSetStatus {
     }
     
     void printStatus(){
-        for ( int i=0; i<_all.size(); i++ )
-            System.out.println( _all.get(i) );
+    	System.out.println( _all );
     }
 
     void close(){
@@ -327,8 +346,6 @@ class ReplicaSetStatus {
     String _lastPrimarySignal;
     boolean _closed = false;
     
-    final Random _random = new Random();
-
     static final MongoOptions _mongoOptions = new MongoOptions();
     static {
         _mongoOptions.connectTimeout = 20000;
