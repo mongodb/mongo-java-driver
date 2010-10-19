@@ -17,6 +17,10 @@
  */
 
 package com.mongodb;
+
+import java.lang.reflect.*;
+import java.util.*;
+
 /**
  * <p>WriteConcern control the write behavior for with various options, as well as exception raising on error conditions.</p>
  * 
@@ -56,6 +60,29 @@ public class WriteConcern {
 	/** Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation*/
     public final static WriteConcern REPLICAS_SAFE = new WriteConcern(2);
 
+    //map of the constants from above for use by fromString
+    private static Map<String, WriteConcern> _namedConcerns = null;
+    
+    /** Get the WriteConcern constants by name: NONE, NORMAL, SAFE, FSYNC_SAFE, REPLICA_SAFE. (matching is done case insensitively)*/
+    public static WriteConcern valueOf(String name) {
+    	if (_namedConcerns == null) {
+			HashMap<String, WriteConcern> newMap = new HashMap<String, WriteConcern>( 8 , 1 );
+			for (Field f : WriteConcern.class.getFields())
+				if (Modifier.isStatic( f.getModifiers() ) && f.getType().equals( WriteConcern.class )) {
+					try {
+						newMap.put( f.getName().toLowerCase(), (WriteConcern) f.get( null ) );
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+				}
+			
+			//Thought about doing a synchronize but this seems just as safe and I don't care about race conditions.
+			_namedConcerns = newMap;
+		}
+
+    	return _namedConcerns.get(name.toLowerCase());		
+    }
+    
     public WriteConcern(){
         this(0);
     }
