@@ -6,6 +6,11 @@ import java.util.*;
 
 public class ReplSetTest {
 
+    static void _sleep()
+        throws InterruptedException {
+        //Thread.sleep( 500 );
+    }
+
     static class R extends Thread {
         R( ServerAddress a ){
             _a = a;
@@ -19,7 +24,7 @@ public class ReplSetTest {
         public void run(){
             while ( true ){
                 try {
-                    Thread.sleep( 500 );
+                    _sleep();
                     _coll.findOne();
                 }
                 catch ( NullPointerException n ){
@@ -40,12 +45,16 @@ public class ReplSetTest {
     public static void main( String args[] )
         throws Exception {
         
-        List<ServerAddress> addrs = new ArrayList<ServerAddress>();
-        addrs.add( new ServerAddress( "localhost" , 27017 ) );
-        addrs.add( new ServerAddress( "localhost" , 27018 ) );
-        addrs.add( new ServerAddress( "localhost" , 27019 ) );
+        boolean rs = true;
 
-        Mongo m = new Mongo ( addrs );
+        List<ServerAddress> addrs = new ArrayList<ServerAddress>();
+        if ( rs ){
+            addrs.add( new ServerAddress( "localhost" , 27017 ) );
+            addrs.add( new ServerAddress( "localhost" , 27018 ) );
+            addrs.add( new ServerAddress( "localhost" , 27019 ) );
+        }
+
+        Mongo m = rs ? new Mongo( addrs ) : new Mongo();
         DB db = m.getDB( "test" );
         DBCollection c = db.getCollection( "foo" );
         c.insert( new BasicDBObject( "_id" , 17 ) );
@@ -56,9 +65,10 @@ public class ReplSetTest {
         }
         
         while ( true ){
-            Thread.sleep( 500 );
+            _sleep();
             try {
-                System.out.println( c.findOne() );
+                DBObject x = c.findOne();
+                //System.out.println( x );
                 c.update( new BasicDBObject( "_id" , 17 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
             }
             catch ( Exception e ){
