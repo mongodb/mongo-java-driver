@@ -28,7 +28,6 @@ class Response {
     
     Response( DBCollection collection ,  InputStream in, BSONDecoder decoder)
         throws IOException {
-        _collection = collection;
 
         byte[] b = new byte[36];
         Bits.readFully(in, b);
@@ -53,7 +52,7 @@ class Response {
         else
             _objects = new ArrayList<DBObject>( _num );
 
-        DBCallback c = DBCallback.FACTORY.create( _collection );        
+        DBCallback c = DBCallback.FACTORY.create( collection );        
         
         for ( int i=0; i<_num; i++ ){
             if ( user._toGo < 5 )
@@ -167,8 +166,6 @@ class Response {
         return "flags:" + _flags + " _cursor:" + _cursor + " _startingFrom:" + _startingFrom + " _num:" + _num ;
     }
 
-    final DBCollection _collection;
-    
     final int _len;
     final int _id;
     final int _responseTo;
