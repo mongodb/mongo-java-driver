@@ -21,14 +21,8 @@ class ReplicaSetStatus {
 
     static final Logger _rootLogger = Logger.getLogger( "com.mongodb.ReplicaSetStatus" );
     
-    ReplicaSetStatus( Mongo m , List<ServerAddress> initial , DBConnector connector ){
-        _mongo = m;
+    ReplicaSetStatus( List<ServerAddress> initial ){
         
-        if ( connector == null )
-            _adminDB = m.getDB( "admin" );
-        else
-            _adminDB = new DBApiLayer( m , "admin" , connector );
-
         _all = new CopyOnWriteArrayList<Node>();
         for ( ServerAddress addr : initial ){
             _all.add( new Node( addr ) );
@@ -105,7 +99,7 @@ class ReplicaSetStatus {
         synchronized void update(){
             try {
                 long start = System.currentTimeMillis();
-                CommandResult res = _port.runCommand( _adminDB , _isMasterCmd );
+                CommandResult res = _port.runCommand( "admin" , _isMasterCmd );
                 _lastCheck = System.currentTimeMillis();
                 _pingTime = _lastCheck - start;
                 
@@ -154,7 +148,7 @@ class ReplicaSetStatus {
                 return;
             
             try {
-                DBObject config = _port.findOne( _mongo.getDB( "local" ) , "system.replset" , new BasicDBObject() );
+                DBObject config = _port.findOne( "local.system.replset" , new BasicDBObject() );
                 if ( config == null ){
                     // probbaly a replica pair
                     // TODO: add this in when pairs are really gone
@@ -335,8 +329,6 @@ class ReplicaSetStatus {
         _closed = true;
     }
 
-    final Mongo _mongo;
-    final DB _adminDB;
 
     final List<Node> _all;
     Updater _updater;
@@ -346,6 +338,8 @@ class ReplicaSetStatus {
     String _lastPrimarySignal;
     boolean _closed = false;
     
+    final Random _random = new Random();
+
     static final MongoOptions _mongoOptions = new MongoOptions();
     static {
         _mongoOptions.connectTimeout = 20000;
@@ -362,7 +356,7 @@ class ReplicaSetStatus {
 
         Mongo m = new Mongo( addrs );
 
-        ReplicaSetStatus status = new ReplicaSetStatus( m , addrs , null );
+        ReplicaSetStatus status = new ReplicaSetStatus( addrs );
         System.out.println( status.ensureMaster()._addr );
 
         while ( true ){
