@@ -18,11 +18,7 @@
 
 package com.mongodb;
 
-import java.util.*;
-import java.util.regex.*;
-import java.io.IOException;
-
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.mongodb.util.*;
 
@@ -46,6 +42,25 @@ public class BasicDBObjectTest extends TestCase {
         assert( a.equals( b ) );
         assert( a.equals( JSON.parse( "{ 'x' : 1 }" ) ) );
         assert( ! a.equals( JSON.parse( "{ 'x' : 2 }" ) ) );
+    }
+
+
+    @Test(groups = {"basic"})
+    public void testBuilderIsEmpty(){
+        BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
+        assert( b.isEmpty() );
+        b.append( "a" , 1 );
+        assert( !b.isEmpty() );
+        assert( b.get().equals( JSON.parse( "{ 'a' : 1 }" ) ) );
+    }
+
+    @Test(groups = {"basic"})
+    public void testBuilderNested(){
+        BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
+        b.add( "a", 1 );
+        b.push( "b" ).append( "c", 2 ).pop();
+        DBObject a = b.get();
+        assert( a.equals( JSON.parse( "{ 'a' : 1, 'b' : { 'c' : 2 } }" ) ) );
     }
 
     @Test(groups = {"basic"})
