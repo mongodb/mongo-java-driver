@@ -199,7 +199,7 @@ public class DBApiLayer extends DB {
                     return;
 
                 l = _deadCursorIds;
-                _deadCursorIds = new Vector<Long>();
+                _deadCursorIds = new LinkedList<Long>(); // replaced Vector by LinkedList because Vector is synchronized ( which should not be necessary in our current use cases )
             }
 
             Bytes.LOGGER.info( "going to kill cursors : " + l.size() );
