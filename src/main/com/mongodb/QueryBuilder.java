@@ -215,6 +215,21 @@ public class QueryBuilder {
                     new Double[]{ x , y , maxDistance } );
         return this;
     }
+    
+    /**
+     * Append a within bounding box search using a two corners to the current QueryBuilder.
+     * 
+     * @param x the x coordinate of the first box corner.
+     * @param y the y coordinate of the first box corner.
+     * @param xx the x coordinate of the second box corner.
+     * @param yy the y coordinate of the second box corner.
+     * @return the current QueryBuilder with an appended within bounding box search.
+     */
+    public QueryBuilder withinBox(double x, double y, double xx, double yy) {
+    	addOperand( "$within" , 
+    	             new BasicDBObject( "$box" , new Object[] { new Double[] { x, y }, new Double[] { xx, yy } } ) );
+    	return this;
+    }
 
 
     public QueryBuilder or( DBObject ... ors ){
