@@ -25,9 +25,14 @@ public class Bits {
 
     public static void readFully( InputStream in, byte[] b )
         throws IOException {
+        readFully( in , b , b.length );
+    }
+
+    public static void readFully( InputStream in, byte[] b , int l )
+        throws IOException {
         int x = 0;
-        while ( x<b.length ){
-            int temp = in.read( b , x , b.length - x );
+        while ( x<l ){
+            int temp = in.read( b , x , l - x );
             if ( temp < 0 )
                 throw new EOFException();
             x += temp;
@@ -36,8 +41,12 @@ public class Bits {
 
     public static int readInt( InputStream in )
         throws IOException {
-        byte[] data = new byte[4];
-        readFully(in, data);
+        return readInt( in , new byte[4] );
+    }
+
+    public static int readInt( InputStream in , byte[] data )
+        throws IOException {
+        readFully(in, data, 4);
         return readInt(data);
     }
 
@@ -52,9 +61,13 @@ public class Bits {
 
     public static long readLong( InputStream in )
         throws IOException {
+        return readLong( in , new byte[8] );
+    }
 
-        byte[] data = new byte[8];
-        readFully(in, data);
+
+    public static long readLong( InputStream in , byte[] data )
+        throws IOException {
+        readFully(in, data, 8);
         return readLong(data);
     }
 

@@ -259,13 +259,13 @@ public class BSONDecoder {
         int readInt()
             throws IOException {
             _read += 4;
-            return Bits.readInt( _in );
+            return Bits.readInt( _in , _random );
         }
 
         long readLong()
             throws IOException {
             _read += 8;
-            return Bits.readLong( _in );
+            return Bits.readLong( _in , _random );
         }
 
         double readDouble()
