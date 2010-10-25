@@ -259,13 +259,13 @@ public class BSONDecoder {
         int readInt()
             throws IOException {
             _read += 4;
-            return Bits.readInt( _in );
+            return Bits.readInt( _in , _random );
         }
 
         long readLong()
             throws IOException {
             _read += 8;
-            return Bits.readLong( _in );
+            return Bits.readLong( _in , _random );
         }
 
         double readDouble()
@@ -295,9 +295,15 @@ public class BSONDecoder {
             }
         }
 
+        boolean _isAscii( byte b ){
+            return b >=0 && b <= 127;
+        }
+
         String readCStr()
             throws IOException {
             
+            boolean isAcii = true;
+
             // short circuit 1 byte strings
             {
                 _random[0] = read();
@@ -315,23 +321,30 @@ public class BSONDecoder {
                 _stringBuffer.reset();
                 _stringBuffer.write( _random[0] );
                 _stringBuffer.write( _random[1] );
-
+                
+                isAcii = _isAscii( _random[0] ) && _isAscii( _random[1] );
             }
-
-
+            
+            
             while ( true ){
                 byte b = read();
                 if ( b == 0 )
                     break;
                 _stringBuffer.write( b );
+                isAcii = isAcii && _isAscii( b );
             }
-
+            
             String out = null;
-            try {
-                out = _stringBuffer.asString( "UTF-8" );
+            if ( isAcii ){
+                out = _stringBuffer.asString();
             }
-            catch ( UnsupportedOperationException e ){
-                throw new RuntimeException( "impossible" , e );
+            else {
+                try {
+                    out = _stringBuffer.asString( "UTF-8" );
+                }
+                catch ( UnsupportedOperationException e ){
+                    throw new RuntimeException( "impossible" , e );
+                }
             }
             _stringBuffer.reset();
             return out;

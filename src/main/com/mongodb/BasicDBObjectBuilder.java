@@ -68,8 +68,7 @@ public class BasicDBObjectBuilder {
      * @return returns itself so you can chain  .add( "a" , 1 ).add( "b" , 1 )
      */
     public BasicDBObjectBuilder add( String key , Object val ){
-        _cur().put( key , val );
-        return this;
+        return append( key, val );
     }
 
     public BasicDBObjectBuilder push( String key ){
@@ -90,6 +89,9 @@ public class BasicDBObjectBuilder {
         return _stack.getFirst();
     }
 
+    public boolean isEmpty(){
+        return ((BasicDBObject) _stack.getFirst()).size() == 0;
+    }
     private DBObject _cur(){
         return _stack.getLast();
     }

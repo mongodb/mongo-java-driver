@@ -625,6 +625,16 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
+    public void testWriteConcernValueOf() {
+        WriteConcern wc1 = WriteConcern.NORMAL;
+        WriteConcern wc2 = WriteConcern.valueOf( "normal" );
+        WriteConcern wc3 = WriteConcern.valueOf( "NORMAL" );
+        
+        assertEquals( wc1._w, wc2._w );
+        assertEquals( wc1._w, wc3._w );
+    }
+    
+    @Test
     public void testFindAndModify(){
         DBCollection c = _db.getCollection( "findandmodify" );
         c.drop();

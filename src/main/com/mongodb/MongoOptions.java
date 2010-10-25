@@ -18,6 +18,8 @@
 
 package com.mongodb;
 
+import java.net.*;
+
 /**
  * Various settings for the driver
  */
@@ -37,8 +39,8 @@ public class MongoOptions {
     }
 
     /**
-       number of connections allowed per host
-       will block if run out
+       <p>The number of connections allowed per host (the pool size, per host)</p>
+       <p>Once the pool is exhausted, this will block. See {@linkplain MongoOptions.threadsAllowedToBlockForConnectionMultiplier}</p>
      */
     public int connectionsPerHost;
 
@@ -51,22 +53,22 @@ public class MongoOptions {
     public int threadsAllowedToBlockForConnectionMultiplier;
     
     /**
-     * max wait time of a blocking thread for a connection
+     * The max wait time for a blocking thread for a connection from the pool
      */
     public int maxWaitTime;
 
     /**
-       connect timeout in milliseconds. 0 is default and infinite
+       The connection timeout in milliseconds; this is for establishing the socket connections (open). 0 is default and infinite
      */
     public int connectTimeout;
 
     /**
-       socket timeout.  0 is default and infinite
+      The socket timeout; this value is passed to {@link Socket.setSoTimeout}.  0 is default and infinite
      */
     public int socketTimeout;
     
     /**
-       this controls whether or not on a connect, the system retries automatically.  defaults to false
+       This controls whether the system retries automatically on connection errors.  defaults to false
     */
     public boolean autoConnectRetry;
     

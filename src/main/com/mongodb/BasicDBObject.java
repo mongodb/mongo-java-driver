@@ -20,9 +20,9 @@ package com.mongodb;
 
 import java.util.*;
 
-import com.mongodb.util.*;
-
 import org.bson.*;
+
+import com.mongodb.util.*;
 
 /**
  * A simple implementation of <code>DBObject</code>.  
@@ -38,6 +38,10 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
      *  Creates an empty object.
      */
     public BasicDBObject(){
+    }
+    
+    public BasicDBObject(int size){
+    	super(size);
     }
 
     /**

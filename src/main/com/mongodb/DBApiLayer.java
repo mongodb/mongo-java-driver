@@ -188,18 +188,28 @@ public class DBApiLayer extends DB {
             throws MongoException {
 
             List<Long> l = null;
+
+            // check without synchronisation ( double check pattern will avoid having two threads do the cleanup )
+            // maybe the whole cleanCursor logic should be moved to a background thread anyway
+            int sz = _deadCursorIds.size();
+
+            if ( sz == 0 )
+                return;
+            
+            if ( sz % 20 != 0 && sz < NUM_CURSORS_BEFORE_KILL )
+                return;
             
             synchronized ( _deadCursorIdsLock ){
-                int sz = _deadCursorIds.size();
+            	sz = _deadCursorIds.size();
 
-                if ( _deadCursorIds.size() == 0 )
+                if ( sz == 0 )
                     return;
                 
                 if ( sz % 20 != 0 && sz < NUM_CURSORS_BEFORE_KILL )
                     return;
 
                 l = _deadCursorIds;
-                _deadCursorIds = new Vector<Long>();
+                _deadCursorIds = new LinkedList<Long>();
             }
 
             Bytes.LOGGER.info( "going to kill cursors : " + l.size() );
@@ -209,7 +219,9 @@ public class DBApiLayer extends DB {
             }
             catch ( Throwable t ){
                 Bytes.LOGGER.log( Level.WARNING , "can't clean cursors" , t );
-                _deadCursorIds.addAll( l );
+                synchronized ( _deadCursorIdsLock ){
+                    _deadCursorIds.addAll( l );
+                }
             }
         }
 

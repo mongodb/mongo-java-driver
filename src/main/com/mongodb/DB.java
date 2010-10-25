@@ -480,7 +480,7 @@ public abstract class DB {
     }
 
     /**
-     * makes thisq query ok to run on a slave node
+     * makes this query ok to run on a slave node
      */
     public void slaveOk(){
         addOption( Bytes.QUERYOPTION_SLAVEOK );

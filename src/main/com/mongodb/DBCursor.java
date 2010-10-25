@@ -20,6 +20,9 @@ package com.mongodb;
 
 import java.util.*;
 
+import com.mongodb.DBApiLayer.MyCollection;
+import com.mongodb.DBApiLayer.Result;
+
 
 /** An iterator over database results.
  * Doing a <code>find()</code> query on a collection returns a 
@@ -80,6 +83,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         c._numWanted = _numWanted;
         c._skip = _skip;
         c._options = _options;
+        c._batchSize = _batchSize;
         if ( _specialFields != null )
             c._specialFields = new BasicDBObject( _specialFields.toMap() );
         return c;
@@ -229,8 +233,36 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         return this;
     }
 
+    /** The cursor (id) on the server; 0 = no cursor */
+    public long getCursorId() {
+    	if (_it instanceof Result) {
+    		Response curRes = ((Result)_it)._curResult;
+    		if ( curRes != null )
+    			return curRes._cursor;
+    	}
+    	
+    	return 0;
+    }
+    
+    /** kill the current cursor on the server. */
+    public boolean kill() {
+    	long cursorId = getCursorId();
+    	if ( cursorId > 0 ) {
+        	if ( _it instanceof Result ) {
+        		Result res = (Result)_it;
+        		((MyCollection) res._collection).killCursors( Arrays.asList( cursorId ) );
+        		
+        		//null the current results so it doesn't get killed again.
+        		res._curResult = null;
+        	}
+    	}
+    	
+        //TODO: how can we tell if it was successful? getLastError?
+    	return true;
+    }
+    
     /**
-     * makes thisq query ok to run on a slave node
+     * makes this query ok to run on a slave node
      */
     public void slaveOk(){
         addOption( Bytes.QUERYOPTION_SLAVEOK );

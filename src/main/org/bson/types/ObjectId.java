@@ -346,8 +346,18 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
                 LOGGER.fine( "machine piece post: " + Integer.toHexString( machinePiece ) );
             }
             
-            final int processPiece = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode() & 0xFFFF;
-            LOGGER.fine( "process piece: " + Integer.toHexString( processPiece ) );
+            final int processPiece;
+            {
+                int temp = new java.util.Random().nextInt();
+                try {
+                    temp = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
+                }
+                catch ( Throwable t ){
+                }
+                temp = temp & 0xFFFF;
+                processPiece = temp;
+                LOGGER.fine( "process piece: " + Integer.toHexString( processPiece ) );
+            }
 
             _genmachine = machinePiece | processPiece;
             LOGGER.fine( "machine : " + Integer.toHexString( _genmachine ) );
