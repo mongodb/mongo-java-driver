@@ -264,8 +264,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     /**
      * makes this query ok to run on a slave node
      */
-    public void slaveOk(){
-        addOption( Bytes.QUERYOPTION_SLAVEOK );
+    public DBCursor slaveOk(){
+        return addOption( Bytes.QUERYOPTION_SLAVEOK );
     }
 
     /**

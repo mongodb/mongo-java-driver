@@ -131,6 +131,9 @@ public class ServerAddress {
                 a._port == _port &&
                 a._host.equals( _host );
         }
+        if ( other instanceof InetSocketAddress ){
+            return _addr.equals( other );
+        }
         return false;
     }
 

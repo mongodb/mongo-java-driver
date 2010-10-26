@@ -142,7 +142,7 @@ class DBTCPConnector implements DBConnector {
         _checkClosed();
 
         MyPort mp = _myPort.get();
-        DBPort port = mp.get( true , false );
+        DBPort port = mp.get( true , false , null );
         port.checkAuth( db );
 
         try {
@@ -181,16 +181,21 @@ class DBTCPConnector implements DBConnector {
     
     public Response call( DB db , DBCollection coll , OutMessage m )
         throws MongoException {
-        return call( db , coll , m , 2 );
+        return call( db , coll , m , null , 2 );
     }
 
-    public Response call( DB db , DBCollection coll , OutMessage m , int retries )
+    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded ) 
+        throws MongoException {
+        return call( db , coll , m , hostNeeded , 2 );
+    }
+
+    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries )
         throws MongoException {
         
         _checkClosed();
 
         final MyPort mp = _myPort.get();
-        final DBPort port = mp.get( false , m.hasOption( Bytes.QUERYOPTION_SLAVEOK ) );
+        final DBPort port = mp.get( false , m.hasOption( Bytes.QUERYOPTION_SLAVEOK ) , hostNeeded );
         
         port.checkAuth( db );
         
@@ -203,7 +208,7 @@ class DBTCPConnector implements DBConnector {
             boolean shoulRetry = _error( ioe ) && ! coll._name.equals( "$cmd" ) && retries > 0;
             mp.error( port , ioe );
             if ( shoulRetry ){
-                return call( db , coll , m , retries - 1 );
+                return call( db , coll , m , hostNeeded , retries - 1 );
             }
             throw new MongoException.Network( "can't call something" , ioe );
         }
@@ -219,7 +224,7 @@ class DBTCPConnector implements DBConnector {
             if ( retries <= 0 ){
                 throw new MongoException( "not talking to master and retries used up" );
             }
-            return call( db , coll , m , retries -1 );
+            return call( db , coll , m , hostNeeded , retries -1 );
         }
         
         m.doneWithMessage();
@@ -249,7 +254,12 @@ class DBTCPConnector implements DBConnector {
 
     class MyPort {
 
-        DBPort get( boolean keep , boolean slaveOk ){
+        DBPort get( boolean keep , boolean slaveOk , ServerAddress hostNeeded ){
+            
+            if ( hostNeeded != null ){
+                _pool = _portHolder.get( hostNeeded );
+                return _pool.get();
+            }
             
             if ( slaveOk && _rsStatus != null ){
                 ServerAddress slave = _rsStatus.getASecondary();
@@ -313,6 +323,7 @@ class DBTCPConnector implements DBConnector {
         DBPort _port;
         DBPortPool _pool;
         boolean _inRequest;
+        ServerAddress _slave; // slave used for last read if any
     }
     
     void checkMaster(){

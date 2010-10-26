@@ -268,7 +268,7 @@ public class DBApiLayer extends DB {
             
             OutMessage query = OutMessage.query( _mongo , options , _fullNameSpace , numToSkip , batchSize , ref , fields );
 
-            Response res = _connector.call( _db , this , query , 2 );
+            Response res = _connector.call( _db , this , query , null , 2 );
 
             if ( res.size() == 0 )
                 return null;
@@ -325,6 +325,7 @@ public class DBApiLayer extends DB {
             _collection = coll;
             _numToReturn = numToReturn;
             _options = options;
+            _host = res._host;
         }
 
         private void init( Response res ){
@@ -374,7 +375,7 @@ public class DBApiLayer extends DB {
             m.writeLong( _curResult.cursor() );
             
             try {
-                Response res = _connector.call( DBApiLayer.this , _collection , m );
+                Response res = _connector.call( DBApiLayer.this , _collection , m , _host );
                 _numGetMores++;
                 init( res );
             }
@@ -427,7 +428,8 @@ public class DBApiLayer extends DB {
         int _numToReturn;
         final MyCollection _collection;
         final int _options;
-        
+        final ServerAddress _host; // host where first went.  all subsequent have to go there
+
         private long _totalBytes = 0;
         private int _numGetMores = 0;
         private List<Integer> _sizes = new ArrayList<Integer>();

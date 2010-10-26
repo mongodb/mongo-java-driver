@@ -61,30 +61,43 @@ class ReplicaSetStatus {
         return null;
     }
 
-
     /**
      * @return a good secondary or null if can't find one
      */
     ServerAddress getASecondary(){
         _checkClosed();
         Node best = null;
-
+        double badBeforeBest = 0;
+        
         int start = _random.nextInt( _all.size() );
-
+        
+        double mybad = 0;
+        
         for ( int i=0; i<_all.size(); i++ ){
             Node n = _all.get( ( start + i ) % _all.size() );
             
-            if ( ! n.secondary() )
+            if ( ! n.secondary() ){
+                mybad++;
                 continue;
+            }
             
             if ( best == null ){
                 best = n;
+                badBeforeBest = mybad;
+                mybad = 0;
                 continue;
             }
             
             long diff = best._pingTime - n._pingTime;
-            if ( diff > 15 )
+            if ( diff > 15 || 
+                 // this is a complex way to make sure we get a random distribution of slaves
+                 ( ( badBeforeBest - mybad ) / ( _all.size() - 1 ) ) > _random.nextDouble() ) 
+                { 
                 best = n;
+                badBeforeBest = mybad;
+                mybad = 0;
+            }
+
         }
         
         if ( best == null )
@@ -96,7 +109,7 @@ class ReplicaSetStatus {
         
         Node( ServerAddress addr ){
             _addr = addr;
-            _port = new DBPort( addr.getSocketAddress() , null , _mongoOptions );
+            _port = new DBPort( addr , null , _mongoOptions );
             _names.add( addr.toString() );
         }
 
