@@ -34,7 +34,8 @@ import org.bson.io.*;
  * <blockquote><pre>
  * Mongo mongo1 = new Mongo( "127.0.0.1" );
  * Mongo mongo2 = new Mongo( "127.0.0.1", 27017 );
- * Mongo mongo3 = new Mongo( new DBAddress( "127.0.0.1:27017", "test" ) )
+ * Mongo mongo3 = new Mongo( new DBAddress( "127.0.0.1", 27017, "test" ) );
+ * Mongo mongo4 = new Mongo( new ServerAddress( "127.0.0.1") );
  * </pre></blockquote>
  *
  * Mongo instances have connection pooling built in - see the requestStart
@@ -66,6 +67,31 @@ import org.bson.io.*;
  * Once the slave becomes master, the driver will begin using that connection
  * as the master connection and the exceptions will stop being thrown.
  * </p>
+ *
+ * <h3>Connecting to a Replica Set</h3>
+ * <p>
+ * You can connect to a 
+ * <a href="http://www.mongodb.org/display/DOCS/Replica+Sets">replica set</a>
+ * using the Java driver by passing several a list if ServerAddress to the
+ * Mongo constructor.
+ * For example:
+ * </p>
+ * <blockquote><pre>
+ * List<ServerAddress> addrs = new ArrayList<ServerAddress>();
+ * addrs.add( new ServerAddress( "localhost" , 27017 ) );
+ * addrs.add( new ServerAddress( "localhost" , 27018 ) );
+ * addrs.add( new ServerAddress( "localhost" , 27019 ) );
+ *
+ * Mongo mongo = new Mongo( addrs );
+ * </pre></blockquote>
+ *
+ * <p>
+ * By default, all read and write operations will be made on the master.
+ * But it's possible to read from the slave(s) by using slaveOk:
+ * </p>
+ * <blockquote><pre>
+ * mongo.slaveOk();
+ * </pre></blockquote>
  */
 public class Mongo {
 
