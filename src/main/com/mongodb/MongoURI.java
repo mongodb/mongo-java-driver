@@ -14,6 +14,7 @@ public class MongoURI {
      *   @dochub connections
      */
     public MongoURI( String uri ){
+        _uri = uri;
         if ( ! uri.startsWith( "mongodb://" ) )
             throw new IllegalArgumentException( "uri needs to start with mongodb://" );
         
@@ -151,4 +152,11 @@ public class MongoURI {
     final String _collection;
 
     final MongoOptions _options = new MongoOptions();
+
+    final String _uri;
+
+    @Override
+    public String toString() {
+        return _uri;
+    }
 }
