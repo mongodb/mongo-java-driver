@@ -267,6 +267,14 @@ class DBTCPConnector implements DBConnector {
                 _pool = _portHolder.get( hostNeeded );
                 return _pool.get();
             }
+
+            if ( _port != null ){
+                if ( _pool == _curPortPool )
+                    return _port;
+                _pool.done( _port );
+                _port = null;
+                _pool = null;
+            }
             
             if ( slaveOk && _rsStatus != null ){
                 ServerAddress slave = _rsStatus.getASecondary();
@@ -276,13 +284,6 @@ class DBTCPConnector implements DBConnector {
                 }
             }
 
-            if ( _port != null ){
-                if ( _pool == _curPortPool )
-                    return _port;
-                _pool.done( _port );
-                _port = null;
-                _pool = null;
-            }
             
             _pool = _curPortPool;
             DBPort p = _pool.get();
@@ -293,8 +294,12 @@ class DBTCPConnector implements DBConnector {
         }
         
         void done( DBPort p ){
-            if ( p != _port )
+            if ( p != _port ){
                 _pool.done( p );
+                _pool = null;
+                _slave = null;
+            }
+
         }
 
         void error( DBPort p , Exception e ){
@@ -302,6 +307,7 @@ class DBTCPConnector implements DBConnector {
             p.close();
 
             _port = null;
+            _pool = null;
 
             _logger.log( Level.SEVERE , "MyPort.error called" , e );            
         }
@@ -312,6 +318,9 @@ class DBTCPConnector implements DBConnector {
 
             if ( _port != null )
                 return;
+            
+            if ( _pool == null )
+                _pool = _curPortPool;
 
             _port = _pool.get();
         }
@@ -324,6 +333,7 @@ class DBTCPConnector implements DBConnector {
             if ( _port != null )
                 _pool.done( _port );
             _port = null;
+            _pool = null;
             _inRequest = false;
         }
 

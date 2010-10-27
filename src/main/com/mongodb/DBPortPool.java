@@ -63,7 +63,7 @@ class DBPortPool extends SimplePool<DBPort> {
                 p = new DBPortPool( addr , _options );
                 _pools.put( addr , p);
 
-                if ( _server != null ){
+                if ( false && _server != null ){
                     try {
                         ObjectName on = createObjectName( addr );
                         if ( _server.isRegistered( on ) ){
