@@ -138,12 +138,17 @@ class DBTCPConnector implements DBConnector {
 
     public WriteResult say( DB db , OutMessage m , WriteConcern concern )
         throws MongoException {
+        return say( db , m , concern , null );
+    }
+    
+    public WriteResult say( DB db , OutMessage m , WriteConcern concern , ServerAddress hostNeeded )
+        throws MongoException {
 
         _checkClosed();
         checkMaster( false , true );
 
         MyPort mp = _myPort.get();
-        DBPort port = mp.get( true , false , null );
+        DBPort port = mp.get( true , false , hostNeeded );
         port.checkAuth( db );
 
         try {
