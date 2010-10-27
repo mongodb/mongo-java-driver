@@ -140,6 +140,7 @@ class DBTCPConnector implements DBConnector {
         throws MongoException {
 
         _checkClosed();
+        checkMaster( false , true );
 
         MyPort mp = _myPort.get();
         DBPort port = mp.get( true , false , null );
@@ -193,7 +194,8 @@ class DBTCPConnector implements DBConnector {
         throws MongoException {
         
         _checkClosed();
-
+        checkMaster( false , true );
+        
         final MyPort mp = _myPort.get();
         final DBPort port = mp.get( false , m.hasOption( Bytes.QUERYOPTION_SLAVEOK ) , hostNeeded );
         
@@ -220,7 +222,7 @@ class DBTCPConnector implements DBConnector {
         ServerError err = res.getError();
         
         if ( err != null && err.isNotMasterError() ){
-            checkMaster();
+            checkMaster( true , true );
             if ( retries <= 0 ){
                 throw new MongoException( "not talking to master and retries used up" );
             }
@@ -247,7 +249,7 @@ class DBTCPConnector implements DBConnector {
         throws MongoException {
         if ( _allHosts != null ){
             _logger.log( Level.WARNING , "replica set mode, switching master" , t );
-            checkMaster();
+            checkMaster( true , true );
         }
         return true;
     }
@@ -326,17 +328,23 @@ class DBTCPConnector implements DBConnector {
         ServerAddress _slave; // slave used for last read if any
     }
     
-    void checkMaster()
+    void checkMaster( boolean force , boolean failIfNoMaster )
         throws MongoException {
-        if ( _rsStatus == null )
-            return;
         
-        ReplicaSetStatus.Node n = _rsStatus.ensureMaster();
-        if ( n == null )
-            throw new MongoException( "can't find a master" );
-        _set( n._addr );
+        if ( _rsStatus != null ){
+            if ( _curPortPool == null || force ){
+                ReplicaSetStatus.Node n = _rsStatus.ensureMaster();
+                if ( n == null ){
+                    if ( failIfNoMaster )
+                        throw new MongoException( "can't find a master" );
+                }
+                else {
+                    _set( n._addr );
+                }
+            }
+        }
     }
-    
+
     private boolean _set( ServerAddress addr ){
         if ( _curMaster == addr )
             return false;

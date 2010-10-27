@@ -137,7 +137,7 @@ public class Mongo {
         _addrs = null;
         _options = options;
         _connector = new DBTCPConnector( this , _addr );
-        _connector.checkMaster();
+        _connector.checkMaster( true , true );
     }
 
     /**
@@ -161,7 +161,7 @@ public class Mongo {
         _addrs = Arrays.asList( left , right );
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
-        _connector.checkMaster();
+        _connector.checkMaster( true , false );
     }
 
     /**
@@ -187,8 +187,7 @@ public class Mongo {
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
         
-        // we explicitly don't want to call checkMaster here
-        // even if there is no master right now, the Mongo instance should be created 
+        _connector.checkMaster( true , false );
     }
 
     public Mongo( MongoURI uri )
@@ -210,9 +209,7 @@ public class Mongo {
             _connector = new DBTCPConnector( this , replicaSetSeeds );
         }
 
-        _connector.checkMaster();
-
-
+        _connector.checkMaster( true , true );
     }
 
     public DB getDB( String dbname ){
