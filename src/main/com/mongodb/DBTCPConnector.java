@@ -326,13 +326,14 @@ class DBTCPConnector implements DBConnector {
         ServerAddress _slave; // slave used for last read if any
     }
     
-    void checkMaster(){
+    void checkMaster()
+        throws MongoException {
         if ( _rsStatus == null )
             return;
         
         ReplicaSetStatus.Node n = _rsStatus.ensureMaster();
         if ( n == null )
-            throw new MongoInternalException( "can't find a master" );
+            throw new MongoException( "can't find a master" );
         _set( n._addr );
     }
     

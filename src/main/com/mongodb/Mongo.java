@@ -186,7 +186,9 @@ public class Mongo {
         _addrs = replicaSetSeeds;
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
-        _connector.checkMaster();
+        
+        // we explicitly don't want to call checkMaster here
+        // even if there is no master right now, the Mongo instance should be created 
     }
 
     public Mongo( MongoURI uri )
