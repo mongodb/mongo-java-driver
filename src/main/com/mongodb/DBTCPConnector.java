@@ -345,6 +345,19 @@ class DBTCPConnector implements DBConnector {
         }
     }
 
+    void testMaster()
+        throws MongoException {
+        
+        DBPort p = null;
+        try {
+            p = _curPortPool.get();
+            p.runCommand( "admin" , new BasicDBObject( "nonce" , 1 ) );
+        }
+        finally {
+            _curPortPool.done( p );
+        }
+    }
+
     private boolean _set( ServerAddress addr ){
         if ( _curMaster == addr )
             return false;
