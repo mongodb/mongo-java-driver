@@ -271,8 +271,8 @@ public abstract class DB {
      *  Gets the the error (if there is one) from the previous operation.  The result of
      *  this command will look like
      *
-     *  <pre>
-     * { "err" :  errorMessage  , "ok" : 1.0 , "_ns" : "$cmd"}
+     * <pre>
+     * { "err" :  errorMessage  , "ok" : 1.0 }
      * </pre>
      *
      * The value for errorMessage will be null if no error occurred, or a description otherwise.
