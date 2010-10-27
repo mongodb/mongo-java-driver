@@ -138,7 +138,22 @@ public abstract class DB {
      */
     public CommandResult command( DBObject cmd )
         throws MongoException {
-        CommandResult res = (CommandResult)getCollection( "$cmd" ).findOne( cmd );
+        return command( cmd , 0 );
+    }
+
+    /** Execute a database command directly.
+     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
+     * @return the result of the command from the database
+     * @dochub commands
+     */
+    public CommandResult command( DBObject cmd , int options )
+        throws MongoException {
+        
+        Iterator<DBObject> i = getCollection( "$cmd" ).__find( cmd , new BasicDBObject() , 0 , -1 , options );
+        if ( i == null || ! i.hasNext() )
+            return null;
+        
+        CommandResult res = (CommandResult)i.next();
         res._cmd = cmd;
         return res;
     }
