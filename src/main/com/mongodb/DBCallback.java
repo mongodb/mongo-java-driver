@@ -36,13 +36,12 @@ public class DBCallback extends BasicBSONCallback {
     
     public void objectStart(boolean array, String name){
         _lastName = name;
-        _lastArray = array;
         super.objectStart( array , name );
     }
     
     public Object objectDone(){
         BSONObject o = (BSONObject)super.objectDone();
-        if ( ! _lastArray && 
+        if ( ! ( o instanceof List ) && 
              o.containsKey( "$ref" ) && 
              o.containsKey( "$id" ) ){
             return cur().put( _lastName , new DBRef( _db, o ) );
@@ -107,12 +106,10 @@ public class DBCallback extends BasicBSONCallback {
     
     public void reset(){
         _lastName = null;
-        _lastArray = false;
         super.reset();
     }
 
     private String _lastName;
-    private boolean _lastArray = false;
     final DBCollection _collection;
     final DB _db;
     static final Logger LOGGER = Logger.getLogger( "com.mongo.DECODING" );
