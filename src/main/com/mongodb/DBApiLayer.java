@@ -98,6 +98,90 @@ public class DBApiLayer extends DB {
         return ns.substring( _root.length() + 1 );
     }
 
+    void _cleanCursors( boolean force )
+        throws MongoException {
+
+        List<DeadCursor> l = null;
+
+        // check without synchronisation ( double check pattern will avoid having two threads do the cleanup )
+        // maybe the whole cleanCursor logic should be moved to a background thread anyway
+        int sz = _deadCursorIds.size();
+
+        if ( sz == 0 )
+            return;
+            
+        if ( ! force && sz < NUM_CURSORS_BEFORE_KILL )
+            return;
+            
+        synchronized ( _deadCursorIdsLock ){
+            sz = _deadCursorIds.size();
+
+            if ( sz == 0 )
+                return;
+                
+            if ( ! force && sz < NUM_CURSORS_BEFORE_KILL )
+                return;
+
+            l = _deadCursorIds;
+            _deadCursorIds = new LinkedList<DeadCursor>();
+        }
+
+        Bytes.LOGGER.info( "going to kill cursors : " + l.size() );
+
+        Map<ServerAddress,List<Long>> m = new HashMap<ServerAddress,List<Long>>();
+        for ( DeadCursor c : l ){
+            List<Long> x = m.get( c.host );
+            if ( x == null ){
+                x = new LinkedList<Long>();
+                m.put( c.host , x );
+            }
+            x.add( c.id );
+        }
+            
+        for ( Map.Entry<ServerAddress,List<Long>> e : m.entrySet() ){
+            try {
+                killCursors( e.getKey() , e.getValue() );
+            }
+            catch ( Throwable t ){
+                Bytes.LOGGER.log( Level.WARNING , "can't clean cursors" , t );
+                synchronized ( _deadCursorIdsLock ){
+                    for ( Long x : e.getValue() )
+                        _deadCursorIds.add( new DeadCursor( x , e.getKey() ) );
+                }
+            }
+        }
+    }
+
+    void killCursors( ServerAddress addr , List<Long> all )
+        throws MongoException {
+        if ( all == null || all.size() == 0 )
+            return;
+
+        OutMessage om = new OutMessage( _mongo , 2007 );
+        om.writeInt( 0 ); // reserved
+            
+        om.writeInt( Math.min( NUM_CURSORS_PER_BATCH , all.size() ) );
+
+        int soFar = 0;
+        int totalSoFar = 0;
+        for (Long l : all) {
+            om.writeLong(l);
+
+            totalSoFar++;
+            soFar++;
+
+            if ( soFar >= NUM_CURSORS_PER_BATCH ){
+                _connector.say( this , om ,com.mongodb.WriteConcern.NONE );
+                om = new OutMessage( _mongo , 2007 );
+                om.writeInt( 0 ); // reserved
+                om.writeInt( Math.min( NUM_CURSORS_PER_BATCH , all.size() - totalSoFar ) );
+                soFar = 0;
+            }
+        }
+
+        _connector.say( this , om ,com.mongodb.WriteConcern.NONE , addr );
+    }
+
 
     class MyCollection extends DBCollection {
         MyCollection( String name ){
@@ -184,77 +268,6 @@ public class DBApiLayer extends DB {
             return _connector.say( _db , om , concern );
         }
 
-        void _cleanCursors()
-            throws MongoException {
-
-            List<Long> l = null;
-
-            // check without synchronisation ( double check pattern will avoid having two threads do the cleanup )
-            // maybe the whole cleanCursor logic should be moved to a background thread anyway
-            int sz = _deadCursorIds.size();
-
-            if ( sz == 0 )
-                return;
-            
-            if ( sz % 20 != 0 && sz < NUM_CURSORS_BEFORE_KILL )
-                return;
-            
-            synchronized ( _deadCursorIdsLock ){
-            	sz = _deadCursorIds.size();
-
-                if ( sz == 0 )
-                    return;
-                
-                if ( sz % 20 != 0 && sz < NUM_CURSORS_BEFORE_KILL )
-                    return;
-
-                l = _deadCursorIds;
-                _deadCursorIds = new LinkedList<Long>();
-            }
-
-            Bytes.LOGGER.info( "going to kill cursors : " + l.size() );
-
-            try {
-                killCursors( l );
-            }
-            catch ( Throwable t ){
-                Bytes.LOGGER.log( Level.WARNING , "can't clean cursors" , t );
-                synchronized ( _deadCursorIdsLock ){
-                    _deadCursorIds.addAll( l );
-                }
-            }
-        }
-
-        void killCursors( List<Long> all )
-            throws MongoException {
-            if ( all == null || all.size() == 0 )
-                return;
-
-            OutMessage om = new OutMessage( _mongo , 2007 );
-            om.writeInt( 0 ); // reserved
-            
-            om.writeInt( Math.min( NUM_CURSORS_PER_BATCH , all.size() ) );
-
-            int soFar = 0;
-            int totalSoFar = 0;
-            for (Long l : all) {
-                om.writeLong(l);
-
-                totalSoFar++;
-                soFar++;
-
-                if ( soFar >= NUM_CURSORS_PER_BATCH ){
-                    _connector.say( _db , om ,com.mongodb.WriteConcern.NONE );
-                    om = new OutMessage( _mongo , 2007 );
-                    om.writeInt( 0 ); // reserved
-                    om.writeInt( Math.min( NUM_CURSORS_PER_BATCH , all.size() - totalSoFar ) );
-                    soFar = 0;
-                }
-            }
-
-            _connector.say( _db , om ,com.mongodb.WriteConcern.NONE );
-        }
-
         @Override
         Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options )
             throws MongoException {
@@ -264,11 +277,11 @@ public class DBApiLayer extends DB {
             
             if ( willTrace() ) trace( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
 
-            _cleanCursors();
+            _cleanCursors( false );
             
             OutMessage query = OutMessage.query( _mongo , options , _fullNameSpace , numToSkip , batchSize , ref , fields );
 
-            Response res = _connector.call( _db , this , query , 2 );
+            Response res = _connector.call( _db , this , query , null , 2 );
 
             if ( res.size() == 0 )
                 return null;
@@ -325,6 +338,7 @@ public class DBApiLayer extends DB {
             _collection = coll;
             _numToReturn = numToReturn;
             _options = options;
+            _host = res._host;
         }
 
         private void init( Response res ){
@@ -374,7 +388,7 @@ public class DBApiLayer extends DB {
             m.writeLong( _curResult.cursor() );
             
             try {
-                Response res = _connector.call( DBApiLayer.this , _collection , m );
+                Response res = _connector.call( DBApiLayer.this , _collection , m , _host );
                 _numGetMores++;
                 init( res );
             }
@@ -402,7 +416,7 @@ public class DBApiLayer extends DB {
         protected void finalize() throws Throwable {
             if ( _curResult != null && _curResult.cursor() != 0 ){
                 synchronized ( _deadCursorIdsLock ){
-                    _deadCursorIds.add( _curResult.cursor() );
+                    _deadCursorIds.add( new DeadCursor( _curResult.cursor() , _host ) );
                 }
             }
             super.finalize();
@@ -410,6 +424,12 @@ public class DBApiLayer extends DB {
 
         public long totalBytes(){
             return _totalBytes;
+        }
+        
+        public long getCursorId(){
+            if ( _curResult == null )
+                return 0;
+            return _curResult._cursor;
         }
         
         int numGetMores(){
@@ -420,6 +440,14 @@ public class DBApiLayer extends DB {
             return Collections.unmodifiableList( _sizes );
         }
         
+        void close(){
+            synchronized ( _deadCursorIdsLock ){
+                _deadCursorIds.add( new DeadCursor( _curResult.cursor() , _host ) );
+            }
+            _cleanCursors( true );
+            _curResult = null;
+            _cur = null;
+        }
         
         
         Response _curResult;
@@ -427,11 +455,23 @@ public class DBApiLayer extends DB {
         int _numToReturn;
         final MyCollection _collection;
         final int _options;
-        
+        final ServerAddress _host; // host where first went.  all subsequent have to go there
+
         private long _totalBytes = 0;
         private int _numGetMores = 0;
         private List<Integer> _sizes = new ArrayList<Integer>();
     }  // class Result
+    
+    class DeadCursor {
+        
+        DeadCursor( long a , ServerAddress b ){
+            id = a;
+            host = b;
+        }
+
+        final long id;
+        final ServerAddress host;
+    }
 
     final String _root;
     final String _rootPlusDot;
@@ -439,7 +479,7 @@ public class DBApiLayer extends DB {
     final Map<String,MyCollection> _collections = Collections.synchronizedMap( new HashMap<String,MyCollection>() );
     
     final String _deadCursorIdsLock = "DBApiLayer-_deadCursorIdsLock-" + Math.random();
-    List<Long> _deadCursorIds = new LinkedList<Long>();
+    List<DeadCursor> _deadCursorIds = new LinkedList<DeadCursor>();
 
     static final List<DBObject> EMPTY = Collections.unmodifiableList( new LinkedList<DBObject>() );
 }

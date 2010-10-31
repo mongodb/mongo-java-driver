@@ -70,7 +70,7 @@ import org.bson.io.*;
 public class Mongo {
 
     public static final int MAJOR_VERSION = 2;
-    public static final int MINOR_VERSION = 2;
+    public static final int MINOR_VERSION = 3;
 
     public static DB connect( DBAddress addr ){
         return new Mongo( addr ).getDB( addr.getDBName() );
@@ -82,7 +82,7 @@ public class Mongo {
     }
 
     /**
-     *  Connects to the local mongo instance on default port.
+     * Connects to a (single) mongodb node (default port)
      *
      *  @param host server to connect to
      *  @throws UnknownHostException if the database host cannot be resolved
@@ -93,11 +93,10 @@ public class Mongo {
     }
 
     /**
-     *  Connects to the local mongo instance on default port.
-     *
-     *  @param host server to connect to
-     *  @param options options to use
-     *  @throws UnknownHostException if the database host cannot be resolved
+     * Connects to a (single) mongodb node (default port)
+     * @param host server to connect to
+     * @param options options to use
+     * @throws UnknownHostException if the database host cannot be resolved
      */
     public Mongo( String host , MongoOptions options )
         throws UnknownHostException , MongoException {
@@ -105,7 +104,7 @@ public class Mongo {
     }
 
     /**
-     * Connects to Mongo using a given host, port, and database.
+     * Connects to a (single) mongodb node
      * @param host the database's host address
      * @param port the port on which the database is running
      * @throws UnknownHostException if the database host cannot be resolved
@@ -116,8 +115,8 @@ public class Mongo {
     }
 
     /**
-     * Connects to Mongo using a given DBAddress
-     * @see com.mongodb.DBAddress
+     * Connects to a (single) mongodb node
+     * @see com.mongodb.ServerAddress
      * @param addr the database address
      */
     public Mongo( ServerAddress addr )
@@ -127,8 +126,8 @@ public class Mongo {
 
 
     /**
-     * Connects to Mongo using a given DBAddress
-     * @see com.mongodb.DBAddress
+     * Connects to a (single) mongo node using a given ServerAddress
+     * @see com.mongodb.ServerAddress
      * @param addr the database address
      */
     public Mongo( ServerAddress addr , MongoOptions options )
@@ -137,13 +136,18 @@ public class Mongo {
         _addrs = null;
         _options = options;
         _connector = new DBTCPConnector( this , _addr );
-        _connector.checkMaster();
+        _connector.checkMaster( true , true );
+        _connector.testMaster();
     }
 
     /**
-       creates a Mongo connection in paired mode
-       * @param left left side of the pair
-       * @param right right side of the pair
+     * <p>Creates a Mongo connection in paired mode. <br/> This will also work for
+     * a replica set and will find all members (the master will be used by
+     * default).</p>
+     * 
+     * @see com.mongodb.ServerAddress
+     * @param left left side of the pair
+     * @param right right side of the pair
      */
     public Mongo( ServerAddress left , ServerAddress right )
         throws MongoException {
@@ -151,9 +155,13 @@ public class Mongo {
     }
 
     /**
-       creates a Mongo connection in paired mode
-       * @param left left side of the pair
-       * @param right right side of the pair
+     * <p>Creates a Mongo connection in paired mode. <br/> This will also work for
+     * a replica set and will find all members (the master will be used by
+     * default).</p>
+     * 
+     * @see com.mongodb.ServerAddress
+     * @param left left side of the pair
+     * @param right right side of the pair
      */
     public Mongo( ServerAddress left , ServerAddress right , MongoOptions options )
         throws MongoException {
@@ -161,11 +169,16 @@ public class Mongo {
         _addrs = Arrays.asList( left , right );
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
-        _connector.checkMaster();
+        _connector.checkMaster( true , false );
+        _connector.testMaster();
     }
 
     /**
-     * creates a Mongo connection to a replica set
+     * <p>Creates a Mongo connection. <br/> This will work for
+     * a replica set, or pair, and will find all members (the master will be used by
+     * default).</p>
+     * 
+     * @see com.mongodb.ServerAddress
      * @pair replicaSetSeeds put as many servers as you can in the list. 
      *                       the system will figure the rest out
      */
@@ -175,8 +188,12 @@ public class Mongo {
     }
 
     /**
-     * creates a Mongo connection to a replica set
-     * @pair replicaSetSeeds put as many servers as you can in the list. 
+     * <p>Creates a Mongo connection. <br/> This will work for
+     * a replica set, or pair, and will find all members (the master will be used by
+     * default).</p>
+     * 
+     * @see com.mongodb.ServerAddress
+     * @param replicaSetSeeds put as many servers as you can in the list. 
      *                       the system will figure the rest out
      */    
     public Mongo( List<ServerAddress> replicaSetSeeds , MongoOptions options )
@@ -186,8 +203,18 @@ public class Mongo {
         _addrs = replicaSetSeeds;
         _options = options;
         _connector = new DBTCPConnector( this , _addrs );
-        _connector.checkMaster();
+        
+        _connector.checkMaster( true , false );
     }
+    /**
+     * Creates a Mongo connection. If only one address is used it will only connect to that node, otherwise it will discover all nodes.
+     * @see MongoURI
+     * <p>examples:
+     *   <li>mongodb://localhost</li>
+     *   <li>mongodb://fred:foobar@localhost/</li>
+     *  </p>
+     *  @dochub connections
+     */    
 
     public Mongo( MongoURI uri )
         throws MongoException , UnknownHostException {
@@ -198,6 +225,7 @@ public class Mongo {
             _addr = new ServerAddress( uri.getHosts().get(0) );
             _addrs = null;
             _connector = new DBTCPConnector( this , _addr );
+            _connector.testMaster();
         }
         else {
             List<ServerAddress> replicaSetSeeds = new ArrayList<ServerAddress>( uri.getHosts().size() );
@@ -206,10 +234,8 @@ public class Mongo {
             _addr = null;
             _addrs = replicaSetSeeds;
             _connector = new DBTCPConnector( this , replicaSetSeeds );
+            _connector.checkMaster( true , true );
         }
-
-        _connector.checkMaster();
-
 
     }
 

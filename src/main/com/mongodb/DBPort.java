@@ -33,13 +33,14 @@ public class DBPort {
     
     static final long CONN_RETRY_TIME_MS = 15000;
 
-    public DBPort( InetSocketAddress addr ){
+    public DBPort( ServerAddress addr ){
         this( addr , null , new MongoOptions() );
     }
     
-    DBPort( InetSocketAddress addr  , DBPortPool pool , MongoOptions options ){
+    DBPort( ServerAddress addr  , DBPortPool pool , MongoOptions options ){
         _options = options;
-        _addr = addr;
+        _sa = addr;
+        _addr = addr.getSocketAddress();
         _pool = pool;
 
         _hashCode = _addr.hashCode();
@@ -97,7 +98,7 @@ public class DBPort {
                 return null;
             
             _processingResponse = true;
-            return new Response( coll , _in , _decoder);
+            return new Response( _sa , coll , _in , _decoder);
         }
         catch ( IOException ioe ){
             close();
@@ -280,6 +281,7 @@ public class DBPort {
     }
     
     final int _hashCode;
+    final ServerAddress _sa;
     final InetSocketAddress _addr;
     final DBPortPool _pool;
     final MongoOptions _options;

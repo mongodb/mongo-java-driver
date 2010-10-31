@@ -26,9 +26,11 @@ import org.bson.io.*;
 
 class Response {
     
-    Response( DBCollection collection ,  InputStream in, BSONDecoder decoder)
+    Response( ServerAddress addr , DBCollection collection ,  InputStream in, BSONDecoder decoder)
         throws IOException {
 
+        _host = addr;
+        
         byte[] b = new byte[36];
         Bits.readFully(in, b);
 
@@ -166,6 +168,8 @@ class Response {
         return "flags:" + _flags + " _cursor:" + _cursor + " _startingFrom:" + _startingFrom + " _num:" + _num ;
     }
 
+    final ServerAddress _host;
+
     final int _len;
     final int _id;
     final int _responseTo;
@@ -177,5 +181,6 @@ class Response {
     final int _num;
     
     final List<DBObject> _objects;
+
 
 }

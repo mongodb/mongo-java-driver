@@ -26,7 +26,9 @@ public interface DBConnector {
     public void requestEnsureConnection();
     
     public WriteResult say( DB db , OutMessage m , WriteConcern concern ) throws MongoException;
+    public WriteResult say( DB db , OutMessage m , WriteConcern concern , ServerAddress hostNeeded ) throws MongoException;
     
     public Response call( DB db , DBCollection coll , OutMessage m ) throws MongoException;
-    public Response call( DB db , DBCollection coll , OutMessage m , int retries ) throws MongoException;
+    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded ) throws MongoException;
+    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries ) throws MongoException;
 }

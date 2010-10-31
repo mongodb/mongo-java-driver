@@ -235,37 +235,23 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
     /** The cursor (id) on the server; 0 = no cursor */
     public long getCursorId() {
-    	if (_it instanceof Result) {
-    		Response curRes = ((Result)_it)._curResult;
-    		if ( curRes != null )
-    			return curRes._cursor;
-    	}
+    	if ( _it instanceof Result )
+            return ((Result)_it).getCursorId();
     	
     	return 0;
     }
     
     /** kill the current cursor on the server. */
-    public boolean kill() {
-    	long cursorId = getCursorId();
-    	if ( cursorId > 0 ) {
-        	if ( _it instanceof Result ) {
-        		Result res = (Result)_it;
-        		((MyCollection) res._collection).killCursors( Arrays.asList( cursorId ) );
-        		
-        		//null the current results so it doesn't get killed again.
-        		res._curResult = null;
-        	}
-    	}
-    	
-        //TODO: how can we tell if it was successful? getLastError?
-    	return true;
+    public void close() {
+    	if ( _it instanceof Result )
+            ((Result)_it).close();
     }
     
     /**
      * makes this query ok to run on a slave node
      */
-    public void slaveOk(){
-        addOption( Bytes.QUERYOPTION_SLAVEOK );
+    public DBCursor slaveOk(){
+        return addOption( Bytes.QUERYOPTION_SLAVEOK );
     }
 
     /**
