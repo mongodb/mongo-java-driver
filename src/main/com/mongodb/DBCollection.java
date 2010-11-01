@@ -915,8 +915,12 @@ public abstract class DBCollection {
      * @throws IllegalArgumentException if <code>c</code> is not a DBObject
      */
     public void setObjectClass( Class c ){
-        if ( c == null )
+        if ( c == null ){ 
+            // reset
             _wrapper = null;
+            _objectClass = null;
+            return;
+        }
         
         if ( ! DBObject.class.isAssignableFrom( c ) )
             throw new IllegalArgumentException( c.getName() + " is not a DBObject" );
