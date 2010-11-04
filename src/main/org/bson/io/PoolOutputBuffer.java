@@ -172,10 +172,15 @@ public class PoolOutputBuffer extends OutputBuffer {
         int y; // position in buffer
     }
     
-    public String asString(){
+    public String asAscii(){
         if ( _fromPool.size() > 0 )
             return super.asString();
-        return new String( _mine , 0 , size() );
+        
+        final int m = size();
+        char c[] = m < _chars.length ? _chars : new char[m];
+        for ( int i=0; i<m; i++ )
+            c[i] = (char)_mine[i];
+        return new String( c , 0  , m );
     }
 
     public String asString( String encoding )
@@ -196,6 +201,7 @@ public class PoolOutputBuffer extends OutputBuffer {
     
     
     final byte[] _mine = new byte[BUF_SIZE];
+    final char[] _chars = new char[BUF_SIZE];
     final List<byte[]> _fromPool = new ArrayList<byte[]>();
     final UTF8Encoding _encoding = new UTF8Encoding();
 
