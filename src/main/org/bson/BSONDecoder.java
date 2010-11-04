@@ -29,7 +29,7 @@ public class BSONDecoder {
 
     public int decode( byte[] b , BSONCallback callback ){
         try {
-            return decode( new Input( new ByteArrayInputStream(b) ) , callback );
+            return _decode( new Input( new ByteArrayInputStream(b) ) , callback );
         }
         catch ( IOException ioe ){
             throw new RuntimeException( "should be impossible" , ioe );
@@ -39,10 +39,10 @@ public class BSONDecoder {
 
     public int decode( InputStream in , BSONCallback callback )
         throws IOException {
-        return decode( new Input( in ) , callback );
+        return _decode( new Input( in ) , callback );
     }
     
-    public int decode( Input in  , BSONCallback callback )
+    private int _decode( Input in  , BSONCallback callback )
         throws IOException {
 
         if ( _in != null || _callback != null )
@@ -51,8 +51,22 @@ public class BSONDecoder {
         _in = in;
         _callback = callback;
         
+        if ( in._read != 0 )
+            throw new IllegalArgumentException( "i'm confused" );
+
         try {
-            return decode();
+            
+            final int len = _in.readInt();
+            _in._max = len;
+            
+            _callback.objectStart();
+            while ( decodeElement() );
+            _callback.objectDone();
+            
+            if ( _in._read != len )
+                throw new IllegalArgumentException( "bad data.  lengths don't match read:" + _in._read + " != len:" + len );
+            
+            return len;
         }
         finally {
             _in = null;
@@ -60,12 +74,14 @@ public class BSONDecoder {
         }
     }
     
-    int decode()
+    int decode( boolean first )
         throws IOException {
 
         final int start = _in._read;
         
         final int len = _in.readInt();
+        if ( first )
+            _in._max = len;
 
         _callback.objectStart();
         while ( decodeElement() );
@@ -250,22 +266,66 @@ public class BSONDecoder {
         return _basic.get();
     }
     
-    class Input {
+    final class Input {
+        
         Input( InputStream in ){
-            _in = in;
+            _raw = in;
             _read = 0;
+
+            _pos = 0;
+            _len = 0;
+        }
+
+        /**
+         * ensure that there are num bytes to read
+         * _pos is where to start reading from
+         * @return where to start reading from
+         */
+        int _need( final int num )
+            throws IOException {
+
+            //System.out.println( "p: " + _pos + " l: " + _len + " want: " + num );
+            
+            if ( _len - _pos >= num ){
+                final int ret = _pos;
+                _pos += num;
+                _read += num;
+                return ret;
+            }
+
+            if ( num >= _inputBuffer.length )
+                throw new IllegalArgumentException( "you can't need that much" );
+            
+            if ( _pos > 0 ){
+                final int remaining = _len - _pos;
+                System.arraycopy( _inputBuffer , _pos , _inputBuffer , 0  , remaining );
+                
+                _pos = 0;
+                _len = remaining;
+            }
+            
+            while ( _len < num ){
+                int x = _raw.read( _inputBuffer , _len , Math.min( _max - _read , _inputBuffer.length - _len ) );
+                if ( x <= 0 )
+                    throw new IOException( "unexpected EOF" );
+                _len += x;
+            }
+            
+            
+            int ret = _pos;
+            _pos += num;
+            _read += num;            
+            return ret;
         }
         
         int readInt()
             throws IOException {
-            _read += 4;
-            return Bits.readInt( _in , _random );
+            return Bits.readInt( _inputBuffer , _need(4) );
         }
 
         long readLong()
             throws IOException {
-            _read += 8;
-            return Bits.readLong( _in , _random );
+            return Bits.readLong( _inputBuffer , _need(8) );
         }
 
         double readDouble()
@@ -275,8 +335,11 @@ public class BSONDecoder {
 
         byte read()
             throws IOException {
-            _read++;
-            return (byte)(_in.read() & 0xFF);
+            if ( _pos < _len ){
+                _read++;
+                return _inputBuffer[_pos++];
+            }
+            return _inputBuffer[_need(1)];
         }
 
         void fill( byte b[] )
@@ -286,9 +349,21 @@ public class BSONDecoder {
 
         void fill( byte b[] , int len )
             throws IOException {
-            int off = 0;
+
+            // first use what we have
+            
+            int have = _len - _pos;
+            int tocopy = Math.min( len , have );
+            System.arraycopy( _inputBuffer , _pos , b , 0 , tocopy );
+            
+            _pos += tocopy;
+            _read += tocopy;
+
+            len -= tocopy;
+            
+            int off = tocopy;
             while ( len > 0 ){
-                int x = _in.read( b , off , len );
+                int x = _raw.read( b , off , len );
                 _read += x;
                 off += x;
                 len -= x;
@@ -309,7 +384,7 @@ public class BSONDecoder {
                 _random[0] = read();
                 if ( _random[0] == 0 )
                     return "";
-                
+
                 _random[1] = read();
                 if ( _random[1] == 0 ){
                     String out = ONE_BYTE_STRINGS[_random[0]];
@@ -355,8 +430,13 @@ public class BSONDecoder {
             int size = readInt();
             if ( size < 0 || size > ( 3 * 1024 * 1024 ) )
                 throw new RuntimeException( "bad string size: " + size );
-            byte[] b = size < _random.length ? _random : new byte[size];
+            
+            if ( size < _inputBuffer.length / 2 ){
+                return new String( _inputBuffer , _need(size) , size - 1 , "UTF-8" );
+            }
 
+            byte[] b = size < _random.length ? _random : new byte[size];
+            
             fill( b , size );
             
             try {
@@ -368,7 +448,13 @@ public class BSONDecoder {
         }
         
         int _read;
-        final InputStream _in;
+        final InputStream _raw;
+
+        int _pos; // current offset into _inputBuffer
+        int _len; // length of valid data in _inputBuffer
+
+        int _max = 5; // max number of total bytes allowed to ready
+        
     }
 
 
@@ -376,6 +462,7 @@ public class BSONDecoder {
     private BSONCallback _callback;
     private byte[] _random = new byte[1024]; // has to be used within a single function
     private char[] _shortChar = new char[1024];
+    private byte[] _inputBuffer = new byte[1024];
 
     private PoolOutputBuffer _stringBuffer = new PoolOutputBuffer();
 

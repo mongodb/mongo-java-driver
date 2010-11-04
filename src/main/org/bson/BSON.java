@@ -69,7 +69,7 @@ public class BSON {
                     _warnUnsupportedRegex( flag.unsupported );
             }
             else {
-                throw new IllegalArgumentException( "unrecognized flag: "+flags.charAt( i ) );
+                throw new IllegalArgumentException( "unrecognized flag ["+flags.charAt( i ) + "] " + (int)flags.charAt(i) );
             }
         }
         return fint;
@@ -78,7 +78,7 @@ public class BSON {
     public static int regexFlag( char c ){
         RegexFlag flag = RegexFlag.getByCharacter( c );
         if ( flag == null )
-            throw new IllegalArgumentException( "unrecognized flag: " + c );
+            throw new IllegalArgumentException( "unrecognized flag [" + c + "]" );
 
         if ( flag.unsupported != null ){
             _warnUnsupportedRegex( flag.unsupported );
