@@ -910,11 +910,18 @@ public abstract class DBCollection {
         return _name;
     }
 
-    /** Set a default class for objects in this collection
+    /** Set a default class for objects in this collection; null resets the class to nothing.
      * @param c the class
      * @throws IllegalArgumentException if <code>c</code> is not a DBObject
      */
     public void setObjectClass( Class c ){
+        if ( c == null ){ 
+            // reset
+            _wrapper = null;
+            _objectClass = null;
+            return;
+        }
+        
         if ( ! DBObject.class.isAssignableFrom( c ) )
             throw new IllegalArgumentException( c.getName() + " is not a DBObject" );
         _objectClass = c;
