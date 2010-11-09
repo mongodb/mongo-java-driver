@@ -335,7 +335,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         if ( _orderBy != null && _orderBy.keySet().size() > 0 )
             return true;
         
-        if ( _hint != null )
+        if ( _hint != null || _snapshot )
             return true;
         
         return _explain;
