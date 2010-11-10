@@ -262,7 +262,7 @@ public class BSON {
      * Returns true if any encoding or decoding hooks are loaded.
      */
     private static boolean _anyHooks(){
-        return _encodeHooks | _decodeHooks;
+        return _encodeHooks || _decodeHooks;
     }
 
     private static boolean _encodeHooks = false;
