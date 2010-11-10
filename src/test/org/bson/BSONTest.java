@@ -84,7 +84,7 @@ public class BSONTest extends TestCase {
     
     @Test
     public void testArray()
-    	throws IOException {
+        throws IOException {
         _test( new BasicBSONObject( "x" , new int[]{ 1 , 2 , 3 , 4} ) , 41 , "e63397fe37de1349c50e1e4377a45e2d" );
     }
 
@@ -156,7 +156,153 @@ public class BSONTest extends TestCase {
         }
 
     }
+
+
+    @Test
+    public void testCustomEncoders() throws IOException{
+        // If clearEncodingHooks isn't working the first test will fail.
+        Transformer tf = new TestDateTransformer();
+        BSON.addEncodingHook( TestDate.class, tf );
+        BSON.clearEncodingHooks();
+        TestDate td = new TestDate( 2009 , 01 , 23 , 10 , 53 , 42 );
+        BSONObject o = new BasicBSONObject( "date" , td );
+        BSONEncoder e = new BSONEncoder();
+        BSONDecoder d = new BSONDecoder();
+        BasicBSONCallback cb = new BasicBSONCallback();
+        OutputBuffer buf = new BasicOutputBuffer();
+        e.set( buf );
+        boolean encodeFailed = false;
+        try {
+            e.putObject( o );
+        }
+        catch ( IllegalArgumentException ieE ) {
+            encodeFailed = true;
+        }
+        assertTrue( encodeFailed, "Expected encoding to fail but it didn't." );
+        // Reset the buffer
+        buf.seekStart();
+        assertTrue( td instanceof TestDate );
+        assertTrue( tf.transform( td ) instanceof java.util.Date, "Transforming a TestDate should yield a JDK Date" );
+
+        BSON.addEncodingHook( TestDate.class, tf );
+        e.putObject( o );
+        e.done();
+
+        d.decode( new ByteArrayInputStream( buf.toByteArray() ), cb );
+        Object result = cb.get();
+        assertTrue( result instanceof BSONObject, "Expected to retrieve a BSONObject but got '" + result.getClass() + "' instead." );
+        BSONObject bson = (BSONObject) result;
+        assertNotNull( bson.get( "date" ) );
+        assertTrue( bson.get( "date" ) instanceof java.util.Date );
+
+        // Check that the hooks registered
+        assertNotNull( BSON.getEncodingHooks( TestDate.class ) );
+        Vector expect = new Vector( 1 );
+        expect.add( tf );
+        assertEquals( BSON.getEncodingHooks( TestDate.class ), expect );
+        assertTrue( BSON.getEncodingHooks( TestDate.class ).contains( tf ) );
+        BSON.removeEncodingHook( TestDate.class, tf );
+        assertFalse( BSON.getEncodingHooks( TestDate.class ).contains( tf ) );
+    }
     
+    @Test
+    @SuppressWarnings( "deprecation" )
+    public void testCustomDecoders() throws IOException{
+        // If clearDecodingHooks isn't working this whole test will fail.
+        Transformer tf = new TestDateTransformer();
+        BSON.addDecodingHook( Date.class, tf );
+        BSON.clearDecodingHooks();
+        TestDate td = new TestDate( 2009 , 01 , 23 , 10 , 53 , 42 );
+        Date dt = new Date( 2009 , 01 , 23 , 10 , 53 , 42 );
+        BSONObject o = new BasicBSONObject( "date" , dt );
+        BSONDecoder d = new BSONDecoder();
+        BSONEncoder e = new BSONEncoder();
+        BasicBSONCallback cb = new BasicBSONCallback();
+        OutputBuffer buf = new BasicOutputBuffer();
+        e.set( buf );
+        e.putObject( o );
+        e.done();
+
+        d.decode( new ByteArrayInputStream( buf.toByteArray() ), cb );
+        Object result = cb.get();
+        assertTrue( result instanceof BSONObject, "Expected to retrieve a BSONObject but got '" + result.getClass() + "' instead." );
+        BSONObject bson = (BSONObject) result;
+        assertNotNull( bson.get( "date" ) );
+        assertTrue( bson.get( "date" ) instanceof java.util.Date );
+
+        BSON.addDecodingHook( Date.class, tf );
+
+        d.decode( new ByteArrayInputStream( buf.toByteArray() ), cb );
+        bson = (BSONObject) cb.get();
+        assertNotNull( bson.get( "date" ) );
+        assertTrue( bson.get( "date" ) instanceof TestDate );
+        assertEquals( bson.get( "date" ), td );
+
+        // Check that the hooks registered
+        assertNotNull( BSON.getDecodingHooks( Date.class ) );
+        Vector expect = new Vector( 1 );
+        expect.add( tf );
+        assertEquals( BSON.getDecodingHooks( Date.class ), expect );
+        assertTrue( BSON.getDecodingHooks( Date.class ).contains( tf ) );
+        BSON.removeDecodingHook( Date.class, tf );
+        assertFalse( BSON.getDecodingHooks( Date.class ).contains( tf ) );
+
+    }
+
+    private class TestDate {
+        final int year;
+        final int month;
+        final int date;
+        final int hour;
+        final int minute;
+        final int second;
+
+        public TestDate(int year , int month , int date , int hour , int minute , int second) {
+            this.year = year;
+            this.month = month;
+            this.date = date;
+            this.hour = hour;
+            this.minute = minute;
+            this.second = second;
+        }
+
+        public TestDate(int year , int month , int date) {
+            this( year , month , date , 0 , 0 , 0 );
+        }
+
+
+        @Override
+        public boolean equals( Object other ){
+            if ( this == other )
+                return true;
+            if ( !( other instanceof TestDate ) )
+                return false;
+
+            TestDate otherDt = (TestDate) other;
+            return ( otherDt.year == this.year && otherDt.month == this.month && otherDt.date == this.date && otherDt.hour == this.hour
+                    && otherDt.minute == this.minute && otherDt.second == this.second );
+        }
+
+        @Override
+        public String toString(){
+            return year + "-" + month + "-" + date + " " + hour + ":" + minute + ":" + second;
+        }
+    }
+
+    private class TestDateTransformer implements Transformer {
+        @SuppressWarnings("deprecation")
+        public Object transform(Object o) {
+            if (o instanceof TestDate) {
+                TestDate td = (TestDate) o;
+                return new java.util.Date(td.year, td.month, td.date, td.hour, td.minute, td.second);
+            } 
+            else if (o instanceof java.util.Date) {
+                Date d = (Date) o;
+                return new TestDate(d.getYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds());
+            } 
+            else return o;
+        }
+    }
     List<String> _data = new ArrayList<String>();
 
 
