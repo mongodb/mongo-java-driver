@@ -159,7 +159,8 @@ public class BSONTest extends TestCase {
 
 
     @Test
-    public void testCustomEncoders() throws IOException{
+    public void testCustomEncoders() 
+      throws IOException{
         // If clearEncodingHooks isn't working the first test will fail.
         Transformer tf = new TestDateTransformer();
         BSON.addEncodingHook( TestDate.class, tf );
@@ -204,10 +205,11 @@ public class BSONTest extends TestCase {
         BSON.removeEncodingHook( TestDate.class, tf );
         assertFalse( BSON.getEncodingHooks( TestDate.class ).contains( tf ) );
     }
-    
+
     @Test
     @SuppressWarnings( "deprecation" )
-    public void testCustomDecoders() throws IOException{
+    public void testCustomDecoders() 
+      throws IOException{
         // If clearDecodingHooks isn't working this whole test will fail.
         Transformer tf = new TestDateTransformer();
         BSON.addDecodingHook( Date.class, tf );
@@ -270,7 +272,6 @@ public class BSONTest extends TestCase {
             this( year , month , date , 0 , 0 , 0 );
         }
 
-
         @Override
         public boolean equals( Object other ){
             if ( this == other )
@@ -290,19 +291,21 @@ public class BSONTest extends TestCase {
     }
 
     private class TestDateTransformer implements Transformer {
-        @SuppressWarnings("deprecation")
-        public Object transform(Object o) {
-            if (o instanceof TestDate) {
+        @SuppressWarnings( "deprecation" )
+        public Object transform( Object o ){
+            if ( o instanceof TestDate ) {
                 TestDate td = (TestDate) o;
-                return new java.util.Date(td.year, td.month, td.date, td.hour, td.minute, td.second);
-            } 
-            else if (o instanceof java.util.Date) {
+                return new java.util.Date( td.year , td.month , td.date , td.hour , td.minute , td.second );
+            }
+            else if ( o instanceof java.util.Date ) {
                 Date d = (Date) o;
-                return new TestDate(d.getYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds());
-            } 
-            else return o;
+                return new TestDate( d.getYear() , d.getMonth() , d.getDate() , d.getHours() , d.getMinutes() , d.getSeconds() );
+            }
+            else
+                return o;
         }
     }
+
     List<String> _data = new ArrayList<String>();
 
 
