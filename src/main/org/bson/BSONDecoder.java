@@ -58,7 +58,7 @@ public class BSONDecoder {
             
             final int len = _in.readInt();
             _in._max = len;
-            
+
             _callback.objectStart();
             while ( decodeElement() );
             _callback.objectDone();
@@ -428,10 +428,16 @@ public class BSONDecoder {
         String readUTF8String()
             throws IOException {
             int size = readInt();
-            if ( size < 0 || size > ( 3 * 1024 * 1024 ) )
+            if ( size <= 0 || size > ( 3 * 1024 * 1024 ) )
                 throw new RuntimeException( "bad string size: " + size );
             
             if ( size < _inputBuffer.length / 2 ){
+                if ( size == 1 ){
+                    _read++;
+                    _pos++;
+                    return "";
+                }
+
                 return new String( _inputBuffer , _need(size) , size - 1 , "UTF-8" );
             }
 
