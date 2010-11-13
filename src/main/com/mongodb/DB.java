@@ -29,34 +29,6 @@ import com.mongodb.util.*;
  */
 public abstract class DB {
 
-    /**
-     * Settings for strictness of error checking on writes (inserts,
-     * updates, and removes).
-     * @deprecated 
-     */
-    @Deprecated
-    public static class WriteConcern {
-        /**
-         * Don't check for or report any errors on writes.
-         */
-        public final static com.mongodb.WriteConcern NONE = com.mongodb.WriteConcern.NONE;
-        
-        /**
-         * Use the default level of error checking on writes. Don't
-         * send a getLastError command or wait for a response, but do
-         * raise an exception on socket errors.
-         */
-        public final static com.mongodb.WriteConcern NORMAL = com.mongodb.WriteConcern.NORMAL;
-        
-        /**
-         * Send a getLastError command following all writes. The write
-         * will wait for a response from the server and raise an
-         * exception on any error. Equivalent to the "safe mode" that
-         * is present in some other MongoDB drivers.
-         */
-        public final static com.mongodb.WriteConcern STRICT = com.mongodb.WriteConcern.STRICT;
-    };
-
     public DB( Mongo mongo , String name ){
         _mongo = mongo;
     	_name = name;
