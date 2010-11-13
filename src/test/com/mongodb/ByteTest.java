@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 import java.io.IOException;
@@ -196,6 +197,8 @@ public class ByteTest extends TestCase {
 
         BSONObject read = BSON.decode( encoded );
         assertEquals( o.keySet().size() - transient_fields, read.keySet().size() );
+        if ( transient_fields == 0 )
+            assertEquals( o , read );
     }
 
     @Test(groups = {"basic"})
@@ -267,6 +270,11 @@ public class ByteTest extends TestCase {
         o.put( "_transientFields", t );
         o.put( "foo", "bar" );
         go( o, 5, 2 );
+        t.clear();
+        
+        o = new BasicDBObject();
+        o.put( "z" , "" );
+        go( o, 13 );
         t.clear();
 
         // $where
@@ -393,6 +401,34 @@ public class ByteTest extends TestCase {
         DBObject x = BasicDBObjectBuilder.start( "x" , 1 ).add( "y" , "asdasd" ).get();
         byte[] b = Bytes.encode( x );
         assertEquals( x , Bytes.decode( b ) );
+    }
+
+    @Test
+    public void testMany()
+        throws IOException {
+
+        DBObject orig = new BasicDBObject();
+        orig.put( "a" , 5 );
+        orig.put( "ab" , 5.1 );
+        orig.put( "abc" , 5123L );
+        orig.put( "abcd" , "asdasdasd" );
+        orig.put( "abcde" , "asdasdasdasdasdasdasdasd" );
+        orig.put( "abcdef" , Arrays.asList( new String[]{ "asdasdasdasdasdasdasdasd" , "asdasdasdasdasdasdasdasd" } ) );
+        
+        byte[] b = Bytes.encode( orig );
+        final int n = 1000;
+        
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        for ( int i=0; i<n; i++ )
+            out.write( b );
+        
+        ByteArrayInputStream in = new ByteArrayInputStream( out.toByteArray() );
+        BSONDecoder d = new BSONDecoder();
+        for ( int i=0; i<n; i++ ){
+            BSONObject x = d.readObject( in );
+            assertEquals( orig , x );
+        }
+        assertEquals( -1 , in.read() );
     }
 
     final DB _db;
