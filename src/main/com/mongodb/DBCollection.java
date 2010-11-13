@@ -87,6 +87,20 @@ public abstract class DBCollection {
     }
 
     /**
+     * Saves document(s) to the database.
+     * if doc doesn't have an _id, one will be added
+     * you can get the _id that was added from doc after the insert
+     *
+     * @param list list of documents to save
+     * @dochub insert
+     */
+    public WriteResult insert(List<DBObject> list, WriteConcern concern ) 
+        throws MongoException {
+        return insert( list.toArray( new DBObject[list.size()] ) , concern );
+    }
+
+
+    /**
      * Performs an update operation.
      * @param q search query for old object to update
      * @param o object with which to update <tt>q</tt>
