@@ -157,7 +157,6 @@ public class BSONTest extends TestCase {
 
     }
 
-
     @Test
     public void testCustomEncoders() 
       throws IOException{
@@ -304,6 +303,17 @@ public class BSONTest extends TestCase {
             else
                 return o;
         }
+    }
+
+    void _roundTrip( BSONObject o ){
+        assertEquals( o , BSON.decode( BSON.encode( o ) ) );
+    }
+
+    @Test
+    public void testRandomRoundTrips(){
+        _roundTrip( new BasicBSONObject( "a" , "" ) );
+        _roundTrip( new BasicBSONObject( "a" , "a" ) );
+        _roundTrip( new BasicBSONObject( "a" , "b" ) );
     }
 
     List<String> _data = new ArrayList<String>();
