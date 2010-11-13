@@ -115,6 +115,16 @@ public class DBCollectionTest extends TestCase {
 
         o.put( "y" , -1 );
         assertEquals("x_2d_y_-1", DBCollection.genIndexName(o));
+
+        o.put( "x" , 1 );
+        o.put( "y" , 1 );
+        o.put( "a" , 1 );
+        assertEquals( "x_1_y_1_a_1" , DBCollection.genIndexName(o) );
+
+        o = new BasicDBObject();
+        o.put( "z" , 1 );
+        o.put( "a" , 1 );
+        assertEquals( "z_1_a_1" , DBCollection.genIndexName(o) );
     }
 
     @Test
