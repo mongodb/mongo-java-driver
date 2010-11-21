@@ -388,7 +388,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         }
 
         if ( _cursorType == CursorType.ARRAY ){
-            _nums.add( String.valueOf( _all.size() ) );
             _all.add( _cur );
         }
 
@@ -605,6 +604,4 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     private int _num = 0;
 
     private final ArrayList<DBObject> _all = new ArrayList<DBObject>();
-    private final List<String> _nums = new ArrayList<String>();
-
 }
