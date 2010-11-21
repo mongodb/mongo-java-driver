@@ -217,7 +217,7 @@ class DBPortPool extends SimplePool<DBPort> {
     }
 
     public boolean ok( DBPort t ){
-        return _addr.equals( t._addr );
+        return _addr.getSocketAddress().equals( t._addr );
     }
     
     protected DBPort createNew(){
