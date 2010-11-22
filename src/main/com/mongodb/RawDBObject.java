@@ -58,7 +58,7 @@ public class RawDBObject implements DBObject {
         Iterator i = this.keySet().iterator();
         while (i.hasNext()) {
             Object s = i.next();
-            m.put(s, this.get(s+""));
+            m.put(s, this.get(String.valueOf(s)));
         }
         return m;
     }
