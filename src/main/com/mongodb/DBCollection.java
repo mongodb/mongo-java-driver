@@ -215,7 +215,7 @@ public abstract class DBCollection {
         return __find( ref , fields , numToSkip , batchSize , getOptions() );
     }
 
-    public abstract void createIndex( DBObject keys , DBObject options ) throws MongoException ;
+    public abstract void createIndex( DBObject keys , DBObject options ) throws MongoException;
 
 
     // ------
