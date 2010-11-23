@@ -307,7 +307,7 @@ public class JavaClientTest extends TestCase {
     public void testStrictWriteSetInCollection(){
         DBCollection c = _db.getCollection( "write1" );
         c.drop();
-        c.setWriteConcern( WriteConcern.STRICT );
+        c.setWriteConcern( WriteConcern.SAFE);
         c.insert( new BasicDBObject( "_id" , 1 ) );
         boolean gotError = false;
         try {
@@ -328,7 +328,7 @@ public class JavaClientTest extends TestCase {
         c.insert( new BasicDBObject( "_id" , 1 ));
         boolean gotError = false;
         try {
-            c.insert( new BasicDBObject( "_id" , 1 ) , WriteConcern.STRICT);
+            c.insert( new BasicDBObject( "_id" , 1 ) , WriteConcern.SAFE);
         }
         catch ( MongoException.DuplicateKey e ){
             gotError = true;
@@ -603,7 +603,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , res.getN() );
         assertTrue( res.isLazy() );
 
-        c.setWriteConcern( WriteConcern.STRICT );
+        c.setWriteConcern( WriteConcern.SAFE);
         res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
         assertEquals( 1 , res.getN() );
         assertFalse( res.isLazy() );
@@ -619,7 +619,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , res.getN() );
         assertTrue( res.isLazy() );
 
-        res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) , false , false , WriteConcern.STRICT );
+        res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) , false , false , WriteConcern.SAFE);
         assertEquals( 1 , res.getN() );
         assertFalse( res.isLazy() );
     }

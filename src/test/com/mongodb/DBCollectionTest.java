@@ -160,6 +160,30 @@ public class DBCollectionTest extends TestCase {
         assertEquals( Boolean.TRUE , c.getIndexInfo().get(1).get( "unique" ) );
     }
 
+    @Test
+    public void testIndexExceptions(){
+        DBCollection c = _db.getCollection( "indexExceptions" );
+        c.drop();
+
+        c.insert( new BasicDBObject( "x" , 1 ) );
+        c.insert( new BasicDBObject( "x" , 1 ) );
+        
+        c.ensureIndex( new BasicDBObject( "y" , 1 ) );
+        c.resetIndexCache();
+        c.ensureIndex( new BasicDBObject( "y" , 1 ) ); // make sure this doesn't throw
+        c.resetIndexCache();
+        
+        Exception failed = null;
+        try {
+            c.ensureIndex( new BasicDBObject( "x" , 1 ) , new BasicDBObject( "unique" , true ) );
+        }
+        catch ( MongoException.DuplicateKey e ){
+            failed = e;
+        }
+        assertNotNull( failed );
+
+    }
+
 
     final DB _db;
 

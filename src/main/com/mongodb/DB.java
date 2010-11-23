@@ -185,7 +185,7 @@ public abstract class DB {
         if (namespaces == null)
             throw new RuntimeException("this is impossible");
 
-        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, 0);
+        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, getOptions());
         if (i == null)
             return new HashSet<String>();
 
