@@ -347,8 +347,9 @@ public abstract class DBCollection {
         throws MongoException {
         DBObject options = defaultOptions( keys );
         options.put( "name" , name );
+        options.removeField("unique");
         if ( unique )
-            options.put( "unique" , Boolean.TRUE );
+            keys.put( "unique" , Boolean.TRUE );
         ensureIndex( keys , options );
     }
 
