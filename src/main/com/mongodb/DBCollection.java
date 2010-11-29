@@ -286,7 +286,7 @@ public abstract class DBCollection {
      * @return the old document
      */
     public DBObject findAndModify( DBObject query , DBObject sort , DBObject update){ 
-    	return findAndModify( query, null, null, false, update, false, false);
+        return findAndModify( query, null, sort, false, update, false, false);
     }
 
     /**
