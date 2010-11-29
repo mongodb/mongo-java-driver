@@ -262,6 +262,18 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         return this;
     }
 
+    public void setOptions( int options ){
+        _options = options;
+    }
+
+    public void resetOptions(){
+        _options = 0;
+    }
+
+    public int getOptions(){
+        return _options;
+    }
+
     // ----  internal stuff ------
 
     private void _check()
