@@ -325,7 +325,7 @@ public class DBApiLayer extends DB {
                 full.put( k , options.get( k ) );
             full.put( "key" , keys );
 
-            DBApiLayer.this.doGetCollection( "system.indexes" ).insert( new DBObject[]{ full } , false , getWriteConcern() );
+            DBApiLayer.this.doGetCollection( "system.indexes" ).insert( new DBObject[]{ full } , false , WriteConcern.SAFE );
         }
 
         final String _fullNameSpace;

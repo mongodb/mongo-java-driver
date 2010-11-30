@@ -88,14 +88,15 @@ public abstract class DB {
     public DBCollection getCollectionFromString( String s ){
         DBCollection foo = null;
         
-        while ( s.contains( "." ) ){
-            int idx = s.indexOf( "." );
+        int idx = s.indexOf( "." );
+        while ( idx >= 0 ){
             String b = s.substring( 0 , idx );
             s = s.substring( idx + 1 );
             if ( foo == null )
                 foo = getCollection( b );
             else
                 foo = foo.getCollection( b );
+            idx = s.indexOf( "." );
         }
 
         if ( foo != null )
@@ -184,7 +185,7 @@ public abstract class DB {
         if (namespaces == null)
             throw new RuntimeException("this is impossible");
 
-        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, 0);
+        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, getOptions());
         if (i == null)
             return new HashSet<String>();
 

@@ -141,7 +141,7 @@ class ReplicaSetStatus {
                 Throwable root = e;
                 if ( e.getCause() != null )
                     root = e.getCause();
-                _logger.log( Level.WARNING , "node down: " + _addr + " " + root );
+                _logger.log( Level.FINE , "node down: " + _addr + " " + root );
                 _ok = false;
             }
             catch ( Exception e ){

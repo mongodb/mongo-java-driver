@@ -82,7 +82,6 @@ public abstract class OutputBuffer {
         }        
         md5.reset();
 
-        final StringBuilder buf = new StringBuilder();
         try {
             pipe( new OutputStream(){
                     public void write( byte[] b , int off , int len ){

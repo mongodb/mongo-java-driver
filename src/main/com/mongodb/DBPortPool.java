@@ -145,7 +145,7 @@ class DBPortPool extends SimplePool<DBPort> {
     }
 
     protected int pick( int iThink , boolean couldCreate ){
-        final int id = Thread.currentThread().hashCode();
+        final int id = System.identityHashCode(Thread.currentThread());
         final int s = _availSafe.size();
         for ( int i=0; i<s; i++ ){
             DBPort p = _availSafe.get(i);
@@ -173,7 +173,7 @@ class DBPortPool extends SimplePool<DBPort> {
 	if ( port == null )
 	    throw new ConnectionWaitTimeOut( _options.maxWaitTime );
 	
-        port._lastThread = Thread.currentThread().hashCode();
+        port._lastThread = System.identityHashCode(Thread.currentThread());
 	return port;
     }
 
@@ -217,7 +217,7 @@ class DBPortPool extends SimplePool<DBPort> {
     }
 
     public boolean ok( DBPort t ){
-        return _addr.equals( t._addr );
+        return _addr.getSocketAddress().equals( t._addr );
     }
     
     protected DBPort createNew(){

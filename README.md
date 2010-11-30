@@ -25,7 +25,7 @@ http://jira.mongodb.org/browse/JAVA
 * Dave Brosius         dbrosius@mebigfatguy.com
 * Scott Hernandez      scotthernandez@hotmail.com
 * Hans Meiser          hmeiser@example.com
-* Benedikt Waldvogel   benedikt.waldvogel@pangora.com
+* Benedikt Waldvogel   mail@bwaldvogel.de
 * William Shulman      william.shulman@gmail.com
 * Daniel Spilker       mail@daniel-spilker.com
 * Kyle Banker          kylebanker@gmail.com

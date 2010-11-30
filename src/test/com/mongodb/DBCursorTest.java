@@ -66,6 +66,20 @@ public class DBCursorTest extends TestCase {
         assertEquals( 50 , c.find().snapshot().limit(50).toArray().size() );
     }
 
+    @Test(groups = {"basic"})
+    public void testOptions() {
+        DBCollection c = _db.getCollection("test");
+        DBCursor dbCursor = c.find();
+
+        assertEquals(0, dbCursor.getOptions());
+        dbCursor.setOptions(Bytes.QUERYOPTION_TAILABLE);
+        assertEquals(Bytes.QUERYOPTION_TAILABLE, dbCursor.getOptions());
+        dbCursor.addOption(Bytes.QUERYOPTION_SLAVEOK);
+        assertEquals(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_SLAVEOK, dbCursor.getOptions());
+        dbCursor.resetOptions();
+        assertEquals(0, dbCursor.getOptions());
+    }
+
     @Test
     public void testBig(){
         DBCollection c = _db.getCollection("big1");
