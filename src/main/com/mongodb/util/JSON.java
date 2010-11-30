@@ -2,6 +2,7 @@
 
 package com.mongodb.util;
 
+import java.lang.reflect.*;
 import java.text.*;
 import java.util.*;
 import java.util.regex.*;
@@ -166,13 +167,11 @@ public class JSON {
         }
 
         if ( o.getClass().isArray() ){
-            Object[] arr = (Object[])o;
-
             buf.append( "[ " );
             
-            for ( int i=0; i<arr.length; i++) {
+            for ( int i=0; i<Array.getLength( o ); i++) {
                 if ( i > 0 ) buf.append( " , " );
-                serialize( arr[i] , buf );
+                serialize( Array.get( o , i ) , buf );
             }
             
             buf.append( "]" );
