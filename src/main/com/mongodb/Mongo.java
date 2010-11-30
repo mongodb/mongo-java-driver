@@ -20,6 +20,7 @@ package com.mongodb;
 
 import java.net.*;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.*;
 
 import org.bson.io.*;
@@ -450,6 +451,7 @@ public class Mongo {
 
         
         private static final ConcurrentMap<String,Mongo> _mongos = new ConcurrentHashMap<String,Mongo>();
-
+        
     }
+
 }
