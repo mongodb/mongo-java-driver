@@ -37,7 +37,7 @@ public class DBApiLayer extends DB {
     /** The maximum number of cursors allowed */
     static final int NUM_CURSORS_BEFORE_KILL = 100;
     static final int NUM_CURSORS_PER_BATCH = 20000;
-    static final int CLEANER_INTERVAL = 1000;
+    static final int CLEANER_INTERVAL = 10000;
     
     //  --- show
 
@@ -128,12 +128,7 @@ public class DBApiLayer extends DB {
                 killCursors( e.getKey() , e.getValue() );
             }
             catch ( Throwable t ){
-                String txt = "";
-                for (Long l : e.getValue())
-                    txt += l + ",";
-                if (txt.endsWith(","))
-                    txt = txt.substring(0,txt.length() - 1);
-                Bytes.LOGGER.log( Level.WARNING , "can't clean cursors " + txt , t );
+                Bytes.LOGGER.log( Level.WARNING , "can't clean cursors" , t );
                 for ( Long x : e.getValue() )
                         _deadCursorIds.add( new DeadCursor( x , e.getKey() ) );
             }
@@ -426,9 +421,18 @@ public class DBApiLayer extends DB {
         void close(){
             // not perfectly thread safe here, may need to use an atomicBoolean
             if (_curResult != null) {
-                _deadCursorIds.add( new DeadCursor( _curResult.cursor() , _host ) );                
+                long curId = _curResult.cursor();
                 _curResult = null;
                 _cur = null;
+                List<Long> l = new ArrayList<Long>();
+                l.add(curId);
+
+                try {
+                    killCursors(_host, l);
+                } catch (Throwable t) {
+                    Bytes.LOGGER.log(Level.WARNING, "can't clean 1 cursor", t);
+                    _deadCursorIds.add(new DeadCursor(curId, _host));
+                }
             }
         }
         
