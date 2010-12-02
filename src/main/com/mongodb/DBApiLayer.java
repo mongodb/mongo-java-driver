@@ -396,7 +396,6 @@ public class DBApiLayer extends DB {
 
         protected void finalize() throws Throwable {
             close();
-            // call to super.finalize slows down GC
             super.finalize();
         }
 
@@ -424,14 +423,17 @@ public class DBApiLayer extends DB {
                 long curId = _curResult.cursor();
                 _curResult = null;
                 _cur = null;
-                List<Long> l = new ArrayList<Long>();
-                l.add(curId);
+                
+                if (curId > 0) {
+                    List<Long> l = new ArrayList<Long>();
+                    l.add(curId);
 
-                try {
-                    killCursors(_host, l);
-                } catch (Throwable t) {
-                    Bytes.LOGGER.log(Level.WARNING, "can't clean 1 cursor", t);
-                    _deadCursorIds.add(new DeadCursor(curId, _host));
+                    try {
+                        killCursors(_host, l);
+                    } catch (Throwable t) {
+                        Bytes.LOGGER.log(Level.WARNING, "can't clean 1 cursor", t);
+                        _deadCursorIds.add(new DeadCursor(curId, _host));
+                    }
                 }
             }
         }
