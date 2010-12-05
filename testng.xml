@@ -4,6 +4,7 @@
 
   <test name="main tests">
     <classes>
+      <class name="com.mongodb.util.StringRangeSetTest"/>
       <class name="com.mongodb.util.SimplePoolTest"/>
       <class name="com.mongodb.util.JSONTest"/>
 
