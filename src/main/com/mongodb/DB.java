@@ -213,7 +213,7 @@ public abstract class DB {
 
         Collections.sort(tables);
 
-        return new OrderedSet<String>(tables);
+        return new LinkedHashSet<String>(tables);
     }
 
     /**

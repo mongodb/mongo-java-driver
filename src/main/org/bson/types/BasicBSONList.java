@@ -18,7 +18,6 @@
 
 package org.bson.types;
 
-import com.mongodb.util.OrderedSet;
 import com.mongodb.util.StringRangeSet;
 
 import org.bson.*;
