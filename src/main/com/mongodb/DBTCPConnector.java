@@ -163,7 +163,7 @@ class DBTCPConnector implements DBConnector {
         }
         catch ( IOException ioe ){
             mp.error( port , ioe );
-            _error( ioe );
+            _error( ioe, false );
 
             if ( concern.raiseNetworkErrors() )
                 throw new MongoException.Network( "can't say something" , ioe );
@@ -197,12 +197,12 @@ class DBTCPConnector implements DBConnector {
 
     public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries )
         throws MongoException {
-        
+        boolean slaveOk = m.hasOption( Bytes.QUERYOPTION_SLAVEOK );
         _checkClosed();
-        checkMaster( false , true );
+        checkMaster( false , !slaveOk );
         
         final MyPort mp = _myPort.get();
-        final DBPort port = mp.get( false , m.hasOption( Bytes.QUERYOPTION_SLAVEOK ) , hostNeeded );
+        final DBPort port = mp.get( false , slaveOk, hostNeeded );
         
         port.checkAuth( db );
         
@@ -212,9 +212,9 @@ class DBTCPConnector implements DBConnector {
             mp.done( port );
         }
         catch ( IOException ioe ){
-            boolean shoulRetry = _error( ioe ) && ! coll._name.equals( "$cmd" ) && retries > 0;
+            boolean shouldRetry = _error( ioe, slaveOk ) && ! coll._name.equals( "$cmd" ) && retries > 0;
             mp.error( port , ioe );
-            if ( shoulRetry ){
+            if ( shouldRetry ){
                 return call( db , coll , m , hostNeeded , retries - 1 );
             }
             throw new MongoException.Network( "can't call something" , ioe );
@@ -250,11 +250,11 @@ class DBTCPConnector implements DBConnector {
         return _curMaster.toString();
     }
 
-    boolean _error( Throwable t )
+    boolean _error( Throwable t, boolean slaveOk )
         throws MongoException {
         if ( _allHosts != null ){
             _logger.log( Level.WARNING , "replica set mode, switching master" , t );
-            checkMaster( true , true );
+            checkMaster( true , !slaveOk );
         }
         return true;
     }
