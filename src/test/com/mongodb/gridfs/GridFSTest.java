@@ -137,6 +137,17 @@ public class GridFSTest extends TestCase {
         testOutStream( s );
     }
 
+    @Test(groups = { "basic" })
+    public void testOutStreamBigAligned() throws Exception {
+        int target = (int) (GridFS.DEFAULT_CHUNKSIZE * 4);
+        StringBuilder buf = new StringBuilder( target );
+        while ( buf.length() < target ) {
+            buf.append( "a" );
+        }
+        String s = buf.toString();
+        testOutStream( s );
+    }
+
     @Test(groups = {"basic"})
     public void testMetadata()
         throws Exception {
