@@ -193,13 +193,14 @@ public class DBApiLayer extends DB {
                 for ( int i=0; i<arr.length; i++ ){
                     DBObject o=arr[i];
                     apply( o );
+                    _checkObject( o , false , false );
                     Object id = o.get( "_id" );
                     if ( id instanceof ObjectId ){
                         ((ObjectId)id).notNew();
                     }
                 }
             }
-            
+
             WriteResult last = null;
 
             int cur = 0;
