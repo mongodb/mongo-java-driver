@@ -817,7 +817,7 @@ public abstract class DBCollection {
         _options = new Bytes.OptionHolder( _db._options );
     }
 
-    private  DBObject _checkObject( DBObject o , boolean canBeNull , boolean query ){
+    protected DBObject _checkObject( DBObject o , boolean canBeNull , boolean query ){
         if ( o == null ){
             if ( canBeNull )
                 return null;
