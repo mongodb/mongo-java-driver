@@ -37,7 +37,7 @@ public class DBApiLayer extends DB {
     /** The maximum number of cursors allowed */
     static final int NUM_CURSORS_BEFORE_KILL = 100;
     static final int NUM_CURSORS_PER_BATCH = 20000;
-    static final int CLEANER_INTERVAL = 10000;
+    static final int CLEANER_INTERVAL = 1000;
     
     //  --- show
 
@@ -395,7 +395,14 @@ public class DBApiLayer extends DB {
         }
 
         protected void finalize() throws Throwable {
-            close();
+            if (_curResult != null) {
+                long curId = _curResult.cursor();
+                _curResult = null;
+                _cur = null;
+                if (curId > 0) {
+                    _deadCursorIds.add(new DeadCursor(curId, _host));
+                }
+            }
             super.finalize();
         }
 
