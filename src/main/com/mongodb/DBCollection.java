@@ -756,7 +756,7 @@ public abstract class DBCollection {
     
     public MapReduceOutput mapReduce( DBObject command )
         throws MongoException {
-        if ( command.get( "mapreduce" ) == null )
+        if ( command.get( "mapreduce" ) == null && command.get( "mapReduce" ) == null )
             throw new IllegalArgumentException( "need mapreduce arg" );
         CommandResult res = _db.command( command );
         res.throwOnError();
