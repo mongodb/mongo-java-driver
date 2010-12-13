@@ -210,6 +210,8 @@ class DBTCPConnector implements DBConnector {
         try {
             res = port.call( m , coll );
             mp.done( port );
+            if ( res._responseTo != m.getId() )
+                throw new MongoException( "ids don't match" );
         }
         catch ( IOException ioe ){
             boolean shouldRetry = _error( ioe, slaveOk ) && ! coll._name.equals( "$cmd" ) && retries > 0;
