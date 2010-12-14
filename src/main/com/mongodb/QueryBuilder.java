@@ -203,6 +203,12 @@ public class QueryBuilder {
                     new BasicDBObject( "$center" , new Object[]{ new Double[]{ x , y } , radius } ) );
         return this;
     }
+	
+    public QueryBuilder withinBox( double x1 , double y1 , double x2, double y2 ){
+        addOperand( "$within" , 
+                    new BasicDBObject( "$box" , new Object[]{ new Double[]{ x1 , y1 } , new Double[]{ x2 , y2 } } ) );
+        return this;
+    }
 
     public QueryBuilder near( double x , double y  ){
         addOperand( "$near" , 
