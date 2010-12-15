@@ -204,12 +204,6 @@ public class QueryBuilder {
         return this;
     }
 	
-    public QueryBuilder withinBox( double x1 , double y1 , double x2, double y2 ){
-        addOperand( "$within" , 
-                    new BasicDBObject( "$box" , new Object[]{ new Double[]{ x1 , y1 } , new Double[]{ x2 , y2 } } ) );
-        return this;
-    }
-
     public QueryBuilder near( double x , double y  ){
         addOperand( "$near" , 
                     new Double[]{ x , y } );
@@ -231,9 +225,9 @@ public class QueryBuilder {
      * @param yy the y coordinate of the second box corner.
      * @return the current QueryBuilder with an appended within bounding box search.
      */
-    public QueryBuilder withinBox(double x, double y, double xx, double yy) {
+    public QueryBuilder withinBox(double x, double y, double x2, double y2) {
     	addOperand( "$within" , 
-    	             new BasicDBObject( "$box" , new Object[] { new Double[] { x, y }, new Double[] { xx, yy } } ) );
+                    new BasicDBObject( "$box" , new Object[] { new Double[] { x, y }, new Double[] { x2, y2 } } ) );
     	return this;
     }
 
