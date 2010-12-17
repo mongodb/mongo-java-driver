@@ -206,8 +206,8 @@ public class Mongo {
      * default).</p>
      * 
      * @see com.mongodb.ServerAddress
-     * @pair replicaSetSeeds put as many servers as you can in the list. 
-     *                       the system will figure the rest out
+     * @param replicaSetSeeds Put as many servers as you can in the list and
+     * the system will figure out the rest.
      */
     public Mongo( List<ServerAddress> replicaSetSeeds )
         throws MongoException {

@@ -221,8 +221,8 @@ public class QueryBuilder {
      * 
      * @param x the x coordinate of the first box corner.
      * @param y the y coordinate of the first box corner.
-     * @param xx the x coordinate of the second box corner.
-     * @param yy the y coordinate of the second box corner.
+     * @param x2 the x coordinate of the second box corner.
+     * @param y2 the y coordinate of the second box corner.
      * @return the current QueryBuilder with an appended within bounding box search.
      */
     public QueryBuilder withinBox(double x, double y, double x2, double y2) {

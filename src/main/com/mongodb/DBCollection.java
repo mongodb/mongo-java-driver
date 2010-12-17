@@ -51,7 +51,6 @@ public abstract class DBCollection {
      * if doc doesn't have an _id, one will be added
      * you can get the _id that was added from doc after the insert
      *
-     * @param arr  array of documents to save
      * @dochub insert
      */
     public WriteResult insert(DBObject o , WriteConcern concern )
@@ -759,10 +758,10 @@ public abstract class DBCollection {
     }
 
     /**
-       performs a map reduce operation
-       * @param outputCollection optional - leave null if want to use temp collection
-       * @param query optional - leave null if you want all objects
-       * @dochub mapreduce
+     * performs a map reduce operation
+     * @param outputTarget optional - leave null if want to use temp collection
+     * @param query optional - leave null if you want all objects
+     * @dochub mapreduce
      */
     public MapReduceOutput mapReduce( String map , String reduce , Object outputTarget , DBObject query )
         throws MongoException {

@@ -40,7 +40,7 @@ public abstract class DB {
     public abstract void requestEnsureConnection();
     
     /** Returns the collection represented by the string &lt;dbName&gt;.&lt;collectionName&gt;.
-     * @param fullNameSpace the string
+     * @param name the name of the collection
      * @return the collection
      */
     protected abstract DBCollection doGetCollection( String name );
