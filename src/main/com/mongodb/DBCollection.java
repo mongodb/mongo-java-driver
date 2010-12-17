@@ -694,17 +694,42 @@ public abstract class DBCollection {
      * @param cond - optional condition on query 
      * @param reduce javascript reduce function 
      * @param initial initial value for first match on a key
+     * @deprecated
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce )
         throws MongoException {
-        CommandResult res =  _db.command( new BasicDBObject( "group" , 
-                                                             BasicDBObjectBuilder.start()
-                                                             .add( "ns" , getName() )
-                                                             .add( "key" , key )
-                                                             .add( "cond" , cond )
-                                                             .add( "$reduce" , reduce )
-                                                             .add( "initial" , initial )
-                                                             .get() ) );
+        return group( key , cond , initial , reduce , null );
+    }
+        
+    /**
+     * @param key - { a : true }
+     * @param cond - optional condition on query 
+     * @param reduce javascript reduce function 
+     * @param initial initial value for first match on a key
+     * @param finalize 
+     */
+    public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce , String finalize )
+        throws MongoException {
+
+        BasicDBObject args  = new BasicDBObject();
+        args.put( "ns" , getName() );
+        args.put( "key" , key );
+        args.put( "cond" , cond );
+        args.put( "$reduce" , reduce );
+        args.put( "initial" , initial );
+        if ( finalize != null )
+            args.put( "finalize" , finalize );
+        
+        return group( args );
+    }
+
+    public DBObject group( DBObject args )
+        throws MongoException {
+        
+        args.put( "ns" , getName() );
+        
+        CommandResult res =  _db.command( new BasicDBObject( "group" , args ) );
+
         res.throwOnError();
         return (DBObject)res.get( "retval" );
     }
