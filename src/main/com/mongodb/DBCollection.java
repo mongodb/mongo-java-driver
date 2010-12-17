@@ -694,7 +694,7 @@ public abstract class DBCollection {
      * @param cond - optional condition on query 
      * @param reduce javascript reduce function 
      * @param initial initial value for first match on a key
-     * @deprecated
+     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce )
         throws MongoException {
@@ -706,7 +706,8 @@ public abstract class DBCollection {
      * @param cond - optional condition on query 
      * @param reduce javascript reduce function 
      * @param initial initial value for first match on a key
-     * @param finalize 
+     * @param finalize An optional function that can operate on the result(s) of the reduce function.
+     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce , String finalize )
         throws MongoException {
