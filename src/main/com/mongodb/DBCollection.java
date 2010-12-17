@@ -738,16 +738,25 @@ public abstract class DBCollection {
        * @param query optional - leave null if you want all objects
        * @dochub mapreduce
      */
-    public MapReduceOutput mapReduce( String map , String reduce , String outputCollection , DBObject query )
+    public MapReduceOutput mapReduce( String map , String reduce , Object outputTarget , DBObject query )
         throws MongoException {
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start()
             .add( "mapreduce" , _name )
             .add( "map" , map )
             .add( "reduce" , reduce );
-
-        if ( outputCollection != null )
-            b.add( "out" , outputCollection );
         
+        if ( outputTarget == null ){
+        }
+        else if ( outputTarget instanceof String ){
+            b.add( "out" , outputTarget );
+        }
+        else if ( outputTarget instanceof org.bson.BSONObject ){
+            b.add( "out" , outputTarget );
+        }
+        else {
+            throw new IllegalArgumentException( "outputTarget has to be a string or a document" );
+        }
+
         if ( query != null )
             b.add( "query" , query );
 
