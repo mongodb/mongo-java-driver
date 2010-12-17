@@ -63,7 +63,7 @@ public class MongoOptions {
     public int connectTimeout;
 
     /**
-      The socket timeout; this value is passed to {@link java.net.Socket.setSoTimeout}.  0 is default and infinite
+      The socket timeout; this value is passed to {@link java.net.Socket#setSoTimeout(int)}.  0 is default and infinite
      */
     public int socketTimeout;
     
