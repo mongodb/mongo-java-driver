@@ -392,13 +392,18 @@ class DBTCPConnector implements DBConnector {
 
         return buf.toString();
     }
-
+    
     public void close(){
         _closed = true;
         if ( _portHolder != null )
             _portHolder.close();
         if ( _rsStatus != null )
             _rsStatus.close();
+        _myPort = null;
+    }
+
+    public boolean isOpen(){
+        return ! _closed;
     }
 
     private ServerAddress _curMaster;
@@ -408,7 +413,7 @@ class DBTCPConnector implements DBConnector {
     private final ReplicaSetStatus _rsStatus;
     private boolean _closed = false;
 
-    private final ThreadLocal<MyPort> _myPort = new ThreadLocal<MyPort>(){
+    private ThreadLocal<MyPort> _myPort = new ThreadLocal<MyPort>(){
         protected MyPort initialValue(){
             return new MyPort();
         }

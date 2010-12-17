@@ -488,7 +488,7 @@ public class DBApiLayer extends DB {
         }
 
         public void run() {
-            while (true) {
+            while (_connector.isOpen()) {
                 try {
                     Thread.sleep(interval);
                     _cleanCursors(true);

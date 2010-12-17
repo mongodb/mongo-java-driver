@@ -31,4 +31,6 @@ public interface DBConnector {
     public Response call( DB db , DBCollection coll , OutMessage m ) throws MongoException;
     public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded ) throws MongoException;
     public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries ) throws MongoException;
+
+    public boolean isOpen();
 }
