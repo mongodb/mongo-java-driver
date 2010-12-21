@@ -1,27 +1,25 @@
-<project>
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.mongodb</groupId>
+		<artifactId>mongodb-parent</artifactId>
+		<version>2.4-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+	<groupId>org.bson</groupId>
+	<artifactId>bson</artifactId>
+	<name>BSON</name>
+	<description>BSON Encoding/Decoding Tools</description>
+	<url>http://bsonspec.org/</url>
 
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>org.bson</groupId>
-  <artifactId>bson</artifactId>
-  <packaging>jar</packaging>
-  <name>BSON</name>
-  <version>$VERSION</version>
-  <description>BSON Encoding/Decoding Tools</description>
-  <url>http://bsonspec.org/</url>
-
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
-
-  <scm>
-    <url>http://github.com/mongodb/mongo-java-driver</url>
-  </scm>
-  
-  <dependencies>
-  </dependencies>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
 </project>

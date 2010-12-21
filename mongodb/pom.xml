@@ -1,27 +1,46 @@
-<project>
-
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>org.mongodb</groupId>
-  <artifactId>mongo-java-driver</artifactId>
-  <packaging>jar</packaging>
-  <name>MongoDB Java Driver</name>
-  <version>$VERSION</version>
-  <description>Java Driver for MongoDB</description>
-  <url>http://mongodb.org/</url>
-
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
-
-  <scm>
-    <url>http://github.com/mongodb/mongo-java-driver</url>
-  </scm>
-  
-  <dependencies>
-  </dependencies>
-
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.mongodb</groupId>
+		<artifactId>mongodb-parent</artifactId>
+		<version>2.4-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+	<artifactId>mongo-java-driver</artifactId>
+	<name>MongoDB Java Driver</name>
+	<description>Java Driver for MongoDB</description>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.3.1</version>
+				<configuration>
+					<archive>
+						<index>true</index>
+						<manifest>
+							<addClasspath>false</addClasspath>
+						</manifest>
+						<manifestEntries>
+							<Bundle-ManifestVersion>2</Bundle-ManifestVersion>
+							<Bundle-Name>MongoDB</Bundle-Name>
+							<Bundle-SymbolicName>com.mongodb</Bundle-SymbolicName>
+							<Bundle-Version>${pom.version}</Bundle-Version>
+							<Export-Package>com.mongodb, com.mongodb.io, com.mongodb.util,
+								com.mongodb.gridfs, org.bson, org.bson.util, org.bson.types,
+								org.bson.io</Export-Package>						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.bson</groupId>
+			<artifactId>bson</artifactId>
+			<version>2.4-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
 </project>

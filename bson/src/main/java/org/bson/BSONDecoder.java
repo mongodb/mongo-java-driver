@@ -2,7 +2,6 @@
 
 package org.bson;
 
-import com.mongodb.BasicDBObject;
 import static org.bson.BSON.*;
 
 import java.io.*;
