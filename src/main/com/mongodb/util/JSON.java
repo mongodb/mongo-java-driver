@@ -180,7 +180,7 @@ public class JSON {
 
         if ( o instanceof BSONTimestamp ){
             BSONTimestamp t = (BSONTimestamp)o;
-            buf.append( t.getTime() + "|" + t.getInc() );
+            buf.append( t.getTime() ).append( "|" ).append( t.getInc() );
             return;
         }
         
