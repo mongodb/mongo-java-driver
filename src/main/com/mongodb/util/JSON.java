@@ -639,7 +639,7 @@ class JSONParser {
 	int i = 0;
         char current = get();
         while( current != ']' ) {
-	    String elemName = "" + i++;
+	    String elemName = String.valueOf(i++);
             Object elem = parse(elemName);
 	    doCallback(elemName, elem);
 
