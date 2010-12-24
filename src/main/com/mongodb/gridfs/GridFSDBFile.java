@@ -24,13 +24,20 @@ import com.mongodb.util.*;
 import java.io.*;
 import java.util.*;
 
+/**
+ * This class enables to retrieve a GridFS file metadata and content.
+ * Operations include:
+ * - writing data to a file on disk or an OutputStream
+ * - getting each chunk as a byte array
+ * - getting an InputStream to stream the data in
+ * @author antoine
+ */
 public class GridFSDBFile extends GridFSFile {
     
     
     public InputStream getInputStream(){
         return new MyInputStream();
     }
-
 
     public long writeTo( String filename ) throws IOException {
         return writeTo( new File( filename ) );

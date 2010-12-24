@@ -20,6 +20,7 @@ package com.mongodb;
 
 import java.net.*;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.*;
 
 import org.bson.io.*;
@@ -96,7 +97,7 @@ import org.bson.io.*;
 public class Mongo {
 
     public static final int MAJOR_VERSION = 2;
-    public static final int MINOR_VERSION = 3;
+    public static final int MINOR_VERSION = 4;
 
     public static DB connect( DBAddress addr ){
         return new Mongo( addr ).getDB( addr.getDBName() );
@@ -205,8 +206,8 @@ public class Mongo {
      * default).</p>
      * 
      * @see com.mongodb.ServerAddress
-     * @pair replicaSetSeeds put as many servers as you can in the list. 
-     *                       the system will figure the rest out
+     * @param replicaSetSeeds Put as many servers as you can in the list and
+     * the system will figure out the rest.
      */
     public Mongo( List<ServerAddress> replicaSetSeeds )
         throws MongoException {
@@ -450,6 +451,7 @@ public class Mongo {
 
         
         private static final ConcurrentMap<String,Mongo> _mongos = new ConcurrentHashMap<String,Mongo>();
-
+        
     }
+
 }

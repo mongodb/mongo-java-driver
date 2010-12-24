@@ -51,7 +51,6 @@ public abstract class DBCollection {
      * if doc doesn't have an _id, one will be added
      * you can get the _id that was added from doc after the insert
      *
-     * @param arr  array of documents to save
      * @dochub insert
      */
     public WriteResult insert(DBObject o , WriteConcern concern )
@@ -694,17 +693,43 @@ public abstract class DBCollection {
      * @param cond - optional condition on query 
      * @param reduce javascript reduce function 
      * @param initial initial value for first match on a key
+     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce )
         throws MongoException {
-        CommandResult res =  _db.command( new BasicDBObject( "group" , 
-                                                             BasicDBObjectBuilder.start()
-                                                             .add( "ns" , getName() )
-                                                             .add( "key" , key )
-                                                             .add( "cond" , cond )
-                                                             .add( "$reduce" , reduce )
-                                                             .add( "initial" , initial )
-                                                             .get() ) );
+        return group( key , cond , initial , reduce , null );
+    }
+        
+    /**
+     * @param key - { a : true }
+     * @param cond - optional condition on query 
+     * @param reduce javascript reduce function 
+     * @param initial initial value for first match on a key
+     * @param finalize An optional function that can operate on the result(s) of the reduce function.
+     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     */
+    public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce , String finalize )
+        throws MongoException {
+
+        BasicDBObject args  = new BasicDBObject();
+        args.put( "ns" , getName() );
+        args.put( "key" , key );
+        args.put( "cond" , cond );
+        args.put( "$reduce" , reduce );
+        args.put( "initial" , initial );
+        if ( finalize != null )
+            args.put( "finalize" , finalize );
+        
+        return group( args );
+    }
+
+    public DBObject group( DBObject args )
+        throws MongoException {
+        
+        args.put( "ns" , getName() );
+        
+        CommandResult res =  _db.command( new BasicDBObject( "group" , args ) );
+
         res.throwOnError();
         return (DBObject)res.get( "retval" );
     }
@@ -733,21 +758,30 @@ public abstract class DBCollection {
     }
 
     /**
-       performs a map reduce operation
-       * @param outputCollection optional - leave null if want to use temp collection
-       * @param query optional - leave null if you want all objects
-       * @dochub mapreduce
+     * performs a map reduce operation
+     * @param outputTarget optional - leave null if want to use temp collection
+     * @param query optional - leave null if you want all objects
+     * @dochub mapreduce
      */
-    public MapReduceOutput mapReduce( String map , String reduce , String outputCollection , DBObject query )
+    public MapReduceOutput mapReduce( String map , String reduce , Object outputTarget , DBObject query )
         throws MongoException {
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start()
             .add( "mapreduce" , _name )
             .add( "map" , map )
             .add( "reduce" , reduce );
-
-        if ( outputCollection != null )
-            b.add( "out" , outputCollection );
         
+        if ( outputTarget == null ){
+        }
+        else if ( outputTarget instanceof String ){
+            b.add( "out" , outputTarget );
+        }
+        else if ( outputTarget instanceof org.bson.BSONObject ){
+            b.add( "out" , outputTarget );
+        }
+        else {
+            throw new IllegalArgumentException( "outputTarget has to be a string or a document" );
+        }
+
         if ( query != null )
             b.add( "query" , query );
 
@@ -756,7 +790,7 @@ public abstract class DBCollection {
     
     public MapReduceOutput mapReduce( DBObject command )
         throws MongoException {
-        if ( command.get( "mapreduce" ) == null )
+        if ( command.get( "mapreduce" ) == null && command.get( "mapReduce" ) == null )
             throw new IllegalArgumentException( "need mapreduce arg" );
         CommandResult res = _db.command( command );
         res.throwOnError();
@@ -817,7 +851,7 @@ public abstract class DBCollection {
         _options = new Bytes.OptionHolder( _db._options );
     }
 
-    private  DBObject _checkObject( DBObject o , boolean canBeNull , boolean query ){
+    protected DBObject _checkObject( DBObject o , boolean canBeNull , boolean query ){
         if ( o == null ){
             if ( canBeNull )
                 return null;

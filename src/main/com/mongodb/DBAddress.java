@@ -81,7 +81,7 @@ public class DBAddress extends ServerAddress {
 
     /** Connects to a given database using the host/port information from an existing <code>DBAddress</code>.
      * @param other the existing <code>DBAddress</code>
-     * @param name the database to which to connect
+     * @param dbname the database to which to connect
      */
     public DBAddress( DBAddress other , String dbname )
         throws UnknownHostException {
@@ -90,7 +90,7 @@ public class DBAddress extends ServerAddress {
 
     /** Connects to a database with a given name at a given host.
      * @param host host name
-     * @param name database name
+     * @param dbname database name
      */
     public DBAddress( String host , String dbname )
         throws UnknownHostException {
@@ -100,7 +100,7 @@ public class DBAddress extends ServerAddress {
     /** Connects to a database with a given host, port, and name
      * @param host host name
      * @param port database port
-     * @param name database name
+     * @param dbname database name
      */
     public DBAddress( String host , int port , String dbname )
         throws UnknownHostException {
@@ -111,7 +111,7 @@ public class DBAddress extends ServerAddress {
     /** Connects to a database with a given host, port, and name
      * @param addr host address
      * @param port database port
-     * @param name database name
+     * @param dbname database name
      */
     public DBAddress( InetAddress addr , int port , String dbname ){
         super( addr , port );

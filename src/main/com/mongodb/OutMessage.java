@@ -177,6 +177,10 @@ class OutMessage extends BSONEncoder {
         return ( _queryOptions & option ) != 0;
     }
 
+    int getId(){ 
+        return _id;
+    }
+
     private Mongo _mongo;
     private PoolOutputBuffer _buffer;
     private int _id;

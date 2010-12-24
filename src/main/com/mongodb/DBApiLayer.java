@@ -25,6 +25,7 @@ import org.bson.*;
 import org.bson.types.*;
 
 import com.mongodb.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /** Database API
  * This cannot be directly instantiated, but the functions are available
@@ -36,7 +37,8 @@ public class DBApiLayer extends DB {
     /** The maximum number of cursors allowed */
     static final int NUM_CURSORS_BEFORE_KILL = 100;
     static final int NUM_CURSORS_PER_BATCH = 20000;
-
+    static final int CLEANER_INTERVAL = 1000;
+    
     //  --- show
 
     static final Logger TRACE_LOGGER = Logger.getLogger( "com.mongodb.TRACE" );
@@ -61,6 +63,8 @@ public class DBApiLayer extends DB {
         _rootPlusDot = _root + ".";
 
         _connector = connector;
+        _cleaner = new DBCleanerThread(CLEANER_INTERVAL);
+        _cleaner.start();
     }
 
     public void requestStart(){
@@ -101,35 +105,16 @@ public class DBApiLayer extends DB {
     void _cleanCursors( boolean force )
         throws MongoException {
 
-        List<DeadCursor> l = null;
-
-        // check without synchronisation ( double check pattern will avoid having two threads do the cleanup )
-        // maybe the whole cleanCursor logic should be moved to a background thread anyway
         int sz = _deadCursorIds.size();
 
-        if ( sz == 0 )
+        if ( sz == 0 || ( ! force && sz < NUM_CURSORS_BEFORE_KILL))
             return;
-            
-        if ( ! force && sz < NUM_CURSORS_BEFORE_KILL )
-            return;
-            
-        synchronized ( _deadCursorIdsLock ){
-            sz = _deadCursorIds.size();
 
-            if ( sz == 0 )
-                return;
-                
-            if ( ! force && sz < NUM_CURSORS_BEFORE_KILL )
-                return;
-
-            l = _deadCursorIds;
-            _deadCursorIds = new LinkedList<DeadCursor>();
-        }
-
-        Bytes.LOGGER.info( "going to kill cursors : " + l.size() );
+        Bytes.LOGGER.info( "going to kill cursors : " + sz );
 
         Map<ServerAddress,List<Long>> m = new HashMap<ServerAddress,List<Long>>();
-        for ( DeadCursor c : l ){
+        DeadCursor c;
+        while (( c = _deadCursorIds.poll()) != null ){
             List<Long> x = m.get( c.host );
             if ( x == null ){
                 x = new LinkedList<Long>();
@@ -144,10 +129,8 @@ public class DBApiLayer extends DB {
             }
             catch ( Throwable t ){
                 Bytes.LOGGER.log( Level.WARNING , "can't clean cursors" , t );
-                synchronized ( _deadCursorIdsLock ){
-                    for ( Long x : e.getValue() )
+                for ( Long x : e.getValue() )
                         _deadCursorIds.add( new DeadCursor( x , e.getKey() ) );
-                }
             }
         }
     }
@@ -210,13 +193,14 @@ public class DBApiLayer extends DB {
                 for ( int i=0; i<arr.length; i++ ){
                     DBObject o=arr[i];
                     apply( o );
+                    _checkObject( o , false , false );
                     Object id = o.get( "_id" );
                     if ( id instanceof ObjectId ){
                         ((ObjectId)id).notNew();
                     }
                 }
             }
-            
+
             WriteResult last = null;
 
             int cur = 0;
@@ -276,8 +260,6 @@ public class DBApiLayer extends DB {
                 ref = new BasicDBObject();
             
             if ( willTrace() ) trace( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
-
-            _cleanCursors( false );
             
             OutMessage query = OutMessage.query( _mongo , options , _fullNameSpace , numToSkip , batchSize , ref , fields );
 
@@ -414,9 +396,12 @@ public class DBApiLayer extends DB {
         }
 
         protected void finalize() throws Throwable {
-            if ( _curResult != null && _curResult.cursor() != 0 ){
-                synchronized ( _deadCursorIdsLock ){
-                    _deadCursorIds.add( new DeadCursor( _curResult.cursor() , _host ) );
+            if (_curResult != null) {
+                long curId = _curResult.cursor();
+                _curResult = null;
+                _cur = null;
+                if (curId > 0) {
+                    _deadCursorIds.add(new DeadCursor(curId, _host));
                 }
             }
             super.finalize();
@@ -441,12 +426,24 @@ public class DBApiLayer extends DB {
         }
         
         void close(){
-            synchronized ( _deadCursorIdsLock ){
-                _deadCursorIds.add( new DeadCursor( _curResult.cursor() , _host ) );
+            // not perfectly thread safe here, may need to use an atomicBoolean
+            if (_curResult != null) {
+                long curId = _curResult.cursor();
+                _curResult = null;
+                _cur = null;
+                
+                if (curId > 0) {
+                    List<Long> l = new ArrayList<Long>();
+                    l.add(curId);
+
+                    try {
+                        killCursors(_host, l);
+                    } catch (Throwable t) {
+                        Bytes.LOGGER.log(Level.WARNING, "can't clean 1 cursor", t);
+                        _deadCursorIds.add(new DeadCursor(curId, _host));
+                    }
+                }
             }
-            _cleanCursors( true );
-            _curResult = null;
-            _cur = null;
         }
         
         
@@ -473,13 +470,43 @@ public class DBApiLayer extends DB {
         final ServerAddress host;
     }
 
+    class DBCleanerThread implements Runnable {
+
+        Thread _thread;
+        int interval;
+
+        DBCleanerThread(int interval) {
+            this.interval = interval;
+        }
+
+        void start() {
+            // start thread as daemon, it's only a cleaner
+            _thread = new Thread(this);
+            _thread.setName(getName() + " - cleaner");
+            _thread.setDaemon(true);
+            _thread.start();
+        }
+
+        public void run() {
+            while (_connector.isOpen()) {
+                try {
+                    Thread.sleep(interval);
+                    _cleanCursors(true);
+                } catch (Throwable t) {
+                    // thread must never die, print full stack
+                    TRACE_LOGGER.log(Level.WARNING, t.getMessage(), t);
+                }
+            }
+        }
+    }
+    
     final String _root;
     final String _rootPlusDot;
     final DBConnector _connector;
+    final DBCleanerThread _cleaner;
     final Map<String,MyCollection> _collections = Collections.synchronizedMap( new HashMap<String,MyCollection>() );
     
-    final String _deadCursorIdsLock = "DBApiLayer-_deadCursorIdsLock-" + Math.random();
-    List<DeadCursor> _deadCursorIds = new LinkedList<DeadCursor>();
+    ConcurrentLinkedQueue<DeadCursor> _deadCursorIds = new ConcurrentLinkedQueue<DeadCursor>();
 
     static final List<DBObject> EMPTY = Collections.unmodifiableList( new LinkedList<DBObject>() );
 }

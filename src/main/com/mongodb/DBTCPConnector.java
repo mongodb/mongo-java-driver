@@ -163,7 +163,7 @@ class DBTCPConnector implements DBConnector {
         }
         catch ( IOException ioe ){
             mp.error( port , ioe );
-            _error( ioe );
+            _error( ioe, false );
 
             if ( concern.raiseNetworkErrors() )
                 throw new MongoException.Network( "can't say something" , ioe );
@@ -197,12 +197,12 @@ class DBTCPConnector implements DBConnector {
 
     public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries )
         throws MongoException {
-        
+        boolean slaveOk = m.hasOption( Bytes.QUERYOPTION_SLAVEOK );
         _checkClosed();
-        checkMaster( false , true );
+        checkMaster( false , !slaveOk );
         
         final MyPort mp = _myPort.get();
-        final DBPort port = mp.get( false , m.hasOption( Bytes.QUERYOPTION_SLAVEOK ) , hostNeeded );
+        final DBPort port = mp.get( false , slaveOk, hostNeeded );
         
         port.checkAuth( db );
         
@@ -210,11 +210,13 @@ class DBTCPConnector implements DBConnector {
         try {
             res = port.call( m , coll );
             mp.done( port );
+            if ( res._responseTo != m.getId() )
+                throw new MongoException( "ids don't match" );
         }
         catch ( IOException ioe ){
-            boolean shoulRetry = _error( ioe ) && ! coll._name.equals( "$cmd" ) && retries > 0;
+            boolean shouldRetry = _error( ioe, slaveOk ) && ! coll._name.equals( "$cmd" ) && retries > 0;
             mp.error( port , ioe );
-            if ( shoulRetry ){
+            if ( shouldRetry ){
                 return call( db , coll , m , hostNeeded , retries - 1 );
             }
             throw new MongoException.Network( "can't call something" , ioe );
@@ -250,11 +252,11 @@ class DBTCPConnector implements DBConnector {
         return _curMaster.toString();
     }
 
-    boolean _error( Throwable t )
+    boolean _error( Throwable t, boolean slaveOk )
         throws MongoException {
         if ( _allHosts != null ){
             _logger.log( Level.WARNING , "replica set mode, switching master" , t );
-            checkMaster( true , true );
+            checkMaster( true , !slaveOk );
         }
         return true;
     }
@@ -390,13 +392,18 @@ class DBTCPConnector implements DBConnector {
 
         return buf.toString();
     }
-
+    
     public void close(){
         _closed = true;
         if ( _portHolder != null )
             _portHolder.close();
         if ( _rsStatus != null )
             _rsStatus.close();
+        _myPort = null;
+    }
+
+    public boolean isOpen(){
+        return ! _closed;
     }
 
     private ServerAddress _curMaster;
@@ -406,7 +413,7 @@ class DBTCPConnector implements DBConnector {
     private final ReplicaSetStatus _rsStatus;
     private boolean _closed = false;
 
-    private final ThreadLocal<MyPort> _myPort = new ThreadLocal<MyPort>(){
+    private ThreadLocal<MyPort> _myPort = new ThreadLocal<MyPort>(){
         protected MyPort initialValue(){
             return new MyPort();
         }

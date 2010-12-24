@@ -196,6 +196,37 @@ public class GridFS {
         return new GridFSInputFile( this , in , filename );
     }
 
+    /**
+     * This method creates an empty {@link GridFSInputFile} instance. On this
+     * instance an {@link java.io.OutputStream} can be obtained using the
+     * {@link GridFSInputFile#getOutputStream()} method. You can still call
+     * {@link GridFSInputFile#setContentType(String)} and
+     * {@link GridFSInputFile#setFilename(String)}. The file will be completely
+     * written and closed after calling the {@link java.io.OutputStream#close()}
+     * method on the output stream.
+     * 
+     * @param filename
+     *            Name of the file to be created.
+     * @return GridFS file handle instance.
+     */
+    public GridFSInputFile createFile(String filename) {
+        return new GridFSInputFile( this , filename );
+    }
+    
+    /**
+     * This method creates an empty {@link GridFSInputFile} instance. On this
+     * instance an {@link java.io.OutputStream} can be obtained using the
+     * {@link GridFSInputFile#getOutputStream()} method. You can still call
+     * {@link GridFSInputFile#setContentType(String)} and
+     * {@link GridFSInputFile#setFilename(String)}. The file will be completely
+     * written and closed after calling the {@link java.io.OutputStream#close()}
+     * method on the output stream.
+     * 
+     * @return GridFS file handle instance.
+     */
+    public GridFSInputFile createFile() {
+        return new GridFSInputFile( this );
+    }
 
 
 
