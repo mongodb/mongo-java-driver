@@ -218,6 +218,8 @@ public class RawDBObject implements DBObject {
                 break;
             case REF:
                 size += 12;
+                size += 4 + _buf.getInt( _dataStart );
+                break;
             case SYMBOL:
             case CODE:
             case STRING:
