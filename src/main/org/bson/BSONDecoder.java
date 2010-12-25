@@ -467,7 +467,6 @@ public class BSONDecoder {
     private Input _in;
     private BSONCallback _callback;
     private byte[] _random = new byte[1024]; // has to be used within a single function
-    private char[] _shortChar = new char[1024];
     private byte[] _inputBuffer = new byte[1024];
 
     private PoolOutputBuffer _stringBuffer = new PoolOutputBuffer();

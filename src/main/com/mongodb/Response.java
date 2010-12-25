@@ -122,7 +122,7 @@ class Response {
         return new ServerError( obj );
     }
     
-    class MyInputStream extends InputStream {
+    static class MyInputStream extends InputStream {
         MyInputStream( InputStream in , int max ){
             _in = in;
             _toGo = max;

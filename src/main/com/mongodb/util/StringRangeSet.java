@@ -76,7 +76,7 @@ public class StringRangeSet implements Set<String> {
 
     @Override
     public boolean contains(Object o) {
-        int t = Integer.valueOf(String.valueOf(o));
+        int t = Integer.parseInt(String.valueOf(o));
         return t >= 0 && t < size;
     }
 

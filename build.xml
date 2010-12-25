@@ -39,7 +39,8 @@
            encoding="ISO-8859-1"
            memoryMaximumSize="256M"
            fork="true"
-           debug="on" >
+           debug="on" 
+    	   includeantruntime="false">
       <classpath refid="classpath"/>
     </javac>
 
@@ -50,7 +51,8 @@
            source="1.5"
            encoding="ISO-8859-1"
            fork="true"
-           debug="on" >
+           debug="on"
+    	   includeantruntime="false">
       <classpath refid="classpath"/>
     </javac>
 
@@ -67,7 +69,8 @@
            encoding="ISO-8859-1"
            memoryMaximumSize="256M"
            fork="true"
-           debug="on" >
+           debug="on"
+    	   includeantruntime="false">
       <classpath refid="classpath"/>
     </javac>
   </target>
@@ -165,7 +168,8 @@
            deprecation="off"
            source="1.5"
            encoding="ISO-8859-1"
-           debug="on" >
+           debug="on" 
+    	   includeantruntime="false">
       <classpath refid="classpath"/>
     </javac>
 
@@ -187,7 +191,8 @@
            deprecation="off"
            source="1.5"
            encoding="ISO-8859-1"
-           debug="on" >
+           debug="on" 
+    	   includeantruntime="false">
       <classpath refid="classpath"/>
     </javac>
 

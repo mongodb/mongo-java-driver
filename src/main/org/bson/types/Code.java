@@ -42,6 +42,10 @@ public class Code {
         Code c = (Code)o;
         return _code.equals( c._code );
     }
+
+    public int hashCode(){
+        return _code.hashCode();
+    }
     
     final String _code;
 

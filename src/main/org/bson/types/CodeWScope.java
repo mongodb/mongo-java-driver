@@ -44,6 +44,9 @@ public class CodeWScope extends Code {
         return _code.equals( c._code ) && _scope.equals( c._scope );
     }
 
+    public int hashCode(){
+        return _code.hashCode() ^ _scope.hashCode();
+    }
 
     final BSONObject _scope;
 }

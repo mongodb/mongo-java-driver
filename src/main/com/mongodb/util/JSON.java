@@ -180,7 +180,7 @@ public class JSON {
 
         if ( o instanceof BSONTimestamp ){
             BSONTimestamp t = (BSONTimestamp)o;
-            buf.append( t.getTime() + "|" + t.getInc() );
+            buf.append( t.getTime() ).append( "|" ).append( t.getInc() );
             return;
         }
         
@@ -639,7 +639,7 @@ class JSONParser {
 	int i = 0;
         char current = get();
         while( current != ']' ) {
-	    String elemName = "" + i++;
+	    String elemName = String.valueOf(i++);
             Object elem = parse(elemName);
 	    doCallback(elemName, elem);
 

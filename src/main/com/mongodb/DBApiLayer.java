@@ -459,7 +459,7 @@ public class DBApiLayer extends DB {
         private List<Integer> _sizes = new ArrayList<Integer>();
     }  // class Result
     
-    class DeadCursor {
+    static class DeadCursor {
         
         DeadCursor( long a , ServerAddress b ){
             id = a;
