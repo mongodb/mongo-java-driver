@@ -43,7 +43,13 @@ public class GridFSDBFile extends GridFSFile {
         return writeTo( new File( filename ) );
     }
     public long writeTo( File f ) throws IOException {
-        return writeTo( new FileOutputStream( f ) );
+    	OutputStream os = null;
+    	try {
+    		os = new BufferedOutputStream( new FileOutputStream( f ) );
+    		return writeTo( os );
+    	} finally {
+    		os.close();
+    	}
     }
 
     public long writeTo( OutputStream out )
