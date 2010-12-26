@@ -274,7 +274,6 @@ public class BSONEncoder {
 
     protected void putCode( String name , Code code ){
         _put( CODE , name );
-        int temp = _buf.getPosition();
         _putValueString( code.getCode() );
     }
 
