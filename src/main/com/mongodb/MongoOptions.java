@@ -53,7 +53,7 @@ public class MongoOptions {
     public int threadsAllowedToBlockForConnectionMultiplier;
     
     /**
-     * The max wait time for a blocking thread for a connection from the pool
+     * The max wait time for a blocking thread for a connection from the pool in ms.
      */
     public int maxWaitTime;
 
