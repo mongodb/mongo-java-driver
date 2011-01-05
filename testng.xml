@@ -32,6 +32,7 @@
       <class name="com.mongodb.ThreadingTest" />
 
       <class name="com.mongodb.gridfs.GridFSTest" />
+      <class name="com.mongodb.MongoURITest" />
 
     </classes>
   </test>

@@ -43,6 +43,21 @@ public class MongoOptions {
         fsync = false;
     }
 
+    
+    /**
+     * Helper method to return the appropriate WriteConcern instance based 
+     * on the current related options settings.
+     **/
+    public WriteConcern getWriteConcern(){
+        // Ensure we only set writeconcern once; if non-default w, etc skip safe (implied)
+        if ( w != 0 || wtimeout != 0 || fsync ) 
+            return new WriteConcern( w , wtimeout , fsync );
+        else if (safe) 
+            return WriteConcern.SAFE;
+        else
+            return WriteConcern.NORMAL;
+    }
+
     /**
      * <p>The number of connections allowed per host 
      * (the pool size, per host)</p>
