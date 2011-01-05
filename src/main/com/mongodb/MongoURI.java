@@ -94,15 +94,17 @@ public class MongoURI {
                 if ( idx >= 0 ){
                     String key = nsPart.substring( 0 , idx ).toLowerCase();
                     String value = nsPart.substring( idx + 1 );
-                    if (key.equals("connectionsperhost")) 
+                    if (key.equals("maxpoolsize")) 
                         _options.connectionsPerHost = Integer.parseInt(value);
-                    else if (key.equals("threadsallowedtoblockforconnectionmultiplier"))
+                    else if (key.equals("minpoolsize"))
+                        log.warning("Currently No support in Java driver for Min Pool Size.")
+                    else if (key.equals("waitqueuemultiple"))
                         _options.threadsAllowedToBlockForConnectionMultiplier = Integer.parseInt(value);
-                    else if (key.equals("maxwaittime"))
+                    else if (key.equals("waitqueuetimeoutms"))
                         _options.maxWaitTime = Integer.parseInt(value);
-                    else if (key.equals("connecttimeout"))
+                    else if (key.equals("connecttimeoutms"))
                         _options.connectTimeout = Integer.parseInt(value);
-                    else if (key.equals("sockettimeout"))
+                    else if (key.equals("sockettimeoutms"))
                         _options.socketTimeout = Integer.parseInt(value);
                     else if (key.equals("autoconnectretry"))
                         _options.autoConnectRetry = Boolean.parseBoolean(value);
