@@ -4,6 +4,7 @@ package com.mongodb;
 
 import java.net.*;
 import java.util.*;
+import java.util.logging.*;
 
 public class MongoURI {
     
@@ -87,8 +88,38 @@ public class MongoURI {
             _collection = null;
         }
 
-        if ( optionsPart != null && optionsPart.length() > 0 ) { // _options TODO
-            throw new RuntimeException( "not done" );
+        if ( optionsPart != null && optionsPart.length() > 0 ) {
+            for (String _part : optionsPart.split("&")) {
+                int idx = _part.indexOf( "=" );
+                if ( idx >= 0 ){
+                    String key = nsPart.substring( 0 , idx ).toLowerCase();
+                    String value = nsPart.substring( idx + 1 );
+                    if (key.equals("connectionsperhost")) 
+                        _options.connectionsPerHost = Integer.parseInt(value);
+                    else if (key.equals("threadsallowedtoblockforconnectionmultiplier"))
+                        _options.threadsAllowedToBlockForConnectionMultiplier = Integer.parseInt(value);
+                    else if (key.equals("maxwaittime"))
+                        _options.maxWaitTime = Integer.parseInt(value);
+                    else if (key.equals("connecttimeout"))
+                        _options.connectTimeout = Integer.parseInt(value);
+                    else if (key.equals("sockettimeout"))
+                        _options.socketTimeout = Integer.parseInt(value);
+                    else if (key.equals("autoconnectretry"))
+                        _options.autoConnectRetry = Boolean.parseBoolean(value);
+                    else if (key.equals("slaveok"))
+                        _options.slaveOk = Boolean.parseBoolean(value);
+                    else if (key.equals("safe"))
+                        _options.safe = Boolean.parseBoolean(value);
+                    else if (key.equals("w"))
+                        _options.w = Integer.parseInt(value);
+                    else if (key.equals("wtimeout"))
+                        _options.wtimeout = Integer.parseInt(value);
+                    else if (key.equals("fsync"))
+                        _options.fsync = Boolean.parseBoolean(value);
+                    else
+                        LOGGER.warning("Unknown or Unsupported Option '" + value + "'");
+                }
+            }
         }
     }
 
@@ -154,6 +185,8 @@ public class MongoURI {
     final MongoOptions _options = new MongoOptions();
 
     final String _uri;
+
+    static final Logger LOGGER = Logger.getLogger( MongoURI.class );
 
     @Override
     public String toString() {
