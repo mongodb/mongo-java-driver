@@ -83,7 +83,7 @@ public abstract class DB {
      * Possible options:
      * <dl>
      * <dt>capped</dt><dd><i>boolean</i>: if the collection is capped</dd>
-     * <dt>size</dt><dd><i>int</i>: collection size</dd>
+     * <dt>size</dt><dd><i>int</i>: collection size (in bytes)</dd>
      * <dt>max</dt><dd><i>int</i>: max number of documents</dd>
      * </dl>
      * @param name the name of the collection to return
