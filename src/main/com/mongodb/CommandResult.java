@@ -18,12 +18,18 @@
 
 package com.mongodb;
 
-/** A simple wrapper for the result of getLastError() calls, and network (socket) errors. */
+/**
+ * A simple wrapper for the result of getLastError() calls and other commands
+ */
 public class CommandResult extends BasicDBObject {
 
     CommandResult(){
     }
 
+    /**
+     * gets the "ok" field which is the result of the command
+     * @return
+     */
     public boolean ok(){
         Object o = get( "ok" );
         if ( o == null )
@@ -38,6 +44,10 @@ public class CommandResult extends BasicDBObject {
         throw new IllegalArgumentException( "can't figure out what to do with: " + o.getClass().getName() );
     }
 
+    /**
+     * gets the "errmsg" field which holds the error message
+     * @return
+     */
     public String getErrorMessage(){
         Object foo = get( "errmsg" );
         if ( foo == null )
@@ -45,6 +55,10 @@ public class CommandResult extends BasicDBObject {
         return foo.toString();
     }
     
+    /**
+     * utility method to create an exception with the command name
+     * @return
+     */
     public MongoException getException(){
         String cmdName = _cmd.keySet().iterator().next();
 
@@ -55,6 +69,10 @@ public class CommandResult extends BasicDBObject {
         return new CommandFailure( this , buf.toString() );
     }
 
+    /**
+     * throws an exception containing the cmd name, in case the command failed
+     * @throws MongoException
+     */
     public void throwOnError()
         throws MongoException {
         if ( ! ok() ){
