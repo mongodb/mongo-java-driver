@@ -118,8 +118,9 @@ public abstract class DBCollection {
      * @param q search query for old object to update
      * @param o object with which to update <tt>q</tt>
      * @param upsert if the database should create the element if it does not exist
-     * @param multi if the update should be applied to all objects matching (db version 1.1.3 and above)
-     *              See http://www.mongodb.org/display/DOCS/Atomic+Operations
+     * @param multi if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
+     * not be inserted if it does not exist in the collection and upsert=true and multi=true.
+     * See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
      * @param concern the write concern
      * @return
      * @throws MongoException
