@@ -20,8 +20,7 @@ package com.mongodb;
 
 
 /**
- *
- * @author antoine
+ * Interface that provides the ability to exchange request/response with the database
  */
 public interface DBConnector {
 
@@ -32,11 +31,11 @@ public interface DBConnector {
      */
     public void requestStart();
     /**
-     * terminates the "consistent thread".
+     * terminates the "consistent request".
      */
     public void requestDone();
     /**
-     * Ensures that a connection exists for the "consistent thread"
+     * Ensures that a connection exists for the "consistent request"
      */
     public void requestEnsureConnection();
     
