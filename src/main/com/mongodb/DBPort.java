@@ -26,13 +26,24 @@ import java.util.logging.*;
 import org.bson.*;
 import com.mongodb.util.*;
 
+/**
+ * represents a Port to the database, which is effectively a single connection to a server
+ * @author antoine
+ */
 public class DBPort {
     
+    /**
+     * the default port
+     */
     public static final int PORT = 27017;
     static final boolean USE_NAGLE = false;
     
     static final long CONN_RETRY_TIME_MS = 15000;
 
+    /**
+     * creates a new DBPort
+     * @param addr the server address
+     */
     public DBPort( ServerAddress addr ){
         this( addr , null , new MongoOptions() );
     }
@@ -48,9 +59,6 @@ public class DBPort {
         _logger = Logger.getLogger( _rootLogger.getName() + "." + addr.toString() );
     }
 
-    /**
-     * @param response will get wiped
-     */
     Response call( OutMessage msg , DBCollection coll )
         throws IOException {
         return go( msg , coll );
@@ -172,6 +180,10 @@ public class DBPort {
         return getLastError( db , concern );
     }
 
+    /**
+     * makes sure that a connection to the server has been opened
+     * @throws IOException
+     */
     public synchronized void ensureOpen()
         throws IOException {
         
@@ -225,22 +237,33 @@ public class DBPort {
         }
     }
 
+    @Override
     public int hashCode(){
         return _hashCode;
     }
     
+    /**
+     * returns a String representation of the target host
+     * @return
+     */
     public String host(){
         return _addr.toString();
     }
     
+    @Override
     public String toString(){
         return "{DBPort  " + host() + "}";
     }
     
-    protected void finalize(){
+    @Override
+    protected void finalize() throws Throwable{
+        super.finalize();
         close();
     }
 
+    /**
+     * closes the underlying connection and streams
+     */
     protected void close(){
         _authed.clear();
                 

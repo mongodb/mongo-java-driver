@@ -19,18 +19,27 @@
 package com.mongodb;
 
 /**
- * Base class for DBRefs.
+ * represents a database reference, which points to an object stored in the database
  */
 public class DBRefBase {
     
 
+    /**
+     * Creates a DBRefBase
+     * @param db the database
+     * @param ns the namespace where the object is stored
+     * @param id the object id
+     */
     public DBRefBase(DB db , String ns , Object id) {
         _db = db;
-        
         _ns = ns;
         _id = id;
     }
 
+    /**
+     * fetches the object referenced from the database
+     * @return
+     */
     public DBObject fetch() {
         if (_loadedPointedTo)
             return _pointedTo;
@@ -45,26 +54,30 @@ public class DBRefBase {
         return _pointedTo;
     }
 
+    @Override
     public String toString(){
         return "{ \"$ref\" : \"" + _ns + "\", \"$id\" : \"" + _id + "\" }";
     }
 
     /**
-     * Get this ref's $id.
+     * Gets the object's id
+     * @return
      */
     public Object getId() {
         return _id;
     }
 
     /**
-     * Get this ref's $ref (the collection name).
+     * Gets the object's namespace (collection name)
+     * @return
      */
     public String getRef() {
         return _ns;
     }
 
     /**
-     * Get this ref's database.
+     * Gets the database
+     * @return
      */
     public DB getDB() {
         return _db;

@@ -20,20 +20,33 @@ package org.bson;
 
 import java.util.*;
 
-/** A key-value map that can be saved to the database. */
+/**
+ * A key-value map that can be saved to the database.
+ */
 public interface BSONObject {
 
-    /** Sets a name/value pair in this object.
+    /**
+     * Sets a name/value pair in this object.
      * @param key Name to set
      * @param v Corresponding value
      * @return <tt>v</tt>
      */
     public Object put( String key , Object v );
 
+    /**
+     * Sets all key/value pairs from an object into this object
+     * @param o the object
+     */
     public void putAll( BSONObject o );
+
+    /**
+     * Sets all key/value pairs from a map into this object
+     * @param m the map
+     */
     public void putAll( Map m );
     
-    /** Gets a field from this object by a given name.
+    /**
+     * Gets a field from this object by a given name.
      * @param key The name of the field fetch
      * @return The field, if found
      */
@@ -45,24 +58,30 @@ public interface BSONObject {
      */
     public Map toMap();
 
-    /** Remove a field with a given name from this object.
+    /**
+     * Removes a field with a given name from this object.
      * @param key The name of the field to remove
      * @return The value removed from this object
      */
     public Object removeField( String key );
 
-    /** 
+    /**
+     * Deprecated
+     * @param s 
+     * @return
      * @deprecated
      */
     public boolean containsKey( String s );
 
-    /** Checks if this object contains a field with the given name.
+    /**
+     * Checks if this object contains a field with the given name.
      * @param s Field name for which to check
-     * @return if this object contains a field with the given name
+     * @return
      */
     public boolean containsField(String s);
 
-    /** Returns this object's fields' names
+    /**
+     * Returns this object's fields' names
      * @return The names of the fields in this object
      */
     public Set<String> keySet();

@@ -26,6 +26,10 @@ import org.bson.*;
 import java.io.*;
 import java.util.*;
 
+/**
+ * The abstract class representing a GridFS file
+ * @author antoine
+ */
 public abstract class GridFSFile implements DBObject {
 
     
@@ -33,13 +37,21 @@ public abstract class GridFSFile implements DBObject {
     // --------- db           -------
     // ------------------------------
 
+    /**
+     * Saves the file entry to the files collection
+     */
     public void save(){
         if ( _fs == null )
             throw new MongoException( "need _fs" );
         _fs._filesCollection.save( this );
     }
 
-    public void validate(){
+    /**
+     * Verifies that the MD5 matches between the database and the local file.
+     * This should be called after transferring a file.
+     * @throws MongoException
+     */
+    public void validate() throws MongoException {
         if ( _fs == null )
             throw new MongoException( "no _fs" );
         if ( _md5 == null )
@@ -55,6 +67,10 @@ public abstract class GridFSFile implements DBObject {
         throw new MongoException( "md5 differ.  mine [" + _md5 + "] theirs [" + m + "]" );
     }
 
+    /**
+     * Returns the number of chunks that store the file data
+     * @return
+     */
     public int numChunks(){
         double d = _length;
         d = d / _chunkSize;
@@ -66,41 +82,75 @@ public abstract class GridFSFile implements DBObject {
     // ------------------------------
 
 
+    /**
+     * Gets the id
+     * @return
+     */
     public Object getId(){
         return _id;
     }
 
+    /**
+     * Gets the filename
+     * @return
+     */
     public String getFilename(){
         return _filename;
     }
 
+    /**
+     * Gets the content type
+     * @return
+     */
     public String getContentType(){
         return _contentType;
     }
 
+    /**
+     * Gets the file's length
+     * @return
+     */
     public long getLength(){
         return _length;
     }
     
+    /**
+     * Gets the size of a chunk
+     * @return
+     */
     public long getChunkSize(){
         return _chunkSize;
     }
     
+    /**
+     * Gets the upload date
+     * @return
+     */
     public Date getUploadDate(){
         return _uploadDate;
     }
 
     /**
+     * Gets the aliases from the metadata.
      * note: to set aliases, call put( "aliases" , List<String> )
+     * @return
      */
     public List<String> getAliases(){
         return (List<String>)_metadata.get( "aliases" );
     }
 
+    /**
+     * Gets the file metadata
+     * @return
+     */
     public DBObject getMetaData(){
         return (DBObject)_metadata.get( "metadata" );
     }
     
+    /**
+     * Gets the observed MD5 during transfer
+     * @return
+     */
     public String getMD5(){
         return _md5;
     }
@@ -151,16 +201,18 @@ public abstract class GridFSFile implements DBObject {
         return _metadata.get( key );
     }
 
-
     public void putAll( BSONObject o ){
         throw new UnsupportedOperationException();
     }
+
     public void putAll( Map m ){
         throw new UnsupportedOperationException();
     }
+
     public Map toMap(){
         throw new UnsupportedOperationException();
     }
+
     public Object removeField( String key ){
         throw new UnsupportedOperationException();
     }
@@ -168,6 +220,7 @@ public abstract class GridFSFile implements DBObject {
     public boolean containsKey( String s ){
         return containsField( s );
     }
+
     public boolean containsField(String s){
         return keySet().contains( s );
     }
@@ -182,6 +235,7 @@ public abstract class GridFSFile implements DBObject {
     public boolean isPartialObject(){
         return false;
     }
+
     public void markAsPartialObject(){
         throw new RuntimeException( "can't load partial GridFSFile file" );
     }
@@ -190,10 +244,15 @@ public abstract class GridFSFile implements DBObject {
     // ------- fields -------
     // ----------------------
 
+    @Override
     public String toString(){
         return JSON.serialize( this );
     }
 
+    /**
+     * Sets the GridFS associated with this file
+     * @param fs
+     */
     protected void setGridFS( GridFS fs ){
         _fs = fs;
     }

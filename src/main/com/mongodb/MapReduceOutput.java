@@ -2,6 +2,10 @@
 
 package com.mongodb;
 
+/**
+ * Represents the result of a map/reduce operation
+ * @author antoine
+ */
 public class MapReduceOutput {
 
     MapReduceOutput( DBCollection from , BasicDBObject raw ){
@@ -10,14 +14,25 @@ public class MapReduceOutput {
         _counts = (BasicDBObject)raw.get( "counts" );
     }
 
+    /**
+     * returns a cursor to the results of the operation
+     * @return
+     */
     public DBCursor results(){
         return _coll.find();
     }
 
+    /**
+     * drops the collection that holds the results
+     */
     public void drop(){
         _coll.drop();
     }
     
+    /**
+     * gets the collection that holds the results
+     * @return
+     */
     public DBCollection getOutputCollection(){
         return _coll;
     }

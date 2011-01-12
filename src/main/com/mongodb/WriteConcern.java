@@ -63,8 +63,10 @@ public class WriteConcern {
     private static Map<String, WriteConcern> _namedConcerns = null;
 
     /**
-     * Get the WriteConcern constants by name: NONE, NORMAL, SAFE, FSYNC_SAFE,
+     * Gets the WriteConcern constants by name: NONE, NORMAL, SAFE, FSYNC_SAFE,
      * REPLICA_SAFE. (matching is done case insensitively)
+     * @param name 
+     * @return
      */
     public static WriteConcern valueOf(String name) {
         if (_namedConcerns == null) {
@@ -86,12 +88,42 @@ public class WriteConcern {
         return _namedConcerns.get( name.toLowerCase() );
     }
 
+    /**
+     * Default constructor keeping all options as default
+     */
     public WriteConcern(){
         this(0);
     }
     
-    /** <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
-     *	<p> w represents # of servers:
+    /** 
+     * Calls {@link WriteConcern#WriteConcern(int, int, boolean)} with wtimeout=0 and fsync=false
+     * @param w number of writes
+     */
+    public WriteConcern( int w ){
+        this( w , 0 , false );
+    }
+    
+    /** 
+     * Calls {@link WriteConcern#WriteConcern(int, int, boolean)} with fsync=false
+     * @param w number of writes
+     * @param wtimeout timeout for write operation
+     */
+    public WriteConcern( int w , int wtimeout ){
+        this( w , wtimeout , false );
+    }
+
+    /**
+     * Calls {@link WriteConcern#WriteConcern(int, int, boolean)} with w=1 and wtimeout=0
+     * @param fsync whether or not to fsync
+     */
+    public WriteConcern( boolean fsync ){
+        this( 1 , 0 , fsync);
+    }
+    
+    /** 
+     * Creates a WriteConcern object.
+     * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
+     *	<p> w represents the number of servers:
      * 		<ul>
      * 			<li>{@code w=-1} None, no checking is done</li>
      * 			<li>{@code w=0} None, network socket errors raised</li>
@@ -99,27 +131,10 @@ public class WriteConcern {
      * 			<li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
      * 		</ul>
      * 	</p>
-     * 
-     **/
-    public WriteConcern( int w ){
-        this( w , 0 , false );
-    }
-    
-    /** <p>Specifies the number of servers to wait for on the write operation, and the amount of time (ms) to wait.</p>
-     *	<p> Note: w should be > 1 </p>
-     * 
-     **/
-    public WriteConcern( int w , int wtimeout ){
-        this( w , wtimeout , false );
-    }
-
-    public WriteConcern( boolean fsync ){
-        this( 1 , 0 , fsync);
-    }
-    
-    /** <p>Specifies the number of servers to wait for on the write operation, and the amount of time (ms) to wait.</p>
-     *	<p> Note: w should be > 1 </p>
-     **/
+     * @param w number of writes
+     * @param wtimeout timeout for write operation
+     * @param fsync whether or not to fsync
+     */
     public WriteConcern( int w , int wtimeout , boolean fsync ){
         _w = w;
         _wtimeout = wtimeout;
@@ -135,29 +150,50 @@ public class WriteConcern {
             _command.put( "fsync" , true );
     }
 
+    /**
+     * Gets the object representing the "getlasterror" command
+     * @return
+     */
     public BasicDBObject getCommand(){
         return _command;
     }
 
-    /** @return the number of servers to write to */
+    /**
+     * Gets the number of servers to write to
+     * @return
+     */
     public int getW(){
         return _w;
     }
 
-    /** @return the write timeout (in milliseconds) */
+    /**
+     * Gets the write timeout (in milliseconds)
+     * @return
+     */
     public int getWtimeout(){
         return _wtimeout;
     }
 
-    /** @return If files are sync'd to disk. */
+    /**
+     * Returns whether files are synced to disk
+     * @return
+     */
     public boolean fsync(){
         return _fsync;
     }
 
+    /**
+     * Returns whether network error may be raised (w >= 0)
+     * @return
+     */
     public boolean raiseNetworkErrors(){
         return _w >= 0;
     }
 
+    /**
+     * Returns whether "getlasterror" should be called (w > 0)
+     * @return
+     */
     public boolean callGetLastError(){
         return _w > 0;
     }

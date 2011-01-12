@@ -28,9 +28,9 @@ import com.mongodb.*;
 import com.mongodb.util.*;
 
 /**
- * Class implementation for writing data to GridFS.
+ * This class represents a GridFS file to be written to the database
  * Operations include:
- * - writing data obtained from an inputstream
+ * - writing data obtained from an InputStream
  * - getting an OutputStream to stream the data out
  * 
  * @author Eliot Horowitz and Guy K. Kloss
@@ -88,11 +88,7 @@ public class GridFSInputFile extends GridFSFile {
         this( fs , null , null );
     }
     
-    /**
-     * {@inheritDoc}
-     * 
-     * @see com.mongodb.gridfs.GridFSFile#getMetaData()
-     */
+    @Override
     public DBObject getMetaData() {
         if ( _metadata == null ) {
             _metadata = new BasicDBObject();
@@ -131,16 +127,16 @@ public class GridFSInputFile extends GridFSFile {
     }
 
     /**
-     * @see com.mongodb.gridfs.GridFSInputFile#save(long)
-     * 
+     * calls {@link GridFSInputFile#save(long)} with the existing chunk size
      */
+    @Override
     public void save() {
         save( _chunkSize);
     }
     
     /**
-     * This method first calls saveChunks(long) if chunk data has not been saved yet.
-     * Then it persists the file object to GridFS.
+     * This method first calls saveChunks(long) if the file data has not been saved yet.
+     * Then it persists the file entry to GridFS.
      * 
      * @param chunkSize
      *            Size of chunks for file in bytes.

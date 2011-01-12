@@ -6,13 +6,19 @@ import java.net.*;
 import java.util.*;
 import java.util.logging.*;
 
+/**
+ * Represents a URI which can be used to create a Mongo instance.
+ * The URI describes the hosts to be used and options.
+ */
 public class MongoURI {
     
     /**
+     * Creates a MongoURI described by a String.
      * examples
      *   mongodb://localhost
      *   mongodb://fred:foobar@localhost/
-     *   @dochub connections
+     * @param uri the URI
+     * @dochub connections
      */
     public MongoURI( String uri ){
         _uri = uri;
@@ -126,51 +132,102 @@ public class MongoURI {
 
     // ---------------------------------
 
+    /**
+     * Gets the username
+     * @return
+     */
     public String getUsername(){
         return _username;
     }
     
+    /**
+     * Gets the password
+     * @return
+     */
     public char[] getPassword(){
         return _password;
     }
 
+    /**
+     * Gets the list of hosts
+     * @return
+     */
     public List<String> getHosts(){
         return _hosts;
     }
      
+    /**
+     * Gets the database name
+     * @return
+     */
     public String getDatabase(){
         return _database;
     }
 
+    /**
+     * Gets the collection name
+     * @return
+     */
     public String getCollection(){
         return _collection;
     }
 
+    /**
+     * Gets the options
+     * @return
+     */
     public MongoOptions getOptions(){
         return _options;
     }
 
-    public Mongo connect() 
+    /**
+     * creates a Mongo instance based on the URI
+     * @return
+     * @throws MongoException
+     * @throws UnknownHostException
+     */
+    public Mongo connect()
         throws MongoException , UnknownHostException {
         // TODO caching?
         return new Mongo( this );
     }
 
+    /**
+     * returns the DB object from a newly created Mongo instance based on this URI
+     * @return
+     * @throws MongoException
+     * @throws UnknownHostException
+     */
     public DB connectDB()
         throws MongoException , UnknownHostException {
         // TODO auth
         return connect().getDB( _database );
     }
 
+    /**
+     * returns the URI's DB object from a given Mongo instance
+     * @param m
+     * @return
+     */
     public DB connectDB( Mongo m ){
         // TODO auth
         return m.getDB( _database );
     }
 
+    /**
+     * returns the URI's Collection from a given DB object
+     * @param db
+     * @return
+     */
     public DBCollection connectCollection( DB db ){
         return db.getCollection( _collection );
     }
 
+    /**
+     * returns the URI's Collection from a given Mongo instance
+     * @param m
+     * @return
+     */
     public DBCollection connectCollection( Mongo m ){
         return connectDB( m ).getCollection( _collection );
     }
