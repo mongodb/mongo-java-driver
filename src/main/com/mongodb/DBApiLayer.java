@@ -53,13 +53,18 @@ public class DBApiLayer extends DB {
     }
     
 
-    protected DBApiLayer( Mongo mongo , String root , DBConnector connector ){
-        super( mongo , root );
+    /**
+     * @param mongo the Mongo instance
+     * @param root the database name
+     * @param connector the connector
+     */
+    protected DBApiLayer( Mongo mongo, String name , DBConnector connector ){
+        super( mongo, name );
 
         if ( connector == null )
-            throw new IllegalArgumentException( "need a connector: " + root );
+            throw new IllegalArgumentException( "need a connector: " + name );
         
-        _root = root;
+        _root = name;
         _rootPlusDot = _root + ".";
 
         _connector = connector;

@@ -61,7 +61,7 @@ public class WriteConcern {
     
     // map of the constants from above for use by fromString
     private static Map<String, WriteConcern> _namedConcerns = null;
-    
+
     /**
      * Get the WriteConcern constants by name: NONE, NORMAL, SAFE, FSYNC_SAFE,
      * REPLICA_SAFE. (matching is done case insensitively)
@@ -167,7 +167,21 @@ public class WriteConcern {
         return "WriteConcern " + _command;
     }
 
-    final int _w; 
+    @Override
+    public boolean equals( Object o ){
+        if ( this == o ) return true;
+        if ( o == null || getClass() != o.getClass() ) return false;
+
+        WriteConcern that = (WriteConcern) o;
+
+        if ( _fsync != that._fsync ) return false;
+        if ( _w != that._w ) return false;
+        if ( _wtimeout != that._wtimeout ) return false;
+
+        return true;
+    }
+
+    final int _w;
     final int _wtimeout;
     final boolean _fsync;
 
