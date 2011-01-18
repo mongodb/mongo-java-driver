@@ -17,7 +17,9 @@ import com.mongodb.*;
  */
 public class JSON {
 
-    /**
+  protected static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
+
+  /**
      *  Serializes an object into it's JSON form
      *
      * @param o object to serialize
@@ -136,10 +138,8 @@ public class JSON {
 
         if (o instanceof Date) {
             Date d = (Date) o;
-            SimpleDateFormat format = 
-		new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-            format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
-	    serialize(new BasicDBObject("$date", format.format(d)), buf);
+            SimpleDateFormat format = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
+	          serialize(new BasicDBObject("$date", format.format(d)), buf);
             return;
         }
 

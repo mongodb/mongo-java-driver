@@ -34,34 +34,32 @@ public class JSONCallback extends BasicBSONCallback {
 	BSONObject b = (BSONObject)o;
 
 	if ( ! _lastArray ) {
-	    if ( b.containsKey( "$oid" ) ) {
-		o = new ObjectId((String)b.get("$oid"));
-		if (!isStackEmpty()) {
+	  if ( b.containsKey( "$oid" ) ) {
+		  o = new ObjectId((String)b.get("$oid"));
+		  if (!isStackEmpty()) {
 		    gotObjectId( _lastName, (ObjectId)o);
-		} else {
+  		} else {
 		    setRoot(o);
-		} 
-	    } else if ( b.containsKey( "$date" ) ) {
-		SimpleDateFormat format = 
-		    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-		format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
-		o = format.parse((String)b.get("$date"), new ParsePosition(0));
-		if (!isStackEmpty()) {
+	  	}
+	  } else if ( b.containsKey( "$date" ) ) {
+		  SimpleDateFormat format = new SimpleDateFormat(JSON.ISO_8601_DATE_FORMAT);
+		  o = format.parse((String)b.get("$date"), new ParsePosition(0));
+		  if (!isStackEmpty()) {
 		    cur().put( _lastName, o );
-		} else {
+		  } else {
 		    setRoot(o);
-		}
-	    } else if ( b.containsKey( "$regex" ) ) {
-		o = Pattern.compile( (String)b.get( "$regex" ), 
-				     BSON.regexFlags( (String)b.get( "$options" )) );
-		if (!isStackEmpty()) {
+  		}
+	  } else if ( b.containsKey( "$regex" ) ) {
+	  	o = Pattern.compile( (String)b.get( "$regex" ),
+			    BSON.regexFlags( (String)b.get( "$options" )) );
+		  if (!isStackEmpty()) {
 		    cur().put( _lastName, o );
-		} else {
+		  } else {
 		    setRoot(o);
-		}
-	    }
+		  }
+	  }
 	}
-        
+
         return o;
     }
 
