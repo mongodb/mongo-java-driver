@@ -299,6 +299,18 @@ public class JSONTest extends com.mongodb.util.TestCase {
        assertEquals(d.toString(), d2.toString());
    }
 
+   @org.testng.annotations.Test
+   public void testOldGmtDate() {
+       Date d = new Date();
+       SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+       format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
+       String formattedDate = "{ \"$date\" : \"" + format.format(d) + "\"}";
+
+       Date d2 = (Date)JSON.parse(formattedDate);
+     
+       assertEquals(d.toString(), d2.toString());
+   }
+
     public static void main( String args[] ){
         (new JSONTest()).runConsole();
     }

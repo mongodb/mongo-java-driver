@@ -43,7 +43,12 @@ public class JSONCallback extends BasicBSONCallback {
 	  	}
 	  } else if ( b.containsKey( "$date" ) ) {
 		  SimpleDateFormat format = new SimpleDateFormat(JSON.ISO_8601_DATE_FORMAT);
-		  o = format.parse((String)b.get("$date"), new ParsePosition(0));
+      String date = (String) b.get("$date");
+      // for backward compatibility 
+      if(date.contains("Z")) {
+        date = date.substring(0, date.indexOf('Z')) + "+0000";
+      }
+      o = format.parse(date, new ParsePosition(0));
 		  if (!isStackEmpty()) {
 		    cur().put( _lastName, o );
 		  } else {
