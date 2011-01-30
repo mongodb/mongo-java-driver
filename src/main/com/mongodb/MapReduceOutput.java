@@ -9,6 +9,8 @@ package com.mongodb;
 public class MapReduceOutput {
 
     MapReduceOutput( DBCollection from , BasicDBObject raw ){
+        _raw = raw;
+
         _collname = raw.getString( "result" );
         _coll = from._db.getCollection( _collname );
         _counts = (BasicDBObject)raw.get( "counts" );
@@ -36,6 +38,16 @@ public class MapReduceOutput {
     public DBCollection getOutputCollection(){
         return _coll;
     }
+
+    public BasicDBObject getRaw(){
+        return _raw;
+    }
+
+    public String toString(){
+        return _raw.toString();
+    }
+    
+    final BasicDBObject _raw;
 
     final String _collname;
     final DBCollection _coll;
