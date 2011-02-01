@@ -11,6 +11,8 @@ import java.util.logging.*;
  * The URI describes the hosts to be used and options.
  */
 public class MongoURI {
+
+    public static final String MONGODB_PREFIX = "mongodb://";
     
     /**
      * Creates a MongoURI described by a String.
@@ -22,8 +24,8 @@ public class MongoURI {
      */
     public MongoURI( String uri ){
         _uri = uri;
-        if ( ! uri.startsWith( "mongodb://" ) )
-            throw new IllegalArgumentException( "uri needs to start with mongodb://" );
+        if ( ! uri.startsWith( MONGODB_PREFIX ) )
+            throw new IllegalArgumentException( "uri needs to start with " + MONGODB_PREFIX );
         
         uri = uri.substring( 10 );
         
