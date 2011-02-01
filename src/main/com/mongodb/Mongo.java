@@ -185,8 +185,6 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addr );
-        _connector.checkMaster( true , true );
-        _connector.testMaster();
     }
 
     /**
@@ -222,8 +220,6 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addrs );
-        _connector.checkMaster( true , false );
-        _connector.testMaster();
     }
 
     /**
@@ -256,8 +252,6 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addrs );
-        
-        _connector.checkMaster( true , false );
     }
 
     /**
@@ -284,7 +278,6 @@ public class Mongo {
             _addr = new ServerAddress( uri.getHosts().get(0) );
             _addrs = null;
             _connector = new DBTCPConnector( this , _addr );
-            _connector.testMaster();
         }
         else {
             List<ServerAddress> replicaSetSeeds = new ArrayList<ServerAddress>( uri.getHosts().size() );
@@ -293,7 +286,6 @@ public class Mongo {
             _addr = null;
             _addrs = replicaSetSeeds;
             _connector = new DBTCPConnector( this , replicaSetSeeds );
-            _connector.checkMaster( true , true );
         }
 
     }
