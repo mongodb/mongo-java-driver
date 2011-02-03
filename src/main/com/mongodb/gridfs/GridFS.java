@@ -72,7 +72,11 @@ public class GridFS {
         _filesCollection = _db.getCollection( _bucketName + ".files" );
         _chunkCollection = _db.getCollection( _bucketName + ".chunks" );
 
-        _chunkCollection.ensureIndex( BasicDBObjectBuilder.start().add( "files_id" , 1 ).add( "n" , 1 ).get() );
+        // ensure standard indexes as long as collections are small
+        if (_filesCollection.count() < 1000)
+            _filesCollection.ensureIndex( BasicDBObjectBuilder.start().add( "filename" , 1 ).add( "uploadDate" , 1 ).get() );
+        if (_chunkCollection.count() < 1000)
+            _chunkCollection.ensureIndex( BasicDBObjectBuilder.start().add( "files_id" , 1 ).add( "n" , 1 ).get() );
 
         _filesCollection.setObjectClass( GridFSDBFile.class );
     }

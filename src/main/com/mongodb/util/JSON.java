@@ -662,7 +662,7 @@ class JSONParser {
 }
 
 /**
- * Exeception throw when invalid JSON is passed to JSONParser.
+ * Exception throw when invalid JSON is passed to JSONParser.
  * 
  * This exception creates a message that points to the first 
  * offending character in the JSON string:
