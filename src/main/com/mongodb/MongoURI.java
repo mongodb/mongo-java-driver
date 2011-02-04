@@ -27,7 +27,7 @@ public class MongoURI {
         if ( ! uri.startsWith( MONGODB_PREFIX ) )
             throw new IllegalArgumentException( "uri needs to start with " + MONGODB_PREFIX );
         
-        uri = uri.substring( 10 );
+        uri = uri.substring(MONGODB_PREFIX.length());
         
         String serverPart;
         String nsPart;
