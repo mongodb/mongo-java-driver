@@ -380,7 +380,7 @@ public class Mongo {
     }
 
     /**
-     * Gets a list of all server addresses used in this Mongo
+     * Gets a list of all server addresses used when this Mongo was created
      * @return
      */
     public List<ServerAddress> getAllAddress() {
@@ -389,6 +389,15 @@ public class Mongo {
             return Arrays.asList(getAddress());
         }
         return result;
+    }
+
+    /**
+     * Gets the list of server addresses currently seen by the connector.
+     * This includes addresses auto-discovered from a replica set.
+     * @return
+     */
+    public List<ServerAddress> getServerAddressList() {
+        return _connector.getServerAddressList();
     }
 
     /**

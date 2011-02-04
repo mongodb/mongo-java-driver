@@ -244,8 +244,29 @@ class DBTCPConnector implements DBConnector {
         return _curMaster;
     }
 
+    /**
+     * Gets the list of seed server addresses
+     * @return
+     */
     public List<ServerAddress> getAllAddress() {
         return _allHosts;
+    }
+
+    /**
+     * Gets the list of server addresses currently seen by the connector.
+     * This includes addresses auto-discovered from a replica set.
+     * @return
+     */
+    public List<ServerAddress> getServerAddressList() {
+        if (_rsStatus != null) {
+            return _rsStatus.getServerAddressList();
+        } else if (_curMaster != null) {
+            // single server
+            List<ServerAddress> list = new ArrayList<ServerAddress>();
+            list.add(_curMaster);
+            return list;
+        }
+        return null;
     }
 
     public String getConnectPoint(){
