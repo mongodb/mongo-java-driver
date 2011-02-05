@@ -136,7 +136,8 @@ class ReplicaSetStatus {
 
                 if ( res.containsKey( "hosts" ) ){
                     for ( Object x : (List)res.get("hosts") ){
-                        seenHosts.add(x.toString());
+                        if (seenHosts != null)
+                            seenHosts.add(x.toString());
                     }
                 }
                 
