@@ -117,7 +117,7 @@ class ReplicaSetStatus {
             update(null);
         }
         
-        synchronized void update(Set<String> seenHosts){
+        synchronized void update(Set<Node> seenNodes){
             try {
                 long start = System.currentTimeMillis();
                 CommandResult res = _port.runCommand( "admin" , _isMasterCmd );
@@ -136,8 +136,10 @@ class ReplicaSetStatus {
 
                 if ( res.containsKey( "hosts" ) ){
                     for ( Object x : (List)res.get("hosts") ){
-                        if (seenHosts != null)
-                            seenHosts.add(x.toString());
+                        String host = x.toString();
+                        Node node = _addIfNotHere(host);
+                        if (node != null && seenNodes != null)
+                            seenNodes.add(node);
                     }
                 }
                 
@@ -277,24 +279,16 @@ class ReplicaSetStatus {
     }
 
     synchronized void updateAll(){
-        HashSet<String> seenHosts = new HashSet<String>();
+        HashSet<Node> seenNodes = new HashSet<Node>();
         for ( int i=0; i<_all.size(); i++ ){
             Node n = _all.get(i);
-            n.update(seenHosts);
-        }
-
-        // add new hosts
-        HashSet<Node> used = new HashSet<Node>();
-        for (String host : seenHosts) {
-            Node n = _addIfNotHere(host);
-            if (n != null)
-                used.add(n);
+            n.update(seenNodes);
         }
 
         // remove unused hosts
         Iterator<Node> it = _all.iterator();
         while (it.hasNext()) {
-            if (!used.contains(it.next()))
+            if (!seenNodes.contains(it.next()))
                 it.remove();
         }
     }
