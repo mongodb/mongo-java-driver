@@ -61,6 +61,38 @@ public class MongoURITest extends TestCase {
         assertEquals( "bbb" , new String( u.getPassword() ) );
     }
 
+    @Test()
+    public void testOptions(){
+        MongoURI uAmp = new MongoURI( "mongodb://localhost/test?" +
+                        "maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&" +
+                        "connectTimeoutMS=2500&socketTimeoutMS=5500&autoConnectRetry=true&" +
+                        "slaveOk=true&safe=false&w=1&wtimeout=2500&fsync=true");
+        _testOpts( uAmp._options );
+        MongoURI uSemi = new MongoURI( "mongodb://localhost/test?" +
+                "maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;" +
+                "connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;" +
+                "slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true");
+        _testOpts( uSemi._options );
+        MongoURI uMixed = new MongoURI( "mongodb://localhost/test?" +
+                "maxPoolSize=10&waitQueueMultiple=5;waitQueueTimeoutMS=150;" +
+                "connectTimeoutMS=2500;socketTimeoutMS=5500&autoConnectRetry=true;" +
+                "slaveOk=true;safe=false&w=1;wtimeout=2500;fsync=true");
+        _testOpts( uMixed._options );
+    }
+
+    private void _testOpts(MongoOptions uOpt){
+        assertEquals( uOpt.connectionsPerHost, 10 );
+        assertEquals( uOpt.threadsAllowedToBlockForConnectionMultiplier, 5 );
+        assertEquals( uOpt.maxWaitTime, 150 );
+        assertEquals( uOpt.socketTimeout, 5500 );
+        assertTrue( uOpt.autoConnectRetry );
+        assertTrue( uOpt.slaveOk );
+        assertFalse( uOpt.safe );
+        assertEquals( uOpt.w, 1 );
+        assertEquals( uOpt.wtimeout, 2500 );
+        assertTrue( uOpt.fsync );
+        assertEquals( uOpt.getWriteConcern(), new WriteConcern(1, 2500, true) );
+    }
     public static void main( String args[] )
         throws Exception {
         (new MongoURITest()).runConsole();

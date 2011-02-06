@@ -589,7 +589,7 @@ public class JavaClientTest extends TestCase {
         assertTrue( cr == cr2 );
 
         CommandResult cr3 = res.getLastError( WriteConcern.NONE );
-        assertTrue( cr != cr3 && cr2 != cr3 );
+        assertTrue( cr3 == cr );
 
     }
 

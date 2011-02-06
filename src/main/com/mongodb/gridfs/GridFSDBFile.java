@@ -29,19 +29,35 @@ import java.util.*;
  * Operations include:
  * - writing data to a file on disk or an OutputStream
  * - getting each chunk as a byte array
- * - getting an InputStream to stream the data in
+ * - getting an InputStream to stream the data into
  * @author antoine
  */
 public class GridFSDBFile extends GridFSFile {
     
     
+    /**
+     * Returns an InputStream from which data can be read
+     * @return
+     */
     public InputStream getInputStream(){
         return new MyInputStream();
     }
 
+    /**
+     * Writes the file's data to a file on disk
+     * @param filename the file name on disk
+     * @return
+     * @throws IOException
+     */
     public long writeTo( String filename ) throws IOException {
         return writeTo( new File( filename ) );
     }
+    /**
+     * Writes the file's data to a file on disk
+     * @param f the File object
+     * @return
+     * @throws IOException
+     */
     public long writeTo( File f ) throws IOException {
     	OutputStream os = null;
     	try {
@@ -52,6 +68,12 @@ public class GridFSDBFile extends GridFSFile {
     	}
     }
 
+    /**
+     * Writes the file's data to an OutputStream
+     * @param out the OutputStream
+     * @return
+     * @throws IOException
+     */
     public long writeTo( OutputStream out )
         throws IOException {
         final int nc = numChunks();

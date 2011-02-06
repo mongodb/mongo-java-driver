@@ -114,6 +114,10 @@ class ReplicaSetStatus {
         }
 
         synchronized void update(){
+            update(null);
+        }
+        
+        synchronized void update(Set<Node> seenNodes){
             try {
                 long start = System.currentTimeMillis();
                 CommandResult res = _port.runCommand( "admin" , _isMasterCmd );
@@ -132,7 +136,10 @@ class ReplicaSetStatus {
 
                 if ( res.containsKey( "hosts" ) ){
                     for ( Object x : (List)res.get("hosts") ){
-                        _addIfNotHere( x.toString() );
+                        String host = x.toString();
+                        Node node = _addIfNotHere(host);
+                        if (node != null && seenNodes != null)
+                            seenNodes.add(node);
                     }
                 }
                 
@@ -271,23 +278,40 @@ class ReplicaSetStatus {
         return getMasterNode();
     }
 
-    void updateAll(){
+    synchronized void updateAll(){
+        HashSet<Node> seenNodes = new HashSet<Node>();
         for ( int i=0; i<_all.size(); i++ ){
             Node n = _all.get(i);
-            n.update();
-        }        
+            n.update(seenNodes);
+        }
+
+        // remove unused hosts
+        Iterator<Node> it = _all.iterator();
+        while (it.hasNext()) {
+            if (!seenNodes.contains(it.next()))
+                it.remove();
+        }
     }
 
-    void _addIfNotHere( String host ){
+    List<ServerAddress> getServerAddressList() {
+        List<ServerAddress> addrs = new ArrayList<ServerAddress>();
+        for (Node node : _all)
+            addrs.add(node._addr);
+        return addrs;
+    }
+
+    Node _addIfNotHere( String host ){
         Node n = findNode( host );
         if ( n == null ){
             try {
-                _all.add( new Node( new ServerAddress( host ) ) );
+                n = new Node( new ServerAddress( host ) );
+                _all.add( n );
             }
             catch ( UnknownHostException un ){
                 _logger.log( Level.WARNING , "couldn't resolve host [" + host + "]" );
             }
         }
+        return n;
     }
 
     Node findNode( String host ){

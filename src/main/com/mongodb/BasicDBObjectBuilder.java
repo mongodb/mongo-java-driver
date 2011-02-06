@@ -21,21 +21,34 @@ package com.mongodb;
 import java.util.*;
 
 /**
- * utility for building objects
+ * utility for building complex objects
  * example:
  *  BasicDBObjectBuilder.start().add( "name" , "eliot" ).add( "number" , 17 ).get()
  */
 public class BasicDBObjectBuilder {
     
+    /**
+     * creates an empty object
+     */
     public BasicDBObjectBuilder(){
         _stack = new LinkedList<DBObject>();
         _stack.add( new BasicDBObject() );
     }
 
+    /**
+     * creates an empty object
+     * @return
+     */
     public static BasicDBObjectBuilder start(){
         return new BasicDBObjectBuilder();
     }
 
+    /**
+     * creates an object with the given key/value
+     * @param k
+     * @param val
+     * @return
+     */
     public static BasicDBObjectBuilder start( String k , Object val ){
         return (new BasicDBObjectBuilder()).add( k , val );
     }
@@ -56,7 +69,10 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * @return returns itself so you can chain .append( "a" , 1 ).add( "b" , 1 )
+     * appends the key/value to the active object
+     * @param key
+     * @param val
+     * @return returns itself so you can chain
      */
     public BasicDBObjectBuilder append( String key , Object val ){
         _cur().put( key , val );
@@ -65,12 +81,22 @@ public class BasicDBObjectBuilder {
     
 
     /**
-     * @return returns itself so you can chain  .add( "a" , 1 ).add( "b" , 1 )
+     * same as appends
+     * @see {@link BasicDBObjectBuilder#add(java.lang.String, java.lang.Object)
+     * @param key 
+     * @param val
+     * @return returns itself so you can chain
      */
     public BasicDBObjectBuilder add( String key , Object val ){
         return append( key, val );
     }
 
+    /**
+     * creates an new empty object and inserts it into the current object with the given key.
+     * The new child object becomes the active one.
+     * @param key
+     * @return returns itself so you can chain
+     */
     public BasicDBObjectBuilder push( String key ){
         BasicDBObject o = new BasicDBObject();
         _cur().put( key , o );
@@ -78,6 +104,10 @@ public class BasicDBObjectBuilder {
         return this;
     }
     
+    /**
+     * pops the active object, which means that the parent object becomes active
+     * @return returns itself so you can chain
+     */
     public BasicDBObjectBuilder pop(){
         if ( _stack.size() <= 1 )
             throw new IllegalArgumentException( "can't pop last element" );
@@ -85,13 +115,22 @@ public class BasicDBObjectBuilder {
         return this;
     }
     
+    /**
+     * gets the base object
+     * @return
+     */
     public DBObject get(){
         return _stack.getFirst();
     }
 
+    /**
+     * returns true if no key/value was inserted into base object
+     * @return
+     */
     public boolean isEmpty(){
         return ((BasicDBObject) _stack.getFirst()).size() == 0;
     }
+    
     private DBObject _cur(){
         return _stack.getLast();
     }

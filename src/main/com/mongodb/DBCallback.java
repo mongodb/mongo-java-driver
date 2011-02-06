@@ -8,6 +8,11 @@ import java.util.logging.*;
 import org.bson.*;
 import org.bson.types.*;
 
+/**
+ * This class overrides BasicBSONCallback to implement some extra features specific to the Database.
+ * For example DBRef type.
+ * @author antoine
+ */
 public class DBCallback extends BasicBSONCallback {
     
     public static interface Factory {
@@ -27,6 +32,7 @@ public class DBCallback extends BasicBSONCallback {
         _db = _collection == null ? null : _collection.getDB();
     }
 
+    @Override
     public void gotDBRef( String name , String ns , ObjectId id ){
         if ( id.equals( Bytes.COLLECTION_REF_ID ) )
             cur().put( name , _collection );
@@ -34,11 +40,13 @@ public class DBCallback extends BasicBSONCallback {
             cur().put( name , new DBPointer( (DBObject)cur() , name , _db , ns , id ) );
     }
     
+    @Override
     public void objectStart(boolean array, String name){
         _lastName = name;
         super.objectStart( array , name );
     }
     
+    @Override
     public Object objectDone(){
         BSONObject o = (BSONObject)super.objectDone();
         if ( ! ( o instanceof List ) && 
@@ -50,10 +58,12 @@ public class DBCallback extends BasicBSONCallback {
         return o;
     }
     
+    @Override
     public BSONObject create(){
         return _create( null );
     }
     
+    @Override
     public BSONObject create( boolean array , List<String> path ){
         if ( array )
             return new BasicDBList();
@@ -104,6 +114,7 @@ public class DBCallback extends BasicBSONCallback {
         return o;
     }
     
+    @Override
     public void reset(){
         _lastName = null;
         super.reset();

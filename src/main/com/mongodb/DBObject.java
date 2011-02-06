@@ -22,18 +22,20 @@ import java.util.*;
 
 import org.bson.*;
 
-/** A key-value map that can be saved to the database. */
+/**
+ * A key-value map that can be saved to the database.
+ */
 public interface DBObject extends BSONObject {
     
     /**
-     * if this object was loaded with only some fields (using a field filter)
-     * this method will be called to notify 
+     * if this object was retrieved with only some fields (using a field filter)
+     * this method will be called to mark it as such.
      */
     public void markAsPartialObject();
 
     /**
      * whether markAsPartialObject was ever called
-     * only matters if you are going to upsert and dont' want to risk losing fields
+     * only matters if you are going to upsert and do not want to risk losing fields
      */
     public boolean isPartialObject();
 

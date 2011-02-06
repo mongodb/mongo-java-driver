@@ -4,7 +4,8 @@
   <property name="version" value="2.5-pre-"/>
   <property name="targetdir" location="target"/>
   <property name="testdir" location="${targetdir}/test"/>
-
+  <dirname property="javabase" file="${java.home}"/>
+  
   <path id="classpath">
     <fileset dir="lib">
       <include name="**/*.jar"/>
@@ -12,7 +13,7 @@
     <pathelement path="conf" />
     <pathelement path="build/main" />
     <pathelement path="build/test" />
-
+    <pathelement path="${javabase}/lib/tools.jar" />
   </path>
 
   <target name="init">

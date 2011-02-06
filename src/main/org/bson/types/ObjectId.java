@@ -254,26 +254,33 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     public String toString(){
         return toStringMongod();
     }
+    
+    int _compare( int i , int j ){
+        i = _flip(i);
+        j = _flip(j);
+
+        final int diff = j - i;
+        
+        if ( i >= 0 ){
+            return j >= 0 ? -diff : -1;
+        }
+        
+        return j < 0 ? -diff : 1;
+    }
 
     public int compareTo( ObjectId id ){
         if ( id == null )
             return -1;
         
-        long xx = id.getTime() - getTime();
-        if ( xx > 0 )
-            return -1;
-        else if ( xx < 0 )
-            return 1;
-
-        int x = id._machine - _machine;
+        int x = _compare( _time , id._time );
         if ( x != 0 )
-            return -x;
+            return x;
 
-        x = id._inc - _inc;
+        x = _compare( _machine , id._machine );
         if ( x != 0 )
-            return -x;
-
-        return 0;
+            return x;
+        
+        return _compare( _inc , id._inc );
     }
 
     public int getMachine(){

@@ -18,12 +18,25 @@
 
 package com.mongodb;
 
-public class MongoInternalException extends RuntimeException {
+/**
+ * An Mongo exception internal to the driver, not carrying any error code
+ * @author antoine
+ */
+public class MongoInternalException extends MongoException {
 
+    /**
+     *
+     * @param msg the message
+     */
     public MongoInternalException( String msg ){
         super( msg );
     }
 
+    /**
+     *
+     * @param msg the message
+     * @param t the throwable cause
+     */
     public MongoInternalException( String msg , Throwable t ){
         super( msg , MongoException._massage( t ) );
     }

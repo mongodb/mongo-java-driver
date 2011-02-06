@@ -28,16 +28,31 @@ import com.mongodb.util.*;
  */
 public class ServerAddress {
     
+    /**
+     * Creates a ServerAddress with default host and port
+     * @throws UnknownHostException
+     */
     public ServerAddress()
         throws UnknownHostException {
         this( defaultHost() , defaultPort() );
     }
     
+    /**
+     * Creates a ServerAddress with default port
+     * @param host hostname
+     * @throws UnknownHostException
+     */
     public ServerAddress( String host )
         throws UnknownHostException {
         this( host , defaultPort() );
     }
 
+    /**
+     * Creates a ServerAddress
+     * @param host hostname
+     * @param port mongod port
+     * @throws UnknownHostException
+     */
     public ServerAddress( String host , int port )
         throws UnknownHostException {
         if ( host == null )
@@ -60,14 +75,27 @@ public class ServerAddress {
         _addr = new InetSocketAddress( _all[0] , _port );
     }
 
+    /**
+     * Creates a ServerAddress with default port
+     * @param addr host address
+     */
     public ServerAddress( InetAddress addr ){
         this( new InetSocketAddress( addr , defaultPort() ) );
     }
 
+    /**
+     * Creates a ServerAddress
+     * @param addr host address
+     * @param port mongod port
+     */
     public ServerAddress( InetAddress addr , int port ){
         this( new InetSocketAddress( addr , port ) );
     }
 
+    /**
+     * Creates a ServerAddress
+     * @param addr inet socket address containing hostname and port
+     */
     public ServerAddress( InetSocketAddress addr ){
         _addr = addr;
         _host = _addr.getHostName();
@@ -79,14 +107,16 @@ public class ServerAddress {
     // pairing
     // --------
 
-    /** Determines if the database at this address is paired.
+    /**
+     * Determines if the database at this address is paired.
      * @return if this address connects to a set of paired databases
      */
     boolean isPaired(){
         return _all != null && _all.length > 1;
     }
 
-    /** If this is the address of a paired database, returns addresses for
+    /**
+     * If this is the address of a paired database, returns addresses for
      * all of the databases with which it is paired.
      * @return the addresses
      * @throws RuntimeException if this address is not one of a paired database
@@ -107,7 +137,8 @@ public class ServerAddress {
     // --------
 
 
-    /** Determines whether this address is the same as a given host.
+    /**
+     * Determines whether this address is the same as a given host.
      * @param host the address to compare
      * @return if they are the same
      */
@@ -124,6 +155,7 @@ public class ServerAddress {
             _host.equalsIgnoreCase( host );
     }
 
+    @Override
     public boolean equals( Object other ){
         if ( other instanceof ServerAddress ){
             ServerAddress a = (ServerAddress)other;
@@ -137,22 +169,36 @@ public class ServerAddress {
         return false;
     }
 
+    @Override
     public int hashCode(){
         return _host.hashCode() + _port;
     }
 
+    /**
+     * Gets the hostname
+     * @return
+     */
     public String getHost(){
         return _host;
     }
 
+    /**
+     * Gets the port number
+     * @return
+     */
     public int getPort(){
         return _port;
     }
     
+    /**
+     * Gets the underlying socket address
+     * @return
+     */
     public InetSocketAddress getSocketAddress(){
         return _addr;
     }
 
+    @Override
     public String toString(){
         return _host + ":" + _port;
     }
@@ -176,15 +222,16 @@ public class ServerAddress {
         return InetAddress.getAllByName( host );
     }
     
-    /** Returns the default database host.
-     * @return the db_ip environmental variable, or "127.0.0.1" as a default
+    /**
+     * Returns the default database host: db_ip environment variable, or "127.0.0.1"
+     * @return
      */
     public static String defaultHost(){
         return "127.0.0.1";
     }
 
-    /** Returns the default port that the database runs on.
-     * @return the db_port environmental variable, or 27017 as a default
+    /** Returns the default database port: db_port environment variable, or 27017 as a default
+     * @return
      */
     public static int defaultPort(){
         return DBPort.PORT;

@@ -96,23 +96,39 @@ import org.bson.io.*;
  */
 public class Mongo {
 
+    /**
+     *
+     */
     public static final int MAJOR_VERSION = 2;
+    /**
+     *
+     */
     public static final int MINOR_VERSION = 4;
 
+    /**
+     * returns a database object
+     * @param addr the database address
+     * @return
+     */
     public static DB connect( DBAddress addr ){
         return new Mongo( addr ).getDB( addr.getDBName() );
     }
 
+    /**
+     * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
+     * @throws UnknownHostException
+     * @throws MongoException
+     */
     public Mongo()
         throws UnknownHostException , MongoException {
         this( new ServerAddress() );
     }
 
     /**
-     * Connects to a (single) mongodb node (default port)
-     *
-     *  @param host server to connect to
-     *  @throws UnknownHostException if the database host cannot be resolved
+     * Creates a Mongo instance based on a (single) mongodb node (default port)
+     * @param host server to connect to
+     * @throws UnknownHostException if the database host cannot be resolved
+     * @throws MongoException
      */
     public Mongo( String host )
         throws UnknownHostException , MongoException {
@@ -120,10 +136,11 @@ public class Mongo {
     }
 
     /**
-     * Connects to a (single) mongodb node (default port)
+     * Creates a Mongo instance based on a (single) mongodb node (default port)
      * @param host server to connect to
-     * @param options options to use
+     * @param options default query options
      * @throws UnknownHostException if the database host cannot be resolved
+     * @throws MongoException
      */
     public Mongo( String host , MongoOptions options )
         throws UnknownHostException , MongoException {
@@ -131,10 +148,11 @@ public class Mongo {
     }
 
     /**
-     * Connects to a (single) mongodb node
+     * Creates a Mongo instance based on a (single) mongodb node
      * @param host the database's host address
      * @param port the port on which the database is running
      * @throws UnknownHostException if the database host cannot be resolved
+     * @throws MongoException
      */
     public Mongo( String host , int port )
         throws UnknownHostException , MongoException {
@@ -142,9 +160,10 @@ public class Mongo {
     }
 
     /**
-     * Connects to a (single) mongodb node
+     * Creates a Mongo instance based on a (single) mongodb node
      * @see com.mongodb.ServerAddress
      * @param addr the database address
+     * @throws MongoException
      */
     public Mongo( ServerAddress addr )
         throws MongoException {
@@ -153,28 +172,30 @@ public class Mongo {
 
 
     /**
-     * Connects to a (single) mongo node using a given ServerAddress
+     * Creates a Mongo instance based on a (single) mongo node using a given ServerAddress
      * @see com.mongodb.ServerAddress
      * @param addr the database address
+     * @param options default query options
+     * @throws MongoException
      */
     public Mongo( ServerAddress addr , MongoOptions options )
         throws MongoException {
         _addr = addr;
         _addrs = null;
         _options = options;
+        _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addr );
-        _connector.checkMaster( true , true );
-        _connector.testMaster();
     }
 
     /**
-     * <p>Creates a Mongo connection in paired mode. <br/> This will also work for
+     * <p>Creates a Mongo in paired mode. <br/> This will also work for
      * a replica set and will find all members (the master will be used by
      * default).</p>
      * 
      * @see com.mongodb.ServerAddress
      * @param left left side of the pair
      * @param right right side of the pair
+     * @throws MongoException
      */
     public Mongo( ServerAddress left , ServerAddress right )
         throws MongoException {
@@ -189,25 +210,25 @@ public class Mongo {
      * @see com.mongodb.ServerAddress
      * @param left left side of the pair
      * @param right right side of the pair
+     * @param options
+     * @throws MongoException
      */
     public Mongo( ServerAddress left , ServerAddress right , MongoOptions options )
         throws MongoException {
         _addr = null;
         _addrs = Arrays.asList( left , right );
         _options = options;
+        _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addrs );
-        _connector.checkMaster( true , false );
-        _connector.testMaster();
     }
 
     /**
-     * <p>Creates a Mongo connection. <br/> This will work for
-     * a replica set, or pair, and will find all members (the master will be used by
-     * default).</p>
-     * 
+     * <p>Creates a Mongo based on a replica set, or pair.
+     * It will find all members (the master will be used by default).</p>
      * @see com.mongodb.ServerAddress
      * @param replicaSetSeeds Put as many servers as you can in the list and
      * the system will figure out the rest.
+     * @throws MongoException
      */
     public Mongo( List<ServerAddress> replicaSetSeeds )
         throws MongoException {
@@ -215,13 +236,13 @@ public class Mongo {
     }
 
     /**
-     * <p>Creates a Mongo connection. <br/> This will work for
-     * a replica set, or pair, and will find all members (the master will be used by
-     * default).</p>
-     * 
+     * <p>Creates a Mongo based on a replica set, or pair.
+     * It will find all members (the master will be used by default).</p>
      * @see com.mongodb.ServerAddress
      * @param replicaSetSeeds put as many servers as you can in the list. 
      *                       the system will figure the rest out
+     * @param options default query options
+     * @throws MongoException
      */    
     public Mongo( List<ServerAddress> replicaSetSeeds , MongoOptions options )
         throws MongoException {
@@ -229,30 +250,34 @@ public class Mongo {
         _addr = null;
         _addrs = replicaSetSeeds;
         _options = options;
+        _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addrs );
-        
-        _connector.checkMaster( true , false );
     }
+
     /**
-     * Creates a Mongo connection. If only one address is used it will only connect to that node, otherwise it will discover all nodes.
+     * Creates a Mongo described by a URI.
+     * If only one address is used it will only connect to that node, otherwise it will discover all nodes.
+     * @param uri
      * @see MongoURI
      * <p>examples:
      *   <li>mongodb://localhost</li>
      *   <li>mongodb://fred:foobar@localhost/</li>
      *  </p>
-     *  @dochub connections
+     *  @throws MongoException
+     * @throws UnknownHostException
+     * @dochub connections
      */    
 
     public Mongo( MongoURI uri )
         throws MongoException , UnknownHostException {
 
         _options = uri.getOptions();
+        _applyMongoOptions();
         
         if ( uri.getHosts().size() == 1 ){
             _addr = new ServerAddress( uri.getHosts().get(0) );
             _addrs = null;
             _connector = new DBTCPConnector( this , _addr );
-            _connector.testMaster();
         }
         else {
             List<ServerAddress> replicaSetSeeds = new ArrayList<ServerAddress>( uri.getHosts().size() );
@@ -261,11 +286,15 @@ public class Mongo {
             _addr = null;
             _addrs = replicaSetSeeds;
             _connector = new DBTCPConnector( this , replicaSetSeeds );
-            _connector.checkMaster( true , true );
         }
 
     }
 
+    /**
+     * gets a database object
+     * @param dbname the database name
+     * @return
+     */
     public DB getDB( String dbname ){
         
         DB db = _dbs.get( dbname );
@@ -279,6 +308,11 @@ public class Mongo {
         return db;
     }
     
+    /**
+     * gets a list of all database names present on the server
+     * @return
+     * @throws MongoException
+     */
     public List<String> getDatabaseNames()
         throws MongoException {
 
@@ -303,9 +337,9 @@ public class Mongo {
 
 
     /**
-     *  Drops the database if it exists.
-     *
+     * Drops the database if it exists.
      * @param dbName name of database to drop
+     * @throws MongoException
      */
     public void dropDatabase(String dbName)
         throws MongoException {
@@ -313,25 +347,42 @@ public class Mongo {
         getDB( dbName ).dropDatabase();
     }
 
+    /**
+     * gets this driver version
+     * @return
+     */
     public String getVersion(){
         return MAJOR_VERSION + "." + MINOR_VERSION;
     }
 
+    /**
+     * returns a string representing the hosts used in this Mongo instance
+     * @return
+     */
     public String debugString(){
         return _connector.debugString();
     }
 
+    /**
+     * Gets the current master's hostname
+     * @return
+     */
     public String getConnectPoint(){
         return _connector.getConnectPoint();
     }
 
-    /** Gets the address of this database.
+    /**
+     * Gets the address of the current master
      * @return the address
      */
     public ServerAddress getAddress(){
         return _connector.getAddress();
     }
 
+    /**
+     * Gets a list of all server addresses used when this Mongo was created
+     * @return
+     */
     public List<ServerAddress> getAllAddress() {
         List<ServerAddress> result = _connector.getAllAddress();
         if (result == null) {
@@ -341,16 +392,25 @@ public class Mongo {
     }
 
     /**
-     * closes all open connections
-     * this Mongo cannot be re-used
+     * Gets the list of server addresses currently seen by the connector.
+     * This includes addresses auto-discovered from a replica set.
+     * @return
+     */
+    public List<ServerAddress> getServerAddressList() {
+        return _connector.getServerAddressList();
+    }
+
+    /**
+     * closes the underlying connector, which in turn closes all open connections.
+     * Once called, this Mongo instance can no longer be used.
      */
     public void close(){
         _connector.close();
     }
 
     /**
-     * Set the write concern for this database. Will be used for
-     * writes to any collection in this database. See the
+     * Sets the write concern for this database. Will be used as default for
+     * writes to any collection in any database. See the
      * documentation for {@link WriteConcern} for more information.
      *
      * @param concern write concern to use
@@ -360,35 +420,59 @@ public class Mongo {
     }
 
     /**
-     * Get the write concern for this database.
+     * Gets the default write concern
+     * @return
      */
     public WriteConcern getWriteConcern(){
         return _concern;
     }
 
     /**
-     * makes this query ok to run on a slave node
+     * makes it possible to run read queries on slave nodes
      */
     public void slaveOk(){
         addOption( Bytes.QUERYOPTION_SLAVEOK );
     }
 
+    /**
+     * adds a default query option
+     * @param option
+     */
     public void addOption( int option ){
         _netOptions.add( option );
     }
 
+    /**
+     * sets the default query options
+     * @param options
+     */
     public void setOptions( int options ){
         _netOptions.set( options );
     }
 
+    /**
+     * reset the default query options
+     */
     public void resetOptions(){
         _netOptions.reset();
     }
    
+    /**
+     * gets the default query options
+     * @return
+     */
     public int getOptions(){
         return _netOptions.get();
     }
 
+    /**
+     * Helper method for setting up MongOptions at instantiation
+     * so that any options which affect this connection can be set.
+     */
+    void _applyMongoOptions() {
+        if (_options.slaveOk) slaveOk();
+        setWriteConcern( _options.getWriteConcern() );
+    }
     
     final ServerAddress _addr;
     final List<ServerAddress> _addrs;
@@ -412,11 +496,19 @@ public class Mongo {
 
     
     /**
-     * Mongo.Holder is if you want to have a static place to hold instances of Mongo
-     * security is not enforced at this level, so need to do on your side
+     * Mongo.Holder can be used as a static place to hold several instances of Mongo.
+     * Security is not enforced at this level, and needs to be done on the application side.
      */
     public static class Holder {
         
+        /**
+         * Attempts to find an existing Mongo instance matching that URI in the holder, and returns it if exists.
+         * Otherwise creates a new Mongo instance based on this URI and adds it to the holder.
+         * @param uri the Mongo URI
+         * @return
+         * @throws MongoException
+         * @throws UnknownHostException
+         */
         public Mongo connect( MongoURI uri )
             throws MongoException , UnknownHostException {
 
