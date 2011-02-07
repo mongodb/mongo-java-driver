@@ -134,7 +134,7 @@ public class DBPort {
             return res.get(0);
         }
         catch ( IOException ioe ){
-            throw new MongoInternalException( "DBPort.findOne failed" , ioe );
+            throw new MongoException.Network( "DBPort.findOne failed" , ioe );
         }
         
     }
@@ -158,7 +158,7 @@ public class DBPort {
             return res.get(0);
         }
         catch ( IOException ioe ){
-            throw new MongoInternalException( "DBPort.findOne failed" , ioe );
+            throw new MongoException.Network( "DBPort.findOne failed" , ioe );
         }
         
     }
@@ -299,7 +299,7 @@ public class DBPort {
         res = runCommand( db , temp );
 
         if ( ! res.ok() )
-            throw new MongoInternalException( "couldn't re-auth" );
+            throw new MongoException( "couldn't re-auth, username/password change?" );
         _authed.put( db , true );
     }
     

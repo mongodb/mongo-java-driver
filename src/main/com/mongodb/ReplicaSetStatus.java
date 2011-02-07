@@ -144,7 +144,7 @@ class ReplicaSetStatus {
                 }
                 
             }
-            catch ( MongoInternalException e ){
+            catch ( MongoException e ){
                 Throwable root = e;
                 if ( e.getCause() != null )
                     root = e.getCause();
@@ -182,7 +182,7 @@ class ReplicaSetStatus {
                 }
             }
 
-            catch ( MongoInternalException e ){
+            catch ( MongoException e ){
                 if ( _setName != null ){
                     // this probably means the master is busy, so going to ignore
                 }
