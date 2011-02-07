@@ -490,8 +490,9 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     /**
      * Checks if there is another object available
      * @return
+     * @throws MongoException
      */
-    public boolean hasNext(){
+    public boolean hasNext() throws MongoException {
         _checkType( CursorType.ITERATOR );
         return _hasNext();
     }
@@ -499,8 +500,9 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     /**
      * Returns the object the cursor is at and moves the cursor ahead by one.
      * @return the next element
+     * @throws MongoException
      */
-    public DBObject next(){
+    public DBObject next() throws MongoException {
         _checkType( CursorType.ITERATOR );
         return _next();
     }
