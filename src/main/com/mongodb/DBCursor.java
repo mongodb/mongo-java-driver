@@ -493,12 +493,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      */
     public boolean hasNext(){
         _checkType( CursorType.ITERATOR );
-        try {
-            return _hasNext();
-        }
-        catch ( MongoException e ){
-            throw new MongoInternalException( "couldn't get next element" , e );
-        }
+        return _hasNext();
     }
     
     /**
@@ -507,12 +502,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      */
     public DBObject next(){
         _checkType( CursorType.ITERATOR );
-        try {
-            return _next();
-        }
-        catch ( MongoException e ){
-            throw new MongoInternalException( "couldn't get next element" , e );
-        }
+        return _next();
     }
 
     /**
