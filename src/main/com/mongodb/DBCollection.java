@@ -785,19 +785,31 @@ public abstract class DBCollection {
     }
 
     /**
-     * renames of this collection to newName
+     * Calls {@link DBCollection#rename(java.lang.String, boolean) with dropTarget=false
      * @param newName new collection name (not a full namespace)
      * @return the new collection
      * @throws MongoException
      */
     public DBCollection rename( String newName ) 
         throws MongoException {
-        
+        return rename(newName, false);
+    }
+
+    /**
+     * renames of this collection to newName
+     * @param newName new collection name (not a full namespace)
+     * @param dropTarget if a collection with the new name exists, whether or not to drop it
+     * @return the new collection
+     * @throws MongoException
+     */
+    public DBCollection rename( String newName, boolean dropTarget )
+        throws MongoException {
         CommandResult ret = 
             _db.getSisterDB( "admin" )
             .command( BasicDBObjectBuilder.start()
                       .add( "renameCollection" , _fullName )
                       .add( "to" , _db._name + "." + newName )
+                      .add( "dropTarget" , dropTarget )
                       .get() );
         ret.throwOnError();
         resetIndexCache();
