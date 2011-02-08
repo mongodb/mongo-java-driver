@@ -403,8 +403,8 @@ class DBTCPConnector implements DBConnector {
         }
     }
 
-    private boolean _set( ServerAddress addr ){
-        if ( _curMaster == addr )
+    private synchronized boolean _set( ServerAddress addr ){
+        if ( _curMaster == addr && _masterPortPool != null )
             return false;
         _curMaster = addr;
         _masterPortPool = _portHolder.get( addr );
