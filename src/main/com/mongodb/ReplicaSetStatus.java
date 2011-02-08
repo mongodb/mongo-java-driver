@@ -134,7 +134,7 @@ class ReplicaSetStatus {
                 _isSecondary = res.getBoolean( "secondary" , false );
                 _lastPrimarySignal = res.getString( "primary" );
 
-                if ( res.containsKey( "hosts" ) ){
+                if ( res.containsField( "hosts" ) ){
                     for ( Object x : (List)res.get("hosts") ){
                         String host = x.toString();
                         Node node = _addIfNotHere(host);
@@ -143,6 +143,14 @@ class ReplicaSetStatus {
                     }
                 }
                 
+                if ( res.containsField( "passives" ) ){
+                    for ( Object x : (List)res.get("passives") ){
+                        String host = x.toString();
+                        Node node = _addIfNotHere(host);
+                        if (node != null && seenNodes != null)
+                            seenNodes.add(node);
+                    }
+                }
             }
             catch ( MongoException e ){
                 Throwable root = e;
