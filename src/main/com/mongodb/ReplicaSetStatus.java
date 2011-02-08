@@ -285,11 +285,14 @@ class ReplicaSetStatus {
             n.update(seenNodes);
         }
 
-        // remove unused hosts
-        Iterator<Node> it = _all.iterator();
-        while (it.hasNext()) {
-            if (!seenNodes.contains(it.next()))
-                it.remove();
+        if (!seenNodes.isEmpty()) {
+            // not empty, means that at least 1 server gave node list
+            // remove unused hosts
+            Iterator<Node> it = _all.iterator();
+            while (it.hasNext()) {
+                if (!seenNodes.contains(it.next()))
+                    it.remove();
+            }
         }
     }
 
