@@ -84,6 +84,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
     /**
      * @deprecated
      */
+    @Deprecated
     public boolean containsKey( String key ){
         return containsField(key);
     }
