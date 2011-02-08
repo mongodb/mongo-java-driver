@@ -121,6 +121,7 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
     /**
      * @deprecated
      */
+    @Deprecated
     public boolean containsKey( String key ){
         return containsField(key);
     }
