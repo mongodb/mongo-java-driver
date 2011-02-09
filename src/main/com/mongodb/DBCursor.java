@@ -637,6 +637,14 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         return _query;
     }
 
+    /**
+     * gets the collection
+     * @return
+     */
+    public DBCollection getCollection(){
+        return _collection;
+    }
+
     // ----  query setup ----
     private final DBCollection _collection;
     private final DBObject _query;
