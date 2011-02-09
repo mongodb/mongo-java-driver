@@ -13,7 +13,7 @@ public class MapReduceOutput {
 
         if ( raw.containsKey( "results" ) ) {
             _coll = null;
-            _collname = "<<INLINE>>";
+            _collname = null;
             _resultSet = (Iterable<DBObject>) raw.get( "results" );
         } else {
             _collname = raw.getString( "result" );
