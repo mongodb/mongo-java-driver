@@ -304,7 +304,7 @@ public abstract class DBCollection {
             cmd.append( "fields", fields );
         if (sort != null && !sort.keySet().isEmpty())
             cmd.append( "sort", sort );
-	
+    
         if (remove)
             cmd.append( "remove", remove );
         else {
@@ -904,47 +904,94 @@ public abstract class DBCollection {
 
     /**
      * performs a map reduce operation
-     * @param map map function in javascript code
-     * @param outputTarget optional - leave null if want to use temp collection
-     * @param reduce reduce function in javascript code
-     * @param query to match
-     * @return 
+     * Runs the command in INLINE output mode
+     * 
+     * @param map
+     *            map function in javascript code
+     * @param reduce
+     *            reduce function in javascript code
+     * @param query
+     *            to match
+     * @return
      * @throws MongoException
      * @dochub mapreduce
      */
-    public MapReduceOutput mapReduce( String map , String reduce , Object outputTarget , DBObject query )
-        throws MongoException {
-        BasicDBObjectBuilder b = BasicDBObjectBuilder.start()
-            .add( "mapreduce" , _name )
-            .add( "map" , map )
-            .add( "reduce" , reduce );
-        
-        if ( outputTarget == null ){
-        }
-        else if ( outputTarget instanceof String ){
-            b.add( "out" , outputTarget );
-        }
-        else if ( outputTarget instanceof org.bson.BSONObject ){
-            b.add( "out" , outputTarget );
-        }
-        else {
-            throw new IllegalArgumentException( "outputTarget has to be a string or a document" );
-        }
-
-        if ( query != null )
-            b.add( "query" , query );
-
-        return mapReduce( b.get() );
+    public MapReduceOutput mapReduce( String map , String reduce , DBObject query ) throws MongoException{
+        return mapReduce( new MapReduceCommand( getName() , map , reduce , query ) );
     }
-    
+
     /**
      * performs a map reduce operation
-     * @param command object representing the parameters
+     * Runs the command in STANDARD output mode (saves to named collection)
+     * 
+     * @param map
+     *            map function in javascript code
+     * @param outputTarget
+     *            optional - leave null if want to use temp collection
+     * @param reduce
+     *            reduce function in javascript code
+     * @param query
+     *            to match
+     * @return
+     * @throws MongoException
+     * @dochub mapreduce
+     */
+    public MapReduceOutput mapReduce( String map , String reduce , String outputTarget , DBObject query ) throws MongoException{
+        return mapReduce( new MapReduceCommand( getName() , map , reduce , outputTarget , query ) );
+    }
+
+    /**
+     * performs a map reduce operation
+     * Specify an outputType (MapReduceCommand.OutputType) to control job
+     * execution
+     * * INLINE - Return results inline
+     * * STANDARD - Save the job output to outputTarget
+     * * MERGE - Merge the job output with the existing contents of outputTarget
+     * * REDUCE - Reduce the job output with the existing contents of
+     * outputTarget
+     * 
+     * @param map
+     *            map function in javascript code
+     * @param outputTarget
+     *            optional - leave null if want to use temp collection
+     * @param outputType
+     *            set the type of job output
+     * @param reduce
+     *            reduce function in javascript code
+     * @param query
+     *            to match
+     * @return
+     * @throws MongoException
+     * @dochub mapreduce
+     */
+    public MapReduceOutput mapReduce( String map , String reduce , String outputTarget , MapReduceCommand.OutputType outputType , DBObject query )
+            throws MongoException{
+        return mapReduce( new MapReduceCommand( getName() , map , reduce , outputTarget , outputType , query ) );
+    }
+
+    /**
+     * performs a map reduce operation
+     * 
+     * @param command
+     *            object representing the parameters
      * @return
      * @throws MongoException
      */
-    public MapReduceOutput mapReduce( DBObject command )
-        throws MongoException {
+    public MapReduceOutput mapReduce( MapReduceCommand command ) throws MongoException{
+        CommandResult res = _db.command( command.toDBObject() );
+        res.throwOnError();
+        return new MapReduceOutput( this , res );
+    }
+
+    /**
+     * performs a map reduce operation
+     * 
+     * @param command
+     *            object representing the parameters
+     * @return
+     * @throws MongoException
+     */
+    public MapReduceOutput mapReduce( DBObject command ) throws MongoException{
         if ( command.get( "mapreduce" ) == null && command.get( "mapReduce" ) == null )
             throw new IllegalArgumentException( "need mapreduce arg" );
         CommandResult res = _db.command( command );
