@@ -844,33 +844,36 @@ public abstract class DBCollection {
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce , String finalize )
         throws MongoException {
-
-        BasicDBObject args  = new BasicDBObject();
-        args.put( "ns" , getName() );
-        args.put( "key" , key );
-        args.put( "cond" , cond );
-        args.put( "$reduce" , reduce );
-        args.put( "initial" , initial );
-        if ( finalize != null )
-            args.put( "finalize" , finalize );
-        
-        return group( args );
+        GroupCommand cmd = new GroupCommand(this, key, cond, initial, reduce, finalize);        
+        return group( cmd );
     }
 
     /**
      * Applies a group operation
-     * @param args object representing the parameters
+     * @param cmd the group command
+     * @return
+     * @throws MongoException
+     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     */
+    public DBObject group( GroupCommand cmd ) {
+        CommandResult res =  _db.command( cmd.toDBObject() );
+        res.throwOnError();
+        return (DBObject)res.get( "retval" );
+    }
+
+
+    /**
+     * @deprecated prefer the {@link DBCollection#group(com.mongodb.GroupCommand)} which is more standard
+     * Applies a group operation
+     * @param args object representing the arguments to the group function
      * @return
      * @throws MongoException
      * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
     public DBObject group( DBObject args )
         throws MongoException {
-        
-        args.put( "ns" , getName() );
-        
+        args.put( "ns" , getName() );  
         CommandResult res =  _db.command( new BasicDBObject( "group" , args ) );
-
         res.throwOnError();
         return (DBObject)res.get( "retval" );
     }

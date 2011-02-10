@@ -17,6 +17,10 @@
 
 package com.mongodb;
 
+/**
+ * This class groups the argument for a map/reduce operation and can build the underlying command object
+ * @dochub mapreduce
+ */
 public class MapReduceCommand {
 
     /**
