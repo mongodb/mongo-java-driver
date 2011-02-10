@@ -33,79 +33,28 @@ public class MapReduceCommand {
      * Represents the command for a map reduce operation
      * Runs the command in REPLACE output type to a named collection
      * 
-     * @param input
+     * @param inputCollection
      *            the collection to read from
      * @param map
      *            map function in javascript code
      * @param reduce
      *            reduce function in javascript code
-     * @param outputTarget
-     *            optional - leave null if want to use temp collection
+     * @param outputCollection
+     *            optional - leave null if want to get the result inline
+     * @param type
+     *            the type of output
      * @param query
-     *            to match
+     *            the query to use on input
      * @return
      * @throws MongoException
      * @dochub mapreduce
      */
-    MapReduceCommand(String input , String map , String reduce , String outputTarget , DBObject query) throws MongoException {
-        _input = input;
+    public MapReduceCommand(DBCollection inputCollection , String map , String reduce , String outputCollection, OutputType type, DBObject query) throws MongoException {
+        _input = inputCollection.getName();
         _map = map;
         _reduce = reduce;
-        _outputTarget = outputTarget;
-        _outputType = OutputType.REPLACE;
-        _query = query;
-    }
-
-    /**
-     * Represents the command for a map reduce operation
-     * Runs the command in INLINE output mode
-     * 
-     * @param input
-     *            the collection to read from
-     * @param map
-     *            map function in javascript code
-     * @param reduce
-     *            reduce function in javascript code
-     * @param query
-     *            to match
-     * @return
-     * @throws MongoException
-     * @dochub mapreduce
-     */
-    MapReduceCommand(String input , String map , String reduce , DBObject query) throws MongoException {
-        _input = input;
-        _map = map;
-        _reduce = reduce;
-        _outputTarget = null;
-        _outputType = OutputType.INLINE;
-        _query = query;
-    }
-
-    /**
-     * Represents the command for a map reduce operation
-     * 
-     * @param input
-     *            the collection to read from
-     * @param map
-     *            map function in javascript code
-     * @param reduce
-     *            reduce function in javascript code
-     * @param outputTarget
-     *            optional - leave null if want to use temp collection
-     * @param outputType
-     *            set the type of job output 
-     * @param query
-     *            to match
-     * @return
-     * @throws MongoException
-     * @dochub mapreduce
-     */
-    MapReduceCommand(String input , String map , String reduce , String outputTarget , OutputType outputType , DBObject query) throws MongoException {
-        _input = input;
-        _map = map;
-        _reduce = reduce;
-        _outputTarget = outputTarget;
-        _outputType = outputType;
+        _outputTarget = outputCollection;
+        _outputType = type;
         _query = query;
     }
 
@@ -205,7 +154,6 @@ public class MapReduceCommand {
         return _query;
     }
 
-
     /**
      * Gets the (optional) sort specification object 
      * 
@@ -226,21 +174,21 @@ public class MapReduceCommand {
     }
 
     /**
-     * Gets the (optional) limit specification object
+     * Gets the (optional) limit on input
      * 
      * @return The limit specification object
      */
-    public DBObject getLimit(){
+    public int getLimit(){
         return _limit;
     }
 
     /**
-     * Sets the (optional) limit specification object
+     * Sets the (optional) limit on input
      * 
      * @param limit
      *            The limit specification object
      */
-    public void setLimit( DBObject limit ){
+    public void setLimit( int limit ){
         _limit = limit;
     }
 
@@ -263,6 +211,15 @@ public class MapReduceCommand {
         _scope = scope;
     }
 
+    /**
+     * Sets the (optional) database name where the output collection should reside
+     * @param outputDB
+     */
+    public void setOutputDB(String outputDB) {
+        this._outputDB = outputDB;
+    }
+
+
     DBObject toDBObject() {
         BasicDBObjectBuilder builder = BasicDBObjectBuilder.start();
 
@@ -271,19 +228,27 @@ public class MapReduceCommand {
                .add("reduce", _reduce)
                .add("verbose", _verbose);
 
-        switch(_outputType) {
-            case INLINE: 
-                builder.add("out", new BasicDBObject("inline", 1));
-                break;
-            case REPLACE:
-                builder.add("out", _outputTarget);
-                break;
-            case MERGE: 
-                builder.add("out", new BasicDBObject("merge", _outputTarget));
-                break;
-            case REDUCE: 
-                builder.add("out", new BasicDBObject("reduce", _outputTarget));
-                break;
+        if (_outputType == OutputType.REPLACE && _outputDB == null) {
+            builder.add("out", _outputTarget);
+        } else {
+            BasicDBObject out = new BasicDBObject();
+            switch(_outputType) {
+                case INLINE:
+                    out.put("inline", 1);
+                    break;
+                case REPLACE:
+                    out.put("replace", _outputTarget);
+                    break;
+                case MERGE:
+                    out.put("merge", _outputTarget);
+                    break;
+                case REDUCE:
+                    out.put("reduce", _outputTarget);
+                    break;
+            }
+            if (_outputDB != null)
+                out.put("db", _outputDB);
+            builder.add("out", out);
         }
 
         if (_query != null)
@@ -295,7 +260,7 @@ public class MapReduceCommand {
         if (_sort != null)
             builder.add("sort", _sort);
 
-        if (_limit != null)
+        if (_limit > 0)
             builder.add("limit", _limit);
 
         if (_scope != null)
@@ -313,11 +278,12 @@ public class MapReduceCommand {
     final String _map;
     final String _reduce;
     final String _outputTarget;
+    String _outputDB = null;
     final OutputType _outputType;
     final DBObject _query;
     String _finalize;
     DBObject _sort;
-    DBObject _limit;
+    int _limit;
     String _scope;
     Boolean _verbose = true;
 }

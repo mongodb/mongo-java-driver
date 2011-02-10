@@ -917,12 +917,12 @@ public abstract class DBCollection {
      * @dochub mapreduce
      */
     public MapReduceOutput mapReduce( String map , String reduce , DBObject query ) throws MongoException{
-        return mapReduce( new MapReduceCommand( getName() , map , reduce , query ) );
+        return mapReduce( new MapReduceCommand( this , map , reduce , null, MapReduceCommand.OutputType.INLINE, query ) );
     }
 
     /**
      * performs a map reduce operation
-     * Runs the command in STANDARD output mode (saves to named collection)
+     * Runs the command in REPLACE output mode (saves to named collection)
      * 
      * @param map
      *            map function in javascript code
@@ -937,15 +937,14 @@ public abstract class DBCollection {
      * @dochub mapreduce
      */
     public MapReduceOutput mapReduce( String map , String reduce , String outputTarget , DBObject query ) throws MongoException{
-        return mapReduce( new MapReduceCommand( getName() , map , reduce , outputTarget , query ) );
+        return mapReduce( new MapReduceCommand( this , map , reduce , outputTarget , MapReduceCommand.OutputType.REPLACE, query ) );
     }
 
     /**
      * performs a map reduce operation
-     * Specify an outputType (MapReduceCommand.OutputType) to control job
-     * execution
+     * Specify an outputType to control job execution
      * * INLINE - Return results inline
-     * * STANDARD - Save the job output to outputTarget
+     * * REPLACE - Replace the output collection with the job output
      * * MERGE - Merge the job output with the existing contents of outputTarget
      * * REDUCE - Reduce the job output with the existing contents of
      * outputTarget
@@ -966,7 +965,7 @@ public abstract class DBCollection {
      */
     public MapReduceOutput mapReduce( String map , String reduce , String outputTarget , MapReduceCommand.OutputType outputType , DBObject query )
             throws MongoException{
-        return mapReduce( new MapReduceCommand( getName() , map , reduce , outputTarget , outputType , query ) );
+        return mapReduce( new MapReduceCommand( this , map , reduce , outputTarget , outputType , query ) );
     }
 
     /**
