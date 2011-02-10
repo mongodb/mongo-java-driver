@@ -8,8 +8,9 @@ package com.mongodb;
  */
 public class MapReduceOutput {
 
-    MapReduceOutput( DBCollection from , BasicDBObject raw ){
+    MapReduceOutput( DBCollection from , DBObject cmd, BasicDBObject raw ){
         _raw = raw;
+        _cmd = cmd;
 
         if ( raw.containsKey( "results" ) ) {
             _coll = null;
@@ -52,6 +53,10 @@ public class MapReduceOutput {
         return _raw;
     }
 
+    public DBObject getCommand() {
+        return _cmd;
+    }
+
     public String toString(){
         return _raw.toString();
     }
@@ -62,4 +67,5 @@ public class MapReduceOutput {
     final Iterable<DBObject> _resultSet;
     final DBCollection _coll;
     final BasicDBObject _counts;
+    final DBObject _cmd;
 }

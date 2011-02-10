@@ -978,9 +978,10 @@ public abstract class DBCollection {
      * @throws MongoException
      */
     public MapReduceOutput mapReduce( MapReduceCommand command ) throws MongoException{
-        CommandResult res = _db.command( command.toDBObject() );
+        DBObject cmd = command.toDBObject();
+        CommandResult res = _db.command( cmd );
         res.throwOnError();
-        return new MapReduceOutput( this , res );
+        return new MapReduceOutput( this , cmd, res );
     }
 
     /**
@@ -996,7 +997,7 @@ public abstract class DBCollection {
             throw new IllegalArgumentException( "need mapreduce arg" );
         CommandResult res = _db.command( command );
         res.throwOnError();
-        return new MapReduceOutput( this , res );
+        return new MapReduceOutput( this , command, res );
     }
     
     /**

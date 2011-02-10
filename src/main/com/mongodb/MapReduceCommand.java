@@ -19,13 +19,19 @@ package com.mongodb;
 
 public class MapReduceCommand {
 
-    static enum OutputType {
-        STANDARD, MERGE, REDUCE, INLINE
+    /**
+     * INLINE - Return results inline, no result is written to the DB server
+     * REPLACE - Save the job output to a collection, replacing its previous content
+     * MERGE - Merge the job output with the existing contents of outputTarget collection
+     * REDUCE - Reduce the job output with the existing contents of outputTarget collection
+     */
+    public static enum OutputType {
+        REPLACE, MERGE, REDUCE, INLINE
     };
 
     /**
      * Represents the command for a map reduce operation
-     * Runs the command in STANDARD output to a named collection
+     * Runs the command in REPLACE output type to a named collection
      * 
      * @param input
      *            the collection to read from
@@ -46,7 +52,7 @@ public class MapReduceCommand {
         _map = map;
         _reduce = reduce;
         _outputTarget = outputTarget;
-        _outputType = OutputType.STANDARD;
+        _outputType = OutputType.REPLACE;
         _query = query;
     }
 
@@ -164,10 +170,6 @@ public class MapReduceCommand {
 
     /**
      * Gets the OutputType for this instance.
-     * INLINE - Return results inline
-     * STANDARD - Save the job output to outputTarget
-     * MERGE - Merge the job output with the existing contents of outputTarget
-     * REDUCE - Reduce the job output with the existing contents of outputTarget
      * @return The outputType.
      */
     public OutputType getOutputType(){
@@ -273,7 +275,7 @@ public class MapReduceCommand {
             case INLINE: 
                 builder.add("out", new BasicDBObject("inline", 1));
                 break;
-            case STANDARD: 
+            case REPLACE:
                 builder.add("out", _outputTarget);
                 break;
             case MERGE: 
