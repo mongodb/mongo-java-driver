@@ -29,6 +29,8 @@ import java.util.*;
  * </pre></blockquote>
  */
 public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSONObject {
+
+    private static final long serialVersionUID = -4415279469780082174L;
     
     /**
      *  Creates an empty object.

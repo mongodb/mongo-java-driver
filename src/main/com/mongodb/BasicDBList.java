@@ -27,6 +27,8 @@ import com.mongodb.util.*;
  */
 public class BasicDBList extends BasicBSONList implements DBObject {
 
+    private static final long serialVersionUID = -4415279469780082174L;
+
     /**
      * Returns a JSON serialization of this object
      * @return JSON serialization

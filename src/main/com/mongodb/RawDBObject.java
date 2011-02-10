@@ -78,6 +78,10 @@ public class RawDBObject implements DBObject {
         throw new RuntimeException( "read only" );
     }
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public boolean containsKey( String key ){
         return containsField(key);
     }

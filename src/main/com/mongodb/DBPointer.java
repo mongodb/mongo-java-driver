@@ -23,6 +23,7 @@ import org.bson.types.*;
 /**
  * @deprecated
  */
+@Deprecated
 public class DBPointer extends DBRefBase {
     
     static final boolean D = Boolean.getBoolean( "DEBUG.DBPOINTER" );

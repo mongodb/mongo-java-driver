@@ -50,8 +50,8 @@ public class DBCallback extends BasicBSONCallback {
     public Object objectDone(){
         BSONObject o = (BSONObject)super.objectDone();
         if ( ! ( o instanceof List ) && 
-             o.containsKey( "$ref" ) && 
-             o.containsKey( "$id" ) ){
+             o.containsField( "$ref" ) && 
+             o.containsField( "$id" ) ){
             return cur().put( _lastName , new DBRef( _db, o ) );
         }
         

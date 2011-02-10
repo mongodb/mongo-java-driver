@@ -217,6 +217,10 @@ public abstract class GridFSFile implements DBObject {
         throw new UnsupportedOperationException();
     }
 
+    /*
+     * @deprecated
+     */
+    @Deprecated
     public boolean containsKey( String s ){
         return containsField( s );
     }

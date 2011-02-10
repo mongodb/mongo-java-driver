@@ -40,6 +40,8 @@ import java.util.logging.*;
  */
 public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
+    private static final long serialVersionUID = -4415279469780082174L;
+
     static final Logger LOGGER = Logger.getLogger( "org.bson.ObjectId" );
 
     /** Gets a new object id.
