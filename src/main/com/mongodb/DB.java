@@ -485,12 +485,32 @@ public abstract class DB {
      * @param passwd
      */
     public void addUser( String username , char[] passwd ){
+        addUser(username, passwd, false);
+    }
+
+    /**
+     * Adds a new user for this db
+     * @param username
+     * @param passwd
+     * @param readOnly if true, user will only be able to read
+     */
+    public void addUser( String username , char[] passwd, boolean readOnly ){
         DBCollection c = getCollection( "system.users" );
         DBObject o = c.findOne( new BasicDBObject( "user" , username ) );
         if ( o == null )
             o = new BasicDBObject( "user" , username );
         o.put( "pwd" , _hash( username , passwd ) );
+        o.put( "readOnly" , readOnly );
         c.save( o );
+    }
+
+    /**
+     * Removes a user for this db
+     * @param username
+     */
+    public void removeUser( String username ){
+        DBCollection c = getCollection( "system.users" );
+        c.remove(new BasicDBObject( "user" , username ));
     }
 
     String _hash( String username , char[] passwd ){

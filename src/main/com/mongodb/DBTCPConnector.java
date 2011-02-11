@@ -32,6 +32,7 @@ class DBTCPConnector implements DBConnector {
 
     public DBTCPConnector( Mongo m , ServerAddress addr )
         throws MongoException {
+        _mongo = m;
         _portHolder = new DBPortPool.Holder( m._options );
         _checkAddress( addr );
 
@@ -39,7 +40,7 @@ class DBTCPConnector implements DBConnector {
 
         if ( addr.isPaired() ){
             _allHosts = new ArrayList<ServerAddress>( addr.explode() );
-            _rsStatus = new ReplicaSetStatus( _allHosts );
+            _rsStatus = new ReplicaSetStatus( m, _allHosts );
             _createLogger.info( "switching to replica set mode : " + _allHosts + " -> " + _curMaster  );
         }
         else {
@@ -61,7 +62,7 @@ class DBTCPConnector implements DBConnector {
         _checkAddress( all );
 
         _allHosts = new ArrayList<ServerAddress>( all ); // make a copy so it can't be modified
-        _rsStatus = new ReplicaSetStatus( _allHosts );
+        _rsStatus = new ReplicaSetStatus( m, _allHosts );
 
         _createLogger.info( all  + " -> " + _curMaster );
     }
@@ -396,7 +397,7 @@ class DBTCPConnector implements DBConnector {
         DBPort p = null;
         try {
             p = _masterPortPool.get();
-            p.runCommand( "admin" , new BasicDBObject( "nonce" , 1 ) );
+            p.runCommand( _mongo.getDB("admin") , new BasicDBObject( "nonce" , 1 ) );
         }
         finally {
             _masterPortPool.done( p );
@@ -434,6 +435,7 @@ class DBTCPConnector implements DBConnector {
         return ! _closed;
     }
 
+    private Mongo _mongo;
     private ServerAddress _curMaster;
     private DBPortPool _masterPortPool;
     private DBPortPool.Holder _portHolder;
