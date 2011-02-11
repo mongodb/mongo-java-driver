@@ -192,14 +192,12 @@ class ReplicaSetStatus {
                     
                     // TODO: look at members
                 }
-            }
-
-            catch ( MongoException e ){
+            } catch ( MongoException e ){
                 if ( _setName != null ){
                     // this probably means the master is busy, so going to ignore
                 }
                 else {
-                    _logger.log( Level.SEVERE , "can't get intial config from node: " + _addr , e );
+                    _logger.log( Level.SEVERE , "can't get initial config from node: " + _addr , e );
                 }
             }
             catch ( Exception e ){

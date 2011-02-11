@@ -28,6 +28,8 @@ import com.mongodb.util.*;
 
 /**
  * represents a Port to the database, which is effectively a single connection to a server
+ * Methods implemented at the port level should throw the raw exceptions like IOException,
+ * so that the connector above can make appropriate decisions on how to handle.
  * @author antoine
  */
 public class DBPort {
@@ -117,29 +119,23 @@ public class DBPort {
         }
     }
 
-    synchronized CommandResult getLastError( DB db , WriteConcern concern){
+    synchronized CommandResult getLastError( DB db , WriteConcern concern) throws IOException {
 	DBApiLayer dbAL = (DBApiLayer) db;
 	return runCommand( dbAL , concern.getCommand() );
     }
 
-    synchronized DBObject findOne( DB db , String coll , DBObject q ){
+    synchronized DBObject findOne( DB db , String coll , DBObject q ) throws IOException {
         OutMessage msg = OutMessage.query( db._mongo , 0 , db.getName() + "." + coll , 0 , -1 , q , null );
         
-        try {
-            Response res = go( msg , db.getCollection( coll ) );
-            if ( res.size() == 0 )
-                return null;
-            if ( res.size() > 1 )
-                throw new MongoInternalException( "something is wrong.  size:" + res.size() );
-            return res.get(0);
-        }
-        catch ( IOException ioe ){
-            throw new MongoException.Network( "DBPort.findOne failed" , ioe );
-        }
-        
+        Response res = go( msg , db.getCollection( coll ) );
+        if ( res.size() == 0 )
+            return null;
+        if ( res.size() > 1 )
+            throw new MongoInternalException( "something is wrong.  size:" + res.size() );
+        return res.get(0);
     }
 
-    synchronized CommandResult runCommand( DB db , DBObject cmd ) {
+    synchronized CommandResult runCommand( DB db , DBObject cmd ) throws IOException {
         DBObject res = findOne( db , "$cmd" , cmd );
         if ( res == null )
             throw new MongoInternalException( "something is wrong, no command result" );
@@ -173,7 +169,7 @@ public class DBPort {
     }
 
 
-    synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern){
+    synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern) throws IOException {
         if ( last != _calls )
             return null;
         
@@ -281,7 +277,7 @@ public class DBPort {
         _socket = null;
     }
     
-    void checkAuth( DB db ){
+    void checkAuth( DB db ) throws IOException {
         if ( db._username == null ){
             if ( db._name.equals( "admin" ) )
                 return;

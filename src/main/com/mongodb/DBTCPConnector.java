@@ -118,8 +118,12 @@ class DBTCPConnector implements DBConnector {
 
     WriteResult _checkWriteError( DB db , MyPort mp , DBPort port , WriteConcern concern )
         throws MongoException {
-
-        CommandResult e = port.runCommand( db , concern.getCommand() );
+        CommandResult e = null;
+        try {
+            e = port.runCommand( db , concern.getCommand() );
+        } catch ( IOException ioe ){
+            throw new MongoException.Network( ioe.getMessage() , ioe );
+        }
         mp.done( port );
         
         Object foo = e.get( "err" );
@@ -150,9 +154,9 @@ class DBTCPConnector implements DBConnector {
 
         MyPort mp = _myPort.get();
         DBPort port = mp.get( true , false , hostNeeded );
-        port.checkAuth( db );
 
         try {
+            port.checkAuth( db );
             port.say( m );
             if ( concern.callGetLastError() ){
                 return _checkWriteError( db , mp , port , concern );
@@ -204,11 +208,10 @@ class DBTCPConnector implements DBConnector {
         
         final MyPort mp = _myPort.get();
         final DBPort port = mp.get( false , slaveOk, hostNeeded );
-        
-        port.checkAuth( db );
-        
+                
         Response res = null;
         try {
+            port.checkAuth( db );
             res = port.call( m , coll );
             mp.done( port );
             if ( res._responseTo != m.getId() )
@@ -398,8 +401,9 @@ class DBTCPConnector implements DBConnector {
         try {
             p = _masterPortPool.get();
             p.runCommand( _mongo.getDB("admin") , new BasicDBObject( "nonce" , 1 ) );
-        }
-        finally {
+        } catch ( IOException ioe ){
+            throw new MongoException.Network( ioe.getMessage() , ioe );
+        } finally {
             _masterPortPool.done( p );
         }
     }
