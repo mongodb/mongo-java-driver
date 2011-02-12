@@ -34,14 +34,14 @@ public class JSONCallback extends BasicBSONCallback {
 	BSONObject b = (BSONObject)o;
 
 	if ( ! _lastArray ) {
-	    if ( b.containsKey( "$oid" ) ) {
+	    if ( b.containsField( "$oid" ) ) {
 		o = new ObjectId((String)b.get("$oid"));
 		if (!isStackEmpty()) {
 		    gotObjectId( _lastName, (ObjectId)o);
 		} else {
 		    setRoot(o);
 		} 
-	    } else if ( b.containsKey( "$date" ) ) {
+	    } else if ( b.containsField( "$date" ) ) {
 		SimpleDateFormat format = 
 		    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
@@ -51,7 +51,7 @@ public class JSONCallback extends BasicBSONCallback {
 		} else {
 		    setRoot(o);
 		}
-	    } else if ( b.containsKey( "$regex" ) ) {
+	    } else if ( b.containsField( "$regex" ) ) {
 		o = Pattern.compile( (String)b.get( "$regex" ), 
 				     BSON.regexFlags( (String)b.get( "$options" )) );
 		if (!isStackEmpty()) {

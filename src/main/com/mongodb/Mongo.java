@@ -466,7 +466,7 @@ public class Mongo {
     }
 
     /**
-     * Helper method for setting up MongOptions at instantiation
+     * Helper method for setting up MongoOptions at instantiation
      * so that any options which affect this connection can be set.
      */
     void _applyMongoOptions() {

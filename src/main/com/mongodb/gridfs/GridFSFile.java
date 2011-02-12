@@ -136,7 +136,7 @@ public abstract class GridFSFile implements DBObject {
      * @return
      */
     public List<String> getAliases(){
-        return (List<String>)_metadata.get( "aliases" );
+        return (List<String>)_extradata.get( "aliases" );
     }
 
     /**
@@ -144,9 +144,17 @@ public abstract class GridFSFile implements DBObject {
      * @return
      */
     public DBObject getMetaData(){
-        return (DBObject)_metadata.get( "metadata" );
+        return (DBObject)_extradata.get( "metadata" );
     }
-    
+
+    /**
+     * Gets the file metadata
+     * @return
+     */
+    public void setMetaData(DBObject metadata){
+        _extradata.put( "metadata", metadata );
+    }
+
     /**
      * Gets the observed MD5 during transfer
      * @return
@@ -177,7 +185,7 @@ public abstract class GridFSFile implements DBObject {
         else if ( key.equals( "md5" ) )
             _md5 = (String)v;
         else
-            _metadata.put( key , v );
+            _extradata.put( key , v );
         return v;
     }
 
@@ -198,7 +206,7 @@ public abstract class GridFSFile implements DBObject {
             return _uploadDate;
         else if ( key.equals( "md5" ) )
             return _md5;
-        return _metadata.get( key );
+        return _extradata.get( key );
     }
 
     public void putAll( BSONObject o ){
@@ -217,6 +225,10 @@ public abstract class GridFSFile implements DBObject {
         throw new UnsupportedOperationException();
     }
 
+    /*
+     * @deprecated
+     */
+    @Deprecated
     public boolean containsKey( String s ){
         return containsField( s );
     }
@@ -228,7 +240,7 @@ public abstract class GridFSFile implements DBObject {
     public Set<String> keySet(){
         Set<String> keys = new HashSet();
         keys.addAll(VALID_FIELDS);
-        keys.addAll(_metadata.keySet());
+        keys.addAll(_extradata.keySet());
         return keys;
     }
 
@@ -266,7 +278,7 @@ public abstract class GridFSFile implements DBObject {
     long _chunkSize;
     Date _uploadDate;
     List<String> _aliases;
-    DBObject _metadata = new BasicDBObject();
+    DBObject _extradata = new BasicDBObject();
     String _md5;
 
     final static Set<String> VALID_FIELDS = Collections.unmodifiableSet( new HashSet( Arrays.asList( new String[]{ 

@@ -26,6 +26,8 @@ import org.bson.*;
  */
 public class MongoException extends RuntimeException {
 
+    private static final long serialVersionUID = -4415279469780082174L;
+
     /**
      * @param msg the message
      */
@@ -92,6 +94,8 @@ public class MongoException extends RuntimeException {
      */
     public static class Network extends MongoException {
 
+        private static final long serialVersionUID = -4415279469780082174L;
+
         Network( String msg , java.io.IOException ioe ){
             super( -2 , msg , ioe );
             _ioe = ioe;
@@ -109,6 +113,9 @@ public class MongoException extends RuntimeException {
      * Subclass of MongoException representing a duplicate key exception
      */
     public static class DuplicateKey extends MongoException {
+
+        private static final long serialVersionUID = -4415279469780082174L;
+
         DuplicateKey( int code , String msg ){
             super( code , msg );
         }
@@ -118,6 +125,9 @@ public class MongoException extends RuntimeException {
      * Subclass of MongoException representing a cursor-not-found exception
      */
     public static class CursorNotFound extends MongoException {
+        
+        private static final long serialVersionUID = -4415279469780082174L;
+
         CursorNotFound(){
             super( -5 , "cursor not found on server" );
         }

@@ -88,14 +88,6 @@ public class GridFSInputFile extends GridFSFile {
         this( fs , null , null );
     }
     
-    @Override
-    public DBObject getMetaData() {
-        if ( _metadata == null ) {
-            _metadata = new BasicDBObject();
-        }
-        return _metadata;
-    }
-    
     /**
      * Sets the file name on the GridFS entry.
      * 

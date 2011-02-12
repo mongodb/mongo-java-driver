@@ -304,7 +304,7 @@ public abstract class DBCollection {
             cmd.append( "fields", fields );
         if (sort != null && !sort.keySet().isEmpty())
             cmd.append( "sort", sort );
-	
+    
         if (remove)
             cmd.append( "remove", remove );
         else {
@@ -785,19 +785,31 @@ public abstract class DBCollection {
     }
 
     /**
-     * renames of this collection to newName
+     * Calls {@link DBCollection#rename(java.lang.String, boolean) with dropTarget=false
      * @param newName new collection name (not a full namespace)
      * @return the new collection
      * @throws MongoException
      */
     public DBCollection rename( String newName ) 
         throws MongoException {
-        
+        return rename(newName, false);
+    }
+
+    /**
+     * renames of this collection to newName
+     * @param newName new collection name (not a full namespace)
+     * @param dropTarget if a collection with the new name exists, whether or not to drop it
+     * @return the new collection
+     * @throws MongoException
+     */
+    public DBCollection rename( String newName, boolean dropTarget )
+        throws MongoException {
         CommandResult ret = 
             _db.getSisterDB( "admin" )
             .command( BasicDBObjectBuilder.start()
                       .add( "renameCollection" , _fullName )
                       .add( "to" , _db._name + "." + newName )
+                      .add( "dropTarget" , dropTarget )
                       .get() );
         ret.throwOnError();
         resetIndexCache();
@@ -832,33 +844,36 @@ public abstract class DBCollection {
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce , String finalize )
         throws MongoException {
-
-        BasicDBObject args  = new BasicDBObject();
-        args.put( "ns" , getName() );
-        args.put( "key" , key );
-        args.put( "cond" , cond );
-        args.put( "$reduce" , reduce );
-        args.put( "initial" , initial );
-        if ( finalize != null )
-            args.put( "finalize" , finalize );
-        
-        return group( args );
+        GroupCommand cmd = new GroupCommand(this, key, cond, initial, reduce, finalize);        
+        return group( cmd );
     }
 
     /**
      * Applies a group operation
-     * @param args object representing the parameters
+     * @param cmd the group command
+     * @return
+     * @throws MongoException
+     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     */
+    public DBObject group( GroupCommand cmd ) {
+        CommandResult res =  _db.command( cmd.toDBObject() );
+        res.throwOnError();
+        return (DBObject)res.get( "retval" );
+    }
+
+
+    /**
+     * @deprecated prefer the {@link DBCollection#group(com.mongodb.GroupCommand)} which is more standard
+     * Applies a group operation
+     * @param args object representing the arguments to the group function
      * @return
      * @throws MongoException
      * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
     public DBObject group( DBObject args )
         throws MongoException {
-        
-        args.put( "ns" , getName() );
-        
+        args.put( "ns" , getName() );  
         CommandResult res =  _db.command( new BasicDBObject( "group" , args ) );
-
         res.throwOnError();
         return (DBObject)res.get( "retval" );
     }
@@ -892,52 +907,99 @@ public abstract class DBCollection {
 
     /**
      * performs a map reduce operation
-     * @param map map function in javascript code
-     * @param outputTarget optional - leave null if want to use temp collection
-     * @param reduce reduce function in javascript code
-     * @param query to match
-     * @return 
+     * Runs the command in INLINE output mode
+     * 
+     * @param map
+     *            map function in javascript code
+     * @param reduce
+     *            reduce function in javascript code
+     * @param query
+     *            to match
+     * @return
      * @throws MongoException
      * @dochub mapreduce
      */
-    public MapReduceOutput mapReduce( String map , String reduce , Object outputTarget , DBObject query )
-        throws MongoException {
-        BasicDBObjectBuilder b = BasicDBObjectBuilder.start()
-            .add( "mapreduce" , _name )
-            .add( "map" , map )
-            .add( "reduce" , reduce );
-        
-        if ( outputTarget == null ){
-        }
-        else if ( outputTarget instanceof String ){
-            b.add( "out" , outputTarget );
-        }
-        else if ( outputTarget instanceof org.bson.BSONObject ){
-            b.add( "out" , outputTarget );
-        }
-        else {
-            throw new IllegalArgumentException( "outputTarget has to be a string or a document" );
-        }
-
-        if ( query != null )
-            b.add( "query" , query );
-
-        return mapReduce( b.get() );
+    public MapReduceOutput mapReduce( String map , String reduce , DBObject query ) throws MongoException{
+        return mapReduce( new MapReduceCommand( this , map , reduce , null, MapReduceCommand.OutputType.INLINE, query ) );
     }
-    
+
     /**
      * performs a map reduce operation
-     * @param command object representing the parameters
+     * Runs the command in REPLACE output mode (saves to named collection)
+     * 
+     * @param map
+     *            map function in javascript code
+     * @param outputTarget
+     *            optional - leave null if want to use temp collection
+     * @param reduce
+     *            reduce function in javascript code
+     * @param query
+     *            to match
+     * @return
+     * @throws MongoException
+     * @dochub mapreduce
+     */
+    public MapReduceOutput mapReduce( String map , String reduce , String outputTarget , DBObject query ) throws MongoException{
+        return mapReduce( new MapReduceCommand( this , map , reduce , outputTarget , MapReduceCommand.OutputType.REPLACE, query ) );
+    }
+
+    /**
+     * performs a map reduce operation
+     * Specify an outputType to control job execution
+     * * INLINE - Return results inline
+     * * REPLACE - Replace the output collection with the job output
+     * * MERGE - Merge the job output with the existing contents of outputTarget
+     * * REDUCE - Reduce the job output with the existing contents of
+     * outputTarget
+     * 
+     * @param map
+     *            map function in javascript code
+     * @param outputTarget
+     *            optional - leave null if want to use temp collection
+     * @param outputType
+     *            set the type of job output
+     * @param reduce
+     *            reduce function in javascript code
+     * @param query
+     *            to match
+     * @return
+     * @throws MongoException
+     * @dochub mapreduce
+     */
+    public MapReduceOutput mapReduce( String map , String reduce , String outputTarget , MapReduceCommand.OutputType outputType , DBObject query )
+            throws MongoException{
+        return mapReduce( new MapReduceCommand( this , map , reduce , outputTarget , outputType , query ) );
+    }
+
+    /**
+     * performs a map reduce operation
+     * 
+     * @param command
+     *            object representing the parameters
      * @return
      * @throws MongoException
      */
-    public MapReduceOutput mapReduce( DBObject command )
-        throws MongoException {
+    public MapReduceOutput mapReduce( MapReduceCommand command ) throws MongoException{
+        DBObject cmd = command.toDBObject();
+        CommandResult res = _db.command( cmd );
+        res.throwOnError();
+        return new MapReduceOutput( this , cmd, res );
+    }
+
+    /**
+     * performs a map reduce operation
+     * 
+     * @param command
+     *            object representing the parameters
+     * @return
+     * @throws MongoException
+     */
+    public MapReduceOutput mapReduce( DBObject command ) throws MongoException{
         if ( command.get( "mapreduce" ) == null && command.get( "mapReduce" ) == null )
             throw new IllegalArgumentException( "need mapreduce arg" );
         CommandResult res = _db.command( command );
         res.throwOnError();
-        return new MapReduceOutput( this , res );
+        return new MapReduceOutput( this , command, res );
     }
     
     /**

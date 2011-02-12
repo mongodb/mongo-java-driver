@@ -673,6 +673,8 @@ class JSONParser {
  */
 class JSONParseException extends RuntimeException { 
 
+    private static final long serialVersionUID = -4415279469780082174L;
+
     String s;
     int pos;
 

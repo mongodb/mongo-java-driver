@@ -55,7 +55,7 @@ public class DBApiLayer extends DB {
 
     /**
      * @param mongo the Mongo instance
-     * @param root the database name
+     * @param name the database name
      * @param connector the connector
      */
     protected DBApiLayer( Mongo mongo, String name , DBConnector connector ){
@@ -374,14 +374,9 @@ public class DBApiLayer extends DB {
             m.writeInt( _numToReturn ); // num to return
             m.writeLong( _curResult.cursor() );
             
-            try {
-                Response res = _connector.call( DBApiLayer.this , _collection , m , _host );
-                _numGetMores++;
-                init( res );
-            }
-            catch ( MongoException me ){
-                throw new MongoInternalException( "can't do getmore" , me );
-            }
+            Response res = _connector.call( DBApiLayer.this , _collection , m , _host );
+            _numGetMores++;
+            init( res );
         }
 
         public void remove(){

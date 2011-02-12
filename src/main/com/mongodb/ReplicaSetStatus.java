@@ -20,9 +20,10 @@ import java.util.logging.*;
 class ReplicaSetStatus {
 
     static final Logger _rootLogger = Logger.getLogger( "com.mongodb.ReplicaSetStatus" );
-    
-    ReplicaSetStatus( List<ServerAddress> initial ){
-        
+    static final int UNAUTHENTICATED_ERROR_CODE = 10057;
+
+    ReplicaSetStatus( Mongo mongo, List<ServerAddress> initial ){
+        _mongo = mongo;
         _all = Collections.synchronizedList( new ArrayList<Node>() );
         for ( ServerAddress addr : initial ){
             _all.add( new Node( addr ) );
@@ -120,7 +121,7 @@ class ReplicaSetStatus {
         synchronized void update(Set<Node> seenNodes){
             try {
                 long start = System.currentTimeMillis();
-                CommandResult res = _port.runCommand( "admin" , _isMasterCmd );
+                CommandResult res = _port.runCommand( _mongo.getDB("admin") , _isMasterCmd );
                 _lastCheck = System.currentTimeMillis();
                 _pingTime = _lastCheck - start;
                 
@@ -134,7 +135,7 @@ class ReplicaSetStatus {
                 _isSecondary = res.getBoolean( "secondary" , false );
                 _lastPrimarySignal = res.getString( "primary" );
 
-                if ( res.containsKey( "hosts" ) ){
+                if ( res.containsField( "hosts" ) ){
                     for ( Object x : (List)res.get("hosts") ){
                         String host = x.toString();
                         Node node = _addIfNotHere(host);
@@ -143,8 +144,16 @@ class ReplicaSetStatus {
                     }
                 }
                 
+                if ( res.containsField( "passives" ) ){
+                    for ( Object x : (List)res.get("passives") ){
+                        String host = x.toString();
+                        Node node = _addIfNotHere(host);
+                        if (node != null && seenNodes != null)
+                            seenNodes.add(node);
+                    }
+                }
             }
-            catch ( MongoInternalException e ){
+            catch ( MongoException e ){
                 Throwable root = e;
                 if ( e.getCause() != null )
                     root = e.getCause();
@@ -160,13 +169,16 @@ class ReplicaSetStatus {
                 return;
             
             try {
-                DBObject config = _port.findOne( "local.system.replset" , new BasicDBObject() );
+                DB db = _mongo.getDB("local");
+                _port.checkAuth(db);
+                DBObject config = _port.findOne( db, "system.replset" , new BasicDBObject() );
                 if ( config == null ){
-                    // probbaly a replica pair
+                    // probably a replica pair
                     // TODO: add this in when pairs are really gone
                     //_logger.log( Level.SEVERE , "no replset config!" );
-                }
-                else {
+                } else if (config.get("$err") != null && UNAUTHENTICATED_ERROR_CODE == (Integer)config.get("code")) {
+                    _logger.log( Level.WARNING , "Replica Set updater cannot get results, call authenticate on 'local' or 'admin' db");
+                } else {
                     
                     String setName = config.get( "_id" ).toString();
                     if ( _setName == null ){
@@ -182,7 +194,7 @@ class ReplicaSetStatus {
                 }
             }
 
-            catch ( MongoInternalException e ){
+            catch ( MongoException e ){
                 if ( _setName != null ){
                     // this probably means the master is busy, so going to ignore
                 }
@@ -285,11 +297,14 @@ class ReplicaSetStatus {
             n.update(seenNodes);
         }
 
-        // remove unused hosts
-        Iterator<Node> it = _all.iterator();
-        while (it.hasNext()) {
-            if (!seenNodes.contains(it.next()))
-                it.remove();
+        if (!seenNodes.isEmpty()) {
+            // not empty, means that at least 1 server gave node list
+            // remove unused hosts
+            Iterator<Node> it = _all.iterator();
+            while (it.hasNext()) {
+                if (!seenNodes.contains(it.next()))
+                    it.remove();
+            }
         }
     }
 
@@ -350,6 +365,7 @@ class ReplicaSetStatus {
 
     final List<Node> _all;
     Updater _updater;
+    Mongo _mongo;
     String _setName = null; // null until init
     Logger _logger = _rootLogger; // will get changed to use set name once its found
 
@@ -374,7 +390,7 @@ class ReplicaSetStatus {
 
         Mongo m = new Mongo( addrs );
 
-        ReplicaSetStatus status = new ReplicaSetStatus( addrs );
+        ReplicaSetStatus status = new ReplicaSetStatus( m, addrs );
         System.out.println( status.ensureMaster()._addr );
 
         while ( true ){

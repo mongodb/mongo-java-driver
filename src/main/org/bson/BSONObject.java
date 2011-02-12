@@ -71,6 +71,7 @@ public interface BSONObject {
      * @return
      * @deprecated
      */
+    @Deprecated
     public boolean containsKey( String s );
 
     /**

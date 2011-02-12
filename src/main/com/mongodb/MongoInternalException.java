@@ -24,6 +24,8 @@ package com.mongodb;
  */
 public class MongoInternalException extends MongoException {
 
+    private static final long serialVersionUID = -4415279469780082174L;
+
     /**
      *
      * @param msg the message
@@ -42,3 +44,4 @@ public class MongoInternalException extends MongoException {
     }
 
 }
+

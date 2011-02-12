@@ -38,6 +38,10 @@ public abstract class ReflectionDBObject implements DBObject {
         return getWrapper().keySet();
     }
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public boolean containsKey( String s ){
         return containsField( s );
     }
@@ -162,6 +166,10 @@ public abstract class ReflectionDBObject implements DBObject {
             return _keys;
         }
 
+        /**
+         * @deprecated
+         */
+        @Deprecated
         public boolean containsKey( String key ){
             return _keys.contains( key );
         }

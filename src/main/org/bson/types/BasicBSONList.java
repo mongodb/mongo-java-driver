@@ -51,9 +51,10 @@ import java.util.*;
  * </p>
  */
 public class BasicBSONList extends ArrayList<Object> implements BSONObject {
+
+    private static final long serialVersionUID = -4415279469780082174L;
     
-    public BasicBSONList(){
-    }
+    public BasicBSONList() { }
     
     /** 
      * Puts a value at an index.
@@ -121,6 +122,7 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
     /**
      * @deprecated
      */
+    @Deprecated
     public boolean containsKey( String key ){
         return containsField(key);
     }

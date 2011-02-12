@@ -8,11 +8,31 @@ package com.mongodb;
  */
 public class MapReduceOutput {
 
-    MapReduceOutput( DBCollection from , BasicDBObject raw ){
+    MapReduceOutput( DBCollection from , DBObject cmd, BasicDBObject raw ){
         _raw = raw;
+        _cmd = cmd;
 
-        _collname = raw.getString( "result" );
-        _coll = from._db.getCollection( _collname );
+        if ( raw.containsField( "results" ) ) {
+            _coll = null;
+            _collname = null;
+            _resultSet = (Iterable<DBObject>) raw.get( "results" );
+        } else {
+            Object res = raw.get("result");
+            if (res instanceof String) {
+                _collname = (String) res;
+            } else {
+                BasicDBObject output = (BasicDBObject) res;
+                _collname = output.getString("collection");
+                _dbname = output.getString("db");
+            }
+
+            DB db = from._db;
+            if (_dbname != null) {
+                db = db.getSisterDB(_dbname);
+            }
+            _coll = db.getCollection( _collname );
+            _resultSet = _coll.find();
+        }
         _counts = (BasicDBObject)raw.get( "counts" );
     }
 
@@ -20,19 +40,21 @@ public class MapReduceOutput {
      * returns a cursor to the results of the operation
      * @return
      */
-    public DBCursor results(){
-        return _coll.find();
+    public Iterable<DBObject> results(){
+        return _resultSet;
     }
 
     /**
      * drops the collection that holds the results
      */
     public void drop(){
-        _coll.drop();
+        if ( _coll != null)
+            _coll.drop();
     }
     
     /**
      * gets the collection that holds the results
+     * (Will return null if results are Inline)
      * @return
      */
     public DBCollection getOutputCollection(){
@@ -43,6 +65,10 @@ public class MapReduceOutput {
         return _raw;
     }
 
+    public DBObject getCommand() {
+        return _cmd;
+    }
+
     public String toString(){
         return _raw.toString();
     }
@@ -50,6 +76,9 @@ public class MapReduceOutput {
     final BasicDBObject _raw;
 
     final String _collname;
+    String _dbname = null;
+    final Iterable<DBObject> _resultSet;
     final DBCollection _coll;
     final BasicDBObject _counts;
+    final DBObject _cmd;
 }
