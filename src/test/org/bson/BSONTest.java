@@ -158,6 +158,7 @@ public class BSONTest extends TestCase {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testCustomEncoders() 
       throws IOException{
         // If clearEncodingHooks isn't working the first test will fail.
@@ -206,7 +207,7 @@ public class BSONTest extends TestCase {
     }
 
     @Test
-    @SuppressWarnings( "deprecation" )
+    @SuppressWarnings({"deprecation", "unchecked"})
     public void testCustomDecoders() 
       throws IOException{
         // If clearDecodingHooks isn't working this whole test will fail.

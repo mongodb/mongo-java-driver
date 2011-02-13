@@ -27,7 +27,7 @@ import com.mongodb.util.*;
 import org.bson.*;
 import org.bson.types.*;
 
-
+@SuppressWarnings({"unchecked", "deprecation"})
 public class DBObjectTest extends TestCase {
 
     public DBObjectTest() {

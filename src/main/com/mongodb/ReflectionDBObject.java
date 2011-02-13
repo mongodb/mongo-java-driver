@@ -54,6 +54,7 @@ public abstract class ReflectionDBObject implements DBObject {
         return getWrapper().set( this , key , v );
     }
 
+    @SuppressWarnings("unchecked")
     public void putAll( Map m ){
         for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() ){
             put( entry.getKey().toString() , entry.getValue() );

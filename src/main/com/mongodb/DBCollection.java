@@ -18,11 +18,12 @@
 
 package com.mongodb;
 
-import java.util.*;
-
+// Mongo
 import org.bson.types.*;
-
 import com.mongodb.util.*;
+
+// Java
+import java.util.*;
 
 /** This class provides a skeleton implementation of a database collection.  
  * <p>A typical invocation sequence is thus
@@ -870,6 +871,7 @@ public abstract class DBCollection {
      * @throws MongoException
      * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
+    @Deprecated
     public DBObject group( DBObject args )
         throws MongoException {
         args.put( "ns" , getName() );  

@@ -5,6 +5,7 @@ import java.net.UnknownHostException;
 
 import org.bson.types.*;
 
+@SuppressWarnings("unchecked")
 public class PerformanceTest {
 
     public static final int batchSize = 100;

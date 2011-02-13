@@ -82,6 +82,7 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
         return v;
     }
 
+    @SuppressWarnings("unchecked")
     public void putAll( Map m ){
     	for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() ){
             put( entry.getKey().toString() , entry.getValue() );
@@ -138,6 +139,7 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
       return new StringRangeSet(size());
     }
 
+    @SuppressWarnings("unchecked")
     public Map toMap() {
         Map m = new HashMap();
         Iterator i = this.keySet().iterator();

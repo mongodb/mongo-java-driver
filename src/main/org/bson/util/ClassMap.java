@@ -40,6 +40,7 @@ import java.util.*;
  * (assuming Dog.class &lt; Animal.class)
  * 
  */
+@SuppressWarnings("unchecked")
 public class ClassMap<T> implements Map <Class, T> {
 
     /**
@@ -59,9 +60,9 @@ public class ClassMap<T> implements Map <Class, T> {
     protected Map<Class, T> getCache(){
         return(_cache);
     }
-    
+
     private void setCache(Map m){
-	_cache = m;
+	    _cache = m;
     }
     
     /**
@@ -207,9 +208,9 @@ public class ClassMap<T> implements Map <Class, T> {
      * initCache
      */
     protected void initCache(){
-	Map cache = getCache();
+	    final Map cache = getCache();
         cache.clear();
-	cache.putAll(getInternalMap());
+	    cache.putAll(getInternalMap());
     }
 
     /**
@@ -256,10 +257,10 @@ public class ClassMap<T> implements Map <Class, T> {
      * computeAncestry
      */
     private static List<Class> computeAncestry(Class c){
-	List<Class> result = new ArrayList<Class>();
-	result.add(Object.class);
-	computeAncestry(c, result);
-	return(result);
+        final List<Class> result = new ArrayList<Class>();
+        result.add(Object.class);
+        computeAncestry(c, result);
+	    return(result);
     }
 
     private static void computeAncestry(Class c, List result){
@@ -284,11 +285,11 @@ public class ClassMap<T> implements Map <Class, T> {
      * classAncestryCache
      */
     private static Map getClassAncestryCache(){
-	return(_ancestryCache);
+	    return(_ancestryCache);
     }
 
     private static void setClassAncestryCache(Map m){
-	_ancestryCache = m;
+	    _ancestryCache = m;
     }
 
     /**

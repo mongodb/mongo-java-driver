@@ -33,6 +33,7 @@ public class DBCallback extends BasicBSONCallback {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void gotDBRef( String name , String ns , ObjectId id ){
         if ( id.equals( Bytes.COLLECTION_REF_ID ) )
             cur().put( name , _collection );

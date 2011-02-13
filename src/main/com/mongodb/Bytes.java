@@ -148,6 +148,7 @@ public class Bytes extends BSON {
      * @param o the object
      * @return the byte value associated with the type, or 0 if <code>o</code> was <code>null</code>
      */
+    @SuppressWarnings("deprecation")
     public static byte getType( Object o ){
         if ( o == null )
             return NULL;
