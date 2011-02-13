@@ -265,6 +265,7 @@ public class QueryBuilder {
      * @param ors
      * @return
      */
+    @SuppressWarnings("unchecked")
     public QueryBuilder or( DBObject ... ors ){
         List l = (List)_query.get( "$or" );
         if ( l == null ){

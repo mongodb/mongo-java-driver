@@ -52,6 +52,7 @@ public class RawDBObject implements DBObject {
         return e.getObject();
     }
 
+    @SuppressWarnings("unchecked")
     public Map toMap() {
         Map m = new HashMap();
         Iterator i = this.keySet().iterator();

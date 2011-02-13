@@ -135,6 +135,7 @@ public abstract class GridFSFile implements DBObject {
      * note: to set aliases, call put( "aliases" , List<String> )
      * @return
      */
+    @SuppressWarnings("unchecked")
     public List<String> getAliases(){
         return (List<String>)_extradata.get( "aliases" );
     }
@@ -237,6 +238,7 @@ public abstract class GridFSFile implements DBObject {
         return keySet().contains( s );
     }
 
+    @SuppressWarnings("unchecked")
     public Set<String> keySet(){
         Set<String> keys = new HashSet();
         keys.addAll(VALID_FIELDS);
@@ -281,6 +283,7 @@ public abstract class GridFSFile implements DBObject {
     DBObject _extradata = new BasicDBObject();
     String _md5;
 
+    @SuppressWarnings("unchecked")
     final static Set<String> VALID_FIELDS = Collections.unmodifiableSet( new HashSet( Arrays.asList( new String[]{ 
                     "_id" , "filename" , "contentType" , "length" , "chunkSize" ,
                     "uploadDate" , "aliases" , "md5"

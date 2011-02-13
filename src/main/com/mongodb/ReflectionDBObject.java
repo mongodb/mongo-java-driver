@@ -86,6 +86,7 @@ public abstract class ReflectionDBObject implements DBObject {
         return false;
     }
 
+    @SuppressWarnings("unchecked")
     public Map toMap() {
        Map m = new HashMap();
        Iterator i = this.keySet().iterator();
