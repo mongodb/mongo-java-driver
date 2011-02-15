@@ -424,19 +424,48 @@ public abstract class DB {
     public boolean authenticate(String username, char[] passwd )
         throws MongoException {
         
-        if ( username == null )
+        if ( username == null || passwd == null )
             throw new NullPointerException( "username can't be null" );
         
         if ( _username != null )
 	    throw new IllegalStateException( "can't call authenticate twice on the same DBObject" );
         
         String hash = _hash( username , passwd );
-        if ( ! _doauth( username , hash.getBytes() ) )
+        CommandResult res = _doauth( username , hash.getBytes() );
+        if ( !res.ok())
             return false;
         _username = username;
         _authhash = hash.getBytes();
         return true;
     }
+
+    /**
+     *  Authenticates to db with the given name and password
+     *
+     * @param username name of user for this database
+     * @param passwd password of user for this database
+     * @return the CommandResult from authenticate command
+     * @throws MongoException if authentication failed due to invalid user/pass, or other exceptions like I/O
+     * @dochub authenticate
+     */
+    public CommandResult authenticateCommand(String username, char[] passwd )
+        throws MongoException {
+
+        if ( username == null || passwd == null )
+            throw new NullPointerException( "username can't be null" );
+
+        if ( _username != null )
+	    throw new IllegalStateException( "can't call authenticate twice on the same DBObject" );
+
+        String hash = _hash( username , passwd );
+        CommandResult res = _doauth( username , hash.getBytes() );
+        if ( !res.ok())
+            throw new MongoException(res);
+        _username = username;
+        _authhash = hash.getBytes();
+        return res;
+    }
+    
     /*
     boolean reauth(){
         if ( _username == null || _authhash == null )
@@ -465,18 +494,14 @@ public abstract class DB {
         return cmd;
     }
 
-    private boolean _doauth( String username , byte[] hash ){
+    private CommandResult _doauth( String username , byte[] hash ){
         CommandResult res = command(new BasicDBObject("getnonce", 1));
-
         if ( ! res.ok() ){
-            throw new MongoException("Error - unable to get nonce value for authentication.");
+            throw new MongoException(res);
         }
 
         DBObject cmd = _authCommand( res.getString( "nonce" ) , username , hash );
-
-        res = command(cmd);
-        
-        return res.ok();
+        return command(cmd);
     }
 
     /**
@@ -484,8 +509,8 @@ public abstract class DB {
      * @param username
      * @param passwd
      */
-    public void addUser( String username , char[] passwd ){
-        addUser(username, passwd, false);
+    public WriteResult addUser( String username , char[] passwd ){
+        return addUser(username, passwd, false);
     }
 
     /**
@@ -494,23 +519,23 @@ public abstract class DB {
      * @param passwd
      * @param readOnly if true, user will only be able to read
      */
-    public void addUser( String username , char[] passwd, boolean readOnly ){
+    public WriteResult addUser( String username , char[] passwd, boolean readOnly ){
         DBCollection c = getCollection( "system.users" );
         DBObject o = c.findOne( new BasicDBObject( "user" , username ) );
         if ( o == null )
             o = new BasicDBObject( "user" , username );
         o.put( "pwd" , _hash( username , passwd ) );
         o.put( "readOnly" , readOnly );
-        c.save( o );
+        return c.save( o );
     }
 
     /**
      * Removes a user for this db
      * @param username
      */
-    public void removeUser( String username ){
+    public WriteResult removeUser( String username ){
         DBCollection c = getCollection( "system.users" );
-        c.remove(new BasicDBObject( "user" , username ));
+        return c.remove(new BasicDBObject( "user" , username ));
     }
 
     String _hash( String username , char[] passwd ){

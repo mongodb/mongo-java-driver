@@ -224,7 +224,7 @@ public class MapReduceCommand {
     }
 
 
-    DBObject toDBObject() {
+    public DBObject toDBObject() {
         BasicDBObjectBuilder builder = BasicDBObjectBuilder.start();
 
         builder.add("mapreduce", _input)
