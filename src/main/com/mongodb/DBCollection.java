@@ -909,24 +909,6 @@ public abstract class DBCollection {
 
     /**
      * performs a map reduce operation
-     * Runs the command in INLINE output mode
-     * 
-     * @param map
-     *            map function in javascript code
-     * @param reduce
-     *            reduce function in javascript code
-     * @param query
-     *            to match
-     * @return
-     * @throws MongoException
-     * @dochub mapreduce
-     */
-    public MapReduceOutput mapReduce( String map , String reduce , DBObject query ) throws MongoException{
-        return mapReduce( new MapReduceCommand( this , map , reduce , null, MapReduceCommand.OutputType.INLINE, query ) );
-    }
-
-    /**
-     * performs a map reduce operation
      * Runs the command in REPLACE output mode (saves to named collection)
      * 
      * @param map
