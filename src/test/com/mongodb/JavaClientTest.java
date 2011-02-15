@@ -403,7 +403,7 @@ public class JavaClientTest extends TestCase {
         
         MapReduceOutput out = 
             c.mapReduce( "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }" ,
-                         "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" , null );
+                         "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" , null, MapReduceCommand.OutputType.INLINE, null);
         
         Map<String,Integer> m = new HashMap<String,Integer>();
         for ( DBObject r : out.results() ){
@@ -610,6 +610,7 @@ public class JavaClientTest extends TestCase {
         CommandResult cr = res.getLastError( WriteConcern.FSYNC_SAFE );
         assertEquals( 1 , cr.getInt( "n" ) );
         assertTrue( cr.containsField( "fsyncFiles" ));
+        System.out.println(cr);
 
         CommandResult cr2 = res.getLastError( WriteConcern.FSYNC_SAFE );
         assertTrue( cr == cr2 );
