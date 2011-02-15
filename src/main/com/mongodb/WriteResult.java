@@ -138,7 +138,10 @@ public class WriteResult {
 
     @Override
     public String toString(){
-        return getLastError().toString();
+        CommandResult res = getCachedLastError();
+        if (res != null)
+            return res.toString();
+        return "N/A";
     }
 
     private long _lastCall;
