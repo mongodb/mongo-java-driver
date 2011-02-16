@@ -90,7 +90,7 @@ class ReplicaSetStatus {
             }
             
             long diff = best._pingTime - n._pingTime;
-            if ( diff > 15 || 
+            if ( diff > slaveAcceptableLatencyMS ||
                  // this is a complex way to make sure we get a random distribution of slaves
                  ( ( badBeforeBest - mybad ) / ( _all.size() - 1 ) ) > _random.nextDouble() ) 
                 { 
@@ -261,7 +261,7 @@ class ReplicaSetStatus {
                 }
                 
                 try {
-                    Thread.sleep( 5 * 1000 );
+                    Thread.sleep( updaterIntervalMS );
                 }
                 catch ( InterruptedException ie ){
                     // TODO: maybe something smarter
@@ -374,10 +374,16 @@ class ReplicaSetStatus {
     
     final Random _random = new Random();
 
+    static int updaterIntervalMS;
+    static int slaveAcceptableLatencyMS;
+
     static final MongoOptions _mongoOptions = new MongoOptions();
+
     static {
-        _mongoOptions.connectTimeout = 20000;
-        _mongoOptions.socketTimeout = 20000;
+        updaterIntervalMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
+        slaveAcceptableLatencyMS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
+        _mongoOptions.connectTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
+        _mongoOptions.socketTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
     }
 
     static final DBObject _isMasterCmd = new BasicDBObject( "ismaster" , 1 );
