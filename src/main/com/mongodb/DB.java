@@ -80,6 +80,7 @@ public abstract class DB {
     /**
      * Creates a collection with a given name and options.
      * If the collection does not exist, a new collection is created.
+     * Note that if the options parameter is null, the creation will be deferred to when the collection is written to.
      * Possible options:
      * <dl>
      * <dt>capped</dt><dd><i>boolean</i>: if the collection is capped</dd>
@@ -87,13 +88,13 @@ public abstract class DB {
      * <dt>max</dt><dd><i>int</i>: max number of documents</dd>
      * </dl>
      * @param name the name of the collection to return
-     * @param o options
+     * @param options options
      * @return the collection
      */
-    public final DBCollection createCollection( String name, DBObject o ){
-        if ( o != null ){
+    public final DBCollection createCollection( String name, DBObject options ){
+        if ( options != null ){
             DBObject createCmd = new BasicDBObject("create", name);
-            createCmd.putAll(o);
+            createCmd.putAll(options);
             CommandResult result = command(createCmd);
             result.throwOnError();
         }
@@ -171,6 +172,20 @@ public abstract class DB {
     public CommandResult command( String cmd )
         throws MongoException {
         return command( new BasicDBObject( cmd , Boolean.TRUE ) );
+    }
+
+    /**
+     * Executes a database command.
+     * This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject, int)  }
+     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
+     * @param cmd command to execute
+     * @param options query options to use
+     * @return result of command from the database
+     * @throws MongoException
+     */
+    public CommandResult command( String cmd, int options  )
+        throws MongoException {
+        return command( new BasicDBObject( cmd , Boolean.TRUE ), options );
     }
 
     /**
@@ -495,13 +510,13 @@ public abstract class DB {
     }
 
     private CommandResult _doauth( String username , byte[] hash ){
-        CommandResult res = command(new BasicDBObject("getnonce", 1));
+        CommandResult res = command(new BasicDBObject("getnonce", 1), getOptions());
         if ( ! res.ok() ){
             throw new MongoException(res);
         }
 
         DBObject cmd = _authCommand( res.getString( "nonce" ) , username , hash );
-        return command(cmd);
+        return command(cmd, getOptions());
     }
 
     /**

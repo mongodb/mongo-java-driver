@@ -307,7 +307,16 @@ public class Mongo {
             return temp;
         return db;
     }
-    
+
+    /**
+     * gets a collection of DBs used by the driver since this Mongo instance was created.
+     * This may include DBs that exist in the client but not yet on the server.
+     * @return
+     */
+    public Collection<DB> getUsedDatabases(){
+        return _dbs.values();
+    }
+
     /**
      * gets a list of all database names present on the server
      * @return
@@ -320,7 +329,7 @@ public class Mongo {
         cmd.put("listDatabases", 1);
         
 
-        BasicDBObject res = (BasicDBObject)getDB( "admin" ).command(cmd);
+        BasicDBObject res = (BasicDBObject)getDB( "admin" ).command(cmd, getOptions());
 
         if (res.getInt("ok" , 0 ) != 1 )
             throw new MongoException( "error listing databases : " + res );

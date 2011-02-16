@@ -857,7 +857,7 @@ public abstract class DBCollection {
      * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
     public DBObject group( GroupCommand cmd ) {
-        CommandResult res =  _db.command( cmd.toDBObject() );
+        CommandResult res =  _db.command( cmd.toDBObject(), getOptions() );
         res.throwOnError();
         return (DBObject)res.get( "retval" );
     }
@@ -875,7 +875,7 @@ public abstract class DBCollection {
     public DBObject group( DBObject args )
         throws MongoException {
         args.put( "ns" , getName() );  
-        CommandResult res =  _db.command( new BasicDBObject( "group" , args ) );
+        CommandResult res =  _db.command( new BasicDBObject( "group" , args ), getOptions() );
         res.throwOnError();
         return (DBObject)res.get( "retval" );
     }
@@ -902,7 +902,7 @@ public abstract class DBCollection {
             .add( "query" , query )
             .get();
         
-        CommandResult res = _db.command( c );
+        CommandResult res = _db.command( c, getOptions() );
         res.throwOnError();
         return (List)(res.get( "values" ));
     }
@@ -965,7 +965,12 @@ public abstract class DBCollection {
      */
     public MapReduceOutput mapReduce( MapReduceCommand command ) throws MongoException{
         DBObject cmd = command.toDBObject();
-        CommandResult res = _db.command( cmd );
+        // if type in inline, then query options like slaveOk is fine
+        CommandResult res = null;
+        if (command.getOutputType() == MapReduceCommand.OutputType.INLINE)
+            res = _db.command( cmd, getOptions() );
+        else
+            res = _db.command( cmd );
         res.throwOnError();
         return new MapReduceOutput( this , cmd, res );
     }
@@ -1032,7 +1037,7 @@ public abstract class DBCollection {
      * @return
      */
     public CommandResult getStats() {
-        return(getDB().command(new BasicDBObject("collstats", getName())));
+        return getDB().command(new BasicDBObject("collstats", getName()), getOptions());
     }
 
     /**
