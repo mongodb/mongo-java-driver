@@ -49,7 +49,6 @@ public class JavaClientTest extends TestCase {
         m.put( "state" , "ny" );
         
         c.save( m );
-        System.out.println( m.keySet() );
         assert( m.containsField( "_id" ) );
 
         Map out = (Map)(c.findOne( m.get( "_id" )));
@@ -610,7 +609,6 @@ public class JavaClientTest extends TestCase {
         CommandResult cr = res.getLastError( WriteConcern.FSYNC_SAFE );
         assertEquals( 1 , cr.getInt( "n" ) );
         assertTrue( cr.containsField( "fsyncFiles" ));
-        System.out.println(cr);
 
         CommandResult cr2 = res.getLastError( WriteConcern.FSYNC_SAFE );
         assertTrue( cr == cr2 );
