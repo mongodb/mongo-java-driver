@@ -645,6 +645,22 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         return _collection;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Cursor id=").append(getCursorId());
+        sb.append(", ns=").append(getCollection().getFullName());
+        sb.append(", query=").append(getQuery());
+        if (getKeysWanted() != null)
+            sb.append(", fields=").append(getKeysWanted());
+        sb.append(", numIterated=").append(_num);
+        if (_numWanted > 0)
+            sb.append(", numWanted=").append(_numWanted);
+        if (_skip > 0)
+            sb.append(", skip=").append(_skip);
+        return sb.toString();
+    }
+
     // ----  query setup ----
     private final DBCollection _collection;
     private final DBObject _query;
