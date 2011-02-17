@@ -304,6 +304,10 @@ class ReplicaSetStatus {
                     it.remove();
             }
         }
+
+        // force check on master
+        // otherwise master change may go unnoticed for a while if no write concern
+        _mongo.getConnector().checkMaster(true, false);
     }
 
     List<ServerAddress> getServerAddressList() {

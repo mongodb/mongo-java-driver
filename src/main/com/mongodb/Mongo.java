@@ -482,7 +482,11 @@ public class Mongo {
         if (_options.slaveOk) slaveOk();
         setWriteConcern( _options.getWriteConcern() );
     }
-    
+
+    DBTCPConnector getConnector() {
+        return _connector;
+    }
+
     final ServerAddress _addr;
     final List<ServerAddress> _addrs;
     final MongoOptions _options;
