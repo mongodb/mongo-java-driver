@@ -322,6 +322,12 @@ class DBTCPConnector implements DBConnector {
                 }
             }
 
+            if (_masterPortPool == null) {
+                // this should only happen in rare case that no master was ever found
+                // may get here at startup if it's a read, slaveOk=true, and ALL servers are down
+                throw new MongoException("Rare case where master=null, probably all servers are down");
+            }
+
             // use master
             DBPort p = _masterPortPool.get();
             if ( keep && _inRequest ) {
