@@ -253,6 +253,10 @@ class ReplicaSetStatus {
             while ( ! _closed ){
                 try {
                     updateAll();
+
+                    // force check on master
+                    // otherwise master change may go unnoticed for a while if no write concern
+                    _mongo.getConnector().checkMaster(true, false);
                 }
                 catch ( Exception e ){
                     _logger.log( Level.WARNING , "couldn't do update pass" , e );
@@ -304,10 +308,6 @@ class ReplicaSetStatus {
                     it.remove();
             }
         }
-
-        // force check on master
-        // otherwise master change may go unnoticed for a while if no write concern
-        _mongo.getConnector().checkMaster(true, false);
     }
 
     List<ServerAddress> getServerAddressList() {
