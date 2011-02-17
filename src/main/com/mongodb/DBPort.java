@@ -30,7 +30,6 @@ import com.mongodb.util.*;
  * represents a Port to the database, which is effectively a single connection to a server
  * Methods implemented at the port level should throw the raw exceptions like IOException,
  * so that the connector above can make appropriate decisions on how to handle.
- * @author antoine
  */
 public class DBPort {
     
@@ -298,7 +297,15 @@ public class DBPort {
             throw new MongoException( "couldn't re-auth, username/password change?" );
         _authed.put( db , true );
     }
-    
+
+    /**
+     * Gets the pool that this port belongs to
+     * @return
+     */
+    public DBPortPool getPool() {
+        return _pool;
+    }
+
     final int _hashCode;
     final ServerAddress _sa;
     final InetSocketAddress _addr;

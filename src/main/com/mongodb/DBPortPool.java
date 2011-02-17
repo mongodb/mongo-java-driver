@@ -228,6 +228,10 @@ class DBPortPool extends SimplePool<DBPort> {
         return new DBPort( _addr , this , _options );
     }
 
+    public ServerAddress getServerAddress() {
+        return _addr;
+    }
+
     final MongoOptions _options;
     final private Semaphore _waitingSem;
     final ServerAddress _addr;

@@ -59,7 +59,7 @@ public abstract class SimplePool<T> implements DynamicMBean {
     /** 
      * callback to determine if an object is ok to be added back to the pool or used
      * will be called when something is put back into the queue and when it comes out
-     * @return true iff the object is ok to be added back to pool
+     * @return true if the object is ok to be added back to pool
      */
     public boolean ok( T t ){
         return true;
