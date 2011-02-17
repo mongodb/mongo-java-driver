@@ -410,14 +410,15 @@ public abstract class DBCollection {
     /**
      * Ensures an index on this collection (that is, the index will be created if it does not exist).
      * @param keys fields to use for index
-     * @param name an identifier for the index
+     * @param name an identifier for the index. If null or empty, the default name will be used.
      * @param unique if the index should be unique
      * @throws MongoException
      */
     public void ensureIndex( DBObject keys , String name , boolean unique ) 
         throws MongoException {
         DBObject options = defaultOptions( keys );
-        options.put( "name" , name );
+        if (name != null && !name.isEmpty())
+            options.put( "name" , name );
         if ( unique )
             options.put( "unique" , Boolean.TRUE );
         ensureIndex( keys , options );
