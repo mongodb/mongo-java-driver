@@ -681,7 +681,13 @@ public class JavaClientTest extends TestCase {
         assertEquals( 2 , dbObj.keySet().size());
         assertEquals( 5 , dbObj.get( "x" ));
         assertNull( c.findOne(new BasicDBObject( "_id" , 1 ) ));
-        
+
+        // test exception throwing
+        try {
+            dbObj = c.findAndModify( null, null );
+            assertTrue(false, "Exception not throw when no update nor remove");
+        } catch (MongoException e) {
+        }
     }
 
     @Test

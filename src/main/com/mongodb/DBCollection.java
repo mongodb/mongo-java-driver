@@ -319,8 +319,10 @@ public abstract class DBCollection {
         
         if (remove && !(update == null || update.keySet().isEmpty() || returnNew))
             throw new MongoException("FindAndModify: Remove cannot be mixed with the Update, or returnNew params!");
-        
-        return (DBObject) this._db.command( cmd ).get( "value" );
+
+        CommandResult res = this._db.command( cmd );
+        res.throwOnError();
+        return (DBObject) res.get( "value" );
     }
 
     
