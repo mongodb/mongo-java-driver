@@ -655,7 +655,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
             sb.append(", fields=").append(getKeysWanted());
         sb.append(", numIterated=").append(_num);
         if (_numWanted > 0)
-            sb.append(", numWanted=").append(_numWanted);
+            sb.append(", limit=").append(_numWanted);
         if (_skip > 0)
             sb.append(", skip=").append(_skip);
         return sb.toString();

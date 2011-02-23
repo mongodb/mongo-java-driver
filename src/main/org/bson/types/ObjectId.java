@@ -342,7 +342,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     static {
 
         try {
-            
+            // build a 2-byte machine piece based on NICs info
             final int machinePiece;
             {
                 StringBuilder sb = new StringBuilder();
@@ -354,17 +354,25 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
                 machinePiece = sb.toString().hashCode() << 16;
                 LOGGER.fine( "machine piece post: " + Integer.toHexString( machinePiece ) );
             }
-            
+
+            // add a 2 byte process piece. It must represent not only the JVM but the class loader.
+            // Since static var belong to class loader there could be collisions otherwise
             final int processPiece;
             {
-                int temp = new java.util.Random().nextInt();
+                int processId = new java.util.Random().nextInt();
                 try {
-                    temp = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
+                    processId = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
                 }
                 catch ( Throwable t ){
                 }
-                temp = temp & 0xFFFF;
-                processPiece = temp;
+
+                ClassLoader loader = ObjectId.class.getClassLoader();
+                int loaderId = loader != null ? System.identityHashCode(loader) : 0;
+
+                StringBuilder sb = new StringBuilder();
+                sb.append(Integer.toHexString(processId));
+                sb.append(Integer.toHexString(loaderId));
+                processPiece = sb.toString().hashCode() & 0xFFFF;
                 LOGGER.fine( "process piece: " + Integer.toHexString( processPiece ) );
             }
 

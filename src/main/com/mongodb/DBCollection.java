@@ -203,7 +203,7 @@ public abstract class DBCollection {
      * @param ref query used to search
      * @param fields the fields of matching objects to return
      * @param numToSkip will not return the first <tt>numToSkip</tt> matches
-     * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
+     * @param batchSize  if positive, represents the size of each batch of objects retrieved. If negative, it limits the total number of objects retrieved.
      * @param options - see Bytes QUERYOPTION_*
      * @return the objects, if found
      * @dochub find
@@ -212,10 +212,11 @@ public abstract class DBCollection {
     
     /**
      * Finds an object.
+     * Calls {@link DBCollection#find(com.mongodb.DBObject, com.mongodb.DBObject, int, int)} and applies the query options
      * @param ref query used to search
      * @param fields the fields of matching objects to return
      * @param numToSkip will not return the first <tt>numToSkip</tt> matches
-     * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
+     * @param batchSize if positive, represents the size of each batch of objects retrieved. If negative, it limits the total number of objects retrieved.
      * @param options - see Bytes QUERYOPTION_*
      * @return the objects, if found
      * @throws MongoException
@@ -231,7 +232,7 @@ public abstract class DBCollection {
      * @param ref query used to search
      * @param fields the fields of matching objects to return
      * @param numToSkip will not return the first <tt>numToSkip</tt> matches
-     * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
+     * @param batchSize if positive, represents the size of each batch of objects retrieved. If negative, it limits the total number of objects retrieved.
      * @return the objects, if found
      * @dochub find
      */
