@@ -705,7 +705,38 @@ public class JavaClientTest extends TestCase {
         assertEquals( "foo.bar.zoo.dork" , c.getName() );
         
     }
-    
+
+    @Test
+    public void testBadKey(){
+        DBCollection c = _db.getCollectionFromString( "foo" );
+        assertEquals( "foo" , c.getName() );
+
+        try {
+            c.insert(new BasicDBObject("a.b", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+        try {
+            c.insert(new BasicDBObject("$a", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+
+        try {
+            c.save(new BasicDBObject("a.b", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+        try {
+            c.save(new BasicDBObject("$a", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+
+        c.insert(new BasicDBObject("a", 1));
+        try {
+            c.update(new BasicDBObject("a", 1), new BasicDBObject("a.b", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+        c.update(new BasicDBObject("a", 1), new BasicDBObject("$set", new BasicDBObject("a.b", 1)));
+    }
+
     final Mongo _mongo;
     final DB _db;
 

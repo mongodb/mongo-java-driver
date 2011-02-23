@@ -287,6 +287,13 @@ public class DBApiLayer extends DB {
         public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , com.mongodb.WriteConcern concern )
             throws MongoException {
 
+            if (o != null && !o.keySet().isEmpty()) {
+                // if 1st key doesnt start with $, then object will be inserted as is, need to check it
+                String key = o.keySet().iterator().next();
+                if (key.charAt(0) != '$')
+                    _checkObject(o, false, false);
+            }
+
             if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
             
             OutMessage om = new OutMessage( _mongo , 2001 );
