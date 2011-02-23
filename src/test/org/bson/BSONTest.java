@@ -25,7 +25,6 @@ import org.bson.io.*;
 import org.bson.types.*;
 import org.testng.annotations.*;
 
-import com.mongodb.util.*;
 import org.testng.Assert;
 
 public class BSONTest extends Assert {

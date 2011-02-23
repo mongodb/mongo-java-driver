@@ -18,7 +18,6 @@
 
 package org.bson;
 
-import com.mongodb.util.TestCase;
 import java.util.*;
 
 import org.testng.annotations.Test;
