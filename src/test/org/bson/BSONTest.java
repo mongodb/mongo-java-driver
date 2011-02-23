@@ -26,8 +26,9 @@ import org.bson.types.*;
 import org.testng.annotations.*;
 
 import com.mongodb.util.*;
+import org.testng.Assert;
 
-public class BSONTest extends TestCase {
+public class BSONTest extends Assert {
 
 
     public BSONTest(){
@@ -318,10 +319,5 @@ public class BSONTest extends TestCase {
     }
 
     List<String> _data = new ArrayList<String>();
-
-
-    public static void main( String args[] ){
-        (new BSONTest()).runConsole();
-    }
 
 }
