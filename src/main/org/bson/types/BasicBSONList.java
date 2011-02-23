@@ -18,10 +18,8 @@
 
 package org.bson.types;
 
-import com.mongodb.util.StringRangeSet;
-
 import org.bson.*;
-
+import org.bson.util.StringRangeSet;
 
 import java.util.*;
 
