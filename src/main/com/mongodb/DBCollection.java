@@ -449,18 +449,18 @@ public abstract class DBCollection {
 
         final String name = options.get( "name" ).toString();
 
-        if ( _createIndexes.contains( name ) )
+        if ( _createdIndexes.contains( name ) )
             return;
 
         createIndex( keys , options );
-        _createIndexes.add( name );
+        _createdIndexes.add( name );
     }
 
     /**
      * Clears all indices that have not yet been applied to this collection.
      */
     public void resetIndexCache(){
-        _createIndexes.clear();
+        _createdIndexes.clear();
     }
 
     DBObject defaultOptions( DBObject keys ){
@@ -675,12 +675,8 @@ public abstract class DBCollection {
             .get();
         
         CommandResult res = _db.command( cmd );
-        if ( res.ok() || res.getErrorMessage().equals( "ns not found" ) ){
-            resetIndexCache();
-            return;
-        }
-        
-        throw new MongoException( "error dropping indexes : " + res );
+        res.throwOnError();
+        resetIndexCache();
     }
     
     /**
@@ -689,11 +685,9 @@ public abstract class DBCollection {
      */
     public void drop()
         throws MongoException {
-        resetIndexCache();
         CommandResult res =_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
-        if ( res.ok() || res.getErrorMessage().equals( "ns not found" ) )
-            return;
-        throw new MongoException( "error dropping : " + res );
+        res.throwOnError();
+        resetIndexCache();
     }
 
     /**
@@ -1305,5 +1299,5 @@ public abstract class DBCollection {
     private Map<String,Class> _internalClass = Collections.synchronizedMap( new HashMap<String,Class>() );
     private ReflectionDBObject.JavaWrapper _wrapper = null;
 
-    final private Set<String> _createIndexes = new HashSet<String>();
+    final private Set<String> _createdIndexes = new HashSet<String>();
 }

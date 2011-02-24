@@ -71,9 +71,6 @@ public abstract class DB {
      */
     public final DBCollection getCollection( String name ){
         DBCollection c = doGetCollection( name );
-        if ( c != null ){
-            _seenCollections.add( c );
-	}
         return c;
     }
 
@@ -328,15 +325,6 @@ public abstract class DB {
     }
 
     /**
-     * Clears any indices that have not yet been applied to
-     * the collections in this database.
-     */
-    public void resetIndexCache(){
-        for ( DBCollection c : _seenCollections )
-            c.resetIndexCache();
-    }
-
-    /**
      * Gets the the error (if there is one) from the previous operation on this connection.
      * The result of this command will look like
      *
@@ -414,7 +402,7 @@ public abstract class DB {
 
         CommandResult res = command(new BasicDBObject("dropDatabase", 1));
         res.throwOnError();
-
+        _mongo._dbs.remove(this.getName());
     }
 
     /**
@@ -670,7 +658,6 @@ public abstract class DB {
 
     final Mongo _mongo;
     final String _name;
-    final Set<DBCollection> _seenCollections = Collections.synchronizedSet( new HashSet<DBCollection>() );
 
     protected boolean _readOnly = false;
     private com.mongodb.WriteConcern _concern;

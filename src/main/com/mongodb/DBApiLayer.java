@@ -170,7 +170,6 @@ public class DBApiLayer extends DB {
         _connector.say( this , om ,com.mongodb.WriteConcern.NONE , addr );
     }
 
-
     class MyCollection extends DBCollection {
         MyCollection( String name ){
             super( DBApiLayer.this , name );
@@ -178,6 +177,12 @@ public class DBApiLayer extends DB {
         }
 
         public void doapply( DBObject o ){
+        }
+
+        @Override
+        public void drop() throws MongoException {
+            super.drop();
+            _collections.remove(getName());
         }
 
         public WriteResult insert(DBObject[] arr, com.mongodb.WriteConcern concern )
