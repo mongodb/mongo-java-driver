@@ -674,9 +674,11 @@ public abstract class DBCollection {
             .add( "index" , name )
             .get();
         
-        CommandResult res = _db.command( cmd );
-        res.throwOnError();
         resetIndexCache();
+        CommandResult res = _db.command( cmd );
+        if (res.ok() || res.getErrorMessage().equals( "ns not found" ))
+            return;
+        res.throwOnError();
     }
     
     /**
@@ -685,9 +687,11 @@ public abstract class DBCollection {
      */
     public void drop()
         throws MongoException {
-        CommandResult res =_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
-        res.throwOnError();
         resetIndexCache();
+        CommandResult res =_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
+        if (res.ok() || res.getErrorMessage().equals( "ns not found" ))
+            return;
+        res.throwOnError();
     }
 
     /**

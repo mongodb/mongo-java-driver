@@ -181,8 +181,8 @@ public class DBApiLayer extends DB {
 
         @Override
         public void drop() throws MongoException {
-            super.drop();
             _collections.remove(getName());
+            super.drop();
         }
 
         public WriteResult insert(DBObject[] arr, com.mongodb.WriteConcern concern )
