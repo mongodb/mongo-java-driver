@@ -441,6 +441,11 @@ class DBTCPConnector implements DBConnector {
         _myPort = null;
     }
 
+    void updatePortPool(ServerAddress addr) {
+        // just remove from map, a new pool will be created lazily
+        _portHolder._pools.remove(addr);
+    }
+
     public boolean isOpen(){
         return ! _closed;
     }

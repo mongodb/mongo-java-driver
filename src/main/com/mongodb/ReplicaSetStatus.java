@@ -28,6 +28,7 @@ class ReplicaSetStatus {
         for ( ServerAddress addr : initial ){
             _all.add( new Node( addr ) );
         }
+        _nextResolveTime = System.currentTimeMillis() + inetAddrCacheMS;
 
         _updater = new Updater();
         _updater.start();
@@ -112,6 +113,18 @@ class ReplicaSetStatus {
             _addr = addr;
             _port = new DBPort( addr , null , _mongoOptions );
             _names.add( addr.toString() );
+        }
+
+        private void updateAddr() {
+            try {
+                if (_addr.updateInetAddr()) {
+                    // address changed, need to use new ports
+                    _port = new DBPort(_addr, null, _mongoOptions);
+                    _mongo.getConnector().updatePortPool(_addr);
+                }
+            } catch (UnknownHostException ex) {
+                _logger.log(Level.WARNING, null, ex);
+            }
         }
 
         synchronized void update(){
@@ -231,7 +244,7 @@ class ReplicaSetStatus {
         
         final ServerAddress _addr;
         final Set<String> _names = Collections.synchronizedSet( new HashSet<String>() );
-        final DBPort _port; // we have our own port so we can set different socket options and don't have to owrry about the pool
+        DBPort _port; // we have our own port so we can set different socket options and don't have to owrry about the pool
 
         boolean _ok = false;        
         long _lastCheck = 0;
@@ -254,6 +267,14 @@ class ReplicaSetStatus {
                 try {
                     updateAll();
 
+                    long now = System.currentTimeMillis();
+                    if (inetAddrCacheMS > 0 && _nextResolveTime < now) {
+                        _nextResolveTime = now + inetAddrCacheMS;
+                        for (Node node : _all) {
+                            node.updateAddr();
+                        }
+                    }
+
                     // force check on master
                     // otherwise master change may go unnoticed for a while if no write concern
                     _mongo.getConnector().checkMaster(true, false);
@@ -266,7 +287,6 @@ class ReplicaSetStatus {
                     Thread.sleep( updaterIntervalMS );
                 }
                 catch ( InterruptedException ie ){
-                    // TODO: maybe something smarter
                 }
 
             }
@@ -375,15 +395,18 @@ class ReplicaSetStatus {
     boolean _closed = false;
     
     final Random _random = new Random();
+    long _nextResolveTime;
 
     static int updaterIntervalMS;
     static int slaveAcceptableLatencyMS;
+    static int inetAddrCacheMS;
 
     static final MongoOptions _mongoOptions = new MongoOptions();
 
     static {
         updaterIntervalMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
         slaveAcceptableLatencyMS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
+        inetAddrCacheMS = Integer.parseInt(System.getProperty("com.mongodb.inetAddrCacheMS", "300000"));
         _mongoOptions.connectTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
         _mongoOptions.socketTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
     }
