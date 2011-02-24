@@ -351,8 +351,8 @@ class DBTCPConnector implements DBConnector {
          * @param e
          */
         void error( DBPort p , Exception e ){
-            p.getPool().done( p );
             p.close();
+            p.getPool().done( p );
 
             _requestPort = null;
             _logger.log( Level.SEVERE , "MyPort.error called" , e );            
