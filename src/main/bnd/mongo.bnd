@@ -1,4 +1,4 @@
-version: 2.3.0
+version: 2.4.0
 
 Bundle-Name: MongoDB
 Bundle-SymbolicName: com.mongodb
@@ -11,3 +11,5 @@ Export-Package:\
 Import-Package:\
    org.testng*;resolution:=optional,\
    *
+
+Include-Resource: OSGI-OPT/src=../
