@@ -18,17 +18,14 @@
 
 package org.bson;
 
-import java.io.*;
-import java.nio.*;
 import java.util.*;
-import java.util.zip.*;
 
 import org.testng.annotations.Test;
 
-import com.mongodb.util.*;
 import org.bson.io.*;
+import org.testng.Assert;
 
-public class PoolOutputBufferTest extends TestCase {
+public class PoolOutputBufferTest extends Assert {
 
     public PoolOutputBufferTest(){
         for ( int x = 8; x<(PoolOutputBuffer.BUF_SIZE*3); x*=2 ){
@@ -74,9 +71,5 @@ public class PoolOutputBufferTest extends TestCase {
     }
     
     List<String> _data = new ArrayList<String>();
-    
-    public static void main( String args[] ){
-        (new PoolOutputBufferTest()).runConsole();
-    }
     
 }

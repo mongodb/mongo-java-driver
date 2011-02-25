@@ -81,7 +81,8 @@ class OutMessage extends BSONEncoder {
     void prepare(){
         _buffer.writeInt( 0 , _buffer.size() );
     }
-    
+
+    @SuppressWarnings("deprecation")
     protected boolean handleSpecialObjects( String name , BSONObject o ){
         
         if ( o == null )
@@ -102,6 +103,7 @@ class OutMessage extends BSONEncoder {
         return false;
     }
 
+    @SuppressWarnings("deprecation")
     protected boolean putSpecial( String name , Object val ){
         if ( val instanceof DBPointer ){
             DBPointer r = (DBPointer)val;
@@ -175,6 +177,10 @@ class OutMessage extends BSONEncoder {
 
     boolean hasOption( int option ){
         return ( _queryOptions & option ) != 0;
+    }
+
+    int getId(){ 
+        return _id;
     }
 
     private Mongo _mongo;

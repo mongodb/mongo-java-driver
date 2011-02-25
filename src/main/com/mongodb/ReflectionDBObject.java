@@ -25,6 +25,9 @@ import org.bson.*;
 
 import com.mongodb.util.*;
 
+/**
+ * This class enables to map simple Class fields to a BSON object fields
+ */
 public abstract class ReflectionDBObject implements DBObject {
     
     public Object get( String key ){
@@ -38,6 +41,7 @@ public abstract class ReflectionDBObject implements DBObject {
     /**
      * @deprecated
      */
+    @Deprecated
     public boolean containsKey( String s ){
         return containsField( s );
     }
@@ -50,6 +54,7 @@ public abstract class ReflectionDBObject implements DBObject {
         return getWrapper().set( this , key , v );
     }
 
+    @SuppressWarnings("unchecked")
     public void putAll( Map m ){
         for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() ){
             put( entry.getKey().toString() , entry.getValue() );
@@ -62,10 +67,18 @@ public abstract class ReflectionDBObject implements DBObject {
         }
     }
 
+    /**
+     * Gets the _id
+     * @return
+     */
     public Object get_id(){
         return _id;
     }
 
+    /**
+     * Sets the _id
+     * @param id
+     */
     public void set_id( Object id ){
         _id = id;
     }
@@ -74,6 +87,7 @@ public abstract class ReflectionDBObject implements DBObject {
         return false;
     }
 
+    @SuppressWarnings("unchecked")
     public Map toMap() {
        Map m = new HashMap();
        Iterator i = this.keySet().iterator();
@@ -84,10 +98,18 @@ public abstract class ReflectionDBObject implements DBObject {
        return m;
     }
 
+    /**
+     * ReflectionDBObjects can't be partial
+     */
     public void markAsPartialObject(){
         throw new RuntimeException( "ReflectionDBObjects can't be partial" );
     }
 
+    /**
+     * can't remove from a ReflectionDBObject
+     * @param key
+     * @return
+     */
     public Object removeField( String key ){
         throw new RuntimeException( "can't remove from a ReflectionDBObject" );
     }
@@ -103,6 +125,9 @@ public abstract class ReflectionDBObject implements DBObject {
     JavaWrapper _wrapper;
     Object _id;
 
+    /**
+     * Represents a wrapper around the DBObject to interface with the Class fields
+     */
     public static class JavaWrapper {
         JavaWrapper( Class c ){
             _class = c;
@@ -143,6 +168,10 @@ public abstract class ReflectionDBObject implements DBObject {
             return _keys;
         }
 
+        /**
+         * @deprecated
+         */
+        @Deprecated
         public boolean containsKey( String key ){
             return _keys.contains( key );
         }
@@ -217,12 +246,22 @@ public abstract class ReflectionDBObject implements DBObject {
         Method _setter;
     }
         
+    /**
+     * Returns the wrapper if this object can be assigned from this class
+     * @param c
+     * @return
+     */
     public static JavaWrapper getWrapperIfReflectionObject( Class c ){
         if ( ReflectionDBObject.class.isAssignableFrom( c ) )
             return getWrapper( c );
         return null;
     }
 
+    /**
+     * Returns an existing Wrapper instance associated with a class, or creates a new one.
+     * @param c
+     * @return
+     */
     public static JavaWrapper getWrapper( Class c ){
         JavaWrapper w = _wrappers.get( c );
         if ( w == null ){

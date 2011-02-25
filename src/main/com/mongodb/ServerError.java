@@ -4,6 +4,9 @@ package com.mongodb;
 
 import org.bson.*;
 
+/**
+ * Represents a server error
+ */
 public class ServerError {
     
     ServerError( DBObject o ){
@@ -35,14 +38,26 @@ public class ServerError {
         return ((Number)c).intValue();
     }
     
+    /**
+     * Gets the error String
+     * @return
+     */
     public String getError(){
         return _err;
     }
 
+    /**
+     * Gets the error code
+     * @return
+     */
     public int getCode(){
         return _code;
     }
 
+    /**
+     * returns true if the error is "not master", which usually happens when doing operation on slave
+     * @return
+     */
     public boolean isNotMasterError(){
         switch ( _code ){
         case 10054:
@@ -57,6 +72,7 @@ public class ServerError {
         return _err.startsWith( "not master" );
     }
 
+    @Override
     public String toString(){
         if ( _code > 0 )
             return _code + " " + _err;

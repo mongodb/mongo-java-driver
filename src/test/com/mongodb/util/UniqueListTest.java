@@ -21,6 +21,7 @@ import org.testng.annotations.Test;
 public class UniqueListTest extends com.mongodb.util.TestCase {
 
     @org.testng.annotations.Test
+    @SuppressWarnings("unchecked")
     public void test1(){
         UniqueList l = new UniqueList();
         l.add( "a" );

@@ -58,7 +58,7 @@ class Response {
         
         for ( int i=0; i<_num; i++ ){
             if ( user._toGo < 5 )
-                throw new IOException( "should have more obejcts, but only " + user._toGo + " bytes left" );
+                throw new IOException( "should have more objects, but only " + user._toGo + " bytes left" );
             c.reset();
             decoder.decode( user , c );
             _objects.add( c.dbget() );
@@ -122,7 +122,7 @@ class Response {
         return new ServerError( obj );
     }
     
-    class MyInputStream extends InputStream {
+    static class MyInputStream extends InputStream {
         MyInputStream( InputStream in , int max ){
             _in = in;
             _toGo = max;

@@ -28,10 +28,17 @@ import java.util.regex.Pattern;
  */
 public class QueryBuilder {
 	
+    /**
+     * Creates a builder with an empty query
+     */
     public QueryBuilder() {
         _query = new BasicDBObject();
     }
 
+    /**
+     * returns a new QueryBuilder
+     * @return
+     */
     public static QueryBuilder start() {
         return new QueryBuilder();
     }
@@ -46,9 +53,10 @@ public class QueryBuilder {
     }
 	
     /**
-     * Adds a new key to the query or sets an existing key to as current for chaining
+     * Adds a new key to the query if not present yet.
+     * Sets this key as the current key.
      * @param key MongoDB document key
-     * @return Returns the current QueryBuilder with an appended key operand
+     * @return Returns the current QueryBuilder
      */
     public QueryBuilder put(String key) {
         _currentKey = key;
@@ -198,25 +206,66 @@ public class QueryBuilder {
         return this;
     }
 	
+    /**
+     * Equivalent of the $within operand, used for geospatial operation
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param radius radius
+     * @return
+     */
     public QueryBuilder withinCenter( double x , double y , double radius ){
         addOperand( "$within" , 
                     new BasicDBObject( "$center" , new Object[]{ new Double[]{ x , y } , radius } ) );
         return this;
     }
-
+	
+    /**
+     * Equivalent of the $near operand
+     * @param x x coordinate
+     * @param y y coordinate
+     * @return
+     */
     public QueryBuilder near( double x , double y  ){
         addOperand( "$near" , 
                     new Double[]{ x , y } );
         return this;
     }
 
+    /**
+     * Equivalent of the $near operand
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param maxDistance max distance
+     * @return
+     */
     public QueryBuilder near( double x , double y , double maxDistance ){
         addOperand( "$near" , 
                     new Double[]{ x , y , maxDistance } );
         return this;
     }
+    
+    /**
+     * Equivalent to a $within operand, based on a bounding box using represented by two corners
+     * 
+     * @param x the x coordinate of the first box corner.
+     * @param y the y coordinate of the first box corner.
+     * @param x2 the x coordinate of the second box corner.
+     * @param y2 the y coordinate of the second box corner.
+     * @return
+     */
+    public QueryBuilder withinBox(double x, double y, double x2, double y2) {
+    	addOperand( "$within" , 
+                    new BasicDBObject( "$box" , new Object[] { new Double[] { x, y }, new Double[] { x2, y2 } } ) );
+    	return this;
+    }
 
 
+    /**
+     * Equivalent to a $or operand
+     * @param ors
+     * @return
+     */
+    @SuppressWarnings("unchecked")
     public QueryBuilder or( DBObject ... ors ){
         List l = (List)_query.get( "$or" );
         if ( l == null ){

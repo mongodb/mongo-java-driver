@@ -40,6 +40,8 @@ import java.util.logging.*;
  */
 public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
+    private static final long serialVersionUID = -4415279469780082174L;
+
     static final Logger LOGGER = Logger.getLogger( "org.bson.ObjectId" );
 
     /** Gets a new object id.
@@ -254,26 +256,33 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     public String toString(){
         return toStringMongod();
     }
+    
+    int _compare( int i , int j ){
+        i = _flip(i);
+        j = _flip(j);
+
+        final int diff = j - i;
+        
+        if ( i >= 0 ){
+            return j >= 0 ? -diff : -1;
+        }
+        
+        return j < 0 ? -diff : 1;
+    }
 
     public int compareTo( ObjectId id ){
         if ( id == null )
             return -1;
         
-        long xx = id.getTime() - getTime();
-        if ( xx > 0 )
-            return -1;
-        else if ( xx < 0 )
-            return 1;
-
-        int x = id._machine - _machine;
+        int x = _compare( _time , id._time );
         if ( x != 0 )
-            return -x;
+            return x;
 
-        x = id._inc - _inc;
+        x = _compare( _machine , id._machine );
         if ( x != 0 )
-            return -x;
-
-        return 0;
+            return x;
+        
+        return _compare( _inc , id._inc );
     }
 
     public int getMachine(){
@@ -333,7 +342,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     static {
 
         try {
-            
+            // build a 2-byte machine piece based on NICs info
             final int machinePiece;
             {
                 StringBuilder sb = new StringBuilder();
@@ -345,17 +354,25 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
                 machinePiece = sb.toString().hashCode() << 16;
                 LOGGER.fine( "machine piece post: " + Integer.toHexString( machinePiece ) );
             }
-            
+
+            // add a 2 byte process piece. It must represent not only the JVM but the class loader.
+            // Since static var belong to class loader there could be collisions otherwise
             final int processPiece;
             {
-                int temp = new java.util.Random().nextInt();
+                int processId = new java.util.Random().nextInt();
                 try {
-                    temp = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
+                    processId = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
                 }
                 catch ( Throwable t ){
                 }
-                temp = temp & 0xFFFF;
-                processPiece = temp;
+
+                ClassLoader loader = ObjectId.class.getClassLoader();
+                int loaderId = loader != null ? System.identityHashCode(loader) : 0;
+
+                StringBuilder sb = new StringBuilder();
+                sb.append(Integer.toHexString(processId));
+                sb.append(Integer.toHexString(loaderId));
+                processPiece = sb.toString().hashCode() & 0xFFFF;
                 LOGGER.fine( "process piece: " + Integer.toHexString( processPiece ) );
             }
 

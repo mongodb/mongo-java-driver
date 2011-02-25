@@ -4,7 +4,6 @@
 
   <test name="main tests">
     <classes>
-      <class name="com.mongodb.util.StringRangeSetTest"/>
       <class name="com.mongodb.util.SimplePoolTest"/>
       <class name="com.mongodb.util.JSONTest"/>
 
@@ -14,6 +13,7 @@
       <class name="org.bson.BSONTest" />
 
       <class name="org.bson.util.ClassMapTest"/>
+      <class name="org.bson.util.StringRangeSetTest"/>
 
       <class name="com.mongodb.ByteTest" />
       <class name="com.mongodb.BasicDBObjectTest" />
@@ -32,6 +32,7 @@
       <class name="com.mongodb.ThreadingTest" />
 
       <class name="com.mongodb.gridfs.GridFSTest" />
+      <class name="com.mongodb.MongoURITest" />
 
     </classes>
   </test>

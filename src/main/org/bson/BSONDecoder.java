@@ -2,7 +2,6 @@
 
 package org.bson;
 
-import com.mongodb.BasicDBObject;
 import static org.bson.BSON.*;
 
 import java.io.*;
@@ -17,7 +16,7 @@ public class BSONDecoder {
             return readObject( new ByteArrayInputStream( b ) );
         }
         catch ( IOException ioe ){
-            throw new RuntimeException( "should be impossible" , ioe );
+            throw new BSONException( "should be impossible" , ioe );
         }
     }
 
@@ -33,7 +32,7 @@ public class BSONDecoder {
             return _decode( new Input( new ByteArrayInputStream(b) ) , callback );
         }
         catch ( IOException ioe ){
-            throw new RuntimeException( "should be impossible" , ioe );
+            throw new BSONException( "should be impossible" , ioe );
         }
     }
 
@@ -420,7 +419,7 @@ public class BSONDecoder {
                     out = _stringBuffer.asString( "UTF-8" );
                 }
                 catch ( UnsupportedOperationException e ){
-                    throw new RuntimeException( "impossible" , e );
+                    throw new BSONException( "impossible" , e );
                 }
             }
             _stringBuffer.reset();
@@ -431,7 +430,7 @@ public class BSONDecoder {
             throws IOException {
             int size = readInt();
             if ( size <= 0 || size > ( 3 * 1024 * 1024 ) )
-                throw new RuntimeException( "bad string size: " + size );
+                throw new BSONException( "bad string size: " + size );
             
             if ( size < _inputBuffer.length / 2 ){
                 if ( size == 1 ){
@@ -450,7 +449,7 @@ public class BSONDecoder {
                 return new String( b , 0 , size - 1 , "UTF-8" );
             }
             catch ( java.io.UnsupportedEncodingException uee ){
-                throw new RuntimeException( "impossible" , uee );
+                throw new BSONException( "impossible" , uee );
             }
         }
         
@@ -468,7 +467,6 @@ public class BSONDecoder {
     private Input _in;
     private BSONCallback _callback;
     private byte[] _random = new byte[1024]; // has to be used within a single function
-    private char[] _shortChar = new char[1024];
     private byte[] _inputBuffer = new byte[1024];
 
     private PoolOutputBuffer _stringBuffer = new PoolOutputBuffer();

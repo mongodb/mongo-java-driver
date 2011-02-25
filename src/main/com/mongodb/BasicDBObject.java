@@ -25,7 +25,7 @@ import org.bson.*;
 import com.mongodb.util.*;
 
 /**
- * A simple implementation of <code>DBObject</code>.  
+ * a basic implementation of bson object that is mongo specific.
  * A <code>DBObject</code> can be created as follows, using this class:
  * <blockquote><pre>
  * DBObject obj = new BasicDBObject();
@@ -33,6 +33,8 @@ import com.mongodb.util.*;
  * </pre></blockquote>
  */
 public class BasicDBObject extends BasicBSONObject implements DBObject {
+
+    private static final long serialVersionUID = -4415279469780082174L;
     
     /**
      *  Creates an empty object.
@@ -40,12 +42,16 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
     public BasicDBObject(){
     }
     
+    /**
+     * creates an empty object
+     * @param size an estimate of number of fields that will be inserted
+     */
     public BasicDBObject(int size){
     	super(size);
     }
 
     /**
-     * Convenience CTOR
+     * creates an object with the given key/value
      * @param key  key under which to store
      * @param value value to stor
      */
@@ -54,34 +60,30 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
     }
 
     /**
-     * Creates a DBObject from a map.
+     * Creates an object from a map.
      * @param m map to convert
      */
     public BasicDBObject(Map m) {
         super(m);
     }
 
-    /** Checks if this object is ready to be saved.
-     * @return if the object is incomplete
-     */
     public boolean isPartialObject(){
         return _isPartialObject;
     }
 
-    /** Returns a JSON serialization of this object
-     * @return JSON serialization
-     */    
-    public String toString(){
-        return JSON.serialize( this );
-    }
-
-    /** Sets that this object is incomplete and should not be saved.
-     */
     public void markAsPartialObject(){
         _isPartialObject = true;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Returns a JSON serialization of this object
+     * @return JSON serialization
+     */    
+    @Override
+    public String toString(){
+        return JSON.serialize( this );
+    }
+
     @Override
     public BasicDBObject append( String key , Object val ){
         put( key , val );

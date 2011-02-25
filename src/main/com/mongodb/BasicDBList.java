@@ -21,11 +21,19 @@ package com.mongodb;
 import org.bson.types.*;
 import com.mongodb.util.*;
 
+/**
+ * a basic implementation of bson list that is mongo specific 
+ * @author antoine
+ */
 public class BasicDBList extends BasicBSONList implements DBObject {
 
-    /** Returns a JSON serialization of this object
+    private static final long serialVersionUID = -4415279469780082174L;
+
+    /**
+     * Returns a JSON serialization of this object
      * @return JSON serialization
      */    
+    @Override
     public String toString(){
         return JSON.serialize( this );
     }

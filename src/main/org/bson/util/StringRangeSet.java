@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.mongodb.util;
+package org.bson.util;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -76,7 +76,7 @@ public class StringRangeSet implements Set<String> {
 
     @Override
     public boolean contains(Object o) {
-        int t = Integer.valueOf(String.valueOf(o));
+        int t = Integer.parseInt(String.valueOf(o));
         return t >= 0 && t < size;
     }
 

@@ -49,7 +49,6 @@ public class JavaClientTest extends TestCase {
         m.put( "state" , "ny" );
         
         c.save( m );
-        System.out.println( m.keySet() );
         assert( m.containsField( "_id" ) );
 
         Map out = (Map)(c.findOne( m.get( "_id" )));
@@ -377,7 +376,33 @@ public class JavaClientTest extends TestCase {
         MapReduceOutput out = 
             c.mapReduce( "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }" ,
                          "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" ,
-                         null , null );
+                         "jmr1_out" , null );
+        
+        Map<String,Integer> m = new HashMap<String,Integer>();
+        for ( DBObject r : out.results() ){
+            m.put( r.get( "_id" ).toString() , ((Number)(r.get( "value" ))).intValue() );
+        }
+        
+        assertEquals( 4 , m.size() );
+        assertEquals( 1 , m.get( "a" ).intValue() );
+        assertEquals( 2 , m.get( "b" ).intValue() );
+        assertEquals( 2 , m.get( "c" ).intValue() );
+        assertEquals( 1 , m.get( "d" ).intValue() );
+                        
+    }
+
+    @Test
+    public void testMapReduceInline(){
+        DBCollection c = _db.getCollection( "jmr1" );
+        c.drop();
+
+        c.save( new BasicDBObject( "x" , new String[]{ "a" , "b" } ) );
+        c.save( new BasicDBObject( "x" , new String[]{ "b" , "c" } ) );
+        c.save( new BasicDBObject( "x" , new String[]{ "c" , "d" } ) );
+        
+        MapReduceOutput out = 
+            c.mapReduce( "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }" ,
+                         "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" , null, MapReduceCommand.OutputType.INLINE, null);
         
         Map<String,Integer> m = new HashMap<String,Integer>();
         for ( DBObject r : out.results() ){
@@ -589,7 +614,7 @@ public class JavaClientTest extends TestCase {
         assertTrue( cr == cr2 );
 
         CommandResult cr3 = res.getLastError( WriteConcern.NONE );
-        assertTrue( cr != cr3 && cr2 != cr3 );
+        assertTrue( cr3 == cr );
 
     }
 
@@ -656,7 +681,13 @@ public class JavaClientTest extends TestCase {
         assertEquals( 2 , dbObj.keySet().size());
         assertEquals( 5 , dbObj.get( "x" ));
         assertNull( c.findOne(new BasicDBObject( "_id" , 1 ) ));
-        
+
+        // test exception throwing
+        try {
+            dbObj = c.findAndModify( null, null );
+            assertTrue(false, "Exception not throw when no update nor remove");
+        } catch (MongoException e) {
+        }
     }
 
     @Test
@@ -674,7 +705,38 @@ public class JavaClientTest extends TestCase {
         assertEquals( "foo.bar.zoo.dork" , c.getName() );
         
     }
-    
+
+    @Test
+    public void testBadKey(){
+        DBCollection c = _db.getCollectionFromString( "foo" );
+        assertEquals( "foo" , c.getName() );
+
+        try {
+            c.insert(new BasicDBObject("a.b", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+        try {
+            c.insert(new BasicDBObject("$a", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+
+        try {
+            c.save(new BasicDBObject("a.b", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+        try {
+            c.save(new BasicDBObject("$a", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+
+        c.insert(new BasicDBObject("a", 1));
+        try {
+            c.update(new BasicDBObject("a", 1), new BasicDBObject("a.b", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+        c.update(new BasicDBObject("a", 1), new BasicDBObject("$set", new BasicDBObject("a.b", 1)));
+    }
+
     final Mongo _mongo;
     final DB _db;
 

@@ -29,9 +29,9 @@ public class GridFSTest extends TestCase {
         throws IOException , MongoException {
         super();
         try {
-	    cleanupMongo = new Mongo( "127.0.0.1" );
-	    cleanupDB = "com_mongodb_unittest_GridFSTest";
-	    _db = cleanupMongo.getDB( cleanupDB );
+        cleanupMongo = new Mongo( "127.0.0.1" );
+        cleanupDB = "com_mongodb_unittest_GridFSTest";
+        _db = cleanupMongo.getDB( cleanupDB );
             _fs = new GridFS( _db );
         }
         catch ( MongoException e ){
@@ -96,6 +96,56 @@ public class GridFSTest extends TestCase {
             buf.append( "asdasdkjasldkjasldjlasjdlajsdljasldjlasjdlkasjdlaskjdlaskjdlsakjdlaskjdasldjsad" );
         String s = buf.toString();
         testInOut( s );
+    }
+
+    void testOutStream( String s ) throws Exception {
+        
+        int[] start = _get();
+        
+        GridFSInputFile in = _fs.createFile();
+        OutputStream writeStream = in.getOutputStream();
+        writeStream.write( s.getBytes(), 0, s.length() );
+        writeStream.close();
+        GridFSDBFile out = _fs.findOne( new BasicDBObject( "_id" , in.getId() ) );
+        assert ( out.getId().equals( in.getId() ) );
+        assert ( out.getChunkSize() == (long) GridFS.DEFAULT_CHUNKSIZE );
+        
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        out.writeTo( bout );
+        String outString = new String( bout.toByteArray() );
+        assert (outString.equals( s ));
+        
+        out.remove();
+        int[] end = _get();
+        assertEquals( start[0], end[0] );
+        assertEquals( start[1], end[1] );
+    }
+    
+    @Test(groups = { "basic" })
+    public void testOutStreamSmall() throws Exception {
+        testOutStream( "this is a simple test" );
+    }
+    
+    @Test(groups = { "basic" })
+    public void testOutStreamBig() throws Exception {
+        int target = (int) (GridFS.DEFAULT_CHUNKSIZE * 3.5);
+        StringBuilder buf = new StringBuilder( target );
+        while ( buf.length() < target ) {
+            buf.append( "asdasdkjasldkjasldjlasjdlajsdljasldjlasjdlkasjdlaskjdlaskjdlsakjdlaskjdasldjsad" );
+        }
+        String s = buf.toString();
+        testOutStream( s );
+    }
+
+    @Test(groups = { "basic" })
+    public void testOutStreamBigAligned() throws Exception {
+        int target = (GridFS.DEFAULT_CHUNKSIZE * 4);
+        StringBuilder buf = new StringBuilder( target );
+        while ( buf.length() < target ) {
+            buf.append( "a" );
+        }
+        String s = buf.toString();
+        testOutStream( s );
     }
 
     @Test(groups = {"basic"})

@@ -37,7 +37,6 @@ public class DBApiLayer extends DB {
     /** The maximum number of cursors allowed */
     static final int NUM_CURSORS_BEFORE_KILL = 100;
     static final int NUM_CURSORS_PER_BATCH = 20000;
-    static final int CLEANER_INTERVAL = 10000;
     
     //  --- show
 
@@ -53,18 +52,21 @@ public class DBApiLayer extends DB {
     }
     
 
-    protected DBApiLayer( Mongo mongo , String root , DBConnector connector ){
-        super( mongo , root );
+    /**
+     * @param mongo the Mongo instance
+     * @param name the database name
+     * @param connector the connector
+     */
+    protected DBApiLayer( Mongo mongo, String name , DBConnector connector ){
+        super( mongo, name );
 
         if ( connector == null )
-            throw new IllegalArgumentException( "need a connector: " + root );
+            throw new IllegalArgumentException( "need a connector: " + name );
         
-        _root = root;
+        _root = name;
         _rootPlusDot = _root + ".";
 
         _connector = connector;
-        _cleaner = new DBCleanerThread(CLEANER_INTERVAL);
-        _cleaner.start();
     }
 
     public void requestStart(){
@@ -102,7 +104,7 @@ public class DBApiLayer extends DB {
         return ns.substring( _root.length() + 1 );
     }
 
-    void _cleanCursors( boolean force )
+    public void cleanCursors( boolean force )
         throws MongoException {
 
         int sz = _deadCursorIds.size();
@@ -165,7 +167,6 @@ public class DBApiLayer extends DB {
         _connector.say( this , om ,com.mongodb.WriteConcern.NONE , addr );
     }
 
-
     class MyCollection extends DBCollection {
         MyCollection( String name ){
             super( DBApiLayer.this , name );
@@ -173,6 +174,12 @@ public class DBApiLayer extends DB {
         }
 
         public void doapply( DBObject o ){
+        }
+
+        @Override
+        public void drop() throws MongoException {
+            _collections.remove(getName());
+            super.drop();
         }
 
         public WriteResult insert(DBObject[] arr, com.mongodb.WriteConcern concern )
@@ -193,13 +200,14 @@ public class DBApiLayer extends DB {
                 for ( int i=0; i<arr.length; i++ ){
                     DBObject o=arr[i];
                     apply( o );
+                    _checkObject( o , false , false );
                     Object id = o.get( "_id" );
                     if ( id instanceof ObjectId ){
                         ((ObjectId)id).notNew();
                     }
                 }
             }
-            
+
             WriteResult last = null;
 
             int cur = 0;
@@ -280,6 +288,13 @@ public class DBApiLayer extends DB {
         @Override
         public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , com.mongodb.WriteConcern concern )
             throws MongoException {
+
+            if (o != null && !o.keySet().isEmpty()) {
+                // if 1st key doesnt start with $, then object will be inserted as is, need to check it
+                String key = o.keySet().iterator().next();
+                if (key.charAt(0) != '$')
+                    _checkObject(o, false, false);
+            }
 
             if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
             
@@ -368,14 +383,9 @@ public class DBApiLayer extends DB {
             m.writeInt( _numToReturn ); // num to return
             m.writeLong( _curResult.cursor() );
             
-            try {
-                Response res = _connector.call( DBApiLayer.this , _collection , m , _host );
-                _numGetMores++;
-                init( res );
-            }
-            catch ( MongoException me ){
-                throw new MongoInternalException( "can't do getmore" , me );
-            }
+            Response res = _connector.call( DBApiLayer.this , _collection , m , _host );
+            _numGetMores++;
+            init( res );
         }
 
         public void remove(){
@@ -395,7 +405,14 @@ public class DBApiLayer extends DB {
         }
 
         protected void finalize() throws Throwable {
-            close();
+            if (_curResult != null) {
+                long curId = _curResult.cursor();
+                _curResult = null;
+                _cur = null;
+                if (curId > 0) {
+                    _deadCursorIds.add(new DeadCursor(curId, _host));
+                }
+            }
             super.finalize();
         }
 
@@ -451,7 +468,7 @@ public class DBApiLayer extends DB {
         private List<Integer> _sizes = new ArrayList<Integer>();
     }  // class Result
     
-    class DeadCursor {
+    static class DeadCursor {
         
         DeadCursor( long a , ServerAddress b ){
             id = a;
@@ -461,41 +478,10 @@ public class DBApiLayer extends DB {
         final long id;
         final ServerAddress host;
     }
-
-    class DBCleanerThread implements Runnable {
-
-        Thread _thread;
-        int interval;
-
-        DBCleanerThread(int interval) {
-            this.interval = interval;
-        }
-
-        void start() {
-            // start thread as daemon, it's only a cleaner
-            _thread = new Thread(this);
-            _thread.setName(getName() + " - cleaner");
-            _thread.setDaemon(true);
-            _thread.start();
-        }
-
-        public void run() {
-            while (true) {
-                try {
-                    Thread.sleep(interval);
-                    _cleanCursors(true);
-                } catch (Throwable t) {
-                    // thread must never die, print full stack
-                    TRACE_LOGGER.log(Level.WARNING, t.getMessage(), t);
-                }
-            }
-        }
-    }
     
     final String _root;
     final String _rootPlusDot;
     final DBConnector _connector;
-    final DBCleanerThread _cleaner;
     final Map<String,MyCollection> _collections = Collections.synchronizedMap( new HashMap<String,MyCollection>() );
     
     ConcurrentLinkedQueue<DeadCursor> _deadCursorIds = new ConcurrentLinkedQueue<DeadCursor>();

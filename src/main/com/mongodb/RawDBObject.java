@@ -28,11 +28,10 @@ import static com.mongodb.Bytes.*;
 import static com.mongodb.util.MyAsserts.*;
 
 import com.mongodb.util.*;
-/** This object wraps the binary object format ("BSON") used for the transport of serialized objects 
-   to / from the Mongo database.
 
-   http://www.mongodb.org/display/DOCS/BSON
-*/
+/**
+ * This object wraps the binary object format ("BSON") used for the transport of serialized objects to / from the Mongo database.
+ */
 public class RawDBObject implements DBObject {
 
     RawDBObject( ByteBuffer buf ){
@@ -53,6 +52,7 @@ public class RawDBObject implements DBObject {
         return e.getObject();
     }
 
+    @SuppressWarnings("unchecked")
     public Map toMap() {
         Map m = new HashMap();
         Iterator i = this.keySet().iterator();
@@ -82,6 +82,7 @@ public class RawDBObject implements DBObject {
     /**
      * @deprecated
      */
+    @Deprecated
     public boolean containsKey( String key ){
         return containsField(key);
     }
@@ -103,6 +104,7 @@ public class RawDBObject implements DBObject {
         
         return keys;
     }
+
     String _readCStr( final int start ){
 	return _readCStr( start , null );
     }
@@ -181,6 +183,7 @@ public class RawDBObject implements DBObject {
         throw new RuntimeException( "RawDBObject can't be a partial object" );
     }
 
+    @Override
     public String toString(){
         return "Object";
     }
@@ -218,6 +221,8 @@ public class RawDBObject implements DBObject {
                 break;
             case REF:
                 size += 12;
+                size += 4 + _buf.getInt( _dataStart );
+                break;
             case SYMBOL:
             case CODE:
             case STRING:

@@ -26,13 +26,25 @@ import java.util.logging.*;
 import org.bson.*;
 import com.mongodb.util.*;
 
+/**
+ * represents a Port to the database, which is effectively a single connection to a server
+ * Methods implemented at the port level should throw the raw exceptions like IOException,
+ * so that the connector above can make appropriate decisions on how to handle.
+ */
 public class DBPort {
     
+    /**
+     * the default port
+     */
     public static final int PORT = 27017;
     static final boolean USE_NAGLE = false;
     
     static final long CONN_RETRY_TIME_MS = 15000;
 
+    /**
+     * creates a new DBPort
+     * @param addr the server address
+     */
     public DBPort( ServerAddress addr ){
         this( addr , null , new MongoOptions() );
     }
@@ -48,9 +60,6 @@ public class DBPort {
         _logger = Logger.getLogger( _rootLogger.getName() + "." + addr.toString() );
     }
 
-    /**
-     * @param response will get wiped
-     */
     Response call( OutMessage msg , DBCollection coll )
         throws IOException {
         return go( msg , coll );
@@ -109,29 +118,23 @@ public class DBPort {
         }
     }
 
-    synchronized CommandResult getLastError( DB db , WriteConcern concern){
+    synchronized CommandResult getLastError( DB db , WriteConcern concern) throws IOException {
 	DBApiLayer dbAL = (DBApiLayer) db;
 	return runCommand( dbAL , concern.getCommand() );
     }
 
-    synchronized DBObject findOne( DB db , String coll , DBObject q ){
+    synchronized DBObject findOne( DB db , String coll , DBObject q ) throws IOException {
         OutMessage msg = OutMessage.query( db._mongo , 0 , db.getName() + "." + coll , 0 , -1 , q , null );
         
-        try {
-            Response res = go( msg , db.getCollection( coll ) );
-            if ( res.size() == 0 )
-                return null;
-            if ( res.size() > 1 )
-                throw new MongoInternalException( "something is wrong.  size:" + res.size() );
-            return res.get(0);
-        }
-        catch ( IOException ioe ){
-            throw new MongoInternalException( "DBPort.findOne failed" , ioe );
-        }
-        
+        Response res = go( msg , db.getCollection( coll ) );
+        if ( res.size() == 0 )
+            return null;
+        if ( res.size() > 1 )
+            throw new MongoInternalException( "something is wrong.  size:" + res.size() );
+        return res.get(0);
     }
 
-    synchronized CommandResult runCommand( DB db , DBObject cmd ) {
+    synchronized CommandResult runCommand( DB db , DBObject cmd ) throws IOException {
         DBObject res = findOne( db , "$cmd" , cmd );
         if ( res == null )
             throw new MongoInternalException( "something is wrong, no command result" );
@@ -150,7 +153,7 @@ public class DBPort {
             return res.get(0);
         }
         catch ( IOException ioe ){
-            throw new MongoInternalException( "DBPort.findOne failed" , ioe );
+            throw new MongoException.Network( "DBPort.findOne failed" , ioe );
         }
         
     }
@@ -165,13 +168,17 @@ public class DBPort {
     }
 
 
-    synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern){
+    synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern) throws IOException {
         if ( last != _calls )
             return null;
         
         return getLastError( db , concern );
     }
 
+    /**
+     * makes sure that a connection to the server has been opened
+     * @throws IOException
+     */
     public synchronized void ensureOpen()
         throws IOException {
         
@@ -225,22 +232,33 @@ public class DBPort {
         }
     }
 
+    @Override
     public int hashCode(){
         return _hashCode;
     }
     
+    /**
+     * returns a String representation of the target host
+     * @return
+     */
     public String host(){
         return _addr.toString();
     }
     
+    @Override
     public String toString(){
         return "{DBPort  " + host() + "}";
     }
     
-    protected void finalize(){
+    @Override
+    protected void finalize() throws Throwable{
+        super.finalize();
         close();
     }
 
+    /**
+     * closes the underlying connection and streams
+     */
     protected void close(){
         _authed.clear();
                 
@@ -258,7 +276,7 @@ public class DBPort {
         _socket = null;
     }
     
-    void checkAuth( DB db ){
+    void checkAuth( DB db ) throws IOException {
         if ( db._username == null ){
             if ( db._name.equals( "admin" ) )
                 return;
@@ -276,10 +294,18 @@ public class DBPort {
         res = runCommand( db , temp );
 
         if ( ! res.ok() )
-            throw new MongoInternalException( "couldn't re-auth" );
+            throw new MongoException( "couldn't re-auth, username/password change?" );
         _authed.put( db , true );
     }
-    
+
+    /**
+     * Gets the pool that this port belongs to
+     * @return
+     */
+    public DBPortPool getPool() {
+        return _pool;
+    }
+
     final int _hashCode;
     final ServerAddress _sa;
     final InetSocketAddress _addr;

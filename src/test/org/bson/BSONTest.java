@@ -25,9 +25,9 @@ import org.bson.io.*;
 import org.bson.types.*;
 import org.testng.annotations.*;
 
-import com.mongodb.util.*;
+import org.testng.Assert;
 
-public class BSONTest extends TestCase {
+public class BSONTest extends Assert {
 
 
     public BSONTest(){
@@ -158,6 +158,7 @@ public class BSONTest extends TestCase {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testCustomEncoders() 
       throws IOException{
         // If clearEncodingHooks isn't working the first test will fail.
@@ -206,7 +207,7 @@ public class BSONTest extends TestCase {
     }
 
     @Test
-    @SuppressWarnings( "deprecation" )
+    @SuppressWarnings({"deprecation", "unchecked"})
     public void testCustomDecoders() 
       throws IOException{
         // If clearDecodingHooks isn't working this whole test will fail.
@@ -317,10 +318,5 @@ public class BSONTest extends TestCase {
     }
 
     List<String> _data = new ArrayList<String>();
-
-
-    public static void main( String args[] ){
-        (new BSONTest()).runConsole();
-    }
 
 }

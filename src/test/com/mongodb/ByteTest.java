@@ -29,6 +29,7 @@ import org.bson.*;
 import org.bson.types.*;
 
 
+@SuppressWarnings("unchecked")
 public class ByteTest extends TestCase {
 
     public ByteTest()
@@ -431,12 +432,57 @@ public class ByteTest extends TestCase {
         assertEquals( -1 , in.read() );
     }
 
+    int _fix( int x ){
+        if ( x < 0 )
+            return -1;
+        if ( x > 0 ) 
+            return 1;
+        return 0;
+    }
+
+    @Test
+    public void testObjcetIdCompare(){
+        Random r = new Random( 171717 );
+        
+        List<ObjectId> l = new ArrayList<ObjectId>();
+        for ( int i=0; i<10000; i++ ){
+            l.add( new ObjectId( new Date( Math.abs( r.nextLong() ) ) , Math.abs( r.nextInt() ) , Math.abs( r.nextInt() ) ) );
+        }
+
+        for ( int i=1; i<l.size(); i++ ){
+            int a = _fix( l.get(0).compareTo( l.get(i) ) );
+            int b = _fix( l.get(0).toString().compareTo( l.get(i).toString() ) );
+            if ( a == b )
+                continue;
+            throw new RuntimeException( "broken [" + l.get(0) + "] [" + l.get(i) + "] a: " + a + " b: " + b );
+        }
+
+        DBCollection c = _db.getCollection( "testObjcetIdCompare" );
+        c.drop();
+        
+        for ( ObjectId o : l ){
+            c.insert( new BasicDBObject( "_id" , o ) );
+        }
+
+        Collections.sort( l );
+        
+        List<DBObject> out = c.find().sort( new BasicDBObject( "_id" , 1 ) ).toArray();
+        
+        assertEquals( l.size() , out.size() );
+        
+        for ( int i=0; i<l.size(); i++ ){
+            assertEquals( l.get(i) , out.get(i).get( "_id" ) );
+        }
+        
+            
+    }
+
     final DB _db;
 
     public static void main( String args[] )
         throws Exception {
         (new ByteTest()).runConsole();
-
+        
     }
 
 }

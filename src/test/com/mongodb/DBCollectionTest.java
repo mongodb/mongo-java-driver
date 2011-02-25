@@ -184,6 +184,15 @@ public class DBCollectionTest extends TestCase {
 
     }
 
+    @Test( expectedExceptions = IllegalArgumentException.class )
+    public void testDotKeysFail() {
+        DBCollection c = _db.getCollection("testdotkeysFail");
+        c.drop();
+        
+        DBObject obj = BasicDBObjectBuilder.start().add("x",1).add("y",2).add("foo.bar","baz").get();
+        c.insert(obj);
+    }
+
 
     final DB _db;
 
