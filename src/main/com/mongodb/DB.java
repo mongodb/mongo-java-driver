@@ -656,6 +656,9 @@ public abstract class DB {
         return _options.get();
     }
 
+    public abstract void cleanCursors( boolean force ) throws MongoException;
+
+
     final Mongo _mongo;
     final String _name;
 

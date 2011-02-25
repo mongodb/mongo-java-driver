@@ -105,6 +105,11 @@ public class Mongo {
      */
     public static final int MINOR_VERSION = 4;
 
+    static int cleanerIntervalMS;
+    static {
+        cleanerIntervalMS = Integer.parseInt(System.getProperty("com.mongodb.cleanerIntervalMS", "1000"));
+    }
+
     /**
      * returns a database object
      * @param addr the database address
@@ -185,6 +190,8 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addr );
+        _cleaner = new DBCleanerThread();
+        _cleaner.start();
     }
 
     /**
@@ -220,6 +227,9 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addrs );
+
+        _cleaner = new DBCleanerThread();
+        _cleaner.start();
     }
 
     /**
@@ -252,6 +262,9 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addrs );
+
+        _cleaner = new DBCleanerThread();
+        _cleaner.start();
     }
 
     /**
@@ -288,6 +301,8 @@ public class Mongo {
             _connector = new DBTCPConnector( this , replicaSetSeeds );
         }
 
+        _cleaner = new DBCleanerThread();
+        _cleaner.start();
     }
 
     /**
@@ -494,6 +509,7 @@ public class Mongo {
     final ConcurrentMap<String,DB> _dbs = new ConcurrentHashMap<String,DB>();
     private WriteConcern _concern = WriteConcern.NORMAL;
     final Bytes.OptionHolder _netOptions = new Bytes.OptionHolder( null );
+    final DBCleanerThread _cleaner;
     
     org.bson.util.SimplePool<PoolOutputBuffer> _bufferPool = 
         new org.bson.util.SimplePool<PoolOutputBuffer>( 1000 ){
@@ -559,4 +575,24 @@ public class Mongo {
         
     }
 
+    class DBCleanerThread extends Thread {
+
+        DBCleanerThread() {
+            setDaemon(true);
+            setName("MongoCleaner" + hashCode());
+        }
+
+        public void run() {
+            while (_connector.isOpen()) {
+                try {
+                    Thread.sleep(cleanerIntervalMS);
+                    for (DB db : _dbs.values()) {
+                        db.cleanCursors(true);
+                    }
+                } catch (Throwable t) {
+                    // thread must never die
+                }
+            }
+        }
+    }
 }
