@@ -13,12 +13,12 @@ import java.util.logging.*;
 public class MongoURI {
 
     public static final String MONGODB_PREFIX = "mongodb://";
-    
+
     /**
      * Creates a MongoURI described by a String.
      * examples
-     *   mongodb://localhost
-     *   mongodb://fred:foobar@localhost/
+     *   mongodb://127.0.0.1
+     *   mongodb://fred:foobar@127.0.0.1/
      * @param uri the URI
      * @dochub connections
      */
@@ -26,9 +26,9 @@ public class MongoURI {
         _uri = uri;
         if ( ! uri.startsWith( MONGODB_PREFIX ) )
             throw new IllegalArgumentException( "uri needs to start with " + MONGODB_PREFIX );
-        
+
         uri = uri.substring(MONGODB_PREFIX.length());
-        
+
         String serverPart;
         String nsPart;
         String optionsPart;
@@ -43,7 +43,7 @@ public class MongoURI {
             else {
                 serverPart = uri.substring( 0 , idx );
                 nsPart = uri.substring( idx + 1 );
-                
+
                 idx = nsPart.indexOf( "?" );
                 if ( idx >= 0 ){
                     optionsPart = nsPart.substring( idx + 1 );
@@ -52,14 +52,14 @@ public class MongoURI {
                 else {
                     optionsPart = null;
                 }
-                    
+
             }
         }
-        
+
         { // _username,_password,_hosts
             List<String> all = new LinkedList<String>();
-            
-            
+
+
             if ( serverPart.indexOf( "@" ) > 0 ){
                 int idx = serverPart.indexOf( "@" );
                 _username = serverPart.substring( 0 , idx );
@@ -76,10 +76,10 @@ public class MongoURI {
 
             for ( String s : serverPart.split( "," ) )
                 all.add( s );
-            
+
             _hosts = Collections.unmodifiableList( all );
         }
-        
+
         if ( nsPart != null ){ // _database,_collection
             int idx = nsPart.indexOf( "." );
             if ( idx < 0 ){
@@ -141,7 +141,7 @@ public class MongoURI {
     public String getUsername(){
         return _username;
     }
-    
+
     /**
      * Gets the password
      * @return
@@ -157,7 +157,7 @@ public class MongoURI {
     public List<String> getHosts(){
         return _hosts;
     }
-     
+
     /**
      * Gets the database name
      * @return

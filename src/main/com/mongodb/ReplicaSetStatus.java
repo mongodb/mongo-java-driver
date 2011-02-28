@@ -10,7 +10,7 @@ import java.util.logging.*;
 /**
  * keeps replica set status
  * has a background thread to ping so it stays current
- * 
+ *
  * TODO
  *  pull config to get
  *      priority
@@ -70,45 +70,45 @@ class ReplicaSetStatus {
         _checkClosed();
         Node best = null;
         double badBeforeBest = 0;
-        
+
         int start = _random.nextInt( _all.size() );
-        
+
         double mybad = 0;
-        
+
         for ( int i=0; i<_all.size(); i++ ){
             Node n = _all.get( ( start + i ) % _all.size() );
-            
+
             if ( ! n.secondary() ){
                 mybad++;
                 continue;
             }
-            
+
             if ( best == null ){
                 best = n;
                 badBeforeBest = mybad;
                 mybad = 0;
                 continue;
             }
-            
+
             long diff = best._pingTime - n._pingTime;
             if ( diff > slaveAcceptableLatencyMS ||
                  // this is a complex way to make sure we get a random distribution of slaves
-                 ( ( badBeforeBest - mybad ) / ( _all.size() - 1 ) ) > _random.nextDouble() ) 
-                { 
+                 ( ( badBeforeBest - mybad ) / ( _all.size() - 1 ) ) > _random.nextDouble() )
+                {
                 best = n;
                 badBeforeBest = mybad;
                 mybad = 0;
             }
 
         }
-        
+
         if ( best == null )
             return null;
         return best._addr;
     }
 
     class Node {
-        
+
         Node( ServerAddress addr ){
             _addr = addr;
             _port = new DBPort( addr , null , _mongoOptions );
@@ -130,19 +130,19 @@ class ReplicaSetStatus {
         synchronized void update(){
             update(null);
         }
-        
+
         synchronized void update(Set<Node> seenNodes){
             try {
                 long start = System.currentTimeMillis();
                 CommandResult res = _port.runCommand( _mongo.getDB("admin") , _isMasterCmd );
                 _lastCheck = System.currentTimeMillis();
                 _pingTime = _lastCheck - start;
-                
+
                 if ( res == null ){
                     _ok = false;
                     return;
                 }
-                
+
                 _ok = true;
                 _isMaster = res.getBoolean( "ismaster" , false );
                 _isSecondary = res.getBoolean( "secondary" , false );
@@ -156,7 +156,7 @@ class ReplicaSetStatus {
                             seenNodes.add(node);
                     }
                 }
-                
+
                 if ( res.containsField( "passives" ) ){
                     for ( Object x : (List)res.get("passives") ){
                         String host = x.toString();
@@ -180,7 +180,7 @@ class ReplicaSetStatus {
 
             if ( ! _isMaster )
                 return;
-            
+
             try {
                 DB db = _mongo.getDB("local");
                 _port.checkAuth(db);
@@ -192,7 +192,7 @@ class ReplicaSetStatus {
                 } else if (config.get("$err") != null && UNAUTHENTICATED_ERROR_CODE == (Integer)config.get("code")) {
                     _logger.log( Level.WARNING , "Replica Set updater cannot get results, call authenticate on 'local' or 'admin' db");
                 } else {
-                    
+
                     String setName = config.get( "_id" ).toString();
                     if ( _setName == null ){
                         _setName = setName;
@@ -201,8 +201,8 @@ class ReplicaSetStatus {
                     else if ( !_setName.equals( setName ) ){
                         _logger.log( Level.SEVERE , "mis match set name old: " + _setName + " new: " + setName );
                         return;
-                    } 
-                    
+                    }
+
                     // TODO: look at members
                 }
             } catch ( MongoException e ){
@@ -217,7 +217,7 @@ class ReplicaSetStatus {
                 _logger.log( Level.SEVERE , "unexpected error getting config from node: " + _addr , e );
             }
 
-                
+
         }
 
         public boolean master(){
@@ -241,12 +241,12 @@ class ReplicaSetStatus {
 
             return buf.toString();
         }
-        
+
         final ServerAddress _addr;
         final Set<String> _names = Collections.synchronizedSet( new HashSet<String>() );
         DBPort _port; // we have our own port so we can set different socket options and don't have to owrry about the pool
 
-        boolean _ok = false;        
+        boolean _ok = false;
         long _lastCheck = 0;
         long _pingTime = 0;
 
@@ -255,13 +255,13 @@ class ReplicaSetStatus {
 
         double _priority = 0;
     }
-    
+
     class Updater extends Thread {
         Updater(){
             super( "ReplicaSetStatus:Updater" );
             setDaemon( true );
         }
-        
+
         public void run(){
             while ( ! _closed ){
                 try {
@@ -282,7 +282,7 @@ class ReplicaSetStatus {
                 catch ( Exception e ){
                     _logger.log( Level.WARNING , "couldn't do update pass" , e );
                 }
-                
+
                 try {
                     Thread.sleep( updaterIntervalMS );
                 }
@@ -307,7 +307,7 @@ class ReplicaSetStatus {
             if ( n._isMaster )
                 return n;
         }
-        
+
         updateAll();
         return getMasterNode();
     }
@@ -355,7 +355,7 @@ class ReplicaSetStatus {
         for ( int i=0; i<_all.size(); i++ )
             if ( _all.get(i)._names.contains( host ) )
                 return _all.get(i);
-        
+
         ServerAddress addr = null;
         try {
             addr = new ServerAddress( host );
@@ -374,7 +374,7 @@ class ReplicaSetStatus {
 
         return null;
     }
-    
+
     void printStatus(){
         for ( int i=0; i<_all.size(); i++ )
             System.out.println( _all.get(i) );
@@ -393,7 +393,7 @@ class ReplicaSetStatus {
 
     String _lastPrimarySignal;
     boolean _closed = false;
-    
+
     final Random _random = new Random();
     long _nextResolveTime;
 
@@ -416,8 +416,8 @@ class ReplicaSetStatus {
     public static void main( String args[] )
         throws Exception {
         List<ServerAddress> addrs = new LinkedList<ServerAddress>();
-        addrs.add( new ServerAddress( "localhost" , 27017 ) );
-        addrs.add( new ServerAddress( "localhost" , 27018 ) );
+        addrs.add( new ServerAddress( "127.0.0.1" , 27017 ) );
+        addrs.add( new ServerAddress( "127.0.0.1" , 27018 ) );
 
         Mongo m = new Mongo( addrs );
 
@@ -433,6 +433,6 @@ class ReplicaSetStatus {
             System.out.println( "-----------------------" );
             Thread.sleep( 5000 );
         }
-        
+
     }
 }

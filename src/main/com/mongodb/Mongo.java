@@ -28,7 +28,7 @@ import org.bson.io.*;
 /**
  * A database connection with internal pooling.
  * For most application, you should have 1 Mongo instance for the entire JVM.
- * 
+ *
  * The following are equivalent, and all connect to the
  * local database running on the default port:
  *
@@ -45,18 +45,18 @@ import org.bson.io.*;
  *
  * <h3>Connecting to a Replica Pair</h3>
  * <p>
- * You can connect to a 
+ * You can connect to a
  * <a href="http://www.mongodb.org/display/DOCS/Replica+Pairs">replica pair</a>
  * using the Java driver by passing two DBAddresses to the Mongo constructor.
  * For example:
  * </p>
  * <blockquote><pre>
- * DBAddress left = new DBAddress("localhost:27017/test");
- * DBAddress right = new DBAddress("localhost:27018/test");
+ * DBAddress left = new DBAddress("127.0.0.1:27017/test");
+ * DBAddress right = new DBAddress("127.0.0.1:27018/test");
  *
  * Mongo mongo = new Mongo(left, right);
  * </pre></blockquote>
- * 
+ *
  * <p>
  * If the master of a replica pair goes down, there will be a brief lag before
  * the slave becomes master.  Thus, your application should be prepared to catch
@@ -71,7 +71,7 @@ import org.bson.io.*;
  *
  * <h3>Connecting to a Replica Set</h3>
  * <p>
- * You can connect to a 
+ * You can connect to a
  * <a href="http://www.mongodb.org/display/DOCS/Replica+Sets">replica set</a>
  * using the Java driver by passing several a list if ServerAddress to the
  * Mongo constructor.
@@ -79,9 +79,9 @@ import org.bson.io.*;
  * </p>
  * <blockquote><pre>
  * List<ServerAddress> addrs = new ArrayList<ServerAddress>();
- * addrs.add( new ServerAddress( "localhost" , 27017 ) );
- * addrs.add( new ServerAddress( "localhost" , 27018 ) );
- * addrs.add( new ServerAddress( "localhost" , 27019 ) );
+ * addrs.add( new ServerAddress( "127.0.0.1" , 27017 ) );
+ * addrs.add( new ServerAddress( "127.0.0.1" , 27018 ) );
+ * addrs.add( new ServerAddress( "127.0.0.1" , 27019 ) );
  *
  * Mongo mongo = new Mongo( addrs );
  * </pre></blockquote>
@@ -198,7 +198,7 @@ public class Mongo {
      * <p>Creates a Mongo in paired mode. <br/> This will also work for
      * a replica set and will find all members (the master will be used by
      * default).</p>
-     * 
+     *
      * @see com.mongodb.ServerAddress
      * @param left left side of the pair
      * @param right right side of the pair
@@ -213,7 +213,7 @@ public class Mongo {
      * <p>Creates a Mongo connection in paired mode. <br/> This will also work for
      * a replica set and will find all members (the master will be used by
      * default).</p>
-     * 
+     *
      * @see com.mongodb.ServerAddress
      * @param left left side of the pair
      * @param right right side of the pair
@@ -249,14 +249,14 @@ public class Mongo {
      * <p>Creates a Mongo based on a replica set, or pair.
      * It will find all members (the master will be used by default).</p>
      * @see com.mongodb.ServerAddress
-     * @param replicaSetSeeds put as many servers as you can in the list. 
+     * @param replicaSetSeeds put as many servers as you can in the list.
      *                       the system will figure the rest out
      * @param options default query options
      * @throws MongoException
-     */    
+     */
     public Mongo( List<ServerAddress> replicaSetSeeds , MongoOptions options )
         throws MongoException {
-        
+
         _addr = null;
         _addrs = replicaSetSeeds;
         _options = options;
@@ -273,20 +273,20 @@ public class Mongo {
      * @param uri
      * @see MongoURI
      * <p>examples:
-     *   <li>mongodb://localhost</li>
-     *   <li>mongodb://fred:foobar@localhost/</li>
+     *   <li>mongodb://127.0.0.1</li>
+     *   <li>mongodb://fred:foobar@127.0.0.1/</li>
      *  </p>
      *  @throws MongoException
      * @throws UnknownHostException
      * @dochub connections
-     */    
+     */
 
     public Mongo( MongoURI uri )
         throws MongoException , UnknownHostException {
 
         _options = uri.getOptions();
         _applyMongoOptions();
-        
+
         if ( uri.getHosts().size() == 1 ){
             _addr = new ServerAddress( uri.getHosts().get(0) );
             _addrs = null;
@@ -311,11 +311,11 @@ public class Mongo {
      * @return
      */
     public DB getDB( String dbname ){
-        
+
         DB db = _dbs.get( dbname );
         if ( db != null )
             return db;
-        
+
         db = new DBApiLayer( this , dbname , _connector );
         DB temp = _dbs.putIfAbsent( dbname , db );
         if ( temp != null )
@@ -342,7 +342,7 @@ public class Mongo {
 
         BasicDBObject cmd = new BasicDBObject();
         cmd.put("listDatabases", 1);
-        
+
 
         BasicDBObject res = (BasicDBObject)getDB( "admin" ).command(cmd, getOptions());
 
@@ -367,7 +367,7 @@ public class Mongo {
      */
     public void dropDatabase(String dbName)
         throws MongoException {
-        
+
         getDB( dbName ).dropDatabase();
     }
 
@@ -480,7 +480,7 @@ public class Mongo {
     public void resetOptions(){
         _netOptions.reset();
     }
-   
+
     /**
      * gets the default query options
      * @return
@@ -510,26 +510,26 @@ public class Mongo {
     private WriteConcern _concern = WriteConcern.NORMAL;
     final Bytes.OptionHolder _netOptions = new Bytes.OptionHolder( null );
     final DBCleanerThread _cleaner;
-    
-    org.bson.util.SimplePool<PoolOutputBuffer> _bufferPool = 
+
+    org.bson.util.SimplePool<PoolOutputBuffer> _bufferPool =
         new org.bson.util.SimplePool<PoolOutputBuffer>( 1000 ){
-        
+
         protected PoolOutputBuffer createNew(){
             return new PoolOutputBuffer();
         }
-        
+
     };
 
 
-    // -------   
+    // -------
 
-    
+
     /**
      * Mongo.Holder can be used as a static place to hold several instances of Mongo.
      * Security is not enforced at this level, and needs to be done on the application side.
      */
     public static class Holder {
-        
+
         /**
          * Attempts to find an existing Mongo instance matching that URI in the holder, and returns it if exists.
          * Otherwise creates a new Mongo instance based on this URI and adds it to the holder.
@@ -542,19 +542,19 @@ public class Mongo {
             throws MongoException , UnknownHostException {
 
             String key = _toKey( uri );
-            
+
             Mongo m = _mongos.get(key);
             if ( m != null )
                 return m;
 
             m = new Mongo( uri );
-            
+
             Mongo temp = _mongos.putIfAbsent( key , m );
             if ( temp == null ){
                 // ours got in
                 return m;
             }
-            
+
             // there was a race and we lost
             // close ours and return the other one
             m.close();
@@ -570,9 +570,9 @@ public class Mongo {
             return buf.toString();
         }
 
-        
+
         private static final ConcurrentMap<String,Mongo> _mongos = new ConcurrentHashMap<String,Mongo>();
-        
+
     }
 
     class DBCleanerThread extends Thread {
