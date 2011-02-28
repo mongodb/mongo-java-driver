@@ -35,6 +35,7 @@ public class MongoOptions {
         maxWaitTime = 1000 * 60 * 2;
         connectTimeout = 0;
         socketTimeout = 0;
+        socketKeepAlive = true;
         autoConnectRetry = false;
         slaveOk = false;
         safe = false;
@@ -93,7 +94,15 @@ public class MongoOptions {
      * 0 is default and infinite
      */
     public int socketTimeout;
-    
+
+    /**
+     * This controls whether or not to have socket keep alive
+     * turned on (SO_KEEPALIVE).
+     *
+     * defaults to true
+     */
+    public boolean socketKeepAlive;
+
     /**
      * This controls whether the system retries automatically
      * on connection errors.  
@@ -150,6 +159,7 @@ public class MongoOptions {
         buf.append( "maxWaitTime: " ).append( maxWaitTime ).append( " " );
         buf.append( "connectTimeout: " ).append( connectTimeout ).append( " " );
         buf.append( "socketTimeout: " ).append( socketTimeout ).append( " " );
+        buf.append( "socketKeepAlive: " ).append( socketKeepAlive ).append( " " );
         buf.append( "autoConnectRetry: " ).append( autoConnectRetry ).append( " " );
         buf.append( "slaveOk: " ).append( slaveOk ).append( " " );
         buf.append( "safe: " ).append( safe ).append( " " );
