@@ -29,7 +29,7 @@ import java.util.logging.*;
 import java.lang.management.*;
 import javax.management.*;
 
-class DBPortPool extends SimplePool<DBPort> {
+public class DBPortPool extends SimplePool<DBPort> {
 
     static class Holder {
         

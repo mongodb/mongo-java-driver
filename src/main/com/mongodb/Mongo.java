@@ -399,7 +399,7 @@ public class Mongo {
      * Gets the underlying TCP connector
      * @return
      */
-    DBTCPConnector getConnector() {
+    public DBTCPConnector getConnector() {
         return _connector;
     }
 

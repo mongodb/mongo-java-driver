@@ -25,7 +25,7 @@ import java.util.logging.*;
 
 import org.bson.*;
 
-class DBTCPConnector implements DBConnector {
+public class DBTCPConnector implements DBConnector {
 
     static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
     static Logger _createLogger = Logger.getLogger( _logger.getName() + ".connect" );
@@ -445,9 +445,24 @@ class DBTCPConnector implements DBConnector {
         _myPort = null;
     }
 
-    void updatePortPool(ServerAddress addr) {
+    /**
+     * Assigns a new DBPortPool for a given ServerAddress.
+     * This is used to obtain a new pool when the resolved IP of a host changes, for example.
+     * User application should not have to call this method directly.
+     * @param addr
+     */
+    public void updatePortPool(ServerAddress addr) {
         // just remove from map, a new pool will be created lazily
         _portHolder._pools.remove(addr);
+    }
+
+    /**
+     * Gets the DBPortPool associated with a ServerAddress.
+     * @param addr
+     * @return
+     */
+    public DBPortPool getDBPortPool(ServerAddress addr) {
+        return _portHolder.get(addr);
     }
 
     public boolean isOpen(){
