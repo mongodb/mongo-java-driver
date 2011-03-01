@@ -17,7 +17,7 @@ import java.util.logging.*;
  *      slave delay
  *      tags (when we do it)
  */
-class ReplicaSetStatus {
+public class ReplicaSetStatus {
 
     static final Logger _rootLogger = Logger.getLogger( "com.mongodb.ReplicaSetStatus" );
     static final int UNAUTHENTICATED_ERROR_CODE = 10057;
@@ -36,6 +36,10 @@ class ReplicaSetStatus {
 
     boolean ready(){
         return _setName != null;
+    }
+
+    public String getName() {
+        return _setName;
     }
 
     void _checkClosed(){

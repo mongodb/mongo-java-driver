@@ -396,6 +396,22 @@ public class Mongo {
     }
 
     /**
+     * Gets the underlying TCP connector
+     * @return
+     */
+    DBTCPConnector getConnector() {
+        return _connector;
+    }
+
+    /**
+     * Gets the replica set status object
+     * @return
+     */
+    public ReplicaSetStatus getReplicaSetStatus() {
+        return _connector.getReplicaSetStatus();
+    }
+
+    /**
      * Gets the address of the current master
      * @return the address
      */
@@ -496,10 +512,6 @@ public class Mongo {
     void _applyMongoOptions() {
         if (_options.slaveOk) slaveOk();
         setWriteConcern( _options.getWriteConcern() );
-    }
-
-    DBTCPConnector getConnector() {
-        return _connector;
     }
 
     final ServerAddress _addr;

@@ -277,6 +277,10 @@ class DBTCPConnector implements DBConnector {
         return null;
     }
 
+    public ReplicaSetStatus getReplicaSetStatus() {
+        return _rsStatus;
+    }
+
     public String getConnectPoint(){
         ServerAddress master = getAddress();
         return master != null ? master.toString() : null;
