@@ -155,7 +155,7 @@ public class JSON {
             return;
 	}
 
-        if (o instanceof byte[]) {
+        if (o instanceof byte[] || o instanceof Binary) {
             buf.append("<Binary Data>");
             return;
         }

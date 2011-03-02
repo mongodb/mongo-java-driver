@@ -429,7 +429,8 @@ public class BSONDecoder {
         String readUTF8String()
             throws IOException {
             int size = readInt();
-            if ( size <= 0 || size > ( 3 * 1024 * 1024 ) )
+            // this is just protection in case it's corrupted, to avoid huge strings
+            if ( size <= 0 || size > ( 32 * 1024 * 1024 ) )
                 throw new BSONException( "bad string size: " + size );
             
             if ( size < _inputBuffer.length / 2 ){

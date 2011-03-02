@@ -534,13 +534,15 @@ public class JavaClientTest extends TestCase {
  
     @Test
     public void testLargeBulkInsert(){
+        // max size should be obtained from server
+        int maxObjSize = 16 * 1024 * 1024;
         DBCollection c = _db.getCollection( "largebulk" );
         c.drop();
         String s = "asdasdasd";
         while ( s.length() < 10000 )
             s += s;
         List<DBObject> l = new ArrayList<DBObject>();
-        final int num = 3 * ( Bytes.MAX_OBJECT_SIZE / s.length() );
+        final int num = 3 * ( maxObjSize / s.length() );
 
         for ( int i=0; i<num; i++ ){
             l.add( BasicDBObjectBuilder.start()
@@ -553,7 +555,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( num , c.find().count() );
 
         s = l.toString();
-        assertTrue( s.length() > Bytes.MAX_OBJECT_SIZE );
+        assertTrue( s.length() > maxObjSize );
         
         boolean worked = false;
         try {

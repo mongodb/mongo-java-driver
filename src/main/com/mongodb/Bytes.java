@@ -48,8 +48,12 @@ public class Bytes extends BSON {
 
     /** Little-endian */
     public static final ByteOrder ORDER = ByteOrder.LITTLE_ENDIAN;
-    
-    static final int MAX_OBJECT_SIZE = 1024 * 1024 * 4;
+
+    /** this size is used to prevent insertion of objects that are too large for db */
+    static final int MAX_OBJECT_SIZE = 1024 * 1024 * 32;
+
+    /** target size of an insert batch */
+    static final int BATCH_INSERT_SIZE = 1024 * 1024 * 16;
     
     static final int CONNECTIONS_PER_HOST = Integer.parseInt( System.getProperty( "MONGO.POOLSIZE" , "10" ) );
 
