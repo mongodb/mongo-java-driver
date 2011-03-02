@@ -169,6 +169,10 @@ public class ReplicaSetStatus {
                             seenNodes.add(node);
                     }
                 }
+
+                if (_isMaster && res.containsField("maxBsonObjectSize"))
+                    _maxBsonObjectSize = ((Integer)res.get( "maxBsonObjectSize" )).intValue();
+
             }
             catch ( MongoException e ){
                 Throwable root = e;
@@ -388,11 +392,15 @@ public class ReplicaSetStatus {
         _closed = true;
     }
 
+    public int getMaxBsonObjectSize() {
+        return _maxBsonObjectSize;
+    }
 
     final List<Node> _all;
     Updater _updater;
     Mongo _mongo;
     String _setName = null; // null until init
+    int _maxBsonObjectSize = 0;
     Logger _logger = _rootLogger; // will get changed to use set name once its found
 
     String _lastPrimarySignal;
