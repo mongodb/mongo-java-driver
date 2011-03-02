@@ -296,7 +296,7 @@ public class DBApiLayer extends DB {
                     _checkObject(o, false, false);
             }
 
-            if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
+            if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) + " " + JSON.serialize( o )  );
             
             OutMessage om = new OutMessage( _mongo , 2001 );
             om.writeInt( 0 ); // reserved
