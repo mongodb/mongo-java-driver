@@ -271,16 +271,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         if ( x != 0 )
             return x;
         
-        x = _compareUnsigned( _inc , id._inc );
-        if (Math.abs(x) > Integer.MAX_VALUE / 2) {
-            // this means that for same second and process more than (max int)/2 were generated
-            // highly unlikely, most likely the counter wrapped
-            if (x < 0)
-                return 1;
-            else
-                return -1;
-        }
-        return x;
+        return _compareUnsigned( _inc , id._inc );
     }
 
     public int getMachine(){
