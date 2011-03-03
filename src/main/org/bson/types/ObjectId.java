@@ -100,10 +100,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
     public ObjectId( Date time ){
-        _time = _flip( (int)(time.getTime() / 1000) );
-        _machine = _genmachine;
-        _inc = _nextInc.getAndIncrement();
-        _new = false;
+        this(time, _genmachine, _nextInc.getAndIncrement());
     }
 
     public ObjectId( Date time , int inc ){
@@ -111,12 +108,11 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
     public ObjectId( Date time , int machine , int inc ){
-        _time = _flip( (int)(time.getTime() / 1000) );
+        _time = (int)(time.getTime() / 1000);
         _machine = machine;
         _inc = inc;
         _new = false;
     }
-
 
     /** Creates a new instance from a string.
      * @param s the string to convert
@@ -133,44 +129,45 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
         if ( babble )
             s = babbleToMongod( s );
-        
+
         byte b[] = new byte[12];
         for ( int i=0; i<b.length; i++ ){
-            b[b.length-(i+1)] = (byte)Integer.parseInt( s.substring( i*2 , i*2 + 2) , 16 );
+            b[i] = (byte)Integer.parseInt( s.substring( i*2 , i*2 + 2) , 16 );
         }
         ByteBuffer bb = ByteBuffer.wrap( b );
-        
-        _inc = bb.getInt(); 
-        _machine = bb.getInt();
         _time = bb.getInt();
-
+        _machine = bb.getInt();
+        _inc = bb.getInt();
         _new = false;
     }
 
     public ObjectId( byte[] b ){
         if ( b.length != 12 )
             throw new IllegalArgumentException( "need 12 bytes" );
-        reverse( b );
         ByteBuffer bb = ByteBuffer.wrap( b );
-        
-        _inc = bb.getInt();            
-        _machine = bb.getInt();
         _time = bb.getInt();
+        _machine = bb.getInt();
+        _inc = bb.getInt();
+        _new = false;
     }
     
-    
+    /**
+     * Creates an ObjectId
+     * @param time time in seconds
+     * @param machine machine ID
+     * @param inc incremental value
+     */
     public ObjectId( int time , int machine , int inc ){
         _time = time;
         _machine = machine;
         _inc = inc;
-        
         _new = false;
     }
     
     /** Create a new object id.
      */
     public ObjectId(){
-        _time = _curtime();
+        _time = (int) (System.currentTimeMillis() / 1000);
         _machine = _genmachine;
         _inc = _nextInc.getAndIncrement();
         _new = true;
@@ -221,19 +218,11 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     public byte[] toByteArray(){
         byte b[] = new byte[12];
         ByteBuffer bb = ByteBuffer.wrap( b );
-        bb.putInt( _inc );
-        bb.putInt( _machine );
+        // by default BB is big endian like we need
         bb.putInt( _time );
-        reverse( b );
+        bb.putInt( _machine );
+        bb.putInt( _inc );
         return b;
-    }
-
-    static void reverse( byte[] b ){
-        for ( int i=0; i<b.length/2; i++ ){
-            byte t = b[i];
-            b[i] = b[ b.length-(i+1) ];
-            b[b.length-(i+1)] = t;
-        }
     }
     
     static String _pos( String s , int p ){
@@ -257,41 +246,61 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return toStringMongod();
     }
     
-    int _compare( int i , int j ){
-        i = _flip(i);
-        j = _flip(j);
-
-        final int diff = j - i;
-        
-        if ( i >= 0 ){
-            return j >= 0 ? -diff : -1;
-        }
-        
-        return j < 0 ? -diff : 1;
+    int _compareUnsigned( int i , int j ){
+        long li = 0xFFFFFFFFL;
+        li = i & li;
+        long lj = 0xFFFFFFFFL;
+        lj = j & lj;
+        long diff = li - lj;
+        if (diff < Integer.MIN_VALUE)
+            return Integer.MIN_VALUE;
+        if (diff > Integer.MAX_VALUE)
+            return Integer.MAX_VALUE;
+        return (int) diff;
     }
 
     public int compareTo( ObjectId id ){
         if ( id == null )
             return -1;
         
-        int x = _compare( _time , id._time );
+        int x = _compareUnsigned( _time , id._time );
         if ( x != 0 )
             return x;
 
-        x = _compare( _machine , id._machine );
+        x = _compareUnsigned( _machine , id._machine );
         if ( x != 0 )
             return x;
         
-        return _compare( _inc , id._inc );
+        x = _compareUnsigned( _inc , id._inc );
+        if (Math.abs(x) > Integer.MAX_VALUE / 2) {
+            // this means that for same second and process more than (max int)/2 were generated
+            // highly unlikely, most likely the counter wrapped
+            if (x < 0)
+                return 1;
+            else
+                return -1;
+        }
+        return x;
     }
 
     public int getMachine(){
         return _machine;
     }
-    
+
+    /**
+     * Gets the time of this ID, in milliseconds
+     * @return
+     */
     public long getTime(){
-        long z = _flip( _time );
-        return z * 1000;
+        return _time * 1000L;
+    }
+
+    /**
+     * Gets the time of this ID, in seconds
+     * @return
+     */
+    public int getTimeSecond(){
+        return _time;
     }
 
     public int getInc(){
@@ -316,6 +325,22 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         _new = false;
     }
 
+    /**
+     * Gets the generated machine ID, identifying the machine / process / class loader
+     * @return
+     */
+    public static int getGenMachineId() {
+        return _genmachine;
+    }
+
+    /**
+     * Gets the current value of the auto increment
+     * @return
+     */
+    public static int getCurrentInc() {
+        return _nextInc.get();
+    }
+
     final int _time;
     final int _machine;
     final int _inc;
@@ -331,12 +356,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return z;
     }
     
-    private static int _curtime(){
-        return _flip( (int)(System.currentTimeMillis()/1000) );
-    }
-
     private static AtomicInteger _nextInc = new AtomicInteger( (new java.util.Random()).nextInt() );
-    private static final String _incLock = new String( "ObjectId._incLock" );
 
     private static final int _genmachine;
     static {

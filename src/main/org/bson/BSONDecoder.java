@@ -141,7 +141,8 @@ public class BSONDecoder {
             break;
 
         case OID:
-            _callback.gotObjectId( name , new ObjectId( _in.readInt() , _in.readInt() , _in.readInt() ) );
+            // OID is stored as big endian
+            _callback.gotObjectId( name , new ObjectId( _in.readIntBE() , _in.readIntBE() , _in.readIntBE() ) );
             break;
             
         case REF:
@@ -323,6 +324,11 @@ public class BSONDecoder {
         int readInt()
             throws IOException {
             return Bits.readInt( _inputBuffer , _need(4) );
+        }
+
+        int readIntBE()
+            throws IOException {
+            return Bits.readIntBE( _inputBuffer , _need(4) );
         }
 
         long readLong()

@@ -108,6 +108,13 @@ public abstract class OutputBuffer {
         write( x >> 24 );
     }
 
+    public void writeIntBE( int x ){
+        write( x >> 24 );
+        write( x >> 16 );
+        write( x >> 8 );
+        write( x );
+    }
+
     public void writeInt( int pos , int x ){
         final int save = getPosition();
         setPosition( pos );

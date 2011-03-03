@@ -63,6 +63,15 @@ public class Bits {
         return x;
     }
 
+    public static int readIntBE( byte[] data , int offset ) {
+        int x = 0;
+        x |= ( 0xFF & data[offset+0] ) << 24;
+        x |= ( 0xFF & data[offset+1] ) << 16;
+        x |= ( 0xFF & data[offset+2] ) << 8;
+        x |= ( 0xFF & data[offset+3] ) << 0;
+        return x;
+    }
+
     public static long readLong( InputStream in )
         throws IOException {
         return readLong( in , new byte[8] );

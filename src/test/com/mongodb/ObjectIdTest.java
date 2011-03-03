@@ -129,6 +129,25 @@ public class ObjectIdTest extends TestCase {
         }
         
     }
+
+    /**
+     * Test that within same second, increment value correctly generates ordered ids
+     */
+    @Test
+    public void testInc() {
+        ObjectId prev = null;
+        Date now = new Date();
+        // need to loop more than value of byte, to check that endianness is correct
+        for (int i = 0; i < 1000; ++i) {
+            ObjectId id = new ObjectId(now);
+            assertEquals(id.getTime() / 1000, now.getTime() / 1000);
+            if (prev != null) {
+                assertTrue(prev.compareTo(id) < 0, "Wrong comparison for ids " + prev + " and " + id);
+            }
+            prev = id;
+        }
+    }
+
     public static void main( String args[] )
         throws Exception {
         (new ObjectIdTest()).runConsole();

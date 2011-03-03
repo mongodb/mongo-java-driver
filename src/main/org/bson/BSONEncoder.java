@@ -352,9 +352,10 @@ public class BSONEncoder {
 
     protected void putObjectId( String name , ObjectId oid ){
         _put( OID , name );
-        _buf.writeInt( oid._time() );
-        _buf.writeInt( oid._machine() );
-        _buf.writeInt( oid._inc() );
+        // according to spec, values should be stored big endian
+        _buf.writeIntBE( oid._time() );
+        _buf.writeIntBE( oid._machine() );
+        _buf.writeIntBE( oid._inc() );
     }
     
     private void putPattern( String name, Pattern p ) {
