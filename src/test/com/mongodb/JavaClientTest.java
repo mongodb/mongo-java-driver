@@ -610,7 +610,7 @@ public class JavaClientTest extends TestCase {
 
         CommandResult cr = res.getLastError( WriteConcern.FSYNC_SAFE );
         assertEquals( 1 , cr.getInt( "n" ) );
-        assertTrue( cr.containsField( "fsyncFiles" ));
+        assertTrue( cr.containsField( "fsyncFiles" ) || cr.containsField( "waited" ));
 
         CommandResult cr2 = res.getLastError( WriteConcern.FSYNC_SAFE );
         assertTrue( cr == cr2 );

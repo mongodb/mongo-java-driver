@@ -56,7 +56,7 @@ public class ErrorTest extends TestCase {
         _db.resetError();
         CommandResult cr = _db.getLastError(WriteConcern.FSYNC_SAFE);
         assert(cr.get("err") == null);
-        assert(cr.containsField("fsyncFiles"));
+        assert(cr.containsField("fsyncFiles") || cr.containsField("waited"));
     }
 
     @Test
