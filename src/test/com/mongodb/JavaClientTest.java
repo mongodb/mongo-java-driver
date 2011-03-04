@@ -535,7 +535,7 @@ public class JavaClientTest extends TestCase {
     @Test
     public void testLargeBulkInsert(){
         // max size should be obtained from server
-        int maxObjSize = 16 * 1024 * 1024;
+        int maxObjSize = _mongo.getMaxBsonObjectSize();
         DBCollection c = _db.getCollection( "largebulk" );
         c.drop();
         String s = "asdasdasd";
@@ -562,7 +562,7 @@ public class JavaClientTest extends TestCase {
             c.save( new BasicDBObject( "foo" , s ) );
             worked = true;
         }
-        catch ( IllegalArgumentException ie ){}
+        catch ( MongoException ie ){}
         assertFalse( worked );
 
         assertEquals( num , c.find().count() );

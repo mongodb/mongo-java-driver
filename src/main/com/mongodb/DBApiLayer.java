@@ -211,6 +211,7 @@ public class DBApiLayer extends DB {
             WriteResult last = null;
 
             int cur = 0;
+            int maxsize = _mongo.getMaxBsonObjectSize();
             while ( cur < arr.length ){
                 OutMessage om = new OutMessage( _mongo , 2002 );
                 
@@ -219,14 +220,10 @@ public class DBApiLayer extends DB {
                 
                 for ( ; cur<arr.length; cur++ ){
                     DBObject o = arr[cur];
-                    int sz = om.putObject( o );
-                    // server is better suited to decide on object size
-                    // indeed driver may be talking to dbs with different limits
-                    // also max size is tough to catch on updates, so here it's just an extra check
-                    if ( sz > Bytes.MAX_OBJECT_SIZE )
-                        throw new IllegalArgumentException( "object too big: " + sz );
-                    
-                    if ( om.size() > Bytes.BATCH_INSERT_SIZE ){
+                    om.putObject( o );
+
+                    // limit for batch insert is 4 x maxbson on server, use 2 x to be safe
+                    if ( om.size() > 2 * maxsize ){
                         cur++;
                         break;
                     }

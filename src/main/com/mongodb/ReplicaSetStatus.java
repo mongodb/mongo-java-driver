@@ -170,8 +170,13 @@ public class ReplicaSetStatus {
                     }
                 }
 
-                if (_isMaster && res.containsField("maxBsonObjectSize"))
-                    _maxBsonObjectSize = ((Integer)res.get( "maxBsonObjectSize" )).intValue();
+                if (_isMaster ) {
+                    // max size was added in 1.8
+                    if (res.containsField("maxBsonObjectSize"))
+                        maxBsonObjectSize = ((Integer)res.get( "maxBsonObjectSize" )).intValue();
+                    else
+                        maxBsonObjectSize = Bytes.MAX_OBJECT_SIZE;
+                }
 
             }
             catch ( MongoException e ){
@@ -392,15 +397,20 @@ public class ReplicaSetStatus {
         _closed = true;
     }
 
+    /**
+     * Gets the maximum size for a BSON object supported by the current master server.
+     * Note that this value may change over time depending on which server is master.
+     * @return the maximum size, or 0 if not obtained from servers yet.
+     */
     public int getMaxBsonObjectSize() {
-        return _maxBsonObjectSize;
+        return maxBsonObjectSize;
     }
 
     final List<Node> _all;
     Updater _updater;
     Mongo _mongo;
     String _setName = null; // null until init
-    int _maxBsonObjectSize = 0;
+    int maxBsonObjectSize = 0;
     Logger _logger = _rootLogger; // will get changed to use set name once its found
 
     String _lastPrimarySignal;

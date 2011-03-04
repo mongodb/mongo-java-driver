@@ -516,22 +516,15 @@ public class Mongo {
 
     /**
      * Gets the maximum size for a BSON object supported by the current master server.
-     * Note that this method may make a request to the server to obtain the size.
-     * @throws MongoException
-     * @return the size supported, or 0 if it cannot be determined.
+     * Note that this value may change over time depending on which server is master.
+     * If the size is not known yet, a request may be sent to the master server
+     * @return the maximum size
      */
     public int getMaxBsonObjectSize() {
-        int size = 0;
-        if (_connector.getReplicaSetStatus() != null)
-            size = _connector.getReplicaSetStatus().getMaxBsonObjectSize();
-        if (size == 0) {
-            // need to fetch size
-            DB db = getDB("admin");
-            CommandResult res = db.command("isMaster");
-            if (res.containsField("maxBsonObjectSize"))
-                size = ((Integer)res.get( "maxBsonObjectSize" )).intValue();
-        }
-        return size;
+        int maxsize = _connector.getMaxBsonObjectSize();
+        if (maxsize == 0)
+            maxsize = _connector.fetchMaxBsonObjectSize();
+        return maxsize > 0 ? maxsize : Bytes.MAX_OBJECT_SIZE;
     }
 
     final ServerAddress _addr;

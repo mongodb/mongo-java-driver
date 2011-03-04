@@ -183,6 +183,20 @@ class OutMessage extends BSONEncoder {
         return _id;
     }
 
+    @Override
+    public int putObject(BSONObject o) {
+        // check max size
+        int sz = super.putObject(o);
+        if (_mongo != null) {
+            int maxsize = _mongo.getConnector().getMaxBsonObjectSize();
+            maxsize = Math.max(maxsize, Bytes.MAX_OBJECT_SIZE);
+            if (sz > maxsize) {
+                throw new MongoInternalException("DBObject of size " + sz + " is over Max BSON size " + _mongo.getMaxBsonObjectSize());
+            }
+        }
+        return sz;
+    }
+
     private Mongo _mongo;
     private PoolOutputBuffer _buffer;
     private int _id;

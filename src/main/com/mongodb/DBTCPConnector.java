@@ -400,10 +400,40 @@ public class DBTCPConnector implements DBConnector {
                 }
                 else {
                     _set( n._addr );
+                    maxBsonObjectSize = _rsStatus.getMaxBsonObjectSize();
                 }
             }
+        } else {
+            // single server, may have to obtain max bson size
+            if (maxBsonObjectSize == 0)
+                    maxBsonObjectSize = fetchMaxBsonObjectSize();
         }
     }
+
+    /**
+     * Fetches the maximum size for a BSON object from the current master server
+     * @return the size, or 0 if it could not be obtained
+     */
+    int fetchMaxBsonObjectSize() {
+        if (_masterPortPool == null)
+            return 0;
+        DBPort port = _masterPortPool.get();
+        try {
+            CommandResult res = port.runCommand(_mongo.getDB("admin"), new BasicDBObject("isMaster", 1));
+            // max size was added in 1.8
+            if (res.containsField("maxBsonObjectSize")) {
+                maxBsonObjectSize = ((Integer) res.get("maxBsonObjectSize")).intValue();
+            } else {
+                maxBsonObjectSize = Bytes.MAX_OBJECT_SIZE;
+            }
+        } catch (Exception e) {
+            _logger.log(Level.WARNING, null, e);
+        } finally {
+            port.getPool().done(port);
+        }
+        return maxBsonObjectSize;
+    }
+
 
     void testMaster()
         throws MongoException {
@@ -469,6 +499,15 @@ public class DBTCPConnector implements DBConnector {
         return ! _closed;
     }
 
+    /**
+     * Gets the maximum size for a BSON object supported by the current master server.
+     * Note that this value may change over time depending on which server is master.
+     * @return the maximum size, or 0 if not obtained from servers yet.
+     */
+    public int getMaxBsonObjectSize() {
+        return maxBsonObjectSize;
+    }
+
     private Mongo _mongo;
 //    private ServerAddress _curMaster;
     private DBPortPool _masterPortPool;
@@ -476,6 +515,7 @@ public class DBTCPConnector implements DBConnector {
     private final List<ServerAddress> _allHosts;
     private final ReplicaSetStatus _rsStatus;
     private boolean _closed = false;
+    private int maxBsonObjectSize = 0;
 
     private ThreadLocal<MyPort> _myPort = new ThreadLocal<MyPort>(){
         protected MyPort initialValue(){

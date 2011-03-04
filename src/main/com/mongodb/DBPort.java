@@ -141,24 +141,17 @@ public class DBPort {
         return (CommandResult)res;
     }
 
-    synchronized DBObject findOne( String ns , DBObject q ){
+    synchronized DBObject findOne( String ns , DBObject q ) throws IOException{
         OutMessage msg = OutMessage.query( null , 0 , ns , 0 , -1 , q , null );
-        
-        try {
-            Response res = go( msg , null , true );
-            if ( res.size() == 0 )
-                return null;
-            if ( res.size() > 1 )
-                throw new MongoInternalException( "something is wrong.  size:" + res.size() );
-            return res.get(0);
-        }
-        catch ( IOException ioe ){
-            throw new MongoException.Network( "DBPort.findOne failed" , ioe );
-        }
-        
+        Response res = go( msg , null , true );
+        if ( res.size() == 0 )
+            return null;
+        if ( res.size() > 1 )
+            throw new MongoInternalException( "something is wrong.  size:" + res.size() );
+        return res.get(0);
     }
 
-    synchronized CommandResult runCommand( String db , DBObject cmd ) {
+    synchronized CommandResult runCommand( String db , DBObject cmd ) throws IOException {
         DBObject res = findOne( db + ".$cmd" , cmd );
         if ( res == null )
             throw new MongoInternalException( "something is wrong, no command result" );
