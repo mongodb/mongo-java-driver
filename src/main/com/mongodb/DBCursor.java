@@ -645,6 +645,20 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         return _collection;
     }
 
+    /**
+     * Gets the Server Address of the server that data is pulled from.
+     * Note that this information is not available if no data has been retrieved yet.
+     * Availability is specific to underlying implementation and may vary.
+     * @return
+     */
+    public ServerAddress getServerAddress() {
+        if (_it != null) {
+            if (_it instanceof DBApiLayer.Result)
+                return ((DBApiLayer.Result)_it).getServerAddress();
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -658,6 +672,9 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
             sb.append(", limit=").append(_numWanted);
         if (_skip > 0)
             sb.append(", skip=").append(_skip);
+        ServerAddress addr = getServerAddress();
+        if (addr != null)
+            sb.append(", addr=").append(addr);
         return sb.toString();
     }
 

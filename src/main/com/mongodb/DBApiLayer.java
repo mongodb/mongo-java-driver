@@ -454,7 +454,10 @@ public class DBApiLayer extends DB {
                 }
             }
         }
-        
+
+        public ServerAddress getServerAddress() {
+            return _host;
+        }
         
         Response _curResult;
         Iterator<DBObject> _cur;
