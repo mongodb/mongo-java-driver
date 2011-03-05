@@ -29,6 +29,7 @@ import org.bson.*;
 import org.bson.types.*;
 
 
+@SuppressWarnings("unchecked")
 public class ByteTest extends TestCase {
 
     public ByteTest()

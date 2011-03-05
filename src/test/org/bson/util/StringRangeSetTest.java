@@ -1,3 +1,5 @@
+package org.bson.util;
+
 /**
  *      Copyright (C) 2010 10gen Inc.
  *  
@@ -13,12 +15,6 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.mongodb.util;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import org.testng.annotations.Test;
 
 public class StringRangeSetTest extends com.mongodb.util.TestCase {
 

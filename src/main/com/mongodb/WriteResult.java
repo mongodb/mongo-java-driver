@@ -2,6 +2,8 @@
 
 package com.mongodb;
 
+import java.io.IOException;
+
 
 /**
  *      Copyright (C) 2008 10gen Inc.
@@ -86,7 +88,12 @@ public class WriteResult {
 
         // here we dont have a satisfying result
         if ( _port != null ){
-            _lastErrorResult = _port.tryGetLastError( _db , _lastCall , (concern == null) ? new WriteConcern() : concern  );
+            try {
+                _lastErrorResult = _port.tryGetLastError( _db , _lastCall , (concern == null) ? new WriteConcern() : concern  );
+            } catch ( IOException ioe ){
+                throw new MongoException.Network( ioe.getMessage() , ioe );
+            }
+
             if (_lastErrorResult == null)
                 throw new IllegalStateException( "The connection may have been used since this write, cannot obtain a result" );
             _lastConcern = concern;
@@ -138,7 +145,10 @@ public class WriteResult {
 
     @Override
     public String toString(){
-        return getLastError().toString();
+        CommandResult res = getCachedLastError();
+        if (res != null)
+            return res.toString();
+        return "N/A";
     }
 
     private long _lastCall;

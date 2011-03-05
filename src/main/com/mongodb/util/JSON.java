@@ -52,6 +52,8 @@ public class JSON {
         }
         a.append("\"");
     }
+
+    @SuppressWarnings("unchecked")
     public static void serialize( Object o , StringBuilder buf ){
         
         o = Bytes.applyEncodingHooks( o );
@@ -119,7 +121,7 @@ public class JSON {
             buf.append( "{ " );
             
             Map m = (Map)o;
-            
+
             for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() ){
                 if ( first ) first = false;
                 else buf.append( " , " );
@@ -153,7 +155,7 @@ public class JSON {
             return;
 	}
 
-        if (o instanceof byte[]) {
+        if (o instanceof byte[] || o instanceof Binary) {
             buf.append("<Binary Data>");
             return;
         }

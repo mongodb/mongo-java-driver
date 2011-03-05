@@ -29,7 +29,7 @@ import java.util.logging.*;
 import java.lang.management.*;
 import javax.management.*;
 
-class DBPortPool extends SimplePool<DBPort> {
+public class DBPortPool extends SimplePool<DBPort> {
 
     static class Holder {
         
@@ -114,18 +114,22 @@ class DBPortPool extends SimplePool<DBPort> {
     // ----
     
     public static class NoMoreConnection extends MongoInternalException {
-	NoMoreConnection( String msg ){
-	    super( msg );
-	}
+        private static final long serialVersionUID = -4415279469780082174L;
+	
+        NoMoreConnection( String msg ){
+	        super( msg );
+	    }
     }
     
     public static class SemaphoresOut extends NoMoreConnection {
+        private static final long serialVersionUID = -4415279469780082174L;
         SemaphoresOut(){
             super( "Out of semaphores to get db connection" );
         }
     }
 
     public static class ConnectionWaitTimeOut extends NoMoreConnection {
+        private static final long serialVersionUID = -4415279469780082174L;
         ConnectionWaitTimeOut(int timeout) {
             super("Connection wait timeout after " + timeout + " ms");
         }
@@ -222,6 +226,10 @@ class DBPortPool extends SimplePool<DBPort> {
     
     protected DBPort createNew(){
         return new DBPort( _addr , this , _options );
+    }
+
+    public ServerAddress getServerAddress() {
+        return _addr;
     }
 
     final MongoOptions _options;

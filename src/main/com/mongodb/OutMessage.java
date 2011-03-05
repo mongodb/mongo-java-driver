@@ -81,7 +81,8 @@ class OutMessage extends BSONEncoder {
     void prepare(){
         _buffer.writeInt( 0 , _buffer.size() );
     }
-    
+
+    @SuppressWarnings("deprecation")
     protected boolean handleSpecialObjects( String name , BSONObject o ){
         
         if ( o == null )
@@ -102,6 +103,7 @@ class OutMessage extends BSONEncoder {
         return false;
     }
 
+    @SuppressWarnings("deprecation")
     protected boolean putSpecial( String name , Object val ){
         if ( val instanceof DBPointer ){
             DBPointer r = (DBPointer)val;
@@ -179,6 +181,20 @@ class OutMessage extends BSONEncoder {
 
     int getId(){ 
         return _id;
+    }
+
+    @Override
+    public int putObject(BSONObject o) {
+        // check max size
+        int sz = super.putObject(o);
+        if (_mongo != null) {
+            int maxsize = _mongo.getConnector().getMaxBsonObjectSize();
+            maxsize = Math.max(maxsize, Bytes.MAX_OBJECT_SIZE);
+            if (sz > maxsize) {
+                throw new MongoInternalException("DBObject of size " + sz + " is over Max BSON size " + _mongo.getMaxBsonObjectSize());
+            }
+        }
+        return sz;
     }
 
     private Mongo _mongo;

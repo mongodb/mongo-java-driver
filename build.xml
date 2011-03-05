@@ -43,12 +43,7 @@
            debug="on" 
     	   includeantruntime="false">
 
-        <!--
-        TODO: This is commented out for now. If you feel like making some easy 
-        changes, uncomment and go to town :-)
         <compilerarg value="-Xlint:all,-fallthrough"/>
-        -->
-
       <classpath refid="classpath"/>
     </javac>
 
@@ -62,6 +57,7 @@
            debug="on"
     	   includeantruntime="false">
       <classpath refid="classpath"/>
+      <compilerarg value="-Xlint:all,-fallthrough"/>
     </javac>
 
   </target>
@@ -80,6 +76,7 @@
            debug="on"
     	   includeantruntime="false">
       <classpath refid="classpath"/>
+      <compilerarg value="-Xlint:all,-fallthrough"/>
     </javac>
   </target>
 

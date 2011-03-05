@@ -18,11 +18,12 @@
 
 package com.mongodb;
 
-import java.util.*;
-
+// Mongo
 import org.bson.types.*;
-
 import com.mongodb.util.*;
+
+// Java
+import java.util.*;
 
 /** This class provides a skeleton implementation of a database collection.  
  * <p>A typical invocation sequence is thus
@@ -202,7 +203,7 @@ public abstract class DBCollection {
      * @param ref query used to search
      * @param fields the fields of matching objects to return
      * @param numToSkip will not return the first <tt>numToSkip</tt> matches
-     * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
+     * @param batchSize  if positive, represents the size of each batch of objects retrieved. If negative, it limits the total number of objects retrieved.
      * @param options - see Bytes QUERYOPTION_*
      * @return the objects, if found
      * @dochub find
@@ -211,10 +212,11 @@ public abstract class DBCollection {
     
     /**
      * Finds an object.
+     * Calls {@link DBCollection#find(com.mongodb.DBObject, com.mongodb.DBObject, int, int)} and applies the query options
      * @param ref query used to search
      * @param fields the fields of matching objects to return
      * @param numToSkip will not return the first <tt>numToSkip</tt> matches
-     * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
+     * @param batchSize if positive, represents the size of each batch of objects retrieved. If negative, it limits the total number of objects retrieved.
      * @param options - see Bytes QUERYOPTION_*
      * @return the objects, if found
      * @throws MongoException
@@ -230,7 +232,7 @@ public abstract class DBCollection {
      * @param ref query used to search
      * @param fields the fields of matching objects to return
      * @param numToSkip will not return the first <tt>numToSkip</tt> matches
-     * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
+     * @param batchSize if positive, represents the size of each batch of objects retrieved. If negative, it limits the total number of objects retrieved.
      * @return the objects, if found
      * @dochub find
      */
@@ -308,8 +310,13 @@ public abstract class DBCollection {
         if (remove)
             cmd.append( "remove", remove );
         else {
-            if (update != null && !update.keySet().isEmpty())
+            if (update != null && !update.keySet().isEmpty()) {
+                // if 1st key doesnt start with $, then object will be inserted as is, need to check it
+                String key = update.keySet().iterator().next();
+                if (key.charAt(0) != '$')
+                    _checkObject(update, false, false);
                 cmd.append( "update", update );
+            }
             if (returnNew)
                 cmd.append( "new", returnNew );
             if (upsert)
@@ -318,8 +325,10 @@ public abstract class DBCollection {
         
         if (remove && !(update == null || update.keySet().isEmpty() || returnNew))
             throw new MongoException("FindAndModify: Remove cannot be mixed with the Update, or returnNew params!");
-        
-        return (DBObject) this._db.command( cmd ).get( "value" );
+
+        CommandResult res = this._db.command( cmd );
+        res.throwOnError();
+        return (DBObject) res.get( "value" );
     }
 
     
@@ -409,14 +418,15 @@ public abstract class DBCollection {
     /**
      * Ensures an index on this collection (that is, the index will be created if it does not exist).
      * @param keys fields to use for index
-     * @param name an identifier for the index
+     * @param name an identifier for the index. If null or empty, the default name will be used.
      * @param unique if the index should be unique
      * @throws MongoException
      */
     public void ensureIndex( DBObject keys , String name , boolean unique ) 
         throws MongoException {
         DBObject options = defaultOptions( keys );
-        options.put( "name" , name );
+        if (name != null && !name.isEmpty())
+            options.put( "name" , name );
         if ( unique )
             options.put( "unique" , Boolean.TRUE );
         ensureIndex( keys , options );
@@ -439,18 +449,18 @@ public abstract class DBCollection {
 
         final String name = options.get( "name" ).toString();
 
-        if ( _createIndexes.contains( name ) )
+        if ( _createdIndexes.contains( name ) )
             return;
 
         createIndex( keys , options );
-        _createIndexes.add( name );
+        _createdIndexes.add( name );
     }
 
     /**
      * Clears all indices that have not yet been applied to this collection.
      */
     public void resetIndexCache(){
-        _createIndexes.clear();
+        _createdIndexes.clear();
     }
 
     DBObject defaultOptions( DBObject keys ){
@@ -664,13 +674,11 @@ public abstract class DBCollection {
             .add( "index" , name )
             .get();
         
+        resetIndexCache();
         CommandResult res = _db.command( cmd );
-        if ( res.ok() || res.getErrorMessage().equals( "ns not found" ) ){
-            resetIndexCache();
+        if (res.ok() || res.getErrorMessage().equals( "ns not found" ))
             return;
-        }
-        
-        throw new MongoException( "error dropping indexes : " + res );
+        res.throwOnError();
     }
     
     /**
@@ -681,9 +689,9 @@ public abstract class DBCollection {
         throws MongoException {
         resetIndexCache();
         CommandResult res =_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
-        if ( res.ok() || res.getErrorMessage().equals( "ns not found" ) )
+        if (res.ok() || res.getErrorMessage().equals( "ns not found" ))
             return;
-        throw new MongoException( "error dropping : " + res );
+        res.throwOnError();
     }
 
     /**
@@ -856,7 +864,7 @@ public abstract class DBCollection {
      * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
     public DBObject group( GroupCommand cmd ) {
-        CommandResult res =  _db.command( cmd.toDBObject() );
+        CommandResult res =  _db.command( cmd.toDBObject(), getOptions() );
         res.throwOnError();
         return (DBObject)res.get( "retval" );
     }
@@ -870,10 +878,11 @@ public abstract class DBCollection {
      * @throws MongoException
      * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
+    @Deprecated
     public DBObject group( DBObject args )
         throws MongoException {
         args.put( "ns" , getName() );  
-        CommandResult res =  _db.command( new BasicDBObject( "group" , args ) );
+        CommandResult res =  _db.command( new BasicDBObject( "group" , args ), getOptions() );
         res.throwOnError();
         return (DBObject)res.get( "retval" );
     }
@@ -900,27 +909,9 @@ public abstract class DBCollection {
             .add( "query" , query )
             .get();
         
-        CommandResult res = _db.command( c );
+        CommandResult res = _db.command( c, getOptions() );
         res.throwOnError();
         return (List)(res.get( "values" ));
-    }
-
-    /**
-     * performs a map reduce operation
-     * Runs the command in INLINE output mode
-     * 
-     * @param map
-     *            map function in javascript code
-     * @param reduce
-     *            reduce function in javascript code
-     * @param query
-     *            to match
-     * @return
-     * @throws MongoException
-     * @dochub mapreduce
-     */
-    public MapReduceOutput mapReduce( String map , String reduce , DBObject query ) throws MongoException{
-        return mapReduce( new MapReduceCommand( this , map , reduce , null, MapReduceCommand.OutputType.INLINE, query ) );
     }
 
     /**
@@ -981,7 +972,12 @@ public abstract class DBCollection {
      */
     public MapReduceOutput mapReduce( MapReduceCommand command ) throws MongoException{
         DBObject cmd = command.toDBObject();
-        CommandResult res = _db.command( cmd );
+        // if type in inline, then query options like slaveOk is fine
+        CommandResult res = null;
+        if (command.getOutputType() == MapReduceCommand.OutputType.INLINE)
+            res = _db.command( cmd, getOptions() );
+        else
+            res = _db.command( cmd );
         res.throwOnError();
         return new MapReduceOutput( this , cmd, res );
     }
@@ -1048,7 +1044,7 @@ public abstract class DBCollection {
      * @return
      */
     public CommandResult getStats() {
-        return(getDB().command(new BasicDBObject("collstats", getName())));
+        return getDB().command(new BasicDBObject("collstats", getName()), getOptions());
     }
 
     /**
@@ -1307,5 +1303,5 @@ public abstract class DBCollection {
     private Map<String,Class> _internalClass = Collections.synchronizedMap( new HashMap<String,Class>() );
     private ReflectionDBObject.JavaWrapper _wrapper = null;
 
-    final private Set<String> _createIndexes = new HashSet<String>();
+    final private Set<String> _createdIndexes = new HashSet<String>();
 }

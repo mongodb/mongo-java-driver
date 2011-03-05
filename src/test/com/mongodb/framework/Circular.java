@@ -24,6 +24,7 @@ import com.mongodb.util.*;
 import org.bson.*;
 import org.bson.types.*;
 
+@SuppressWarnings("deprecation")
 public class Circular {
 
     public static void main(String[] args) 

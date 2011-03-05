@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 public class ThreadPoolTest extends com.mongodb.util.TestCase {
 
     @org.testng.annotations.Test
+    @SuppressWarnings("unchecked")
     public void test1()
         throws Exception {
         ThreadPool tp = new ThreadPool( "blah" , 2 ){

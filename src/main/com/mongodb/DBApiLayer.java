@@ -37,7 +37,6 @@ public class DBApiLayer extends DB {
     /** The maximum number of cursors allowed */
     static final int NUM_CURSORS_BEFORE_KILL = 100;
     static final int NUM_CURSORS_PER_BATCH = 20000;
-    static final int CLEANER_INTERVAL = 1000;
     
     //  --- show
 
@@ -68,8 +67,6 @@ public class DBApiLayer extends DB {
         _rootPlusDot = _root + ".";
 
         _connector = connector;
-        _cleaner = new DBCleanerThread(CLEANER_INTERVAL);
-        _cleaner.start();
     }
 
     public void requestStart(){
@@ -107,7 +104,7 @@ public class DBApiLayer extends DB {
         return ns.substring( _root.length() + 1 );
     }
 
-    void _cleanCursors( boolean force )
+    public void cleanCursors( boolean force )
         throws MongoException {
 
         int sz = _deadCursorIds.size();
@@ -170,7 +167,6 @@ public class DBApiLayer extends DB {
         _connector.say( this , om ,com.mongodb.WriteConcern.NONE , addr );
     }
 
-
     class MyCollection extends DBCollection {
         MyCollection( String name ){
             super( DBApiLayer.this , name );
@@ -178,6 +174,12 @@ public class DBApiLayer extends DB {
         }
 
         public void doapply( DBObject o ){
+        }
+
+        @Override
+        public void drop() throws MongoException {
+            _collections.remove(getName());
+            super.drop();
         }
 
         public WriteResult insert(DBObject[] arr, com.mongodb.WriteConcern concern )
@@ -209,6 +211,7 @@ public class DBApiLayer extends DB {
             WriteResult last = null;
 
             int cur = 0;
+            int maxsize = _mongo.getMaxBsonObjectSize();
             while ( cur < arr.length ){
                 OutMessage om = new OutMessage( _mongo , 2002 );
                 
@@ -217,11 +220,10 @@ public class DBApiLayer extends DB {
                 
                 for ( ; cur<arr.length; cur++ ){
                     DBObject o = arr[cur];
-                    int sz = om.putObject( o );
-                    if ( sz > Bytes.MAX_OBJECT_SIZE )
-                        throw new IllegalArgumentException( "object too big: " + sz );
-                    
-                    if ( om.size() > ( 4 * 1024 * 1024 ) ){
+                    om.putObject( o );
+
+                    // limit for batch insert is 4 x maxbson on server, use 2 x to be safe
+                    if ( om.size() > 2 * maxsize ){
                         cur++;
                         break;
                     }
@@ -286,6 +288,13 @@ public class DBApiLayer extends DB {
         @Override
         public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , com.mongodb.WriteConcern concern )
             throws MongoException {
+
+            if (o != null && !o.keySet().isEmpty()) {
+                // if 1st key doesnt start with $, then object will be inserted as is, need to check it
+                String key = o.keySet().iterator().next();
+                if (key.charAt(0) != '$')
+                    _checkObject(o, false, false);
+            }
 
             if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
             
@@ -445,7 +454,10 @@ public class DBApiLayer extends DB {
                 }
             }
         }
-        
+
+        public ServerAddress getServerAddress() {
+            return _host;
+        }
         
         Response _curResult;
         Iterator<DBObject> _cur;
@@ -469,41 +481,10 @@ public class DBApiLayer extends DB {
         final long id;
         final ServerAddress host;
     }
-
-    class DBCleanerThread implements Runnable {
-
-        Thread _thread;
-        int interval;
-
-        DBCleanerThread(int interval) {
-            this.interval = interval;
-        }
-
-        void start() {
-            // start thread as daemon, it's only a cleaner
-            _thread = new Thread(this);
-            _thread.setName(getName() + " - cleaner");
-            _thread.setDaemon(true);
-            _thread.start();
-        }
-
-        public void run() {
-            while (_connector.isOpen()) {
-                try {
-                    Thread.sleep(interval);
-                    _cleanCursors(true);
-                } catch (Throwable t) {
-                    // thread must never die, print full stack
-                    TRACE_LOGGER.log(Level.WARNING, t.getMessage(), t);
-                }
-            }
-        }
-    }
     
     final String _root;
     final String _rootPlusDot;
     final DBConnector _connector;
-    final DBCleanerThread _cleaner;
     final Map<String,MyCollection> _collections = Collections.synchronizedMap( new HashMap<String,MyCollection>() );
     
     ConcurrentLinkedQueue<DeadCursor> _deadCursorIds = new ConcurrentLinkedQueue<DeadCursor>();

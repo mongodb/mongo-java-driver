@@ -17,7 +17,7 @@
 package org.bson;
 
 /**
- * A general runtime exception raised in BSON processing. 
+ * A general runtime exception raised in BSON processing.
  */
 public class BSONException extends RuntimeException {
 
@@ -34,7 +34,7 @@ public class BSONException extends RuntimeException {
      * @param errorCode The error code.
      * @param msg The error message.
      */
-    public BSONException( final String errorCode, final String msg ) {
+    public BSONException( final int errorCode, final String msg ) {
         super( msg );
         _errorCode = errorCode;
     }
@@ -52,24 +52,22 @@ public class BSONException extends RuntimeException {
      * @param msg The error message.
      * @param t The throwable cause.
      */
-    public BSONException( final String errorCode, final String msg, final Throwable t ) {
+    public BSONException( final int errorCode, final String msg, final Throwable t ) {
         super( msg,  t );
         _errorCode = errorCode;
     }
-    
+
     /**
      * Returns the error code.
      * @return The error code.
      */
-    public String getErrorCode() { return _errorCode; }
+    public Integer getErrorCode() { return _errorCode; }
 
     /**
      * Returns true if the error code is set (i.e., not null).
      */
-    public boolean hasErrorCode() { 
-        return (_errorCode != null) ? true : false; 
-    }
+    public boolean hasErrorCode() { return (_errorCode != null); }
 
-    private String _errorCode = null;
+    private Integer _errorCode = null;
 }
 

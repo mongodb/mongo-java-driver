@@ -205,8 +205,8 @@ public class ServerAddress {
 
     final String _host;
     final int _port;
-    final InetSocketAddress _addr;
-    final InetAddress[] _all;
+    InetSocketAddress _addr;
+    InetAddress[] _all;
 
     // --------
     // static helpers
@@ -235,6 +235,20 @@ public class ServerAddress {
      */
     public static int defaultPort(){
         return DBPort.PORT;
+    }
+
+    /**
+     * attempts to update the internal InetAddress by resolving the host name.
+     * @return true if host resolved to a new IP that is different from old one, false otherwise
+     * @throws UnknownHostException
+     */
+    boolean updateInetAddr() throws UnknownHostException {
+        InetSocketAddress oldaddr = _addr;
+        _all = _getAddress( _host );
+        _addr = new InetSocketAddress( _all[0] , _port );
+        if (!_addr.equals(oldaddr))
+            return true;
+        return false;
     }
     
 }

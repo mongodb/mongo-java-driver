@@ -55,6 +55,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
      * Creates a DBObject from a map.
      * @param m map to convert
      */
+    @SuppressWarnings("unchecked")   
     public BasicBSONObject(Map m) {
         super(m);
     }
@@ -177,6 +178,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return super.put( key , val );
     }
 
+    @SuppressWarnings("unchecked")   
     public void putAll( Map m ){
         for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() ){
             put( entry.getKey().toString() , entry.getValue() );

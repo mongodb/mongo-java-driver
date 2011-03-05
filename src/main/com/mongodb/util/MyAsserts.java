@@ -7,6 +7,9 @@ import java.util.regex.*;
 public class MyAsserts {
 
     public static class MyAssert extends RuntimeException {
+
+        private static final long serialVersionUID = -4415279469780082174L;
+
         MyAssert( String s ){
             super( s );
             _s = s;

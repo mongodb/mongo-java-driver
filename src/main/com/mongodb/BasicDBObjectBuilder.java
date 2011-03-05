@@ -58,6 +58,7 @@ public class BasicDBObjectBuilder {
      * @param m map to use
      * @return the new builder
      */
+    @SuppressWarnings("unchecked")
     public static BasicDBObjectBuilder start(Map m){
         BasicDBObjectBuilder b = new BasicDBObjectBuilder();
         Iterator<Map.Entry> i = m.entrySet().iterator();

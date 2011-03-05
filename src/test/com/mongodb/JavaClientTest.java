@@ -49,7 +49,6 @@ public class JavaClientTest extends TestCase {
         m.put( "state" , "ny" );
         
         c.save( m );
-        System.out.println( m.keySet() );
         assert( m.containsField( "_id" ) );
 
         Map out = (Map)(c.findOne( m.get( "_id" )));
@@ -403,7 +402,7 @@ public class JavaClientTest extends TestCase {
         
         MapReduceOutput out = 
             c.mapReduce( "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }" ,
-                         "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" , null );
+                         "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" , null, MapReduceCommand.OutputType.INLINE, null);
         
         Map<String,Integer> m = new HashMap<String,Integer>();
         for ( DBObject r : out.results() ){
@@ -535,13 +534,15 @@ public class JavaClientTest extends TestCase {
  
     @Test
     public void testLargeBulkInsert(){
+        // max size should be obtained from server
+        int maxObjSize = _mongo.getMaxBsonObjectSize();
         DBCollection c = _db.getCollection( "largebulk" );
         c.drop();
         String s = "asdasdasd";
         while ( s.length() < 10000 )
             s += s;
         List<DBObject> l = new ArrayList<DBObject>();
-        final int num = 3 * ( Bytes.MAX_OBJECT_SIZE / s.length() );
+        final int num = 3 * ( maxObjSize / s.length() );
 
         for ( int i=0; i<num; i++ ){
             l.add( BasicDBObjectBuilder.start()
@@ -554,14 +555,14 @@ public class JavaClientTest extends TestCase {
         assertEquals( num , c.find().count() );
 
         s = l.toString();
-        assertTrue( s.length() > Bytes.MAX_OBJECT_SIZE );
+        assertTrue( s.length() > maxObjSize );
         
         boolean worked = false;
         try {
             c.save( new BasicDBObject( "foo" , s ) );
             worked = true;
         }
-        catch ( IllegalArgumentException ie ){}
+        catch ( MongoException ie ){}
         assertFalse( worked );
 
         assertEquals( num , c.find().count() );
@@ -609,7 +610,7 @@ public class JavaClientTest extends TestCase {
 
         CommandResult cr = res.getLastError( WriteConcern.FSYNC_SAFE );
         assertEquals( 1 , cr.getInt( "n" ) );
-        assertTrue( cr.containsField( "fsyncFiles" ));
+        assertTrue( cr.containsField( "fsyncFiles" ) || cr.containsField( "waited" ));
 
         CommandResult cr2 = res.getLastError( WriteConcern.FSYNC_SAFE );
         assertTrue( cr == cr2 );
@@ -682,7 +683,13 @@ public class JavaClientTest extends TestCase {
         assertEquals( 2 , dbObj.keySet().size());
         assertEquals( 5 , dbObj.get( "x" ));
         assertNull( c.findOne(new BasicDBObject( "_id" , 1 ) ));
-        
+
+        // test exception throwing
+        try {
+            dbObj = c.findAndModify( null, null );
+            assertTrue(false, "Exception not throw when no update nor remove");
+        } catch (MongoException e) {
+        }
     }
 
     @Test
@@ -700,7 +707,38 @@ public class JavaClientTest extends TestCase {
         assertEquals( "foo.bar.zoo.dork" , c.getName() );
         
     }
-    
+
+    @Test
+    public void testBadKey(){
+        DBCollection c = _db.getCollectionFromString( "foo" );
+        assertEquals( "foo" , c.getName() );
+
+        try {
+            c.insert(new BasicDBObject("a.b", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+        try {
+            c.insert(new BasicDBObject("$a", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+
+        try {
+            c.save(new BasicDBObject("a.b", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+        try {
+            c.save(new BasicDBObject("$a", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+
+        c.insert(new BasicDBObject("a", 1));
+        try {
+            c.update(new BasicDBObject("a", 1), new BasicDBObject("a.b", 1));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+        c.update(new BasicDBObject("a", 1), new BasicDBObject("$set", new BasicDBObject("a.b", 1)));
+    }
+
     final Mongo _mongo;
     final DB _db;
 

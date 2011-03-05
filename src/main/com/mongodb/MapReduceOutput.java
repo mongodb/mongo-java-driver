@@ -8,6 +8,7 @@ package com.mongodb;
  */
 public class MapReduceOutput {
 
+    @SuppressWarnings("unchecked")
     MapReduceOutput( DBCollection from , DBObject cmd, BasicDBObject raw ){
         _raw = raw;
         _cmd = cmd;

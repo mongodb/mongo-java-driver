@@ -71,15 +71,13 @@ public abstract class DB {
      */
     public final DBCollection getCollection( String name ){
         DBCollection c = doGetCollection( name );
-        if ( c != null ){
-            _seenCollections.add( c );
-	}
         return c;
     }
 
     /**
      * Creates a collection with a given name and options.
      * If the collection does not exist, a new collection is created.
+     * Note that if the options parameter is null, the creation will be deferred to when the collection is written to.
      * Possible options:
      * <dl>
      * <dt>capped</dt><dd><i>boolean</i>: if the collection is capped</dd>
@@ -87,13 +85,13 @@ public abstract class DB {
      * <dt>max</dt><dd><i>int</i>: max number of documents</dd>
      * </dl>
      * @param name the name of the collection to return
-     * @param o options
+     * @param options options
      * @return the collection
      */
-    public final DBCollection createCollection( String name, DBObject o ){
-        if ( o != null ){
+    public final DBCollection createCollection( String name, DBObject options ){
+        if ( options != null ){
             DBObject createCmd = new BasicDBObject("create", name);
-            createCmd.putAll(o);
+            createCmd.putAll(options);
             CommandResult result = command(createCmd);
             result.throwOnError();
         }
@@ -171,6 +169,20 @@ public abstract class DB {
     public CommandResult command( String cmd )
         throws MongoException {
         return command( new BasicDBObject( cmd , Boolean.TRUE ) );
+    }
+
+    /**
+     * Executes a database command.
+     * This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject, int)  }
+     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
+     * @param cmd command to execute
+     * @param options query options to use
+     * @return result of command from the database
+     * @throws MongoException
+     */
+    public CommandResult command( String cmd, int options  )
+        throws MongoException {
+        return command( new BasicDBObject( cmd , Boolean.TRUE ), options );
     }
 
     /**
@@ -313,15 +325,6 @@ public abstract class DB {
     }
 
     /**
-     * Clears any indices that have not yet been applied to
-     * the collections in this database.
-     */
-    public void resetIndexCache(){
-        for ( DBCollection c : _seenCollections )
-            c.resetIndexCache();
-    }
-
-    /**
      * Gets the the error (if there is one) from the previous operation on this connection.
      * The result of this command will look like
      *
@@ -399,7 +402,7 @@ public abstract class DB {
 
         CommandResult res = command(new BasicDBObject("dropDatabase", 1));
         res.throwOnError();
-
+        _mongo._dbs.remove(this.getName());
     }
 
     /**
@@ -424,19 +427,48 @@ public abstract class DB {
     public boolean authenticate(String username, char[] passwd )
         throws MongoException {
         
-        if ( username == null )
+        if ( username == null || passwd == null )
             throw new NullPointerException( "username can't be null" );
         
         if ( _username != null )
 	    throw new IllegalStateException( "can't call authenticate twice on the same DBObject" );
         
         String hash = _hash( username , passwd );
-        if ( ! _doauth( username , hash.getBytes() ) )
+        CommandResult res = _doauth( username , hash.getBytes() );
+        if ( !res.ok())
             return false;
         _username = username;
         _authhash = hash.getBytes();
         return true;
     }
+
+    /**
+     *  Authenticates to db with the given name and password
+     *
+     * @param username name of user for this database
+     * @param passwd password of user for this database
+     * @return the CommandResult from authenticate command
+     * @throws MongoException if authentication failed due to invalid user/pass, or other exceptions like I/O
+     * @dochub authenticate
+     */
+    public CommandResult authenticateCommand(String username, char[] passwd )
+        throws MongoException {
+
+        if ( username == null || passwd == null )
+            throw new NullPointerException( "username can't be null" );
+
+        if ( _username != null )
+	    throw new IllegalStateException( "can't call authenticate twice on the same DBObject" );
+
+        String hash = _hash( username , passwd );
+        CommandResult res = _doauth( username , hash.getBytes() );
+        if ( !res.ok())
+            throw new MongoException(res);
+        _username = username;
+        _authhash = hash.getBytes();
+        return res;
+    }
+    
     /*
     boolean reauth(){
         if ( _username == null || _authhash == null )
@@ -465,18 +497,14 @@ public abstract class DB {
         return cmd;
     }
 
-    private boolean _doauth( String username , byte[] hash ){
-        CommandResult res = command(new BasicDBObject("getnonce", 1));
-
+    private CommandResult _doauth( String username , byte[] hash ){
+        CommandResult res = command(new BasicDBObject("getnonce", 1), getOptions());
         if ( ! res.ok() ){
-            throw new MongoException("Error - unable to get nonce value for authentication.");
+            throw new MongoException(res);
         }
 
         DBObject cmd = _authCommand( res.getString( "nonce" ) , username , hash );
-
-        res = command(cmd);
-        
-        return res.ok();
+        return command(cmd, getOptions());
     }
 
     /**
@@ -484,8 +512,8 @@ public abstract class DB {
      * @param username
      * @param passwd
      */
-    public void addUser( String username , char[] passwd ){
-        addUser(username, passwd, false);
+    public WriteResult addUser( String username , char[] passwd ){
+        return addUser(username, passwd, false);
     }
 
     /**
@@ -494,23 +522,23 @@ public abstract class DB {
      * @param passwd
      * @param readOnly if true, user will only be able to read
      */
-    public void addUser( String username , char[] passwd, boolean readOnly ){
+    public WriteResult addUser( String username , char[] passwd, boolean readOnly ){
         DBCollection c = getCollection( "system.users" );
         DBObject o = c.findOne( new BasicDBObject( "user" , username ) );
         if ( o == null )
             o = new BasicDBObject( "user" , username );
         o.put( "pwd" , _hash( username , passwd ) );
         o.put( "readOnly" , readOnly );
-        c.save( o );
+        return c.save( o );
     }
 
     /**
      * Removes a user for this db
      * @param username
      */
-    public void removeUser( String username ){
+    public WriteResult removeUser( String username ){
         DBCollection c = getCollection( "system.users" );
-        c.remove(new BasicDBObject( "user" , username ));
+        return c.remove(new BasicDBObject( "user" , username ));
     }
 
     String _hash( String username , char[] passwd ){
@@ -628,9 +656,11 @@ public abstract class DB {
         return _options.get();
     }
 
+    public abstract void cleanCursors( boolean force ) throws MongoException;
+
+
     final Mongo _mongo;
     final String _name;
-    final Set<DBCollection> _seenCollections = Collections.synchronizedSet( new HashSet<DBCollection>() );
 
     protected boolean _readOnly = false;
     private com.mongodb.WriteConcern _concern;
