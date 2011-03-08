@@ -349,8 +349,10 @@ public class DBApiLayer extends DB {
         }
 
         public DBObject next(){
-            if ( _cur.hasNext() )
+            if ( _cur.hasNext() ) {
+                _numSeen++;
                 return _cur.next();
+            }
 
             if ( ! _curResult.hasGetMore( _options ) )
                 throw new RuntimeException( "no more" );
@@ -380,7 +382,7 @@ public class DBApiLayer extends DB {
 
             m.writeInt( 0 ); 
             m.writeCString( _collection._fullNameSpace );
-            m.writeInt( _numToReturn ); // num to return
+            m.writeInt( _numToReturn - _numSeen ); // num to return
             m.writeLong( _curResult.cursor() );
             
             Response res = _connector.call( DBApiLayer.this , _collection , m , _host );
@@ -393,11 +395,11 @@ public class DBApiLayer extends DB {
         }
         
         public int getNumberToReturn(){
-        	return _numToReturn;
+            return _numToReturn;
         }
-
+        
         public void setNumberToReturn(int num){
-        	_numToReturn = num;
+            _numToReturn = num;
         }
 
         public String toString(){
@@ -469,6 +471,8 @@ public class DBApiLayer extends DB {
         private long _totalBytes = 0;
         private int _numGetMores = 0;
         private List<Integer> _sizes = new ArrayList<Integer>();
+        private int _numSeen = 0;
+        
     }  // class Result
     
     static class DeadCursor {
