@@ -176,7 +176,7 @@ class Response {
     final int _operation;
     
     final int _flags;
-    final long _cursor;
+    long _cursor;
     final int _startingFrom;
     final int _num;
     

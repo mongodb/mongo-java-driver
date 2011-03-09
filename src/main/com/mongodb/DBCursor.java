@@ -82,7 +82,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         DBCursor c = new DBCursor(_collection, _query, _keysWanted);
         c._orderBy = _orderBy;
         c._hint = _hint;
-        c._numWanted = _numWanted;
+        c._limit = _limit;
         c._skip = _skip;
         c._options = _options;
         c._batchSize = _batchSize;
@@ -196,39 +196,58 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     public DBObject explain(){
         DBCursor c = copy();
         c._explain = true;
-        c._numWanted = c._numWanted * -1;
+        if (c._limit > 0) {
+            // need to pass a negative batchSize as limit for explain
+            c._batchSize = c._limit * -1;
+            c._limit = 0;
+        }
         return c.next();
     }
 
     /**
-     * <p>Limits the number of elements returned.</p> 
-     * <p><b>Note</b>: Specifying a <i>negative number</i> instructs the server to return that number of items 
-     * and to close the cursor. It will only return what can fit in a <i>single 4mb response</i>.</p>
+     * Limits the number of elements returned.
+     * Note: parameter <tt>n</tt> should be positive, although a negative value is supported for legacy reason.
+     * Passing a negative value will call {@link DBCursor#batchSize(int)} which is the preferred method.
      * @param n the number of elements to return
-     * @return a cursor pointing to the first element of the limited results
+     * @return a cursor to iterate the results
      * @dochub limit
      */
     public DBCursor limit( int n ){
         if ( _it != null )
             throw new IllegalStateException( "can't set limit after executing query" );
 
-        _numWanted = n;
+        if (n > 0)
+            _limit = n;
+        else if (n < 0)
+            batchSize(n);
         return this;
     }
 
     /**
-     * Limits the number of elements returned in one batch
+     * Limits the number of elements returned in one batch.
+     * A cursor typically fetches a batch of result objects and store them locally.
+     * 
+     * If <tt>batchSize</tt> is positive, it represents the size of each batch of objects retrieved.
+     * It can be adjusted to optimize performance and limit data transfer.
+     * 
+     * If <tt>batchSize</tt> is negative, it will limit of number objects returned, that fit within the max batch size limit (usually 4MB), and cursor will be closed.
+     * For example if <tt>batchSize</tt> is -10, then the server will return a maximum of 10 documents and as many as can fit in 4MB, then close the cursor.
+     * Note that this feature is different from limit() in that documents must fit within a maximum size, and it removes the need to send a request to close the cursor server-side.
+     * 
+     * The batch size can be changed even after a cursor is iterated, in which case the setting will apply on the next batch retrieval.
+     *
      * @param n the number of elements to return in a batch
      * @return
      */
     public DBCursor batchSize( int n ){
-//        if ( n < 1 )
-//            throw new IllegalArgumentException( "batchSize has to be >= 1" );
+        // check for special case, used to have server bug with 1
         if ( n == 1 )
             n = 2;
-        if ( _it != null )
+        
+        if ( _it != null ) {
         	if (_it instanceof DBApiLayer.Result)
-        		((DBApiLayer.Result)_it).setNumberToReturn(n);
+        		((DBApiLayer.Result)_it).setBatchSize(n);
+        }
 
         _batchSize = n;
         return this;
@@ -332,14 +351,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
                     foo.put( "$snapshot", true );
             }
 
-            int bs = _numWanted;
-            if ( _batchSize > 0 ){
-                if ( _numWanted == 0 )
-                    bs = _batchSize;
-                else
-                    bs = Math.min( bs , _batchSize );
-            }
-            _it = _collection.__find( foo , _keysWanted , _skip , bs , _options );
+            _it = _collection.__find( foo, _keysWanted, _skip, _batchSize, _limit , _options );
         }
 
         if ( _it == null ){
@@ -471,7 +483,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         throws MongoException {
         _check();
 
-        if ( _numWanted > 0 && _num >= _numWanted )
+        if ( _limit > 0 && _num >= _limit )
             return false;
 
         return _it.hasNext();
@@ -617,7 +629,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         if ( _collection._db == null )
             throw new IllegalArgumentException( "why is _collection._db null" );
         
-        return (int)_collection.getCount(this._query, this._keysWanted, this._numWanted, this._skip );
+        return (int)_collection.getCount(this._query, this._keysWanted, this._limit, this._skip );
     }
 
     
@@ -668,10 +680,13 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         if (getKeysWanted() != null)
             sb.append(", fields=").append(getKeysWanted());
         sb.append(", numIterated=").append(_num);
-        if (_numWanted > 0)
-            sb.append(", limit=").append(_numWanted);
-        if (_skip > 0)
+        if (_skip != 0)
             sb.append(", skip=").append(_skip);
+        if (_limit != 0)
+            sb.append(", limit=").append(_limit);
+        if (_batchSize != 0)
+            sb.append(", batchSize=").append(_batchSize);
+
         ServerAddress addr = getServerAddress();
         if (addr != null)
             sb.append(", addr=").append(addr);
@@ -686,7 +701,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     private DBObject _orderBy = null;
     private String _hint = null;
     private boolean _explain = false;
-    private int _numWanted = 0;
+    private int _limit = 0;
     private int _batchSize = 0;
     private int _skip = 0;
     private boolean _snapshot = false;

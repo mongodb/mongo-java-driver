@@ -149,7 +149,7 @@ public abstract class DB {
     public CommandResult command( DBObject cmd , int options )
         throws MongoException {
         
-        Iterator<DBObject> i = getCollection( "$cmd" ).__find( cmd , new BasicDBObject() , 0 , -1 , options );
+        Iterator<DBObject> i = getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options);
         if ( i == null || ! i.hasNext() )
             return null;
         
@@ -260,7 +260,7 @@ public abstract class DB {
         if (namespaces == null)
             throw new RuntimeException("this is impossible");
 
-        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, getOptions());
+        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, 0, getOptions());
         if (i == null)
             return new HashSet<String>();
 

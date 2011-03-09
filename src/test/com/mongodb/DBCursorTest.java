@@ -97,7 +97,7 @@ public class DBCursorTest extends TestCase {
 
         for ( int i=0; i<numToInsert; i++ )
             c.save( BasicDBObjectBuilder.start().add( "x" , i ).add( "s" , bigString ).get() );
-        
+
         assert( 800 < numToInsert );
         
         assertEquals( numToInsert , c.find().count() );
@@ -149,6 +149,7 @@ public class DBCursorTest extends TestCase {
         assertEquals( 49 , c.find( q ).toArray().size() );
         assertEquals( 49 , c.find( q ).itcount() );
         assertEquals( 20 , c.find( q ).limit(20).itcount() );
+        assertEquals( 20 , c.find( q ).limit(-20).itcount() );
         
         c.ensureIndex( new BasicDBObject( "x" , 1 ) );
 
@@ -156,12 +157,12 @@ public class DBCursorTest extends TestCase {
         assertEquals( 49 , c.find( q ).toArray().size() );
         assertEquals( 49 , c.find( q ).itcount() );
         assertEquals( 20 , c.find( q ).limit(20).itcount() );
+        assertEquals( 20 , c.find( q ).limit(-20).itcount() );
 
         assertEquals( 49 , c.find( q ).explain().get("n") );
 
-        // these 2 are 'reversed' b/c we want the user case to make sense
-        assertEquals( 20 , c.find( q ).limit(20).explain().get("n") ); 
-        assertEquals( 49 , c.find( q ).limit(-20).explain().get("n") );
+        assertEquals( 20 , c.find( q ).limit(20).explain().get("n") );
+        assertEquals( 20 , c.find( q ).limit(-20).explain().get("n") );
         
     }
 
