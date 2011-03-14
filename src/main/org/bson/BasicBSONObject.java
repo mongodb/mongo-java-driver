@@ -158,6 +158,19 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return foo.toString();
     }
 
+    /** Returns the value of a field as a boolean.
+     * @param key the field to look up
+     * @return the value of the field, or false if field does not exist
+     */
+    public boolean getBoolean( String key ){
+        return getBoolean(key, false);
+    }
+
+    /** Returns the value of a field as a boolean
+     * @param key the field to look up
+     * @param def the default value in case the field is not found
+     * @return the value of the field, converted to a string
+     */
     public boolean getBoolean( String key , boolean def ){
         Object foo = get( key );
         if ( foo == null )
