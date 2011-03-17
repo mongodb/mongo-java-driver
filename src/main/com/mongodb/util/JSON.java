@@ -206,20 +206,20 @@ public class JSON {
 
 
     /**
-     *  Parses a JSON string into a DBObject.
+     *  Parses a JSON string representing a JSON value
      *
-     * @param s the string to serialize
-     * @return DBObject the object
+     * @param s the string to parse
+     * @return the object
      */
     public static Object parse( String s ){
 	return parse( s, null );
     }
 
     /**
-     *  Parses a JSON string into a DBObject.
+     * Parses a JSON string representing a JSON value
      *
-     * @param s the string to serialize
-     * @return DBObject the object
+     * @param s the string to parse
+     * @return the object
      */
     public static Object parse( String s, BSONCallback c ){
         if (s == null || (s=s.trim()).equals("")) {
