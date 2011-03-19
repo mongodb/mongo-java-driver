@@ -24,30 +24,31 @@ public class JSONCallback extends BasicBSONCallback {
     }
 
     public void objectStart(boolean array, String name){
-        _lastName = name;
         _lastArray = array;
         super.objectStart( array , name );
     }
 
     public Object objectDone(){
+        String name = curName();
         Object o = super.objectDone();
 	BSONObject b = (BSONObject)o;
 
+        // override the object if it's a special type
 	if ( ! _lastArray ) {
 	    if ( b.containsField( "$oid" ) ) {
 		o = new ObjectId((String)b.get("$oid"));
 		if (!isStackEmpty()) {
-		    gotObjectId( _lastName, (ObjectId)o);
+		    gotObjectId( name, (ObjectId)o);
 		} else {
 		    setRoot(o);
-		} 
+		}
 	    } else if ( b.containsField( "$date" ) ) {
 		SimpleDateFormat format = 
 		    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
 		o = format.parse((String)b.get("$date"), new ParsePosition(0));
 		if (!isStackEmpty()) {
-		    cur().put( _lastName, o );
+		    cur().put( name, o );
 		} else {
 		    setRoot(o);
 		}
@@ -55,16 +56,41 @@ public class JSONCallback extends BasicBSONCallback {
 		o = Pattern.compile( (String)b.get( "$regex" ), 
 				     BSON.regexFlags( (String)b.get( "$options" )) );
 		if (!isStackEmpty()) {
-		    cur().put( _lastName, o );
+		    cur().put( name, o );
+		} else {
+		    setRoot(o);
+		}
+	    } else if ( b.containsField( "$ts" ) ) {
+                Long ts = (Long) b.get("$ts");
+                Long inc = (Long) b.get("$ts");
+		o = new BSONTimestamp(ts.intValue(), inc.intValue());
+		if (!isStackEmpty()) {
+		    cur().put( name, o );
+		} else {
+		    setRoot(o);
+		}
+	    } else if ( b.containsField( "$code" ) ) {
+                if (b.containsField("$scope")) {
+                    o = new CodeWScope((String)b.get("$code"), (DBObject)b.get("$scope"));
+                } else {
+                    o = new Code((String)b.get("$code"));
+                }
+		if (!isStackEmpty()) {
+		    cur().put( name, o );
+		} else {
+		    setRoot(o);
+		}
+	    } else if ( b.containsField( "$ref" ) ) {
+                o = new DBRefBase(null, (String)b.get("$ref"), b.get("$id"));
+		if (!isStackEmpty()) {
+		    cur().put( name, o );
 		} else {
 		    setRoot(o);
 		}
 	    }
 	}
-        
         return o;
     }
 
-    private String _lastName;
     private boolean _lastArray = false;
 }

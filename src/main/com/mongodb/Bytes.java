@@ -22,6 +22,8 @@ import java.nio.*;
 import java.nio.charset.*;
 import java.util.regex.Pattern;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.*;
 
 import org.bson.*;
@@ -150,7 +152,7 @@ public class Bytes extends BSON {
     /**
      * Gets the type byte for a given object.
      * @param o the object
-     * @return the byte value associated with the type, or 0 if <code>o</code> was <code>null</code>
+     * @return the byte value associated with the type, or -1 if no type is matched
      */
     @SuppressWarnings("deprecation")
     public static byte getType( Object o ){
@@ -159,6 +161,17 @@ public class Bytes extends BSON {
 
         if ( o instanceof DBPointer )
             return REF;
+
+        if (o instanceof Integer
+                || o instanceof Short
+                || o instanceof Byte
+                || o instanceof AtomicInteger) {
+            return NUMBER_INT;
+        }
+        
+        if (o instanceof Long || o instanceof AtomicLong) {
+            return NUMBER_LONG;
+        }
 
         if ( o instanceof Number )
             return NUMBER;
@@ -181,13 +194,22 @@ public class Bytes extends BSON {
         if ( o instanceof java.util.Date )
             return DATE;
 
+        if ( o instanceof BSONTimestamp )
+            return TIMESTAMP;
+
         if ( o instanceof java.util.regex.Pattern )
             return REGEX;
         
-        if ( o instanceof DBObject )
+        if ( o instanceof DBObject || o instanceof DBRefBase )
             return OBJECT;
 
-        return 0;
+        if ( o instanceof Code )
+            return CODE;
+        
+        if ( o instanceof CodeWScope )
+            return CODE_W_SCOPE;
+
+        return -1;
     }
 
     static final ObjectId COLLECTION_REF_ID = new ObjectId( -1 , -1 , -1 );

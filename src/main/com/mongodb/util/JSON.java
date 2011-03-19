@@ -146,7 +146,11 @@ public class JSON {
         }
 
         if (o instanceof DBRefBase) {
-            buf.append(o);
+            DBRefBase ref = (DBRefBase)o;
+            BasicDBObject temp = new BasicDBObject();
+            temp.put( "$ref" , ref.getRef() );
+            temp.put( "$id" , ref.getId() );
+            serialize( temp, buf );
             return;
         }
 
@@ -182,7 +186,10 @@ public class JSON {
 
         if ( o instanceof BSONTimestamp ){
             BSONTimestamp t = (BSONTimestamp)o;
-            buf.append( t.getTime() ).append( "|" ).append( t.getInc() );
+            BasicDBObject temp = new BasicDBObject();
+            temp.put( "$ts" , t.getTime() );
+            temp.put( "$inc" , t.getInc() );
+            serialize( temp, buf );
             return;
         }
         
@@ -197,7 +204,10 @@ public class JSON {
         }
 
         if ( o instanceof Code ){
-            string( buf , ((Code)o).getCode() );
+            Code c = (Code)o;
+            BasicDBObject temp = new BasicDBObject();
+            temp.put( "$code" , c.getCode() );
+            serialize( temp, buf );
             return;
         }
         
@@ -561,9 +571,7 @@ class JSONParser {
 
         if (isDouble)
           return Double.valueOf(s.substring(start, pos));
-        if ( pos - start >= 10 )
-          return Long.valueOf(s.substring(start, pos));
-        return Integer.valueOf(s.substring(start, pos));
+        return Long.valueOf(s.substring(start, pos));
     }
 
     /** 

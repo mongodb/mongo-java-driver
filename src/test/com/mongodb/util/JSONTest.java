@@ -193,7 +193,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
         assertEquals(threw, false);
         threw = false;
         
-        assertEquals( 4 , JSON.parse( "4" ) );
+        assertEquals( 4L , JSON.parse( "4" ) );
     }
 
     @org.testng.annotations.Test    
