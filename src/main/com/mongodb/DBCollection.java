@@ -307,8 +307,10 @@ public abstract class DBCollection {
             throw new MongoException("FindAndModify: Remove cannot be mixed with the Update, or returnNew params!");
 
         CommandResult res = this._db.command( cmd );
+        if (res.ok() || res.getErrorMessage().equals( "No matching object found" ))
+            return (DBObject) res.get( "value" );
         res.throwOnError();
-        return (DBObject) res.get( "value" );
+        return null;
     }
 
     

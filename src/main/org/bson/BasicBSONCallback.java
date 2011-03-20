@@ -154,6 +154,12 @@ public class BasicBSONCallback implements BSONCallback {
         return _stack.getLast();
     }
     
+    protected String curName(){
+        if (_nameStack.isEmpty())
+            return null;
+        return _nameStack.getLast();
+    }
+
     public Object get(){
 	return _root;
     }
