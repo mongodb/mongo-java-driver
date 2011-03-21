@@ -2,10 +2,17 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.logging.*;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * keeps replica set status
@@ -178,6 +185,18 @@ public class ReplicaSetStatus {
                         maxBsonObjectSize = Bytes.MAX_OBJECT_SIZE;
                 }
 
+                if (res.containsField("setName")) {
+	                String setName = res.get( "setName" ).toString();
+	                if ( _setName == null ){
+	                    _setName = setName;
+	                    _logger = Logger.getLogger( _rootLogger.getName() + "." + setName );
+	                }
+	                else if ( !_setName.equals( setName ) ){
+	                    _logger.log( Level.SEVERE , "mis match set name old: " + _setName + " new: " + setName );
+	                    return;
+	                }
+                }
+
             }
             catch ( MongoException e ){
                 Throwable root = e;
@@ -193,44 +212,6 @@ public class ReplicaSetStatus {
 
             if ( ! _isMaster )
                 return;
-
-            try {
-                DB db = _mongo.getDB("local");
-                _port.checkAuth(db);
-                DBObject config = _port.findOne( db, "system.replset" , new BasicDBObject() );
-                if ( config == null ){
-                    // probably a replica pair
-                    // TODO: add this in when pairs are really gone
-                    //_logger.log( Level.SEVERE , "no replset config!" );
-                } else if (config.get("$err") != null && UNAUTHENTICATED_ERROR_CODE == (Integer)config.get("code")) {
-                    _logger.log( Level.WARNING , "Replica Set updater cannot get results, call authenticate on 'local' or 'admin' db");
-                } else {
-
-                    String setName = config.get( "_id" ).toString();
-                    if ( _setName == null ){
-                        _setName = setName;
-                        _logger = Logger.getLogger( _rootLogger.getName() + "." + setName );
-                    }
-                    else if ( !_setName.equals( setName ) ){
-                        _logger.log( Level.SEVERE , "mis match set name old: " + _setName + " new: " + setName );
-                        return;
-                    }
-
-                    // TODO: look at members
-                }
-            } catch ( MongoException e ){
-                if ( _setName != null ){
-                    // this probably means the master is busy, so going to ignore
-                }
-                else {
-                    _logger.log( Level.SEVERE , "can't get initial config from node: " + _addr , e );
-                }
-            }
-            catch ( Exception e ){
-                _logger.log( Level.SEVERE , "unexpected error getting config from node: " + _addr , e );
-            }
-
-
         }
 
         public boolean master(){
