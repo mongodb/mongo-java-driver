@@ -297,6 +297,11 @@ class JSONParser {
             read('n'); read('u'); read('l'); read('l');
 	    value = null;
             break;
+        // NaN
+        case 'N':
+            read('N'); read('a'); read('N');
+	    value = Double.NaN;
+            break;
         // true
         case 't':
             read('t'); read('r'); read('u'); read('e');
