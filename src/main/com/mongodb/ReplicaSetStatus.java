@@ -132,6 +132,7 @@ public class ReplicaSetStatus {
                     // address changed, need to use new ports
                     _port = new DBPort(_addr, null, _mongoOptions);
                     _mongo.getConnector().updatePortPool(_addr);
+                    _logger.log(Level.INFO, "Address of host " + _addr.toString() + " changed to " + _addr.getSocketAddress().toString());
                 }
             } catch (UnknownHostException ex) {
                 _logger.log(Level.WARNING, null, ex);
