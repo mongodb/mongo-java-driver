@@ -444,6 +444,12 @@ public class Mongo {
      */
     public void close(){
         _connector.close();
+        _cleaner.interrupt();
+        try {
+            _cleaner.join();
+        } catch (InterruptedException e) {
+            //end early
+        }
     }
 
     /**
@@ -615,7 +621,11 @@ public class Mongo {
         public void run() {
             while (_connector.isOpen()) {
                 try {
-                    Thread.sleep(cleanerIntervalMS);
+                    try {
+                        Thread.sleep(cleanerIntervalMS);
+                    } catch (InterruptedException e) {
+                        //caused by the Mongo instance being closed -- proceed with cleanup
+                    }
                     for (DB db : _dbs.values()) {
                         db.cleanCursors(true);
                     }

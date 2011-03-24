@@ -19,9 +19,9 @@
 package com.mongodb;
 
 import java.io.*;
-import java.util.*;
-import java.util.regex.*;
 
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import com.mongodb.util.*;
@@ -34,7 +34,33 @@ public class MongoTest extends TestCase {
     }
     
     final DB _db;
-    
+
+    int _originalCleanerIntervalMs;
+
+    @BeforeTest
+    public void setUp() {
+        _originalCleanerIntervalMs = Mongo.cleanerIntervalMS;
+    }
+
+    @Test
+    public void testClose_shouldNotReturnUntilCleanupThreadIsFinished() throws Exception {
+
+        System.out.println(Mongo.cleanerIntervalMS);
+        Mongo.cleanerIntervalMS = 250000; //set to a suitably large value to avoid race conditions in the test
+
+        Mongo mongo = new Mongo();
+        assertNotEquals(mongo._cleaner.getState(), Thread.State.NEW);
+
+        mongo.close();
+
+        assertFalse(mongo._cleaner.isAlive());
+    }
+
+    @AfterTest
+    public void tearDown() {
+        Mongo.cleanerIntervalMS = _originalCleanerIntervalMs;
+    }
+
     public static void main( String args[] )
         throws Exception {
         (new MongoTest()).runConsole();
