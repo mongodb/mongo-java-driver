@@ -477,7 +477,7 @@ public class DBApiLayer extends DB {
             if (_curResult == null)
                 return;
             long curId = _curResult.cursor();
-            if (curId < 0)
+            if (curId <= 0)
                 return;
 
             List<Long> l = new ArrayList<Long>();
