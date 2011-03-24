@@ -84,7 +84,7 @@ class Response {
     }
     
     public boolean hasGetMore( int queryOptions ){
-        if ( _cursor <= 0 )
+        if ( _cursor == 0 )
             return false;
         
         if ( _num > 0 )

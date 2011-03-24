@@ -371,7 +371,7 @@ public class DBApiLayer extends DB {
                 throw new MongoException.CursorNotFound();
             }
 
-            if (res._cursor > 0 && _limit > 0 && _limit - _numFetched <= 0) {
+            if (res._cursor != 0 && _limit > 0 && _limit - _numFetched <= 0) {
                 // fetched all docs within limit, close cursor server-side
                 killCursor();
             }
@@ -439,7 +439,7 @@ public class DBApiLayer extends DB {
                 long curId = _curResult.cursor();
                 _curResult = null;
                 _cur = null;
-                if (curId > 0) {
+                if (curId != 0) {
                     _deadCursorIds.add(new DeadCursor(curId, _host));
                 }
             }
@@ -477,7 +477,7 @@ public class DBApiLayer extends DB {
             if (_curResult == null)
                 return;
             long curId = _curResult.cursor();
-            if (curId <= 0)
+            if (curId == 0)
                 return;
 
             List<Long> l = new ArrayList<Long>();
