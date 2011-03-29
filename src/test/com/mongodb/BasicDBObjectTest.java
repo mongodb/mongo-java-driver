@@ -44,7 +44,6 @@ public class BasicDBObjectTest extends TestCase {
         assert( ! a.equals( JSON.parse( "{ 'x' : 2 }" ) ) );
     }
 
-
     @Test(groups = {"basic"})
     public void testBuilderIsEmpty(){
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start();

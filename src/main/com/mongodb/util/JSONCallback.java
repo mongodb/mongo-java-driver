@@ -62,7 +62,7 @@ public class JSONCallback extends BasicBSONCallback {
 		}
 	    } else if ( b.containsField( "$ts" ) ) {
                 Long ts = (Long) b.get("$ts");
-                Long inc = (Long) b.get("$ts");
+                Long inc = (Long) b.get("$inc");
 		o = new BSONTimestamp(ts.intValue(), inc.intValue());
 		if (!isStackEmpty()) {
 		    cur().put( name, o );
@@ -81,7 +81,7 @@ public class JSONCallback extends BasicBSONCallback {
 		    setRoot(o);
 		}
 	    } else if ( b.containsField( "$ref" ) ) {
-                o = new DBRefBase(null, (String)b.get("$ref"), b.get("$id"));
+                o = new DBRef(null, (String)b.get("$ref"), b.get("$id"));
 		if (!isStackEmpty()) {
 		    cur().put( name, o );
 		} else {

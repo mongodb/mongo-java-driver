@@ -56,7 +56,18 @@ public class BSONTimestamp {
     public String toString(){
         return "TS time:" + _time + " inc:" + _inc;
     }
-    
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+        if (obj instanceof BSONTimestamp) {
+            BSONTimestamp t2 = (BSONTimestamp) obj;
+            return getTime() == t2.getTime() && getInc() == t2.getInc();
+        }
+        return false;
+    }
+
     final int _inc;
     final Date _time;
 }

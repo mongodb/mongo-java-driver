@@ -19,6 +19,7 @@
 package org.bson;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * A simple implementation of <code>DBObject</code>.  
@@ -245,6 +246,12 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
             else if ( a instanceof Number && b instanceof Number ){
                 if ( ((Number)a).doubleValue() != 
                      ((Number)b).doubleValue() )
+                    return false;
+            }
+            else if ( a instanceof Pattern && b instanceof Pattern ){
+                Pattern p1 = (Pattern) a;
+                Pattern p2 = (Pattern) b;
+                if (!p1.pattern().equals(p2.pattern()) || p1.flags() != p2.flags())
                     return false;
             }
             else {

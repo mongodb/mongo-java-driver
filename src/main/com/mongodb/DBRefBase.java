@@ -83,6 +83,19 @@ public class DBRefBase {
         return _db;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+
+        if (obj instanceof DBRefBase) {
+            DBRefBase ref = (DBRefBase) obj;
+            if (_ns.equals(ref.getRef()) && _id.equals(ref.getId()))
+                return true;
+        }
+        return false;
+    }
+
     final Object _id;
     final String _ns;
     final DB _db;
