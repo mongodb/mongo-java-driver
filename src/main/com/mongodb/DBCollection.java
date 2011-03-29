@@ -767,8 +767,8 @@ public abstract class DBCollection {
                 // for now, return 0 - lets pretend it does exist
                 return 0;
             }
-            
-            throw new MongoException( "error counting : " + res );
+
+            res.throwOnError();
         }
 
         return res.getLong("n");

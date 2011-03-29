@@ -344,10 +344,8 @@ public class Mongo {
         cmd.put("listDatabases", 1);
 
 
-        BasicDBObject res = (BasicDBObject)getDB( "admin" ).command(cmd, getOptions());
-
-        if (res.getInt("ok" , 0 ) != 1 )
-            throw new MongoException( "error listing databases : " + res );
+        CommandResult res = getDB( "admin" ).command(cmd, getOptions());
+        res.throwOnError();
 
         List l = (List)res.get("databases");
 
@@ -619,5 +617,20 @@ public class Mongo {
                 }
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        String str = "Mongo: ";
+        List<ServerAddress> list = getServerAddressList();
+        if (list == null || list.isEmpty())
+            str += "null";
+        else {
+            for (ServerAddress addr : list) {
+                str += addr.toString() + ",";
+            }
+            str = str.substring(0, str.length() - 1);
+        }
+        return str;
     }
 }

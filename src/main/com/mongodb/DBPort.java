@@ -286,8 +286,7 @@ public class DBPort {
         
         res = runCommand( db , temp );
 
-        if ( ! res.ok() )
-            throw new MongoException( "couldn't re-auth, username/password change?" );
+        res.throwOnError();
         _authed.put( db , true );
     }
 

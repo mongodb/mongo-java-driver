@@ -31,6 +31,8 @@ public class ServerError {
         Object c = o.get( "code" );
         if ( c == null )
             c = o.get( "$code" );
+        if ( c == null )
+            c = o.get( "assertionCode" );
         
         if ( c == null )
             return -5;
