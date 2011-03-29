@@ -87,6 +87,13 @@ public class JSONCallback extends BasicBSONCallback {
 		} else {
 		    setRoot(o);
 		}
+	    } else if ( b.containsField( "$uuid" ) ) {
+                o = UUID.fromString((String)b.get("$uuid"));
+		if (!isStackEmpty()) {
+		    cur().put( name, o );
+		} else {
+		    setRoot(o);
+		}
 	    }
 	}
         return o;

@@ -193,6 +193,14 @@ public class JSON {
             return;
         }
         
+        if ( o instanceof UUID ){
+            UUID uuid = (UUID)o;
+            BasicDBObject temp = new BasicDBObject();
+            temp.put( "$uuid" , uuid.toString() );
+            serialize( temp, buf );
+            return;
+        }
+
         if ( o instanceof CodeWScope ){
             CodeWScope c = (CodeWScope)o;
             
