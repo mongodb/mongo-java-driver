@@ -117,14 +117,9 @@ public class DBTCPConnector implements DBConnector {
     }
 
     WriteResult _checkWriteError( DB db , MyPort mp , DBPort port , WriteConcern concern )
-        throws MongoException {
+        throws MongoException, IOException {
         CommandResult e = null;
-        try {
-            e = port.runCommand( db , concern.getCommand() );
-        } catch ( IOException ioe ){
-            throw new MongoException.Network( ioe.getMessage() , ioe );
-        }
-        mp.done( port );
+        e = port.runCommand( db , concern.getCommand() );
         
         Object foo = e.get( "err" );
         if ( foo == null )
@@ -162,7 +157,6 @@ public class DBTCPConnector implements DBConnector {
                 return _checkWriteError( db , mp , port , concern );
             }
             else {
-                mp.done( port );
                 return new WriteResult( db , port , concern );
             }
         }
@@ -186,6 +180,7 @@ public class DBTCPConnector implements DBConnector {
             throw re;
         }
         finally {
+            mp.done( port );
             m.doneWithMessage();
         }
     }
@@ -210,26 +205,30 @@ public class DBTCPConnector implements DBConnector {
         final DBPort port = mp.get( false , slaveOk, hostNeeded );
                 
         Response res = null;
+        boolean retry = false;
         try {
             port.checkAuth( db );
             res = port.call( m , coll );
-            mp.done( port );
             if ( res._responseTo != m.getId() )
                 throw new MongoException( "ids don't match" );
         }
         catch ( IOException ioe ){
-            boolean shouldRetry = _error( ioe, slaveOk ) && ! coll._name.equals( "$cmd" ) && retries > 0;
             mp.error( port , ioe );
-            if ( shouldRetry ){
-                return call( db , coll , m , hostNeeded , retries - 1 );
+            retry = _error( ioe, slaveOk ) && ! coll._name.equals( "$cmd" ) && retries > 0;
+            if ( !retry ){
+                throw new MongoException.Network( "can't call something" , ioe );
             }
-            throw new MongoException.Network( "can't call something" , ioe );
         }
         catch ( RuntimeException re ){
             mp.error( port , re );
             throw re;
+        } finally {
+            mp.done( port );
         }
-        
+
+        if (retry)
+            return call( db , coll , m , hostNeeded , retries - 1 );
+
         ServerError err = res.getError();
         
         if ( err != null && err.isNotMasterError() ){
@@ -356,8 +355,6 @@ public class DBTCPConnector implements DBConnector {
          */
         void error( DBPort p , Exception e ){
             p.close();
-            p.getPool().done( p );
-
             _requestPort = null;
             _logger.log( Level.SEVERE , "MyPort.error called" , e );            
         }
