@@ -208,6 +208,17 @@
 
   </target>
 
+  <target name="junit-reports" depends="test">
+    <junitreport todir="${testdir}">
+      <fileset dir="${testdir}">
+        <include name="*/*.xml"/>
+      </fileset>
+    
+      <report format="noframes"  todir="${testdir}"/>
+    </junitreport>
+  </target>
+
+
 
   <target name="publish">
     <exec dir="." executable="python">
