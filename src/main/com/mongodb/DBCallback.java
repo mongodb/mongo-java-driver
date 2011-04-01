@@ -14,12 +14,13 @@ import org.bson.types.*;
  * @author antoine
  */
 public class DBCallback extends BasicBSONCallback {
-    
+
     public static interface Factory {
         public DBCallback create( DBCollection collection );
     }
 
     static class DefaultFactory implements Factory {
+        @Override
         public DBCallback create( DBCollection collection ){
             return new DBCallback( collection );
         }
@@ -40,30 +41,30 @@ public class DBCallback extends BasicBSONCallback {
         else
             cur().put( name , new DBPointer( (DBObject)cur() , name , _db , ns , id ) );
     }
-    
+
     @Override
     public void objectStart(boolean array, String name){
         _lastName = name;
         super.objectStart( array , name );
     }
-    
+
     @Override
     public Object objectDone(){
         BSONObject o = (BSONObject)super.objectDone();
-        if ( ! ( o instanceof List ) && 
-             o.containsField( "$ref" ) && 
+        if ( ! ( o instanceof List ) &&
+             o.containsField( "$ref" ) &&
              o.containsField( "$id" ) ){
             return cur().put( _lastName , new DBRef( _db, o ) );
         }
-        
+
         return o;
     }
-    
+
     @Override
     public BSONObject create(){
         return _create( null );
     }
-    
+
     @Override
     public BSONObject create( boolean array , List<String> path ){
         if ( array )
@@ -72,7 +73,7 @@ public class DBCallback extends BasicBSONCallback {
     }
 
     private DBObject _create( List<String> path ){
-        
+
         Class c = null;
 
         if ( _collection != null && _collection._objectClass != null){
@@ -88,9 +89,9 @@ public class DBCallback extends BasicBSONCallback {
                 }
                 c = _collection.getInternalClass( buf.toString() );
             }
-            
+
         }
-        
+
         if ( c != null ){
             try {
                 return (DBObject)c.newInstance();
@@ -104,7 +105,7 @@ public class DBCallback extends BasicBSONCallback {
                 throw new MongoInternalException( "can't instantiate a : " + c , iae );
             }
         }
-        
+
         if ( _collection != null && _collection._name.equals( "$cmd" ) )
             return new CommandResult();
         return new BasicDBObject();
@@ -114,7 +115,7 @@ public class DBCallback extends BasicBSONCallback {
         DBObject o = (DBObject)get();
         return o;
     }
-    
+
     @Override
     public void reset(){
         _lastName = null;
