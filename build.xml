@@ -5,7 +5,7 @@
   <property name="targetdir" location="target"/>
   <property name="testdir" location="${targetdir}/test"/>
   <dirname property="javabase" file="${java.home}"/>
-  
+
   <path id="classpath">
     <fileset dir="lib">
       <include name="**/*.jar"/>
@@ -40,7 +40,7 @@
            encoding="ISO-8859-1"
            memoryMaximumSize="256M"
            fork="true"
-           debug="on" 
+           debug="on"
     	   includeantruntime="false">
 
         <compilerarg value="-Xlint:all,-fallthrough"/>
@@ -142,21 +142,15 @@
       <fileset dir="docs/${version}" />
     </jar>
 
-
-
   </target>
 
   <target name="rebuild" depends="clean, compile"/>
 
   <!-- - - - - - - - - - - - - - - - - - - - - - -->
-  <!--  test stuff                               -->
+  <!--  test targets                             -->
   <!-- - - - - - - - - - - - - - - - - - - - - - -->
 
-  <taskdef name="testng"
-           classpathref="classpath"
-           classname="org.testng.TestNGAntTask"
-           >
-  </taskdef>
+  <taskdef name="testng" classpathref="classpath" classname="org.testng.TestNGAntTask" />
 
   <target name="test" depends="compile">
     <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="true" >
@@ -164,6 +158,30 @@
       <xmlfileset dir="." includes="testng.xml"/>
     </testng>
   </target>
+
+  <target name="test-single" depends="compile">
+    <condition property="propsSpecified">
+      <and>
+        <isset property="class.name" />
+      </and>
+    </condition>
+    <fail unless="propsSpecified" message="class.name roperty not specified."/>
+
+    <copy todir="build/test" file="testng-single.xml" overwrite="true">
+      <filterset>
+        <filter token="CLASS" value="${class.name}"/>
+      </filterset>
+    </copy>
+
+    <testng classpathref="classpath" outputdir="${testdir}" haltonfailure="true" verbose="1">
+      <jvmarg value="-Xmx512M" />
+      <xmlfileset dir="build/test" includes="testng-single.xml"/>
+    </testng>
+  </target>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - -->
+  <!--  misc targets                             -->
+  <!-- - - - - - - - - - - - - - - - - - - - - - -->
 
   <target name="examples" depends="compile">
 
@@ -173,7 +191,7 @@
            deprecation="off"
            source="1.5"
            encoding="ISO-8859-1"
-           debug="on" 
+           debug="on"
     	   includeantruntime="false">
       <classpath refid="classpath"/>
     </javac>
@@ -196,29 +214,34 @@
            deprecation="off"
            source="1.5"
            encoding="ISO-8859-1"
-           debug="on" 
+           debug="on"
     	   includeantruntime="false">
       <classpath refid="classpath"/>
     </javac>
 
-    <java classname="examples.ReadOplog" 
-          fork="true">
+    <java classname="examples.ReadOplog" fork="true">
       <classpath refid="classpath"/>
     </java>
 
   </target>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - -->
+  <!--  reporting targets                        -->
+  <!-- - - - - - - - - - - - - - - - - - - - - - -->
 
   <target name="junit-reports" depends="test">
     <junitreport todir="${testdir}">
       <fileset dir="${testdir}">
         <include name="*/*.xml"/>
       </fileset>
-    
+
       <report format="noframes"  todir="${testdir}"/>
     </junitreport>
   </target>
 
-
+  <!-- - - - - - - - - - - - - - - - - - - - - - -->
+  <!--  publish targets                          -->
+  <!-- - - - - - - - - - - - - - - - - - - - - - -->
 
   <target name="publish">
     <exec dir="." executable="python">
