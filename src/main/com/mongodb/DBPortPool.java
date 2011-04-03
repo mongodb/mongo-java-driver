@@ -18,16 +18,14 @@
 
 package com.mongodb;
 
-import com.mongodb.util.*;
-
-import java.io.*;
-import java.net.*;
+import java.lang.management.ManagementFactory;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.logging.*;
+import java.util.concurrent.Semaphore;
+import java.util.logging.Level;
 
-import java.lang.management.*;
 import javax.management.*;
+
+import com.mongodb.util.SimplePool;
 
 public class DBPortPool extends SimplePool<DBPort> {
 
@@ -103,7 +101,7 @@ public class DBPortPool extends SimplePool<DBPort> {
         }
 
         private ObjectName createObjectName( ServerAddress addr ) throws MalformedObjectNameException {
-            return new ObjectName( "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ':' , '_' ) );
+            return new ObjectName( "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ":" , ",port=" ) + ",instance=" + hashCode() );
         }
 
         final MongoOptions _options;
@@ -138,10 +136,10 @@ public class DBPortPool extends SimplePool<DBPort> {
     // ----
     
     DBPortPool( ServerAddress addr , MongoOptions options ){
-        super( "DBPortPool-" + addr.toString() , options.connectionsPerHost , options.connectionsPerHost );
+        super( "DBPortPool-" + addr.toString() + ", options = " +  options.toString() , options.connectionsPerHost , options.connectionsPerHost );
         _options = options;
         _addr = addr;
-	_waitingSem = new Semaphore( _options.connectionsPerHost * _options.threadsAllowedToBlockForConnectionMultiplier );
+        _waitingSem = new Semaphore( _options.connectionsPerHost * _options.threadsAllowedToBlockForConnectionMultiplier );
     }
 
     protected long memSize( DBPort p ){
