@@ -32,13 +32,13 @@ import com.mongodb.util.*;
  * so that the connector above can make appropriate decisions on how to handle.
  */
 public class DBPort {
-    
+
     /**
      * the default port
      */
     public static final int PORT = 27017;
     static final boolean USE_NAGLE = false;
-    
+
     static final long CONN_RETRY_TIME_MS = 15000;
 
     /**
@@ -48,7 +48,7 @@ public class DBPort {
     public DBPort( ServerAddress addr ){
         this( addr , null , new MongoOptions() );
     }
-    
+
     DBPort( ServerAddress addr  , DBPortPool pool , MongoOptions options ){
         _options = options;
         _sa = addr;
@@ -64,12 +64,12 @@ public class DBPort {
         throws IOException {
         return go( msg , coll );
     }
-    
+
     void say( OutMessage msg )
         throws IOException {
         go( msg , null );
     }
-    
+
     private synchronized Response go( OutMessage msg , DBCollection coll )
         throws IOException {
         return go( msg , coll , false );
@@ -89,24 +89,25 @@ public class DBPort {
         }
 
         _calls++;
-    
+
         if ( _socket == null )
             _open();
-        
+
         if ( _out == null )
             throw new IllegalStateException( "_out shouldn't be null" );
 
         try {
             msg.prepare();
             msg.pipe( _out );
-            
+
             if ( _pool != null )
                 _pool._everWorked = true;
-            
+
             if ( coll == null && ! forceReponse )
                 return null;
-            
+
             _processingResponse = true;
+
             return new Response( _sa , coll , _in , _decoder);
         }
         catch ( IOException ioe ){
@@ -125,7 +126,7 @@ public class DBPort {
 
     synchronized DBObject findOne( DB db , String coll , DBObject q ) throws IOException {
         OutMessage msg = OutMessage.query( db._mongo , 0 , db.getName() + "." + coll , 0 , -1 , q , null );
-        
+
         Response res = go( msg , db.getCollection( coll ) );
         if ( res.size() == 0 )
             return null;
@@ -164,7 +165,7 @@ public class DBPort {
     synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern) throws IOException {
         if ( last != _calls )
             return null;
-        
+
         return getLastError( db , concern );
     }
 
@@ -174,27 +175,27 @@ public class DBPort {
      */
     public synchronized void ensureOpen()
         throws IOException {
-        
+
         if ( _socket != null )
             return;
-        
+
         _open();
     }
 
     boolean _open()
         throws IOException {
-        
+
         long sleepTime = 100;
 
         final long start = System.currentTimeMillis();
         while ( true ){
-            
+
             IOException lastError = null;
 
             try {
                 _socket = new Socket();
                 _socket.connect( _addr , _options.connectTimeout );
-                
+
                 _socket.setTcpNoDelay( ! USE_NAGLE );
                 _socket.setSoTimeout( _options.socketTimeout );
                 _in = new BufferedInputStream( _socket.getInputStream() );
@@ -206,22 +207,22 @@ public class DBPort {
                 _logger.log( Level.INFO , "connect fail to : " + _addr , ioe );
                 close();
             }
-            
+
             if ( ! _options.autoConnectRetry || ( _pool != null && ! _pool._everWorked ) )
                 throw lastError;
-            
+
             long sleptSoFar = System.currentTimeMillis() - start;
 
             if ( sleptSoFar >= CONN_RETRY_TIME_MS )
                 throw lastError;
-            
+
             if ( sleepTime + sleptSoFar > CONN_RETRY_TIME_MS )
                 sleepTime = CONN_RETRY_TIME_MS - sleptSoFar;
 
             _logger.severe( "going to sleep and retry.  total sleep time after = " + ( sleptSoFar + sleptSoFar ) + "ms  this time:" + sleepTime + "ms" );
             ThreadUtil.sleep( sleepTime );
             sleepTime *= 2;
-            
+
         }
     }
 
@@ -229,7 +230,7 @@ public class DBPort {
     public int hashCode(){
         return _hashCode;
     }
-    
+
     /**
      * returns a String representation of the target host
      * @return
@@ -237,12 +238,12 @@ public class DBPort {
     public String host(){
         return _addr.toString();
     }
-    
+
     @Override
     public String toString(){
         return "{DBPort  " + host() + "}";
     }
-    
+
     @Override
     protected void finalize() throws Throwable{
         super.finalize();
@@ -254,7 +255,7 @@ public class DBPort {
      */
     protected void close(){
         _authed.clear();
-                
+
         if ( _socket != null ){
             try {
                 _socket.close();
@@ -263,12 +264,12 @@ public class DBPort {
                 // don't care
             }
         }
-        
+
         _in = null;
         _out = null;
         _socket = null;
     }
-    
+
     void checkAuth( DB db ) throws IOException {
         if ( db._username == null ){
             if ( db._name.equals( "admin" ) )
@@ -278,12 +279,12 @@ public class DBPort {
         }
         if ( _authed.containsKey( db ) )
             return;
-        
+
         CommandResult res = runCommand( db , new BasicDBObject( "getnonce" , 1 ) );
         res.throwOnError();
-        
+
         DBObject temp = db._authCommand( res.getString( "nonce" ) );
-        
+
         res = runCommand( db , temp );
 
         res.throwOnError();
@@ -305,7 +306,7 @@ public class DBPort {
     final MongoOptions _options;
     final Logger _logger;
     final BSONDecoder _decoder = new BSONDecoder();
-    
+
     private Socket _socket;
     private InputStream _in;
     private OutputStream _out;
