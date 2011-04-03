@@ -4,25 +4,25 @@ package com.mongodb.util;
 
 import java.text.*;
 import java.util.*;
-import java.util.logging.*;
 import java.util.regex.*;
 
 import org.bson.*;
 import org.bson.types.*;
+
 import com.mongodb.*;
 
 public class JSONCallback extends BasicBSONCallback {
     
+    @Override
     public BSONObject create(){
         return new BasicDBObject();
     }
     
-    public BSONObject create( boolean array , List<String> path ){
-        if ( array )
-            return new BasicDBList();
-        return new BasicDBObject();
+    @Override
+    protected BSONObject createList() {
+        return new BasicDBList();
     }
-
+    
     public void objectStart(boolean array, String name){
         _lastArray = array;
         super.objectStart( array , name );
