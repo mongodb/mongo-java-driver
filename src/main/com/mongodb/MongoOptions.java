@@ -159,18 +159,18 @@ public class MongoOptions {
 
     public String toString(){
         StringBuilder buf = new StringBuilder();
-        buf.append( "connectionsPerHost: " ).append( connectionsPerHost ).append( " " );
-        buf.append( "threadsAllowedToBlockForConnectionMultiplier: " ).append( threadsAllowedToBlockForConnectionMultiplier ).append( " " );
-        buf.append( "maxWaitTime: " ).append( maxWaitTime ).append( " " );
-        buf.append( "connectTimeout: " ).append( connectTimeout ).append( " " );
-        buf.append( "socketTimeout: " ).append( socketTimeout ).append( " " );
-        buf.append( "socketKeepAlive: " ).append( socketKeepAlive ).append( " " );
-        buf.append( "autoConnectRetry: " ).append( autoConnectRetry ).append( " " );
-        buf.append( "slaveOk: " ).append( slaveOk ).append( " " );
-        buf.append( "safe: " ).append( safe ).append( " " );
-        buf.append( "w: " ).append( w ).append( " " );
-        buf.append( "wtimeout: " ).append( wtimeout ).append( " " );
-        buf.append( "fsync: " ).append( fsync ).append( " " );
+        buf.append( "connectionsPerHost=" ).append( connectionsPerHost ).append( ", " );
+        buf.append( "threadsAllowedToBlockForConnectionMultiplier=" ).append( threadsAllowedToBlockForConnectionMultiplier ).append( ", " );
+        buf.append( "maxWaitTime=" ).append( maxWaitTime ).append( ", " );
+        buf.append( "connectTimeout=" ).append( connectTimeout ).append( ", " );
+        buf.append( "socketTimeout=" ).append( socketTimeout ).append( ", " );
+        buf.append( "socketKeepAlive=" ).append( socketKeepAlive ).append( ", " );
+        buf.append( "autoConnectRetry=" ).append( autoConnectRetry ).append( ", " );
+        buf.append( "slaveOk=" ).append( slaveOk ).append( ", " );
+        buf.append( "safe=" ).append( safe ).append( ", " );
+        buf.append( "w=" ).append( w ).append( ", " );
+        buf.append( "wtimeout=" ).append( wtimeout ).append( ", " );
+        buf.append( "fsync=" ).append( fsync );
 
         return buf.toString();
     }
