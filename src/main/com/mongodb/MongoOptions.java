@@ -41,7 +41,7 @@ public class MongoOptions {
         w = 0;
         wtimeout = 0;
         fsync = false;
-        dbCallbackFactory = DBCallbackImpl.FACTORY;
+        dbCallbackFactory = DefaultDBCallback.FACTORY;
     }
 
     /**
