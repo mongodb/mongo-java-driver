@@ -56,12 +56,14 @@ class Response {
 
         DBCallback c = collection.getDB().getMongo().getMongoOptions().dbCallbackFactory.create( collection );
 
-        for ( int i=0; i<_num; i++ ){
+        for ( int i=0; i < _num; i++ ){
             if ( user._toGo < 5 )
                 throw new IOException( "should have more objects, but only " + user._toGo + " bytes left" );
             c.reset();
             decoder.decode( user , c );
-            _objects.add( c.dbget() );
+
+            // TODO: By moving to generics, you can remove these casts (and requirement to impl DBOBject).
+            _objects.add( (DBObject)c.get() );
         }
 
         if ( user._toGo != 0 )
