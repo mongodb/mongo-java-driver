@@ -110,8 +110,7 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
     }
 
     DBObject dbget(){
-        DBObject o = (DBObject)get();
-        return o;
+        return (DBObject)get();
     }
 
     @Override
