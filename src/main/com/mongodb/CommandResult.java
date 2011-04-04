@@ -60,22 +60,59 @@ public class CommandResult extends BasicDBObject {
      * @return
      */
     public MongoException getException(){
-        String cmdName = _cmd.keySet().iterator().next();
+        if ( !ok() ) {
+            String cmdName = _cmd.keySet().iterator().next();
 
-        StringBuilder buf = new StringBuilder( "command failed [" );
-        buf.append( "command failed [" ).append( cmdName ).append( "] " );
-        buf.append( toString() );
+            StringBuilder buf = new StringBuilder( "command failed [" );
+            buf.append( "command failed [" ).append( cmdName ).append( "] " );
+            buf.append( toString() );
+
+            return new CommandFailure( this , buf.toString() );
+        } else {
+            // GLE check
+            if ( hasErr() ) {
+                Object foo = get( "err" );
+
+                int code = getCode();
+
+                String s = foo.toString();
+                if ( code == 11000 || code == 11001 || s.startsWith( "E11000" ) || s.startsWith( "E11001" ) )
+                    return new MongoException.DuplicateKey( code , s );
+
+                return new MongoException( code , s );
+            }
+        }
         
-        return new CommandFailure( this , buf.toString() );
+        //all good, should never get here.
+        return  null;
+    }
+ 
+    /**
+     * returns the "code" field, as an int
+     * @return -1 if there is no code
+     */
+    private int getCode(){
+        int code = -1;
+        if ( get( "code" ) instanceof Number )
+            code = ((Number)get("code")).intValue();
+        return code;
     }
 
     /**
-     * throws an exception containing the cmd name, in case the command failed
+     * check the "err" field
+     * @return if it has it, and isn't null
+     */
+    boolean hasErr(){
+        Object o = get( "err" );
+        return (o != null && ( (String) o ).length() > 0 );
+    }
+
+    /**
+     * throws an exception containing the cmd name, in case the command failed, or the "err/code" information
      * @throws MongoException
      */
-    public void throwOnError()
-        throws MongoException {
-        if ( ! ok() ){
+    public void throwOnError() throws MongoException {
+        if ( !ok() || hasErr() ){
             throw getException();
         }
     }

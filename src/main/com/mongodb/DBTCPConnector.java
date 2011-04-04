@@ -18,12 +18,10 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
 import java.util.*;
-import java.util.logging.*;
-
-import org.bson.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DBTCPConnector implements DBConnector {
 
@@ -120,20 +118,12 @@ public class DBTCPConnector implements DBConnector {
         throws MongoException, IOException {
         CommandResult e = null;
         e = port.runCommand( db , concern.getCommand() );
-        
-        Object foo = e.get( "err" );
-        if ( foo == null )
+
+        if ( ! e.hasErr() )
             return new WriteResult( e , concern );
         
-        int code = -1;
-        if ( e.get( "code" ) instanceof Number )
-            code = ((Number)e.get("code")).intValue();
-        String s = foo.toString();
-        if ( code == 11000 || code == 11001 ||
-             s.startsWith( "E11000" ) ||
-             s.startsWith( "E11001" ) )
-            throw new MongoException.DuplicateKey( code , s );
-        throw new MongoException( code , s );
+        e.throwOnError();
+        return null;
     }
 
     public WriteResult say( DB db , OutMessage m , WriteConcern concern )

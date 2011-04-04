@@ -16,12 +16,12 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.Iterator;
 
 import org.testng.annotations.Test;
 
-import com.mongodb.util.*;
+import com.mongodb.util.TestCase;
 
 public class DBCursorTest extends TestCase {
 
@@ -226,6 +226,14 @@ public class DBCursorTest extends TestCase {
 
     }
 
+//    @Test
+//    public void testFullRangeCursorIdsOnClose(){
+//        DBCollection c = _db.getCollection( "testCursorIds" );
+//        c.insert( new BasicDBObject( "x" , 1 ) );
+//        
+//        DBCursor curr
+//
+//    }
     @Test
     public void testLimitAndBatchSize() {
         DBCollection c = _db.getCollection( "LimitAndBatchSize" );
