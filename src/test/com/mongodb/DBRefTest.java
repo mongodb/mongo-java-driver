@@ -52,15 +52,15 @@ public class DBRefTest extends TestCase {
 
         DBRef ref = new DBRef(_db, "hello", (Object)"world");
         DBObject o = new BasicDBObject("!", ref);
-        
+
         OutMessage out = new OutMessage( cleanupMongo );
         out.putObject( o );
-        
-        DBCallback cb = new DBCallback( null );
+
+        DefaultDBCallback cb = new DefaultDBCallback( null );
         BSONDecoder decoder = new BSONDecoder();
         decoder.decode( out.toByteArray() , cb );
         DBObject read = cb.dbget();
-        
+
 	String correct = null;
 	correct = "{\"!\":{\"$ref\":\"hello\",\"$id\":\"world\"}}";
 
@@ -72,7 +72,7 @@ public class DBRefTest extends TestCase {
     public void testDBRefFetches(){
         DBCollection coll = _db.getCollection("x");
         coll.drop();
-        
+
         BasicDBObject obj = new BasicDBObject("_id", 321325243);
         coll.save(obj);
 
@@ -98,7 +98,7 @@ public class DBRefTest extends TestCase {
         refs.add(new DBRef(_db, "other", 14));
         refs.add(new DBRef(_db, "other", 16));
         a.save( BasicDBObjectBuilder.start( "refs" , refs).get() );
-        
+
         DBObject loaded = a.findOne();
         assertNotNull( loaded );
         List<DBRef> refsLoaded = (List<DBRef>) loaded.get("refs");
@@ -108,10 +108,10 @@ public class DBRefTest extends TestCase {
         assertEquals(12, refsLoaded.get(0).getId());
         assertEquals(14, refsLoaded.get(1).getId());
         assertEquals(16, refsLoaded.get(2).getId());
-        
+
     }
 
-    
+
     @Test
     public void testRoundTrip(){
         DBCollection a = _db.getCollection( "refroundtripa" );
@@ -121,11 +121,11 @@ public class DBRefTest extends TestCase {
 
         a.save( BasicDBObjectBuilder.start( "_id" , 17 ).add( "n" , 111 ).get() );
         b.save( BasicDBObjectBuilder.start( "n" , 12 ).add( "l" , new DBRef( _db , "refroundtripa" , 17 ) ).get() );
-        
+
         assertEquals( 12 , b.findOne().get( "n" ) );
         assertEquals( DBRef.class , b.findOne().get( "l" ).getClass() );
         assertEquals( 111 , ((DBRef)(b.findOne().get( "l" ))).fetch().get( "n" ) );
-        
+
     }
 
     @Test
@@ -135,16 +135,16 @@ public class DBRefTest extends TestCase {
         DBRef ref = new DBRef( _db , "fake" , 17 );
 
         b.save( BasicDBObjectBuilder.start( "n" , 12 ).add( "l" , ref ).get() );
-        
+
         assertEquals( 12 , b.findOne().get( "n" ) );
         assertEquals( DBRef.class , b.findOne().get( "l" ).getClass() );
-        
+
         DBObject loaded = b.findOne(BasicDBObjectBuilder.start( "l" , ref ).get() );
         assertEquals( 12 , loaded.get( "n" ) );
         assertEquals( DBRef.class , loaded.get( "l" ).getClass() );
         assertEquals( ref.getId(), ((DBRef)loaded.get( "l" )).getId());
         assertEquals( ref.getRef(), ((DBRef)loaded.get( "l" )).getRef());
-        assertEquals( ref.getDB(), ((DBRef)loaded.get( "l" )).getDB());        
+        assertEquals( ref.getDB(), ((DBRef)loaded.get( "l" )).getDB());
     }
 
     DB _db;

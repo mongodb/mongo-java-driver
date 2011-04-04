@@ -25,12 +25,12 @@ import org.bson.*;
 import org.bson.io.*;
 
 class Response {
-    
+
     Response( ServerAddress addr , DBCollection collection ,  InputStream in, BSONDecoder decoder)
         throws IOException {
 
         _host = addr;
-        
+
         byte[] b = new byte[36];
         Bits.readFully(in, b);
 
@@ -54,14 +54,16 @@ class Response {
         else
             _objects = new ArrayList<DBObject>( _num );
 
-        DBCallback c = DBCallback.FACTORY.create( collection );        
-        
-        for ( int i=0; i<_num; i++ ){
+        DBCallback c = collection.getDB().getMongo().getMongoOptions().dbCallbackFactory.create( collection );
+
+        for ( int i=0; i < _num; i++ ){
             if ( user._toGo < 5 )
                 throw new IOException( "should have more objects, but only " + user._toGo + " bytes left" );
             c.reset();
             decoder.decode( user , c );
-            _objects.add( c.dbget() );
+
+            // TODO: By moving to generics, you can remove these casts (and requirement to impl DBOBject).
+            _objects.add( (DBObject)c.get() );
         }
 
         if ( user._toGo != 0 )
@@ -74,7 +76,7 @@ class Response {
     public int size(){
         return _num;
     }
-    
+
     public DBObject get( int i ){
         return _objects.get( i );
     }
@@ -82,30 +84,30 @@ class Response {
     public Iterator<DBObject> iterator(){
         return _objects.iterator();
     }
-    
+
     public boolean hasGetMore( int queryOptions ){
         if ( _cursor == 0 )
             return false;
-        
+
         if ( _num > 0 )
             return true;
 
         if ( ( queryOptions & Bytes.QUERYOPTION_TAILABLE ) == 0 )
             return false;
-            
+
         // have a tailable cursor
 
         if ( ( _flags & Bytes.RESULTFLAG_AWAITCAPABLE ) > 0 && ( queryOptions & Bytes.QUERYOPTION_AWAITDATA ) > 0 )
             return true;
-        
+
         try {
             Thread.sleep( 500 );
         }
         catch ( Exception e ){}
-        
+
         return true;
     }
-    
+
     public long cursor(){
         return _cursor;
     }
@@ -113,15 +115,15 @@ class Response {
     public ServerError getError(){
         if ( _num != 1 )
             return null;
-        
+
         DBObject obj = get(0);
-        
+
         if ( ServerError.getMsg( obj , null ) == null )
             return null;
-        
+
         return new ServerError( obj );
     }
-    
+
     static class MyInputStream extends InputStream {
         MyInputStream( InputStream in , int max ){
             _in = in;
@@ -138,10 +140,10 @@ class Response {
 
             if ( _toGo <= 0 )
                 return -1;
-                
+
             int val = _in.read();
             _toGo--;
-            
+
             return val;
         }
 
@@ -174,12 +176,12 @@ class Response {
     final int _id;
     final int _responseTo;
     final int _operation;
-    
+
     final int _flags;
     long _cursor;
     final int _startingFrom;
     final int _num;
-    
+
     final List<DBObject> _objects;
 
 

@@ -196,6 +196,7 @@ public class DBPort {
                 _socket.connect( _addr , _options.connectTimeout );
                 
                 _socket.setTcpNoDelay( ! USE_NAGLE );
+                _socket.setKeepAlive( _options.socketKeepAlive );
                 _socket.setSoTimeout( _options.socketTimeout );
                 _in = new BufferedInputStream( _socket.getInputStream() );
                 _out = _socket.getOutputStream();

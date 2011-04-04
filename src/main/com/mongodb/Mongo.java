@@ -513,6 +513,13 @@ public class Mongo {
     }
 
     /**
+     * Returns the mongo options.
+     */
+    public MongoOptions getMongoOptions() {
+        return _options;
+    }
+
+    /**
      * Gets the maximum size for a BSON object supported by the current master server.
      * Note that this value may change over time depending on which server is master.
      * If the size is not known yet, a request may be sent to the master server
