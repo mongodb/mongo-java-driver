@@ -18,8 +18,6 @@
 
 package com.mongodb;
 
-import com.mongodb.impl.*;
-
 import java.net.*;
 
 /**
