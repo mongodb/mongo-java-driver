@@ -18,19 +18,16 @@
 
 package com.mongodb.util;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
-import java.util.regex.*;
-
-import java.text.*;
-
+import org.bson.BSON;
+import org.bson.BasicBSONObject;
 import org.bson.types.*;
 
 import com.mongodb.*;
-import org.bson.BSON;
-import org.bson.BasicBSONObject;
-
-import org.testng.annotations.Test;
 
 public class JSONTest extends com.mongodb.util.TestCase {
 
@@ -195,7 +192,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
         assertEquals(threw, false);
         threw = false;
         
-        assertEquals( 4L , JSON.parse( "4" ) );
+        assertEquals( 4 , JSON.parse( "4" ) );
     }
 
     @org.testng.annotations.Test    
@@ -304,10 +301,11 @@ public class JSONTest extends com.mongodb.util.TestCase {
 
     @org.testng.annotations.Test
     public void testJSONEncoding() throws ParseException {
-        String json = "{ 'str' : 'asdfasd' , 'long' : 5 , 'float' : 0.4 , 'bool' : false , 'date' : { '$date' : '2011-05-18T18:56:00Z'} , 'pat' : { '$regex' : '.*' , '$options' : ''} , 'oid' : { '$oid' : '4d83ab3ea39562db9c1ae2ae'} , 'ref' : { '$ref' : 'test.test' , '$id' : { '$oid' : '4d83ab59a39562db9c1ae2af'}} , 'code' : { '$code' : 'asdfdsa'} , 'codews' : { '$code' : 'ggggg' , '$scope' : { }} , 'ts' : { '$ts' : 1300474885 , '$inc' : 10} , 'null' :  null, 'uuid' : { '$uuid' : '60f65152-6d4a-4f11-9c9b-590b575da7b5' }}";
+        String json = "{ 'str' : 'asdfasd' , 'long' : 123123123123 , 'int' : 5 , 'float' : 0.4 , 'bool' : false , 'date' : { '$date' : '2011-05-18T18:56:00Z'} , 'pat' : { '$regex' : '.*' , '$options' : ''} , 'oid' : { '$oid' : '4d83ab3ea39562db9c1ae2ae'} , 'ref' : { '$ref' : 'test.test' , '$id' : { '$oid' : '4d83ab59a39562db9c1ae2af'}} , 'code' : { '$code' : 'asdfdsa'} , 'codews' : { '$code' : 'ggggg' , '$scope' : { }} , 'ts' : { '$ts' : 1300474885 , '$inc' : 10} , 'null' :  null, 'uuid' : { '$uuid' : '60f65152-6d4a-4f11-9c9b-590b575da7b5' }}";
         BasicDBObject a = (BasicDBObject) JSON.parse(json);
         assert (a.get("str").equals("asdfasd"));
-        assert (a.get("long").equals(5L));
+        assert (a.get("int").equals(5));
+        assert (a.get("long").equals(123123123123L));
         assert (a.get("float").equals(0.4d));
         assert (a.get("bool").equals(false));
         SimpleDateFormat format =

@@ -2,9 +2,10 @@
 
 package com.mongodb.util;
 
-import java.text.*;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.*;
+import java.util.regex.Pattern;
 
 import org.bson.*;
 import org.bson.types.*;
@@ -61,8 +62,8 @@ public class JSONCallback extends BasicBSONCallback {
 		    setRoot(o);
 		}
 	    } else if ( b.containsField( "$ts" ) ) {
-                Long ts = (Long) b.get("$ts");
-                Long inc = (Long) b.get("$inc");
+                Long ts = ((Number)b.get("$ts")).longValue();
+                Long inc = ((Number)b.get("$inc")).longValue();
 		o = new BSONTimestamp(ts.intValue(), inc.intValue());
 		if (!isStackEmpty()) {
 		    cur().put( name, o );

@@ -17,14 +17,14 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.nio.*;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.regex.*;
+import java.util.regex.Pattern;
 
-import org.bson.*;
+import org.bson.Transformer;
 import org.bson.types.*;
-import org.testng.annotations.*;
+import org.testng.annotations.Test;
 
 import com.mongodb.util.*;
 
@@ -635,7 +635,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , res.getN() );
         assertFalse( res.isLazy() );
     }
-    
+
     @Test
     public void testWriteResultMethodLevelWriteConcern(){
         DBCollection c = _db.getCollection( "writeresult2" );
