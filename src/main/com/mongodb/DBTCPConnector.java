@@ -414,7 +414,7 @@ public class DBTCPConnector implements DBConnector {
                 maxBsonObjectSize = Bytes.MAX_OBJECT_SIZE;
             }
         } catch (Exception e) {
-            _logger.log(Level.WARNING, null, e);
+            _logger.log(Level.WARNING, "Exception determining maxBSON size using"+maxBsonObjectSize, e);
         } finally {
             port.getPool().done(port);
         }
