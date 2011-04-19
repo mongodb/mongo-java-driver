@@ -60,14 +60,15 @@ public class MongoURI {
             List<String> all = new LinkedList<String>();
 
 
-            if ( serverPart.indexOf( "@" ) > 0 ){
-                int idx = serverPart.indexOf( "@" );
-                _username = serverPart.substring( 0 , idx );
+            int idx = serverPart.indexOf( "@" );
+            
+            if ( idx > 0 ){
+                String authPart = serverPart.substring( 0 , idx );
                 serverPart = serverPart.substring( idx + 1 );
 
-                idx = serverPart.indexOf( ":" );
-                _password = serverPart.substring( 0 , idx ).toCharArray();
-                serverPart = serverPart.substring( idx + 1 );
+                idx = authPart.indexOf( ":" );
+                _username = authPart.substring( 0, idx );
+                _password = authPart.substring( idx + 1 ).toCharArray();
             }
             else {
                 _username = null;
