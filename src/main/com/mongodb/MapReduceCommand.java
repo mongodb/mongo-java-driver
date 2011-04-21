@@ -17,6 +17,8 @@
 
 package com.mongodb;
 
+import java.util.Map;
+
 /**
  * This class groups the argument for a map/reduce operation and can build the underlying command object
  * @dochub mapreduce
@@ -201,7 +203,7 @@ public class MapReduceCommand {
      * 
      * @return The JavaScript scope
      */
-    public String getScope(){
+    public Map<String, Object> getScope(){
         return _scope;
     }
 
@@ -211,7 +213,7 @@ public class MapReduceCommand {
      * @param scope
      *            The JavaScript scope
      */
-    public void setScope( String scope ){
+    public void setScope( Map<String, Object> scope ){
         _scope = scope;
     }
 
@@ -288,6 +290,6 @@ public class MapReduceCommand {
     String _finalize;
     DBObject _sort;
     int _limit;
-    String _scope;
+    Map<String, Object> _scope;
     Boolean _verbose = true;
 }
