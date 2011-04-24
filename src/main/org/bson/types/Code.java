@@ -46,7 +46,12 @@ public class Code {
     public int hashCode(){
         return _code.hashCode();
     }
-    
+
+    @Override
+    public String toString() {
+        return getCode();
+    }
+
     final String _code;
 
 }

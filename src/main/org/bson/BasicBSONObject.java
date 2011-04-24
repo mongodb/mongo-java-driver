@@ -19,6 +19,7 @@
 package org.bson;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * A simple implementation of <code>DBObject</code>.  
@@ -158,6 +159,19 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return foo.toString();
     }
 
+    /** Returns the value of a field as a boolean.
+     * @param key the field to look up
+     * @return the value of the field, or false if field does not exist
+     */
+    public boolean getBoolean( String key ){
+        return getBoolean(key, false);
+    }
+
+    /** Returns the value of a field as a boolean
+     * @param key the field to look up
+     * @param def the default value in case the field is not found
+     * @return the value of the field, converted to a string
+     */
     public boolean getBoolean( String key , boolean def ){
         Object foo = get( key );
         if ( foo == null )
@@ -232,6 +246,12 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
             else if ( a instanceof Number && b instanceof Number ){
                 if ( ((Number)a).doubleValue() != 
                      ((Number)b).doubleValue() )
+                    return false;
+            }
+            else if ( a instanceof Pattern && b instanceof Pattern ){
+                Pattern p1 = (Pattern) a;
+                Pattern p2 = (Pattern) b;
+                if (!p1.pattern().equals(p2.pattern()) || p1.flags() != p2.flags())
                     return false;
             }
             else {

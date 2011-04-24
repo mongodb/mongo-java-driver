@@ -18,17 +18,16 @@
 
 package com.mongodb.util;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
-import java.util.regex.*;
-
-import java.text.*;
-
+import org.bson.BSON;
+import org.bson.BasicBSONObject;
 import org.bson.types.*;
 
 import com.mongodb.*;
-
-import org.testng.annotations.Test;
 
 public class JSONTest extends com.mongodb.util.TestCase {
 
@@ -299,6 +298,37 @@ public class JSONTest extends com.mongodb.util.TestCase {
        Date d2 = (Date)JSON.parse(serialized);
        assertEquals(d.toString(), d2.toString());
    }
+
+    @org.testng.annotations.Test
+    public void testJSONEncoding() throws ParseException {
+        String json = "{ 'str' : 'asdfasd' , 'long' : 123123123123 , 'int' : 5 , 'float' : 0.4 , 'bool' : false , 'date' : { '$date' : '2011-05-18T18:56:00Z'} , 'pat' : { '$regex' : '.*' , '$options' : ''} , 'oid' : { '$oid' : '4d83ab3ea39562db9c1ae2ae'} , 'ref' : { '$ref' : 'test.test' , '$id' : { '$oid' : '4d83ab59a39562db9c1ae2af'}} , 'code' : { '$code' : 'asdfdsa'} , 'codews' : { '$code' : 'ggggg' , '$scope' : { }} , 'ts' : { '$ts' : 1300474885 , '$inc' : 10} , 'null' :  null, 'uuid' : { '$uuid' : '60f65152-6d4a-4f11-9c9b-590b575da7b5' }}";
+        BasicDBObject a = (BasicDBObject) JSON.parse(json);
+        assert (a.get("str").equals("asdfasd"));
+        assert (a.get("int").equals(5));
+        assert (a.get("long").equals(123123123123L));
+        assert (a.get("float").equals(0.4d));
+        assert (a.get("bool").equals(false));
+        SimpleDateFormat format =
+                new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
+        assert (a.get("date").equals(format.parse("2011-05-18T18:56:00Z")));
+        Pattern pat = (Pattern) a.get("pat");
+        Pattern pat2 = Pattern.compile(".*", BSON.regexFlags(""));
+        assert (pat.pattern().equals(pat2.pattern()));
+        assert (pat.flags() == (pat2.flags()));
+        ObjectId oid = (ObjectId) a.get("oid");
+        assert (oid.equals(new ObjectId("4d83ab3ea39562db9c1ae2ae")));
+        DBRef ref = (DBRef) a.get("ref");
+        assert (ref.equals(new DBRef(null, "test.test", new ObjectId("4d83ab59a39562db9c1ae2af"))));
+        assert (a.get("code").equals(new Code("asdfdsa")));
+        assert (a.get("codews").equals(new CodeWScope("ggggg", new BasicBSONObject())));
+        assert (a.get("ts").equals(new BSONTimestamp(1300474885, 10)));
+        assert (a.get("uuid").equals(UUID.fromString("60f65152-6d4a-4f11-9c9b-590b575da7b5")));
+        String json2 = JSON.serialize(a);
+        BasicDBObject b = (BasicDBObject) JSON.parse(json2);
+        a.equals(b);
+        assert (a.equals(b));
+    }
 
     public static void main( String args[] ){
         (new JSONTest()).runConsole();

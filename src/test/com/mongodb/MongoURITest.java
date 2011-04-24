@@ -54,13 +54,34 @@ public class MongoURITest extends TestCase {
 
     @Test()
     public void testUserPass(){
-        MongoURI u = new MongoURI( "mongodb://aaa@bbb:foo/bar" );
+        MongoURI u = new MongoURI( "mongodb://user:pass@host/bar" );
         assertEquals( 1 , u.getHosts().size() );
-        assertEquals( "foo" , u.getHosts().get(0) );
-        assertEquals( "aaa" , u.getUsername() );
-        assertEquals( "bbb" , new String( u.getPassword() ) );
+        assertEquals( "host" , u.getHosts().get(0) );
+        assertEquals( "user" , u.getUsername() );
+        assertEquals( "pass" , new String( u.getPassword() ) );
+    }
+    
+    @Test()
+    public void testUserPassAndPort(){
+        MongoURI u = new MongoURI( "mongodb://user:pass@host:27011/bar" );
+        assertEquals( 1 , u.getHosts().size() );
+        assertEquals( "host:27011" , u.getHosts().get(0) );
+        assertEquals( "user" , u.getUsername() );
+        assertEquals( "pass" , new String( u.getPassword() ) );
     }
 
+    @Test()
+    public void testUserPassAndMultipleHostsWithPort(){
+        MongoURI u = new MongoURI( "mongodb://user:pass@host:27011,host2:27012,host3:27013/bar" );
+        assertEquals( 3 , u.getHosts().size() );
+        assertEquals( "host:27011" , u.getHosts().get(0) );
+        assertEquals( "host2:27012" , u.getHosts().get(1) );
+        assertEquals( "host3:27013" , u.getHosts().get(2) );
+        assertEquals( "user" , u.getUsername() );
+        assertEquals( "pass" , new String( u.getPassword() ) );
+    }
+
+    
     @Test()
     public void testOptions(){
         MongoURI uAmp = new MongoURI( "mongodb://localhost/test?" +

@@ -103,7 +103,7 @@ public class Mongo {
     /**
      *
      */
-    public static final int MINOR_VERSION = 4;
+    public static final int MINOR_VERSION = 5;
 
     static int cleanerIntervalMS;
     static {
@@ -344,10 +344,8 @@ public class Mongo {
         cmd.put("listDatabases", 1);
 
 
-        BasicDBObject res = (BasicDBObject)getDB( "admin" ).command(cmd, getOptions());
-
-        if (res.getInt("ok" , 0 ) != 1 )
-            throw new MongoException( "error listing databases : " + res );
+        CommandResult res = getDB( "admin" ).command(cmd, getOptions());
+        res.throwOnError();
 
         List l = (List)res.get("databases");
 
@@ -515,6 +513,13 @@ public class Mongo {
     }
 
     /**
+     * Returns the mongo options.
+     */
+    public MongoOptions getMongoOptions() {
+        return _options;
+    }
+
+    /**
      * Gets the maximum size for a BSON object supported by the current master server.
      * Note that this value may change over time depending on which server is master.
      * If the size is not known yet, a request may be sent to the master server
@@ -619,5 +624,20 @@ public class Mongo {
                 }
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        String str = "Mongo: ";
+        List<ServerAddress> list = getServerAddressList();
+        if (list == null || list.isEmpty())
+            str += "null";
+        else {
+            for (ServerAddress addr : list) {
+                str += addr.toString() + ",";
+            }
+            str = str.substring(0, str.length() - 1);
+        }
+        return str;
     }
 }

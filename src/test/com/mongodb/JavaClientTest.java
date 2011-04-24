@@ -17,14 +17,14 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.nio.*;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.regex.*;
+import java.util.regex.Pattern;
 
-import org.bson.*;
+import org.bson.Transformer;
 import org.bson.types.*;
-import org.testng.annotations.*;
+import org.testng.annotations.Test;
 
 import com.mongodb.util.*;
 
@@ -635,7 +635,7 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , res.getN() );
         assertFalse( res.isLazy() );
     }
-    
+
     @Test
     public void testWriteResultMethodLevelWriteConcern(){
         DBCollection c = _db.getCollection( "writeresult2" );
@@ -685,10 +685,17 @@ public class JavaClientTest extends TestCase {
         assertNull( c.findOne(new BasicDBObject( "_id" , 1 ) ));
 
         // test exception throwing
+        c.insert( new BasicDBObject( "a" , 1 ) );
         try {
             dbObj = c.findAndModify( null, null );
-            assertTrue(false, "Exception not throw when no update nor remove");
+            assertTrue(false, "Exception not thrown when no update nor remove");
         } catch (MongoException e) {
+        }
+
+        try {
+            dbObj = c.findAndModify( new BasicDBObject("a", "noexist"), null );
+        } catch (MongoException e) {
+            assertTrue(false, "Exception thrown when matching record");
         }
     }
 
@@ -737,6 +744,17 @@ public class JavaClientTest extends TestCase {
             assertTrue(false, "Bad key was accepted");
         } catch (Exception e) {}
         c.update(new BasicDBObject("a", 1), new BasicDBObject("$set", new BasicDBObject("a.b", 1)));
+    }
+
+    @Test
+    public void testAllTypes(){
+        DBCollection c = _db.getCollectionFromString( "foo" );
+        c.drop();
+        String json = "{ 'str' : 'asdfasd' , 'long' : 5 , 'float' : 0.4 , 'bool' : false , 'date' : { '$date' : '2011-05-18T18:56:00Z'} , 'pat' : { '$regex' : '.*' , '$options' : ''} , 'oid' : { '$oid' : '4d83ab3ea39562db9c1ae2ae'} , 'ref' : { '$ref' : 'test.test' , '$id' : { '$oid' : '4d83ab59a39562db9c1ae2af'}} , 'code' : { '$code' : 'asdfdsa'} , 'codews' : { '$code' : 'ggggg' , '$scope' : { }} , 'ts' : { '$ts' : 1300474885 , '$inc' : 10} , 'null' :  null, 'uuid' : { '$uuid' : '60f65152-6d4a-4f11-9c9b-590b575da7b5' }}";
+        BasicDBObject a = (BasicDBObject) JSON.parse(json);
+        c.insert(a);
+        DBObject b = c.findOne();
+        assertTrue(a.equals(b));
     }
 
     final Mongo _mongo;

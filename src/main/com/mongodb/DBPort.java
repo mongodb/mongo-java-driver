@@ -196,6 +196,7 @@ public class DBPort {
                 _socket.connect( _addr , _options.connectTimeout );
                 
                 _socket.setTcpNoDelay( ! USE_NAGLE );
+                _socket.setKeepAlive( _options.socketKeepAlive );
                 _socket.setSoTimeout( _options.socketTimeout );
                 _in = new BufferedInputStream( _socket.getInputStream() );
                 _out = _socket.getOutputStream();
@@ -286,8 +287,7 @@ public class DBPort {
         
         res = runCommand( db , temp );
 
-        if ( ! res.ok() )
-            throw new MongoException( "couldn't re-auth, username/password change?" );
+        res.throwOnError();
         _authed.put( db , true );
     }
 

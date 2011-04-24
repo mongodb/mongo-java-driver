@@ -2,6 +2,8 @@
 
 package org.bson;
 
+import com.mongodb.DBRef;
+import com.mongodb.DBRefBase;
 import static org.bson.BSON.*;
 
 import java.lang.reflect.*;
@@ -197,6 +199,12 @@ public class BSONEncoder {
         }
         else if (val instanceof Code) {
             putCode( name , (Code)val );
+        }
+        else if (val instanceof DBRefBase) {
+            BSONObject temp = new BasicBSONObject();
+            temp.put("$ref", ((DBRefBase)val).getRef());
+            temp.put("$id", ((DBRefBase)val).getId());
+            putObject( name, temp );
         }
         else if ( putSpecial( name , val ) ){
             // no-op

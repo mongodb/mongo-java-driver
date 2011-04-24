@@ -199,62 +199,42 @@ public abstract class DBCollection {
 
 
     /**
-     * Finds an object from the database
-     * @param ref query used to search
-     * @param fields the fields of matching objects to return
-     * @param numToSkip will not return the first <tt>numToSkip</tt> matches
-     * @param batchSize  if positive, represents the size of each batch of objects retrieved. If negative, it limits the total number of objects retrieved.
-     * @param options - see Bytes QUERYOPTION_*
-     * @return the objects, if found
-     * @dochub find
+     * Finds objects
      */
-    abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException ;
+    abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options ) throws MongoException ;
     
     /**
-     * Finds an object.
      * Calls {@link DBCollection#find(com.mongodb.DBObject, com.mongodb.DBObject, int, int)} and applies the query options
-     * @param ref query used to search
+     * @param query query used to search
      * @param fields the fields of matching objects to return
-     * @param numToSkip will not return the first <tt>numToSkip</tt> matches
-     * @param batchSize if positive, represents the size of each batch of objects retrieved. If negative, it limits the total number of objects retrieved.
+     * @param numToSkip number of objects to skip
+     * @param batchSize the batch size. This option has a complex behavior, see {@link DBCursor#batchSize(int) }
      * @param options - see Bytes QUERYOPTION_*
-     * @return the objects, if found
+     * @return the cursor
      * @throws MongoException
      * @dochub find
      */
-    public final DBCursor find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException{
-    	return find(ref, fields, numToSkip, batchSize).addOption(options);
+    public final DBCursor find( DBObject query , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException{
+    	return find(query, fields, numToSkip, batchSize).addOption(options);
     }
     
 
     /**
-     * Finds an object.
-     * @param ref query used to search
+     * Finds objects from the database that match a query.
+     * A DBCursor object is returned, that can be iterated to go through the results.
+     *
+     * @param query query used to search
      * @param fields the fields of matching objects to return
-     * @param numToSkip will not return the first <tt>numToSkip</tt> matches
-     * @param batchSize if positive, represents the size of each batch of objects retrieved. If negative, it limits the total number of objects retrieved.
-     * @return the objects, if found
+     * @param numToSkip number of objects to skip
+     * @param batchSize the batch size. This option has a complex behavior, see {@link DBCursor#batchSize(int) }
+     * @param options - see Bytes QUERYOPTION_*
+     * @return the cursor
+     * @throws MongoException
      * @dochub find
      */
     public final DBCursor find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) {
     	DBCursor cursor = find(ref, fields).skip(numToSkip).batchSize(batchSize);
-    	if ( batchSize < 0 ) 
-    		cursor.limit( Math.abs(batchSize) );
     	return cursor;
-    }
-
-    /**
-     * Finds an object.
-     * @param ref query used to search
-     * @param fields the fields of matching objects to return
-     * @param numToSkip will not return the first <tt>numToSkip</tt> matches
-     * @param batchSize if positive, is the # of objects per batch sent back from the db.  all objects that match will be returned.  if batchSize < 0, its a hard limit, and only 1 batch will either batchSize or the # that fit in a batch
-     * @return the objects, if found
-     * @dochub find
-     */
-    Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) 
-        throws MongoException {
-        return __find( ref , fields , numToSkip , batchSize , getOptions() );
     }
 
     // ------
@@ -282,7 +262,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( Object obj, DBObject fields ) {
-        Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, getOptions() );
+        Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions() );
         return (iterator != null ? iterator.next() : null);
     }
     
@@ -327,8 +307,10 @@ public abstract class DBCollection {
             throw new MongoException("FindAndModify: Remove cannot be mixed with the Update, or returnNew params!");
 
         CommandResult res = this._db.command( cmd );
+        if (res.ok() || res.getErrorMessage().equals( "No matching object found" ))
+            return (DBObject) res.get( "value" );
         res.throwOnError();
-        return (DBObject) res.get( "value" );
+        return null;
     }
 
     
@@ -573,7 +555,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( DBObject o, DBObject fields ) {
-        Iterator<DBObject> i = __find( o , fields , 0 , -1 , getOptions() );
+        Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0, getOptions() );
         if ( i == null || ! i.hasNext() )
             return null;
         return i.next();
@@ -785,8 +767,8 @@ public abstract class DBCollection {
                 // for now, return 0 - lets pretend it does exist
                 return 0;
             }
-            
-            throw new MongoException( "error counting : " + res );
+
+            res.throwOnError();
         }
 
         return res.getLong("n");

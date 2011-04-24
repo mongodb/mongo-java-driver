@@ -287,7 +287,7 @@ public class ByteTest extends TestCase {
         obj = 5;
         o = new BasicDBObject();
         o.put( "$where", obj );
-        assertEquals( Bytes.getType( obj ), Bytes.NUMBER );
+        assertEquals( Bytes.getType( obj ), Bytes.NUMBER_INT );
         go( o, 17 );
     }
 

@@ -149,7 +149,7 @@ public abstract class DB {
     public CommandResult command( DBObject cmd , int options )
         throws MongoException {
         
-        Iterator<DBObject> i = getCollection( "$cmd" ).__find( cmd , new BasicDBObject() , 0 , -1 , options );
+        Iterator<DBObject> i = getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options);
         if ( i == null || ! i.hasNext() )
             return null;
         
@@ -215,12 +215,8 @@ public abstract class DB {
         throws MongoException {
         
         CommandResult res = doEval( code , args );
-        
-        if ( res.ok() ){
-            return res.get( "retval" );
-        }
-        
-        throw new MongoException( "eval failed: " + res );
+        res.throwOnError();
+        return res.get( "retval" );
     }
 
     /**
@@ -260,7 +256,7 @@ public abstract class DB {
         if (namespaces == null)
             throw new RuntimeException("this is impossible");
 
-        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, getOptions());
+        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, 0, getOptions());
         if (i == null)
             return new HashSet<String>();
 
@@ -462,8 +458,7 @@ public abstract class DB {
 
         String hash = _hash( username , passwd );
         CommandResult res = _doauth( username , hash.getBytes() );
-        if ( !res.ok())
-            throw new MongoException(res);
+        res.throwOnError();
         _username = username;
         _authhash = hash.getBytes();
         return res;
@@ -499,9 +494,7 @@ public abstract class DB {
 
     private CommandResult _doauth( String username , byte[] hash ){
         CommandResult res = command(new BasicDBObject("getnonce", 1), getOptions());
-        if ( ! res.ok() ){
-            throw new MongoException(res);
-        }
+        res.throwOnError();
 
         DBObject cmd = _authCommand( res.getString( "nonce" ) , username , hash );
         return command(cmd, getOptions());

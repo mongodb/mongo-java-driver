@@ -16,12 +16,12 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.Iterator;
 
 import org.testng.annotations.Test;
 
-import com.mongodb.util.*;
+import com.mongodb.util.TestCase;
 
 public class DBCursorTest extends TestCase {
 
@@ -97,7 +97,7 @@ public class DBCursorTest extends TestCase {
 
         for ( int i=0; i<numToInsert; i++ )
             c.save( BasicDBObjectBuilder.start().add( "x" , i ).add( "s" , bigString ).get() );
-        
+
         assert( 800 < numToInsert );
         
         assertEquals( numToInsert , c.find().count() );
@@ -105,9 +105,10 @@ public class DBCursorTest extends TestCase {
         assertEquals( numToInsert , c.find().limit(800).count() );
         assertEquals( 800 , c.find().limit(800).toArray().size() );
 
+        // negative limit works like negative batchsize, for legacy reason
         int x = c.find().limit(-800).toArray().size();
         assertLess( x , 800 );
-        
+
         DBCursor a = c.find();
         assertEquals( numToInsert , a.itcount() );
 
@@ -149,6 +150,7 @@ public class DBCursorTest extends TestCase {
         assertEquals( 49 , c.find( q ).toArray().size() );
         assertEquals( 49 , c.find( q ).itcount() );
         assertEquals( 20 , c.find( q ).limit(20).itcount() );
+        assertEquals( 20 , c.find( q ).limit(-20).itcount() );
         
         c.ensureIndex( new BasicDBObject( "x" , 1 ) );
 
@@ -156,12 +158,12 @@ public class DBCursorTest extends TestCase {
         assertEquals( 49 , c.find( q ).toArray().size() );
         assertEquals( 49 , c.find( q ).itcount() );
         assertEquals( 20 , c.find( q ).limit(20).itcount() );
+        assertEquals( 20 , c.find( q ).limit(-20).itcount() );
 
         assertEquals( 49 , c.find( q ).explain().get("n") );
 
-        // these 2 are 'reversed' b/c we want the user case to make sense
-        assertEquals( 20 , c.find( q ).limit(20).explain().get("n") ); 
-        assertEquals( 49 , c.find( q ).limit(-20).explain().get("n") );
+        assertEquals( 20 , c.find( q ).limit(20).explain().get("n") );
+        assertEquals( 20 , c.find( q ).limit(-20).explain().get("n") );
         
     }
 
@@ -223,7 +225,58 @@ public class DBCursorTest extends TestCase {
             assertTrue( o.get("_id") != null );
 
     }
-    
+
+//    @Test
+//    public void testFullRangeCursorIdsOnClose(){
+//        DBCollection c = _db.getCollection( "testCursorIds" );
+//        c.insert( new BasicDBObject( "x" , 1 ) );
+//        
+//        DBCursor curr
+//
+//    }
+    @Test
+    public void testLimitAndBatchSize() {
+        DBCollection c = _db.getCollection( "LimitAndBatchSize" );
+        c.drop();
+        
+        for ( int i=0; i<1000; i++ )
+            c.save( new BasicDBObject( "x" , i ) );
+
+        DBObject q = BasicDBObjectBuilder.start().push( "x" ).add( "$lt" , 200 ).get();
+
+        DBCursor cur = c.find( q );
+        assertEquals(0, cur.getCursorId());
+        assertEquals( 200 , cur.itcount() );
+
+        cur = c.find( q ).limit(50);
+        assertEquals(0, cur.getCursorId());
+        assertEquals( 50 , cur.itcount() );
+
+        cur = c.find( q ).batchSize(50);
+        assertEquals(0, cur.getCursorId());
+        assertEquals( 200 , cur.itcount() );
+
+        cur = c.find( q ).batchSize(100).limit(50);
+        assertEquals(0, cur.getCursorId());
+        assertEquals( 50 , cur.itcount() );
+
+        cur = c.find( q ).batchSize(-40);
+        assertEquals(0, cur.getCursorId());
+        assertEquals( 40 , cur.itcount() );
+
+        cur = c.find( q ).limit(-100);
+        assertEquals(0, cur.getCursorId());
+        assertEquals( 100 , cur.itcount() );
+
+        cur = c.find( q ).batchSize(-40).limit(20);
+        assertEquals(0, cur.getCursorId());
+        assertEquals( 20 , cur.itcount() );
+
+        cur = c.find( q ).batchSize(-20).limit(100);
+        assertEquals(0, cur.getCursorId());
+        assertEquals( 20 , cur.itcount() );
+    }
+
     final DB _db;
 
     public static void main( String args[] )

@@ -50,7 +50,29 @@ public class DBApiLayer extends DB {
     static final void trace( String s ){
         TRACE_LOGGER.log( TRACE_LEVEL , s );
     }
-    
+
+    static int chooseBatchSize(int batchSize, int limit, int fetched) {
+        int bs = Math.abs(batchSize);
+        int remaining = limit > 0 ? limit - fetched : 0;
+        int res = 0;
+        if (bs == 0 && remaining > 0)
+            res = remaining;
+        else if (bs > 0 && remaining == 0)
+            res = bs;
+        else
+            res = Math.min(bs, remaining);
+
+        if (batchSize < 0) {
+            // force close
+            res = -res;
+        }
+
+        if (res == 1) {
+            // optimization: use negative batchsize to close cursor
+            res = -1;
+        }
+        return res;
+    }
 
     /**
      * @param mongo the Mongo instance
@@ -260,7 +282,7 @@ public class DBApiLayer extends DB {
         }
 
         @Override
-        Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int options )
+        Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize, int limit , int options )
             throws MongoException {
             
             if ( ref == null )
@@ -268,7 +290,7 @@ public class DBApiLayer extends DB {
             
             if ( willTrace() ) trace( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
             
-            OutMessage query = OutMessage.query( _mongo , options , _fullNameSpace , numToSkip , batchSize , ref , fields );
+            OutMessage query = OutMessage.query( _mongo , options , _fullNameSpace , numToSkip , chooseBatchSize(batchSize, limit, 0) , ref , fields );
 
             Response res = _connector.call( _db , this , query , null , 2 );
 
@@ -282,7 +304,7 @@ public class DBApiLayer extends DB {
                     throw e;
             }
             
-            return new Result( this , res , batchSize , options );
+            return new Result( this , res , batchSize, limit , options );
         }
 
         @Override
@@ -296,7 +318,7 @@ public class DBApiLayer extends DB {
                     _checkObject(o, false, false);
             }
 
-            if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) );
+            if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) + " " + JSON.serialize( o )  );
             
             OutMessage om = new OutMessage( _mongo , 2001 );
             om.writeInt( 0 ); // reserved
@@ -329,12 +351,13 @@ public class DBApiLayer extends DB {
 
     class Result implements Iterator<DBObject> {
 
-        Result( MyCollection coll , Response res , int numToReturn , int options ){
-            init( res );
+        Result( MyCollection coll , Response res , int batchSize, int limit , int options ){
             _collection = coll;
-            _numToReturn = numToReturn;
+            _batchSize = batchSize;
+            _limit = limit;
             _options = options;
             _host = res._host;
+            init( res );
         }
 
         private void init( Response res ){
@@ -342,15 +365,22 @@ public class DBApiLayer extends DB {
             _curResult = res;
             _cur = res.iterator();
             _sizes.add( res.size() );
+            _numFetched += res.size();
 
             if ( ( res._flags & Bytes.RESULTFLAG_CURSORNOTFOUND ) > 0 ){
                 throw new MongoException.CursorNotFound();
             }
+
+            if (res._cursor != 0 && _limit > 0 && _limit - _numFetched <= 0) {
+                // fetched all docs within limit, close cursor server-side
+                killCursor();
+            }
         }
 
         public DBObject next(){
-            if ( _cur.hasNext() )
+            if ( _cur.hasNext() ) {
                 return _cur.next();
+            }
 
             if ( ! _curResult.hasGetMore( _options ) )
                 throw new RuntimeException( "no more" );
@@ -380,7 +410,7 @@ public class DBApiLayer extends DB {
 
             m.writeInt( 0 ); 
             m.writeCString( _collection._fullNameSpace );
-            m.writeInt( _numToReturn ); // num to return
+            m.writeInt( chooseBatchSize(_batchSize, _limit, _numFetched) );
             m.writeLong( _curResult.cursor() );
             
             Response res = _connector.call( DBApiLayer.this , _collection , m , _host );
@@ -392,12 +422,12 @@ public class DBApiLayer extends DB {
             throw new RuntimeException( "can't remove this way" );
         }
         
-        public int getNumberToReturn(){
-        	return _numToReturn;
+        public int getBatchSize(){
+            return _batchSize;
         }
-
-        public void setNumberToReturn(int num){
-        	_numToReturn = num;
+        
+        public void setBatchSize(int size){
+            _batchSize = size;
         }
 
         public String toString(){
@@ -409,7 +439,7 @@ public class DBApiLayer extends DB {
                 long curId = _curResult.cursor();
                 _curResult = null;
                 _cur = null;
-                if (curId > 0) {
+                if (curId != 0) {
                     _deadCursorIds.add(new DeadCursor(curId, _host));
                 }
             }
@@ -437,22 +467,29 @@ public class DBApiLayer extends DB {
         void close(){
             // not perfectly thread safe here, may need to use an atomicBoolean
             if (_curResult != null) {
-                long curId = _curResult.cursor();
+                killCursor();
                 _curResult = null;
                 _cur = null;
-                
-                if (curId > 0) {
-                    List<Long> l = new ArrayList<Long>();
-                    l.add(curId);
-
-                    try {
-                        killCursors(_host, l);
-                    } catch (Throwable t) {
-                        Bytes.LOGGER.log(Level.WARNING, "can't clean 1 cursor", t);
-                        _deadCursorIds.add(new DeadCursor(curId, _host));
-                    }
-                }
             }
+        }
+
+        void killCursor() {
+            if (_curResult == null)
+                return;
+            long curId = _curResult.cursor();
+            if (curId == 0)
+                return;
+
+            List<Long> l = new ArrayList<Long>();
+            l.add(curId);
+
+            try {
+                killCursors(_host, l);
+            } catch (Throwable t) {
+                Bytes.LOGGER.log(Level.WARNING, "can't clean 1 cursor", t);
+                _deadCursorIds.add(new DeadCursor(curId, _host));
+            }
+            _curResult._cursor = 0;
         }
 
         public ServerAddress getServerAddress() {
@@ -461,7 +498,8 @@ public class DBApiLayer extends DB {
         
         Response _curResult;
         Iterator<DBObject> _cur;
-        int _numToReturn;
+        int _batchSize;
+        int _limit;
         final MyCollection _collection;
         final int _options;
         final ServerAddress _host; // host where first went.  all subsequent have to go there
@@ -469,6 +507,8 @@ public class DBApiLayer extends DB {
         private long _totalBytes = 0;
         private int _numGetMores = 0;
         private List<Integer> _sizes = new ArrayList<Integer>();
+        private int _numFetched = 0;
+        
     }  // class Result
     
     static class DeadCursor {

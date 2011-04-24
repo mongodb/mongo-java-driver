@@ -2,12 +2,12 @@
 
 package com.mongodb.util;
 
-import java.lang.reflect.*;
-import java.text.*;
+import java.lang.reflect.Array;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.*;
+import java.util.regex.Pattern;
 
-import org.bson.*;
+import org.bson.BSONCallback;
 import org.bson.types.*;
 
 import com.mongodb.*;
@@ -146,7 +146,11 @@ public class JSON {
         }
 
         if (o instanceof DBRefBase) {
-            buf.append(o);
+            DBRefBase ref = (DBRefBase)o;
+            BasicDBObject temp = new BasicDBObject();
+            temp.put( "$ref" , ref.getRef() );
+            temp.put( "$id" , ref.getId() );
+            serialize( temp, buf );
             return;
         }
 
@@ -182,10 +186,21 @@ public class JSON {
 
         if ( o instanceof BSONTimestamp ){
             BSONTimestamp t = (BSONTimestamp)o;
-            buf.append( t.getTime() ).append( "|" ).append( t.getInc() );
+            BasicDBObject temp = new BasicDBObject();
+            temp.put( "$ts" , t.getTime() );
+            temp.put( "$inc" , t.getInc() );
+            serialize( temp, buf );
             return;
         }
         
+        if ( o instanceof UUID ){
+            UUID uuid = (UUID)o;
+            BasicDBObject temp = new BasicDBObject();
+            temp.put( "$uuid" , uuid.toString() );
+            serialize( temp, buf );
+            return;
+        }
+
         if ( o instanceof CodeWScope ){
             CodeWScope c = (CodeWScope)o;
             
@@ -197,7 +212,10 @@ public class JSON {
         }
 
         if ( o instanceof Code ){
-            string( buf , ((Code)o).getCode() );
+            Code c = (Code)o;
+            BasicDBObject temp = new BasicDBObject();
+            temp.put( "$code" , c.getCode() );
+            serialize( temp, buf );
             return;
         }
         
@@ -206,20 +224,20 @@ public class JSON {
 
 
     /**
-     *  Parses a JSON string into a DBObject.
+     *  Parses a JSON string representing a JSON value
      *
-     * @param s the string to serialize
-     * @return DBObject the object
+     * @param s the string to parse
+     * @return the object
      */
     public static Object parse( String s ){
 	return parse( s, null );
     }
 
     /**
-     *  Parses a JSON string into a DBObject.
+     * Parses a JSON string representing a JSON value
      *
-     * @param s the string to serialize
-     * @return DBObject the object
+     * @param s the string to parse
+     * @return the object
      */
     public static Object parse( String s, BSONCallback c ){
         if (s == null || (s=s.trim()).equals("")) {
@@ -286,6 +304,11 @@ class JSONParser {
         case 'n':
             read('n'); read('u'); read('l'); read('l');
 	    value = null;
+            break;
+        // NaN
+        case 'N':
+            read('N'); read('a'); read('N');
+	    value = Double.NaN;
             break;
         // true
         case 't':
@@ -561,9 +584,11 @@ class JSONParser {
 
         if (isDouble)
           return Double.valueOf(s.substring(start, pos));
-        if ( pos - start >= 10 )
-          return Long.valueOf(s.substring(start, pos));
-        return Integer.valueOf(s.substring(start, pos));
+        
+        Long val = Long.valueOf(s.substring(start, pos));
+        if (val <= Integer.MAX_VALUE)
+            return val.intValue();
+        return val;
     }
 
     /** 

@@ -3,7 +3,7 @@
 package org.bson;
 
 import java.util.*;
-import java.util.regex.*;
+import java.util.regex.Pattern;
 
 import org.bson.types.*;
 
@@ -17,14 +17,18 @@ public class BasicBSONCallback implements BSONCallback {
         return new BasicBSONObject();
     }
 
+    protected BSONObject createList() {
+        return new BasicBSONList();
+    }
+
     public BSONCallback createBSONCallback(){
         return new BasicBSONCallback();
     }
 
     public BSONObject create( boolean array , List<String> path ){
         if ( array )
-            return new BasicBSONList();
-        return new BasicBSONObject();
+            return createList();
+        return create();
     }
 
     public void objectStart(){
@@ -154,6 +158,12 @@ public class BasicBSONCallback implements BSONCallback {
         return _stack.getLast();
     }
     
+    protected String curName(){
+        if (_nameStack.isEmpty())
+            return null;
+        return _nameStack.getLast();
+    }
+
     public Object get(){
 	return _root;
     }
