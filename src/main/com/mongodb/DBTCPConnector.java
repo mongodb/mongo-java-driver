@@ -455,11 +455,18 @@ public class DBTCPConnector implements DBConnector {
     
     public void close(){
         _closed = true;
-        if ( _portHolder != null )
+        if ( _portHolder != null ) {
             _portHolder.close();
-        if ( _rsStatus != null )
+            _portHolder = null;
+        }
+        if ( _rsStatus != null ) {
             _rsStatus.close();
-        _myPort = null;
+            _rsStatus = null;
+        }
+
+        // below this will remove the myport for this thread only
+        // client using thread pool in web framework may need to call close() from all threads
+        _myPort.remove();
     }
 
     /**
@@ -500,7 +507,7 @@ public class DBTCPConnector implements DBConnector {
     private DBPortPool _masterPortPool;
     private DBPortPool.Holder _portHolder;
     private final List<ServerAddress> _allHosts;
-    private final ReplicaSetStatus _rsStatus;
+    private ReplicaSetStatus _rsStatus;
     private boolean _closed = false;
     private int maxBsonObjectSize = 0;
 
