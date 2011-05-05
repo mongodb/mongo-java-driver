@@ -277,11 +277,11 @@ public class DBTCPConnector implements DBConnector {
 
     boolean _error( Throwable t, boolean slaveOk )
         throws MongoException {
-        if ( _allHosts != null ){
-            _logger.log( Level.WARNING , "replica set mode, switching master" , t );
+        if ( _rsStatus.hasServerUp() ){
+            // the replset has at least 1 server up, try to see if should switch master
             checkMaster( true , !slaveOk );
         }
-        return true;
+        return _rsStatus.hasServerUp();
     }
 
     class MyPort {
@@ -346,7 +346,7 @@ public class DBTCPConnector implements DBConnector {
         void error( DBPort p , Exception e ){
             p.close();
             _requestPort = null;
-            _logger.log( Level.SEVERE , "MyPort.error called" , e );            
+//            _logger.log( Level.SEVERE , "MyPort.error called" , e );
         }
         
         void requestEnsureConnection(){
@@ -437,7 +437,12 @@ public class DBTCPConnector implements DBConnector {
     }
 
     private boolean _set( ServerAddress addr ){
-        _masterPortPool = _portHolder.get( addr );
+        DBPortPool newPool = _portHolder.get( addr );
+        if (newPool == _masterPortPool)
+            return false;
+
+        _logger.log(Level.WARNING, "Master switching from " + (_masterPortPool != null ? _masterPortPool.getServerAddress() : "null") + " to " + addr);
+        _masterPortPool = newPool;
         return true;
     }
 
