@@ -25,7 +25,7 @@ import com.mongodb.DBApiLayer.Result;
 
 
 /** An iterator over database results.
- * Doing a <code>find()</code> query on a collection returns a 
+ * Doing a <code>find()</code> query on a collection returns a
  * <code>DBCursor</code> thus
  *
  * <blockquote><pre>
@@ -35,13 +35,13 @@ import com.mongodb.DBApiLayer.Result;
  * </pre></blockquote>
  *
  * <p><b>Warning:</b> Calling <code>toArray</code> or <code>length</code> on
- * a DBCursor will irrevocably turn it into an array.  This 
+ * a DBCursor will irrevocably turn it into an array.  This
  * means that, if the cursor was iterating over ten million results
  * (which it was lazily fetching from the database), suddenly there will
  * be a ten-million element array in memory.  Before converting to an array,
- * make sure that there are a reasonable number of results using 
+ * make sure that there are a reasonable number of results using
  * <code>skip()</code> and <code>limit()</code>.
- * <p>For example, to get an array of the 1000-1100th elements of a cursor, use 
+ * <p>For example, to get an array of the 1000-1100th elements of a cursor, use
  *
  * <blockquote><pre>
  * List<DBObject> obj = collection.find( query ).skip( 1000 ).limit( 100 ).toArray();
@@ -73,7 +73,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
     /**
      * Creates a copy of an existing database cursor.
-     * The new cursor is an iterator, even if the original 
+     * The new cursor is an iterator, even if the original
      * was an array.
      *
      * @return the new cursor
@@ -86,6 +86,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         c._skip = _skip;
         c._options = _options;
         c._batchSize = _batchSize;
+        c._snapshot = _snapshot;
+        c._explain = _explain;
         if ( _specialFields != null )
             c._specialFields = new BasicDBObject( _specialFields.toMap() );
         return c;
@@ -143,10 +145,10 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     public DBCursor hint( DBObject indexKeys ){
         if ( _it != null )
             throw new IllegalStateException( "can't hint after executing query" );
-        
+
         if ( indexKeys == null )
             _hint = null;
-        else 
+        else
             _hint = DBCollection.genIndexName( indexKeys );
         return this;
     }
@@ -165,9 +167,9 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     }
 
     /**
-     * Use snapshot mode for the query. Snapshot mode assures no duplicates are 
-     * returned, or objects missed, which were present at both the start and end 
-     * of the query's execution (if an object is new during the query, or deleted 
+     * Use snapshot mode for the query. Snapshot mode assures no duplicates are
+     * returned, or objects missed, which were present at both the start and end
+     * of the query's execution (if an object is new during the query, or deleted
      * during the query, it may or may not be returned, even with snapshot mode).
      * Note that short query responses (less than 1MB) are always effectively snapshotted.
      * Currently, snapshot mode may not be used with sorting or explicit hints.
@@ -226,14 +228,14 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     /**
      * Limits the number of elements returned in one batch.
      * A cursor typically fetches a batch of result objects and store them locally.
-     * 
+     *
      * If <tt>batchSize</tt> is positive, it represents the size of each batch of objects retrieved.
      * It can be adjusted to optimize performance and limit data transfer.
-     * 
+     *
      * If <tt>batchSize</tt> is negative, it will limit of number objects returned, that fit within the max batch size limit (usually 4MB), and cursor will be closed.
      * For example if <tt>batchSize</tt> is -10, then the server will return a maximum of 10 documents and as many as can fit in 4MB, then close the cursor.
      * Note that this feature is different from limit() in that documents must fit within a maximum size, and it removes the need to send a request to close the cursor server-side.
-     * 
+     *
      * The batch size can be changed even after a cursor is iterated, in which case the setting will apply on the next batch retrieval.
      *
      * @param n the number of elements to return in a batch
@@ -243,7 +245,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         // check for special case, used to have server bug with 1
         if ( n == 1 )
             n = 2;
-        
+
         if ( _it != null ) {
         	if (_it instanceof DBApiLayer.Result)
         		((DBApiLayer.Result)_it).setBatchSize(n);
@@ -273,10 +275,10 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     public long getCursorId() {
     	if ( _it instanceof Result )
             return ((Result)_it).getCursorId();
-    	
+
     	return 0;
     }
-    
+
     /**
      * kills the current cursor on the server.
      */
@@ -284,7 +286,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     	if ( _it instanceof Result )
             ((Result)_it).close();
     }
-    
+
     /**
      * makes this query ok to run on a slave node
      * @return
@@ -332,7 +334,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         throws MongoException {
         if ( _it != null )
             return;
-        
+
         if ( _collection != null && _query != null ){
 
             _lookForHints();
@@ -340,7 +342,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
             DBObject foo = _query;
             if ( hasSpecialQueryFields() ){
                 foo = _specialFields == null ? new BasicDBObject() : _specialFields;
-                
+
                 _addToQueryObject( foo , "query" , _query , true );
                 _addToQueryObject( foo , "orderby" , _orderBy , false );
                 _addToQueryObject( foo , "$hint" , _hint );
@@ -359,12 +361,12 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
             _fake = true;
         }
     }
-    
+
     /**
      * if there is a hint to use, use it
      */
     private void _lookForHints(){
-        
+
         if ( _hint != null ) // if someone set a hint, then don't do this
             return;
 
@@ -374,7 +376,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         Set<String> mykeys = _query.keySet();
 
         for ( DBObject o : _collection._hintFields ){
-            
+
             Set<String> hintKeys = o.keySet();
 
             if ( ! mykeys.containsAll( hintKeys ) )
@@ -391,20 +393,20 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
         if ( _orderBy != null && _orderBy.keySet().size() > 0 )
             return true;
-        
+
         if ( _hint != null || _snapshot )
             return true;
-        
+
         return _explain;
     }
 
     void _addToQueryObject( DBObject query , String field , DBObject thing , boolean sendEmpty ){
         if ( thing == null )
             return;
-        
+
         if ( ! sendEmpty && thing.keySet().size() == 0 )
             return;
-    
+
         _addToQueryObject( query , field , thing );
     }
 
@@ -412,7 +414,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
         if ( thing == null )
             return;
-        
+
         query.put( field , thing );
     }
 
@@ -478,7 +480,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
         throw new IllegalArgumentException("_it not a real result" );
     }
-    
+
     private boolean _hasNext()
         throws MongoException {
         _check();
@@ -508,7 +510,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         _checkType( CursorType.ITERATOR );
         return _hasNext();
     }
-    
+
     /**
      * Returns the object the cursor is at and moves the cursor ahead by one.
      * @return the next element
@@ -545,7 +547,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
             _next();
     }
 
-    /** 
+    /**
      * pulls back all items into an array and returns the number of objects.
      * Note: this can be resource intensive
      * @see #count()
@@ -569,7 +571,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         throws MongoException {
         return toArray( Integer.MAX_VALUE );
     }
-    
+
     /**
      * Converts this cursor to an array.
      * @param max the maximum number of objects to return
@@ -582,7 +584,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         _fill( max );
         return _all;
     }
-    
+
     /**
      * for testing only!
      * Iterates cursor and counts objects
@@ -605,13 +607,13 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * @return the number of objects
      * @throws MongoException
      */
-    public int count() 
+    public int count()
         throws MongoException {
         if ( _collection == null )
             throw new IllegalArgumentException( "why is _collection null" );
         if ( _collection._db == null )
             throw new IllegalArgumentException( "why is _collection._db null" );
-        
+
         return (int)_collection.getCount(this._query, this._keysWanted);
     }
 
@@ -622,17 +624,17 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * @return the number of objects
      * @throws MongoException
      */
-    public int size() 
+    public int size()
         throws MongoException {
         if ( _collection == null )
             throw new IllegalArgumentException( "why is _collection null" );
         if ( _collection._db == null )
             throw new IllegalArgumentException( "why is _collection._db null" );
-        
+
         return (int)_collection.getCount(this._query, this._keysWanted, this._limit, this._skip );
     }
 
-    
+
     /**
      * gets the fields to be returned
      * @return
@@ -640,7 +642,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     public DBObject getKeysWanted(){
         return _keysWanted;
     }
-    
+
     /**
      * gets the query
      * @return
@@ -697,7 +699,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     private final DBCollection _collection;
     private final DBObject _query;
     private final DBObject _keysWanted;
-    
+
     private DBObject _orderBy = null;
     private String _hint = null;
     private boolean _explain = false;
