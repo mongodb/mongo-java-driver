@@ -214,7 +214,7 @@ public class BSONDecoder {
         return true;
     }
 
-    void _binary( String name )
+    protected void _binary( String name )
         throws IOException {
         final int totalLen = _in.readInt();
         final byte bType = _in.read();
@@ -267,7 +267,7 @@ public class BSONDecoder {
         return _basic.get();
     }
     
-    final class Input {
+    protected final class Input {
         
         Input( InputStream in ){
             _raw = in;
@@ -321,7 +321,7 @@ public class BSONDecoder {
             return ret;
         }
         
-        int readInt()
+        public int readInt()
             throws IOException {
             return Bits.readInt( _inputBuffer , _need(4) );
         }
@@ -341,7 +341,7 @@ public class BSONDecoder {
             return Double.longBitsToDouble( readLong() );
         }
 
-        byte read()
+        public byte read()
             throws IOException {
             if ( _pos < _len ){
                 ++_read;
@@ -350,12 +350,12 @@ public class BSONDecoder {
             return _inputBuffer[_need(1)];
         }
 
-        void fill( byte b[] )
+        public void fill( byte b[] )
             throws IOException {
             fill( b , b.length );
         }
 
-        void fill( byte b[] , int len )
+        public void fill( byte b[] , int len )
             throws IOException {  
             // first use what we have
             int have = _len - _pos;
@@ -471,8 +471,8 @@ public class BSONDecoder {
     }
 
 
-    private Input _in;
-    private BSONCallback _callback;
+    protected Input _in;
+    protected BSONCallback _callback;
     private byte[] _random = new byte[1024]; // has to be used within a single function
     private byte[] _inputBuffer = new byte[1024];
 
