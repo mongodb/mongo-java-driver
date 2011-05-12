@@ -19,6 +19,7 @@
 package com.mongodb;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -204,7 +205,8 @@ public class DBTCPConnector implements DBConnector {
         }
         catch ( IOException ioe ){
             mp.error( port , ioe );
-            retry = _error( ioe, slaveOk ) && ! coll._name.equals( "$cmd" ) && retries > 0;
+            retry = retries > 0 && !coll._name.equals( "$cmd" )
+                    && !(ioe instanceof SocketTimeoutException) && _error( ioe, slaveOk );
             if ( !retry ){
                 throw new MongoException.Network( "can't call something" , ioe );
             }
