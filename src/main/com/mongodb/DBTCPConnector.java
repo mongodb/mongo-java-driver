@@ -19,6 +19,7 @@
 package com.mongodb;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -204,7 +205,8 @@ public class DBTCPConnector implements DBConnector {
         }
         catch ( IOException ioe ){
             mp.error( port , ioe );
-            retry = _error( ioe, slaveOk ) && ! coll._name.equals( "$cmd" ) && retries > 0;
+            retry = retries > 0 && !coll._name.equals( "$cmd" )
+                    && !(ioe instanceof SocketTimeoutException) && _error( ioe, slaveOk );
             if ( !retry ){
                 throw new MongoException.Network( "can't call something" , ioe );
             }
@@ -277,11 +279,11 @@ public class DBTCPConnector implements DBConnector {
 
     boolean _error( Throwable t, boolean slaveOk )
         throws MongoException {
-        if ( _allHosts != null ){
-            _logger.log( Level.WARNING , "replica set mode, switching master" , t );
+        if ( _rsStatus.hasServerUp() ){
+            // the replset has at least 1 server up, try to see if should switch master
             checkMaster( true , !slaveOk );
         }
-        return true;
+        return _rsStatus.hasServerUp();
     }
 
     class MyPort {
@@ -346,7 +348,7 @@ public class DBTCPConnector implements DBConnector {
         void error( DBPort p , Exception e ){
             p.close();
             _requestPort = null;
-            _logger.log( Level.SEVERE , "MyPort.error called" , e );            
+//            _logger.log( Level.SEVERE , "MyPort.error called" , e );
         }
         
         void requestEnsureConnection(){
@@ -437,7 +439,12 @@ public class DBTCPConnector implements DBConnector {
     }
 
     private boolean _set( ServerAddress addr ){
-        _masterPortPool = _portHolder.get( addr );
+        DBPortPool newPool = _portHolder.get( addr );
+        if (newPool == _masterPortPool)
+            return false;
+
+        _logger.log(Level.WARNING, "Master switching from " + (_masterPortPool != null ? _masterPortPool.getServerAddress() : "null") + " to " + addr);
+        _masterPortPool = newPool;
         return true;
     }
 
@@ -455,11 +462,18 @@ public class DBTCPConnector implements DBConnector {
     
     public void close(){
         _closed = true;
-        if ( _portHolder != null )
+        if ( _portHolder != null ) {
             _portHolder.close();
-        if ( _rsStatus != null )
+            _portHolder = null;
+        }
+        if ( _rsStatus != null ) {
             _rsStatus.close();
-        _myPort = null;
+            _rsStatus = null;
+        }
+
+        // below this will remove the myport for this thread only
+        // client using thread pool in web framework may need to call close() from all threads
+        _myPort.remove();
     }
 
     /**
@@ -500,7 +514,7 @@ public class DBTCPConnector implements DBConnector {
     private DBPortPool _masterPortPool;
     private DBPortPool.Holder _portHolder;
     private final List<ServerAddress> _allHosts;
-    private final ReplicaSetStatus _rsStatus;
+    private ReplicaSetStatus _rsStatus;
     private boolean _closed = false;
     private int maxBsonObjectSize = 0;
 
