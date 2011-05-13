@@ -174,12 +174,12 @@ public class ClassMap<T> implements Map <Class, T> {
      * equals
      */
     public boolean equals(Object object){
-        try {
-  	    ClassMap that = (ClassMap)object;
-	    return(getInternalMap().equals(that.getInternalMap()));
-        } catch (ClassCastException cce) {
-	    return(false);
+        if (object instanceof ClassMap) {
+        	ClassMap<T> that = (ClassMap<T>)object;
+        	return(getInternalMap().equals(that.getInternalMap()));
         }
+        
+        return false;
     }
 
     /**
