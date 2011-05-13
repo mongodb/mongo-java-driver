@@ -616,7 +616,7 @@ public abstract class DBCollection {
         Object id = jo.get( "_id" );
 
         if ( id == null || ( id instanceof ObjectId && ((ObjectId)id).isNew() ) ){
-            if ( id != null && id instanceof ObjectId )
+            if ( id != null )
                 ((ObjectId)id).notNew();
             if ( concern == null )
             	return insert( jo );
