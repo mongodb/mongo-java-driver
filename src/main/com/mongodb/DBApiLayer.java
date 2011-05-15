@@ -19,13 +19,14 @@
 package com.mongodb;
 
 import java.util.*;
-import java.util.logging.*;
-
-import org.bson.*;
-import org.bson.types.*;
-
-import com.mongodb.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.bson.BSONObject;
+import org.bson.types.ObjectId;
+
+import com.mongodb.util.JSON;
 
 /** Database API
  * This cannot be directly instantiated, but the functions are available
@@ -312,7 +313,7 @@ public class DBApiLayer extends DB {
             throws MongoException {
 
             if (o != null && !o.keySet().isEmpty()) {
-                // if 1st key doesnt start with $, then object will be inserted as is, need to check it
+                // if 1st key doesn't start with $, then object will be inserted as is, need to check it
                 String key = o.keySet().iterator().next();
                 if (key.charAt(0) != '$')
                     _checkObject(o, false, false);
