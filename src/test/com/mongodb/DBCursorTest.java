@@ -211,6 +211,20 @@ public class DBCursorTest extends TestCase {
     }
 
     @Test
+    public void testLargeBatch(){
+        DBCollection c = _db.getCollection( "largeBatch1" );
+        c.drop();
+
+        int total = 1000000;
+        int batch = 100000;
+        for ( int i=0; i<total; i++ )
+            c.save( new BasicDBObject( "x" , i ) );
+
+        DBCursor cursor = c.find().batchSize( batch );
+        assertEquals( total , cursor.itcount() );
+        assertEquals( total/batch + 1, cursor.getSizes().size());
+    }
+    @Test
     public void testSpecial(){
         DBCollection c = _db.getCollection( "testSpecial" );
         c.insert( new BasicDBObject( "x" , 1 ) );
