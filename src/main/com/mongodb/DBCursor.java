@@ -20,7 +20,6 @@ package com.mongodb;
 
 import java.util.*;
 
-import com.mongodb.DBApiLayer.MyCollection;
 import com.mongodb.DBApiLayer.Result;
 
 
@@ -82,6 +81,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         DBCursor c = new DBCursor(_collection, _query, _keysWanted);
         c._orderBy = _orderBy;
         c._hint = _hint;
+        c._hintDBObj = _hintDBObj;
         c._limit = _limit;
         c._skip = _skip;
         c._options = _options;
@@ -137,17 +137,14 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
     /**
      * Informs the database of indexed fields of the collection in order to improve performance.
-     * @param indexKeys a <code>DBObject</code> with index names as keys
+     * @param indexKeys a <code>DBObject</code> with fields and direction
      * @return same DBCursor for chaining operations
      */
     public DBCursor hint( DBObject indexKeys ){
         if ( _it != null )
             throw new IllegalStateException( "can't hint after executing query" );
         
-        if ( indexKeys == null )
-            _hint = null;
-        else 
-            _hint = DBCollection.genIndexName( indexKeys );
+        _hintDBObj = indexKeys;
         return this;
     }
 
@@ -343,7 +340,10 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
                 
                 _addToQueryObject( foo , "query" , _query , true );
                 _addToQueryObject( foo , "orderby" , _orderBy , false );
-                _addToQueryObject( foo , "$hint" , _hint );
+                if(_hint != null)
+                    _addToQueryObject( foo , "$hint" , _hint );
+                if(_hintDBObj != null)
+                    _addToQueryObject( foo , "$hint" , _hintDBObj);
 
                 if ( _explain )
                     foo.put( "$explain" , true );
@@ -392,7 +392,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         if ( _orderBy != null && _orderBy.keySet().size() > 0 )
             return true;
         
-        if ( _hint != null || _snapshot )
+        if ( _hint != null || _hintDBObj != null || _snapshot )
             return true;
         
         return _explain;
@@ -700,6 +700,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     
     private DBObject _orderBy = null;
     private String _hint = null;
+    private DBObject _hintDBObj = null;
     private boolean _explain = false;
     private int _limit = 0;
     private int _batchSize = 0;
