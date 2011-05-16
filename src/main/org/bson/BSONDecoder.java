@@ -6,8 +6,9 @@ import static org.bson.BSON.*;
 
 import java.io.*;
 
-import org.bson.io.*;
-import org.bson.types.*;
+import org.bson.io.Bits;
+import org.bson.io.PoolOutputBuffer;
+import org.bson.types.ObjectId;
 
 public class BSONDecoder {
     
@@ -220,13 +221,8 @@ public class BSONDecoder {
         final byte bType = _in.read();
         
         switch ( bType ){
-        case B_GENERAL: {
-            final byte[] data = new byte[totalLen];
-            _in.fill( data );
-            _callback.gotBinaryArray( name , data );
-            return;
-        }
-        case B_BINARY: {
+        case B_GENERAL:
+        case B_BINARY:
             final int len = _in.readInt();
             if ( len + 4 != totalLen )
                 throw new IllegalArgumentException( "bad data size subtype 2 len: " + len + " totalLen: " + totalLen );
@@ -235,7 +231,6 @@ public class BSONDecoder {
             _in.fill( data );
             _callback.gotBinaryArray( name , data );
             return;
-        }
         case B_UUID:
             if ( totalLen != 16 )
                 throw new IllegalArgumentException( "bad data size subtype 3 len: " + totalLen + " != 16");
