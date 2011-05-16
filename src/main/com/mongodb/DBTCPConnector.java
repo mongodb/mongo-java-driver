@@ -443,7 +443,8 @@ public class DBTCPConnector implements DBConnector {
         if (newPool == _masterPortPool)
             return false;
 
-        _logger.log(Level.WARNING, "Master switching from " + (_masterPortPool != null ? _masterPortPool.getServerAddress() : "null") + " to " + addr);
+        if ( _logger.isLoggable( Level.WARNING ) && _masterPortPool != null )
+            _logger.log(Level.WARNING, "Master switching from " + _masterPortPool.getServerAddress() + " to " + addr);
         _masterPortPool = newPool;
         return true;
     }
