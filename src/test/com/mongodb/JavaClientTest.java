@@ -18,6 +18,7 @@
 package com.mongodb;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -785,7 +786,14 @@ public class JavaClientTest extends TestCase {
         DBObject b = c.findOne();
         assertTrue(a.equals(b));
     }
+    
+    @Test
+    public void testMongoHolder() throws MongoException, UnknownHostException {
+        Mongo m1 = Mongo.Holder.singleton().connect( new MongoURI( "mongodb://localhost" ) );
+        Mongo m2 = Mongo.Holder.singleton().connect( new MongoURI( "mongodb://localhost" ) );
 
+        assertEquals( m1, m2);
+    }
     final Mongo _mongo;
     final DB _db;
 

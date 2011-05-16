@@ -18,12 +18,12 @@
 
 package com.mongodb;
 
-import java.net.*;
+import java.net.UnknownHostException;
 import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import org.bson.io.*;
+import org.bson.io.PoolOutputBuffer;
 
 /**
  * A database connection with internal pooling.
@@ -605,9 +605,11 @@ public class Mongo {
             buf.append( uri.getUsername() );
             return buf.toString();
         }
+        
+        public static Holder singleton() { return _default; }
 
-
-        private static final ConcurrentMap<String,Mongo> _mongos = new ConcurrentHashMap<String,Mongo>();
+        private static Holder _default = new Holder();
+        private final ConcurrentMap<String,Mongo> _mongos = new ConcurrentHashMap<String,Mongo>();
 
     }
 
