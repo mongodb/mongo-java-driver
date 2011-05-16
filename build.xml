@@ -89,9 +89,12 @@
       <arg value="-1" />
     </exec>
 
-    <jar jarfile="mongo.jar" manifest="src/main/META-INF/MANIFEST.MF" >
-      <fileset dir="build/main" />
-    </jar>
+    <taskdef resource="aQute/bnd/ant/taskdef.properties" classpath="lib/biz.aQute.bnd.jar"/>
+    <bnd classpath="build/main"
+      files="src/main/bnd/mongo.bnd"
+      failok="false"
+      eclipse="false"
+      output="mongo.jar"/>
 
     <jar jarfile="bson.jar" >
       <fileset dir="build/main" >

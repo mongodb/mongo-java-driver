@@ -1,0 +1,15 @@
+version: 2.4.0
+
+Bundle-Name: MongoDB
+Bundle-SymbolicName: com.mongodb
+Bundle-Version: ${version}
+
+Export-Package:\
+   com.mongodb*;version=${version},\
+   org.bson*;version=${version}
+
+Import-Package:\
+   org.testng*;resolution:=optional,\
+   *
+
+Include-Resource: OSGI-OPT/src=../
