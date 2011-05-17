@@ -21,6 +21,8 @@
 
 package org.bson.types;
 
+import org.bson.BSON;
+
 /**
    generic binary holder
  */
@@ -31,7 +33,7 @@ public class Binary {
      * @param data raw data
      */
     public Binary( byte[] data ){
-        this((byte)0, data);
+        this(BSON.B_GENERAL, data);
     }
 
     /**
