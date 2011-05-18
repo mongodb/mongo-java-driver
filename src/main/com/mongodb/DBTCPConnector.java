@@ -279,11 +279,17 @@ public class DBTCPConnector implements DBConnector {
 
     boolean _error( Throwable t, boolean slaveOk )
         throws MongoException {
-        if ( _rsStatus.hasServerUp() ){
-            // the replset has at least 1 server up, try to see if should switch master
-            checkMaster( true , !slaveOk );
+        if ( _rsStatus != null ) {
+            if ( _rsStatus.hasServerUp() ){
+                // the replset has at least 1 server up, try to see if should switch master
+                checkMaster( true , !slaveOk );
+                return _rsStatus.hasServerUp();
+            } else {
+                return false;
+            }
+        } else {
+            return true;
         }
-        return _rsStatus.hasServerUp();
     }
 
     class MyPort {
