@@ -49,3 +49,5 @@ src/test/ed/webtests/webtest-local.bash
 
 *.ipr
 *.iws
+
+pom.xml
