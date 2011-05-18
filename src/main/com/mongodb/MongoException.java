@@ -66,7 +66,7 @@ public class MongoException extends RuntimeException {
         super( msg , _massage( t ) );
         _code = code;
     }
-    
+
     /**
      * Creates a MongoException from a BSON object representing an error
      * @param o
@@ -105,7 +105,7 @@ public class MongoException extends RuntimeException {
             super( ioe.toString() , ioe );
             _ioe = ioe;
         }
-        
+
         final java.io.IOException _ioe;
     }
 
@@ -125,12 +125,25 @@ public class MongoException extends RuntimeException {
      * Subclass of MongoException representing a cursor-not-found exception
      */
     public static class CursorNotFound extends MongoException {
-        
+
         private static final long serialVersionUID = -4415279469780082174L;
 
         CursorNotFound(){
             super( -5 , "cursor not found on server" );
         }
+    }
+
+    /**
+     * Subclass of MongoException representing the fact that
+     * {@link DBCursor#cancelTailing() has been called by a different thread.
+     */
+    public static class CursorTailingCancelled extends MongoException {
+
+      private static final long serialVersionUID = -4415279469780082174L;
+
+      CursorTailingCancelled(){
+          super( 0 , "tailing cancelled" );
+      }
     }
 
     /**
