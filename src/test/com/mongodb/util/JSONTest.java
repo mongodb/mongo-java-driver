@@ -274,6 +274,23 @@ public class JSONTest extends com.mongodb.util.TestCase {
        assertEquals( a.toString() , b.toString() );
    }
 
+    @org.testng.annotations.Test
+    public void testComplexPattern() {
+        String x = "\\w*\\|He llo\\|\\w*";
+        String serializedPattern = 
+ 	    "{ \"$regex\" : \"" + x + "\" , \"$options\" : \"" + "i\"}";
+
+        Pattern pattern = Pattern.compile( x , Pattern.CASE_INSENSITIVE);
+        assertEquals( serializedPattern, JSON.serialize(pattern));
+
+        BasicDBObject a = new BasicDBObject( "x" , pattern );
+        assertEquals( "{ \"x\" : " + serializedPattern + "}" , a.toString() );
+
+        DBObject b = (DBObject)JSON.parse( a.toString() );
+        assertEquals( b.get("x").getClass(), Pattern.class );
+        assertEquals( a.toString() , b.toString() );
+    }
+
    @org.testng.annotations.Test
    public void testObjectId() {
        ObjectId oid = new ObjectId(new Date());

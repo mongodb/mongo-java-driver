@@ -165,11 +165,15 @@ public class JSON {
         }
 
         if (o instanceof Pattern) {
-	    DBObject externalForm = new BasicDBObject();
-	    externalForm.put("$regex", o.toString());
-	    externalForm.put("$options", Bytes.regexFlags( ((Pattern)o).flags() ) );
-	    serialize(externalForm, buf);
-            return;
+            buf.append( "{ " );
+            buf.append("\"$regex\"");
+            buf.append( " : " );
+            buf.append("\"");
+            buf.append(o.toString());
+            buf.append("\" , \"$options\" : \"");
+            buf.append(Bytes.regexFlags( ((Pattern)o).flags() ));
+            buf.append("\"}");
+            return;  
         }
 
         if ( o.getClass().isArray() ){
@@ -296,6 +300,7 @@ class JSONParser {
      * @throws JSONParseException if invalid JSON is found
      */
     protected Object parse(String name) {
+        
         Object value = null;
         char current = get();
 
@@ -323,7 +328,11 @@ class JSONParser {
         // string
         case '\'':
         case '\"':
-            value = parseString();
+            if("$regex".equals(name))
+                value = parseRegex();
+            else
+               value = parseString();
+            
             break;
         // number
         case '0': case '1': case '2': case '3': case '4': case '5':
@@ -474,6 +483,36 @@ class JSONParser {
         return (char)-1;
     }
 
+
+    /**
+     * Parses a regex. Characters in a regex should not be escaped.
+     *
+     * @return the regex string.
+     * @throws JSONParseException if invalid JSON is found
+     */
+    public String parseRegex() {
+         char quot;
+            if(check('\''))
+                quot = '\'';
+            else if(check('\"'))
+                quot = '\"';
+            else 
+                throw new JSONParseException(s, pos);
+
+            char current;
+
+            read(quot);
+            StringBuilder buf = new StringBuilder();
+           
+            while(pos < s.length() && (current = s.charAt(pos)) != quot) {
+                  buf.append(s.charAt(pos));
+                  pos++;
+            }
+            read(quot);
+           
+            return buf.toString();
+        
+    }
     /**
      * Parses a string.
      *
