@@ -64,7 +64,9 @@ public class GridFSDBFile extends GridFSFile {
     		os = new BufferedOutputStream( new FileOutputStream( f ) );
     		return writeTo( os );
     	} finally {
-    		os.close();
+            if (os != null){
+    		    os.close();
+            }
     	}
     }
 
