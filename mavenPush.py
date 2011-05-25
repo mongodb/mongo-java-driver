@@ -28,8 +28,8 @@ if p[0].find( "SUCCESSFUL" ) < 0:
     print( p[1] )
     raise( "build failed" )
 
-def go( shortName , longName ):
-    dir = root + "/org/mongodb/" + longName + "/" + version
+def go( pkgName, shortName , longName ):
+    dir = root + pkgName + longName + "/" + version
     if not os.path.exists( dir ):
         os.makedirs( dir )
 
@@ -52,5 +52,5 @@ def go( shortName , longName ):
     out.close()
 
 
-go( "mongo" , "mongo-java-driver" )
-go( "bson" , "bson" )
+go( "/org/mongodb/" , "mongo" , "mongo-java-driver" )
+go( "/org/bson/" , "bson" , "bson" )

@@ -18,6 +18,7 @@
 package com.mongodb;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -416,7 +417,36 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , m.get( "d" ).intValue() );
                         
     }
-    
+
+    @Test
+    public void testMapReduceInlineWScope(){
+        DBCollection c = _db.getCollection( "jmr2" );
+        c.drop();
+
+        c.save( new BasicDBObject( "x" , new String[]{ "a" , "b" } ) );
+        c.save( new BasicDBObject( "x" , new String[]{ "b" , "c" } ) );
+        c.save( new BasicDBObject( "x" , new String[]{ "c" , "d" } ) );
+        
+        Map<String, Object> scope = new HashMap<String, Object>();
+        scope.put("exclude", "a");
+        
+        MapReduceCommand mrc = new MapReduceCommand( c, "function(){ for ( var i=0; i<this.x.length; i++ ){ if(this.x[i] != exclude) emit( this.x[i] , 1 ); } }" ,
+                         "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" , null, MapReduceCommand.OutputType.INLINE, null);
+        mrc.setScope( scope );
+        
+        MapReduceOutput out = c.mapReduce( mrc );
+        Map<String,Integer> m = new HashMap<String,Integer>();
+        for ( DBObject r : out.results() ){
+            m.put( r.get( "_id" ).toString() , ((Number)(r.get( "value" ))).intValue() );
+        }
+        
+        assertEquals( 3 , m.size() );
+        assertEquals( 2 , m.get( "b" ).intValue() );
+        assertEquals( 2 , m.get( "c" ).intValue() );
+        assertEquals( 1 , m.get( "d" ).intValue() );
+                        
+    }
+
     String _testMulti( DBCollection c ){
         String s = "";
         for ( DBObject z : c.find().sort( new BasicDBObject( "_id" , 1 ) ) ){
@@ -756,7 +786,14 @@ public class JavaClientTest extends TestCase {
         DBObject b = c.findOne();
         assertTrue(a.equals(b));
     }
+    
+    @Test
+    public void testMongoHolder() throws MongoException, UnknownHostException {
+        Mongo m1 = Mongo.Holder.singleton().connect( new MongoURI( "mongodb://localhost" ) );
+        Mongo m2 = Mongo.Holder.singleton().connect( new MongoURI( "mongodb://localhost" ) );
 
+        assertEquals( m1, m2);
+    }
     final Mongo _mongo;
     final DB _db;
 

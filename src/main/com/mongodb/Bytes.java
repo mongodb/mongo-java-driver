@@ -70,7 +70,7 @@ public class Bytes extends BSON {
      */
     public static final int QUERYOPTION_TAILABLE = 1 << 1;
     /**
-     * Allow query of replica slave. Normally these return an error except for namespace "local".
+     * When turned on, read queries will be directed to slave servers instead of the primary server.
      */
     public static final int QUERYOPTION_SLAVEOK = 1 << 2;
     /**

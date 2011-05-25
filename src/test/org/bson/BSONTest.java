@@ -18,14 +18,15 @@
 
 package org.bson;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.*;
 
-import org.bson.io.*;
-import org.bson.types.*;
-import org.testng.annotations.*;
-
+import org.bson.io.BasicOutputBuffer;
+import org.bson.io.OutputBuffer;
+import org.bson.types.CodeWScope;
 import org.testng.Assert;
+import org.testng.annotations.Test;
 
 public class BSONTest extends Assert {
 
@@ -128,7 +129,7 @@ public class BSONTest extends Assert {
           data[i] = 1;
         }
         BSONObject binary_object = new BasicBSONObject( "bin" , data);
-        _test( binary_object , 10019 , "682d9a636619b135fa9801ac42c48a10" );
+        _test( binary_object , 10019 , "71c3247d9e9a26d73bf64efc0b9fe90f" );
     }
 
     @Test

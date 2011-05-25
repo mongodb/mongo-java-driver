@@ -2,20 +2,21 @@
 
 package org.bson;
 
-import com.mongodb.DBRef;
-import com.mongodb.DBRefBase;
 import static org.bson.BSON.*;
 
-import java.lang.reflect.*;
-import java.nio.*;
-import java.nio.charset.*;
+import java.lang.reflect.Array;
+import java.nio.Buffer;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.*;
-import java.util.regex.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Pattern;
 
-import org.bson.io.*;
+import org.bson.io.BasicOutputBuffer;
+import org.bson.io.OutputBuffer;
 import org.bson.types.*;
+
+import com.mongodb.DBRefBase;
 
 /**
  * this is meant to be pooled or cached
@@ -320,7 +321,7 @@ public class BSONEncoder {
         _put( BINARY , name );
         _buf.writeInt( 4 + data.length );
 
-        _buf.write( B_BINARY );
+        _buf.write( B_GENERAL );
         _buf.writeInt( data.length );
         int before = _buf.getPosition();
         _buf.write( data );

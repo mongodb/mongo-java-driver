@@ -21,11 +21,26 @@
 
 package org.bson.types;
 
+import org.bson.BSON;
+
 /**
    generic binary holder
  */
 public class Binary {
 
+    /**
+     * Creates a Binary object with the default binary type of 0
+     * @param data raw data
+     */
+    public Binary( byte[] data ){
+        this(BSON.B_GENERAL, data);
+    }
+
+    /**
+     * Creates a Binary object
+     * @param type type of the field as encoded in BSON
+     * @param data raw data
+     */
     public Binary( byte type , byte[] data ){
         _type = type;
         _data = data;
