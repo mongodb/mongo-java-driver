@@ -349,6 +349,9 @@ public class DBTCPConnector implements DBConnector {
             p.close();
             _requestPort = null;
 //            _logger.log( Level.SEVERE , "MyPort.error called" , e );
+
+            // depending on type of error, may need to close other connections in pool
+            p.getPool().gotError(e);
         }
         
         void requestEnsureConnection(){
