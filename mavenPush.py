@@ -31,12 +31,13 @@ if p[0].find( "SUCCESSFUL" ) < 0:
     print( p[1] )
     raise( "build failed" )
 
-def build_metadata_xml(path, groupid, artifactid):
+def build_metadata_xml(path, artifactid):
+    groupid = os.path.split(path)[1]
     xml = '<metadata>'
     xml += '<groupId>org.%s</groupId>' % (groupid,)
     xml += '<artifactId>%s</artifactId>' % (artifactid,)
     xml += '<versioning><versions>'
-    print( "listing versions in %s" % (path,) )
+
     entries = os.listdir(path)
     for entry in entries:
         if os.path.isdir(os.path.join(path, entry)):
@@ -72,7 +73,7 @@ def go( pkgName, shortName , longName ):
     out.close()
     
     out = open( os.path.join(os.path.split(dir)[0], "maven-metadata.xml") , 'w' )
-    out.write( build_metadata_xml(os.path.split(dir)[0], shortName, longName) )
+    out.write( build_metadata_xml(os.path.split(dir)[0], longName) )
     out.close()
 
 go( "/org/mongodb/" , "mongo" , "mongo-java-driver" )
