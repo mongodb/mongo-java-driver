@@ -101,7 +101,10 @@ public class DBPortPool extends SimplePool<DBPort> {
         }
 
         private ObjectName createObjectName( ServerAddress addr ) throws MalformedObjectNameException {
-            return new ObjectName( "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ":" , ",port=" ) + ",instance=" + hashCode() );
+            String name =  "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ":" , ",port=" ) + ",instance=" + hashCode();
+            if ( _options.description != null )
+                name += ",description=" + _options.description;
+            return new ObjectName( name );
         }
 
         final MongoOptions _options;
