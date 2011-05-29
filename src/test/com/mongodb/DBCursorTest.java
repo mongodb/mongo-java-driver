@@ -121,8 +121,8 @@ public class DBCursorTest extends TestCase {
         assertEquals( numToInsert , c.find().batchSize(2).itcount() );
         assertEquals( numToInsert , c.find().batchSize(1).itcount() );
         
-        assertEquals( numToInsert , _count( c.find( null , null , 0 , 5 ) ) );
-        assertEquals( 5 , _count( c.find( null , null , 0 , -5 ) ) );
+        assertEquals( numToInsert , _count( c.find( null , null).skip(  0 ).batchSize( 5 ) ) );
+        assertEquals( 5 , _count( c.find( null , null).skip(  0 ).batchSize( -5 ) ) );
     }
 
     @SuppressWarnings("unchecked")

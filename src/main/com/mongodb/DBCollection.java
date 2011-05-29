@@ -212,6 +212,7 @@ public abstract class DBCollection {
      * @throws MongoException
      * @dochub find
      */
+    @Deprecated
     public final DBCursor find( DBObject query , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException{
     	return find(query, fields, numToSkip, batchSize).addOption(options);
     }
@@ -230,8 +231,9 @@ public abstract class DBCollection {
      * @throws MongoException
      * @dochub find
      */
-    public final DBCursor find( DBObject ref , DBObject fields , int numToSkip , int batchSize ) {
-    	DBCursor cursor = find(ref, fields).skip(numToSkip).batchSize(batchSize);
+    @Deprecated
+    public final DBCursor find( DBObject query , DBObject fields , int numToSkip , int batchSize ) {
+    	DBCursor cursor = find(query, fields).skip(numToSkip).batchSize(batchSize);
     	return cursor;
     }
 
