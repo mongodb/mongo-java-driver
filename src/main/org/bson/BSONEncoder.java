@@ -319,23 +319,28 @@ public class BSONEncoder {
     }
     
     protected void putBinary( String name , byte[] data ){
+        putBinary( name, B_GENERAL, data );
+    }
+    
+    protected void putBinary( String name , Binary val ){
+        putBinary( name, val.getType(), val.getData() );        
+    }
+    
+    private void putBinary( String name , int type , byte[] data ){
         _put( BINARY , name );
-        _buf.writeInt( 4 + data.length );
-
-        _buf.write( B_GENERAL );
-        _buf.writeInt( data.length );
+        int totalLen = data.length;
+        
+        if (type == B_BINARY)
+            totalLen += 4;
+        
+        _buf.writeInt( totalLen );
+        _buf.write( type );
+        if (type == B_BINARY)
+            _buf.writeInt( totalLen -4 );
         int before = _buf.getPosition();
         _buf.write( data );
         int after = _buf.getPosition();
-        
         com.mongodb.util.MyAsserts.assertEquals( after - before , data.length );
-    }
-
-    protected void putBinary( String name , Binary val ){
-        _put( BINARY , name );
-        _buf.writeInt( val.length() );
-        _buf.write( val.getType() );
-        _buf.write( val.getData() );
     }
     
     protected void putUUID( String name , UUID val ){

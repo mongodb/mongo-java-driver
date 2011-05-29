@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import org.bson.BSON;
 import org.bson.Transformer;
 import org.bson.types.*;
 import org.testng.annotations.Test;
@@ -184,7 +185,7 @@ public class JavaClientTest extends TestCase {
             bb.order( Bytes.ORDER );
             bb.putInt( 5 );
             bb.put( "eliot".getBytes() );
-            out.put( "a" , new Binary( (byte)2 , raw ) );
+            out.put( "a" , "eliot".getBytes() );
             c.save( out );
             
             out = c.findOne();
@@ -194,6 +195,39 @@ public class JavaClientTest extends TestCase {
             out.put( "a" , new Binary( (byte)111 , raw ) );
             c.save( out );
             Binary blah = (Binary)c.findOne().get( "a" );
+            assertEquals( 111 , blah.getType() );
+            assertEquals( Util.toHex( raw ) , Util.toHex( blah.getData() ) );
+        }
+        
+    }
+    
+    @Test
+    public void testBinaryOld()
+        throws MongoException {
+        DBCollection c = _db.getCollection( "testBinary" );
+        c.drop();
+        c.save( BasicDBObjectBuilder.start().add( "a" , "eliot".getBytes() ).get() );
+        
+        DBObject out = c.findOne();
+        byte[] b = (byte[])(out.get( "a" ) );
+        assertEquals( "eliot" , new String( b ) );
+        
+        {
+            byte[] raw = new byte[9];
+            ByteBuffer bb = ByteBuffer.wrap( raw );
+            bb.order( Bytes.ORDER );
+            bb.putInt( 5 );
+            bb.put( "eliot".getBytes() );
+            out.put( "a" , new Binary( BSON.B_BINARY , "eliot".getBytes() ) );
+            c.save( out );
+            
+            out = c.findOne();
+            Binary blah = (Binary)(out.get( "a" ) );
+            assertEquals( "eliot" , new String( blah.getData() ) );
+
+            out.put( "a" , new Binary( (byte)111 , raw ) );
+            c.save( out );
+            blah = (Binary)c.findOne().get( "a" );
             assertEquals( 111 , blah.getType() );
             assertEquals( Util.toHex( raw ) , Util.toHex( blah.getData() ) );
         }

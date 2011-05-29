@@ -130,12 +130,16 @@ public class BasicBSONCallback implements BSONCallback {
         _put( name , new BasicBSONObject( "$ns" , ns ).append( "$id" , id ) );
     }
 
-    public void gotBinaryArray( String name , byte[] b ){
-        _put( name , b );
+    @Deprecated
+    public void gotBinaryArray( String name , byte[] data ){
+        gotBinary( name, BSON.B_GENERAL, data );
     }
     
     public void gotBinary( String name , byte type , byte[] data ){
-        _put( name , new Binary( type , data ) );
+        if( type == BSON.B_GENERAL )
+            _put( name , data );
+        else
+            _put( name , new Binary( type , data ) );
     }
     
     public void gotUUID( String name , long part1, long part2){

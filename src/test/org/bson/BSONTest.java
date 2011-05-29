@@ -129,7 +129,7 @@ public class BSONTest extends Assert {
           data[i] = 1;
         }
         BSONObject binary_object = new BasicBSONObject( "bin" , data);
-        _test( binary_object , 10019 , "71c3247d9e9a26d73bf64efc0b9fe90f" );
+        _test( binary_object , 10015 , "1d439ba5b959ecfe297a7862bf95bc10" );
     }
 
     @Test

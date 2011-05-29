@@ -221,7 +221,12 @@ public class BSONDecoder {
         final byte bType = _in.read();
         
         switch ( bType ){
-        case B_GENERAL:
+        case B_GENERAL: {
+                final byte[] data = new byte[totalLen];
+                _in.fill( data );
+                _callback.gotBinary( name, bType, data );
+                return;
+        }
         case B_BINARY:
             final int len = _in.readInt();
             if ( len + 4 != totalLen )
@@ -229,7 +234,7 @@ public class BSONDecoder {
             
             final byte[] data = new byte[len];
             _in.fill( data );
-            _callback.gotBinaryArray( name , data );
+            _callback.gotBinary( name , bType , data );
             return;
         case B_UUID:
             if ( totalLen != 16 )

@@ -39,9 +39,10 @@ public interface BSONCallback {
     void gotDBRef( String name , String ns , ObjectId id );
     
     /**
-     * subtype 2/0
+     * 
      */
-    void gotBinaryArray( String name , byte[] b );
+    @Deprecated
+    void gotBinaryArray( String name , byte[] data );
     void gotBinary( String name , byte type , byte[] data );
     /**
      * subtype 3

@@ -176,7 +176,7 @@ public class ByteTest extends TestCase {
         o.put( "bytes", barray );
 
         byte[] encoded = BSON.encode( o );
-        assertEquals( 277 , encoded.length );
+        assertEquals( 273 , encoded.length );
 
         BSONObject read = BSON.decode( encoded );
         byte[] b = (byte[])read.get( "bytes" );
