@@ -16,12 +16,12 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.List;
 
-import org.testng.annotations.*;
+import org.testng.annotations.Test;
 
-import com.mongodb.util.*;
+import com.mongodb.util.TestCase;
 
 public class DBCollectionTest extends TestCase {
 
@@ -51,6 +51,12 @@ public class DBCollectionTest extends TestCase {
         c.drop();
         
         DBObject obj = c.findOne();
+        assertEquals(obj, null);
+
+        obj = c.findOne(null);
+        assertEquals(obj, null);
+
+        obj = c.findOne(null, null);
         assertEquals(obj, null);
 
         DBObject inserted = BasicDBObjectBuilder.start().add("x",1).add("y",2).get();

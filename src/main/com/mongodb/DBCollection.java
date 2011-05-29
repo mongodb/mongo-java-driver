@@ -19,11 +19,9 @@
 package com.mongodb;
 
 // Mongo
-import org.bson.types.*;
-import com.mongodb.util.*;
-
-// Java
 import java.util.*;
+
+import org.bson.types.ObjectId;
 
 /** This class provides a skeleton implementation of a database collection.  
  * <p>A typical invocation sequence is thus
@@ -556,9 +554,7 @@ public abstract class DBCollection {
      */
     public final DBObject findOne( DBObject o, DBObject fields ) {
         Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0, getOptions() );
-        if ( i == null || ! i.hasNext() )
-            return null;
-        return i.next();
+        return i == null ? null : i.next();
     }
 
     /**
