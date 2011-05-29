@@ -208,7 +208,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
     /** Add a key/value pair to this object
      * @param key the field name
      * @param val the field value
-     * @return the <code>val</code> parameter
+     * @return <code>this</code>
      */
     public BasicBSONObject append( String key , Object val ){
         put( key , val );
