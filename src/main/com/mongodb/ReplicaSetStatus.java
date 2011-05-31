@@ -38,9 +38,12 @@ public class ReplicaSetStatus {
         _nextResolveTime = System.currentTimeMillis() + inetAddrCacheMS;
 
         _updater = new Updater();
-        _updater.start();
     }
 
+    void start() {
+        _updater.start();
+    }
+    
     boolean ready(){
         return _setName != null;
     }
@@ -435,6 +438,7 @@ public class ReplicaSetStatus {
         Mongo m = new Mongo( addrs );
 
         ReplicaSetStatus status = new ReplicaSetStatus( m, addrs );
+        status.start();
         System.out.println( status.ensureMaster()._addr );
 
         while ( true ){

@@ -65,6 +65,11 @@ public class DBTCPConnector implements DBConnector {
 
         _createLogger.info( all  + " -> " + getAddress() );
     }
+    
+    public void start() {
+        if (_rsStatus != null)
+            _rsStatus.start();
+    }
 
     private static ServerAddress _checkAddress( ServerAddress addr ){
         if ( addr == null )

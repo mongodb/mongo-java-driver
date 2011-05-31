@@ -190,6 +190,7 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addr );
+        _connector.start();
         _cleaner = new DBCleanerThread();
         _cleaner.start();
     }
@@ -227,6 +228,7 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addrs );
+        _connector.start();
 
         _cleaner = new DBCleanerThread();
         _cleaner.start();
@@ -301,6 +303,7 @@ public class Mongo {
             _connector = new DBTCPConnector( this , replicaSetSeeds );
         }
 
+        _connector.start();
         _cleaner = new DBCleanerThread();
         _cleaner.start();
     }
