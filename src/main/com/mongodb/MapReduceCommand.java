@@ -225,57 +225,67 @@ public class MapReduceCommand {
         this._outputDB = outputDB;
     }
 
+    
 
     public DBObject toDBObject() {
-        BasicDBObjectBuilder builder = BasicDBObjectBuilder.start();
+        BasicDBObject cmd = new BasicDBObject();
 
-        builder.add("mapreduce", _input)
-               .add("map", _map)
-               .add("reduce", _reduce)
-               .add("verbose", _verbose);
+        cmd.put("mapreduce", _input);
+        cmd.put("map", _map);
+        cmd.put("reduce", _reduce);
+        cmd.put("verbose", _verbose);
 
-        if (_outputType == OutputType.REPLACE && _outputDB == null) {
-            builder.add("out", _outputTarget);
-        } else {
-            BasicDBObject out = new BasicDBObject();
-            switch(_outputType) {
-                case INLINE:
-                    out.put("inline", 1);
-                    break;
-                case REPLACE:
-                    out.put("replace", _outputTarget);
-                    break;
-                case MERGE:
-                    out.put("merge", _outputTarget);
-                    break;
-                case REDUCE:
-                    out.put("reduce", _outputTarget);
-                    break;
-            }
-            if (_outputDB != null)
-                out.put("db", _outputDB);
-            builder.add("out", out);
+        BasicDBObject out = new BasicDBObject();
+        switch(_outputType) {
+            case INLINE:
+                out.put("inline", 1);
+                break;
+            case REPLACE:
+                out.put("replace", _outputTarget);
+                break;
+            case MERGE:
+                out.put("merge", _outputTarget);
+                break;
+            case REDUCE:
+                out.put("reduce", _outputTarget);
+                break;
         }
+        if (_outputDB != null)
+            out.put("db", _outputDB);
+        cmd.put("out", out);
 
         if (_query != null)
-            builder.add("query", _query);
+            cmd.put("query", _query);
 
         if (_finalize != null) 
-            builder.add( "finalize", _finalize );
+            cmd.put( "finalize", _finalize );
 
         if (_sort != null)
-            builder.add("sort", _sort);
+            cmd.put("sort", _sort);
 
         if (_limit > 0)
-            builder.add("limit", _limit);
+            cmd.put("limit", _limit);
 
         if (_scope != null)
-            builder.add("scope", _scope);
+            cmd.put("scope", _scope);
 
-
-        return builder.get();
+        if (_extra != null) {
+            cmd.putAll(_extra);
+        }
+        
+        return cmd;
     }
 
+    public void addExtraOption(String name, Object value) {
+        if (_extra == null)
+            _extra = new BasicDBObject();
+        _extra.put(name, value);
+    }
+    
+    public DBObject getExtraOptions() {
+        return _extra;
+    }
+    
     public String toString() { 
         return toDBObject().toString();
     }
@@ -292,4 +302,5 @@ public class MapReduceCommand {
     int _limit;
     Map<String, Object> _scope;
     Boolean _verbose = true;
+    DBObject _extra;
 }

@@ -249,6 +249,11 @@ public class ReplicaSetStatus {
             return buf.toString();
         }
 
+        public void close() {
+            _port.close();
+            _port = null;
+        }
+        
         final ServerAddress _addr;
         final Set<String> _names = Collections.synchronizedSet( new HashSet<String>() );
         DBPort _port; // we have our own port so we can set different socket options and don't have to owrry about the pool
@@ -388,7 +393,12 @@ public class ReplicaSetStatus {
     }
 
     void close(){
-        _closed = true;
+        if (!_closed) {
+            _closed = true;
+            for (int i = 0; i < _all.size(); i++) {
+                _all.get(i).close();
+            }
+        }
     }
 
     /**
