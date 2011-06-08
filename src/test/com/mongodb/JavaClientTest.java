@@ -220,14 +220,16 @@ public class JavaClientTest extends TestCase {
             bb.put( "eliot".getBytes() );
             out.put( "a" , new Binary( BSON.B_BINARY , "eliot".getBytes() ) );
             c.save( out );
-            
+
+            // objects of subtype B_BINARY or B_GENERAL should becomes byte[]
             out = c.findOne();
-            Binary blah = (Binary)(out.get( "a" ) );
-            assertEquals( "eliot" , new String( blah.getData() ) );
+//            Binary blah = (Binary)(out.get( "a" ) );
+            byte[] bytes = (byte[]) out.get("a");
+            assertEquals( "eliot" , new String( bytes ) );
 
             out.put( "a" , new Binary( (byte)111 , raw ) );
             c.save( out );
-            blah = (Binary)c.findOne().get( "a" );
+            Binary blah = (Binary)c.findOne().get( "a" );
             assertEquals( 111 , blah.getType() );
             assertEquals( Util.toHex( raw ) , Util.toHex( blah.getData() ) );
         }
