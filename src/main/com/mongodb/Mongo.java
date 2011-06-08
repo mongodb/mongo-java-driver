@@ -264,6 +264,7 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addrs );
+        _connector.start();
 
         _cleaner = new DBCleanerThread();
         _cleaner.start();
