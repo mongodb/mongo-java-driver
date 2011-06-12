@@ -207,6 +207,10 @@ public class BSONEncoder {
             temp.put("$id", ((DBRefBase)val).getId());
             putObject( name, temp );
         }
+        else if ( val instanceof MinKey )
+            putMinKey( name );
+        else if ( val instanceof MaxKey )
+            putMaxKey( name );
         else if ( putSpecial( name , val ) ){
             // no-op
         }
@@ -376,6 +380,14 @@ public class BSONEncoder {
         _put( REGEX , name );
         _put( p.pattern() );
         _put( regexFlags( p.flags() ) );
+    }
+
+    private void putMinKey( String name ) {
+        _put( MINKEY , name );
+    }
+
+    private void putMaxKey( String name ) {
+        _put( MAXKEY , name );
     }
 
 

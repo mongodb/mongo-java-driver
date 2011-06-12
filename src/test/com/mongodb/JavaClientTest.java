@@ -200,6 +200,20 @@ public class JavaClientTest extends TestCase {
         }
         
     }
+
+    @Test
+    public void testMinMaxKey()
+        throws MongoException {
+        DBCollection c = _db.getCollection( "testMinMaxKey" );
+        c.drop();
+        c.save( BasicDBObjectBuilder.start().add( "min" , new MinKey() ).add( "max" , new MaxKey() ).get() );
+
+        DBObject out = c.findOne();
+        MinKey min = (MinKey)(out.get( "min" ) );
+        MaxKey max = (MaxKey)(out.get( "max" ) );
+        assertTrue( JSON.serialize(min).contains("$minKey") );
+        assertTrue( JSON.serialize(max).contains("$maxKey") );
+    }
     
     @Test
     public void testBinaryOld()

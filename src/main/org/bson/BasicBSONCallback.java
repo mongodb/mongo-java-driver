@@ -84,10 +84,10 @@ public class BasicBSONCallback implements BSONCallback {
     }
 
     public void gotMinKey( String name ){
-        cur().put( name , "MinKey" );
+        cur().put( name , new MinKey() );
     }
     public void gotMaxKey( String name ){
-        cur().put( name , "MaxKey" );
+        cur().put( name , new MaxKey() );
     }
     
     public void gotBoolean( String name , boolean v ){

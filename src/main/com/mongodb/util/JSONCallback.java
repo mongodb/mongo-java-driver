@@ -88,6 +88,20 @@ public class JSONCallback extends BasicBSONCallback {
 		} else {
 		    setRoot(o);
 		}
+	    } else if ( b.containsField( "$minKey" ) ) {
+                o = new MinKey();
+		if (!isStackEmpty()) {
+		    cur().put( name, o );
+		} else {
+		    setRoot(o);
+		}
+	    } else if ( b.containsField( "$maxKey" ) ) {
+                o = new MaxKey();
+		if (!isStackEmpty()) {
+		    cur().put( name, o );
+		} else {
+		    setRoot(o);
+		}
 	    } else if ( b.containsField( "$uuid" ) ) {
                 o = UUID.fromString((String)b.get("$uuid"));
 		if (!isStackEmpty()) {

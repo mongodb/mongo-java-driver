@@ -218,7 +218,16 @@ public class JSON {
             serialize( temp, buf );
             return;
         }
-        
+
+        if ( o instanceof MinKey ){
+            serialize( new BasicDBObject("$minKey", 1), buf );
+            return;
+        }
+        if ( o instanceof MaxKey ){
+            serialize( new BasicDBObject("$maxKey", 1), buf );
+            return;
+        }
+
         throw new RuntimeException( "json can't serialize type : " + o.getClass() );
     }
 
