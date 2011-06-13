@@ -96,6 +96,11 @@ public class DBRefBase {
         return false;
     }
 
+    @Override
+    public int hashCode() {
+        return (_ns.hashCode() * 31) + _id.hashCode();
+    }
+
     final Object _id;
     final String _ns;
     final DB _db;
