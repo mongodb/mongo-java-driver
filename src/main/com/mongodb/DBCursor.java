@@ -285,6 +285,18 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     }
 
     /**
+     * Causes {@link MongoException.CursorTailingCancelled} to be thrown
+     * in a thread currently blocked in {@link #hasNext()} or {@link #next()}
+     * on a tailing cursor. Does nothing if this cursor isn't tailing or
+     * tailing hasn't started yet.
+     */
+    public void cancelTailing() {
+        if ( (_options & Bytes.QUERYOPTION_TAILABLE) != 0 && _it instanceof Result ) {
+            ((Result)_it).cancelTailing();
+        }
+    }
+
+    /**
      * makes this query ok to run on a slave node
      * @return
      */

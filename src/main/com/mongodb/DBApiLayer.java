@@ -404,6 +404,11 @@ public class DBApiLayer extends DB {
 
         private void _advance(){
 
+            if ( _cancelTailing ) {
+              _cancelTailing = false;
+              throw new MongoException.CursorTailingCancelled();
+            }
+
             if ( _curResult.cursor() <= 0 )
                 throw new RuntimeException( "can't advance a cursor <= 0" );
             
@@ -493,6 +498,10 @@ public class DBApiLayer extends DB {
             _curResult._cursor = 0;
         }
 
+        public void cancelTailing() {
+          _cancelTailing = true;
+        }
+
         public ServerAddress getServerAddress() {
             return _host;
         }
@@ -509,6 +518,7 @@ public class DBApiLayer extends DB {
         private int _numGetMores = 0;
         private List<Integer> _sizes = new ArrayList<Integer>();
         private int _numFetched = 0;
+        private volatile boolean _cancelTailing = false;
         
     }  // class Result
     
