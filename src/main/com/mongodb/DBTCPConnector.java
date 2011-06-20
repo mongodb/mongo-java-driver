@@ -20,7 +20,9 @@ package com.mongodb;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -212,6 +214,7 @@ public class DBTCPConnector implements DBConnector {
             mp.error( port , ioe );
             retry = retries > 0 && !coll._name.equals( "$cmd" )
                     && !(ioe instanceof SocketTimeoutException) && _error( ioe, slaveOk );
+            
             if ( !retry ){
                 throw new MongoException.Network( "can't call something" , ioe );
             }
@@ -284,11 +287,11 @@ public class DBTCPConnector implements DBConnector {
 
     boolean _error( Throwable t, boolean slaveOk )
         throws MongoException {
-        if ( _rsStatus.hasServerUp() ){
+        if ( _rsStatus != null && _rsStatus.hasServerUp() ){
             // the replset has at least 1 server up, try to see if should switch master
             checkMaster( true , !slaveOk );
         }
-        return _rsStatus.hasServerUp();
+        return true;
     }
 
     class MyPort {
