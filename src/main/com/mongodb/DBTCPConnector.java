@@ -282,10 +282,25 @@ public class DBTCPConnector implements DBConnector {
         return master != null ? master.toString() : null;
     }
 
+    /**
+     * This method is called in case of an IOException.
+     * It will potentially trigger a checkMaster() to check the status of all servers.
+     * @param t the exception thrown
+     * @param slaveOk slaveOk flag
+     * @return true if the request should be retried, false otherwise
+     * @throws MongoException
+     */
     boolean _error( Throwable t, boolean slaveOk )
         throws MongoException {
+        if (_rsStatus == null) {
+            // single server, no need to retry
+            return false;
+        }
+
+        // the replset has at least 1 server up, try to see if should switch master
+        // if no server is up, we wont retry until the updater thread finds one
+        // this is to cut down the volume of requests/errors when all servers are down
         if ( _rsStatus.hasServerUp() ){
-            // the replset has at least 1 server up, try to see if should switch master
             checkMaster( true , !slaveOk );
         }
         return _rsStatus.hasServerUp();
