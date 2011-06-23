@@ -315,9 +315,11 @@ public class ReplicaSetStatus {
 
         if ( _lastPrimarySignal != null ){
             n = findNode( _lastPrimarySignal );
-            n.update();
-            if ( n._isMaster )
-                return n;
+            if (n != null) {
+                n.update();
+                if ( n._isMaster )
+                    return n;
+            }
         }
 
         updateAll();
