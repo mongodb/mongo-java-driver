@@ -51,8 +51,8 @@ public class BSONTest extends Assert {
         assertEquals( hash , buf.md5() );
         e.done();
         
-        BSONDecoder d = new BSONDecoder();
-        BasicBSONCallback cb = new BasicBSONCallback();
+        BSONDecoder d = new BasicBSONDecoder();
+        BSONCallback cb = new BasicBSONCallback();
         int s = d.decode( new ByteArrayInputStream( buf.toByteArray() ) , cb );
         assertEquals( size , s );
 
@@ -169,8 +169,8 @@ public class BSONTest extends Assert {
         TestDate td = new TestDate( 2009 , 01 , 23 , 10 , 53 , 42 );
         BSONObject o = new BasicBSONObject( "date" , td );
         BSONEncoder e = new BSONEncoder();
-        BSONDecoder d = new BSONDecoder();
-        BasicBSONCallback cb = new BasicBSONCallback();
+        BSONDecoder d = new BasicBSONDecoder();
+        BSONCallback cb = new BasicBSONCallback();
         OutputBuffer buf = new BasicOutputBuffer();
         e.set( buf );
         boolean encodeFailed = false;
@@ -218,9 +218,9 @@ public class BSONTest extends Assert {
         TestDate td = new TestDate( 2009 , 01 , 23 , 10 , 53 , 42 );
         Date dt = new Date( 2009 , 01 , 23 , 10 , 53 , 42 );
         BSONObject o = new BasicBSONObject( "date" , dt );
-        BSONDecoder d = new BSONDecoder();
+        BSONDecoder d = new BasicBSONDecoder();
         BSONEncoder e = new BSONEncoder();
-        BasicBSONCallback cb = new BasicBSONCallback();
+        BSONCallback cb = new BasicBSONCallback();
         OutputBuffer buf = new BasicOutputBuffer();
         e.set( buf );
         e.putObject( o );

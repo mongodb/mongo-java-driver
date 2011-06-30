@@ -41,7 +41,7 @@ public class MongoOptions {
         w = 0;
         wtimeout = 0;
         fsync = false;
-        dbCallbackFactory = DefaultDBCallback.FACTORY;
+        dbDecoderFactory = DefaultDBDecoder.FACTORY;
     }
 
     /**
@@ -126,7 +126,7 @@ public class MongoOptions {
      * Override the DBCallback factory. Default is for the standard Mongo Java
      * driver configuration.
      */
-    public DBCallbackFactory dbCallbackFactory;
+    public DBDecoderFactory dbDecoderFactory;
 
     /**
      * If <b>true</b> the driver sends a getLastError command after

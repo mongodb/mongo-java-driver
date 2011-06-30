@@ -58,6 +58,7 @@ public class DBPort {
         _hashCode = _addr.hashCode();
 
         _logger = Logger.getLogger( _rootLogger.getName() + "." + addr.toString() );
+        _decoder = _options.dbDecoderFactory.create();
     }
 
     Response call( OutMessage msg , DBCollection coll )
@@ -107,7 +108,13 @@ public class DBPort {
                 return null;
             
             _processingResponse = true;
-            return new Response( _sa , coll , _in , _decoder);
+            DBDecoder decoder = _decoder;
+            if (coll.getDBDecoderFactory() != null) {
+                // custom decoder for this collection, use it
+                // here we have to create a new decoder per call, pool would be nicer
+                decoder = coll.getDBDecoderFactory().create();
+            }
+            return new Response( _sa , coll , _in , decoder);
         }
         catch ( IOException ioe ){
             close();
@@ -305,7 +312,7 @@ public class DBPort {
     final DBPortPool _pool;
     final MongoOptions _options;
     final Logger _logger;
-    final BSONDecoder _decoder = new BSONDecoder();
+    final DBDecoder _decoder;
     
     private Socket _socket;
     private InputStream _in;

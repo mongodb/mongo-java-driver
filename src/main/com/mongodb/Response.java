@@ -26,7 +26,7 @@ import org.bson.io.*;
 
 class Response {
 
-    Response( ServerAddress addr , DBCollection collection ,  InputStream in, BSONDecoder decoder)
+    Response( ServerAddress addr , DBCollection collection ,  InputStream in, DBDecoder decoder)
         throws IOException {
 
         _host = addr;
@@ -54,16 +54,12 @@ class Response {
         else
             _objects = new ArrayList<DBObject>( _num );
 
-        DBCallback c = collection.getDB().getMongo().getMongoOptions().dbCallbackFactory.create( collection );
-
         for ( int i=0; i < _num; i++ ){
             if ( user._toGo < 5 )
                 throw new IOException( "should have more objects, but only " + user._toGo + " bytes left" );
-            c.reset();
-            decoder.decode( user , c );
-
             // TODO: By moving to generics, you can remove these casts (and requirement to impl DBOBject).
-            _objects.add( (DBObject)c.get() );
+
+            _objects.add( decoder.decode( user, collection ) );
         }
 
         if ( user._toGo != 0 )

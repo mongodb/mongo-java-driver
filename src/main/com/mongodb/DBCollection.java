@@ -1269,6 +1269,14 @@ public abstract class DBCollection {
     public int getOptions(){
         return _options.get();
     }
+
+    public void setDBDecoderFactory(DBDecoderFactory dbDecoderFactory) {
+        this.dbDecoderFactory = dbDecoderFactory;
+    }
+
+    public DBDecoderFactory getDBDecoderFactory() {
+        return dbDecoderFactory;
+    }
     
     final DB _db;
 
@@ -1284,4 +1292,6 @@ public abstract class DBCollection {
     private ReflectionDBObject.JavaWrapper _wrapper = null;
 
     final private Set<String> _createdIndexes = new HashSet<String>();
+    
+    private DBDecoderFactory dbDecoderFactory;
 }

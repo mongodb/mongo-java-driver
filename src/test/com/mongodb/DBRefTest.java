@@ -57,7 +57,7 @@ public class DBRefTest extends TestCase {
         out.putObject( o );
 
         DefaultDBCallback cb = new DefaultDBCallback( null );
-        BSONDecoder decoder = new BSONDecoder();
+        BSONDecoder decoder = new BasicBSONDecoder();
         decoder.decode( out.toByteArray() , cb );
         DBObject read = cb.dbget();
 

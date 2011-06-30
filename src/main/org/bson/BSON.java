@@ -300,7 +300,7 @@ public class BSON {
 
     static ThreadLocal<BSONDecoder> _staticDecoder = new ThreadLocal<BSONDecoder>(){
         protected BSONDecoder initialValue(){
-            return new BSONDecoder();
+            return new BasicBSONDecoder();
         }
     };
 

@@ -424,7 +424,7 @@ public class ByteTest extends TestCase {
             out.write( b );
         
         ByteArrayInputStream in = new ByteArrayInputStream( out.toByteArray() );
-        BSONDecoder d = new BSONDecoder();
+        BSONDecoder d = new BasicBSONDecoder();
         for ( int i=0; i<n; i++ ){
             BSONObject x = d.readObject( in );
             assertEquals( orig , x );
