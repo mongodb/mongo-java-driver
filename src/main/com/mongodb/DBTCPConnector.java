@@ -213,7 +213,8 @@ public class DBTCPConnector implements DBConnector {
             retry = retries > 0 && !coll._name.equals( "$cmd" )
                     && !(ioe instanceof SocketTimeoutException) && _error( ioe, slaveOk );
             if ( !retry ){
-                throw new MongoException.Network( "can't call something" , ioe );
+                throw new MongoException.Network( "can't call something : " + port.host() + "/" + db, 
+                                                  ioe ); 
             }
         }
         catch ( RuntimeException re ){
