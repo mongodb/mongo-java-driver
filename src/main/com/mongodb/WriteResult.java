@@ -119,7 +119,8 @@ public class WriteResult {
     }
     
     /**
-     * Gets the "n" field
+     * Gets the "n" field, which contains the number of documents
+     * affected in the write operation.
      * @return
      */
     public int getN(){
