@@ -90,7 +90,7 @@ public class DBPort {
         }
 
         _calls++;
-    
+
         if ( _socket == null )
             _open();
         

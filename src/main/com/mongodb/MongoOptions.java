@@ -64,100 +64,99 @@ public class MongoOptions {
     public String description;
 
     /**
-     * <p>The number of connections allowed per host
-     * (the pool size, per host)</p>
-     * <p>Once the pool is exhausted, this will block.
+     * The maximum number of connections allowed per host for this Mongo instance.
+     * Those connections will be kept in a pool when idle.
+     * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.
+     * Default is 10.
      * @see {@linkplain MongoOptions#threadsAllowedToBlockForConnectionMultiplier}</p>
      */
     public int connectionsPerHost;
 
     /**
-     *  multiplier for connectionsPerHost for # of threads that
-     *  can block if connectionsPerHost is 10, and
-     *  threadsAllowedToBlockForConnectionMultiplier is 5,
-     *  then 50 threads can block
-     *  more than that and an exception will be throw
+     * this multiplier, multiplied with the connectionsPerHost setting, gives the maximum number of threads that
+     * may be waiting for a connection to become available from the pool.
+     * All further threads will get an exception right away.
+     * For example if connectionsPerHost is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50 threads can wait for a connection.
+     * Default is 5.
      */
     public int threadsAllowedToBlockForConnectionMultiplier;
 
     /**
-     * The max wait time for a blocking thread for a connection from the pool in ms.
+     * The maximum wait time in ms that a thread may wait for a connection to become available.
+     * Default is 120,000.
      */
     public int maxWaitTime;
 
     /**
-     *  The connection timeout in milliseconds; this is for
-     *  establishing the socket connections (open).
-     *  0 is default and infinite
+     * The connection timeout in milliseconds.
+     * It is used solely when establishing a new connection {@link java.net.Socket#connect(java.net.SocketAddress, int) }
+     * Default is 0 and means no timeout.
      */
     public int connectTimeout;
 
     /**
-     * The socket timeout; this value is passed to
-     * {@link java.net.Socket#setSoTimeout(int)}.
-     * 0 is default and infinite
+     * The socket timeout in milliseconds
+     * It is used for I/O socket read and write operations {@link java.net.Socket#setSoTimeout(int)}
+     * Default is 0 and means no timeout.
      */
     public int socketTimeout;
 
     /**
-     * This controls whether or not to have socket keep alive
-     * turned on (SO_KEEPALIVE).
-     *
-     * defaults to false
+     * This flag controls the socket keep alive feature that keeps a connection alive through firewalls {@link java.net.Socket#setKeepAlive(boolean)}
+     * Default is false.
      */
     public boolean socketKeepAlive;
 
     /**
-     * This controls whether the system retries automatically
-     * on connection errors.
-     * defaults to false
+     * If true, the driver will keep trying to connect to the server in case that the socket cannot be established.
+     * This can be useful to avoid exceptions being thrown when a server is down temporarily by blocking the operations.
+     * Note that it is not a good solution for many applications because:
+     * - in general infinite retries is not advised, the application can get stuck in case of long server down time
+     * - for a replica set, the driver will keep trying to connect to the same host, even if the master has changed
+     * - this does not apply to read/write exceptions on the socket
+     *
+     * For most applications it is advised to keep this setting off and handle exceptions properly in the application.
+     * The driver already has mechanisms to automatically recreate dead connections and retry read operations.
+     * Default is false.
      */
     public boolean autoConnectRetry;
 
     /**
-     * Specifies if the driver is allowed to read from secondaries
-     * or slaves.
-     *
-     * defaults to false
+     * This flag specifies if the driver is allowed to read from secondary (slave) servers.
+     * Specifically in the current implementation, the driver will avoid reading from the primary server and round robin requests to secondaries.
+     * Driver also factors in the latency to secondaries when choosing a server.
+     * Note that reading from secondaries can increase performance and reliability, but it may result in temporary inconsistent results.
+     * Default is false.
      */
     public boolean slaveOk;
 
     /**
-     * Override the DBCallback factory. Default is for the standard Mongo Java
-     * driver configuration.
+     * Override the DBCallback factory. Default is for the standard Mongo Java driver configuration.
      */
     public DBDecoderFactory dbDecoderFactory;
 
     /**
-     * If <b>true</b> the driver sends a getLastError command after
-     * every update to ensure it succeeded (see also w and wtimeout)
-     * If <b>false</b>, the driver does not send a getlasterror command
-     * after every update.
-     *
-     * defaults to false
+     * If <b>true</b> the driver will use a WriteConcern of WriteConcern.SAFE for all operations.
+     * If w, wtimeout, fsync or j are specified, this setting is ignored.
+     * Default is false.
      */
     public boolean safe;
 
     /**
-     * If set, the w value of WriteConcern for the connection is set
-     * to this.
-     *
-     * Defaults to 0; implies safe = true
+     * The "w" value of the global WriteConcern.
+     * Default is 0.
      */
     public int w;
 
     /**
-     * If set, the wtimeout value of WriteConcern for the
-     * connection is set to this.
-     *
-     * Defaults to 0; implies safe = true
+     * The "wtimeout" value of the global WriteConcern.
+     * Default is 0.
      */
     public int wtimeout;
 
     /**
-     * Sets the fsync value of WriteConcern for the connection.
-     *
-     * Defaults to false; implies safe = true
+     * The "fsync" value of the global WriteConcern.
+     * Default is false.
      */
     public boolean fsync;
 
