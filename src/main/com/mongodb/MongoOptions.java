@@ -34,6 +34,7 @@ public class MongoOptions {
         maxWaitTime = 1000 * 60 * 2;
         connectTimeout = 0;
         socketTimeout = 0;
+        maxConnectionRetryTime = -1L;
         socketKeepAlive = false;
         autoConnectRetry = false;
         slaveOk = false;
@@ -98,6 +99,12 @@ public class MongoOptions {
      * 0 is default and infinite
      */
     public int socketTimeout;
+
+    /**
+     * The maximum amount of time to spend retrying a connection. Used in DBPort.
+     * Any negative value (the default) will use DBPort's old default value of 15000.
+     */
+    public long maxConnectionRetryTime;
 
     /**
      * This controls whether or not to have socket keep alive

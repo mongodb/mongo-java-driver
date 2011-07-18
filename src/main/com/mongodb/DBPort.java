@@ -193,6 +193,11 @@ public class DBPort {
         
         long sleepTime = 100;
 
+        long maxConnectionRetryTime = CONN_RETRY_TIME_MS;
+        if (_options.maxConnectionRetryTime > 0) {
+            maxConnectionRetryTime = _options.maxConnectionRetryTime;
+        }
+
         final long start = System.currentTimeMillis();
         while ( true ){
             
@@ -220,11 +225,11 @@ public class DBPort {
             
             long sleptSoFar = System.currentTimeMillis() - start;
 
-            if ( sleptSoFar >= CONN_RETRY_TIME_MS )
+            if ( sleptSoFar >= maxConnectionRetryTime )
                 throw lastError;
             
-            if ( sleepTime + sleptSoFar > CONN_RETRY_TIME_MS )
-                sleepTime = CONN_RETRY_TIME_MS - sleptSoFar;
+            if ( sleepTime + sleptSoFar > maxConnectionRetryTime )
+                sleepTime = maxConnectionRetryTime - sleptSoFar;
 
             _logger.severe( "going to sleep and retry.  total sleep time after = " + ( sleptSoFar + sleptSoFar ) + "ms  this time:" + sleepTime + "ms" );
             ThreadUtil.sleep( sleepTime );
