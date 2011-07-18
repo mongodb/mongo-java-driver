@@ -66,8 +66,13 @@ def go( pkgName, shortName , longName ):
     out.write( pom )
     out.close()
 
-    p = subprocess.Popen( [ "sha1sum" , fileRoot + ".jar" ] , stdout=subprocess.PIPE ).communicate()
-    sha1 = p[0].split( ' ' )[0]
+    hasSha1Sum = subprocess.Popen( [ "which", "sha1sum" ] , stdout=subprocess.PIPE ).communicate()
+    if hasSha1Sum[0] != '':
+        p = subprocess.Popen( [ "sha1sum" , fileRoot + ".jar" ] , stdout=subprocess.PIPE ).communicate()
+        sha1 = p[0].split( ' ' )[0]
+    else:
+        p = subprocess.Popen( [ "openssl", "dgst", "-sha1", fileRoot + ".jar" ] , stdout=subprocess.PIPE ).communicate()
+        sha1 = p[0].split( ' ' )[1]
     out = open( fileRoot + ".jar.sha1" , 'w' )
     out.write( sha1 )
     out.close()
