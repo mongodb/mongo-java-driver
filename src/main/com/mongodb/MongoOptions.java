@@ -160,6 +160,12 @@ public class MongoOptions {
      */
     public boolean fsync;
 
+    /**
+     * The "j" value of the global WriteConcern.
+     * Default is false.
+     */
+    public boolean j;
+
     public String toString(){
         StringBuilder buf = new StringBuilder();
         buf.append( "description=" ).append( description ).append( ", " );
@@ -174,7 +180,8 @@ public class MongoOptions {
         buf.append( "safe=" ).append( safe ).append( ", " );
         buf.append( "w=" ).append( w ).append( ", " );
         buf.append( "wtimeout=" ).append( wtimeout ).append( ", " );
-        buf.append( "fsync=" ).append( fsync );
+        buf.append( "fsync=" ).append( fsync ).append( ", " );
+        buf.append( "j=" ).append( j );
 
         return buf.toString();
     }

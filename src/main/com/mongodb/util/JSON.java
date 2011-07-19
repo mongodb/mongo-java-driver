@@ -139,7 +139,7 @@ public class JSON {
         if (o instanceof Date) {
             Date d = (Date) o;
             SimpleDateFormat format = 
-		new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
             format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
 	    serialize(new BasicDBObject("$date", format.format(d)), buf);
             return;

@@ -2,9 +2,12 @@
 
 package com.mongodb.util;
 
+import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import org.bson.*;
@@ -45,9 +48,17 @@ public class JSONCallback extends BasicBSONCallback {
 		}
 	    } else if ( b.containsField( "$date" ) ) {
 		SimpleDateFormat format = 
-		    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-		format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
-		o = format.parse((String)b.get("$date"), new ParsePosition(0));
+		    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                GregorianCalendar calendar = new GregorianCalendar(new SimpleTimeZone(0, "GMT"));
+                format.setCalendar(calendar);
+                String txtdate = (String) b.get("$date");
+                o = format.parse(txtdate, new ParsePosition(0));
+                if (o == null) {
+                    // try older format with no ms
+                    format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                    format.setCalendar(calendar);
+                    o = format.parse(txtdate, new ParsePosition(0));
+                }
 		if (!isStackEmpty()) {
 		    cur().put( name, o );
 		} else {
