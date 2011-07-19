@@ -289,6 +289,24 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , out.get( "a" ) );
         assertNull( out.get( "b" ) );
 
+        // make sure can't insert back partial
+        try {
+            c.update(out, out);
+            assertTrue(false);
+        } catch (IllegalArgumentException ex) {
+        }
+
+        out = c.findOne( null , BasicDBObjectBuilder.start().add( "b" , 1 ).get() );
+        assertEquals( 2 , out.get( "b" ) );
+        assertNull( out.get( "a" ) );
+
+        // make sure can't insert back partial
+        try {
+            c.update(out, out);
+            assertTrue(false);
+        } catch (IllegalArgumentException ex) {
+        }
+
     }
 
     @Test
