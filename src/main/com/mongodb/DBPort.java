@@ -199,7 +199,7 @@ public class DBPort {
             IOException lastError = null;
 
             try {
-                _socket = new Socket();
+                _socket = _options.socketFactory.createSocket();
                 _socket.connect( _addr , _options.connectTimeout );
                 
                 _socket.setTcpNoDelay( ! USE_NAGLE );

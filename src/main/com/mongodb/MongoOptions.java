@@ -18,6 +18,7 @@
 
 package com.mongodb;
 
+import javax.net.SocketFactory;
 
 /**
  * Various settings for the driver
@@ -41,7 +42,9 @@ public class MongoOptions {
         w = 0;
         wtimeout = 0;
         fsync = false;
+        j = false;
         dbDecoderFactory = DefaultDBDecoder.FACTORY;
+        socketFactory = SocketFactory.getDefault();
     }
 
     /**
@@ -165,6 +168,12 @@ public class MongoOptions {
      * Default is false.
      */
     public boolean j;
+
+    /**
+     * sets the socket factory for creating sockets to mongod
+     * Default is SocketFactory.getDefault()
+     */
+    public SocketFactory socketFactory;
 
     public String toString(){
         StringBuilder buf = new StringBuilder();
