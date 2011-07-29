@@ -35,6 +35,7 @@ crap
 hs_err_*
 doc
 docs
+bin
 target
 include/jython/cachedir
 mongo.jar
