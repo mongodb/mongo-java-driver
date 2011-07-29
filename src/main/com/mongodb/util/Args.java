@@ -45,33 +45,32 @@ public class Args {
     }
 
     public String toString(){
-        String s = "";
-        
+        StringBuilder s = new StringBuilder();
+
         for ( String p : _options.keySet() ){
-            s += "-" + p;
+            s.append( '-' ).append( p );
 
             String v = _options.get( p );
             if ( v.length() == 0 )
                 continue;
 
-            s += "=";
-            
+            s.append( '=' );
+
             if ( v.indexOf( " " ) >= 0 )
-                s += "\"" + v + "\"";
+                s.append( '"' ).append( v ).append( '"' );
             else
-                s += v;
+                s.append( v );
         }
 
         for ( String p : _params ){
-            s += " ";
+            s.append( ' ' );
             if ( p.indexOf( " " ) >= 0 )
-                s += "\"" + p + "\"";
-            else 
-                s += p;
+                s.append( '"' ).append( p ).append( '"' );
+            else
+                s.append( p );
         }
-            
-        
-        return s;
+
+        return s.toString();
     }
 
     final Map<String,String> _options = new HashMap<String,String>();
