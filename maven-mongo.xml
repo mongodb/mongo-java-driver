@@ -26,4 +26,8 @@
   <dependencies>
   </dependencies>
 
+  <issueManagement>
+    <system>JIRA</system>
+    <url>https://jira.mongodb.org/browse/JAVA</url>
+  </issueManagement>
 </project>
