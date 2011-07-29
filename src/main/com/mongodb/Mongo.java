@@ -693,16 +693,15 @@ public class Mongo {
 
     @Override
     public String toString() {
-        String str = "Mongo: ";
+        StringBuilder str = new StringBuilder("Mongo: ");
         List<ServerAddress> list = getServerAddressList();
         if (list == null || list.isEmpty())
-            str += "null";
+            str.append("null");
         else {
-            for (ServerAddress addr : list) {
-                str += addr.toString() + ",";
-            }
-            str = str.substring(0, str.length() - 1);
+            for ( ServerAddress addr : list )
+                str.append( addr.toString() ).append( ',' );
+            str.deleteCharAt( str.length() - 1 );
         }
-        return str;
+        return str.toString();
     }
 }
