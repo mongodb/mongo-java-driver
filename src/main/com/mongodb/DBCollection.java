@@ -458,16 +458,16 @@ public abstract class DBCollection {
      * @return a string representation of this index's fields
      */
     public static String genIndexName( DBObject keys ){
-        String name = "";
+        StringBuilder name = new StringBuilder();
         for ( String s : keys.keySet() ){
             if ( name.length() > 0 )
-                name += "_";
-            name += s + "_";
+                name.append( '_' );
+            name.append( s ).append( '_' );
             Object val = keys.get( s );
             if ( val instanceof Number || val instanceof String )
-                name += val.toString().replace( ' ' , '_' );
+                name.append( val.toString().replace( ' ', '_' ) );
         }
-        return name;
+        return name.toString();
     }
 
     // --- END INDEX CODE ---
