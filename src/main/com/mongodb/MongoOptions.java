@@ -37,6 +37,7 @@ public class MongoOptions {
         socketTimeout = 0;
         socketKeepAlive = false;
         autoConnectRetry = false;
+        maxAutoConnectRetryTime = 0;
         slaveOk = false;
         safe = false;
         w = 0;
@@ -125,6 +126,12 @@ public class MongoOptions {
     public boolean autoConnectRetry;
 
     /**
+     * The maximum amount of time in MS to spend retrying to open connection to the same server.
+     * Default is 0, which means to use the default 15s if autoConnectRetry is on.
+     */
+    public long maxAutoConnectRetryTime;
+
+    /**
      * This flag specifies if the driver is allowed to read from secondary (slave) servers.
      * Specifically in the current implementation, the driver will avoid reading from the primary server and round robin requests to secondaries.
      * Driver also factors in the latency to secondaries when choosing a server.
@@ -185,6 +192,7 @@ public class MongoOptions {
         buf.append( "socketTimeout=" ).append( socketTimeout ).append( ", " );
         buf.append( "socketKeepAlive=" ).append( socketKeepAlive ).append( ", " );
         buf.append( "autoConnectRetry=" ).append( autoConnectRetry ).append( ", " );
+        buf.append( "maxAutoConnectRetryTime=" ).append( maxAutoConnectRetryTime ).append( ", " );
         buf.append( "slaveOk=" ).append( slaveOk ).append( ", " );
         buf.append( "safe=" ).append( safe ).append( ", " );
         buf.append( "w=" ).append( w ).append( ", " );
