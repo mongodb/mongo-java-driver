@@ -493,11 +493,11 @@ public abstract class DB {
     }
 
     private CommandResult _doauth( String username , byte[] hash ){
-        CommandResult res = command(new BasicDBObject("getnonce", 1), getOptions());
+        CommandResult res = command(new BasicDBObject("getnonce", 1));
         res.throwOnError();
 
         DBObject cmd = _authCommand( res.getString( "nonce" ) , username , hash );
-        return command(cmd, getOptions());
+        return command(cmd);
     }
 
     /**
