@@ -348,7 +348,7 @@ class JSONParser {
         // string
         case '\'':
         case '\"':
-            value = parseString();
+            value = parseString(true);
             break;
         // number
         case '0': case '1': case '2': case '3': case '4': case '5':
@@ -395,7 +395,7 @@ class JSONParser {
         read('{');
         char current = get();
         while(get() != '}') {
-            String key = parseString();
+            String key = parseString(false);
             read(':');
             Object value = parse(key);
 	    doCallback(key, value);
@@ -505,22 +505,31 @@ class JSONParser {
      * @return the next string.
      * @throws JSONParseException if invalid JSON is found
      */
-    public String parseString() {
-        char quot;
+    public String parseString(boolean needQuote) {
+        char quot = 0;
         if(check('\''))
             quot = '\'';
         else if(check('\"'))
             quot = '\"';
-        else 
+        else if (needQuote)
             throw new JSONParseException(s, pos);
 
         char current;
 
-        read(quot);
+        if (quot > 0)
+            read(quot);
         StringBuilder buf = new StringBuilder();
         int start = pos;
-        while(pos < s.length() && 
-              (current = s.charAt(pos)) != quot) {
+        while(pos < s.length()) {
+            current = s.charAt(pos);
+            if (quot > 0) {
+                if (current == quot)
+                    break;
+            } else {
+                if (current == ':' || current == ' ')
+                    break;
+            }
+
             if(current == '\\') {
                 pos++;
                 
@@ -565,9 +574,9 @@ class JSONParser {
             }
             pos++;
         }
-        read(quot);
-
-        buf.append(s.substring(start, pos-1));
+        buf.append(s.substring(start, pos));
+        if (quot > 0)
+            read(quot);            
         return buf.toString();
     }
 
