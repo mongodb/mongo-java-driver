@@ -315,7 +315,7 @@ public class DBApiLayer extends DB {
             if (o != null && !o.keySet().isEmpty()) {
                 // if 1st key doesn't start with $, then object will be inserted as is, need to check it
                 String key = o.keySet().iterator().next();
-                if (key.charAt(0) != '$')
+                if (!key.startsWith("$"))
                     _checkObject(o, false, false);
             }
 
