@@ -23,7 +23,6 @@ import com.mongodb.util.*;
 
 import org.bson.*;
 
-import java.io.*;
 import java.util.*;
 
 /**

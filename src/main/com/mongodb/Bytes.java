@@ -19,9 +19,6 @@
 package com.mongodb;
 
 import java.nio.*;
-import java.nio.charset.*;
-import java.util.regex.Pattern;
-import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.*;

@@ -27,8 +27,6 @@ import org.bson.types.*;
 import static com.mongodb.Bytes.*;
 import static com.mongodb.util.MyAsserts.*;
 
-import com.mongodb.util.*;
-
 /**
  * This object wraps the binary object format ("BSON") used for the transport of serialized objects to / from the Mongo database.
  */

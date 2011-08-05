@@ -23,8 +23,6 @@ import java.lang.reflect.*;
 
 import org.bson.*;
 
-import com.mongodb.util.*;
-
 /**
  * This class enables to map simple Class fields to a BSON object fields
  */
