@@ -20,7 +20,6 @@ package com.mongodb.io;
 
 import java.util.*;
 import java.nio.*;
-import java.nio.channels.*;
 
 public class ByteBufferHolder {
 

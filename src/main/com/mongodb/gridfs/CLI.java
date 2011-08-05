@@ -19,7 +19,6 @@
 package com.mongodb.gridfs;
 
 import java.io.*;
-import java.util.*;
 import java.security.*;
 
 import com.mongodb.*;

@@ -18,8 +18,6 @@
 
 package com.mongodb;
 
-import java.util.*;
-
 import org.bson.*;
 
 /**

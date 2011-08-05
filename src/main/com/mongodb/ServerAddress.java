@@ -21,8 +21,6 @@ package com.mongodb;
 import java.net.*;
 import java.util.*;
 
-import com.mongodb.util.*;
-
 /**
  * mongo server address
  */

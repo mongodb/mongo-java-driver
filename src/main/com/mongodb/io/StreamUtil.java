@@ -19,7 +19,6 @@
 package com.mongodb.io;
 
 import java.io.*;
-import java.util.*;
 
 public class StreamUtil {
 

@@ -18,13 +18,9 @@
 
 package com.mongodb.util;
 
-import java.util.*;
-import java.net.*;
-
 import com.mongodb.*;
 
 import org.testng.*;
-import org.testng.reporters.*;
 
 public class TestNGListener extends TestListenerAdapter {
 
