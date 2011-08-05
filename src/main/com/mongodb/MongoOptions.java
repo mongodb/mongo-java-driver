@@ -112,15 +112,15 @@ public class MongoOptions {
     public boolean socketKeepAlive;
 
     /**
-     * If true, the driver will keep trying to connect to the server in case that the socket cannot be established.
-     * This can be useful to avoid exceptions being thrown when a server is down temporarily by blocking the operations.
-     * Note that it is not a good solution for many applications because:
-     * - in general infinite retries is not advised, the application can get stuck in case of long server down time
-     * - for a replica set, the driver will keep trying to connect to the same host, even if the master has changed
-     * - this does not apply to read/write exceptions on the socket
+     * If true, the driver will keep trying to connect to the same server in case that the socket cannot be established.
+     * There is maximum amount of time to keep retrying, which is 15s by default.
+     * This can be useful to avoid some exceptions being thrown when a server is down temporarily by blocking the operations.
+     * It also can be useful to smooth the transition to a new master (so that a new master is elected within the retry time).
+     * Note that when using this flag:
+     * - for a replica set, the driver will trying to connect to the old master for that time, instead of failing over to the new one right away
+     * - this does not prevent exception from being thrown in read/write operations on the socket, which must be handled by application
      *
-     * For most applications it is advised to keep this setting off and handle exceptions properly in the application.
-     * The driver already has mechanisms to automatically recreate dead connections and retry read operations.
+     * Even if this flag is false, the driver already has mechanisms to automatically recreate broken connections and retry the read operations.
      * Default is false.
      */
     public boolean autoConnectRetry;
