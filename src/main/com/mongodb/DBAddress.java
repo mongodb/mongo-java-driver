@@ -19,9 +19,6 @@
 package com.mongodb;
 
 import java.net.*;
-import java.util.*;
-
-import com.mongodb.util.*;
 
 /**
  * Represents a database address

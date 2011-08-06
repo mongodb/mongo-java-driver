@@ -19,10 +19,8 @@
 package com.mongodb.gridfs;
 
 import com.mongodb.*;
-import com.mongodb.util.*;
 
 import java.io.*;
-import java.util.*;
 
 /**
  * This class enables to retrieve a GridFS file metadata and content.
