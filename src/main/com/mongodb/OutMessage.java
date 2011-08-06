@@ -18,12 +18,9 @@
 
 package com.mongodb;
 
-import java.util.*;
-import java.util.regex.*;
 import java.util.concurrent.atomic.*;
 import java.io.*;
 
-import com.mongodb.util.*;
 
 import org.bson.*;
 import org.bson.io.*;

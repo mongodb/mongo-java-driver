@@ -21,7 +21,6 @@ package com.mongodb;
 import java.io.*;
 import java.util.*;
 
-import org.bson.*;
 import org.bson.io.*;
 
 class Response {
