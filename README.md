@@ -1,29 +1,25 @@
 ## MongoDB Java Driver ##
-
-driver home: http://github.com/mongodb/mongo-java-driver
-
-mongodb home: http://www.mongodb.org/
-
-javadoc: http://api.mongodb.org/java/
+ * release notes: http://github.com/mongodb/mongo-java-driver/wiki/Release-Notes
+ * driver home: http://github.com/mongodb/mongo-java-driver
+ * mongodb home: http://www.mongodb.org/
+ * javadoc: http://api.mongodb.org/java/
 
 ### Questions and Bug Reports
  * mailing list: http://groups.google.com/group/mongodb-user
- * jira: http://jira.mongodb.org/
-
-### Change Log ##
-
-http://jira.mongodb.org/browse/JAVA
-
+ * jira: http://jira.mongodb.org/browse/JAVA
 
 ### Maintainers
-* Eliot Horowitz       eliot@10gen.com
-* Kristina Chodorow    kristina@10gen.com
+* Antoine Girbal       antoine@10gen.com
+* Scott Hernandez      scott@10gen.com
+* Brendan McAdams      brendan@10gen.com
 
 ### Contributors:
+* Eliot Horowitz       eliot@10gen.com
+* Kristina Chodorow    kristina@10gen.com
 * Geir Magnusson       geir@pobox.com
 * Keith Branton        mongoDBjira@branton.co.uk
 * Dave Brosius         dbrosius@mebigfatguy.com
-* Scott Hernandez      scotthernandez@hotmail.com
+* Scott Hernandez      scotthernandez@gmail.com
 * Hans Meiser          hmeiser@example.com
 * Benedikt Waldvogel   mail@bwaldvogel.de
 * William Shulman      william.shulman@gmail.com
@@ -41,4 +37,3 @@ http://jira.mongodb.org/browse/JAVA
 * Matthew Foemmel      git@foemmel.com
 * Jim Dickinson        jdickinson@shopwiki.com
 * Jorge Ortiz          jorge.ortiz@gmail.com
-
