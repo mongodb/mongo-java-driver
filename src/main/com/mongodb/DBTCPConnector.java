@@ -37,16 +37,9 @@ public class DBTCPConnector implements DBConnector {
 
         _createLogger.info( addr.toString() );
 
-        if ( addr.isPaired() ){
-            _allHosts = new ArrayList<ServerAddress>( addr.explode() );
-            _rsStatus = new ReplicaSetStatus( m, _allHosts );
-            _createLogger.info( "switching to replica set mode : " + _allHosts + " -> " + getAddress()  );
-        }
-        else {
-            _set( addr );
-            _allHosts = null;
-            _rsStatus = null;
-        }
+        _set( addr );
+        _allHosts = null;
+        _rsStatus = null;
 
     }
 
