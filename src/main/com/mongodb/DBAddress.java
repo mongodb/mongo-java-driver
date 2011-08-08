@@ -144,6 +144,8 @@ public class DBAddress extends ServerAddress {
                 a._port == _port &&
                 a._db.equals( _db ) &&
                 a._host.equals( _host );
+        } else if ( other instanceof ServerAddress ){
+            return other.equals(this);
         }
         return false;
     }
