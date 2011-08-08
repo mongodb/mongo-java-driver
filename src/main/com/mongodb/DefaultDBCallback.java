@@ -19,12 +19,13 @@
 package com.mongodb;
 
 // Bson
-import org.bson.*;
-import org.bson.types.*;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-// Java
-import java.util.*;
-import java.util.logging.*;
+import org.bson.BSONObject;
+import org.bson.BasicBSONCallback;
+import org.bson.types.ObjectId;
 
 /**
  * This class overrides BasicBSONCallback to implement some extra features specific to the Database.

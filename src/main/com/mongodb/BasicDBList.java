@@ -18,8 +18,9 @@
 
 package com.mongodb;
 
-import org.bson.types.*;
-import com.mongodb.util.*;
+import org.bson.types.BasicBSONList;
+
+import com.mongodb.util.JSON;
 
 /**
  * a basic implementation of bson list that is mongo specific 

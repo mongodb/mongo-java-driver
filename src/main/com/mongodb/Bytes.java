@@ -18,13 +18,17 @@
 
 package com.mongodb;
 
-import java.nio.*;
+import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import org.bson.*;
-import org.bson.types.*;
+import org.bson.BSON;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Code;
+import org.bson.types.CodeWScope;
+import org.bson.types.ObjectId;
 
 /**
  * Class that hold definitions of the wire protocol

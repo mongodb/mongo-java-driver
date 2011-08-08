@@ -18,7 +18,8 @@
 
 package com.mongodb;
 
-import java.net.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * Represents a database address

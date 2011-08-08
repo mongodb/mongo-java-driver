@@ -18,14 +18,18 @@
 
 package com.mongodb;
 
-import java.util.concurrent.atomic.*;
-import java.io.*;
+import static org.bson.BSON.EOO;
+import static org.bson.BSON.OBJECT;
+import static org.bson.BSON.REF;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import org.bson.*;
-import org.bson.io.*;
-import org.bson.types.*;
-import static org.bson.BSON.*;
+import org.bson.BSONEncoder;
+import org.bson.BSONObject;
+import org.bson.io.PoolOutputBuffer;
+import org.bson.types.ObjectId;
 
 class OutMessage extends BSONEncoder {
 

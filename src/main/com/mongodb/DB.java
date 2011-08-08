@@ -18,10 +18,17 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.util.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
-import com.mongodb.util.*;
+import com.mongodb.util.Util;
 
 /**
  * an abstract class that represents a logical database on a server

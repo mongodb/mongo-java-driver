@@ -18,8 +18,10 @@
 
 package com.mongodb;
 
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>WriteConcern control the write behavior for with various options, as well as exception raising on error conditions.</p>

@@ -18,11 +18,13 @@
 
 package com.mongodb.gridfs;
 
-import java.io.*;
-import java.security.*;
+import java.io.File;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 
-import com.mongodb.*;
-import com.mongodb.util.*;
+import com.mongodb.DBObject;
+import com.mongodb.Mongo;
+import com.mongodb.util.Util;
 
 
 /**

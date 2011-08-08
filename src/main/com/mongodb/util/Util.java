@@ -16,7 +16,7 @@
  */
 package com.mongodb.util;
 
-import java.nio.*;
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
