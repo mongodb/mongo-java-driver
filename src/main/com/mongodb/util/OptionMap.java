@@ -18,7 +18,7 @@
 
 package com.mongodb.util;
 
-import java.util.*;
+import java.util.TreeMap;
 
 public class OptionMap extends TreeMap<String,String> {
     

@@ -18,10 +18,16 @@
 
 package com.mongodb;
 
-import java.util.*;
-import java.lang.reflect.*;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
-import org.bson.*;
+import org.bson.BSONObject;
 
 /**
  * This class enables to map simple Class fields to a BSON object fields

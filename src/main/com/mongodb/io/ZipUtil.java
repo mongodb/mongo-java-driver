@@ -18,10 +18,10 @@
 
 package com.mongodb.io;
 
-import java.io.*;
-import java.nio.*;
-import java.util.*;
-import java.util.zip.*;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 public class ZipUtil {
     

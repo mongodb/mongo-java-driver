@@ -18,12 +18,20 @@
 
 package com.mongodb.gridfs;
 
-import com.mongodb.*;
-import com.mongodb.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import org.bson.*;
+import org.bson.BSONObject;
 
-import java.util.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.MongoException;
+import com.mongodb.util.JSON;
 
 /**
  * The abstract class representing a GridFS file

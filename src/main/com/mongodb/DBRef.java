@@ -18,7 +18,7 @@
 
 package com.mongodb;
 
-import org.bson.*;
+import org.bson.BSONObject;
 
 /**
  * overrides DBRefBase to understand a BSONObject representation of a reference.

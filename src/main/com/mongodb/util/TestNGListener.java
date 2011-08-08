@@ -18,9 +18,13 @@
 
 package com.mongodb.util;
 
-import com.mongodb.*;
+import org.testng.ITestContext;
+import org.testng.ITestResult;
+import org.testng.TestListenerAdapter;
 
-import org.testng.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.Mongo;
 
 public class TestNGListener extends TestListenerAdapter {
 

@@ -18,7 +18,9 @@
 
 package com.mongodb;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * utility for building complex objects

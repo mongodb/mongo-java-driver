@@ -20,13 +20,25 @@ package com.mongodb.util;
 
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.GregorianCalendar;
+import java.util.SimpleTimeZone;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
-import org.bson.*;
-import org.bson.types.*;
+import org.bson.BSON;
+import org.bson.BSONObject;
+import org.bson.BasicBSONCallback;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Code;
+import org.bson.types.CodeWScope;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
 
-import com.mongodb.*;
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.DBRef;
 
 public class JSONCallback extends BasicBSONCallback {
     

@@ -18,8 +18,11 @@
 
 package com.mongodb.util;
 
-import java.lang.ref.*;
-import java.util.*;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * if its not obvious what a weak bag should do, then, well...

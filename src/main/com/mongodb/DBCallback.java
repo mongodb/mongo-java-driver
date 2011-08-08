@@ -19,7 +19,7 @@
 package com.mongodb;
 
 
-import org.bson.*;
+import org.bson.BSONCallback;
 
 /**
  * The DB callback interface.

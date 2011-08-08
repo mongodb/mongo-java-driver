@@ -18,7 +18,8 @@
 
 package com.mongodb.util;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class UniqueList<T> extends ArrayList<T> {
 
