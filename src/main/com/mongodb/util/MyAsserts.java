@@ -18,7 +18,7 @@
 
 package com.mongodb.util;
 
-import java.util.regex.*;
+import java.util.regex.Pattern;
 
 public class MyAsserts {
 

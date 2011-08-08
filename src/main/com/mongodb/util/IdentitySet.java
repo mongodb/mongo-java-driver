@@ -18,7 +18,9 @@
 
 package com.mongodb.util;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
 
 public class IdentitySet<T> implements Iterable<T> {
 

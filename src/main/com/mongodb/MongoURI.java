@@ -18,9 +18,11 @@
 
 package com.mongodb;
 
-import java.net.*;
-import java.util.*;
-import java.util.logging.*;
+import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents a URI which can be used to create a Mongo instance.

@@ -18,12 +18,19 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.logging.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import com.mongodb.util.*;
+import com.mongodb.util.ThreadUtil;
 
 /**
  * represents a Port to the database, which is effectively a single connection to a server

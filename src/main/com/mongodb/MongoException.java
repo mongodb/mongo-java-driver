@@ -18,7 +18,7 @@
 
 package com.mongodb;
 
-import org.bson.*;
+import org.bson.BSONObject;
 
 /**
  * A general exception raised in Mongo

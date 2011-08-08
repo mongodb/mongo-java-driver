@@ -18,7 +18,7 @@
 
 package com.mongodb.io;
 
-import java.nio.*;
+import java.nio.ByteBuffer;
 
 public interface ByteBufferFactory {
     public ByteBuffer get();

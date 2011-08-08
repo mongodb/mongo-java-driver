@@ -18,11 +18,11 @@
 
 package com.mongodb;
 
-import java.util.*;
+import java.util.Map;
 
-import org.bson.*;
+import org.bson.BasicBSONObject;
 
-import com.mongodb.util.*;
+import com.mongodb.util.JSON;
 
 /**
  * a basic implementation of bson object that is mongo specific.

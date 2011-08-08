@@ -18,9 +18,16 @@
 
 package com.mongodb.gridfs;
 
-import com.mongodb.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-import java.io.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.BasicDBObjectBuilder;
+import com.mongodb.DBObject;
+import com.mongodb.MongoException;
 
 /**
  * This class enables to retrieve a GridFS file metadata and content.

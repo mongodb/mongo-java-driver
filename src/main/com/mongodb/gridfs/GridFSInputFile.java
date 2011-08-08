@@ -18,14 +18,19 @@
 
 package com.mongodb.gridfs;
 
-import java.io.*;
-import java.security.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.MessageDigest;
+import java.util.Date;
 
-import org.bson.types.*;
+import org.bson.types.ObjectId;
 
-import com.mongodb.*;
-import com.mongodb.util.*;
+import com.mongodb.BasicDBObjectBuilder;
+import com.mongodb.DBObject;
+import com.mongodb.MongoException;
+import com.mongodb.util.SimplePool;
+import com.mongodb.util.Util;
 
 /**
  * This class represents a GridFS file to be written to the database
