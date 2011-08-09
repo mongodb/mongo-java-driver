@@ -59,6 +59,12 @@ public class DBCollectionTest extends TestCase {
         obj = c.findOne(null, null);
         assertEquals(obj, null);
 
+        // Test that findOne works when fields is specified but no match is found
+        // *** This is a Regression test for JAVA-411 ***
+        obj = c.findOne(null, new BasicDBObject("_id", true));
+                              
+        assertEquals(obj, null);
+
         DBObject inserted = BasicDBObjectBuilder.start().add("x",1).add("y",2).get();
         c.insert(inserted);
         c.insert(BasicDBObjectBuilder.start().add("_id", 123).add("x",2).add("z",2).get());
