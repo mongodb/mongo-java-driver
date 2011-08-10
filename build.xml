@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <project name="MongoDB Java Driver" default="compile" basedir=".">
 
-  <property name="version" value="2.7.0-pre"/>
+  <property name="version" value="2.6.5"/>
   <property name="targetdir" location="target"/>
   <property name="testdir" location="${targetdir}/test"/>
   <dirname property="javabase" file="${java.home}"/>

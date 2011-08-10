@@ -106,7 +106,7 @@ public class Mongo {
     /**
      *
      */
-    public static final int MINOR_VERSION = 7;
+    public static final int MINOR_VERSION = 6;
 
     static int cleanerIntervalMS;
     static {
