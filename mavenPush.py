@@ -71,7 +71,7 @@ def go( pkgName, shortName , longName ):
     out = open( fileRoot + ".jar.sha1" , 'w' )
     out.write( sha1 )
     out.close()
-    
+
     out = open( os.path.join(os.path.split(dir)[0], "maven-metadata.xml") , 'w' )
     out.write( build_metadata_xml(os.path.split(dir)[0], longName) )
     out.close()
