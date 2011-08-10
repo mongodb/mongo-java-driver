@@ -184,7 +184,7 @@ public class ReplicaSetStatus {
                 }
 
                 if (!_ok) {
-                    _logger.log( Level.WARNING , "Server seen up: " + _addr );
+                    _logger.log( Level.INFO , "Server seen up: " + _addr );
                 }
                 _ok = true;
                 _isMaster = res.getBoolean( "ismaster" , false );
