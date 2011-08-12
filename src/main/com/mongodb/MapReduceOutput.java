@@ -48,6 +48,8 @@ public class MapReduceOutput {
                 db = db.getSisterDB(_dbname);
             }
             _coll = db.getCollection( _collname );
+            // M/R only applies to master, make sure we dont go to slave for results
+            _coll.setOptions(_coll.getOptions() & ~Bytes.QUERYOPTION_SLAVEOK);
             _resultSet = _coll.find();
         }
         _counts = (BasicDBObject)raw.get( "counts" );
