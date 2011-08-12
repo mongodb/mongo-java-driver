@@ -34,6 +34,7 @@ import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 
 import com.mongodb.util.JSON;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** Database API
  * This cannot be directly instantiated, but the functions are available
@@ -116,16 +117,9 @@ public class DBApiLayer extends DB {
         if ( c != null )
             return c;
 
-        synchronized ( _collections ){
-            c = _collections.get( name );
-            if ( c != null )
-                return c;
-
-            c = new MyCollection( name );
-            _collections.put( name , c );
-        }
-
-        return c;
+        c = new MyCollection( name );
+        MyCollection old = _collections.putIfAbsent(name, c);
+        return old != null ? old : c;
     }
 
     String _removeRoot( String ns ){
@@ -533,7 +527,7 @@ public class DBApiLayer extends DB {
     final String _root;
     final String _rootPlusDot;
     final DBConnector _connector;
-    final Map<String,MyCollection> _collections = Collections.synchronizedMap( new HashMap<String,MyCollection>() );
+    final ConcurrentHashMap<String,MyCollection> _collections = new ConcurrentHashMap<String,MyCollection>();
     
     ConcurrentLinkedQueue<DeadCursor> _deadCursorIds = new ConcurrentLinkedQueue<DeadCursor>();
 
