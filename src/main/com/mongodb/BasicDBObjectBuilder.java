@@ -85,7 +85,7 @@ public class BasicDBObjectBuilder {
 
     /**
      * same as appends
-     * @see {@link BasicDBObjectBuilder#add(java.lang.String, java.lang.Object)
+     * @see #append(String, Object)
      * @param key 
      * @param val
      * @return returns itself so you can chain
