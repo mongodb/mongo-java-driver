@@ -233,7 +233,6 @@ public abstract class DBCollection {
      * @param fields the fields of matching objects to return
      * @param numToSkip number of objects to skip
      * @param batchSize the batch size. This option has a complex behavior, see {@link DBCursor#batchSize(int) }
-     * @param options - see Bytes QUERYOPTION_*
      * @return the cursor
      * @throws MongoException
      * @dochub find
@@ -784,7 +783,7 @@ public abstract class DBCollection {
     }
 
     /**
-     * Calls {@link DBCollection#rename(java.lang.String, boolean) with dropTarget=false
+     * Calls {@link DBCollection#rename(java.lang.String, boolean)} with dropTarget=false
      * @param newName new collection name (not a full namespace)
      * @return the new collection
      * @throws MongoException
@@ -1101,7 +1100,7 @@ public abstract class DBCollection {
      * <blockquote><pre>
      *    DBCollection users = mongo.getCollection( "wiki" ).getCollection( "users" );
      * </pre></blockquote>
-     * Which is equilalent to
+     * Which is equivalent to
      * <pre><blockquote>
      *   DBCollection users = mongo.getCollection( "wiki.users" );
      * </pre></blockquote>
