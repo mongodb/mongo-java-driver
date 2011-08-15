@@ -1,0 +1,11 @@
+Bundle-Name: ${name}
+Bundle-SymbolicName: com.mongodb
+Bundle-Version: ${version}
+Bundle-ManifestVersion: 2
+Export-Template:  
+ com.mongodb.*;version="${version}",
+ org.bson.*;version="${version}"
+Import-Template: 
+ javax.management.*;version="0"
+Excluded-Imports: 
+ org.testng.*

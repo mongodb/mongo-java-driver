@@ -1,5 +1,6 @@
 <?xml version='1.0'?>
-<project name="MongoDB Java Driver" default="compile" basedir=".">
+<project name="MongoDB Java Driver" default="compile" basedir="."
+  xmlns:bundlor="antlib:com.springsource.bundlor.ant">
 
   <property name="version" value="2.7.0-pre"/>
   <property name="targetdir" location="target"/>
@@ -92,7 +93,7 @@
       <arg value="-1" />
     </exec>
 
-    <jar jarfile="mongo.jar" manifest="src/main/META-INF/MANIFEST.MF" >
+    <jar jarfile="mongo.jar" manifest="build/main/META-INF/MANIFEST.MF" >
       <fileset dir="build/main" />
     </jar>
 
@@ -262,4 +263,22 @@
     </exec>
   </target>
 
+  <target name="bundlor.init">
+    <taskdef resource="com/springsource/bundlor/ant/antlib.xml"
+      uri="antlib:com.springsource.bundlor.ant">
+      <classpath id="bundlor.classpath">
+        <fileset dir="${bundlor.home}/dist"/>
+        <fileset dir="${bundlor.home}/lib"/>
+      </classpath>
+    </taskdef>
+  </target>
+  
+  <bundlor:bundlor
+    inputPath="${basedir}/build/main"
+    outputPath="${basedir}/build/main"
+    bundleVersion="${version}"
+    manifestTemplatePath="${basedir}/template.mf" >
+    <property name="name" value="${ant.project.name}" />
+    <property name="version" value="${version}" />
+  </bundlor:bundlor>
 </project>
