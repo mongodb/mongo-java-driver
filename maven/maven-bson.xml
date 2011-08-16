@@ -1,0 +1,35 @@
+<project>
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.mongodb</groupId>
+    <artifactId>bson</artifactId>
+    <packaging>jar</packaging>
+    <name>BSON</name>
+    <version>@VERSION@</version>
+    <description>The BSON libs</description>
+    <url>http://bsonspec.org/</url>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/mongodb</url>
+    </scm>
+
+    <dependencies>
+    </dependencies>
+
+    <developers>
+        <developer>
+            <name>Various</name>
+            <organization>10gen</organization>
+        </developer>
+    </developers>
+
+
+</project>
