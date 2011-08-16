@@ -1,0 +1,163 @@
+<?xml version="1.0"?>
+
+<!--
+Copyright 2011, 10gen
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at:
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<project name="maven-mongo-java-driver" default="compile" basedir="../" xmlns:aspectj="antlib:org.aspectj" xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+
+    <!-- ******************************************************************* -->
+    <!-- Set the base attributes.                                            -->
+    <!-- ******************************************************************* -->
+
+    <import file="../build.xml" as="core"/>
+
+    <property file="../build.properties" prefix="build.conf"/>
+
+    <property name="dir.build" value="../build"/>
+
+    <!-- ******************************************************************* -->
+    <!-- Set the Maven attributes.                                           -->
+    <!-- ******************************************************************* -->
+
+    <property name="maven-snapshots-repository-id" value="sonatype-nexus-snapshots"/>
+    <property name="maven-snapshots-repository-url" value="https://oss.sonatype.org/content/repositories/snapshots"/>
+    <property name="maven-staging-repository-id" value="sonatype-nexus-staging"/>
+    <property name="maven-staging-repository-url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2/"/>
+
+    <!-- ******************************************************************* -->
+    <!-- Setup the build for the the Maven fun.                              -->
+    <!-- ******************************************************************* -->
+
+    <target name="maven.init" depends="clean, jar, alljars" description="Init the maven fun">
+
+        <copy file="maven/maven-mongo-java-driver.xml" tofile="build/maven-mongo-java-driver.xml" filtering="true">
+            <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
+        </copy>
+
+        <copy file="maven/maven-bson.xml" tofile="build/maven-bson.xml" filtering="true">
+            <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
+        </copy>
+
+        <mkdir dir="build/dist"/>
+
+        <copy tofile="build/dist/mongo-java-driver-sources-${build.conf.lib.version}.jar" file="mongo-sources.jar" overwrite="true" filtering="false"/>
+        <copy tofile="build/dist/mongo-java-driver-javadoc-${build.conf.lib.version}.jar" file="mongo-javadoc.jar" overwrite="true" filtering="false"/>
+        <copy tofile="build/dist/mongo-java-driver-${build.conf.lib.version}.jar" file="mongo.jar" overwrite="true" filtering="false"/>
+
+        <copy tofile="build/dist/bson-sources-${build.conf.lib.version}.jar" file="bson-sources.jar" overwrite="true" filtering="false"/>
+        <copy tofile="build/dist/bson-javadoc-${build.conf.lib.version}.jar" file="bson-javadoc.jar" overwrite="true" filtering="false"/>
+        <copy tofile="build/dist/bson-${build.conf.lib.version}.jar" file="bson.jar" overwrite="true" filtering="false"/>
+
+    </target>
+
+    <!-- ******************************************************************* -->
+    <!-- Stage in the Maven repository.                                      -->
+    <!-- ******************************************************************* -->
+
+    <target name="maven.stage" depends="maven.init" description="Deploy build to maven central server - stage">
+
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file"/>
+            <arg value="-Durl=${maven-staging-repository-url}"/>
+            <arg value="-DrepositoryId=${maven-staging-repository-id}"/>
+            <arg value="-DpomFile=${dir.build}/maven-mongo-java-driver.xml"/>
+            <arg value="-Dfile=${dir.build}/dist/mongo-java-driver-${build.conf.lib.version}.jar"/>
+            <arg value="-Dkeyname=CAA86C78"/>
+            <arg value="-Pgpg" />
+        </artifact:mvn>
+
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file"/>
+            <arg value="-Durl=${maven-staging-repository-url}"/>
+            <arg value="-DrepositoryId=${maven-staging-repository-id}"/>
+            <arg value="-DpomFile=${dir.build}/maven-mongo-java-driver.xml"/>
+            <arg value="-Dfile=${dir.build}/dist/mongo-java-driver-sources-${build.conf.lib.version}.jar"/>
+            <arg value="-Dclassifier=sources"/>
+            <arg value="-Dkeyname=CAA86C78"/>
+            <arg value="-Pgpg"/>
+        </artifact:mvn>
+
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file"/>
+            <arg value="-Durl=${maven-staging-repository-url}"/>
+            <arg value="-DrepositoryId=${maven-staging-repository-id}"/>
+            <arg value="-DpomFile=${dir.build}/maven-mongo-java-driver.xml"/>
+            <arg value="-Dfile=${dir.build}/dist/mongo-java-driver-javadoc-${build.conf.lib.version}.jar"/>
+            <arg value="-Dclassifier=javadoc"/>
+            <arg value="-Dkeyname=CAA86C78"/>
+            <arg value="-Pgpg"/>
+        </artifact:mvn>
+
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file"/>
+            <arg value="-Durl=${maven-staging-repository-url}"/>
+            <arg value="-DrepositoryId=${maven-staging-repository-id}"/>
+            <arg value="-DpomFile=${dir.build}/maven-bson.xml"/>
+            <arg value="-Dfile=${dir.build}/dist/bson-${build.conf.lib.version}.jar"/>
+            <arg value="-Dkeyname=CAA86C78"/>
+            <arg value="-Pgpg" />
+        </artifact:mvn>
+
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file"/>
+            <arg value="-Durl=${maven-staging-repository-url}"/>
+            <arg value="-DrepositoryId=${maven-staging-repository-id}"/>
+            <arg value="-DpomFile=${dir.build}/maven-bson.xml"/>
+            <arg value="-Dfile=${dir.build}/dist/bson-sources-${build.conf.lib.version}.jar"/>
+            <arg value="-Dclassifier=sources"/>
+            <arg value="-Dkeyname=CAA86C78"/>
+            <arg value="-Pgpg"/>
+        </artifact:mvn>
+
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file"/>
+            <arg value="-Durl=${maven-staging-repository-url}"/>
+            <arg value="-DrepositoryId=${maven-staging-repository-id}"/>
+            <arg value="-DpomFile=${dir.build}/maven-bson.xml"/>
+            <arg value="-Dfile=${dir.build}/dist/bson-javadoc-${build.conf.lib.version}.jar"/>
+            <arg value="-Dclassifier=javadoc"/>
+            <arg value="-Dkeyname=CAA86C78"/>
+            <arg value="-Pgpg"/>
+        </artifact:mvn>
+
+    </target>
+
+    <!-- ******************************************************************* -->
+    <!-- Deploy to Maven repository.                                         -->
+    <!-- ******************************************************************* -->
+
+    <target name="maven.snapshot" depends="maven.init" description="Deploy build to maven central server - snapshot">
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.6:deploy-file"/>
+            <arg value="-Durl=${maven-snapshots-repository-url}"/>
+            <arg value="-DrepositoryId=${maven-snapshots-repository-id}"/>
+            <arg value="-DpomFile=${dir.build}/maven-mongo-java-driver.xml"/>
+            <arg value="-Dfile=${dir.build}/dist/mongo-java-driver-${build.conf.lib.version}.jar"/>
+        </artifact:mvn>
+
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.6:deploy-file"/>
+            <arg value="-Durl=${maven-snapshots-repository-url}"/>
+            <arg value="-DrepositoryId=${maven-snapshots-repository-id}"/>
+            <arg value="-DpomFile=${dir.build}/maven-bson.xml"/>
+            <arg value="-Dfile=${dir.build}/dist/bson-${build.conf.lib.version}.jar"/>
+        </artifact:mvn>
+
+    </target>
+
+    <!-- ******************************************************************* -->
+
+</project>
