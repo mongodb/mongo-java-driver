@@ -1,7 +1,26 @@
 <?xml version='1.0'?>
+
+<!--
+Copyright 2011, 10gen
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at:
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
 <project name="MongoDB Java Driver" default="compile" basedir=".">
 
   <property name="version" value="2.7.0-pre"/>
+  <property file="build.properties" prefix="build.conf"/>
+
   <property name="targetdir" location="target"/>
   <property name="testdir" location="${targetdir}/test"/>
   <dirname property="javabase" file="${java.home}"/>
@@ -38,8 +57,8 @@
            destdir="build/main"
            optimize="off"
            deprecation="off"
-           source="1.5"
-           target="1.5"
+           source="${build.conf.javac.source}"
+           target="${build.conf.javac.source}"
            encoding="ISO-8859-1"
            memoryMaximumSize="256M"
            fork="true"
@@ -54,7 +73,7 @@
            destdir="build/test"
            optimize="off"
            deprecation="off"
-           source="1.5"
+           source="${build.conf.javac.source}"
            encoding="ISO-8859-1"
            fork="true"
            debug="on"
@@ -71,8 +90,8 @@
            destdir="build/util"
            optimize="off"
            deprecation="off"
-           source="1.5"
-           target="1.5"
+           source="${build.conf.javac.source}"
+           target="${build.conf.javac.source}"
            encoding="ISO-8859-1"
            memoryMaximumSize="256M"
            fork="true"
@@ -83,8 +102,11 @@
     </javac>
   </target>
 
-
   <target name="jar" depends="compile" description="Create driver jar">
+
+    <copy file="src/main/META-INF/MANIFEST.MF" tofile="build/MANIFEST.MF" filtering="true">
+      <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
+    </copy>
 
     <exec executable="git" output="build/main/git-hash">
       <arg value="log" />
@@ -92,18 +114,17 @@
       <arg value="-1" />
     </exec>
 
-    <jar jarfile="mongo.jar" manifest="src/main/META-INF/MANIFEST.MF" >
+    <jar jarfile="mongo.jar" manifest="build/MANIFEST.MF">
       <fileset dir="build/main" />
     </jar>
 
-    <jar jarfile="bson.jar" >
-      <fileset dir="build/main" >
+    <jar jarfile="bson.jar">
+      <fileset dir="build/main">
         <not>
           <filename name="com/"/>
         </not>
       </fileset>
     </jar>
-
 
   </target>
 
@@ -113,10 +134,10 @@
     <javadoc packagenames="com.mongodb,com.mongodb.gridfs,com.mongodb.util,org.bson,org.bson.types,org.bson.io,org.bson.util"
              sourcepath="src/main/"
              defaultexcludes="yes"
-             destdir="docs/${version}"
+             destdir="docs/${build.conf.lib.version}"
              author="true"
              version="true"
-             source="1.5"
+             source="${build.conf.javac.source}"
              use="true"
              access="protected"
              >
@@ -134,7 +155,7 @@
     </jar>
 
     <jar jarfile="mongo-javadoc.jar" >
-      <fileset dir="docs/${version}" />
+      <fileset dir="docs/${build.conf.lib.version}" />
     </jar>
 
     <jar jarfile="bson-sources.jar" >
@@ -142,7 +163,7 @@
     </jar>
 
     <jar jarfile="bson-javadoc.jar" >
-      <fileset dir="docs/${version}" />
+      <fileset dir="docs/${build.conf.lib.version}" />
     </jar>
 
   </target>
@@ -192,7 +213,7 @@
            destdir="build/test"
            optimize="off"
            deprecation="off"
-           source="1.5"
+           source="${build.conf.javac.source}"
            encoding="ISO-8859-1"
            debug="on"
     	   includeantruntime="false">
@@ -215,7 +236,7 @@
            destdir="build/test"
            optimize="off"
            deprecation="off"
-           source="1.5"
+           source="${build.conf.javac.source}"
            encoding="ISO-8859-1"
            debug="on"
     	   includeantruntime="false">
@@ -249,7 +270,7 @@
   <target name="publish">
     <exec dir="." executable="python">
       <arg value="mavenPush.py"/>
-      <arg value="${version}"/>
+      <arg value="${build.conf.lib.version}"/>
       <arg value="/ebs/maven/"/>
     </exec>
   </target>
@@ -257,7 +278,7 @@
   <target name="publish-local">
     <exec dir="." executable="python">
       <arg value="mavenPush.py"/>
-      <arg value="${version}"/>
+      <arg value="${build.conf.lib.version}"/>
       <arg value="~/.m2/repository/"/>
     </exec>
   </target>
