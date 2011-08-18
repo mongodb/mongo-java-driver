@@ -48,7 +48,11 @@ limitations under the License.
     <delete dir="build"/>
 
     <delete file="mongo.jar"/>
+    <delete file="mongo-javadoc.jar"/>
+    <delete file="mongo-sources.jar"/>
     <delete file="bson.jar"/>
+    <delete file="bson-javadoc.jar"/>
+    <delete file="bson-sources.jar"/>
   </target>
 
   <target name="compile" depends="init">
