@@ -32,9 +32,9 @@ limitations under the License.
     <!-- Set the Maven attributes.                                           -->
     <!-- ******************************************************************* -->
 
-    <property name="maven-snapshots-repository-id" value="sonatype-nexus-snapshots"/>
+    <property name="maven-snapshots-repository-id" value="mongodb-snapshots"/>
     <property name="maven-snapshots-repository-url" value="https://oss.sonatype.org/content/repositories/snapshots"/>
-    <property name="maven-staging-repository-id" value="sonatype-nexus-staging"/>
+    <property name="maven-staging-repository-id" value="mongodb-staging"/>
     <property name="maven-staging-repository-url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2/"/>
 
     <!-- ******************************************************************* -->
@@ -76,7 +76,7 @@ limitations under the License.
             <arg value="-DpomFile=${dir.build}/maven-mongo-java-driver.xml"/>
             <arg value="-Dfile=${dir.build}/dist/mongo-java-driver-${build.conf.lib.version}.jar"/>
             <arg value="-Dkeyname=CAA86C78"/>
-            <arg value="-Pgpg" />
+            <arg value="-Pgpg-mongodb"/>
         </artifact:mvn>
 
         <artifact:mvn>
@@ -87,7 +87,7 @@ limitations under the License.
             <arg value="-Dfile=${dir.build}/dist/mongo-java-driver-sources-${build.conf.lib.version}.jar"/>
             <arg value="-Dclassifier=sources"/>
             <arg value="-Dkeyname=CAA86C78"/>
-            <arg value="-Pgpg"/>
+            <arg value="-Pgpg-mongodb"/>
         </artifact:mvn>
 
         <artifact:mvn>
@@ -98,7 +98,7 @@ limitations under the License.
             <arg value="-Dfile=${dir.build}/dist/mongo-java-driver-javadoc-${build.conf.lib.version}.jar"/>
             <arg value="-Dclassifier=javadoc"/>
             <arg value="-Dkeyname=CAA86C78"/>
-            <arg value="-Pgpg"/>
+            <arg value="-Pgpg-mongodb"/>
         </artifact:mvn>
 
         <artifact:mvn>
@@ -108,7 +108,7 @@ limitations under the License.
             <arg value="-DpomFile=${dir.build}/maven-bson.xml"/>
             <arg value="-Dfile=${dir.build}/dist/bson-${build.conf.lib.version}.jar"/>
             <arg value="-Dkeyname=CAA86C78"/>
-            <arg value="-Pgpg" />
+            <arg value="-Pgpg-mongodb" />
         </artifact:mvn>
 
         <artifact:mvn>
@@ -119,7 +119,7 @@ limitations under the License.
             <arg value="-Dfile=${dir.build}/dist/bson-sources-${build.conf.lib.version}.jar"/>
             <arg value="-Dclassifier=sources"/>
             <arg value="-Dkeyname=CAA86C78"/>
-            <arg value="-Pgpg"/>
+            <arg value="-Pgpg-mongodb"/>
         </artifact:mvn>
 
         <artifact:mvn>
@@ -130,7 +130,7 @@ limitations under the License.
             <arg value="-Dfile=${dir.build}/dist/bson-javadoc-${build.conf.lib.version}.jar"/>
             <arg value="-Dclassifier=javadoc"/>
             <arg value="-Dkeyname=CAA86C78"/>
-            <arg value="-Pgpg"/>
+            <arg value="-Pgpg-mongodb"/>
         </artifact:mvn>
 
     </target>
