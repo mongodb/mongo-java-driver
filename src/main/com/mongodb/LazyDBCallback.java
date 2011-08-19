@@ -15,7 +15,9 @@
  */
 package com.mongodb;
 
+import java.util.Iterator;
 import org.bson.LazyBSONCallback;
+import org.bson.LazyBSONObject.LazyBSONIterator;
 
 /**
  *
@@ -30,7 +32,10 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
     @Override
     public Object createObject(byte[] data, int offset) {
         LazyDBObject o = new LazyDBObject(data, offset, this);
-        if ( o.containsField( "$ref" ) &&
+        // need to detect DBRef but must make sure we dont search through all fields
+        // $ref must be 1st key
+        Iterator it = o.keySet().iterator();
+        if ( it.hasNext() && it.next().equals( "$ref" ) &&
              o.containsField( "$id" ) ){
             return new DBRef( _db, o );
         }
