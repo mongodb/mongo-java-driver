@@ -18,277 +18,294 @@ limitations under the License.
 
 <project name="MongoDB Java Driver" default="compile" basedir=".">
 
-  <property name="version" value="2.7.0-pre"/>
-  <property file="build.properties" prefix="build.conf"/>
+    <property file="build.properties" prefix="build.conf"/>
 
-  <property name="targetdir" location="target"/>
-  <property name="testdir" location="${targetdir}/test"/>
-  <dirname property="javabase" file="${java.home}"/>
+    <!-- ******************************************************************* -->
+    <!-- Set the base attributes.                                            -->
+    <!-- ******************************************************************* -->
 
-  <path id="classpath">
-    <fileset dir="lib">
-      <include name="**/*.jar"/>
-    </fileset>
-    <pathelement path="conf" />
-    <pathelement path="build/main" />
-    <pathelement path="build/test" />
-    <pathelement path="${javabase}/lib/tools.jar" />
-  </path>
+    <property name="targetdir" location="target"/>
+    <property name="testdir" location="${targetdir}/test"/>
+    <dirname property="javabase" file="${java.home}"/>
 
-  <target name="init">
-    <mkdir dir="build" />
-    <mkdir dir="build/main" />
-    <mkdir dir="build/test" />
-    <mkdir dir="build/util" />
-    <mkdir dir="logs" />
-    <mkdir dir="${testdir}" />
-  </target>
+    <path id="classpath">
+        <fileset dir="lib"><include name="**/*.jar"/></fileset>
+        <pathelement path="conf" />
+        <pathelement path="build/main" />
+        <pathelement path="build/test" />
+        <pathelement path="${javabase}/lib/tools.jar" />
+    </path>
 
-  <target name="clean">
-    <delete dir="build"/>
-    <delete dir="target"/>
-    <delete dir="docs"/>
-    <delete dir="logs"/>
-    <delete file="mongo.jar"/>
-    <delete file="mongo-javadoc.jar"/>
-    <delete file="mongo-sources.jar"/>
-    <delete file="bson.jar"/>
-    <delete file="bson-javadoc.jar"/>
-    <delete file="bson-sources.jar"/>
-  </target>
+    <!-- ******************************************************************* -->
+    <!-- The init target.                                                    -->
+    <!-- ******************************************************************* -->
 
-  <target name="compile" depends="init">
+    <target name="init">
+        <mkdir dir="build" />
+        <mkdir dir="build/main" />
+        <mkdir dir="build/test" />
+        <mkdir dir="build/util" />
+        <mkdir dir="logs" />
+        <mkdir dir="${testdir}" />
+    </target>
 
-    <javac srcdir="src/main"
-           destdir="build/main"
-           optimize="off"
-           deprecation="off"
-           source="${build.conf.javac.source}"
-           target="${build.conf.javac.source}"
-           encoding="ISO-8859-1"
-           memoryMaximumSize="256M"
-           fork="true"
-           debug="on"
-    	   includeantruntime="false">
+    <!-- ******************************************************************* -->
+    <!-- The clean target.                                                   -->
+    <!-- ******************************************************************* -->
 
-        <compilerarg value="-Xlint:all,-fallthrough"/>
-      <classpath refid="classpath"/>
-    </javac>
+    <target name="clean">
+        <delete dir="build"/>
+        <delete dir="target"/>
+        <delete dir="docs"/>
+        <delete dir="logs"/>
+        <delete file="mongo.jar"/>
+        <delete file="mongo-javadoc.jar"/>
+        <delete file="mongo-sources.jar"/>
+        <delete file="bson.jar"/>
+        <delete file="bson-javadoc.jar"/>
+        <delete file="bson-sources.jar"/>
+    </target>
 
-    <javac srcdir="src/test"
-           destdir="build/test"
-           optimize="off"
-           deprecation="off"
-           source="${build.conf.javac.source}"
-           encoding="ISO-8859-1"
-           fork="true"
-           debug="on"
-    	   includeantruntime="false">
-      <classpath refid="classpath"/>
-      <compilerarg value="-Xlint:all,-fallthrough"/>
-    </javac>
+    <!-- ******************************************************************* -->
+    <!-- The compile target.                                                 -->
+    <!-- ******************************************************************* -->
 
-  </target>
+    <target name="compile" depends="init">
 
-  <target name="utilcompile" depends="compile">
+        <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sMAJOR_VERSION\s=\s\d+;" replace=" MAJOR_VERSION = ${build.conf.lib.major};" byline="false"/>
+        <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sINOR_VERSION\s=\s\d+;" replace=" MINOR_VERSION = ${build.conf.lib.minor};" byline="false"/>
 
-    <javac srcdir="src/util"
-           destdir="build/util"
-           optimize="off"
-           deprecation="off"
-           source="${build.conf.javac.source}"
-           target="${build.conf.javac.source}"
-           encoding="ISO-8859-1"
-           memoryMaximumSize="256M"
-           fork="true"
-           debug="on"
-    	   includeantruntime="false">
-      <classpath refid="classpath"/>
-      <compilerarg value="-Xlint:all,-fallthrough"/>
-    </javac>
-  </target>
+        <javac
+            srcdir="src/main"
+            destdir="build/main"
+            optimize="off"
+            deprecation="off"
+            source="${build.conf.javac.source}"
+            target="${build.conf.javac.source}"
+            encoding="ISO-8859-1"
+            memoryMaximumSize="256M"
+            fork="true"
+            debug="on"
+            includeantruntime="false">
+            <compilerarg value="-Xlint:all,-fallthrough"/>
+            <classpath refid="classpath"/>
+        </javac>
 
-  <target name="jar" depends="compile" description="Create driver jar">
+        <javac
+            srcdir="src/test"
+            destdir="build/test"
+            optimize="off"
+            deprecation="off"
+            source="${build.conf.javac.source}"
+            encoding="ISO-8859-1"
+            fork="true"
+            debug="on"
+            includeantruntime="false">
+            <classpath refid="classpath"/>
+            <compilerarg value="-Xlint:all,-fallthrough"/>
+        </javac>
 
-    <copy file="src/main/META-INF/MANIFEST.MF" tofile="build/MANIFEST.MF" filtering="true">
-      <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
-    </copy>
+    </target>
 
-    <copy file="src/main/META-INF/MANIFEST_BSON.MF" tofile="build/MANIFEST_BSON.MF" filtering="true">
-      <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
-    </copy>
+    <!-- ******************************************************************* -->
+    <!-- The util compile target.                                            -->
+    <!-- ******************************************************************* -->
 
-    <exec executable="git" output="build/main/git-hash">
-      <arg value="log" />
-      <arg value="--pretty=format:%H" />
-      <arg value="-1" />
-    </exec>
+    <target name="utilcompile" depends="compile">
 
-    <jar jarfile="mongo.jar" manifest="build/MANIFEST.MF">
-      <fileset dir="build/main" />
-    </jar>
+        <javac
+            srcdir="src/util"
+            destdir="build/util"
+            optimize="off"
+            deprecation="off"
+            source="${build.conf.javac.source}"
+            target="${build.conf.javac.source}"
+            encoding="ISO-8859-1"
+            memoryMaximumSize="256M"
+            fork="true"
+            debug="on"
+            includeantruntime="false">
+            <classpath refid="classpath"/>
+            <compilerarg value="-Xlint:all,-fallthrough"/>
+        </javac>
+    </target>
 
-    <jar jarfile="bson.jar" manifest="build/MANIFEST_BSON.MF">
-      <fileset dir="build/main">
-        <not>
-          <filename name="com/"/>
-        </not>
-      </fileset>
-    </jar>
+    <!-- ******************************************************************* -->
+    <!-- The jar target.                                                     -->
+    <!-- ******************************************************************* -->
 
-  </target>
+    <target name="jar" depends="compile" description="Create driver jar">
 
-  <target name="javadocs" depends="compile,utilcompile" description="Generate API docs">
-    <delete dir="docs/"/>
-    <javadoc
-        packagenames="com.mongodb,com.mongodb.gridfs,com.mongodb.util,org.bson,org.bson.types,org.bson.io,org.bson.util"
-        sourcepath="src/main/"
-        defaultexcludes="yes"
-        destdir="docs/mongo-java-driver/${build.conf.lib.version}"
-        author="true"
-        version="true"
-        source="${build.conf.javac.source}"
-        use="true"
-        access="protected">
-        <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
-      <classpath refid="classpath"/>
-      <taglet name="ApiToolsTaglet" path="build/util"/>
-    </javadoc>
+        <copy file="src/main/META-INF/MANIFEST.MF" tofile="build/MANIFEST.MF" filtering="true">
+            <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
+        </copy>
 
-    <javadoc
-        packagenames="org.bson,org.bson.types,org.bson.io,org.bson.util"
-        sourcepath="src/main/"
-        defaultexcludes="yes"
-        destdir="docs/bson/${build.conf.lib.version}"
-        author="true"
-        version="true"
-        source="${build.conf.javac.source}"
-        use="true"
-        access="protected">
-        <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
-      <classpath refid="classpath"/>
-      <taglet name="ApiToolsTaglet" path="build/util"/>
-    </javadoc>
+        <copy file="src/main/META-INF/MANIFEST_BSON.MF" tofile="build/MANIFEST_BSON.MF" filtering="true">
+            <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
+        </copy>
 
-  </target>
+        <exec executable="git" output="build/main/git-hash">
+            <arg value="log" />
+            <arg value="--pretty=format:%H" />
+            <arg value="-1" />
+        </exec>
 
-  <target name="alljars" depends="jar, javadocs" description="build jar, source jar, javadoc jar">
+        <jar jarfile="mongo.jar" manifest="build/MANIFEST.MF"><fileset dir="build/main" /></jar>
 
-    <jar jarfile="mongo-sources.jar">
-      <fileset dir="src/main"><not><filename name="META-INF/"/></not></fileset>
-    </jar>
+        <jar jarfile="bson.jar" manifest="build/MANIFEST_BSON.MF">
+          <fileset dir="build/main"><not><filename name="com/"/></not></fileset>
+        </jar>
 
-    <jar jarfile="mongo-javadoc.jar">
-      <fileset dir="docs/mongo-java-driver/${build.conf.lib.version}"/>
-    </jar>
+    </target>
 
-    <jar jarfile="bson-sources.jar">
-      <fileset dir="src/main">
-        <not><filename name="com/"/></not>
-        <not><filename name="META-INF/"/></not>
-      </fileset>
-    </jar>
+    <!-- ******************************************************************* -->
+    <!-- The javadocs target.                                                -->
+    <!-- ******************************************************************* -->
 
-    <jar jarfile="bson-javadoc.jar">
-      <fileset dir="docs/bson/${build.conf.lib.version}"/>
-    </jar>
+    <target name="javadocs" depends="compile,utilcompile" description="Generate API docs">
+        <delete dir="docs/"/>
+        <javadoc
+            packagenames="com.mongodb,com.mongodb.gridfs,com.mongodb.util,org.bson,org.bson.types,org.bson.io,org.bson.util"
+            sourcepath="src/main/"
+            defaultexcludes="yes"
+            destdir="docs/mongo-java-driver/${build.conf.lib.version}"
+            author="true"
+            version="true"
+            source="${build.conf.javac.source}"
+            use="true"
+            access="protected">
+            <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
+            <classpath refid="classpath"/>
+            <taglet name="ApiToolsTaglet" path="build/util"/>
+        </javadoc>
 
-  </target>
+        <javadoc
+            packagenames="org.bson,org.bson.types,org.bson.io,org.bson.util"
+            sourcepath="src/main/"
+            defaultexcludes="yes"
+            destdir="docs/bson/${build.conf.lib.version}"
+            author="true"
+            version="true"
+            source="${build.conf.javac.source}"
+            use="true"
+            access="protected">
+            <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
+            <classpath refid="classpath"/>
+            <taglet name="ApiToolsTaglet" path="build/util"/>
+        </javadoc>
 
-  <target name="rebuild" depends="clean, compile"/>
+    </target>
 
-  <!-- - - - - - - - - - - - - - - - - - - - - - -->
-  <!--  test targets                             -->
-  <!-- - - - - - - - - - - - - - - - - - - - - - -->
+    <!-- ******************************************************************* -->
+    <!-- Jar the rest of the files.                                          -->
+    <!-- ******************************************************************* -->
 
-  <taskdef name="testng" classpathref="classpath" classname="org.testng.TestNGAntTask" />
+    <target name="alljars" depends="jar, javadocs" description="build jar, source jar, javadoc jar">
 
-  <target name="test" depends="compile">
-    <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="true" >
-      <jvmarg value="-Xmx512M" />
-      <xmlfileset dir="." includes="testng.xml"/>
-    </testng>
-  </target>
+        <jar jarfile="mongo-sources.jar"><fileset dir="src/main"><not><filename name="META-INF/"/></not></fileset></jar>
+        <jar jarfile="mongo-javadoc.jar"><fileset dir="docs/mongo-java-driver/${build.conf.lib.version}"/></jar>
 
-  <target name="test-single" depends="compile">
-    <condition property="propsSpecified">
-      <and>
-        <isset property="class.name" />
-      </and>
-    </condition>
-    <fail unless="propsSpecified" message="class.name roperty not specified."/>
+        <jar jarfile="bson-sources.jar">
+            <fileset dir="src/main">
+            <not><filename name="com/"/></not>
+            <not><filename name="META-INF/"/></not>
+            </fileset>
+        </jar>
 
-    <copy todir="build/test" file="testng-single.xml" overwrite="true">
-      <filterset>
-        <filter token="CLASS" value="${class.name}"/>
-      </filterset>
-    </copy>
+        <jar jarfile="bson-javadoc.jar"><fileset dir="docs/bson/${build.conf.lib.version}"/></jar>
 
-    <testng classpathref="classpath" outputdir="${testdir}" haltonfailure="true" verbose="1">
-      <jvmarg value="-Xmx512M" />
-      <xmlfileset dir="build/test" includes="testng-single.xml"/>
-    </testng>
-  </target>
+    </target>
 
-  <!-- - - - - - - - - - - - - - - - - - - - - - -->
-  <!--  misc targets                             -->
-  <!-- - - - - - - - - - - - - - - - - - - - - - -->
+    <!-- ******************************************************************* -->
+    <!-- The clean compile target                                            -->
+    <!-- ******************************************************************* -->
 
-  <target name="examples" depends="compile">
+    <target name="rebuild" depends="clean, compile"/>
 
-    <javac srcdir="examples"
-           destdir="build/test"
-           optimize="off"
-           deprecation="off"
-           source="${build.conf.javac.source}"
-           encoding="ISO-8859-1"
-           debug="on"
-    	   includeantruntime="false">
-      <classpath refid="classpath"/>
-    </javac>
+    <!-- ******************************************************************* -->
+    <!-- The test targets                                                    -->
+    <!-- ******************************************************************* -->
 
-    <java classname="QuickTour" >
-      <classpath refid="classpath"/>
-    </java>
+    <taskdef name="testng" classpathref="classpath" classname="org.testng.TestNGAntTask"/>
 
-    <java classname="QuickTourAdmin" >
-      <classpath refid="classpath"/>
-    </java>
+    <target name="test" depends="compile">
+        <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="true" >
+            <jvmarg value="-Xmx512M" />
+            <xmlfileset dir="." includes="testng.xml"/>
+        </testng>
+    </target>
 
-  </target>
+    <target name="test-single" depends="compile">
+        <condition property="propsSpecified">
+            <and>
+                <isset property="class.name" />
+            </and>
+        </condition>
 
-  <target name="readoplog" depends="compile">
+        <fail unless="propsSpecified" message="class.name roperty not specified."/>
 
-    <javac srcdir="examples"
-           destdir="build/test"
-           optimize="off"
-           deprecation="off"
-           source="${build.conf.javac.source}"
-           encoding="ISO-8859-1"
-           debug="on"
-    	   includeantruntime="false">
-      <classpath refid="classpath"/>
-    </javac>
+        <copy todir="build/test" file="testng-single.xml" overwrite="true">
+            <filterset><filter token="CLASS" value="${class.name}"/></filterset>
+        </copy>
 
-    <java classname="examples.ReadOplog" fork="true">
-      <classpath refid="classpath"/>
-    </java>
+        <testng classpathref="classpath" outputdir="${testdir}" haltonfailure="true" verbose="1">
+            <jvmarg value="-Xmx512M" />
+            <xmlfileset dir="build/test" includes="testng-single.xml"/>
+        </testng>
+    </target>
 
-  </target>
+    <!-- ******************************************************************* -->
+    <!-- Misc targets                                                        -->
+    <!-- ******************************************************************* -->
 
-  <!-- - - - - - - - - - - - - - - - - - - - - - -->
-  <!--  reporting targets                        -->
-  <!-- - - - - - - - - - - - - - - - - - - - - - -->
+    <target name="examples" depends="compile">
 
-  <target name="junit-reports" depends="test">
-    <junitreport todir="${testdir}">
-      <fileset dir="${testdir}">
-        <include name="*/*.xml"/>
-      </fileset>
+        <javac
+            srcdir="examples"
+            destdir="build/test"
+            optimize="off"
+            deprecation="off"
+            source="${build.conf.javac.source}"
+            encoding="ISO-8859-1"
+            debug="on"
+            includeantruntime="false">
+            <classpath refid="classpath"/>
+        </javac>
 
-      <report format="noframes"  todir="${testdir}"/>
-    </junitreport>
-  </target>
+        <java classname="QuickTour"><classpath refid="classpath"/></java>
+
+        <java classname="QuickTourAdmin"><classpath refid="classpath"/></java>
+
+    </target>
+
+    <target name="readoplog" depends="compile">
+
+        <javac
+            srcdir="examples"
+            destdir="build/test"
+            optimize="off"
+            deprecation="off"
+            source="${build.conf.javac.source}"
+            encoding="ISO-8859-1"
+            debug="on"
+            includeantruntime="false">
+            <classpath refid="classpath"/>
+        </javac>
+
+        <java classname="examples.ReadOplog" fork="true"><classpath refid="classpath"/></java>
+
+    </target>
+
+    <!-- ******************************************************************* -->
+    <!-- The reporting targets                                               -->
+    <!-- ******************************************************************* -->
+
+    <target name="junit-reports" depends="test">
+        <junitreport todir="${testdir}">
+            <fileset dir="${testdir}"><include name="*/*.xml"/></fileset>
+            <report format="noframes"  todir="${testdir}"/>
+        </junitreport>
+    </target>
 
   <!-- NOTE: publish-local is now located in maven/ -->
 
