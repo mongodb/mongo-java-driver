@@ -290,24 +290,6 @@ limitations under the License.
     </junitreport>
   </target>
 
-  <!-- - - - - - - - - - - - - - - - - - - - - - -->
-  <!--  publish targets                          -->
-  <!-- - - - - - - - - - - - - - - - - - - - - - -->
-
-  <target name="publish">
-    <exec dir="." executable="python">
-      <arg value="mavenPush.py"/>
-      <arg value="${build.conf.lib.version}"/>
-      <arg value="/ebs/maven/"/>
-    </exec>
-  </target>
-
-  <target name="publish-local">
-    <exec dir="." executable="python">
-      <arg value="mavenPush.py"/>
-      <arg value="${build.conf.lib.version}"/>
-      <arg value="~/.m2/repository/"/>
-    </exec>
-  </target>
+  <!-- NOTE: publish-local is now located in maven/ -->
 
 </project>
