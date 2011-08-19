@@ -18,7 +18,7 @@ package org.bson;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import org.bson.BasicBSONDecoder.Input;
+
 import org.bson.io.Bits;
 
 /**
