@@ -46,7 +46,9 @@ limitations under the License.
 
   <target name="clean">
     <delete dir="build"/>
-
+    <delete dir="target"/>
+    <delete dir="docs"/>
+    <delete dir="logs"/>
     <delete file="mongo.jar"/>
     <delete file="mongo-javadoc.jar"/>
     <delete file="mongo-sources.jar"/>
