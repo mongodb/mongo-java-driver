@@ -15,9 +15,11 @@
  */
 package com.mongodb;
 
-import java.util.Iterator;
-import org.bson.LazyBSONCallback;
-import org.bson.LazyBSONObject.LazyBSONIterator;
+import org.bson.*;
+import org.bson.types.*;
+
+import java.util.*;
+import java.util.logging.*;
 
 /**
  *
@@ -30,8 +32,9 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
     }
 
     @Override
-    public Object createObject(byte[] data, int offset) {
-        LazyDBObject o = new LazyDBObject(data, offset, this);
+    public Object createObject( byte[] data, int offset ){
+        LazyDBObject o = new LazyDBObject( data, offset, this );
+        //log.info("Created inner BSONObject: " + o);
         // need to detect DBRef but must make sure we dont search through all fields
         // $ref must be 1st key
         Iterator it = o.keySet().iterator();
@@ -42,6 +45,11 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
         return o;
     }
 
+    public Object createDBRef( String ns, ObjectId id ){
+        return new DBRef( _db, ns, id );
+    }
+
     final DBCollection _collection;
     final DB _db;
+    private static final Logger log = Logger.getLogger( "com.mongodb.LazyDBCallback" );
 }

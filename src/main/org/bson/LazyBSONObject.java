@@ -1,5 +1,5 @@
 /**
- *      Copyright (C) 2008 10gen Inc.
+ *      Copyright (C) 2008-2011 10gen Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,225 +15,217 @@
  */
 package org.bson;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.regex.Pattern;
-import org.bson.io.Bits;
-import org.bson.types.BSONTimestamp;
-import org.bson.types.Binary;
-import org.bson.types.Code;
-import org.bson.types.CodeWScope;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
-import org.bson.types.Symbol;
+import org.bson.io.*;
+import org.bson.types.*;
+
+import java.util.*;
+import java.util.logging.*;
+import java.util.regex.*;
 
 /**
- *
  * @author antoine
+ * @author brendan
  */
 public class LazyBSONObject implements BSONObject {
 
-    final static int FIRST_ELMT_OFFSET = 4;
+    public LazyBSONObject( byte[] data, LazyBSONCallback callback ){
+        this( BSONByteBuffer.wrap( data ), callback );
+    }
+
+    public LazyBSONObject( byte[] data, int offset, LazyBSONCallback callback ){
+        this( BSONByteBuffer.wrap( data, offset, data.length - offset ), offset, callback );
+    }
+
+    public LazyBSONObject( BSONByteBuffer buffer, LazyBSONCallback callback ){
+        this( buffer, 0, callback );
+    }
+
+    public LazyBSONObject( BSONByteBuffer buffer, int offset, LazyBSONCallback callback ){
+        _callback = callback;
+        _input = buffer;
+        _doc_start_offset = offset;
+    }
 
     public class LazyBSONIterator implements Iterator<String> {
 
-        public boolean hasNext() {
-            return !isElementEmpty(offset);
+        public boolean hasNext(){
+            return !isElementEmpty( offset );
         }
 
-        public String next() {
-            String key = getElementFieldName(offset);
-            offset += getElementBSONSize(offset);
+        public String next(){
+            int fieldSize = sizeCString( offset );
+            int elementSize = getElementBSONSize( offset++ );
+            String key = _input.getCString( offset );
+            offset += ( fieldSize + elementSize );
             return key;
         }
 
-        public void remove() {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public void remove(){
+            throw new UnsupportedOperationException( "Not supported yet." );
         }
-        int offset = FIRST_ELMT_OFFSET;
+
+        int offset = _doc_start_offset + FIRST_ELMT_OFFSET;
     }
 
     public class LazyBSONKeySet implements Set<String> {
 
-        public int size() {
+        public int size(){
             int size = 0;
-            for (String key : this) {
+            for ( String key : this ){
                 ++size;
             }
             return size;
         }
 
-        public boolean isEmpty() {
+        public boolean isEmpty(){
             return LazyBSONObject.this.isEmpty();
         }
 
-        public boolean contains(Object o) {
-            for (String key : this) {
-                if (key.equals(o)) {
+        public boolean contains( Object o ){
+            for ( String key : this ){
+                if ( key.equals( o ) ){
                     return true;
                 }
             }
             return false;
         }
 
-        public Iterator<String> iterator() {
+        public Iterator<String> iterator(){
             return new LazyBSONIterator();
         }
 
-        public Object[] toArray() {
+        public Object[] toArray(){
             String[] array = new String[size()];
-            return toArray(array);
+            return toArray( array );
         }
 
-        @SuppressWarnings("unchecked")
-        public <T> T[] toArray(T[] ts) {
+        @SuppressWarnings( "unchecked" )
+        public <T> T[] toArray( T[] ts ){
             int i = 0;
-            for (String key : this) {
+            for ( String key : this ){
                 ts[++i] = (T) key;
             }
             return ts;
         }
 
-        public boolean add(String e) {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public boolean add( String e ){
+            throw new UnsupportedOperationException( "Not supported yet." );
         }
 
-        public boolean remove(Object o) {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public boolean remove( Object o ){
+            throw new UnsupportedOperationException( "Not supported yet." );
         }
 
-        public boolean containsAll(Collection<?> clctn) {
-            for (Object item : clctn) {
-                if (!contains(item)) {
+        public boolean containsAll( Collection<?> clctn ){
+            for ( Object item : clctn ){
+                if ( !contains( item ) ){
                     return false;
                 }
             }
             return true;
         }
 
-        public boolean addAll(Collection<? extends String> clctn) {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public boolean addAll( Collection<? extends String> clctn ){
+            throw new UnsupportedOperationException( "Not supported yet." );
         }
 
-        public boolean retainAll(Collection<?> clctn) {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public boolean retainAll( Collection<?> clctn ){
+            throw new UnsupportedOperationException( "Not supported yet." );
         }
 
-        public boolean removeAll(Collection<?> clctn) {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public boolean removeAll( Collection<?> clctn ){
+            throw new UnsupportedOperationException( "Not supported yet." );
         }
 
-        public void clear() {
-            throw new UnsupportedOperationException("Not supported yet.");
+        public void clear(){
+            throw new UnsupportedOperationException( "Not supported yet." );
         }
     }
 
-    public LazyBSONObject(byte[] data, LazyBSONCallback cbk) {
-        this(data, 0, cbk);
+    public Object put( String key, Object v ){
+        throw new UnsupportedOperationException( "Object is read only" );
     }
 
-    public LazyBSONObject(byte[] data, int offset, LazyBSONCallback cbk) {
-        _data = data;
-        _start = offset;
-        _cbk = cbk;
+    public void putAll( BSONObject o ){
+        throw new UnsupportedOperationException( "Object is read only" );
     }
 
-    public Object put(String key, Object v) {
-        throw new UnsupportedOperationException("Object is read only");
+    public void putAll( Map m ){
+        throw new UnsupportedOperationException( "Object is read only" );
     }
 
-    public void putAll(BSONObject o) {
-        throw new UnsupportedOperationException("Object is read only");
-    }
-
-    public void putAll(Map m) {
-        throw new UnsupportedOperationException("Object is read only");
-    }
-
-    public Object get(String key) {
-        int offset = FIRST_ELMT_OFFSET;
+    public Object get( String key ){
+        int offset = _doc_start_offset + FIRST_ELMT_OFFSET;
         boolean found = false;
-        while (!isElementEmpty(offset)) {
-            String name = getElementFieldName(offset);
-            if (name.equals(key)) {
-                found = true;
+        // TODO - Memoize any key location we find
+        while ( !isElementEmpty( offset ) ){
+            int fieldSize = sizeCString( offset );
+            int elementSize = getElementBSONSize( offset++ );
+            String name = _input.getCString( offset );
+            if ( name.equals( key ) ){
+                found = true; // TODO - Memoize me
                 break;
             }
-            offset += getElementBSONSize(offset);
+            offset += ( fieldSize + elementSize );
         }
-        if (!found)
+        if ( !found ){
             return null;
-        
-        return getElementValue(offset);
+        }
+
+        return getElementValue( offset - 1 );
     }
 
-    public Map toMap() {
-        throw new UnsupportedOperationException("Not Supported");
+    public Map toMap(){
+        throw new UnsupportedOperationException( "Not Supported" );
     }
 
-    public Object removeField(String key) {
-        throw new UnsupportedOperationException("Object is read only");
+    public Object removeField( String key ){
+        throw new UnsupportedOperationException( "Object is read only" );
     }
 
     @Deprecated
-    public boolean containsKey(String s) {
-        return containsField(s);
+    public boolean containsKey( String s ){
+        return containsField( s );
     }
 
-    public boolean containsField(String s) {
-        return keySet().contains(s);
+    public boolean containsField( String s ){
+        return keySet().contains( s );
     }
 
-    public Set<String> keySet() {
+    public Set<String> keySet(){
         return new LazyBSONKeySet();
     }
 
-    private boolean isElementEmpty(int elmtOff) {
-        return getElementType(elmtOff) == BSON.EOO;
+    private boolean isElementEmpty( int offset ){
+        return getElementType( offset ) == BSON.EOO;
     }
 
-    public boolean isEmpty() {
-        return isElementEmpty(FIRST_ELMT_OFFSET);
+    public boolean isEmpty(){
+        return isElementEmpty( _doc_start_offset + FIRST_ELMT_OFFSET );
     }
 
-    private int getBSONSize(int objOff) {
-        return Bits.readInt(_data, objOff);
+    private int getBSONSize( final int offset ){
+        return _input.getInt( offset );
     }
 
-    public int getBSONSize() {
-        return getBSONSize(_start);
+    public int getBSONSize(){
+        return _input.getInt( _doc_start_offset );
     }
 
-    private String getElementFieldName(int elmtOff) {
-//        return readElementCStringValueAscii(_start + elmtOff + 1);
-        return readElementCStringValue(_start + elmtOff + 1);
+    private String getElementFieldName( final int offset ){
+        return _input.getCString( offset );
     }
 
-    private int getElementFieldNameSize(int elmtOff) {
-        int offset = _start + elmtOff + 1;
-        int end = offset;
-        while (_data[end] != 0) {
-            ++end;
-        }
-        return end - offset + 1;
+    private byte getElementType( final int offset ){
+        return _input.get( offset );
     }
 
-    private byte getElementType(int elmtOff) {
-        return _data[_start + elmtOff];
-    }
-
-    private int getElementBSONSize(int elmtOff) {
+    private int getElementBSONSize( int offset ){
         int x = 0;
-        byte type = getElementType(elmtOff);
-        int fieldSize = getElementFieldNameSize(elmtOff);
-        int valueOffset = _start + elmtOff + 1 + fieldSize;
-
-        switch (type) {
+        byte type = getElementType( offset++ );
+        int n = sizeCString( offset++ );
+        int valueOffset = offset + n;
+        switch ( type ){
             case BSON.EOO:
             case BSON.UNDEFINED:
             case BSON.NULL:
@@ -258,86 +250,55 @@ public class LazyBSONObject implements BSONObject {
             case BSON.SYMBOL:
             case BSON.CODE:
             case BSON.STRING:
-                x = Bits.readInt(_data, valueOffset) + 4;
+                x = _input.getInt( valueOffset ) + 4;
                 break;
             case BSON.CODE_W_SCOPE:
-                x = getBSONSize(valueOffset);
+                x = _input.getInt( valueOffset );
                 break;
             case BSON.REF:
-                x = Bits.readInt(_data, valueOffset) + 4 + 12;
+                x = _input.getInt( valueOffset ) + 4 + 12;
                 break;
             case BSON.OBJECT:
             case BSON.ARRAY:
-                x = getBSONSize(valueOffset);
+                x = _input.getInt( valueOffset );
                 break;
             case BSON.BINARY:
-                x = Bits.readInt(_data, valueOffset) + 4 + 1/*subtype*/;
+                x = _input.getInt( valueOffset ) + 4 + 1/*subtype*/;
                 break;
             case BSON.REGEX:
                 // 2 cstrs
-                int end = valueOffset;
-                while (_data[end] != 0) {
-                    ++end;
-                }
-                ++end;
-                while (_data[end] != 0) {
-                    ++end;
-                }
-                ++end;
-                x = end - valueOffset;
+                int part1 = sizeCString( valueOffset ) + 1;
+                int part2 = sizeCString( valueOffset + part1 ) + 1;
+                x = part1 + part2 + 4;
                 break;
             default:
-                throw new BSONException("Invalid type " + type + " for field " + getElementFieldName(elmtOff));
+                throw new BSONException( "Invalid type " + type + " for field " + getElementFieldName( offset ) );
         }
-        return x + fieldSize + 1;
+        return x;
     }
-    
-    private String readElementStringValue(int valueOffset) {
-        int size = Bits.readInt(_data, valueOffset);
-        return new String(_data, valueOffset + 4, size);
-    }
-    
-    private String readElementStringValueAscii(int valueOffset) {
-        int size = Bits.readInt(_data, valueOffset);
-        char[] chars = new char[size];
-        valueOffset += 4;
-        for (int i = 0; i < size; ++i) {
-            chars[i] = (char) _data[valueOffset + i];
-        }
-        return new String(chars, 0, size);
-    }
-    
-    private String readElementCStringValue(int valueOffset) {
-        int end = valueOffset;
-        while (_data[end] != 0) {
-            ++end;
-        }
-        int len = end - valueOffset;
-        if (len == 3 && _data[valueOffset] == '_' && _data[valueOffset + 1] == 'i' && _data[valueOffset + 2] == 'd')
-            return "_id";
-        return new String(_data, valueOffset, len);
-    }
-    
-    private String readElementCStringValueAscii(int valueOffset) {
-        int end = valueOffset;
-        while (_data[end] != 0) {
-            ++end;
-        }
-        int len = end - valueOffset;
-        char[] chars = new char[len];
-        for (int i = 0; i < len; ++i) {
-            chars[i] = (char) _data[valueOffset + i];
-        }
-        return new String(chars, 0, len);
-    }
-    
-    private Object getElementValue(int elmtOff) {
-        int x = 0;
-        byte type = getElementType(elmtOff);
-        int fieldSize = getElementFieldNameSize(elmtOff);
-        int valueOffset = _start + elmtOff + 1 + fieldSize;
 
-        switch (type) {
+
+    private int sizeCString( int offset ){
+        offset += 1;
+        int end = offset;
+        while ( true ){
+            byte b = _input.get( end );
+            if ( b == 0 )
+                break;
+            else
+                end++;
+        }
+        return end - offset + 1;
+    }
+
+    private Object getElementValue( int offset ){
+        int x = 0;
+        byte type = getElementType( offset );
+        int fieldNameSize = sizeCString( offset++ );
+        int valueOffset = offset + fieldNameSize;
+
+
+        switch ( type ){
             case BSON.EOO:
             case BSON.UNDEFINED:
             case BSON.NULL:
@@ -347,107 +308,124 @@ public class LazyBSONObject implements BSONObject {
             case BSON.MINKEY:
                 return new MinKey();
             case BSON.BOOLEAN:
-                return (_data[valueOffset] != 0);
+                return ( _input.get( valueOffset ) != 0 );
             case BSON.NUMBER_INT:
-                return Bits.readInt(_data, valueOffset);
+                return _input.getInt( valueOffset );
             case BSON.TIMESTAMP:
-                int inc = Bits.readInt(_data, valueOffset);
-                int time = Bits.readInt(_data, valueOffset + 4);
-                return new BSONTimestamp(time, inc);
+                int inc = _input.getInt( valueOffset );
+                int time = _input.getInt( valueOffset + 4 );
+                return new BSONTimestamp( time, inc );
             case BSON.DATE:
-                return new Date(Bits.readLong(_data, valueOffset));
+                return new Date( _input.getLong( valueOffset ) );
             case BSON.NUMBER_LONG:
-                return Bits.readLong(_data, valueOffset);
+                return _input.getLong( valueOffset );
             case BSON.NUMBER:
-                return Double.longBitsToDouble(Bits.readLong(_data, valueOffset));
+                return Double.longBitsToDouble( _input.getLong( valueOffset ) );
             case BSON.OID:
-                return new ObjectId(Bits.readIntBE(_data, valueOffset) , 
-                        Bits.readIntBE(_data, valueOffset + 4) , 
-                        Bits.readIntBE(_data, valueOffset + 8) );
+                return new ObjectId( _input.getIntBE( valueOffset ),
+                                     _input.getIntBE( valueOffset + 4 ),
+                                     _input.getIntBE( valueOffset + 8 ) );
             case BSON.SYMBOL:
-                return new Symbol(readElementStringValue(valueOffset));
+                return new Symbol( _input.getUTF8String( valueOffset ) );
             case BSON.CODE:
-                return new Code(readElementStringValue(valueOffset));
+                return new Code( _input.getUTF8String( valueOffset ) );
             case BSON.STRING:
-                return readElementStringValue(valueOffset);
+                return _input.getUTF8String( valueOffset );
             case BSON.CODE_W_SCOPE:
-                int size = Bits.readInt(_data, valueOffset);
-                int strsize = Bits.readInt(_data, valueOffset + 4);
-                String code = readElementStringValue(valueOffset + 4);
-                BSONObject scope = (BSONObject) _cbk.createObject(_data, valueOffset + 4 + 4 + strsize);
-                return new CodeWScope(code, scope);
+                int size = _input.getInt( valueOffset );
+                int strsize = _input.getInt( valueOffset + 4 );
+                String code = _input.getUTF8String( valueOffset + 4 );
+                BSONObject scope = (BSONObject) _callback.createObject( _input.array(), valueOffset + 4 + 4 + strsize );
+                return new CodeWScope( code, scope );
             case BSON.REF:
-                int csize = Bits.readInt(_data, valueOffset);
-                String ns = readElementCStringValue(valueOffset + 4);
+                int csize = _input.getInt( valueOffset );
+                String ns = _input.getCString( valueOffset + 4 );
                 int oidOffset = valueOffset + csize + 4;
-                ObjectId oid = new ObjectId(Bits.readIntBE(_data, oidOffset) , 
-                        Bits.readIntBE(_data, oidOffset + 4) , 
-                        Bits.readIntBE(_data, oidOffset + 8) );
-                return new BasicBSONObject( "$ns" , ns ).append( "$id" , oid );
+                ObjectId oid = new ObjectId( _input.getIntBE( oidOffset ),
+                                             _input.getIntBE( oidOffset + 4 ),
+                                             _input.getIntBE( oidOffset + 8 ) );
+                return _callback.createDBRef( ns, oid );
             case BSON.OBJECT:
-                return _cbk.createObject(_data, valueOffset);
+                return _callback.createObject( _input.array(), valueOffset );
             case BSON.ARRAY:
-                return _cbk.createObject(_data, valueOffset);
+                return _callback.createObject( _input.array(), valueOffset );
             case BSON.BINARY:
-                return readBinary(valueOffset);
+                return readBinary( valueOffset );
             case BSON.REGEX:
-                String pattern = readElementCStringValue(valueOffset);
-                // calculate offset, string length is not reliable
-                int end = valueOffset;
-                while (_data[end] != 0) {
-                    ++end;
-                }
-                ++end;
-                String flags = readElementCStringValue(end);
-                return Pattern.compile( pattern , BSON.regexFlags( flags ) );
+                int n = sizeCString( valueOffset );
+                String pattern = _input.getCString( valueOffset );
+                String flags = _input.getCString( valueOffset + n );
+                return Pattern.compile( pattern, BSON.regexFlags( flags ) );
             default:
-                throw new BSONException("Invalid type " + type + " for field " + getElementFieldName(elmtOff));
+                throw new BSONException( "Invalid type " + type + " for field " + getElementFieldName( offset ) );
         }
     }
 
-    protected Object readBinary( int valueOffset ) {
-        final int totalLen = Bits.readInt(_data, valueOffset);
+    private Object readBinary( int valueOffset ){
+        final int totalLen = _input.getInt( valueOffset );
         valueOffset += 4;
-        final byte bType = _data[valueOffset];
-        valueOffset++;
+        final byte bType = _input.get( valueOffset );
 
         byte[] bin;
         switch ( bType ){
-        case BSON.B_GENERAL: {
-            bin = new byte[totalLen];
-            System.arraycopy(_data, valueOffset, bin, 0, bin.length);
-            return bin;
-        }
-        case BSON.B_BINARY:
-            final int len = Bits.readInt(_data, valueOffset);
-            valueOffset += 4;
-            bin = new byte[len];
-            System.arraycopy(_data, valueOffset, bin, 0, bin.length);
-            return bin;
-        case BSON.B_UUID:
-            if ( totalLen != 16 )
-                throw new IllegalArgumentException( "bad data size subtype 3 len: " + totalLen + " != 16");
+            case BSON.B_GENERAL:{
+                bin = new byte[totalLen];
+                for ( int n = 0; n < totalLen; n++ ){
+                    bin[n] = _input.get( valueOffset + n );
+                }
+                return bin;
+            }
+            case BSON.B_BINARY:
+                final int len = _input.getInt( valueOffset );
+                if ( len + 4 != totalLen )
+                    throw new IllegalArgumentException(
+                            "Bad Data Size; Binary Subtype 2.  { actual len: " + len + " expected totalLen: " + totalLen
+                            + "}" );
+                valueOffset += 4;
+                bin = new byte[len];
+                for ( int n = 0; n < len; n++ ){
+                    bin[n] = _input.get( valueOffset + n );
+                }
+                return bin;
+            case BSON.B_UUID:
+                if ( totalLen != 16 )
+                    throw new IllegalArgumentException(
+                            "Bad Data Size; Binary Subtype 3 (UUID). { total length: " + totalLen + " != 16" );
 
-            long part1 = Bits.readLong(_data, valueOffset);
-            valueOffset += 8;
-            long part2 = Bits.readLong(_data, valueOffset);
-            return new UUID(part1, part2);
+                long part1 = _input.getLong( valueOffset );
+                valueOffset += 8;
+                long part2 = _input.getLong( valueOffset );
+                return new UUID( part1, part2 );
         }
 
         bin = new byte[totalLen];
-        System.arraycopy(_data, valueOffset, bin, 0, bin.length);
-        return new Binary(bType, bin);
+        for ( int n = 0; n < totalLen; n++ ){
+            bin[n] = _input.get( valueOffset + n );
+        }
+        return bin;
     }
 
-    /** Returns a JSON serialization of this object
+    /**
+     * Returns a JSON serialization of this object
+     *
      * @return JSON serialization
      */
     public String toString(){
         return com.mongodb.util.JSON.serialize( this );
     }
 
-    private byte[] _data;
-    private int _start;
+    /**
+     * In a "normal" (aka not embedded) doc, this will be the offset of the first element.
+     *
+     * In an embedded doc because we use ByteBuffers to avoid unecessary copying the offset must be manually set in
+     * _doc_start_offset
+     */
+    final static int FIRST_ELMT_OFFSET = 4;
+
+    private final int _doc_start_offset;
+
+    private final BSONByteBuffer _input; // TODO - Guard this with synchronicity?
     // callback is kept to create sub-objects on the fly
-    private LazyBSONCallback _cbk;
+    private final LazyBSONCallback _callback;
+    private static final Logger log = Logger.getLogger( "org.bson.LazyBSONObject" );
 }

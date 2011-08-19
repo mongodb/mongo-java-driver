@@ -1083,9 +1083,9 @@ public abstract class DBCollection {
     private void _checkKeys( DBObject o ) {
         for ( String s : o.keySet() ){
             if ( s.contains( "." ) )
-                throw new IllegalArgumentException( "fields stored in the db can't have . in them" );
+                throw new IllegalArgumentException( "fields stored in the db can't have . in them. (Bad Key: '" + s + "')" );
             if ( s.startsWith( "$" ) )
-                throw new IllegalArgumentException( "fields stored in the db can't start with '$'" );
+                throw new IllegalArgumentException( "fields stored in the db can't start with '$' (Bad Key: '" + s + "')" );
 
             Object inner;
             if ( (inner = o.get( s )) instanceof DBObject ) {

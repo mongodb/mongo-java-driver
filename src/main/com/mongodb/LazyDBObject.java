@@ -18,6 +18,8 @@ package com.mongodb;
 import org.bson.LazyBSONCallback;
 import org.bson.LazyBSONObject;
 
+import java.io.*;
+
 public class LazyDBObject extends LazyBSONObject implements DBObject {
 
     public void markAsPartialObject() {
@@ -27,11 +29,11 @@ public class LazyDBObject extends LazyBSONObject implements DBObject {
         return false;
     }
     
-    public LazyDBObject(byte[] data, LazyBSONCallback cbk) {
+    public LazyDBObject(byte[] data, LazyBSONCallback cbk){
         this(data, 0, cbk);
     }
 
-    public LazyDBObject(byte[] data, int offset, LazyBSONCallback cbk) {
+    public LazyDBObject(byte[] data, int offset, LazyBSONCallback cbk){
         super(data, offset, cbk);
     }
 }
