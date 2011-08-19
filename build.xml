@@ -114,6 +114,10 @@ limitations under the License.
       <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
     </copy>
 
+    <copy file="src/main/META-INF/MANIFEST_BSON.MF" tofile="build/MANIFEST_BSON.MF" filtering="true">
+      <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
+    </copy>
+
     <exec executable="git" output="build/main/git-hash">
       <arg value="log" />
       <arg value="--pretty=format:%H" />
@@ -124,7 +128,7 @@ limitations under the License.
       <fileset dir="build/main" />
     </jar>
 
-    <jar jarfile="bson.jar">
+    <jar jarfile="bson.jar" manifest="build/MANIFEST_BSON.MF">
       <fileset dir="build/main">
         <not>
           <filename name="com/"/>
@@ -156,20 +160,23 @@ limitations under the License.
 
   <target name="alljars" depends="jar, javadocs" description="build jar, source jar, javadoc jar">
 
-    <jar jarfile="mongo-sources.jar" >
-      <fileset dir="src/main" />
+    <jar jarfile="mongo-sources.jar">
+      <fileset dir="src/main"><not><filename name="META-INF/"/></not></fileset>
     </jar>
 
-    <jar jarfile="mongo-javadoc.jar" >
-      <fileset dir="docs/${build.conf.lib.version}" />
+    <jar jarfile="mongo-javadoc.jar">
+      <fileset dir="docs/${build.conf.lib.version}"/>
     </jar>
 
-    <jar jarfile="bson-sources.jar" >
-      <fileset dir="src/main" />
+    <jar jarfile="bson-sources.jar">
+      <fileset dir="src/main">
+        <not><filename name="com/"/></not>
+        <not><filename name="META-INF/"/></not>
+      </fileset>
     </jar>
 
-    <jar jarfile="bson-javadoc.jar" >
-      <fileset dir="docs/${build.conf.lib.version}" />
+    <jar jarfile="bson-javadoc.jar">
+      <fileset dir="docs/${build.conf.lib.version}"/>
     </jar>
 
   </target>
