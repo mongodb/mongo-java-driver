@@ -35,7 +35,7 @@ import java.util.logging.*;
  *     <td colspan="2">pid</td><td colspan="3">inc</td></tr>
  * </table>
  * </pre></blockquote>
- * 
+ *
  * @dochub objectids
  */
 public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
@@ -50,14 +50,14 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     public static ObjectId get(){
         return new ObjectId();
     }
-    
+
     /** Checks if a string could be an <code>ObjectId</code>.
      * @return whether the string could be an object id
      */
     public static boolean isValid( String s ){
         if ( s == null )
             return false;
-        
+
         final int len = s.length();
         if ( len != 24 )
             return false;
@@ -72,21 +72,21 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
                 continue;
 
             return false;
-        }        
+        }
 
         return true;
     }
-    
+
     /** Turn an object into an <code>ObjectId</code>, if possible.
      * Strings will be converted into <code>ObjectId</code>s, if possible, and <code>ObjectId</code>s will
      * be cast and returned.  Passing in <code>null</code> returns <code>null</code>.
-     * @param o the object to convert 
-     * @return an <code>ObjectId</code> if it can be massaged, null otherwise 
+     * @param o the object to convert
+     * @return an <code>ObjectId</code> if it can be massaged, null otherwise
      */
     public static ObjectId massageToObjectId( Object o ){
         if ( o == null )
             return null;
-        
+
         if ( o instanceof ObjectId )
             return (ObjectId)o;
 
@@ -95,7 +95,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
             if ( isValid( s ) )
                 return new ObjectId( s );
         }
-        
+
         return null;
     }
 
@@ -150,7 +150,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         _inc = bb.getInt();
         _new = false;
     }
-    
+
     /**
      * Creates an ObjectId
      * @param time time in seconds
@@ -163,7 +163,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         _inc = inc;
         _new = false;
     }
-    
+
     /** Create a new object id.
      */
     public ObjectId(){
@@ -181,17 +181,17 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
     public boolean equals( Object o ){
-        
+
         if ( this == o )
             return true;
 
         ObjectId other = massageToObjectId( o );
         if ( other == null )
             return false;
-        
-        return 
-            _time == other._time && 
-            _machine == other._machine && 
+
+        return
+            _time == other._time &&
+            _machine == other._machine &&
             _inc == other._inc;
     }
 
@@ -203,7 +203,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         byte b[] = toByteArray();
 
         StringBuilder buf = new StringBuilder(24);
-        
+
         for ( int i=0; i<b.length; i++ ){
             int x = b[i] & 0xFF;
             String s = Integer.toHexString( x );
@@ -214,7 +214,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
         return buf.toString();
     }
-    
+
     public byte[] toByteArray(){
         byte b[] = new byte[12];
         ByteBuffer bb = ByteBuffer.wrap( b );
@@ -224,28 +224,28 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         bb.putInt( _inc );
         return b;
     }
-    
+
     static String _pos( String s , int p ){
         return s.substring( p * 2 , ( p * 2 ) + 2 );
     }
-    
+
     public static String babbleToMongod( String b ){
         if ( ! isValid( b ) )
             throw new IllegalArgumentException( "invalid object id: " + b );
-        
+
         StringBuilder buf = new StringBuilder( 24 );
         for ( int i=7; i>=0; i-- )
             buf.append( _pos( b , i ) );
         for ( int i=11; i>=8; i-- )
             buf.append( _pos( b , i ) );
-        
+
         return buf.toString();
     }
 
     public String toString(){
         return toStringMongod();
     }
-    
+
     int _compareUnsigned( int i , int j ){
         long li = 0xFFFFFFFFL;
         li = i & li;
@@ -262,7 +262,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     public int compareTo( ObjectId id ){
         if ( id == null )
             return -1;
-        
+
         int x = _compareUnsigned( _time , id._time );
         if ( x != 0 )
             return x;
@@ -270,7 +270,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         x = _compareUnsigned( _machine , id._machine );
         if ( x != 0 )
             return x;
-        
+
         return _compareUnsigned( _inc , id._inc );
     }
 
@@ -280,7 +280,6 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
     /**
      * Gets the time of this ID, in milliseconds
-     * @return
      */
     public long getTime(){
         return _time * 1000L;
@@ -288,7 +287,6 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
     /**
      * Gets the time of this ID, in seconds
-     * @return
      */
     public int getTimeSecond(){
         return _time;
@@ -297,7 +295,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     public int getInc(){
         return _inc;
     }
-    
+
     public int _time(){
         return _time;
     }
@@ -318,7 +316,6 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
     /**
      * Gets the generated machine ID, identifying the machine / process / class loader
-     * @return
      */
     public static int getGenMachineId() {
         return _genmachine;
@@ -326,7 +323,6 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
     /**
      * Gets the current value of the auto increment
-     * @return
      */
     public static int getCurrentInc() {
         return _nextInc.get();
@@ -335,9 +331,9 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     final int _time;
     final int _machine;
     final int _inc;
-    
+
     boolean _new;
-    
+
     public static int _flip( int x ){
         int z = 0;
         z |= ( ( x << 24 ) & 0xFF000000 );
@@ -346,7 +342,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         z |= ( ( x >> 24 ) & 0x000000FF );
         return z;
     }
-    
+
     private static AtomicInteger _nextInc = new AtomicInteger( (new java.util.Random()).nextInt() );
 
     private static final int _genmachine;
@@ -395,5 +391,5 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         }
 
     }
-
 }
+

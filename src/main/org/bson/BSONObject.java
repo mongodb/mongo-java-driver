@@ -2,13 +2,13 @@
 
 /**
  *      Copyright (C) 2008 10gen Inc.
- *  
+ *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
  *   You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *   Unless required by applicable law or agreed to in writing, software
  *   distributed under the License is distributed on an "AS IS" BASIS,
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,8 @@
 
 package org.bson;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A key-value map that can be saved to the database.
@@ -44,7 +45,7 @@ public interface BSONObject {
      * @param m the map
      */
     public void putAll( Map m );
-    
+
     /**
      * Gets a field from this object by a given name.
      * @param key The name of the field fetch
@@ -67,8 +68,8 @@ public interface BSONObject {
 
     /**
      * Deprecated
-     * @param s 
-     * @return
+     * @param s
+     * @return True if the key is present
      * @deprecated
      */
     @Deprecated
@@ -77,7 +78,7 @@ public interface BSONObject {
     /**
      * Checks if this object contains a field with the given name.
      * @param s Field name for which to check
-     * @return
+     * @return True if the field is present
      */
     public boolean containsField(String s);
 
@@ -86,5 +87,5 @@ public interface BSONObject {
      * @return The names of the fields in this object
      */
     public Set<String> keySet();
-
 }
+
