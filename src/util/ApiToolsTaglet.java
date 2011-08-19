@@ -22,15 +22,16 @@ import com.sun.tools.doclets.*;
 
 public class ApiToolsTaglet implements Taglet {
 
+    @SuppressWarnings("unchecked")
     public static void register( Map tagletMap ){
         ApiToolsTaglet t = new ApiToolsTaglet();
         tagletMap.put( t.getName() , t );
     }
-    
+
     public String getName(){
         return "dochub";
     }
-    
+
     public boolean inConstructor(){ return true; }
     public boolean inField(){ return true; }
     public boolean inMethod(){ return true; }
@@ -51,11 +52,11 @@ public class ApiToolsTaglet implements Taglet {
     public String toString( Tag tag ){
         return toString( new Tag[]{ tag } );
     }
-    
+
     public String toString( Tag[] tags ){
         if ( tags.length == 0 )
             return null;
-        
+
         StringBuilder buf = new StringBuilder( "\n<br><DT><B>MongoDB Doc Links</B><DD>" );
         buf.append( "<ul>" );
         for ( Tag t : tags ){
