@@ -47,5 +47,21 @@ public class BasicDBList extends BasicBSONList implements DBObject {
         _isPartialObject = true;
     }
 
+    public Object copy() {
+        // copy field values into new object
+        BasicDBList newobj = new BasicDBList();
+        // need to clone the sub obj
+        for (int i = 0; i < size(); ++i) {
+            Object val = get(i);
+            if (val instanceof BasicDBObject) {
+                val = ((BasicDBObject)val).copy();
+            } else if (val instanceof BasicDBList) {
+                val = ((BasicDBList)val).copy();
+            }
+            newobj.add(val);
+        }
+        return newobj;
+    }
+    
     private boolean _isPartialObject;
 }

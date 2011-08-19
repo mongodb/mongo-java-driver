@@ -90,6 +90,20 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
         return this;
     }
 
-
+    public Object copy() {
+        // copy field values into new object
+        BasicDBObject newobj = new BasicDBObject(this.toMap());
+        // need to clone the sub obj
+        for (String field : keySet()) {
+            Object val = get(field);
+            if (val instanceof BasicDBObject) {
+                newobj.put(field, ((BasicDBObject)val).copy());
+            } else if (val instanceof BasicDBList) {
+                newobj.put(field, ((BasicDBList)val).copy());
+            }
+        }
+        return newobj;
+    }
+    
     private boolean _isPartialObject = false;
 }
