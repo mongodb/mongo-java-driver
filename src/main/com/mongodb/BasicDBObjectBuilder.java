@@ -28,7 +28,7 @@ import java.util.Map;
  *  BasicDBObjectBuilder.start().add( "name" , "eliot" ).add( "number" , 17 ).get()
  */
 public class BasicDBObjectBuilder {
-    
+
     /**
      * creates an empty object
      */
@@ -38,8 +38,8 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * creates an empty object
-     * @return
+     * Creates an empty object
+     * @return The new empty builder
      */
     public static BasicDBObjectBuilder start(){
         return new BasicDBObjectBuilder();
@@ -47,9 +47,8 @@ public class BasicDBObjectBuilder {
 
     /**
      * creates an object with the given key/value
-     * @param k
-     * @param val
-     * @return
+     * @param k The field name
+     * @param val The value
      */
     public static BasicDBObjectBuilder start( String k , Object val ){
         return (new BasicDBObjectBuilder()).add( k , val );
@@ -81,12 +80,12 @@ public class BasicDBObjectBuilder {
         _cur().put( key , val );
         return this;
     }
-    
+
 
     /**
      * same as appends
      * @see #append(String, Object)
-     * @param key 
+     * @param key
      * @param val
      * @return returns itself so you can chain
      */
@@ -106,7 +105,7 @@ public class BasicDBObjectBuilder {
         _stack.addLast( o );
         return this;
     }
-    
+
     /**
      * pops the active object, which means that the parent object becomes active
      * @return returns itself so you can chain
@@ -117,10 +116,10 @@ public class BasicDBObjectBuilder {
         _stack.removeLast();
         return this;
     }
-    
+
     /**
      * gets the base object
-     * @return
+     * @return The base object
      */
     public DBObject get(){
         return _stack.getFirst();
@@ -128,12 +127,12 @@ public class BasicDBObjectBuilder {
 
     /**
      * returns true if no key/value was inserted into base object
-     * @return
+     * @return True if empty
      */
     public boolean isEmpty(){
         return ((BasicDBObject) _stack.getFirst()).size() == 0;
     }
-    
+
     private DBObject _cur(){
         return _stack.getLast();
     }
