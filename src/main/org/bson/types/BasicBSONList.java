@@ -162,5 +162,4 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
             return -1;
         }
     }
-
 }

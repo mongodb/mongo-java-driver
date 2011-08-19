@@ -36,8 +36,9 @@ public class LazyDBDecoder extends LazyBSONDecoder implements DBDecoder {
     }
         
     public DBCallback getDBCallback(DBCollection collection) {
-        // callback doesnt do anything special, unique per decoder
-        return _callback;
+        // callback doesnt do anything special, could be unique per decoder
+        // but have to create per collection due to DBRef, at least
+        return new LazyDBCallback(collection);
     }
 
     public DBObject decode(byte[] b, DBCollection collection) {
@@ -53,6 +54,4 @@ public class LazyDBDecoder extends LazyBSONDecoder implements DBDecoder {
         decode(in, cbk);
         return (DBObject) cbk.get();
     }
-
-    DBCallback _callback = new LazyDBCallback();
 }

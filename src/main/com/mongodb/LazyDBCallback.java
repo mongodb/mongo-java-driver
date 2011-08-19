@@ -22,9 +22,21 @@ import org.bson.LazyBSONCallback;
  */
 public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
 
+    public LazyDBCallback( DBCollection coll ){
+        _collection = coll;
+        _db = _collection == null ? null : _collection.getDB();
+    }
+
     @Override
     public Object createObject(byte[] data, int offset) {
-        return new LazyDBObject(data, offset, this);
+        LazyDBObject o = new LazyDBObject(data, offset, this);
+        if ( o.containsField( "$ref" ) &&
+             o.containsField( "$id" ) ){
+            return new DBRef( _db, o );
+        }
+        return o;
     }
-    
+
+    final DBCollection _collection;
+    final DB _db;
 }

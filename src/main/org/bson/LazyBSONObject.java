@@ -439,6 +439,13 @@ public class LazyBSONObject implements BSONObject {
         return new Binary(bType, bin);
     }
 
+    /** Returns a JSON serialization of this object
+     * @return JSON serialization
+     */
+    public String toString(){
+        return com.mongodb.util.JSON.serialize( this );
+    }
+
     private byte[] _data;
     private int _start;
     // callback is kept to create sub-objects on the fly
