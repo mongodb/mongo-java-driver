@@ -99,13 +99,9 @@ import org.bson.io.PoolOutputBuffer;
  */
 public class Mongo {
 
-    /**
-     *
-     */
+    // Make sure you don't change the format of these two lines. A preprocessing regexp
+    // is applied and updates the version based on configuration in build.properties.
     public static final int MAJOR_VERSION = 2;
-    /**
-     *
-     */
     public static final int MINOR_VERSION = 7;
 
     static int cleanerIntervalMS;
