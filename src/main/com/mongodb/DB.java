@@ -62,14 +62,14 @@ public abstract class DB {
      * ensure that a connection is assigned to the current "consistent request"
      */
     public abstract void requestEnsureConnection();
-    
+
     /**
      * Returns the collection represented by the string &lt;dbName&gt;.&lt;collectionName&gt;.
      * @param name the name of the collection
      * @return the collection
      */
     protected abstract DBCollection doGetCollection( String name );
-    
+
     /**
      * Gets a collection with a given name.
      * If the collection does not exist, a new collection is created.
@@ -105,7 +105,7 @@ public abstract class DB {
         return getCollection(name);
     }
 
-    
+
     /**
      * Returns a collection matching a given string.
      * @param s the name of the collection
@@ -113,7 +113,7 @@ public abstract class DB {
      */
     public DBCollection getCollectionFromString( String s ){
         DBCollection foo = null;
-        
+
         int idx = s.indexOf( "." );
         while ( idx >= 0 ){
             String b = s.substring( 0 , idx );
@@ -155,11 +155,11 @@ public abstract class DB {
      */
     public CommandResult command( DBObject cmd , int options )
         throws MongoException {
-        
+
         Iterator<DBObject> i = getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options);
         if ( i == null || ! i.hasNext() )
             return null;
-        
+
         CommandResult res = (CommandResult)i.next();
         res._cmd = cmd;
         return res;
@@ -197,7 +197,7 @@ public abstract class DB {
      * This is useful if you need to touch a lot of data lightly, in which case network transfer could be a bottleneck.
      * @param code the function in javascript code
      * @param args arguments to be passed to the function
-     * @return
+     * @return The command result
      * @throws MongoException
      */
     public CommandResult doEval( String code , Object ... args )
@@ -215,12 +215,12 @@ public abstract class DB {
      * Otherwise an exception is thrown.
      * @param code the function in javascript code
      * @param args arguments to be passed to the function
-     * @return
+     * @return The object
      * @throws MongoException
      */
     public Object eval( String code , Object ... args )
         throws MongoException {
-        
+
         CommandResult res = doEval( code , args );
         res.throwOnError();
         return res.get( "retval" );
@@ -350,7 +350,7 @@ public abstract class DB {
     }
 
     /**
-     * @see {@link DB#getLastError()}
+     * @see {@link DB#getLastError() }
      * @param concern the concern associated with "getLastError" call
      * @return
      * @throws MongoException
@@ -362,10 +362,10 @@ public abstract class DB {
 
     /**
      * @see {@link DB#getLastError(com.mongodb.WriteConcern) }
-     * @param w 
+     * @param w
      * @param wtimeout
      * @param fsync
-     * @return
+     * @return The command result
      * @throws MongoException
      */
     public CommandResult getLastError( int w , int wtimeout , boolean fsync )
@@ -378,7 +378,6 @@ public abstract class DB {
      * Sets the write concern for this database. It Will be used for
      * writes to any collection in this database. See the
      * documentation for {@link WriteConcern} for more information.
-     *
      * @param concern write concern to use
      */
     public void setWriteConcern( com.mongodb.WriteConcern concern ){
@@ -429,13 +428,13 @@ public abstract class DB {
      */
     public boolean authenticate(String username, char[] passwd )
         throws MongoException {
-        
+
         if ( username == null || passwd == null )
             throw new NullPointerException( "username can't be null" );
-        
+
         if ( _username != null )
 	    throw new IllegalStateException( "can't call authenticate twice on the same DBObject" );
-        
+
         String hash = _hash( username , passwd );
         CommandResult res = _doauth( username , hash.getBytes() );
         if ( !res.ok())
@@ -470,7 +469,7 @@ public abstract class DB {
         _authhash = hash.getBytes();
         return res;
     }
-    
+
     /*
     boolean reauth(){
         if ( _username == null || _authhash == null )
@@ -488,14 +487,14 @@ public abstract class DB {
 
     static DBObject _authCommand( String nonce , String username , byte[] hash ){
         String key = nonce + username + new String( hash );
-        
+
         BasicDBObject cmd = new BasicDBObject();
 
         cmd.put("authenticate", 1);
         cmd.put("user", username);
         cmd.put("nonce", nonce);
         cmd.put("key", Util.hexMD5(key.getBytes()));
-        
+
         return cmd;
     }
 
@@ -647,7 +646,7 @@ public abstract class DB {
     public void resetOptions(){
         _options.reset();
     }
-   
+
     /**
      * Gets the query options
      * @return
