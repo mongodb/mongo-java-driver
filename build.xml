@@ -139,21 +139,35 @@ limitations under the License.
   </target>
 
   <target name="javadocs" depends="compile,utilcompile" description="Generate API docs">
-
     <delete dir="docs/"/>
-    <javadoc packagenames="com.mongodb,com.mongodb.gridfs,com.mongodb.util,org.bson,org.bson.types,org.bson.io,org.bson.util"
-             sourcepath="src/main/"
-             defaultexcludes="yes"
-             destdir="docs/${build.conf.lib.version}"
-             author="true"
-             version="true"
-             source="${build.conf.javac.source}"
-             use="true"
-             access="protected"
-             >
-      <link href="http://download.oracle.com/javase/1.5.0/docs/api/" />
+    <javadoc
+        packagenames="com.mongodb,com.mongodb.gridfs,com.mongodb.util,org.bson,org.bson.types,org.bson.io,org.bson.util"
+        sourcepath="src/main/"
+        defaultexcludes="yes"
+        destdir="docs/mongo-java-driver/${build.conf.lib.version}"
+        author="true"
+        version="true"
+        source="${build.conf.javac.source}"
+        use="true"
+        access="protected">
+        <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
       <classpath refid="classpath"/>
-      <taglet name="ApiToolsTaglet" path="build/util" />
+      <taglet name="ApiToolsTaglet" path="build/util"/>
+    </javadoc>
+
+    <javadoc
+        packagenames="org.bson,org.bson.types,org.bson.io,org.bson.util"
+        sourcepath="src/main/"
+        defaultexcludes="yes"
+        destdir="docs/bson/${build.conf.lib.version}"
+        author="true"
+        version="true"
+        source="${build.conf.javac.source}"
+        use="true"
+        access="protected">
+        <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
+      <classpath refid="classpath"/>
+      <taglet name="ApiToolsTaglet" path="build/util"/>
     </javadoc>
 
   </target>
@@ -165,7 +179,7 @@ limitations under the License.
     </jar>
 
     <jar jarfile="mongo-javadoc.jar">
-      <fileset dir="docs/${build.conf.lib.version}"/>
+      <fileset dir="docs/mongo-java-driver/${build.conf.lib.version}"/>
     </jar>
 
     <jar jarfile="bson-sources.jar">
@@ -176,7 +190,7 @@ limitations under the License.
     </jar>
 
     <jar jarfile="bson-javadoc.jar">
-      <fileset dir="docs/${build.conf.lib.version}"/>
+      <fileset dir="docs/bson/${build.conf.lib.version}"/>
     </jar>
 
   </target>
