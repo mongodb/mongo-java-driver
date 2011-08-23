@@ -81,6 +81,40 @@ public class DBCursorTest extends TestCase {
     }
 
     @Test
+    public void testBig2(){
+        DBCollection c = _db.getCollection("big2");
+        c.drop();
+
+        String bigString;
+        {
+            StringBuilder buf = new StringBuilder( 16000 );
+            for ( int i=0; i<16000; i++ )
+                buf.append( "x" );
+            bigString = buf.toString();
+        }
+        
+        int numToInsert = ( 15 * 1024 * 1024 ) / bigString.length();
+
+        for ( int i=0; i<numToInsert; i++ )
+            c.save( BasicDBObjectBuilder.start().add( "x" , i ).add( "s" , bigString ).get() );
+
+        assert( 800 < numToInsert );
+        
+        assertEquals( numToInsert , c.find().count() );
+        long start = 0;
+        
+        start = System.currentTimeMillis();
+        c.find().batchSize( 100 ).toArray();
+        long elapsed1 = System.currentTimeMillis() - start;
+        start = System.currentTimeMillis();
+        c.find().batchSize( 100 ).toArray(400);
+        
+        long elapsed2 = System.currentTimeMillis() - start;
+        assertTrue( (elapsed1 - elapsed2 > 0/*ms*/) , String.format( "toArray run in %sms, toArray(400) in %sms", elapsed1, elapsed2 ));
+    }
+
+    
+    @Test
     public void testBig(){
         DBCollection c = _db.getCollection("big1");
         c.drop();
