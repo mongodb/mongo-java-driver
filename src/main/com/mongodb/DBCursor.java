@@ -18,11 +18,7 @@
 
 package com.mongodb;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.mongodb.DBApiLayer.Result;
 
@@ -302,6 +298,9 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * @return
      */
     public DBCursor addOption( int option ){
+        if ( option == Bytes.QUERYOPTION_EXHAUST )
+            throw new IllegalArgumentException("The exhaust option is not user settable.");
+        
         _options |= option;
         return this;
     }
@@ -585,7 +584,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     public List<DBObject> toArray( int max )
         throws MongoException {
         _checkType( CursorType.ARRAY );
-        _fill( max );
+        _fill( max - 1 );
         return _all;
     }
 
