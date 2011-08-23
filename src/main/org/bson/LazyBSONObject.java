@@ -19,6 +19,7 @@ import org.bson.io.*;
 import org.bson.types.*;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.logging.*;
 import java.util.regex.*;
 
@@ -44,6 +45,26 @@ public class LazyBSONObject implements BSONObject {
         _callback = callback;
         _input = buffer;
         _doc_start_offset = offset;
+    }
+
+
+    class LazyLookupRecord {
+        LazyLookupRecord( final String name, final int offset ){
+            this.name = name;
+            this.offset = offset;
+            this.type = getElementType( offset - 1 );
+            this.fieldNameSize = sizeCString( offset ) + 1;
+            this.valueOffset = offset + fieldNameSize;
+        }
+
+        final String name;
+        /**
+         * The offset the record begins at.
+         */
+        final byte type;
+        final int fieldNameSize;
+        final int valueOffset;
+        final int offset;
     }
 
     public class LazyBSONIterator implements Iterator<String> {
@@ -157,22 +178,35 @@ public class LazyBSONObject implements BSONObject {
     public Object get( String key ){
         int offset = _doc_start_offset + FIRST_ELMT_OFFSET;
         boolean found = false;
-        // TODO - Memoize any key location we find
-        while ( !isElementEmpty( offset ) ){
-            int fieldSize = sizeCString( offset );
-            int elementSize = getElementBSONSize( offset++ );
-            String name = _input.getCString( offset );
-            if ( name.equals( key ) ){
-                found = true; // TODO - Memoize me
-                break;
+        LazyLookupRecord record = null;
+        if ( noHitFields.contains( key ) ){
+            found = false;
+        }
+        else if ( fieldIndex.containsKey( key ) ){
+            record = fieldIndex.get( key );
+            found = true;
+        }
+        else{
+            while ( !isElementEmpty( offset ) ){
+                int fieldSize = sizeCString( offset );
+                int elementSize = getElementBSONSize( offset++ );
+                String name = _input.getCString( offset );
+                final LazyLookupRecord _t_record = new LazyLookupRecord( name, offset );
+                fieldIndex.putIfAbsent( name, _t_record );
+                if ( name.equals( key ) ){
+                    found = true;
+                    record = _t_record;
+                    break;
+                }
+                offset += ( fieldSize + elementSize );
             }
-            offset += ( fieldSize + elementSize );
         }
         if ( !found ){
+            noHitFields.add( key );
             return null;
         }
-
-        return getElementValue( offset - 1 );
+        else
+            return getElementValue( record );
     }
 
     public Map toMap(){
@@ -291,14 +325,8 @@ public class LazyBSONObject implements BSONObject {
         return end - offset + 1;
     }
 
-    private Object getElementValue( int offset ){
-        int x = 0;
-        byte type = getElementType( offset );
-        int fieldNameSize = sizeCString( offset++ );
-        int valueOffset = offset + fieldNameSize;
-
-
-        switch ( type ){
+    private Object getElementValue( LazyLookupRecord record ){
+        switch ( record.type ){
             case BSON.EOO:
             case BSON.UNDEFINED:
             case BSON.NULL:
@@ -308,56 +336,58 @@ public class LazyBSONObject implements BSONObject {
             case BSON.MINKEY:
                 return new MinKey();
             case BSON.BOOLEAN:
-                return ( _input.get( valueOffset ) != 0 );
+                return ( _input.get( record.valueOffset ) != 0 );
             case BSON.NUMBER_INT:
-                return _input.getInt( valueOffset );
+                return _input.getInt( record.valueOffset );
             case BSON.TIMESTAMP:
-                int inc = _input.getInt( valueOffset );
-                int time = _input.getInt( valueOffset + 4 );
+                int inc = _input.getInt( record.valueOffset );
+                int time = _input.getInt( record.valueOffset + 4 );
                 return new BSONTimestamp( time, inc );
             case BSON.DATE:
-                return new Date( _input.getLong( valueOffset ) );
+                return new Date( _input.getLong( record.valueOffset ) );
             case BSON.NUMBER_LONG:
-                return _input.getLong( valueOffset );
+                return _input.getLong( record.valueOffset );
             case BSON.NUMBER:
-                return Double.longBitsToDouble( _input.getLong( valueOffset ) );
+                return Double.longBitsToDouble( _input.getLong( record.valueOffset ) );
             case BSON.OID:
-                return new ObjectId( _input.getIntBE( valueOffset ),
-                                     _input.getIntBE( valueOffset + 4 ),
-                                     _input.getIntBE( valueOffset + 8 ) );
+                return new ObjectId( _input.getIntBE( record.valueOffset ),
+                                     _input.getIntBE( record.valueOffset + 4 ),
+                                     _input.getIntBE( record.valueOffset + 8 ) );
             case BSON.SYMBOL:
-                return new Symbol( _input.getUTF8String( valueOffset ) );
+                return new Symbol( _input.getUTF8String( record.valueOffset ) );
             case BSON.CODE:
-                return new Code( _input.getUTF8String( valueOffset ) );
+                return new Code( _input.getUTF8String( record.valueOffset ) );
             case BSON.STRING:
-                return _input.getUTF8String( valueOffset );
+                return _input.getUTF8String( record.valueOffset );
             case BSON.CODE_W_SCOPE:
-                int size = _input.getInt( valueOffset );
-                int strsize = _input.getInt( valueOffset + 4 );
-                String code = _input.getUTF8String( valueOffset + 4 );
-                BSONObject scope = (BSONObject) _callback.createObject( _input.array(), valueOffset + 4 + 4 + strsize );
+                int size = _input.getInt( record.valueOffset );
+                int strsize = _input.getInt( record.valueOffset + 4 );
+                String code = _input.getUTF8String( record.valueOffset + 4 );
+                BSONObject scope =
+                        (BSONObject) _callback.createObject( _input.array(), record.valueOffset + 4 + 4 + strsize );
                 return new CodeWScope( code, scope );
             case BSON.REF:
-                int csize = _input.getInt( valueOffset );
-                String ns = _input.getCString( valueOffset + 4 );
-                int oidOffset = valueOffset + csize + 4;
+                int csize = _input.getInt( record.valueOffset );
+                String ns = _input.getCString( record.valueOffset + 4 );
+                int oidOffset = record.valueOffset + csize + 4;
                 ObjectId oid = new ObjectId( _input.getIntBE( oidOffset ),
                                              _input.getIntBE( oidOffset + 4 ),
                                              _input.getIntBE( oidOffset + 8 ) );
                 return _callback.createDBRef( ns, oid );
             case BSON.OBJECT:
-                return _callback.createObject( _input.array(), valueOffset );
+                return _callback.createObject( _input.array(), record.valueOffset );
             case BSON.ARRAY:
-                return _callback.createObject( _input.array(), valueOffset );
+                return _callback.createObject( _input.array(), record.valueOffset );
             case BSON.BINARY:
-                return readBinary( valueOffset );
+                return readBinary( record.valueOffset );
             case BSON.REGEX:
-                int n = sizeCString( valueOffset );
-                String pattern = _input.getCString( valueOffset );
-                String flags = _input.getCString( valueOffset + n );
+                int n = sizeCString( record.valueOffset );
+                String pattern = _input.getCString( record.valueOffset );
+                String flags = _input.getCString( record.valueOffset + n );
                 return Pattern.compile( pattern, BSON.regexFlags( flags ) );
             default:
-                throw new BSONException( "Invalid type " + type + " for field " + getElementFieldName( offset ) );
+                throw new BSONException(
+                        "Invalid type " + record.type + " for field " + getElementFieldName( record.offset ) );
         }
     }
 
@@ -423,6 +453,10 @@ public class LazyBSONObject implements BSONObject {
     final static int FIRST_ELMT_OFFSET = 4;
 
     private final int _doc_start_offset;
+
+    private final ConcurrentHashMap<String, LazyLookupRecord> fieldIndex =
+            new ConcurrentHashMap<String, LazyLookupRecord>();
+    private final ConcurrentSkipListSet<String> noHitFields = new ConcurrentSkipListSet<String>();
 
     private final BSONByteBuffer _input; // TODO - Guard this with synchronicity?
     // callback is kept to create sub-objects on the fly
