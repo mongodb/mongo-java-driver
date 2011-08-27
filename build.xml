@@ -45,6 +45,7 @@ limitations under the License.
         <mkdir dir="build/main" />
         <mkdir dir="build/test" />
         <mkdir dir="build/util" />
+        <mkdir dir="build/feature" />
         <mkdir dir="logs" />
         <mkdir dir="${testdir}" />
     </target>
@@ -144,6 +145,10 @@ limitations under the License.
             <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
         </copy>
 
+        <copy file="src/feature/feature.xml" tofile="build/feature/feature.xml" filtering="true">
+            <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
+        </copy>
+
         <exec executable="git" output="build/main/git-hash">
             <arg value="log" />
             <arg value="--pretty=format:%H" />
@@ -156,6 +161,7 @@ limitations under the License.
           <fileset dir="build/main"><not><filename name="com/"/></not></fileset>
         </jar>
 
+        <jar jarfile="mongo.feature.jar"><fileset dir="build/feature" /></jar>
     </target>
 
     <!-- ******************************************************************* -->

@@ -2,7 +2,7 @@
 <feature
       id="com.mongodb.feature"
       label="MongoDB Driver"
-      version="2.7.0.qualifier"
+      version="@VERSION@"
       provider-name="MongoDB">
 
    <description url="http://www.mongodb.org/display/DOCS/Java+Language+Center">
@@ -29,7 +29,7 @@
          id="com.mongodb"
          download-size="0"
          install-size="0"
-         version="0.0.0"
+         version="@VERSION@"
          unpack="false"/>
 
 </feature>
