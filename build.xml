@@ -60,6 +60,7 @@ limitations under the License.
         <delete dir="docs"/>
         <delete dir="logs"/>
         <delete file="mongo.jar"/>
+        <delete file="mongo.feature.jar"/>
         <delete file="mongo-javadoc.jar"/>
         <delete file="mongo-sources.jar"/>
         <delete file="bson.jar"/>
