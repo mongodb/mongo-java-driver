@@ -46,6 +46,9 @@ limitations under the License.
         <mkdir dir="build/test" />
         <mkdir dir="build/util" />
         <mkdir dir="build/feature" />
+        <mkdir dir="build/p2" />
+        <mkdir dir="build/p2/features" />
+        <mkdir dir="build/p2/plugins" />
         <mkdir dir="logs" />
         <mkdir dir="${testdir}" />
     </target>
@@ -60,7 +63,6 @@ limitations under the License.
         <delete dir="docs"/>
         <delete dir="logs"/>
         <delete file="mongo.jar"/>
-        <delete file="mongo.feature.jar"/>
         <delete file="mongo-javadoc.jar"/>
         <delete file="mongo-sources.jar"/>
         <delete file="bson.jar"/>
@@ -162,7 +164,8 @@ limitations under the License.
           <fileset dir="build/main"><not><filename name="com/"/></not></fileset>
         </jar>
 
-        <jar jarfile="mongo.feature.jar"><fileset dir="build/feature" /></jar>
+        <jar jarfile="build/p2/features/mongo.feature.jar"><fileset dir="build/feature" /></jar>
+        <copy file="mongo.jar" tofile="build/p2/plugins/mongo.jar"/>
     </target>
 
     <!-- ******************************************************************* -->
