@@ -203,7 +203,7 @@ public class BSONByteBuffer {
             }
         }
         _stringBuffer.reset();
-        return out.intern();
+        return out;
     }
 
     public String getUTF8String( int i ){
@@ -227,7 +227,7 @@ public class BSONByteBuffer {
         }
 
         try {
-            return new String( b, 0, size - 1, "UTF-8" ).intern();
+            return new String( b, 0, size - 1, "UTF-8" );
         }
         catch ( UnsupportedEncodingException e ) {
             throw new BSONException( "Cannot decode string as UTF-8." );
