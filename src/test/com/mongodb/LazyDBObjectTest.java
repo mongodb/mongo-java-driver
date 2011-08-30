@@ -211,6 +211,12 @@ public class LazyDBObjectTest extends TestCase {
         //    assertEquals( doc.get( "uuid" ), test_uuid );
         assertEquals( ( (Pattern) doc.get( "regex" ) ).pattern(), test_regex.pattern() );
         assertEquals( ( (Pattern) doc.get( "regex" ) ).flags(), test_regex.flags() );
+        // Test iteration of keyset
+        for (String key : ((LazyDBObject) doc).keySet()) {
+            assertNotNull( key );
+            if (!key.equals( "null" ))
+                assertNotNull( doc.get( key ) );
+        }
     }
 
 

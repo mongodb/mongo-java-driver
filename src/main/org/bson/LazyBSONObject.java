@@ -223,7 +223,12 @@ public class LazyBSONObject implements BSONObject {
     }
 
     public boolean containsField( String s ){
-        return keySet().contains( s );
+        if ( noHitFields.contains( s ) )
+            return true; 
+        else if ( fieldIndex.containsKey( s ) )
+            return false;
+        else 
+            return keySet().contains( s );
     }
 
     public Set<String> keySet(){
@@ -360,7 +365,6 @@ public class LazyBSONObject implements BSONObject {
             case BSON.STRING:
                 return _input.getUTF8String( record.valueOffset );
             case BSON.CODE_W_SCOPE:
-                int size = _input.getInt( record.valueOffset );
                 int strsize = _input.getInt( record.valueOffset + 4 );
                 String code = _input.getUTF8String( record.valueOffset + 4 );
                 BSONObject scope =
