@@ -19,6 +19,7 @@ package com.mongodb;
 import java.io.IOException;
 import java.util.List;
 
+import org.bson.types.*;
 import org.testng.annotations.Test;
 
 import com.mongodb.util.TestCase;
@@ -36,7 +37,7 @@ public class DBCollectionTest extends TestCase {
     public void testMultiInsert() {
         DBCollection c = _db.getCollection("testmultiinsert");
         c.drop();
-        
+
         DBObject obj = c.findOne();
         assertEquals(obj, null);
 
@@ -49,7 +50,7 @@ public class DBCollectionTest extends TestCase {
     public void testFindOne() {
         DBCollection c = _db.getCollection("test");
         c.drop();
-        
+
         DBObject obj = c.findOne();
         assertEquals(obj, null);
 
@@ -62,7 +63,7 @@ public class DBCollectionTest extends TestCase {
         // Test that findOne works when fields is specified but no match is found
         // *** This is a Regression test for JAVA-411 ***
         obj = c.findOne(null, new BasicDBObject("_id", true));
-                              
+
         assertEquals(obj, null);
 
         DBObject inserted = BasicDBObjectBuilder.start().add("x",1).add("y",2).get();
@@ -87,7 +88,7 @@ public class DBCollectionTest extends TestCase {
         assertEquals(obj.containsField("x"), false);
         assertEquals(obj.get("y"), 2);
     }
-    
+
     @Test
     public void testDropIndex(){
         DBCollection c = _db.getCollection( "dropindex1" );
@@ -107,10 +108,10 @@ public class DBCollectionTest extends TestCase {
 
         c.ensureIndex( new BasicDBObject( "y" , 1 ) );
         assertEquals( 3 , c.getIndexInfo().size() );
-        
+
         c.dropIndex( new BasicDBObject( "x" , 1 ) );
         assertEquals( 2 , c.getIndexInfo().size() );
-        
+
     }
 
     @Test
@@ -163,7 +164,7 @@ public class DBCollectionTest extends TestCase {
     public void testEnsureIndex(){
         DBCollection c = _db.getCollection( "ensureIndex1" );
         c.drop();
-        
+
         c.save( new BasicDBObject( "x" , 1 ) );
         assertEquals( 1 , c.getIndexInfo().size() );
 
@@ -179,12 +180,12 @@ public class DBCollectionTest extends TestCase {
 
         c.insert( new BasicDBObject( "x" , 1 ) );
         c.insert( new BasicDBObject( "x" , 1 ) );
-        
+
         c.ensureIndex( new BasicDBObject( "y" , 1 ) );
         c.resetIndexCache();
         c.ensureIndex( new BasicDBObject( "y" , 1 ) ); // make sure this doesn't throw
         c.resetIndexCache();
-        
+
         Exception failed = null;
         try {
             c.ensureIndex( new BasicDBObject( "x" , 1 ) , new BasicDBObject( "unique" , true ) );
@@ -196,11 +197,43 @@ public class DBCollectionTest extends TestCase {
 
     }
 
+    @Test(groups = {"bulkContinue"})
+    public void testMultiInsertNoContinue() {
+        DBCollection c = _db.getCollection("testmultiinsertNoContinue");
+        c.drop();
+
+        DBObject obj = c.findOne();
+        assertEquals(obj, null);
+
+        ObjectId id = new ObjectId();
+        DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x",1).add("y",2).get();
+        DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x",3).add("y",4).get();
+        DBObject inserted3 = BasicDBObjectBuilder.start().add("x",5).add("y",6).get();
+        WriteResult r = c.insert(false, inserted1,inserted2, inserted3);
+        assertEquals( c.count(), 1);
+    }
+
+    @Test(groups = {"bulkContinue"})
+    public void testMultiInsertWithContinue() {
+        DBCollection c = _db.getCollection("testmultiinsertWithContinue");
+        c.drop();
+
+        DBObject obj = c.findOne();
+        assertEquals(obj, null);
+
+        ObjectId id = new ObjectId();
+        DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x",1).add("y",2).get();
+        DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x",3).add("y",4).get();
+        DBObject inserted3 = BasicDBObjectBuilder.start().add("x",5).add("y",6).get();
+        WriteResult r = c.insert(true, inserted1,inserted2, inserted3);
+        assertEquals( c.count(), 2 );
+    }
+
     @Test( expectedExceptions = IllegalArgumentException.class )
     public void testDotKeysFail() {
         DBCollection c = _db.getCollection("testdotkeysFail");
         c.drop();
-        
+
         DBObject obj = BasicDBObjectBuilder.start().add("x",1).add("y",2).add("foo.bar","baz").get();
         c.insert(obj);
     }
