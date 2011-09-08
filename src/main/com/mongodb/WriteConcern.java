@@ -84,7 +84,24 @@ public class WriteConcern {
     public WriteConcern( int w ){
         this( w , 0 , false );
     }
-    
+
+    /**
+     * Tag based Write Concern with wtimeout=0, fsync=false, and j=false
+     * @param w Write Concern tag
+     */
+    public WriteConcern( String w ){
+        this( w , 0 , false, false );
+    }
+
+    /**
+     * Tag based Write Concern with configgable j and wtimeout=0, fsync=false
+     * @param w Write Concern Tag
+     * @param j whether writes should wait for a journaling group commit
+     */
+    public WriteConcern( String w, boolean j ){
+        this( w , 0 , false, j );
+    }
+
     /** 
      * Calls {@link WriteConcern#WriteConcern(int, int, boolean)} with fsync=false
      * @param w number of writes
@@ -308,6 +325,19 @@ public class WriteConcern {
     public Object getWValue(){
         return _wValue;
     }
+
+    /**
+     * Create a Majority Write Concern that requires a majority of
+     * servers to acknowledge the write.
+     *
+     * @param wtimeout timeout for write operation
+     * @param fsync whether or not to fsync
+     * @param j whether writes should wait for a journaling group commit
+     */
+    public static MajorityWriteConcern majorityWriteConcern( int wtimeout, boolean fsync, boolean j ) {
+        return new MajorityWriteConcern( wtimeout, fsync, j );
+    }
+
 
     final Object _wValue;
     final int _wtimeout;
