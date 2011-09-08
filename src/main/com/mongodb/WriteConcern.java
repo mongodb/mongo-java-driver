@@ -56,7 +56,7 @@ public class WriteConcern {
     public final static WriteConcern SAFE = new WriteConcern(1);
 
     /** Exceptions are raised for network issues, and server errors; waits on a majority of servers for the write operation */
-    public final static WriteConcern MAJORITY_SAFE = new MajorityWriteConcern();
+    public final static WriteConcern MAJORITY = new MajorityWriteConcern();
 
     /** Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to disk*/
     public final static WriteConcern FSYNC_SAFE = new WriteConcern(true);
@@ -313,9 +313,7 @@ public class WriteConcern {
         if ( o == null || getClass() != o.getClass() ) return false;
 
         WriteConcern that = (WriteConcern) o;
-
         return _fsync == that._fsync && _wValue == that._wValue && _wtimeout == that._wtimeout && _j == that._j;
-
     }
 
     /**
