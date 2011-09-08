@@ -381,7 +381,7 @@ public abstract class DB {
      * @param concern write concern to use
      */
     public void setWriteConcern( com.mongodb.WriteConcern concern ){
-	if (concern == null) throw new IllegalArgumentException();
+        if (concern == null) throw new IllegalArgumentException();
         _concern = concern;
     }
 
@@ -393,6 +393,28 @@ public abstract class DB {
         if ( _concern != null )
             return _concern;
         return _mongo.getWriteConcern();
+    }
+
+    /**
+     * Sets the read preference for this database. Will be used as default for
+     * reads from any collection in this database. See the
+     * documentation for {@link ReadPreference} for more information.
+     *
+     * @param preference Read Preference to use
+     */
+    public void setReadPreference( ReadPreference preference ){
+        if ( preference == null ) throw new IllegalArgumentException();
+        _readPref = preference;
+    }
+
+    /**
+     * Gets the default read preference
+     * @return
+     */
+    public ReadPreference getReadPreference(){
+        if ( _readPref != null )
+            return _readPref;
+        return _mongo.getReadPreference();
     }
 
     /**
@@ -667,6 +689,7 @@ public abstract class DB {
 
     protected boolean _readOnly = false;
     private com.mongodb.WriteConcern _concern;
+    private com.mongodb.ReadPreference _readPref;
     final Bytes.OptionHolder _options;
 
     String _username;

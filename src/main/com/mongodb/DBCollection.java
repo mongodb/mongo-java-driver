@@ -1328,6 +1328,26 @@ public abstract class DBCollection {
     }
 
     /**
+     * Sets the read preference for this collection. Will be used as default
+     * for reads from this collection; overrides DB & Connection level settings.
+     * See the * documentation for {@link ReadPreference} for more information.
+     *
+     * @param preference Read Preference to use
+     */
+    public void setReadPreference( ReadPreference preference ){
+        _readPref = preference;
+    }
+
+    /**
+     * Gets the default read preference
+     * @return
+     */
+    public ReadPreference getReadPreference(){
+        if ( _readPref != null )
+            return _readPref;
+        return _db.getReadPreference();
+    }
+    /**
      * makes this query ok to run on a slave node
      *
      * @deprecated Replaced in MongoDB 2.0/Java Driver 2.7 with ReadPreference.SECONDARY
@@ -1384,6 +1404,7 @@ public abstract class DBCollection {
 
     protected List<DBObject> _hintFields;
     private WriteConcern _concern = null;
+    private ReadPreference _readPref = null;
     final Bytes.OptionHolder _options;
 
     protected Class _objectClass = null;

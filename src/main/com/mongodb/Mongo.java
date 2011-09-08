@@ -475,6 +475,25 @@ public class Mongo {
     }
 
     /**
+     * Sets the read preference for this database. Will be used as default for
+     * reads from any collection in any database. See the
+     * documentation for {@link ReadPreference} for more information.
+     *
+     * @param preference Read Preference to use
+     */
+    public void setReadPreference( ReadPreference preference ){
+        _readPref = preference;
+    }
+
+    /**
+     * Gets the default read preference
+     * @return
+     */
+    public ReadPreference getReadPreference(){
+        return _readPref;
+    }
+
+    /**
      * makes it possible to run read queries on slave nodes
      *
      * @deprecated Replaced in MongoDB 2.0/Java Driver 2.7 with ReadPreference.SECONDARY
@@ -551,6 +570,7 @@ public class Mongo {
     final DBTCPConnector _connector;
     final ConcurrentMap<String,DB> _dbs = new ConcurrentHashMap<String,DB>();
     private WriteConcern _concern = WriteConcern.NORMAL;
+    private ReadPreference _readPref = ReadPreference.PRIMARY;
     final Bytes.OptionHolder _netOptions = new Bytes.OptionHolder( null );
     final DBCleanerThread _cleaner;
 
