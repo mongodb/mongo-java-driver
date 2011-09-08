@@ -754,11 +754,29 @@ public class JavaClientTest extends TestCase {
         WriteConcern wc1 = WriteConcern.NORMAL;
         WriteConcern wc2 = WriteConcern.valueOf( "normal" );
         WriteConcern wc3 = WriteConcern.valueOf( "NORMAL" );
-        
-        assertEquals( wc1._w, wc2._w );
-        assertEquals( wc1._w, wc3._w );
+
+        assertEquals( wc1, wc2 );
+        assertEquals( wc1, wc3 );
+        assertEquals( wc1.getW(), wc2.getW() );
+        assertEquals( wc1.getWValue(), wc2.getWValue() );
+        assertEquals( wc1.getW(), wc3.getW() );
+        assertEquals( wc1.getWValue(), wc3.getWValue() );
     }
-    
+
+    @Test
+    public void testWriteConcernMajority() {
+        WriteConcern wc1 = WriteConcern.MAJORITY;
+        WriteConcern wc2 = WriteConcern.valueOf( "majority" );
+        WriteConcern wc3 = WriteConcern.valueOf( "MAJORITY" );
+
+        assertEquals( wc1, wc2 );
+        assertEquals( wc1, wc3 );
+        assertEquals( wc1.getWString(), wc2.getWString() );
+        assertEquals( wc1.getWValue(), wc2.getWValue() );
+        assertEquals( wc1.getWString(), wc3.getWString() );
+        assertEquals( wc1.getWValue(), wc3.getWValue() );
+    }
+
     @Test
     public void testFindAndModify(){
         DBCollection c = _db.getCollection( "findandmodify" );
