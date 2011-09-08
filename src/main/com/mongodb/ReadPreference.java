@@ -18,10 +18,18 @@ import java.util.*;
 public class ReadPreference {
     public static class PrimaryReadPreference extends ReadPreference {
         private PrimaryReadPreference() {}
+        @Override
+        public String toString(){
+           return "ReadPreference.PRIMARY" ;
+        }
     }
 
     public static class SecondaryReadPreference extends ReadPreference {
         private SecondaryReadPreference() {}
+        @Override
+        public String toString(){
+            return "ReadPreference.SECONDARY";
+        }
     }
 
     public static class TaggedReadPreference extends ReadPreference {
@@ -35,6 +43,11 @@ public class ReadPreference {
 
         public DBObject getTags(){
             return _tags;
+        }
+
+        @Override
+        public String toString(){
+            return getTags().toString();
         }
 
         private final DBObject _tags;
