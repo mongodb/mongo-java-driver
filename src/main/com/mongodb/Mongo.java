@@ -476,7 +476,11 @@ public class Mongo {
 
     /**
      * makes it possible to run read queries on slave nodes
+     *
+     * @deprecated Replaced in MongoDB 2.0/Java Driver 2.7 with ReadPreference.SECONDARY
+     * @see com.mongodb.ReadPreference.SECONDARY
      */
+    @Deprecated
     public void slaveOk(){
         addOption( Bytes.QUERYOPTION_SLAVEOK );
     }

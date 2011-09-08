@@ -290,8 +290,13 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
     /**
      * makes this query ok to run on a slave node
-     * @return
+     *
+     * @return a copy of the same cursor (for chaining)
+     *
+     * @deprecated Replaced in MongoDB 2.0/Java Driver 2.7 with ReadPreference.SECONDARY
+     * @see com.mongodb.ReadPreference.SECONDARY
      */
+    @Deprecated
     public DBCursor slaveOk(){
         return addOption( Bytes.QUERYOPTION_SLAVEOK );
     }

@@ -619,7 +619,11 @@ public abstract class DB {
 
     /**
      * Makes it possible to execute "read" queries on a slave node
+     *
+     * @deprecated Replaced in MongoDB 2.0/Java Driver 2.7 with ReadPreference.SECONDARY
+     * @see com.mongodb.ReadPreference.SECONDARY
      */
+    @Deprecated
     public void slaveOk(){
         addOption( Bytes.QUERYOPTION_SLAVEOK );
     }
