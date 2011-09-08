@@ -291,7 +291,11 @@ public abstract class DBCollection {
     /**
      * Finds objects
      */
-    abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options ) throws MongoException ;
+    Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options ) throws MongoException {
+        return __find( ref, fields, numToSkip, batchSize, limit, options, _readPref );
+    }
+
+    abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options, ReadPreference readPref ) throws MongoException ;
 
     /**
      * Calls {@link DBCollection#find(com.mongodb.DBObject, com.mongodb.DBObject, int, int)} and applies the query options
@@ -340,7 +344,20 @@ public abstract class DBCollection {
      */
     public final DBObject findOne( Object obj )
         throws MongoException {
-        return findOne(obj, null);
+        return findOne(obj, null, _readPref);
+    }
+
+    /**
+     * Finds an object by its id.
+     * This compares the passed in value to the _id field of the document
+     *
+     * @param obj any valid object
+     * @return the object, if found, otherwise <code>null</code>
+     * @throws MongoException
+     */
+    public final DBObject findOne( Object obj , ReadPreference readPref )
+            throws MongoException {
+        return findOne(obj, null, readPref);
     }
 
     /**
@@ -353,7 +370,20 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( Object obj, DBObject fields ) {
-        Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions() );
+        return findOne( obj, fields, _readPref );
+    }
+
+    /**
+     * Finds an object by its id.
+     * This compares the passed in value to the _id field of the document
+     *
+     * @param obj any valid object
+     * @param fields fields to return
+     * @return the object, if found, otherwise <code>null</code>
+     * @dochub find
+     */
+    public final DBObject findOne( Object obj, DBObject fields, ReadPreference readPref ) {
+        Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions(), readPref );
         return (iterator != null ? iterator.next() : null);
     }
 
@@ -578,7 +608,18 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBCursor find( DBObject ref ){
-        return new DBCursor( this, ref, null );
+        return find( ref, _readPref );
+    }
+
+    /**
+     * Queries for an object in this collection.
+     * @param ref object for which to search
+     * @param preference Read Preference for this write
+     * @return an iterator over the results
+     * @dochub find
+     */
+    public final DBCursor find( DBObject ref, ReadPreference preference ){
+        return new DBCursor( this, ref, null, preference );
     }
 
     /**
@@ -605,7 +646,34 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBCursor find( DBObject ref , DBObject keys ){
-        return new DBCursor( this, ref, keys );
+        return find( ref, keys, _readPref );
+    }
+
+    /**
+     * Queries for an object in this collection.
+     *
+     * <p>
+     * An empty DBObject will match every document in the collection.
+     * Regardless of fields specified, the _id fields are always returned.
+     * </p>
+     * <p>
+     * An example that returns the "x" and "_id" fields for every document
+     * in the collection that has an "x" field:
+     * </p>
+     * <blockquote><pre>
+     * BasicDBObject keys = new BasicDBObject();
+     * keys.put("x", 1);
+     *
+     * DBCursor cursor = collection.find(new BasicDBObject(), keys);
+     * </pre></blockquote>
+     *
+     * @param ref object for which to search
+     * @param keys fields to return
+     * @return a cursor to iterate over results
+     * @dochub find
+     */
+    public final DBCursor find( DBObject ref , DBObject keys, ReadPreference readPref ){
+        return new DBCursor( this, ref, keys, readPref );
     }
 
     /**
@@ -614,7 +682,16 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBCursor find(){
-        return new DBCursor( this, new BasicDBObject(), null );
+        return find( _readPref );
+    }
+
+    /**
+     * Queries for all objects in this collection.
+     * @return a cursor which will iterate over every object
+     * @dochub find
+     */
+    public final DBCursor find( ReadPreference readPref ){
+        return new DBCursor( this, new BasicDBObject(), null, readPref );
     }
 
     /**
@@ -628,6 +705,16 @@ public abstract class DBCollection {
     }
 
     /**
+     * Returns a single object from this collection.
+     * @return the object found, or <code>null</code> if the collection is empty
+     * @throws MongoException
+     */
+    public final DBObject findOne( ReadPreference readPref )
+            throws MongoException {
+        return findOne( new BasicDBObject(), readPref );
+    }
+
+    /**
      * Returns a single object from this collection matching the query.
      * @param o the query object
      * @return the object found, or <code>null</code> if no such object exists
@@ -635,7 +722,18 @@ public abstract class DBCollection {
      */
     public final DBObject findOne( DBObject o )
         throws MongoException {
-        return findOne(o, null);
+        return findOne( o, null, _readPref );
+    }
+
+    /**
+     * Returns a single object from this collection matching the query.
+     * @param o the query object
+     * @return the object found, or <code>null</code> if no such object exists
+     * @throws MongoException
+     */
+    public final DBObject findOne( DBObject o, ReadPreference readPref )
+            throws MongoException {
+        return findOne( o, null, readPref );
     }
 
     /**
@@ -646,13 +744,24 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( DBObject o, DBObject fields ) {
-        Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0, getOptions() );
+        return findOne( o, fields, _readPref );
+    }
+    /**
+     * Returns a single object from this collection matching the query.
+     * @param o the query object
+     * @param fields fields to return
+     * @return the object found, or <code>null</code> if no such object exists
+     * @dochub find
+     */
+    public final DBObject findOne( DBObject o, DBObject fields, ReadPreference readPref ) {
+        Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0, getOptions(), readPref );
         DBObject obj = (i == null ? null : i.next());
         if ( obj != null && ( fields != null && fields.keySet().size() > 0 ) ){
             obj.markAsPartialObject();
         }
         return obj;
     }
+
 
     /**
      * calls {@link DBCollection#apply(com.mongodb.DBObject, boolean)} with ensureID=true

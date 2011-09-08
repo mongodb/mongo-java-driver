@@ -59,14 +59,16 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * @param collection collection to use
      * @param q query to perform
      * @param k keys to return from the query
+     * @param preference the Read Preference for this query
      */
-    public DBCursor( DBCollection collection , DBObject q , DBObject k ){
+    public DBCursor( DBCollection collection , DBObject q , DBObject k, ReadPreference preference ){
         _collection = collection;
         _query = q == null ? new BasicDBObject() : q;
         _keysWanted = k;
         if ( _collection != null ){
             _options = _collection.getOptions();
         }
+        _readPref = preference;
     }
 
     /**
@@ -82,7 +84,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * @return the new cursor
      */
     public DBCursor copy() {
-        DBCursor c = new DBCursor(_collection, _query, _keysWanted);
+        DBCursor c = new DBCursor(_collection, _query, _keysWanted, _readPref);
         c._orderBy = _orderBy;
         c._hint = _hint;
         c._hintDBObj = _hintDBObj;
@@ -685,6 +687,25 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         return null;
     }
 
+    /**
+     * Sets the read preference for this cursor.
+     * See the * documentation for {@link ReadPreference}
+     * for more information.
+     *
+     * @param preference Read Preference to use
+     */
+    public void setReadPreference( ReadPreference preference ){
+        _readPref = preference;
+    }
+
+    /**
+     * Gets the default read preference
+     * @return
+     */
+    public ReadPreference getReadPreference(){
+        return _readPref;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -704,6 +725,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         ServerAddress addr = getServerAddress();
         if (addr != null)
             sb.append(", addr=").append(addr);
+
+        sb.append(", readPreference=").append( _readPref.toString() );
         return sb.toString();
     }
 
@@ -721,6 +744,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     private int _skip = 0;
     private boolean _snapshot = false;
     private int _options = 0;
+    private ReadPreference _readPref;
 
     private DBObject _specialFields;
 
