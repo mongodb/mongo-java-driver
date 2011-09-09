@@ -18,6 +18,7 @@
 
 package com.mongodb;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -43,10 +44,10 @@ public class DBAddress extends ServerAddress {
      * </tr>
      * </table>
      * @param urlFormat
-     * @throws UnknownHostException
+     * @throws IOException 
      */
     public DBAddress( String urlFormat )
-        throws UnknownHostException {
+        throws IOException {
         super( _getHostSection( urlFormat ) );
 
         _check( urlFormat , "urlFormat" );
@@ -82,20 +83,20 @@ public class DBAddress extends ServerAddress {
     /**
      * @param other an existing <code>DBAddress</code> that gives the host and port
      * @param dbname the database to which to connect
-     * @throws UnknownHostException
+     * @throws IOException 
      */
     public DBAddress( DBAddress other , String dbname )
-        throws UnknownHostException {
+        throws IOException {
         this( other._host , other._port , dbname );
     }
 
     /**
      * @param host host name
      * @param dbname database name
-     * @throws UnknownHostException
+     * @throws IOException 
      */
     public DBAddress( String host , String dbname )
-        throws UnknownHostException {
+        throws IOException {
         this( host , DBPort.PORT , dbname );
     }
     
@@ -103,10 +104,10 @@ public class DBAddress extends ServerAddress {
      * @param host host name
      * @param port database port
      * @param dbname database name
-     * @throws UnknownHostException
+     * @throws IOException 
      */
     public DBAddress( String host , int port , String dbname )
-        throws UnknownHostException {
+        throws IOException {
         super( host , port );
         _db = dbname.trim();
     }
@@ -160,8 +161,8 @@ public class DBAddress extends ServerAddress {
         try {
             return new DBAddress( _host , _port , name );
         }
-        catch ( UnknownHostException uh ){
-            throw new MongoInternalException( "shouldn't be possible" , uh );
+        catch ( IOException ioe ){
+            throw new MongoInternalException( "shouldn't be possible" , ioe );
         }
     }
     

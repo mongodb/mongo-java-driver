@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.Collections;
 import java.util.logging.Logger;
+import java.io.IOException;
 import java.net.UnknownHostException;
 
 /**
@@ -52,6 +53,7 @@ public class MongoURI {
      * examples
      *   mongodb://127.0.0.1
      *   mongodb://fred:foobar@127.0.0.1/
+     *   mongodb:///tmp/mongodb-27017.sock
      * @param uri the URI
      * @dochub connections
      */
@@ -67,7 +69,7 @@ public class MongoURI {
         String optionsPart;
 
         {
-            int idx = uri.lastIndexOf( "/" );
+			int idx = uri.lastIndexOf("?");
             if ( idx < 0 ){
                 serverPart = uri;
                 nsPart = null;
@@ -220,10 +222,10 @@ public class MongoURI {
      * creates a Mongo instance based on the URI
      * @return
      * @throws MongoException
-     * @throws UnknownHostException
+     * @throws IOException 
      */
     public Mongo connect()
-        throws MongoException , UnknownHostException {
+        throws MongoException , IOException {
         // TODO caching?
         return new Mongo( this );
     }
@@ -232,10 +234,10 @@ public class MongoURI {
      * returns the DB object from a newly created Mongo instance based on this URI
      * @return
      * @throws MongoException
-     * @throws UnknownHostException
+     * @throws IOException 
      */
     public DB connectDB()
-        throws MongoException , UnknownHostException {
+        throws MongoException , IOException {
         // TODO auth
         return connect().getDB( _database );
     }
