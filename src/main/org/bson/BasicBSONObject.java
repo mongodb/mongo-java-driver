@@ -18,11 +18,17 @@
 
 package org.bson;
 
-import java.util.*;
+// BSON
+import org.bson.types.ObjectId;
+
+// Java
+import java.util.Map;
+import java.util.Set;
+import java.util.LinkedHashMap;
 import java.util.regex.Pattern;
 
 /**
- * A simple implementation of <code>DBObject</code>.  
+ * A simple implementation of <code>DBObject</code>.
  * A <code>DBObject</code> can be created as follows, using this class:
  * <blockquote><pre>
  * DBObject obj = new BasicBSONObject();
@@ -32,7 +38,7 @@ import java.util.regex.Pattern;
 public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSONObject {
 
     private static final long serialVersionUID = -4415279469780082174L;
-    
+
     /**
      *  Creates an empty object.
      */
@@ -56,7 +62,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
      * Creates a DBObject from a map.
      * @param m map to convert
      */
-    @SuppressWarnings("unchecked")   
+    @SuppressWarnings("unchecked")
     public BasicBSONObject(Map m) {
         super(m);
     }
@@ -69,7 +75,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return new LinkedHashMap<String,Object>(this);
     }
 
-    /** Deletes a field from this object. 
+    /** Deletes a field from this object.
      * @param key the field name to remove
      * @return the object removed
      */
@@ -109,7 +115,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         Object o = get(key);
         if ( o == null )
             throw new NullPointerException( "no value for: " + key );
-        
+
         return BSON.toInt( o );
     }
 
@@ -122,7 +128,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         Object foo = get( key );
         if ( foo == null )
             return def;
-        
+
         return BSON.toInt( foo );
     }
 
@@ -130,7 +136,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
      * Returns the value of a field as a <code>long</code>.
      *
      * @param key the field to return
-     * @return the field value 
+     * @return the field value
      */
     public long getLong( String key){
         Object foo = get( key );
@@ -141,13 +147,13 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
      * Returns the value of a field as a <code>double</code>.
      *
      * @param key the field to return
-     * @return the field value 
+     * @return the field value
      */
     public double getDouble( String key){
         Object foo = get( key );
         return ((Number)foo).doubleValue();
     }
-    
+
     /** Returns the value of a field as a string
      * @param key the field to look up
      * @return the value of the field, converted to a string
@@ -183,6 +189,16 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         throw new IllegalArgumentException( "can't coerce to bool:" + foo.getClass() );
     }
 
+    /**
+     * Returns the object id or null if not set.
+     * @param field The field to return
+     * @return The field object value or null if not found (or if null :-^).
+     */
+    public ObjectId getObjectId( final String field ) {
+        Object obj = get( field );
+        return (obj != null) ? (ObjectId)obj : null;
+    }
+
     /** Add a key/value pair to this object
      * @param key the field name
      * @param val the field value
@@ -192,18 +208,18 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return super.put( key , val );
     }
 
-    @SuppressWarnings("unchecked")   
+    @SuppressWarnings("unchecked")
     public void putAll( Map m ){
         for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() ){
             put( entry.getKey().toString() , entry.getValue() );
         }
-    } 
-    
+    }
+
     public void putAll( BSONObject o ){
         for ( String k : o.keySet() ){
             put( k , o.get( k ) );
         }
-   } 
+   }
 
     /** Add a key/value pair to this object
      * @param key the field name
@@ -218,7 +234,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
 
     /** Returns a JSON serialization of this object
      * @return JSON serialization
-     */    
+     */
     public String toString(){
         return com.mongodb.util.JSON.serialize( this );
     }
@@ -226,7 +242,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
     public boolean equals( Object o ){
         if ( ! ( o instanceof BSONObject ) )
             return false;
-        
+
         BSONObject other = (BSONObject)o;
         if ( ! keySet().equals( other.keySet() ) )
             return false;
@@ -234,7 +250,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         for ( String key : keySet() ){
             Object a = get( key );
             Object b = other.get( key );
-            
+
             if ( a == null ){
                 if ( b != null )
                     return false;
@@ -244,7 +260,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
                     return false;
             }
             else if ( a instanceof Number && b instanceof Number ){
-                if ( ((Number)a).doubleValue() != 
+                if ( ((Number)a).doubleValue() !=
                      ((Number)b).doubleValue() )
                     return false;
             }
