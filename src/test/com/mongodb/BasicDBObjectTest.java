@@ -18,18 +18,28 @@
 
 package com.mongodb;
 
-import org.testng.annotations.*;
-
+import org.bson.types.*;
 import com.mongodb.util.*;
 
+import org.testng.annotations.*;
+
 public class BasicDBObjectTest extends TestCase {
+
+    @Test(groups = {"basic"})
+    public void testGetObjectId() {
+        final ObjectId objId = ObjectId.get();
+
+        BasicDBObject doc = new BasicDBObject( "foo" , objId);
+        assert( doc.getObjectId( "foo" ).equals( objId ) );
+
+    }
 
     @Test(groups = {"basic"})
     public void testBasic(){
         BasicDBObject a = new BasicDBObject( "x" , 1 );
         BasicDBObject b = new BasicDBObject( "x" , 1 );
         assert( a.equals( b ) );
-        
+
         Object x = JSON.parse( "{ 'x' : 1 }" );
         assert( a.equals( x ) );
     }
@@ -71,7 +81,7 @@ public class BasicDBObjectTest extends TestCase {
         b.pop();
         b.push( "z" );
         b.append( "b" , 3 );
-        
+
 
         Object x = b.get();
         Object y = JSON.parse( "{ 'x' : 1 , 'y' : { 'a' : 2 } , 'z' : { 'b' : 3 } }" );
@@ -93,21 +103,21 @@ public class BasicDBObjectTest extends TestCase {
     public void testEquals(){
         BasicDBObject a = new BasicDBObject();
         BasicDBObject b = new BasicDBObject();
-        
-        
+
+
         _equal( a , b );
-        
+
         a.put( "x" , 1 );
         _notequal( a , b );
-        
+
         b.put( "x" , 1 );
         _equal( a , b );
-        
+
         a.removeField( "x" );
         _notequal( a , b );
-        
+
         b.removeField( "x" );
-        _equal( a , b );        
+        _equal( a , b );
 
         a.put( "x" , null );
         b.put( "x" , 2 );
@@ -117,8 +127,8 @@ public class BasicDBObjectTest extends TestCase {
         b.put( "x" , null );
         _notequal( a , b );
     }
-    
-    
+
+
     public static void main( String args[] )
         throws Exception {
         (new BasicDBObjectTest()).runConsole();
