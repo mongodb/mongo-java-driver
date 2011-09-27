@@ -1276,16 +1276,41 @@ public abstract class DBCollection {
      */
     private void _checkKeys( DBObject o ) {
         for ( String s : o.keySet() ){
-            if ( s.contains( "." ) )
-                throw new IllegalArgumentException( "fields stored in the db can't have . in them. (Bad Key: '" + s + "')" );
-            if ( s.startsWith( "$" ) )
-                throw new IllegalArgumentException( "fields stored in the db can't start with '$' (Bad Key: '" + s + "')" );
-
-            Object inner;
-            if ( (inner = o.get( s )) instanceof DBObject ) {
+            validateKey ( s );
+            Object inner = o.get( s );
+            if ( inner instanceof DBObject ) {
                 _checkKeys( (DBObject)inner );
+            } else if ( inner instanceof Map ) {
+                _checkKeys( (Map<String, Object>)inner );
             }
         }
+    }
+
+    /**
+     * Checks key strings for invalid characters.
+     */
+    private void _checkKeys( Map<String, Object> o ) {
+        for ( String s : o.keySet() ){
+            validateKey ( s );
+            Object inner = o.get( s );
+            if ( inner instanceof DBObject ) {
+                _checkKeys( (DBObject)inner );
+            } else if ( inner instanceof Map ) {
+                _checkKeys( (Map<String, Object>)inner );
+            }
+        }
+    }
+
+    /**
+     * Check for invalid key names
+     * @param s the string field/key to check
+     * @exception IllegalArgumentException if the key is not valid.
+     */
+    private void validateKey(String s ) {
+        if ( s.contains( "." ) )
+            throw new IllegalArgumentException( "fields stored in the db can't have . in them. (Bad Key: '" + s + "')" );
+        if ( s.startsWith( "$" ) )
+            throw new IllegalArgumentException( "fields stored in the db can't start with '$' (Bad Key: '" + s + "')" );
     }
 
     /**

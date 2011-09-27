@@ -841,6 +841,12 @@ public class JavaClientTest extends TestCase {
             assertTrue(false, "Bad key was accepted");
         } catch (Exception e) {}
         try {
+            Map<String, Integer> data = new HashMap<String, Integer>();
+            data.put("a.b", 1);
+            c.insert(new BasicDBObject("data", data));
+            assertTrue(false, "Bad key was accepted");
+        } catch (Exception e) {}
+        try {
             c.insert(new BasicDBObject("$a", 1));
             assertTrue(false, "Bad key was accepted");
         } catch (Exception e) {}
