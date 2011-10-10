@@ -18,6 +18,7 @@
 
 package com.mongodb;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -120,22 +121,22 @@ public class Mongo {
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
-     * @throws UnknownHostException
      * @throws MongoException
+     * @throws IOException 
      */
     public Mongo()
-        throws UnknownHostException , MongoException {
+        throws MongoException, IOException {
         this( new ServerAddress() );
     }
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (default port)
      * @param host server to connect to
-     * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
+     * @throws IOException 
      */
     public Mongo( String host )
-        throws UnknownHostException , MongoException {
+        throws MongoException, IOException {
         this( new ServerAddress( host ) );
     }
 
@@ -143,11 +144,11 @@ public class Mongo {
      * Creates a Mongo instance based on a (single) mongodb node (default port)
      * @param host server to connect to
      * @param options default query options
-     * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
+     * @throws IOException 
      */
     public Mongo( String host , MongoOptions options )
-        throws UnknownHostException , MongoException {
+        throws MongoException, IOException {
         this( new ServerAddress( host ) , options );
     }
 
@@ -155,11 +156,11 @@ public class Mongo {
      * Creates a Mongo instance based on a (single) mongodb node
      * @param host the database's host address
      * @param port the port on which the database is running
-     * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
+     * @throws IOException 
      */
     public Mongo( String host , int port )
-        throws UnknownHostException , MongoException {
+        throws MongoException, IOException {
         this( new ServerAddress( host , port ) );
     }
 
@@ -279,12 +280,12 @@ public class Mongo {
      *   <li>mongodb://fred:foobar@127.0.0.1/</li>
      *  </p>
      *  @throws MongoException
-     * @throws UnknownHostException
+     * @throws IOException 
      * @dochub connections
      */
 
     public Mongo( MongoURI uri )
-        throws MongoException , UnknownHostException {
+        throws MongoException , IOException {
 
         _options = uri.getOptions();
         _applyMongoOptions();
@@ -648,10 +649,10 @@ public class Mongo {
          * @param uri the Mongo URI
          * @return
          * @throws MongoException
-         * @throws UnknownHostException
+         * @throws IOException 
          */
         public Mongo connect( MongoURI uri )
-            throws MongoException , UnknownHostException {
+            throws MongoException , IOException {
 
             String key = _toKey( uri );
 

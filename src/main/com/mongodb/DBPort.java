@@ -31,6 +31,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.mongodb.util.ThreadUtil;
+import org.newsclub.net.unix.AFUNIXSocket;
+import org.newsclub.net.unix.AFUNIXSocketAddress;
 
 /**
  * represents a Port to the database, which is effectively a single connection to a server
@@ -44,7 +46,7 @@ public class DBPort {
      */
     public static final int PORT = 27017;
     static final boolean USE_NAGLE = false;
-    
+
     static final long CONN_RETRY_TIME_MS = 15000;
 
     /**
@@ -210,10 +212,15 @@ public class DBPort {
             IOException lastError = null;
 
             try {
-                _socket = _options.socketFactory.createSocket();
-                _socket.connect( _addr , _options.connectTimeout );
-                
-                _socket.setTcpNoDelay( ! USE_NAGLE );
+				if (_addr instanceof AFUNIXSocketAddress) {
+				  _socket = AFUNIXSocket.newInstance();
+                  _socket.connect( _addr , _options.connectTimeout );
+				} else {
+				  _socket = new Socket();
+				  _socket.connect(_addr, _options.connectTimeout);
+                  _socket.setTcpNoDelay( ! USE_NAGLE );
+				}
+
                 _socket.setKeepAlive( _options.socketKeepAlive );
                 _socket.setSoTimeout( _options.socketTimeout );
                 _in = new BufferedInputStream( _socket.getInputStream() );

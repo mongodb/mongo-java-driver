@@ -18,11 +18,16 @@
 
 package com.mongodb;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.newsclub.net.unix.AFUNIXSocket;
+import org.newsclub.net.unix.AFUNIXSocketAddress;
 
 /**
  * mongo server address
@@ -31,20 +36,20 @@ public class ServerAddress {
     
     /**
      * Creates a ServerAddress with default host and port
-     * @throws UnknownHostException
+     * @throws IOException 
      */
     public ServerAddress()
-        throws UnknownHostException {
+        throws IOException {
         this( defaultHost() , defaultPort() );
     }
     
     /**
      * Creates a ServerAddress with default port
      * @param host hostname
-     * @throws UnknownHostException
+     * @throws IOException 
      */
     public ServerAddress( String host )
-        throws UnknownHostException {
+        throws IOException {
         this( host , defaultPort() );
     }
 
@@ -52,10 +57,10 @@ public class ServerAddress {
      * Creates a ServerAddress
      * @param host hostname
      * @param port mongod port
-     * @throws UnknownHostException
+     * @throws IOException 
      */
     public ServerAddress( String host , int port )
-        throws UnknownHostException {
+        throws IOException {
         if ( host == null )
             host = defaultHost();
         host = host.trim();
@@ -72,8 +77,16 @@ public class ServerAddress {
 
         _host = host;
         _port = port;
+		try {
         _all = _getAddress( _host );
         _addr = new InetSocketAddress( _all[0] , _port );
+		} catch (UnknownHostException e) {
+			if (AFUNIXSocket.isSupported()) {
+				_addr = new AFUNIXSocketAddress(new File(host));
+			} else {
+				throw e;
+			}
+		}
     }
 
     /**

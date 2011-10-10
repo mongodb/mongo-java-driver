@@ -18,6 +18,7 @@
 
 package com.mongodb;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -374,7 +375,7 @@ public class ReplicaSetStatus {
                 n = new Node( new ServerAddress( host ) );
                 _all.add( n );
             }
-            catch ( UnknownHostException un ){
+            catch ( IOException ioe ){
                 _logger.log( Level.WARNING , "couldn't resolve host [" + host + "]" );
             }
         }
@@ -390,7 +391,7 @@ public class ReplicaSetStatus {
         try {
             addr = new ServerAddress( host );
         }
-        catch ( UnknownHostException un ){
+        catch ( IOException ioe ){
             _logger.log( Level.WARNING , "couldn't resolve host [" + host + "]" );
             return null;
         }
