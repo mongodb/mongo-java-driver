@@ -26,18 +26,22 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.bson.BSONEncoder;
-import org.bson.BSONObject;
+import org.bson.*;
 import org.bson.io.PoolOutputBuffer;
 import org.bson.types.ObjectId;
 
-class OutMessage extends BSONEncoder {
+class OutMessage extends BasicBSONEncoder {
 
     static AtomicInteger ID = new AtomicInteger(1);
-    
+
     static OutMessage query( Mongo m , int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
+        return query( m, options, ns, numToSkip, batchSize, query, fields, ReadPreference.PRIMARY );
+    }
+
+    static OutMessage query( Mongo m , int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref ){
         OutMessage out = new OutMessage( m , 2004 );
         out._appendQuery( options , ns , numToSkip , batchSize , query , fields );
+        out.setReadPreference( readPref );
         return out;
     }
 
@@ -198,9 +202,19 @@ class OutMessage extends BSONEncoder {
         return sz;
     }
 
+
+    public ReadPreference getReadPreference(){
+        return _readPref;
+    }
+
+    public void setReadPreference( ReadPreference readPref ){
+        _readPref = readPref;
+    }
+
     private Mongo _mongo;
     private PoolOutputBuffer _buffer;
     private int _id;
     private int _queryOptions = 0;
+    private ReadPreference _readPref = ReadPreference.PRIMARY;
 
 }

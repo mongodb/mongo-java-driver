@@ -139,7 +139,7 @@ public class DBTCPConnector implements DBConnector {
         checkMaster( false , true );
 
         MyPort mp = _myPort.get();
-        DBPort port = mp.get( true , false , hostNeeded );
+        DBPort port = mp.get( true , ReadPreference.PRIMARY, hostNeeded );
 
         try {
             port.checkAuth( db );
@@ -188,12 +188,17 @@ public class DBTCPConnector implements DBConnector {
 
     public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries )
         throws MongoException {
-        boolean slaveOk = m.hasOption( Bytes.QUERYOPTION_SLAVEOK );
+        ReadPreference readPref = m.getReadPreference();
+        if (readPref == ReadPreference.PRIMARY && m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
+           readPref = ReadPreference.SECONDARY;
+
+        boolean secondaryOk = !(readPref == ReadPreference.PRIMARY);
+
         _checkClosed();
-        checkMaster( false , !slaveOk );
+        checkMaster( false, !secondaryOk );
         
         final MyPort mp = _myPort.get();
-        final DBPort port = mp.get( false , slaveOk, hostNeeded );
+        final DBPort port = mp.get( false , readPref, hostNeeded );
                 
         Response res = null;
         boolean retry = false;
@@ -206,7 +211,7 @@ public class DBTCPConnector implements DBConnector {
         catch ( IOException ioe ){
             mp.error( port , ioe );
             retry = retries > 0 && !coll._name.equals( "$cmd" )
-                    && !(ioe instanceof SocketTimeoutException) && _error( ioe, slaveOk );
+                    && !(ioe instanceof SocketTimeoutException) && _error( ioe, secondaryOk );
             if ( !retry ){
                 throw new MongoException.Network( "can't call something : " + port.host() + "/" + db, 
                                                   ioe ); 
@@ -282,11 +287,11 @@ public class DBTCPConnector implements DBConnector {
      * This method is called in case of an IOException.
      * It will potentially trigger a checkMaster() to check the status of all servers.
      * @param t the exception thrown
-     * @param slaveOk slaveOk flag
+     * @param secondaryOk secondaryOk flag
      * @return true if the request should be retried, false otherwise
      * @throws MongoException
      */
-    boolean _error( Throwable t, boolean slaveOk )
+    boolean _error( Throwable t, boolean secondaryOk )
         throws MongoException {
         if (_rsStatus == null) {
             // single server, no need to retry
@@ -297,14 +302,14 @@ public class DBTCPConnector implements DBConnector {
         // if no server is up, we wont retry until the updater thread finds one
         // this is to cut down the volume of requests/errors when all servers are down
         if ( _rsStatus.hasServerUp() ){
-            checkMaster( true , !slaveOk );
+            checkMaster( true , !secondaryOk );
         }
         return _rsStatus.hasServerUp();
     }
 
     class MyPort {
 
-        DBPort get( boolean keep , boolean slaveOk , ServerAddress hostNeeded ){
+        DBPort get( boolean keep , ReadPreference readPref, ServerAddress hostNeeded ){
             
             if ( hostNeeded != null ){
                 // asked for a specific host
@@ -325,8 +330,8 @@ public class DBTCPConnector implements DBConnector {
                 _requestPort = null;
             }
             
-            if ( slaveOk && _rsStatus != null ){
-                // if slaveOk, try to use a secondary
+            if ( !(readPref == ReadPreference.PRIMARY) && _rsStatus != null ){
+                // if not a primary read set, try to use a secondary
                 ServerAddress slave = _rsStatus.getASecondary();
                 if ( slave != null ){
                     return _portHolder.get( slave ).get();
