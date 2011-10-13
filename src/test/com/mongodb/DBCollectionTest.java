@@ -29,8 +29,8 @@ public class DBCollectionTest extends TestCase {
     public DBCollectionTest()
         throws IOException , MongoException {
         super();
-	cleanupMongo = new Mongo( "127.0.0.1" );
-	cleanupDB = "com_mongodb_unittest_DBCollectionTest";
+        cleanupMongo = new Mongo( "127.0.0.1" );
+        cleanupDB = "com_mongodb_unittest_DBCollectionTest";
         _db = cleanupMongo.getDB( cleanupDB );
     }
     @Test(groups = {"basic"})
@@ -57,10 +57,10 @@ public class DBCollectionTest extends TestCase {
         DBObject obj = c.findOne();
         assertEquals(obj, null);
 
-        obj = c.findOne(null);
+        obj = c.findOne();
         assertEquals(obj, null);
 
-        obj = c.findOne(null, null);
+        obj = c.findOne();
         assertEquals(obj, null);
 
         // Test that findOne works when fields is specified but no match is found
@@ -201,9 +201,10 @@ public class DBCollectionTest extends TestCase {
 
     }
 
-    @Test(groups = {"bulkContinue"})
+    @Test
     public void testMultiInsertNoContinue() {
         DBCollection c = _db.getCollection("testmultiinsertNoContinue");
+        c.setWriteConcern( WriteConcern.NORMAL );
         c.drop();
 
         DBObject obj = c.findOne();
@@ -213,11 +214,17 @@ public class DBCollectionTest extends TestCase {
         DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x",1).add("y",2).get();
         DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x",3).add("y",4).get();
         DBObject inserted3 = BasicDBObjectBuilder.start().add("x",5).add("y",6).get();
-        WriteResult r = c.insert(false, inserted1,inserted2, inserted3);
+        WriteResult r = c.insert(inserted1,inserted2, inserted3);
+        System.err.println( "Count: " + c.count()  + " WriteConcern: " + c.getWriteConcern() );
+
+        System.err.println( " Continue on Error? " + c.getWriteConcern().continueOnErrorForInsert() );
+        for (DBObject doc : c.find(  )) {
+            System.err.println( doc );
+        }
         assertEquals( c.count(), 1);
     }
 
-    @Test(groups = {"bulkContinue"})
+    @Test
     public void testMultiInsertWithContinue() {
         DBCollection c = _db.getCollection("testmultiinsertWithContinue");
         c.drop();
@@ -229,7 +236,7 @@ public class DBCollectionTest extends TestCase {
         DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x",1).add("y",2).get();
         DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x",3).add("y",4).get();
         DBObject inserted3 = BasicDBObjectBuilder.start().add("x",5).add("y",6).get();
-        WriteResult r = c.insert(true, inserted1,inserted2, inserted3);
+        WriteResult r = c.insert(WriteConcern.NORMAL.withContinueOnErrorForInsert( true ), inserted1,inserted2, inserted3);
         assertEquals( c.count(), 2 );
     }
 

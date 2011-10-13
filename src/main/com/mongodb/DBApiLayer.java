@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,7 +35,6 @@ import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 
 import com.mongodb.util.JSON;
-import java.util.concurrent.ConcurrentHashMap;
 
 /** Database API
  * This cannot be directly instantiated, but the functions are available
@@ -206,17 +206,16 @@ public class DBApiLayer extends DB {
             super.drop();
         }
 
-        public WriteResult insert(DBObject[] arr, com.mongodb.WriteConcern concern, Boolean continueOnError )
+        public WriteResult insert(DBObject[] arr, com.mongodb.WriteConcern concern, DBEncoder encoder )
             throws MongoException {
-            return insert( arr , true , concern, continueOnError );
+            return insert( arr, true, concern, encoder );
         }
 
-        protected WriteResult insert(DBObject[] arr, boolean shouldApply , com.mongodb.WriteConcern concern ) {
-            return insert( arr, shouldApply, concern, false );
-        }
-
-        protected WriteResult insert(DBObject[] arr, boolean shouldApply , com.mongodb.WriteConcern concern, Boolean continueOnError )
+        protected WriteResult insert(DBObject[] arr, boolean shouldApply , com.mongodb.WriteConcern concern, DBEncoder encoder )
             throws MongoException {
+
+            if (encoder == null)
+                encoder = DefaultDBEncoder.FACTORY.create();
 
             if ( willTrace() ) {
                 for (DBObject o : arr) {
@@ -241,10 +240,10 @@ public class DBApiLayer extends DB {
             int cur = 0;
             int maxsize = _mongo.getMaxBsonObjectSize();
             while ( cur < arr.length ){
-                OutMessage om = new OutMessage( _mongo , 2002 );
+                OutMessage om = new OutMessage( _mongo , 2002, encoder );
 
                 int flags = 0;
-                if ( continueOnError ) flags |= 1;
+                if ( concern.continueOnErrorForInsert() ) flags |= 1;
                 om.writeInt( flags );
                 om.writeCString( _fullNameSpace );
 
@@ -265,12 +264,15 @@ public class DBApiLayer extends DB {
             return last;
         }
 
-        public WriteResult remove( DBObject o , com.mongodb.WriteConcern concern )
+        public WriteResult remove( DBObject o , com.mongodb.WriteConcern concern, DBEncoder encoder )
             throws MongoException {
+
+            if (encoder == null)
+                encoder = DefaultDBEncoder.FACTORY.create();
 
             if ( willTrace() ) trace( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
 
-            OutMessage om = new OutMessage( _mongo , 2006 );
+            OutMessage om = new OutMessage( _mongo , 2006, encoder );
 
             om.writeInt( 0 ); // reserved
             om.writeCString( _fullNameSpace );
@@ -290,7 +292,7 @@ public class DBApiLayer extends DB {
         }
 
         @Override
-        Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize, int limit , int options, ReadPreference readPref )
+        Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize, int limit , int options, ReadPreference readPref, DBDecoder decoder )
             throws MongoException {
 
             if ( ref == null )
@@ -300,7 +302,7 @@ public class DBApiLayer extends DB {
 
             OutMessage query = OutMessage.query( _mongo , options , _fullNameSpace , numToSkip , chooseBatchSize(batchSize, limit, 0) , ref , fields, readPref);
 
-            Response res = _connector.call( _db , this , query , null , 2 );
+            Response res = _connector.call( _db , this , query , null , 2, readPref, decoder );
 
             if ( res.size() == 0 )
                 return null;
@@ -312,12 +314,15 @@ public class DBApiLayer extends DB {
                     throw e;
             }
 
-            return new Result( this , res , batchSize, limit , options );
+            return new Result( this , res , batchSize, limit , options, decoder );
         }
 
         @Override
-        public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , com.mongodb.WriteConcern concern )
+        public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , com.mongodb.WriteConcern concern, DBEncoder encoder )
             throws MongoException {
+
+            if (encoder == null)
+                encoder = DefaultDBEncoder.FACTORY.create();
 
             if (o != null && !o.keySet().isEmpty()) {
                 // if 1st key doesn't start with $, then object will be inserted as is, need to check it
@@ -328,7 +333,7 @@ public class DBApiLayer extends DB {
 
             if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) + " " + JSON.serialize( o )  );
 
-            OutMessage om = new OutMessage( _mongo , 2001 );
+            OutMessage om = new OutMessage( _mongo , 2001, encoder );
             om.writeInt( 0 ); // reserved
             om.writeCString( _fullNameSpace );
 
@@ -343,15 +348,18 @@ public class DBApiLayer extends DB {
             return _connector.say( _db , om , concern );
         }
 
-        public void createIndex( final DBObject keys, final DBObject options )
+        public void createIndex( final DBObject keys, final DBObject options, DBEncoder encoder )
             throws MongoException {
+
+            if (encoder == null)
+                encoder = DefaultDBEncoder.FACTORY.create();
 
             DBObject full = new BasicDBObject();
             for ( String k : options.keySet() )
                 full.put( k , options.get( k ) );
             full.put( "key" , keys );
 
-            DBApiLayer.this.doGetCollection( "system.indexes" ).insert( new DBObject[]{ full } , false , WriteConcern.SAFE );
+            DBApiLayer.this.doGetCollection( "system.indexes" ).insert( new DBObject[]{ full } , false , WriteConcern.SAFE, encoder );
         }
 
         final String _fullNameSpace;
@@ -359,12 +367,13 @@ public class DBApiLayer extends DB {
 
     class Result implements Iterator<DBObject> {
 
-        Result( MyCollection coll , Response res , int batchSize, int limit , int options ){
+        Result( MyCollection coll , Response res , int batchSize, int limit , int options, DBDecoder decoder ){
             _collection = coll;
             _batchSize = batchSize;
             _limit = limit;
             _options = options;
             _host = res._host;
+            _decoder = decoder;
             init( res );
         }
 
@@ -421,7 +430,7 @@ public class DBApiLayer extends DB {
             m.writeInt( chooseBatchSize(_batchSize, _limit, _numFetched) );
             m.writeLong( _curResult.cursor() );
 
-            Response res = _connector.call( DBApiLayer.this , _collection , m , _host );
+            Response res = _connector.call( DBApiLayer.this , _collection , m , _host, _decoder );
             _numGetMores++;
             init( res );
         }
@@ -508,6 +517,7 @@ public class DBApiLayer extends DB {
         Iterator<DBObject> _cur;
         int _batchSize;
         int _limit;
+        final DBDecoder _decoder;
         final MyCollection _collection;
         final int _options;
         final ServerAddress _host; // host where first went.  all subsequent have to go there

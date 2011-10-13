@@ -15,20 +15,22 @@
  */
 package org.bson;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Logger;
 
 import org.bson.io.Bits;
+import org.bson.util.ExposedByteArrayInputStream;
 
 /**
  * implementation of BSONDecoder that creates LazyBSONObject instances
  */
 public class LazyBSONDecoder implements BSONDecoder {
+    static final Logger LOG = Logger.getLogger( LazyBSONDecoder.class.getName() );
 
     public BSONObject readObject(byte[] b) {
         try {
-            return readObject( new ByteArrayInputStream( b ) );
+            return readObject( new ExposedByteArrayInputStream( b ) );
         }
         catch ( IOException ioe ){
             throw new BSONException( "should be impossible" , ioe );
@@ -43,14 +45,21 @@ public class LazyBSONDecoder implements BSONDecoder {
 
     public int decode(byte[] b, BSONCallback callback) {
         try {
-            return decode( new ByteArrayInputStream( b ), callback );
+            return decode( new ExposedByteArrayInputStream( b ), callback );
         }
-        catch ( IOException ioe ){
+        catch ( IOException ioe ) {
             throw new BSONException( "should be impossible" , ioe );
         }
     }
 
     public int decode(InputStream in, BSONCallback callback) throws IOException {
+        //shortcut if we don't need to copy
+        if ( in instanceof ExposedByteArrayInputStream) {
+            LOG.warning( "skipping stream read -> copy with ExposedByteArrayInputStream" );
+            System.out.println("skipping stream read -> copy with ExposedByteArrayInputStream" );
+            return decode(((ExposedByteArrayInputStream)in).getBuffer(), callback);
+        }
+            
         byte[] data = null;
         if (_buffer == null)
             _buffer = new byte[4096];

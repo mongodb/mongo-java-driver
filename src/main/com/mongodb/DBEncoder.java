@@ -11,17 +11,11 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package org.bson;
+package com.mongodb;
 
+import org.bson.*;
 import org.bson.io.*;
 
-
-public interface BSONEncoder {
-    public byte[] encode( BSONObject o );
-
-    public int putObject( BSONObject o );
-
-    public void done();
-
-    void set( OutputBuffer out );
+public interface DBEncoder {
+    public int writeObject( OutputBuffer buf, BSONObject o );
 }

@@ -310,7 +310,7 @@ public class BSON {
 
     static ThreadLocal<BSONEncoder> _staticEncoder = new ThreadLocal<BSONEncoder>(){
         protected BSONEncoder initialValue(){
-            return new BSONEncoder();
+            return new BasicBSONEncoder();
         }
     };
 

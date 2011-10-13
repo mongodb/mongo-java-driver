@@ -45,6 +45,7 @@ public class MongoOptions {
         fsync = false;
         j = false;
         dbDecoderFactory = DefaultDBDecoder.FACTORY;
+        dbEncoderFactory = DefaultDBEncoder.FACTORY;
         socketFactory = SocketFactory.getDefault();
     }
 
@@ -148,6 +149,11 @@ public class MongoOptions {
      * Override the DBCallback factory. Default is for the standard Mongo Java driver configuration.
      */
     public DBDecoderFactory dbDecoderFactory;
+
+    /**
+     * Override the encoding factory. Default is for the standard Mongo Java driver configuration.
+     */
+    public DBEncoderFactory dbEncoderFactory;
 
     /**
      * If <b>true</b> the driver will use a WriteConcern of WriteConcern.SAFE for all operations.

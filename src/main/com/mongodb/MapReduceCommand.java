@@ -285,6 +285,26 @@ public class MapReduceCommand {
     public DBObject getExtraOptions() {
         return _extra;
     }
+
+    /**
+     * Sets the read preference for this command.
+     * See the * documentation for {@link ReadPreference}
+     * for more information.
+     *
+     * @param preference Read Preference to use
+     */
+    public void setReadPreference( ReadPreference preference ){
+        _readPref = preference;
+    }
+    
+    /**
+     * Gets the read preference
+     * @return
+     */
+    public ReadPreference getReadPreference(){
+        return _readPref;
+    }
+    
     
     public String toString() { 
         return toDBObject().toString();
@@ -294,6 +314,7 @@ public class MapReduceCommand {
     final String _map;
     final String _reduce;
     final String _outputTarget;
+    ReadPreference _readPref;
     String _outputDB = null;
     final OutputType _outputType;
     final DBObject _query;

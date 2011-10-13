@@ -67,9 +67,16 @@ public class DBPort {
         _decoder = _options.dbDecoderFactory.create();
     }
 
-    Response call( OutMessage msg , DBCollection coll )
-        throws IOException {
+    Response call( OutMessage msg , DBCollection coll ) throws IOException {
         return go( msg , coll );
+    }
+
+    Response call( OutMessage msg , DBCollection coll , DBDecoder decoder ) throws IOException {
+        return go( msg , coll , false , null , decoder );
+    }
+
+    Response call( OutMessage msg , DBCollection coll , ReadPreference readPref, DBDecoder decoder ) throws IOException {
+        return go( msg , coll , false , readPref , decoder );
     }
     
     void say( OutMessage msg )
@@ -79,10 +86,15 @@ public class DBPort {
     
     private synchronized Response go( OutMessage msg , DBCollection coll )
         throws IOException {
-        return go( msg , coll , false );
+        return go( msg , coll , false , null , null );
     }
 
-    private synchronized Response go( OutMessage msg , DBCollection coll , boolean forceReponse )
+    private synchronized Response go( OutMessage msg , DBCollection coll , DBDecoder decoder )
+        throws IOException {
+        return go( msg , coll , false , null , decoder );
+    }
+
+    private synchronized Response go( OutMessage msg , DBCollection coll , boolean forceReponse , ReadPreference readPref , DBDecoder decoder )
         throws IOException {
 
         if ( _processingResponse ){
@@ -114,13 +126,7 @@ public class DBPort {
                 return null;
             
             _processingResponse = true;
-            DBDecoder decoder = _decoder;
-            if (coll.getDBDecoderFactory() != null) {
-                // custom decoder for this collection, use it
-                // here we have to create a new decoder per call, pool would be nicer
-                decoder = coll.getDBDecoderFactory().create();
-            }
-            return new Response( _sa , coll , _in , decoder);
+            return new Response( _sa , coll , _in , (decoder == null ? _decoder : decoder) );
         }
         catch ( IOException ioe ){
             close();
@@ -132,14 +138,14 @@ public class DBPort {
     }
 
     synchronized CommandResult getLastError( DB db , WriteConcern concern) throws IOException {
-	DBApiLayer dbAL = (DBApiLayer) db;
-	return runCommand( dbAL , concern.getCommand() );
+	    DBApiLayer dbAL = (DBApiLayer) db;
+	    return runCommand( dbAL , concern.getCommand() );
     }
 
     synchronized DBObject findOne( DB db , String coll , DBObject q ) throws IOException {
         OutMessage msg = OutMessage.query( db._mongo , 0 , db.getName() + "." + coll , 0 , -1 , q , null );
         
-        Response res = go( msg , db.getCollection( coll ) );
+        Response res = go( msg , db.getCollection( coll ) , DefaultDBDecoder.FACTORY.create() );
         if ( res.size() == 0 )
             return null;
         if ( res.size() > 1 )
@@ -156,7 +162,7 @@ public class DBPort {
 
     synchronized DBObject findOne( String ns , DBObject q ) throws IOException{
         OutMessage msg = OutMessage.query( null , 0 , ns , 0 , -1 , q , null );
-        Response res = go( msg , null , true );
+        Response res = go( msg , null , true , null, DefaultDBDecoder.FACTORY.create() );
         if ( res.size() == 0 )
             return null;
         if ( res.size() > 1 )

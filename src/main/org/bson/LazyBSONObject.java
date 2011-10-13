@@ -15,17 +15,29 @@
  */
 package org.bson;
 
-import org.bson.io.*;
-import org.bson.types.*;
-
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.logging.*;
-import java.util.regex.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import org.bson.io.BSONByteBuffer;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Code;
+import org.bson.types.CodeWScope;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
+import org.bson.types.Symbol;
 
 /**
  * @author antoine
  * @author brendan
+ * @author scotthernandez
+ * @author Kilroy Wuz Here
  */
 public class LazyBSONObject implements BSONObject {
 
@@ -48,8 +60,8 @@ public class LazyBSONObject implements BSONObject {
     }
 
 
-    class LazyLookupRecord {
-        LazyLookupRecord( final String name, final int offset ){
+    class ElementRecord {
+        ElementRecord( final String name, final int offset ){
             this.name = name;
             this.offset = offset;
             this.type = getElementType( offset - 1 );
@@ -176,37 +188,42 @@ public class LazyBSONObject implements BSONObject {
     }
 
     public Object get( String key ){
-        int offset = _doc_start_offset + FIRST_ELMT_OFFSET;
-        boolean found = false;
-        LazyLookupRecord record = null;
-        if ( noHitFields.contains( key ) ){
-            found = false;
-        }
-        else if ( fieldIndex.containsKey( key ) ){
-            record = fieldIndex.get( key );
-            found = true;
-        }
-        else{
-            while ( !isElementEmpty( offset ) ){
-                int fieldSize = sizeCString( offset );
-                int elementSize = getElementBSONSize( offset++ );
-                String name = _input.getCString( offset );
-                final LazyLookupRecord _t_record = new LazyLookupRecord( name, offset );
-                fieldIndex.putIfAbsent( name, _t_record );
-                if ( name.equals( key ) ){
-                    found = true;
-                    record = _t_record;
-                    break;
-                }
-                offset += ( fieldSize + elementSize );
-            }
-        }
-        if ( !found ){
-            noHitFields.add( key );
+        //get element up to the key
+        ArrayList<ElementRecord> elements = getElementsToKey( key );
+        
+        //no found if null/empty
+        if (elements == null || elements.size() == 0)
             return null;
+        
+        //get last to see if it is what we want; if it isn't then what we are looking for isn't there
+        ElementRecord lastRec = elements.get( elements.size() - 1 );
+        return ( lastRec.name.equals( key ) ) ? getElementValue( lastRec ) : null;
+        
+    }
+    
+    /**
+     * returns all the ElementRecords to the point of the key; if no key is specified or found then a full list is returned.
+     * @param key the field/key to stop at
+     * @return all the ElementRecords to the point of the key (must be the last element returned)
+     */
+    ArrayList<ElementRecord> getElementsToKey(String key){
+        int offset = _doc_start_offset + FIRST_ELMT_OFFSET;
+        ArrayList<ElementRecord> elements = new ArrayList<LazyBSONObject.ElementRecord>();
+ 
+        while ( !isElementEmpty( offset ) ){
+            int fieldSize = sizeCString( offset );
+            int elementSize = getElementBSONSize( offset++ );
+            String name = _input.getCString( offset );
+            final ElementRecord rec = new ElementRecord( name, offset );
+            elements.add( rec );
+            if ( name.equals( key ) ){
+                //found it, break.
+                break;
+            }
+            offset += ( fieldSize + elementSize );
         }
-        else
-            return getElementValue( record );
+
+        return elements;
     }
 
     public Map toMap(){
@@ -223,19 +240,14 @@ public class LazyBSONObject implements BSONObject {
     }
 
     public boolean containsField( String s ){
-        if ( noHitFields.contains( s ) )
-            return true; 
-        else if ( fieldIndex.containsKey( s ) )
-            return false;
-        else 
-            return keySet().contains( s );
+        return keySet().contains( s );
     }
 
     public Set<String> keySet(){
         return new LazyBSONKeySet();
     }
 
-    private boolean isElementEmpty( int offset ){
+    protected boolean isElementEmpty( int offset ){
         return getElementType( offset ) == BSON.EOO;
     }
 
@@ -255,11 +267,11 @@ public class LazyBSONObject implements BSONObject {
         return _input.getCString( offset );
     }
 
-    private byte getElementType( final int offset ){
+    protected byte getElementType( final int offset ){
         return _input.get( offset );
     }
 
-    private int getElementBSONSize( int offset ){
+    protected int getElementBSONSize( int offset ){
         int x = 0;
         byte type = getElementType( offset++ );
         int n = sizeCString( offset++ );
@@ -317,7 +329,7 @@ public class LazyBSONObject implements BSONObject {
     }
 
 
-    private int sizeCString( int offset ){
+    protected int sizeCString( int offset ){
         offset += 1;
         int end = offset;
         while ( true ){
@@ -330,7 +342,7 @@ public class LazyBSONObject implements BSONObject {
         return end - offset + 1;
     }
 
-    private Object getElementValue( LazyLookupRecord record ){
+    protected Object getElementValue( ElementRecord record ){
         switch ( record.type ){
             case BSON.EOO:
             case BSON.UNDEFINED:
@@ -456,14 +468,10 @@ public class LazyBSONObject implements BSONObject {
      */
     final static int FIRST_ELMT_OFFSET = 4;
 
-    private final int _doc_start_offset;
+    protected final int _doc_start_offset;
 
-    private final ConcurrentHashMap<String, LazyLookupRecord> fieldIndex =
-            new ConcurrentHashMap<String, LazyLookupRecord>();
-    private final ConcurrentSkipListSet<String> noHitFields = new ConcurrentSkipListSet<String>();
-
-    private final BSONByteBuffer _input; // TODO - Guard this with synchronicity?
+    protected final BSONByteBuffer _input; // TODO - Guard this with synchronicity?
     // callback is kept to create sub-objects on the fly
-    private final LazyBSONCallback _callback;
+    protected final LazyBSONCallback _callback;
     private static final Logger log = Logger.getLogger( "org.bson.LazyBSONObject" );
 }

@@ -22,7 +22,7 @@ import java.util.logging.*;
 /**
  *
  */
-public class LazyBSONCallback implements BSONCallback {
+public class LazyBSONCallback extends EmptyBSONCallback {
 
     public void objectStart(){
         throw new UnsupportedOperationException( "Not supported yet." );
@@ -48,101 +48,8 @@ public class LazyBSONCallback implements BSONCallback {
         return _root;
     }
 
-    public BSONCallback createBSONCallback(){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void arrayStart(){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void arrayStart( String name ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public Object arrayDone(){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotNull( String name ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotUndefined( String name ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotMinKey( String name ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotMaxKey( String name ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotBoolean( String name, boolean v ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotDouble( String name, double v ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotInt( String name, int v ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotLong( String name, long v ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotDate( String name, long millis ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotString( String name, String v ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotSymbol( String name, String v ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotRegex( String name, String pattern, String flags ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotTimestamp( String name, int time, int inc ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotObjectId( String name, ObjectId id ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotDBRef( String name, String ns, ObjectId id ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    @Deprecated
-    public void gotBinaryArray( String name, byte[] data ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
     public void gotBinary( String name, byte type, byte[] data ){
         setRootObject( createObject( data, 0 ) );
-    }
-
-    public void gotUUID( String name, long part1, long part2 ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotCode( String name, String code ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void gotCodeWScope( String name, String code, Object scope ){
-        throw new UnsupportedOperationException( "Not supported yet." );
     }
 
     public void setRootObject( Object root ){

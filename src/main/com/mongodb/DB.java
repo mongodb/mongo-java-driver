@@ -59,7 +59,7 @@ public abstract class DB {
     public abstract void requestDone();
 
     /**
-     * ensure that a connection is assigned to the current "consistent request"
+     * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)
      */
     public abstract void requestEnsureConnection();
 
@@ -157,7 +157,7 @@ public abstract class DB {
         throws MongoException {
 
         // TODO - Is ReadPreference OK for commands?
-        Iterator<DBObject> i = getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options);
+        Iterator<DBObject> i = getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, null, DefaultDBDecoder.FACTORY.create() );
         if ( i == null || ! i.hasNext() )
             return null;
 
@@ -265,7 +265,7 @@ public abstract class DB {
             throw new RuntimeException("this is impossible");
 
         // TODO - Is ReadPreference OK for collection Names?
-        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, 0, getOptions());
+        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, 0, getOptions(), null, null);
         if (i == null)
             return new HashSet<String>();
 
@@ -644,7 +644,7 @@ public abstract class DB {
     /**
      * Makes it possible to execute "read" queries on a slave node
      *
-     * @deprecated Replaced in MongoDB 2.0/Java Driver 2.7 with ReadPreference.SECONDARY
+     * @deprecated Replaced with ReadPreference.SECONDARY
      * @see com.mongodb.ReadPreference.SECONDARY
      */
     @Deprecated

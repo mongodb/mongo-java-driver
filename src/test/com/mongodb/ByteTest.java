@@ -16,11 +16,24 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.util.*;
+import java.util.regex.Pattern;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.bson.*;
+import org.bson.BSON;
+import org.bson.BSONDecoder;
+import org.bson.BSONObject;
+import org.bson.BasicBSONDecoder;
+
 import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
 
@@ -30,11 +43,10 @@ import com.mongodb.util.TestCase;
 @SuppressWarnings("unchecked")
 public class ByteTest extends TestCase {
 
-    public ByteTest()
-        throws IOException , MongoException {
+    public ByteTest() throws IOException , MongoException {
         super();
-	cleanupMongo = new Mongo( "127.0.0.1" );
-	cleanupDB = "com_mongodb_unittest_ByteTest";
+        cleanupMongo = new Mongo( "127.0.0.1" );
+        cleanupDB = "com_mongodb_unittest_ByteTest";
         _db = cleanupMongo.getDB( cleanupDB );
 
 

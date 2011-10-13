@@ -43,7 +43,7 @@ public class BSONTest extends Assert {
     
     void _test( BSONObject o , int size , String hash )
         throws IOException {
-        BSONEncoder e = new BSONEncoder();
+        BSONEncoder e = new BasicBSONEncoder();
         OutputBuffer buf = new BasicOutputBuffer();
         e.set( buf );
         e.putObject( o );
@@ -168,7 +168,7 @@ public class BSONTest extends Assert {
         BSON.clearEncodingHooks();
         TestDate td = new TestDate( 2009 , 01 , 23 , 10 , 53 , 42 );
         BSONObject o = new BasicBSONObject( "date" , td );
-        BSONEncoder e = new BSONEncoder();
+        BSONEncoder e = new BasicBSONEncoder();
         BSONDecoder d = new BasicBSONDecoder();
         BSONCallback cb = new BasicBSONCallback();
         OutputBuffer buf = new BasicOutputBuffer();
@@ -219,7 +219,7 @@ public class BSONTest extends Assert {
         Date dt = new Date( 2009 , 01 , 23 , 10 , 53 , 42 );
         BSONObject o = new BasicBSONObject( "date" , dt );
         BSONDecoder d = new BasicBSONDecoder();
-        BSONEncoder e = new BSONEncoder();
+        BSONEncoder e = new BasicBSONEncoder();
         BSONCallback cb = new BasicBSONCallback();
         OutputBuffer buf = new BasicOutputBuffer();
         e.set( buf );

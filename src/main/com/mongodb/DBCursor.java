@@ -69,6 +69,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
             _options = _collection.getOptions();
         }
         _readPref = preference;
+        _decoderFact = collection.getDBDecoderFactory();
     }
 
     /**
@@ -295,7 +296,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      *
      * @return a copy of the same cursor (for chaining)
      *
-     * @deprecated Replaced in MongoDB 2.0/Java Driver 2.7 with ReadPreference.SECONDARY
+     * @deprecated Replaced with ReadPreference.SECONDARY
      * @see com.mongodb.ReadPreference.SECONDARY
      */
     @Deprecated
@@ -320,15 +321,17 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * sets the query option - see Bytes.QUERYOPTION_* for list
      * @param options
      */
-    public void setOptions( int options ){
+    public DBCursor setOptions( int options ){
         _options = options;
+        return this;
     }
 
     /**
      * resets the query options
      */
-    public void resetOptions(){
+    public DBCursor resetOptions(){
         _options = 0;
+        return this;
     }
 
     /**
@@ -367,7 +370,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
                     foo.put( "$snapshot", true );
             }
 
-            _it = _collection.__find( foo, _keysWanted, _skip, _batchSize, _limit , _options );
+            _it = _collection.__find( foo, _keysWanted, _skip, _batchSize, _limit , _options , null , _decoderFact.create() );
         }
 
         if ( _it == null ){
@@ -694,8 +697,9 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      *
      * @param preference Read Preference to use
      */
-    public void setReadPreference( ReadPreference preference ){
+    public DBCursor setReadPreference( ReadPreference preference ){
         _readPref = preference;
+        return this;
     }
 
     /**
@@ -704,6 +708,15 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      */
     public ReadPreference getReadPreference(){
         return _readPref;
+    }
+
+    public DBCursor setDecoderFactory(DBDecoderFactory fact){
+        _decoderFact = fact;
+        return this;
+    }
+
+    public DBDecoderFactory getDecoderFactory(){
+        return _decoderFact;
     }
 
     @Override
@@ -745,6 +758,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     private boolean _snapshot = false;
     private int _options = 0;
     private ReadPreference _readPref;
+    private DBDecoderFactory _decoderFact;
 
     private DBObject _specialFields;
 

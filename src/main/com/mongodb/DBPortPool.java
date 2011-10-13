@@ -171,22 +171,22 @@ public class DBPortPool extends SimplePool<DBPort> {
     }
     
     public DBPort get(){
-	DBPort port = null;
-	if ( ! _waitingSem.tryAcquire() )
-	    throw new SemaphoresOut();
+        DBPort port = null;
+        if ( ! _waitingSem.tryAcquire() )
+            throw new SemaphoresOut();
 
-	try {
-	    port = get( _options.maxWaitTime );
-	}
-	finally {
-	    _waitingSem.release();
-	}
+        try {
+            port = get( _options.maxWaitTime );
+        }
+        finally {
+            _waitingSem.release();
+        }
 
-	if ( port == null )
-	    throw new ConnectionWaitTimeOut( _options.maxWaitTime );
-	
-        port._lastThread = System.identityHashCode(Thread.currentThread());
-	return port;
+        if ( port == null )
+            throw new ConnectionWaitTimeOut( _options.maxWaitTime );
+        
+            port._lastThread = System.identityHashCode(Thread.currentThread());
+        return port;
     }
 
     void gotError( Exception e ){

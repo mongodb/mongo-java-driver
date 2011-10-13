@@ -175,7 +175,7 @@ public class LazyDBObjectTest extends TestCase {
         b.append( "regex", test_regex );
         DBObject _d = b.get();
         coll.insert( _d, WriteConcern.SAFE );
-        DBObject doc = coll.findOne( new BasicDBObject( "_id", oid ) );
+        DBObject doc = coll.find( new BasicDBObject( "_id", oid ) ).setDecoderFactory( LazyDBDecoder.FACTORY ).next();
         assertTrue( doc instanceof LazyDBObject, "Did Not Receive a LazyDBObject on read." );
         assertEquals( doc.get( "str" ), "foobarbaz" );
         assertEquals( doc.get( "_id" ), oid );

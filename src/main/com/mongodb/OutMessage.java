@@ -39,23 +39,36 @@ class OutMessage extends BasicBSONEncoder {
     }
 
     static OutMessage query( Mongo m , int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref ){
-        OutMessage out = new OutMessage( m , 2004 );
+        return query( m, options, ns, numToSkip, batchSize, query, fields, readPref, DefaultDBEncoder.FACTORY.create());
+    }
+
+    static OutMessage query( Mongo m , int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref, DBEncoder enc ){
+        OutMessage out = new OutMessage( m , 2004, enc );
         out._appendQuery( options , ns , numToSkip , batchSize , query , fields );
         out.setReadPreference( readPref );
         return out;
     }
 
     OutMessage( Mongo m ){
-        _mongo = m;
-        _buffer = _mongo == null ? new PoolOutputBuffer() : _mongo._bufferPool.get();
-        set( _buffer );
+        this( m , DefaultDBEncoder.FACTORY.create() );
     }
 
     OutMessage( Mongo m , int op ){
         this( m );
         reset( op );
     }
-    
+
+    OutMessage( Mongo m , DBEncoder encoder ) {
+        _encoder = encoder;
+        _mongo = m;
+        _buffer = _mongo == null ? new PoolOutputBuffer() : _mongo._bufferPool.get();
+        set( _buffer );
+    }
+
+    OutMessage( Mongo m , int op , DBEncoder enc ) {
+        this( m , enc );
+        reset( op );
+    }
     private void _appendQuery( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
         _queryOptions = options;
         writeInt( options );
@@ -87,77 +100,6 @@ class OutMessage extends BasicBSONEncoder {
         _buffer.writeInt( 0 , _buffer.size() );
     }
 
-    @SuppressWarnings("deprecation")
-    protected boolean handleSpecialObjects( String name , BSONObject o ){
-        
-        if ( o == null )
-            return false;
-
-        if ( o instanceof DBCollection ){
-            DBCollection c = (DBCollection)o;
-            putDBPointer( name , c.getName() , Bytes.COLLECTION_REF_ID );
-            return true;
-        }
-        
-        if ( name != null && o instanceof DBPointer ){
-            DBPointer r = (DBPointer)o;
-            putDBPointer( name , r._ns , (ObjectId)r._id );
-            return true;
-        }
-        
-        return false;
-    }
-
-    @SuppressWarnings("deprecation")
-    protected boolean putSpecial( String name , Object val ){
-        if ( val instanceof DBPointer ){
-            DBPointer r = (DBPointer)val;
-            putDBPointer( name , r._ns , (ObjectId)r._id );
-            return true;
-        }
-        
-        if ( val instanceof DBRefBase ){
-            putDBRef( name, (DBRefBase)val );
-            return true;
-        }
-        
-        return false;
-    }
-
-    protected void putDBPointer( String name , String ns , ObjectId oid ){
-        _put( REF , name );
-        
-        _putValueString( ns );
-        _buf.writeInt( oid._time() );
-        _buf.writeInt( oid._machine() );
-        _buf.writeInt( oid._inc() );
-    }
-
-    protected void putDBRef( String name, DBRefBase ref ){
-        _put( OBJECT , name );
-        final int sizePos = _buf.getPosition();
-        _buf.writeInt( 0 );
-        
-        _putObjectField( "$ref" , ref.getRef() );
-        _putObjectField( "$id" , ref.getId() );
-
-        _buf.write( EOO );
-        _buf.writeInt( sizePos , _buf.getPosition() - sizePos );
-    }
-
-    void append( String db , WriteConcern c ){
-
-        _id = ID.getAndIncrement();
-
-        int loc = size();
-
-        writeInt( 0 ); // will set this later
-        writeInt( _id );
-        writeInt( 0 ); // response to
-        writeInt( 2004 );
-        _appendQuery( 0 , db + ".$cmd" , 0 , -1 , c.getCommand() , null );
-        _buf.writeInt( loc , size() - loc );
-    }
 
     void pipe( OutputStream out )
         throws IOException {
@@ -191,7 +133,7 @@ class OutMessage extends BasicBSONEncoder {
     @Override
     public int putObject(BSONObject o) {
         // check max size
-        int sz = super.putObject(o);
+        int sz = _encoder.writeObject(_buf, o);
         if (_mongo != null) {
             int maxsize = _mongo.getConnector().getMaxBsonObjectSize();
             maxsize = Math.max(maxsize, Bytes.MAX_OBJECT_SIZE);
@@ -216,5 +158,6 @@ class OutMessage extends BasicBSONEncoder {
     private int _id;
     private int _queryOptions = 0;
     private ReadPreference _readPref = ReadPreference.PRIMARY;
+    private DBEncoder _encoder;
 
 }

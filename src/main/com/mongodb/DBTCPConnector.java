@@ -91,6 +91,7 @@ public class DBTCPConnector implements DBConnector {
      * operations will be performed on the same socket, so they will be
      * correctly ordered.
      */
+    @Override
     public void requestStart(){
         _myPort.get().requestStart();
     }
@@ -102,10 +103,12 @@ public class DBTCPConnector implements DBConnector {
      * pool is allowed to reassign requests to different sockets in order to
      * more effectively balance load. See requestStart for more information.
      */
+    @Override
     public void requestDone(){
         _myPort.get().requestDone();
     }
 
+    @Override
     public void requestEnsureConnection(){
         _myPort.get().requestEnsureConnection();
     }
@@ -127,11 +130,13 @@ public class DBTCPConnector implements DBConnector {
         return null;
     }
 
+    @Override
     public WriteResult say( DB db , OutMessage m , WriteConcern concern )
         throws MongoException {
         return say( db , m , concern , null );
     }
     
+    @Override
     public WriteResult say( DB db , OutMessage m , WriteConcern concern , ServerAddress hostNeeded )
         throws MongoException {
 
@@ -176,19 +181,19 @@ public class DBTCPConnector implements DBConnector {
         }
     }
     
-    public Response call( DB db , DBCollection coll , OutMessage m )
+    @Override
+    public Response call( DB db , DBCollection coll , OutMessage m, ServerAddress hostNeeded, DBDecoder decoder )
         throws MongoException {
-        return call( db , coll , m , null , 2 );
+        return call( db , coll , m , hostNeeded , 2, null, decoder );
     }
 
-    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded ) 
-        throws MongoException {
-        return call( db , coll , m , hostNeeded , 2 );
+
+    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries ) throws MongoException {
+        return call( db, coll, m, hostNeeded, retries, null, null);
     }
 
-    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries )
-        throws MongoException {
-        ReadPreference readPref = m.getReadPreference();
+    @Override
+    public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries, ReadPreference readPref, DBDecoder decoder ) throws MongoException{ 
         if (readPref == ReadPreference.PRIMARY && m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
            readPref = ReadPreference.SECONDARY;
 
@@ -204,7 +209,7 @@ public class DBTCPConnector implements DBConnector {
         boolean retry = false;
         try {
             port.checkAuth( db );
-            res = port.call( m , coll );
+            res = port.call( m , coll, readPref, decoder );
             if ( res._responseTo != m.getId() )
                 throw new MongoException( "ids don't match" );
         }
@@ -225,7 +230,7 @@ public class DBTCPConnector implements DBConnector {
         }
 
         if (retry)
-            return call( db , coll , m , hostNeeded , retries - 1 );
+            return call( db , coll , m , hostNeeded , retries - 1 , readPref, decoder );
 
         ServerError err = res.getError();
         
@@ -234,7 +239,7 @@ public class DBTCPConnector implements DBConnector {
             if ( retries <= 0 ){
                 throw new MongoException( "not talking to master and retries used up" );
             }
-            return call( db , coll , m , hostNeeded , retries -1 );
+            return call( db , coll , m , hostNeeded , retries -1, readPref, decoder );
         }
         
         m.doneWithMessage();

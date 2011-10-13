@@ -54,7 +54,7 @@ public abstract class DBCollection {
      * @dochub insert
      */
     public WriteResult insert(DBObject[] arr , WriteConcern concern ) throws MongoException {
-        return insert( arr, concern, false );
+        return insert( arr, concern, getDBEncoderFactory().create() );
     }
 
     /**
@@ -64,12 +64,12 @@ public abstract class DBCollection {
      *
      * @param arr  array of documents to save
      * @param concern the write concern
-     * @param continueOnError If an error occurs during bulk insert, continues instead of stopping
+     * @param encoder the DBEncoder to use
      * @return
      * @throws MongoException
      * @dochub insert
      */
-    public abstract WriteResult insert(DBObject[] arr , WriteConcern concern, Boolean continueOnError ) throws MongoException;
+    public abstract WriteResult insert(DBObject[] arr , WriteConcern concern, DBEncoder encoder) throws MongoException;
 
     /**
      * Inserts a document into the database.
@@ -87,7 +87,6 @@ public abstract class DBCollection {
         return insert( new DBObject[]{ o } , concern );
     }
 
-
     /**
      * Saves document(s) to the database.
      * if doc doesn't have an _id, one will be added
@@ -100,45 +99,22 @@ public abstract class DBCollection {
      */
     public WriteResult insert(DBObject ... arr)
         throws MongoException {
-        return insert( arr , getWriteConcern(), false);
+        return insert( arr , getWriteConcern() );
     }
 
     /**
      * Saves document(s) to the database.
      * if doc doesn't have an _id, one will be added
      * you can get the _id that was added from doc after the insert
-     *
-     * With continueOnError:
-     * "If set, the database will not stop processing a bulk insert if one
-     * fails (eg due to duplicate IDs). This makes bulk insert behave similarly
-     * to a series of single inserts, except lastError will be set if any insert
-     * fails, not just the last one. If multiple errors occur, only the most
-     * recent will be reported by getLastError. (new in 1.9.1)"
      *
      * @param arr  array of documents to save
-     * @param continueOnError If an error occurs during bulk insert, continues instead of stopping
      * @return
      * @throws MongoException
      * @dochub insert
      */
-    public WriteResult insert(Boolean continueOnError, DBObject ... arr)
-            throws MongoException {
-        return insert( arr , getWriteConcern(), continueOnError );
-    }
-
-    /**
-     * Saves document(s) to the database.
-     * if doc doesn't have an _id, one will be added
-     * you can get the _id that was added from doc after the insert
-     *
-     * @param list list of documents to save
-     * @return
-     * @throws MongoException
-     * @dochub insert
-     */
-    public WriteResult insert(List<DBObject> list)
+    public WriteResult insert(WriteConcern concern, DBObject ... arr)
         throws MongoException {
-        return insert( list, false );
+        return insert( arr, concern );
     }
 
     /**
@@ -146,29 +122,21 @@ public abstract class DBCollection {
      * if doc doesn't have an _id, one will be added
      * you can get the _id that was added from doc after the insert
      *
-     * With continueOnError:
-     * "If set, the database will not stop processing a bulk insert if one
-     * fails (eg due to duplicate IDs). This makes bulk insert behave similarly
-     * to a series of single inserts, except lastError will be set if any insert
-     * fails, not just the last one. If multiple errors occur, only the most
-     * recent will be reported by getLastError. (new in 1.9.1)"
-     *
      * @param list list of documents to save
-     * @param continueOnError If an error occurs during bulk insert, continues instead of stopping
      * @return
      * @throws MongoException
      * @dochub insert
      */
-    public WriteResult insert(List<DBObject> list, Boolean continueOnError)
-            throws MongoException {
-        return insert( list.toArray( new DBObject[list.size()] ) , getWriteConcern(), continueOnError );
+    public WriteResult insert(List<DBObject> list )
+        throws MongoException {
+        return insert( list, getWriteConcern() );
     }
 
     /**
      * Saves document(s) to the database.
      * if doc doesn't have an _id, one will be added
      * you can get the _id that was added from doc after the insert
-     *
+     * 
      * @param list list of documents to save
      * @param concern the write concern
      * @return
@@ -176,32 +144,8 @@ public abstract class DBCollection {
      * @dochub insert
      */
     public WriteResult insert(List<DBObject> list, WriteConcern concern )
-        throws MongoException {
-        return insert( list, concern, false );
-    }
-
-    /**
-     * Saves document(s) to the database.
-     * if doc doesn't have an _id, one will be added
-     * you can get the _id that was added from doc after the insert
-     *
-     * With continueOnError:
-     * "If set, the database will not stop processing a bulk insert if one
-     * fails (eg due to duplicate IDs). This makes bulk insert behave similarly
-     * to a series of single inserts, except lastError will be set if any insert
-     * fails, not just the last one. If multiple errors occur, only the most
-     * recent will be reported by getLastError. (new in 1.9.1)"
-     *
-     * @param list list of documents to save
-     * @param concern the write concern
-     * @param continueOnError If an error occurs during bulk insert, continues instead of stopping
-     * @return
-     * @throws MongoException
-     * @dochub insert
-     */
-    public WriteResult insert(List<DBObject> list, WriteConcern concern, Boolean continueOnError )
             throws MongoException {
-        return insert( list.toArray( new DBObject[list.size()] ) , concern, continueOnError );
+        return insert( list.toArray( new DBObject[list.size()] ) , concern );
     }
 
     /**
@@ -217,7 +161,25 @@ public abstract class DBCollection {
      * @throws MongoException
      * @dochub update
      */
-    public abstract WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi , WriteConcern concern ) throws MongoException ;
+    public WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi , WriteConcern concern ) throws MongoException {
+        return update( q, o, upsert, multi, concern, getDBEncoderFactory().create() );
+    }
+
+    /**
+     * Performs an update operation.
+     * @param q search query for old object to update
+     * @param o object with which to update <tt>q</tt>
+     * @param upsert if the database should create the element if it does not exist
+     * @param multi if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
+     * not be inserted if it does not exist in the collection and upsert=true and multi=true.
+     * See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
+     * @param concern the write concern
+     * @param encoder the DBEncoder to use
+     * @return
+     * @throws MongoException
+     * @dochub update
+     */
+    public abstract WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi , WriteConcern concern, DBEncoder encoder ) throws MongoException ;
 
     /**
      * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean, com.mongodb.WriteConcern)} with default WriteConcern.
@@ -273,7 +235,20 @@ public abstract class DBCollection {
      * @throws MongoException
      * @dochub remove
      */
-    public abstract WriteResult remove( DBObject o , WriteConcern concern ) throws MongoException ;
+    public WriteResult remove( DBObject o , WriteConcern concern ) throws MongoException {
+        return remove(  o, concern, getDBEncoderFactory().create() );
+    }
+
+    /**
+     * Removes objects from the database collection.
+     * @param o the object that documents to be removed must match
+     * @param concern WriteConcern for this operation
+     * @param encoder the DBEncoder to use
+     * @return
+     * @throws MongoException
+     * @dochub remove
+     */
+    public abstract WriteResult remove( DBObject o , WriteConcern concern, DBEncoder encoder ) throws MongoException ;
 
     /**
      * calls {@link DBCollection#remove(com.mongodb.DBObject, com.mongodb.WriteConcern)} with the default WriteConcern
@@ -291,11 +266,7 @@ public abstract class DBCollection {
     /**
      * Finds objects
      */
-    Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options ) throws MongoException {
-        return __find( ref, fields, numToSkip, batchSize, limit, options, _readPref );
-    }
-
-    abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options, ReadPreference readPref ) throws MongoException ;
+    abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options, ReadPreference readPref, DBDecoder decoder ) throws MongoException ;
 
     /**
      * Calls {@link DBCollection#find(com.mongodb.DBObject, com.mongodb.DBObject, int, int)} and applies the query options
@@ -383,7 +354,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( Object obj, DBObject fields, ReadPreference readPref ) {
-        Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions(), readPref );
+        Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions(), readPref, _decoderFactory.create() );
         return (iterator != null ? iterator.next() : null);
     }
 
@@ -486,7 +457,18 @@ public abstract class DBCollection {
      * @param options
      * @throws MongoException
      */
-    public abstract void createIndex( DBObject keys , DBObject options ) throws MongoException;
+    public void createIndex( DBObject keys , DBObject options ) throws MongoException {
+        createIndex( keys, options, getDBEncoderFactory().create() );
+    }
+
+    /**
+     * Forces creation of an index on a set of fields, if one does not already exist.
+     * @param keys
+     * @param options
+     * @param encoder the DBEncoder to use
+     * @throws MongoException
+     */
+    public abstract void createIndex( DBObject keys , DBObject options, DBEncoder encoder ) throws MongoException;
 
     /**
      * Creates an ascending index on a field with default options, if one does not already exist.
@@ -754,7 +736,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( DBObject o, DBObject fields, ReadPreference readPref ) {
-        Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0, getOptions(), readPref );
+        Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0, getOptions(), readPref, _decoderFactory.create() );
         DBObject obj = (i == null ? null : i.next());
         if ( obj != null && ( fields != null && fields.keySet().size() > 0 ) ){
             obj.markAsPartialObject();
@@ -1253,6 +1235,8 @@ public abstract class DBCollection {
         _name = name;
         _fullName = _db.getName() + "." + name;
         _options = new Bytes.OptionHolder( _db._options );
+        _decoderFactory = _db.getMongo().getMongoOptions().dbDecoderFactory;
+        _encoderFactory = _db.getMongo().getMongoOptions().dbEncoderFactory;
     }
 
     protected DBObject _checkObject( DBObject o , boolean canBeNull , boolean query ){
@@ -1473,7 +1457,7 @@ public abstract class DBCollection {
     }
 
     /**
-     * Gets the default read preference
+     * Gets the read preference
      * @return
      */
     public ReadPreference getReadPreference(){
@@ -1484,7 +1468,7 @@ public abstract class DBCollection {
     /**
      * makes this query ok to run on a slave node
      *
-     * @deprecated Replaced in MongoDB 2.0/Java Driver 2.7 with ReadPreference.SECONDARY
+     * @deprecated Replaced with ReadPreference.SECONDARY
      * @see com.mongodb.ReadPreference.SECONDARY
      */
     @Deprecated
@@ -1523,12 +1507,26 @@ public abstract class DBCollection {
         return _options.get();
     }
 
-    public void setDBDecoderFactory(DBDecoderFactory dbDecoderFactory) {
-        this.dbDecoderFactory = dbDecoderFactory;
+    public void setDBDecoderFactory(DBDecoderFactory fact) {
+        if (fact == null)
+            _decoderFactory = _db.getMongo().getMongoOptions().dbDecoderFactory;
+        else
+            _decoderFactory = fact;
     }
 
     public DBDecoderFactory getDBDecoderFactory() {
-        return dbDecoderFactory;
+        return _decoderFactory;
+    }
+
+    public void setDBEncoderFactory(DBEncoderFactory fact) {
+        if (fact == null)
+            _encoderFactory = _db.getMongo().getMongoOptions().dbEncoderFactory;
+        else
+            _encoderFactory = fact;
+    }
+
+    public DBEncoderFactory getDBEncoderFactory() {
+        return _encoderFactory;
     }
 
     final DB _db;
@@ -1539,6 +1537,8 @@ public abstract class DBCollection {
     protected List<DBObject> _hintFields;
     private WriteConcern _concern = null;
     private ReadPreference _readPref = null;
+    private DBDecoderFactory _decoderFactory;
+    private DBEncoderFactory _encoderFactory;
     final Bytes.OptionHolder _options;
 
     protected Class _objectClass = null;
@@ -1547,5 +1547,4 @@ public abstract class DBCollection {
 
     final private Set<String> _createdIndexes = new HashSet<String>();
 
-    private DBDecoderFactory dbDecoderFactory;
 }

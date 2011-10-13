@@ -56,7 +56,7 @@ public class WriteConcern {
     public final static WriteConcern SAFE = new WriteConcern(1);
 
     /** Exceptions are raised for network issues, and server errors; waits on a majority of servers for the write operation */
-    public final static WriteConcern MAJORITY = new MajorityWriteConcern();
+    public final static WriteConcern MAJORITY = new Majority();
 
     /** Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to disk*/
     public final static WriteConcern FSYNC_SAFE = new WriteConcern(true);
@@ -159,18 +159,31 @@ public class WriteConcern {
         _wtimeout = wtimeout;
         _fsync = fsync;
         _j = j;
+        _continueOnErrorInsert = false;
+    }
 
-        _command = new BasicDBObject( "getlasterror" , 1 );
-
-        _command.put( "w" , _wValue );
-        _command.put( "wtimeout" , wtimeout );
-
-        if ( _fsync )
-            _command.put( "fsync" , true );
-
-        if ( _j )
-            _command.put( "j", true );
-
+    /**
+     * Creates a WriteConcern object.
+     * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
+     *	<p> w represents the number of servers:
+     * 		<ul>
+     * 			<li>{@code w=-1} None, no checking is done</li>
+     * 			<li>{@code w=0} None, network socket errors raised</li>
+     * 			<li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
+     * 			<li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
+     * 		</ul>
+     * 	</p>
+     * @param w number of writes
+     * @param wtimeout timeout for write operation
+     * @param fsync whether or not to fsync
+     * @param j whether writes should wait for a journaling group commit
+     */
+    public WriteConcern( int w , int wtimeout , boolean fsync, boolean j , boolean continueInsertOnError ){
+        _wValue = w;
+        _wtimeout = wtimeout;
+        _fsync = fsync;
+        _j = j;
+        _continueOnErrorInsert = continueInsertOnError;
     }
 
     /**
@@ -194,24 +207,50 @@ public class WriteConcern {
         _wtimeout = wtimeout;
         _fsync = fsync;
         _j = j;
-
-        _command = new BasicDBObject( "getlasterror" , 1 );
-
-        _command.put( "w" , _wValue );
-        _command.put( "wtimeout" , wtimeout );
-
-        if ( _fsync )
-            _command.put( "fsync" , true );
-
-        if ( _j )
-            _command.put( "j", true );
+        _continueOnErrorInsert = false;
     }
+
+    /**
+     * Creates a WriteConcern object.
+     * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
+     *	<p> w represents the number of servers:
+     * 		<ul>
+     * 			<li>{@code w=-1} None, no checking is done</li>
+     * 			<li>{@code w=0} None, network socket errors raised</li>
+     * 			<li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
+     * 			<li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
+     * 		</ul>
+     * 	</p>
+     * @param w number of writes
+     * @param wtimeout timeout for write operation
+     * @param fsync whether or not to fsync
+     * @param j whether writes should wait for a journaling group commit
+     */
+    public WriteConcern( String w , int wtimeout , boolean fsync, boolean j , Boolean continueInsertOnError ){
+        _wValue = w;
+        _wtimeout = wtimeout;
+        _fsync = fsync;
+        _j = j;
+        _continueOnErrorInsert = continueInsertOnError;
+    }
+
 
     /**
      * Gets the object representing the "getlasterror" command
      * @return
      */
     public BasicDBObject getCommand(){
+        BasicDBObject _command = new BasicDBObject( "getlasterror" , 1 );
+
+        _command.put( "w" , _wValue );
+        _command.put( "wtimeout" , _wtimeout );
+
+        if ( _fsync )
+            _command.put( "fsync" , true );
+
+        if ( _j )
+            _command.put( "j", true );
+
         return _command;
     }
 
@@ -259,6 +298,14 @@ public class WriteConcern {
     public boolean j(){
         return _j;
     }
+    
+    /**
+     * Returns whether (batch) inserts will continue if an error occurs before the end
+     * @return boolean
+     */
+    public boolean continueOnErrorForInsert(){
+        return _continueOnErrorInsert;
+    }
 
     /**
      * Returns whether network error may be raised (w >= 0)
@@ -304,7 +351,7 @@ public class WriteConcern {
 
     @Override
     public String toString(){
-        return "WriteConcern " + _command;
+        return "WriteConcern " + getCommand() + " / (Continue Inserting on Errors? " + continueOnErrorForInsert() + ")";
     }
 
     @Override
@@ -313,15 +360,74 @@ public class WriteConcern {
         if ( o == null || getClass() != o.getClass() ) return false;
 
         WriteConcern that = (WriteConcern) o;
-        return _fsync == that._fsync && _wValue == that._wValue && _wtimeout == that._wtimeout && _j == that._j;
+        return _fsync == that._fsync && _wValue == that._wValue && _wtimeout == that._wtimeout && _j == that._j && _continueOnErrorInsert == that._continueOnErrorInsert;
     }
 
     /**
-     * Gets the number of servers to write to
+     * Gets the w value (either int or string)
      * @return
      */
     public Object getWValue(){
         return _wValue;
+    }
+
+    /**
+     * Clones this WriteConcern with a new String mode for "w" (WriteConcerns are immutable)
+     * @param mode
+     * @return
+     */
+    public WriteConcern withW(String mode) {
+        return _instance(mode, _wtimeout, _fsync, _j, _continueOnErrorInsert);
+    }
+
+    /**
+     * Clones this WriteConcern with a new int mode for "w" (WriteConcerns are immutable)
+     * @param mode
+     * @param w
+     * @return
+     */
+    public WriteConcern withW(int w) {
+        return _instance( w, _wtimeout, _fsync, _j, _continueOnErrorInsert );
+    }
+
+    /**
+     *
+     * Clones this WriteConcern with a new "j" (WriteConcerns are immutable)
+     * @param j
+     * @return
+     */
+    public WriteConcern withJ(boolean j) {
+        return _instance( _wValue, _wtimeout, _fsync, _j, _continueOnErrorInsert );
+    }
+
+
+    /**
+     *
+     * Clones this WriteConcern with a new boolean mode for "continue inserts on error" (WriteConcerns are immutable)
+     * @param cont
+     * @return
+     */
+    public WriteConcern withContinueOnErrorForInsert(boolean cont) {
+        return _instance( _wValue, _wtimeout, _fsync, _j, cont );
+    }
+
+    /**
+     *
+     * Clones this WriteConcern with a new boolean mode for fsync  (WriteConcerns are immutable)
+     * @param fsync
+     * @return
+     */
+    public WriteConcern withFsync(boolean fsync) {
+        return _instance( _wValue, _wtimeout, fsync, _j, _continueOnErrorInsert );
+    }
+
+
+    protected WriteConcern _instance( Object wValue, int wtimeout, boolean fsync, boolean j, boolean cont ){
+        if (wValue instanceof Integer)
+            return new WriteConcern( (Integer) wValue, wtimeout, fsync, j, cont );
+        else if (wValue instanceof String)
+            return new WriteConcern( (String) wValue, wtimeout, fsync, j, cont );
+        else throw new IllegalArgumentException( "W must be a String or Integer." );
     }
 
     /**
@@ -332,26 +438,30 @@ public class WriteConcern {
      * @param fsync whether or not to fsync
      * @param j whether writes should wait for a journaling group commit
      */
-    public static MajorityWriteConcern majorityWriteConcern( int wtimeout, boolean fsync, boolean j ) {
-        return new MajorityWriteConcern( wtimeout, fsync, j );
+    public static Majority majorityWriteConcern( int wtimeout, boolean fsync, boolean j ) {
+        return new Majority( wtimeout, fsync, j );
     }
 
 
-    final Object _wValue;
+    Object _wValue;
     final int _wtimeout;
     final boolean _fsync;
     final boolean _j;
+    final boolean _continueOnErrorInsert;
 
-    final BasicDBObject _command;
+    public static class Majority extends WriteConcern {
 
-    public static class MajorityWriteConcern extends WriteConcern {
-
-        public MajorityWriteConcern( ) {
+        public Majority( ) {
             super( "majority", 0, false, false );
         }
 
-        public MajorityWriteConcern( int wtimeout, boolean fsync, boolean j ){
+        public Majority( int wtimeout, boolean fsync, boolean j ){
             super( "majority", wtimeout, fsync, j );
+        }
+
+        @Override
+        public String toString(){
+            return "[Majority] WriteConcern " + getCommand();
         }
 
     }

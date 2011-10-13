@@ -17,6 +17,7 @@ package com.mongodb;
 
 import org.bson.LazyBSONCallback;
 import org.bson.LazyBSONObject;
+import org.bson.io.BSONByteBuffer; 
 
 import java.io.*;
 
@@ -28,6 +29,15 @@ public class LazyDBObject extends LazyBSONObject implements DBObject {
     public boolean isPartialObject() {
         return false;
     }
+
+    public LazyDBObject(BSONByteBuffer buff, LazyBSONCallback cbk){ 
+        super(buff, cbk);
+    }
+
+    public LazyDBObject(BSONByteBuffer buff, int offset, LazyBSONCallback cbk){ 
+        super(buff, offset, cbk);
+    }
+
     
     public LazyDBObject(byte[] data, LazyBSONCallback cbk){
         this(data, 0, cbk);
