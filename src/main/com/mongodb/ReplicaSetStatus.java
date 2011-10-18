@@ -18,15 +18,11 @@
 
 package com.mongodb;
 
+import com.mongodb.util.*;
+
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
+import java.util.Map.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -94,12 +90,34 @@ public class ReplicaSetStatus {
     }
 
     /**
+     * @return a good secondary by tag value or null if can't find one
+     */
+    ServerAddress getASecondary( DBObject tags ){
+        for ( String key : tags.keySet() ) {
+            ServerAddress secondary = getASecondary( key, tags.get( key ).toString() );
+            if (secondary != null)
+                return secondary;
+        }
+        // No matching server for any supplied tags was found
+        return null;
+    }
+
+    /**
      * @return a good secondary or null if can't find one
      */
     ServerAddress getASecondary(){
+        return getASecondary( null, null );
+    }
+    /**
+     * @return a good secondary or null if can't find one
+     */
+    ServerAddress getASecondary( String tagKey, String tagValue ){
         _checkClosed();
         Node best = null;
         double badBeforeBest = 0;
+
+        if (tagKey == null && tagValue != null || tagValue == null & tagKey != null)
+           throw new IllegalArgumentException( "Tag Key & Value must be consistent: both defined or not defined." );
 
         int start = _random.nextInt( _all.size() );
 
@@ -111,7 +129,11 @@ public class ReplicaSetStatus {
             if ( ! n.secondary() ){
                 mybad++;
                 continue;
+            } else if (tagKey != null && !n.checkTag( tagKey, tagValue )){
+                mybad++;
+                continue;
             }
+
 
             if ( best == null ){
                 best = n;
@@ -209,6 +231,14 @@ public class ReplicaSetStatus {
                     }
                 }
 
+                // Tags were added in 2.0 but may not be present
+                if (res.containsField( "tags" )) {
+                    DBObject tags = (DBObject) res.get( "tags" );
+                    for ( String key : tags.keySet() ) {
+                        _tags.put( key, tags.get( key ).toString() );
+                    }
+                }
+
                 if (_isMaster ) {
                     // max size was added in 1.8
                     if (res.containsField("maxBsonObjectSize"))
@@ -251,6 +281,10 @@ public class ReplicaSetStatus {
             return _ok && _isSecondary;
         }
 
+        public boolean checkTag(String key, String value){
+            return _tags.containsKey( key ) && _tags.get( key ).equals( value );
+        }
+
         public String toString(){
             StringBuilder buf = new StringBuilder();
             buf.append( "Replica Set Node: " ).append( _addr ).append( "\n" );
@@ -261,6 +295,8 @@ public class ReplicaSetStatus {
             buf.append( "\t secondary \t" ).append( _isSecondary ).append( "\n" );
 
             buf.append( "\t priority \t" ).append( _priority ).append( "\n" );
+
+            buf.append( "\t tags \t" ).append( JSON.serialize( _tags )  ).append( "\n" );
 
             return buf.toString();
         }
@@ -273,6 +309,7 @@ public class ReplicaSetStatus {
         final ServerAddress _addr;
         final Set<String> _names = Collections.synchronizedSet( new HashSet<String>() );
         DBPort _port; // we have our own port so we can set different socket options and don't have to owrry about the pool
+        final LinkedHashMap<String, String> _tags = new LinkedHashMap<String, String>( );
 
         boolean _ok = false;
         long _lastCheck = 0;
@@ -460,8 +497,10 @@ public class ReplicaSetStatus {
     public static void main( String args[] )
         throws Exception {
         List<ServerAddress> addrs = new LinkedList<ServerAddress>();
-        addrs.add( new ServerAddress( "127.0.0.1" , 27017 ) );
         addrs.add( new ServerAddress( "127.0.0.1" , 27018 ) );
+        addrs.add( new ServerAddress( "127.0.0.1" , 27019 ) );
+        addrs.add( new ServerAddress( "127.0.0.1" , 27020 ) );
+        addrs.add( new ServerAddress( "127.0.0.1" , 27021 ) );
 
         Mongo m = new Mongo( addrs );
 
@@ -476,6 +515,9 @@ public class ReplicaSetStatus {
                 System.out.println( "master: " + status.getMaster() + "\t secondary: " + status.getASecondary() );
             }
             System.out.println( "-----------------------" );
+            DBObject tags = new BasicDBObject();
+            tags.put( "dc", "newyork" );
+            System.out.println( "Tagged Node: " + status.getASecondary( tags ) );
             Thread.sleep( 5000 );
         }
 

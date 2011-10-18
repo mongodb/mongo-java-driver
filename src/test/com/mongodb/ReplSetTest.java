@@ -65,14 +65,16 @@ public class ReplSetTest {
 
         List<ServerAddress> addrs = new ArrayList<ServerAddress>();
         if ( rs ){
-            addrs.add( new ServerAddress( "localhost" , 27017 ) );
             addrs.add( new ServerAddress( "localhost" , 27018 ) );
             addrs.add( new ServerAddress( "localhost" , 27019 ) );
+            addrs.add( new ServerAddress( "localhost" , 27020 ) );
+            addrs.add( new ServerAddress( "localhost" , 27021 ) );
         }
 
         Mongo m = rs ? new Mongo( addrs ) : new Mongo();
         DB db = m.getDB( "test" );
         DBCollection c = db.getCollection( "foo" );
+        c.drop();
         c.insert( new BasicDBObject( "_id" , 17 ) );
         c.slaveOk();
 
@@ -83,9 +85,13 @@ public class ReplSetTest {
         while ( true ){
             _sleep();
             try {
-                DBObject x = c.findOne();
-                //System.out.println( x );
-                c.update( new BasicDBObject( "_id" , 17 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
+                DBObject x = c.findOne(new BasicDBObject( "_id", 17 ),
+                                       ReadPreference.withTags( new BasicDBObject("dc", "proximacentauri") ));
+                System.out.println( x );
+                Integer n = (Integer) x.get( "x" );
+                if (n != null && n >= 150 )
+                    break;
+                c.update( new BasicDBObject( "_id", 17 ), new BasicDBObject( "$inc", new BasicDBObject( "x", 1 ) ) );
             }
             catch ( Exception e ){
                 e.printStackTrace();

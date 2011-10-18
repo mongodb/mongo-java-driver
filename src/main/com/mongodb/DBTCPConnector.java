@@ -18,6 +18,8 @@
 
 package com.mongodb;
 
+import com.mongodb.ReadPreference.*;
+
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
@@ -337,9 +339,20 @@ public class DBTCPConnector implements DBConnector {
             
             if ( !(readPref == ReadPreference.PRIMARY) && _rsStatus != null ){
                 // if not a primary read set, try to use a secondary
-                ServerAddress slave = _rsStatus.getASecondary();
-                if ( slave != null ){
-                    return _portHolder.get( slave ).get();
+                // Do they want a Secondary, or a specific tag set?
+                if (readPref == ReadPreference.SECONDARY) {
+                    ServerAddress slave = _rsStatus.getASecondary();
+                    if ( slave != null ){
+                        return _portHolder.get( slave ).get();
+                    }
+                } else if (readPref instanceof ReadPreference.TaggedReadPreference) {
+                    // Tag based read
+                    ServerAddress secondary = _rsStatus.getASecondary( ( (TaggedReadPreference) readPref ).getTags() );
+                    if (secondary != null)
+                        return _portHolder.get( secondary ).get();
+                    else
+                        throw new MongoException( "Could not find any valid secondaries with the supplied tags ('" +
+                                                  ( (TaggedReadPreference) readPref ).getTags() + "'");
                 }
             }
 
