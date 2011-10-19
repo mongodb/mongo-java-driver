@@ -100,11 +100,6 @@ class Response {
         if ( ( _flags & Bytes.RESULTFLAG_AWAITCAPABLE ) > 0 && ( queryOptions & Bytes.QUERYOPTION_AWAITDATA ) > 0 )
             return true;
 
-        try {
-            Thread.sleep( 500 );
-        }
-        catch ( Exception e ){}
-
         return true;
     }
 

@@ -72,12 +72,26 @@ public class DBCursorTest extends TestCase {
         DBCursor dbCursor = c.find();
 
         assertEquals(0, dbCursor.getOptions());
-        dbCursor.setOptions(Bytes.QUERYOPTION_TAILABLE);
+        dbCursor.setOptions( Bytes.QUERYOPTION_TAILABLE );
         assertEquals(Bytes.QUERYOPTION_TAILABLE, dbCursor.getOptions());
-        dbCursor.addOption(Bytes.QUERYOPTION_SLAVEOK);
+        dbCursor.addOption( Bytes.QUERYOPTION_SLAVEOK );
         assertEquals(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_SLAVEOK, dbCursor.getOptions());
         dbCursor.resetOptions();
         assertEquals(0, dbCursor.getOptions());
+    }
+
+    @Test
+    public void testTailable() {
+        DBCollection c = _db.createCollection( "tailableTest", new BasicDBObject( "capped", true ).append( "size", 10000));
+        DBCursor cursor = c.find( ).addOption( Bytes.QUERYOPTION_TAILABLE );
+
+        long start = System.currentTimeMillis();
+        System.err.println( "[ " + start + " ] Has Next?" +  cursor.hasNext());
+        cursor.next();
+        long end = System.currentTimeMillis();
+        System.err.println(  "[ " + end + " ] Tailable next returned." );
+        assertLess(start - end, 100);
+        c.drop();
     }
 
     @Test

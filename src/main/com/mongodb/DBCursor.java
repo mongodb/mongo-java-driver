@@ -18,11 +18,7 @@
 
 package com.mongodb;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.mongodb.DBApiLayer.Result;
 
@@ -455,7 +451,16 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         _check();
 
         _cur = null;
-        _cur = _it.next();
+        if ((_options & Bytes.QUERYOPTION_TAILABLE) > 0) {
+            try {
+                _cur = _it.next();
+            } catch (NoSuchElementException e){
+                // Hacky way of handling this but should be OK for now...
+                return null;
+            }
+        } else {
+            _cur = _it.next();
+        }
         _num++;
 
         if ( _keysWanted != null && _keysWanted.keySet().size() > 0 ){
