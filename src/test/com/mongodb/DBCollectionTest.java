@@ -229,7 +229,7 @@ public class DBCollectionTest extends TestCase {
     public void mongodIsVersion20Plus() {
         String version = (String) _db.command("serverStatus").get("version");
         System.err.println("Connected to MongoDB Version '" + version + "'");
-        assertEquals(version.charAt(0), "2");
+        assert(Double.parseDouble(version.substring(0, 3)) >= 2.0);
     }
 
     @Test(dependsOnMethods = { "mongodIsVersion20Plus" })
