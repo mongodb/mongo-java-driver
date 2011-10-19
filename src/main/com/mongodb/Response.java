@@ -95,11 +95,7 @@ class Response {
         if ( ( queryOptions & Bytes.QUERYOPTION_TAILABLE ) == 0 )
             return false;
 
-        // have a tailable cursor
-
-        if ( ( _flags & Bytes.RESULTFLAG_AWAITCAPABLE ) > 0 && ( queryOptions & Bytes.QUERYOPTION_AWAITDATA ) > 0 )
-            return true;
-
+        // have a tailable cursor, it is always possible to call get more
         return true;
     }
 

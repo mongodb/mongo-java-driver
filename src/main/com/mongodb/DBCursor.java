@@ -450,17 +450,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
         _check();
 
-        _cur = null;
-        if ((_options & Bytes.QUERYOPTION_TAILABLE) > 0) {
-            try {
-                _cur = _it.next();
-            } catch (NoSuchElementException e){
-                // Hacky way of handling this but should be OK for now...
-                return null;
-            }
-        } else {
-            _cur = _it.next();
-        }
+        _cur = _it.next();
         _num++;
 
         if ( _keysWanted != null && _keysWanted.keySet().size() > 0 ){
@@ -744,7 +734,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         if (addr != null)
             sb.append(", addr=").append(addr);
 
-        sb.append(", readPreference=").append( _readPref.toString() );
+        if (_readPref != null)
+            sb.append(", readPreference=").append( _readPref.toString() );
         return sb.toString();
     }
 

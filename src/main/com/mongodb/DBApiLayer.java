@@ -407,15 +407,31 @@ public class DBApiLayer extends DB {
         }
 
         public boolean hasNext(){
-            while ( true ){
-                if ( _cur.hasNext() )
-                    return true;
-
+            boolean hasNext = _cur.hasNext();
+            while ( !hasNext ) {
                 if ( ! _curResult.hasGetMore( _options ) )
                     return false;
 
                 _advance();
+                hasNext = _cur.hasNext();
+                
+                if (!hasNext) {
+                    if ( ( _options & Bytes.QUERYOPTION_AWAITDATA ) == 0 ) {
+                        // dont block waiting for data if no await
+                        return false;
+                    } else {
+                        // if await, driver should block until data is available
+                        // if server does not support await, driver must sleep to avoid busy loop
+                        if ((_curResult._flags & Bytes.RESULTFLAG_AWAITCAPABLE) == 0) {
+                            try {
+                                Thread.sleep(500);
+                            } catch (Exception e) {
+                            }
+                        }
+                    }
+                }
             }
+            return hasNext;
         }
 
         private void _advance(){

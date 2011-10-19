@@ -19,6 +19,8 @@ package com.mongodb;
 import java.io.IOException;
 import java.util.Iterator;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.testng.annotations.Test;
 
 import com.mongodb.util.TestCase;
@@ -80,20 +82,80 @@ public class DBCursorTest extends TestCase {
         assertEquals(0, dbCursor.getOptions());
     }
 
-    @Test
-    public void testTailable() {
-        DBCollection c = _db.createCollection( "tailableTest", new BasicDBObject( "capped", true ).append( "size", 10000));
-        DBCursor cursor = c.find( ).addOption( Bytes.QUERYOPTION_TAILABLE );
+//    @Test
+//    public void testTailable() {
+//        DBCollection c = _db.createCollection( "tailableTest", new BasicDBObject( "capped", true ).append( "size", 10000));
+//        DBCursor cursor = c.find( ).addOption( Bytes.QUERYOPTION_TAILABLE );
+//
+//        long start = System.currentTimeMillis();
+//        System.err.println( "[ " + start + " ] Has Next?" +  cursor.hasNext());
+//        cursor.next();
+//        long end = System.currentTimeMillis();
+//        System.err.println(  "[ " + end + " ] Tailable next returned." );
+//        assertLess(start - end, 100);
+//        c.drop();
+//    }
 
-        long start = System.currentTimeMillis();
-        System.err.println( "[ " + start + " ] Has Next?" +  cursor.hasNext());
-        cursor.next();
-        long end = System.currentTimeMillis();
-        System.err.println(  "[ " + end + " ] Tailable next returned." );
-        assertLess(start - end, 100);
+    @Test//(enabled = false)
+    public void testTailable() {
+        DBCollection c = _db.getCollection("tail1");
         c.drop();
+        _db.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+        for (int i = 0; i < 10; i++) {
+            c.save(new BasicDBObject("x", i));
+        }
+
+        DBCursor cur = c.find().sort(new BasicDBObject("$natural", 1)).addOption(Bytes.QUERYOPTION_TAILABLE);
+
+        while (cur.hasNext()) {
+            cur.next();
+            //do nothing...
+        }
+
+        assert (!cur.hasNext());
+        c.save(new BasicDBObject("x", 12));
+        assert (cur.hasNext());
+        assertNotNull(cur.next());
+        assert (!cur.hasNext());
     }
 
+    @Test//(enabled = false)
+    public void testTailableAwait() {
+        DBCollection c = _db.getCollection("tail1");
+        c.drop();
+        _db.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+        for (int i = 0; i < 10; i++) {
+            c.save(new BasicDBObject("x", i));
+        }
+
+        final DBCursor cur = c.find().sort(new BasicDBObject("$natural", 1)).addOption(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA);
+        Thread t = new Thread(new Runnable() {
+            public void run() {
+                // the following call will block on the last hasNext
+                int i = 0;
+                while (cur.hasNext()) {
+                    cur.next();
+                    if (++i > 10)
+                        break;
+                }
+            }
+        });
+        t.start();
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException ex) {
+        }
+        assert (t.isAlive());
+
+        // this doc should unblock thread
+        c.save(new BasicDBObject("x", 12));
+        try {
+            t.join(100);
+        } catch (InterruptedException ex) {
+        }
+    }
+    
     @Test
     public void testBig2(){
         DBCollection c = _db.getCollection("big2");
