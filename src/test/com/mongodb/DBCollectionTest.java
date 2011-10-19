@@ -224,8 +224,17 @@ public class DBCollectionTest extends TestCase {
         assertEquals( c.count(), 1);
     }
 
+
     @Test
+    public void mongodIsVersion20Plus() {
+        String version = (String) _db.command("serverStatus").get("version");
+        System.err.println("Connected to MongoDB Version '" + version + "'");
+        assert(version.charAt(0) == 2);
+    }
+
+    @Test(dependsOnMethods = { "mongodIsVersion20Plus" })
     public void testMultiInsertWithContinue() {
+        
         DBCollection c = _db.getCollection("testmultiinsertWithContinue");
         c.drop();
 
