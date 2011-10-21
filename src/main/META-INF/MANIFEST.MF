@@ -3,5 +3,5 @@ Bundle-ManifestVersion: 2
 Bundle-Name: MongoDB
 Bundle-SymbolicName: com.mongodb
 Bundle-Version: @VERSION@
-Import-Package: javax.management, javax.net
+Import-Package: javax.management, javax.net, javax.net.ssl
 Export-Package: com.mongodb, com.mongodb.io, com.mongodb.util, com.mongodb.gridfs, org.bson, org.bson.util, org.bson.types, org.bson.io
