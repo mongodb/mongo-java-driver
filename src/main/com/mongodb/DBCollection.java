@@ -1049,7 +1049,7 @@ public abstract class DBCollection {
         // if type in inline, then query options like slaveOk is fine
         CommandResult res = null;
         if (command.getOutputType() == MapReduceCommand.OutputType.INLINE)
-            res = _db.command( cmd, getOptions() );
+            res = _db.command( cmd, getOptions(), command.getReadPreference() != null ? command.getReadPreference() : getReadPreference() );
         else
             res = _db.command( cmd );
         res.throwOnError();

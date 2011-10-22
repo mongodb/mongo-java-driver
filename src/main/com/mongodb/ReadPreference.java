@@ -13,7 +13,7 @@
 
 package com.mongodb;
 
-import java.util.*;
+import java.util.Map;
 
 public class ReadPreference {
     public static class PrimaryReadPreference extends ReadPreference {

@@ -77,6 +77,10 @@ class Response {
         return _num;
     }
 
+	public ServerAddress serverUsed() {
+		return _host;
+	}
+
     public DBObject get( int i ){
         return _objects.get( i );
     }

@@ -20,15 +20,28 @@ package com.mongodb;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import org.bson.BSON;
 import org.bson.Transformer;
-import org.bson.types.*;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Binary;
+import org.bson.types.Code;
+import org.bson.types.CodeWScope;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
 
-import com.mongodb.util.*;
+import com.mongodb.util.JSON;
+import com.mongodb.util.TestCase;
+import com.mongodb.util.Util;
 
 public class JavaClientTest extends TestCase {
     
@@ -462,7 +475,7 @@ public class JavaClientTest extends TestCase {
 
     @Test
     public void testMapReduceInline(){
-        DBCollection c = _db.getCollection( "jmr1" );
+        DBCollection c = _db.getCollection( "imr1" );
         c.drop();
 
         c.save( new BasicDBObject( "x" , new String[]{ "a" , "b" } ) );
@@ -484,6 +497,42 @@ public class JavaClientTest extends TestCase {
         assertEquals( 2 , m.get( "c" ).intValue() );
         assertEquals( 1 , m.get( "d" ).intValue() );
                         
+    }
+
+
+    //If run against a replicaset this will verify that the inline map/reduce hits the secondary.
+    @Test
+    public void testMapReduceInlineSecondary() throws Exception {
+        Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27020)));
+        DBCollection c = mongo.getDB(_db.getName()).getCollection( "imr2" );
+//        c.setReadPreference(ReadPreference.SECONDARY);
+        c.slaveOk();
+        c.drop();
+
+        c.save( new BasicDBObject( "x" , new String[]{ "a" , "b" } ) );
+        c.save( new BasicDBObject( "x" , new String[]{ "b" , "c" } ) );
+        WriteResult wr = c.save( new BasicDBObject( "x" , new String[]{ "c" , "d" } ) );
+        if(mongo.getReplicaSetStatus() != null )
+		wr.getLastError(WriteConcern.REPLICAS_SAFE);
+
+        MapReduceOutput out =
+            c.mapReduce( "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }" ,
+                         "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" , null, MapReduceCommand.OutputType.INLINE, null);
+
+        Map<String,Integer> m = new HashMap<String,Integer>();
+        for ( DBObject r : out.results() ){
+            m.put( r.get( "_id" ).toString() , ((Number)(r.get( "value" ))).intValue() );
+        }
+
+        assertEquals( 4 , m.size() );
+        assertEquals( 1 , m.get( "a" ).intValue() );
+        assertEquals( 2 , m.get( "b" ).intValue() );
+        assertEquals( 2 , m.get( "c" ).intValue() );
+        assertEquals( 1 , m.get( "d" ).intValue() );
+        ReplicaSetStatus replStatus = mongo.getReplicaSetStatus();
+        //if it is a replicaset, and there is no master, or master is not the secondary
+        if(replStatus!= null && ((replStatus.getMaster() == null) || (replStatus.getMaster() != null && !replStatus.getMaster().equals(replStatus.getASecondary()))))
+            assertTrue( !mongo.getReplicaSetStatus().isMaster( out.getCommandResult().getServerUsed() ), "Had a replicaset but didn't use secondary! replSetStatus : " + mongo.getReplicaSetStatus());
     }
 
     @Test

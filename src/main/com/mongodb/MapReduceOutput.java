@@ -25,8 +25,8 @@ package com.mongodb;
 public class MapReduceOutput {
 
     @SuppressWarnings("unchecked")
-    public MapReduceOutput( DBCollection from , DBObject cmd, BasicDBObject raw ){
-        _raw = raw;
+    public MapReduceOutput( DBCollection from , DBObject cmd, CommandResult raw ){
+        _commandResult = raw;
         _cmd = cmd;
 
         if ( raw.containsField( "results" ) ) {
@@ -80,19 +80,28 @@ public class MapReduceOutput {
         return _coll;
     }
 
+    @Deprecated
     public BasicDBObject getRaw(){
-        return _raw;
+        return _commandResult;
+    }
+
+    public CommandResult getCommandResult(){
+        return _commandResult;
     }
 
     public DBObject getCommand() {
         return _cmd;
     }
 
+    public ServerAddress getServerUsed() {
+        return _commandResult.getServerUsed();
+    }
+
     public String toString(){
-        return _raw.toString();
+        return _commandResult.toString();
     }
     
-    final BasicDBObject _raw;
+    final CommandResult _commandResult;
 
     final String _collname;
     String _dbname = null;

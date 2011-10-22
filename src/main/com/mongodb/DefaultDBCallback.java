@@ -121,8 +121,6 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
             }
         }
 
-        if ( _collection != null && _collection._name.equals( "$cmd" ) )
-            return new CommandResult();
         return new BasicDBObject();
     }
 

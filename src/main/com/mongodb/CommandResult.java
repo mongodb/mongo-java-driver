@@ -18,12 +18,18 @@
 
 package com.mongodb;
 
+
 /**
  * A simple wrapper for the result of getLastError() calls and other commands
  */
 public class CommandResult extends BasicDBObject {
 
-    CommandResult() { }
+    CommandResult(ServerAddress srv) {
+        super();
+        _host = srv;
+        //so it is shown in toString/debug
+        put("serverUsed", srv.toString());
+    }
 
     /**
      * gets the "ok" field which is the result of the command
@@ -116,8 +122,12 @@ public class CommandResult extends BasicDBObject {
         }
     }
 
+    public ServerAddress getServerUsed() {
+	return _host;
+    }
 
     DBObject _cmd;
+    ServerAddress _host = null;
     private static final long serialVersionUID = 1L;
 
     static class CommandFailure extends MongoException {

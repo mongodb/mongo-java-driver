@@ -18,13 +18,21 @@
 
 package com.mongodb;
 
-import com.mongodb.util.*;
-
 import java.net.UnknownHostException;
-import java.util.*;
-import java.util.Map.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.mongodb.util.JSON;
 
 /**
  * keeps replica set status
@@ -38,7 +46,7 @@ import java.util.logging.Logger;
  */
 public class ReplicaSetStatus {
 
-    static final Logger _rootLogger = Logger.getLogger( "com.mongodb.ReplicaSetStatus" );
+	static final Logger _rootLogger = Logger.getLogger( "com.mongodb.ReplicaSetStatus" );
     static final int UNAUTHENTICATED_ERROR_CODE = 10057;
 
     ReplicaSetStatus( Mongo mongo, List<ServerAddress> initial ){
@@ -64,6 +72,23 @@ public class ReplicaSetStatus {
         return _setName;
     }
 
+    @Override
+	public String toString() {
+	StringBuffer sb = new StringBuffer();
+	sb.append("{replSetName: '" + _setName );
+	sb.append("', closed:").append(_closed).append(", ");
+	sb.append("nextResolveTime:'").append(new Date(_nextResolveTime).toString()).append("', ");
+	sb.append("members : [ ");
+	if(_all != null) {
+		for(Node n : _all)
+			sb.append(n.toJSON()).append(",");
+		sb.setLength(sb.length()-1); //remove last comma
+	}
+	sb.append("] ");
+
+	return sb.toString();
+	}
+
     void _checkClosed(){
         if ( _closed )
             throw new IllegalStateException( "ReplicaSetStatus closed" );
@@ -72,7 +97,7 @@ public class ReplicaSetStatus {
     /**
      * @return master or null if don't have one
      */
-    ServerAddress getMaster(){
+    public ServerAddress getMaster(){
         Node n = getMasterNode();
         if ( n == null )
             return null;
@@ -88,6 +113,18 @@ public class ReplicaSetStatus {
         }
         return null;
     }
+
+	/**
+	 * @param srv
+	 *            the server to compare
+	 * @return indication if the ServerAddress is the current Master/Primary
+	 */
+	public boolean isMaster(ServerAddress srv) {
+		if (srv == null)
+			return false;
+
+		return srv.equals(getMaster());
+	}
 
     /**
      * @return a good secondary by tag value or null if can't find one
@@ -297,6 +334,21 @@ public class ReplicaSetStatus {
             buf.append( "\t priority \t" ).append( _priority ).append( "\n" );
 
             buf.append( "\t tags \t" ).append( JSON.serialize( _tags )  ).append( "\n" );
+
+            return buf.toString();
+        }
+
+        public String toJSON(){
+            StringBuilder buf = new StringBuilder();
+            buf.append( "{ address:'" ).append( _addr ).append( "', " );
+            buf.append( "ok:" ).append( _ok ).append( ", " );
+            buf.append( "ping:" ).append( _pingTime ).append( ", " );
+            buf.append( "isMaster:" ).append( _isMaster ).append( ", " );
+            buf.append( "isSecondary:" ).append( _isSecondary ).append( ", " );
+            buf.append( "priority:" ).append( _priority ).append( ", " );
+            if(_tags != null && !_tags.isEmpty())
+		buf.append( "tags:" ).append( JSON.serialize( _tags )  );
+            buf.append("}");
 
             return buf.toString();
         }

@@ -67,16 +67,16 @@ public class DBPort {
         _decoder = _options.dbDecoderFactory.create();
     }
 
-    Response call( OutMessage msg , DBCollection coll ) throws IOException {
-        return go( msg , coll );
+    Response call( OutMessage msg , DBCollection coll ) throws IOException{
+        return go( msg, coll );
     }
 
-    Response call( OutMessage msg , DBCollection coll , DBDecoder decoder ) throws IOException {
-        return go( msg , coll , false , null , decoder );
+    Response call( OutMessage msg , DBCollection coll , DBDecoder decoder) throws IOException{
+        return go( msg, coll, false, null, decoder);
     }
 
-    Response call( OutMessage msg , DBCollection coll , ReadPreference readPref, DBDecoder decoder ) throws IOException {
-        return go( msg , coll , false , readPref , decoder );
+    Response call( OutMessage msg , DBCollection coll , ReadPreference readPref , DBDecoder decoder) throws IOException{
+        return go( msg, coll, false, readPref, decoder);
     }
     
     void say( OutMessage msg )
@@ -86,15 +86,14 @@ public class DBPort {
     
     private synchronized Response go( OutMessage msg , DBCollection coll )
         throws IOException {
-        return go( msg , coll , false , null , null );
+        return go( msg , coll , false, null, null );
     }
 
-    private synchronized Response go( OutMessage msg , DBCollection coll , DBDecoder decoder )
-        throws IOException {
-        return go( msg , coll , false , null , decoder );
+    private synchronized Response go( OutMessage msg , DBCollection coll , DBDecoder decoder ) throws IOException{
+        return go( msg, coll, false, null, decoder );
     }
 
-    private synchronized Response go( OutMessage msg , DBCollection coll , boolean forceReponse , ReadPreference readPref , DBDecoder decoder )
+    private synchronized Response go( OutMessage msg , DBCollection coll , boolean forceReponse , ReadPreference readPref, DBDecoder decoder)
         throws IOException {
 
         if ( _processingResponse ){
@@ -137,48 +136,47 @@ public class DBPort {
         }
     }
 
-    synchronized CommandResult getLastError( DB db , WriteConcern concern) throws IOException {
-	    DBApiLayer dbAL = (DBApiLayer) db;
-	    return runCommand( dbAL , concern.getCommand() );
+    synchronized CommandResult getLastError( DB db , WriteConcern concern ) throws IOException{
+        DBApiLayer dbAL = (DBApiLayer) db;
+        return runCommand( dbAL, concern.getCommand() );
     }
 
-    synchronized DBObject findOne( DB db , String coll , DBObject q ) throws IOException {
+    synchronized private Response findOne( DB db , String coll , DBObject q ) throws IOException {
         OutMessage msg = OutMessage.query( db._mongo , 0 , db.getName() + "." + coll , 0 , -1 , q , null );
-        
         Response res = go( msg , db.getCollection( coll ) , DefaultDBDecoder.FACTORY.create() );
-        if ( res.size() == 0 )
-            return null;
-        if ( res.size() > 1 )
-            throw new MongoInternalException( "something is wrong.  size:" + res.size() );
-        return res.get(0);
+        return res;
+    }
+
+    synchronized private Response findOne( String ns , DBObject q ) throws IOException{
+        OutMessage msg = OutMessage.query( null , 0 , ns , 0 , -1 , q , null );
+        Response res = go( msg , null , true, null, DefaultDBDecoder.FACTORY.create()  );
+        return res;
     }
 
     synchronized CommandResult runCommand( DB db , DBObject cmd ) throws IOException {
-        DBObject res = findOne( db , "$cmd" , cmd );
-        if ( res == null )
-            throw new MongoInternalException( "something is wrong, no command result" );
-        return (CommandResult)res;
+        Response res = findOne( db , "$cmd" , cmd );
+        return convertToCR( res );
     }
 
-    synchronized DBObject findOne( String ns , DBObject q ) throws IOException{
-        OutMessage msg = OutMessage.query( null , 0 , ns , 0 , -1 , q , null );
-        Response res = go( msg , null , true , null, DefaultDBDecoder.FACTORY.create() );
+    synchronized CommandResult runCommand( String db , DBObject cmd ) throws IOException {
+        Response res = findOne( db + ".$cmd" , cmd );
+        return convertToCR( res );
+    }
+
+    private CommandResult convertToCR(Response res) {
         if ( res.size() == 0 )
             return null;
         if ( res.size() > 1 )
             throw new MongoInternalException( "something is wrong.  size:" + res.size() );
-        return res.get(0);
-    }
 
-    synchronized CommandResult runCommand( String db , DBObject cmd ) throws IOException {
-        DBObject res = findOne( db + ".$cmd" , cmd );
-        if ( res == null )
+        DBObject data =  res.get(0);
+        if ( data == null )
             throw new MongoInternalException( "something is wrong, no command result" );
-        CommandResult cr = new CommandResult();
-        cr.putAll( res );
+
+        CommandResult cr = new CommandResult(res.serverUsed());
+        cr.putAll( data );
         return cr;
     }
-
 
     synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern) throws IOException {
         if ( last != _calls )
@@ -263,6 +261,13 @@ public class DBPort {
         return _addr.toString();
     }
     
+    /**
+     * @return the server address for this port
+     */
+    public ServerAddress serverAddress() {
+        return _sa;
+    }
+
     @Override
     public String toString(){
         return "{DBPort  " + host() + "}";

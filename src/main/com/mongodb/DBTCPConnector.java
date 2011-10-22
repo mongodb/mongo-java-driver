@@ -18,8 +18,6 @@
 
 package com.mongodb;
 
-import com.mongodb.ReadPreference.*;
-
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
@@ -27,6 +25,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.mongodb.ReadPreference.TaggedReadPreference;
 
 public class DBTCPConnector implements DBConnector {
 
@@ -165,7 +165,7 @@ public class DBTCPConnector implements DBConnector {
             if ( concern.raiseNetworkErrors() )
                 throw new MongoException.Network( "can't say something" , ioe );
             
-            CommandResult res = new CommandResult();
+            CommandResult res = new CommandResult(port.serverAddress());
             res.put( "ok" , false );
             res.put( "$err" , "NETWORK ERROR" );
             return new WriteResult( res , concern );

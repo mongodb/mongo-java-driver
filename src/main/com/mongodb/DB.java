@@ -28,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.mongodb.DBApiLayer.Result;
 import com.mongodb.util.Util;
 
 /**
@@ -139,9 +140,33 @@ public abstract class DB {
      * @throws MongoException
      * @dochub commands
      */
-    public CommandResult command( DBObject cmd )
+    public CommandResult command( DBObject cmd ) throws MongoException{
+        return command( cmd, 0 );
+    }
+
+    /**
+     * Executes a database command.
+     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
+     * @param cmd dbobject representing the command to execute
+     * @param options query options to use
+     * @param readPrefs ReadPreferences for this command (nodes selection is the biggest part of this)
+     * @return result of command from the database
+     * @dochub commands
+     * @throws MongoException
+     */
+    public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs )
         throws MongoException {
-        return command( cmd , 0 );
+
+        Iterator<DBObject> i = getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, readPrefs , DefaultDBDecoder.FACTORY.create());
+        if ( i == null || ! i.hasNext() )
+            return null;
+
+        DBObject res = i.next();
+        ServerAddress sa = (i instanceof Result) ? ((Result) i).getServerAddress() : null;
+        CommandResult cr = new CommandResult(sa);
+        cr.putAll( res );
+        cr._cmd = cmd;
+        return cr;
     }
 
     /**
@@ -155,17 +180,8 @@ public abstract class DB {
      */
     public CommandResult command( DBObject cmd , int options )
         throws MongoException {
-
-        // TODO - Is ReadPreference OK for commands?
-        Iterator<DBObject> i = getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, null, DefaultDBDecoder.FACTORY.create() );
-        if ( i == null || ! i.hasNext() )
-            return null;
-
-        CommandResult res = (CommandResult)i.next();
-        res._cmd = cmd;
-        return res;
+	return command(cmd, options, null);
     }
-
     /**
      * Executes a database command.
      * This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject) }

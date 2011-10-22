@@ -18,17 +18,13 @@
 
 package com.mongodb;
 
-import static org.bson.BSON.EOO;
-import static org.bson.BSON.OBJECT;
-import static org.bson.BSON.REF;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.bson.*;
+import org.bson.BSONObject;
+import org.bson.BasicBSONEncoder;
 import org.bson.io.PoolOutputBuffer;
-import org.bson.types.ObjectId;
 
 class OutMessage extends BasicBSONEncoder {
 
@@ -44,8 +40,7 @@ class OutMessage extends BasicBSONEncoder {
 
     static OutMessage query( Mongo m , int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref, DBEncoder enc ){
         OutMessage out = new OutMessage( m , 2004, enc );
-        out._appendQuery( options , ns , numToSkip , batchSize , query , fields );
-        out.setReadPreference( readPref );
+        out._appendQuery( options , ns , numToSkip , batchSize , query , fields, readPref);
         return out;
     }
 
@@ -69,9 +64,15 @@ class OutMessage extends BasicBSONEncoder {
         this( m , enc );
         reset( op );
     }
-    private void _appendQuery( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
+    private void _appendQuery( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref){
         _queryOptions = options;
-        writeInt( options );
+        _readPref = readPref;
+
+        //If the readPrefs are non-null and non-primary, set slaveOk query option
+        if (!(_readPref instanceof ReadPreference.PrimaryReadPreference))
+		_queryOptions |= Bytes.QUERYOPTION_SLAVEOK;
+
+        writeInt( _queryOptions );
         writeCString( ns );
 
         writeInt( numToSkip );
@@ -147,10 +148,6 @@ class OutMessage extends BasicBSONEncoder {
 
     public ReadPreference getReadPreference(){
         return _readPref;
-    }
-
-    public void setReadPreference( ReadPreference readPref ){
-        _readPref = readPref;
     }
 
     private Mongo _mongo;
