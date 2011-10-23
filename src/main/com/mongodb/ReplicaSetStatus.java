@@ -131,7 +131,9 @@ public class ReplicaSetStatus {
      */
     ServerAddress getASecondary( DBObject tags ){
         for ( String key : tags.keySet() ) {
+            System.err.println( "Searching for a secondary with tag " + key + " = " + tags.get( key ) );
             ServerAddress secondary = getASecondary( key, tags.get( key ).toString() );
+            System.err.println( "Secondary retrieved: " + secondary );
             if (secondary != null)
                 return secondary;
         }
@@ -164,9 +166,12 @@ public class ReplicaSetStatus {
             Node n = _all.get( ( start + i ) % _all.size() );
 
             if ( ! n.secondary() ){
+                System.err.println( " not a secondary: " + n );
                 mybad++;
                 continue;
             } else if (tagKey != null && !n.checkTag( tagKey, tagValue )){
+                System.err.println( " Doesn't have tag " + tagKey + " = " + tagValue
+                                   + " ... " + n);
                 mybad++;
                 continue;
             }
