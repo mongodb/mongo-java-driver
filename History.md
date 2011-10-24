@@ -1,5 +1,5 @@
 
-2.7.0-rc0 / 2011-10-24 
+2.7.0-rc1 / 2011-10-24 
 =======================
 
   * JAVA-434: replaced isEmpty() with 1.5 compatible alternative
