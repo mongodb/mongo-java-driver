@@ -85,8 +85,7 @@ public class ReplSetTest {
         while ( true ){
             _sleep();
             try {
-                DBObject x = c.findOne(new BasicDBObject( "_id", 17 ), null,
-                                       ReadPreference.withTags( new BasicDBObject("dc", "proximacentauri") ));
+                DBObject x = c.findOne(new BasicDBObject( "_id", 17 ), null);
                 System.out.println( x );
                 Integer n = (Integer) x.get( "x" );
                 if (n != null && n >= 150 )
