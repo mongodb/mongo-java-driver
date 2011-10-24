@@ -67,11 +67,16 @@ public abstract class GridFSFile implements DBObject {
         DBObject cmd = new BasicDBObject( "filemd5" , _id );
         cmd.put( "root" , _fs._bucketName );
         DBObject res = _fs._db.command( cmd );
-        String m = res.get( "md5" ).toString();
-        if ( m.equals( _md5 ) )
-            return;
+        if ( res != null && res.containsField( "md5" ) ) {
+            String m = res.get( "md5" ).toString();
+            if ( m.equals( _md5 ) )
+                return;
+            throw new MongoException( "md5 differ.  mine [" + _md5 + "] theirs [" + m + "]" );
+        }
 
-        throw new MongoException( "md5 differ.  mine [" + _md5 + "] theirs [" + m + "]" );
+        // no md5 from the server
+        throw new MongoException( "no md5 returned from server: " + res );
+
     }
 
     /**
