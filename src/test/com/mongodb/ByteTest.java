@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import java.util.regex.Pattern;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,14 +32,13 @@ import org.bson.BSON;
 import org.bson.BSONDecoder;
 import org.bson.BSONObject;
 import org.bson.BasicBSONDecoder;
-
 import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
 
 import com.mongodb.util.TestCase;
 
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class ByteTest extends TestCase {
 
     public ByteTest() throws IOException , MongoException {
@@ -48,8 +46,6 @@ public class ByteTest extends TestCase {
         cleanupMongo = new Mongo( "127.0.0.1" );
         cleanupDB = "com_mongodb_unittest_ByteTest";
         _db = cleanupMongo.getDB( cleanupDB );
-
-
     }
 
     @Test(groups = {"basic"})
@@ -162,6 +158,23 @@ public class ByteTest extends TestCase {
         assertEquals( 1 , l.get(0) );
         assertEquals( 2 , l.get(1) );
         assertEquals( 3 , l.get(2) );
+    }
+
+    @Test
+    public void testCharacterEncode(){
+        DBObject x = new BasicDBObject();
+        x.put( "a" , new Character[]{ 'a' , 'b' , 'c' } );
+        x.put( "b" , 's');
+
+        BSONObject y = BSON.decode( BSON.encode( x ) );
+
+        List l = (List)y.get("a");
+        assertEquals( 3 , l.size() );
+        assertEquals( "a" , l.get(0) );
+        assertEquals( "b" , l.get(1) );
+        assertEquals( "c" , l.get(2) );
+
+        assertEquals( "s" , y.get("b") );
     }
 
     @Test(groups = {"basic"})
