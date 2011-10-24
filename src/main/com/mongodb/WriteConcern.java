@@ -242,8 +242,10 @@ public class WriteConcern {
     public BasicDBObject getCommand(){
         BasicDBObject _command = new BasicDBObject( "getlasterror" , 1 );
 
-        _command.put( "w" , _wValue );
-        _command.put( "wtimeout" , _wtimeout );
+        if ( _wValue instanceof Integer && ( (Integer) _wValue > 0) ){
+            _command.put( "w" , _wValue );
+            _command.put( "wtimeout" , _wtimeout );
+        }
 
         if ( _fsync )
             _command.put( "fsync" , true );
