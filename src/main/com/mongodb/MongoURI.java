@@ -16,11 +16,11 @@
 
 package com.mongodb;
 
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Collections;
-import java.util.logging.Logger;
 import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>
@@ -160,7 +160,7 @@ public class MongoURI {
 
     boolean _parseBoolean( String _in ){
         String in = _in.trim();
-        if ( in != null && !in.isEmpty() && ( in.equals( "1" ) || in.toLowerCase().equals( "true" ) || in.toLowerCase()
+        if ( in != null && in.length() > 0 && ( in.equals( "1" ) || in.toLowerCase().equals( "true" ) || in.toLowerCase()
                                                                                                          .equals( "yes" ) ) )
             return true;
         else return false;

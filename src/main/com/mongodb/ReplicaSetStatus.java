@@ -346,7 +346,7 @@ public class ReplicaSetStatus {
             buf.append( "isMaster:" ).append( _isMaster ).append( ", " );
             buf.append( "isSecondary:" ).append( _isSecondary ).append( ", " );
             buf.append( "priority:" ).append( _priority ).append( ", " );
-            if(_tags != null && !_tags.isEmpty())
+            if(_tags != null && _tags.size() > 0)
 		buf.append( "tags:" ).append( JSON.serialize( _tags )  );
             buf.append("}");
 
@@ -438,7 +438,7 @@ public class ReplicaSetStatus {
             n.update(seenNodes);
         }
 
-        if (!seenNodes.isEmpty()) {
+        if (seenNodes.size() > 0) {
             // not empty, means that at least 1 server gave node list
             // remove unused hosts
             Iterator<Node> it = _all.iterator();

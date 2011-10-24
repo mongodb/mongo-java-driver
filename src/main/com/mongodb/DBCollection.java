@@ -485,7 +485,7 @@ public abstract class DBCollection {
     public void ensureIndex( DBObject keys , String name , boolean unique )
         throws MongoException {
         DBObject options = defaultOptions( keys );
-        if (name != null && !name.isEmpty())
+        if (name != null && name.length()>0)
             options.put( "name" , name );
         if ( unique )
             options.put( "unique" , Boolean.TRUE );

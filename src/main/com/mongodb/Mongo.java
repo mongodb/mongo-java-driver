@@ -718,7 +718,7 @@ public class Mongo {
     public String toString() {
         StringBuilder str = new StringBuilder("Mongo: ");
         List<ServerAddress> list = getServerAddressList();
-        if (list == null || list.isEmpty())
+        if (list == null || list.size() == 0)
             str.append("null");
         else {
             for ( ServerAddress addr : list )
