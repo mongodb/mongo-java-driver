@@ -32,7 +32,7 @@ public class DBRefBase {
      */
     public DBRefBase(DB db , String ns , Object id) {
         _db = db;
-        _ns = ns;
+        _ns = ns.intern();
         _id = id;
     }
 
