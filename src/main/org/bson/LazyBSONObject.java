@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+
 import org.bson.io.BSONByteBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Code;
@@ -393,7 +394,7 @@ public class LazyBSONObject implements BSONObject {
             case BSON.OBJECT:
                 return _callback.createObject( _input.array(), record.valueOffset );
             case BSON.ARRAY:
-                return _callback.createObject( _input.array(), record.valueOffset );
+                return _callback.createArray( _input.array(), record.valueOffset );
             case BSON.BINARY:
                 return readBinary( record.valueOffset );
             case BSON.REGEX:
@@ -411,6 +412,7 @@ public class LazyBSONObject implements BSONObject {
         final int totalLen = _input.getInt( valueOffset );
         valueOffset += 4;
         final byte bType = _input.get( valueOffset );
+        valueOffset += 1;
 
         byte[] bin;
         switch ( bType ){

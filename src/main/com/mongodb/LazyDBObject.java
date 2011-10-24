@@ -17,17 +17,16 @@ package com.mongodb;
 
 import org.bson.LazyBSONCallback;
 import org.bson.LazyBSONObject;
-import org.bson.io.BSONByteBuffer; 
-
-import java.io.*;
+import org.bson.io.BSONByteBuffer;
 
 public class LazyDBObject extends LazyBSONObject implements DBObject {
 
-    public void markAsPartialObject() {
+	public void markAsPartialObject() {
+	_partial = true;
     }
 
     public boolean isPartialObject() {
-        return false;
+        return _partial;
     }
 
     public LazyDBObject(BSONByteBuffer buff, LazyBSONCallback cbk){ 
@@ -46,4 +45,6 @@ public class LazyDBObject extends LazyBSONObject implements DBObject {
     public LazyDBObject(byte[] data, int offset, LazyBSONCallback cbk){
         super(data, offset, cbk);
     }
+
+    private boolean _partial = false;
 }

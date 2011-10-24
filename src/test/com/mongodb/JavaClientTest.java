@@ -512,7 +512,7 @@ public class JavaClientTest extends TestCase {
         c.save( new BasicDBObject( "x" , new String[]{ "a" , "b" } ) );
         c.save( new BasicDBObject( "x" , new String[]{ "b" , "c" } ) );
         WriteResult wr = c.save( new BasicDBObject( "x" , new String[]{ "c" , "d" } ) );
-        if(mongo.getReplicaSetStatus() != null )
+        if(mongo.getReplicaSetStatus() != null  && mongo.getReplicaSetStatus().getName() != null)
 		wr.getLastError(WriteConcern.REPLICAS_SAFE);
 
         MapReduceOutput out =
@@ -531,9 +531,9 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , m.get( "d" ).intValue() );
         ReplicaSetStatus replStatus = mongo.getReplicaSetStatus();
         //if it is a replicaset, and there is no master, or master is not the secondary
-        if(replStatus!= null && ((replStatus.getMaster() == null) || (replStatus.getMaster() != null && !replStatus.getMaster().equals(replStatus.getASecondary()))))
-            assertTrue( !mongo.getReplicaSetStatus().isMaster( out.getCommandResult().getServerUsed() ), "Had a replicaset but didn't use secondary! replSetStatus : " + mongo.getReplicaSetStatus() + " \n Used: " +
-                    out.getCommandResult().getServerUsed() + " \n ");
+        if( replStatus!= null && replStatus.getName() != null && ((replStatus.getMaster() == null) || (replStatus.getMaster() != null && !replStatus.getMaster().equals(replStatus.getASecondary()))))
+            assertTrue( !mongo.getReplicaSetStatus().isMaster( out.getCommandResult().getServerUsed() ), 
+            		"Had a replicaset but didn't use secondary! replSetStatus : " + mongo.getReplicaSetStatus() + " \n Used: " + out.getCommandResult().getServerUsed() + " \n ");
     }
 
     @Test

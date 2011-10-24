@@ -16,13 +16,21 @@
 
 package com.mongodb;
 
-import com.mongodb.util.*;
-import org.bson.types.*;
-import org.testng.annotations.*;
+import java.net.UnknownHostException;
+import java.util.Date;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
-import java.net.*;
-import java.util.*;
-import java.util.regex.*;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Binary;
+import org.bson.types.Code;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
+import org.bson.types.Symbol;
+import org.testng.annotations.Test;
+
+import com.mongodb.util.TestCase;
 
 @SuppressWarnings( { "unchecked" , "deprecation" } )
 public class LazyDBObjectTest extends TestCase {
@@ -54,7 +62,7 @@ public class LazyDBObjectTest extends TestCase {
         String[] test_arr = new String[] { "foo" , "bar" , "baz" , "x" , "y" , "z" };
         BSONTimestamp test_tsp = new BSONTimestamp();
         Date test_date = new Date();
-        Binary test_bin = new Binary( new byte[] { 'x' , 'y' , 'z' , 5 , 4 , 3 , 2 , 1 } );
+        Binary test_bin = new Binary( "scott".getBytes() );
         UUID test_uuid = UUID.randomUUID();
         Pattern test_regex = Pattern.compile( "^test.*regex.*xyz$" );
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
@@ -75,9 +83,9 @@ public class LazyDBObjectTest extends TestCase {
         b.append( "double245_6289", 245.6289 );
         b.append( "oid", test_oid );
         // Symbol wonky
-        //b.append( "symbol", new Symbol( "foobar" ) );
+        b.append( "symbol", new Symbol( "foobar" ) );
         // Code wonky
-        //b.append( "code", new Code( "var x = 12345;"  ) );
+        b.append( "code", new Code( "var x = 12345;"  ) );
         // TODO - Shell doesn't work with Code W/ Scope, return to this test later
         /*
         b.append( "code_scoped", new CodeWScope( "return x * 500;", test_doc ) );*/
@@ -119,10 +127,8 @@ public class LazyDBObjectTest extends TestCase {
         assertEquals( ( (DBObject) doc.get( "array" ) ).get( "3" ), "x" );
         assertEquals( ( (DBObject) doc.get( "array" ) ).get( "4" ), "y" );
         assertEquals( ( (DBObject) doc.get( "array" ) ).get( "5" ), "z" );
-        // TODO - Test Binary values Properly (I Did confirm the binary Decodes OK)
-        //assertEquals( doc.get( "binary" ), test_bin.getData() );
-        // UUID misbehaving, may be related to known parse issues
-        //    assertEquals( doc.get( "uuid" ), test_uuid );
+        assertEquals( new String((byte[]) doc.get( "binary" )), new String(test_bin.getData()));
+        assertEquals( doc.get( "uuid" ).toString(), test_uuid.toString() );
         assertEquals( ( (Pattern) doc.get( "regex" ) ).pattern(), test_regex.pattern() );
         assertEquals( ( (Pattern) doc.get( "regex" ) ).flags(), test_regex.flags() );
     }
@@ -139,7 +145,7 @@ public class LazyDBObjectTest extends TestCase {
         String[] test_arr = new String[] { "foo" , "bar" , "baz" , "x" , "y" , "z" };
         BSONTimestamp test_tsp = new BSONTimestamp();
         Date test_date = new Date();
-        Binary test_bin = new Binary( new byte[] { 'x' , 'y' , 'z' , 5 , 4 , 3 , 2 , 1 } );
+        Binary test_bin = new Binary( "scott".getBytes() );
         UUID test_uuid = UUID.randomUUID();
         Pattern test_regex = Pattern.compile( "^test.*regex.*xyz$" );
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
@@ -160,9 +166,9 @@ public class LazyDBObjectTest extends TestCase {
         b.append( "double245_6289", 245.6289 );
         b.append( "oid", test_oid );
         // Symbol wonky
-        //b.append( "symbol", new Symbol( "foobar" ) );
+        b.append( "symbol", new Symbol( "foobar" ) );
         // Code wonky
-        //b.append( "code", new Code( "var x = 12345;"  ) );
+        b.append( "code", new Code( "var x = 12345;"  ) );
         // TODO - Shell doesn't work with Code W/ Scope, return to this test later
         /*
         b.append( "code_scoped", new CodeWScope( "return x * 500;", test_doc ) );*/
@@ -205,10 +211,8 @@ public class LazyDBObjectTest extends TestCase {
         assertEquals( ( (DBObject) doc.get( "array" ) ).get( "3" ), "x" );
         assertEquals( ( (DBObject) doc.get( "array" ) ).get( "4" ), "y" );
         assertEquals( ( (DBObject) doc.get( "array" ) ).get( "5" ), "z" );
-        // TODO - Test Binary values Properly (I Did confirm the binary Decodes OK)
-        /*        assertEquals( doc.get( "binary" ), test_bin.getData() );*/
-        // UUID misbehaving, may be related to known parse issues
-        //    assertEquals( doc.get( "uuid" ), test_uuid );
+        assertEquals( new String((byte[]) doc.get( "binary" )), new String(test_bin.getData()));
+        assertEquals( doc.get( "uuid" ).toString(), test_uuid.toString() );
         assertEquals( ( (Pattern) doc.get( "regex" ) ).pattern(), test_regex.pattern() );
         assertEquals( ( (Pattern) doc.get( "regex" ) ).flags(), test_regex.flags() );
         // Test iteration of keyset

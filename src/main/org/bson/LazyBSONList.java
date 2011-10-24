@@ -79,7 +79,7 @@ public class LazyBSONList extends LazyBSONObject implements List {
 
     public class LazyBSONListIterator implements Iterator {
         ArrayList<ElementRecord> elements;
-        int pos;
+        int pos=0;
         
         public LazyBSONListIterator() {
             elements = getElementsToKey( null );
@@ -92,7 +92,7 @@ public class LazyBSONList extends LazyBSONObject implements List {
 
         @Override
         public Object next(){
-            return elements.get(++pos);
+            return getElementValue(elements.get(pos++));
         }
 
         @Override

@@ -15,9 +15,10 @@
  */
 package org.bson;
 
-import org.bson.types.*;
+import java.util.List;
+import java.util.logging.Logger;
 
-import java.util.logging.*;
+import org.bson.types.ObjectId;
 
 /**
  *
@@ -57,8 +58,12 @@ public class LazyBSONCallback extends EmptyBSONCallback {
     }
 
     public Object createObject( byte[] data, int offset ){
-        // TODO - LazyBSONList ?
         return new LazyBSONObject( data, offset, this );
+    }
+
+    @SuppressWarnings("rawtypes")
+	public List createArray( byte[] data, int offset ){
+        return new LazyDBList( data, offset, this );
     }
 
     public Object createDBRef( String ns, ObjectId id ){
