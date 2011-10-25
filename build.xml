@@ -242,7 +242,7 @@ limitations under the License.
             </and>
         </condition>
 
-        <fail unless="propsSpecified" message="class.name roperty not specified."/>
+        <fail unless="propsSpecified" message="class.name property not specified."/>
 
         <copy todir="build/test" file="testng-single.xml" overwrite="true">
             <filterset><filter token="CLASS" value="${class.name}"/></filterset>
