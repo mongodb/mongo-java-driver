@@ -235,6 +235,13 @@ limitations under the License.
         </testng>
     </target>
 
+    <target name="bamboo-test" depends="compile">
+        <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" >
+            <jvmarg value="-Xmx512M" />
+            <xmlfileset dir="." includes="testng.xml"/>
+        </testng>
+    </target>
+
     <target name="test-single" depends="compile">
         <condition property="propsSpecified">
             <and>
@@ -300,7 +307,7 @@ limitations under the License.
     <!-- The reporting targets                                               -->
     <!-- ******************************************************************* -->
 
-    <target name="junit-reports" depends="test">
+    <target name="junit-reports" depends="bamboo-test">
         <junitreport todir="${testdir}">
             <fileset dir="${testdir}"><include name="*/*.xml"/></fileset>
             <report format="noframes"  todir="${testdir}"/>
