@@ -33,6 +33,7 @@ public class DBCollectionTest extends TestCase {
         cleanupDB = "com_mongodb_unittest_DBCollectionTest";
         _db = cleanupMongo.getDB( cleanupDB );
     }
+
     @Test(groups = {"basic"})
     public void testMultiInsert() {
         DBCollection c = _db.getCollection("testmultiinsert");
@@ -176,6 +177,20 @@ public class DBCollectionTest extends TestCase {
         assertEquals( 2 , c.getIndexInfo().size() );
         assertEquals( Boolean.TRUE , c.getIndexInfo().get(1).get( "unique" ) );
     }
+
+    @Test
+    public void testEnsureNestedIndex(){
+        DBCollection c = _db.getCollection( "ensureNestedIndex1" );
+        c.drop();
+
+        BasicDBObject newDoc = new BasicDBObject( "x", new BasicDBObject( "y", 1 ) );
+        c.save( newDoc );
+
+        assertEquals( 1 , c.getIndexInfo().size() );
+        c.ensureIndex( new BasicDBObject("x.y", 1), "nestedIdx1", false);
+        assertEquals( 2 , c.getIndexInfo().size() );
+    }
+
 
     @Test
     public void testIndexExceptions(){
