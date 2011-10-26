@@ -236,7 +236,6 @@ limitations under the License.
     </target>
 
     <target name="bamboo-test" depends="compile,guard.noclover">
-        <clover-setup/>
         <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener, com.cenqua.clover.tasks.testng.CloverOptimizedTestSelector" haltonfailure="false" >
             <jvmarg value="-Xmx512M" />
             <xmlfileset dir="." includes="testng.xml"/>
@@ -326,6 +325,10 @@ limitations under the License.
 	<target name="-check.clover">
 		<available property="clover.installed" classname="com.cenqua.clover.CloverInstr" />
 	</target>
+
+    <target name="with.clover" depends="guard.noclover">
+        <clover-setup/>
+    </target>
 	 
 	<target name="guard.noclover" depends="-check.clover" unless="clover.installed">
 		<fail message="The target you are attempting to run requires Clover, which doesn't appear to be installed"/>
