@@ -236,7 +236,7 @@ limitations under the License.
     </target>
 
     <target name="bamboo-test" depends="compile">
-        <clover-setup/>
+        <clover-setup/>
         <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener, com.cenqua.clover.tasks.testng.CloverOptimizedTestSelector" haltonfailure="false" >
             <jvmarg value="-Xmx512M" />
             <xmlfileset dir="." includes="testng.xml"/>
