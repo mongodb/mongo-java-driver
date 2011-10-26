@@ -47,6 +47,7 @@ public class MongoOptions {
         dbDecoderFactory = DefaultDBDecoder.FACTORY;
         dbEncoderFactory = DefaultDBEncoder.FACTORY;
         socketFactory = SocketFactory.getDefault();
+        description = null;
     }
 
     public MongoOptions copy() {
@@ -68,6 +69,7 @@ public class MongoOptions {
         m.dbDecoderFactory = dbDecoderFactory;
         m.dbEncoderFactory = dbEncoderFactory;
         m.socketFactory = socketFactory;
+        m.description = description;
         return m;
     }
 
