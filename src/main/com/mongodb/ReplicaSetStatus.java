@@ -50,6 +50,9 @@ public class ReplicaSetStatus {
     static final int UNAUTHENTICATED_ERROR_CODE = 10057;
 
     ReplicaSetStatus( Mongo mongo, List<ServerAddress> initial ){
+        _mongoOptions = _mongoOptionsDefaults.copy();
+        _mongoOptions.socketFactory = mongo._options.socketFactory;
+
         _mongo = mongo;
         _all = Collections.synchronizedList( new ArrayList<Node>() );
         for ( ServerAddress addr : initial ){
@@ -541,15 +544,16 @@ public class ReplicaSetStatus {
     static int inetAddrCacheMS;
     static float latencySmoothFactor;
 
-    static final MongoOptions _mongoOptions = new MongoOptions();
+    final MongoOptions _mongoOptions;
+    static final MongoOptions _mongoOptionsDefaults = new MongoOptions();
 
     static {
         updaterIntervalMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
         slaveAcceptableLatencyMS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
         inetAddrCacheMS = Integer.parseInt(System.getProperty("com.mongodb.inetAddrCacheMS", "300000"));
         latencySmoothFactor = Float.parseFloat(System.getProperty("com.mongodb.latencySmoothFactor", "4"));
-        _mongoOptions.connectTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
-        _mongoOptions.socketTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
+        _mongoOptionsDefaults.connectTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
+        _mongoOptionsDefaults.socketTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
     }
 
     static final DBObject _isMasterCmd = new BasicDBObject( "ismaster" , 1 );
