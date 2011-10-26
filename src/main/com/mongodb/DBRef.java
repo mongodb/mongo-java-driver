@@ -57,8 +57,7 @@ public class DBRef extends DBRefBase {
         String ns;
         Object id;
 
-        if ((ns = (String)ref.get("$ref")) != null &&
-            (id = ref.get("$id")) != null) {
+        if ((ns = (String)ref.get("$ref")) != null && (id = ref.get("$id")) != null) {
             return db.getCollection(ns).findOne(new BasicDBObject("_id", id));
         }
         return null;
