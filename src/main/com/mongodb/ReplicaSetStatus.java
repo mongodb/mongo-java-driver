@@ -66,7 +66,7 @@ public class ReplicaSetStatus {
     void start() {
         _updater.start();
     }
-    
+
     boolean ready(){
         return _setName != null;
     }
@@ -151,29 +151,44 @@ public class ReplicaSetStatus {
     /**
      * @return a good secondary or null if can't find one
      */
-    ServerAddress getASecondary( String tagKey, String tagValue ){
+    ServerAddress getASecondary( String tagKey, String tagValue ) {
         _checkClosed();
+        return getASecondary(tagKey, tagValue, _all, _random);
+    }
+
+    /**
+     * This was extracted so we can test the logic from a unit test. This can't be
+     * tested from a standalone unit test until node is more decoupled from this class.
+     *
+     * @return a good secondary or null if can't find one
+     */
+    static ServerAddress getASecondary( final String pTagKey,
+                                        final String pTagValue,
+                                        final List<Node> pNodes,
+                                        final Random pRandom)
+    {
         Node best = null;
         double badBeforeBest = 0;
 
-        if (tagKey == null && tagValue != null || tagValue == null & tagKey != null)
+        if (pTagKey == null && pTagValue != null || pTagValue == null & pTagKey != null)
            throw new IllegalArgumentException( "Tag Key & Value must be consistent: both defined or not defined." );
 
-        int start = _random.nextInt( _all.size() );
+        int start = pRandom.nextInt( pNodes.size() );
+
+        final int nodeCount = pNodes.size();
 
         double mybad = 0;
 
-        for ( int i=0; i<_all.size(); i++ ){
-            Node n = _all.get( ( start + i ) % _all.size() );
+        for ( int i=0; i < nodeCount; i++ ){
+            Node n = pNodes.get( ( start + i ) % nodeCount );
 
             if ( ! n.secondary() ){
                 mybad++;
                 continue;
-            } else if (tagKey != null && !n.checkTag( tagKey, tagValue )){
+            } else if (pTagKey != null && !n.checkTag( pTagKey, pTagValue )){
                 mybad++;
                 continue;
             }
-
 
             if ( best == null ){
                 best = n;
@@ -183,10 +198,9 @@ public class ReplicaSetStatus {
             }
 
             float diff = best._pingTime - n._pingTime;
-            if ( diff > slaveAcceptableLatencyMS ||
-                 // this is a complex way to make sure we get a random distribution of slaves
-                 ( ( badBeforeBest - mybad ) / ( _all.size() - 1 ) ) > _random.nextDouble() )
-                {
+
+            // this is a complex way to make sure we get a random distribution of slaves
+            if ( diff > slaveAcceptableLatencyMS || ( ( badBeforeBest - mybad ) / ( nodeCount  - 1 ) ) > pRandom.nextDouble() ) {
                 best = n;
                 badBeforeBest = mybad;
                 mybad = 0;
@@ -196,6 +210,7 @@ public class ReplicaSetStatus {
 
         if ( best == null )
             return null;
+
         return best._addr;
     }
 
@@ -209,6 +224,9 @@ public class ReplicaSetStatus {
         return false;
     }
 
+    /**
+     * The replica set node object.
+     */
     class Node {
 
         Node( ServerAddress addr ){
@@ -366,7 +384,7 @@ public class ReplicaSetStatus {
             _port.close();
             _port = null;
         }
-        
+
         final ServerAddress _addr;
         final Set<String> _names = Collections.synchronizedSet( new HashSet<String>() );
         DBPort _port; // we have our own port so we can set different socket options and don't have to owrry about the pool
