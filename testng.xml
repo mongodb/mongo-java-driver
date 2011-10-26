@@ -25,6 +25,7 @@ limitations under the License.
             <class name="com.mongodb.io.ByteBufferStreamTest"/>
             <class name="org.bson.PoolOutputBufferTest"/>
             <class name="org.bson.BSONTest" />
+            <class name="org.bson.io.BSONInputTest" />
             <class name="org.bson.util.ClassMapTest"/>
             <class name="org.bson.util.StringRangeSetTest"/>
             <class name="com.mongodb.ByteTest" />
