@@ -235,12 +235,17 @@ limitations under the License.
         </testng>
     </target>
 
-    <target name="bamboo-test" depends="compile">
+    <target name="bamboo-test" depends="compile,guard.noclover">
         <clover-setup/>
         <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener, com.cenqua.clover.tasks.testng.CloverOptimizedTestSelector" haltonfailure="false" >
             <jvmarg value="-Xmx512M" />
             <xmlfileset dir="." includes="testng.xml"/>
-        </testng>
+        </testng> 
+	    <clover-report>
+	       <current outfile="coverage.xml">
+		  <format type="xml"/>
+	       </current>
+	    </clover-report>
     </target>
 
     <target name="test-single" depends="compile">
@@ -316,5 +321,14 @@ limitations under the License.
     </target>
 
   <!-- NOTE: publish-local is now located in maven/ -->
+	<taskdef resource="cloverlib.xml" classpath="lib/clover-3.1.0.jar"/>
+
+	<target name="-check.clover">
+		<available property="clover.installed" classname="com.cenqua.clover.CloverInstr" />
+	</target>
+	 
+	<target name="guard.noclover" depends="-check.clover" unless="clover.installed">
+		<fail message="The target you are attempting to run requires Clover, which doesn't appear to be installed"/>
+	</target>
 
 </project>
