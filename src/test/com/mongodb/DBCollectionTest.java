@@ -94,6 +94,16 @@ public class DBCollectionTest extends TestCase {
     }
     */
 
+    /**
+     * This was broken recently. Adding test.
+     */
+    @Test
+    public void testDropDatabase() throws Exception {
+        final Mongo mongo = new Mongo( "127.0.0.1" );
+        mongo.getDB("testDropDatabase").dropDatabase();
+        mongo.close();
+    }
+
     @Test
     public void testDropIndex(){
         DBCollection c = _db.getCollection( "dropindex1" );
