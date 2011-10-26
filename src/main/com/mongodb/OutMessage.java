@@ -59,6 +59,8 @@ class OutMessage extends BasicBSONEncoder {
         _encoder = encoder;
         _mongo = m;
         _buffer = _mongo == null ? new PoolOutputBuffer() : _mongo._bufferPool.get();
+        _buffer.reset();
+
         set( _buffer );
     }
 
@@ -119,6 +121,7 @@ class OutMessage extends BasicBSONEncoder {
 
     void doneWithMessage(){
         if ( _buffer != null && _mongo != null )
+            _buffer.reset();
             _mongo._bufferPool.done( _buffer );
 
         _buffer = null;
