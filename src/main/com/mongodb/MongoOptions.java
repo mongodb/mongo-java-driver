@@ -49,6 +49,28 @@ public class MongoOptions {
         socketFactory = SocketFactory.getDefault();
     }
 
+    public MongoOptions copy() {
+        MongoOptions m = new MongoOptions();
+        m.connectionsPerHost = connectionsPerHost;
+        m.threadsAllowedToBlockForConnectionMultiplier = threadsAllowedToBlockForConnectionMultiplier;
+        m.maxWaitTime = maxWaitTime;
+        m.connectTimeout = connectTimeout;
+        m.socketTimeout = socketTimeout;
+        m.socketKeepAlive = socketKeepAlive;
+        m.autoConnectRetry = autoConnectRetry;
+        m.maxAutoConnectRetryTime = maxAutoConnectRetryTime;
+        m.slaveOk = slaveOk;
+        m.safe = safe;
+        m.w = w;
+        m.wtimeout = wtimeout;
+        m.fsync = fsync;
+        m.j = j;
+        m.dbDecoderFactory = dbDecoderFactory;
+        m.dbEncoderFactory = dbEncoderFactory;
+        m.socketFactory = socketFactory;
+        return m;
+    }
+
     /**
      * Helper method to return the appropriate WriteConcern instance based
      * on the current related options settings.
