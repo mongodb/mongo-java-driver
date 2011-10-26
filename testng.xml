@@ -37,6 +37,7 @@ limitations under the License.
       <class name="com.mongodb.DBTests" />
       <class name="com.mongodb.DBObjectTest" />
       <class name="com.mongodb.DBCollectionTest" />
+      <class name="com.mongodb.ReplicaSetStatusTest" />
       <class name="com.mongodb.DBCursorTest" />
       <class name="com.mongodb.ObjectIdTest" />
       <class name="com.mongodb.DBRefTest" />
