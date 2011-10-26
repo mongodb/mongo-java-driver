@@ -260,7 +260,7 @@ limitations under the License.
             <filterset><filter token="CLASS" value="${class.name}"/></filterset>
         </copy>
 
-        <testng classpathref="classpath" outputdir="${testdir}" haltonfailure="true" verbose="1">
+        <testng classpathref="classpath" outputdir="${testdir}" haltonfailure="true" verbose="1" listeners="com.mongodb.util.TestNGListener" >
             <jvmarg value="-Xmx512M" />
             <xmlfileset dir="build/test" includes="testng-single.xml"/>
         </testng>
