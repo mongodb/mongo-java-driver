@@ -40,7 +40,9 @@ class OutMessage extends BasicBSONEncoder {
 
     static OutMessage query( Mongo m , int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref, DBEncoder enc ){
         OutMessage out = new OutMessage( m , 2004, enc );
+
         out._appendQuery( options , ns , numToSkip , batchSize , query , fields, readPref);
+
         return out;
     }
 
@@ -69,15 +71,15 @@ class OutMessage extends BasicBSONEncoder {
         _readPref = readPref;
 
         //If the readPrefs are non-null and non-primary, set slaveOk query option
-        if (!(_readPref instanceof ReadPreference.PrimaryReadPreference))
-		_queryOptions |= Bytes.QUERYOPTION_SLAVEOK;
+        if (_readPref != null && !(_readPref instanceof ReadPreference.PrimaryReadPreference))
+		    _queryOptions |= Bytes.QUERYOPTION_SLAVEOK;
 
         writeInt( _queryOptions );
         writeCString( ns );
 
         writeInt( numToSkip );
         writeInt( batchSize );
-        
+
         putObject( query );
         if ( fields != null )
             putObject( fields );
@@ -88,7 +90,7 @@ class OutMessage extends BasicBSONEncoder {
         done();
         _buffer.reset();
         set( _buffer );
-        
+
         _id = ID.getAndIncrement();
 
         writeInt( 0 ); // length: will set this later
@@ -118,7 +120,7 @@ class OutMessage extends BasicBSONEncoder {
     void doneWithMessage(){
         if ( _buffer != null && _mongo != null )
             _mongo._bufferPool.done( _buffer );
-        
+
         _buffer = null;
         _mongo = null;
     }
@@ -127,7 +129,7 @@ class OutMessage extends BasicBSONEncoder {
         return ( _queryOptions & option ) != 0;
     }
 
-    int getId(){ 
+    int getId(){
         return _id;
     }
 
