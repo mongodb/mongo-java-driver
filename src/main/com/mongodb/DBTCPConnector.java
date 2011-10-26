@@ -62,7 +62,7 @@ public class DBTCPConnector implements DBConnector {
 
         _createLogger.info( all  + " -> " + getAddress() );
     }
-    
+
     public void start() {
         if (_rsStatus != null)
             _rsStatus.start();
@@ -127,7 +127,7 @@ public class DBTCPConnector implements DBConnector {
 
         if ( ! e.hasErr() )
             return new WriteResult( e , concern );
-        
+
         e.throwOnError();
         return null;
     }
@@ -137,7 +137,7 @@ public class DBTCPConnector implements DBConnector {
         throws MongoException {
         return say( db , m , concern , null );
     }
-    
+
     @Override
     public WriteResult say( DB db , OutMessage m , WriteConcern concern , ServerAddress hostNeeded )
         throws MongoException {
@@ -164,7 +164,7 @@ public class DBTCPConnector implements DBConnector {
 
             if ( concern.raiseNetworkErrors() )
                 throw new MongoException.Network( "can't say something" , ioe );
-            
+
             CommandResult res = new CommandResult(port.serverAddress());
             res.put( "ok" , false );
             res.put( "$err" , "NETWORK ERROR" );
@@ -182,7 +182,7 @@ public class DBTCPConnector implements DBConnector {
             m.doneWithMessage();
         }
     }
-    
+
     @Override
     public Response call( DB db , DBCollection coll , OutMessage m, ServerAddress hostNeeded, DBDecoder decoder )
         throws MongoException {
@@ -195,9 +195,11 @@ public class DBTCPConnector implements DBConnector {
     }
 
     @Override
-    public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries, ReadPreference readPref, DBDecoder decoder ) throws MongoException{ 
+    public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries, ReadPreference readPref, DBDecoder decoder ) throws MongoException{
+
         if (readPref == null)
             readPref = ReadPreference.PRIMARY;
+
         if (readPref == ReadPreference.PRIMARY && m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
            readPref = ReadPreference.SECONDARY;
 
@@ -205,10 +207,10 @@ public class DBTCPConnector implements DBConnector {
 
         _checkClosed();
         checkMaster( false, !secondaryOk );
-        
+
         final MyPort mp = _myPort.get();
         final DBPort port = mp.get( false , readPref, hostNeeded );
-                
+
         Response res = null;
         boolean retry = false;
         try {
@@ -222,8 +224,8 @@ public class DBTCPConnector implements DBConnector {
             retry = retries > 0 && !coll._name.equals( "$cmd" )
                     && !(ioe instanceof SocketTimeoutException) && _error( ioe, secondaryOk );
             if ( !retry ){
-                throw new MongoException.Network( "can't call something : " + port.host() + "/" + db, 
-                                                  ioe ); 
+                throw new MongoException.Network( "can't call something : " + port.host() + "/" + db,
+                                                  ioe );
             }
         }
         catch ( RuntimeException re ){
@@ -237,7 +239,7 @@ public class DBTCPConnector implements DBConnector {
             return call( db , coll , m , hostNeeded , retries - 1 , readPref, decoder );
 
         ServerError err = res.getError();
-        
+
         if ( err != null && err.isNotMasterError() ){
             checkMaster( true , true );
             if ( retries <= 0 ){
@@ -245,7 +247,7 @@ public class DBTCPConnector implements DBConnector {
             }
             return call( db , coll , m , hostNeeded , retries -1, readPref, decoder );
         }
-        
+
         m.doneWithMessage();
         return res;
     }
@@ -272,7 +274,7 @@ public class DBTCPConnector implements DBConnector {
         if (_rsStatus != null) {
             return _rsStatus.getServerAddressList();
         }
-        
+
         ServerAddress master = getAddress();
         if (master != null) {
             // single server
@@ -319,7 +321,7 @@ public class DBTCPConnector implements DBConnector {
     class MyPort {
 
         DBPort get( boolean keep , ReadPreference readPref, ServerAddress hostNeeded ){
-            
+
             if ( hostNeeded != null ){
                 // asked for a specific host
                 return _portHolder.get( hostNeeded ).get();
@@ -338,7 +340,7 @@ public class DBTCPConnector implements DBConnector {
                 _requestPort.getPool().done(_requestPort);
                 _requestPort = null;
             }
-            
+
             if ( !(readPref == ReadPreference.PRIMARY) && _rsStatus != null ){
                 // if not a primary read set, try to use a secondary
                 // Do they want a Secondary, or a specific tag set?
@@ -373,7 +375,7 @@ public class DBTCPConnector implements DBConnector {
 
             return p;
         }
-        
+
         void done( DBPort p ){
             // keep request port
             if ( p != _requestPort ){
@@ -394,14 +396,14 @@ public class DBTCPConnector implements DBConnector {
             // depending on type of error, may need to close other connections in pool
             p.getPool().gotError(e);
         }
-        
+
         void requestEnsureConnection(){
             if ( ! _inRequest )
                 return;
 
             if ( _requestPort != null )
                 return;
-            
+
             _requestPort = _masterPortPool.get();
         }
 
@@ -420,10 +422,10 @@ public class DBTCPConnector implements DBConnector {
 //        DBPortPool _requestPool;
         boolean _inRequest;
     }
-    
+
     void checkMaster( boolean force , boolean failIfNoMaster )
         throws MongoException {
-        
+
         if ( _rsStatus != null ){
             if ( _masterPortPool == null || force ){
                 ReplicaSetStatus.Node n = _rsStatus.ensureMaster();
@@ -470,7 +472,7 @@ public class DBTCPConnector implements DBConnector {
 
     void testMaster()
         throws MongoException {
-        
+
         DBPort p = null;
         try {
             p = _masterPortPool.get();
@@ -504,7 +506,7 @@ public class DBTCPConnector implements DBConnector {
 
         return buf.toString();
     }
-    
+
     public void close(){
         _closed = true;
         if ( _portHolder != null ) {
