@@ -359,10 +359,10 @@ public class DBApiLayer extends DB {
                 full.put( k , options.get( k ) );
             full.put( "key" , keys );
 
-            DBCollection idxs = DBApiLayer.this.doGetCollection( "system.indexes" );
+            MyCollection idxs = DBApiLayer.this.doGetCollection( "system.indexes" );
             //query first, maybe we should do an update w/upsert? -- need to test performance and lock behavior
             if ( idxs.findOne( full ) == null )
-                idxs.insert( new DBObject[] { full }, WriteConcern.SAFE, encoder );
+                idxs.insert( new DBObject[] { full },  false, WriteConcern.SAFE, encoder );
         }
 
         final String _fullNameSpace;
