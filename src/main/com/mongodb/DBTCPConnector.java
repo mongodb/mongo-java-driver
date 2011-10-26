@@ -196,6 +196,8 @@ public class DBTCPConnector implements DBConnector {
 
     @Override
     public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries, ReadPreference readPref, DBDecoder decoder ) throws MongoException{ 
+        if (readPref == null)
+            readPref = ReadPreference.PRIMARY;
         if (readPref == ReadPreference.PRIMARY && m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
            readPref = ReadPreference.SECONDARY;
 
