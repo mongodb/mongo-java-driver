@@ -53,36 +53,36 @@ public class BasicBSONDecoder implements BSONDecoder {
         }
     }
 
-
     public int decode( InputStream in , BSONCallback callback )
         throws IOException {
         return _decode( new BSONInput( in ) , callback );
     }
-    
+
     private int _decode( BSONInput in  , BSONCallback callback )
         throws IOException {
 
         if ( _in != null || _callback != null )
             throw new IllegalStateException( "not ready" );
-        
+
         _in = in;
         _callback = callback;
-        
+
         if ( in.numRead() != 0 )
             throw new IllegalArgumentException( "i'm confused" );
 
         try {
-            
+
             final int len = _in.readInt();
+
             _in.setMax(len);
 
             _callback.objectStart();
             while ( decodeElement() );
             _callback.objectDone();
-            
+
             if ( _in.numRead() != len )
                 throw new IllegalArgumentException( "bad data.  lengths don't match read:" + _in.numRead() + " != len:" + len );
-            
+
             return len;
         }
         finally {
@@ -90,12 +90,12 @@ public class BasicBSONDecoder implements BSONDecoder {
             _callback = null;
         }
     }
-    
+
     int decode( boolean first )
         throws IOException {
 
         final int start = _in.numRead();
-        
+
         final int len = _in.readInt();
         if ( first )
             _in.setMax(len);
@@ -103,7 +103,7 @@ public class BasicBSONDecoder implements BSONDecoder {
         _callback.objectStart();
         while ( decodeElement() );
         _callback.objectDone();
-        
+
         final int read = _in.numRead() - start;
 
         if ( read != len ){
@@ -112,23 +112,24 @@ public class BasicBSONDecoder implements BSONDecoder {
 
         return len;
     }
-    
+
     boolean decodeElement()
         throws IOException {
 
         final byte type = _in.read();
+
         if ( type == EOO )
             return false;
-        
+
         String name = _in.readCStr();
-        
+
         switch ( type ){
         case NULL:
-            _callback.gotNull( name ); 
+            _callback.gotNull( name );
             break;
-            
+
         case UNDEFINED:
-            _callback.gotUndefined( name ); 
+            _callback.gotUndefined( name );
             break;
 
         case BOOLEAN:
@@ -138,20 +139,18 @@ public class BasicBSONDecoder implements BSONDecoder {
         case NUMBER:
             _callback.gotDouble( name , _in.readDouble() );
             break;
-	    
+
         case NUMBER_INT:
             _callback.gotInt( name , _in.readInt() );
             break;
 
         case NUMBER_LONG:
             _callback.gotLong( name , _in.readLong() );
-            break;	    
+            break;
 
-            
         case SYMBOL:
             _callback.gotSymbol( name , _in.readUTF8String() );
             break;
-            
 
         case STRING:
             _callback.gotString(name, _in.readUTF8String() );
@@ -161,18 +160,18 @@ public class BasicBSONDecoder implements BSONDecoder {
             // OID is stored as big endian
             _callback.gotObjectId( name , new ObjectId( _in.readIntBE() , _in.readIntBE() , _in.readIntBE() ) );
             break;
-            
+
         case REF:
             _in.readInt();  // length of ctring that follows
             String ns = _in.readCStr();
             ObjectId theOID = new ObjectId( _in.readInt() , _in.readInt() , _in.readInt() );
             _callback.gotDBRef( name , ns , theOID );
             break;
-            
+
         case DATE:
             _callback.gotDate( name , _in.readLong() );
             break;
-            
+
         case REGEX:
             _callback.gotRegex( name , _in.readCStr() , _in.readCStr() );
             break;
@@ -180,7 +179,7 @@ public class BasicBSONDecoder implements BSONDecoder {
         case BINARY:
             _binary( name );
             break;
-            
+
         case CODE:
             _callback.gotCode( name , _in.readUTF8String() );
             break;
@@ -199,17 +198,17 @@ public class BasicBSONDecoder implements BSONDecoder {
             _callback.arrayDone();
 
             break;
-            
-            
+
+
         case OBJECT:
             _in.readInt();  // total size - we don't care....
-            
+
             _callback.objectStart( name );
             while ( decodeElement() );
             _callback.objectDone();
 
             break;
-            
+
         case TIMESTAMP:
             int i = _in.readInt();
             int time = _in.readInt();
@@ -227,7 +226,7 @@ public class BasicBSONDecoder implements BSONDecoder {
         default:
             throw new UnsupportedOperationException( "BSONDecoder doesn't understand type : " + type + " name: " + name  );
         }
-        
+
         return true;
     }
 
@@ -235,7 +234,7 @@ public class BasicBSONDecoder implements BSONDecoder {
         throws IOException {
         final int totalLen = _in.readInt();
         final byte bType = _in.read();
-        
+
         switch ( bType ){
         case B_GENERAL: {
                 final byte[] data = new byte[totalLen];
@@ -247,7 +246,7 @@ public class BasicBSONDecoder implements BSONDecoder {
             final int len = _in.readInt();
             if ( len + 4 != totalLen )
                 throw new IllegalArgumentException( "bad data size subtype 2 len: " + len + " totalLen: " + totalLen );
-            
+
             final byte[] data = new byte[len];
             _in.fill( data );
             _callback.gotBinary( name , bType , data );
@@ -255,23 +254,23 @@ public class BasicBSONDecoder implements BSONDecoder {
         case B_UUID:
             if ( totalLen != 16 )
                 throw new IllegalArgumentException( "bad data size subtype 3 len: " + totalLen + " != 16");
-            
+
             long part1 = _in.readLong();
             long part2 = _in.readLong();
             _callback.gotUUID(name, part1, part2);
-            return;	
+            return;
         }
-        
+
         byte[] data = new byte[totalLen];
         _in.fill( data );
 
         _callback.gotBinary( name , bType , data );
     }
-    
+
     Object _readBasicObject()
         throws IOException {
         _in.readInt();
-        
+
         BSONCallback save = _callback;
         BSONCallback _basic = _callback.createBSONCallback();
         _callback = _basic;
