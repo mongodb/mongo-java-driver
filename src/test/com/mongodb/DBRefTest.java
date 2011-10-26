@@ -61,8 +61,8 @@ public class DBRefTest extends TestCase {
         decoder.decode( out.toByteArray() , cb );
         DBObject read = cb.dbget();
 
-	String correct = null;
-	correct = "{\"!\":{\"$ref\":\"hello\",\"$id\":\"world\"}}";
+	    String correct = null;
+	    correct = "{\"!\":{\"$ref\":\"hello\",\"$id\":\"world\"}}";
 
         String got = read.toString().replaceAll( " +" , "" );
         assertEquals( correct , got );
