@@ -1,4 +1,13 @@
 
+2.7.0-rc2 / 2011-10-26 
+========================
+
+  * JAVA-459: smooth the latency measurements (for secondary/slave server selection)
+  * JAVA-428: Fixed edge cases where slaveOK / ReadPreference.SECONDARY wasn't working
+  * JAVA-444: make ensureIndex first do a read on index collection to see if index exists * If an embedded field was referenced in an index a hard failure   occurred,  due to triggering of the 'no dots in key names' logic   via the insert.  Moved code to use the lower level API method which   permits disabling of key checks.
+  * Introduced "bamboo-test" task which does NOT halt on failure to allow bamboo tests to complete and report properly (and various fixes)
+  * added unit test for x.y ensureIndex.
+
 2.7.0-rc1 / 2011-10-24 
 =======================
 
