@@ -44,7 +44,7 @@ import com.mongodb.util.TestCase;
 import com.mongodb.util.Util;
 
 public class JavaClientTest extends TestCase {
-    
+
     public JavaClientTest()
         throws IOException , MongoException {
         _mongo = new Mongo( "127.0.0.1" );
@@ -62,7 +62,7 @@ public class JavaClientTest extends TestCase {
         DBObject m = new BasicDBObject();
         m.put( "name" , "eliot" );
         m.put( "state" , "ny" );
-        
+
         c.save( m );
         assert( m.containsField( "_id" ) );
 
@@ -76,17 +76,17 @@ public class JavaClientTest extends TestCase {
         throws MongoException {
         DBCollection c = _db.getCollection( "test2" );;
         c.drop();
-        
+
         DBObject m = new BasicDBObject();
         m.put( "name" , "eliot" );
         m.put( "state" , "ny" );
-        
+
         Map<String,Object> sub = new HashMap<String,Object>();
         sub.put( "bar" , "1z" );
         m.put( "foo" , sub );
 
         c.save( m );
-        
+
         assert( m.containsField( "_id" ) );
 
         Map out = (Map)(c.findOne( m.get( "_id" )));
@@ -104,10 +104,10 @@ public class JavaClientTest extends TestCase {
         DBCollection c = _db.getCollection( "testWhere1" );
         c.drop();
         assertNull( c.findOne() );
-        
+
         c.save( BasicDBObjectBuilder.start().add( "a" , 1 ).get() );
         assertNotNull( c.findOne() != null );
-     
+
         assertNotNull( c.findOne( BasicDBObjectBuilder.start().add( "$where" , "this.a == 1" ).get() ) );
         assertNull( c.findOne( BasicDBObjectBuilder.start().add( "$where" , "this.a == 2" ).get() ) );
     }
@@ -118,10 +118,10 @@ public class JavaClientTest extends TestCase {
         DBCollection c = _db.getCollection( "testCodeWScope" );
         c.drop();
         assertNull( c.findOne() );
-        
+
         c.save( BasicDBObjectBuilder.start().add( "a" , 1 ).get() );
         assertNotNull( c.findOne() != null );
-     
+
         assertNotNull( c.findOne( BasicDBObjectBuilder.start().add( "$where" , new CodeWScope( "this.a == x" , new BasicDBObject( "x" , 1 )  ) ).get() ) );
         assertNull( c.findOne( BasicDBObjectBuilder.start().add( "$where" , new CodeWScope( "this.a == x" , new BasicDBObject( "x" , 2 )  ) ).get() ) );
 
@@ -132,7 +132,7 @@ public class JavaClientTest extends TestCase {
         in.put( "a" , new Code("x=5") );
         in.put( "b" , new CodeWScope( "x=5" , new BasicDBObject( "x" , 2 ) ) );
         c.insert( in );
-        
+
         DBObject out = c.findOne();
 
         assertEquals( in , out );
@@ -187,11 +187,11 @@ public class JavaClientTest extends TestCase {
         DBCollection c = _db.getCollection( "testBinary" );
         c.drop();
         c.save( BasicDBObjectBuilder.start().add( "a" , "eliot".getBytes() ).get() );
-        
+
         DBObject out = c.findOne();
         byte[] b = (byte[])(out.get( "a" ) );
         assertEquals( "eliot" , new String( b ) );
-        
+
         {
             byte[] raw = new byte[9];
             ByteBuffer bb = ByteBuffer.wrap( raw );
@@ -200,7 +200,7 @@ public class JavaClientTest extends TestCase {
             bb.put( "eliot".getBytes() );
             out.put( "a" , "eliot".getBytes() );
             c.save( out );
-            
+
             out = c.findOne();
             b = (byte[])(out.get( "a" ) );
             assertEquals( "eliot" , new String( b ) );
@@ -211,7 +211,7 @@ public class JavaClientTest extends TestCase {
             assertEquals( 111 , blah.getType() );
             assertEquals( Util.toHex( raw ) , Util.toHex( blah.getData() ) );
         }
-        
+
     }
 
     @Test
@@ -227,18 +227,18 @@ public class JavaClientTest extends TestCase {
         assertTrue( JSON.serialize(min).contains("$minKey") );
         assertTrue( JSON.serialize(max).contains("$maxKey") );
     }
-    
+
     @Test
     public void testBinaryOld()
         throws MongoException {
         DBCollection c = _db.getCollection( "testBinary" );
         c.drop();
         c.save( BasicDBObjectBuilder.start().add( "a" , "eliot".getBytes() ).get() );
-        
+
         DBObject out = c.findOne();
         byte[] b = (byte[])(out.get( "a" ) );
         assertEquals( "eliot" , new String( b ) );
-        
+
         {
             byte[] raw = new byte[9];
             ByteBuffer bb = ByteBuffer.wrap( raw );
@@ -260,7 +260,7 @@ public class JavaClientTest extends TestCase {
             assertEquals( 111 , blah.getType() );
             assertEquals( Util.toHex( raw ) , Util.toHex( blah.getData() ) );
         }
-        
+
     }
     @Test
     public void testUUID()
@@ -268,7 +268,7 @@ public class JavaClientTest extends TestCase {
         DBCollection c = _db.getCollection( "testUUID" );
         c.drop();
         c.save( BasicDBObjectBuilder.start().add( "a" , new UUID(1,2)).add("x",5).get() );
-        
+
         DBObject out = c.findOne();
         UUID b = (UUID)(out.get( "a" ) );
         assertEquals( new UUID(1,2), b);
@@ -280,7 +280,7 @@ public class JavaClientTest extends TestCase {
         throws MongoException {
         assertEquals( 17 , ((Number)(_db.eval( "return 17" ))).intValue() );
         assertEquals( 18 , ((Number)(_db.eval( "function(x){ return 17 + x; }" , 1 ))).intValue() );
-    }    
+    }
 
     @Test
     public void testPartial1()
@@ -325,7 +325,7 @@ public class JavaClientTest extends TestCase {
     @Test
     public void testGroup()
         throws MongoException {
-        
+
         DBCollection c = _db.getCollection( "group1" );
         c.drop();
         c.save( BasicDBObjectBuilder.start().add( "x" , "a" ).get() );
@@ -333,7 +333,7 @@ public class JavaClientTest extends TestCase {
         c.save( BasicDBObjectBuilder.start().add( "x" , "a" ).get() );
         c.save( BasicDBObjectBuilder.start().add( "x" , "b" ).get() );
 
-        DBObject g = c.group( new BasicDBObject( "x" , 1 ) , null , new BasicDBObject( "count" , 0 ) , 
+        DBObject g = c.group( new BasicDBObject( "x" , 1 ) , null , new BasicDBObject( "count" , 0 ) ,
                               "function( o , p ){ p.count++; }" );
 
         List l = (List)g;
@@ -349,11 +349,11 @@ public class JavaClientTest extends TestCase {
         c.save( BasicDBObjectBuilder.start().add( "id" , 1 ).add( "x" , true ).get() );
         assertEquals( Boolean.class , c.findOne().get( "x" ).getClass() );
 
-        c.update( new BasicDBObject( "id" , 1 ) , 
-                  new BasicDBObject( "$set" , 
+        c.update( new BasicDBObject( "id" , 1 ) ,
+                  new BasicDBObject( "$set" ,
                                      new BasicDBObject( "x" , 5.5 ) ) );
-        assertEquals( Double.class , c.findOne().get( "x" ).getClass() );        
-        
+        assertEquals( Double.class , c.findOne().get( "x" ).getClass() );
+
     }
 
     @Test
@@ -363,22 +363,22 @@ public class JavaClientTest extends TestCase {
         DBCollection c = _db.getCollection( "keys1" );
         c.drop();
         c.save( BasicDBObjectBuilder.start().push( "a" ).add( "x" , 1 ).get() );
-        
+
         assertEquals( 1, ((DBObject)c.findOne().get("a")).get("x" ) );
         c.update( new BasicDBObject() , BasicDBObjectBuilder.start().push( "$set" ).add( "a.x" , 2 ).get() );
         assertEquals( 1 , c.find().count() );
         assertEquals( 2, ((DBObject)c.findOne().get("a")).get("x" ) );
-        
+
     }
 
     @Test
     public void testTimestamp()
         throws MongoException {
-        
+
         DBCollection c = _db.getCollection( "ts1" );
         c.drop();
         c.save( BasicDBObjectBuilder.start().add( "y" , new BSONTimestamp() ).get() );
-        
+
         BSONTimestamp t = (BSONTimestamp)c.findOne().get("y");
         assert( t.getTime() > 0 );
         assert( t.getInc() > 0 );
@@ -398,7 +398,7 @@ public class JavaClientTest extends TestCase {
             gotError = true;
         }
         assertEquals( true , gotError );
-        
+
         assertEquals( 1 , c.find().count() );
     }
 
@@ -423,7 +423,7 @@ public class JavaClientTest extends TestCase {
     public void testPattern(){
         DBCollection c = _db.getCollection( "jp1" );
         c.drop();
-        
+
         c.insert( new BasicDBObject( "x" , "a" ) );
         c.insert( new BasicDBObject( "x" , "A" ) );
 
@@ -438,7 +438,7 @@ public class JavaClientTest extends TestCase {
     public void testDates(){
         DBCollection c = _db.getCollection( "dates1" );
         c.drop();
-        
+
         DBObject in = new BasicDBObject( "x" , new java.util.Date() );
         c.insert( in );
         DBObject out = c.findOne();
@@ -454,23 +454,23 @@ public class JavaClientTest extends TestCase {
         c.save( new BasicDBObject( "x" , new String[]{ "a" , "b" } ) );
         c.save( new BasicDBObject( "x" , new String[]{ "b" , "c" } ) );
         c.save( new BasicDBObject( "x" , new String[]{ "c" , "d" } ) );
-        
-        MapReduceOutput out = 
+
+        MapReduceOutput out =
             c.mapReduce( "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }" ,
                          "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" ,
                          "jmr1_out" , null );
-        
+
         Map<String,Integer> m = new HashMap<String,Integer>();
         for ( DBObject r : out.results() ){
             m.put( r.get( "_id" ).toString() , ((Number)(r.get( "value" ))).intValue() );
         }
-        
+
         assertEquals( 4 , m.size() );
         assertEquals( 1 , m.get( "a" ).intValue() );
         assertEquals( 2 , m.get( "b" ).intValue() );
         assertEquals( 2 , m.get( "c" ).intValue() );
         assertEquals( 1 , m.get( "d" ).intValue() );
-                        
+
     }
 
     @Test
@@ -481,22 +481,22 @@ public class JavaClientTest extends TestCase {
         c.save( new BasicDBObject( "x" , new String[]{ "a" , "b" } ) );
         c.save( new BasicDBObject( "x" , new String[]{ "b" , "c" } ) );
         c.save( new BasicDBObject( "x" , new String[]{ "c" , "d" } ) );
-        
-        MapReduceOutput out = 
+
+        MapReduceOutput out =
             c.mapReduce( "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }" ,
                          "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" , null, MapReduceCommand.OutputType.INLINE, null);
-        
+
         Map<String,Integer> m = new HashMap<String,Integer>();
         for ( DBObject r : out.results() ){
             m.put( r.get( "_id" ).toString() , ((Number)(r.get( "value" ))).intValue() );
         }
-        
+
         assertEquals( 4 , m.size() );
         assertEquals( 1 , m.get( "a" ).intValue() );
         assertEquals( 2 , m.get( "b" ).intValue() );
         assertEquals( 2 , m.get( "c" ).intValue() );
         assertEquals( 1 , m.get( "d" ).intValue() );
-                        
+
     }
 
 
@@ -505,7 +505,7 @@ public class JavaClientTest extends TestCase {
     public void testMapReduceInlineSecondary() throws Exception {
         Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27020)));
         DBCollection c = mongo.getDB(_db.getName()).getCollection( "imr2" );
-//        c.setReadPreference(ReadPreference.SECONDARY);
+        //c.setReadPreference(ReadPreference.SECONDARY);
         c.slaveOk();
         c.drop();
 
@@ -532,7 +532,7 @@ public class JavaClientTest extends TestCase {
         ReplicaSetStatus replStatus = mongo.getReplicaSetStatus();
         //if it is a replicaset, and there is no master, or master is not the secondary
         if( replStatus!= null && replStatus.getName() != null && ((replStatus.getMaster() == null) || (replStatus.getMaster() != null && !replStatus.getMaster().equals(replStatus.getASecondary()))))
-            assertTrue( !mongo.getReplicaSetStatus().isMaster( out.getCommandResult().getServerUsed() ), 
+            assertTrue( !mongo.getReplicaSetStatus().isMaster( out.getCommandResult().getServerUsed() ),
             		"Had a replicaset but didn't use secondary! replSetStatus : " + mongo.getReplicaSetStatus() + " \n Used: " + out.getCommandResult().getServerUsed() + " \n ");
     }
 
@@ -544,25 +544,25 @@ public class JavaClientTest extends TestCase {
         c.save( new BasicDBObject( "x" , new String[]{ "a" , "b" } ) );
         c.save( new BasicDBObject( "x" , new String[]{ "b" , "c" } ) );
         c.save( new BasicDBObject( "x" , new String[]{ "c" , "d" } ) );
-        
+
         Map<String, Object> scope = new HashMap<String, Object>();
         scope.put("exclude", "a");
-        
+
         MapReduceCommand mrc = new MapReduceCommand( c, "function(){ for ( var i=0; i<this.x.length; i++ ){ if(this.x[i] != exclude) emit( this.x[i] , 1 ); } }" ,
                          "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" , null, MapReduceCommand.OutputType.INLINE, null);
         mrc.setScope( scope );
-        
+
         MapReduceOutput out = c.mapReduce( mrc );
         Map<String,Integer> m = new HashMap<String,Integer>();
         for ( DBObject r : out.results() ){
             m.put( r.get( "_id" ).toString() , ((Number)(r.get( "value" ))).intValue() );
         }
-        
+
         assertEquals( 3 , m.size() );
         assertEquals( 2 , m.get( "b" ).intValue() );
         assertEquals( 2 , m.get( "c" ).intValue() );
         assertEquals( 1 , m.get( "d" ).intValue() );
-                        
+
     }
 
     String _testMulti( DBCollection c ){
@@ -574,7 +574,7 @@ public class JavaClientTest extends TestCase {
         }
         return s;
     }
-    
+
     @Test
     public void testMulti(){
         DBCollection c = _db.getCollection( "multi1" );
@@ -593,7 +593,7 @@ public class JavaClientTest extends TestCase {
 
         c.updateMulti( new BasicDBObject() , BasicDBObjectBuilder.start().push( "$inc" ).add( "x" , 1 ).get() );
         assertEquals( "3,7" , _testMulti( c ) );
-        
+
     }
 
     @Test
@@ -604,25 +604,25 @@ public class JavaClientTest extends TestCase {
 
         try {
             assertEquals( 0 , u.find().count() );
-            
+
             _db.addUser( "xx" , new char[]{ 'e' } );
             assertEquals( 1 , u.find().count() );
-            
+
             assertEquals( false , _db.authenticate( "xx" , new char[]{ 'f' } ) );
             assertEquals( true , _db.authenticate( "xx" , new char[]{ 'e' } ) );
         }
         finally {
             u.remove( new BasicDBObject() );
-            assertEquals( 0 , u.find().count() );        
+            assertEquals( 0 , u.find().count() );
         }
-        
+
     }
 
     @Test
     public void testTransformers(){
         DBCollection c = _db.getCollection( "tt" );
         c.drop();
-        
+
         c.save( BasicDBObjectBuilder.start( "_id" , 1 ).add( "x" , 1.1 ).get() );
         assertEquals( Double.class , c.findOne().get( "x" ).getClass() );
 
@@ -646,9 +646,9 @@ public class JavaClientTest extends TestCase {
         } );
         assertEquals( String.class , c.findOne().get( "x" ).getClass() );
         Bytes.clearAllHooks();
-        assertEquals( Double.class , c.findOne().get( "x" ).getClass() );        
+        assertEquals( Double.class , c.findOne().get( "x" ).getClass() );
     }
-    
+
 
     @Test
     public void testObjectIdCompat(){
@@ -657,13 +657,13 @@ public class JavaClientTest extends TestCase {
 
         c.save( new BasicDBObject( "x" , 1 ) );
         _db.eval( "db.oidc.insert( { x : 2 } );" );
-        
+
         List<DBObject> l = c.find().toArray();
         assertEquals( 2 , l.size() );
-        
+
         ObjectId a = (ObjectId)(l.get(0).get("_id"));
         ObjectId b = (ObjectId)(l.get(1).get("_id"));
-        
+
         assertLess( Math.abs( a.getTime() - b.getTime() ) , 10000 );
     }
 
@@ -673,13 +673,13 @@ public class JavaClientTest extends TestCase {
         c.drop();
 
         c.save( new BasicDBObject( "x" , 1 ) );
-        
+
         Object o = _db.eval( "return db.oidc.findOne()._id.toString()" );
         String x = c.findOne().get( "_id" ).toString();
         assertEquals( x , o );
     }
-       
- 
+
+
     @Test
     public void testLargeBulkInsert(){
         // max size should be obtained from server
@@ -704,7 +704,7 @@ public class JavaClientTest extends TestCase {
 
         s = l.toString();
         assertTrue( s.length() > maxObjSize );
-        
+
         boolean worked = false;
         try {
             c.save( new BasicDBObject( "foo" , s ) );
@@ -720,7 +720,7 @@ public class JavaClientTest extends TestCase {
     public void testUpdate5(){
         DBCollection c = _db.getCollection( "udpate5" );
         c.drop();
-        
+
         c.insert( new BasicDBObject( "x" , new Integer( 5 ) ) );
         assertEquals( Integer.class , c.findOne().get("x").getClass() );
         assertEquals( new Integer(5) , c.findOne().get("x") );
@@ -728,10 +728,10 @@ public class JavaClientTest extends TestCase {
         c.update( new BasicDBObject() , new BasicDBObject( "$set" , new BasicDBObject( "x" , 5.6D ) ) );
         assertEquals( Double.class , c.findOne().get("x").getClass() );
         assertEquals( 5.6 , c.findOne().get("x") );
-        
-        
+
+
     }
-    
+
     @Test
     public void testIn(){
         DBCollection c = _db.getCollection( "in1" );
@@ -772,7 +772,7 @@ public class JavaClientTest extends TestCase {
     public void testWriteResult(){
         DBCollection c = _db.getCollection( "writeresult1" );
         c.drop();
-        
+
         WriteResult res = c.insert( new BasicDBObject( "_id" , 1 ) );
         res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
         assertEquals( 1 , res.getN() );
@@ -788,7 +788,7 @@ public class JavaClientTest extends TestCase {
     public void testWriteResultMethodLevelWriteConcern(){
         DBCollection c = _db.getCollection( "writeresult2" );
         c.drop();
-        
+
         WriteResult res = c.insert( new BasicDBObject( "_id" , 1 ) );
         res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
         assertEquals( 1 , res.getN() );
@@ -831,19 +831,19 @@ public class JavaClientTest extends TestCase {
     public void testFindAndModify(){
         DBCollection c = _db.getCollection( "findandmodify" );
         c.drop();
-        
+
         c.insert( new BasicDBObject( "_id" , 1 ) );
         //return old one
         DBObject dbObj = c.findAndModify( new BasicDBObject( "_id" , 1 ) , null, new BasicDBObject( "x", 1));
         assertEquals( 1 , dbObj.keySet().size());
         assertEquals( 1 , c.findOne(new BasicDBObject( "_id" , 1 ) ).get( "x" ));
-        
+
         //return new one
         dbObj = c.findAndModify( new BasicDBObject( "_id" , 1 ) , null, null, false, new BasicDBObject( "x", 5), true, false);
         assertEquals( 2 , dbObj.keySet().size());
         assertEquals( 5 , dbObj.get( "x" ));
         assertEquals( 5 , c.findOne(new BasicDBObject( "_id" , 1 ) ).get( "x" ));
-        
+
         //remove it, and return old one
         dbObj = c.findAndRemove( new BasicDBObject( "_id" , 1 ) );
         assertEquals( 2 , dbObj.keySet().size());
@@ -878,7 +878,7 @@ public class JavaClientTest extends TestCase {
 
         c = _db.getCollectionFromString( "foo.bar.zoo.dork" );
         assertEquals( "foo.bar.zoo.dork" , c.getName() );
-        
+
     }
 
     @Test
@@ -928,7 +928,7 @@ public class JavaClientTest extends TestCase {
         DBObject b = c.findOne();
         assertTrue(a.equals(b));
     }
-    
+
     @Test
     public void testMongoHolder() throws MongoException, UnknownHostException {
         Mongo m1 = Mongo.Holder.singleton().connect( new MongoURI( "mongodb://localhost" ) );
