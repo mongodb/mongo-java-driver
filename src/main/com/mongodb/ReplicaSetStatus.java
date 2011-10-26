@@ -179,7 +179,7 @@ public class ReplicaSetStatus {
                 continue;
             }
 
-            long diff = best._pingTime - n._pingTime;
+            float diff = best._pingTime - n._pingTime;
             if ( diff > slaveAcceptableLatencyMS ||
                  // this is a complex way to make sure we get a random distribution of slaves
                  ( ( badBeforeBest - mybad ) / ( _all.size() - 1 ) ) > _random.nextDouble() )
@@ -235,8 +235,14 @@ public class ReplicaSetStatus {
             try {
                 long start = System.currentTimeMillis();
                 CommandResult res = _port.runCommand( _mongo.getDB("admin") , _isMasterCmd );
+                boolean first = (_lastCheck == 0);
                 _lastCheck = System.currentTimeMillis();
-                _pingTime = _lastCheck - start;
+                float newPing = _lastCheck - start;
+                if (first)
+                    _pingTime = newPing;
+                else
+                    _pingTime = _pingTime + ((newPing - _pingTime) / latencySmoothFactor);
+                _rootLogger.log( Level.FINE , "Latency to " + _addr + " actual=" + newPing + " smoothed=" + _pingTime );
 
                 if ( res == null ){
                     throw new MongoInternalException("Invalid null value returned from isMaster");
@@ -365,7 +371,7 @@ public class ReplicaSetStatus {
 
         boolean _ok = false;
         long _lastCheck = 0;
-        long _pingTime = 0;
+        float _pingTime = 0;
 
         boolean _isMaster = false;
         boolean _isSecondary = false;
@@ -533,6 +539,7 @@ public class ReplicaSetStatus {
     static int updaterIntervalMS;
     static int slaveAcceptableLatencyMS;
     static int inetAddrCacheMS;
+    static float latencySmoothFactor;
 
     static final MongoOptions _mongoOptions = new MongoOptions();
 
@@ -540,6 +547,7 @@ public class ReplicaSetStatus {
         updaterIntervalMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
         slaveAcceptableLatencyMS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
         inetAddrCacheMS = Integer.parseInt(System.getProperty("com.mongodb.inetAddrCacheMS", "300000"));
+        latencySmoothFactor = Float.parseFloat(System.getProperty("com.mongodb.latencySmoothFactor", "4"));
         _mongoOptions.connectTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
         _mongoOptions.socketTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
     }
