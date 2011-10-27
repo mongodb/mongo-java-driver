@@ -200,7 +200,7 @@ public class ReplicaSetStatus {
             float diff = best._pingTime - n._pingTime;
 
             // this is a complex way to make sure we get a random distribution of slaves
-            if ( diff > slaveAcceptableLatencyMS || ( ( badBeforeBest - mybad ) / ( nodeCount  - 1 ) ) > pRandom.nextDouble() ) {
+            if ( diff > slaveAcceptableLatencyMS || ( ( badBeforeBest - mybad ) / ( nodeCount  - 1 ) ) > pRandom.nextDouble() && diff > -1*slaveAcceptableLatencyMS ) {
                 best = n;
                 badBeforeBest = mybad;
                 mybad = 0;
