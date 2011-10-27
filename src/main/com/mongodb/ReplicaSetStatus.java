@@ -208,10 +208,7 @@ public class ReplicaSetStatus {
 
         }
 
-        if ( best == null )
-            return null;
-
-        return best._addr;
+        return ( best != null ) ? best._addr : null;
     }
 
     boolean hasServerUp() {
