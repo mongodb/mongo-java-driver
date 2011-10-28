@@ -539,6 +539,7 @@ public class Mongo {
      * Helper method for setting up MongoOptions at instantiation
      * so that any options which affect this connection can be set.
      */
+    @SuppressWarnings("deprecation")
     void _applyMongoOptions() {
         if (_options.slaveOk) slaveOk();
         setWriteConcern( _options.getWriteConcern() );
