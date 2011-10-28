@@ -133,6 +133,7 @@ public class MongoURI {
         if ( optionsPart != null && optionsPart.length() > 0 ) parseOptions( optionsPart );
     }
 
+    @SuppressWarnings("deprecation")
     private void parseOptions( String optionsPart ){
         for ( String _part : optionsPart.split( "&|;" ) ){
             int idx = _part.indexOf( "=" );
