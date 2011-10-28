@@ -25,7 +25,7 @@ import java.util.Map;
 
 /**
  * <p>WriteConcern control the write behavior for with various options, as well as exception raising on error conditions.</p>
- * 
+ *
  * <p>
  * <b>w</b>
  * <ul>
@@ -41,7 +41,7 @@ import java.util.Map;
  * </ul>
  * </p>
  * <p><b>fsync</b> force fsync to disk </p>
- * 
+ *
  * @dochub databases
  */
 public class WriteConcern {
@@ -51,7 +51,7 @@ public class WriteConcern {
 
     /** Exceptions are raised for network issues, but not server errors */
     public final static WriteConcern NORMAL = new WriteConcern(0);
-    
+
     /** Exceptions are raised for network issues, and server errors; waits on a server for the write operation */
     public final static WriteConcern SAFE = new WriteConcern(1);
 
@@ -66,7 +66,7 @@ public class WriteConcern {
 
     /** Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation*/
     public final static WriteConcern REPLICAS_SAFE = new WriteConcern(2);
-    
+
     // map of the constants from above for use by fromString
     private static Map<String, WriteConcern> _namedConcerns = null;
 
@@ -76,8 +76,8 @@ public class WriteConcern {
     public WriteConcern(){
         this(0);
     }
-    
-    /** 
+
+    /**
      * Calls {@link WriteConcern#WriteConcern(int, int, boolean)} with wtimeout=0 and fsync=false
      * @param w number of writes
      */
@@ -93,7 +93,7 @@ public class WriteConcern {
         this( w , 0 , false, false );
     }
 
-    /** 
+    /**
      * Calls {@link WriteConcern#WriteConcern(int, int, boolean)} with fsync=false
      * @param w number of writes
      * @param wtimeout timeout for write operation
@@ -109,8 +109,8 @@ public class WriteConcern {
     public WriteConcern( boolean fsync ){
         this( 1 , 0 , fsync);
     }
-    
-    /** 
+
+    /**
      * Creates a WriteConcern object.
      * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
      *	<p> w represents the number of servers:
@@ -182,7 +182,7 @@ public class WriteConcern {
     public BasicDBObject getCommand(){
         BasicDBObject _command = new BasicDBObject( "getlasterror" , 1 );
 
-        if ( _wValue instanceof Integer && ( (Integer) _wValue > 0) || 
+        if ( _wValue instanceof Integer && ( (Integer) _wValue > 0) ||
             ( _wValue instanceof String && _wValue != null ) ){
             _command.put( "w" , _wValue );
             _command.put( "wtimeout" , _wtimeout );
@@ -199,12 +199,12 @@ public class WriteConcern {
 
     /**
      * Sets the w value (the write strategy)
-     * @param wValue 
+     * @param wValue
      */
     public void setWObject(Object wValue) {
         this._wValue = wValue;
     }
-    
+
     /**
      * Gets the w value (the write strategy)
      * @return
@@ -212,15 +212,15 @@ public class WriteConcern {
     public Object getWObject(){
         return _wValue;
     }
-    
+
     /**
      * Sets the w value (the write strategy)
-     * @param w 
+     * @param w
      */
     public void setW(int w) {
         _wValue = w;
     }
-    
+
     /**
      * Gets the w parameter (the write strategy)
      * @return
@@ -228,7 +228,7 @@ public class WriteConcern {
     public int getW(){
         return (Integer) _wValue;
     }
-    
+
     /**
      * Gets the w parameter (the write strategy) in String format
      * @return
@@ -239,7 +239,7 @@ public class WriteConcern {
 
     /**
      * Sets the write timeout (in milliseconds)
-     * @param wtimeout 
+     * @param wtimeout
      */
     public void setWtimeout(int wtimeout) {
         this._wtimeout = wtimeout;
@@ -260,7 +260,7 @@ public class WriteConcern {
     public void setFsync(boolean fsync) {
         _fsync = fsync;
     }
-    
+
     /**
      * Gets the fsync flag (fsync to disk on the server)
      * @return
@@ -268,7 +268,7 @@ public class WriteConcern {
     public boolean getFsync(){
         return _fsync;
     }
-    
+
     /**
      * Gets the fsync flag (fsync to disk on the server)
      * @return
@@ -276,7 +276,7 @@ public class WriteConcern {
     public boolean fsync(){
         return _fsync;
     }
-    
+
     /**
      * Returns whether network error may be raised (w >= 0)
      * @return
@@ -347,15 +347,17 @@ public class WriteConcern {
 
     /**
      * Gets the j parameter (journal syncing)
-     * @return 
+     * @return
      */
     public boolean getJ() {
         return _j;
     }
 
     /**
-     * Sets the "continue inserts on error" mode
-     * @param continueOnErrorForInsert 
+     * Sets the "continue inserts on error" mode. This only applies to server side errors.
+     * If there is a document which does not validate in the client, an exception will still
+     * be thrown in the client.
+     * @param continueOnErrorForInsert
      */
     public void setContinueOnErrorForInsert(boolean continueOnErrorForInsert) {
         this._continueOnErrorForInsert = continueOnErrorForInsert;
@@ -363,7 +365,7 @@ public class WriteConcern {
 
     /**
      * Gets the "continue inserts on error" mode
-     * @return 
+     * @return
      */
     public boolean getContinueOnErrorForInsert() {
         return _continueOnErrorForInsert;
