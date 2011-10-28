@@ -146,7 +146,7 @@ public class WriteConcern {
      * @param j whether writes should wait for a journaling group commit
      */
     public WriteConcern( int w , int wtimeout , boolean fsync , boolean j ){
-        _wValue = w;
+        _w = w;
         _wtimeout = wtimeout;
         _fsync = fsync;
         _j = j;
@@ -169,7 +169,7 @@ public class WriteConcern {
      * @param j whether writes should wait for a journaling group commit
      */
     public WriteConcern( String w , int wtimeout , boolean fsync, boolean j ){
-        _wValue = w;
+        _w = w;
         _wtimeout = wtimeout;
         _fsync = fsync;
         _j = j;
@@ -182,9 +182,9 @@ public class WriteConcern {
     public BasicDBObject getCommand(){
         BasicDBObject _command = new BasicDBObject( "getlasterror" , 1 );
 
-        if ( _wValue instanceof Integer && ( (Integer) _wValue > 0) ||
-            ( _wValue instanceof String && _wValue != null ) ){
-            _command.put( "w" , _wValue );
+        if ( _w instanceof Integer && ( (Integer) _w > 0) ||
+            ( _w instanceof String && _w != null ) ){
+            _command.put( "w" , _w );
             _command.put( "wtimeout" , _wtimeout );
         }
 
@@ -201,8 +201,10 @@ public class WriteConcern {
      * Sets the w value (the write strategy)
      * @param wValue
      */
-    public void setWObject(Object wValue) {
-        this._wValue = wValue;
+    public void setWObject(Object w) {
+        if ( ! (w instanceof Integer) && ! (w instanceof String) )
+            throw new IllegalArgumentException("The w parameter must be an int or a String");
+        this._w = w;
     }
 
     /**
@@ -210,7 +212,7 @@ public class WriteConcern {
      * @return
      */
     public Object getWObject(){
-        return _wValue;
+        return _w;
     }
 
     /**
@@ -218,7 +220,7 @@ public class WriteConcern {
      * @param w
      */
     public void setW(int w) {
-        _wValue = w;
+        _w = w;
     }
 
     /**
@@ -226,7 +228,7 @@ public class WriteConcern {
      * @return
      */
     public int getW(){
-        return (Integer) _wValue;
+        return (Integer) _w;
     }
 
     /**
@@ -234,7 +236,7 @@ public class WriteConcern {
      * @return
      */
     public String getWString(){
-        return _wValue.toString();
+        return _w.toString();
     }
 
     /**
@@ -282,9 +284,9 @@ public class WriteConcern {
      * @return
      */
     public boolean raiseNetworkErrors(){
-        if (_wValue instanceof Integer)
-            return (Integer) _wValue >= 0;
-        return _wValue != null;
+        if (_w instanceof Integer)
+            return (Integer) _w >= 0;
+        return _w != null;
     }
 
     /**
@@ -292,9 +294,9 @@ public class WriteConcern {
      * @return
      */
     public boolean callGetLastError(){
-        if (_wValue instanceof Integer)
-            return (Integer) _wValue  > 0;
-        return _wValue != null;
+        if (_w instanceof Integer)
+            return (Integer) _w  > 0;
+        return _w != null;
     }
 
     /**
@@ -334,7 +336,7 @@ public class WriteConcern {
         if ( o == null || getClass() != o.getClass() ) return false;
 
         WriteConcern that = (WriteConcern) o;
-        return _fsync == that._fsync && _wValue == that._wValue && _wtimeout == that._wtimeout && _j == that._j && _continueOnErrorForInsert == that._continueOnErrorForInsert;
+        return _fsync == that._fsync && _w == that._w && _wtimeout == that._wtimeout && _j == that._j && _continueOnErrorForInsert == that._continueOnErrorForInsert;
     }
 
     /**
@@ -384,7 +386,7 @@ public class WriteConcern {
     }
 
 
-    Object _wValue = 0;
+    Object _w = 0;
     int _wtimeout = 0;
     boolean _fsync = false;
     boolean _j = false;
