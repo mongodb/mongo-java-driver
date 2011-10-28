@@ -270,19 +270,13 @@ public class WriteConcern {
     }
     
     /**
-     * Returns whether (batch) inserts will continue if an error occurs before the end
-     * @return boolean
-     */
-    public boolean continueOnErrorForInsert(){
-        return _continueOnErrorInsert;
-    }
-
-    /**
      * Returns whether network error may be raised (w >= 0)
      * @return
      */
     public boolean raiseNetworkErrors(){
-        return (Integer) _wValue >= 0;
+        if (_wValue instanceof Integer)
+            return (Integer) _wValue >= 0;
+        return _wValue != null;
     }
 
     /**
@@ -290,7 +284,9 @@ public class WriteConcern {
      * @return
      */
     public boolean callGetLastError(){
-        return (Integer) _wValue  > 0;
+        if (_wValue instanceof Integer)
+            return (Integer) _wValue  > 0;
+        return _wValue != null;
     }
 
     /**
@@ -321,7 +317,7 @@ public class WriteConcern {
 
     @Override
     public String toString(){
-        return "WriteConcern " + getCommand() + " / (Continue Inserting on Errors? " + continueOnErrorForInsert() + ")";
+        return "WriteConcern " + getCommand() + " / (Continue Inserting on Errors? " + _continueOnErrorInsert + ")";
     }
 
     @Override
