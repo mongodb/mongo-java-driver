@@ -28,15 +28,16 @@ public class ReplSetTest {
     }
 
     static class R extends Thread {
+        @SuppressWarnings("deprecation")
         R( ServerAddress a ){
             _a = a;
             _mongo = new Mongo(a);
             _db = _mongo.getDB( "test" );
             _coll = _db.getCollection( "foo" );
-            
+
             _coll.slaveOk();
         }
-        
+
         public void run(){
             while ( true ){
                 try {
@@ -51,16 +52,17 @@ public class ReplSetTest {
                 }
             }
         }
-        
+
         final ServerAddress _a;
         final Mongo _mongo;
         final DB _db;
         final DBCollection _coll;
     }
 
+    @SuppressWarnings("deprecation")
     public static void main( String args[] )
         throws Exception {
-        
+
         boolean rs = true;
 
         List<ServerAddress> addrs = new ArrayList<ServerAddress>();
@@ -81,7 +83,7 @@ public class ReplSetTest {
         for ( ServerAddress a : addrs ){
             new R(a).start();
         }
-        
+
         while ( true ){
             _sleep();
             try {

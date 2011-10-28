@@ -502,6 +502,7 @@ public class JavaClientTest extends TestCase {
 
     //If run against a replicaset this will verify that the inline map/reduce hits the secondary.
     @Test
+    @SuppressWarnings("deprecation")
     public void testMapReduceInlineSecondary() throws Exception {
         Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27020)));
         DBCollection c = mongo.getDB(_db.getName()).getCollection( "imr2" );
