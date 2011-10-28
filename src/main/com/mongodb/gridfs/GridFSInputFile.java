@@ -289,6 +289,11 @@ public class GridFSInputFile extends GridFSFile {
             _messageDigester = null;
             _length = _totalBytes;
             _savedChunks = true;
+            try {
+                if (null != _in) _in.close();
+            } catch (IOException e) {
+                //ignore
+            }
         }
     }
     
