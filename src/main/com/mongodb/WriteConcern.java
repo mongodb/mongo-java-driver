@@ -269,15 +269,14 @@ public class WriteConcern {
         return _fsync;
     }
     
-   /**
-    * Returns whether (batch) inserts will continue if an error occurs before the end
-    * @return boolean
-    */
-    public boolean continueOnErrorForInsert(){
-        return _continueOnErrorInsert;
+    /**
+     * Gets the fsync flag (fsync to disk on the server)
+     * @return
+     */
+    public boolean fsync(){
+        return _fsync;
     }
-	  	
-
+    
     /**
      * Returns whether network error may be raised (w >= 0)
      * @return
@@ -326,7 +325,7 @@ public class WriteConcern {
 
     @Override
     public String toString(){
-        return "WriteConcern " + getCommand() + " / (Continue Inserting on Errors? " + getContinueOnErrorInsert() + ")";
+        return "WriteConcern " + getCommand() + " / (Continue Inserting on Errors? " + getContinueOnErrorForInsert() + ")";
     }
 
     @Override
@@ -335,7 +334,7 @@ public class WriteConcern {
         if ( o == null || getClass() != o.getClass() ) return false;
 
         WriteConcern that = (WriteConcern) o;
-        return _fsync == that._fsync && _wValue == that._wValue && _wtimeout == that._wtimeout && _j == that._j && _continueOnErrorInsert == that._continueOnErrorInsert;
+        return _fsync == that._fsync && _wValue == that._wValue && _wtimeout == that._wtimeout && _j == that._j && _continueOnErrorForInsert == that._continueOnErrorForInsert;
     }
 
     /**
@@ -356,18 +355,18 @@ public class WriteConcern {
 
     /**
      * Sets the "continue inserts on error" mode
-     * @param continueOnErrorInsert 
+     * @param continueOnErrorForInsert 
      */
-    public void setContinueOnErrorInsert(boolean continueOnErrorInsert) {
-        this._continueOnErrorInsert = continueOnErrorInsert;
+    public void setContinueOnErrorForInsert(boolean continueOnErrorForInsert) {
+        this._continueOnErrorForInsert = continueOnErrorForInsert;
     }
 
     /**
      * Gets the "continue inserts on error" mode
      * @return 
      */
-    public boolean getContinueOnErrorInsert() {
-        return _continueOnErrorInsert;
+    public boolean getContinueOnErrorForInsert() {
+        return _continueOnErrorForInsert;
     }
 
     /**
@@ -387,7 +386,7 @@ public class WriteConcern {
     int _wtimeout = 0;
     boolean _fsync = false;
     boolean _j = false;
-    boolean _continueOnErrorInsert = false;
+    boolean _continueOnErrorForInsert = false;
 
     public static class Majority extends WriteConcern {
 

@@ -243,7 +243,7 @@ public class DBApiLayer extends DB {
                 OutMessage om = new OutMessage( _mongo , 2002, encoder );
 
                 int flags = 0;
-                if ( concern.continueOnErrorForInsert() ) flags |= 1;
+                if ( concern.getContinueOnErrorForInsert() ) flags |= 1;
                 om.writeInt( flags );
                 om.writeCString( _fullNameSpace );
 
