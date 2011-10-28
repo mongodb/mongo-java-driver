@@ -808,9 +808,9 @@ public class JavaClientTest extends TestCase {
         assertEquals( wc1, wc2 );
         assertEquals( wc1, wc3 );
         assertEquals( wc1.getW(), wc2.getW() );
-        assertEquals( wc1.getWValue(), wc2.getWValue() );
+        assertEquals( wc1.getWObject(), wc2.getWObject() );
         assertEquals( wc1.getW(), wc3.getW() );
-        assertEquals( wc1.getWValue(), wc3.getWValue() );
+        assertEquals( wc1.getWObject(), wc3.getWObject() );
     }
 
     @Test
@@ -822,9 +822,9 @@ public class JavaClientTest extends TestCase {
         assertEquals( wc1, wc2 );
         assertEquals( wc1, wc3 );
         assertEquals( wc1.getWString(), wc2.getWString() );
-        assertEquals( wc1.getWValue(), wc2.getWValue() );
+        assertEquals( wc1.getWObject(), wc2.getWObject() );
         assertEquals( wc1.getWString(), wc3.getWString() );
-        assertEquals( wc1.getWValue(), wc3.getWValue() );
+        assertEquals( wc1.getWObject(), wc3.getWObject() );
     }
 
     @Test

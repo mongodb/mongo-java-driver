@@ -93,15 +93,6 @@ public class WriteConcern {
         this( w , 0 , false, false );
     }
 
-    /**
-     * Tag based Write Concern with configgable j and wtimeout=0, fsync=false
-     * @param w Write Concern Tag
-     * @param j whether writes should wait for a journaling group commit
-     */
-    public WriteConcern( String w, boolean j ){
-        this( w , 0 , false, j );
-    }
-
     /** 
      * Calls {@link WriteConcern#WriteConcern(int, int, boolean)} with fsync=false
      * @param w number of writes
@@ -154,36 +145,11 @@ public class WriteConcern {
      * @param fsync whether or not to fsync
      * @param j whether writes should wait for a journaling group commit
      */
-    public WriteConcern( int w , int wtimeout , boolean fsync, boolean j ){
+    public WriteConcern( int w , int wtimeout , boolean fsync , boolean j ){
         _wValue = w;
         _wtimeout = wtimeout;
         _fsync = fsync;
         _j = j;
-        _continueOnErrorInsert = false;
-    }
-
-    /**
-     * Creates a WriteConcern object.
-     * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
-     *	<p> w represents the number of servers:
-     * 		<ul>
-     * 			<li>{@code w=-1} None, no checking is done</li>
-     * 			<li>{@code w=0} None, network socket errors raised</li>
-     * 			<li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
-     * 			<li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
-     * 		</ul>
-     * 	</p>
-     * @param w number of writes
-     * @param wtimeout timeout for write operation
-     * @param fsync whether or not to fsync
-     * @param j whether writes should wait for a journaling group commit
-     */
-    public WriteConcern( int w , int wtimeout , boolean fsync, boolean j , boolean continueInsertOnError ){
-        _wValue = w;
-        _wtimeout = wtimeout;
-        _fsync = fsync;
-        _j = j;
-        _continueOnErrorInsert = continueInsertOnError;
     }
 
     /**
@@ -207,33 +173,7 @@ public class WriteConcern {
         _wtimeout = wtimeout;
         _fsync = fsync;
         _j = j;
-        _continueOnErrorInsert = false;
     }
-
-    /**
-     * Creates a WriteConcern object.
-     * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
-     *	<p> w represents the number of servers:
-     * 		<ul>
-     * 			<li>{@code w=-1} None, no checking is done</li>
-     * 			<li>{@code w=0} None, network socket errors raised</li>
-     * 			<li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
-     * 			<li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
-     * 		</ul>
-     * 	</p>
-     * @param w number of writes
-     * @param wtimeout timeout for write operation
-     * @param fsync whether or not to fsync
-     * @param j whether writes should wait for a journaling group commit
-     */
-    public WriteConcern( String w , int wtimeout , boolean fsync, boolean j , Boolean continueInsertOnError ){
-        _wValue = w;
-        _wtimeout = wtimeout;
-        _fsync = fsync;
-        _j = j;
-        _continueOnErrorInsert = continueInsertOnError;
-    }
-
 
     /**
      * Gets the object representing the "getlasterror" command
@@ -258,24 +198,52 @@ public class WriteConcern {
     }
 
     /**
-     * Gets the number of servers to write to
-     * if W is not a string value, returns -999.
-     *
-     * You should migrate to using getWValue (returns Object)
-     * or getWString (String)
+     * Sets the w value (the write strategy)
+     * @param wValue 
+     */
+    public void setWObject(Object wValue) {
+        this._wValue = wValue;
+    }
+    
+    /**
+     * Gets the w value (the write strategy)
+     * @return
+     */
+    public Object getWObject(){
+        return _wValue;
+    }
+    
+    /**
+     * Sets the w value (the write strategy)
+     * @param w 
+     */
+    public void setW(int w) {
+        _wValue = w;
+    }
+    
+    /**
+     * Gets the w parameter (the write strategy)
      * @return
      */
     public int getW(){
-        if (_wValue instanceof Integer)
-            return (Integer) _wValue;
-        else
-            return -999;
+        return (Integer) _wValue;
     }
-
+    
+    /**
+     * Gets the w parameter (the write strategy) in String format
+     * @return
+     */
     public String getWString(){
         return _wValue.toString();
     }
 
+    /**
+     * Sets the write timeout (in milliseconds)
+     * @param wtimeout 
+     */
+    public void setWtimeout(int wtimeout) {
+        this._wtimeout = wtimeout;
+    }
 
     /**
      * Gets the write timeout (in milliseconds)
@@ -286,20 +254,19 @@ public class WriteConcern {
     }
 
     /**
-     * Returns whether writes wait for files to be synced to disk
+     * Sets the fsync flag (fsync to disk on the server)
+     * @param fsync
+     */
+    public void setFsync(boolean fsync) {
+        _fsync = fsync;
+    }
+    
+    /**
+     * Gets the fsync flag (fsync to disk on the server)
      * @return
      */
-    public boolean fsync(){
+    public boolean getFsync(){
         return _fsync;
-    }
-
-    /**
-     * Returns whether writes will await a group commit to the
-     * journal.
-     * @return boolean
-     */
-    public boolean j(){
-        return _j;
     }
     
     /**
@@ -367,70 +334,35 @@ public class WriteConcern {
     }
 
     /**
-     * Gets the w value (either int or string)
-     * @return
-     */
-    public Object getWValue(){
-        return _wValue;
-    }
-
-    /**
-     * Clones this WriteConcern with a new String mode for "w" (WriteConcerns are immutable)
-     * @param mode
-     * @return
-     */
-    public WriteConcern withW(String mode) {
-        return _instance(mode, _wtimeout, _fsync, _j, _continueOnErrorInsert);
-    }
-
-    /**
-     * Clones this WriteConcern with a new int mode for "w" (WriteConcerns are immutable)
-     * @param mode
-     * @param w
-     * @return
-     */
-    public WriteConcern withW(int w) {
-        return _instance( w, _wtimeout, _fsync, _j, _continueOnErrorInsert );
-    }
-
-    /**
-     *
-     * Clones this WriteConcern with a new "j" (WriteConcerns are immutable)
+     * Sets the j parameter (journal syncing)
      * @param j
-     * @return
      */
-    public WriteConcern withJ(boolean j) {
-        return _instance( _wValue, _wtimeout, _fsync, _j, _continueOnErrorInsert );
-    }
-
-
-    /**
-     *
-     * Clones this WriteConcern with a new boolean mode for "continue inserts on error" (WriteConcerns are immutable)
-     * @param cont
-     * @return
-     */
-    public WriteConcern withContinueOnErrorForInsert(boolean cont) {
-        return _instance( _wValue, _wtimeout, _fsync, _j, cont );
+    public void setJ(boolean j) {
+        this._j = j;
     }
 
     /**
-     *
-     * Clones this WriteConcern with a new boolean mode for fsync  (WriteConcerns are immutable)
-     * @param fsync
-     * @return
+     * Gets the j parameter (journal syncing)
+     * @return 
      */
-    public WriteConcern withFsync(boolean fsync) {
-        return _instance( _wValue, _wtimeout, fsync, _j, _continueOnErrorInsert );
+    public boolean getJ() {
+        return _j;
     }
 
+    /**
+     * Sets the "continue inserts on error" mode
+     * @param continueOnErrorInsert 
+     */
+    public void setContinueOnErrorInsert(boolean continueOnErrorInsert) {
+        this._continueOnErrorInsert = continueOnErrorInsert;
+    }
 
-    protected WriteConcern _instance( Object wValue, int wtimeout, boolean fsync, boolean j, boolean cont ){
-        if (wValue instanceof Integer)
-            return new WriteConcern( (Integer) wValue, wtimeout, fsync, j, cont );
-        else if (wValue instanceof String)
-            return new WriteConcern( (String) wValue, wtimeout, fsync, j, cont );
-        else throw new IllegalArgumentException( "W must be a String or Integer." );
+    /**
+     * Gets the "continue inserts on error" mode
+     * @return 
+     */
+    public boolean getContinueOnErrorInsert() {
+        return _continueOnErrorInsert;
     }
 
     /**
@@ -446,11 +378,11 @@ public class WriteConcern {
     }
 
 
-    Object _wValue;
-    final int _wtimeout;
-    final boolean _fsync;
-    final boolean _j;
-    final boolean _continueOnErrorInsert;
+    Object _wValue = 0;
+    int _wtimeout = 0;
+    boolean _fsync = false;
+    boolean _j = false;
+    boolean _continueOnErrorInsert = false;
 
     public static class Majority extends WriteConcern {
 
