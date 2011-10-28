@@ -675,7 +675,10 @@ public class JavaClientTest extends TestCase {
 
         c.save( new BasicDBObject( "x" , 1 ) );
 
-        Object o = _db.eval( "return db.oidc.findOne()._id.toString()" );
+        String o = (String) _db.eval( "return db.oidc.findOne()._id.toString()" );
+        // printing on servers has changed in 2.1
+        if (o.startsWith("ObjectId"))
+            o = (String) _db.eval( "return db.oidc.findOne()._id.valueOf()" );
         String x = c.findOne().get( "_id" ).toString();
         assertEquals( x , o );
     }
