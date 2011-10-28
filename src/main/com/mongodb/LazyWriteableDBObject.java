@@ -64,7 +64,7 @@ public class LazyWriteableDBObject extends LazyDBObject {
 	/* (non-Javadoc)
 	 * @see org.bson.LazyBSONObject#putAll(java.util.Map)
 	 */
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings("unchecked")
 	@Override
 	public void putAll(Map m) {
 		writeable.putAll(m);
