@@ -269,6 +269,15 @@ public class WriteConcern {
         return _fsync;
     }
     
+   /**
+    * Returns whether (batch) inserts will continue if an error occurs before the end
+    * @return boolean
+    */
+    public boolean continueOnErrorForInsert(){
+        return _continueOnErrorInsert;
+    }
+	  	
+
     /**
      * Returns whether network error may be raised (w >= 0)
      * @return
@@ -317,7 +326,7 @@ public class WriteConcern {
 
     @Override
     public String toString(){
-        return "WriteConcern " + getCommand() + " / (Continue Inserting on Errors? " + _continueOnErrorInsert + ")";
+        return "WriteConcern " + getCommand() + " / (Continue Inserting on Errors? " + getContinueOnErrorInsert() + ")";
     }
 
     @Override
