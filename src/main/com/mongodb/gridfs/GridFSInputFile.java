@@ -52,11 +52,14 @@ public class GridFSInputFile extends GridFSFile {
      *            Stream used for reading data from.
      * @param filename
      *            Name of the file to be created.
+     * @param closeStreamOnPersist 
+                  indicate the passed in input stream should be closed once the data chunk persisted
      */
-    GridFSInputFile( GridFS fs , InputStream in , String filename ) {
+    GridFSInputFile( GridFS fs , InputStream in , String filename, boolean closeStreamOnPersist ) {
         _fs = fs;
         _in = in;
         _filename = filename;
+        _closeStreamOnPersist = closeStreamOnPersist;
         
         _id = new ObjectId();
         _chunkSize = GridFS.DEFAULT_CHUNKSIZE;
@@ -64,6 +67,21 @@ public class GridFSInputFile extends GridFSFile {
         _messageDigester = _md5Pool.get();
         _messageDigester.reset();
         _buffer = new byte[(int) _chunkSize];
+    }
+    
+    /**
+     * Default constructor setting the GridFS file name and providing an input
+     * stream containing data to be written to the file.
+     * 
+     * @param fs
+     *            The GridFS connection handle.
+     * @param in
+     *            Stream used for reading data from.
+     * @param filename
+     *            Name of the file to be created.
+     */
+    GridFSInputFile( GridFS fs , InputStream in , String filename ) {
+        this( fs, in, filename, false);
     }
     
     /**
@@ -290,7 +308,9 @@ public class GridFSInputFile extends GridFSFile {
             _length = _totalBytes;
             _savedChunks = true;
             try {
-                if (null != _in) _in.close();
+                if (null != _in && _closeStreamOnPersist) {
+                  _in.close();
+                }
             } catch (IOException e) {
                 //ignore
             }
@@ -298,6 +318,7 @@ public class GridFSInputFile extends GridFSFile {
     }
     
     private final InputStream _in;
+    private boolean _closeStreamOnPersist;
     private boolean _savedChunks = false;
     private byte[] _buffer = null;
     private int _currentChunkNumber = 0;
