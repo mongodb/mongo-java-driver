@@ -232,7 +232,7 @@ public class GridFS {
      * @return
      */
     public GridFSInputFile createFile( byte[] data ){
-        return createFile( new ByteArrayInputStream( data ) );
+        return createFile( new ByteArrayInputStream( data ), true );
     }
 
 
@@ -245,7 +245,7 @@ public class GridFS {
      */
     public GridFSInputFile createFile( File f )
         throws IOException {
-        return createFile( new FileInputStream( f ) , f.getName() );
+        return createFile( new FileInputStream( f ) , f.getName(), true );
     }
 
     /**
@@ -260,6 +260,18 @@ public class GridFS {
 
     /**
      * creates a file entry.
+     * after calling this method, you have to call save() on the GridFSInputFile file
+     * @param in an inputstream containing the file's data
+     * @param closeStreamOnPersist indicate the passed in input stream should be closed 
+     *        once the data chunk persisted
+     * @return
+     */
+    public GridFSInputFile createFile( InputStream in, boolean closeStreamOnPersist ){
+        return createFile( in , null, closeStreamOnPersist );
+    }
+
+    /**
+     * creates a file entry.
      * After calling this method, you have to call save() on the GridFSInputFile file
      * @param in an inputstream containing the file's data
      * @param filename the file name as stored in the db
@@ -267,6 +279,19 @@ public class GridFS {
      */
     public GridFSInputFile createFile( InputStream in , String filename ){
         return new GridFSInputFile( this , in , filename );
+    }
+
+    /**
+     * creates a file entry.
+     * After calling this method, you have to call save() on the GridFSInputFile file
+     * @param in an inputstream containing the file's data
+     * @param filename the file name as stored in the db
+     * @param closeStreamOnPersist indicate the passed in input stream should be closed 
+     *        once the data chunk persisted
+     * @return
+     */
+    public GridFSInputFile createFile( InputStream in , String filename, boolean closeStreamOnPersist ){
+        return new GridFSInputFile( this , in , filename, closeStreamOnPersist );
     }
 
     /**
