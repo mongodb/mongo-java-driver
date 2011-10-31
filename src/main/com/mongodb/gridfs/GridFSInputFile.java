@@ -308,9 +308,8 @@ public class GridFSInputFile extends GridFSFile {
             _length = _totalBytes;
             _savedChunks = true;
             try {
-                if (null != _in && _closeStreamOnPersist) {
-                  _in.close();
-                }
+                if ( _in != null && _closeStreamOnPersist )
+                    _in.close();
             } catch (IOException e) {
                 //ignore
             }
