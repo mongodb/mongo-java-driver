@@ -37,22 +37,22 @@ import com.mongodb.util.Util;
  * Operations include:
  * - writing data obtained from an InputStream
  * - getting an OutputStream to stream the data out
- * 
+ *
  * @author Eliot Horowitz and Guy K. Kloss
  */
 public class GridFSInputFile extends GridFSFile {
-    
+
     /**
      * Default constructor setting the GridFS file name and providing an input
      * stream containing data to be written to the file.
-     * 
+     *
      * @param fs
      *            The GridFS connection handle.
      * @param in
      *            Stream used for reading data from.
      * @param filename
      *            Name of the file to be created.
-     * @param closeStreamOnPersist 
+     * @param closeStreamOnPersist
                   indicate the passed in input stream should be closed once the data chunk persisted
      */
     GridFSInputFile( GridFS fs , InputStream in , String filename, boolean closeStreamOnPersist ) {
@@ -60,7 +60,7 @@ public class GridFSInputFile extends GridFSFile {
         _in = in;
         _filename = filename;
         _closeStreamOnPersist = closeStreamOnPersist;
-        
+
         _id = new ObjectId();
         _chunkSize = GridFS.DEFAULT_CHUNKSIZE;
         _uploadDate = new Date();
@@ -68,11 +68,11 @@ public class GridFSInputFile extends GridFSFile {
         _messageDigester.reset();
         _buffer = new byte[(int) _chunkSize];
     }
-    
+
     /**
      * Default constructor setting the GridFS file name and providing an input
      * stream containing data to be written to the file.
-     * 
+     *
      * @param fs
      *            The GridFS connection handle.
      * @param in
@@ -83,13 +83,13 @@ public class GridFSInputFile extends GridFSFile {
     GridFSInputFile( GridFS fs , InputStream in , String filename ) {
         this( fs, in, filename, false);
     }
-    
+
     /**
      * Constructor that only provides a file name, but does not rely on the
      * presence of an {@link java.io.InputStream}. An
      * {@link java.io.OutputStream} can later be obtained for writing using the
      * {@link #getOutputStream()} method.
-     * 
+     *
      * @param fs
      *            The GridFS connection handle.
      * @param filename
@@ -98,32 +98,32 @@ public class GridFSInputFile extends GridFSFile {
     GridFSInputFile( GridFS fs , String filename ) {
         this( fs , null , filename );
     }
-    
+
     /**
      * Minimal constructor that does not rely on the presence of an
      * {@link java.io.InputStream}. An {@link java.io.OutputStream} can later be
      * obtained for writing using the {@link #getOutputStream()} method.
-     * 
+     *
      * @param fs
      *            The GridFS connection handle.
      */
     GridFSInputFile( GridFS fs ) {
         this( fs , null , null );
     }
-    
+
     /**
      * Sets the file name on the GridFS entry.
-     * 
+     *
      * @param fn
      *            File name.
      */
     public void setFilename( String fn ) {
         _filename = fn;
     }
-    
+
     /**
      * Sets the content type (MIME type) on the GridFS entry.
-     * 
+     *
      * @param ct
      *            Content type.
      */
@@ -148,11 +148,11 @@ public class GridFSInputFile extends GridFSFile {
     public void save() {
         save( _chunkSize);
     }
-    
+
     /**
      * This method first calls saveChunks(long) if the file data has not been saved yet.
      * Then it persists the file entry to GridFS.
-     * 
+     *
      * @param chunkSize
      *            Size of chunks for file in bytes.
      */
@@ -169,13 +169,13 @@ public class GridFSInputFile extends GridFSFile {
                 throw new MongoException( "couldn't save chunks" , ioe );
             }
         }
-        
+
         super.save();
     }
-    
+
     /**
      * @see com.mongodb.gridfs.GridFSInputFile#saveChunks(long)
-     * 
+     *
      * @return Number of the next chunk.
      * @throws IOException
      *             on problems reading the new entry's
@@ -184,12 +184,12 @@ public class GridFSInputFile extends GridFSFile {
     public int saveChunks() throws IOException {
         return saveChunks( _chunkSize );
     }
-    
+
     /**
      * Saves all data into chunks from configured {@link java.io.InputStream} input stream
      * to GridFS. A non-default chunk size can be specified.
      * This method does NOT save the file object itself, one must call save() to do so.
-     * 
+     *
      * @param chunkSize
      *            Size of chunks for file in bytes.
      * @return Number of the next chunk.
@@ -207,11 +207,11 @@ public class GridFSInputFile extends GridFSFile {
             _chunkSize = chunkSize;
             _buffer = new byte[(int) _chunkSize];
         }
-        
+
         if ( chunkSize > 3.5 * 1000 * 1000 ) {
             throw new MongoException( "chunkSize must be less than 3.5MiB!" );
         }
-        
+
         int bytesRead = 0;
         while ( bytesRead >= 0 ) {
             _currentBufferPosition = 0;
@@ -223,14 +223,14 @@ public class GridFSInputFile extends GridFSFile {
         _finishData();
         return _currentChunkNumber;
     }
-    
+
     /**
      * After retrieving this {@link java.io.OutputStream}, this object will be
      * capable of accepting successively written data to the output stream.
      * To completely persist this GridFS object, you must finally call the {@link java.io.OutputStream#close()}
      * method on the output stream. Note that calling the save() and saveChunks()
      * methods will throw Exceptions once you obtained the OutputStream.
-     * 
+     *
      * @return Writable stream object.
      */
     public OutputStream getOutputStream() {
@@ -239,11 +239,11 @@ public class GridFSInputFile extends GridFSFile {
         }
         return _outputStream;
     }
-    
+
     /**
      * Dumps a new chunk into the chunks collection. Depending on the flag, also
      * partial buffers (at the end) are going to be written immediately.
-     * 
+     *
      * @param data
      *            Data for chunk.
      * @param writePartial
@@ -264,7 +264,7 @@ public class GridFSInputFile extends GridFSFile {
             writeBuffer = new byte[_currentBufferPosition];
             System.arraycopy( _buffer, 0, writeBuffer, 0, _currentBufferPosition );
         }
-        
+
         DBObject chunk = BasicDBObjectBuilder.start()
                 .add( "files_id", _id )
                 .add( "n", _currentChunkNumber )
@@ -275,10 +275,10 @@ public class GridFSInputFile extends GridFSFile {
         _messageDigester.update( writeBuffer );
         _currentBufferPosition = 0;
     }
-    
+
     /**
      * Reads a buffer full from the {@link java.io.InputStream}.
-     * 
+     *
      * @return Number of bytes read from stream.
      * @throws IOException
      *             if the reading from the stream fails.
@@ -296,7 +296,7 @@ public class GridFSInputFile extends GridFSFile {
         }
         return bytesRead;
     }
-    
+
     /**
      * Marks the data as fully written. This needs to be called before super.save()
      */
@@ -316,7 +316,7 @@ public class GridFSInputFile extends GridFSFile {
             }
         }
     }
-    
+
     private final InputStream _in;
     private boolean _closeStreamOnPersist;
     private boolean _savedChunks = false;
@@ -326,7 +326,7 @@ public class GridFSInputFile extends GridFSFile {
     private long _totalBytes = 0;
     private MessageDigest _messageDigester = null;
     private OutputStream _outputStream = null;
-    
+
     /**
      * A pool of {@link java.security.MessageDigest} objects.
      */
@@ -334,7 +334,7 @@ public class GridFSInputFile extends GridFSFile {
             = new SimplePool<MessageDigest>( "md5" , 10 , -1 , false , false ) {
         /**
          * {@inheritDoc}
-         * 
+         *
          * @see com.mongodb.util.SimplePool#createNew()
          */
         protected MessageDigest createNew() {
@@ -345,18 +345,18 @@ public class GridFSInputFile extends GridFSFile {
             }
         }
     };
-    
+
     /**
      * An output stream implementation that can be used to successively write to
      * a GridFS file.
-     * 
+     *
      * @author Guy K. Kloss
      */
     class MyOutputStream extends OutputStream {
-        
+
         /**
          * {@inheritDoc}
-         * 
+         *
          * @see java.io.OutputStream#write(int)
          */
         @Override
@@ -365,10 +365,10 @@ public class GridFSInputFile extends GridFSFile {
             byteArray[0] = (byte) (b & 0xff);
             write( byteArray, 0, 1 );
         }
-        
+
         /**
          * {@inheritDoc}
-         * 
+         *
          * @see java.io.OutputStream#write(byte[], int, int)
          */
         @Override
@@ -390,7 +390,7 @@ public class GridFSInputFile extends GridFSFile {
                 }
             }
         }
-        
+
         /**
          * Processes/saves all data from {@link java.io.InputStream} and closes
          * the potentially present {@link java.io.OutputStream}. The GridFS file
