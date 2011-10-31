@@ -1,4 +1,22 @@
 
+2.7.0-rc3 / 2011-10-31 
+=======================
+
+  * changed if statement to improve readability.
+  * JAVA-462: GridFSInputFile does not close input streams when constructed by the driver (greenlaw110)
+    - Add closeStreamOnPersist option when creating GridFSInputFile
+  * JAVA-425 fixes
+    - attempt to clean up and standardize writeConcern
+    - throw exception if w is wrong type
+    - fix cast exception in case W is a String
+  * Documented continue on error better.
+  * Close inputstream of GridFSInputFile once chunk saved
+  * JAVA-461: the logic to spread requests around slaves may select a slave over latency limit
+  * Reset buffer when the object is checked out and before adding back.
+  * added MongoOptions test
+  * use the socket factory from the Mongo for ReplicaSetStatus connections
+  * added MongoOptions.copy
+
 2.7.0-rc2 / 2011-10-26 
 ========================
 
