@@ -271,8 +271,8 @@ public class DBCollectionTest extends TestCase {
         DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x",3).add("y",4).get();
         DBObject inserted3 = BasicDBObjectBuilder.start().add("x",5).add("y",6).get();
         WriteConcern wc = new WriteConcern();
-        wc.setContinueOnErrorForInsert(true);
-        WriteResult r = c.insert(wc, inserted1, inserted2, inserted3);
+        WriteConcern newWC = wc.continueOnErrorForInsert(true);
+        WriteResult r = c.insert(newWC, inserted1, inserted2, inserted3);
         assertEquals( c.count(), 2 );
     }
 
