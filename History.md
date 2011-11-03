@@ -1,4 +1,10 @@
 
+2.7.0-rc4 / 2011-11-03 
+=======================
+
+  * New Secondary Selection tests for Replica Sets introduced
+  * To correct a regression, make WriteConcern immutable (Otherwise you can mutate static presets like SAFE at runtime) * Reintroduced constructors which accept continueOnErrorForInsert args * To enable you to set continueOnErrorForInsert with the presets like SAFE, immutable "new WriteConcern like this with COEI changed" method added.
+
 2.7.0-rc3 / 2011-10-31 
 =======================
 
