@@ -1,4 +1,12 @@
 
+2.7.0 / 2011-11-04 
+===================
+
+ * Released Java Driver 2.7.0
+ * See change notes from Release Candidate series
+ * Please report any bugs or issues to https://jira.mongodb.org/browse/JAVA
+
+
 2.7.0-rc4 / 2011-11-03 
 =======================
 
