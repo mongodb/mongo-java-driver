@@ -312,7 +312,7 @@ limitations under the License.
     <!-- The reporting targets                                               -->
     <!-- ******************************************************************* -->
 
-    <target name="junit-reports" depends="bamboo-test">
+    <target name="junit-reports" depends="test">
         <junitreport todir="${testdir}">
             <fileset dir="${testdir}"><include name="*/*.xml"/></fileset>
             <report format="noframes"  todir="${testdir}"/>
