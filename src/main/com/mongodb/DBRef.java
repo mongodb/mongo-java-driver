@@ -18,7 +18,7 @@
 
 package com.mongodb;
 
-import org.bson.*;
+import org.bson.BSONObject;
 
 /**
  * overrides DBRefBase to understand a BSONObject representation of a reference.
@@ -57,8 +57,7 @@ public class DBRef extends DBRefBase {
         String ns;
         Object id;
 
-        if ((ns = (String)ref.get("$ref")) != null &&
-            (id = ref.get("$id")) != null) {
+        if ((ns = (String)ref.get("$ref")) != null && (id = ref.get("$id")) != null) {
             return db.getCollection(ns).findOne(new BasicDBObject("_id", id));
         }
         return null;

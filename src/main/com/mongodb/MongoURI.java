@@ -1,14 +1,47 @@
-// MongoURI.java
+/**
+ * Copyright (C) 2008 10gen Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.mongodb;
 
-import java.net.*;
-import java.util.*;
-import java.util.logging.*;
+import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
- * Represents a URI which can be used to create a Mongo instance.
- * The URI describes the hosts to be used and options.
+ * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>
+ * which can be used to create a Mongo instance. The URI describes the hosts to
+ * be used and options.
+ *
+ * The Java driver supports the following options (case insensitive):<br />
+ *
+ * <ul>
+ * <li>maxpoolsize</li>
+ * <li>waitqueuemultiple</li>
+ * <li>waitqueuetimeoutms</li>
+ * <li>connecttimeoutms</li>
+ * <li>sockettimeoutms</li>
+ * <li>autoconnectretry</li>
+ * <li>slaveok</li>
+ * <li>safe</li>
+ * <li>w</li>
+ * <li>wtimeout</li>
+ * <li>fsync</li>
+ * </ul>
  */
 public class MongoURI {
 
@@ -61,7 +94,7 @@ public class MongoURI {
 
 
             int idx = serverPart.indexOf( "@" );
-            
+
             if ( idx > 0 ){
                 String authPart = serverPart.substring( 0 , idx );
                 serverPart = serverPart.substring( idx + 1 );
@@ -100,6 +133,7 @@ public class MongoURI {
         if ( optionsPart != null && optionsPart.length() > 0 ) parseOptions( optionsPart );
     }
 
+    @SuppressWarnings("deprecation")
     private void parseOptions( String optionsPart ){
         for ( String _part : optionsPart.split( "&|;" ) ){
             int idx = _part.indexOf( "=" );
@@ -127,7 +161,7 @@ public class MongoURI {
 
     boolean _parseBoolean( String _in ){
         String in = _in.trim();
-        if ( in != null && !in.isEmpty() && ( in.equals( "1" ) || in.toLowerCase().equals( "true" ) || in.toLowerCase()
+        if ( in != null && in.length() > 0 && ( in.equals( "1" ) || in.toLowerCase().equals( "true" ) || in.toLowerCase()
                                                                                                          .equals( "yes" ) ) )
             return true;
         else return false;

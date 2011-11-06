@@ -18,17 +18,22 @@
 
 package com.mongodb;
 
+
 /**
  * A simple wrapper for the result of getLastError() calls and other commands
  */
 public class CommandResult extends BasicDBObject {
 
-    CommandResult(){
+    CommandResult(ServerAddress srv) {
+        super();
+        _host = srv;
+        //so it is shown in toString/debug
+        put("serverUsed", srv.toString());
     }
 
     /**
      * gets the "ok" field which is the result of the command
-     * @return
+     * @return True if ok
      */
     public boolean ok(){
         Object o = get( "ok" );
@@ -37,16 +42,16 @@ public class CommandResult extends BasicDBObject {
 
         if ( o instanceof Boolean )
             return ((Boolean)o).booleanValue();
-        
+
         if ( o instanceof Number )
             return ((Number)o).intValue() == 1;
-        
+
         throw new IllegalArgumentException( "can't figure out what to do with: " + o.getClass().getName() );
     }
 
     /**
      * gets the "errmsg" field which holds the error message
-     * @return
+     * @return The error message or null
      */
     public String getErrorMessage(){
         Object foo = get( "errmsg" );
@@ -54,10 +59,10 @@ public class CommandResult extends BasicDBObject {
             return null;
         return foo.toString();
     }
-    
+
     /**
      * utility method to create an exception with the command name
-     * @return
+     * @return The mongo exception or null
      */
     public MongoException getException(){
         if ( !ok() ) {
@@ -82,11 +87,11 @@ public class CommandResult extends BasicDBObject {
                 return new MongoException( code , s );
             }
         }
-        
+
         //all good, should never get here.
         return  null;
     }
- 
+
     /**
      * returns the "code" field, as an int
      * @return -1 if there is no code
@@ -116,9 +121,13 @@ public class CommandResult extends BasicDBObject {
             throw getException();
         }
     }
-    
+
+    public ServerAddress getServerUsed() {
+	return _host;
+    }
 
     DBObject _cmd;
+    ServerAddress _host = null;
     private static final long serialVersionUID = 1L;
 
     static class CommandFailure extends MongoException {

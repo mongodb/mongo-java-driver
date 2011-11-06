@@ -18,8 +18,6 @@
 
 package org.bson.types;
 
-import java.util.*;
-
 import org.bson.*;
 
 /** 

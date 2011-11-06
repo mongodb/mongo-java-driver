@@ -60,7 +60,7 @@ public class MongoURITest extends TestCase {
         assertEquals( "user" , u.getUsername() );
         assertEquals( "pass" , new String( u.getPassword() ) );
     }
-    
+
     @Test()
     public void testUserPassAndPort(){
         MongoURI u = new MongoURI( "mongodb://user:pass@host:27011/bar" );
@@ -81,7 +81,7 @@ public class MongoURITest extends TestCase {
         assertEquals( "pass" , new String( u.getPassword() ) );
     }
 
-    
+
     @Test()
     public void testOptions(){
         MongoURI uAmp = new MongoURI( "mongodb://localhost/test?" +
@@ -101,6 +101,7 @@ public class MongoURITest extends TestCase {
         _testOpts( uMixed._options );
     }
 
+    @SuppressWarnings("deprecation")
     private void _testOpts(MongoOptions uOpt){
         assertEquals( uOpt.connectionsPerHost, 10 );
         assertEquals( uOpt.threadsAllowedToBlockForConnectionMultiplier, 5 );

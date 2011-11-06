@@ -18,13 +18,20 @@
 
 package com.mongodb.gridfs;
 
-import com.mongodb.*;
-import com.mongodb.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import org.bson.*;
+import org.bson.BSONObject;
 
-import java.io.*;
-import java.util.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.MongoException;
+import com.mongodb.util.JSON;
 
 /**
  * The abstract class representing a GridFS file
@@ -60,11 +67,16 @@ public abstract class GridFSFile implements DBObject {
         DBObject cmd = new BasicDBObject( "filemd5" , _id );
         cmd.put( "root" , _fs._bucketName );
         DBObject res = _fs._db.command( cmd );
-        String m = res.get( "md5" ).toString();
-        if ( m.equals( _md5 ) )
-            return;
+        if ( res != null && res.containsField( "md5" ) ) {
+            String m = res.get( "md5" ).toString();
+            if ( m.equals( _md5 ) )
+                return;
+            throw new MongoException( "md5 differ.  mine [" + _md5 + "] theirs [" + m + "]" );
+        }
 
-        throw new MongoException( "md5 differ.  mine [" + _md5 + "] theirs [" + m + "]" );
+        // no md5 from the server
+        throw new MongoException( "no md5 returned from server: " + res );
+
     }
 
     /**

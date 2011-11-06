@@ -19,7 +19,10 @@
 package com.mongodb;
 
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -96,14 +99,10 @@ import org.bson.io.PoolOutputBuffer;
  */
 public class Mongo {
 
-    /**
-     *
-     */
+    // Make sure you don't change the format of these two lines. A preprocessing regexp
+    // is applied and updates the version based on configuration in build.properties.
     public static final int MAJOR_VERSION = 2;
-    /**
-     *
-     */
-    public static final int MINOR_VERSION = 5;
+    public static final int MINOR_VERSION = 7;
 
     static int cleanerIntervalMS;
     static {
@@ -190,6 +189,7 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addr );
+        _connector.start();
         _cleaner = new DBCleanerThread();
         _cleaner.start();
     }
@@ -227,6 +227,7 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addrs );
+        _connector.start();
 
         _cleaner = new DBCleanerThread();
         _cleaner.start();
@@ -262,6 +263,7 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addrs );
+        _connector.start();
 
         _cleaner = new DBCleanerThread();
         _cleaner.start();
@@ -301,6 +303,7 @@ public class Mongo {
             _connector = new DBTCPConnector( this , replicaSetSeeds );
         }
 
+        _connector.start();
         _cleaner = new DBCleanerThread();
         _cleaner.start();
     }
@@ -472,8 +475,31 @@ public class Mongo {
     }
 
     /**
-     * makes it possible to run read queries on slave nodes
+     * Sets the read preference for this database. Will be used as default for
+     * reads from any collection in any database. See the
+     * documentation for {@link ReadPreference} for more information.
+     *
+     * @param preference Read Preference to use
      */
+    public void setReadPreference( ReadPreference preference ){
+        _readPref = preference;
+    }
+
+    /**
+     * Gets the default read preference
+     * @return
+     */
+    public ReadPreference getReadPreference(){
+        return _readPref;
+    }
+
+    /**
+     * makes it possible to run read queries on slave nodes
+     *
+     * @deprecated Replaced with ReadPreference.SECONDARY
+     * @see com.mongodb.ReadPreference.SECONDARY
+     */
+    @Deprecated
     public void slaveOk(){
         addOption( Bytes.QUERYOPTION_SLAVEOK );
     }
@@ -513,6 +539,7 @@ public class Mongo {
      * Helper method for setting up MongoOptions at instantiation
      * so that any options which affect this connection can be set.
      */
+    @SuppressWarnings("deprecation")
     void _applyMongoOptions() {
         if (_options.slaveOk) slaveOk();
         setWriteConcern( _options.getWriteConcern() );
@@ -544,6 +571,7 @@ public class Mongo {
     final DBTCPConnector _connector;
     final ConcurrentMap<String,DB> _dbs = new ConcurrentHashMap<String,DB>();
     private WriteConcern _concern = WriteConcern.NORMAL;
+    private ReadPreference _readPref = ReadPreference.PRIMARY;
     final Bytes.OptionHolder _netOptions = new Bytes.OptionHolder( null );
     final DBCleanerThread _cleaner;
 
@@ -556,6 +584,55 @@ public class Mongo {
 
     };
 
+    /**
+     * Forces the master server to fsync the RAM data to disk
+     * This is done automatically by the server at intervals, but can be forced for better reliability. 
+     * @param async if true, the fsync will be done asynchronously on the server.
+     * @return 
+     */
+    public CommandResult fsync(boolean async) {
+        DBObject cmd = new BasicDBObject("fsync", 1);
+        if (async) {
+            cmd.put("async", 1);
+        }
+        return getDB("admin").command(cmd);
+    }
+
+    /**
+     * Forces the master server to fsync the RAM data to disk, then lock all writes.
+     * The database will be read-only after this command returns.
+     * @return 
+     */
+    public CommandResult fsyncAndLock() {
+        DBObject cmd = new BasicDBObject("fsync", 1);
+        cmd.put("lock", 1);
+        return getDB("admin").command(cmd);
+    }
+
+    /**
+     * Unlocks the database, allowing the write operations to go through.
+     * This command may be asynchronous on the server, which means there may be a small delay before the database becomes writable.
+     * @return 
+     */
+    public DBObject unlock() {
+        DB db = getDB("admin");
+        DBCollection col = db.getCollection("$cmd.sys.unlock");
+        return col.findOne();
+    }
+
+    /**
+     * Returns true if the database is locked (read-only), false otherwise.
+     * @return 
+     */
+    public boolean isLocked() {
+        DB db = getDB("admin");
+        DBCollection col = db.getCollection("$cmd.sys.inprog");
+        BasicDBObject res = (BasicDBObject) col.findOne();
+        if (res.containsField("fsyncLock")) {
+            return res.getInt("fsyncLock") == 1;
+        }
+        return false;
+    }
 
     // -------
 
@@ -640,16 +717,15 @@ public class Mongo {
 
     @Override
     public String toString() {
-        String str = "Mongo: ";
+        StringBuilder str = new StringBuilder("Mongo: ");
         List<ServerAddress> list = getServerAddressList();
-        if (list == null || list.isEmpty())
-            str += "null";
+        if (list == null || list.size() == 0)
+            str.append("null");
         else {
-            for (ServerAddress addr : list) {
-                str += addr.toString() + ",";
-            }
-            str = str.substring(0, str.length() - 1);
+            for ( ServerAddress addr : list )
+                str.append( addr.toString() ).append( ',' );
+            str.deleteCharAt( str.length() - 1 );
         }
-        return str;
+        return str.toString();
     }
 }

@@ -18,19 +18,28 @@
 
 package com.mongodb.gridfs;
 
-import java.io.*;
-import java.util.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.mongodb.*;
+import org.bson.types.ObjectId;
 
-import org.bson.*;
-import org.bson.types.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.BasicDBObjectBuilder;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 
 /**
  *  Implementation of GridFS v1.0
  *
  *  <a href="http://www.mongodb.org/display/DOCS/GridFS+Specification">GridFS 1.0 spec</a>
- * 
+ *
  * @dochub gridfs
  */
 public class GridFS {
@@ -192,7 +201,7 @@ public class GridFS {
         _filesCollection.remove( new BasicDBObject( "_id" , id ) );
         _chunkCollection.remove( new BasicDBObject( "files_id" , id ) );
     }
-    
+
     /**
      * removes all files matching the given filename
      * @param filename
@@ -210,7 +219,7 @@ public class GridFS {
             f.remove();
         }
     }
-    
+
 
     // --------------------------
     // ------ writing     -------
@@ -223,7 +232,7 @@ public class GridFS {
      * @return
      */
     public GridFSInputFile createFile( byte[] data ){
-        return createFile( new ByteArrayInputStream( data ) );
+        return createFile( new ByteArrayInputStream( data ), true );
     }
 
 
@@ -231,12 +240,12 @@ public class GridFS {
      * creates a file entry.
      * After calling this method, you have to call save() on the GridFSInputFile file
      * @param f the file object
-     * @return 
+     * @return
      * @throws IOException
      */
     public GridFSInputFile createFile( File f )
         throws IOException {
-        return createFile( new FileInputStream( f ) , f.getName() );
+        return createFile( new FileInputStream( f ) , f.getName(), true );
     }
 
     /**
@@ -251,6 +260,18 @@ public class GridFS {
 
     /**
      * creates a file entry.
+     * after calling this method, you have to call save() on the GridFSInputFile file
+     * @param in an inputstream containing the file's data
+     * @param closeStreamOnPersist indicate the passed in input stream should be closed
+     *        once the data chunk persisted
+     * @return
+     */
+    public GridFSInputFile createFile( InputStream in, boolean closeStreamOnPersist ){
+        return createFile( in , null, closeStreamOnPersist );
+    }
+
+    /**
+     * creates a file entry.
      * After calling this method, you have to call save() on the GridFSInputFile file
      * @param in an inputstream containing the file's data
      * @param filename the file name as stored in the db
@@ -261,6 +282,19 @@ public class GridFS {
     }
 
     /**
+     * creates a file entry.
+     * After calling this method, you have to call save() on the GridFSInputFile file
+     * @param in an inputstream containing the file's data
+     * @param filename the file name as stored in the db
+     * @param closeStreamOnPersist indicate the passed in input stream should be closed
+     *        once the data chunk persisted
+     * @return
+     */
+    public GridFSInputFile createFile( InputStream in , String filename, boolean closeStreamOnPersist ){
+        return new GridFSInputFile( this , in , filename, closeStreamOnPersist );
+    }
+
+    /**
      * @see {@link GridFS#createFile()} on how to use this method
      * @param filename the file name as stored in the db
      * @return
@@ -268,7 +302,7 @@ public class GridFS {
     public GridFSInputFile createFile(String filename) {
         return new GridFSInputFile( this , filename );
     }
-    
+
     /**
      * This method creates an empty {@link GridFSInputFile} instance. On this
      * instance an {@link java.io.OutputStream} can be obtained using the
@@ -277,7 +311,7 @@ public class GridFS {
      * {@link GridFSInputFile#setFilename(String)}. The file will be completely
      * written and closed after calling the {@link java.io.OutputStream#close()}
      * method on the output stream.
-     * 
+     *
      * @return GridFS file handle instance.
      */
     public GridFSInputFile createFile() {

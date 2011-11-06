@@ -55,14 +55,17 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * @param collection collection to use
      * @param q query to perform
      * @param k keys to return from the query
+     * @param preference the Read Preference for this query
      */
-    public DBCursor( DBCollection collection , DBObject q , DBObject k ){
+    public DBCursor( DBCollection collection , DBObject q , DBObject k, ReadPreference preference ){
         _collection = collection;
         _query = q == null ? new BasicDBObject() : q;
         _keysWanted = k;
         if ( _collection != null ){
             _options = _collection.getOptions();
         }
+        _readPref = preference;
+        _decoderFact = collection.getDBDecoderFactory();
     }
 
     /**
@@ -78,7 +81,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * @return the new cursor
      */
     public DBCursor copy() {
-        DBCursor c = new DBCursor(_collection, _query, _keysWanted);
+        DBCursor c = new DBCursor(_collection, _query, _keysWanted, _readPref);
         c._orderBy = _orderBy;
         c._hint = _hint;
         c._hintDBObj = _hintDBObj;
@@ -286,8 +289,13 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
     /**
      * makes this query ok to run on a slave node
-     * @return
+     *
+     * @return a copy of the same cursor (for chaining)
+     *
+     * @deprecated Replaced with ReadPreference.SECONDARY
+     * @see com.mongodb.ReadPreference.SECONDARY
      */
+    @Deprecated
     public DBCursor slaveOk(){
         return addOption( Bytes.QUERYOPTION_SLAVEOK );
     }
@@ -298,6 +306,9 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * @return
      */
     public DBCursor addOption( int option ){
+        if ( option == Bytes.QUERYOPTION_EXHAUST )
+            throw new IllegalArgumentException("The exhaust option is not user settable.");
+        
         _options |= option;
         return this;
     }
@@ -306,15 +317,17 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * sets the query option - see Bytes.QUERYOPTION_* for list
      * @param options
      */
-    public void setOptions( int options ){
+    public DBCursor setOptions( int options ){
         _options = options;
+        return this;
     }
 
     /**
      * resets the query options
      */
-    public void resetOptions(){
+    public DBCursor resetOptions(){
         _options = 0;
+        return this;
     }
 
     /**
@@ -353,7 +366,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
                     foo.put( "$snapshot", true );
             }
 
-            _it = _collection.__find( foo, _keysWanted, _skip, _batchSize, _limit , _options );
+            _it = _collection.__find( foo, _keysWanted, _skip, _batchSize, _limit , _options , null , _decoderFact.create() );
         }
 
         if ( _it == null ){
@@ -437,7 +450,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
         _check();
 
-        _cur = null;
         _cur = _it.next();
         _num++;
 
@@ -581,7 +593,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     public List<DBObject> toArray( int max )
         throws MongoException {
         _checkType( CursorType.ARRAY );
-        _fill( max );
+        _fill( max - 1 );
         return _all;
     }
 
@@ -673,6 +685,35 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         return null;
     }
 
+    /**
+     * Sets the read preference for this cursor.
+     * See the * documentation for {@link ReadPreference}
+     * for more information.
+     *
+     * @param preference Read Preference to use
+     */
+    public DBCursor setReadPreference( ReadPreference preference ){
+        _readPref = preference;
+        return this;
+    }
+
+    /**
+     * Gets the default read preference
+     * @return
+     */
+    public ReadPreference getReadPreference(){
+        return _readPref;
+    }
+
+    public DBCursor setDecoderFactory(DBDecoderFactory fact){
+        _decoderFact = fact;
+        return this;
+    }
+
+    public DBDecoderFactory getDecoderFactory(){
+        return _decoderFact;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -692,6 +733,9 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
         ServerAddress addr = getServerAddress();
         if (addr != null)
             sb.append(", addr=").append(addr);
+
+        if (_readPref != null)
+            sb.append(", readPreference=").append( _readPref.toString() );
         return sb.toString();
     }
 
@@ -709,6 +753,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
     private int _skip = 0;
     private boolean _snapshot = false;
     private int _options = 0;
+    private ReadPreference _readPref;
+    private DBDecoderFactory _decoderFact;
 
     private DBObject _specialFields;
 

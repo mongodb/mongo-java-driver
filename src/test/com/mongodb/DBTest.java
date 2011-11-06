@@ -45,12 +45,12 @@ public class DBTest extends TestCase {
         DBCollection c = _db.createCollection("foo1", o1);
 
         DBObject o2 = BasicDBObjectBuilder.start().add("capped", true)
-            .add("size", 100).get();
+            .add("size", 100000).add("max", 10).get();
         c = _db.createCollection("foo2", o2);
         for (int i=0; i<30; i++) {
             c.insert(new BasicDBObject("x", i));
         }
-        assertTrue(c.find().count() < 10);
+        assertTrue(c.find().count() <= 10);
 
         DBObject o3 = BasicDBObjectBuilder.start().add("capped", true)
             .add("size", 1000).add("max", 2).get();

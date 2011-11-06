@@ -18,10 +18,11 @@
 
 package com.mongodb;
 
-import java.net.*;
-import java.util.*;
-
-import com.mongodb.util.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * mongo server address

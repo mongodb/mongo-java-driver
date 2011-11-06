@@ -288,7 +288,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
    @org.testng.annotations.Test
    public void testDate() {
        Date d = new Date();
-       SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+       SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
        format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
        String formattedDate = format.format(d);
 
@@ -297,6 +297,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
 
        Date d2 = (Date)JSON.parse(serialized);
        assertEquals(d.toString(), d2.toString());
+       assertTrue(d.equals(d2));
    }
 
     @org.testng.annotations.Test

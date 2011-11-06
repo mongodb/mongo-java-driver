@@ -64,20 +64,26 @@ public interface DBConnector {
      * @param db the database
      * @param coll the collection
      * @param m the request message
-     * @return the read response
+     * @param hostNeeded specific server to connect to
+     * @param decoder the decoder to use
+     * @return the read result
      * @throws MongoException
      */
-    public Response call( DB db , DBCollection coll , OutMessage m ) throws MongoException;
+    public Response call( DB db , DBCollection coll , OutMessage m , 
+                          ServerAddress hostNeeded , DBDecoder decoder ) throws MongoException;
     /**
+     *
      * does a read operation on the database
      * @param db the database
      * @param coll the collection
      * @param m the request message
      * @param hostNeeded specific server to connect to
+     * @param retries the number of retries in case of an error
      * @return the read result
      * @throws MongoException
      */
-    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded ) throws MongoException;
+    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries ) throws MongoException;
+
     /**
      * does a read operation on the database
      * @param db the database
@@ -85,10 +91,12 @@ public interface DBConnector {
      * @param m the request message
      * @param hostNeeded specific server to connect to
      * @param retries number of retries in case of error
+     * @param readPref the read preferences
+     * @param decoder the decoder to use
      * @return the read result
      * @throws MongoException
      */
-    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries ) throws MongoException;
+    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries , ReadPreference readPref , DBDecoder decoder ) throws MongoException;
 
     /**
      * returns true if the connector is in a usable state

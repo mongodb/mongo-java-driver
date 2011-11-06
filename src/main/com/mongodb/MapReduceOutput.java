@@ -1,5 +1,21 @@
 // MapReduceOutput.java
 
+/**
+ *      Copyright (C) 2008 10gen Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
 package com.mongodb;
 
 /**
@@ -9,8 +25,8 @@ package com.mongodb;
 public class MapReduceOutput {
 
     @SuppressWarnings("unchecked")
-    MapReduceOutput( DBCollection from , DBObject cmd, BasicDBObject raw ){
-        _raw = raw;
+    public MapReduceOutput( DBCollection from , DBObject cmd, CommandResult raw ){
+        _commandResult = raw;
         _cmd = cmd;
 
         if ( raw.containsField( "results" ) ) {
@@ -32,6 +48,8 @@ public class MapReduceOutput {
                 db = db.getSisterDB(_dbname);
             }
             _coll = db.getCollection( _collname );
+            // M/R only applies to master, make sure we dont go to slave for results
+            _coll.setOptions(_coll.getOptions() & ~Bytes.QUERYOPTION_SLAVEOK);
             _resultSet = _coll.find();
         }
         _counts = (BasicDBObject)raw.get( "counts" );
@@ -62,19 +80,28 @@ public class MapReduceOutput {
         return _coll;
     }
 
+    @Deprecated
     public BasicDBObject getRaw(){
-        return _raw;
+        return _commandResult;
+    }
+
+    public CommandResult getCommandResult(){
+        return _commandResult;
     }
 
     public DBObject getCommand() {
         return _cmd;
     }
 
+    public ServerAddress getServerUsed() {
+        return _commandResult.getServerUsed();
+    }
+
     public String toString(){
-        return _raw.toString();
+        return _commandResult.toString();
     }
     
-    final BasicDBObject _raw;
+    final CommandResult _commandResult;
 
     final String _collname;
     String _dbname = null;

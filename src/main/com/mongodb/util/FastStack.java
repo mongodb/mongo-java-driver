@@ -18,7 +18,8 @@
 
 package com.mongodb.util;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FastStack<T>{
 

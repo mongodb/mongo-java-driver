@@ -18,9 +18,9 @@
 
 package com.mongodb.io;
 
-import java.util.*;
-import java.nio.*;
-import java.nio.channels.*;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ByteBufferHolder {
 

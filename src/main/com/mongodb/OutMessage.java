@@ -18,47 +18,70 @@
 
 package com.mongodb;
 
-import java.util.*;
-import java.util.regex.*;
-import java.util.concurrent.atomic.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import com.mongodb.util.*;
+import org.bson.BSONObject;
+import org.bson.BasicBSONEncoder;
+import org.bson.io.PoolOutputBuffer;
 
-import org.bson.*;
-import org.bson.io.*;
-import org.bson.types.*;
-import static org.bson.BSON.*;
-
-class OutMessage extends BSONEncoder {
+class OutMessage extends BasicBSONEncoder {
 
     static AtomicInteger ID = new AtomicInteger(1);
-    
+
     static OutMessage query( Mongo m , int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
-        OutMessage out = new OutMessage( m , 2004 );
-        out._appendQuery( options , ns , numToSkip , batchSize , query , fields );
+        return query( m, options, ns, numToSkip, batchSize, query, fields, ReadPreference.PRIMARY );
+    }
+
+    static OutMessage query( Mongo m , int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref ){
+        return query( m, options, ns, numToSkip, batchSize, query, fields, readPref, DefaultDBEncoder.FACTORY.create());
+    }
+
+    static OutMessage query( Mongo m , int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref, DBEncoder enc ){
+        OutMessage out = new OutMessage( m , 2004, enc );
+
+        out._appendQuery( options , ns , numToSkip , batchSize , query , fields, readPref);
+
         return out;
     }
 
     OutMessage( Mongo m ){
-        _mongo = m;
-        _buffer = _mongo == null ? new PoolOutputBuffer() : _mongo._bufferPool.get();
-        set( _buffer );
+        this( m , DefaultDBEncoder.FACTORY.create() );
     }
 
     OutMessage( Mongo m , int op ){
         this( m );
         reset( op );
     }
-    
-    private void _appendQuery( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
+
+    OutMessage( Mongo m , DBEncoder encoder ) {
+        _encoder = encoder;
+        _mongo = m;
+        _buffer = _mongo == null ? new PoolOutputBuffer() : _mongo._bufferPool.get();
+        _buffer.reset();
+
+        set( _buffer );
+    }
+
+    OutMessage( Mongo m , int op , DBEncoder enc ) {
+        this( m , enc );
+        reset( op );
+    }
+    private void _appendQuery( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref){
         _queryOptions = options;
-        writeInt( options );
+        _readPref = readPref;
+
+        //If the readPrefs are non-null and non-primary, set slaveOk query option
+        if (_readPref != null && !(_readPref instanceof ReadPreference.PrimaryReadPreference))
+		    _queryOptions |= Bytes.QUERYOPTION_SLAVEOK;
+
+        writeInt( _queryOptions );
         writeCString( ns );
 
         writeInt( numToSkip );
         writeInt( batchSize );
-        
+
         putObject( query );
         if ( fields != null )
             putObject( fields );
@@ -69,7 +92,7 @@ class OutMessage extends BSONEncoder {
         done();
         _buffer.reset();
         set( _buffer );
-        
+
         _id = ID.getAndIncrement();
 
         writeInt( 0 ); // length: will set this later
@@ -82,77 +105,6 @@ class OutMessage extends BSONEncoder {
         _buffer.writeInt( 0 , _buffer.size() );
     }
 
-    @SuppressWarnings("deprecation")
-    protected boolean handleSpecialObjects( String name , BSONObject o ){
-        
-        if ( o == null )
-            return false;
-
-        if ( o instanceof DBCollection ){
-            DBCollection c = (DBCollection)o;
-            putDBPointer( name , c.getName() , Bytes.COLLECTION_REF_ID );
-            return true;
-        }
-        
-        if ( name != null && o instanceof DBPointer ){
-            DBPointer r = (DBPointer)o;
-            putDBPointer( name , r._ns , (ObjectId)r._id );
-            return true;
-        }
-        
-        return false;
-    }
-
-    @SuppressWarnings("deprecation")
-    protected boolean putSpecial( String name , Object val ){
-        if ( val instanceof DBPointer ){
-            DBPointer r = (DBPointer)val;
-            putDBPointer( name , r._ns , (ObjectId)r._id );
-            return true;
-        }
-        
-        if ( val instanceof DBRefBase ){
-            putDBRef( name, (DBRefBase)val );
-            return true;
-        }
-        
-        return false;
-    }
-
-    protected void putDBPointer( String name , String ns , ObjectId oid ){
-        _put( REF , name );
-        
-        _putValueString( ns );
-        _buf.writeInt( oid._time() );
-        _buf.writeInt( oid._machine() );
-        _buf.writeInt( oid._inc() );
-    }
-
-    protected void putDBRef( String name, DBRefBase ref ){
-        _put( OBJECT , name );
-        final int sizePos = _buf.getPosition();
-        _buf.writeInt( 0 );
-        
-        _putObjectField( "$ref" , ref.getRef() );
-        _putObjectField( "$id" , ref.getId() );
-
-        _buf.write( EOO );
-        _buf.writeInt( sizePos , _buf.getPosition() - sizePos );
-    }
-
-    void append( String db , WriteConcern c ){
-
-        _id = ID.getAndIncrement();
-
-        int loc = size();
-
-        writeInt( 0 ); // will set this later
-        writeInt( _id );
-        writeInt( 0 ); // response to
-        writeInt( 2004 );
-        _appendQuery( 0 , db + ".$cmd" , 0 , -1 , c.getCommand() , null );
-        _buf.writeInt( loc , size() - loc );
-    }
 
     void pipe( OutputStream out )
         throws IOException {
@@ -169,8 +121,9 @@ class OutMessage extends BSONEncoder {
 
     void doneWithMessage(){
         if ( _buffer != null && _mongo != null )
+            _buffer.reset();
             _mongo._bufferPool.done( _buffer );
-        
+
         _buffer = null;
         _mongo = null;
     }
@@ -179,14 +132,14 @@ class OutMessage extends BSONEncoder {
         return ( _queryOptions & option ) != 0;
     }
 
-    int getId(){ 
+    int getId(){
         return _id;
     }
 
     @Override
     public int putObject(BSONObject o) {
         // check max size
-        int sz = super.putObject(o);
+        int sz = _encoder.writeObject(_buf, o);
         if (_mongo != null) {
             int maxsize = _mongo.getConnector().getMaxBsonObjectSize();
             maxsize = Math.max(maxsize, Bytes.MAX_OBJECT_SIZE);
@@ -197,9 +150,16 @@ class OutMessage extends BSONEncoder {
         return sz;
     }
 
+
+    public ReadPreference getReadPreference(){
+        return _readPref;
+    }
+
     private Mongo _mongo;
     private PoolOutputBuffer _buffer;
     private int _id;
     private int _queryOptions = 0;
+    private ReadPreference _readPref = ReadPreference.PRIMARY;
+    private DBEncoder _encoder;
 
 }

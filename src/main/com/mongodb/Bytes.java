@@ -18,25 +18,26 @@
 
 package com.mongodb;
 
-import java.nio.*;
-import java.nio.charset.*;
-import java.util.regex.Pattern;
-import java.util.*;
+import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import org.bson.*;
-import org.bson.types.*;
+import org.bson.BSON;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Code;
+import org.bson.types.CodeWScope;
+import org.bson.types.ObjectId;
 
 /**
  * Class that hold definitions of the wire protocol
  * @author antoine
  */
 public class Bytes extends BSON {
-    
+
     static final Logger LOGGER = Logger.getLogger( "com.mongodb" );
-    
+
     static final boolean D = Boolean.getBoolean( "DEBUG.MONGO" );
 
     static {
@@ -56,7 +57,7 @@ public class Bytes extends BSON {
 
     /** default target size of an insert batch */
     static final int BATCH_INSERT_SIZE = 1024 * 1024 * 8;
-    
+
     static final int CONNECTIONS_PER_HOST = Integer.parseInt( System.getProperty( "MONGO.POOLSIZE" , "10" ) );
 
 
@@ -82,12 +83,14 @@ public class Bytes extends BSON {
      * Set this option to prevent that.
      */
     public static final int QUERYOPTION_NOTIMEOUT = 1 << 4;
+
     /**
      * Use with TailableCursor.
      * If we are at the end of the data, block for a while rather than returning no data.
      * After a timeout period, we do return as normal.
      */
     public static final int QUERYOPTION_AWAITDATA = 1 << 5;
+
     /**
      * Stream the data down full blast in multiple "more" packages, on the assumption that the client will fully read all data queried.
      * Faster when you are pulling a lot of data and know you want to pull it all down.
@@ -96,8 +99,15 @@ public class Bytes extends BSON {
     public static final int QUERYOPTION_EXHAUST = 1 << 6;
 
     /**
+     * Use with sharding (mongos).
+     * Allows partial results from a sharded system if any shards are down/missing from the cluster. If not used an error will be returned
+     * from the mongos server.
+     */
+    public static final int QUERYOPTION_PARTIAL = 1 << 7;
+
+    /**
      * Set when getMore is called but the cursor id is not valid at the server.
-     * Returned with zero results. 
+     * Returned with zero results.
      */
     public static final int RESULTFLAG_CURSORNOTFOUND = 1;
     /**
@@ -117,6 +127,7 @@ public class Bytes extends BSON {
      */
     public static final int RESULTFLAG_AWAITCAPABLE = 8;
 
+
     static class OptionHolder {
         OptionHolder( OptionHolder parent ){
             _parent = parent;
@@ -126,7 +137,7 @@ public class Bytes extends BSON {
             _options = options;
             _hasOptions = true;
         }
-        
+
         int get(){
             if ( _hasOptions )
                 return _options;
@@ -134,7 +145,7 @@ public class Bytes extends BSON {
                 return 0;
             return _parent.get();
         }
-        
+
         void add( int option ){
             set( get() | option );
         }
@@ -144,7 +155,7 @@ public class Bytes extends BSON {
         }
 
         final OptionHolder _parent;
-        
+
         int _options = 0;
         boolean _hasOptions = false;
     }
@@ -168,17 +179,17 @@ public class Bytes extends BSON {
                 || o instanceof AtomicInteger) {
             return NUMBER_INT;
         }
-        
+
         if (o instanceof Long || o instanceof AtomicLong) {
             return NUMBER_LONG;
         }
 
         if ( o instanceof Number )
             return NUMBER;
-        
+
         if ( o instanceof String )
             return STRING;
-        
+
         if ( o instanceof java.util.List )
             return ARRAY;
 
@@ -187,10 +198,10 @@ public class Bytes extends BSON {
 
         if ( o instanceof ObjectId )
             return OID;
-        
+
         if ( o instanceof Boolean )
             return BOOLEAN;
-        
+
         if ( o instanceof java.util.Date )
             return DATE;
 
@@ -199,13 +210,13 @@ public class Bytes extends BSON {
 
         if ( o instanceof java.util.regex.Pattern )
             return REGEX;
-        
+
         if ( o instanceof DBObject || o instanceof DBRefBase )
             return OBJECT;
 
         if ( o instanceof Code )
             return CODE;
-        
+
         if ( o instanceof CodeWScope )
             return CODE_W_SCOPE;
 

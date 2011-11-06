@@ -19,11 +19,18 @@
 package com.mongodb;
 
 import java.lang.management.ManagementFactory;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 
-import javax.management.*;
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 import com.mongodb.util.SimplePool;
 
@@ -101,7 +108,10 @@ public class DBPortPool extends SimplePool<DBPort> {
         }
 
         private ObjectName createObjectName( ServerAddress addr ) throws MalformedObjectNameException {
-            return new ObjectName( "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ":" , ",port=" ) + ",instance=" + hashCode() );
+            String name =  "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ":" , ",port=" ) + ",instance=" + hashCode();
+            if ( _options.description != null )
+                name += ",description=" + _options.description;
+            return new ObjectName( name );
         }
 
         final MongoOptions _options;
@@ -161,22 +171,22 @@ public class DBPortPool extends SimplePool<DBPort> {
     }
     
     public DBPort get(){
-	DBPort port = null;
-	if ( ! _waitingSem.tryAcquire() )
-	    throw new SemaphoresOut();
+        DBPort port = null;
+        if ( ! _waitingSem.tryAcquire() )
+            throw new SemaphoresOut();
 
-	try {
-	    port = get( _options.maxWaitTime );
-	}
-	finally {
-	    _waitingSem.release();
-	}
+        try {
+            port = get( _options.maxWaitTime );
+        }
+        finally {
+            _waitingSem.release();
+        }
 
-	if ( port == null )
-	    throw new ConnectionWaitTimeOut( _options.maxWaitTime );
-	
-        port._lastThread = System.identityHashCode(Thread.currentThread());
-	return port;
+        if ( port == null )
+            throw new ConnectionWaitTimeOut( _options.maxWaitTime );
+        
+            port._lastThread = System.identityHashCode(Thread.currentThread());
+        return port;
     }
 
     void gotError( Exception e ){
@@ -187,11 +197,11 @@ public class DBPortPool extends SimplePool<DBPort> {
             return;
         }
         
-        if ( e instanceof java.net.SocketTimeoutException && _options.socketTimeout > 0 ){
-            // we don't want to clear the port pool for 1 connection timing out
+        if ( e instanceof java.net.SocketTimeoutException ){
+            // we don't want to clear the port pool for a connection timing out
             return;
         }
-        Bytes.LOGGER.log( Level.INFO , "emptying DBPortPool b/c of error" , e );
+        Bytes.LOGGER.log( Level.WARNING , "emptying DBPortPool to " + getServerAddress() + " b/c of error" , e );
 
         // force close all sockets 
 

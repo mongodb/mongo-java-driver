@@ -18,9 +18,7 @@
 
 package com.mongodb;
 
-import java.util.*;
-
-import org.bson.*;
+import org.bson.BSONObject;
 
 /**
  * A key-value map that can be saved to the database.

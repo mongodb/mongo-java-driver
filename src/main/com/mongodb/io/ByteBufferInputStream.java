@@ -18,9 +18,9 @@
 
 package com.mongodb.io;
 
-import java.io.*;
-import java.nio.*;
-import java.util.*;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 public class ByteBufferInputStream extends InputStream {
 

@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: BSON
+Bundle-SymbolicName: org.bson
+Bundle-Version: @VERSION@
+Export-Package: org.bson, org.bson.util, org.bson.types, org.bson.io

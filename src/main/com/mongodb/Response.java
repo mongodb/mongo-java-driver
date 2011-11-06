@@ -18,15 +18,19 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.util.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
-import org.bson.*;
-import org.bson.io.*;
+import org.bson.io.Bits;
 
 class Response {
 
-    Response( ServerAddress addr , DBCollection collection ,  InputStream in, BSONDecoder decoder)
+    Response( ServerAddress addr , DBCollection collection ,  InputStream in, DBDecoder decoder)
         throws IOException {
 
         _host = addr;
@@ -54,16 +58,12 @@ class Response {
         else
             _objects = new ArrayList<DBObject>( _num );
 
-        DBCallback c = collection.getDB().getMongo().getMongoOptions().dbCallbackFactory.create( collection );
-
         for ( int i=0; i < _num; i++ ){
             if ( user._toGo < 5 )
                 throw new IOException( "should have more objects, but only " + user._toGo + " bytes left" );
-            c.reset();
-            decoder.decode( user , c );
-
             // TODO: By moving to generics, you can remove these casts (and requirement to impl DBOBject).
-            _objects.add( (DBObject)c.get() );
+
+            _objects.add( decoder.decode( user, collection ) );
         }
 
         if ( user._toGo != 0 )
@@ -76,6 +76,10 @@ class Response {
     public int size(){
         return _num;
     }
+
+	public ServerAddress serverUsed() {
+		return _host;
+	}
 
     public DBObject get( int i ){
         return _objects.get( i );
@@ -95,16 +99,7 @@ class Response {
         if ( ( queryOptions & Bytes.QUERYOPTION_TAILABLE ) == 0 )
             return false;
 
-        // have a tailable cursor
-
-        if ( ( _flags & Bytes.RESULTFLAG_AWAITCAPABLE ) > 0 && ( queryOptions & Bytes.QUERYOPTION_AWAITDATA ) > 0 )
-            return true;
-
-        try {
-            Thread.sleep( 500 );
-        }
-        catch ( Exception e ){}
-
+        // have a tailable cursor, it is always possible to call get more
         return true;
     }
 

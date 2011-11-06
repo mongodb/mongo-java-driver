@@ -18,13 +18,19 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.logging.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import org.bson.*;
-import com.mongodb.util.*;
+import com.mongodb.util.ThreadUtil;
 
 /**
  * represents a Port to the database, which is effectively a single connection to a server
@@ -58,11 +64,19 @@ public class DBPort {
         _hashCode = _addr.hashCode();
 
         _logger = Logger.getLogger( _rootLogger.getName() + "." + addr.toString() );
+        _decoder = _options.dbDecoderFactory.create();
     }
 
-    Response call( OutMessage msg , DBCollection coll )
-        throws IOException {
-        return go( msg , coll );
+    Response call( OutMessage msg , DBCollection coll ) throws IOException{
+        return go( msg, coll );
+    }
+
+    Response call( OutMessage msg , DBCollection coll , DBDecoder decoder) throws IOException{
+        return go( msg, coll, false, null, decoder);
+    }
+
+    Response call( OutMessage msg , DBCollection coll , ReadPreference readPref , DBDecoder decoder) throws IOException{
+        return go( msg, coll, false, readPref, decoder);
     }
     
     void say( OutMessage msg )
@@ -72,10 +86,14 @@ public class DBPort {
     
     private synchronized Response go( OutMessage msg , DBCollection coll )
         throws IOException {
-        return go( msg , coll , false );
+        return go( msg , coll , false, null, null );
     }
 
-    private synchronized Response go( OutMessage msg , DBCollection coll , boolean forceReponse )
+    private synchronized Response go( OutMessage msg , DBCollection coll , DBDecoder decoder ) throws IOException{
+        return go( msg, coll, false, null, decoder );
+    }
+
+    private synchronized Response go( OutMessage msg , DBCollection coll , boolean forceReponse , ReadPreference readPref, DBDecoder decoder)
         throws IOException {
 
         if ( _processingResponse ){
@@ -89,7 +107,7 @@ public class DBPort {
         }
 
         _calls++;
-    
+
         if ( _socket == null )
             _open();
         
@@ -107,7 +125,7 @@ public class DBPort {
                 return null;
             
             _processingResponse = true;
-            return new Response( _sa , coll , _in , _decoder);
+            return new Response( _sa , coll , _in , (decoder == null ? _decoder : decoder) );
         }
         catch ( IOException ioe ){
             close();
@@ -118,48 +136,47 @@ public class DBPort {
         }
     }
 
-    synchronized CommandResult getLastError( DB db , WriteConcern concern) throws IOException {
-	DBApiLayer dbAL = (DBApiLayer) db;
-	return runCommand( dbAL , concern.getCommand() );
+    synchronized CommandResult getLastError( DB db , WriteConcern concern ) throws IOException{
+        DBApiLayer dbAL = (DBApiLayer) db;
+        return runCommand( dbAL, concern.getCommand() );
     }
 
-    synchronized DBObject findOne( DB db , String coll , DBObject q ) throws IOException {
+    synchronized private Response findOne( DB db , String coll , DBObject q ) throws IOException {
         OutMessage msg = OutMessage.query( db._mongo , 0 , db.getName() + "." + coll , 0 , -1 , q , null );
-        
-        Response res = go( msg , db.getCollection( coll ) );
-        if ( res.size() == 0 )
-            return null;
-        if ( res.size() > 1 )
-            throw new MongoInternalException( "something is wrong.  size:" + res.size() );
-        return res.get(0);
+        Response res = go( msg , db.getCollection( coll ) , DefaultDBDecoder.FACTORY.create() );
+        return res;
+    }
+
+    synchronized private Response findOne( String ns , DBObject q ) throws IOException{
+        OutMessage msg = OutMessage.query( null , 0 , ns , 0 , -1 , q , null );
+        Response res = go( msg , null , true, null, DefaultDBDecoder.FACTORY.create()  );
+        return res;
     }
 
     synchronized CommandResult runCommand( DB db , DBObject cmd ) throws IOException {
-        DBObject res = findOne( db , "$cmd" , cmd );
-        if ( res == null )
-            throw new MongoInternalException( "something is wrong, no command result" );
-        return (CommandResult)res;
+        Response res = findOne( db , "$cmd" , cmd );
+        return convertToCR( res );
     }
 
-    synchronized DBObject findOne( String ns , DBObject q ) throws IOException{
-        OutMessage msg = OutMessage.query( null , 0 , ns , 0 , -1 , q , null );
-        Response res = go( msg , null , true );
+    synchronized CommandResult runCommand( String db , DBObject cmd ) throws IOException {
+        Response res = findOne( db + ".$cmd" , cmd );
+        return convertToCR( res );
+    }
+
+    private CommandResult convertToCR(Response res) {
         if ( res.size() == 0 )
             return null;
         if ( res.size() > 1 )
             throw new MongoInternalException( "something is wrong.  size:" + res.size() );
-        return res.get(0);
-    }
 
-    synchronized CommandResult runCommand( String db , DBObject cmd ) throws IOException {
-        DBObject res = findOne( db + ".$cmd" , cmd );
-        if ( res == null )
+        DBObject data =  res.get(0);
+        if ( data == null )
             throw new MongoInternalException( "something is wrong, no command result" );
-        CommandResult cr = new CommandResult();
-        cr.putAll( res );
+
+        CommandResult cr = new CommandResult(res.serverUsed());
+        cr.putAll( data );
         return cr;
     }
-
 
     synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern) throws IOException {
         if ( last != _calls )
@@ -186,13 +203,18 @@ public class DBPort {
         
         long sleepTime = 100;
 
+        long maxAutoConnectRetryTime = CONN_RETRY_TIME_MS;
+        if (_options.maxAutoConnectRetryTime > 0) {
+            maxAutoConnectRetryTime = _options.maxAutoConnectRetryTime;
+        }
+
         final long start = System.currentTimeMillis();
         while ( true ){
             
             IOException lastError = null;
 
             try {
-                _socket = new Socket();
+                _socket = _options.socketFactory.createSocket();
                 _socket.connect( _addr , _options.connectTimeout );
                 
                 _socket.setTcpNoDelay( ! USE_NAGLE );
@@ -213,11 +235,11 @@ public class DBPort {
             
             long sleptSoFar = System.currentTimeMillis() - start;
 
-            if ( sleptSoFar >= CONN_RETRY_TIME_MS )
+            if ( sleptSoFar >= maxAutoConnectRetryTime )
                 throw lastError;
             
-            if ( sleepTime + sleptSoFar > CONN_RETRY_TIME_MS )
-                sleepTime = CONN_RETRY_TIME_MS - sleptSoFar;
+            if ( sleepTime + sleptSoFar > maxAutoConnectRetryTime )
+                sleepTime = maxAutoConnectRetryTime - sleptSoFar;
 
             _logger.severe( "going to sleep and retry.  total sleep time after = " + ( sleptSoFar + sleptSoFar ) + "ms  this time:" + sleepTime + "ms" );
             ThreadUtil.sleep( sleepTime );
@@ -239,6 +261,13 @@ public class DBPort {
         return _addr.toString();
     }
     
+    /**
+     * @return the server address for this port
+     */
+    public ServerAddress serverAddress() {
+        return _sa;
+    }
+
     @Override
     public String toString(){
         return "{DBPort  " + host() + "}";
@@ -305,7 +334,7 @@ public class DBPort {
     final DBPortPool _pool;
     final MongoOptions _options;
     final Logger _logger;
-    final BSONDecoder _decoder = new BSONDecoder();
+    final DBDecoder _decoder;
     
     private Socket _socket;
     private InputStream _in;

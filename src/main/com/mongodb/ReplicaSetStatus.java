@@ -1,18 +1,38 @@
 // ReplicaSetStatus.java
 
+/**
+ *      Copyright (C) 2008 10gen Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
 package com.mongodb;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.mongodb.util.JSON;
 
 /**
  * keeps replica set status
@@ -26,10 +46,13 @@ import java.util.logging.Logger;
  */
 public class ReplicaSetStatus {
 
-    static final Logger _rootLogger = Logger.getLogger( "com.mongodb.ReplicaSetStatus" );
+	static final Logger _rootLogger = Logger.getLogger( "com.mongodb.ReplicaSetStatus" );
     static final int UNAUTHENTICATED_ERROR_CODE = 10057;
 
     ReplicaSetStatus( Mongo mongo, List<ServerAddress> initial ){
+        _mongoOptions = _mongoOptionsDefaults.copy();
+        _mongoOptions.socketFactory = mongo._options.socketFactory;
+
         _mongo = mongo;
         _all = Collections.synchronizedList( new ArrayList<Node>() );
         for ( ServerAddress addr : initial ){
@@ -38,6 +61,9 @@ public class ReplicaSetStatus {
         _nextResolveTime = System.currentTimeMillis() + inetAddrCacheMS;
 
         _updater = new Updater();
+    }
+
+    void start() {
         _updater.start();
     }
 
@@ -49,6 +75,23 @@ public class ReplicaSetStatus {
         return _setName;
     }
 
+    @Override
+	public String toString() {
+	StringBuffer sb = new StringBuffer();
+	sb.append("{replSetName: '" + _setName );
+	sb.append("', closed:").append(_closed).append(", ");
+	sb.append("nextResolveTime:'").append(new Date(_nextResolveTime).toString()).append("', ");
+	sb.append("members : [ ");
+	if(_all != null) {
+		for(Node n : _all)
+			sb.append(n.toJSON()).append(",");
+		sb.setLength(sb.length()-1); //remove last comma
+	}
+	sb.append("] ");
+
+	return sb.toString();
+	}
+
     void _checkClosed(){
         if ( _closed )
             throw new IllegalStateException( "ReplicaSetStatus closed" );
@@ -57,7 +100,7 @@ public class ReplicaSetStatus {
     /**
      * @return master or null if don't have one
      */
-    ServerAddress getMaster(){
+    public ServerAddress getMaster(){
         Node n = getMasterNode();
         if ( n == null )
             return null;
@@ -74,22 +117,75 @@ public class ReplicaSetStatus {
         return null;
     }
 
+	/**
+	 * @param srv
+	 *            the server to compare
+	 * @return indication if the ServerAddress is the current Master/Primary
+	 */
+	public boolean isMaster(ServerAddress srv) {
+		if (srv == null)
+			return false;
+
+		return srv.equals(getMaster());
+	}
+
+    /**
+     * @return a good secondary by tag value or null if can't find one
+     */
+    ServerAddress getASecondary( DBObject tags ){
+        for ( String key : tags.keySet() ) {
+            ServerAddress secondary = getASecondary( key, tags.get( key ).toString() );
+            if (secondary != null)
+                return secondary;
+        }
+        // No matching server for any supplied tags was found
+        return null;
+    }
+
     /**
      * @return a good secondary or null if can't find one
      */
     ServerAddress getASecondary(){
+        return getASecondary( null, null );
+    }
+    /**
+     * @return a good secondary or null if can't find one
+     */
+    ServerAddress getASecondary( String tagKey, String tagValue ) {
         _checkClosed();
+        return getASecondary(tagKey, tagValue, _all, _random);
+    }
+
+    /**
+     * This was extracted so we can test the logic from a unit test. This can't be
+     * tested from a standalone unit test until node is more decoupled from this class.
+     *
+     * @return a good secondary or null if can't find one
+     */
+    static ServerAddress getASecondary( final String pTagKey,
+                                        final String pTagValue,
+                                        final List<Node> pNodes,
+                                        final Random pRandom)
+    {
         Node best = null;
         double badBeforeBest = 0;
 
-        int start = _random.nextInt( _all.size() );
+        if (pTagKey == null && pTagValue != null || pTagValue == null & pTagKey != null)
+           throw new IllegalArgumentException( "Tag Key & Value must be consistent: both defined or not defined." );
+
+        int start = pRandom.nextInt( pNodes.size() );
+
+        final int nodeCount = pNodes.size();
 
         double mybad = 0;
 
-        for ( int i=0; i<_all.size(); i++ ){
-            Node n = _all.get( ( start + i ) % _all.size() );
+        for ( int i=0; i < nodeCount; i++ ){
+            Node n = pNodes.get( ( start + i ) % nodeCount );
 
             if ( ! n.secondary() ){
+                mybad++;
+                continue;
+            } else if (pTagKey != null && !n.checkTag( pTagKey, pTagValue )){
                 mybad++;
                 continue;
             }
@@ -101,11 +197,10 @@ public class ReplicaSetStatus {
                 continue;
             }
 
-            long diff = best._pingTime - n._pingTime;
-            if ( diff > slaveAcceptableLatencyMS ||
-                 // this is a complex way to make sure we get a random distribution of slaves
-                 ( ( badBeforeBest - mybad ) / ( _all.size() - 1 ) ) > _random.nextDouble() )
-                {
+            float diff = best._pingTime - n._pingTime;
+
+            // this is a complex way to make sure we get a random distribution of slaves
+            if ( diff > slaveAcceptableLatencyMS || ( ( badBeforeBest - mybad ) / ( nodeCount  - 1 ) ) > pRandom.nextDouble() && diff > -1*slaveAcceptableLatencyMS ) {
                 best = n;
                 badBeforeBest = mybad;
                 mybad = 0;
@@ -113,9 +208,7 @@ public class ReplicaSetStatus {
 
         }
 
-        if ( best == null )
-            return null;
-        return best._addr;
+        return ( best != null ) ? best._addr : null;
     }
 
     boolean hasServerUp() {
@@ -128,6 +221,9 @@ public class ReplicaSetStatus {
         return false;
     }
 
+    /**
+     * The replica set node object.
+     */
     class Node {
 
         Node( ServerAddress addr ){
@@ -157,15 +253,21 @@ public class ReplicaSetStatus {
             try {
                 long start = System.currentTimeMillis();
                 CommandResult res = _port.runCommand( _mongo.getDB("admin") , _isMasterCmd );
+                boolean first = (_lastCheck == 0);
                 _lastCheck = System.currentTimeMillis();
-                _pingTime = _lastCheck - start;
+                float newPing = _lastCheck - start;
+                if (first)
+                    _pingTime = newPing;
+                else
+                    _pingTime = _pingTime + ((newPing - _pingTime) / latencySmoothFactor);
+                _rootLogger.log( Level.FINE , "Latency to " + _addr + " actual=" + newPing + " smoothed=" + _pingTime );
 
                 if ( res == null ){
                     throw new MongoInternalException("Invalid null value returned from isMaster");
                 }
 
                 if (!_ok) {
-                    _logger.log( Level.WARNING , "Server seen up: " + _addr );
+                    _logger.log( Level.INFO , "Server seen up: " + _addr );
                 }
                 _ok = true;
                 _isMaster = res.getBoolean( "ismaster" , false );
@@ -187,6 +289,14 @@ public class ReplicaSetStatus {
                         Node node = _addIfNotHere(host);
                         if (node != null && seenNodes != null)
                             seenNodes.add(node);
+                    }
+                }
+
+                // Tags were added in 2.0 but may not be present
+                if (res.containsField( "tags" )) {
+                    DBObject tags = (DBObject) res.get( "tags" );
+                    for ( String key : tags.keySet() ) {
+                        _tags.put( key, tags.get( key ).toString() );
                     }
                 }
 
@@ -232,6 +342,10 @@ public class ReplicaSetStatus {
             return _ok && _isSecondary;
         }
 
+        public boolean checkTag(String key, String value){
+            return _tags.containsKey( key ) && _tags.get( key ).equals( value );
+        }
+
         public String toString(){
             StringBuilder buf = new StringBuilder();
             buf.append( "Replica Set Node: " ).append( _addr ).append( "\n" );
@@ -243,16 +357,39 @@ public class ReplicaSetStatus {
 
             buf.append( "\t priority \t" ).append( _priority ).append( "\n" );
 
+            buf.append( "\t tags \t" ).append( JSON.serialize( _tags )  ).append( "\n" );
+
             return buf.toString();
+        }
+
+        public String toJSON(){
+            StringBuilder buf = new StringBuilder();
+            buf.append( "{ address:'" ).append( _addr ).append( "', " );
+            buf.append( "ok:" ).append( _ok ).append( ", " );
+            buf.append( "ping:" ).append( _pingTime ).append( ", " );
+            buf.append( "isMaster:" ).append( _isMaster ).append( ", " );
+            buf.append( "isSecondary:" ).append( _isSecondary ).append( ", " );
+            buf.append( "priority:" ).append( _priority ).append( ", " );
+            if(_tags != null && _tags.size() > 0)
+		buf.append( "tags:" ).append( JSON.serialize( _tags )  );
+            buf.append("}");
+
+            return buf.toString();
+        }
+
+        public void close() {
+            _port.close();
+            _port = null;
         }
 
         final ServerAddress _addr;
         final Set<String> _names = Collections.synchronizedSet( new HashSet<String>() );
         DBPort _port; // we have our own port so we can set different socket options and don't have to owrry about the pool
+        final LinkedHashMap<String, String> _tags = new LinkedHashMap<String, String>( );
 
         boolean _ok = false;
         long _lastCheck = 0;
-        long _pingTime = 0;
+        float _pingTime = 0;
 
         boolean _isMaster = false;
         boolean _isSecondary = false;
@@ -307,9 +444,11 @@ public class ReplicaSetStatus {
 
         if ( _lastPrimarySignal != null ){
             n = findNode( _lastPrimarySignal );
-            n.update();
-            if ( n._isMaster )
-                return n;
+            if (n != null) {
+                n.update();
+                if ( n._isMaster )
+                    return n;
+            }
         }
 
         updateAll();
@@ -323,7 +462,7 @@ public class ReplicaSetStatus {
             n.update(seenNodes);
         }
 
-        if (!seenNodes.isEmpty()) {
+        if (seenNodes.size() > 0) {
             // not empty, means that at least 1 server gave node list
             // remove unused hosts
             Iterator<Node> it = _all.iterator();
@@ -385,7 +524,12 @@ public class ReplicaSetStatus {
     }
 
     void close(){
-        _closed = true;
+        if (!_closed) {
+            _closed = true;
+            for (int i = 0; i < _all.size(); i++) {
+                _all.get(i).close();
+            }
+        }
     }
 
     /**
@@ -413,15 +557,18 @@ public class ReplicaSetStatus {
     static int updaterIntervalMS;
     static int slaveAcceptableLatencyMS;
     static int inetAddrCacheMS;
+    static float latencySmoothFactor;
 
-    static final MongoOptions _mongoOptions = new MongoOptions();
+    final MongoOptions _mongoOptions;
+    static final MongoOptions _mongoOptionsDefaults = new MongoOptions();
 
     static {
         updaterIntervalMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
         slaveAcceptableLatencyMS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
         inetAddrCacheMS = Integer.parseInt(System.getProperty("com.mongodb.inetAddrCacheMS", "300000"));
-        _mongoOptions.connectTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
-        _mongoOptions.socketTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
+        latencySmoothFactor = Float.parseFloat(System.getProperty("com.mongodb.latencySmoothFactor", "4"));
+        _mongoOptionsDefaults.connectTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
+        _mongoOptionsDefaults.socketTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
     }
 
     static final DBObject _isMasterCmd = new BasicDBObject( "ismaster" , 1 );
@@ -429,12 +576,15 @@ public class ReplicaSetStatus {
     public static void main( String args[] )
         throws Exception {
         List<ServerAddress> addrs = new LinkedList<ServerAddress>();
-        addrs.add( new ServerAddress( "127.0.0.1" , 27017 ) );
         addrs.add( new ServerAddress( "127.0.0.1" , 27018 ) );
+        addrs.add( new ServerAddress( "127.0.0.1" , 27019 ) );
+        addrs.add( new ServerAddress( "127.0.0.1" , 27020 ) );
+        addrs.add( new ServerAddress( "127.0.0.1" , 27021 ) );
 
         Mongo m = new Mongo( addrs );
 
         ReplicaSetStatus status = new ReplicaSetStatus( m, addrs );
+        status.start();
         System.out.println( status.ensureMaster()._addr );
 
         while ( true ){
@@ -444,6 +594,9 @@ public class ReplicaSetStatus {
                 System.out.println( "master: " + status.getMaster() + "\t secondary: " + status.getASecondary() );
             }
             System.out.println( "-----------------------" );
+            DBObject tags = new BasicDBObject();
+            tags.put( "dc", "newyork" );
+            System.out.println( "Tagged Node: " + status.getASecondary( tags ) );
             Thread.sleep( 5000 );
         }
 

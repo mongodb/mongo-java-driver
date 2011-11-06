@@ -1,16 +1,46 @@
 // JSON.java
 
+/**
+ *      Copyright (C) 2008 10gen Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
 package com.mongodb.util;
 
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Map;
+import java.util.Set;
+import java.util.SimpleTimeZone;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import org.bson.BSONCallback;
-import org.bson.types.*;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Binary;
+import org.bson.types.Code;
+import org.bson.types.CodeWScope;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
 
-import com.mongodb.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.Bytes;
+import com.mongodb.DBObject;
+import com.mongodb.DBRefBase;
 
 /**
  *   Helper methods for JSON serialization and de-serialization
@@ -139,7 +169,7 @@ public class JSON {
         if (o instanceof Date) {
             Date d = (Date) o;
             SimpleDateFormat format = 
-		new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
             format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
 	    serialize(new BasicDBObject("$date", format.format(d)), buf);
             return;
@@ -218,7 +248,16 @@ public class JSON {
             serialize( temp, buf );
             return;
         }
-        
+
+        if ( o instanceof MinKey ){
+            serialize( new BasicDBObject("$minKey", 1), buf );
+            return;
+        }
+        if ( o instanceof MaxKey ){
+            serialize( new BasicDBObject("$maxKey", 1), buf );
+            return;
+        }
+
         throw new RuntimeException( "json can't serialize type : " + o.getClass() );
     }
 
@@ -323,7 +362,7 @@ class JSONParser {
         // string
         case '\'':
         case '\"':
-            value = parseString();
+            value = parseString(true);
             break;
         // number
         case '0': case '1': case '2': case '3': case '4': case '5':
@@ -370,7 +409,7 @@ class JSONParser {
         read('{');
         char current = get();
         while(get() != '}') {
-            String key = parseString();
+            String key = parseString(false);
             read(':');
             Object value = parse(key);
 	    doCallback(key, value);
@@ -480,22 +519,31 @@ class JSONParser {
      * @return the next string.
      * @throws JSONParseException if invalid JSON is found
      */
-    public String parseString() {
-        char quot;
+    public String parseString(boolean needQuote) {
+        char quot = 0;
         if(check('\''))
             quot = '\'';
         else if(check('\"'))
             quot = '\"';
-        else 
+        else if (needQuote)
             throw new JSONParseException(s, pos);
 
         char current;
 
-        read(quot);
+        if (quot > 0)
+            read(quot);
         StringBuilder buf = new StringBuilder();
         int start = pos;
-        while(pos < s.length() && 
-              (current = s.charAt(pos)) != quot) {
+        while(pos < s.length()) {
+            current = s.charAt(pos);
+            if (quot > 0) {
+                if (current == quot)
+                    break;
+            } else {
+                if (current == ':' || current == ' ')
+                    break;
+            }
+
             if(current == '\\') {
                 pos++;
                 
@@ -540,9 +588,9 @@ class JSONParser {
             }
             pos++;
         }
-        read(quot);
-
-        buf.append(s.substring(start, pos-1));
+        buf.append(s.substring(start, pos));
+        if (quot > 0)
+            read(quot);            
         return buf.toString();
     }
 
@@ -686,39 +734,4 @@ class JSONParser {
         return _callback.arrayDone();
     }
 
-}
-
-/**
- * Exception throw when invalid JSON is passed to JSONParser.
- * 
- * This exception creates a message that points to the first 
- * offending character in the JSON string:
- * <pre>
- * { "x" : 3, "y" : 4, some invalid json.... }
- *                     ^
- * </pre>
- */
-class JSONParseException extends RuntimeException { 
-
-    private static final long serialVersionUID = -4415279469780082174L;
-
-    String s;
-    int pos;
-
-    public String getMessage() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n");
-        sb.append(s);
-        sb.append("\n");
-        for(int i=0;i<pos;i++) {
-            sb.append(" ");
-        }
-        sb.append("^");
-        return sb.toString();
-    }
-
-    public JSONParseException(String s, int pos) {
-        this.s = s;
-        this.pos = pos;
-    }
 }

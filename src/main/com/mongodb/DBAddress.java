@@ -18,10 +18,8 @@
 
 package com.mongodb;
 
-import java.net.*;
-import java.util.*;
-
-import com.mongodb.util.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * Represents a database address
@@ -146,6 +144,8 @@ public class DBAddress extends ServerAddress {
                 a._port == _port &&
                 a._db.equals( _db ) &&
                 a._host.equals( _host );
+        } else if ( other instanceof ServerAddress ){
+            return other.equals(this);
         }
         return false;
     }
