@@ -132,7 +132,7 @@ public class ReplicaSetStatus {
     /**
      * @return a good secondary by tag value or null if can't find one
      */
-    ServerAddress getASecondary( DBObject tags ){
+    public ServerAddress getASecondary( DBObject tags ){
         for ( String key : tags.keySet() ) {
             ServerAddress secondary = getASecondary( key, tags.get( key ).toString() );
             if (secondary != null)
@@ -145,13 +145,13 @@ public class ReplicaSetStatus {
     /**
      * @return a good secondary or null if can't find one
      */
-    ServerAddress getASecondary(){
+    public ServerAddress getASecondary(){
         return getASecondary( null, null );
     }
     /**
      * @return a good secondary or null if can't find one
      */
-    ServerAddress getASecondary( String tagKey, String tagValue ) {
+    public ServerAddress getASecondary( String tagKey, String tagValue ) {
         _checkClosed();
         return getASecondary(tagKey, tagValue, _all, _random);
     }
@@ -224,7 +224,7 @@ public class ReplicaSetStatus {
     /**
      * The replica set node object.
      */
-    class Node {
+    public class Node {
 
         Node( ServerAddress addr ){
             _addr = addr;
@@ -376,6 +376,10 @@ public class ReplicaSetStatus {
 
             return buf.toString();
         }
+        
+        public DBPort getPort() {
+            return _port;
+        }
 
         public void close() {
             _port.close();
@@ -473,7 +477,7 @@ public class ReplicaSetStatus {
         }
     }
 
-    List<ServerAddress> getServerAddressList() {
+    public List<ServerAddress> getServerAddressList() {
         List<ServerAddress> addrs = new ArrayList<ServerAddress>();
         for (Node node : _all)
             addrs.add(node._addr);
@@ -494,7 +498,7 @@ public class ReplicaSetStatus {
         return n;
     }
 
-    Node findNode( String host ){
+    public Node findNode( String host ){
         for ( int i=0; i<_all.size(); i++ )
             if ( _all.get(i)._names.contains( host ) )
                 return _all.get(i);
@@ -539,6 +543,10 @@ public class ReplicaSetStatus {
      */
     public int getMaxBsonObjectSize() {
         return maxBsonObjectSize;
+    }
+    
+    public List<Node> getAll() {
+        return new ArrayList<Node>(_all);
     }
 
     final List<Node> _all;
