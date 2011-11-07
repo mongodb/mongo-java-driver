@@ -153,7 +153,7 @@ public class DBPort {
         return res;
     }
 
-    synchronized CommandResult runCommand( DB db , DBObject cmd ) throws IOException {
+    public synchronized CommandResult runCommand( DB db , DBObject cmd ) throws IOException {
         Response res = findOne( db , "$cmd" , cmd );
         return convertToCR( res );
     }
