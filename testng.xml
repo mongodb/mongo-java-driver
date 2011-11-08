@@ -46,6 +46,7 @@ limitations under the License.
             <class name="com.mongodb.ThreadingTest" />
             <class name="com.mongodb.MongoURITest" />
             <class name="com.mongodb.MongoOptionsTest" />
+            <class name="com.mongodb.SecondaryReadTest" />
         </classes>
     </test>
 
