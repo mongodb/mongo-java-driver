@@ -150,6 +150,57 @@ public class SecondaryReadTest extends TestCase {
         verifySecondaryCounts(secondaryCount, testHosts);
    }
 
+    @Test(groups = {"basic"})
+    public void testSecondaryReadCursor() throws Exception {
+
+        final Mongo mongo = loadMongo();
+
+        final CommandResult result = serverStatusCmd(mongo);
+
+        // If the result is null, this is not a replica set.
+        if (result == null) return;
+
+        final List<TestHost> testHosts = new ArrayList<TestHost>();
+        final String primaryHostnameAndPort = extractHosts(result, testHosts);
+        final DBCollection col = loadCleanDbCollection(mongo);
+
+        final List<ObjectId> insertedIds = insertTestData(col);
+
+        // Get the opcounter/query data for the hosts.
+        loadQueryCount(testHosts, true);
+
+        final int secondaryCount = getSecondaryCount(testHosts);
+
+        // Perform some reads on the secondaries
+        col.setReadPreference(ReadPreference.SECONDARY);
+
+        final DBCursor cur = col.find();
+
+        ServerAddress curServerAddress = cur.getServerAddress();
+
+        assertEquals(true, serverIsSecondary(curServerAddress, testHosts));
+
+        try {
+            while (cur.hasNext()) {
+                cur.next();
+                assertEquals(true, serverIsSecondary(cur.getServerAddress(), testHosts));
+            }
+        } finally { cur.close(); }
+
+        loadQueryCount(testHosts, false);
+    }
+
+    private boolean serverIsSecondary(final ServerAddress pServerAddr, final List<TestHost> pHosts) {
+        for (final TestHost h : pHosts) {
+            if (!h.stateStr.equals("SECONDARY")) continue;
+            final int portIdx = h.hostnameAndPort.indexOf(":");
+            final int port = Integer.parseInt(h.hostnameAndPort.substring(portIdx+1, h.hostnameAndPort.length()));
+            final String hostname = h.hostnameAndPort.substring(0, portIdx);
+            if (pServerAddr.getPort() == port && hostname.equals(pServerAddr.getHost())) return true;
+        }
+
+        return false;
+    }
 
     private Mongo loadMongo() throws Exception {
         return new Mongo(new MongoURI("mongodb://127.0.0.1:27017,127.0.0.1:27018"));
