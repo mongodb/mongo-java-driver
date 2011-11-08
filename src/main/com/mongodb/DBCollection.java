@@ -329,7 +329,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( Object obj, DBObject fields ) {
-        Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions(), _readPref, _decoderFactory.create() );
+        Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions(), getReadPreference(), _decoderFactory.create() );
         return (iterator != null ? iterator.next() : null);
     }
 
@@ -565,7 +565,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBCursor find( DBObject ref ){
-        return new DBCursor( this, ref, null, _readPref );
+        return new DBCursor( this, ref, null, getReadPreference());
     }
 
     /**
@@ -592,7 +592,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBCursor find( DBObject ref , DBObject keys ){
-        return new DBCursor( this, ref, keys, _readPref );
+        return new DBCursor( this, ref, keys, getReadPreference());
     }
 
 
@@ -602,7 +602,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBCursor find(){
-        return new DBCursor( this, null, null, _readPref );
+        return new DBCursor( this, null, null, getReadPreference());
     }
 
     /**
@@ -623,7 +623,7 @@ public abstract class DBCollection {
      */
     public final DBObject findOne( DBObject o )
         throws MongoException {
-        return findOne( o, null, _readPref );
+        return findOne( o, null, getReadPreference());
     }
 
     /**
@@ -634,7 +634,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( DBObject o, DBObject fields ) {
-        return findOne( o, fields, _readPref );
+        return findOne( o, fields, getReadPreference());
     }
     /**
      * Returns a single object from this collection matching the query.
