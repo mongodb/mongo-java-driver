@@ -366,7 +366,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
                     foo.put( "$snapshot", true );
             }
 
-            _it = _collection.__find( foo, _keysWanted, _skip, _batchSize, _limit , _options , null , _decoderFact.create() );
+            _it = _collection.__find( foo, _keysWanted, _skip, _batchSize, _limit , _options , _readPref , _decoderFact.create() );
         }
 
         if ( _it == null ){
