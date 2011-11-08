@@ -27,12 +27,56 @@ import com.mongodb.util.TestCase;
 
 public class DBCursorTest extends TestCase {
 
-    public DBCursorTest()
-        throws IOException , MongoException {
+    public DBCursorTest() throws IOException , MongoException {
         super();
-	cleanupMongo = new Mongo( "127.0.0.1" );
-	cleanupDB = "com_mongodb_unittest_DBCursorTest";
+	    cleanupMongo = new Mongo( "127.0.0.1" );
+	    cleanupDB = "com_mongodb_unittest_DBCursorTest";
         _db = cleanupMongo.getDB( cleanupDB );
+    }
+
+    @Test(groups = {"basic"})
+    public void testGetServerAddressLoop() {
+
+        final DBCollection c = _db.getCollection("getServerAddress");
+        c.drop();
+
+        // Insert some data.
+        for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", "two"));
+
+        final DBCursor cur = c.find();
+
+        while (cur.hasNext()) {
+            cur.next();
+            assertNotNull(cur.getServerAddress());
+        }
+
+        System.out.println("works in loop");
+    }
+
+    @Test(groups = {"basic"})
+    public void testGetServerAddressQuery() {
+
+        final DBCollection c = _db.getCollection("getServerAddress");
+        c.drop();
+
+        // Insert some data.
+        for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", "two"));
+
+        final DBCursor cur = c.find();
+        assertNotNull(cur.getServerAddress());
+    }
+
+    @Test(groups = {"basic"})
+    public void testGetServerAddressQuery1() {
+
+        final DBCollection c = _db.getCollection("getServerAddress");
+        c.drop();
+
+        // Insert some data.
+        for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", i));
+
+        final DBCursor cur = c.find(new BasicDBObject("one", 9));
+        assertNotNull(cur.getServerAddress());
     }
 
     @Test(groups = {"basic"})
@@ -95,6 +139,7 @@ public class DBCursorTest extends TestCase {
 //        assertLess(start - end, 100);
 //        c.drop();
 //    }
+
 
     @Test//(enabled = false)
     public void testTailable() {
