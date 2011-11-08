@@ -678,10 +678,14 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * @return
      */
     public ServerAddress getServerAddress() {
-        if (_it != null) {
-            if (_it instanceof DBApiLayer.Result)
-                return ((DBApiLayer.Result)_it).getServerAddress();
-        }
+        if (_it != null && _it instanceof DBApiLayer.Result)
+            return ((DBApiLayer.Result)_it).getServerAddress();
+
+        _check();
+
+        if (_it != null && _it instanceof DBApiLayer.Result)
+            return ((DBApiLayer.Result)_it).getServerAddress();
+
         return null;
     }
 
