@@ -1,4 +1,11 @@
 
+2.7.1 / 2011-11-08 
+==================
+
+  * JAVA-467 - added _check call to getServerAddress if _it is null 
+  * JAVA-467 - Moved variable calls to method to fix read preference hierarchy 
+  * simplified getServerAddress method.
+
 2.7.0 / 2011-11-04 
 ===================
 
