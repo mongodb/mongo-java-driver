@@ -18,12 +18,15 @@
 
 package org.bson;
 
-import java.nio.charset.*;
-import java.util.*;
-import java.util.regex.*;
-import java.util.logging.*;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
-import org.bson.util.*;
+import org.bson.util.ClassMap;
 
 public class BSON {
 
@@ -74,8 +77,11 @@ public class BSON {
      * @return the Java flags
      */
     public static int regexFlags( String flags ){
-        flags = flags.toLowerCase();
         int fint = 0;
+        if ( flags == null || flags.length() == 0 )
+            return fint;
+
+        flags = flags.toLowerCase();
 
         for( int i=0; i<flags.length(); i++ ) {
             RegexFlag flag = RegexFlag.getByCharacter( flags.charAt( i ) );
