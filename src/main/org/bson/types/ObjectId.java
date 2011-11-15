@@ -360,7 +360,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
                         sb.append( ni.toString() );
                     }
                     machinePiece = sb.toString().hashCode() << 16;
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     // exception sometimes happens with IBM JVM, use random
                     LOGGER.log(Level.WARNING, e.getMessage(), e);
                     machinePiece = (new Random().nextInt()) << 16;
