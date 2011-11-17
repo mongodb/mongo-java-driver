@@ -265,15 +265,19 @@ public class GridFSInputFile extends GridFSFile {
             System.arraycopy( _buffer, 0, writeBuffer, 0, _currentBufferPosition );
         }
 
-        DBObject chunk = BasicDBObjectBuilder.start()
-                .add( "files_id", _id )
-                .add( "n", _currentChunkNumber )
-                .add( "data", writeBuffer ).get();
+        DBObject chunk = createChunk(_id, _currentChunkNumber, writeBuffer);
         _fs._chunkCollection.save( chunk );
         _currentChunkNumber++;
         _totalBytes += writeBuffer.length;
         _messageDigester.update( writeBuffer );
         _currentBufferPosition = 0;
+    }
+
+    protected DBObject createChunk(Object id, int currentChunkNumber, byte[] writeBuffer) {
+        return BasicDBObjectBuilder.start()
+                    .add("files_id", id)
+                    .add("n", currentChunkNumber)
+                    .add("data", writeBuffer).get();
     }
 
     /**
