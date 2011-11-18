@@ -55,7 +55,7 @@ public class GridFSInputFile extends GridFSFile {
      * @param closeStreamOnPersist
                   indicate the passed in input stream should be closed once the data chunk persisted
      */
-    GridFSInputFile( GridFS fs , InputStream in , String filename, boolean closeStreamOnPersist ) {
+    protected GridFSInputFile( GridFS fs , InputStream in , String filename, boolean closeStreamOnPersist ) {
         _fs = fs;
         _in = in;
         _filename = filename;
@@ -80,7 +80,7 @@ public class GridFSInputFile extends GridFSFile {
      * @param filename
      *            Name of the file to be created.
      */
-    GridFSInputFile( GridFS fs , InputStream in , String filename ) {
+    protected GridFSInputFile( GridFS fs , InputStream in , String filename ) {
         this( fs, in, filename, false);
     }
 
@@ -95,7 +95,7 @@ public class GridFSInputFile extends GridFSFile {
      * @param filename
      *            Name of the file to be created.
      */
-    GridFSInputFile( GridFS fs , String filename ) {
+    protected GridFSInputFile( GridFS fs , String filename ) {
         this( fs , null , filename );
     }
 
@@ -107,7 +107,7 @@ public class GridFSInputFile extends GridFSFile {
      * @param fs
      *            The GridFS connection handle.
      */
-    GridFSInputFile( GridFS fs ) {
+    protected GridFSInputFile( GridFS fs ) {
         this( fs , null , null );
     }
 
