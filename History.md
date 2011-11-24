@@ -1,4 +1,19 @@
 
+2.7.2 / 2011-11-10 
+==================
+
+  * JAVA-469: java.net.NetworkInterface.getNetworkInterfaces may fail with IBM JVM, which prevents from using driver
+  * deprecated replica pair constructors. 
+    - updated javadocs and removed replica pair javadocs in class doc.
+  * JAVA-428: Fixed an issue where read preferences not set on cursor
+
+2.7.1 / 2011-11-08 
+==================
+
+  * JAVA-467 - added _check call to getServerAddress if _it is null 
+  * JAVA-467 - Moved variable calls to method to fix read preference hierarchy 
+  * simplified getServerAddress method.
+
 2.7.0 / 2011-11-04 
 ===================
 

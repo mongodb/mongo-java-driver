@@ -18,19 +18,53 @@
 
 package org.bson;
 
-import static org.bson.BSON.*;
+import static org.bson.BSON.ARRAY;
+import static org.bson.BSON.BINARY;
+import static org.bson.BSON.BOOLEAN;
+import static org.bson.BSON.B_BINARY;
+import static org.bson.BSON.B_GENERAL;
+import static org.bson.BSON.B_UUID;
+import static org.bson.BSON.CODE;
+import static org.bson.BSON.CODE_W_SCOPE;
+import static org.bson.BSON.DATE;
+import static org.bson.BSON.EOO;
+import static org.bson.BSON.MAXKEY;
+import static org.bson.BSON.MINKEY;
+import static org.bson.BSON.NULL;
+import static org.bson.BSON.NUMBER;
+import static org.bson.BSON.NUMBER_INT;
+import static org.bson.BSON.NUMBER_LONG;
+import static org.bson.BSON.OBJECT;
+import static org.bson.BSON.OID;
+import static org.bson.BSON.REGEX;
+import static org.bson.BSON.STRING;
+import static org.bson.BSON.SYMBOL;
+import static org.bson.BSON.TIMESTAMP;
+import static org.bson.BSON.UNDEFINED;
+import static org.bson.BSON.regexFlags;
 
 import java.lang.reflect.Array;
 import java.nio.Buffer;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
-import org.bson.types.*;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Binary;
+import org.bson.types.Code;
+import org.bson.types.CodeWScope;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
+import org.bson.types.Symbol;
 
 import com.mongodb.DBRefBase;
 
@@ -182,6 +216,8 @@ public class BasicBSONEncoder implements BSONEncoder {
             putDate( name , (Date)val );
         else if ( val instanceof Number )
             putNumber(name, (Number)val );
+        else if ( val instanceof Character )
+            putString(name, val.toString() );
         else if ( val instanceof String )
             putString(name, val.toString() );
         else if ( val instanceof ObjectId )

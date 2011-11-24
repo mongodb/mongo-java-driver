@@ -366,7 +366,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
                     foo.put( "$snapshot", true );
             }
 
-            _it = _collection.__find( foo, _keysWanted, _skip, _batchSize, _limit , _options , null , _decoderFact.create() );
+            _it = _collection.__find( foo, _keysWanted, _skip, _batchSize, _limit , _options , _readPref , _decoderFact.create() );
         }
 
         if ( _it == null ){
@@ -678,10 +678,9 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
      * @return
      */
     public ServerAddress getServerAddress() {
-        if (_it != null) {
-            if (_it instanceof DBApiLayer.Result)
-                return ((DBApiLayer.Result)_it).getServerAddress();
-        }
+        if (_it != null && _it instanceof DBApiLayer.Result)
+            return ((DBApiLayer.Result)_it).getServerAddress();
+
         return null;
     }
 

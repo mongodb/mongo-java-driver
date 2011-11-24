@@ -421,7 +421,6 @@ public abstract class DB {
      * @param preference Read Preference to use
      */
     public void setReadPreference( ReadPreference preference ){
-        if ( preference == null ) throw new IllegalArgumentException();
         _readPref = preference;
     }
 

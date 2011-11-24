@@ -46,32 +46,6 @@ import org.bson.io.PoolOutputBuffer;
  * and requestDone methods for more information.
  * http://www.mongodb.org/display/DOCS/Java+Driver+Concurrency
  *
- * <h3>Connecting to a Replica Pair</h3>
- * <p>
- * You can connect to a
- * <a href="http://www.mongodb.org/display/DOCS/Replica+Pairs">replica pair</a>
- * using the Java driver by passing two DBAddresses to the Mongo constructor.
- * For example:
- * </p>
- * <blockquote><pre>
- * DBAddress left = new DBAddress("127.0.0.1:27017/test");
- * DBAddress right = new DBAddress("127.0.0.1:27018/test");
- *
- * Mongo mongo = new Mongo(left, right);
- * </pre></blockquote>
- *
- * <p>
- * If the master of a replica pair goes down, there will be a brief lag before
- * the slave becomes master.  Thus, your application should be prepared to catch
- * the exceptions that might be thrown in such a case: IllegalArgumentException,
- * MongoException, and MongoException.Network (depending on when the connection
- * drops).
- * </p>
- * <p>
- * Once the slave becomes master, the driver will begin using that connection
- * as the master connection and the exceptions will stop being thrown.
- * </p>
- *
  * <h3>Connecting to a Replica Set</h3>
  * <p>
  * You can connect to a
@@ -174,7 +148,6 @@ public class Mongo {
         this( addr , new MongoOptions() );
     }
 
-
     /**
      * Creates a Mongo instance based on a (single) mongo node using a given ServerAddress
      * @see com.mongodb.ServerAddress
@@ -204,6 +177,7 @@ public class Mongo {
      * @param right right side of the pair
      * @throws MongoException
      */
+    @Deprecated
     public Mongo( ServerAddress left , ServerAddress right )
         throws MongoException {
         this( left , right , new MongoOptions() );
@@ -220,6 +194,7 @@ public class Mongo {
      * @param options
      * @throws MongoException
      */
+    @Deprecated
     public Mongo( ServerAddress left , ServerAddress right , MongoOptions options )
         throws MongoException {
         _addr = null;
@@ -235,7 +210,9 @@ public class Mongo {
 
     /**
      * <p>Creates a Mongo based on a replica set, or pair.
-     * It will find all members (the master will be used by default).</p>
+     * It will find all members (the master will be used by default). If you pass in a single server in the list,
+     * the driver will still function as if it is a replica set. If you have a standalone server,
+     * use the Mongo(ServerAddress) constructor.</p>
      * @see com.mongodb.ServerAddress
      * @param replicaSetSeeds Put as many servers as you can in the list and
      * the system will figure out the rest.

@@ -194,11 +194,12 @@ public class JSON {
             return;
         }
 
-        if (o instanceof Pattern) {
-	    DBObject externalForm = new BasicDBObject();
-	    externalForm.put("$regex", o.toString());
-	    externalForm.put("$options", Bytes.regexFlags( ((Pattern)o).flags() ) );
-	    serialize(externalForm, buf);
+        if ( o instanceof Pattern ) {
+            DBObject externalForm = new BasicDBObject();
+            externalForm.put( "$regex", o.toString() );
+            if ( ( (Pattern) o ).flags() != 0 )
+                externalForm.put( "$options", Bytes.regexFlags( ( (Pattern) o ).flags() ) );
+            serialize( externalForm, buf );
             return;
         }
 

@@ -350,15 +350,21 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
         try {
             // build a 2-byte machine piece based on NICs info
-            final int machinePiece;
+            int machinePiece;
             {
-                StringBuilder sb = new StringBuilder();
-                Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
-                while ( e.hasMoreElements() ){
-                    NetworkInterface ni = e.nextElement();
-                    sb.append( ni.toString() );
+                try {
+                    StringBuilder sb = new StringBuilder();
+                    Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
+                    while ( e.hasMoreElements() ){
+                        NetworkInterface ni = e.nextElement();
+                        sb.append( ni.toString() );
+                    }
+                    machinePiece = sb.toString().hashCode() << 16;
+                } catch (Throwable e) {
+                    // exception sometimes happens with IBM JVM, use random
+                    LOGGER.log(Level.WARNING, e.getMessage(), e);
+                    machinePiece = (new Random().nextInt()) << 16;
                 }
-                machinePiece = sb.toString().hashCode() << 16;
                 LOGGER.fine( "machine piece post: " + Integer.toHexString( machinePiece ) );
             }
 
@@ -386,8 +392,8 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
             _genmachine = machinePiece | processPiece;
             LOGGER.fine( "machine : " + Integer.toHexString( _genmachine ) );
         }
-        catch ( java.io.IOException ioe ){
-            throw new RuntimeException( ioe );
+        catch ( Exception e ){
+            throw new RuntimeException( e );
         }
 
     }
