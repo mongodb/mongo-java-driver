@@ -1182,9 +1182,10 @@ public abstract class DBCollection {
      * Checks key strings for invalid characters.
      */
     private void _checkKeys( Map<String, Object> o ) {
-        for ( String s : o.keySet() ){
+        for ( Map.Entry<String, Object> entry : o.entrySet() ){
+            String s = entry.getKey(); 
             validateKey ( s );
-            Object inner = o.get( s );
+            Object inner = entry.getValue();
             if ( inner instanceof DBObject ) {
                 _checkKeys( (DBObject)inner );
             } else if ( inner instanceof Map ) {
