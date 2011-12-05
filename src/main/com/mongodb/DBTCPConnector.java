@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mongodb.ReadPreference.TaggedReadPreference;
 
@@ -117,7 +118,7 @@ public class DBTCPConnector implements DBConnector {
     }
 
     void _checkClosed(){
-        if ( _closed )
+        if ( _closed.get() )
             throw new IllegalStateException( "this Mongo has been closed" );
     }
 
@@ -509,14 +510,18 @@ public class DBTCPConnector implements DBConnector {
     }
 
     public void close(){
-        _closed = true;
+        _closed.set( true );
         if ( _portHolder != null ) {
-            _portHolder.close();
-            _portHolder = null;
+            try {
+                _portHolder.close();
+                _portHolder = null;
+            } catch (final Throwable t) { /* nada */ }
         }
         if ( _rsStatus != null ) {
-            _rsStatus.close();
-            _rsStatus = null;
+            try {
+                _rsStatus.close();
+                _rsStatus = null;
+            } catch (final Throwable t) { /* nada */ }
         }
 
         // below this will remove the myport for this thread only
@@ -545,7 +550,7 @@ public class DBTCPConnector implements DBConnector {
     }
 
     public boolean isOpen(){
-        return ! _closed;
+        return ! _closed.get();
     }
 
     /**
@@ -563,7 +568,8 @@ public class DBTCPConnector implements DBConnector {
     private DBPortPool.Holder _portHolder;
     private final List<ServerAddress> _allHosts;
     private ReplicaSetStatus _rsStatus;
-    private boolean _closed = false;
+    private final AtomicBoolean _closed = new AtomicBoolean(false);
+
     private final AtomicInteger _maxBsonObjectSize = new AtomicInteger(0);
 
     private ThreadLocal<MyPort> _myPort = new ThreadLocal<MyPort>(){
