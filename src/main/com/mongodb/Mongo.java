@@ -423,8 +423,13 @@ public class Mongo {
      * Once called, this Mongo instance can no longer be used.
      */
     public void close(){
-        _connector.close();
+
+        try {
+            _connector.close();
+        } catch (final Throwable t) { /* nada */ }
+
         _cleaner.interrupt();
+
         try {
             _cleaner.join();
         } catch (InterruptedException e) {
