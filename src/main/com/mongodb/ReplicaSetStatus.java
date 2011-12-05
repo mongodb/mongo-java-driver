@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.mongodb.util.JSON;
@@ -81,7 +82,7 @@ public class ReplicaSetStatus {
 	public String toString() {
 	StringBuffer sb = new StringBuffer();
 	sb.append("{replSetName: '" + _setName );
-	sb.append("', closed:").append(_closed).append(", ");
+	sb.append("', closed:").append(_closed.get()).append(", ");
 	sb.append("nextResolveTime:'").append(new Date(_nextResolveTime).toString()).append("', ");
 	sb.append("members : [ ");
 	if(_all != null) {
@@ -95,7 +96,7 @@ public class ReplicaSetStatus {
 	}
 
     void _checkClosed(){
-        if ( _closed )
+        if ( _closed.get() )
             throw new IllegalStateException( "ReplicaSetStatus closed" );
     }
 
@@ -445,7 +446,7 @@ public class ReplicaSetStatus {
         }
 
         public void run(){
-            while ( ! _closed ){
+            while ( ! _closed.get() ){
                 try {
                     updateAll();
 
@@ -555,11 +556,13 @@ public class ReplicaSetStatus {
     }
 
     void close(){
-        if (!_closed) {
-            _closed = true;
-            for (int i = 0; i < _all.size(); i++) {
+        if (_closed.get()) throw new IllegalStateException("Already closed");
+
+        _closed.set(true);
+        for (int i = 0; i < _all.size(); i++) {
+            try {
                 _all.get(i).close();
-            }
+            } catch (final Throwable t) { /* nada */ }
         }
     }
 
@@ -582,7 +585,7 @@ public class ReplicaSetStatus {
     private final AtomicReference<Logger> _logger = new AtomicReference<Logger>(_rootLogger);
 
     private final AtomicReference<String> _lastPrimarySignal = new AtomicReference<String>();
-    boolean _closed = false;
+    private final AtomicBoolean _closed = new AtomicBoolean(false);
 
     final Random _random = new Random();
     long _nextResolveTime;
