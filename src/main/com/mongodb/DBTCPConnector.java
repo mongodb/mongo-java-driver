@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.mongodb.ReadPreference.TaggedReadPreference;
 
@@ -435,13 +436,13 @@ public class DBTCPConnector implements DBConnector {
                 }
                 else {
                     _set( n._addr );
-                    maxBsonObjectSize = _rsStatus.getMaxBsonObjectSize();
+                    _maxBsonObjectSize.set(_rsStatus.getMaxBsonObjectSize());
                 }
             }
         } else {
             // single server, may have to obtain max bson size
-            if (maxBsonObjectSize == 0)
-                    maxBsonObjectSize = fetchMaxBsonObjectSize();
+            if (_maxBsonObjectSize.get() == 0)
+                fetchMaxBsonObjectSize();
         }
     }
 
@@ -457,18 +458,18 @@ public class DBTCPConnector implements DBConnector {
             CommandResult res = port.runCommand(_mongo.getDB("admin"), new BasicDBObject("isMaster", 1));
             // max size was added in 1.8
             if (res.containsField("maxBsonObjectSize")) {
-                maxBsonObjectSize = ((Integer) res.get("maxBsonObjectSize")).intValue();
+                _maxBsonObjectSize.set(((Integer) res.get("maxBsonObjectSize")).intValue());
             } else {
-                maxBsonObjectSize = Bytes.MAX_OBJECT_SIZE;
+                _maxBsonObjectSize.set(Bytes.MAX_OBJECT_SIZE);
             }
         } catch (Exception e) {
-            _logger.log(Level.WARNING, "Exception determining maxBSON size using"+maxBsonObjectSize, e);
+            _logger.log(Level.WARNING, "Exception determining maxBSONObjectSize ", e);
         } finally {
             port.getPool().done(port);
         }
-        return maxBsonObjectSize;
-    }
 
+        return _maxBsonObjectSize.get();
+    }
 
     void testMaster()
         throws MongoException {
@@ -553,7 +554,7 @@ public class DBTCPConnector implements DBConnector {
      * @return the maximum size, or 0 if not obtained from servers yet.
      */
     public int getMaxBsonObjectSize() {
-        return maxBsonObjectSize;
+        return _maxBsonObjectSize.get();
     }
 
     private Mongo _mongo;
@@ -563,7 +564,7 @@ public class DBTCPConnector implements DBConnector {
     private final List<ServerAddress> _allHosts;
     private ReplicaSetStatus _rsStatus;
     private boolean _closed = false;
-    private int maxBsonObjectSize = 0;
+    private final AtomicInteger _maxBsonObjectSize = new AtomicInteger(0);
 
     private ThreadLocal<MyPort> _myPort = new ThreadLocal<MyPort>(){
         protected MyPort initialValue(){
