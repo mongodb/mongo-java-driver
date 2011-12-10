@@ -312,7 +312,11 @@ limitations under the License.
     <!-- The reporting targets                                               -->
     <!-- ******************************************************************* -->
 
-    <target name="junit-reports" depends="test">
+    <target name="junit-reports">
+        <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" >
+            <jvmarg value="-Xmx512M" />
+            <xmlfileset dir="." includes="testng.xml"/>
+        </testng>
         <junitreport todir="${testdir}">
             <fileset dir="${testdir}"><include name="*/*.xml"/></fileset>
             <report format="noframes"  todir="${testdir}"/>
