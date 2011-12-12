@@ -673,13 +673,10 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
 
     /**
      * Gets the Server Address of the server that data is pulled from.
-     * Note that this information is not available if no data has been retrieved yet.
-     * Availability is specific to underlying implementation and may vary.
+     * Note that this information may not be available until hasNext() or next() is called.
      * @return
      */
     public ServerAddress getServerAddress() {
-        _check();
-
         if (_it != null && _it instanceof DBApiLayer.Result)
             return ((DBApiLayer.Result)_it).getServerAddress();
 
