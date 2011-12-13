@@ -332,7 +332,6 @@ public class ReplicaSetStatus {
 	                String setName = res.get( "setName" ).toString();
 	                if ( _setName == null ){
 	                    _setName.set(setName);
-                        //SVTODO:  change this at the end.
 	                    _logger.set( Logger.getLogger( _rootLogger.getName() + "." + setName ) );
 	                }
 	                else if ( !_setName.equals( setName ) ){
