@@ -30,7 +30,7 @@ import org.bson.util.ClassMap;
 
 public class BSON {
 
-    static final Logger LOGGER = Logger.getLogger( "org.bson.BSON" );
+    static final Logger LOGGER = Logger.getLogger( BSON.class.getCanonicalName() );
 
     // ---- basics ----
 

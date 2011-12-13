@@ -137,5 +137,5 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
     private String _lastName;
     final DBCollection _collection;
     final DB _db;
-    static final Logger LOGGER = Logger.getLogger( "com.mongo.DECODING" );
+    static final Logger LOGGER = Logger.getLogger( DefaultDBCallback.class.getCanonicalName() );
 }

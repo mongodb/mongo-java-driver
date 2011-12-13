@@ -63,7 +63,6 @@ public class DBPort {
 
         _hashCode = _addr.hashCode();
 
-        _logger = Logger.getLogger( _rootLogger.getName() + "." + addr.toString() );
         _decoder = _options.dbDecoderFactory.create();
     }
 
@@ -226,7 +225,7 @@ public class DBPort {
             }
             catch ( IOException ioe ){
                 lastError = new IOException( "couldn't connect to [" + _addr + "] bc:" + ioe );
-                _logger.log( Level.INFO , "connect fail to : " + _addr , ioe );
+                _logger.log( Level.INFO , "connect fail to : " + _addr + " -- serverAddress: " + _sa, ioe );
                 close();
             }
             
@@ -241,7 +240,7 @@ public class DBPort {
             if ( sleepTime + sleptSoFar > maxAutoConnectRetryTime )
                 sleepTime = maxAutoConnectRetryTime - sleptSoFar;
 
-            _logger.severe( "going to sleep and retry.  total sleep time after = " + ( sleptSoFar + sleptSoFar ) + "ms  this time:" + sleepTime + "ms" );
+            _logger.severe( "going to sleep and retry.  total sleep time after = " + ( sleptSoFar + sleptSoFar ) + "ms  this time:" + sleepTime + "ms. serverAddress: " + _sa );
             ThreadUtil.sleep( sleepTime );
             sleepTime *= 2;
             
@@ -333,7 +332,7 @@ public class DBPort {
     final InetSocketAddress _addr;
     final DBPortPool _pool;
     final MongoOptions _options;
-    final Logger _logger;
+    final Logger _logger = Logger.getLogger(DBPort.class.getCanonicalName());
     final DBDecoder _decoder;
     
     private Socket _socket;
@@ -346,5 +345,4 @@ public class DBPort {
     int _lastThread;
     long _calls = 0;
 
-    private static Logger _rootLogger = Logger.getLogger( "com.mongodb.port" );
 }

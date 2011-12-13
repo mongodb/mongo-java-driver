@@ -33,7 +33,9 @@ import com.mongodb.ReadPreference.TaggedReadPreference;
 public class DBTCPConnector implements DBConnector {
 
     static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
+    //SVTODO: really? as opposed to static Logger _logger = Logger.getLogger( DBTCPConnector.class.getCanonicalName() + ".tcp");
     static Logger _createLogger = Logger.getLogger( _logger.getName() + ".connect" );
+    //SVTODO: really? as opposed to static Logger _logger = Logger.getLogger( DBTCPConnector.class.getCanonicalName() + ".connect");
 
     public DBTCPConnector( Mongo m , ServerAddress addr )
         throws MongoException {

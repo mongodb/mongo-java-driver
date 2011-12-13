@@ -49,7 +49,7 @@ import com.mongodb.util.JSON;
  */
 public class ReplicaSetStatus {
 
-	static final Logger _rootLogger = Logger.getLogger( "com.mongodb.ReplicaSetStatus" );
+	static final Logger _rootLogger = Logger.getLogger( ReplicaSetStatus.class.getCanonicalName() );
     static final int UNAUTHENTICATED_ERROR_CODE = 10057;
 
     ReplicaSetStatus( Mongo mongo, List<ServerAddress> initial ){
@@ -332,6 +332,7 @@ public class ReplicaSetStatus {
 	                String setName = res.get( "setName" ).toString();
 	                if ( _setName == null ){
 	                    _setName.set(setName);
+                        //SVTODO:  change this at the end.
 	                    _logger.set( Logger.getLogger( _rootLogger.getName() + "." + setName ) );
 	                }
 	                else if ( !_setName.equals( setName ) ){

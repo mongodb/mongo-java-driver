@@ -16,14 +16,11 @@
 
 package com.mongodb;
 
-import java.io.IOException;
-import java.util.Iterator;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
 
-import com.mongodb.util.TestCase;
+import java.io.IOException;
+import java.util.Iterator;
 
 public class DBCursorTest extends TestCase {
 
@@ -63,6 +60,7 @@ public class DBCursorTest extends TestCase {
         for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", "two"));
 
         final DBCursor cur = c.find();
+        cur.next();
         assertNotNull(cur.getServerAddress());
     }
 
@@ -76,6 +74,7 @@ public class DBCursorTest extends TestCase {
         for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", i));
 
         final DBCursor cur = c.find(new BasicDBObject("one", 9));
+        cur.next();
         assertNotNull(cur.getServerAddress());
     }
 

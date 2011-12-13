@@ -475,5 +475,5 @@ public class LazyBSONObject implements BSONObject {
     protected final BSONByteBuffer _input; // TODO - Guard this with synchronicity?
     // callback is kept to create sub-objects on the fly
     protected final LazyBSONCallback _callback;
-    private static final Logger log = Logger.getLogger( "org.bson.LazyBSONObject" );
+    private static final Logger log = Logger.getLogger( LazyBSONObject.class.getCanonicalName() );
 }

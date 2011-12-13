@@ -42,22 +42,23 @@ import com.mongodb.util.JSON;
  */
 public class DBApiLayer extends DB {
 
-    static final boolean D = Boolean.getBoolean( "DEBUG.DB" );
     /** The maximum number of cursors allowed */
     static final int NUM_CURSORS_BEFORE_KILL = 100;
     static final int NUM_CURSORS_PER_BATCH = 20000;
 
     //  --- show
 
-    static final Logger TRACE_LOGGER = Logger.getLogger( "com.mongodb.TRACE" );
+    static final Logger LOGGER = Logger.getLogger(DBApiLayer.class.getCanonicalName());
     static final Level TRACE_LEVEL = Boolean.getBoolean( "DB.TRACE" ) ? Level.INFO : Level.FINEST;
 
-    static final boolean willTrace(){
-        return TRACE_LOGGER.isLoggable( TRACE_LEVEL );
+    static boolean willTrace(){
+        return LOGGER.isLoggable( TRACE_LEVEL );
     }
 
-    static final void trace( String s ){
-        TRACE_LOGGER.log( TRACE_LEVEL , s );
+    static void trace( String s ){
+        if(willTrace()) {
+            LOGGER.log( TRACE_LEVEL , s );
+        }
     }
 
     static int chooseBatchSize(int batchSize, int limit, int fetched) {
@@ -136,7 +137,7 @@ public class DBApiLayer extends DB {
         if ( sz == 0 || ( ! force && sz < NUM_CURSORS_BEFORE_KILL))
             return;
 
-        Bytes.LOGGER.info( "going to kill cursors : " + sz );
+        LOGGER.info( "going to kill cursors : " + sz );
 
         Map<ServerAddress,List<Long>> m = new HashMap<ServerAddress,List<Long>>();
         DeadCursor c;
@@ -154,7 +155,7 @@ public class DBApiLayer extends DB {
                 killCursors( e.getKey() , e.getValue() );
             }
             catch ( Throwable t ){
-                Bytes.LOGGER.log( Level.WARNING , "can't clean cursors" , t );
+                LOGGER.log( Level.WARNING , "can't clean cursors" , t );
                 for ( Long x : e.getValue() )
                         _deadCursorIds.add( new DeadCursor( x , e.getKey() ) );
             }
@@ -270,7 +271,7 @@ public class DBApiLayer extends DB {
             if (encoder == null)
                 encoder = DefaultDBEncoder.FACTORY.create();
 
-            if ( willTrace() ) trace( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
+            trace( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
 
             OutMessage om = new OutMessage( _mongo , 2006, encoder );
 
@@ -298,7 +299,7 @@ public class DBApiLayer extends DB {
             if ( ref == null )
                 ref = new BasicDBObject();
 
-            if ( willTrace() ) trace( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
+            trace( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
 
             OutMessage query = OutMessage.query( _mongo , options , _fullNameSpace , numToSkip , chooseBatchSize(batchSize, limit, 0) , ref , fields, readPref);
 
@@ -331,7 +332,7 @@ public class DBApiLayer extends DB {
                     _checkObject(o, false, false);
             }
 
-            if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) + " " + JSON.serialize( o )  );
+            trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) + " " + JSON.serialize( o )  );
 
             OutMessage om = new OutMessage( _mongo , 2001, encoder );
             om.writeInt( 0 ); // reserved
@@ -522,7 +523,7 @@ public class DBApiLayer extends DB {
             try {
                 killCursors(_host, l);
             } catch (Throwable t) {
-                Bytes.LOGGER.log(Level.WARNING, "can't clean 1 cursor", t);
+                LOGGER.log(Level.WARNING, "can't clean 1 cursor", t);
                 _deadCursorIds.add(new DeadCursor(curId, _host));
             }
             _curResult._cursor = 0;

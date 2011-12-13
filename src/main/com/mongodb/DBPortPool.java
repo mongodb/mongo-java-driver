@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.management.JMException;
 import javax.management.MBeanServer;
@@ -35,6 +36,8 @@ import javax.management.ObjectName;
 import com.mongodb.util.SimplePool;
 
 public class DBPortPool extends SimplePool<DBPort> {
+    
+    private static final Logger LOGGER = Logger.getLogger(DBPortPool.class.getCanonicalName());
 
     static class Holder {
         
@@ -73,15 +76,15 @@ public class DBPortPool extends SimplePool<DBPort> {
                         ObjectName on = createObjectName( addr );
                         if ( _server.isRegistered( on ) ){
                             _server.unregisterMBean( on );
-                            Bytes.LOGGER.log( Level.INFO , "multiple Mongo instances for same host, jmx numbers might be off" );
+                            LOGGER.log( Level.INFO , "multiple Mongo instances for same host, jmx numbers might be off" );
                         }
                         _server.registerMBean( p , on );
                     }
                     catch ( JMException e ){
-                        Bytes.LOGGER.log( Level.WARNING , "jmx registration error: " + e + " continuing..." );
+                        LOGGER.log( Level.WARNING , "jmx registration error: " + e + " continuing..." );
                     }
                     catch ( java.security.AccessControlException e ){
-                        Bytes.LOGGER.log( Level.WARNING , "jmx registration error: " + e + " continuing..." );
+                        LOGGER.log( Level.WARNING , "jmx registration error: " + e + " continuing..." );
                     }
                 }
 
@@ -101,7 +104,7 @@ public class DBPortPool extends SimplePool<DBPort> {
                             _server.unregisterMBean( on );
                         }
                     } catch ( JMException e ){
-                        Bytes.LOGGER.log( Level.WARNING , "jmx de-registration error, continuing" , e );
+                        LOGGER.log( Level.WARNING , "jmx de-registration error, continuing" , e );
                     }
                 }
             }
@@ -201,7 +204,7 @@ public class DBPortPool extends SimplePool<DBPort> {
             // we don't want to clear the port pool for a connection timing out
             return;
         }
-        Bytes.LOGGER.log( Level.WARNING , "emptying DBPortPool to " + getServerAddress() + " b/c of error" , e );
+        LOGGER.log( Level.WARNING , "emptying DBPortPool to " + getServerAddress() + " b/c of error" , e );
 
         // force close all sockets 
 
