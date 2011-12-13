@@ -60,7 +60,6 @@ public class DBCursorTest extends TestCase {
         for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", "two"));
 
         final DBCursor cur = c.find();
-        cur.next();
         assertNotNull(cur.getServerAddress());
     }
 
@@ -74,7 +73,6 @@ public class DBCursorTest extends TestCase {
         for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", i));
 
         final DBCursor cur = c.find(new BasicDBObject("one", 9));
-        cur.next();
         assertNotNull(cur.getServerAddress());
     }
 
