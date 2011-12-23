@@ -562,6 +562,11 @@ public class DBTCPConnector implements DBConnector {
         return _maxBsonObjectSize.get();
     }
 
+    // expose for unit testing
+    MyPort getMyPort() {
+        return _myPort.get();
+    }
+
     private Mongo _mongo;
 //    private ServerAddress _curMaster;
     private DBPortPool _masterPortPool;
