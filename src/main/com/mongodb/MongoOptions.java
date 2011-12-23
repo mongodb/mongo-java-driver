@@ -111,8 +111,8 @@ public class MongoOptions {
     public int threadsAllowedToBlockForConnectionMultiplier;
 
     /**
-     * The maximum wait time in ms that a thread may wait for a connection to become available.
-     * Default is 120,000.
+     * The maximum wait time in milliseconds that a thread may wait for a connection to become available.
+     * Default is 120,000. A value of 0 means that it will not wait.  A negative value means to wait indefinitely.
      */
     public int maxWaitTime;
 
