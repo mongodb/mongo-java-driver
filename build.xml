@@ -311,6 +311,32 @@ limitations under the License.
             <report format="noframes"  todir="${testdir}"/>
         </junitreport>
     </target>
+    <taskdef resource="cloverlib.xml" classpath="../lib/clover.jar"/>
+	  	
+	  	
+    <target name="-check.clover">
+      <available property="clover.installed" classname="com.cenqua.clover.CloverInstr" />
+    </target>
+            
+    <target name="with.clover" depends="guard.noclover">
+        <clover-setup/>
+    </target>
+            
+    <target name="guard.noclover" depends="-check.clover" unless="clover.installed">
+      <fail message="The target you are attempting to run requires Clover, which doesn't appear to be installed"/>
+    </target>
+
+    <target name="jenkins-test" depends="with.clover,compile">
+        <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener, com.cenqua.clover.tasks.testng.CloverOptimizedTestSelector" haltonfailure="false" >
+            <jvmarg value="-Xmx512M" />
+            <xmlfileset dir="." includes="testng.xml"/>
+        </testng>
+        <clover-report>
+            <current outfile="coverage.xml">
+                <format type="xml"/>
+            </current>
+        </clover-report>
+    </target>
 
   <!-- NOTE: publish-local is now located in maven/ -->
 
