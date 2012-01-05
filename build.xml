@@ -17,6 +17,7 @@ limitations under the License.
 -->
 
 <project name="MongoDB Java Driver" default="compile" basedir=".">
+    <property environment="env"/>
 
     <property file="build.properties" prefix="build.conf"/>
 
@@ -28,12 +29,23 @@ limitations under the License.
     <property name="testdir" location="${targetdir}/test"/>
     <dirname property="javabase" file="${java.home}"/>
 
+    <property name="clover.jar" location="${env.CLOVER_HOME}/lib/clover.jar"/>
+    <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/>
     <path id="classpath">
         <fileset dir="lib"><include name="**/*.jar"/></fileset>
         <pathelement path="conf" />
         <pathelement path="build/main" />
         <pathelement path="build/test" />
         <pathelement path="${javabase}/lib/tools.jar" />
+    </path>
+
+    <path id="classpath.clover">
+        <fileset dir="lib"><include name="**/*.jar"/></fileset>
+        <pathelement path="conf" />
+        <pathelement path="build/main" />
+        <pathelement path="build/test" />
+        <pathelement path="${javabase}/lib/tools.jar" />
+        <pathelement path="${clover.jar}" />
     </path>
 
     <!-- ******************************************************************* -->
@@ -311,7 +323,7 @@ limitations under the License.
             <report format="noframes"  todir="${testdir}"/>
         </junitreport>
     </target>
-    <taskdef resource="cloverlib.xml" classpath="../lib/clover.jar"/>
+
 	  	
 	  	
     <target name="-check.clover">
@@ -327,7 +339,8 @@ limitations under the License.
     </target>
 
     <target name="jenkins-test" depends="with.clover,compile">
-        <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener, com.cenqua.clover.tasks.testng.CloverOptimizedTestSelector" haltonfailure="false" >
+
+        <testng classpathref="classpath.clover" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener, com.cenqua.clover.tasks.testng.CloverOptimizedTestSelector" haltonfailure="false" >
             <jvmarg value="-Xmx512M" />
             <xmlfileset dir="." includes="testng.xml"/>
         </testng>
