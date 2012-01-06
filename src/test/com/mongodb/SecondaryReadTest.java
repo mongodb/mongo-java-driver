@@ -184,6 +184,8 @@ public class SecondaryReadTest extends TestCase {
 
             final DBCursor cur = col.find();
 
+            cur.hasNext();
+
             ServerAddress curServerAddress = cur.getServerAddress();
 
             assertEquals(true, serverIsSecondary(curServerAddress, testHosts));
@@ -206,6 +208,9 @@ public class SecondaryReadTest extends TestCase {
             final int portIdx = h.hostnameAndPort.indexOf(":");
             final int port = Integer.parseInt(h.hostnameAndPort.substring(portIdx+1, h.hostnameAndPort.length()));
             final String hostname = h.hostnameAndPort.substring(0, portIdx);
+
+            //System.out.println("---- hostname: " + hostname + " + server addr host: " + pServerAddr.getHost());
+
             if (pServerAddr.getPort() == port && hostname.equals(pServerAddr.getHost())) return true;
         }
 
@@ -263,9 +268,7 @@ public class SecondaryReadTest extends TestCase {
         // Insert some test data.
         for (int idx=0; idx < INSERT_COUNT; idx++) {
             final ObjectId id = ObjectId.get();
-            System.err.println("Inserting ID " + id + " with REPLICAS_SAFE");
             WriteResult writeResult = pCol.insert(new BasicDBObject("_id", id), WriteConcern.REPLICAS_SAFE);
-            System.err.println("Inserted OK.");
             writeResult.getLastError().throwOnError();
             insertedIds.add(id);
         }
