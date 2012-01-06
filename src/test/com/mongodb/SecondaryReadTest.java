@@ -44,36 +44,38 @@ public class SecondaryReadTest extends TestCase {
 
         final Mongo mongo = loadMongo();
 
-        final CommandResult result = serverStatusCmd(mongo);
+        try {
+            final CommandResult result = serverStatusCmd(mongo);
 
-        // If the result is null, this is not a replica set.
-        if (result == null) return;
+            // If the result is null, this is not a replica set.
+            if (result == null) return;
 
-        final List<TestHost> testHosts = new ArrayList<TestHost>();
-        final String primaryHostnameAndPort = extractHosts(result, testHosts);
-        final DBCollection col = loadCleanDbCollection(mongo);
+            final List<TestHost> testHosts = new ArrayList<TestHost>();
+            final String primaryHostnameAndPort = extractHosts(result, testHosts);
+            final DBCollection col = loadCleanDbCollection(mongo);
 
-        final List<ObjectId> insertedIds = insertTestData(col);
+            final List<ObjectId> insertedIds = insertTestData(col);
 
-        // Get the opcounter/query data for the hosts.
-        loadQueryCount(testHosts, true);
+            // Get the opcounter/query data for the hosts.
+            loadQueryCount(testHosts, true);
 
-        final int secondaryCount = getSecondaryCount(testHosts);
+            final int secondaryCount = getSecondaryCount(testHosts);
 
-        // Perform some reads on the secondaries
-        col.setReadPreference(ReadPreference.SECONDARY);
+            // Perform some reads on the secondaries
+            col.setReadPreference(ReadPreference.SECONDARY);
 
-        for (int idx=0; idx < ITERATION_COUNT; idx++) {
-            for (ObjectId id : insertedIds) {
-                final BasicDBObject doc = (BasicDBObject)col.findOne(new BasicDBObject("_id", id));
-                if (doc == null) throw new IllegalStateException("Doc not found");
-                if (!doc.getObjectId("_id").equals(id)) throw new IllegalStateException("Ids are off");
+            for (int idx=0; idx < ITERATION_COUNT; idx++) {
+                for (ObjectId id : insertedIds) {
+                    final BasicDBObject doc = (BasicDBObject)col.findOne(new BasicDBObject("_id", id));
+                    if (doc == null) throw new IllegalStateException("Doc not found");
+                    if (!doc.getObjectId("_id").equals(id)) throw new IllegalStateException("Ids are off");
+                }
             }
-        }
 
-        loadQueryCount(testHosts, false);
+            loadQueryCount(testHosts, false);
 
-        verifySecondaryCounts(secondaryCount, testHosts);
+            verifySecondaryCounts(secondaryCount, testHosts);
+        } finally { if (mongo != null) mongo.close(); }
    }
 
     @Test(groups = {"basic"})
@@ -81,36 +83,39 @@ public class SecondaryReadTest extends TestCase {
 
         final Mongo mongo = loadMongo();
 
-        final CommandResult result = serverStatusCmd(mongo);
+        try {
 
-        // If the result is null, this is not a replica set.
-        if (result == null) return;
+            final CommandResult result = serverStatusCmd(mongo);
 
-        final List<TestHost> testHosts = new ArrayList<TestHost>();
-        final String primaryHostnameAndPort = extractHosts(result, testHosts);
-        final DBCollection col = loadCleanDbCollection(mongo);
+            // If the result is null, this is not a replica set.
+            if (result == null) return;
 
-        final List<ObjectId> insertedIds = insertTestData(col);
+            final List<TestHost> testHosts = new ArrayList<TestHost>();
+            final String primaryHostnameAndPort = extractHosts(result, testHosts);
+            final DBCollection col = loadCleanDbCollection(mongo);
 
-        // Get the opcounter/query data for the hosts.
-        loadQueryCount(testHosts, true);
+            final List<ObjectId> insertedIds = insertTestData(col);
 
-        final int secondaryCount = getSecondaryCount(testHosts);
+            // Get the opcounter/query data for the hosts.
+            loadQueryCount(testHosts, true);
 
-        // Perform some reads on the secondaries
-        mongo.setReadPreference(ReadPreference.SECONDARY);
+            final int secondaryCount = getSecondaryCount(testHosts);
 
-        for (int idx=0; idx < ITERATION_COUNT; idx++) {
-            for (ObjectId id : insertedIds) {
-                final BasicDBObject doc = (BasicDBObject)col.findOne(new BasicDBObject("_id", id));
-                if (doc == null) throw new IllegalStateException("Doc not found");
-                if (!doc.getObjectId("_id").equals(id)) throw new IllegalStateException("Ids are off");
+            // Perform some reads on the secondaries
+            mongo.setReadPreference(ReadPreference.SECONDARY);
+
+            for (int idx=0; idx < ITERATION_COUNT; idx++) {
+                for (ObjectId id : insertedIds) {
+                    final BasicDBObject doc = (BasicDBObject)col.findOne(new BasicDBObject("_id", id));
+                    if (doc == null) throw new IllegalStateException("Doc not found");
+                    if (!doc.getObjectId("_id").equals(id)) throw new IllegalStateException("Ids are off");
+                }
             }
-        }
 
-        loadQueryCount(testHosts, false);
+            loadQueryCount(testHosts, false);
 
-        verifySecondaryCounts(secondaryCount, testHosts);
+            verifySecondaryCounts(secondaryCount, testHosts);
+        } finally { if (mongo != null) mongo.close(); }
    }
 
     @Test(groups = {"basic"})
@@ -118,76 +123,81 @@ public class SecondaryReadTest extends TestCase {
 
         final Mongo mongo = loadMongo();
 
-        final CommandResult result = serverStatusCmd(mongo);
+        try {
 
-        // If the result is null, this is not a replica set.
-        if (result == null) return;
+            final CommandResult result = serverStatusCmd(mongo);
 
-        final List<TestHost> testHosts = new ArrayList<TestHost>();
-        final String primaryHostnameAndPort = extractHosts(result, testHosts);
-        final DBCollection col = loadCleanDbCollection(mongo);
+            // If the result is null, this is not a replica set.
+            if (result == null) return;
 
-        final List<ObjectId> insertedIds = insertTestData(col);
+            final List<TestHost> testHosts = new ArrayList<TestHost>();
+            final String primaryHostnameAndPort = extractHosts(result, testHosts);
+            final DBCollection col = loadCleanDbCollection(mongo);
 
-        // Get the opcounter/query data for the hosts.
-        loadQueryCount(testHosts, true);
+            final List<ObjectId> insertedIds = insertTestData(col);
 
-        final int secondaryCount = getSecondaryCount(testHosts);
+            // Get the opcounter/query data for the hosts.
+            loadQueryCount(testHosts, true);
 
-        // Perform some reads on the secondaries
-        col.getDB().setReadPreference(ReadPreference.SECONDARY);
+            final int secondaryCount = getSecondaryCount(testHosts);
 
-        for (int idx=0; idx < ITERATION_COUNT; idx++) {
-            for (ObjectId id : insertedIds) {
-                final BasicDBObject doc = (BasicDBObject)col.findOne(new BasicDBObject("_id", id));
-                if (doc == null) throw new IllegalStateException("Doc not found");
-                if (!doc.getObjectId("_id").equals(id)) throw new IllegalStateException("Ids are off");
+            // Perform some reads on the secondaries
+            col.getDB().setReadPreference(ReadPreference.SECONDARY);
+
+            for (int idx=0; idx < ITERATION_COUNT; idx++) {
+                for (ObjectId id : insertedIds) {
+                    final BasicDBObject doc = (BasicDBObject)col.findOne(new BasicDBObject("_id", id));
+                    if (doc == null) throw new IllegalStateException("Doc not found");
+                    if (!doc.getObjectId("_id").equals(id)) throw new IllegalStateException("Ids are off");
+                }
             }
-        }
 
-        loadQueryCount(testHosts, false);
+            loadQueryCount(testHosts, false);
 
-        verifySecondaryCounts(secondaryCount, testHosts);
+            verifySecondaryCounts(secondaryCount, testHosts);
+        } finally { if (mongo != null) mongo.close(); }
    }
 
     @Test(groups = {"basic"})
     public void testSecondaryReadCursor() throws Exception {
-
         final Mongo mongo = loadMongo();
-
-        final CommandResult result = serverStatusCmd(mongo);
-
-        // If the result is null, this is not a replica set.
-        if (result == null) return;
-
-        final List<TestHost> testHosts = new ArrayList<TestHost>();
-        final String primaryHostnameAndPort = extractHosts(result, testHosts);
-        final DBCollection col = loadCleanDbCollection(mongo);
-
-        final List<ObjectId> insertedIds = insertTestData(col);
-
-        // Get the opcounter/query data for the hosts.
-        loadQueryCount(testHosts, true);
-
-        final int secondaryCount = getSecondaryCount(testHosts);
-
-        // Perform some reads on the secondaries
-        col.setReadPreference(ReadPreference.SECONDARY);
-
-        final DBCursor cur = col.find();
-
-        ServerAddress curServerAddress = cur.getServerAddress();
-
-        assertEquals(true, serverIsSecondary(curServerAddress, testHosts));
-
         try {
-            while (cur.hasNext()) {
-                cur.next();
-                assertEquals(true, serverIsSecondary(cur.getServerAddress(), testHosts));
-            }
-        } finally { cur.close(); }
 
-        loadQueryCount(testHosts, false);
+            final CommandResult result = serverStatusCmd(mongo);
+
+            // If the result is null, this is not a replica set.
+            if (result == null) return;
+
+            final List<TestHost> testHosts = new ArrayList<TestHost>();
+            final String primaryHostnameAndPort = extractHosts(result, testHosts);
+            final DBCollection col = loadCleanDbCollection(mongo);
+
+            final List<ObjectId> insertedIds = insertTestData(col);
+
+            // Get the opcounter/query data for the hosts.
+            loadQueryCount(testHosts, true);
+
+            final int secondaryCount = getSecondaryCount(testHosts);
+
+            // Perform some reads on the secondaries
+            col.setReadPreference(ReadPreference.SECONDARY);
+
+            final DBCursor cur = col.find();
+
+            ServerAddress curServerAddress = cur.getServerAddress();
+
+            assertEquals(true, serverIsSecondary(curServerAddress, testHosts));
+
+            try {
+                while (cur.hasNext()) {
+                    cur.next();
+                    assertEquals(true, serverIsSecondary(cur.getServerAddress(), testHosts));
+                }
+            } finally { cur.close(); }
+
+            loadQueryCount(testHosts, false);
+
+        } finally { if (mongo != null) mongo.close(); }
     }
 
     private boolean serverIsSecondary(final ServerAddress pServerAddr, final List<TestHost> pHosts) {
@@ -203,7 +213,7 @@ public class SecondaryReadTest extends TestCase {
     }
 
     private Mongo loadMongo() throws Exception {
-        return new Mongo(new MongoURI("mongodb://127.0.0.1:27017,127.0.0.1:27018/?connectTimeoutMS=20000;socketTimeoutMS=20000;maxpoolsize=50;autoconnectretry=true"));
+        return new Mongo(new MongoURI("mongodb://127.0.0.1:27017,127.0.0.1:27018/?connectTimeoutMS=30000;socketTimeoutMS=30000;maxpoolsize=5;autoconnectretry=true"));
     }
 
     private CommandResult serverStatusCmd(final Mongo pMongo) {
@@ -308,7 +318,7 @@ public class SecondaryReadTest extends TestCase {
 
     private static void loadQueryCount(final List<TestHost> pHosts, final boolean pBefore) throws Exception {
         for (final TestHost testHost : pHosts) {
-            final Mongo mongoHost = new Mongo(new MongoURI("mongodb://"+testHost.hostnameAndPort+"/?connectTimeoutMS=20000;socketTimeoutMS=20000;maxpoolsize=50;autoconnectretry=true"));
+            final Mongo mongoHost = new Mongo(new MongoURI("mongodb://"+testHost.hostnameAndPort+"/?connectTimeoutMS=30000;socketTimeoutMS=30000;maxpoolsize=5;autoconnectretry=true"));
             try {
                 final CommandResult serverStatusResult
                 = mongoHost.getDB("com_mongodb_unittest_SecondaryReadTest").command(new BasicDBObject("serverStatus", 1));
@@ -318,7 +328,7 @@ public class SecondaryReadTest extends TestCase {
                 if (pBefore) testHost.queriesBefore = opcounters.getLong("query");
                 else testHost.queriesAfter = opcounters.getLong("query");
 
-            } finally { mongoHost.close(); }
+            } finally { if (mongoHost != null) mongoHost.close(); }
         }
     }
 
