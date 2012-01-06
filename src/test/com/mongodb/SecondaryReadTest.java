@@ -253,7 +253,9 @@ public class SecondaryReadTest extends TestCase {
         // Insert some test data.
         for (int idx=0; idx < INSERT_COUNT; idx++) {
             final ObjectId id = ObjectId.get();
+            System.err.println("Inserting ID " + id + " with REPLICAS_SAFE");
             WriteResult writeResult = pCol.insert(new BasicDBObject("_id", id), WriteConcern.REPLICAS_SAFE);
+            System.err.println("Inserted OK.");
             writeResult.getLastError().throwOnError();
             insertedIds.add(id);
         }
