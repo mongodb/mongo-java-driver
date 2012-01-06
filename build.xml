@@ -340,7 +340,7 @@ limitations under the License.
 
     <target name="jenkins-test" depends="with.clover,compile">
 
-        <testng classpathref="classpath.clover" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener, com.cenqua.clover.tasks.testng.CloverOptimizedTestSelector" haltonfailure="false" >
+        <testng classpathref="classpath.clover" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener, com.cenqua.clover.tasks.testng.CloverOptimizedTestSelector" haltonfailure="false" verbose="3">
             <jvmarg value="-Xmx512M" />
             <xmlfileset dir="." includes="testng.xml"/>
         </testng>
