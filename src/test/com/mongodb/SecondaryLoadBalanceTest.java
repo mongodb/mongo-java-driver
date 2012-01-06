@@ -66,10 +66,10 @@ public class SecondaryLoadBalanceTest extends TestCase {
             counters.get(addr.getHost()).incrementAndGet();
         }
 
-        System.out.println("---- node count: " + nodes.size());
+        //System.out.println("---- node count: " + nodes.size());
 
         for (final String host : counters.keySet()) {
-            System.out.println(host + " : " + counters.get(host).get());
+            //System.out.println(host + " : " + counters.get(host).get());
             assertEquals(true, counters.get(host).get() > 0);
         }
     }
