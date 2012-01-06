@@ -203,7 +203,7 @@ public class SecondaryReadTest extends TestCase {
     }
 
     private Mongo loadMongo() throws Exception {
-        return new Mongo(new MongoURI("mongodb://127.0.0.1:27017,127.0.0.1:27018"));
+        return new Mongo(new MongoURI("mongodb://127.0.0.1:27017,127.0.0.1:27018/?connectTimeoutMS=20000;socketTimeoutMS=20000;maxpoolsize=50;autoconnectretry=true"));
     }
 
     private CommandResult serverStatusCmd(final Mongo pMongo) {
@@ -308,7 +308,7 @@ public class SecondaryReadTest extends TestCase {
 
     private static void loadQueryCount(final List<TestHost> pHosts, final boolean pBefore) throws Exception {
         for (final TestHost testHost : pHosts) {
-            final Mongo mongoHost = new Mongo(new MongoURI("mongodb://"+testHost.hostnameAndPort));
+            final Mongo mongoHost = new Mongo(new MongoURI("mongodb://"+testHost.hostnameAndPort+"/?connectTimeoutMS=20000;socketTimeoutMS=20000;maxpoolsize=50;autoconnectretry=true"));
             try {
                 final CommandResult serverStatusResult
                 = mongoHost.getDB("com_mongodb_unittest_SecondaryReadTest").command(new BasicDBObject("serverStatus", 1));
