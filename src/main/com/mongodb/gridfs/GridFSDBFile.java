@@ -18,6 +18,7 @@
 
 package com.mongodb.gridfs;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -64,7 +65,15 @@ public class GridFSDBFile extends GridFSFile {
      * @throws IOException
      */
     public long writeTo( File f ) throws IOException {
-        return writeTo( new FileOutputStream( f ) );
+    	OutputStream os = null;
+    	try {
+    		os = new BufferedOutputStream( new FileOutputStream( f ) );
+    		return writeTo( os );
+    	} finally {
+            if (os != null){
+    		    os.close();
+            }
+    	}
     }
 
     /**

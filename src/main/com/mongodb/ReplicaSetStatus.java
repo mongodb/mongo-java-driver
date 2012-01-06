@@ -334,7 +334,7 @@ public class ReplicaSetStatus {
 	                    _setName.set(setName);
 	                    _logger.set( Logger.getLogger( _rootLogger.getName() + "." + setName ) );
 	                }
-	                else if ( !_setName.equals( setName ) ){
+	                else if ( !_setName.get().equals( setName ) ){
 	                    _logger.get().log( Level.SEVERE , "mis match set name old: " + _setName.get() + " new: " + setName );
 	                    return;
 	                }
