@@ -1,4 +1,10 @@
 
+2.7.3RC1 / 2012-01-17 
+==================
+
+  * Remove defunct BSONInputTest
+  * JAVA-505 / JAVA-421 - Regression in performance of Java Driver should be rolled back (GC Related)
+
 2.7.2 / 2011-11-10 
 ==================
 
