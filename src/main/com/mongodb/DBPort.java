@@ -143,13 +143,13 @@ public class DBPort {
 
     synchronized private Response findOne( DB db , String coll , DBObject q ) throws IOException {
         OutMessage msg = OutMessage.query( db._mongo , 0 , db.getName() + "." + coll , 0 , -1 , q , null );
-        Response res = go( msg , db.getCollection( coll ) , DefaultDBDecoder.FACTORY.create() );
+        Response res = go( msg , db.getCollection( coll ) , null );
         return res;
     }
 
     synchronized private Response findOne( String ns , DBObject q ) throws IOException{
         OutMessage msg = OutMessage.query( null , 0 , ns , 0 , -1 , q , null );
-        Response res = go( msg , null , true, null, DefaultDBDecoder.FACTORY.create()  );
+        Response res = go( msg , null , true, null, null  );
         return res;
     }
 

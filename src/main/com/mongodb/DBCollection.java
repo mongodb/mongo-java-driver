@@ -329,7 +329,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( Object obj, DBObject fields ) {
-        Iterator<DBObject> iterator = __find(new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions(), getReadPreference(), _decoderFactory.create() );
+        Iterator<DBObject> iterator = __find( new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions(), getReadPreference(), getDecoder() );
         return (iterator != null ? iterator.next() : null);
     }
 
@@ -644,12 +644,18 @@ public abstract class DBCollection {
      * @dochub find
      */
     public final DBObject findOne( DBObject o, DBObject fields, ReadPreference readPref ) {
-        Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0, getOptions(), readPref, _decoderFactory.create() );
+        Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0, getOptions(), readPref, getDecoder() );
         DBObject obj = (i == null ? null : i.next());
         if ( obj != null && ( fields != null && fields.keySet().size() > 0 ) ){
             obj.markAsPartialObject();
         }
         return obj;
+    }
+
+    // Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
+    // so that DBPort will use a cached decoder from the default factory.
+    private DBDecoder getDecoder() {
+        return _decoderFactory != null ? _decoderFactory.create() : null;
     }
 
 
@@ -1143,7 +1149,6 @@ public abstract class DBCollection {
         _name = name;
         _fullName = _db.getName() + "." + name;
         _options = new Bytes.OptionHolder( _db._options );
-        _decoderFactory = _db.getMongo().getMongoOptions().dbDecoderFactory;
         _encoderFactory = _db.getMongo().getMongoOptions().dbEncoderFactory;
     }
 
@@ -1415,17 +1420,27 @@ public abstract class DBCollection {
         return _options.get();
     }
 
+    /**
+     * Set a customer decoder factory for this collection.  Set to null to use the default from MongoOptions.
+     * @param fact  the factory to set.
+     */
     public void setDBDecoderFactory(DBDecoderFactory fact) {
-        if (fact == null)
-            _decoderFactory = _db.getMongo().getMongoOptions().dbDecoderFactory;
-        else
-            _decoderFactory = fact;
+        _decoderFactory = fact;
     }
 
+    /**
+     * Get the decoder factory for this collection.  A null return value means that the default from MongoOptions
+     * is being used.
+     * @return  the factory
+     */
     public DBDecoderFactory getDBDecoderFactory() {
         return _decoderFactory;
     }
 
+    /**
+     * Set a customer encoder factory for this collection.  Set to null to use the default from MongoOptions.
+     * @param fact  the factory to set.
+     */
     public void setDBEncoderFactory(DBEncoderFactory fact) {
         if (fact == null)
             _encoderFactory = _db.getMongo().getMongoOptions().dbEncoderFactory;
@@ -1433,6 +1448,11 @@ public abstract class DBCollection {
             _encoderFactory = fact;
     }
 
+    /**
+     * Get the encoder factory for this collection.  A null return value means that the default from MongoOptions
+     * is being used.
+     * @return  the factory
+     */
     public DBEncoderFactory getDBEncoderFactory() {
         return _encoderFactory;
     }

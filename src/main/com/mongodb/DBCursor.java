@@ -366,13 +366,19 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
                     foo.put( "$snapshot", true );
             }
 
-            _it = _collection.__find( foo, _keysWanted, _skip, _batchSize, _limit , _options , _readPref , _decoderFact.create() );
+            _it = _collection.__find( foo, _keysWanted, _skip, _batchSize, _limit , _options , _readPref , getDecoder());
         }
 
         if ( _it == null ){
             _it = (new LinkedList<DBObject>()).iterator();
             _fake = true;
         }
+    }
+
+    // Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
+    // so that the collection can use a cached decoder
+    private DBDecoder getDecoder() {
+        return _decoderFact != null ? _decoderFact.create() : null;
     }
 
     /**
