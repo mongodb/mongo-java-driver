@@ -54,7 +54,7 @@ public abstract class DBCollection {
      * @dochub insert
      */
     public WriteResult insert(DBObject[] arr , WriteConcern concern ) throws MongoException {
-        return insert( arr, concern, getDBEncoderFactory().create() );
+        return insert( arr, concern, getDBEncoder());
     }
 
     /**
@@ -162,7 +162,7 @@ public abstract class DBCollection {
      * @dochub update
      */
     public WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi , WriteConcern concern ) throws MongoException {
-        return update( q, o, upsert, multi, concern, getDBEncoderFactory().create() );
+        return update( q, o, upsert, multi, concern, getDBEncoder());
     }
 
     /**
@@ -236,7 +236,7 @@ public abstract class DBCollection {
      * @dochub remove
      */
     public WriteResult remove( DBObject o , WriteConcern concern ) throws MongoException {
-        return remove(  o, concern, getDBEncoderFactory().create() );
+        return remove(  o, concern, getDBEncoder());
     }
 
     /**
@@ -433,7 +433,7 @@ public abstract class DBCollection {
      * @throws MongoException
      */
     public void createIndex( DBObject keys , DBObject options ) throws MongoException {
-        createIndex( keys, options, getDBEncoderFactory().create() );
+        createIndex( keys, options, getDBEncoder());
     }
 
     /**
@@ -656,6 +656,12 @@ public abstract class DBCollection {
     // so that DBPort will use a cached decoder from the default factory.
     private DBDecoder getDecoder() {
         return _decoderFactory != null ? _decoderFactory.create() : null;
+    }
+
+    // Only create a new encoder if there is an encoder factory explicitly set on the collection.  Otherwise return null
+    // to allow DB to create its own or use a cached one.
+    private DBEncoder getDBEncoder() {
+        return _encoderFactory != null ? _encoderFactory.create() : null;
     }
 
 
@@ -1149,7 +1155,6 @@ public abstract class DBCollection {
         _name = name;
         _fullName = _db.getName() + "." + name;
         _options = new Bytes.OptionHolder( _db._options );
-        _encoderFactory = _db.getMongo().getMongoOptions().dbEncoderFactory;
     }
 
     protected DBObject _checkObject( DBObject o , boolean canBeNull , boolean query ){
@@ -1394,7 +1399,7 @@ public abstract class DBCollection {
      * @param option
      */
     public void addOption( int option ){
-        _options.add( option );
+        _options.add(option);
     }
 
     /**
@@ -1402,7 +1407,7 @@ public abstract class DBCollection {
      * @param options
      */
     public void setOptions( int options ){
-        _options.set( options );
+        _options.set(options);
     }
 
     /**
@@ -1442,10 +1447,7 @@ public abstract class DBCollection {
      * @param fact  the factory to set.
      */
     public void setDBEncoderFactory(DBEncoderFactory fact) {
-        if (fact == null)
-            _encoderFactory = _db.getMongo().getMongoOptions().dbEncoderFactory;
-        else
-            _encoderFactory = fact;
+        _encoderFactory = fact;
     }
 
     /**
