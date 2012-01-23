@@ -655,13 +655,13 @@ public abstract class DBCollection {
     // Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
     // so that DBPort will use a cached decoder from the default factory.
     private DBDecoder getDecoder() {
-        return _decoderFactory != null ? _decoderFactory.create() : null;
+        return getDBDecoderFactory() != null ? getDBDecoderFactory().create() : null;
     }
 
     // Only create a new encoder if there is an encoder factory explicitly set on the collection.  Otherwise return null
     // to allow DB to create its own or use a cached one.
     private DBEncoder getDBEncoder() {
-        return _encoderFactory != null ? _encoderFactory.create() : null;
+        return getDBEncoderFactory() != null ? getDBEncoderFactory().create() : null;
     }
 
 
@@ -1429,7 +1429,7 @@ public abstract class DBCollection {
      * Set a customer decoder factory for this collection.  Set to null to use the default from MongoOptions.
      * @param fact  the factory to set.
      */
-    public void setDBDecoderFactory(DBDecoderFactory fact) {
+    public synchronized void setDBDecoderFactory(DBDecoderFactory fact) {
         _decoderFactory = fact;
     }
 
@@ -1438,7 +1438,7 @@ public abstract class DBCollection {
      * is being used.
      * @return  the factory
      */
-    public DBDecoderFactory getDBDecoderFactory() {
+    public synchronized DBDecoderFactory getDBDecoderFactory() {
         return _decoderFactory;
     }
 
@@ -1446,7 +1446,7 @@ public abstract class DBCollection {
      * Set a customer encoder factory for this collection.  Set to null to use the default from MongoOptions.
      * @param fact  the factory to set.
      */
-    public void setDBEncoderFactory(DBEncoderFactory fact) {
+    public synchronized void setDBEncoderFactory(DBEncoderFactory fact) {
         _encoderFactory = fact;
     }
 
@@ -1455,7 +1455,7 @@ public abstract class DBCollection {
      * is being used.
      * @return  the factory
      */
-    public DBEncoderFactory getDBEncoderFactory() {
+    public synchronized DBEncoderFactory getDBEncoderFactory() {
         return _encoderFactory;
     }
 
