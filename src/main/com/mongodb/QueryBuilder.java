@@ -279,6 +279,23 @@ public class QueryBuilder {
     }
 
     /**
+     * Equivalent to an $and operand
+     * @param ands
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    public QueryBuilder and( DBObject ... ands ){
+        List l = (List)_query.get( "$and" );
+        if ( l == null ){
+            l = new ArrayList();
+            _query.put( "$and" , l );
+        }
+        for ( DBObject o : ands )
+            l.add( o );
+        return this;
+    }
+
+    /**
      * Creates a <code>DBObject</code> query to be used for the driver's find operations
      * @return Returns a DBObject query instance
      * @throws RuntimeException if a key does not have a matching operand

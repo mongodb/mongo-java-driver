@@ -291,6 +291,22 @@ public class QueryBuilderTest extends TestCase {
         
         assertEquals( 2 , c.find( q ).itcount() );
     }
+
+    @Test
+    public void testAnd() {
+        DBCollection c = _testDB.getCollection( "and1" );
+        c.drop();
+        c.insert( new BasicDBObject( "a" , 1 ).append( "b" , 1) );
+        c.insert( new BasicDBObject( "b" , 1 ) );
+        
+        DBObject q = QueryBuilder.start()
+            .and( new BasicDBObject( "a" , 1 ) , 
+                  new BasicDBObject( "b" , 1 ) )
+            .get();
+        
+        assertEquals( 1 , c.find( q ).itcount() );
+    }
+
     
     @AfterClass
     public static void tearDown() {
