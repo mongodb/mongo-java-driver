@@ -9,6 +9,7 @@
  * jira: http://jira.mongodb.org/browse/JAVA
 
 ### Maintainers
+* Jeff Yemin           jeff.yemin@10gen.com
 * Antoine Girbal       antoine@10gen.com
 * Scott Hernandez      scott@10gen.com
 * Brendan McAdams      brendan@10gen.com
@@ -37,4 +38,4 @@
 * Matthew Foemmel      git@foemmel.com
 * Jim Dickinson        jdickinson@shopwiki.com
 * Jorge Ortiz          jorge.ortiz@gmail.com
-* Ryan Nitz
+* Ryan Nitz         
