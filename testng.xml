@@ -41,6 +41,7 @@ limitations under the License.
             <class name="com.mongodb.ObjectIdTest"/>
             <class name="com.mongodb.DBRefTest"/>
             <class name="com.mongodb.QueryBuilderTest"/>
+            <class name="com.mongodb.QueryTest"/>
             <class name="com.mongodb.ErrorTest"/>
             <class name="com.mongodb.ThreadingTest"/>
             <class name="com.mongodb.MongoURITest"/>

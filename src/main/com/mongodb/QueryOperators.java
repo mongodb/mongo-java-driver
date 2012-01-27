@@ -36,4 +36,9 @@ public class QueryOperators {
 	public static final String EXISTS = "$exists";
 	public static final String WHERE = "$where";
 	public static final String NEAR = "$near";
+	public static final String NEARSPHERE = "$nearSphere";
+	public static final String MAXDISTANCE = "$maxDistance";
+	public static final String AND = "$and";
+	public static final String OR = "$or";
+	public static final String ELEMMATCH = "$elemMatch";
 }
