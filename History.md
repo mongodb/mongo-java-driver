@@ -1,4 +1,12 @@
 
+2.7.3 / 2012-01-30 
+==================
+
+  * synchronized access to encoder/decoder
+  * JAVA-505: Made encoder creation work just like decoder creation
+    + using cached DBDecoder in most cases to avoid excessive memory allocation caused by too many instances of DefaultDBDecoder being created
+  * JAVA-505 / JAVA-421 - Regression in performance of Java Driver should be rolled back (GC Related)
+
 2.7.3RC1 / 2012-01-17 
 ==================
 
