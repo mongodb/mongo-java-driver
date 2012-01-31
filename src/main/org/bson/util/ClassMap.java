@@ -18,156 +18,109 @@
 
 package org.bson.util;
 
-import org.bson.util.concurrent.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import java.util.*;
+import org.bson.util.concurrent.ComputingMap;
+import org.bson.util.concurrent.Function;
 
 /**
- * Maps Class objects to values. A ClassMap is different from a regular Map in that get(c) does not only look to see if
- * 'c' is a key in the Map, but also walks the up superclass and interface graph of 'c' to find matches. Derived matches
- * of this sort are then "cached" in the registry so that matches are faster on future gets.
- *
+ * Maps Class objects to values. A ClassMap is different from a regular Map in
+ * that get(c) does not only look to see if 'c' is a key in the Map, but also
+ * walks the up superclass and interface graph of 'c' to find matches. Derived
+ * matches of this sort are then "cached" in the registry so that matches are
+ * faster on future gets.
+ * 
  * This is a very useful class for Class based registries.
- *
+ * 
  * Example:
- *
- * ClassMap<String> m = new ClassMap<String>(); m.put(Animal.class, "Animal"); m.put(Fox.class, "Fox"); m.Fox.class) -->
- * "Fox" m.get(Dog.class) --> "Animal"
- *
+ * 
+ * ClassMap<String> m = new ClassMap<String>(); m.put(Animal.class, "Animal");
+ * m.put(Fox.class, "Fox"); m.Fox.class) --> "Fox" m.get(Dog.class) --> "Animal"
+ * 
  * (assuming Dog.class &lt; Animal.class)
  */
-@SuppressWarnings( "unchecked" )
-public class ClassMap<T> extends CopyOnWriteMap<Class, T> {
-
-    public ClassMap(){
-        super( new HashMap<Class, T>(), View.Type.LIVE );
-    }
-
-    @Override
-    protected <N extends Map<? extends Class, ? extends T>> Map<Class, T> copy( N map ){
-        return new HashMap<Class, T>( map );
-    }
-
+public class ClassMap<T> implements Map<Class<?>, T> {
 
     /**
-     * cache
+     * Walks superclass and interface graph, superclasses first, then
+     * interfaces, to compute an ancestry list. Supertypes are visited left to
+     * right. Duplicates are removed such that no Class will appear in the list
+     * before one of its subtypes.
      */
-    protected Map<Class, T> getCache(){
-        return ( _cache );
+    public static <T> List<Class<?>> getAncestry(Class<T> c) {
+        return ClassAncestry.getAncestry(c);
     }
 
-    private void setCache( Map m ){
-        _cache = m;
-    }
-
-
-    /**
-     * computeValue
-     */
-    private T computeValue( Class key ){
-        List<Class> ancestry = getAncestry( key );
-        Map<Class, T> map = getCache();
-        for ( Class c : ancestry ){
-            if ( map.containsKey( c ) ){
-                T value = map.get( c );
-                return ( value );
+    private final class ComputeFunction implements Function<Class<?>, T> {
+        @Override
+        public T apply(Class<?> a) {
+            for (Class<?> cls : getAncestry(a)) {
+                if (a != cls) {
+                    return get(cls);
+                }
             }
+            return null;
         }
-        return ( null );
+    };
+
+    private final Map<Class<?>, T> map = ComputingMap.create(new ComputeFunction());
+
+    public int size() {
+        return map.size();
     }
 
-    /**
-     * initCache
-     */
-    protected void initCache(){
-        final Map cache = getCache();
-        cache.clear();
-        cache.putAll( this );
+    public boolean isEmpty() {
+        return map.isEmpty();
     }
 
-    /**
-     * toString
-     */
-    public String toString(){
-        return ( getCache().toString() );
+    public boolean containsKey(Object key) {
+        return map.containsKey(key);
     }
 
-    /**
-     * getAncestry
-     *
-     * Walks superclass and interface graph, superclasses first, then interfaces, to compute an ancestry list.
-     * Supertypes are visited left to right. Duplicates are removed such that no Class will appear in the list before
-     * one of its subtypes.
-     *
-     * Does not need to be synchronized, races are harmless as the Class graph does not change at runtime.
-     */
-    public static List<Class> getAncestry( Class c ){
-        List<Class> result = null;
-
-        Map<Class, List<Class>> cache = getClassAncestryCache();
-        List<Class> cachedResult = cache.get( c );
-        if ( cachedResult != null ){
-            result = cachedResult;
-        }
-        else{
-            result = new ArrayList<Class>();
-
-            List<Class> ancestry = computeAncestry( c );
-            int size = ancestry.size();
-            for ( int i = 0; i < size; i++ ){
-                result.add( ancestry.get( ( size - i ) - 1 ) );
-            }
-
-            cache.put( c, result );
-        }
-
-        return ( result );
+    public boolean containsValue(Object value) {
+        return map.containsValue(value);
     }
 
-    /**
-     * computeAncestry
-     */
-    private static List<Class> computeAncestry( Class c ){
-        final List<Class> result = new ArrayList<Class>();
-        result.add( Object.class );
-        computeAncestry( c, result );
-        return ( result );
+    public T get(Object key) {
+        return map.get(key);
     }
 
-    private static void computeAncestry( Class c, List result ){
-        if ( ( c == null ) || ( c == Object.class ) ){
-            return;
-        }
-
-        // first interfaces (looks backwards but is not)
-        Class[] interfaces = c.getInterfaces();
-        for ( int i = interfaces.length - 1; i >= 0; i-- ){
-            computeAncestry( interfaces[i], result );
-        }
-
-        // next superclass
-        computeAncestry( c.getSuperclass(), result );
-
-        if ( !result.contains( c ) )
-            result.add( c );
+    public T put(Class<?> key, T value) {
+        return map.put(key, value);
     }
 
-    /**
-     * classAncestryCache
-     */
-    private static Map getClassAncestryCache(){
-        return ( _ancestryCache );
+    public T remove(Object key) {
+        return map.remove(key);
     }
 
-    private static void setClassAncestryCache( Map m ){
-        _ancestryCache = m;
+    public void putAll(Map<? extends Class<?>, ? extends T> m) {
+        map.putAll(m);
     }
 
-    /**
-     * private members
-     */
-    private Map<Class, T> _cache = new HashMap<Class, T>();
+    public void clear() {
+        map.clear();
+    }
 
-    private static Map<Class, List<Class>> _ancestryCache = new HashMap<Class, List<Class>>();
+    public Set<Class<?>> keySet() {
+        return map.keySet();
+    }
 
+    public Collection<T> values() {
+        return map.values();
+    }
+
+    public Set<java.util.Map.Entry<Class<?>, T>> entrySet() {
+        return map.entrySet();
+    }
+
+    public boolean equals(Object o) {
+        return map.equals(o);
+    }
+
+    public int hashCode() {
+        return map.hashCode();
+    }
 }
