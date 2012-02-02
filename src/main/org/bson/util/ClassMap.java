@@ -18,12 +18,11 @@
 
 package org.bson.util;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.bson.util.concurrent.ComputingMap;
+import org.bson.util.concurrent.CopyOnWriteMap;
 import org.bson.util.concurrent.Function;
 
 /**
@@ -42,7 +41,7 @@ import org.bson.util.concurrent.Function;
  * 
  * (assuming Dog.class &lt; Animal.class)
  */
-public class ClassMap<T> implements Map<Class<?>, T> {
+public class ClassMap<T>  {
 
     /**
      * Walks superclass and interface graph, superclasses first, then
@@ -58,15 +57,44 @@ public class ClassMap<T> implements Map<Class<?>, T> {
         @Override
         public T apply(Class<?> a) {
             for (Class<?> cls : getAncestry(a)) {
-                if (a != cls) {
-                    return get(cls);
+                T result = map.get(cls);
+                System.out.println("trying: " + a + " and " + cls + " : " + result);
+                if (result != null) {
+                    return result;
                 }
             }
             return null;
         }
     };
 
-    private final Map<Class<?>, T> map = ComputingMap.create(new ComputeFunction());
+    private final Map<Class<?>, T> map = CopyOnWriteMap.newHashMap();
+    private final Map<Class<?>, T> cache = ComputingMap.create(new ComputeFunction());
+
+
+    public T get(Object key) {
+        return cache.get(key);
+    }
+
+    public T put(Class<?> key, T value) {
+        try {
+            return map.put(key, value);
+        } finally {
+            cache.clear();
+        }
+    }
+
+    public T remove(Object key) {
+        try {
+            return map.remove(key);
+        } finally {
+            cache.clear();
+        }
+    }
+
+    public void clear() {
+        map.clear();
+        cache.clear();
+    }
 
     public int size() {
         return map.size();
@@ -74,53 +102,5 @@ public class ClassMap<T> implements Map<Class<?>, T> {
 
     public boolean isEmpty() {
         return map.isEmpty();
-    }
-
-    public boolean containsKey(Object key) {
-        return map.containsKey(key);
-    }
-
-    public boolean containsValue(Object value) {
-        return map.containsValue(value);
-    }
-
-    public T get(Object key) {
-        return map.get(key);
-    }
-
-    public T put(Class<?> key, T value) {
-        return map.put(key, value);
-    }
-
-    public T remove(Object key) {
-        return map.remove(key);
-    }
-
-    public void putAll(Map<? extends Class<?>, ? extends T> m) {
-        map.putAll(m);
-    }
-
-    public void clear() {
-        map.clear();
-    }
-
-    public Set<Class<?>> keySet() {
-        return map.keySet();
-    }
-
-    public Collection<T> values() {
-        return map.values();
-    }
-
-    public Set<java.util.Map.Entry<Class<?>, T>> entrySet() {
-        return map.entrySet();
-    }
-
-    public boolean equals(Object o) {
-        return map.equals(o);
-    }
-
-    public int hashCode() {
-        return map.hashCode();
     }
 }
