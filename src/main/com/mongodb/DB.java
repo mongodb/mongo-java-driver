@@ -77,7 +77,7 @@ public abstract class DB {
      * @param name the name of the collection to return
      * @return the collection
      */
-    public final DBCollection getCollection( String name ){
+    public DBCollection getCollection( String name ){
         DBCollection c = doGetCollection( name );
         return c;
     }
@@ -96,7 +96,7 @@ public abstract class DB {
      * @param options options
      * @return the collection
      */
-    public final DBCollection createCollection( String name, DBObject options ){
+    public DBCollection createCollection( String name, DBObject options ){
         if ( options != null ){
             DBObject createCmd = new BasicDBObject("create", name);
             createCmd.putAll(options);

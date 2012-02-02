@@ -280,7 +280,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     @Deprecated
-    public final DBCursor find( DBObject query , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException{
+    public DBCursor find( DBObject query , DBObject fields , int numToSkip , int batchSize , int options ) throws MongoException{
     	return find(query, fields, numToSkip, batchSize).addOption(options);
     }
 
@@ -298,7 +298,7 @@ public abstract class DBCollection {
      * @dochub find
      */
     @Deprecated
-    public final DBCursor find( DBObject query , DBObject fields , int numToSkip , int batchSize ) {
+    public DBCursor find( DBObject query , DBObject fields , int numToSkip , int batchSize ) {
     	DBCursor cursor = find(query, fields).skip(numToSkip).batchSize(batchSize);
     	return cursor;
     }
@@ -313,7 +313,7 @@ public abstract class DBCollection {
      * @return the object, if found, otherwise <code>null</code>
      * @throws MongoException
      */
-    public final DBObject findOne( Object obj )
+    public DBObject findOne( Object obj )
         throws MongoException {
         return findOne(obj, null);
     }
@@ -328,7 +328,7 @@ public abstract class DBCollection {
      * @return the object, if found, otherwise <code>null</code>
      * @dochub find
      */
-    public final DBObject findOne( Object obj, DBObject fields ) {
+    public DBObject findOne( Object obj, DBObject fields ) {
         Iterator<DBObject> iterator = __find( new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions(), getReadPreference(), getDecoder() );
         return (iterator != null ? iterator.next() : null);
     }
@@ -421,7 +421,7 @@ public abstract class DBCollection {
      * @param keys an object with a key set of the fields desired for the index
      * @throws MongoException
      */
-    public final void createIndex( final DBObject keys )
+    public void createIndex( final DBObject keys )
         throws MongoException {
         createIndex( keys , defaultOptions( keys ) );
     }
@@ -449,7 +449,7 @@ public abstract class DBCollection {
      * Creates an ascending index on a field with default options, if one does not already exist.
      * @param name name of field to index on
      */
-    public final void ensureIndex( final String name ){
+    public void ensureIndex( final String name ){
         ensureIndex( new BasicDBObject( name , 1 ) );
     }
 
@@ -458,7 +458,7 @@ public abstract class DBCollection {
      * @param keys an object with a key set of the fields desired for the index
      * @throws MongoException
      */
-    public final void ensureIndex( final DBObject keys )
+    public void ensureIndex( final DBObject keys )
         throws MongoException {
         ensureIndex( keys , defaultOptions( keys ) );
     }
@@ -498,7 +498,7 @@ public abstract class DBCollection {
      * @param optionsIN options for the index (name, unique, etc)
      * @throws MongoException
      */
-    public final void ensureIndex( final DBObject keys , final DBObject optionsIN )
+    public void ensureIndex( final DBObject keys , final DBObject optionsIN )
         throws MongoException {
 
         if ( checkReadOnly( false ) ) return;
@@ -564,7 +564,7 @@ public abstract class DBCollection {
      * @return an iterator over the results
      * @dochub find
      */
-    public final DBCursor find( DBObject ref ){
+    public DBCursor find( DBObject ref ){
         return new DBCursor( this, ref, null, getReadPreference());
     }
 
@@ -591,7 +591,7 @@ public abstract class DBCollection {
      * @return a cursor to iterate over results
      * @dochub find
      */
-    public final DBCursor find( DBObject ref , DBObject keys ){
+    public DBCursor find( DBObject ref , DBObject keys ){
         return new DBCursor( this, ref, keys, getReadPreference());
     }
 
@@ -601,7 +601,7 @@ public abstract class DBCollection {
      * @return a cursor which will iterate over every object
      * @dochub find
      */
-    public final DBCursor find(){
+    public DBCursor find(){
         return new DBCursor( this, null, null, getReadPreference());
     }
 
@@ -610,7 +610,7 @@ public abstract class DBCollection {
      * @return the object found, or <code>null</code> if the collection is empty
      * @throws MongoException
      */
-    public final DBObject findOne()
+    public DBObject findOne()
         throws MongoException {
         return findOne( new BasicDBObject() );
     }
@@ -621,7 +621,7 @@ public abstract class DBCollection {
      * @return the object found, or <code>null</code> if no such object exists
      * @throws MongoException
      */
-    public final DBObject findOne( DBObject o )
+    public DBObject findOne( DBObject o )
         throws MongoException {
         return findOne( o, null, getReadPreference());
     }
@@ -633,7 +633,7 @@ public abstract class DBCollection {
      * @return the object found, or <code>null</code> if no such object exists
      * @dochub find
      */
-    public final DBObject findOne( DBObject o, DBObject fields ) {
+    public DBObject findOne( DBObject o, DBObject fields ) {
         return findOne( o, fields, getReadPreference());
     }
     /**
@@ -643,7 +643,7 @@ public abstract class DBCollection {
      * @return the object found, or <code>null</code> if no such object exists
      * @dochub find
      */
-    public final DBObject findOne( DBObject o, DBObject fields, ReadPreference readPref ) {
+    public DBObject findOne( DBObject o, DBObject fields, ReadPreference readPref ) {
         Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0, getOptions(), readPref, getDecoder() );
         DBObject obj = (i == null ? null : i.next());
         if ( obj != null && ( fields != null && fields.keySet().size() > 0 ) ){
@@ -670,7 +670,7 @@ public abstract class DBCollection {
      * @param o <code>DBObject</code> to which to add fields
      * @return the modified parameter object
      */
-    public final Object apply( DBObject o ){
+    public Object apply( DBObject o ){
         return apply( o , true );
     }
 
@@ -680,7 +680,7 @@ public abstract class DBCollection {
      * @param ensureID whether to add an <code>_id</code> field
      * @return the modified object <code>o</code>
      */
-    public final Object apply( DBObject jo , boolean ensureID ){
+    public Object apply( DBObject jo , boolean ensureID ){
 
         Object id = jo.get( "_id" );
         if ( ensureID && id == null ){
@@ -699,7 +699,7 @@ public abstract class DBCollection {
      *        will add <code>_id</code> field to jo if needed
      * @return
      */
-    public final WriteResult save( DBObject jo ) {
+    public WriteResult save( DBObject jo ) {
     	return save(jo, getWriteConcern());
     }
 
@@ -710,7 +710,7 @@ public abstract class DBCollection {
      * @return
      * @throws MongoException
      */
-    public final WriteResult save( DBObject jo, WriteConcern concern )
+    public WriteResult save( DBObject jo, WriteConcern concern )
         throws MongoException {
         if ( checkReadOnly( true ) )
             return null;
