@@ -87,14 +87,15 @@ public class DBTCPConnectorTest extends TestCase {
     /**
      * Tests that same connections is used for sequential reads
      */
-    @Test
-    public void testConnectionReservationForReads() {
-        _connector.requestStart();
-        _connector.call(_db, _collection,
-                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.PRIMARY),
-                null, 0);
-        assertNotNull(_connector.getMyPort()._requestPort);
-    }
+    // TODO: re-enable this test for JAVA-498
+//    @Test
+//    public void testConnectionReservationForReads() {
+//        _connector.requestStart();
+//        _connector.call(_db, _collection,
+//                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.PRIMARY),
+//                null, 0);
+//        assertNotNull(_connector.getMyPort()._requestPort);
+//    }
 
 
     private OutMessage createOutMessageForInsert() {
