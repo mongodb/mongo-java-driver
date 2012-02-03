@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.util.concurrent;
+package org.bson.util;
 
 /**
  * Design by contract assertions.

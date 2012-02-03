@@ -1,7 +1,7 @@
 package org.bson.util;
 
 import static java.util.Collections.unmodifiableList;
-import static org.bson.util.concurrent.CopyOnWriteMap.newHashMap;
+import static org.bson.util.CopyOnWriteMap.newHashMap;
 
 import java.util.ArrayList;
 import java.util.Collections;

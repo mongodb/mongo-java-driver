@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package org.bson.util.concurrent;
+package org.bson.util;
 
-import static org.bson.util.concurrent.Assertions.notNull;
+import static org.bson.util.Assertions.notNull;
 import static java.util.Collections.unmodifiableCollection;
 import static java.util.Collections.unmodifiableSet;
-import org.bson.util.concurrent.annotations.GuardedBy;
-import org.bson.util.concurrent.annotations.ThreadSafe;
+import org.bson.util.annotations.GuardedBy;
+import org.bson.util.annotations.ThreadSafe;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -42,7 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * navigable maps.
  */
 @ThreadSafe
-public abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements ConcurrentMap<K, V>, Serializable {
+abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements ConcurrentMap<K, V>, Serializable {
     private static final long serialVersionUID = 4508989182041753878L;
 
     @GuardedBy("lock")

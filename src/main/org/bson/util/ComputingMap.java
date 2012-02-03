@@ -1,13 +1,13 @@
-package org.bson.util.concurrent;
+package org.bson.util;
 
-import static org.bson.util.concurrent.Assertions.notNull;
+import static org.bson.util.Assertions.notNull;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-public final class ComputingMap<K, V> implements Map<K, V>, Function<K, V> {
+final class ComputingMap<K, V> implements Map<K, V>, Function<K, V> {
 
     public static <K, V> Map<K, V> create(Function<K, V> function) {
         return new ComputingMap<K, V>(CopyOnWriteMap.<K, V> newHashMap(), function);

@@ -1,6 +1,3 @@
-package org.bson.util.concurrent.annotations;
-import java.lang.annotation.*;
-
 /*
  * Copyright (c) 2005 Brian Goetz and Tim Peierls
  * Released under the Creative Commons Attribution License
@@ -10,6 +7,10 @@ import java.lang.annotation.*;
  * Any republication or derived work distributed in source code form
  * must include this copyright and license notice.
  */
+
+package org.bson.util.annotations;
+
+import java.lang.annotation.*;
 
 
 /**
