@@ -8,7 +8,7 @@
  * must include this copyright and license notice.
  */
 
-package org.bson.util.concurrent.annotations;
+package org.bson.util.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

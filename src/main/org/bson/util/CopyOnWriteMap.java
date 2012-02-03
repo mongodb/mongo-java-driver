@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.util.concurrent;
+package org.bson.util;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,10 +23,10 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.WeakHashMap;
 
-import org.bson.util.concurrent.annotations.GuardedBy;
-import org.bson.util.concurrent.annotations.ThreadSafe;
+import org.bson.util.annotations.GuardedBy;
+import org.bson.util.annotations.ThreadSafe;
 
-import org.bson.util.concurrent.AbstractCopyOnWriteMap.View.Type;
+import org.bson.util.AbstractCopyOnWriteMap.View.Type;
 
 /**
  * A thread-safe variant of {@link Map} in which all mutative operations (the
@@ -56,7 +56,7 @@ import org.bson.util.concurrent.AbstractCopyOnWriteMap.View.Type;
  * underlying Map implementations
  * <p>
  * There are supplied implementations for the common j.u.c {@link Map}
- * implementations via the {@link CopyOnWriteMaps} static {@link Builder}.
+ * implementations via the {@link CopyOnWriteMap} static {@link Builder}.
  * <p>
  * Collection views of the keys, values and entries are optionally
  * {@link View.Type.LIVE live} or {@link View.Type.STABLE stable}. Live views
@@ -78,7 +78,7 @@ import org.bson.util.concurrent.AbstractCopyOnWriteMap.View.Type;
  * @author Jed Wesley-Smith
  */
 @ThreadSafe
-public abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, V>> {
+abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, V>> {
     private static final long serialVersionUID = 7935514534647505917L;
 
     /**

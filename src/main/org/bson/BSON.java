@@ -22,7 +22,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -175,7 +175,7 @@ public class BSON {
         _encodeHooks = true;
         List<Transformer> l = _encodingHooks.get( c );
         if ( l == null ){
-            l = new Vector<Transformer>();
+            l = new CopyOnWriteArrayList<Transformer>();
             _encodingHooks.put( c , l );
         }
         l.add( t );
@@ -185,7 +185,7 @@ public class BSON {
         _decodeHooks = true;
         List<Transformer> l = _decodingHooks.get( c );
         if ( l == null ){
-            l = new Vector<Transformer>();
+            l = new CopyOnWriteArrayList<Transformer>();
             _decodingHooks.put( c , l );
         }
         l.add( t );

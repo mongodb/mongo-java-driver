@@ -21,10 +21,6 @@ package org.bson.util;
 import java.util.List;
 import java.util.Map;
 
-import org.bson.util.concurrent.ComputingMap;
-import org.bson.util.concurrent.CopyOnWriteMap;
-import org.bson.util.concurrent.Function;
-
 /**
  * Maps Class objects to values. A ClassMap is different from a regular Map in
  * that get(c) does not only look to see if 'c' is a key in the Map, but also
