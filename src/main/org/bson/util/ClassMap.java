@@ -42,7 +42,6 @@ import org.bson.util.concurrent.Function;
  * (assuming Dog.class &lt; Animal.class)
  */
 public class ClassMap<T>  {
-
     /**
      * Walks superclass and interface graph, superclasses first, then
      * interfaces, to compute an ancestry list. Supertypes are visited left to
@@ -58,7 +57,6 @@ public class ClassMap<T>  {
         public T apply(Class<?> a) {
             for (Class<?> cls : getAncestry(a)) {
                 T result = map.get(cls);
-                System.out.println("trying: " + a + " and " + cls + " : " + result);
                 if (result != null) {
                     return result;
                 }
