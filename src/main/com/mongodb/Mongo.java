@@ -286,12 +286,20 @@ public class Mongo {
     }
 
     /**
-     * gets a database object
+     * gets a database object, creating it if it doesn't exist
      * @param dbname the database name
      * @return
      */
     public DB getDB( String dbname ){
+        return getDBWithAdminCommandOnCreation(dbname, null);
+    }
 
+  /**
+     * gets a database object, creating it and running the specified command if the db doesn't exist
+     * @param dbname the database name
+     * @return
+     */
+    public DB getDBWithAdminCommandOnCreation(String dbname, DBObject cmd){
         DB db = _dbs.get( dbname );
         if ( db != null )
             return db;
@@ -300,7 +308,21 @@ public class Mongo {
         DB temp = _dbs.putIfAbsent( dbname , db );
         if ( temp != null )
             return temp;
+        if ( cmd != null ) {
+            getDB("admin").command(cmd);
+
+        }
         return db;
+    }
+
+  /**
+     * gets a sharded database object, creating it if it doesn't exist
+     * @param dbname the database name
+     * @return
+     */
+    public DB getShardedDB( String dbname){
+        DBObject cmd = new BasicDBObject( "enablesharding", dbname );
+        return getDBWithAdminCommandOnCreation(dbname, cmd);
     }
 
     /**

@@ -113,13 +113,22 @@ public class DBApiLayer extends DB {
     }
 
     protected MyCollection doGetCollection( String name ){
+        return doGetCollectionWithDBCommandOnCreation(name, null);
+    }
+
+    protected MyCollection doGetCollectionWithDBCommandOnCreation(String name, DBObject cmd) {
         MyCollection c = _collections.get( name );
         if ( c != null )
             return c;
 
         c = new MyCollection( name );
         MyCollection old = _collections.putIfAbsent(name, c);
-        return old != null ? old : c;
+        if (old != null) return old;
+        else {
+            if (cmd != null) getMongo().getDB("admin").command(cmd);
+            return c;
+        }
+
     }
 
     String _removeRoot( String ns ){
