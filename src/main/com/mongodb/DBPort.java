@@ -27,6 +27,7 @@ import java.net.Socket;
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -342,7 +343,7 @@ public class DBPort {
 
     private boolean _processingResponse;
 
-    private Map<DB,Boolean> _authed = Collections.synchronizedMap( new WeakHashMap<DB,Boolean>() );
+    private Map<DB,Boolean> _authed = new ConcurrentHashMap<DB, Boolean>( );
     int _lastThread;
     long _calls = 0;
 
