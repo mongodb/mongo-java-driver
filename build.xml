@@ -344,11 +344,11 @@ limitations under the License.
             <jvmarg value="-Xmx512M" />
             <xmlfileset dir="." includes="testng.xml"/>
         </testng>
-        <clover-report>
-            <current outfile="coverage.xml">
-                <format type="xml"/>
-            </current>
-        </clover-report>
+        <!--<clover-report>-->
+            <!--<current outfile="coverage.xml">-->
+                <!--<format type="xml"/>-->
+            <!--</current>-->
+        <!--</clover-report>-->
     </target>
 
   <!-- NOTE: publish-local is now located in maven/ -->
