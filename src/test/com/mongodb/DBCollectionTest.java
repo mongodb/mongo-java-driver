@@ -66,8 +66,6 @@ public class DBCollectionTest extends TestCase {
         }
     }
 
-    /*
-    TODO: fix... build is broken.
     @Test(groups = {"basic"})
     public void testFindOne() {
         DBCollection c = _db.getCollection("test");
@@ -110,7 +108,6 @@ public class DBCollectionTest extends TestCase {
         assertEquals(obj.containsField("x"), false);
         assertEquals(obj.get("y"), 2);
     }
-    */
 
     /**
      * This was broken recently. Adding test.
