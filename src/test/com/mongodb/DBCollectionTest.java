@@ -21,6 +21,8 @@ import java.util.List;
 
 import org.bson.types.*;
 import org.testng.annotations.Test;
+import org.testng.Assert;
+
 
 import com.mongodb.util.TestCase;
 
@@ -46,6 +48,22 @@ public class DBCollectionTest extends TestCase {
         DBObject inserted2 = BasicDBObjectBuilder.start().add("x",3).add("y",3).get();
         c.insert(inserted1,inserted2);
         c.insert(new DBObject[] {inserted1,inserted2});
+    }
+
+    @Test(groups = {"basic"})
+    public void testDuplicateKeyException() {
+        DBCollection c = _db.getCollection("testDuplicateKey");
+        c.drop();
+        
+        DBObject obj = new BasicDBObject();
+        c.insert(obj, WriteConcern.SAFE);
+        try {
+           c.insert(obj, WriteConcern.SAFE);
+           Assert.fail();
+        }
+        catch (MongoException.DuplicateKey e) {
+           // Proves that a DuplicateKey exception is thrown, as test will fail if any other exception is thrown
+        }
     }
 
     /*
@@ -288,7 +306,6 @@ public class DBCollectionTest extends TestCase {
         DBObject obj = BasicDBObjectBuilder.start().add("x",1).add("y",2).add("foo.bar","baz").get();
         c.insert(obj);
     }
-
 
     final DB _db;
 
