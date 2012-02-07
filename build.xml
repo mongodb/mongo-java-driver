@@ -338,9 +338,9 @@ limitations under the License.
       <fail message="The target you are attempting to run requires Clover, which doesn't appear to be installed"/>
     </target>
 
-    <target name="jenkins-test" depends="with.clover,compile">
+    <target name="jenkins-test" depends="compile">
 
-        <testng classpathref="classpath.clover" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener, com.cenqua.clover.tasks.testng.CloverOptimizedTestSelector" haltonfailure="false" verbose="1">
+        <testng classpathref="classpath.clover" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1">
             <jvmarg value="-Xmx512M" />
             <xmlfileset dir="." includes="testng.xml"/>
         </testng>
