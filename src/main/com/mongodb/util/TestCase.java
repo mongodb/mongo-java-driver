@@ -29,7 +29,7 @@ import java.util.List;
 import com.mongodb.Mongo;
 
 public class TestCase extends MyAsserts {
-    
+
     static class Test {
         Test( Object o , Method m ){
             _o = o;
@@ -229,6 +229,16 @@ public class TestCase extends MyAsserts {
         catch ( Exception e ){
             throw new RuntimeException( e );
         }
+    }
+
+    /**
+     *
+     * @param version  must be a major version, e.g. 1.8, 2,0, 2.2
+     * @return true if server is at least specified version
+     */
+    protected boolean serverIsAtLeastVersion(double version) {
+        String serverVersion = (String) cleanupMongo.getDB("admin").command("serverStatus").get("version");
+        return Double.parseDouble(serverVersion.substring(0, 3)) >= version;
     }
 
     public static void main( String args[] )

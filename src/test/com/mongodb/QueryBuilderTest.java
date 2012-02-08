@@ -294,6 +294,10 @@ public class QueryBuilderTest extends TestCase {
 
     @Test
     public void testAnd() {
+        if (!serverIsAtLeastVersion(2.0)) {
+            return;
+        }
+
         DBCollection c = _testDB.getCollection( "and1" );
         c.drop();
         c.insert( new BasicDBObject( "a" , 1 ).append( "b" , 1) );

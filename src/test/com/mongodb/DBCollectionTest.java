@@ -264,19 +264,10 @@ public class DBCollectionTest extends TestCase {
         assertEquals( c.count(), 1);
     }
 
-
-    public void mongodIsVersion20Plus() {
-        String version = (String) _db.command("serverStatus").get("version");
-        System.err.println("Connected to MongoDB Version '" + version + "'");
-        assert(Double.parseDouble(version.substring(0, 3)) >= 2.0);
-    }
-
-    @Test/*(dependsOnMethods = { "mongodIsVersion20Plus" })*/
+    @Tes
     public void testMultiInsertWithContinue() {
-        try {
-            mongodIsVersion20Plus();
-        } catch (Throwable t) {
-            throw new org.testng.SkipException("MongoDB 2.0 or higher is required for this test.");
+        if (!serverIsAtLeastVersion(2.0)) {
+            return;
         }
     
         DBCollection c = _db.getCollection("testmultiinsertWithContinue");
