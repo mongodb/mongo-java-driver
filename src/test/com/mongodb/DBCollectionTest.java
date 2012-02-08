@@ -264,7 +264,7 @@ public class DBCollectionTest extends TestCase {
         assertEquals( c.count(), 1);
     }
 
-    @Tes
+    @Test
     public void testMultiInsertWithContinue() {
         if (!serverIsAtLeastVersion(2.0)) {
             return;
