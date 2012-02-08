@@ -17,6 +17,7 @@
  */
 package com.mongodb;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 import org.testng.annotations.*;
@@ -30,11 +31,14 @@ import com.mongodb.util.TestCase;
  *
  */
 public class QueryBuilderTest extends TestCase {
-    private static TestDB _testDB;
-	
-    @BeforeClass
-    public static void setup() {
-        _testDB = new TestDB("queryBuilderTest");
+    private DB _testDB;
+
+    public QueryBuilderTest()
+            throws IOException, MongoException {
+        super();
+        cleanupMongo = new Mongo( "127.0.0.1" );
+        _testDB = cleanupMongo.getDB( "queryBuilderTest" );
+        _testDB.dropDatabase();
     }
 	
     @Test
@@ -311,12 +315,6 @@ public class QueryBuilderTest extends TestCase {
         assertEquals( 1 , c.find( q ).itcount() );
     }
 
-    
-    @AfterClass
-    public static void tearDown() {
-        _testDB.cleanup();
-    }
-	
     /**
      * Convenience method that
      * creates a new MongoDB Document with a key-value pair and saves it inside the specified collection
