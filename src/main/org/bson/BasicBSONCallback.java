@@ -48,36 +48,36 @@ public class BasicBSONCallback implements BSONCallback {
     }
 
     public void objectStart(){
-        if ( _stack.size() > 0 ) {
-	    throw new IllegalStateException( "something is wrong" );
-	}
-	objectStart(false);
+        if ( _stack.size() > 0 )
+	        throw new IllegalStateException( "something is wrong" );
+
+	    objectStart(false);
     }
 
     public void objectStart(boolean array){
         _root = create(array, null);
         _stack.add( (BSONObject)_root );
     }
-    
+
     public void objectStart(String name){
         objectStart( false , name );
     }
-    
+
     public void objectStart(boolean array, String name){
         _nameStack.addLast( name );
-        BSONObject o = create( array , _nameStack );
+        final BSONObject o = create( array , _nameStack );
         _stack.getLast().put( name , o);
         _stack.addLast( o );
     }
-    
+
     public Object objectDone(){
-        BSONObject o =_stack.removeLast();
+        final BSONObject o =_stack.removeLast();
         if ( _nameStack.size() > 0 )
             _nameStack.removeLast();
-        else if ( _stack.size() > 0 ) {
-	    throw new IllegalStateException( "something is wrong" );
-	}
-        return (BSONObject)BSON.applyDecodingHooks(o);
+        else if ( _stack.size() > 0 )
+	        throw new IllegalStateException( "something is wrong" );
+
+        return !BSON.hasDecodeHooks() ? o : (BSONObject)BSON.applyDecodingHooks(o);
     }
 
     public void arrayStart(){
@@ -95,30 +95,30 @@ public class BasicBSONCallback implements BSONCallback {
     public void gotNull( String name ){
         cur().put( name , null );
     }
-        
-    public void gotUndefined( String name ){
-    }
+
+    public void gotUndefined( String name ) { }
 
     public void gotMinKey( String name ){
         cur().put( name , new MinKey() );
     }
+
     public void gotMaxKey( String name ){
         cur().put( name , new MaxKey() );
     }
-    
+
     public void gotBoolean( String name , boolean v ){
         _put( name , v );
     }
-    
-    public void gotDouble( String name , double v ){
+
+    public void gotDouble( final String name , final double v ){
         _put( name , v );
     }
-    
-    public void gotInt( String name , int v ){
+
+    public void gotInt( final String name , final int v ){
         _put( name , v );
     }
-    
-    public void gotLong( String name , long v ){
+
+    public void gotLong( final String name , final long v ){
         _put( name , v );
     }
 
@@ -128,8 +128,8 @@ public class BasicBSONCallback implements BSONCallback {
     public void gotRegex( String name , String pattern , String flags ){
         _put( name , Pattern.compile( pattern , BSON.regexFlags( flags ) ) );
     }
-    
-    public void gotString( String name , String v ){
+
+    public void gotString( final String name , final String v ){
         _put( name , v );
     }
     public void gotSymbol( String name , String v ){
@@ -150,14 +150,14 @@ public class BasicBSONCallback implements BSONCallback {
     public void gotBinaryArray( String name , byte[] data ){
         gotBinary( name, BSON.B_GENERAL, data );
     }
-    
+
     public void gotBinary( String name , byte type , byte[] data ){
         if( type == BSON.B_GENERAL || type == BSON.B_BINARY )
             _put( name , data );
         else
             _put( name , new Binary( type , data ) );
     }
-    
+
     public void gotUUID( String name , long part1, long part2){
         _put( name , new UUID(part1, part2) );
     }
@@ -165,37 +165,35 @@ public class BasicBSONCallback implements BSONCallback {
     public void gotCode( String name , String code ){
         _put( name , new Code( code ) );
     }
-    
+
     public void gotCodeWScope( String name , String code , Object scope ){
         _put( name , new CodeWScope( code, (BSONObject)scope ) );
     }
 
-    protected void _put( String name , Object o ){
-        cur().put( name , BSON.applyDecodingHooks( o ) );
+    protected final void _put( final String name , final Object o ){
+        cur().put( name , !BSON.hasDecodeHooks() ? o : BSON.applyDecodingHooks( o ) );
     }
-    
+
     protected BSONObject cur(){
         return _stack.getLast();
     }
-    
+
     protected String curName(){
-        if (_nameStack.isEmpty())
-            return null;
-        return _nameStack.getLast();
+        return (!_nameStack.isEmpty()) ? _nameStack.getLast() : null;
     }
 
     public Object get(){
-	return _root;
+	    return _root;
     }
 
     protected void setRoot(Object o) {
-	_root = o;
+	    _root = o;
     }
 
     protected boolean isStackEmpty() {
-	return _stack.size() < 1;
-    }    
-    
+	    return _stack.size() < 1;
+    }
+
     public void reset(){
         _root = null;
         _stack.clear();
