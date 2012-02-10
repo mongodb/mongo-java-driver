@@ -37,19 +37,19 @@ public abstract class OutputBuffer {
      * @return size of data so far
      */
     public abstract int size();
-    
+
     /**
      * @return bytes written
      */
     public abstract int pipe( OutputStream out )
         throws IOException;
-    
+
     /**
      * mostly for testing
      */
-    public byte[] toByteArray(){
+    public byte [] toByteArray(){
         try {
-            ByteArrayOutputStream bout = new ByteArrayOutputStream( size() );
+            final ByteArrayOutputStream bout = new ByteArrayOutputStream( size() );
             pipe( bout );
             return bout.toByteArray();
         }
