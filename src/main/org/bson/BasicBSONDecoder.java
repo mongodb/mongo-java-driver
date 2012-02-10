@@ -229,7 +229,7 @@ public class BasicBSONDecoder implements BSONDecoder {
         return true;
     }
 
-    protected void _binary( String name )
+    protected void _binary( final String name )
         throws IOException {
         final int totalLen = _in.readInt();
         final byte bType = _in.read();
@@ -246,7 +246,7 @@ public class BasicBSONDecoder implements BSONDecoder {
             if ( len + 4 != totalLen )
                 throw new IllegalArgumentException( "bad data size subtype 2 len: " + len + " totalLen: " + totalLen );
 
-            final byte[] data = new byte[len];
+            final byte [] data = new byte[len];
             _in.fill( data );
             _callback.gotBinary( name , bType , data );
             return;
@@ -254,13 +254,13 @@ public class BasicBSONDecoder implements BSONDecoder {
             if ( totalLen != 16 )
                 throw new IllegalArgumentException( "bad data size subtype 3 len: " + totalLen + " != 16");
 
-            long part1 = _in.readLong();
-            long part2 = _in.readLong();
+            final long part1 = _in.readLong();
+            final long part2 = _in.readLong();
             _callback.gotUUID(name, part1, part2);
             return;
         }
 
-        byte[] data = new byte[totalLen];
+        final byte [] data = new byte[totalLen];
         _in.fill( data );
 
         _callback.gotBinary( name , bType , data );
@@ -270,8 +270,8 @@ public class BasicBSONDecoder implements BSONDecoder {
         throws IOException {
         _in.readInt();
 
-        BSONCallback save = _callback;
-        BSONCallback _basic = _callback.createBSONCallback();
+        final BSONCallback save = _callback;
+        final BSONCallback _basic = _callback.createBSONCallback();
         _callback = _basic;
         _basic.reset();
         _basic.objectStart(false);
@@ -281,11 +281,9 @@ public class BasicBSONDecoder implements BSONDecoder {
         return _basic.get();
     }
 
-
-
     protected class BSONInput {
 
-        public BSONInput(InputStream in){
+        public BSONInput(final InputStream in){
             _raw = in;
             _read = 0;
 
@@ -374,8 +372,8 @@ public class BasicBSONDecoder implements BSONDecoder {
         public void fill( byte b[] , int len )
                 throws IOException {
             // first use what we have
-            int have = _len - _pos;
-            int tocopy = Math.min( len , have );
+            final int have = _len - _pos;
+            final int tocopy = Math.min( len , have );
             System.arraycopy( _inputBuffer , _pos , b , 0 , tocopy );
 
             _pos += tocopy;
@@ -385,7 +383,7 @@ public class BasicBSONDecoder implements BSONDecoder {
 
             int off = tocopy;
             while ( len > 0 ){
-                int x = _raw.read( b , off , len );
+                final int x = _raw.read( b , off , len );
                 if (x <= 0)
                     throw new IOException( "unexpected EOF" );
                 _read += x;
@@ -394,12 +392,7 @@ public class BasicBSONDecoder implements BSONDecoder {
             }
         }
 
-        protected boolean _isAscii( byte b ){
-            return b >=0 && b <= 127;
-        }
-
-        public String readCStr()
-                throws IOException {
+        public String readCStr() throws IOException {
 
             boolean isAscii = true;
 
@@ -415,7 +408,7 @@ public class BasicBSONDecoder implements BSONDecoder {
                 if (out != null) {
                     return out;
                 }
-                return new String(_random, 0, 1, "UTF-8");
+                return new String(_random, 0, 1, DEFAULT_ENCODING);
             }
 
             _stringBuffer.reset();
@@ -438,7 +431,7 @@ public class BasicBSONDecoder implements BSONDecoder {
             }
             else {
                 try {
-                    out = _stringBuffer.asString( "UTF-8" );
+                    out = _stringBuffer.asString( DEFAULT_ENCODING );
                 }
                 catch ( UnsupportedOperationException e ){
                     throw new BSONException( "impossible" , e );
@@ -450,9 +443,9 @@ public class BasicBSONDecoder implements BSONDecoder {
 
         public String readUTF8String()
                 throws IOException {
-            int size = readInt();
+            final int size = readInt();
             // this is just protection in case it's corrupted, to avoid huge strings
-            if ( size <= 0 || size > ( 32 * 1024 * 1024 ) )
+            if ( size <= 0 || size > MAX_STRING )
                 throw new BSONException( "bad string size: " + size );
 
             if ( size < _inputBuffer.length / 2 ){
@@ -461,15 +454,15 @@ public class BasicBSONDecoder implements BSONDecoder {
                     return "";
                 }
 
-                return new String( _inputBuffer , _need(size) , size - 1 , "UTF-8" );
+                return new String( _inputBuffer , _need(size) , size - 1 , DEFAULT_ENCODING );
             }
 
-            byte[] b = size < _random.length ? _random : new byte[size];
+            final byte [] b = size < _random.length ? _random : new byte[size];
 
             fill( b , size );
 
             try {
-                return new String( b , 0 , size - 1 , "UTF-8" );
+                return new String( b , 0 , size - 1 , DEFAULT_ENCODING );
             }
             catch ( java.io.UnsupportedEncodingException uee ){
                 throw new BSONException( "impossible" , uee );
@@ -498,16 +491,25 @@ public class BasicBSONDecoder implements BSONDecoder {
         int _max = 4; // max number of total bytes allowed to ready
 
     }
+
     protected BSONInput _in;
     protected BSONCallback _callback;
+
     private byte[] _random = new byte[1024]; // has to be used within a single function
     private byte[] _inputBuffer = new byte[1024];
+
     private PoolOutputBuffer _stringBuffer = new PoolOutputBuffer();
 
     protected int _pos; // current offset into _inputBuffer
     protected int _len; // length of valid data in _inputBuffer
 
+    private static final int MAX_STRING = ( 32 * 1024 * 1024 );
 
+    private static final String DEFAULT_ENCODING = "UTF-8";
+
+    private static final boolean _isAscii( final byte b ){
+        return b >=0 && b <= 127;
+    }
 
     static final String[] ONE_BYTE_STRINGS = new String[128];
     static void _fillRange( byte min, byte max ){
