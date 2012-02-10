@@ -26,7 +26,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     public void write(byte[] b){
         write( b , 0 , b.length );
     }
-    
+
     @Override
     public void write(byte[] b, int off, int len){
         _ensure( len );
@@ -40,7 +40,7 @@ public class BasicOutputBuffer extends OutputBuffer {
         _buffer[_cur++] = (byte)(0xFF&b);
         _size = Math.max( _cur , _size );
     }
-    
+
     @Override
     public int getPosition(){
         return _cur;
@@ -49,7 +49,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     public void setPosition( int position ){
         _cur = position;
     }
-    
+
     @Override
     public void seekEnd(){
         _cur = _size;
@@ -58,7 +58,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     public void seekStart(){
         _cur = 0;
     }
-    
+
     /**
      * @return size of data so far
      */
@@ -66,7 +66,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     public int size(){
         return _size;
     }
-    
+
     /**
      * @return bytes written
      */
@@ -76,6 +76,7 @@ public class BasicOutputBuffer extends OutputBuffer {
         out.write( _buffer , 0 , _size );
         return _size;
     }
+
     /**
      * @return bytes written
      */
@@ -84,7 +85,7 @@ public class BasicOutputBuffer extends OutputBuffer {
         out.write( _buffer , 0 , _size );
         return _size;
     }
-    
+
 
     void _ensure( int more ){
         final int need = _cur + more;
@@ -94,7 +95,7 @@ public class BasicOutputBuffer extends OutputBuffer {
         int newSize = _buffer.length*2;
         if ( newSize <= need )
             newSize = need + 128;
-        
+
         byte[] n = new byte[newSize];
         System.arraycopy( _buffer , 0 , n , 0 , _size );
         _buffer = n;
