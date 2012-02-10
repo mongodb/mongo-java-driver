@@ -34,10 +34,10 @@ public class BSON {
 
     // ---- basics ----
 
-    public static final byte EOO = 0;    
+    public static final byte EOO = 0;
     public static final byte NUMBER = 1;
     public static final byte STRING = 2;
-    public static final byte OBJECT = 3;    
+    public static final byte OBJECT = 3;
     public static final byte ARRAY = 4;
     public static final byte BINARY = 5;
     public static final byte UNDEFINED = 6;
@@ -58,19 +58,19 @@ public class BSON {
     public static final byte MAXKEY = 127;
 
     // --- binary types
-    /* 
+    /*
        these are binary types
        so the format would look like
        <BINARY><name><BINARY_TYPE><...>
     */
-    
+
     public static final byte B_GENERAL = 0;
     public static final byte B_FUNC = 1;
     public static final byte B_BINARY = 2;
     public static final byte B_UUID = 3;
 
     // ---- regular expression handling ----
-    
+
     /** Converts a string of regular expression flags from the database in Java regular
      * expression flags.
      * @param flags flags from database
@@ -106,7 +106,7 @@ public class BSON {
             _warnUnsupportedRegex( flag.unsupported );
             return 0;
         }
-        
+
         return flag.javaFlag;
     }
 
@@ -116,7 +116,7 @@ public class BSON {
      */
     public static String regexFlags( int flags ){
         StringBuilder buf = new StringBuilder();
-        
+
         for( RegexFlag flag : RegexFlag.values() ) {
             if( ( flags & flag.javaFlag ) > 0 ) {
                 buf.append( flag.flagChar );
@@ -130,7 +130,7 @@ public class BSON {
         return buf.toString();
     }
 
-    private static enum RegexFlag { 
+    private static enum RegexFlag {
         CANON_EQ( Pattern.CANON_EQ, 'c', "Pattern.CANON_EQ" ),
         UNIX_LINES(Pattern.UNIX_LINES, 'd', "Pattern.UNIX_LINES" ),
         GLOBAL( GLOBAL_FLAG, 'g', null ),
@@ -171,6 +171,8 @@ public class BSON {
 
     // --- (en|de)coding hooks -----
 
+    public static boolean hasDecodeHooks() { return _decodeHooks; }
+
     public static void addEncodingHook( Class c , Transformer t ){
         _encodeHooks = true;
         List<Transformer> l = _encodingHooks.get( c );
@@ -180,7 +182,7 @@ public class BSON {
         }
         l.add( t );
     }
-    
+
     public static void addDecodingHook( Class c , Transformer t ){
         _decodeHooks = true;
         List<Transformer> l = _decodingHooks.get( c );
@@ -217,7 +219,7 @@ public class BSON {
 
    /**
      * Returns the encoding hook(s) associated with the specified class
-     * 
+     *
      */
     public static List<Transformer> getEncodingHooks( Class c ){
         return _encodingHooks.get( c );
@@ -231,14 +233,14 @@ public class BSON {
         _encodingHooks.clear();
     }
 
-    /** 
+    /**
      * Remove all encoding hooks for a specific class.
      */
     public static void removeEncodingHooks( Class c ){
         _encodingHooks.remove( c );
     }
 
-    /** 
+    /**
      * Remove a specific encoding hook for a specific class.
      */
     public static void removeEncodingHook( Class c , Transformer t ){
@@ -260,14 +262,14 @@ public class BSON {
         _decodingHooks.clear();
     }
 
-    /** 
+    /**
      * Remove all decoding hooks for a specific class.
      */
     public static void removeDecodingHooks( Class c ){
         _decodingHooks.remove( c );
     }
 
-    /** 
+    /**
      * Remove a specific encoding hook for a specific class.
      */
     public static void removeDecodingHook( Class c , Transformer t ){
@@ -289,16 +291,16 @@ public class BSON {
 
     private static boolean _encodeHooks = false;
     private static boolean _decodeHooks = false;
-    static ClassMap<List<Transformer>> _encodingHooks = 
+    static ClassMap<List<Transformer>> _encodingHooks =
 	new ClassMap<List<Transformer>>();
-        
-    static ClassMap<List<Transformer>> _decodingHooks = 
+
+    static ClassMap<List<Transformer>> _decodingHooks =
         new ClassMap<List<Transformer>>();
-    
+
     static protected Charset _utf8 = Charset.forName( "UTF-8" );
-    
+
     // ----- static encode/decode -----
-    
+
     public static byte[] encode( BSONObject o ){
         BSONEncoder e = _staticEncoder.get();
         try {
@@ -308,7 +310,7 @@ public class BSON {
             e.done();
         }
     }
-    
+
     public static BSONObject decode( byte[] b ){
         BSONDecoder d = _staticDecoder.get();
         return d.readObject( b );
@@ -331,13 +333,13 @@ public class BSON {
     public static int toInt( Object o ){
         if ( o == null )
             throw new NullPointerException( "can't be null" );
-        
+
                 if ( o instanceof Number )
             return ((Number)o).intValue();
-        
+
         if ( o instanceof Boolean )
             return ((Boolean)o) ? 1 : 0;
-        
+
         throw new IllegalArgumentException( "can't convert: " + o.getClass().getName() + " to int" );
     }
 }
