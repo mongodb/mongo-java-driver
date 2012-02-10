@@ -404,23 +404,17 @@ public class BasicBSONDecoder implements BSONDecoder {
 
             _random[1] = read();
             if (_random[1] == 0) {
-                String out = ONE_BYTE_STRINGS[_random[0]];
-                if (out != null) {
-                    return out;
-                }
-                return new String(_random, 0, 1, DEFAULT_ENCODING);
+                final String out = ONE_BYTE_STRINGS[_random[0]];
+                return (out != null) ? out : new String(_random, 0, 1, DEFAULT_ENCODING);
             }
 
             _stringBuffer.reset();
-            _stringBuffer.write(_random[0]);
-            _stringBuffer.write(_random[1]);
+            _stringBuffer.write(_random, 0, 2);
 
             isAscii = _isAscii(_random[0]) && _isAscii(_random[1]);
 
-            while ( true ){
-                byte b = read();
-                if ( b == 0 )
-                    break;
+            byte b;
+            while ((b = read()) != 0) {
                 _stringBuffer.write( b );
                 isAscii = isAscii && _isAscii( b );
             }
@@ -495,8 +489,8 @@ public class BasicBSONDecoder implements BSONDecoder {
     protected BSONInput _in;
     protected BSONCallback _callback;
 
-    private byte[] _random = new byte[1024]; // has to be used within a single function
-    private byte[] _inputBuffer = new byte[1024];
+    private byte [] _random = new byte[1024]; // has to be used within a single function
+    private byte [] _inputBuffer = new byte[1024];
 
     private PoolOutputBuffer _stringBuffer = new PoolOutputBuffer();
 
