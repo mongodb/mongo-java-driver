@@ -74,10 +74,8 @@ public class NewBSONDecoder implements BSONDecoder {
     private final String readCstr() {
         int length = 0;
         final int offset = _pos;
-        while (true) {
-            if (_data[_pos++] == 0) break;
-            length++;
-        }
+
+        while (_data[_pos++] != 0) length++;
 
         try {
             return new String(_data, offset, length, DEFAULT_ENCODING);
