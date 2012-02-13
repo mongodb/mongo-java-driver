@@ -33,6 +33,7 @@ public class NewBSONDecoder implements BSONDecoder {
 
     @Override
     public BSONObject readObject(final byte [] pData) {
+        _length = pData.length;
         final BasicBSONCallback c = new BasicBSONCallback();
         decode(pData, c);
         return (BSONObject)c.get();
@@ -56,10 +57,8 @@ public class NewBSONDecoder implements BSONDecoder {
     public int decode(final byte [] pData, final BSONCallback pCallback) {
         _data = pData;
         _pos = 4;
-        _length = pData.length;
         _callback = pCallback;
         _decode();
-
         return _length;
     }
 
@@ -72,6 +71,7 @@ public class NewBSONDecoder implements BSONDecoder {
         }
 
         (new DataInputStream(pIn)).readFully(_data, 4, (_length - 4));
+
         return decode(_data, pCallback);
     }
 
