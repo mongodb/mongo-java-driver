@@ -41,28 +41,38 @@ public class NewBSONDecoder implements BSONDecoder {
     @Override
     public BSONObject readObject(final InputStream pIn) throws IOException {
         // Slurp in the data and convert to a byte array.
-        final int length = Bits.readInt(pIn);
+        _length = Bits.readInt(pIn);
 
-        final byte [] data = new byte[length];
-        (new DataInputStream(pIn)).readFully(data, 4, (length - 4));
-        return readObject(data);
+        if (_data == null || _data.length < _length) {
+            _data = new byte[_length];
+        }
+
+        (new DataInputStream(pIn)).readFully(_data, 4, (_length - 4));
+
+        return readObject(_data);
     }
 
     @Override
     public int decode(final byte [] pData, final BSONCallback pCallback) {
         _data = pData;
         _pos = 4;
+        _length = pData.length;
         _callback = pCallback;
         _decode();
 
-        return _data.length;
+        return _length;
     }
 
     @Override
     public int decode(final InputStream pIn, final BSONCallback pCallback) throws IOException {
-        final byte [] data = new byte[Bits.readInt(pIn)];
-        (new DataInputStream(pIn)).readFully(data, 4, (data.length - 4));
-        return decode(data, pCallback);
+        _length = Bits.readInt(pIn);
+
+        if (_data == null || _data.length < _length) {
+            _data = new byte[_length];
+        }
+
+        (new DataInputStream(pIn)).readFully(_data, 4, (_length - 4));
+        return decode(_data, pCallback);
     }
 
     private final void _decode() {
@@ -286,6 +296,7 @@ public class NewBSONDecoder implements BSONDecoder {
     private static final String DEFAULT_ENCODING = "UTF-8";
 
     private byte [] _data;
+    private int _length;
     private int _pos = 0;
     private BSONCallback _callback;
 }
