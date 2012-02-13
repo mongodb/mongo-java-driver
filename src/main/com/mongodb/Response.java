@@ -18,15 +18,16 @@
 
 package com.mongodb;
 
-import java.io.ByteArrayInputStream;
+// Bson
+import org.bson.io.Bits;
+
+// Java
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.bson.io.Bits;
 
 class Response {
 
@@ -35,23 +36,38 @@ class Response {
 
         _host = addr;
 
-        byte[] b = new byte[36];
+        final byte [] b = new byte[36];
         Bits.readFully(in, b);
+        int pos = 0;
 
-        ByteArrayInputStream bin = new ByteArrayInputStream( b );
-        _len = Bits.readInt( bin );
-        if ( _len > ( 32 * 1024 * 1024 ) )
-        	throw new IllegalArgumentException( "response too long: " + _len );
+        _len = Bits.readInt(b, pos);
+        pos += 4;
 
-        _id = Bits.readInt( bin );
-        _responseTo = Bits.readInt( bin );
-        _operation = Bits.readInt( bin );
-        _flags = Bits.readInt( bin );
-        _cursor = Bits.readLong( bin );
-        _startingFrom = Bits.readInt( bin );
-        _num = Bits.readInt( bin );
+        if (_len > MAX_LENGTH)
+            throw new IllegalArgumentException( "response too long: " + _len );
 
-        MyInputStream user = new MyInputStream( in , _len - b.length );
+        _id = Bits.readInt(b, pos);
+        pos += 4;
+
+        _responseTo = Bits.readInt(b, pos);
+        pos += 4;
+
+        _operation = Bits.readInt(b, pos);
+        pos += 4;
+
+        _flags = Bits.readInt(b, pos);
+        pos += 4;
+
+        _cursor = Bits.readLong(b, pos);
+        pos += 8;
+
+        _startingFrom = Bits.readInt(b, pos);
+        pos += 4;
+
+        _num = Bits.readInt(b, pos);
+        pos += 4;
+
+        final MyInputStream user = new MyInputStream( in , _len - b.length );
 
         if ( _num < 2 )
             _objects = new LinkedList<DBObject>();
@@ -179,5 +195,5 @@ class Response {
 
     final List<DBObject> _objects;
 
-
+    private static final int MAX_LENGTH = ( 32 * 1024 * 1024 );
 }
