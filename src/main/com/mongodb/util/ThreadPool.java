@@ -92,8 +92,6 @@ public abstract class ThreadPool<T> {
         }
 
         public void uncaughtException( Thread t, Throwable e ){
-            System.err.println( "ThreadPool [" + _name + "] uncaughtException" );
-            e.printStackTrace();
             for ( int i=0; i<_threads.size(); i++ ){
                 if ( _threads.get( i ) == t ){
                     _threads.remove( i );

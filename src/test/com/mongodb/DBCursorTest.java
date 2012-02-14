@@ -49,8 +49,6 @@ public class DBCursorTest extends TestCase {
             cur.next();
             assertNotNull(cur.getServerAddress());
         }
-
-        System.out.println("works in loop");
     }
 
     @Test(groups = {"basic"})
