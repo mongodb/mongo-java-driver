@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import java.net.UnknownHostException;
 import java.util.*;
 
 import org.testng.annotations.Test;
@@ -108,5 +109,19 @@ public class DBTests extends TestCase {
 
         assertEquals( b.getName() , b2.getName() );
 
+    }
+    
+    @Test
+    public void testCommandToSecondary() throws MongoException, UnknownHostException {
+        Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27018)));
+
+        if (isStandalone(mongo)) {
+            return;
+        }
+
+        DB db = mongo.getDB("secondaryTest");
+        db.setReadPreference(ReadPreference.SECONDARY);
+        CommandResult result = db.command("ping");
+        assertEquals("127.0.0.1:27018", result.get("serverUsed"));
     }
 }

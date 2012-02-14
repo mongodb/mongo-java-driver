@@ -180,7 +180,7 @@ public abstract class DB {
      */
     public CommandResult command( DBObject cmd , int options )
         throws MongoException {
-	return command(cmd, options, null);
+	return command(cmd, options, getReadPreference());
     }
     /**
      * Executes a database command.
