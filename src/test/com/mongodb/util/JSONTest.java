@@ -56,9 +56,13 @@ public class JSONTest extends com.mongodb.util.TestCase {
 
     @org.testng.annotations.Test(groups = {"basic"})
     public void testLongValues() {
-        Long val = Integer.MAX_VALUE + 1L; 
-        String test = String.format("{ \"x\" : %d}", val);
+        Long bigVal = Integer.MAX_VALUE + 1L;
+        String test = String.format("{ \"x\" : %d}", bigVal);
         assertEquals(JSON.serialize(JSON.parse(test)), test);
+
+        Long smallVal = Integer.MIN_VALUE - 1L;
+        String test2 = String.format("{ \"x\" : %d}", smallVal);
+        assertEquals(JSON.serialize(JSON.parse(test2)), test2);
     }
 
     @org.testng.annotations.Test(groups = {"basic"})

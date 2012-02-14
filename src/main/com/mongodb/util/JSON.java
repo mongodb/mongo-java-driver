@@ -635,7 +635,7 @@ class JSONParser {
           return Double.valueOf(s.substring(start, pos));
         
         Long val = Long.valueOf(s.substring(start, pos));
-        if (val <= Integer.MAX_VALUE)
+        if (val <= Integer.MAX_VALUE && val >= Integer.MIN_VALUE)
             return val.intValue();
         return val;
     }
