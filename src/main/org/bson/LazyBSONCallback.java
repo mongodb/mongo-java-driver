@@ -81,5 +81,5 @@ public class LazyBSONCallback extends EmptyBSONCallback {
         }
     }*/
     private Object _root;
-    private static final Logger log = Logger.getLogger( "org.bson.LazyBSONCallback" );
+    private static final Logger log = Logger.getLogger( LazyBSONCallback.class.getCanonicalName() );
 }

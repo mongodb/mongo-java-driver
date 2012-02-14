@@ -42,7 +42,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
-    static final Logger LOGGER = Logger.getLogger( "org.bson.ObjectId" );
+    static final Logger LOGGER = Logger.getLogger( ObjectId.class.getCanonicalName());
 
     /** Gets a new object id.
      * @return the new id

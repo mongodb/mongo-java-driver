@@ -32,7 +32,7 @@ import com.mongodb.ReadPreference.TaggedReadPreference;
 
 public class DBTCPConnector implements DBConnector {
 
-    static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
+    static Logger _logger = Logger.getLogger( DBTCPConnector.class.getCanonicalName());
     static Logger _createLogger = Logger.getLogger( _logger.getName() + ".connect" );
 
     public DBTCPConnector( Mongo m , ServerAddress addr )
@@ -40,9 +40,9 @@ public class DBTCPConnector implements DBConnector {
         _mongo = m;
         _portHolder = new DBPortPool.Holder( m._options );
         _checkAddress( addr );
-
-        _createLogger.info( addr.toString() );
-
+        
+        _logger.info("init " + addr.toString());
+        
         _set( addr );
         _allHosts = null;
         _rsStatus = null;
@@ -62,7 +62,7 @@ public class DBTCPConnector implements DBConnector {
         _allHosts = new ArrayList<ServerAddress>( all ); // make a copy so it can't be modified
         _rsStatus = new ReplicaSetStatus( m, _allHosts );
 
-        _createLogger.info( all  + " -> " + getAddress() );
+        _logger.info( "init with list of addresses" + all  + " -> " + getAddress() );
     }
 
     public void start() {

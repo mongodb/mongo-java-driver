@@ -41,5 +41,5 @@ public class LazyWriteableDBCallback extends LazyDBCallback {
         return o;
     }
 
-    private static final Logger log = Logger.getLogger( LazyWriteableDBCallback.class.getName() );
+    private static final Logger log = Logger.getLogger( LazyWriteableDBCallback.class.getCanonicalName() );
 }

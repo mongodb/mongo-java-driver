@@ -36,7 +36,7 @@ import org.bson.types.ObjectId;
  */
 public class Bytes extends BSON {
 
-    static final Logger LOGGER = Logger.getLogger( "com.mongodb" );
+    static final Logger LOGGER = Logger.getLogger( Bytes.class.getCanonicalName() );
 
     static final boolean D = Boolean.getBoolean( "DEBUG.MONGO" );
 

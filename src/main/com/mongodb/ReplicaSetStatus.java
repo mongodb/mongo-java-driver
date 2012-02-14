@@ -49,7 +49,7 @@ import com.mongodb.util.JSON;
  */
 public class ReplicaSetStatus {
 
-	static final Logger _rootLogger = Logger.getLogger( "com.mongodb.ReplicaSetStatus" );
+	static final Logger _rootLogger = Logger.getLogger( ReplicaSetStatus.class.getCanonicalName() );
     static final int UNAUTHENTICATED_ERROR_CODE = 10057;
 
     ReplicaSetStatus( Mongo mongo, List<ServerAddress> initial ){

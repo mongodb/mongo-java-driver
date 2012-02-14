@@ -289,7 +289,7 @@ public class BSONByteBuffer {
         _fillRange( (byte) 'A', (byte) 'Z' );
     }
 
-    private static final Logger log = Logger.getLogger( "org.bson.io.BSONByteBuffer" );
+    private static final Logger log = Logger.getLogger( BSONByteBuffer.class.getCanonicalName() );
 
 
 }

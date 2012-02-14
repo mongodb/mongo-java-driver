@@ -281,7 +281,7 @@ public class MongoURI {
 
     final String _uri;
 
-    static final Logger LOGGER = Logger.getLogger( "com.mongodb.MongoURI" );
+    static final Logger LOGGER = Logger.getLogger( MongoURI.class.getCanonicalName() );
 
     @Override
     public String toString() {

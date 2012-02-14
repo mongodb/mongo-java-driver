@@ -16,14 +16,11 @@
 
 package com.mongodb;
 
-import java.io.IOException;
-import java.util.Iterator;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
 
-import com.mongodb.util.TestCase;
+import java.io.IOException;
+import java.util.Iterator;
 
 public class DBCursorTest extends TestCase {
 

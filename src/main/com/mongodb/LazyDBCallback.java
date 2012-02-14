@@ -51,5 +51,5 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
 
     final DBCollection _collection;
     final DB _db;
-    private static final Logger log = Logger.getLogger( LazyDBCallback.class.getName() );
+    private static final Logger log = Logger.getLogger( LazyDBCallback.class.getCanonicalName() );
 }

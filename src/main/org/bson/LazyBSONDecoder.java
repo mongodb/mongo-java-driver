@@ -26,7 +26,7 @@ import org.bson.util.ExposedByteArrayInputStream;
  * implementation of BSONDecoder that creates LazyBSONObject instances
  */
 public class LazyBSONDecoder implements BSONDecoder {
-    static final Logger LOG = Logger.getLogger( LazyBSONDecoder.class.getName() );
+    static final Logger LOG = Logger.getLogger( LazyBSONDecoder.class.getCanonicalName() );
 
     public BSONObject readObject(byte[] b) {
         try {
