@@ -26,6 +26,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.CommandResult;
 import com.mongodb.Mongo;
 
 public class TestCase extends MyAsserts {
@@ -240,6 +242,31 @@ public class TestCase extends MyAsserts {
         String serverVersion = (String) cleanupMongo.getDB("admin").command("serverStatus").get("version");
         return Double.parseDouble(serverVersion.substring(0, 3)) >= version;
     }
+
+    /**
+     *
+     * @param mongo the connection
+     * @return true if connected to a standalone server
+     */
+    protected boolean isStandalone(Mongo mongo) {
+        return runReplicaSetStatusCommand(mongo) == null;
+    }
+    
+    protected CommandResult runReplicaSetStatusCommand(final Mongo pMongo) {
+        // Check to see if this is a replica set... if not, get out of here.
+        final CommandResult result = pMongo.getDB("admin").command(new BasicDBObject("replSetGetStatus", 1));
+
+        final String errorMsg = result.getErrorMessage();
+
+        if (errorMsg != null && errorMsg.indexOf("--replSet") != -1) {
+            System.err.println("---- SecondaryReadTest: This is not a replica set - not testing secondary reads");
+            return null;
+        }
+
+        return result;
+    }
+
+
 
     public static void main( String args[] )
         throws Exception {

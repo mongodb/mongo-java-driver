@@ -17,7 +17,6 @@
 package com.mongodb;
 
 // Mongo
-import com.mongodb.*;
 import org.bson.types.*;
 import com.mongodb.util.*;
 
@@ -26,7 +25,6 @@ import org.testng.annotations.Test;
 
 // Java
 import java.util.*;
-import java.util.concurrent.*;
 
 public class SecondaryReadTest extends TestCase {
 
@@ -45,13 +43,12 @@ public class SecondaryReadTest extends TestCase {
         final Mongo mongo = loadMongo();
 
         try {
-            final CommandResult result = serverStatusCmd(mongo);
+            if (isStandalone(mongo)) {
+                return;
+            }
 
-            // If the result is null, this is not a replica set.
-            if (result == null) return;
+            final List<TestHost> testHosts = extractHosts(mongo);
 
-            final List<TestHost> testHosts = new ArrayList<TestHost>();
-            final String primaryHostnameAndPort = extractHosts(result, testHosts);
             final DBCollection col = loadCleanDbCollection(mongo);
 
             final List<ObjectId> insertedIds = insertTestData(col);
@@ -84,14 +81,12 @@ public class SecondaryReadTest extends TestCase {
         final Mongo mongo = loadMongo();
 
         try {
+            if (isStandalone(mongo)) {
+                return;
+            }
 
-            final CommandResult result = serverStatusCmd(mongo);
+            final List<TestHost> testHosts = extractHosts(mongo);
 
-            // If the result is null, this is not a replica set.
-            if (result == null) return;
-
-            final List<TestHost> testHosts = new ArrayList<TestHost>();
-            final String primaryHostnameAndPort = extractHosts(result, testHosts);
             final DBCollection col = loadCleanDbCollection(mongo);
 
             final List<ObjectId> insertedIds = insertTestData(col);
@@ -124,14 +119,12 @@ public class SecondaryReadTest extends TestCase {
         final Mongo mongo = loadMongo();
 
         try {
+            if (isStandalone(mongo)) {
+                return;
+            }
 
-            final CommandResult result = serverStatusCmd(mongo);
+            final List<TestHost> testHosts = extractHosts(mongo);
 
-            // If the result is null, this is not a replica set.
-            if (result == null) return;
-
-            final List<TestHost> testHosts = new ArrayList<TestHost>();
-            final String primaryHostnameAndPort = extractHosts(result, testHosts);
             final DBCollection col = loadCleanDbCollection(mongo);
 
             final List<ObjectId> insertedIds = insertTestData(col);
@@ -162,22 +155,18 @@ public class SecondaryReadTest extends TestCase {
     public void testSecondaryReadCursor() throws Exception {
         final Mongo mongo = loadMongo();
         try {
+            if (isStandalone(mongo)) {
+                return;
+            }
 
-            final CommandResult result = serverStatusCmd(mongo);
+            final List<TestHost> testHosts = extractHosts(mongo);
 
-            // If the result is null, this is not a replica set.
-            if (result == null) return;
-
-            final List<TestHost> testHosts = new ArrayList<TestHost>();
-            final String primaryHostnameAndPort = extractHosts(result, testHosts);
             final DBCollection col = loadCleanDbCollection(mongo);
 
-            final List<ObjectId> insertedIds = insertTestData(col);
+            insertTestData(col);
 
             // Get the opcounter/query data for the hosts.
             loadQueryCount(testHosts, true);
-
-            final int secondaryCount = getSecondaryCount(testHosts);
 
             // Perform some reads on the secondaries
             col.setReadPreference(ReadPreference.SECONDARY);
@@ -221,39 +210,25 @@ public class SecondaryReadTest extends TestCase {
         return new Mongo(new MongoURI("mongodb://127.0.0.1:27017,127.0.0.1:27018/?connectTimeoutMS=30000;socketTimeoutMS=30000;maxpoolsize=5;autoconnectretry=true"));
     }
 
-    private CommandResult serverStatusCmd(final Mongo pMongo) {
-        // Check to see if this is a replica set... if not, get out of here.
-        final CommandResult result = pMongo.getDB("admin").command(new BasicDBObject("replSetGetStatus", 1));
-
-        final String errorMsg = result.getErrorMessage();
-
-        if (errorMsg != null && errorMsg.indexOf("--replSet") != -1) {
-            System.err.println("---- SecondaryReadTest: This is not a replica set - not testing secondary reads");
-            return null;
-        }
-
-        return result;
-    }
-
     @SuppressWarnings({"unchecked"})
-    private String extractHosts(final CommandResult pResult, final List<TestHost> pHosts) {
-        String primaryHostnameAndPort = null;
-        // Extract the repl set members.
+    private List<TestHost> extractHosts(Mongo mongo) {
+        CommandResult result = runReplicaSetStatusCommand(mongo);
 
-        for (final BasicDBObject member : (List<BasicDBObject>)pResult.get("members")) {
+        List<TestHost> pHosts = new ArrayList<TestHost>();
+
+        // Extract the repl set members.
+        for (final BasicDBObject member : (List<BasicDBObject>) result.get("members")) {
             String hostnameAndPort = member.getString("name");
-            if (hostnameAndPort.indexOf(":") == -1) hostnameAndPort = hostnameAndPort + ":27017";
+            if (!hostnameAndPort.contains(":")) {
+                hostnameAndPort = hostnameAndPort + ":27017";
+            }
 
             final String stateStr = member.getString("stateStr");
-
-            if (stateStr.equals("PRIMARY")) primaryHostnameAndPort = hostnameAndPort;
 
             pHosts.add(new TestHost(hostnameAndPort, stateStr));
         }
 
-        if (primaryHostnameAndPort == null) throw new IllegalStateException("No primary defined");
-
-        return primaryHostnameAndPort;
+        return pHosts;
     }
 
     private DBCollection loadCleanDbCollection(final Mongo pMongo) {
