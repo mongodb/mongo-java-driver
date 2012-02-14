@@ -251,6 +251,25 @@ public class TestCase extends MyAsserts {
     protected boolean isStandalone(Mongo mongo) {
         return runReplicaSetStatusCommand(mongo) == null;
     }
+
+    @SuppressWarnings({"unchecked"})
+    protected String getPrimaryAsString(Mongo mongo) {
+        CommandResult replicaSetStatus = runReplicaSetStatusCommand(mongo);
+
+        for (final BasicDBObject member : (List<BasicDBObject>) replicaSetStatus.get("members")) {
+            String hostnameAndPort = member.getString("name");
+            if (!hostnameAndPort.contains(":"))
+                hostnameAndPort = hostnameAndPort + ":27017";
+
+            final String stateStr = member.getString("stateStr");
+
+            if (stateStr.equals("PRIMARY"))
+                return hostnameAndPort;
+        }
+
+        throw new IllegalStateException("No primary defined");
+    }
+
     
     protected CommandResult runReplicaSetStatusCommand(final Mongo pMongo) {
         // Check to see if this is a replica set... if not, get out of here.

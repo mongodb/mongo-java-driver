@@ -119,9 +119,11 @@ public class DBTests extends TestCase {
             return;
         }
 
+        String primary = getPrimaryAsString(mongo);
+
         DB db = mongo.getDB("secondaryTest");
         db.setReadPreference(ReadPreference.SECONDARY);
-        CommandResult result = db.command("ping");
-        assertEquals("127.0.0.1:27018", result.get("serverUsed"));
+        CommandResult result      = db.command("ping");
+        assertNotEquals(primary, result.get("serverUsed"));
     }
 }
