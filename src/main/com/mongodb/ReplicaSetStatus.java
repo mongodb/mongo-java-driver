@@ -80,20 +80,20 @@ public class ReplicaSetStatus {
 
     @Override
 	public String toString() {
-	StringBuffer sb = new StringBuffer();
-	sb.append("{replSetName: '" + _setName.get() );
-	sb.append("', closed:").append(_closed.get()).append(", ");
-	sb.append("nextResolveTime:'").append(new Date(_nextResolveTime).toString()).append("', ");
-	sb.append("members : [ ");
-	if(_all != null) {
-		for(Node n : _all)
-			sb.append(n.toJSON()).append(",");
-		sb.setLength(sb.length()-1); //remove last comma
-	}
-	sb.append("] ");
+        StringBuffer sb = new StringBuffer();
+        sb.append("{replSetName: '" + _setName.get());
+        sb.append("', closed:").append(_closed.get()).append(", ");
+        sb.append("nextResolveTime:'").append(new Date(_nextResolveTime).toString()).append("', ");
+        sb.append("members : [ ");
+        if (_all != null) {
+            for (Node n : _all)
+                sb.append(n.toJSON()).append(",");
+            sb.setLength(sb.length() - 1); //remove last comma
+        }
+        sb.append("] ");
 
-	return sb.toString();
-	}
+        return sb.toString();
+    }
 
     void _checkClosed(){
         if ( _closed.get() )
