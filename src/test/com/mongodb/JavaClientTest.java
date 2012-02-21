@@ -492,7 +492,7 @@ public class JavaClientTest extends TestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testMapReduceInlineSecondary() throws Exception {
-        Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27020)));
+        Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1", 27017), new ServerAddress("127.0.0.1", 27018)));
 
         if (isStandalone(mongo)) {
             return;
