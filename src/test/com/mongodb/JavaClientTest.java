@@ -494,6 +494,10 @@ public class JavaClientTest extends TestCase {
     public void testMapReduceInlineSecondary() throws Exception {
         Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27020)));
 
+        if (isStandalone(mongo)) {
+            return;
+        }
+
         int size = getReplicaSetSize(mongo);
         DBCollection c = mongo.getDB(_db.getName()).getCollection( "imr2" );
         //c.setReadPreference(ReadPreference.SECONDARY);
