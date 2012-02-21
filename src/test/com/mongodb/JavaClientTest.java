@@ -17,31 +17,19 @@
 
 package com.mongodb;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.regex.Pattern;
-
-import org.bson.BSON;
-import org.bson.Transformer;
-import org.bson.types.BSONTimestamp;
-import org.bson.types.Binary;
-import org.bson.types.Code;
-import org.bson.types.CodeWScope;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
-import org.testng.annotations.Test;
-
 import com.mongodb.util.JSON;
 import com.mongodb.util.TestCase;
 import com.mongodb.util.Util;
+import org.bson.BSON;
+import org.bson.Transformer;
+import org.bson.types.*;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class JavaClientTest extends TestCase {
 
@@ -505,6 +493,8 @@ public class JavaClientTest extends TestCase {
     @SuppressWarnings("deprecation")
     public void testMapReduceInlineSecondary() throws Exception {
         Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27020)));
+
+        int size = getReplicaSetSize(mongo);
         DBCollection c = mongo.getDB(_db.getName()).getCollection( "imr2" );
         //c.setReadPreference(ReadPreference.SECONDARY);
         c.slaveOk();
@@ -513,8 +503,9 @@ public class JavaClientTest extends TestCase {
         c.save( new BasicDBObject( "x" , new String[]{ "a" , "b" } ) );
         c.save( new BasicDBObject( "x" , new String[]{ "b" , "c" } ) );
         WriteResult wr = c.save( new BasicDBObject( "x" , new String[]{ "c" , "d" } ) );
-        if(mongo.getReplicaSetStatus() != null  && mongo.getReplicaSetStatus().getName() != null)
-		wr.getLastError(WriteConcern.REPLICAS_SAFE);
+        if (mongo.getReplicaSetStatus() != null  && mongo.getReplicaSetStatus().getName() != null) {
+            wr.getLastError(new WriteConcern(size));
+        }
 
         MapReduceOutput out =
             c.mapReduce( "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }" ,

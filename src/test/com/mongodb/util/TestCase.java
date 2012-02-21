@@ -18,6 +18,10 @@
 
 package com.mongodb.util;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.CommandResult;
+import com.mongodb.Mongo;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
@@ -25,10 +29,6 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.mongodb.BasicDBObject;
-import com.mongodb.CommandResult;
-import com.mongodb.Mongo;
 
 public class TestCase extends MyAsserts {
 
@@ -268,6 +268,22 @@ public class TestCase extends MyAsserts {
         }
 
         throw new IllegalStateException("No primary defined");
+    }
+    
+    protected int getReplicaSetSize(Mongo mongo) {
+        int size = 0;
+
+        CommandResult replicaSetStatus = runReplicaSetStatusCommand(mongo);
+
+        for (final BasicDBObject member : (List<BasicDBObject>) replicaSetStatus.get("members")) {
+
+            final String stateStr = member.getString("stateStr");
+
+            if (stateStr.equals("PRIMARY") || stateStr.equals("SECONDARY"))
+                size++;
+        }
+
+        return size;
     }
 
     
