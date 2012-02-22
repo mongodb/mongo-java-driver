@@ -23,10 +23,14 @@ package org.bson.types;
 
 import org.bson.BSON;
 
+import java.io.Serializable;
+
 /**
    generic binary holder
  */
-public class Binary {
+public class Binary implements Serializable {
+
+    private static final long serialVersionUID = 7902997490338209467L;
 
     /**
      * Creates a Binary object with the default binary type of 0
