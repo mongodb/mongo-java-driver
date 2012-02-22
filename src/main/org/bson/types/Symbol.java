@@ -18,10 +18,14 @@
 
 package org.bson.types;
 
+import java.io.Serializable;
+
 /**
  *  Class to hold a BSON symbol object, which is an interned string in Ruby
  */
-public class Symbol {
+public class Symbol implements Serializable {
+
+    private static final long serialVersionUID = 1326269319883146072L;
 
     public Symbol(String s) {
         _symbol = s;
