@@ -18,6 +18,7 @@
 
 package org.bson.types;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -26,10 +27,12 @@ import java.util.Date;
  * <b>time</b> is seconds since epoch
  * <b>inc<b> is an ordinal
  */
-public class BSONTimestamp {
+public class BSONTimestamp implements Serializable {
+
+    private static final long serialVersionUID = -3268482672267936464L;
     
     static final boolean D = Boolean.getBoolean( "DEBUG.DBTIMESTAMP" );
-    
+
     public BSONTimestamp(){
         _inc = 0;
         _time = null;

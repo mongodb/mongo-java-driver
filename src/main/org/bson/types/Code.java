@@ -18,6 +18,7 @@
 
 package org.bson.types;
 
+import java.io.Serializable;
 import java.util.*;
 
 import org.bson.*;
@@ -25,7 +26,9 @@ import org.bson.*;
 /** 
  * for using the Code type
  */
-public class Code {
+public class Code implements Serializable {
+
+    private static final long serialVersionUID = 475535263314046697L;
 
     public Code( String code ){
         _code = code;
