@@ -18,6 +18,7 @@
 
 package com.mongodb;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -44,7 +45,9 @@ import java.util.Map;
  *
  * @dochub databases
  */
-public class WriteConcern {
+public class WriteConcern implements Serializable {
+
+    private static final long serialVersionUID = 1884671104750417011L;
 
     /** No exceptions are raised, even for network issues */
     public final static WriteConcern NONE = new WriteConcern(-1);
@@ -409,6 +412,8 @@ public class WriteConcern {
     boolean _continueOnErrorForInsert = false;
 
     public static class Majority extends WriteConcern {
+
+        private static final long serialVersionUID = -4128295115883875212L;
 
         public Majority( ) {
             super( "majority", 0, false, false );
