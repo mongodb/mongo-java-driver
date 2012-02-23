@@ -16,43 +16,32 @@
 
 package com.mongodb;
 
+import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
 
-import com.mongodb.ReplicaSetStatus.Node;
-
-
-import com.mongodb.util.TestCase;
-
-import java.util.*;
+import java.io.IOException;
 
 /**
  * This is a placeholder. A node needs to be able to be created outside of ReplicaSetStatus.
  */
 public class ReplicaSetStatusTest extends TestCase {
+    public ReplicaSetStatusTest() throws IOException, MongoException {
+        cleanupMongo = new Mongo(new MongoURI("mongodb://127.0.0.1:27017,127.0.0.1:27018"));
+
+        cleanupDB = "com_mongodb_unittest_ReplicaSetStatusUpdaterTest";
+    }
 
     @Test
-    public void testFindASecondary() throws Exception {
+    public void testClose() throws InterruptedException {
+        ReplicaSetStatus replicaSetStatus = new ReplicaSetStatus(cleanupMongo, cleanupMongo.getAllAddress());
+        replicaSetStatus.start();
+        assertNotNull(replicaSetStatus.members.get());
 
-        //final List<Node> nodes = new ArrayList<Node>();
+        replicaSetStatus.close();
 
-        //final Node node1 = new Node(new ServerAddress("127.0.0.1", 27017));
+        replicaSetStatus._updater.join(5000);
 
-        /*
-        boolean _ok = false;
-        long _lastCheck = 0;
-        float _pingTime = 0;
-
-        boolean _isMaster = false;
-        boolean _isSecondary = false;
-
-        double _priority = 0;
-
-
-
-        final Random random = new Random();
-
-        final ServerAddress addr = ReplicaSetStatus.getASecondary( null, null, nodes, random);
-        */
+        assertTrue(!replicaSetStatus._updater.isAlive());
     }
 }
 

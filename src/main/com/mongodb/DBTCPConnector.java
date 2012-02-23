@@ -18,17 +18,17 @@
 
 package com.mongodb;
 
+import com.mongodb.ReadPreference.TaggedReadPreference;
+
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.mongodb.ReadPreference.TaggedReadPreference;
 
 public class DBTCPConnector implements DBConnector {
 
@@ -56,6 +56,7 @@ public class DBTCPConnector implements DBConnector {
 
     public DBTCPConnector( Mongo m , List<ServerAddress> all )
         throws MongoException {
+        _mongo = m;
         _portHolder = new DBPortPool.Holder( m._options );
         _checkAddress( all );
 
@@ -430,13 +431,13 @@ public class DBTCPConnector implements DBConnector {
 
         if ( _rsStatus != null ){
             if ( _masterPortPool == null || force ){
-                ReplicaSetStatus.Node n = _rsStatus.ensureMaster();
-                if ( n == null ){
+                ServerAddress masterAddress = _rsStatus.ensureMaster();
+                if ( masterAddress == null ){
                     if ( failIfNoMaster )
                         throw new MongoException( "can't find a master" );
                 }
                 else {
-                    _set( n._addr );
+                    _set( masterAddress );
                     _maxBsonObjectSize.set(_rsStatus.getMaxBsonObjectSize());
                 }
             }
@@ -470,20 +471,6 @@ public class DBTCPConnector implements DBConnector {
         }
 
         return _maxBsonObjectSize.get();
-    }
-
-    void testMaster()
-        throws MongoException {
-
-        DBPort p = null;
-        try {
-            p = _masterPortPool.get();
-            p.runCommand( _mongo.getDB("admin") , new BasicDBObject( "nonce" , 1 ) );
-        } catch ( IOException ioe ){
-            throw new MongoException.Network( ioe.getMessage() , ioe );
-        } finally {
-            _masterPortPool.done( p );
-        }
     }
 
     private boolean _set( ServerAddress addr ){
@@ -567,9 +554,8 @@ public class DBTCPConnector implements DBConnector {
         return _myPort.get();
     }
 
-    private Mongo _mongo;
-//    private ServerAddress _curMaster;
     private DBPortPool _masterPortPool;
+    private final Mongo _mongo;
     private DBPortPool.Holder _portHolder;
     private final List<ServerAddress> _allHosts;
     private ReplicaSetStatus _rsStatus;
