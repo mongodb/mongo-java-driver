@@ -159,6 +159,44 @@ public class GridFSTest extends TestCase {
         assert( out.get("meta").equals( 5 ) );
     }
 
+    @Test(groups = {"basic"})
+    public void testBadChunkSize() throws Exception {
+        int fileSize = (int)(2 * GridFS.MAX_CHUNKSIZE);
+        if (fileSize > 1024 * 1024 * 1024)
+            //If this is the case, GridFS is probably obsolete...
+            fileSize = 10 * 1024 * 1024;
+
+        byte[] randomBytes = new byte[fileSize];
+        for (int idx = 0; idx < 2 * GridFS.MAX_CHUNKSIZE; ++idx)
+            randomBytes[idx] = (byte)(256 * Math.random());
+
+        GridFSInputFile inputFile = _fs.createFile(randomBytes);
+        try{
+            inputFile.save(0);
+            fail("should have received an exception about a chunk size being zero");
+        }catch(MongoException mongoExc) {
+            //We expect this exception to complain about the chunksize
+            assertTrue(mongoExc.toString().contains("chunkSize must be greater than zero"));
+        }
+
+        try{
+            inputFile.save(GridFS.MAX_CHUNKSIZE + 10);
+            fail("should have received an exception about a chunk size being too big");
+        }catch(MongoException mongoExc) {
+            //also expecting it to complain about the chunkSize
+            assertTrue(mongoExc.toString().contains("and less than or equal to GridFS.MAX_CHUNKSIZE"));
+        }
+
+        //For good measure let's save and restore the bytes
+        inputFile.save(GridFS.MAX_CHUNKSIZE / 2);
+        GridFSDBFile savedFile = _fs.findOne(new BasicDBObject("_id", inputFile.getId()));
+        ByteArrayOutputStream savedFileByteStream = new ByteArrayOutputStream();
+        savedFile.writeTo(savedFileByteStream);
+        byte[] savedFileBytes = savedFileByteStream.toByteArray();
+
+        assertArrayEquals(randomBytes, savedFileBytes);
+    }
+
     final DB _db;
     final GridFS _fs;
     

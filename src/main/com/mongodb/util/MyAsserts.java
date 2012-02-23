@@ -18,6 +18,7 @@
 
 package com.mongodb.util;
 
+import java.util.Arrays;
 import java.util.regex.Pattern;
 
 public class MyAsserts {
@@ -106,6 +107,13 @@ public class MyAsserts {
         throw new MyAssert( "[" + a + "] != [" + b + "] " + msg );
     }
 
+    public static void assertArrayEquals(byte[] expected, byte[] result) {
+        if (Arrays.equals(expected, result))
+            return;
+
+        throw new MyAssert("These arrays are different, but they might be big so not printing them here");
+    }
+
     public static void assertNotEquals( Object a , Object b ){
         if ( a == null ){
             if ( b != null )
@@ -181,6 +189,10 @@ public class MyAsserts {
     public static void assertEmptyString( String s ) {
         if( !s.equals( "" ) )
             throw new MyAssert( s );
+    }
+
+    public static void fail(String errorMessage) {
+        throw new MyAssert(errorMessage);
     }
 
 }

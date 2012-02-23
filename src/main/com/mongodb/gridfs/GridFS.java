@@ -48,6 +48,12 @@ public class GridFS {
      * file's chunk size
      */
     public static final int DEFAULT_CHUNKSIZE = 256 * 1024;
+
+    /**
+     * file's max chunk size
+     */
+    public static final long MAX_CHUNKSIZE = (long)(3.5 * 1000 * 1000);
+
     /**
      * bucket to use for the collection namespaces
      */
