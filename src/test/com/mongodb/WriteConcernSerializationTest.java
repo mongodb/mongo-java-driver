@@ -19,14 +19,10 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 
 public class WriteConcernSerializationTest extends TestCase {
     @Test()
@@ -38,7 +34,7 @@ public class WriteConcernSerializationTest extends TestCase {
 
         objectOutputStream.writeObject(writeConcern);
 
-        ByteInputStream inputStream = new ByteInputStream(outputStream.toByteArray(), outputStream.toByteArray().length);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         WriteConcern object2 = (WriteConcern) objectInputStream.readObject();
 
@@ -57,7 +53,7 @@ public class WriteConcernSerializationTest extends TestCase {
 
         objectOutputStream.writeObject(writeConcern);
 
-        ByteInputStream inputStream = new ByteInputStream(outputStream.toByteArray(), outputStream.toByteArray().length);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         WriteConcern.Majority object2 = (WriteConcern.Majority) objectInputStream.readObject();
 
