@@ -17,10 +17,14 @@
 
 package org.bson.types;
 
+import java.io.Serializable;
+
 /**
  * Represent the minimum key value regardless of the key's type
  */
-public class MinKey {
+public class MinKey implements Serializable {
+
+    private static final long serialVersionUID = 4075901136671855684L;
 
     public MinKey() {
     }
