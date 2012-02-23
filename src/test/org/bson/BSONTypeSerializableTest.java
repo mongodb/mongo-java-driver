@@ -17,11 +17,11 @@
  */
 package org.bson;
 
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
 import org.bson.types.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -37,7 +37,7 @@ public class BSONTypeSerializableTest extends Assert {
 
         objectOutputStream.writeObject(key);
 
-        ByteInputStream inputStream = new ByteInputStream(outputStream.toByteArray(), outputStream.toByteArray().length);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         MinKey key2 = (MinKey) objectInputStream.readObject();
     }
@@ -51,7 +51,7 @@ public class BSONTypeSerializableTest extends Assert {
 
         objectOutputStream.writeObject(key);
 
-        ByteInputStream inputStream = new ByteInputStream(outputStream.toByteArray(), outputStream.toByteArray().length);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         MaxKey key2 = (MaxKey) objectInputStream.readObject();
     }
@@ -65,7 +65,7 @@ public class BSONTypeSerializableTest extends Assert {
 
         objectOutputStream.writeObject(binary);
 
-        ByteInputStream inputStream = new ByteInputStream(outputStream.toByteArray(), outputStream.toByteArray().length);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         Binary binary2 = (Binary) objectInputStream.readObject();
         
@@ -82,7 +82,7 @@ public class BSONTypeSerializableTest extends Assert {
 
         objectOutputStream.writeObject(object);
 
-        ByteInputStream inputStream = new ByteInputStream(outputStream.toByteArray(), outputStream.toByteArray().length);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         BSONTimestamp object2 = (BSONTimestamp) objectInputStream.readObject();
 
@@ -99,7 +99,7 @@ public class BSONTypeSerializableTest extends Assert {
 
         objectOutputStream.writeObject(object);
 
-        ByteInputStream inputStream = new ByteInputStream(outputStream.toByteArray(), outputStream.toByteArray().length);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         Code object2 = (Code) objectInputStream.readObject();
 
@@ -116,7 +116,7 @@ public class BSONTypeSerializableTest extends Assert {
 
         objectOutputStream.writeObject(object);
 
-        ByteInputStream inputStream = new ByteInputStream(outputStream.toByteArray(), outputStream.toByteArray().length);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         CodeWScope object2 = (CodeWScope) objectInputStream.readObject();
 
@@ -133,7 +133,7 @@ public class BSONTypeSerializableTest extends Assert {
 
         objectOutputStream.writeObject(object);
 
-        ByteInputStream inputStream = new ByteInputStream(outputStream.toByteArray(), outputStream.toByteArray().length);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         Symbol object2 = (Symbol) objectInputStream.readObject();
 
@@ -149,7 +149,7 @@ public class BSONTypeSerializableTest extends Assert {
 
         objectOutputStream.writeObject(object);
 
-        ByteInputStream inputStream = new ByteInputStream(outputStream.toByteArray(), outputStream.toByteArray().length);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         ObjectId object2 = (ObjectId) objectInputStream.readObject();
 
