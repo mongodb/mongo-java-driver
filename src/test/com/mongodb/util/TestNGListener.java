@@ -77,7 +77,7 @@ public class TestNGListener extends TestListenerAdapter {
     private void _recordResults( ITestContext context ) throws UnknownHostException {
         DBObject obj = new BasicDBObject();
         for( ITestResult r : context.getPassedTests().getAllResults() ) {
-            obj.put( r.getTestClass().getName() + "." + r.getName(), 
+            obj.put( (r.getTestClass().getName() + "." + r.getName()).replace('.', '_'),
                      r.getEndMillis()-r.getStartMillis() );
         }
         obj.put( "total", context.getEndDate().getTime()-context.getStartDate().getTime() );
