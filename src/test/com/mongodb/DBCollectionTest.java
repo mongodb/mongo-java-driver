@@ -16,15 +16,13 @@
 
 package com.mongodb;
 
+import com.mongodb.util.TestCase;
+import org.bson.types.ObjectId;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
 import java.io.IOException;
 import java.util.List;
-
-import org.bson.types.*;
-import org.testng.annotations.Test;
-import org.testng.Assert;
-
-
-import com.mongodb.util.TestCase;
 
 public class DBCollectionTest extends TestCase {
 
@@ -255,12 +253,9 @@ public class DBCollectionTest extends TestCase {
         DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x",3).add("y",4).get();
         DBObject inserted3 = BasicDBObjectBuilder.start().add("x",5).add("y",6).get();
         WriteResult r = c.insert(inserted1,inserted2, inserted3);
-        System.err.println( "Count: " + c.count()  + " WriteConcern: " + c.getWriteConcern() );
+        assertEquals(1, c.count());
+        assertFalse(c.getWriteConcern().getContinueOnErrorForInsert());
 
-        System.err.println( " Continue on Error? " + c.getWriteConcern().getContinueOnErrorForInsert() );
-        for (DBObject doc : c.find(  )) {
-            System.err.println( doc );
-        }
         assertEquals( c.count(), 1);
     }
 

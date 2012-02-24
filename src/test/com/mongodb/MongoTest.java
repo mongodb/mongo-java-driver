@@ -18,13 +18,12 @@
 
 package com.mongodb;
 
-import java.io.*;
-
+import com.mongodb.util.TestCase;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import com.mongodb.util.*;
+import java.io.IOException;
 
 public class MongoTest extends TestCase {
     
@@ -44,8 +43,6 @@ public class MongoTest extends TestCase {
 
     @Test
     public void testClose_shouldNotReturnUntilCleanupThreadIsFinished() throws Exception {
-
-        System.out.println(Mongo.cleanerIntervalMS);
         Mongo.cleanerIntervalMS = 250000; //set to a suitably large value to avoid race conditions in the test
 
         Mongo mongo = new Mongo();
