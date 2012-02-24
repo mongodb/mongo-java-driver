@@ -18,16 +18,8 @@
 
 package com.mongodb;
 
-import java.io.*;
-import java.nio.*;
-import java.util.*;
-import java.util.regex.*;
-
-import org.bson.*;
-import org.bson.types.*;
-import org.testng.annotations.*;
-
-import com.mongodb.util.*;
+import com.mongodb.util.TestCase;
+import org.testng.annotations.Test;
 
 public class ThreadingTest extends TestCase {
     
@@ -46,6 +38,8 @@ public class ThreadingTest extends TestCase {
 
         Mongo b = new Mongo();
         assertEquals( 1 , b.getDB( DB ).getCollection( "test2Mongos" ).findOne().get( "_id" ) );
+        a.close();
+        b.close();
     }
 
     public static void main( String args[] )
