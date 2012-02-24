@@ -699,19 +699,15 @@ public class JavaClientTest extends TestCase {
         }
         assertEquals( 0 , c.find().count() );
         c.insert( l );
-        assertEquals( num , c.find().count() );
+        assertEquals(num, c.find().count());
 
-        s = l.toString();
-        assertTrue( s.length() > maxObjSize );
-
-        boolean worked = false;
         try {
-            c.save( new BasicDBObject( "foo" , s ) );
-            worked = true;
+            c.save( new BasicDBObject( "foo" , new Binary(new byte[maxObjSize]) ) );
+            fail("Should not be able to save an object larger than maximum bson object size of " + maxObjSize);
         }
-        catch ( MongoException ie ){}
-        assertFalse( worked );
-
+        catch ( MongoInternalException ie ) {
+            assertEquals(-3, ie.getCode());
+        }
         assertEquals( num , c.find().count() );
     }
 
