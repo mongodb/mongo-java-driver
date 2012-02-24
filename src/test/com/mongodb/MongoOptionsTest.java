@@ -18,7 +18,6 @@ package com.mongodb;
 
 import org.testng.annotations.Test;
 
-import com.mongodb.ReplicaSetStatus.Node;
 import com.mongodb.util.TestCase;
 
 /**
