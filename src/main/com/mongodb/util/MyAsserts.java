@@ -73,6 +73,11 @@ public class MyAsserts {
         if ( a != b )
             throw new MyAssert( "" + a + " != " + b );
     }
+
+    public static void assertEquals( byte expected , byte result ) {
+        if ( expected != result )
+            throw new MyAssert( "" + expected + " != " + result );
+    }
     
     public static void assertEquals( double a , double b , double diff ){
         if ( Math.abs( a - b ) > diff )

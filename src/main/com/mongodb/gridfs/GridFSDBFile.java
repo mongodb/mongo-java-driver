@@ -133,13 +133,11 @@ public class GridFSDBFile extends GridFSFile {
         public int read(byte[] b, int off, int len){
             
             if ( _data == null || _offset >= _data.length ){
-                
-                if ( _nextChunk >= _numChunks )
+                if ( _currentChunkIdx + 1 >= _numChunks )
                     return -1;
                 
-                _data = getChunk( _nextChunk );
+                _data = getChunk( ++_currentChunkIdx );
                 _offset = 0;
-                _nextChunk++;
             }
 
             int r = Math.min( len , _data.length - _offset );
@@ -148,9 +146,39 @@ public class GridFSDBFile extends GridFSFile {
             return r;
         }
 
+        /**
+         * Will smartly skips over chunks without fetching them if possible.
+         */
+        public long skip(long numBytesToSkip) throws IOException {
+            if (numBytesToSkip <= 0)
+                return 0;
+
+            if (_currentChunkIdx == _numChunks)
+                //We're actually skipping over the back end of the file, short-circuit here
+                //Don't count those extra bytes to skip in with the return value
+                return 0;
+
+            if (_offset + numBytesToSkip <= _chunkSize) {
+                //We're skipping over bytes in the current chunk, adjust the offset accordingly
+                _offset += numBytesToSkip;
+                if (_data == null && _currentChunkIdx < _numChunks)
+                    _data = getChunk(_currentChunkIdx);
+
+                return numBytesToSkip;
+            }
+
+            //We skipping over the remainder of this chunk, could do this less recursively...
+            long skippedBytes = _chunkSize - _offset;
+            _offset = 0;
+            ++_currentChunkIdx;
+            _data = null;
+
+            return skippedBytes + skip(numBytesToSkip - skippedBytes);
+        }
+
         final int _numChunks;
 
-        int _nextChunk = 0;
+        int _currentChunkIdx = -1;
         int _offset;
         byte[] _data = null;
     }
