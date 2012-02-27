@@ -202,8 +202,7 @@ public class GridFSTest extends TestCase {
     public void testInputStreamSkipping() throws Exception {
         //int chunkSize = 5;
         int chunkSize = GridFS.DEFAULT_CHUNKSIZE;
-        int fileSize = 7 * chunkSize;
-        
+        int fileSize = (int)(7.25 * chunkSize);
 
         byte[] fileBytes = new byte[fileSize];
         for (int idx = 0; idx < fileSize; ++idx)

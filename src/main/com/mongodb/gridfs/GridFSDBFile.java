@@ -168,15 +168,22 @@ public class GridFSDBFile extends GridFSFile {
             }
 
             //We skipping over the remainder of this chunk, could do this less recursively...
-            long skippedBytes = _chunkSize - _offset;
-            _offset = 0;
             ++_currentChunkIdx;
+            long skippedBytes = 0;
+            if (_currentChunkIdx < _numChunks)
+                skippedBytes = _chunkSize - _offset;
+            else
+                skippedBytes = _lastChunkSize;
+
+            _offset = 0;
             _data = null;
 
             return skippedBytes + skip(numBytesToSkip - skippedBytes);
         }
 
         final int _numChunks;
+        //Math trick to ensure the _lastChunkSize is between 1 and _chunkSize
+        final long _lastChunkSize = ((_length - 1) % _chunkSize) + 1;
 
         int _currentChunkIdx = -1;
         int _offset;
