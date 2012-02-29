@@ -53,38 +53,18 @@ public class LazyBSONDecoder implements BSONDecoder {
     }
 
     public int decode(InputStream in, BSONCallback callback) throws IOException {
-        byte[] data = null;
-        if (_buffer == null)
-            _buffer = new byte[4096];
-        int read = readBytesFully(in, _buffer, 0, 4);
-        int objSize = Bits.readInt(_buffer);
-        if (objSize > _buffer.length) {
-            // need bigger buffer
-            data = new byte[objSize];
-            System.arraycopy(_buffer, 0, data, 0, read);
-        } else {
-            data = _buffer;
-            _buffer = null;
-        }
+        byte[] objSizeBuffer = new byte[BYTES_IN_INTEGER];
+        Bits.readFully(in, objSizeBuffer, 0, BYTES_IN_INTEGER);
+        int objSize = Bits.readInt(objSizeBuffer);
+        byte[] data = new byte[objSize];
+        System.arraycopy(objSizeBuffer, 0, data, 0, BYTES_IN_INTEGER);
 
-        if (read < objSize)
-            readBytesFully(in, data, read, objSize - read);
+        Bits.readFully(in, data, BYTES_IN_INTEGER, objSize - BYTES_IN_INTEGER);
 
-        callback.gotBinary(null, (byte)0, data);
-        return objSize + 4;
+        // note that we are handing off ownership of the data byte array to the callback
+        callback.gotBinary(null, (byte) 0, data);
+        return objSize;
     }
 
-    private int readBytesFully(InputStream in, byte[] buffer, int offset, int toread) throws IOException {
-        int read = 0;
-        int len = buffer.length;
-        while (read < toread) {
-            int n = in.read(buffer, offset, toread - read);
-            read += n;
-            offset += n;
-        }
-        return read;
-    }
-
-    byte[] _buffer = null;
-
+    private static int BYTES_IN_INTEGER = 4;
 }
