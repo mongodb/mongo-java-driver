@@ -30,6 +30,16 @@ public class MaxKey implements Serializable {
     }
 
     @Override
+    public boolean equals(Object o) {
+       return o instanceof MaxKey;
+    }
+    
+    @Override
+    public int hashCode() {
+        return 0;
+    }
+    
+    @Override
     public String toString() {
         return "MaxKey";
     }

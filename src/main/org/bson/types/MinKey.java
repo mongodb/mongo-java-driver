@@ -30,6 +30,16 @@ public class MinKey implements Serializable {
     }
 
     @Override
+    public boolean equals(Object o) {
+        return o instanceof MinKey;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
+
+    @Override
     public String toString() {
         return "MinKey";
     }
