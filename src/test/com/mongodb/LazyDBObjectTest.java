@@ -16,21 +16,21 @@
 
 package com.mongodb;
 
-import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.UUID;
-import java.util.regex.Pattern;
-
-import org.bson.types.BSONTimestamp;
-import org.bson.types.Binary;
-import org.bson.types.Code;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
-import org.bson.types.Symbol;
+import com.mongodb.util.TestCase;
+import org.bson.BSONEncoder;
+import org.bson.BasicBSONEncoder;
+import org.bson.io.BasicOutputBuffer;
+import org.bson.io.OutputBuffer;
+import org.bson.types.*;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.mongodb.util.TestCase;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @SuppressWarnings( { "unchecked" , "deprecation" } )
 public class LazyDBObjectTest extends TestCase {
@@ -41,103 +41,182 @@ public class LazyDBObjectTest extends TestCase {
             cleanupMongo = new Mongo( "127.0.0.1" );
             cleanupDB = "com_mongodb_unittest_LazyDBObjectTest";
             _db = cleanupMongo.getDB( cleanupDB );
-            /*            Mongo mongo = new Mongo( "127.0.0.1" );
-        String db = "com_mongodb_unittest_LazyDBObjectTest";
-        _db = mongo.getDB( db );*/
         }
         catch ( UnknownHostException e ) {
             throw new MongoException( "couldn't connect" );
         }
     }
 
-    @Test( groups = { "reads" } )
-    public void testNormalReadAllTypes()
-            throws InterruptedException{
-        DBCollection coll = _db.getCollection( "test_reads_normal" );
-        //coll.setDBDecoderFactory( LazyDBDecoder.FACTORY );
-        ObjectId oid = new ObjectId();
-        ObjectId test_oid = new ObjectId();
-        ObjectId test_ref_id = new ObjectId();
-        DBObject test_doc = new BasicDBObject( "abc", "12345" );
-        String[] test_arr = new String[] { "foo" , "bar" , "baz" , "x" , "y" , "z" };
-        BSONTimestamp test_tsp = new BSONTimestamp();
-        Date test_date = new Date();
-        Binary test_bin = new Binary( "scott".getBytes() );
-        UUID test_uuid = UUID.randomUUID();
-        Pattern test_regex = Pattern.compile( "^test.*regex.*xyz$" );
-        BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
-        b.append( "_id", oid );
-        b.append( "null", null );
-        b.append( "max", new MaxKey() );
-        b.append( "min", new MinKey() );
-        b.append( "booleanTrue", true );
-        b.append( "booleanFalse", false );
-        b.append( "int1", 1 );
-        b.append( "int1500", 1500 );
-        b.append( "int3753", 3753 );
-        b.append( "tsp", test_tsp );
-        b.append( "date", test_date );
-        b.append( "long5", 5L );
-        b.append( "long3254525", 3254525L );
-        b.append( "float324_582", 324.582f );
-        b.append( "double245_6289", 245.6289 );
-        b.append( "oid", test_oid );
-        // Symbol wonky
-        b.append( "symbol", new Symbol( "foobar" ) );
-        // Code wonky
-        b.append( "code", new Code( "var x = 12345;"  ) );
-        // TODO - Shell doesn't work with Code W/ Scope, return to this test later
-        /*
-        b.append( "code_scoped", new CodeWScope( "return x * 500;", test_doc ) );*/
-        b.append( "str", "foobarbaz" );
-        b.append( "ref", new DBRef( _db, "testRef", test_ref_id ) );
-        b.append( "object", test_doc );
-        b.append( "array", test_arr );
-        b.append( "binary", test_bin );
-        b.append( "uuid", test_uuid );
-        b.append( "regex", test_regex );
-        DBObject _d = b.get();
-        coll.insert( _d, WriteConcern.SAFE );
-        DBObject doc = coll.findOne( new BasicDBObject( "_id", oid ) );
-        assertEquals( doc.get( "str" ), "foobarbaz" );
-        assertEquals( doc.get( "_id" ), _d.get( "_id" ) );
-        assertNull( doc.get( "null" ) );
-        // MaxKey and MinKey don't test against themselves correctly at all
-        assertEquals( doc.get( "max" ).toString(), "MaxKey" );
-        assertEquals( doc.get( "min" ).toString(), "MinKey" );
-        assertEquals( doc.get( "booleanTrue" ), true );
-        assertEquals( doc.get( "booleanFalse" ), false );
-        assertEquals( doc.get( "int1" ), 1 );
-        assertEquals( doc.get( "int1500" ), 1500 );
-        assertEquals( doc.get( "int3753" ), 3753 );
-        assertEquals( doc.get( "tsp" ), test_tsp );
-        assertEquals( doc.get( "date" ), test_date );
-        assertEquals( doc.get( "long5" ), 5L );
-        assertEquals( doc.get( "long3254525" ), 3254525L );
-        // Match against what is expected for MongoDB to store the float as
-        assertEquals( doc.get( "float324_582" ), 324.5820007324219 );
-        assertEquals( doc.get( "double245_6289" ), 245.6289 );
-        assertEquals( doc.get( "oid" ), test_oid );
-        assertEquals( doc.get( "str" ), "foobarbaz" );
-        assertEquals( doc.get( "ref" ), new DBRef( _db, "testRef", test_ref_id ) );
-        assertEquals( ( (DBObject) doc.get( "object" ) ).get( "abc" ), test_doc.get( "abc" ) );
-        assertEquals( ( (DBObject) doc.get( "array" ) ).get( "0" ), "foo" );
-        assertEquals( ( (DBObject) doc.get( "array" ) ).get( "1" ), "bar" );
-        assertEquals( ( (DBObject) doc.get( "array" ) ).get( "2" ), "baz" );
-        assertEquals( ( (DBObject) doc.get( "array" ) ).get( "3" ), "x" );
-        assertEquals( ( (DBObject) doc.get( "array" ) ).get( "4" ), "y" );
-        assertEquals( ( (DBObject) doc.get( "array" ) ).get( "5" ), "z" );
-        assertEquals( new String((byte[]) doc.get( "binary" )), new String(test_bin.getData()));
-        assertEquals( doc.get( "uuid" ).toString(), test_uuid.toString() );
-        assertEquals( ( (Pattern) doc.get( "regex" ) ).pattern(), test_regex.pattern() );
-        assertEquals( ( (Pattern) doc.get( "regex" ) ).flags(), test_regex.flags() );
+    BSONEncoder e;
+    OutputBuffer buf;
+    ByteArrayOutputStream bios;
+    LazyDBDecoder lazyDBDecoder;
+    DefaultDBDecoder defaultDBDecoder;
+
+    @BeforeMethod
+    public void beforeMethod() {
+        e = new BasicBSONEncoder();
+        buf = new BasicOutputBuffer();
+        e.set(buf);
+        bios = new ByteArrayOutputStream();
+        lazyDBDecoder = new LazyDBDecoder();
+        defaultDBDecoder = new DefaultDBDecoder();
     }
 
-    @Test( groups = { "reads" } )
-    public void testLazyReadAllTypes()
-            throws InterruptedException{
-        DBCollection coll = _db.getCollection( "test_reads_lazy" );
-        coll.setDBDecoderFactory( LazyDBDecoder.FACTORY );
+    @Test
+    public void testDecodeAllTypes() throws IOException {
+
+        DBObject origDoc = createTestDoc();
+        e.putObject(origDoc);
+        buf.pipe(bios);
+        DBObject doc = defaultDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        compareDocs(origDoc, doc);
+    }
+
+    @Test
+    public void testLazyDecodeAllTypes()
+            throws InterruptedException, IOException {
+
+        DBObject origDoc = createTestDoc();
+        e.putObject(origDoc);
+        buf.pipe(bios);
+        DBObject doc = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        compareDocs(origDoc, doc);
+    }
+
+    @Test
+    public void testMissingKey() throws IOException {
+        e.putObject(createSimpleTestDoc());
+        buf.pipe(bios);
+
+        DBObject decodedObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        assertNull(decodedObj.get("missingKey"));
+    }
+
+    @Test
+    public void testKeySet() throws IOException {
+        DBObject obj = createSimpleTestDoc();
+        e.putObject(obj);
+        buf.pipe(bios);
+
+        DBObject decodedObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        assertNotNull(decodedObj);
+        assertTrue(decodedObj instanceof LazyDBObject);
+        LazyDBObject lazyDBObj = (LazyDBObject) decodedObj;
+
+        Set<String> keySet = lazyDBObj.keySet();
+
+        assertEquals(5, keySet.size());
+        assertFalse(keySet.isEmpty());
+
+        Object[] keySetArray = keySet.toArray();
+        assertEquals(5, keySetArray.length);
+
+        String[] typedArray = keySet.toArray(new String[0]);
+        assertEquals(5, typedArray.length);
+
+        typedArray = keySet.toArray(new String[6]);
+        assertEquals(6, typedArray.length);
+        assertNull(typedArray[5]);
+
+        assertTrue(keySet.contains("first"));
+        assertFalse(keySet.contains("x"));
+
+        assertTrue(keySet.containsAll(Arrays.asList("first", "second")));
+        assertFalse(keySet.containsAll(Arrays.asList("first", "notFound")));
+
+        Iterator<String> iter = keySet.iterator();
+
+        assertTrue(iter.hasNext());
+        assertEquals("_id", iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals("first", iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals("second", iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals("third", iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals("fourth", iter.next());
+        assertFalse(iter.hasNext());
+
+        assertEquals(obj.get("_id"), lazyDBObj.get("_id"));
+        assertEquals(obj.get("first"), lazyDBObj.get("first"));
+        assertEquals(obj.get("second"), lazyDBObj.get("second"));
+        assertEquals(obj.get("third"), lazyDBObj.get("third"));
+        assertEquals(obj.get("fourth"), lazyDBObj.get("fourth"));
+    }
+
+    @Test
+    public void testEntrySet() throws IOException {
+        DBObject obj = createSimpleTestDoc();
+        e.putObject(obj);
+        buf.pipe(bios);
+
+        DBObject decodedObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        LazyDBObject lazyDBObj = (LazyDBObject) decodedObj;
+
+        Set<Map.Entry<String, Object>> entrySet = lazyDBObj.entrySet();
+        assertEquals(5, entrySet.size());
+        assertFalse(entrySet.isEmpty());
+        
+        Object[] entrySetArray = entrySet.toArray();
+        assertEquals(5, entrySetArray.length);   // kind of a lame test
+
+        Map.Entry<String, Object>[] typedArray = entrySet.toArray(new Map.Entry[0]);
+        assertEquals(5, typedArray.length);
+
+        typedArray = entrySet.toArray(new Map.Entry[6]);
+        assertEquals(6, typedArray.length);
+        assertNull(typedArray[5]);
+
+        assertTrue(entrySet.contains(new TestMapEntry("first", 1)));
+        assertFalse(entrySet.contains(new TestMapEntry("first", 2)));
+        assertFalse(entrySet.contains(new TestMapEntry("x", 1)));
+        
+        assertTrue(entrySet.containsAll(Arrays.asList(new TestMapEntry("first", 1), new TestMapEntry("second", "str1"))));
+        assertFalse(entrySet.containsAll(Arrays.asList(new TestMapEntry("first", 1), new TestMapEntry("second", "str2"))));
+
+        Iterator<Map.Entry<String, Object>> entryIter = entrySet.iterator();
+
+        assertTrue(entryIter.hasNext());
+        Map.Entry<String, Object> next = entryIter.next();
+        assertEquals("_id", next.getKey());
+        assertEquals(obj.get("_id"), next.getValue());
+
+        assertTrue(entryIter.hasNext());
+        next = entryIter.next();
+        assertEquals("first", next.getKey());
+        assertEquals(obj.get("first"), next.getValue());
+
+        assertTrue(entryIter.hasNext());
+        next = entryIter.next();
+        assertEquals("second", next.getKey());
+        assertEquals(obj.get("second"), next.getValue());
+
+        assertTrue(entryIter.hasNext());
+        next = entryIter.next();
+        assertEquals("third", next.getKey());
+        assertEquals(obj.get("third"), next.getValue());
+
+        assertTrue(entryIter.hasNext());
+        next = entryIter.next();
+        assertEquals("fourth", next.getKey());
+        assertEquals(obj.get("fourth"), next.getValue());
+
+        assertFalse(entryIter.hasNext());
+    }
+
+    private DBObject createSimpleTestDoc() {
+        DBObject obj = new BasicDBObject("_id", new ObjectId());
+        obj.put("first", 1);
+        obj.put("second", "str1");
+        obj.put("third", true);
+        obj.put("fourth", new BasicDBObject("firstNested", 1));
+        return obj;
+    }
+
+
+    private DBObject createTestDoc() {
         ObjectId oid = new ObjectId();
         ObjectId test_oid = new ObjectId();
         ObjectId test_ref_id = new ObjectId();
@@ -179,50 +258,69 @@ public class LazyDBObjectTest extends TestCase {
         b.append( "binary", test_bin );
         b.append( "uuid", test_uuid );
         b.append( "regex", test_regex );
-        DBObject _d = b.get();
-        coll.insert( _d, WriteConcern.SAFE );
-        DBObject doc = coll.find( new BasicDBObject( "_id", oid ) ).setDecoderFactory( LazyDBDecoder.FACTORY ).next();
-        assertTrue( doc instanceof LazyDBObject, "Did Not Receive a LazyDBObject on read." );
-        assertEquals( doc.get( "str" ), "foobarbaz" );
-        assertEquals( doc.get( "_id" ), oid );
+
+        return b.get();
+    }
+
+    private void compareDocs(DBObject origDoc, DBObject doc) {
+        assertEquals( origDoc.get( "str" ), doc.get( "str" ) );
+        assertEquals( origDoc.get("_id"), doc.get("_id"));
         assertNull( doc.get( "null" ) );
-        // MaxKey and MinKey don't test against themselves correctly at all
-        assertEquals( doc.get( "max" ).toString(), "MaxKey" );
-        assertEquals( doc.get( "min" ).toString(), "MinKey" );
-        assertEquals( doc.get( "booleanTrue" ), true );
-        assertEquals( doc.get( "booleanFalse" ), false );
-        assertEquals( doc.get( "int1" ), 1 );
-        assertEquals( doc.get( "int1500" ), 1500 );
-        assertEquals( doc.get( "int3753" ), 3753 );
-        assertEquals( doc.get( "tsp" ), test_tsp );
-        assertEquals( doc.get( "date" ), test_date );
+        assertEquals( origDoc.get("max"), doc.get( "max" ) );
+        assertEquals( origDoc.get("min"), doc.get( "min" ) );
+        assertEquals( true, doc.get( "booleanTrue" ) );
+        assertEquals( false, doc.get( "booleanFalse" ));
+        assertEquals( origDoc.get( "int1" ), doc.get( "int1" ) );
+        assertEquals( origDoc.get( "int1500" ), doc.get( "int1500" ) );
+        assertEquals( origDoc.get( "int3753" ), doc.get( "int3753" ) );
+        assertEquals( origDoc.get( "tsp" ), doc.get( "tsp" ));
+        assertEquals( doc.get( "date" ), doc.get( "date" ) );
         assertEquals( doc.get( "long5" ), 5L );
         assertEquals( doc.get( "long3254525" ), 3254525L );
         // Match against what is expected for MongoDB to store the float as
         assertEquals( doc.get( "float324_582" ), 324.5820007324219 );
         assertEquals( doc.get( "double245_6289" ), 245.6289 );
-        assertEquals( doc.get( "oid" ), test_oid );
+        assertEquals( origDoc.get( "oid"), doc.get( "oid" ) );
+        assertEquals( origDoc.get( "symbol"), doc.get( "symbol" ) );
         assertEquals( doc.get( "str" ), "foobarbaz" );
-        assertEquals( doc.get( "ref" ), new DBRef( _db, "testRef", test_ref_id ) );
-        assertEquals( ( (DBObject) doc.get( "object" ) ).get( "abc" ), test_doc.get( "abc" ) );
+        assertEquals( origDoc.get( "ref" ), doc.get( "ref" ) );
+        assertEquals(((DBObject) origDoc.get("object")).get("abc"), ((DBObject) doc.get("object")).get("abc"));
         assertEquals( ( (DBObject) doc.get( "array" ) ).get( "0" ), "foo" );
         assertEquals( ( (DBObject) doc.get( "array" ) ).get( "1" ), "bar" );
         assertEquals( ( (DBObject) doc.get( "array" ) ).get( "2" ), "baz" );
         assertEquals( ( (DBObject) doc.get( "array" ) ).get( "3" ), "x" );
         assertEquals( ( (DBObject) doc.get( "array" ) ).get( "4" ), "y" );
         assertEquals( ( (DBObject) doc.get( "array" ) ).get( "5" ), "z" );
-        assertEquals( new String((byte[]) doc.get( "binary" )), new String(test_bin.getData()));
-        assertEquals( doc.get( "uuid" ).toString(), test_uuid.toString() );
-        assertEquals( ( (Pattern) doc.get( "regex" ) ).pattern(), test_regex.pattern() );
-        assertEquals( ( (Pattern) doc.get( "regex" ) ).flags(), test_regex.flags() );
-        // Test iteration of keyset
-        for (String key : ((LazyDBObject) doc).keySet()) {
-            assertNotNull( key );
-            if (!key.equals( "null" ))
-                assertNotNull( doc.get( key ) );
+        assertEquals( new String( ((Binary) origDoc.get( "binary")).getData()), new String((byte[]) doc.get( "binary" )));
+        assertEquals( origDoc.get( "uuid"), doc.get( "uuid" ) );
+        assertEquals( ( (Pattern) origDoc.get( "regex" ) ).pattern(), ((Pattern) doc.get( "regex" ) ).pattern() );
+        assertEquals( ( (Pattern) doc.get( "regex" ) ).flags(), ((Pattern) doc.get( "regex" ) ).flags() );
+    }
+    
+    private static class TestMapEntry implements Map.Entry<String, Object> {
+        private String key;
+        private Object value;
+
+        private TestMapEntry(String key, Object value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public String getKey() {
+            return key;
+        }
+
+        @Override
+        public Object getValue() {
+            return value;
+        }
+
+        @Override
+        public Object setValue(Object value) {
+            throw new UnsupportedOperationException();
         }
     }
-
 
     private DB _db;
 

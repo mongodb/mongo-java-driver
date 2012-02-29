@@ -89,20 +89,30 @@ public class LazyBSONObject implements BSONObject {
         int offset = _doc_start_offset + FIRST_ELMT_OFFSET;
     }
 
-    public class LazyBSONKeySet implements Set<String> {
+    public class LazyBSONKeySet extends ReadOnlySet<String> {
 
+        /**
+         * This method runs in linear time
+         *
+         * @return the number of keys in the document
+         */
+        @Override
         public int size(){
             int size = 0;
-            for ( String key : this ){
+            Iterator<String> iter = iterator();
+            while(iter.hasNext()) {
+                iter.next();
                 ++size;
             }
             return size;
         }
 
+        @Override
         public boolean isEmpty(){
             return LazyBSONObject.this.isEmpty();
         }
 
+        @Override
         public boolean contains( Object o ){
             for ( String key : this ){
                 if ( key.equals( o ) ){
@@ -112,55 +122,209 @@ public class LazyBSONObject implements BSONObject {
             return false;
         }
 
+        @Override
         public Iterator<String> iterator(){
             return new LazyBSONKeyIterator();
         }
 
-        public Object[] toArray(){
-            String[] array = new String[size()];
-            return toArray( array );
+        @Override
+        public String[] toArray(){
+            String[] a = new String[size()];
+            return toArray(a);
         }
 
         @SuppressWarnings( "unchecked" )
-        public <T> T[] toArray( T[] ts ){
+        @Override
+        public <T> T[] toArray(T[] a) {
+            int size = size();
+
+            T[] localArray = a.length >= size ? a :
+                    (T[]) java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), size);
+
             int i = 0;
             for ( String key : this ){
-                ts[++i] = (T) key;
+                localArray[i++] = (T) key;
             }
-            return ts;
+
+            if (localArray.length > i) {
+                localArray[i] = null;
+            }
+            return localArray;
         }
 
+        @Override
         public boolean add( String e ){
             throw new UnsupportedOperationException( "Not supported yet." );
         }
 
+        @Override
         public boolean remove( Object o ){
             throw new UnsupportedOperationException( "Not supported yet." );
         }
 
-        public boolean containsAll( Collection<?> clctn ){
-            for ( Object item : clctn ){
+        @Override
+        public boolean containsAll( Collection<?> collection ){
+            for ( Object item : collection ){
                 if ( !contains( item ) ){
                     return false;
                 }
             }
             return true;
         }
+    }
 
-        public boolean addAll( Collection<? extends String> clctn ){
-            throw new UnsupportedOperationException( "Not supported yet." );
+    class LazyBSONEntryIterator implements Iterator<Map.Entry<String, Object>> {
+
+        public boolean hasNext(){
+            return !isElementEmpty( offset );
         }
 
-        public boolean retainAll( Collection<?> clctn ){
-            throw new UnsupportedOperationException( "Not supported yet." );
+        public Map.Entry<String, Object> next(){
+            int fieldSize = sizeCString(offset + 1);
+            int elementSize = getElementBSONSize(offset);
+            String key = _input.getCString(offset + 1);
+            final ElementRecord nextElementRecord = new ElementRecord(key, ++offset);
+            offset += fieldSize + elementSize;
+            return new Map.Entry<String, Object>() {
+                @Override
+                public String getKey() {
+                    return nextElementRecord.name;
+                }
+
+                @Override
+                public Object getValue() {
+                    return getElementValue(nextElementRecord);
+                }
+
+                @Override
+                public Object setValue(Object value) {
+                    throw new UnsupportedOperationException("Read only");
+                }
+
+                @Override
+                public boolean equals(Object o) {
+                    if (!(o instanceof Map.Entry))
+                        return false;
+                    Map.Entry e = (Map.Entry) o;
+                    return getKey().equals(e.getKey()) && getValue().equals(e.getValue());
+                }
+
+                @Override
+                public int hashCode() {
+                    return getKey().hashCode() ^ getValue().hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return getKey() + "=" + getValue();
+                }
+            };
         }
 
-        public boolean removeAll( Collection<?> clctn ){
-            throw new UnsupportedOperationException( "Not supported yet." );
+        public void remove(){
+            throw new UnsupportedOperationException( "Read only" );
         }
 
-        public void clear(){
-            throw new UnsupportedOperationException( "Not supported yet." );
+        int offset = _doc_start_offset + FIRST_ELMT_OFFSET;
+    }
+
+    class LazyBSONEntrySet extends ReadOnlySet<Map.Entry<String, Object>>  {
+        @Override
+        public int size() {
+            return LazyBSONObject.this.keySet().size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return LazyBSONObject.this.isEmpty();
+        }
+
+        @Override
+        public boolean contains(Object o) {
+            Iterator<Map.Entry<String, Object>> iter = iterator();
+            while (iter.hasNext()) {
+                if (iter.next().equals(o)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public boolean containsAll(Collection<?> c) {
+            for (Object cur : c) {
+                if (!contains(cur)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        @Override
+        public Iterator<Map.Entry<String, Object>> iterator() {
+            return new LazyBSONEntryIterator();
+        }
+
+        @Override
+        public Object[] toArray() {
+            Map.Entry[] array = new Map.Entry[size()];
+            return toArray(array);
+        }
+
+        @SuppressWarnings( "unchecked" )
+        @Override
+        public <T> T[] toArray(T[] a) {
+            int size = size();
+
+            T[] localArray = a.length >= size ? a :
+                    (T[]) java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), size);
+
+            Iterator<Map.Entry<String, Object>> iter = iterator();
+            int i = 0;
+            while(iter.hasNext()) {
+                localArray[i++] = (T) iter.next();
+            }
+
+            if (localArray.length > i) {
+                localArray[i] = null;
+            }
+
+            return localArray;
+        }
+    }
+
+    // Base class that throws UnsupportedOperationException for any method that writes to the Set
+    abstract class ReadOnlySet<E> implements Set<E> {
+
+        @Override
+        public boolean add(E e) {
+            throw new UnsupportedOperationException("Read-only Set");
+        }
+
+        @Override
+        public boolean remove(Object o) {
+            throw new UnsupportedOperationException("Read-only Set");
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends E> c) {
+            throw new UnsupportedOperationException("Read-only Set");
+        }
+
+        @Override
+        public boolean retainAll(Collection<?> c) {
+            throw new UnsupportedOperationException("Read-only Set");
+        }
+
+        @Override
+        public boolean removeAll(Collection<?> c) {
+            throw new UnsupportedOperationException("Read-only Set");
+        }
+
+        @Override
+        public void clear() {
+            throw new UnsupportedOperationException("Read-only Set");
         }
     }
 
@@ -249,8 +413,20 @@ public class LazyBSONObject implements BSONObject {
         return keySet().contains( s );
     }
 
+    /**
+     *
+     * @return the set of all keys in the document
+     */
     public Set<String> keySet(){
         return new LazyBSONKeySet();
+    }
+
+    /**
+     * This method will be more efficient than using a combination of keySet() and get(String key)
+     * @return the set of entries (key, value) in the document
+     */
+    public Set<Map.Entry<String, Object>> entrySet(){
+        return new LazyBSONEntrySet();
     }
 
     protected boolean isElementEmpty( int offset ){
