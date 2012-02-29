@@ -15,24 +15,12 @@
  */
 package org.bson;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import org.bson.io.BSONByteBuffer;
+import org.bson.types.*;
+
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-
-import org.bson.io.BSONByteBuffer;
-import org.bson.types.BSONTimestamp;
-import org.bson.types.Code;
-import org.bson.types.CodeWScope;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
-import org.bson.types.Symbol;
 
 /**
  * @author antoine
@@ -66,7 +54,7 @@ public class LazyBSONObject implements BSONObject {
             this.name = name;
             this.offset = offset;
             this.type = getElementType( offset - 1 );
-            this.fieldNameSize = sizeCString( offset ) + 1;
+            this.fieldNameSize = sizeCString( offset );
             this.valueOffset = offset + fieldNameSize;
         }
 
@@ -80,22 +68,22 @@ public class LazyBSONObject implements BSONObject {
         final int offset;
     }
 
-    public class LazyBSONIterator implements Iterator<String> {
+    class LazyBSONKeyIterator implements Iterator<String> {
 
         public boolean hasNext(){
             return !isElementEmpty( offset );
         }
 
         public String next(){
-            int fieldSize = sizeCString( offset );
-            int elementSize = getElementBSONSize( offset++ );
-            String key = _input.getCString( offset );
-            offset += ( fieldSize + elementSize );
+            int fieldSize = sizeCString( offset + 1);
+            int elementSize = getElementBSONSize( offset );
+            String key = _input.getCString( offset + 1);
+            offset += fieldSize + elementSize + 1;
             return key;
         }
 
         public void remove(){
-            throw new UnsupportedOperationException( "Not supported yet." );
+            throw new UnsupportedOperationException( "Read only" );
         }
 
         int offset = _doc_start_offset + FIRST_ELMT_OFFSET;
@@ -125,7 +113,7 @@ public class LazyBSONObject implements BSONObject {
         }
 
         public Iterator<String> iterator(){
-            return new LazyBSONIterator();
+            return new LazyBSONKeyIterator();
         }
 
         public Object[] toArray(){
@@ -190,37 +178,54 @@ public class LazyBSONObject implements BSONObject {
 
     public Object get( String key ){
         //get element up to the key
-        ArrayList<ElementRecord> elements = getElementsToKey( key );
+        ElementRecord element = getElement(key);
         
         //no found if null/empty
-        if (elements == null || elements.size() == 0)
+        if (element == null) {
             return null;
+        }
         
-        //get last to see if it is what we want; if it isn't then what we are looking for isn't there
-        ElementRecord lastRec = elements.get( elements.size() - 1 );
-        return ( lastRec.name.equals( key ) ) ? getElementValue( lastRec ) : null;
+        return getElementValue(element);
         
     }
     
     /**
-     * returns all the ElementRecords to the point of the key; if no key is specified or found then a full list is returned.
-     * @param key the field/key to stop at
-     * @return all the ElementRecords to the point of the key (must be the last element returned)
+     * returns the ElementRecord for the given key, or null if not found
+     * @param key the field/key to find
+     * @return ElementRecord for key, or null
      */
-    ArrayList<ElementRecord> getElementsToKey(String key){
+    ElementRecord getElement(String key){
         int offset = _doc_start_offset + FIRST_ELMT_OFFSET;
-        ArrayList<ElementRecord> elements = new ArrayList<LazyBSONObject.ElementRecord>();
  
         while ( !isElementEmpty( offset ) ){
-            int fieldSize = sizeCString( offset );
-            int elementSize = getElementBSONSize( offset++ );
-            String name = _input.getCString( offset );
-            final ElementRecord rec = new ElementRecord( name, offset );
-            elements.add( rec );
-            if ( name.equals( key ) ){
-                //found it, break.
-                break;
+            int fieldSize = sizeCString( offset + 1 );
+            int elementSize = getElementBSONSize( offset );
+            String name = _input.getCString( ++offset);
+
+            if (name.equals(key)) {
+                return new ElementRecord( name, offset );
             }
+            offset += ( fieldSize + elementSize);
+        }
+
+        return null;
+    }
+
+
+    /**
+     * returns all the ElementRecords in this document
+     * @return list of ElementRecord
+     */
+    List<ElementRecord> getElements(){
+        int offset = _doc_start_offset + FIRST_ELMT_OFFSET;
+        ArrayList<ElementRecord> elements = new ArrayList<LazyBSONObject.ElementRecord>();
+
+        while ( !isElementEmpty( offset ) ){
+            int fieldSize = sizeCString( offset + 1 );
+            int elementSize = getElementBSONSize( offset );
+            String name = _input.getCString( ++offset );
+            ElementRecord rec = new ElementRecord( name, offset );
+            elements.add( rec );
             offset += ( fieldSize + elementSize );
         }
 
@@ -275,7 +280,7 @@ public class LazyBSONObject implements BSONObject {
     protected int getElementBSONSize( int offset ){
         int x = 0;
         byte type = getElementType( offset++ );
-        int n = sizeCString( offset++ );
+        int n = sizeCString( offset );
         int valueOffset = offset + n;
         switch ( type ){
             case BSON.EOO:
@@ -319,9 +324,9 @@ public class LazyBSONObject implements BSONObject {
                 break;
             case BSON.REGEX:
                 // 2 cstrs
-                int part1 = sizeCString( valueOffset ) + 1;
-                int part2 = sizeCString( valueOffset + part1 ) + 1;
-                x = part1 + part2 + 4;
+                int part1 = sizeCString( valueOffset );
+                int part2 = sizeCString( valueOffset + part1 );
+                x = part1 + part2;
                 break;
             default:
                 throw new BSONException( "Invalid type " + type + " for field " + getElementFieldName( offset ) );
@@ -330,8 +335,12 @@ public class LazyBSONObject implements BSONObject {
     }
 
 
+    /**
+     * Returns the size of the BSON cstring at the given offset in the buffer
+     * @param offset the offset into the buffer
+     * @return the size of the BSON cstring, including the null terminator
+     */
     protected int sizeCString( int offset ){
-        offset += 1;
         int end = offset;
         while ( true ){
             byte b = _input.get( end );

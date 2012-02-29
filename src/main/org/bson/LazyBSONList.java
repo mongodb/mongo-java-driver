@@ -1,12 +1,8 @@
 package org.bson;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-
 import org.bson.io.BSONByteBuffer;
+
+import java.util.*;
 
 @SuppressWarnings( "rawtypes" )
 public class LazyBSONList extends LazyBSONObject implements List {
@@ -73,16 +69,16 @@ public class LazyBSONList extends LazyBSONObject implements List {
 
     @Override
     public int size(){
-        //TODO check the last one and get the key/field name to see the ordinal position incase the array is stored with missing elements.
-        return getElementsToKey( null ).size();
+        //TODO check the last one and get the key/field name to see the ordinal position in case the array is stored with missing elements.
+        return getElements().size();
     }
 
     public class LazyBSONListIterator implements Iterator {
-        ArrayList<ElementRecord> elements;
+        List<ElementRecord> elements;
         int pos=0;
         
         public LazyBSONListIterator() {
-            elements = getElementsToKey( null );
+            elements = getElements();
         }
         
         @Override
