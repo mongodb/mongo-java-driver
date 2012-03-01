@@ -17,14 +17,16 @@
 package com.mongodb;
 
 // Mongo
-import org.bson.types.*;
-import com.mongodb.util.*;
 
+import com.mongodb.util.TestCase;
+import org.bson.types.ObjectId;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 
 // Java
-import java.util.*;
 
 public class SecondaryReadTest extends TestCase {
 
@@ -275,25 +277,14 @@ public class SecondaryReadTest extends TestCase {
 
             final long queriesExecuted = testHost.getQueriesExecuted();
 
-            if (expectedPerSecondary == queriesExecuted) continue;
-
+            final double deviation;
             if (queriesExecuted > expectedPerSecondary) {
-                final double deviation = (double)100 - (((double)expectedPerSecondary / (double)queriesExecuted) * (double)100);
-                //System.out.println("------ deviation: " + deviation);
-                assertEquals(true, (deviation <= MAX_DEVIATION_PERCENT));
+                deviation = (double)100 - (((double)expectedPerSecondary / (double)queriesExecuted) * (double)100);
             } else {
-                final double deviation = (double)100 - (((double)queriesExecuted / (double)expectedPerSecondary) * (double)100);
-                //System.out.println("------ deviation: " + deviation);
-                assertEquals(true, (deviation <= MAX_DEVIATION_PERCENT));
+                deviation = (double)100 - (((double)queriesExecuted / (double)expectedPerSecondary) * (double)100);
             }
+            Assert.assertTrue(deviation <= MAX_DEVIATION_PERCENT, "Percentage deviation of " + deviation + " is higher than " + MAX_DEVIATION_PERCENT);
         }
-
-        /*
-        for (final TestHost testHost : pHosts) {
-            System.out.println("--- host: " + testHost.hostnameAndPort + " - queries: " + testHost.queriesBefore + " - after: " + testHost.queriesAfter);
-        }
-        */
-
     }
 
     private static void loadQueryCount(final List<TestHost> pHosts, final boolean pBefore) throws Exception {
