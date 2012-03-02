@@ -206,6 +206,39 @@ public class LazyDBObjectTest extends TestCase {
         assertFalse(entryIter.hasNext());
     }
 
+    @Test
+    public void testEqualsAndHashCode() throws IOException {
+        DBObject obj = createSimpleTestDoc();
+        e.putObject(obj);
+        buf.pipe(bios);
+
+        LazyDBObject lazyOne = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()),
+                (DBCollection) null);
+
+        LazyDBObject lazyTwo = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()),
+                (DBCollection) null);
+        
+        assertTrue(lazyOne.equals(lazyTwo));
+        assertEquals(lazyOne.hashCode(), lazyTwo.hashCode());
+    }
+
+    @Test 
+    public void testPipe() throws IOException {
+        DBObject obj = createSimpleTestDoc();
+        e.putObject(obj);
+        buf.pipe(bios);
+
+        LazyDBObject lazyDBObj = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), 
+                (DBCollection) null);
+        bios.reset();
+        lazyDBObj.pipe(bios);
+
+        LazyDBObject lazyDBObjectFromPipe = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()),
+                (DBCollection) null);
+        
+        assertEquals(lazyDBObj, lazyDBObjectFromPipe);
+    }
+
     private DBObject createSimpleTestDoc() {
         DBObject obj = new BasicDBObject("_id", new ObjectId());
         obj.put("first", 1);

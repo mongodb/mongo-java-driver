@@ -18,6 +18,8 @@ package org.bson;
 import org.bson.io.BSONByteBuffer;
 import org.bson.types.*;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -92,7 +94,7 @@ public class LazyBSONObject implements BSONObject {
     public class LazyBSONKeySet extends ReadOnlySet<String> {
 
         /**
-         * This method runs in linear time
+         * This method runs in time linear to the total size of all keys in the document.
          *
          * @return the number of keys in the document
          */
@@ -442,7 +444,11 @@ public class LazyBSONObject implements BSONObject {
     }
 
     public int getBSONSize(){
-        return _input.getInt( _doc_start_offset );
+        return getBSONSize( _doc_start_offset );
+    }
+    
+    public void pipe(OutputStream os) throws IOException {
+        os.write(_input.array(), _doc_start_offset, getBSONSize());
     }
 
     private String getElementFieldName( final int offset ){
@@ -636,6 +642,21 @@ public class LazyBSONObject implements BSONObject {
             bin[n] = _input.get( valueOffset + n );
         }
         return bin;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LazyBSONObject that = (LazyBSONObject) o;
+
+        return Arrays.equals(this._input.array(), that._input.array());
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(_input.array());
     }
 
     /**
