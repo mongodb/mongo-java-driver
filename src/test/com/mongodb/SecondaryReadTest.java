@@ -20,7 +20,6 @@ package com.mongodb;
 
 import com.mongodb.util.TestCase;
 import org.bson.types.ObjectId;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -283,7 +282,7 @@ public class SecondaryReadTest extends TestCase {
             } else {
                 deviation = (double)100 - (((double)queriesExecuted / (double)expectedPerSecondary) * (double)100);
             }
-            Assert.assertTrue(deviation <= MAX_DEVIATION_PERCENT, "Percentage deviation of " + deviation + " is higher than " + MAX_DEVIATION_PERCENT);
+            assertLess(deviation, MAX_DEVIATION_PERCENT);
         }
     }
 
