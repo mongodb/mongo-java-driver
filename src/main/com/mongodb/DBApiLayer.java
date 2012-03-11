@@ -388,7 +388,7 @@ public class DBApiLayer extends DB {
             _numFetched += res.size();
 
             if ( ( res._flags & Bytes.RESULTFLAG_CURSORNOTFOUND ) > 0 ){
-                throw new MongoException.CursorNotFound();
+                throw new MongoException.CursorNotFound(res._cursor, res.serverUsed());
             }
 
             if (res._cursor != 0 && _limit > 0 && _limit - _numFetched <= 0) {
