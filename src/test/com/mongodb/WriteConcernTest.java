@@ -24,8 +24,17 @@ import org.testng.annotations.Test;
 
 import java.io.*;
 
-public class WriteConcernSerializationTest extends TestCase {
-    @Test()
+public class WriteConcernTest extends TestCase {
+
+    @Test
+    public void testEqualityAndHashCode() {
+        Assert.assertEquals(new WriteConcern(new String("majority")), new WriteConcern(new String("majority")));
+        Assert.assertEquals(new WriteConcern(new String("majority")).hashCode(), new WriteConcern(new String("majority")).hashCode());
+        Assert.assertNotEquals(new WriteConcern(new String("majority")), new WriteConcern(1));
+        Assert.assertNotEquals(new WriteConcern(new String("majority")).hashCode(), new WriteConcern(1).hashCode());
+    }
+
+    @Test
     public void testSerializeWriteConcern() throws IOException, ClassNotFoundException {
         WriteConcern writeConcern = WriteConcern.SAFE;
 
@@ -44,7 +53,7 @@ public class WriteConcernSerializationTest extends TestCase {
         Assert.assertEquals(false, object2.getContinueOnErrorForInsert());
     }
 
-    @Test()
+    @Test
     public void testSerializeMajorityWriteConcern() throws IOException, ClassNotFoundException {
         WriteConcern writeConcern = WriteConcern.MAJORITY;
 
