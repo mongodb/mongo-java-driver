@@ -18,20 +18,18 @@
 
 package com.mongodb;
 
+import com.mongodb.util.ThreadUtil;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Collections;
 import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import com.mongodb.util.ThreadUtil;
 
 /**
  * represents a Port to the database, which is effectively a single connection to a server
@@ -56,7 +54,7 @@ public class DBPort {
         this( addr , null , new MongoOptions() );
     }
     
-    DBPort( ServerAddress addr  , DBPortPool pool , MongoOptions options ){
+    DBPort( ServerAddress addr, DBPortPool pool, MongoOptions options ){
         _options = options;
         _sa = addr;
         _addr = addr.getSocketAddress();
@@ -118,7 +116,7 @@ public class DBPort {
         try {
             msg.prepare();
             msg.pipe( _out );
-            
+
             if ( _pool != null )
                 _pool._everWorked = true;
             
@@ -156,15 +154,10 @@ public class DBPort {
 
     synchronized CommandResult runCommand( DB db , DBObject cmd ) throws IOException {
         Response res = findOne( db , "$cmd" , cmd );
-        return convertToCR( res );
+        return convertToCommandResult(cmd, res);
     }
 
-    synchronized CommandResult runCommand( String db , DBObject cmd ) throws IOException {
-        Response res = findOne( db + ".$cmd" , cmd );
-        return convertToCR( res );
-    }
-
-    private CommandResult convertToCR(Response res) {
+    private CommandResult convertToCommandResult(DBObject cmd, Response res) {
         if ( res.size() == 0 )
             return null;
         if ( res.size() > 1 )
@@ -174,7 +167,7 @@ public class DBPort {
         if ( data == null )
             throw new MongoInternalException( "something is wrong, no command result" );
 
-        CommandResult cr = new CommandResult(res.serverUsed());
+        CommandResult cr = new CommandResult(cmd, res.serverUsed());
         cr.putAll( data );
         return cr;
     }
@@ -217,7 +210,7 @@ public class DBPort {
             try {
                 _socket = _options.socketFactory.createSocket();
                 _socket.connect( _addr , _options.connectTimeout );
-                
+
                 _socket.setTcpNoDelay( ! USE_NAGLE );
                 _socket.setKeepAlive( _options.socketKeepAlive );
                 _socket.setSoTimeout( _options.socketTimeout );

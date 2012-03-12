@@ -25,7 +25,14 @@ package com.mongodb;
 public class CommandResult extends BasicDBObject {
 
     CommandResult(ServerAddress srv) {
-        super();
+        this(null, srv);
+    }
+
+    CommandResult(DBObject cmd, ServerAddress srv) {
+        if (srv == null) {
+            throw new IllegalArgumentException("server address is null");
+        }
+        _cmd = cmd;
         _host = srv;
         //so it is shown in toString/debug
         put("serverUsed", srv.toString());
@@ -41,7 +48,7 @@ public class CommandResult extends BasicDBObject {
             throw new IllegalArgumentException( "'ok' should never be null..." );
 
         if ( o instanceof Boolean )
-            return ((Boolean)o).booleanValue();
+            return (Boolean) o;
 
         if ( o instanceof Number )
             return ((Number)o).intValue() == 1;
@@ -66,10 +73,16 @@ public class CommandResult extends BasicDBObject {
      */
     public MongoException getException(){
         if ( !ok() ) {
-            String cmdName = _cmd.keySet().iterator().next();
+            StringBuilder buf = new StringBuilder();
 
-            StringBuilder buf = new StringBuilder( "command failed [" );
-            buf.append( "command failed [" ).append( cmdName ).append( "] " );
+            String cmdName;
+            if (_cmd != null) {
+                cmdName = _cmd.keySet().iterator().next();
+                buf.append( "command failed [" ).append( cmdName ).append( "]: " );
+            } else {
+                buf.append( "operation failed: ");
+            }
+            
             buf.append( toString() );
 
             return new CommandFailure( this , buf.toString() );
@@ -126,8 +139,8 @@ public class CommandResult extends BasicDBObject {
 	return _host;
     }
 
-    DBObject _cmd;
-    ServerAddress _host = null;
+    private final DBObject _cmd;
+    private final ServerAddress _host;
     private static final long serialVersionUID = 1L;
 
     static class CommandFailure extends MongoException {
