@@ -90,7 +90,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         addNodeToLists("127.0.0.6", true, 10, updatableNodes, nodes, aTag);
         addNodeToLists("127.0.0.7", true, 10, updatableNodes, nodes, aTag);
 
-        ReplicaSetStatus.ReplicaSet replicaSet = new ReplicaSetStatus.ReplicaSet(updatableNodes, random, 15);
+        ReplicaSetStatus.ReplicaSet replicaSet = new ReplicaSetStatus.ReplicaSet(nodes, random, 15);
         assertEquals(random, replicaSet.random);
         assertEquals(nodes, replicaSet.all);
 

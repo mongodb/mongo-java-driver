@@ -35,7 +35,7 @@ public class ReplicaSetStatusTest extends TestCase {
     public void testClose() throws InterruptedException {
         ReplicaSetStatus replicaSetStatus = new ReplicaSetStatus(cleanupMongo, cleanupMongo.getAllAddress());
         replicaSetStatus.start();
-        assertNotNull(replicaSetStatus.members.get());
+        assertNotNull(replicaSetStatus._replicaSetHolder.get());
 
         replicaSetStatus.close();
 
