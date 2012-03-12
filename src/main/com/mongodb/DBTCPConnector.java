@@ -473,12 +473,12 @@ public class DBTCPConnector implements DBConnector {
         return _maxBsonObjectSize.get();
     }
 
-    private boolean _set( ServerAddress addr ){
+    private synchronized boolean _set( ServerAddress addr ){
         DBPortPool newPool = _portHolder.get( addr );
         if (newPool == _masterPortPool)
             return false;
 
-        if ( _logger.isLoggable( Level.WARNING ) && _masterPortPool != null )
+        if (  _masterPortPool != null )
             _logger.log(Level.WARNING, "Master switching from " + _masterPortPool.getServerAddress() + " to " + addr);
         _masterPortPool = newPool;
         return true;
