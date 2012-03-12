@@ -554,7 +554,7 @@ public class DBTCPConnector implements DBConnector {
         return _myPort.get();
     }
 
-    private DBPortPool _masterPortPool;
+    private volatile DBPortPool _masterPortPool;
     private final Mongo _mongo;
     private DBPortPool.Holder _portHolder;
     private final List<ServerAddress> _allHosts;
