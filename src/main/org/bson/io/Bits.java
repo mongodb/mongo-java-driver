@@ -28,14 +28,26 @@ public class Bits {
         readFully( in , b , b.length );
     }
 
-    public static void readFully( InputStream in, byte[] b , int l )
+    public static void readFully( InputStream in, byte[] b, int length )
         throws IOException {
-        int x = 0;
-        while ( x<l ){
-            int temp = in.read( b , x , l - x );
-            if ( temp < 0 )
+        readFully(in, b, 0, length);
+    }
+
+    public static void readFully( InputStream in, byte[] b, int startOffset, int length )
+        throws IOException {
+
+        if (b.length - startOffset > length) {
+            throw new IllegalArgumentException("Buffer is too small");
+        }
+
+        int offset = startOffset;
+        int toRead = length;
+        while ( toRead > 0 ){
+            int bytesRead = in.read( b, offset , toRead );
+            if ( bytesRead < 0 )
                 throw new EOFException();
-            x += temp;
+            toRead -= bytesRead;
+            offset += bytesRead;
         }
     }
 

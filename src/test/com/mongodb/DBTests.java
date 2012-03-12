@@ -16,15 +16,14 @@
 
 package com.mongodb;
 
-import java.net.UnknownHostException;
-import java.util.*;
-
+import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
 
-import com.mongodb.util.*;
+import java.net.UnknownHostException;
+import java.util.Arrays;
 
 /**
- *  Tests aspect of the DB - not really driver tests
+ * Tests aspect of the DB - not really driver tests
  */
 public class DBTests extends TestCase {
 
@@ -32,22 +31,22 @@ public class DBTests extends TestCase {
     final DB _db;
 
     public DBTests()
-        throws Exception {
-        _mongo = new Mongo();
-	cleanupMongo = new Mongo( "127.0.0.1" );
-	cleanupDB = "java_com_mongodb_unittest_DBTests";
-	_db = cleanupMongo.getDB( cleanupDB );
+            throws Exception {
+        _mongo = new Mongo("127.0.0.1");
+        cleanupMongo = _mongo;
+        cleanupDB = "java_com_mongodb_unittest_DBTests";
+        _db = cleanupMongo.getDB(cleanupDB);
     }
 
     @Test
     public void testGetCollectionNames() throws MongoException {
         String name = "testGetCollectionNames";
-        DBCollection c = _db.getCollection( name );
+        DBCollection c = _db.getCollection(name);
         c.drop();
-        assertFalse( _db.getCollectionNames().contains( name ) );
-        c.save( new BasicDBObject( "x" , 1 ) );
-        assertTrue( _db.getCollectionNames().contains( name ) );
-        
+        assertFalse(_db.getCollectionNames().contains(name));
+        c.save(new BasicDBObject("x", 1));
+        assertTrue(_db.getCollectionNames().contains(name));
+
     }
 
 
@@ -55,75 +54,105 @@ public class DBTests extends TestCase {
     public void testRename() throws MongoException {
         String namea = "testRenameA";
         String nameb = "testRenameB";
-        DBCollection a = _db.getCollection( namea );
-        DBCollection b = _db.getCollection( nameb );
-        
+        DBCollection a = _db.getCollection(namea);
+        DBCollection b = _db.getCollection(nameb);
+
         a.drop();
         b.drop();
 
-        assertEquals( 0 , a.find().count() );
-        assertEquals( 0 , b.find().count() );
+        assertEquals(0, a.find().count());
+        assertEquals(0, b.find().count());
 
-        a.save( new BasicDBObject( "x" , 1 ) );
-        assertEquals( 1 , a.find().count() );
-        assertEquals( 0 , b.find().count() );
-        
-        DBCollection b2 = a.rename( nameb );
-        assertEquals( 0 , a.find().count() );
-        assertEquals( 1 , b.find().count() );
-        assertEquals( 1 , b2.find().count() );
-        
-        assertEquals( b.getName() , b2.getName() );
-        
+        a.save(new BasicDBObject("x", 1));
+        assertEquals(1, a.find().count());
+        assertEquals(0, b.find().count());
+
+        DBCollection b2 = a.rename(nameb);
+        assertEquals(0, a.find().count());
+        assertEquals(1, b.find().count());
+        assertEquals(1, b2.find().count());
+
+        assertEquals(b.getName(), b2.getName());
+
     }
 
     @Test
     public void testRenameAndDrop() throws MongoException {
         String namea = "testRenameA";
         String nameb = "testRenameB";
-        DBCollection a = _db.getCollection( namea );
-        DBCollection b = _db.getCollection( nameb );
+        DBCollection a = _db.getCollection(namea);
+        DBCollection b = _db.getCollection(nameb);
 
         a.drop();
         b.drop();
 
-        assertEquals( 0 , a.find().count() );
-        assertEquals( 0 , b.find().count() );
+        assertEquals(0, a.find().count());
+        assertEquals(0, b.find().count());
 
-        a.save( new BasicDBObject( "x" , 1 ) );
-        b.save( new BasicDBObject( "x" , 1 ) );
-        assertEquals( 1 , a.find().count() );
-        assertEquals( 1 , b.find().count() );
+        a.save(new BasicDBObject("x", 1));
+        b.save(new BasicDBObject("x", 1));
+        assertEquals(1, a.find().count());
+        assertEquals(1, b.find().count());
 
         try {
-            DBCollection b2 = a.rename( nameb );
+            DBCollection b2 = a.rename(nameb);
             assertTrue(false, "Rename to existing collection must fail");
         } catch (MongoException e) {
             assertEquals(e.getCode(), 10027);
         }
 
-        DBCollection b2 = a.rename( nameb, true );
-        assertEquals( 0 , a.find().count() );
-        assertEquals( 1 , b.find().count() );
-        assertEquals( 1 , b2.find().count() );
+        DBCollection b2 = a.rename(nameb, true);
+        assertEquals(0, a.find().count());
+        assertEquals(1, b.find().count());
+        assertEquals(1, b2.find().count());
 
-        assertEquals( b.getName() , b2.getName() );
+        assertEquals(b.getName(), b2.getName());
 
     }
-    
+
     @Test
     public void testCommandToSecondary() throws MongoException, UnknownHostException {
         Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27018)));
 
-        if (isStandalone(mongo)) {
-            return;
+        try {
+            if (isStandalone(mongo)) {
+                return;
+            }
+
+            String primary = getPrimaryAsString(mongo);
+
+            DB db = mongo.getDB("secondaryTest");
+            db.setReadPreference(ReadPreference.SECONDARY);
+//        CommandResult result = db.command("ping");
+//        assertNotEquals(primary, result.get("serverUsed"));
+
+            db.getCollection("secondaryTest").findOne();
+        } finally {
+            mongo.close();
         }
+    }
 
-        String primary = getPrimaryAsString(mongo);
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testTurnOffSlaveOk() throws MongoException, UnknownHostException {
+        MongoOptions mongoOptions = new MongoOptions();
 
-        DB db = mongo.getDB("secondaryTest");
-        db.setReadPreference(ReadPreference.SECONDARY);
-        CommandResult result      = db.command("ping");
-        assertNotEquals(primary, result.get("serverUsed"));
+        mongoOptions.slaveOk = true;
+
+        Mongo mongo = new Mongo("localhost", mongoOptions);
+        try {
+        mongo.addOption(Bytes.QUERYOPTION_PARTIAL);
+        mongo.addOption(Bytes.QUERYOPTION_AWAITDATA);
+
+        int isSlaveOk = mongo.getOptions() & Bytes.QUERYOPTION_SLAVEOK;
+
+        assertEquals(Bytes.QUERYOPTION_SLAVEOK, isSlaveOk);
+
+        mongo.setOptions(mongo.getOptions() & (~Bytes.QUERYOPTION_SLAVEOK));
+
+        assertEquals(Bytes.QUERYOPTION_AWAITDATA | Bytes.QUERYOPTION_PARTIAL, mongo.getOptions());
+        } finally {
+            mongo.close();
+        }
     }
 }

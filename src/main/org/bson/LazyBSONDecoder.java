@@ -15,12 +15,12 @@
  */
 package org.bson;
 
+import org.bson.io.Bits;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Logger;
-
-import org.bson.io.Bits;
-import org.bson.util.ExposedByteArrayInputStream;
 
 /**
  * implementation of BSONDecoder that creates LazyBSONObject instances
@@ -30,7 +30,7 @@ public class LazyBSONDecoder implements BSONDecoder {
 
     public BSONObject readObject(byte[] b) {
         try {
-            return readObject( new ExposedByteArrayInputStream( b ) );
+            return readObject( new ByteArrayInputStream( b ) );
         }
         catch ( IOException ioe ){
             throw new BSONException( "should be impossible" , ioe );
@@ -45,7 +45,7 @@ public class LazyBSONDecoder implements BSONDecoder {
 
     public int decode(byte[] b, BSONCallback callback) {
         try {
-            return decode( new ExposedByteArrayInputStream( b ), callback );
+            return decode( new ByteArrayInputStream( b ), callback );
         }
         catch ( IOException ioe ) {
             throw new BSONException( "should be impossible" , ioe );
@@ -53,45 +53,18 @@ public class LazyBSONDecoder implements BSONDecoder {
     }
 
     public int decode(InputStream in, BSONCallback callback) throws IOException {
-        //shortcut if we don't need to copy
-        if ( in instanceof ExposedByteArrayInputStream) {
-            LOG.warning( "skipping stream read -> copy with ExposedByteArrayInputStream" );
-            System.out.println("skipping stream read -> copy with ExposedByteArrayInputStream" );
-            return decode(((ExposedByteArrayInputStream)in).getBuffer(), callback);
-        }
-            
-        byte[] data = null;
-        if (_buffer == null)
-            _buffer = new byte[4096];
-        int read = readBytesFully(in, _buffer, 0, 4);
-        int objSize = Bits.readInt(_buffer);
-        if (objSize > _buffer.length) {
-            // need bigger buffer
-            data = new byte[objSize];
-            System.arraycopy(_buffer, 0, data, 0, read);
-        } else {
-            data = _buffer;
-            _buffer = null;
-        }
-        
-        if (read < objSize)
-            readBytesFully(in, data, read, objSize - read);
-            
-        callback.gotBinary(null, (byte)0, data);
-        return objSize + 4;
-    }
-    
-    private int readBytesFully(InputStream in, byte[] buffer, int offset, int toread) throws IOException {
-        int read = 0;
-        int len = buffer.length;
-        while (read < toread) {
-            int n = in.read(buffer, offset, toread - read);
-            read += n;
-            offset += n;
-        }
-        return read;
+        byte[] objSizeBuffer = new byte[BYTES_IN_INTEGER];
+        Bits.readFully(in, objSizeBuffer, 0, BYTES_IN_INTEGER);
+        int objSize = Bits.readInt(objSizeBuffer);
+        byte[] data = new byte[objSize];
+        System.arraycopy(objSizeBuffer, 0, data, 0, BYTES_IN_INTEGER);
+
+        Bits.readFully(in, data, BYTES_IN_INTEGER, objSize - BYTES_IN_INTEGER);
+
+        // note that we are handing off ownership of the data byte array to the callback
+        callback.gotBinary(null, (byte) 0, data);
+        return objSize;
     }
 
-    byte[] _buffer = null;
-
+    private static int BYTES_IN_INTEGER = 4;
 }

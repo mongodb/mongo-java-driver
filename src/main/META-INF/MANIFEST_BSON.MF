@@ -2,5 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: BSON
 Bundle-SymbolicName: org.bson
+Bundle-ClassPath: bson-@VERSION@.jar
 Bundle-Version: @VERSION@
-Export-Package: org.bson, org.bson.util, org.bson.types, org.bson.io
+Export-Package: org.bson;version="@VERSION@",
+ org.bson.util;version="@VERSION@",
+ org.bson.types;version="@VERSION@",
+ org.bson.io;version="@VERSION@"

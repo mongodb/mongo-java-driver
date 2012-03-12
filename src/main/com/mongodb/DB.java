@@ -163,9 +163,8 @@ public abstract class DB {
 
         DBObject res = i.next();
         ServerAddress sa = (i instanceof Result) ? ((Result) i).getServerAddress() : null;
-        CommandResult cr = new CommandResult(sa);
+        CommandResult cr = new CommandResult(cmd, sa);
         cr.putAll( res );
-        cr._cmd = cmd;
         return cr;
     }
 

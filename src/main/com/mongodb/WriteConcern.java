@@ -169,7 +169,7 @@ public class WriteConcern implements Serializable {
      * @param j whether writes should wait for a journaling group commit
      * @param continueOnInsertError if batch inserts should continue after the first error
      */
-    public WriteConcern( int w , int wtimeout , boolean fsync , boolean j, boolean continueOnInsertError){
+    public WriteConcern( int w , int wtimeout , boolean fsync , boolean j, boolean continueOnInsertError) {
         _w = w;
         _wtimeout = wtimeout;
         _fsync = fsync;
@@ -216,6 +216,10 @@ public class WriteConcern implements Serializable {
      * @return
      */
     public WriteConcern( String w , int wtimeout , boolean fsync, boolean j, boolean continueOnInsertError ){
+        if (w == null) {
+            throw new IllegalArgumentException("w can not be null");
+        }
+
         _w = w;
         _wtimeout = wtimeout;
         _fsync = fsync;
@@ -243,7 +247,7 @@ public class WriteConcern implements Serializable {
 
     /**
      * Sets the w value (the write strategy)
-     * @param wValue
+     * @param w
      */
     public void setWObject(Object w) {
         if ( ! (w instanceof Integer) && ! (w instanceof String) )
@@ -351,12 +355,29 @@ public class WriteConcern implements Serializable {
     }
 
     @Override
-    public boolean equals( Object o ){
-        if ( this == o ) return true;
-        if ( o == null || getClass() != o.getClass() ) return false;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
         WriteConcern that = (WriteConcern) o;
-        return _fsync == that._fsync && _w == that._w && _wtimeout == that._wtimeout && _j == that._j && _continueOnErrorForInsert == that._continueOnErrorForInsert;
+
+        if (_continueOnErrorForInsert != that._continueOnErrorForInsert) return false;
+        if (_fsync != that._fsync) return false;
+        if (_j != that._j) return false;
+        if (_wtimeout != that._wtimeout) return false;
+        if (!_w.equals(that._w)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = _w.hashCode();
+        result = 31 * result + _wtimeout;
+        result = 31 * result + (_fsync ? 1 : 0);
+        result = 31 * result + (_j ? 1 : 0);
+        result = 31 * result + (_continueOnErrorForInsert ? 1 : 0);
+        return result;
     }
 
     /**

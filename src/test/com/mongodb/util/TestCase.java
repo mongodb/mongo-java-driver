@@ -133,13 +133,18 @@ public class TestCase extends MyAsserts {
     public void add( TestCase tc ){
         _tests.addAll( tc._tests );
     }
+
     public String cleanupDB = null;
     public Mongo cleanupMongo = null;
+
     @org.testng.annotations.AfterClass
-    public void cleanup(){
-	if ((cleanupMongo != null) && (cleanupDB != null)) {
-	    cleanupMongo.dropDatabase(cleanupDB);
-	}
+    public void cleanup() {
+        if (cleanupMongo != null) {
+            if (cleanupDB != null) {
+                cleanupMongo.dropDatabase(cleanupDB);
+            }
+            cleanupMongo.close();
+        }
     }
 
     /**
@@ -166,7 +171,7 @@ public class TestCase extends MyAsserts {
             else
                 errors.add( r );
         }
-	cleanup();
+        cleanup();
         System.out.println( "\n----" );
 
         int pass = _tests.size() - ( errors.size() + fails.size() );
@@ -269,7 +274,8 @@ public class TestCase extends MyAsserts {
 
         throw new IllegalStateException("No primary defined");
     }
-    
+
+    @SuppressWarnings("unchecked")
     protected int getReplicaSetSize(Mongo mongo) {
         int size = 0;
 

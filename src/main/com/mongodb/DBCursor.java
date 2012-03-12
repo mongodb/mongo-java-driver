@@ -18,6 +18,7 @@
 
 package com.mongodb;
 
+import java.io.Closeable;
 import java.util.*;
 
 import com.mongodb.DBApiLayer.Result;
@@ -48,7 +49,7 @@ import com.mongodb.DBApiLayer.Result;
  *
  * @dochub cursors
  */
-public class DBCursor implements Iterator<DBObject> , Iterable<DBObject> {
+public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closeable {
 
     /**
      * Initializes a new database cursor

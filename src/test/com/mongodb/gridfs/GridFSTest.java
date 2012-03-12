@@ -167,10 +167,11 @@ public class GridFSTest extends TestCase {
             fileSize = 10 * 1024 * 1024;
 
         byte[] randomBytes = new byte[fileSize];
-        for (int idx = 0; idx < 2 * GridFS.MAX_CHUNKSIZE; ++idx)
+        for (int idx = 0; idx < fileSize; ++idx)
             randomBytes[idx] = (byte)(256 * Math.random());
 
         GridFSInputFile inputFile = _fs.createFile(randomBytes);
+        inputFile.setFilename("bad_chunk_size.bin");
         try{
             inputFile.save(0);
             fail("should have received an exception about a chunk size being zero");
@@ -195,6 +196,65 @@ public class GridFSTest extends TestCase {
         byte[] savedFileBytes = savedFileByteStream.toByteArray();
 
         assertArrayEquals(randomBytes, savedFileBytes);
+    }
+
+    @Test(groups = {"basic"})
+    public void testInputStreamSkipping() throws Exception {
+        //int chunkSize = 5;
+        int chunkSize = GridFS.DEFAULT_CHUNKSIZE;
+        int fileSize = (int)(7.25 * chunkSize);
+
+        byte[] fileBytes = new byte[fileSize];
+        for (int idx = 0; idx < fileSize; ++idx)
+            fileBytes[idx] = (byte)(idx % 251);
+            //Don't want chunks to be aligned at byte position 0
+
+        GridFSInputFile inputFile = _fs.createFile(fileBytes);
+        inputFile.setFilename("input_stream_skipping.bin");
+        inputFile.save(chunkSize);
+
+        GridFSDBFile savedFile = _fs.findOne(new BasicDBObject("_id", inputFile.getId()));
+        GridFSDBFile.MyInputStream inputStream = (GridFSDBFile.MyInputStream)savedFile.getInputStream();
+
+        //Quick run-through, make sure the file is as expected
+        for (int idx = 0; idx < fileSize; ++idx)
+            assertEquals((byte)(idx % 251), (byte)inputStream.read());
+
+        inputStream = (GridFSDBFile.MyInputStream)savedFile.getInputStream();
+
+        int position = 0;
+        assertEquals((byte)(position++ % 251), (byte)inputStream.read());
+
+        long skipped = inputStream.skip(1);
+        assertEquals(1, skipped);
+        position += 1;
+        assertEquals((byte)(position++ % 251), (byte)inputStream.read());
+
+        skipped = inputStream.skip(chunkSize);
+        assertEquals(chunkSize, skipped);
+        position += chunkSize;
+        assertEquals((byte)(position++ % 251), (byte)inputStream.read());
+
+        skipped = inputStream.skip(-1);
+        assertEquals(0, skipped);
+        skipped = inputStream.skip(0);
+        assertEquals(0, skipped);
+
+        skipped = inputStream.skip(3 * chunkSize);
+        assertEquals(3 * chunkSize, skipped);
+        position += 3 * chunkSize;
+        assertEquals((byte)(position++ % 251), (byte)inputStream.read());
+
+        //Make sure skipping works when we skip to an exact chunk boundary
+        long toSkip = inputStream.available();
+        skipped = inputStream.skip(toSkip);
+        assertEquals(toSkip, skipped);
+        position += toSkip;
+        assertEquals((byte)(position++ % 251), (byte)inputStream.read());
+
+        skipped = inputStream.skip(2 * fileSize);
+        assertEquals(fileSize - position, skipped);
+        assertEquals(-1, inputStream.read());
     }
 
     final DB _db;

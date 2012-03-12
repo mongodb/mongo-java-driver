@@ -26,6 +26,8 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
 
+import java.net.UnknownHostException;
+
 public class TestNGListener extends TestListenerAdapter {
 
     public void onConfigurationFailure(ITestResult itr){
@@ -65,24 +67,31 @@ public class TestNGListener extends TestListenerAdapter {
             _print( r.getThrowable() );
         }
 
-        _recordResults( context );
+        try {
+            _recordResults( context );
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
     
-    private void _recordResults( ITestContext context ) {
+    private void _recordResults( ITestContext context ) throws UnknownHostException {
         DBObject obj = new BasicDBObject();
         for( ITestResult r : context.getPassedTests().getAllResults() ) {
-            obj.put( r.getTestClass().getName() + "." + r.getName(), 
+            obj.put( (r.getTestClass().getName() + "." + r.getName()).replace('.', '_'),
                      r.getEndMillis()-r.getStartMillis() );
         }
         obj.put( "total", context.getEndDate().getTime()-context.getStartDate().getTime() );
         obj.put( "time", System.currentTimeMillis() );
 
+        Mongo mongo = new Mongo();
         try {
-            Mongo mongo = new Mongo();
             mongo.getDB( "results" ).getCollection( "testng" ).save( obj );
         }
         catch( Exception e ) {
             System.err.println( "\nUnable to save test results to the db." );
+            e.printStackTrace();
+        } finally {
+            mongo.close();
         }
     }
 

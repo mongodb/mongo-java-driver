@@ -128,8 +128,34 @@ public class MongoException extends RuntimeException {
         
         private static final long serialVersionUID = -4415279469780082174L;
 
-        CursorNotFound(){
-            super( -5 , "cursor not found on server" );
+        private final long cursorId;
+        private final ServerAddress serverAddress;
+
+        /**
+         *
+         * @param cursorId
+         * @param serverAddress
+         */
+        CursorNotFound(long cursorId, ServerAddress serverAddress){
+            super( -5 , "cursor " + cursorId + " not found on server " + serverAddress );
+            this.cursorId = cursorId;
+            this.serverAddress = serverAddress;
+        }
+
+        /**
+         * Get the cursor id that wasn't found.
+         * @return
+         */
+        public long getCursorId() {
+            return cursorId;
+        }
+
+        /**
+         * The server address where the cursor is.
+         * @return
+         */
+        public ServerAddress getServerAddress() {
+            return serverAddress;
         }
     }
 
