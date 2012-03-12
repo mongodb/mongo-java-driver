@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
 /**
  * Testing functionality of database TCP connector
@@ -33,7 +34,7 @@ public class DBTCPConnectorTest extends TestCase {
 
     @BeforeClass
     public void beforeClass() throws UnknownHostException {
-        cleanupMongo = new Mongo("127.0.0.1");
+        cleanupMongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1:27018")));
         cleanupDB = "com_mongodb_unittest_DBTCPConnectorTest";
         _db = cleanupMongo.getDB(cleanupDB);
         _collection = _db.getCollection("testCol");
@@ -41,7 +42,8 @@ public class DBTCPConnectorTest extends TestCase {
 
     @BeforeMethod
     public void beforeMethod() throws UnknownHostException {
-        _connector = new DBTCPConnector(cleanupMongo, new ServerAddress("127.0.0.1"));
+        _connector = new DBTCPConnector(cleanupMongo, Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1:27018")));
+        _connector.start();
     }
 
     /**
@@ -85,17 +87,35 @@ public class DBTCPConnectorTest extends TestCase {
     }
 
     /**
+     * Test that request port changes when read is followed by write with connection reservation
+     */
+    @Test
+    public void testConnectionReservationForReadThenWrite() {
+        if (isStandalone(cleanupMongo)) {
+            return;
+        }
+
+        _connector.requestStart();
+        _connector.call(_db, _collection,
+                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.SECONDARY),
+                null, 0, ReadPreference.SECONDARY, null);
+        DBPort requestPort = _connector.getMyPort()._requestPort;
+        _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
+        assertNotEquals(requestPort, _connector.getMyPort()._requestPort);
+        assertEquals(_connector.getReplicaSetStatus().getMaster(), _connector.getMyPort()._requestPort.serverAddress());
+    }
+
+    /**
      * Tests that same connections is used for sequential reads
      */
-    // TODO: re-enable this test for JAVA-498
-//    @Test
-//    public void testConnectionReservationForReads() {
-//        _connector.requestStart();
-//        _connector.call(_db, _collection,
-//                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.PRIMARY),
-//                null, 0);
-//        assertNotNull(_connector.getMyPort()._requestPort);
-//    }
+    @Test
+    public void testConnectionReservationForReads() {
+        _connector.requestStart();
+        _connector.call(_db, _collection,
+                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.PRIMARY),
+                null, 0);
+        assertNotNull(_connector.getMyPort()._requestPort);
+    }
 
 
     private OutMessage createOutMessageForInsert() {

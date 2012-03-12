@@ -371,7 +371,7 @@ public class DBTCPConnector implements DBConnector {
 
             // use master
             DBPort p = _masterPortPool.get();
-            if ( keep && _inRequest ) {
+            if ( _inRequest ) {
                 // if within request, remember port to stick to same server
                 _requestPort = p;
             }
