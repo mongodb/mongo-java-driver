@@ -398,9 +398,9 @@ public class LazyBSONObject implements BSONObject {
             case BSON.BINARY:
                 return readBinary( record.valueOffset );
             case BSON.REGEX:
-                int n = sizeCString( record.valueOffset );
+                int patternCStringSize = sizeCString( record.valueOffset );
                 String pattern = _input.getCString( record.valueOffset );
-                String flags = _input.getCString( record.valueOffset + n );
+                String flags = _input.getCString( record.valueOffset + patternCStringSize + 1 );
                 return Pattern.compile( pattern, BSON.regexFlags( flags ) );
             default:
                 throw new BSONException(

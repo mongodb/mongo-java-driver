@@ -16,21 +16,14 @@
 
 package com.mongodb;
 
+import com.mongodb.util.TestCase;
+import org.bson.types.*;
+import org.testng.annotations.Test;
+
 import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.UUID;
 import java.util.regex.Pattern;
-
-import org.bson.types.BSONTimestamp;
-import org.bson.types.Binary;
-import org.bson.types.Code;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
-import org.bson.types.Symbol;
-import org.testng.annotations.Test;
-
-import com.mongodb.util.TestCase;
 
 @SuppressWarnings( { "unchecked" , "deprecation" } )
 public class LazyDBObjectTest extends TestCase {
@@ -147,7 +140,7 @@ public class LazyDBObjectTest extends TestCase {
         Date test_date = new Date();
         Binary test_bin = new Binary( "scott".getBytes() );
         UUID test_uuid = UUID.randomUUID();
-        Pattern test_regex = Pattern.compile( "^test.*regex.*xyz$" );
+        Pattern test_regex = Pattern.compile( "^test.*regex.*xyz$", Pattern.CASE_INSENSITIVE );
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
         b.append( "_id", oid );
         b.append( "null", null );
