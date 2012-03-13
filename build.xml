@@ -17,6 +17,13 @@ limitations under the License.
 -->
 
 <project name="MongoDB Java Driver" default="compile" basedir=".">
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+        <classpath>
+            <pathelement location="lib/ant-contrib-1.0b3.jar"/>
+        </classpath>
+    </taskdef>
+
     <property environment="env"/>
 
     <property file="build.properties" prefix="build.conf"/>
@@ -84,8 +91,18 @@ limitations under the License.
 
     <target name="compile" depends="init">
 
-        <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sMAJOR_VERSION\s=\s\d+;" replace=" MAJOR_VERSION = ${build.conf.lib.major};" byline="false"/>
-        <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sINOR_VERSION\s=\s\d+;" replace=" MINOR_VERSION = ${build.conf.lib.minor};" byline="false"/>
+        <propertyregex property="lib.major"
+                       input="${build.conf.lib.version}"
+                       regexp="(\d+)\.(\d+)\.(\d+)"
+                       select="\1" />
+
+        <propertyregex property="lib.minor"
+                       input="${build.conf.lib.version}"
+                       regexp="(\d+)\.(\d+)\.(\d+)"
+                       select="\2" />
+        
+        <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sMAJOR_VERSION\s=\s\d+;" replace=" MAJOR_VERSION = ${lib.major};" byline="false"/>
+        <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sMINOR_VERSION\s=\s\d+;" replace=" MINOR_VERSION = ${lib.minor};" byline="false"/>
 
         <javac
             srcdir="src/main"
