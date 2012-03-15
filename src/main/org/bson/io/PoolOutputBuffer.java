@@ -37,9 +37,13 @@ public class PoolOutputBuffer extends OutputBuffer {
         _cur.reset();
         _end.reset();
 
-        for ( int i=0; i<_fromPool.size(); i++ )
-            _extra.done( _fromPool.get(i) );
-        _fromPool.clear();
+        if ( _fromPoolNotEmpty ) {
+            int size = _fromPool.size();
+            for ( int i = 0; i < size; i++ )
+                _extra.done( _fromPool.get( i ) );
+            _fromPool.clear();
+            _fromPoolNotEmpty = false;
+        }
     }
 
     public int getPosition(){
@@ -101,6 +105,8 @@ public class PoolOutputBuffer extends OutputBuffer {
             return;
 
         _fromPool.add( _extra.get() );
+        _fromPoolNotEmpty = true;
+
         _end.nextBuffer();
         _cur.reset( _end );
     }
@@ -189,7 +195,7 @@ public class PoolOutputBuffer extends OutputBuffer {
     }
 
     public String asAscii(){
-        if ( _fromPool.size() > 0 )
+        if ( _fromPoolNotEmpty )
             return super.asString();
 
         final int m = size();
@@ -205,7 +211,7 @@ public class PoolOutputBuffer extends OutputBuffer {
         throws UnsupportedEncodingException {
 
 
-        if ( _fromPool.size() > 0 )
+        if ( _fromPoolNotEmpty )
             return super.asString( encoding );
 
         if ( encoding.equals( DEFAULT_ENCODING_1 ) || encoding.equals( DEFAULT_ENCODING_2) ){
@@ -224,6 +230,8 @@ public class PoolOutputBuffer extends OutputBuffer {
     final char[] _chars = new char[BUF_SIZE];
     final List<byte[]> _fromPool = new ArrayList<byte[]>();
     final UTF8Encoding _encoding = new UTF8Encoding();
+
+    boolean _fromPoolNotEmpty = false;
 
     private static final String DEFAULT_ENCODING_1 = "UTF-8";
     private static final String DEFAULT_ENCODING_2 = "UTF8";
