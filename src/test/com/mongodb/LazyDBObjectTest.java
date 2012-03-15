@@ -17,18 +17,21 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
+import org.bson.types.*;
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeMethod;
+
+import java.net.UnknownHostException;
+import java.util.Date;
+import java.util.UUID;
 import org.bson.BSONEncoder;
 import org.bson.BasicBSONEncoder;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
-import org.bson.types.*;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -239,6 +242,28 @@ public class LazyDBObjectTest extends TestCase {
         assertEquals(lazyDBObj, lazyDBObjectFromPipe);
     }
 
+    @Test
+    public void testLazyDBEncoder() throws IOException {
+        DBObject obj = createSimpleTestDoc();
+        e.putObject(obj);
+        buf.pipe(bios);
+
+        LazyDBObject lazyDBObj = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()),
+                (DBCollection) null);
+        bios.reset();
+        lazyDBObj.pipe(bios);
+
+        LazyDBEncoder encoder = new LazyDBEncoder();
+        BasicOutputBuffer buf = new BasicOutputBuffer();
+        int size = encoder.writeObject(buf, lazyDBObj);
+        assertEquals(lazyDBObj.getBSONSize(), size);
+        assertEquals(lazyDBObj.getBSONSize(), buf.size());
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        lazyDBObj.pipe(baos);
+        assertArrayEquals(baos.toByteArray(), buf.toByteArray());
+    }
+
     private DBObject createSimpleTestDoc() {
         DBObject obj = new BasicDBObject("_id", new ObjectId());
         obj.put("first", 1);
@@ -259,7 +284,7 @@ public class LazyDBObjectTest extends TestCase {
         Date test_date = new Date();
         Binary test_bin = new Binary( "scott".getBytes() );
         UUID test_uuid = UUID.randomUUID();
-        Pattern test_regex = Pattern.compile( "^test.*regex.*xyz$" );
+        Pattern test_regex = Pattern.compile( "^test.*regex.*xyz$", Pattern.CASE_INSENSITIVE );
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
         b.append( "_id", oid );
         b.append( "null", null );
