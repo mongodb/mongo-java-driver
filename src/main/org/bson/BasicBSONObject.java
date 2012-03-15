@@ -24,6 +24,7 @@ import org.bson.types.ObjectId;
 // Java
 import java.util.Map;
 import java.util.Set;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.regex.Pattern;
 
@@ -195,8 +196,16 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
      * @return The field object value or null if not found (or if null :-^).
      */
     public ObjectId getObjectId( final String field ) {
-        Object obj = get( field );
-        return (obj != null) ? (ObjectId)obj : null;
+        return (ObjectId) get( field );
+    }
+
+    /**
+     * Returns the date or null if not set.
+     * @param field The field to return
+     * @return The field object value or null if not found.
+     */
+    public Date getDate( final String field ) {
+        return (Date) get( field );
     }
 
     /** Add a key/value pair to this object

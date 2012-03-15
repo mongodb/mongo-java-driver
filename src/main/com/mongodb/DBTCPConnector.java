@@ -325,6 +325,10 @@ public class DBTCPConnector implements DBConnector {
         DBPort get( boolean keep , ReadPreference readPref, ServerAddress hostNeeded ){
 
             if ( hostNeeded != null ){
+                if (_requestPort != null && _requestPort.serverAddress().equals(hostNeeded)) {
+                    return _requestPort;
+                }
+
                 // asked for a specific host
                 return _portHolder.get( hostNeeded ).get();
             }
