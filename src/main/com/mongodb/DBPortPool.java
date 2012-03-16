@@ -54,16 +54,11 @@ public class DBPortPool extends SimplePool<DBPort> {
 
         DBPortPool get( ServerAddress addr ){
             
-            DBPortPool p = _pools.get( addr );
-            
-            if (p != null) 
-                return p;
-            
             synchronized (_pools) {
-                p = _pools.get( addr );
-                if (p != null) {
+                DBPortPool p = _pools.get( addr );
+            
+                if (p != null) 
                     return p;
-                }
                 
                 p = new DBPortPool( addr , _options );
                 _pools.put( addr , p);
@@ -85,9 +80,9 @@ public class DBPortPool extends SimplePool<DBPort> {
                     }
                 }
 
+                return p;
             }
             
-            return p;
         }
 
         void close(){
@@ -115,7 +110,7 @@ public class DBPortPool extends SimplePool<DBPort> {
         }
 
         final MongoOptions _options;
-        final Map<ServerAddress,DBPortPool> _pools = Collections.synchronizedMap( new HashMap<ServerAddress,DBPortPool>() );
+        final Map<ServerAddress,DBPortPool> _pools = new HashMap<ServerAddress,DBPortPool>();
         final MBeanServer _server;
     }
 
