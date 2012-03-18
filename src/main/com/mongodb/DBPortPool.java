@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import javax.management.JMException;
@@ -108,7 +109,7 @@ public class DBPortPool extends SimplePool<DBPort> {
         }
 
         private ObjectName createObjectName( ServerAddress addr ) throws MalformedObjectNameException {
-            String name =  "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ":" , ",port=" ) + ",instance=" + hashCode();
+            String name =  "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ":" , ",port=" ) + ",instance=" + _serial;
             if ( _options.description != null )
                 name += ",description=" + _options.description;
             return new ObjectName( name );
@@ -117,6 +118,10 @@ public class DBPortPool extends SimplePool<DBPort> {
         final MongoOptions _options;
         final Map<ServerAddress,DBPortPool> _pools = Collections.synchronizedMap( new HashMap<ServerAddress,DBPortPool>() );
         final MBeanServer _server;
+        final int _serial = nextSerial.incrementAndGet();
+
+        // we use this to give each Holder a different mbean name
+        static AtomicInteger nextSerial = new AtomicInteger(0);
     }
 
     // ----
