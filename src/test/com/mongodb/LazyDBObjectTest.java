@@ -244,24 +244,24 @@ public class LazyDBObjectTest extends TestCase {
 
     @Test
     public void testLazyDBEncoder() throws IOException {
+        // this is all set up just to get a lazy db object that can be encoded
         DBObject obj = createSimpleTestDoc();
         e.putObject(obj);
         buf.pipe(bios);
+        LazyDBObject lazyDBObj = (LazyDBObject) lazyDBDecoder.decode(
+                new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
 
-        LazyDBObject lazyDBObj = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()),
-                (DBCollection) null);
-        bios.reset();
-        lazyDBObj.pipe(bios);
-
+        // now to the actual test
         LazyDBEncoder encoder = new LazyDBEncoder();
-        BasicOutputBuffer buf = new BasicOutputBuffer();
-        int size = encoder.writeObject(buf, lazyDBObj);
+        BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
+        int size = encoder.writeObject(outputBuffer, lazyDBObj);
         assertEquals(lazyDBObj.getBSONSize(), size);
-        assertEquals(lazyDBObj.getBSONSize(), buf.size());
+        assertEquals(lazyDBObj.getBSONSize(), outputBuffer.size());
 
+        // this is just asserting that the encoder actually piped the correct bytes
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         lazyDBObj.pipe(baos);
-        assertArrayEquals(baos.toByteArray(), buf.toByteArray());
+        assertArrayEquals(baos.toByteArray(), outputBuffer.toByteArray());
     }
 
     private DBObject createSimpleTestDoc() {
