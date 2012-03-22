@@ -242,6 +242,28 @@ public class LazyDBObjectTest extends TestCase {
         assertEquals(lazyDBObj, lazyDBObjectFromPipe);
     }
 
+    @Test
+    public void testLazyDBEncoder() throws IOException {
+        DBObject obj = createSimpleTestDoc();
+        e.putObject(obj);
+        buf.pipe(bios);
+
+        LazyDBObject lazyDBObj = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()),
+                (DBCollection) null);
+        bios.reset();
+        lazyDBObj.pipe(bios);
+
+        LazyDBEncoder encoder = new LazyDBEncoder();
+        BasicOutputBuffer buf = new BasicOutputBuffer();
+        int size = encoder.writeObject(buf, lazyDBObj);
+        assertEquals(lazyDBObj.getBSONSize(), size);
+        assertEquals(lazyDBObj.getBSONSize(), buf.size());
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        lazyDBObj.pipe(baos);
+        assertArrayEquals(baos.toByteArray(), buf.toByteArray());
+    }
+
     private DBObject createSimpleTestDoc() {
         DBObject obj = new BasicDBObject("_id", new ObjectId());
         obj.put("first", 1);

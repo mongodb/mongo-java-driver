@@ -21,7 +21,7 @@ package org.bson.io;
 import java.io.*;
 import java.security.*;
 
-public abstract class OutputBuffer {
+public abstract class OutputBuffer extends OutputStream {
 
     public abstract void write(byte[] b);
     public abstract void write(byte[] b, int off, int len);
