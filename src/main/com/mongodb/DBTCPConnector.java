@@ -43,7 +43,7 @@ public class DBTCPConnector implements DBConnector {
 
         _createLogger.info( addr.toString() );
 
-        _set( addr );
+        setMasterAddress(addr);
         _allHosts = null;
         _rsStatus = null;
 
@@ -435,14 +435,13 @@ public class DBTCPConnector implements DBConnector {
 
         if ( _rsStatus != null ){
             if ( _masterPortPool == null || force ){
-                ServerAddress masterAddress = _rsStatus.ensureMaster();
-                if ( masterAddress == null ){
+                ReplicaSetStatus.Node master = _rsStatus.ensureMaster();
+                if ( master == null ){
                     if ( failIfNoMaster )
                         throw new MongoException( "can't find a master" );
                 }
                 else {
-                    _set( masterAddress );
-                    _maxBsonObjectSize.set(_rsStatus.getMaxBsonObjectSize());
+                    setMaster(master);
                 }
             }
         } else {
@@ -450,6 +449,11 @@ public class DBTCPConnector implements DBConnector {
             if (_maxBsonObjectSize.get() == 0)
                 fetchMaxBsonObjectSize();
         }
+    }
+
+    synchronized void setMaster(ReplicaSetStatus.Node master) {
+        setMasterAddress(master.getServerAddress());
+        _maxBsonObjectSize.set(master.getMaxBsonObjectSize());
     }
 
     /**
@@ -477,7 +481,9 @@ public class DBTCPConnector implements DBConnector {
         return _maxBsonObjectSize.get();
     }
 
-    private synchronized boolean _set( ServerAddress addr ){
+
+
+    private synchronized boolean setMasterAddress(ServerAddress addr){
         DBPortPool newPool = _portHolder.get( addr );
         if (newPool == _masterPortPool)
             return false;

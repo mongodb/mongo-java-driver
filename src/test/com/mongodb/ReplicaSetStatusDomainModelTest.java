@@ -37,10 +37,12 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         boolean ok = true;
         boolean isMaster = true;
         boolean isSecondary = false;
+        int maxBsonObjectSize =  Bytes.MAX_OBJECT_SIZE * 4;
         LinkedHashMap<String, String> tags = new LinkedHashMap<String, String>();
         tags.put("foo", "1");
         tags.put("bar", "2");
-        ReplicaSetStatus.Node n = new ReplicaSetStatus.Node(addr, names, pingTime, ok, isMaster, isSecondary, tags);
+        ReplicaSetStatus.Node n = new ReplicaSetStatus.Node(addr, names, pingTime, ok, isMaster, isSecondary, tags,
+                Bytes.MAX_OBJECT_SIZE);
         assertTrue(n.isOk());
         assertTrue(n.master());
         assertFalse(n.secondary());
@@ -50,6 +52,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         tagSet.add(new ReplicaSetStatus.Tag("foo", "1"));
         tagSet.add(new ReplicaSetStatus.Tag("bar", "2"));
         assertEquals(tagSet, n.getTags());
+        assertEquals(maxBsonObjectSize, n.getMaxBsonObjectSize());
 
         // assert that collections are not modifiable
         try {
@@ -82,7 +85,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         LinkedHashMap<String, String> anotherTag = new LinkedHashMap<String, String>();
         anotherTag.put("bar", "2");
 
-        addNodeToLists("127.0.0.1", false, 10, updatableNodes, nodes,emptyTagMap);
+        addNodeToLists("127.0.0.1", false, 10, updatableNodes, nodes, emptyTagMap);
         addNodeToLists("127.0.0.2", true, 30, updatableNodes, nodes, emptyTagMap);
         addNodeToLists("127.0.0.3", true, 30, updatableNodes, nodes, aTag);
         addNodeToLists("127.0.0.4", true, 30, updatableNodes, nodes, anotherTag);
@@ -93,6 +96,8 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         ReplicaSetStatus.ReplicaSet replicaSet = new ReplicaSetStatus.ReplicaSet(nodes, random, 15);
         assertEquals(random, replicaSet.random);
         assertEquals(nodes, replicaSet.all);
+        assertEquals(nodes.get(0), replicaSet.master);
+        assertTrue(replicaSet.hasMaster());
 
         List<ReplicaSetStatus.Node> goodSecondaries = nodes.subList(4, 7);
         assertEquals(goodSecondaries, replicaSet.goodSecondaries);
@@ -163,17 +168,18 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         ServerAddress serverAddress = new ServerAddress(address);
         ReplicaSetStatus.UpdatableNode updatableNode
                 = new ReplicaSetStatus.UpdatableNode(serverAddress, updatableNodes, _logger, null, _mongoOptions,
-                _maxBsonObjectSize, _setName, _lastPrimarySignal);
+                _setName, _lastPrimarySignal);
         updatableNode._ok = true;
         updatableNode._pingTime = pingTime;
         updatableNode._isSecondary = isSecondary;
         updatableNode._isMaster = !isSecondary;
         updatableNode._tags.putAll(tags);
+        updatableNode._maxBsonObjectSize = Bytes.MAX_OBJECT_SIZE;
 
         updatableNodes.add(updatableNode);
 
         nodes.add(new ReplicaSetStatus.Node(serverAddress, Collections.singleton(serverAddress.toString()), pingTime,
-                true, !isSecondary, isSecondary, tags));
+                true, !isSecondary, isSecondary, tags, Bytes.MAX_OBJECT_SIZE));
     }
 
     private final MongoOptions _mongoOptions = new MongoOptions();
