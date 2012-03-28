@@ -630,14 +630,18 @@ class JSONParser {
                 break outer;
             }
         }
-
-        if (isDouble)
-          return Double.valueOf(s.substring(start, pos));
         
-        Long val = Long.valueOf(s.substring(start, pos));
-        if (val <= Integer.MAX_VALUE && val >= Integer.MIN_VALUE)
-            return val.intValue();
-        return val;
+        try{
+        	if (isDouble)
+        		return Double.valueOf(s.substring(start, pos));
+
+        	Long val = Long.valueOf(s.substring(start, pos));
+        	if (val <= Integer.MAX_VALUE && val >= Integer.MIN_VALUE)
+        		return val.intValue();
+        	return val;
+        }catch(NumberFormatException e){
+        	throw new JSONParseException(s, start, e);
+        }
     }
 
     /** 
