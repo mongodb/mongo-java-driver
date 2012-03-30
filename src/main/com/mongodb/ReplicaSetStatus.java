@@ -173,6 +173,11 @@ public class ReplicaSetStatus {
               throw new MongoException("Interrupted while waiting for next update to replica set status", e);
            }
        }
+
+        public synchronized void close() {
+            this.members = null;
+            notifyAll();
+        }
     }
 
     // Immutable snapshot state of a replica set. Since the nodes don't change state, this class pre-computes the list
@@ -673,6 +678,7 @@ public class ReplicaSetStatus {
                // Allow thread to exit
             }
 
+            _replicaSetHolder.close();
             closeAllNodes();
         }
 
@@ -732,11 +738,15 @@ public class ReplicaSetStatus {
 
     /**
      * Ensures that we have the current master, if there is one. If the current snapshot of the replica set
-     * has no master, this method waits on cycle to find a new master, and returns it if found, or null if not.
+     * has no master, this method waits one cycle to find a new master, and returns it if found, or null if not.
      *
      * @return address of the current master, or null if there is none
      */
-    Node ensureMaster(){
+    Node ensureMaster() {
+        if (_closed) {
+            return null;
+        }
+        
         Node masterNode = getMasterNode();
         if (masterNode != null) {
             return masterNode;

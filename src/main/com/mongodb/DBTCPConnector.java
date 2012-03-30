@@ -452,6 +452,9 @@ public class DBTCPConnector implements DBConnector {
     }
 
     synchronized void setMaster(ReplicaSetStatus.Node master) {
+        if (_closed.get()) {
+            return;
+        }
         setMasterAddress(master.getServerAddress());
         _maxBsonObjectSize.set(master.getMaxBsonObjectSize());
     }
@@ -483,7 +486,7 @@ public class DBTCPConnector implements DBConnector {
 
 
 
-    private synchronized boolean setMasterAddress(ServerAddress addr){
+    private synchronized boolean setMasterAddress(ServerAddress addr) {
         DBPortPool newPool = _portHolder.get( addr );
         if (newPool == _masterPortPool)
             return false;
