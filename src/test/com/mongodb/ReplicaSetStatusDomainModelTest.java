@@ -42,7 +42,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         tags.put("foo", "1");
         tags.put("bar", "2");
         ReplicaSetStatus.Node n = new ReplicaSetStatus.Node(addr, names, pingTime, ok, isMaster, isSecondary, tags,
-                Bytes.MAX_OBJECT_SIZE);
+                maxBsonObjectSize);
         assertTrue(n.isOk());
         assertTrue(n.master());
         assertFalse(n.secondary());
