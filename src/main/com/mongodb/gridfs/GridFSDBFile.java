@@ -64,7 +64,15 @@ public class GridFSDBFile extends GridFSFile {
      * @throws IOException
      */
     public long writeTo( File f ) throws IOException {
-        return writeTo( new FileOutputStream( f ) );
+    	
+    	FileOutputStream out = null;
+    	try{
+    		out = new FileOutputStream( f );
+    		return writeTo( out);
+    	}finally{
+    	    if(out != null)
+    	        out.close();
+    	}
     }
 
     /**
@@ -74,12 +82,12 @@ public class GridFSDBFile extends GridFSFile {
      * @throws IOException
      */
     public long writeTo( OutputStream out )
-        throws IOException {
-        final int nc = numChunks();
-        for ( int i=0; i<nc; i++ ){
-            out.write( getChunk( i ) );
-        }
-        return _length;
+    		throws IOException {
+    	final int nc = numChunks();
+    	for ( int i=0; i<nc; i++ ){
+    	    out.write( getChunk( i ) );
+    	}
+    	return _length;
     }
     
     byte[] getChunk( int i ){
