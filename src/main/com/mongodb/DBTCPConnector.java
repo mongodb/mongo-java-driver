@@ -245,7 +245,7 @@ public class DBTCPConnector implements DBConnector {
         if ( err != null && err.isNotMasterError() ){
             checkMaster( true , true );
             if ( retries <= 0 ){
-                throw new MongoException( "not talking to master and retries used up" );
+                throw new MongoException( "not talking to master and retries used up,error from server:" + err.getError());
             }
             return call( db , coll , m , hostNeeded , retries -1, readPref, decoder );
         }
