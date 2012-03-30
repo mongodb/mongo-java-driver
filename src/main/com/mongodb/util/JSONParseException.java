@@ -49,4 +49,10 @@ public class JSONParseException extends RuntimeException {
         this.s = s;
         this.pos = pos;
     }
+    
+    public JSONParseException(String s, int pos, Throwable cause) {
+    	super(cause);
+        this.s = s;
+        this.pos = pos;
+    }
 }
