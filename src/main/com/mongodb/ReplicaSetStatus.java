@@ -62,7 +62,7 @@ public class ReplicaSetStatus {
         StringBuilder sb = new StringBuilder();
         sb.append("{replSetName: ").append(_setName.get());
         sb.append(", nextResolveTime: ").append(new Date(_updater.getNextResolveTime()).toString());
-        sb.append(", all : ").append(_replicaSetHolder);
+        sb.append(", members: ").append(_replicaSetHolder);
 
         return sb.toString();
     }
@@ -177,6 +177,14 @@ public class ReplicaSetStatus {
         public synchronized void close() {
             this.members = null;
             notifyAll();
+        }
+        
+        public String toString() {
+            ReplicaSet cur = this.members;
+            if (cur != null) {
+                return cur.toString();
+            }
+            return "none";
         }
     }
 
