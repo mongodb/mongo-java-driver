@@ -63,6 +63,13 @@ public class JSONTest extends com.mongodb.util.TestCase {
         Long smallVal = Integer.MIN_VALUE - 1L;
         String test2 = String.format("{ \"x\" : %d}", smallVal);
         assertEquals(JSON.serialize(JSON.parse(test2)), test2);
+        
+        try{
+        	JSON.parse("{\"ReallyBigNumber\": 10000000000000000000 }");
+        	fail("JSONParseException should have been thrown");
+        }catch(JSONParseException e) {
+            // fall through
+        }
     }
 
     @org.testng.annotations.Test(groups = {"basic"})
