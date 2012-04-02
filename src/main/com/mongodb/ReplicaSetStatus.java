@@ -63,6 +63,12 @@ public class ReplicaSetStatus {
         sb.append("{replSetName: ").append(_setName.get());
         sb.append(", nextResolveTime: ").append(new Date(_updater.getNextResolveTime()).toString());
         sb.append(", members: ").append(_replicaSetHolder);
+        sb.append(", updaterIntervalMS: ").append(updaterIntervalMS);
+        sb.append(", updaterIntervalNoMasterMS: ").append(updaterIntervalNoMasterMS);
+        sb.append(", slaveAcceptableLatencyMS: ").append(slaveAcceptableLatencyMS);
+        sb.append(", inetAddrCacheMS: ").append(inetAddrCacheMS);
+        sb.append(", latencySmoothFactor: ").append(latencySmoothFactor);
+        sb.append("}");
 
         return sb.toString();
     }
