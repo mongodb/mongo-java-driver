@@ -312,9 +312,6 @@ public class DBApiLayer extends DB {
 
             Response res = _connector.call( _db , this , query , null , 2, readPref, decoder );
 
-            if ( res.size() == 0 )
-                return null;
-
             if ( res.size() == 1 ){
                 BSONObject foo = res.get(0);
                 MongoException e = MongoException.parse( foo );

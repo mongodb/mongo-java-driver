@@ -59,12 +59,13 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @param preference the Read Preference for this query
      */
     public DBCursor( DBCollection collection , DBObject q , DBObject k, ReadPreference preference ){
+        if (collection == null) {
+            throw new IllegalArgumentException("collection is null");
+        }
         _collection = collection;
         _query = q == null ? new BasicDBObject() : q;
         _keysWanted = k;
-        if ( _collection != null ){
-            _options = _collection.getOptions();
-        }
+        _options = _collection.getOptions();
         _readPref = preference;
         _decoderFact = collection.getDBDecoderFactory();
     }
@@ -346,34 +347,26 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         if ( _it != null )
             return;
 
-        if ( _collection != null && _query != null ){
+        _lookForHints();
 
-            _lookForHints();
+        DBObject foo = _query;
+        if (hasSpecialQueryFields()) {
+            foo = _specialFields == null ? new BasicDBObject() : _specialFields;
 
-            DBObject foo = _query;
-            if ( hasSpecialQueryFields() ){
-                foo = _specialFields == null ? new BasicDBObject() : _specialFields;
+            _addToQueryObject(foo, "query", _query, true);
+            _addToQueryObject(foo, "orderby", _orderBy, false);
+            if (_hint != null)
+                _addToQueryObject(foo, "$hint", _hint);
+            if (_hintDBObj != null)
+                _addToQueryObject(foo, "$hint", _hintDBObj);
 
-                _addToQueryObject( foo , "query" , _query , true );
-                _addToQueryObject( foo , "orderby" , _orderBy , false );
-                if(_hint != null)
-                    _addToQueryObject( foo , "$hint" , _hint );
-                if(_hintDBObj != null)
-                    _addToQueryObject( foo , "$hint" , _hintDBObj);
-
-                if ( _explain )
-                    foo.put( "$explain" , true );
-                if ( _snapshot )
-                    foo.put( "$snapshot", true );
-            }
-
-            _it = _collection.__find( foo, _keysWanted, _skip, _batchSize, _limit , _options , _readPref , getDecoder());
+            if (_explain)
+                foo.put("$explain", true);
+            if (_snapshot)
+                foo.put("$snapshot", true);
         }
 
-        if ( _it == null ){
-            _it = (new LinkedList<DBObject>()).iterator();
-            _fake = true;
-        }
+        _it = _collection.__find(foo, _keysWanted, _skip, _batchSize, _limit, _options, _readPref, getDecoder());
     }
 
     // Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
@@ -477,9 +470,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return
      */
     public int numGetMores(){
-        if ( _fake )
-            return 0;
-
         if ( _it instanceof DBApiLayer.Result )
             return ((DBApiLayer.Result)_it).numGetMores();
 
@@ -491,9 +481,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return
      */
     public List<Integer> getSizes(){
-        if ( _fake )
-            return new LinkedList<Integer>();
-
         if ( _it instanceof DBApiLayer.Result )
             return ((DBApiLayer.Result)_it).getSizes();
 
@@ -765,7 +752,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
 
     // ----  result info ----
     private Iterator<DBObject> _it = null;
-    private boolean _fake = false;
 
     private CursorType _cursorType = null;
     private DBObject _cur = null;

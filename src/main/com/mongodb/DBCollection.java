@@ -334,7 +334,7 @@ public abstract class DBCollection {
      */
     public DBObject findOne( Object obj, DBObject fields ) {
         Iterator<DBObject> iterator = __find( new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions(), getReadPreference(), getDecoder() );
-        return (iterator != null ? iterator.next() : null);
+        return (iterator.hasNext() ? iterator.next() : null);
     }
 
     /**
@@ -649,7 +649,7 @@ public abstract class DBCollection {
      */
     public DBObject findOne( DBObject o, DBObject fields, ReadPreference readPref ) {
         Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0, getOptions(), readPref, getDecoder() );
-        DBObject obj = (i == null ? null : i.next());
+        DBObject obj = (i.hasNext() ? i.next() : null);
         if ( obj != null && ( fields != null && fields.keySet().size() > 0 ) ){
             obj.markAsPartialObject();
         }
