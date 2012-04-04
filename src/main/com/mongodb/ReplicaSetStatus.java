@@ -24,7 +24,6 @@ import org.bson.util.annotations.ThreadSafe;
 
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -504,16 +503,18 @@ public class ReplicaSetStatus {
 
         synchronized void update(Set<UpdatableNode> seenNodes){
             try {
-                long start = System.currentTimeMillis();
+                long start = System.nanoTime();
                 CommandResult res = _port.runCommand( _mongo.getDB("admin") , _isMasterCmd );
-                boolean first = (_lastCheck == 0);
-                _lastCheck = System.currentTimeMillis();
-                float newPing = _lastCheck - start;
-                if (first)
-                    _pingTime = newPing;
+                long end = System.nanoTime();
+                float newPingMS = (end - start) / 1000000F;
+                if (!successfullyContacted)
+                    _pingTimeMS = newPingMS;
                 else
-                    _pingTime = _pingTime + ((newPing - _pingTime) / latencySmoothFactor);
-                _rootLogger.log( Level.FINE , "Latency to " + _addr + " actual=" + newPing + " smoothed=" + _pingTime );
+                    _pingTimeMS = _pingTimeMS + ((newPingMS - _pingTimeMS) / latencySmoothFactor);
+
+                _rootLogger.log( Level.FINE , "Latency to " + _addr + " actual=" + newPingMS + " smoothed=" + _pingTimeMS);
+
+                successfullyContacted = true;
 
                 if ( res == null ){
                     throw new MongoInternalException("Invalid null value returned from isMaster");
@@ -630,9 +631,9 @@ public class ReplicaSetStatus {
         private DBPort _port; // we have our own port so we can set different socket options and don't have to owrry about the pool
         final LinkedHashMap<String, String> _tags = new LinkedHashMap<String, String>( );
 
+        boolean successfullyContacted = false;
         boolean _ok = false;
-        long _lastCheck = 0;
-        float _pingTime = 0;
+        float _pingTimeMS = 0;
 
         boolean _isMaster = false;
         boolean _isSecondary = false;
@@ -722,7 +723,7 @@ public class ReplicaSetStatus {
         private List<Node> createNodeList() {
             List<Node> nodeList = new ArrayList<Node>(_all.size());
             for (UpdatableNode cur : _all) {
-                nodeList.add(new Node(cur._addr, cur._names, cur._pingTime, cur._ok, cur._isMaster, cur._isSecondary, cur._tags, cur._maxBsonObjectSize));
+                nodeList.add(new Node(cur._addr, cur._names, cur._pingTimeMS, cur._ok, cur._isMaster, cur._isSecondary, cur._tags, cur._maxBsonObjectSize));
             }
             return nodeList;
         }

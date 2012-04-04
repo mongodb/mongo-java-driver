@@ -170,7 +170,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
                 = new ReplicaSetStatus.UpdatableNode(serverAddress, updatableNodes, _logger, null, _mongoOptions,
                 _setName, _lastPrimarySignal);
         updatableNode._ok = true;
-        updatableNode._pingTime = pingTime;
+        updatableNode._pingTimeMS = pingTime;
         updatableNode._isSecondary = isSecondary;
         updatableNode._isMaster = !isSecondary;
         updatableNode._tags.putAll(tags);
