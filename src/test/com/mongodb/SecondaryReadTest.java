@@ -64,9 +64,7 @@ public class SecondaryReadTest extends TestCase {
 
             for (int idx=0; idx < ITERATION_COUNT; idx++) {
                 for (ObjectId id : insertedIds) {
-                    final BasicDBObject doc = (BasicDBObject)col.findOne(new BasicDBObject("_id", id));
-                    if (doc == null) throw new IllegalStateException("Doc not found");
-                    if (!doc.getObjectId("_id").equals(id)) throw new IllegalStateException("Ids are off");
+                    col.findOne(new BasicDBObject("_id", id));
                 }
             }
 
@@ -102,9 +100,7 @@ public class SecondaryReadTest extends TestCase {
 
             for (int idx=0; idx < ITERATION_COUNT; idx++) {
                 for (ObjectId id : insertedIds) {
-                    final BasicDBObject doc = (BasicDBObject)col.findOne(new BasicDBObject("_id", id));
-                    if (doc == null) throw new IllegalStateException("Doc not found");
-                    if (!doc.getObjectId("_id").equals(id)) throw new IllegalStateException("Ids are off");
+                    col.findOne(new BasicDBObject("_id", id));
                 }
             }
 
@@ -140,9 +136,7 @@ public class SecondaryReadTest extends TestCase {
 
             for (int idx=0; idx < ITERATION_COUNT; idx++) {
                 for (ObjectId id : insertedIds) {
-                    final BasicDBObject doc = (BasicDBObject)col.findOne(new BasicDBObject("_id", id));
-                    if (doc == null) throw new IllegalStateException("Doc not found");
-                    if (!doc.getObjectId("_id").equals(id)) throw new IllegalStateException("Ids are off");
+                    col.findOne(new BasicDBObject("_id", id));
                 }
             }
 
