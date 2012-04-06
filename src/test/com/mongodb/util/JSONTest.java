@@ -119,7 +119,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
     public void testBin() {
         byte b[] = {'a', 'b', 0, 'd'};
         DBObject obj = BasicDBObjectBuilder.start().add("b", b).get();
-        assertEquals(JSON.serialize(obj), "{ \"b\" : <Binary Data>}");
+        assertEquals(JSON.serialize(obj), "{ \"b\" : { \"$bindata\" : \"YWIAZA==\"}}");
     }
 
 
