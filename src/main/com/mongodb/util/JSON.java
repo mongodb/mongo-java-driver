@@ -189,8 +189,13 @@ public class JSON {
             return;
 	}
 
-        if (o instanceof byte[] || o instanceof Binary) {
-            buf.append("<Binary Data>");
+        if (o instanceof Binary) {
+            o = ((Binary) o).getData();
+        }
+        if (o instanceof byte[]) {
+            BasicDBObject temp = new BasicDBObject( "$bindata" ,
+                    new sun.misc.BASE64Encoder().encode((byte[]) o) );
+            serialize( temp, buf );
             return;
         }
 
