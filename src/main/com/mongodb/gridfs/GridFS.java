@@ -26,14 +26,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mongodb.*;
 import org.bson.types.ObjectId;
-
-import com.mongodb.BasicDBObject;
-import com.mongodb.BasicDBObjectBuilder;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
 
 /**
  *  Implementation of GridFS v1.0
@@ -101,6 +95,17 @@ public class GridFS {
     // ------ utils       -------
     // --------------------------
 
+    protected class GridFSCursor extends DBCursor {
+        public GridFSCursor(DBCollection collection , DBObject q , DBObject k, ReadPreference preference ){
+            super(collection, q, k, preference);
+        }
+
+        @Override
+        public DBObject next() throws MongoException {
+            DBObject obj = super.next();
+            return _fix(obj);
+        }
+    }
 
     /**
      * gets the list of files stored in this gridfs, sorted by filename
@@ -108,7 +113,7 @@ public class GridFS {
      * @return cursor of file objects
      */
     public DBCursor getFileList(){
-        return _filesCollection.find().sort(new BasicDBObject("filename",1));
+        return new GridFSCursor(_filesCollection, new BasicDBObject(), null, null).sort(new BasicDBObject("filename", 1));
     }
 
     /**
@@ -118,7 +123,7 @@ public class GridFS {
      * @return cursor of file objects
      */
     public DBCursor getFileList( DBObject query ){
-        return _filesCollection.find( query ).sort(new BasicDBObject("filename",1));
+        return new GridFSCursor(_filesCollection, query, null, null).sort(new BasicDBObject("filename", 1));
     }
 
 
