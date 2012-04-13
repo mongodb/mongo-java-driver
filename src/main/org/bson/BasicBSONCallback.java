@@ -170,7 +170,7 @@ public class BasicBSONCallback implements BSONCallback {
         _put( name , new CodeWScope( code, (BSONObject)scope ) );
     }
 
-    protected final void _put( final String name , final Object o ){
+    protected void _put( final String name , final Object o ){
         cur().put( name , !BSON.hasDecodeHooks() ? o : BSON.applyDecodingHooks( o ) );
     }
 
