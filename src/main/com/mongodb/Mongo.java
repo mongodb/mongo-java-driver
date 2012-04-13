@@ -73,14 +73,40 @@ import org.bson.io.PoolOutputBuffer;
  */
 public class Mongo {
 
-    // Make sure you don't change the format of these two lines. A preprocessing regexp
+    // Make sure you don't change the format of these two static variables. A preprocessing regexp
     // is applied and updates the version based on configuration in build.properties.
+
+    /**
+     * @deprecated Replaced by <code>Mongo.getMajorVersion()</code>
+     */
+    @Deprecated
     public static final int MAJOR_VERSION = 2;
+
+    /**
+     * @deprecated Replaced by <code>Mongo.getMinorVersion()</code>
+     */
+    @Deprecated
     public static final int MINOR_VERSION = 8;
 
     static int cleanerIntervalMS;
     static {
         cleanerIntervalMS = Integer.parseInt(System.getProperty("com.mongodb.cleanerIntervalMS", "1000"));
+    }
+
+    /**
+     * Gets the major version of this library
+     * @return the major version, e.g. 2
+     */
+    public static int getMajorVersion() {
+        return MAJOR_VERSION;
+    }
+
+    /**
+     * Gets the minor version of this library
+     * @return the minor version, e.g. 8
+     */
+    public static int getMinorVersion() {
+        return MINOR_VERSION;
     }
 
     /**
