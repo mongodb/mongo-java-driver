@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-<project name="MongoDB Java Driver" default="compile" basedir=".">
+<project name="mongo-java-driver" default="compile" basedir=".">
 
     <taskdef resource="net/sf/antcontrib/antcontrib.properties">
         <classpath>
@@ -366,6 +366,22 @@ limitations under the License.
                 <!--<format type="xml"/>-->
             <!--</current>-->
         <!--</clover-report>-->
+    </target>
+
+
+    <target name="check-binary-compatibility" depends="jar">
+        <taskdef classpathref="classpath" resource="clirrtask.properties"/>
+
+        <property name="jar.baseline" value="mongo-${build.conf.compatibility.baseline.version}.jar"/>
+
+        <get src="${build.conf.url.libbase}/${ant.project.name}/${jar.baseline}" dest="${jar.baseline}"
+             verbose="true" usetimestamp="true"/>
+
+        <clirr failOnBinError="no" failOnSrcError="no">
+            <origfiles dir="." includes="${jar.baseline}"/>
+            <newfiles dir="." includes="mongo.jar"/>
+            <formatter type="plain" outfile="build/clirr.txt"/>
+        </clirr>
     </target>
 
   <!-- NOTE: publish-local is now located in maven/ -->
