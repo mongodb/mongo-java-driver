@@ -34,6 +34,7 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+import com.mongodb.WriteConcern;
 
 /**
  *  Implementation of GridFS v1.0
@@ -86,6 +87,9 @@ public class GridFS {
 
         _filesCollection = _db.getCollection( _bucketName + ".files" );
         _chunkCollection = _db.getCollection( _bucketName + ".chunks" );
+
+        _filesCollection.setWriteConcern(WriteConcern.SAFE);
+        _chunkCollection.setWriteConcern(WriteConcern.SAFE);
 
         // ensure standard indexes as long as collections are small
         if (_filesCollection.count() < 1000)

@@ -275,10 +275,7 @@ public class GridFSInputFile extends GridFSFile {
                 .add( "n", _currentChunkNumber )
                 .add( "data", writeBuffer ).get();
 
-        if (_fs._chunkCollection.getWriteConcern() == null)
-            _fs._chunkCollection.save( chunk , WriteConcern.SAFE );
-        else
-            _fs._chunkCollection.save( chunk );
+        _fs._chunkCollection.save( chunk );
 
         _currentChunkNumber++;
         _totalBytes += writeBuffer.length;
