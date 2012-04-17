@@ -91,7 +91,7 @@ public class GridFS {
         if (_filesCollection.count() < 1000)
             _filesCollection.ensureIndex( BasicDBObjectBuilder.start().add( "filename" , 1 ).add( "uploadDate" , 1 ).get() );
         if (_chunkCollection.count() < 1000)
-            _chunkCollection.ensureIndex( BasicDBObjectBuilder.start().add( "files_id" , 1 ).add( "n" , 1 ).get() );
+            _chunkCollection.ensureIndex( BasicDBObjectBuilder.start().add( "files_id" , 1 ).add( "n" , 1 ).get() , BasicDBObjectBuilder.start().add( "unique" , 1 ).get() );
 
         _filesCollection.setObjectClass( GridFSDBFile.class );
     }

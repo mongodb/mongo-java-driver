@@ -257,6 +257,39 @@ public class GridFSTest extends TestCase {
         assertEquals(-1, inputStream.read());
     }
 
+    @Test(groups = {"basic"})
+    public void testCustomFileID() throws IOException {
+        int chunkSize = 10;
+        int fileSize = (int)(3.25 * chunkSize);
+
+        byte[] fileBytes = new byte[fileSize];
+        for (int idx = 0; idx < fileSize; ++idx)
+            fileBytes[idx] = (byte)(idx % 251);
+
+        GridFSInputFile inputFile = _fs.createFile(fileBytes);
+        inputFile.setId(1);
+        inputFile.setFilename("custom_file_id.bin");
+        inputFile.save(chunkSize);
+
+        GridFSDBFile savedFile = _fs.findOne(new BasicDBObject("_id", inputFile.getId()));
+        InputStream inputStream = savedFile.getInputStream();
+
+        for (int idx = 0; idx < fileSize; ++idx)
+            assertEquals((byte)(idx % 251), (byte)inputStream.read());
+
+        GridFSInputFile conflictingInputFile = _fs.createFile(fileBytes);
+        conflictingInputFile.setId(1); //_id: 1 already exists
+        conflictingInputFile.setFilename("broken_file_id.bin");
+        try{
+            conflictingInputFile.save(chunkSize);
+
+            DBCursor fileList = _fs.getFileList();
+            fail("Should get an exception when trying to overwrite an existing GridFSFile _id");
+        }catch(MongoException mongoExc) {
+            
+        }
+    }
+
     final DB _db;
     final GridFS _fs;
     
