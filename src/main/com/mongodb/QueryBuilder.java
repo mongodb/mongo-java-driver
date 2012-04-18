@@ -1,4 +1,8 @@
-// QueryBuilder.java
+/* QueryBuilder.java
+ *
+ * modified April 11, 2012 by Bryan Reinero
+ *  added $nearSphere, $centerSphere and $within $polygon query support
+ */
 
 /**
  *      Copyright (C) 2010 10gen Inc.
@@ -219,7 +223,7 @@ public class QueryBuilder {
                     new BasicDBObject( "$center" , new Object[]{ new Double[]{ x , y } , radius } ) );
         return this;
     }
-	
+    
     /**
      * Equivalent of the $near operand
      * @param x x coordinate
@@ -246,6 +250,45 @@ public class QueryBuilder {
     }
     
     /**
+     * Equivalent of the $nearSphere operand
+     * @param longitude coordinate in decimal degrees 
+     * @param latitude coordinate in decimal degrees
+     * @return
+     */
+    public QueryBuilder nearSphere( double longitude , double latitude ){
+        addOperand( "$nearSphere" , 
+                    new Double[]{ longitude , latitude } );
+        return this;
+    }
+    
+    /**
+     * Equivalent of the $nearSphere operand
+     * @param longitude coordinate in decimal degrees 
+     * @param latitude coordinate in decimal degrees
+     * @param maxDistance max spherical distance
+     * @return
+     */
+    public QueryBuilder nearSphere( double longitude , double latitude , double maxDistance ){
+        addOperand( "$nearSphere" , 
+                    new Double[]{ longitude , latitude , maxDistance } );
+        return this;
+    }
+    
+    /**
+     * Equivalent of the $centerSphere operand
+     * mostly intended for queries up to a few hundred miles or km.
+     * @param longitude coordinate in decimal degrees 
+     * @param latitude coordinate in decimal degrees
+     * @param maxDistance max spherical distance
+     * @return
+     */
+    public QueryBuilder withinCenterSphere( double longitude , double latitude , double maxDistance ){
+        addOperand( "$within" , 
+                new BasicDBObject( "$centerSphere" , new Object[]{ new Double[]{longitude , latitude} , maxDistance } ) );
+        return this;
+    }
+    
+    /**
      * Equivalent to a $within operand, based on a bounding box using represented by two corners
      * 
      * @param x the x coordinate of the first box corner.
@@ -259,7 +302,20 @@ public class QueryBuilder {
                     new BasicDBObject( "$box" , new Object[] { new Double[] { x, y }, new Double[] { x2, y2 } } ) );
     	return this;
     }
-
+    
+    /**
+     * Equivalent to a $within operand, based on a bounding polygon represented by an array of points
+     * 
+     * @param points an array of Double[] defining the vertices of the search area
+     * @return
+     */
+    public QueryBuilder withinPolygon(List<Double[]> points) {
+        if(points == null || points.isEmpty() || points.size() < 3)
+            throw new IllegalArgumentException("Polygon insufficient number of vertices defined");
+        addOperand( "$within" , 
+                    new BasicDBObject( "$polygon" , points ) );
+        return this;
+    }
 
     /**
      * Equivalent to a $or operand

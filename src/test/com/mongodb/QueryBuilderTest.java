@@ -17,18 +17,23 @@
  */
 package com.mongodb;
 
+
+/*
+ * modified April 11, 2012 by Bryan Reinero
+ *  added $near, $nearSphere, $centerSphere and $within $polygon tests
+ */
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 import org.testng.annotations.*;
 
 import com.mongodb.QueryBuilder.QueryBuilderException;
+import com.mongodb.util.JSON;
 import com.mongodb.util.TestCase;
 
 /**
  * Test for various methods of <code/>QueryBuilder</code>
  * @author Julson Lim
- *
  */
 public class QueryBuilderTest extends TestCase {
     private DB _testDB;
@@ -252,6 +257,59 @@ public class QueryBuilderTest extends TestCase {
 		
         DBObject queryTrue = QueryBuilder.start(key).all(Arrays.asList(1,2,3)).size(3).get();
         assertTrue(testQuery(collection, queryTrue));
+    }
+    
+    @Test
+    public void nearTest() {
+        String key = "loc";
+        DBCollection collection = _testDB.getCollection("geoSpacial-test");
+        BasicDBObject geoSpatialIndex = new BasicDBObject();
+        geoSpatialIndex.put(key, "2d");
+        collection.ensureIndex(geoSpatialIndex);
+        
+        BasicDBObject location = new BasicDBObject();
+        Double[] coordinates = {(double) 50, (double) 30};
+        location.put(key, coordinates );
+        saveTestDocument(collection, key, location);
+        
+        DBObject queryTrue = QueryBuilder.start(key).near(45, 45).get();
+        assertTrue(testQuery(collection, queryTrue));
+        
+        queryTrue = QueryBuilder.start(key).near(45, 45, 16).get();
+        assertTrue(testQuery(collection, queryTrue));
+        
+        queryTrue = QueryBuilder.start(key).nearSphere(45, 45).get();
+        assertTrue(testQuery(collection, queryTrue));
+        
+        queryTrue = QueryBuilder.start(key).nearSphere(45, 45, 0.5).get();
+        assertTrue(testQuery(collection, queryTrue));
+        
+        queryTrue = QueryBuilder.start(key).withinCenterSphere(50, 30, 0.5).get();
+        assertTrue(testQuery(collection, queryTrue));
+        
+        ArrayList<Double[]> points = new ArrayList<Double[]>();
+        points.add( new Double[] { (double)30, (double)30 }); 
+        points.add( new Double[] { (double)70, (double)30 });  
+        points.add( new Double[] { (double)70, (double)30 }); 
+        queryTrue = QueryBuilder.start(key).withinPolygon(points).get();
+        assertTrue(testQuery(collection, queryTrue));
+        
+        try{
+            QueryBuilder.start(key).withinPolygon(null);
+            fail("IllegalArgumentException should have been thrown");
+        }catch(IllegalArgumentException e) {}
+        
+        try{
+            QueryBuilder.start(key).withinPolygon(new ArrayList<Double[]>());
+            fail("IllegalArgumentException should have been thrown");
+        }catch(IllegalArgumentException e) {}
+        
+        try{
+            ArrayList<Double[]> tooFew = new ArrayList<Double[]>();
+            tooFew.add( new Double[] { (double)30, (double)30 });
+            QueryBuilder.start(key).withinPolygon(tooFew);
+            fail("IllegalArgumentException should have been thrown");
+        }catch(IllegalArgumentException e) {}
     }
 	
     @Test
