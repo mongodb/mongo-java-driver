@@ -135,7 +135,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
             assertNotNull(addr);
             counters.get(addr.getHost()).incrementAndGet();
         }
-        assertLess(((getHigh(counters) - getLow(counters)) / (double) getHigh(counters)), .02);
+        assertLess(((getHigh(counters) - getLow(counters)) / (double) getHigh(counters)), .03);
     }
 
     private int getLow(Map<String, AtomicInteger> counters) {
