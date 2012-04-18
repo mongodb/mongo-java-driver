@@ -19,8 +19,11 @@ package com.mongodb;
 import java.io.IOException;
 import java.util.Iterator;
 
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.sun.org.apache.xpath.internal.functions.FuncGenerateId;
 import org.testng.annotations.Test;
 
 import com.mongodb.util.TestCase;
@@ -165,40 +168,45 @@ public class DBCursorTest extends TestCase {
     }
 
     @Test//(enabled = false)
-    public void testTailableAwait() {
+    public void testTailableAwait() throws ExecutionException, TimeoutException, InterruptedException {
         DBCollection c = _db.getCollection("tail1");
         c.drop();
         _db.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
         for (int i = 0; i < 10; i++) {
-            c.save(new BasicDBObject("x", i));
+            c.save(new BasicDBObject("x", i), WriteConcern.SAFE);
         }
 
         final DBCursor cur = c.find().sort(new BasicDBObject("$natural", 1)).addOption(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA);
-        Thread t = new Thread(new Runnable() {
-            public void run() {
-                // the following call will block on the last hasNext
-                int i = 0;
-                while (cur.hasNext()) {
-                    cur.next();
-                    if (++i > 10)
-                        break;
+        Callable<Object> callable = new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+                try {
+                    // the following call will block on the last hasNext
+                    int i = 0;
+                    while (cur.hasNext()) {
+                        DBObject obj = cur.next();
+                        i++;
+                        if (i > 10)
+                            return obj.get("x");
+                    }
+
+                    return null;
+                } catch (Throwable e) {
+                    return e;
                 }
             }
-        });
-        t.start();
+        };
 
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException ex) {
-        }
-        assert (t.isAlive());
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        Future<Object> future = es.submit(callable);
+
+        Thread.sleep(5000);
+        assertTrue(!future.isDone());
 
         // this doc should unblock thread
-        c.save(new BasicDBObject("x", 12));
-        try {
-            t.join(100);
-        } catch (InterruptedException ex) {
-        }
+        c.save(new BasicDBObject("x", 10), WriteConcern.SAFE);
+        Object retVal = future.get(5, TimeUnit.SECONDS);
+        assertEquals(10, retVal);
     }
     
     @Test
