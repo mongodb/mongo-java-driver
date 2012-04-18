@@ -18,6 +18,7 @@
 
 package com.mongodb.util;
 
+import java.io.IOException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.GregorianCalendar;
@@ -145,7 +146,18 @@ public class JSONCallback extends BasicBSONCallback {
 		} else {
 		    setRoot(o);
 		}
-	    }
+	    } else if ( b.containsField( "$bindata" ) ) {
+            try {
+                o = new sun.misc.BASE64Decoder().decodeBuffer((String)b.get("$bindata"));
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Cannot decode BASE64 code", e);
+            }
+            if (!isStackEmpty()) {
+                cur().put( name, o );
+            } else {
+                setRoot(o);
+            }
+        }
 	}
         return o;
     }
