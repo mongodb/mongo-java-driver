@@ -34,6 +34,7 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+import com.mongodb.WriteConcern;
 
 /**
  *  Implementation of GridFS v1.0
@@ -65,8 +66,8 @@ public class GridFS {
 
     /**
      * Creates a GridFS instance for the default bucket "fs"
-     * in the given database.
-     *
+     * in the given database. Set the preferred WriteConcern on the give DB with DB.setWriteConcern
+     * @see com.mongodb.WriteConcern
      * @param db database to work with
      */
     public GridFS(DB db) {
@@ -75,8 +76,9 @@ public class GridFS {
 
     /**
      * Creates a GridFS instance for the specified bucket
-     * in the given database.
+     * in the given database.  Set the preferred WriteConcern on the give DB with DB.setWriteConcern
      *
+     * @see com.mongodb.WriteConcern
      * @param db database to work with
      * @param bucket bucket to use in the given database
      */
@@ -91,7 +93,7 @@ public class GridFS {
         if (_filesCollection.count() < 1000)
             _filesCollection.ensureIndex( BasicDBObjectBuilder.start().add( "filename" , 1 ).add( "uploadDate" , 1 ).get() );
         if (_chunkCollection.count() < 1000)
-            _chunkCollection.ensureIndex( BasicDBObjectBuilder.start().add( "files_id" , 1 ).add( "n" , 1 ).get() );
+            _chunkCollection.ensureIndex( BasicDBObjectBuilder.start().add( "files_id" , 1 ).add( "n" , 1 ).get() , BasicDBObjectBuilder.start().add( "unique" , 1 ).get() );
 
         _filesCollection.setObjectClass( GridFSDBFile.class );
     }

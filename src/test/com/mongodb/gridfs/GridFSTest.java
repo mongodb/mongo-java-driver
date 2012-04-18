@@ -257,6 +257,29 @@ public class GridFSTest extends TestCase {
         assertEquals(-1, inputStream.read());
     }
 
+    @Test(groups = {"basic"})
+    public void testCustomFileID() throws IOException {
+        int chunkSize = 10;
+        int fileSize = (int)(3.25 * chunkSize);
+
+        byte[] fileBytes = new byte[fileSize];
+        for (int idx = 0; idx < fileSize; ++idx)
+            fileBytes[idx] = (byte)(idx % 251);
+
+        GridFSInputFile inputFile = _fs.createFile(fileBytes);
+        int id = 1;
+        inputFile.setId(id);
+        inputFile.setFilename("custom_file_id.bin");
+        inputFile.save(chunkSize);
+        assertEquals(id, inputFile.getId());
+
+        GridFSDBFile savedFile = _fs.findOne(new BasicDBObject("_id", id));
+        InputStream inputStream = savedFile.getInputStream();
+
+        for (int idx = 0; idx < fileSize; ++idx)
+            assertEquals((byte)(idx % 251), (byte)inputStream.read());
+    }
+
     final DB _db;
     final GridFS _fs;
     

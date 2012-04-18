@@ -392,6 +392,10 @@ public class BasicBSONDecoder implements BSONDecoder {
             }
         }
 
+        protected boolean _isAscii( byte b ){
+            return b >=0 && b <= 127;
+        }
+
         public String readCStr() throws IOException {
 
             boolean isAscii = true;

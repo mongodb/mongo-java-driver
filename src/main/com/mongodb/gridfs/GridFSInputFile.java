@@ -28,6 +28,7 @@ import org.bson.types.ObjectId;
 
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
+import com.mongodb.WriteConcern;
 import com.mongodb.MongoException;
 import com.mongodb.util.SimplePool;
 import com.mongodb.util.Util;
@@ -109,6 +110,10 @@ public class GridFSInputFile extends GridFSFile {
      */
     GridFSInputFile( GridFS fs ) {
         this( fs , null , null );
+    }
+
+    public void setId(Object id) {
+        _id = id;
     }
 
     /**
@@ -269,7 +274,9 @@ public class GridFSInputFile extends GridFSFile {
                 .add( "files_id", _id )
                 .add( "n", _currentChunkNumber )
                 .add( "data", writeBuffer ).get();
+
         _fs._chunkCollection.save( chunk );
+
         _currentChunkNumber++;
         _totalBytes += writeBuffer.length;
         _messageDigester.update( writeBuffer );
