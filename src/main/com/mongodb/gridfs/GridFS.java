@@ -66,8 +66,8 @@ public class GridFS {
 
     /**
      * Creates a GridFS instance for the default bucket "fs"
-     * in the given database.
-     *
+     * in the given database. Set the preferred WriteConcern on the give DB with DB.setWriteConcern
+     * @see com.mongodb.WriteConcern
      * @param db database to work with
      */
     public GridFS(DB db) {
@@ -76,8 +76,9 @@ public class GridFS {
 
     /**
      * Creates a GridFS instance for the specified bucket
-     * in the given database.
+     * in the given database.  Set the preferred WriteConcern on the give DB with DB.setWriteConcern
      *
+     * @see com.mongodb.WriteConcern
      * @param db database to work with
      * @param bucket bucket to use in the given database
      */
@@ -87,9 +88,6 @@ public class GridFS {
 
         _filesCollection = _db.getCollection( _bucketName + ".files" );
         _chunkCollection = _db.getCollection( _bucketName + ".chunks" );
-
-        _filesCollection.setWriteConcern(WriteConcern.SAFE);
-        _chunkCollection.setWriteConcern(WriteConcern.SAFE);
 
         // ensure standard indexes as long as collections are small
         if (_filesCollection.count() < 1000)

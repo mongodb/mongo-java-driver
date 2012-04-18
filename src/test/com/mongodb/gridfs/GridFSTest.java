@@ -267,27 +267,17 @@ public class GridFSTest extends TestCase {
             fileBytes[idx] = (byte)(idx % 251);
 
         GridFSInputFile inputFile = _fs.createFile(fileBytes);
-        inputFile.setId(1);
+        int id = 1;
+        inputFile.setId(id);
         inputFile.setFilename("custom_file_id.bin");
         inputFile.save(chunkSize);
+        assertEquals(id, inputFile.getId());
 
-        GridFSDBFile savedFile = _fs.findOne(new BasicDBObject("_id", inputFile.getId()));
+        GridFSDBFile savedFile = _fs.findOne(new BasicDBObject("_id", id));
         InputStream inputStream = savedFile.getInputStream();
 
         for (int idx = 0; idx < fileSize; ++idx)
             assertEquals((byte)(idx % 251), (byte)inputStream.read());
-
-        GridFSInputFile conflictingInputFile = _fs.createFile(fileBytes);
-        conflictingInputFile.setId(1); //_id: 1 already exists
-        conflictingInputFile.setFilename("broken_file_id.bin");
-        try{
-            conflictingInputFile.save(chunkSize);
-
-            DBCursor fileList = _fs.getFileList();
-            fail("Should get an exception when trying to overwrite an existing GridFSFile _id");
-        }catch(MongoException mongoExc) {
-            
-        }
     }
 
     final DB _db;
