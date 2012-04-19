@@ -191,7 +191,7 @@ public abstract class ReflectionDBObject implements DBObject {
             if ( i == null )
                 throw new IllegalArgumentException( "no field [" + name + "] on [" + _name + "]" );
             try {
-                return i._class.isEnum() ? Enum.valueOf(i._class, val.toString()) : i._setter.invoke(t, val);
+                return i._setter.invoke(t, i._class.isEnum() ? Enum.valueOf(i._class, val.toString()) : val);
             }
             catch ( Exception e ){
                 throw new RuntimeException( "could not invoke setter for [" + name + "] on [" + _name + "]" , e );
