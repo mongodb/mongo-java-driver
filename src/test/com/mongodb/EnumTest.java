@@ -66,12 +66,13 @@ public final class EnumTest extends TestCase
 		dbRef.put("_id", 88);
 
 		DBObject dbObject = c.findOne(dbRef);
-
 		Assert.assertNotNull(dbObject);
 		Assert.assertTrue(dbObject instanceof Foo);
 
 		Foo foo = (Foo) dbObject;
 		Assert.assertNotNull(foo);
+		Assert.assertEquals(foo.get_id().toString(), "88");
+		Assert.assertEquals(foo.get_color(), Colors.Blue);
 	}
 
 	public static final class Foo extends ReflectionDBObject
