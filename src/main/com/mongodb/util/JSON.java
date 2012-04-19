@@ -18,29 +18,9 @@
 
 package com.mongodb.util;
 
-import java.lang.reflect.Array;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Map;
-import java.util.Set;
-import java.util.SimpleTimeZone;
-import java.util.UUID;
-import java.util.regex.Pattern;
-
 import org.bson.BSONCallback;
-import org.bson.types.BSONTimestamp;
-import org.bson.types.Binary;
-import org.bson.types.Code;
-import org.bson.types.CodeWScope;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.Bytes;
 import com.mongodb.DBObject;
-import com.mongodb.DBRefBase;
 
 /**
  *   Helper methods for JSON serialization and de-serialization
@@ -83,186 +63,43 @@ public class JSON {
         a.append("\"");
     }
 
-    @SuppressWarnings("unchecked")
-    public static void serialize( Object o , StringBuilder buf ){
-        
-        o = Bytes.applyEncodingHooks( o );
-
-        if ( o == null ){
-            buf.append( " null " );
-            return;
-        }
-        
-        if ( o instanceof Number ){
-            buf.append( o );
-            return;
-        }
-        
-        if ( o instanceof String ){
-            string( buf , o.toString() );
-            return;
-        }
-
-        if ( o instanceof Iterable){
-
-            boolean first = true;
-            buf.append( "[ " );
-            
-            for ( Object n : (Iterable)o ){
-                if ( first ) first = false;
-                else buf.append( " , " );
-                
-                serialize( n , buf );
-            }
-            
-            buf.append( "]" );
-            return;
-        }
-
-
-        if ( o instanceof ObjectId) {
-	    serialize(new BasicDBObject("$oid", o.toString()), buf);
-            return;
-        }
-        
-        if ( o instanceof DBObject){
- 
-            boolean first = true;
-            buf.append( "{ " );
-            
-            DBObject dbo = (DBObject)o;
-            
-            for ( String name : dbo.keySet() ){
-                if ( first ) first = false;
-                else buf.append( " , " );
-                
-                string( buf , name );
-                buf.append( " : " );
-                serialize( dbo.get( name ) , buf );
-            }
-            
-            buf.append( "}" );
-            return;
-        }
-
-        if ( o instanceof Map ){
- 
-            boolean first = true;
-            buf.append( "{ " );
-            
-            Map m = (Map)o;
-
-            for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() ){
-                if ( first ) first = false;
-                else buf.append( " , " );
-                
-                string( buf , entry.getKey().toString() );
-                buf.append( " : " );
-                serialize( entry.getValue() , buf );
-            }
-            
-            buf.append( "}" );
-            return;
-        }
-
-
-        if (o instanceof Date) {
-            Date d = (Date) o;
-            SimpleDateFormat format = 
-		new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-            format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
-	    serialize(new BasicDBObject("$date", format.format(d)), buf);
-            return;
-        }
-
-        if (o instanceof DBRefBase) {
-            DBRefBase ref = (DBRefBase)o;
-            BasicDBObject temp = new BasicDBObject();
-            temp.put( "$ref" , ref.getRef() );
-            temp.put( "$id" , ref.getId() );
-            serialize( temp, buf );
-            return;
-        }
-
-        if (o instanceof Boolean) {
-            buf.append(o);
-            return;
-	}
-
-        if (o instanceof byte[] || o instanceof Binary) {
-            buf.append("<Binary Data>");
-            return;
-        }
-
-        if ( o instanceof Pattern ) {
-            DBObject externalForm = new BasicDBObject();
-            externalForm.put( "$regex", o.toString() );
-            if ( ( (Pattern) o ).flags() != 0 )
-                externalForm.put( "$options", Bytes.regexFlags( ( (Pattern) o ).flags() ) );
-            serialize( externalForm, buf );
-            return;
-        }
-
-        if ( o.getClass().isArray() ){
-            buf.append( "[ " );
-            
-            for ( int i=0; i<Array.getLength( o ); i++) {
-                if ( i > 0 ) buf.append( " , " );
-                serialize( Array.get( o , i ) , buf );
-            }
-            
-            buf.append( "]" );
-            return;
-        }
-
-        if ( o instanceof BSONTimestamp ){
-            BSONTimestamp t = (BSONTimestamp)o;
-            BasicDBObject temp = new BasicDBObject();
-            temp.put( "$ts" , t.getTime() );
-            temp.put( "$inc" , t.getInc() );
-            serialize( temp, buf );
-            return;
-        }
-        
-        if ( o instanceof UUID ){
-            UUID uuid = (UUID)o;
-            BasicDBObject temp = new BasicDBObject();
-            temp.put( "$uuid" , uuid.toString() );
-            serialize( temp, buf );
-            return;
-        }
-
-        if ( o instanceof CodeWScope ){
-            CodeWScope c = (CodeWScope)o;
-            
-            BasicDBObject temp = new BasicDBObject();
-            temp.put( "$code" , c.getCode() );
-            temp.put( "$scope" , c.getScope() );
-            serialize( temp, buf );
-            return;
-        }
-
-        if ( o instanceof Code ){
-            Code c = (Code)o;
-            BasicDBObject temp = new BasicDBObject();
-            temp.put( "$code" , c.getCode() );
-            serialize( temp, buf );
-            return;
-        }
-
-        if ( o instanceof MinKey ){
-            serialize( new BasicDBObject("$minKey", 1), buf );
-            return;
-        }
-        if ( o instanceof MaxKey ){
-            serialize( new BasicDBObject("$maxKey", 1), buf );
-            return;
-        }
-
-        throw new RuntimeException( "json can't serialize type : " + o.getClass() );
+    /**
+     *  Serializes an object into it's JSON form
+     *
+     * @param o object to serialize
+     * @param buf StringBuilder containing the JSON representation under construction 
+     * @return String containing JSON form of the object
+     */
+    public static String serialize( Object o, StringBuilder buf){
+        BSONObjectSerializer serializer = BSONSerializerFactory.buildLegacyBSONSerializer();
+        serialize(o, serializer, buf);
+        return buf.toString();
     }
-
-
+    
+    /**
+     *  Serializes an object into it's JSON form
+     *
+     * @param o object to serialize
+     * @param serializer contains instance specific serialization methods
+     * @param buf StringBuilder containing the JSON representation under construction 
+     * @return String containing JSON form of the object
+     */
+    public static String serialize( Object o, BSONObjectSerializer serializer, StringBuilder buf){
+        serializer.serialize(o, buf);
+        return buf.toString();
+    }
+    
+    /**
+     *  Serializes an object into it's JSON form
+     *
+     * @param o object to serialize
+     * @param serializer contains instance specific serialization methods
+     * @return String containing JSON form of the object
+     */
+    public static String serialize( Object o, BSONObjectSerializer serializer){
+        return serialize(o, serializer, new StringBuilder());
+    }
+    
     /**
      *  Parses a JSON string representing a JSON value
      *

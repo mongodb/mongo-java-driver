@@ -41,6 +41,21 @@ import com.mongodb.DBRef;
 public class JSONTest extends com.mongodb.util.TestCase {
 
     @org.testng.annotations.Test(groups = {"basic"})
+    public void testSerializationMethods(){
+        
+        // basic test of each of JSON class' serialization methods
+        String json = "{ \"x\" : \"basic test\"}";
+        StringBuilder buf = new StringBuilder();
+        BSONObjectSerializer serializer = BSONSerializerFactory.buildLegacyBSONSerializer(); 
+        Object obj = JSON.parse(json);
+
+        assertEquals(JSON.serialize(obj), json);
+        assertEquals(JSON.serialize(obj, serializer), json);
+        assertEquals(JSON.serialize(obj, serializer, buf), json);
+        assertEquals( buf.toString(), json);
+    }
+    
+    @org.testng.annotations.Test(groups = {"basic"})
     public void testNumbers(){
         assertEquals(JSON.serialize(JSON.parse("{'x' : 5 }")), "{ \"x\" : 5}");
         assertEquals(JSON.serialize(JSON.parse("{'x' : 5.0 }")), "{ \"x\" : 5.0}");
