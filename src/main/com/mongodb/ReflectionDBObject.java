@@ -18,16 +18,10 @@
 
 package com.mongodb;
 
-import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
 import org.bson.BSONObject;
+
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * This class enables to map simple Class fields to a BSON object fields
@@ -197,7 +191,7 @@ public abstract class ReflectionDBObject implements DBObject {
             if ( i == null )
                 throw new IllegalArgumentException( "no field [" + name + "] on [" + _name + "]" );
             try {
-                return i._setter.invoke( t , val );
+                return i._setter.invoke(t, i._class.isEnum() ? Enum.valueOf(i._class, val.toString()) : val);
             }
             catch ( Exception e ){
                 throw new RuntimeException( "could not invoke setter for [" + name + "] on [" + _name + "]" , e );

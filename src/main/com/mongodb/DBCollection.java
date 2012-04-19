@@ -127,7 +127,7 @@ public abstract class DBCollection {
      * @throws MongoException
      * @dochub insert
      */
-    public WriteResult insert(List<DBObject> list )
+    public WriteResult insert(List<? extends DBObject> list )
         throws MongoException {
         return insert( list, getWriteConcern() );
     }
@@ -143,7 +143,7 @@ public abstract class DBCollection {
      * @throws MongoException
      * @dochub insert
      */
-    public WriteResult insert(List<DBObject> list, WriteConcern concern )
+    public WriteResult insert(List<? extends DBObject> list, WriteConcern concern )
             throws MongoException {
         return insert( list.toArray( new DBObject[list.size()] ) , concern );
     }
