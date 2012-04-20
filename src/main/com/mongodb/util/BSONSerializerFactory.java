@@ -210,17 +210,15 @@ public class BSONSerializerFactory {
                     BSONObjectSerializer serializer, StringBuilder buf) {
                 boolean first = true;
                 buf.append("[ ");
-                Object n;
-
+                
                 Iterator it = ((Iterable) obj).iterator();
                 while ( it.hasNext() ) {
-                    n = it.next();
                     if (first)
                         first = false;
                     else
                         buf.append(" , ");
                     
-                    serializer.serialize(n, buf);
+                    serializer.serialize(it.next(), buf);
                 }
                 buf.append("]");
             }
