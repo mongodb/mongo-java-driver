@@ -37,6 +37,7 @@ import java.util.logging.Logger;
  * <li>sockettimeoutms</li>
  * <li>autoconnectretry</li>
  * <li>slaveok</li>
+ * <li>replicaset</li>
  * <li>safe</li>
  * <li>w</li>
  * <li>wtimeout</li>
@@ -150,6 +151,7 @@ public class MongoURI {
                 else if ( key.equals( "sockettimeoutms" ) ) _options.socketTimeout = Integer.parseInt( value );
                 else if ( key.equals( "autoconnectretry" ) ) _options.autoConnectRetry = _parseBoolean( value );
                 else if ( key.equals( "slaveok" ) ) _options.slaveOk = _parseBoolean( value );
+                else if ( key.equals( "replicaset" ) ) _options.replicaSet = value;
                 else if ( key.equals( "safe" ) ) _options.safe = _parseBoolean( value );
                 else if ( key.equals( "w" ) ) _options.w = Integer.parseInt( value );
                 else if ( key.equals( "wtimeout" ) ) _options.wtimeout = Integer.parseInt( value );

@@ -81,23 +81,33 @@ public class MongoURITest extends TestCase {
         assertEquals( "pass" , new String( u.getPassword() ) );
     }
 
+    @Test()
+    public void testSingleSeedReplSet(){
+        MongoURI u = new MongoURI( "mongodb://user:pass@host:27042/bar?replicaSet=baz" );
+        assertEquals( 1 , u.getHosts().size() );
+        assertEquals( "host:27042" , u.getHosts().get(0) );
+        assertEquals( "user" , u.getUsername() );
+        assertEquals( "pass" , new String( u.getPassword() ) );
+        assertEquals( "bar" , u.getDatabase() );
+        assertEquals( "baz" , u.getOptions().replicaSet );
+    }
 
     @Test()
     public void testOptions(){
         MongoURI uAmp = new MongoURI( "mongodb://localhost/test?" +
                         "maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&" +
                         "connectTimeoutMS=2500&socketTimeoutMS=5500&autoConnectRetry=true&" +
-                        "slaveOk=true&safe=false&w=1&wtimeout=2500&fsync=true");
+                        "slaveOk=true&replicaSet=baz&safe=false&w=1&wtimeout=2500&fsync=true");
         _testOpts( uAmp._options );
         MongoURI uSemi = new MongoURI( "mongodb://localhost/test?" +
                 "maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;" +
                 "connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;" +
-                "slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true");
+                "slaveOk=true;replicaSet=baz;safe=false;w=1;wtimeout=2500;fsync=true");
         _testOpts( uSemi._options );
         MongoURI uMixed = new MongoURI( "mongodb://localhost/test?" +
                 "maxPoolSize=10&waitQueueMultiple=5;waitQueueTimeoutMS=150;" +
                 "connectTimeoutMS=2500;socketTimeoutMS=5500&autoConnectRetry=true;" +
-                "slaveOk=true;safe=false&w=1;wtimeout=2500;fsync=true");
+                "slaveOk=true;replicaSet=baz&safe=false&w=1&wtimeout=2500;fsync=true");
         _testOpts( uMixed._options );
     }
 
@@ -109,6 +119,7 @@ public class MongoURITest extends TestCase {
         assertEquals( uOpt.socketTimeout, 5500 );
         assertTrue( uOpt.autoConnectRetry );
         assertTrue( uOpt.slaveOk );
+        assertEquals( "baz" , uOpt.replicaSet );
         assertFalse( uOpt.safe );
         assertEquals( uOpt.w, 1 );
         assertEquals( uOpt.wtimeout, 2500 );

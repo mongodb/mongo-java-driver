@@ -50,7 +50,7 @@ import org.bson.io.PoolOutputBuffer;
  * <p>
  * You can connect to a
  * <a href="http://www.mongodb.org/display/DOCS/Replica+Sets">replica set</a>
- * using the Java driver by passing several a list if ServerAddress to the
+ * using the Java driver by passing a list of ServerAddress values to the
  * Mongo constructor.
  * For example:
  * </p>
@@ -65,10 +65,10 @@ import org.bson.io.PoolOutputBuffer;
  *
  * <p>
  * By default, all read and write operations will be made on the master.
- * But it's possible to read from the slave(s) by using slaveOk:
+ * But it's possible to read from the slave(s) by changing the readPreference, e.g.:
  * </p>
  * <blockquote><pre>
- * mongo.slaveOk();
+ * mongo.setReadPreference( ReadPreference.SECONDARY );
  * </pre></blockquote>
  */
 public class Mongo {
@@ -175,7 +175,11 @@ public class Mongo {
     }
 
     /**
-     * Creates a Mongo instance based on a (single) mongo node using a given ServerAddress
+     * Creates a Mongo instance based on a (single) mongo node using a given ServerAddress.
+     *
+     * Will throw MongoException if options contains a non-null <code>replicaSet</code>, 
+     * as this is inconsistent with a single-node connection.
+     *
      * @see com.mongodb.ServerAddress
      * @param addr the database address
      * @param options default query options
@@ -183,6 +187,10 @@ public class Mongo {
      */
     public Mongo( ServerAddress addr , MongoOptions options )
         throws MongoException {
+        if ( options.replicaSet != null ) {
+            String err = "Single address constructor should not have 'replicaSet' option set.";
+            throw new MongoException( err );
+        }
         _addr = addr;
         _addrs = null;
         _options = options;
@@ -274,7 +282,12 @@ public class Mongo {
 
     /**
      * Creates a Mongo described by a URI.
-     * If only one address is used it will only connect to that node, otherwise it will discover all nodes.
+     * If multiple addresses are used or <code>replicaSet=<i>rs-name</i></code> option 
+     * is specified, this will discover all nodes starting from those seeds.
+     *
+     * If only one address is used and <code>replicaSet</code> is NOT specified, 
+     * it will only connect to that node.
+     * 
      * @param uri
      * @see MongoURI
      * <p>examples:
@@ -285,14 +298,13 @@ public class Mongo {
      * @throws UnknownHostException
      * @dochub connections
      */
-
     public Mongo( MongoURI uri )
         throws MongoException , UnknownHostException {
 
         _options = uri.getOptions();
         _applyMongoOptions();
 
-        if ( uri.getHosts().size() == 1 ){
+        if ( uri.getHosts().size() == 1 && _options.replicaSet == null ){
             _addr = new ServerAddress( uri.getHosts().get(0) );
             _addrs = null;
             _connector = new DBTCPConnector( this , _addr );
