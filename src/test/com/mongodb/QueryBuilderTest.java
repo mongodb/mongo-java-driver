@@ -28,7 +28,6 @@ import java.util.regex.Pattern;
 import org.testng.annotations.*;
 
 import com.mongodb.QueryBuilder.QueryBuilderException;
-import com.mongodb.util.JSON;
 import com.mongodb.util.TestCase;
 
 /**
@@ -262,15 +261,13 @@ public class QueryBuilderTest extends TestCase {
     @Test
     public void nearTest() {
         String key = "loc";
-        DBCollection collection = _testDB.getCollection("geoSpacial-test");
+        DBCollection collection = _testDB.getCollection("geoSpatial-test");
         BasicDBObject geoSpatialIndex = new BasicDBObject();
         geoSpatialIndex.put(key, "2d");
         collection.ensureIndex(geoSpatialIndex);
         
-        BasicDBObject location = new BasicDBObject();
         Double[] coordinates = {(double) 50, (double) 30};
-        location.put(key, coordinates );
-        saveTestDocument(collection, key, location);
+        saveTestDocument(collection, key, coordinates);
         
         DBObject queryTrue = QueryBuilder.start(key).near(45, 45).get();
         assertTrue(testQuery(collection, queryTrue));
@@ -287,12 +284,14 @@ public class QueryBuilderTest extends TestCase {
         queryTrue = QueryBuilder.start(key).withinCenterSphere(50, 30, 0.5).get();
         assertTrue(testQuery(collection, queryTrue));
         
-        ArrayList<Double[]> points = new ArrayList<Double[]>();
-        points.add( new Double[] { (double)30, (double)30 }); 
-        points.add( new Double[] { (double)70, (double)30 });  
-        points.add( new Double[] { (double)70, (double)30 }); 
-        queryTrue = QueryBuilder.start(key).withinPolygon(points).get();
-        assertTrue(testQuery(collection, queryTrue));
+        if (serverIsAtLeastVersion(1.9)) {
+            ArrayList<Double[]> points = new ArrayList<Double[]>();
+            points.add( new Double[] { (double)30, (double)30 }); 
+            points.add( new Double[] { (double)70, (double)30 });  
+            points.add( new Double[] { (double)70, (double)30 }); 
+            queryTrue = QueryBuilder.start(key).withinPolygon(points).get();
+            assertTrue(testQuery(collection, queryTrue));
+        }
         
         try{
             QueryBuilder.start(key).withinPolygon(null);
@@ -390,5 +389,4 @@ public class QueryBuilderTest extends TestCase {
         DBCursor cursor = collection.find(query);
         return cursor.hasNext();
     }
-		
 }
