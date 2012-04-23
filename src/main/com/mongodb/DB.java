@@ -144,6 +144,20 @@ public abstract class DB {
         return command( cmd, 0 );
     }
 
+    public CommandResult command( DBObject cmd, DBEncoder encoder ) throws MongoException{
+        return command( cmd, 0, encoder );
+    }
+
+    public CommandResult command( DBObject cmd , int options, DBEncoder encoder )
+            throws MongoException {
+        return command(cmd, options, getReadPreference(), encoder);
+    }
+
+    public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs )
+            throws MongoException {
+        return command(cmd, options, readPrefs, DefaultDBEncoder.FACTORY.create());
+    }
+
     /**
      * Executes a database command.
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
@@ -154,10 +168,12 @@ public abstract class DB {
      * @dochub commands
      * @throws MongoException
      */
-    public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs )
+    public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs, DBEncoder encoder )
         throws MongoException {
 
-        Iterator<DBObject> i = getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, readPrefs , DefaultDBDecoder.FACTORY.create());
+        Iterator<DBObject> i =
+                getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, readPrefs ,
+                        DefaultDBDecoder.FACTORY.create(), encoder);
         if ( i == null || ! i.hasNext() )
             return null;
 

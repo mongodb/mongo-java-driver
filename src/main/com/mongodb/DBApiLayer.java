@@ -295,12 +295,20 @@ public class DBApiLayer extends DB {
         Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize, int limit , int options, ReadPreference readPref, DBDecoder decoder )
             throws MongoException {
 
+            return __find(ref, fields, numToSkip, batchSize, limit, options, readPref, decoder, DefaultDBEncoder.FACTORY.create());
+        }
+
+        @Override
+        Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options,
+                                            ReadPreference readPref, DBDecoder decoder, DBEncoder encoder ) throws MongoException {
+
             if ( ref == null )
                 ref = new BasicDBObject();
 
             if ( willTrace() ) trace( "find: " + _fullNameSpace + " " + JSON.serialize( ref ) );
 
-            OutMessage query = OutMessage.query( _mongo , options , _fullNameSpace , numToSkip , chooseBatchSize(batchSize, limit, 0) , ref , fields, readPref);
+            OutMessage query = OutMessage.query( _mongo , options , _fullNameSpace , numToSkip , chooseBatchSize(batchSize, limit, 0) , ref , fields, readPref,
+                    encoder);
 
             Response res = _connector.call( _db , this , query , null , 2, readPref, decoder );
 

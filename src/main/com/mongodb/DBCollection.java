@@ -268,6 +268,10 @@ public abstract class DBCollection {
      */
     abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options, ReadPreference readPref, DBDecoder decoder ) throws MongoException ;
 
+    abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options,
+                                        ReadPreference readPref, DBDecoder decoder, DBEncoder encoder ) throws MongoException ;
+
+
     /**
      * Calls {@link DBCollection#find(com.mongodb.DBObject, com.mongodb.DBObject, int, int)} and applies the query options
      * @param query query used to search
@@ -1476,5 +1480,4 @@ public abstract class DBCollection {
     private ReflectionDBObject.JavaWrapper _wrapper = null;
 
     final private Set<String> _createdIndexes = new HashSet<String>();
-
 }

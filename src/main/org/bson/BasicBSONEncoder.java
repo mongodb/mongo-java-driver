@@ -123,7 +123,7 @@ public class BasicBSONEncoder implements BSONEncoder {
     /**
      * this is really for embedded objects
      */
-    int putObject( String name , BSONObject o ){
+    protected int putObject( String name , BSONObject o ){
 
         if ( o == null )
             throw new NullPointerException( "can't save a null object" );
