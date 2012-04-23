@@ -18,6 +18,7 @@ package org.bson;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.mongodb.LazyDBObject;
 import org.bson.types.ObjectId;
 
 /**
@@ -58,7 +59,7 @@ public class LazyBSONCallback extends EmptyBSONCallback {
     }
 
     public Object createObject( byte[] data, int offset ){
-        return new LazyBSONObject( data, offset, this );
+        return new LazyDBObject( data, offset, this );
     }
 
     @SuppressWarnings("rawtypes")
