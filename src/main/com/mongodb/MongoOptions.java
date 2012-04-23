@@ -38,6 +38,7 @@ public class MongoOptions {
         socketKeepAlive = false;
         autoConnectRetry = false;
         maxAutoConnectRetryTime = 0;
+        replicaSet = null;
         slaveOk = false;
         safe = false;
         w = 0;
@@ -60,6 +61,7 @@ public class MongoOptions {
         m.socketKeepAlive = socketKeepAlive;
         m.autoConnectRetry = autoConnectRetry;
         m.maxAutoConnectRetryTime = maxAutoConnectRetryTime;
+        m.replicaSet = replicaSet;
         m.slaveOk = slaveOk;
         m.safe = safe;
         m.w = w;
@@ -170,6 +172,14 @@ public class MongoOptions {
     public boolean slaveOk;
 
     /**
+     * The name of the replica set to which the driver is connecting.
+     * May be null, even when connecting to a replica set.
+     * If present, resolves any ambiguity between single-server connection and single-seed
+     * replica set connection (in favor of the latter).
+     */
+    public String replicaSet;
+
+    /**
      * Override the DBCallback factory. Default is for the standard Mongo Java driver configuration.
      */
     public DBDecoderFactory dbDecoderFactory;
@@ -228,6 +238,7 @@ public class MongoOptions {
         buf.append( "autoConnectRetry=" ).append( autoConnectRetry ).append( ", " );
         buf.append( "maxAutoConnectRetryTime=" ).append( maxAutoConnectRetryTime ).append( ", " );
         buf.append( "slaveOk=" ).append( slaveOk ).append( ", " );
+        buf.append( "replicaSet=" ).append( replicaSet ).append( ", " );
         buf.append( "safe=" ).append( safe ).append( ", " );
         buf.append( "w=" ).append( w ).append( ", " );
         buf.append( "wtimeout=" ).append( wtimeout ).append( ", " );
