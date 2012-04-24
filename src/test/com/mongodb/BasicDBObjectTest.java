@@ -28,10 +28,30 @@ public class BasicDBObjectTest extends TestCase {
     @Test(groups = {"basic"})
     public void testGetObjectId() {
         final ObjectId objId = ObjectId.get();
-
         BasicDBObject doc = new BasicDBObject( "foo" , objId);
         assert( doc.getObjectId( "foo" ).equals( objId ) );
+    }
 
+    @Test(groups = {"basic"})
+    public void testGetLongWithDefault() {
+        final long test = 100;
+        BasicDBObject doc = new BasicDBObject( "foo" , test);
+        assert( doc.getLong( "foo", 0l ) == test );
+        assert( doc.getLong( "bar", 0l ) == 0l );
+    }
+
+    @Test(groups = {"basic"})
+    public void testGetDoubleWithDefault() {
+        BasicDBObject doc = new BasicDBObject( "foo" , Double.MAX_VALUE);
+        assert( doc.getDouble( "foo", (double)0 ) == Double.MAX_VALUE);
+        assert( doc.getDouble( "bar", Double.MIN_VALUE ) == Double.MIN_VALUE);
+    }
+
+    @Test(groups = {"basic"})
+    public void testGetStringWithDefault() {
+        BasicDBObject doc = new BasicDBObject( "foo" , "badmf");
+        assert( doc.getString( "foo", "ID" ).equals("badmf"));
+        assert( doc.getString( "bar", "DEFAULT" ).equals("DEFAULT") );
     }
 
     @Test(groups = {"basic"})
