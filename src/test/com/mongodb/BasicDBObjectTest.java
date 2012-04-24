@@ -23,13 +23,39 @@ import com.mongodb.util.*;
 
 import org.testng.annotations.*;
 
+// Java
+import java.util.Date;
+
 public class BasicDBObjectTest extends TestCase {
+
+    @Test(groups = {"basic"})
+    public void testGetDate() {
+        final Date date = new Date();
+        BasicDBObject doc = new BasicDBObject( "foo" , date);
+        assert( doc.getDate( "foo" ).equals( date ) );
+    }
+
+    @Test(groups = {"basic"})
+    public void testGetDateWithDefault() {
+        final Date date = new Date();
+        BasicDBObject doc = new BasicDBObject( "foo" , date);
+        assert( doc.getDate( "foo", new Date() ).equals( date ) );
+        assert( doc.getDate( "bar", date ).equals( date ) );
+    }
 
     @Test(groups = {"basic"})
     public void testGetObjectId() {
         final ObjectId objId = ObjectId.get();
         BasicDBObject doc = new BasicDBObject( "foo" , objId);
         assert( doc.getObjectId( "foo" ).equals( objId ) );
+    }
+
+    @Test(groups = {"basic"})
+    public void testGetObjectIdWithDefault() {
+        final ObjectId objId = ObjectId.get();
+        BasicDBObject doc = new BasicDBObject( "foo" , objId);
+        assert( doc.getObjectId( "foo", ObjectId.get() ).equals( objId ) );
+        assert( doc.getObjectId( "bar", objId ).equals( objId ) );
     }
 
     @Test(groups = {"basic"})
