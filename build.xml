@@ -37,6 +37,9 @@ limitations under the License.
     <dirname property="javabase" file="${java.home}"/>
 
     <property name="clover.jar" location="${env.CLOVER_HOME}/lib/clover.jar"/>
+
+    <property name="test.com.mongodb.slaveAcceptableLatencyMS" value="15"/>
+
     <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/>
     <path id="classpath">
         <fileset dir="lib"><include name="**/*.jar"/></fileset>
@@ -260,6 +263,8 @@ limitations under the License.
     <target name="test" depends="compile">
         <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="true" >
             <jvmarg value="-Xmx512M" />
+            <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
+
             <xmlfileset dir="." includes="testng.xml"/>
         </testng>
     </target>
@@ -280,6 +285,7 @@ limitations under the License.
 
         <testng classpathref="classpath" outputdir="${testdir}" haltonfailure="true" verbose="1" listeners="com.mongodb.util.TestNGListener" >
             <jvmarg value="-Xmx512M" />
+            <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
             <xmlfileset dir="build/test" includes="testng-single.xml"/>
         </testng>
     </target>

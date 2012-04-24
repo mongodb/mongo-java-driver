@@ -30,16 +30,15 @@ import java.util.List;
 public class SecondaryReadTest extends TestCase {
 
 
-    private static final int INSERT_COUNT = 1000;
+    private static final int TOTAL_COUNT = 5000;
 
-    private static final int ITERATION_COUNT = 100;
+    private static final double MAX_DEVIATION_PERCENT = 3.0;
 
-    private static final int TOTAL_COUNT = INSERT_COUNT * ITERATION_COUNT;
-
-    private static final double MAX_DEVIATION_PERCENT = 1.0;
-
+    /**
+     * Assert that the percentage of reads to each secondary does not deviate by more than 1 %
+     */
     @Test(groups = {"basic"})
-    public void testSecondaryReads1() throws Exception {
+    public void testSecondaryReadBalance() throws Exception {
 
         final Mongo mongo = loadMongo();
 
@@ -51,8 +50,6 @@ public class SecondaryReadTest extends TestCase {
             final List<TestHost> testHosts = extractHosts(mongo);
 
             final DBCollection col = loadCleanDbCollection(mongo);
-
-            final List<ObjectId> insertedIds = insertTestData(col);
 
             // Get the opcounter/query data for the hosts.
             loadQueryCount(testHosts, true);
@@ -62,10 +59,8 @@ public class SecondaryReadTest extends TestCase {
             // Perform some reads on the secondaries
             col.setReadPreference(ReadPreference.SECONDARY);
 
-            for (int idx=0; idx < ITERATION_COUNT; idx++) {
-                for (ObjectId id : insertedIds) {
-                    col.findOne(new BasicDBObject("_id", id));
-                }
+            for (int idx=0; idx < TOTAL_COUNT; idx++) {
+                col.findOne();
             }
 
             loadQueryCount(testHosts, false);
@@ -74,78 +69,9 @@ public class SecondaryReadTest extends TestCase {
         } finally { if (mongo != null) mongo.close(); }
    }
 
-    @Test(groups = {"basic"})
-    public void testSecondaryReads2() throws Exception {
-
-        final Mongo mongo = loadMongo();
-
-        try {
-            if (isStandalone(mongo)) {
-                return;
-            }
-
-            final List<TestHost> testHosts = extractHosts(mongo);
-
-            final DBCollection col = loadCleanDbCollection(mongo);
-
-            final List<ObjectId> insertedIds = insertTestData(col);
-
-            // Get the opcounter/query data for the hosts.
-            loadQueryCount(testHosts, true);
-
-            final int secondaryCount = getSecondaryCount(testHosts);
-
-            // Perform some reads on the secondaries
-            mongo.setReadPreference(ReadPreference.SECONDARY);
-
-            for (int idx=0; idx < ITERATION_COUNT; idx++) {
-                for (ObjectId id : insertedIds) {
-                    col.findOne(new BasicDBObject("_id", id));
-                }
-            }
-
-            loadQueryCount(testHosts, false);
-
-            verifySecondaryCounts(secondaryCount, testHosts);
-        } finally { if (mongo != null) mongo.close(); }
-   }
-
-    @Test(groups = {"basic"})
-    public void testSecondaryReads3() throws Exception {
-
-        final Mongo mongo = loadMongo();
-
-        try {
-            if (isStandalone(mongo)) {
-                return;
-            }
-
-            final List<TestHost> testHosts = extractHosts(mongo);
-
-            final DBCollection col = loadCleanDbCollection(mongo);
-
-            final List<ObjectId> insertedIds = insertTestData(col);
-
-            // Get the opcounter/query data for the hosts.
-            loadQueryCount(testHosts, true);
-
-            final int secondaryCount = getSecondaryCount(testHosts);
-
-            // Perform some reads on the secondaries
-            col.getDB().setReadPreference(ReadPreference.SECONDARY);
-
-            for (int idx=0; idx < ITERATION_COUNT; idx++) {
-                for (ObjectId id : insertedIds) {
-                    col.findOne(new BasicDBObject("_id", id));
-                }
-            }
-
-            loadQueryCount(testHosts, false);
-
-            verifySecondaryCounts(secondaryCount, testHosts);
-        } finally { if (mongo != null) mongo.close(); }
-   }
-
+    /**
+     * Assert that secondary reads actually are routed to a secondary
+     */
     @Test(groups = {"basic"})
     public void testSecondaryReadCursor() throws Exception {
         final Mongo mongo = loadMongo();
@@ -158,7 +84,7 @@ public class SecondaryReadTest extends TestCase {
 
             final DBCollection col = loadCleanDbCollection(mongo);
 
-            insertTestData(col);
+            insertTestData(col, new WriteConcern(getSecondaryCount(testHosts) + 1));
 
             // Get the opcounter/query data for the hosts.
             loadQueryCount(testHosts, true);
@@ -172,37 +98,28 @@ public class SecondaryReadTest extends TestCase {
 
             ServerAddress curServerAddress = cur.getServerAddress();
 
-            assertEquals(true, serverIsSecondary(curServerAddress, testHosts));
-
-            try {
-                while (cur.hasNext()) {
-                    cur.next();
-                    assertEquals(true, serverIsSecondary(cur.getServerAddress(), testHosts));
-                }
-            } finally { cur.close(); }
-
-            loadQueryCount(testHosts, false);
+            assertTrue(serverIsSecondary(curServerAddress, testHosts));
 
         } finally { if (mongo != null) mongo.close(); }
     }
 
     private boolean serverIsSecondary(final ServerAddress pServerAddr, final List<TestHost> pHosts) {
         for (final TestHost h : pHosts) {
-            if (!h.stateStr.equals("SECONDARY")) continue;
+            if (!h.stateStr.equals("SECONDARY"))
+                continue;
             final int portIdx = h.hostnameAndPort.indexOf(":");
             final int port = Integer.parseInt(h.hostnameAndPort.substring(portIdx+1, h.hostnameAndPort.length()));
             final String hostname = h.hostnameAndPort.substring(0, portIdx);
 
-            //System.out.println("---- hostname: " + hostname + " + server addr host: " + pServerAddr.getHost());
-
-            if (pServerAddr.getPort() == port && hostname.equals(pServerAddr.getHost())) return true;
+            if (pServerAddr.getPort() == port && hostname.equals(pServerAddr.getHost()))
+                return true;
         }
 
         return false;
     }
 
     private Mongo loadMongo() throws Exception {
-        return new Mongo(new MongoURI("mongodb://127.0.0.1:27017,127.0.0.1:27018/?connectTimeoutMS=30000;socketTimeoutMS=30000;maxpoolsize=5;autoconnectretry=true"));
+        return new Mongo(new MongoURI("mongodb://127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/?connectTimeoutMS=30000;socketTimeoutMS=30000;maxpoolsize=5;autoconnectretry=true"));
     }
 
     @SuppressWarnings({"unchecked"})
@@ -232,30 +149,20 @@ public class SecondaryReadTest extends TestCase {
         return db.getCollection("testBalance");
     }
 
-    private List<ObjectId> insertTestData(final DBCollection pCol) throws Exception {
-        final ArrayList<ObjectId> insertedIds = new ArrayList<ObjectId>();
-
+    private void insertTestData(final DBCollection pCol, WriteConcern writeConcern) throws Exception {
         // Insert some test data.
-        for (int idx=0; idx < INSERT_COUNT; idx++) {
-            final ObjectId id = ObjectId.get();
-            WriteResult writeResult = pCol.insert(new BasicDBObject("_id", id), WriteConcern.REPLICAS_SAFE);
+        for (int idx=0; idx < 1000; idx++) {
+            WriteConcern curWriteConcern = idx == 999 ? WriteConcern.NONE : writeConcern;
+            WriteResult writeResult = pCol.insert(new BasicDBObject(), curWriteConcern);
             writeResult.getLastError().throwOnError();
-            insertedIds.add(id);
         }
-
-        // Make sure everything is inserted.
-        while (true) {
-            final long count = pCol.count();
-            if (count == INSERT_COUNT) break;
-            Thread.sleep(1000);
-        }
-
-        return insertedIds;
     }
 
     private int getSecondaryCount(final List<TestHost> pHosts) {
         int secondaryCount = 0;
-        for (final TestHost testHost : pHosts) if (testHost.stateStr.equals("SECONDARY")) secondaryCount++;
+        for (final TestHost testHost : pHosts)
+            if (testHost.stateStr.equals("SECONDARY"))
+                secondaryCount++;
         return secondaryCount;
     }
 
