@@ -242,12 +242,34 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
     }
 
     /**
+     * Returns the object id or def if not set.
+     * @param field The field to return
+     * @param def the default value in case the field is not found
+     * @return The field object value or def if not set.
+     */
+    public ObjectId getObjectId( final String field, final ObjectId def ) {
+        final Object foo =  get( field );
+        return (foo != null) ? (ObjectId)foo : def;
+    }
+
+    /**
      * Returns the date or null if not set.
      * @param field The field to return
      * @return The field object value or null if not found.
      */
     public Date getDate( final String field ) {
         return (Date) get( field );
+    }
+
+    /**
+     * Returns the date or def if not set.
+     * @param field The field to return
+     * @param def the default value in case the field is not found
+     * @return The field object value or def if not set.
+     */
+    public Date getDate( final String field, final Date def ) {
+        final Object foo =  get( field );
+        return (foo != null) ? (Date)foo : def;
     }
 
     /** Add a key/value pair to this object
