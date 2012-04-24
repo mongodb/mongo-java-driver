@@ -20,11 +20,6 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import java.util.concurrent.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import com.sun.org.apache.xpath.internal.functions.FuncGenerateId;
-import com.sun.xml.internal.bind.v2.TODO;
 import org.testng.annotations.Test;
 
 import com.mongodb.util.TestCase;
