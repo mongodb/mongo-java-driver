@@ -145,6 +145,20 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
     }
 
     /**
+     * Returns the value of a field as an <code>long</code>.
+     * @param key the field to look for
+     * @param def the default to return
+     * @return the field value (or default)
+     */
+    public long getLong( String key , long def ) {
+        Object foo = get( key );
+        if ( foo == null )
+            return def;
+
+        return ((Number)foo).longValue();
+    }
+
+    /**
      * Returns the value of a field as a <code>double</code>.
      *
      * @param key the field to return
@@ -152,6 +166,20 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
      */
     public double getDouble( String key){
         Object foo = get( key );
+        return ((Number)foo).doubleValue();
+    }
+
+    /**
+     * Returns the value of a field as an <code>double</code>.
+     * @param key the field to look for
+     * @param def the default to return
+     * @return the field value (or default)
+     */
+    public double getDouble( String key , double def ) {
+        Object foo = get( key );
+        if ( foo == null )
+            return def;
+
         return ((Number)foo).doubleValue();
     }
 
@@ -163,6 +191,20 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         Object foo = get( key );
         if ( foo == null )
             return null;
+        return foo.toString();
+    }
+
+    /**
+     * Returns the value of a field as a string
+     * @param key the field to look up
+     * @param def the default to return
+     * @return the value of the field, converted to a string
+     */
+    public String getString( String key, final String def ) {
+        Object foo = get( key );
+        if ( foo == null )
+            return def;
+
         return foo.toString();
     }
 
