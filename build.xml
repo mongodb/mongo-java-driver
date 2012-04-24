@@ -365,6 +365,7 @@ limitations under the License.
 
         <testng classpathref="classpath.clover" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1">
             <jvmarg value="-Xmx512M" />
+            <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
             <xmlfileset dir="." includes="testng.xml"/>
         </testng>
         <!--<clover-report>-->
