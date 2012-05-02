@@ -27,13 +27,7 @@ import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.DynamicMBean;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanInfo;
-
-public abstract class SimplePool<T> implements DynamicMBean {
+public abstract class SimplePool<T> implements SimplePoolMBean {
 
     static final boolean TRACK_LEAKS = Boolean.getBoolean( "MONGO-TRACKLEAKS" );
     static final long _sleepTime = 2;
@@ -57,15 +51,6 @@ public abstract class SimplePool<T> implements DynamicMBean {
         _maxTotal = maxTotal;
         _trackLeaks = trackLeaks || TRACK_LEAKS;
         _debug = debug;
-        _mbeanInfo = new MBeanInfo( this.getClass().getName() , _name , 
-                new MBeanAttributeInfo[]{
-                    new MBeanAttributeInfo( "name" , "java.lang.String" , "name of pool" , true , false , false ) , 
-                    new MBeanAttributeInfo( "size" , "java.lang.Integer" , "total size of pool" , true , false , false ) , 
-                    new MBeanAttributeInfo( "available" , "java.lang.Integer" , "total connections available" , true , false , false ) , 
-                    new MBeanAttributeInfo( "inUse" , "java.lang.Integer" , "number connections in use right now" , true , false , false ) , 
-                    new MBeanAttributeInfo( "everCreated" , "java.lang.Integer" , "number connections ever created" , true , false , false ) 
-                } , null , null , null );
-        
     }
 
     /** Creates a new object of this pool's type.
@@ -255,11 +240,18 @@ public abstract class SimplePool<T> implements DynamicMBean {
         }
     }
 
-    public int total(){
+    @Override
+    public String getName() {
+        return _name;
+    }
+
+    @Override
+    public int getTotal(){
         return _all.size();
     }
     
-    public int inUse(){
+    @Override
+    public int getInUse(){
         return _all.size() - _avail.size();
     }
 
@@ -267,13 +259,14 @@ public abstract class SimplePool<T> implements DynamicMBean {
         return _all.getAll().iterator();
     }
 
-    public int available(){
+    public int getAvailable(){
         if ( _maxTotal <= 0 )
             throw new IllegalStateException( "this pool has an infinite number of things available" );
-        return _maxTotal - inUse();
+        return _maxTotal - getInUse();
     }
 
-    public int everCreated(){
+    @Override
+    public int getEverCreated(){
         return _everCreated;
     }
 
@@ -282,51 +275,10 @@ public abstract class SimplePool<T> implements DynamicMBean {
             System.out.println( "SimplePool [" + _name + "] : " + msg );
     }
 
-    public int maxToKeep(){
+    @Override
+    public int getSize(){
         return _maxToKeep;
     }
-
-    public Object getAttribute(String attribute){
-        if ( attribute.equals( "name" ) )
-            return _name;
-        if ( attribute.equals( "size" ) )
-            return _maxToKeep;
-        if ( attribute.equals( "available" ) )
-            return available();
-        if ( attribute.equals( "inUse" ) )
-            return inUse();
-        if ( attribute.equals( "everCreated" ) )
-            return _everCreated;
-        
-        System.err.println( "com.mongo.util.SimplePool unknown attribute: " + attribute );
-        throw new RuntimeException( "unknown attribute: " + attribute );
-    }
-    
-    public AttributeList getAttributes(String[] attributes){
-        AttributeList l = new AttributeList();
-        for ( int i=0; i<attributes.length; i++ ){
-            String name = attributes[i];
-            l.add( new Attribute( name , getAttribute( name ) ) );
-        }
-        return l;
-    }
-
-    public MBeanInfo getMBeanInfo(){
-        return _mbeanInfo;
-    }
-
-    public Object invoke(String actionName, Object[] params, String[] signature){
-        throw new RuntimeException( "not allowed to invoke anything" );
-    }
-
-    public void setAttribute(Attribute attribute){
-        throw new RuntimeException( "not allowed to set anything" );
-    }
-    
-    public AttributeList setAttributes(AttributeList attributes){
-        throw new RuntimeException( "not allowed to set anything" );
-    }
-
 
     public String toString(){
         StringBuilder buf = new StringBuilder();
@@ -345,7 +297,6 @@ public abstract class SimplePool<T> implements DynamicMBean {
     protected final int _maxTotal;
     protected final boolean _trackLeaks;
     protected final boolean _debug;
-    protected final MBeanInfo _mbeanInfo;
 
     private final List<T> _avail = new ArrayList<T>();
     protected final List<T> _availSafe = Collections.unmodifiableList( _avail );

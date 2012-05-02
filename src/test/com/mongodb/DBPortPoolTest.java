@@ -61,8 +61,8 @@ public class DBPortPoolTest extends com.mongodb.util.TestCase {
 //            Assert.assertNotSame( 0 , ports[x]._lastThread, x + ":" + ports[x].hashCode());
         }
         
-        assertEquals( 10 , pool.everCreated() );
-        assertEquals( 10 , pool.available() );
+        assertEquals( 10 , pool.getEverCreated() );
+        assertEquals( 10 , pool.getAvailable() );
         
     }
 

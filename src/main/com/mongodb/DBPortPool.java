@@ -19,12 +19,9 @@
 package com.mongodb;
 
 import com.mongodb.util.SimplePool;
+import com.mongodb.util.management.JMException;
+import com.mongodb.util.management.MBeanServerFactory;
 
-import javax.management.JMException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,17 +37,6 @@ public class DBPortPool extends SimplePool<DBPort> {
         
         Holder( MongoOptions options ){
             _options = options;
-            {
-                MBeanServer temp = null;
-                try {
-                    temp = ManagementFactory.getPlatformMBeanServer();
-                }
-                catch ( Throwable t ){
-                    // ignore
-                }
-                
-                _server = temp;
-            }
         }
 
         DBPortPool get( ServerAddress addr ){
@@ -69,25 +55,20 @@ public class DBPortPool extends SimplePool<DBPort> {
                 p = new DBPortPool( addr , _options );
                 _pools.put( addr , p);
 
-                if ( _server != null ){
-                    try {
-                        ObjectName on = createObjectName( addr );
-                        if ( _server.isRegistered( on ) ){
-                            _server.unregisterMBean( on );
-                            Bytes.LOGGER.log( Level.INFO , "multiple Mongo instances for same host, jmx numbers might be off" );
-                        }
-                        _server.registerMBean( p , on );
+                try {
+                    String on = createObjectName(addr);
+                    if (MBeanServerFactory.getMBeanServer().isRegistered(on)) {
+                        MBeanServerFactory.getMBeanServer().unregisterMBean(on);
+                        Bytes.LOGGER.log(Level.INFO, "multiple Mongo instances for same host, jmx numbers might be off");
                     }
-                    catch ( JMException e ){
-                        Bytes.LOGGER.log( Level.WARNING , "jmx registration error: " + e + " continuing..." );
-                    }
-                    catch ( java.security.AccessControlException e ){
-                        Bytes.LOGGER.log( Level.WARNING , "jmx registration error: " + e + " continuing..." );
-                    }
+                    MBeanServerFactory.getMBeanServer().registerMBean(p, on);
+                } catch (JMException e) {
+                    Bytes.LOGGER.log(Level.WARNING, "jmx registration error: " + e + " continuing...");
+                } catch (java.security.AccessControlException e) {
+                    Bytes.LOGGER.log(Level.WARNING, "jmx registration error: " + e + " continuing...");
                 }
-
             }
-            
+
             return p;
         }
 
@@ -97,9 +78,9 @@ public class DBPortPool extends SimplePool<DBPort> {
                     p.close();
 
                     try {
-                        ObjectName on = createObjectName( p._addr );
-                        if ( _server.isRegistered( on ) ){
-                            _server.unregisterMBean( on );
+                        String on = createObjectName( p._addr );
+                        if ( MBeanServerFactory.getMBeanServer().isRegistered(on) ){
+                            MBeanServerFactory.getMBeanServer().unregisterMBean(on);
                         }
                     } catch ( JMException e ){
                         Bytes.LOGGER.log( Level.WARNING , "jmx de-registration error, continuing" , e );
@@ -108,16 +89,15 @@ public class DBPortPool extends SimplePool<DBPort> {
             }
         }
 
-        private ObjectName createObjectName( ServerAddress addr ) throws MalformedObjectNameException {
+        private String createObjectName( ServerAddress addr ) {
             String name =  "com.mongodb:type=ConnectionPool,host=" + addr.toString().replace( ":" , ",port=" ) + ",instance=" + _serial;
             if ( _options.description != null )
                 name += ",description=" + _options.description;
-            return new ObjectName( name );
+            return name;
         }
 
         final MongoOptions _options;
-        final Map<ServerAddress,DBPortPool> _pools = Collections.synchronizedMap(new HashMap<ServerAddress, DBPortPool>());
-        final MBeanServer _server;
+        final Map<ServerAddress,DBPortPool> _pools = Collections.synchronizedMap( new HashMap<ServerAddress,DBPortPool>() );
         final int _serial = nextSerial.incrementAndGet();
 
         // we use this to give each Holder a different mbean name
