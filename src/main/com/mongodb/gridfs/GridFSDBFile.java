@@ -173,6 +173,7 @@ public class GridFSDBFile extends GridFSFile {
                 offsetInFile = _currentChunkIdx * _chunkSize + _offset;
             if (numBytesToSkip + offsetInFile >= _length) {
                 _currentChunkIdx = _numChunks;
+                _data = null;
                 return _length - offsetInFile;
             }
 
@@ -186,8 +187,6 @@ public class GridFSDBFile extends GridFSFile {
         }
 
         final int _numChunks;
-        //Math trick to ensure the _lastChunkSize is between 1 and _chunkSize
-        //final long _lastChunkSize = ((_length - 1) % _chunkSize) + 1;
 
         int _currentChunkIdx = -1;
         int _offset = 0;
