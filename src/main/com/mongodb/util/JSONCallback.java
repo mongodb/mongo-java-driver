@@ -20,6 +20,7 @@ package com.mongodb.util;
 
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.SimpleTimeZone;
 import java.util.UUID;
@@ -76,13 +77,21 @@ public class JSONCallback extends BasicBSONCallback {
 		    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
                 GregorianCalendar calendar = new GregorianCalendar(new SimpleTimeZone(0, "GMT"));
                 format.setCalendar(calendar);
-                String txtdate = (String) b.get("$date");
-                o = format.parse(txtdate, new ParsePosition(0));
-                if (o == null) {
-                    // try older format with no ms
-                    format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                    format.setCalendar(calendar);
+
+                String txtdate = b.get("$date").toString();
+
+                try {
+                    // Convert from seconds to ms to match consistency 
+                    // with strict JSON serialization
+                    o = new Date(  Long.parseLong(txtdate) * 1000l);
+                } catch (NumberFormatException e) {
                     o = format.parse(txtdate, new ParsePosition(0));
+                    if (o == null) {
+                        // try older format with no ms
+                        format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                        format.setCalendar(calendar);
+                        o = format.parse(txtdate, new ParsePosition(0));
+                    }
                 }
 		if (!isStackEmpty()) {
 		    cur().put( name, o );
