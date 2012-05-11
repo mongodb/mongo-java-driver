@@ -447,8 +447,9 @@ public class LazyBSONObject implements BSONObject {
         return getBSONSize( _doc_start_offset );
     }
     
-    public void pipe(OutputStream os) throws IOException {
+    public int pipe(OutputStream os) throws IOException {
         os.write(_input.array(), _doc_start_offset, getBSONSize());
+        return getBSONSize();
     }
 
     private String getElementFieldName( final int offset ){
