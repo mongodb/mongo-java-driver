@@ -768,8 +768,8 @@ public class JavaClientTest extends TestCase {
         DBCollection c = _db.getCollection( "writeresult1" );
         c.drop();
 
-        WriteResult res = c.insert( new BasicDBObject( "_id" , 1 ) );
-        res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
+        c.insert( new BasicDBObject( "_id" , 1 ) );
+        WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
         assertEquals( 1 , res.getN() );
         assertTrue( res.isLazy() );
 
