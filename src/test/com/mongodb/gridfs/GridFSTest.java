@@ -222,12 +222,9 @@ public class GridFSTest extends TestCase {
 
         inputStream = (GridFSDBFile.MyInputStream)savedFile.getInputStream();
 
-        int position = 0;
-        assertEquals((byte)(position++ % 251), (byte)inputStream.read());
-
         long skipped = inputStream.skip(1);
         assertEquals(1, skipped);
-        position += 1;
+        int position = 1;
         assertEquals((byte)(position++ % 251), (byte)inputStream.read());
 
         skipped = inputStream.skip(chunkSize);

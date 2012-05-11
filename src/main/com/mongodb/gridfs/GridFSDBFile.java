@@ -64,7 +64,7 @@ public class GridFSDBFile extends GridFSFile {
      * @throws IOException
      */
     public long writeTo( File f ) throws IOException {
-    	
+        
     	FileOutputStream out = null;
     	try{
     		out = new FileOutputStream( f );
@@ -138,6 +138,7 @@ public class GridFSDBFile extends GridFSFile {
         public int read(byte[] b){
             return read( b , 0 , b.length );
         }
+
         public int read(byte[] b, int off, int len){
             
             if ( _data == null || _offset >= _data.length ){
@@ -166,35 +167,29 @@ public class GridFSDBFile extends GridFSFile {
                 //Don't count those extra bytes to skip in with the return value
                 return 0;
 
-            if (_offset + numBytesToSkip <= _chunkSize) {
-                //We're skipping over bytes in the current chunk, adjust the offset accordingly
-                _offset += numBytesToSkip;
-                if (_data == null && _currentChunkIdx < _numChunks)
-                    _data = getChunk(_currentChunkIdx);
-
-                return numBytesToSkip;
+            // offset in the whole file
+            long offsetInFile = 0;
+            if (_currentChunkIdx >= 0)
+                offsetInFile = _currentChunkIdx * _chunkSize + _offset;
+            if (numBytesToSkip + offsetInFile >= _length) {
+                _currentChunkIdx = _numChunks;
+                _data = null;
+                return _length - offsetInFile;
             }
 
-            //We skipping over the remainder of this chunk, could do this less recursively...
-            ++_currentChunkIdx;
-            long skippedBytes = 0;
-            if (_currentChunkIdx < _numChunks)
-                skippedBytes = _chunkSize - _offset;
-            else
-                skippedBytes = _lastChunkSize;
+            int temp = _currentChunkIdx;
+            _currentChunkIdx = (int)((numBytesToSkip + offsetInFile) / _chunkSize);
+            if (temp != _currentChunkIdx)
+                _data = getChunk(_currentChunkIdx);
+            _offset = (int)((numBytesToSkip + offsetInFile) % _chunkSize);
 
-            _offset = 0;
-            _data = null;
-
-            return skippedBytes + skip(numBytesToSkip - skippedBytes);
+            return numBytesToSkip;
         }
 
         final int _numChunks;
-        //Math trick to ensure the _lastChunkSize is between 1 and _chunkSize
-        final long _lastChunkSize = ((_length - 1) % _chunkSize) + 1;
 
         int _currentChunkIdx = -1;
-        int _offset;
+        int _offset = 0;
         byte[] _data = null;
     }
     
