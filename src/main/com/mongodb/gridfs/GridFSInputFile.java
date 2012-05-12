@@ -144,6 +144,7 @@ public class GridFSInputFile extends GridFSFile {
         if (_outputStream != null || _savedChunks)
             return;
         this._chunkSize = _chunkSize;
+        this._buffer = new byte[(int) _chunkSize];
     }
 
     /**
