@@ -138,13 +138,13 @@ public class GridFSInputFile extends GridFSFile {
 
     /**
      * Set the chunk size. This must be called before saving any data.
-     * @param _chunkSize
+     * @param chunkSize The size in bytes.
      */
-    public void setChunkSize(long _chunkSize) {
+    public void setChunkSize(long chunkSize) {
         if (_outputStream != null || _savedChunks)
             return;
-        this._chunkSize = _chunkSize;
-        this._buffer = new byte[(int) _chunkSize];
+        _chunkSize = chunkSize;
+        _buffer = new byte[(int) _chunkSize];
     }
 
     /**
@@ -152,7 +152,7 @@ public class GridFSInputFile extends GridFSFile {
      */
     @Override
     public void save() {
-        save( _chunkSize);
+        save( _chunkSize );
     }
 
     /**
