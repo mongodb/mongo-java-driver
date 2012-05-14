@@ -31,7 +31,6 @@ public class DBAddressTest extends TestCase {
         DBAddress bar = new DBAddress( foo, "some.other.host" );
         assertEquals( foo.sameHost( "www.10gen.com:1000" ), true );
         assertEquals( foo.getSocketAddress().hashCode(), bar.getSocketAddress().hashCode() );
-        assertEquals( foo.toString(), "www.10gen.com:1000/some-host" );
     }
 
     @Test(groups = {"basic"})
@@ -63,8 +62,6 @@ public class DBAddressTest extends TestCase {
         assertEquals( 27017 , new ServerAddress().getPort() );
         assertEquals( 27017 , new ServerAddress( "localhost" ).getPort() );
         assertEquals( 9999 , new ServerAddress( "localhost:9999" ).getPort() );
-
-        assertEquals( false , new ServerAddress( "localhost:9999" ).isPaired() );
     }
 
     @Test

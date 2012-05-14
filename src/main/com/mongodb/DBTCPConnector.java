@@ -503,7 +503,7 @@ public class DBTCPConnector implements DBConnector {
             buf.append( "replica set : " ).append( _allHosts );
         } else {
             ServerAddress master = getAddress();
-            buf.append( master ).append( " " ).append( master != null ? master._addr : null );
+            buf.append( master ).append( " " ).append( master != null ? master.getSocketAddress() : null );
         }
 
         return buf.toString();

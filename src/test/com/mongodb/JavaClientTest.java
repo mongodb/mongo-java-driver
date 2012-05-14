@@ -35,7 +35,7 @@ public class JavaClientTest extends TestCase {
 
     public JavaClientTest()
         throws IOException , MongoException {
-        _mongo = new Mongo( "127.0.0.1" );
+        _mongo = new Mongo( "localhost" );
 	cleanupMongo = _mongo;
 	cleanupDB = "com_mongodb_unittest_JavaClientTest";
 	_db = cleanupMongo.getDB( cleanupDB );

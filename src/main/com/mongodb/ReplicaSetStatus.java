@@ -490,7 +490,7 @@ public class ReplicaSetStatus {
 
         private void updateAddr() {
             try {
-                if (_addr.updateInetAddr()) {
+                if (_addr.updateInetAddress()) {
                     // address changed, need to use new ports
                     _port = new DBPort(_addr, null, _mongoOptions);
                     _mongo.getConnector().updatePortPool(_addr);
