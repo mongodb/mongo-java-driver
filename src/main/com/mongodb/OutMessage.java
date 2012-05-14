@@ -120,9 +120,10 @@ class OutMessage extends BasicBSONEncoder {
     }
 
     void doneWithMessage(){
-        if ( _buffer != null && _mongo != null )
+        if ( _buffer != null && _mongo != null ) {
             _buffer.reset();
             _mongo._bufferPool.done( _buffer );
+        }
 
         _buffer = null;
         _mongo = null;
