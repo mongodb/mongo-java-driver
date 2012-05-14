@@ -123,14 +123,34 @@ public class DBTests extends TestCase {
 
             DB db = mongo.getDB("secondaryTest");
             db.setReadPreference(ReadPreference.SECONDARY);
-//        CommandResult result = db.command("ping");
-//        assertNotEquals(primary, result.get("serverUsed"));
-
-            db.getCollection("secondaryTest").findOne();
+            CommandResult result = db.command("ping");
+            assertNotEquals(primary, result.get("serverUsed"));
         } finally {
             mongo.close();
         }
     }
+
+    @Test
+    public void testGetCollectionNamesToSecondary() throws MongoException, UnknownHostException {
+        Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27018)));
+
+        try {
+            if (isStandalone(mongo)) {
+                return;
+            }
+
+            String secondary = getASecondaryAsString(mongo);
+            mongo.close();
+            mongo = new Mongo(secondary);
+            DB db = mongo.getDB("secondaryTest");
+            db.setReadPreference(ReadPreference.SECONDARY);
+            db.getCollectionNames();
+        } finally {
+            mongo.close();
+        }
+    }
+
+
 
     @Test
     @SuppressWarnings("deprecation")
