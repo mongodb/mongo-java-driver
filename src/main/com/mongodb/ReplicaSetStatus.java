@@ -704,9 +704,8 @@ public class ReplicaSetStatus {
         public synchronized void updateAll(){
             HashSet<UpdatableNode> seenNodes = new HashSet<UpdatableNode>();
 
-            // make a copy of _all, since UpdatableNode.update can add to it
-            for (UpdatableNode node : new ArrayList<UpdatableNode>(_all)) {
-                node.update(seenNodes);
+            for (int i = 0; i < _all.size(); i++) {
+                _all.get(i).update(seenNodes);
             }
 
             if (seenNodes.size() > 0) {
