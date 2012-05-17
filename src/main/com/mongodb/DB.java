@@ -150,7 +150,7 @@ public abstract class DB {
 
     public CommandResult command( DBObject cmd , int options, DBEncoder encoder )
             throws MongoException {
-        return command(cmd, options, getReadPreference(), encoder);
+        return command(cmd, options, null, encoder);
     }
 
     public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs )

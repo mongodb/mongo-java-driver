@@ -110,25 +110,25 @@ public class DBTests extends TestCase {
 
     }
 
-    @Test
-    public void testCommandToSecondary() throws MongoException, UnknownHostException {
-        Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27018)));
-
-        try {
-            if (isStandalone(mongo)) {
-                return;
-            }
-
-            String primary = getPrimaryAsString(mongo);
-
-            DB db = mongo.getDB("secondaryTest");
-            db.setReadPreference(ReadPreference.SECONDARY);
-            CommandResult result = db.command("ping");
-            assertNotEquals(primary, result.get("serverUsed"));
-        } finally {
-            mongo.close();
-        }
-    }
+//    @Test
+//    public void testCommandToSecondary() throws MongoException, UnknownHostException {
+//        Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27018)));
+//
+//        try {
+//            if (isStandalone(mongo)) {
+//                return;
+//            }
+//
+//            String primary = getPrimaryAsString(mongo);
+//
+//            DB db = mongo.getDB("secondaryTest");
+//            db.setReadPreference(ReadPreference.SECONDARY);
+//            CommandResult result = db.command("ping");
+//            assertNotEquals(primary, result.get("serverUsed"));
+//        } finally {
+//            mongo.close();
+//        }
+//    }
 
     @Test
     public void testGetCollectionNamesToSecondary() throws MongoException, UnknownHostException {
