@@ -150,7 +150,7 @@ public abstract class DB {
 
     public CommandResult command( DBObject cmd , int options, DBEncoder encoder )
             throws MongoException {
-        return command(cmd, options, getReadPreference(), encoder);
+        return command(cmd, options, null, encoder);
     }
 
     public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs )
@@ -295,8 +295,7 @@ public abstract class DB {
         if (namespaces == null)
             throw new RuntimeException("this is impossible");
 
-        // TODO - Is ReadPreference OK for collection Names?
-        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, 0, getOptions(), null, null);
+        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, 0, getOptions(), getReadPreference(), null);
         if (i == null)
             return new HashSet<String>();
 

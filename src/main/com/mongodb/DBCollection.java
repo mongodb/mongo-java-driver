@@ -378,10 +378,41 @@ public abstract class DBCollection {
             throw new MongoException("FindAndModify: Remove cannot be mixed with the Update, or returnNew params!");
 
         CommandResult res = this._db.command( cmd );
-        if (res.ok() || res.getErrorMessage().equals( "No matching object found" ))
-            return (DBObject) res.get( "value" );
+        if (res.ok() || res.getErrorMessage().equals( "No matching object found" )) {
+            return replaceWithObjectClass((DBObject) res.get( "value" ));
+        }
         res.throwOnError();
         return null;
+    }
+
+    /**
+     * Doesn't yet handle internal classes properly, so this method only does something if object class is set but
+     * no internal classes are set.
+     *
+     * @param oldObj  the original value from the command result
+     * @return replaced object if necessary, or oldObj
+     */
+    private DBObject replaceWithObjectClass(DBObject oldObj) {
+        if (oldObj == null || getObjectClass() == null &  _internalClass.isEmpty()) {
+            return oldObj;
+        }
+
+        DBObject newObj = instantiateObjectClassInstance();
+
+        for (String key : oldObj.keySet()) {
+            newObj.put(key, oldObj.get(key));
+        }
+        return newObj;
+    }
+
+    private DBObject instantiateObjectClassInstance() {
+        try {
+            return (DBObject) getObjectClass().newInstance();
+        } catch (InstantiationException e) {
+            throw new MongoInternalException("can't create instance of type " + getObjectClass(), e);
+        } catch (IllegalAccessException e) {
+            throw new MongoInternalException("can't create instance of type " + getObjectClass(), e);
+        }
     }
 
 

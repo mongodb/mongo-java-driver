@@ -234,7 +234,8 @@ public class LazyDBObjectTest extends TestCase {
         LazyDBObject lazyDBObj = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), 
                 (DBCollection) null);
         bios.reset();
-        lazyDBObj.pipe(bios);
+        int byteCount = lazyDBObj.pipe(bios);
+        assertEquals(lazyDBObj.getBSONSize(), byteCount);
 
         LazyDBObject lazyDBObjectFromPipe = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()),
                 (DBCollection) null);

@@ -35,7 +35,7 @@ public class JavaClientTest extends TestCase {
 
     public JavaClientTest()
         throws IOException , MongoException {
-        _mongo = new Mongo( "127.0.0.1" );
+        _mongo = new Mongo( "localhost" );
 	cleanupMongo = _mongo;
 	cleanupDB = "com_mongodb_unittest_JavaClientTest";
 	_db = cleanupMongo.getDB( cleanupDB );
@@ -768,8 +768,8 @@ public class JavaClientTest extends TestCase {
         DBCollection c = _db.getCollection( "writeresult1" );
         c.drop();
 
-        WriteResult res = c.insert( new BasicDBObject( "_id" , 1 ) );
-        res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
+        c.insert( new BasicDBObject( "_id" , 1 ) );
+        WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
         assertEquals( 1 , res.getN() );
         assertTrue( res.isLazy() );
 

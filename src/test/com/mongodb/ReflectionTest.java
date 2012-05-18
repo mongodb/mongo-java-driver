@@ -27,11 +27,6 @@ public class ReflectionTest extends TestCase {
     public static class Person extends ReflectionDBObject {
         
         public Person(){
-
-        }
-
-        Person( String name ){
-            _name = name;
         }
 
         public String getName(){
@@ -55,16 +50,17 @@ public class ReflectionTest extends TestCase {
     @Test
     public void test1()
         throws MongoException {
-        DBCollection c = _db.getCollection( "persen.test1" );
+        DBCollection c = _db.getCollection( "person.test1" );
         c.drop();
         c.setObjectClass( Person.class );
         
-        Person p = new Person( "eliot" );
+        Person p = new Person();
+        p.setName( "eliot" );
         c.save( p );
 
         DBObject out = c.findOne();
         assertEquals( "eliot" , out.get( "Name" ) );
-        assertTrue( out instanceof Person , "didn't come out as Person" );
+        assertEquals(Person.class, out.getClass());
     }
     
     public static class Outer extends ReflectionDBObject {
@@ -105,10 +101,52 @@ public class ReflectionTest extends TestCase {
         
         DBObject out = c.findOne();
         assertEquals( "eliot" , out.get( "Name" ) );
-        assertTrue( out instanceof Outer , "didn't come out as Person" );        
+        assertEquals(Outer.class, out.getClass());
         o = (Outer)out;
         assertEquals( "eliot" , o.getName() );
         assertEquals( 17 , o.getInner().getNumber() );
+    }
+
+    static class Process extends ReflectionDBObject {
+
+        public Process() {}
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public int getStatus() {
+            return status;
+        }
+
+        public void setStatus(int status) {
+            this.status = status;
+        }
+
+        String name;
+        int status;
+    }
+
+    @Test
+    public void testFindAndModify() {
+        DBCollection c = _db.getCollection( "findAndModify" );
+        c.drop();
+        c.setObjectClass( Process.class );
+
+        Process p = new Process();
+        p.setName("test");
+        p.setStatus(0);
+        c.save(p, WriteConcern.SAFE);
+
+        DBObject obj = c.findAndModify(new BasicDBObject(), new BasicDBObject("$set", new BasicDBObject("status", 1)));
+        assertEquals(Process.class, obj.getClass());
+        Process pModified = (Process) obj;
+        assertEquals(0, pModified.getStatus());
+        assertEquals("test", pModified.getName());
     }
 
     final DB _db;

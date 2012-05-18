@@ -123,16 +123,12 @@ public class DBTCPConnector implements DBConnector {
             throw new IllegalStateException( "this Mongo has been closed" );
     }
 
-    WriteResult _checkWriteError( DB db , MyPort mp , DBPort port , WriteConcern concern )
+    WriteResult _checkWriteError( DB db, DBPort port , WriteConcern concern )
         throws MongoException, IOException {
-        CommandResult e = null;
-        e = port.runCommand( db , concern.getCommand() );
-
-        if ( ! e.hasErr() )
-            return new WriteResult( e , concern );
+        CommandResult e = port.runCommand( db , concern.getCommand() );
 
         e.throwOnError();
-        return null;
+        return new WriteResult( e , concern );
     }
 
     @Override
@@ -155,7 +151,7 @@ public class DBTCPConnector implements DBConnector {
             port.checkAuth( db );
             port.say( m );
             if ( concern.callGetLastError() ){
-                return _checkWriteError( db , mp , port , concern );
+                return _checkWriteError( db , port , concern );
             }
             else {
                 return new WriteResult( db , port , concern );
@@ -503,7 +499,7 @@ public class DBTCPConnector implements DBConnector {
             buf.append( "replica set : " ).append( _allHosts );
         } else {
             ServerAddress master = getAddress();
-            buf.append( master ).append( " " ).append( master != null ? master._addr : null );
+            buf.append( master ).append( " " ).append( master != null ? master.getSocketAddress() : null );
         }
 
         return buf.toString();

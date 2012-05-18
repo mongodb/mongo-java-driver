@@ -199,6 +199,18 @@ public class GridFSTest extends TestCase {
     }
 
     @Test(groups = {"basic"})
+    public void getBigChunkSize() throws Exception {
+        GridFSInputFile file = _fs.createFile("512kb_bucket");
+        file.setChunkSize(file.getChunkSize() * 2);
+        OutputStream os = file.getOutputStream();
+        for (int i = 0; i < 1024; i++) {
+            os.write(new byte[GridFS.DEFAULT_CHUNKSIZE / 1024 + 1]);
+        }
+        os.close();
+   }
+
+
+    @Test(groups = {"basic"})
     public void testInputStreamSkipping() throws Exception {
         //int chunkSize = 5;
         int chunkSize = GridFS.DEFAULT_CHUNKSIZE;
@@ -222,12 +234,9 @@ public class GridFSTest extends TestCase {
 
         inputStream = (GridFSDBFile.MyInputStream)savedFile.getInputStream();
 
-        int position = 0;
-        assertEquals((byte)(position++ % 251), (byte)inputStream.read());
-
         long skipped = inputStream.skip(1);
         assertEquals(1, skipped);
-        position += 1;
+        int position = 1;
         assertEquals((byte)(position++ % 251), (byte)inputStream.read());
 
         skipped = inputStream.skip(chunkSize);

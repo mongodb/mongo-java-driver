@@ -259,6 +259,16 @@ public class TestCase extends MyAsserts {
 
     @SuppressWarnings({"unchecked"})
     protected String getPrimaryAsString(Mongo mongo) {
+        return getMemberNameByState(mongo, "primary");
+    }
+
+    @SuppressWarnings({"unchecked"})
+    protected String getASecondaryAsString(Mongo mongo) {
+        return getMemberNameByState(mongo, "secondary");
+    }
+
+    @SuppressWarnings({"unchecked"})
+    protected String getMemberNameByState(Mongo mongo, String stateStrToMatch) {
         CommandResult replicaSetStatus = runReplicaSetStatusCommand(mongo);
 
         for (final BasicDBObject member : (List<BasicDBObject>) replicaSetStatus.get("members")) {
@@ -268,11 +278,11 @@ public class TestCase extends MyAsserts {
 
             final String stateStr = member.getString("stateStr");
 
-            if (stateStr.equals("PRIMARY"))
+            if (stateStr.equalsIgnoreCase(stateStrToMatch))
                 return hostnameAndPort;
         }
 
-        throw new IllegalStateException("No primary defined");
+        throw new IllegalStateException("No member found in state " + stateStrToMatch);
     }
 
     @SuppressWarnings("unchecked")
