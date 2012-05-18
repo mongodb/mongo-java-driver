@@ -193,7 +193,7 @@ public class BSONSerializationTest extends com.mongodb.util.TestCase {
         Date d = new Date();
         buf = new StringBuilder();
         serializer.serialize(d, buf);
-        assertEquals(buf.toString(), "{ \"$date\" : "+(d.getTime()/1000l)+"}");
+        assertEquals(buf.toString(), "{ \"$date\" : "+(d.getTime())+"}");
     }
     
     @org.testng.annotations.Test(groups = {"basic"})

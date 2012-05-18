@@ -395,7 +395,7 @@ public class BSONSerializerFactory {
                     BSONObjectSerializer serializer, StringBuilder buf) {
                 Date d = (Date) obj;
                 serializer.serialize(
-                        new BasicDBObject("$date", Long.valueOf(d.getTime() / 1000L)), buf);
+                        new BasicDBObject("$date", Long.valueOf(d.getTime())), buf);
             }
 
         });

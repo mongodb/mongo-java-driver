@@ -64,41 +64,36 @@ public class JSONCallback extends BasicBSONCallback {
 	BSONObject b = (BSONObject)o;
 
         // override the object if it's a special type
-	if ( ! _lastArray ) {
-	    if ( b.containsField( "$oid" ) ) {
-		o = new ObjectId((String)b.get("$oid"));
-		if (!isStackEmpty()) {
-		    gotObjectId( name, (ObjectId)o);
-		} else {
-		    setRoot(o);
-		}
-	    } else if ( b.containsField( "$date" ) ) {
-		SimpleDateFormat format = 
-		    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-                GregorianCalendar calendar = new GregorianCalendar(new SimpleTimeZone(0, "GMT"));
-                format.setCalendar(calendar);
+        if (!_lastArray) {
+            if (b.containsField("$oid")) {
+                o = new ObjectId((String) b.get("$oid"));
+                if (!isStackEmpty()) {
+                    gotObjectId(name, (ObjectId) o);
+                } else {
+                    setRoot(o);
+                }
+            } else if (b.containsField("$date")) {
 
-                String txtdate = b.get("$date").toString();
+                if(b.get("$date") instanceof Number){
+                    o = new Date(((Number)b.get("$date")).longValue());
+                }else {
+                    SimpleDateFormat format = new SimpleDateFormat(_msDateFormat);
+                    format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
+                    o = format.parse(b.get("$date").toString(), new ParsePosition(0));
 
-                try {
-                    // Convert from seconds to ms to match consistency 
-                    // with strict JSON serialization
-                    o = new Date(  Long.parseLong(txtdate) * 1000l);
-                } catch (NumberFormatException e) {
-                    o = format.parse(txtdate, new ParsePosition(0));
                     if (o == null) {
                         // try older format with no ms
-                        format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                        format.setCalendar(calendar);
-                        o = format.parse(txtdate, new ParsePosition(0));
+                        format = new SimpleDateFormat(_secDateFormat);
+                        format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
+                        o = format.parse(b.get("$date").toString(), new ParsePosition(0));
                     }
                 }
-		if (!isStackEmpty()) {
-		    cur().put( name, o );
-		} else {
-		    setRoot(o);
-		}
-	    } else if ( b.containsField( "$regex" ) ) {
+                if (!isStackEmpty()) {
+                    cur().put(name, o);
+                } else {
+                    setRoot(o);
+                }
+            } else if ( b.containsField( "$regex" ) ) {
 		o = Pattern.compile( (String)b.get( "$regex" ), 
 				     BSON.regexFlags( (String)b.get( "$options" )) );
 		if (!isStackEmpty()) {
@@ -158,6 +153,9 @@ public class JSONCallback extends BasicBSONCallback {
 	}
         return o;
     }
-
+    
     private boolean _lastArray = false;
+    
+    public static final String _msDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    public static final String _secDateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 }
