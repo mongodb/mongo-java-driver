@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.sun.tools.javac.resources.version;
 import org.bson.io.PoolOutputBuffer;
 
 /**
@@ -87,6 +88,8 @@ public class Mongo {
      */
     @Deprecated
     public static final int MINOR_VERSION = 8;
+
+    private static final String FULL_VERSION = "2.8.0.RC1";
 
     static int cleanerIntervalMS;
     static {
@@ -377,10 +380,10 @@ public class Mongo {
 
     /**
      * gets this driver version
-     * @return
+     * @return the full version string of this driver, e.g. "2.8.0"
      */
     public String getVersion(){
-        return MAJOR_VERSION + "." + MINOR_VERSION;
+        return FULL_VERSION;
     }
 
     /**

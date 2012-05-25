@@ -106,6 +106,8 @@ limitations under the License.
         
         <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sMAJOR_VERSION\s=\s\d+;" replace=" MAJOR_VERSION = ${lib.major};" byline="false"/>
         <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sMINOR_VERSION\s=\s\d+;" replace=" MINOR_VERSION = ${lib.minor};" byline="false"/>
+        <replaceregexp file="src/main/com/mongodb/Mongo.java" match='\sFULL_VERSION\s=\s"\S*";'
+                       replace=' FULL_VERSION = "${build.conf.lib.version}";' byline="false"/>
 
         <javac
             srcdir="src/main"
