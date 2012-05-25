@@ -18,7 +18,7 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/mongodb</url>
+        <url>https://github.com/mongodb/mongo-java-driver</url>
     </scm>
 
     <dependencies>
