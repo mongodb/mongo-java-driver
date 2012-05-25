@@ -11,5 +11,6 @@ Export-Package: com.mongodb;version="@VERSION@",
  com.mongodb.gridfs;version="@VERSION@",
  org.bson;version="@VERSION@",
  org.bson.util;version="@VERSION@",
+ org.bson.util.annotations;version="@VERSION@",
  org.bson.types;version="@VERSION@",
  org.bson.io;version="@VERSION@"
