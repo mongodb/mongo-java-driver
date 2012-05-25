@@ -171,11 +171,11 @@ limitations under the License.
     <target name="jar" depends="compile" description="Create driver jar">
 
         <copy file="src/main/META-INF/MANIFEST.MF" tofile="build/MANIFEST.MF" filtering="true">
-            <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
+            <filterset><filter token="VERSION" value="${build.conf.lib.version.osgi.compat}"/></filterset>
         </copy>
 
         <copy file="src/main/META-INF/MANIFEST_BSON.MF" tofile="build/MANIFEST_BSON.MF" filtering="true">
-            <filterset><filter token="VERSION" value="${build.conf.lib.version}"/></filterset>
+            <filterset><filter token="VERSION" value="${build.conf.lib.version.osgi.compat}"/></filterset>
         </copy>
 
         <exec executable="git" output="build/main/git-hash">
