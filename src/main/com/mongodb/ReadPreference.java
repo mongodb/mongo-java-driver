@@ -58,6 +58,7 @@ public class ReadPreference {
 
     public static ReadPreference SECONDARY = new SecondaryReadPreference();
 
+    /*
     public static ReadPreference withTags(Map<String, String> tags) {
         return new TaggedReadPreference( tags );
     }
@@ -65,4 +66,5 @@ public class ReadPreference {
     public static ReadPreference withTags( final DBObject tags ) {
         return new TaggedReadPreference( tags );
     }
+    */
 }
