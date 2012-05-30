@@ -18,14 +18,10 @@
 
 package com.mongodb.util;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.SimpleTimeZone;
-import java.util.UUID;
-import java.util.regex.Pattern;
-
+import com.mongodb.BasicDBObject;
+import com.mongodb.BasicDBObjectBuilder;
+import com.mongodb.DBObject;
+import com.mongodb.DBRef;
 import org.bson.BSON;
 import org.bson.BasicBSONObject;
 import org.bson.types.BSONTimestamp;
@@ -33,10 +29,13 @@ import org.bson.types.Code;
 import org.bson.types.CodeWScope;
 import org.bson.types.ObjectId;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.BasicDBObjectBuilder;
-import com.mongodb.DBObject;
-import com.mongodb.DBRef;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.SimpleTimeZone;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class JSONTest extends com.mongodb.util.TestCase {
 
@@ -46,13 +45,9 @@ public class JSONTest extends com.mongodb.util.TestCase {
         // basic test of each of JSON class' serialization methods
         String json = "{ \"x\" : \"basic test\"}";
         StringBuilder buf = new StringBuilder();
-        BSONObjectSerializer serializer = BSONSerializerFactory.buildLegacyBSONSerializer(); 
         Object obj = JSON.parse(json);
 
         assertEquals(JSON.serialize(obj), json);
-        assertEquals(JSON.serialize(obj, serializer), json);
-        assertEquals(JSON.serialize(obj, serializer, buf), json);
-        assertEquals( buf.toString(), json);
     }
     
     @org.testng.annotations.Test(groups = {"basic"})

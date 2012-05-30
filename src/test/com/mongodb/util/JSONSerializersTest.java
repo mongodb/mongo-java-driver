@@ -1,28 +1,14 @@
 package com.mongodb.util;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.SimpleTimeZone;
-import java.util.UUID;
-import java.util.regex.Pattern;
-
-import org.bson.types.BSONTimestamp;
-import org.bson.types.BasicBSONList;
-import org.bson.types.Binary;
-import org.bson.types.Code;
-import org.bson.types.CodeWScope;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
-
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBRefBase;
+import org.bson.types.*;
 
-public class BSONSerializationTest extends com.mongodb.util.TestCase {
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.regex.Pattern;
+
+public class JSONSerializersTest extends com.mongodb.util.TestCase {
     
     @org.testng.annotations.Test(groups = {"basic"})
     public void testBinaryCodecs() {
@@ -33,7 +19,7 @@ public class BSONSerializationTest extends com.mongodb.util.TestCase {
                 "QmFzZTY0IFNlcmlhbGl6YXRpb24gVGVzdA==");
         
         // test  legacy serialization
-        BSONObjectSerializer serializer = BSONSerializerFactory.buildLegacyBSONSerializer();
+        ObjectSerializer serializer = JSONSerializers.getLegacy();
         StringBuilder buf = new StringBuilder();
         serializer.serialize("Base64 Serialization Test".getBytes(), buf);
         assertEquals(buf.toString(), "<Binary Data>");
@@ -41,7 +27,7 @@ public class BSONSerializationTest extends com.mongodb.util.TestCase {
     
     @org.testng.annotations.Test(groups = {"basic"})
     public void testLegacySerialization() {
-        BSONObjectSerializer serializer = BSONSerializerFactory.buildLegacyBSONSerializer();
+        ObjectSerializer serializer = JSONSerializers.getLegacy();
         
         BasicDBObject testObj = new BasicDBObject();
         
@@ -169,7 +155,7 @@ public class BSONSerializationTest extends com.mongodb.util.TestCase {
     
     @org.testng.annotations.Test(groups = {"basic"})
     public void testStrictSerialization() {
-        BSONObjectSerializer serializer = BSONSerializerFactory.buildStrictBSONSerializer();
+        ObjectSerializer serializer = JSONSerializers.getStrict();
         
         // test  BINARY
         byte b[] = {1,2,3,4};
@@ -198,17 +184,15 @@ public class BSONSerializationTest extends com.mongodb.util.TestCase {
     
     @org.testng.annotations.Test(groups = {"basic"})
     public void testSerializationByAncestry() {
-        BSONObjectSerializer serializer = new BSONObjectSerializer();
-        
+        ClassMapBasedObjectSerializer serializer = new ClassMapBasedObjectSerializer();
+
         // by superclass 
         serializer.addObjectSerializer(
                 Object.class, 
-                new BSONObjectSerializer.ObjectSerializer(){
+                new AbstractObjectSerializer(){
 
                     @Override
-                    public void serialize(Object obj,
-                            BSONObjectSerializer serializer,
-                            StringBuilder buf) {                        
+                    public void serialize(Object obj, StringBuilder buf) {
                         buf.append("serialized as Object class");
                     }
                 }
@@ -216,11 +200,10 @@ public class BSONSerializationTest extends com.mongodb.util.TestCase {
         
         // interface
         serializer.addObjectSerializer(java.util.List.class,
-                new BSONObjectSerializer.ObjectSerializer() {
+                new AbstractObjectSerializer() {
 
                     @Override
-                    public void serialize(Object obj,
-                            BSONObjectSerializer serializer, StringBuilder buf) {
+                    public void serialize(Object obj, StringBuilder buf) {
                         buf.append(obj.toString());
                     }
 

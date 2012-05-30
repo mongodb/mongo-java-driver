@@ -28,15 +28,58 @@ import com.mongodb.DBObject;
 public class JSON {
 
     /**
-     *  Serializes an object into it's JSON form
+     *  Serializes an object into it's JSON form.
+     *  <p>
+     *  This method delegates serialization to <code>JSONSerializers.getLegacy</code>
      *
      * @param o object to serialize
      * @return  String containing JSON form of the object
+     * @see com.mongodb.util.JSONSerializers#getLegacy()
      */
     public static String serialize( Object o ){
         StringBuilder buf = new StringBuilder();
         serialize( o , buf );
         return buf.toString();
+    }
+
+    /**
+     *  Serializes an object into it's JSON form
+     *  <p>
+     *  This method delegates serialization to <code>JSONSerializers.getLegacy</code>
+     *
+     * @param o object to serialize
+     * @param buf StringBuilder containing the JSON representation under construction 
+     * @return String containing JSON form of the object
+     * @see com.mongodb.util.JSONSerializers#getLegacy()
+     */
+    public static String serialize( Object o, StringBuilder buf) {
+        JSONSerializers.getLegacy().serialize(o, buf);
+        return buf.toString();
+    }
+
+    /**
+     *  Parses a JSON string representing a JSON value
+     *
+     * @param s the string to parse
+     * @return the object
+     */
+    public static Object parse( String s ){
+	return parse(s, null);
+    }
+
+    /**
+     * Parses a JSON string representing a JSON value
+     *
+     * @param s the string to parse
+     * @return the object
+     */
+    public static Object parse( String s, BSONCallback c ){
+        if (s == null || (s=s.trim()).equals("")) {
+            return (DBObject)null;
+        }
+
+        JSONParser p = new JSONParser(s, c);
+        return p.parse();
     }
 
     static void string( StringBuilder a , String s ){
@@ -62,69 +105,6 @@ public class JSON {
         }
         a.append("\"");
     }
-
-    /**
-     *  Serializes an object into it's JSON form
-     *
-     * @param o object to serialize
-     * @param buf StringBuilder containing the JSON representation under construction 
-     * @return String containing JSON form of the object
-     */
-    public static String serialize( Object o, StringBuilder buf){
-        BSONObjectSerializer serializer = BSONSerializerFactory.buildLegacyBSONSerializer();
-        serialize(o, serializer, buf);
-        return buf.toString();
-    }
-    
-    /**
-     *  Serializes an object into it's JSON form
-     *
-     * @param o object to serialize
-     * @param serializer contains instance specific serialization methods
-     * @param buf StringBuilder containing the JSON representation under construction 
-     * @return String containing JSON form of the object
-     */
-    public static String serialize( Object o, BSONObjectSerializer serializer, StringBuilder buf){
-        serializer.serialize(o, buf);
-        return buf.toString();
-    }
-    
-    /**
-     *  Serializes an object into it's JSON form
-     *
-     * @param o object to serialize
-     * @param serializer contains instance specific serialization methods
-     * @return String containing JSON form of the object
-     */
-    public static String serialize( Object o, BSONObjectSerializer serializer){
-        return serialize(o, serializer, new StringBuilder());
-    }
-    
-    /**
-     *  Parses a JSON string representing a JSON value
-     *
-     * @param s the string to parse
-     * @return the object
-     */
-    public static Object parse( String s ){
-	return parse( s, null );
-    }
-
-    /**
-     * Parses a JSON string representing a JSON value
-     *
-     * @param s the string to parse
-     * @return the object
-     */
-    public static Object parse( String s, BSONCallback c ){
-        if (s == null || (s=s.trim()).equals("")) {
-            return (DBObject)null;
-        }
-
-        JSONParser p = new JSONParser(s, c);
-        return p.parse();
-    }
-
 }
 
 
