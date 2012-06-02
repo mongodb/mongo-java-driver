@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.sun.tools.javac.resources.version;
 import org.bson.io.PoolOutputBuffer;
 
 /**
