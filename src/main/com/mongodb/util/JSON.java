@@ -52,9 +52,8 @@ public class JSON {
      * @return String containing JSON form of the object
      * @see com.mongodb.util.JSONSerializers#getLegacy()
      */
-    public static String serialize( Object o, StringBuilder buf) {
+    public static void serialize( Object o, StringBuilder buf) {
         JSONSerializers.getLegacy().serialize(o, buf);
-        return buf.toString();
     }
 
     /**
