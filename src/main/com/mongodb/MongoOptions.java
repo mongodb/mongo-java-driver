@@ -34,7 +34,7 @@ public class MongoOptions {
         connectionsPerHost = Bytes.CONNECTIONS_PER_HOST;
         threadsAllowedToBlockForConnectionMultiplier = 5;
         maxWaitTime = 1000 * 60 * 2;
-        connectTimeout = 0;
+        connectTimeout = 1000 * 10;
         socketTimeout = 0;
         socketKeepAlive = false;
         autoConnectRetry = false;
@@ -118,9 +118,9 @@ public class MongoOptions {
     public int maxWaitTime;
 
     /**
-     * The connection timeout in milliseconds.
+     * The connection timeout in milliseconds.  A value of 0 means no timeout.
      * It is used solely when establishing a new connection {@link java.net.Socket#connect(java.net.SocketAddress, int) }
-     * Default is 0 and means no timeout.
+     * Default is 10,000.
      */
     public int connectTimeout;
 
