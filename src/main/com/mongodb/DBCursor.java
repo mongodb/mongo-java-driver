@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.util.*;
 
 import com.mongodb.DBApiLayer.Result;
+import com.mongodb.QueryOpBuilder;
 
 
 /** An iterator over database results.
@@ -351,25 +352,27 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
 
         DBObject foo = _query;
         if (hasSpecialQueryFields()) {
-            foo = _specialFields == null ? new BasicDBObject() : _specialFields;
-
-            _addToQueryObject(foo, "query", _query, true);
-            _addToQueryObject(foo, "orderby", _orderBy, false);
-            if (_hint != null)
-                _addToQueryObject(foo, "$hint", _hint);
-            if (_hintDBObj != null)
-                _addToQueryObject(foo, "$hint", _hintDBObj);
-
-            if (_explain)
-                foo.put("$explain", true);
-            if (_snapshot)
-                foo.put("$snapshot", true);
+            QueryOpBuilder opbuilder = (_specialFields == null ? new QueryOpBuilder() : new QueryOpBuilder(_specialFields));
+    
+            opbuilder.addQuery(_query)
+            	.addOrderBy(_orderBy)
+            	.addHint(_hint)
+            	.addHint(_hintDBObj);
+            
+            if(_explain)
+            		opbuilder.addExplain();
+            if(_snapshot)
+            		opbuilder.addSnapshot();
+            
+            foo = opbuilder.get();
         }
 
         _it = _collection.__find(foo, _keysWanted, _skip, _batchSize, _limit, _options, _readPref, getDecoder());
     }
 
-    // Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
+ 
+
+	// Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
     // so that the collection can use a cached decoder
     private DBDecoder getDecoder() {
         return _decoderFact != null ? _decoderFact.create() : null;
@@ -411,24 +414,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
             return true;
 
         return _explain;
-    }
-
-    void _addToQueryObject( DBObject query , String field , DBObject thing , boolean sendEmpty ){
-        if ( thing == null )
-            return;
-
-        if ( ! sendEmpty && thing.keySet().size() == 0 )
-            return;
-
-        _addToQueryObject( query , field , thing );
-    }
-
-    void _addToQueryObject( DBObject query , String field , Object thing ){
-
-        if ( thing == null )
-            return;
-
-        query.put( field , thing );
     }
 
     void _checkType( CursorType type ){
