@@ -96,12 +96,12 @@ public class MongoException extends RuntimeException {
 
         private static final long serialVersionUID = -4415279469780082174L;
 
-        Network( String msg , java.io.IOException ioe ){
+        public Network( String msg , java.io.IOException ioe ){
             super( -2 , msg , ioe );
             _ioe = ioe;
         }
 
-        Network( java.io.IOException ioe ){
+        public Network( java.io.IOException ioe ){
             super( ioe.toString() , ioe );
             _ioe = ioe;
         }
@@ -116,7 +116,7 @@ public class MongoException extends RuntimeException {
 
         private static final long serialVersionUID = -4415279469780082174L;
 
-        DuplicateKey( int code , String msg ){
+        public DuplicateKey( int code , String msg ){
             super( code , msg );
         }
     }
@@ -136,7 +136,7 @@ public class MongoException extends RuntimeException {
          * @param cursorId
          * @param serverAddress
          */
-        CursorNotFound(long cursorId, ServerAddress serverAddress){
+        public CursorNotFound(long cursorId, ServerAddress serverAddress){
             super( -5 , "cursor " + cursorId + " not found on server " + serverAddress );
             this.cursorId = cursorId;
             this.serverAddress = serverAddress;
