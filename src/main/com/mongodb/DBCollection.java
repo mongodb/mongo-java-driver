@@ -658,7 +658,7 @@ public abstract class DBCollection {
      */
     public DBObject findOne( DBObject o )
         throws MongoException {
-        return findOne( o, null, getReadPreference());
+        return findOne( o, null, null, getReadPreference());
     }
 
     /**
@@ -669,8 +669,21 @@ public abstract class DBCollection {
      * @dochub find
      */
     public DBObject findOne( DBObject o, DBObject fields ) {
-        return findOne( o, fields, getReadPreference());
+        return findOne( o, fields, null, getReadPreference());
     }
+    
+    /**
+     * Returns a single obejct from this collection matching the query.
+     * @param o the query object
+     * @param fields fields to return
+     * @param orderby fields to order by
+     * @return the object found, or <code>null</code> if no such object exists
+     * @dochub find
+     */
+    public DBObject findOne( DBObject o, DBObject fields, DBObject orderby){
+    	return findOne(o, fields, orderby, getReadPreference());
+    }
+    
     /**
      * Returns a single object from this collection matching the query.
      * @param o the query object
@@ -679,7 +692,26 @@ public abstract class DBCollection {
      * @dochub find
      */
     public DBObject findOne( DBObject o, DBObject fields, ReadPreference readPref ) {
-        Iterator<DBObject> i = __find( o , fields , 0 , -1 , 0, getOptions(), readPref, getDecoder() );
+       return findOne(o, fields, null, readPref);
+    }
+    
+    /**
+     * Returns a single object from this collection matching the query.
+     * @param o the query object
+     * @param fields fields to return
+     * @param orderby fields to order by
+     * @return the object found, or <code>null</code> if no such object exists
+     * @dochub find
+     */
+    public DBObject findOne( DBObject o, DBObject fields, DBObject orderby, ReadPreference readPref ) {
+    	
+    	DBObject queryop = new QueryOpBuilder()
+    								.addQuery(o)
+    								.addOrderBy(orderby)
+    								.get();
+    	
+    	Iterator<DBObject> i = __find( queryop, fields , 0 , -1 , 0, getOptions(), readPref, getDecoder() );
+        
         DBObject obj = (i.hasNext() ? i.next() : null);
         if ( obj != null && ( fields != null && fields.keySet().size() > 0 ) ){
             obj.markAsPartialObject();
