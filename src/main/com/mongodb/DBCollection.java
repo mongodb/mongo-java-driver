@@ -676,12 +676,12 @@ public abstract class DBCollection {
      * Returns a single obejct from this collection matching the query.
      * @param o the query object
      * @param fields fields to return
-     * @param orderby fields to order by
+     * @param orderBy fields to order by
      * @return the object found, or <code>null</code> if no such object exists
      * @dochub find
      */
-    public DBObject findOne( DBObject o, DBObject fields, DBObject orderby){
-    	return findOne(o, fields, orderby, getReadPreference());
+    public DBObject findOne( DBObject o, DBObject fields, DBObject orderBy){
+    	return findOne(o, fields, orderBy, getReadPreference());
     }
     
     /**
@@ -699,15 +699,15 @@ public abstract class DBCollection {
      * Returns a single object from this collection matching the query.
      * @param o the query object
      * @param fields fields to return
-     * @param orderby fields to order by
+     * @param orderBy fields to order by
      * @return the object found, or <code>null</code> if no such object exists
      * @dochub find
      */
-    public DBObject findOne( DBObject o, DBObject fields, DBObject orderby, ReadPreference readPref ) {
+    public DBObject findOne( DBObject o, DBObject fields, DBObject orderBy, ReadPreference readPref ) {
     	
     	DBObject queryop = new QueryOpBuilder()
     								.addQuery(o)
-    								.addOrderBy(orderby)
+    								.addOrderBy(orderBy)
     								.get();
     	
     	Iterator<DBObject> i = __find( queryop, fields , 0 , -1 , 0, getOptions(), readPref, getDecoder() );

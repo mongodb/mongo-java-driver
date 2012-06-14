@@ -5,42 +5,52 @@ import com.mongodb.DBObject;
 
 
 /**
- * Utility for constructing Query operation command with query, orderby, hint, explain, snapshot
+ * Utility for constructing Query operation command with query, orderby, hint, explain, snapshot.
  */
-public class QueryOpBuilder {
-	private DBObject queryop;
+class QueryOpBuilder {
+	
+	private DBObject query;
+	private DBObject orderBy;
+	private DBObject hintObj;
+	private String hintStr;
+	private boolean explain;
+	private boolean snapshot;
 
-	/**
-	 * Creates a builder with an empty query op
-	 */
+	private DBObject specialFields;
+	
 	public QueryOpBuilder(){
-		queryop = new BasicDBObject();
 	}
 	
-	/**
-	 * Creates a new builder
-	 * @param queryop
-	 */
-	public QueryOpBuilder(DBObject queryop){
-		this.queryop = queryop;
+	public QueryOpBuilder(DBObject query, DBObject orderBy, DBObject hintObj, String hintStr, boolean explain, boolean snapshot,
+			DBObject specialFields) {
+		this.query = query;
+		this.orderBy = orderBy;
+		this.hintObj = hintObj;
+		this.hintStr = hintStr;
+		this.explain = explain;
+		this.snapshot = snapshot;
+		this.specialFields = specialFields;
 	}
-	
+
+
 	/**
 	 * Adds the query clause to the operation
 	 * @param query
 	 * @return
 	 */
 	public QueryOpBuilder addQuery(DBObject query){
-		return addToQueryObject("query", query, true);
+		this.query = query;
+		return this;
 	}
 	
 	/**
-	 * Adds the groupby clause to the operation
+	 * Adds the orderby clause to the operation
 	 * @param orderBy
 	 * @return
 	 */
 	public QueryOpBuilder addOrderBy(DBObject orderBy){
-		return addToQueryObject("orderby", orderBy, false);	
+		this.orderBy = orderBy;
+		return this;	
 	}
 	
 	/**
@@ -49,75 +59,124 @@ public class QueryOpBuilder {
 	 * @return
 	 */
 	public QueryOpBuilder addHint(String hint){
-		if(hint != null)
-			 addToQueryObject("$hint", hint);
-		
+		this.hintStr = hint;
 		return this;
 	}
 	
+	/**
+	 * Adds hint clause to the operation
+	 * @param hint
+	 * @return
+	 */
 	public QueryOpBuilder addHint(DBObject hint){
-		if(hint != null)
-			addToQueryObject("$hint", hint, false);
-		
+		this.hintObj = hint;
+		return this;
+	}
+	
+	
+	/**
+	 * Adds special fields to the operation
+	 * @param specialFields
+	 * @return
+	 */
+	public QueryOpBuilder addSpecialFields(DBObject specialFields){
+		this.specialFields = specialFields;
 		return this;
 	}
 	
 	/**
 	 * Adds the explain flag to the operation
+	 * @param explain
 	 * @return
 	 */
-	public QueryOpBuilder addExplain(){
-		return addToQueryObject("$explain", true);
+	public QueryOpBuilder addExplain(boolean explain){
+		this.explain = explain;
+		return this;
 	}
 	
 	/**
 	 * Adds the snapshot flag to the operation
+	 * @param snapshot
 	 * @return
 	 */
-	public QueryOpBuilder addSnapshot(){
-		return addToQueryObject("$snapshot", true);
-		
+	public QueryOpBuilder addSnapshot(boolean snapshot){
+		this.snapshot = snapshot;
+		return this;
 	}
 
+	
+	/**
+	 * Constructs the query operation DBObject
+	 * @return DBObject representing the query command to be sent to server
+	 */
+	public DBObject get(){
+		if(hasSpecialQueryFields()){
+			DBObject queryop = (specialFields == null ? new BasicDBObject() : specialFields);
+
+            addToQueryObject(queryop, "query", query, true);
+            addToQueryObject(queryop, "orderby", orderBy, false);
+            if (hintStr != null)
+                addToQueryObject(queryop, "$hint", hintStr);
+            if (hintObj != null)
+                addToQueryObject(queryop, "$hint", hintObj);
+
+            if (explain)
+                queryop.put("$explain", true);
+            if (snapshot)
+                queryop.put("$snapshot", true);
+
+            return queryop;
+		}
+		
+		return query;
+	}
+
+    private boolean hasSpecialQueryFields(){
+        if ( specialFields != null )
+            return true;
+
+        if ( orderBy != null && orderBy.keySet().size() > 0 )
+            return true;
+        
+        if ( hintStr != null || hintObj != null || snapshot || explain)
+            return true;
+
+        return false;
+    }
+	
 	/**
 	 * Adds DBObject to the operation
+	 * @param dbobj DBObject to add field to
 	 * @param field name of the field
 	 * @param obj object to add to the operation.  Ignore if <code>null</code>.
 	 * @param sendEmpty if <code>true</code> adds obj even if it's empty.  Ignore if <code>false</code> and obj is empty.
 	 * @return
 	 */
-	public QueryOpBuilder addToQueryObject(String field, DBObject obj, boolean sendEmpty) {
+	private void addToQueryObject(DBObject dbobj, String field, DBObject obj, boolean sendEmpty) {
 		if (obj == null)
-			return this;
+			return;
 
 		if (!sendEmpty && obj.keySet().size() == 0)
-			return this;
+			return;
 
-		return addToQueryObject(field, obj);
+		addToQueryObject(dbobj, field, obj);
 	}
 
 	/**
 	 * Adds an Object to the operation
+	 * @param dbobj DBObject to add field to
 	 * @param field name of the field
 	 * @param obj Object to be added.  Ignore if <code>null</code>
 	 * @return
 	 */
-	public QueryOpBuilder addToQueryObject(String field, Object obj) {
+	private void addToQueryObject(DBObject dbobj, String field, Object obj) {
 
 		if (obj == null)
-			return this;
+			return;
 
-		queryop.put(field, obj);
-
-		return this;
+		dbobj.put(field, obj);
 	}
 	
-	/**
-	 * gets the constructed query operation object
-	 * @return
-	 */
-	public DBObject get(){
-		return queryop;
-	}
+	
 
 }

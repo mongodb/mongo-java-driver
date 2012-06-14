@@ -343,34 +343,17 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
 
     // ----  internal stuff ------
 
-    private void _check()
-        throws MongoException {
-        if ( _it != null )
-            return;
+	private void _check() throws MongoException {
+		if (_it != null)
+			return;
 
-        _lookForHints();
+		_lookForHints();
 
-        DBObject foo = _query;
-        if (hasSpecialQueryFields()) {
-            QueryOpBuilder opbuilder = (_specialFields == null ? new QueryOpBuilder() : new QueryOpBuilder(_specialFields));
-    
-            opbuilder.addQuery(_query)
-            	.addOrderBy(_orderBy)
-            	.addHint(_hint)
-            	.addHint(_hintDBObj);
-            
-            if(_explain)
-            		opbuilder.addExplain();
-            if(_snapshot)
-            		opbuilder.addSnapshot();
-            
-            foo = opbuilder.get();
-        }
-
-        _it = _collection.__find(foo, _keysWanted, _skip, _batchSize, _limit, _options, _readPref, getDecoder());
-    }
-
- 
+		DBObject queryOp = new QueryOpBuilder(_query, _orderBy, _hintDBObj, _hint, _explain, _snapshot, _specialFields).get();
+		
+		_it = _collection.__find(queryOp, _keysWanted, _skip, _batchSize, _limit,
+				_options, _readPref, getDecoder());
+	}
 
 	// Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
     // so that the collection can use a cached decoder
@@ -401,19 +384,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
             hint( o );
             return;
         }
-    }
-
-    boolean hasSpecialQueryFields(){
-        if ( _specialFields != null )
-            return true;
-
-        if ( _orderBy != null && _orderBy.keySet().size() > 0 )
-            return true;
-        
-        if ( _hint != null || _hintDBObj != null || _snapshot )
-            return true;
-
-        return _explain;
     }
 
     void _checkType( CursorType type ){
