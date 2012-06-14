@@ -349,7 +349,15 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
 
 		_lookForHints();
 
-		DBObject queryOp = new QueryOpBuilder(_query, _orderBy, _hintDBObj, _hint, _explain, _snapshot, _specialFields).get();
+		DBObject queryOp = new QueryOpBuilder()
+							.addQuery(_query)
+							.addOrderBy(_orderBy)
+							.addHint(_hintDBObj)
+							.addHint(_hint)
+							.addExplain(_explain)
+							.addSnapshot(_snapshot)
+							.addSpecialFields(_specialFields)
+							.get();
 		
 		_it = _collection.__find(queryOp, _keysWanted, _skip, _batchSize, _limit,
 				_options, _readPref, getDecoder());

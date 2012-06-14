@@ -20,17 +20,6 @@ class QueryOpBuilder {
 	
 	public QueryOpBuilder(){
 	}
-	
-	public QueryOpBuilder(DBObject query, DBObject orderBy, DBObject hintObj, String hintStr, boolean explain, boolean snapshot,
-			DBObject specialFields) {
-		this.query = query;
-		this.orderBy = orderBy;
-		this.hintObj = hintObj;
-		this.hintStr = hintStr;
-		this.explain = explain;
-		this.snapshot = snapshot;
-		this.specialFields = specialFields;
-	}
 
 
 	/**
