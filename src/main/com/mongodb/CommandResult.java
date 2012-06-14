@@ -146,6 +146,11 @@ public class CommandResult extends BasicDBObject {
     static class CommandFailure extends MongoException {
         private static final long serialVersionUID = 1L;
 
+        /**
+         * 
+         * @param res the result
+         * @param msg the message
+         */
         public CommandFailure( CommandResult res , String msg ){
             super( ServerError.getCode( res ) , msg );
         }
