@@ -88,7 +88,7 @@ public class Mongo {
     @Deprecated
     public static final int MINOR_VERSION = 8;
 
-    private static final String FULL_VERSION = "2.8.0-RC1";
+    private static final String FULL_VERSION = "2.8.0";
 
     static int cleanerIntervalMS;
     static {
