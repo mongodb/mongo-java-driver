@@ -99,10 +99,17 @@ class QueryOpBuilder {
 	 * @return DBObject representing the query command to be sent to server
 	 */
 	public DBObject get(){
+		DBObject lclQuery = query;
+		
+		//must always have a query
+		if(lclQuery == null){
+			lclQuery = new BasicDBObject();
+		}
+		
 		if(hasSpecialQueryFields()){
 			DBObject queryop = (specialFields == null ? new BasicDBObject() : specialFields);
 
-            addToQueryObject(queryop, "query", query, true);
+            addToQueryObject(queryop, "query", lclQuery, true);
             addToQueryObject(queryop, "orderby", orderBy, false);
             if (hintStr != null)
                 addToQueryObject(queryop, "$hint", hintStr);
@@ -117,7 +124,7 @@ class QueryOpBuilder {
             return queryop;
 		}
 		
-		return query;
+		return lclQuery;
 	}
 
     private boolean hasSpecialQueryFields(){
