@@ -420,6 +420,43 @@ public class DBCursorTest extends TestCase {
         assertEquals( 20 , cur.itcount() );
     }
 
+    @Test
+    public void testSort(){
+        DBCollection c = _db.getCollection( "SortTest" );
+        c.drop();
+
+        for ( int i=0; i<1000; i++ )
+            c.save( new BasicDBObject( "x" , i ).append("y", 1000-i));
+
+        //x ascending
+        DBCursor cur = c.find().sort( new BasicDBObject("x", 1));
+        int curmax = -100;
+        while(cur.hasNext()){
+        	int val = (Integer)cur.next().get("x");
+        	assertTrue( val > curmax);
+        	curmax = val;
+        }
+        
+        //x desc
+        cur = c.find().sort( new BasicDBObject("x", -1));
+        curmax = 9999;
+        while(cur.hasNext()){
+        	int val = (Integer)cur.next().get("x");
+        	assertTrue( val < curmax);
+        	curmax = val;
+        }
+        
+        //query and sort
+        cur = c.find( QueryBuilder.start("x").greaterThanEquals(500).get()).sort(new BasicDBObject("y", 1));
+        assertEquals(500, cur.count());
+        curmax = -100;
+        while(cur.hasNext()){
+        	int val = (Integer)cur.next().get("y");
+        	assertTrue( val > curmax);
+        	curmax = val;
+        }
+    }
+    
     final DB _db;
 
     public static void main( String args[] )
