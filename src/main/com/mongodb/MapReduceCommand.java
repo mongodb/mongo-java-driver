@@ -52,10 +52,9 @@ public class MapReduceCommand {
      * @param query
      *            the query to use on input
      * @return
-     * @throws MongoException
      * @dochub mapreduce
      */
-    public MapReduceCommand(DBCollection inputCollection , String map , String reduce , String outputCollection, OutputType type, DBObject query) throws MongoException {
+    public MapReduceCommand(DBCollection inputCollection , String map , String reduce , String outputCollection, OutputType type, DBObject query) {
         _input = inputCollection.getName();
         _map = map;
         _reduce = reduce;

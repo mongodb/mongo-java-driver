@@ -196,6 +196,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * "n" : the number of records that the database returned
      * "millis" : how long it took the database to execute the query
      * @return a <code>DBObject</code>
+     * @throws MongoException
      * @dochub explain
      */
     public DBObject explain(){
@@ -262,7 +263,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * Discards a given number of elements at the beginning of the cursor.
      * @param n the number of elements to skip
      * @return a cursor pointing to the new first element of the results
-     * @throws RuntimeException if the cursor has started to be iterated through
+     * @throws IllegalStateException if the cursor has started to be iterated through
      */
     public DBCursor skip( int n ){
         if ( _it != null )
@@ -343,7 +344,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
 
     // ----  internal stuff ------
 
-	private void _check() throws MongoException {
+	private void _check(){
 		if (_it != null)
 			return;
 
@@ -406,8 +407,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         throw new IllegalArgumentException( "can't switch cursor access methods" );
     }
 
-    private DBObject _next()
-        throws MongoException {
+    private DBObject _next() {
         if ( _cursorType == null )
             _checkType( CursorType.ITERATOR );
 
@@ -450,8 +450,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         throw new IllegalArgumentException("_it not a real result" );
     }
 
-    private boolean _hasNext()
-        throws MongoException {
+    private boolean _hasNext() {
         _check();
 
         if ( _limit > 0 && _num >= _limit )
@@ -475,7 +474,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return
      * @throws MongoException
      */
-    public boolean hasNext() throws MongoException {
+    public boolean hasNext() {
         _checkType( CursorType.ITERATOR );
         return _hasNext();
     }
@@ -485,7 +484,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return the next element
      * @throws MongoException
      */
-    public DBObject next() throws MongoException {
+    public DBObject next() {
         _checkType( CursorType.ITERATOR );
         return _next();
     }
@@ -509,8 +508,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
 
     //  ---- array api  -----
 
-    void _fill( int n )
-        throws MongoException {
+    void _fill( int n ){
         _checkType( CursorType.ARRAY );
         while ( n >= _all.size() && _hasNext() )
             _next();
@@ -524,8 +522,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return the number of elements in the array
      * @throws MongoException
      */
-    public int length()
-        throws MongoException {
+    public int length() {
         _checkType( CursorType.ARRAY );
         _fill( Integer.MAX_VALUE );
         return _all.size();
@@ -536,8 +533,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return an array of elements
      * @throws MongoException
      */
-    public List<DBObject> toArray()
-        throws MongoException {
+    public List<DBObject> toArray(){
         return toArray( Integer.MAX_VALUE );
     }
 
@@ -547,8 +543,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return an array of objects
      * @throws MongoException
      */
-    public List<DBObject> toArray( int max )
-        throws MongoException {
+    public List<DBObject> toArray( int max ) {
         _checkType( CursorType.ARRAY );
         _fill( max - 1 );
         return _all;
@@ -559,6 +554,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * Iterates cursor and counts objects
      * @see #count()
      * @return num objects
+     * @throws MongoException
      */
     public int itcount(){
         int n = 0;
@@ -576,8 +572,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return the number of objects
      * @throws MongoException
      */
-    public int count()
-        throws MongoException {
+    public int count() {
         if ( _collection == null )
             throw new IllegalArgumentException( "why is _collection null" );
         if ( _collection._db == null )
@@ -593,8 +588,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return the number of objects
      * @throws MongoException
      */
-    public int size()
-        throws MongoException {
+    public int size() {
         if ( _collection == null )
             throw new IllegalArgumentException( "why is _collection null" );
         if ( _collection._db == null )

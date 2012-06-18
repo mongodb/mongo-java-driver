@@ -79,6 +79,7 @@ public class ReplicaSetStatus {
 
     /**
      * @return master or null if don't have one
+     * @throws MongoException
      */
     public ServerAddress getMaster(){
         Node n = getMasterNode();
@@ -96,6 +97,7 @@ public class ReplicaSetStatus {
 	 * @param srv
 	 *            the server to compare
 	 * @return indication if the ServerAddress is the current Master/Primary
+	 * @throws MongoException
 	 */
 	public boolean isMaster(ServerAddress srv) {
 		if (srv == null)
@@ -792,6 +794,7 @@ public class ReplicaSetStatus {
      * Gets the maximum size for a BSON object supported by the current master server.
      * Note that this value may change over time depending on which server is master.
      * @return the maximum size, or 0 if not obtained from servers yet.
+     * @throws MongoException
      */
     public int getMaxBsonObjectSize() {
         return _replicaSetHolder.get().getMaxBsonObjectSize();

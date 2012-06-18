@@ -28,7 +28,6 @@ import org.bson.types.ObjectId;
 
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
-import com.mongodb.WriteConcern;
 import com.mongodb.MongoException;
 import com.mongodb.util.SimplePool;
 import com.mongodb.util.Util;
@@ -149,6 +148,7 @@ public class GridFSInputFile extends GridFSFile {
 
     /**
      * calls {@link GridFSInputFile#save(long)} with the existing chunk size
+     * @throws MongoException 
      */
     @Override
     public void save() {
@@ -161,6 +161,7 @@ public class GridFSInputFile extends GridFSFile {
      *
      * @param chunkSize
      *            Size of chunks for file in bytes.
+     * @throws MongoException 
      */
     public void save( long chunkSize ) {
         if (_outputStream != null)
@@ -186,6 +187,7 @@ public class GridFSInputFile extends GridFSFile {
      * @throws IOException
      *             on problems reading the new entry's
      *             {@link java.io.InputStream}.
+     * @throws MongoException 
      */
     public int saveChunks() throws IOException {
         return saveChunks( _chunkSize );
@@ -202,6 +204,7 @@ public class GridFSInputFile extends GridFSFile {
      * @throws IOException
      *             on problems reading the new entry's
      *             {@link java.io.InputStream}.
+     * @throws MongoException 
      */
     public int saveChunks( long chunkSize ) throws IOException {
         if (_outputStream != null)
@@ -254,6 +257,7 @@ public class GridFSInputFile extends GridFSFile {
      *            Data for chunk.
      * @param writePartial
      *            Write also partial buffers full.
+     * @throws MongoException 
      */
     private void _dumpBuffer( boolean writePartial ) {
         if ( ( _currentBufferPosition < _chunkSize ) && !writePartial ) {

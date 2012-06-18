@@ -47,7 +47,7 @@ public interface DBConnector {
      * @return the write result
      * @throws MongoException
      */
-    public WriteResult say( DB db , OutMessage m , WriteConcern concern ) throws MongoException;
+    public WriteResult say( DB db , OutMessage m , WriteConcern concern );
     /**
      * does a write operation
      * @param db the database
@@ -57,7 +57,7 @@ public interface DBConnector {
      * @return the write result
      * @throws MongoException
      */
-    public WriteResult say( DB db , OutMessage m , WriteConcern concern , ServerAddress hostNeeded ) throws MongoException;
+    public WriteResult say( DB db , OutMessage m , WriteConcern concern , ServerAddress hostNeeded );
     
     /**
      * does a read operation on the database
@@ -70,7 +70,7 @@ public interface DBConnector {
      * @throws MongoException
      */
     public Response call( DB db , DBCollection coll , OutMessage m , 
-                          ServerAddress hostNeeded , DBDecoder decoder ) throws MongoException;
+                          ServerAddress hostNeeded , DBDecoder decoder );
     /**
      *
      * does a read operation on the database
@@ -82,7 +82,7 @@ public interface DBConnector {
      * @return the read result
      * @throws MongoException
      */
-    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries ) throws MongoException;
+    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries );
 
     /**
      * does a read operation on the database
@@ -96,7 +96,7 @@ public interface DBConnector {
      * @return the read result
      * @throws MongoException
      */
-    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries , ReadPreference readPref , DBDecoder decoder ) throws MongoException;
+    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries , ReadPreference readPref , DBDecoder decoder );
 
     /**
      * returns true if the connector is in a usable state

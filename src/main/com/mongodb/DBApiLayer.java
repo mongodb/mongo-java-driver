@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 
+//import com.mongodb.MongoException.CursorNotFound;
 import com.mongodb.util.JSON;
 
 /** Database API
@@ -128,8 +129,12 @@ public class DBApiLayer extends DB {
         return ns.substring( _root.length() + 1 );
     }
 
-    public void cleanCursors( boolean force )
-        throws MongoException {
+    
+    /**
+     * @param force
+     * @throws MongoException
+     */
+    public void cleanCursors( boolean force ){
 
         int sz = _deadCursorIds.size();
 
@@ -161,8 +166,7 @@ public class DBApiLayer extends DB {
         }
     }
 
-    void killCursors( ServerAddress addr , List<Long> all )
-        throws MongoException {
+    void killCursors( ServerAddress addr , List<Long> all ){
         if ( all == null || all.size() == 0 )
             return;
 
@@ -201,18 +205,16 @@ public class DBApiLayer extends DB {
         }
 
         @Override
-        public void drop() throws MongoException {
+        public void drop(){
             _collections.remove(getName());
             super.drop();
         }
 
-        public WriteResult insert(DBObject[] arr, com.mongodb.WriteConcern concern, DBEncoder encoder )
-            throws MongoException {
+        public WriteResult insert(DBObject[] arr, com.mongodb.WriteConcern concern, DBEncoder encoder ){
             return insert( arr, true, concern, encoder );
         }
 
-        protected WriteResult insert(DBObject[] arr, boolean shouldApply , com.mongodb.WriteConcern concern, DBEncoder encoder )
-            throws MongoException {
+        protected WriteResult insert(DBObject[] arr, boolean shouldApply , com.mongodb.WriteConcern concern, DBEncoder encoder ){
 
             if (encoder == null)
                 encoder = DefaultDBEncoder.FACTORY.create();
@@ -264,8 +266,7 @@ public class DBApiLayer extends DB {
             return last;
         }
 
-        public WriteResult remove( DBObject o , com.mongodb.WriteConcern concern, DBEncoder encoder )
-            throws MongoException {
+        public WriteResult remove( DBObject o , com.mongodb.WriteConcern concern, DBEncoder encoder ){
 
             if (encoder == null)
                 encoder = DefaultDBEncoder.FACTORY.create();
@@ -292,15 +293,14 @@ public class DBApiLayer extends DB {
         }
 
         @Override
-        Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize, int limit , int options, ReadPreference readPref, DBDecoder decoder )
-            throws MongoException {
+        Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize, int limit , int options, ReadPreference readPref, DBDecoder decoder ){
 
             return __find(ref, fields, numToSkip, batchSize, limit, options, readPref, decoder, DefaultDBEncoder.FACTORY.create());
         }
 
         @Override
         Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options,
-                                            ReadPreference readPref, DBDecoder decoder, DBEncoder encoder ) throws MongoException {
+                                            ReadPreference readPref, DBDecoder decoder, DBEncoder encoder ){
 
             if ( ref == null )
                 ref = new BasicDBObject();
@@ -323,8 +323,7 @@ public class DBApiLayer extends DB {
         }
 
         @Override
-        public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , com.mongodb.WriteConcern concern, DBEncoder encoder )
-            throws MongoException {
+        public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , com.mongodb.WriteConcern concern, DBEncoder encoder ){
 
             if (encoder == null)
                 encoder = DefaultDBEncoder.FACTORY.create();
@@ -353,8 +352,7 @@ public class DBApiLayer extends DB {
             return _connector.say( _db , om , concern );
         }
 
-        public void createIndex( final DBObject keys, final DBObject options, DBEncoder encoder )
-            throws MongoException {
+        public void createIndex( final DBObject keys, final DBObject options, DBEncoder encoder ){
 
             if (encoder == null)
                 encoder = DefaultDBEncoder.FACTORY.create();

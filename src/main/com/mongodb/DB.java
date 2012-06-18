@@ -95,6 +95,7 @@ public abstract class DB {
      * @param name the name of the collection to return
      * @param options options
      * @return the collection
+     * @throws MongoException
      */
     public DBCollection createCollection( String name, DBObject options ){
         if ( options != null ){
@@ -140,21 +141,52 @@ public abstract class DB {
      * @throws MongoException
      * @dochub commands
      */
-    public CommandResult command( DBObject cmd ) throws MongoException{
+    public CommandResult command( DBObject cmd ){
         return command( cmd, 0 );
     }
 
-    public CommandResult command( DBObject cmd, DBEncoder encoder ) throws MongoException{
+
+    /**
+     * Executes a database command.
+     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.DBEncoder) } with 0 as query option.
+     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
+     * @param cmd dbobject representing the command to execute
+     * @param encoder 
+     * @return result of command from the database
+     * @throws MongoException
+     * @dochub commands
+     */
+    public CommandResult command( DBObject cmd, DBEncoder encoder ){
         return command( cmd, 0, encoder );
     }
 
-    public CommandResult command( DBObject cmd , int options, DBEncoder encoder )
-            throws MongoException {
+    /**
+     * Executes a database command.
+     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with a null readPrefs.
+     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
+     * @param cmd dbobject representing the command to execute
+     * @param options query options to use
+     * @param encoder 
+     * @return result of command from the database
+     * @throws MongoException
+     * @dochub commands
+     */
+    public CommandResult command( DBObject cmd , int options, DBEncoder encoder ){
         return command(cmd, options, null, encoder);
     }
 
-    public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs )
-            throws MongoException {
+    /**
+     * Executes a database command.
+     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with a default encoder.
+     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
+     * @param cmd dbobject representing the command to execute
+     * @param options query options to use
+     * @param readPrefs ReadPreferences for this command (nodes selection is the biggest part of this)
+     * @return result of command from the database
+     * @throws MongoException
+     * @dochub commands
+     */
+    public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs ){
         return command(cmd, options, readPrefs, DefaultDBEncoder.FACTORY.create());
     }
 
@@ -164,12 +196,12 @@ public abstract class DB {
      * @param cmd dbobject representing the command to execute
      * @param options query options to use
      * @param readPrefs ReadPreferences for this command (nodes selection is the biggest part of this)
+     * @param encoder
      * @return result of command from the database
-     * @dochub commands
      * @throws MongoException
+     * @dochub commands
      */
-    public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs, DBEncoder encoder )
-        throws MongoException {
+    public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs, DBEncoder encoder ){
 
         Iterator<DBObject> i =
                 getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, readPrefs ,
@@ -190,13 +222,13 @@ public abstract class DB {
      * @param cmd dbobject representing the command to execute
      * @param options query options to use
      * @return result of command from the database
-     * @dochub commands
      * @throws MongoException
+     * @dochub commands
      */
-    public CommandResult command( DBObject cmd , int options )
-        throws MongoException {
-	return command(cmd, options, getReadPreference());
+    public CommandResult command( DBObject cmd , int options ){
+    	return command(cmd, options, getReadPreference());
     }
+    
     /**
      * Executes a database command.
      * This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject) }
@@ -204,9 +236,9 @@ public abstract class DB {
      * @param cmd command to execute
      * @return result of command from the database
      * @throws MongoException
+     * @dochub commands
      */
-    public CommandResult command( String cmd )
-        throws MongoException {
+    public CommandResult command( String cmd ){
         return command( new BasicDBObject( cmd , Boolean.TRUE ) );
     }
 
@@ -218,9 +250,9 @@ public abstract class DB {
      * @param options query options to use
      * @return result of command from the database
      * @throws MongoException
+     * @dochub commands
      */
-    public CommandResult command( String cmd, int options  )
-        throws MongoException {
+    public CommandResult command( String cmd, int options  ){
         return command( new BasicDBObject( cmd , Boolean.TRUE ), options );
     }
 
@@ -232,8 +264,7 @@ public abstract class DB {
      * @return The command result
      * @throws MongoException
      */
-    public CommandResult doEval( String code , Object ... args )
-        throws MongoException {
+    public CommandResult doEval( String code , Object ... args ){
 
         return command( BasicDBObjectBuilder.start()
                         .add( "$eval" , code )
@@ -250,8 +281,7 @@ public abstract class DB {
      * @return The object
      * @throws MongoException
      */
-    public Object eval( String code , Object ... args )
-        throws MongoException {
+    public Object eval( String code , Object ... args ){
 
         CommandResult res = doEval( code , args );
         res.throwOnError();
@@ -261,6 +291,7 @@ public abstract class DB {
     /**
      * Returns the result of "dbstats" command
      * @return
+     * @throws MongoException
      */
     public CommandResult getStats() {
         return command("dbstats");
@@ -288,8 +319,7 @@ public abstract class DB {
      * @return the names of collections in this database
      * @throws MongoException
      */
-    public Set<String> getCollectionNames()
-        throws MongoException {
+    public Set<String> getCollectionNames(){
 
         DBCollection namespaces = getCollection("system.namespaces");
         if (namespaces == null)
@@ -330,6 +360,7 @@ public abstract class DB {
      * Checks to see if a collection by name %lt;name&gt; exists.
      * @param collectionName The collection to test for existence
      * @return false if no collection by that name exists, true if a match to an existing collection was found
+     * @throws MongoException
      */
     public boolean collectionExists(String collectionName)
     {
@@ -376,8 +407,7 @@ public abstract class DB {
      * @return DBObject with error and status information
      * @throws MongoException
      */
-    public CommandResult getLastError()
-        throws MongoException {
+    public CommandResult getLastError(){
         return command(new BasicDBObject("getlasterror", 1));
     }
 
@@ -387,8 +417,7 @@ public abstract class DB {
      * @return
      * @throws MongoException
      */
-    public CommandResult getLastError( com.mongodb.WriteConcern concern )
-        throws MongoException {
+    public CommandResult getLastError( com.mongodb.WriteConcern concern ){
         return command( concern.getCommand() );
     }
 
@@ -400,8 +429,7 @@ public abstract class DB {
      * @return The command result
      * @throws MongoException
      */
-    public CommandResult getLastError( int w , int wtimeout , boolean fsync )
-        throws MongoException {
+    public CommandResult getLastError( int w , int wtimeout , boolean fsync ){
         return command( (new com.mongodb.WriteConcern( w, wtimeout , fsync )).getCommand() );
     }
 
@@ -452,8 +480,7 @@ public abstract class DB {
      * Drops this database. Removes all data on disk. Use with caution.
      * @throws MongoException
      */
-    public void dropDatabase()
-        throws MongoException {
+    public void dropDatabase(){
 
         CommandResult res = command(new BasicDBObject("dropDatabase", 1));
         res.throwOnError();
@@ -479,8 +506,7 @@ public abstract class DB {
      * @throws MongoException
      * @dochub authenticate
      */
-    public boolean authenticate(String username, char[] passwd )
-        throws MongoException {
+    public boolean authenticate(String username, char[] passwd ){
 
         if ( username == null || passwd == null )
             throw new NullPointerException( "username can't be null" );
@@ -506,8 +532,7 @@ public abstract class DB {
      * @throws MongoException if authentication failed due to invalid user/pass, or other exceptions like I/O
      * @dochub authenticate
      */
-    public CommandResult authenticateCommand(String username, char[] passwd )
-        throws MongoException {
+    public CommandResult authenticateCommand(String username, char[] passwd ){
 
         if ( username == null || passwd == null )
             throw new NullPointerException( "username can't be null" );
@@ -551,7 +576,7 @@ public abstract class DB {
         return cmd;
     }
 
-    private CommandResult _doauth( String username , byte[] hash ){
+    private CommandResult _doauth( String username , byte[] hash ) {
         CommandResult res = command(new BasicDBObject("getnonce", 1));
         res.throwOnError();
 
@@ -563,6 +588,7 @@ public abstract class DB {
      * Adds a new user for this db
      * @param username
      * @param passwd
+     * @throws MongoException
      */
     public WriteResult addUser( String username , char[] passwd ){
         return addUser(username, passwd, false);
@@ -573,6 +599,7 @@ public abstract class DB {
      * @param username
      * @param passwd
      * @param readOnly if true, user will only be able to read
+     * @throws MongoException
      */
     public WriteResult addUser( String username , char[] passwd, boolean readOnly ){
         DBCollection c = getCollection( "system.users" );
@@ -587,6 +614,7 @@ public abstract class DB {
     /**
      * Removes a user for this db
      * @param username
+     * @throws MongoException
      */
     public WriteResult removeUser( String username ){
         DBCollection c = getCollection( "system.users" );
@@ -629,8 +657,7 @@ public abstract class DB {
      * @return DBObject with error and status information
      * @throws MongoException
      */
-    public CommandResult getPreviousError()
-        throws MongoException {
+    public CommandResult getPreviousError(){
         return command(new BasicDBObject("getpreverror", 1));
     }
 
@@ -639,8 +666,7 @@ public abstract class DB {
      * Used to clear all errors such that {@link DB#getPreviousError()} will return no error.
      * @throws MongoException
      */
-    public void resetError()
-        throws MongoException {
+    public void resetError(){
         command(new BasicDBObject("reseterror", 1));
     }
 
@@ -648,8 +674,7 @@ public abstract class DB {
      * For testing purposes only - this method forces an error to help test error handling
      * @throws MongoException
      */
-    public void forceError()
-        throws MongoException {
+    public void forceError(){
         command(new BasicDBObject("forceerror", 1));
     }
 
@@ -712,7 +737,7 @@ public abstract class DB {
         return _options.get();
     }
 
-    public abstract void cleanCursors( boolean force ) throws MongoException;
+    public abstract void cleanCursors( boolean force );
 
 
     final Mongo _mongo;
