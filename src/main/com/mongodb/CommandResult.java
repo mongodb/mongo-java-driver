@@ -129,7 +129,7 @@ public class CommandResult extends BasicDBObject {
      * throws an exception containing the cmd name, in case the command failed, or the "err/code" information
      * @throws MongoException
      */
-    public void throwOnError() throws MongoException {
+    public void throwOnError() {
         if ( !ok() || hasErr() ){
             throw getException();
         }

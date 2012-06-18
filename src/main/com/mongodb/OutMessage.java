@@ -68,6 +68,7 @@ class OutMessage extends BasicBSONEncoder {
         this( m , enc );
         reset( op );
     }
+    
     private void _appendQuery( int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref){
         _queryOptions = options;
         _readPref = readPref;

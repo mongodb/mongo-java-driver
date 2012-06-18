@@ -46,6 +46,7 @@ public abstract class GridFSFile implements DBObject {
 
     /**
      * Saves the file entry to the files collection
+     * @throws MongoException 
      */
     public void save(){
         if ( _fs == null )
@@ -58,7 +59,7 @@ public abstract class GridFSFile implements DBObject {
      * This should be called after transferring a file.
      * @throws MongoException
      */
-    public void validate() throws MongoException {
+    public void validate(){
         if ( _fs == null )
             throw new MongoException( "no _fs" );
         if ( _md5 == null )

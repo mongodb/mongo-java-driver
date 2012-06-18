@@ -65,6 +65,7 @@ public class MapReduceOutput {
 
     /**
      * drops the collection that holds the results
+     * @throws MongoException
      */
     public void drop(){
         if ( _coll != null)

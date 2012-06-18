@@ -39,8 +39,9 @@ public class DBRefBase {
     /**
      * fetches the object referenced from the database
      * @return
+     * @throws MongoException
      */
-    public DBObject fetch() {
+    public DBObject fetch() throws MongoException {
         if (_loadedPointedTo)
             return _pointedTo;
 

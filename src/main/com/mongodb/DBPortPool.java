@@ -175,7 +175,11 @@ public class DBPortPool extends SimplePool<DBPort> {
         return iThink;
     }
     
-    public DBPort get(){
+    /**
+     * @return
+     * @throws MongoException 
+     */
+    public DBPort get() {
         DBPort port = null;
         if ( ! _waitingSem.tryAcquire() )
             throw new SemaphoresOut();

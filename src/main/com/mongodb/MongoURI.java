@@ -224,7 +224,7 @@ public class MongoURI {
      * @throws UnknownHostException
      */
     public Mongo connect()
-        throws MongoException , UnknownHostException {
+        throws UnknownHostException {
         // TODO caching?
         return new Mongo( this );
     }
@@ -236,7 +236,7 @@ public class MongoURI {
      * @throws UnknownHostException
      */
     public DB connectDB()
-        throws MongoException , UnknownHostException {
+        throws UnknownHostException {
         // TODO auth
         return connect().getDB( _database );
     }
