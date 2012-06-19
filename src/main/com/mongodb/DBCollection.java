@@ -914,7 +914,7 @@ public abstract class DBCollection {
         if ( skip > 0 )
             cmd.put( "skip" , skip );
 
-        CommandResult res = _db.command(cmd,getOptions());
+        CommandResult res = _db.command(cmd,getOptions(),getReadPreference());
 
         if ( ! res.ok() ){
             String errmsg = res.getErrorMessage();
@@ -999,7 +999,7 @@ public abstract class DBCollection {
      * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
     public DBObject group( GroupCommand cmd ) {
-        CommandResult res =  _db.command( cmd.toDBObject(), getOptions() );
+        CommandResult res =  _db.command( cmd.toDBObject(), getOptions(), getReadPreference() );
         res.throwOnError();
         return (DBObject)res.get( "retval" );
     }
@@ -1016,7 +1016,7 @@ public abstract class DBCollection {
     @Deprecated
     public DBObject group( DBObject args ){
         args.put( "ns" , getName() );
-        CommandResult res =  _db.command( new BasicDBObject( "group" , args ), getOptions() );
+        CommandResult res =  _db.command( new BasicDBObject( "group" , args ), getOptions(), getReadPreference() );
         res.throwOnError();
         return (DBObject)res.get( "retval" );
     }
@@ -1045,7 +1045,7 @@ public abstract class DBCollection {
             .add( "query" , query )
             .get();
 
-        CommandResult res = _db.command( c, getOptions() );
+        CommandResult res = _db.command( c, getOptions(), getReadPreference() );
         res.throwOnError();
         return (List)(res.get( "values" ));
     }
