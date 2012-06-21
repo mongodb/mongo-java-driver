@@ -578,7 +578,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         if ( _collection._db == null )
             throw new IllegalArgumentException( "why is _collection._db null" );
 
-        return (int)_collection.getCount(this._query, this._keysWanted);
+        return (int)_collection.getCount(this._query, this._keysWanted, getReadPreference());
     }
 
     /**
@@ -594,7 +594,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         if ( _collection._db == null )
             throw new IllegalArgumentException( "why is _collection._db null" );
 
-        return (int)_collection.getCount(this._query, this._keysWanted, this._limit, this._skip );
+        return (int)_collection.getCount(this._query, this._keysWanted, this._limit, this._skip, getReadPreference() );
     }
 
 
