@@ -18,11 +18,10 @@
 
 package com.mongodb;
 
-import java.util.Map;
-
+import com.mongodb.util.JSON;
 import org.bson.BasicBSONObject;
 
-import com.mongodb.util.JSON;
+import java.util.Map;
 
 /**
  * a basic implementation of bson object that is mongo specific.
@@ -105,5 +104,5 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
         return newobj;
     }
     
-    private boolean _isPartialObject = false;
+    private boolean _isPartialObject;
 }
