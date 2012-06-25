@@ -883,11 +883,7 @@ public abstract class DBCollection {
      *  calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject)} with null fields.
      *  @param query query to match
      *  @return
-<<<<<<< HEAD
-     * @throws MongoException
-=======
      *  @throws MongoException
->>>>>>> JAVA-570
      */ 
     public long getCount(DBObject query){
         return getCount(query, null);
