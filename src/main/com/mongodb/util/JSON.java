@@ -28,7 +28,7 @@ import com.mongodb.DBObject;
 public class JSON {
 
     /**
-     *  Serializes an object into it's JSON form.
+     *  Serializes an object into its JSON form.
      *  <p>
      *  This method delegates serialization to <code>JSONSerializers.getLegacy</code>
      *
@@ -43,7 +43,7 @@ public class JSON {
     }
 
     /**
-     *  Serializes an object into it's JSON form
+     *  Serializes an object into its JSON form.
      *  <p>
      *  This method delegates serialization to <code>JSONSerializers.getLegacy</code>
      *
