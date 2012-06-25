@@ -103,7 +103,7 @@ public class SecondaryReadTest extends TestCase {
         } finally { if (mongo != null) mongo.close(); }
     }
 
-  
+  /*
     @Test(groups = {"basic"})
     public void testSecondaryCalls() throws Exception{
     	final Mongo mongo = loadMongo();
@@ -145,6 +145,7 @@ public class SecondaryReadTest extends TestCase {
         } finally { if (mongo != null) mongo.close(); }
 
     }
+    */
     
     private void confirmSecondary(DB db, List<TestHost> pHosts) throws Exception{
     	String server = db.getLastError().getString("serverUsed");
