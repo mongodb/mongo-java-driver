@@ -88,7 +88,11 @@ public class Mongo {
     @Deprecated
     public static final int MINOR_VERSION = 9;
 
+<<<<<<< HEAD
     private static final String FULL_VERSION = "2.9.0-SNAPSHOT";
+=======
+    private static final String FULL_VERSION = "2.9.0";
+>>>>>>> JAVA-570
 
     static int cleanerIntervalMS;
     static {

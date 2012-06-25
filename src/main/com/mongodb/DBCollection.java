@@ -681,6 +681,7 @@ public abstract class DBCollection {
      * Returns a single object from this collection matching the query.
      * @param o the query object
      * @param fields fields to return
+     * @param readPref
      * @return the object found, or <code>null</code> if no such object exists
      * @throws MongoException
      * @dochub find
@@ -862,33 +863,73 @@ public abstract class DBCollection {
     /**
      *  calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject)} with an empty query and null fields.
      *  @return number of documents that match query
-     * @throws MongoException
+     *  @throws MongoException
      */
     public long getCount(){
         return getCount(new BasicDBObject(), null);
+    }
+    
+    /**
+     *  calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.ReadPreference)} with empty query and null fields.
+     *  @param readPrefs ReadPreferences for this command
+     *  @return number of documents that match query
+     *  @throws MongoException
+     */
+    public long getCount(ReadPreference readPrefs){
+        return getCount(new BasicDBObject(), null, readPrefs);
     }
 
     /**
      *  calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject)} with null fields.
      *  @param query query to match
      *  @return
+<<<<<<< HEAD
      * @throws MongoException
+=======
+     *  @throws MongoException
+>>>>>>> JAVA-570
      */ 
     public long getCount(DBObject query){
         return getCount(query, null);
     }
 
+    
     /**
      *  calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject, long, long)} with limit=0 and skip=0
      *  @param query query to match
      *  @param fields fields to return
      *  @return
-     * @throws MongoException
+     *  @throws MongoException
      */
     public long getCount(DBObject query, DBObject fields){
         return getCount( query , fields , 0 , 0 );
     }
+    
+    /**
+     *  calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject, long, long, com.mongodb.ReadPreference)} with limit=0 and skip=0
+     *  @param query query to match
+     *  @param fields fields to return
+     *  @param readPrefs ReadPreferences for this command
+     *  @return
+     *  @throws MongoException
+     */
+    public long getCount(DBObject query, DBObject fields, ReadPreference readPrefs){
+        return getCount( query , fields , 0 , 0, readPrefs );
+    }
 
+    /**
+     *  calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject, long, long, com.mongodb.ReadPreference)} with the DBCollection's ReadPreference
+     *  @param query query to match
+     *  @param fields fields to return
+     *  @param limit limit the count to this value
+     *  @param skip skip number of entries to skip
+     *  @return
+     *  @throws MongoException
+     */
+    public long getCount(DBObject query, DBObject fields, long limit, long skip){
+    	return getCount(query, fields, limit, skip, getReadPreference());
+    }
+    
     /**
      *  Returns the number of documents in the collection
      *  that match the specified query
@@ -896,12 +937,13 @@ public abstract class DBCollection {
      *  @param query query to select documents to count
      *  @param fields fields to return
      *  @param limit limit the count to this value
-     * @param skip number of entries to skip
-     * @return number of documents that match query and fields
-     * @throws MongoException
+     *  @param skip number of entries to skip
+     *  @param readPrefs ReadPreferences for this command
+     *  @return number of documents that match query and fields
+     *  @throws MongoException
      */
-    public long getCount(DBObject query, DBObject fields, long limit, long skip ){
 
+    public long getCount(DBObject query, DBObject fields, long limit, long skip, ReadPreference readPrefs ){
         BasicDBObject cmd = new BasicDBObject();
         cmd.put("count", getName());
         cmd.put("query", query);
@@ -914,8 +956,7 @@ public abstract class DBCollection {
         if ( skip > 0 )
             cmd.put( "skip" , skip );
 
-        CommandResult res = _db.command(cmd,getOptions());
-
+        CommandResult res = _db.command(cmd,getOptions(),readPrefs);
         if ( ! res.ok() ){
             String errmsg = res.getErrorMessage();
 
@@ -929,6 +970,10 @@ public abstract class DBCollection {
         }
 
         return res.getLong("n");
+    }
+    
+    CommandResult command(DBObject cmd, int options, ReadPreference readPrefs){
+    	return _db.command(cmd,getOptions(),readPrefs);
     }
 
     /**
@@ -973,8 +1018,8 @@ public abstract class DBCollection {
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce ){
         return group( key , cond , initial , reduce , null );
-    }
-
+    }    
+    
     /**
      * Applies a group operation
      * @param key - { a : true }
@@ -990,6 +1035,23 @@ public abstract class DBCollection {
         GroupCommand cmd = new GroupCommand(this, key, cond, initial, reduce, finalize);
         return group( cmd );
     }
+    
+    /**
+     * Applies a group operation
+     * @param key - { a : true }
+     * @param cond - optional condition on query
+     * @param reduce javascript reduce function
+     * @param initial initial value for first match on a key
+     * @param finalize An optional function that can operate on the result(s) of the reduce function.
+     * @param readPrefs ReadPreferences for this command
+     * @return
+     * @throws MongoException
+     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     */
+    public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce , String finalize, ReadPreference readPrefs ){
+        GroupCommand cmd = new GroupCommand(this, key, cond, initial, reduce, finalize);
+        return group( cmd, readPrefs );
+    }
 
     /**
      * Applies a group operation
@@ -999,11 +1061,22 @@ public abstract class DBCollection {
      * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
     public DBObject group( GroupCommand cmd ) {
-        CommandResult res =  _db.command( cmd.toDBObject(), getOptions() );
+        return group(cmd, getReadPreference());
+    }
+
+    /**
+     * Applies a group operation
+     * @param cmd the group command
+     * @param readPrefs ReadPreferences for this command
+     * @return
+     * @throws MongoException
+     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     */
+    public DBObject group( GroupCommand cmd, ReadPreference readPrefs ) {
+        CommandResult res =  _db.command( cmd.toDBObject(), getOptions(), readPrefs );
         res.throwOnError();
         return (DBObject)res.get( "retval" );
     }
-
 
     /**
      * @deprecated prefer the {@link DBCollection#group(com.mongodb.GroupCommand)} which is more standard
@@ -1016,7 +1089,7 @@ public abstract class DBCollection {
     @Deprecated
     public DBObject group( DBObject args ){
         args.put( "ns" , getName() );
-        CommandResult res =  _db.command( new BasicDBObject( "group" , args ), getOptions() );
+        CommandResult res =  _db.command( new BasicDBObject( "group" , args ), getOptions(), getReadPreference() );
         res.throwOnError();
         return (DBObject)res.get( "retval" );
     }
@@ -1030,6 +1103,17 @@ public abstract class DBCollection {
     public List distinct( String key ){
         return distinct( key , new BasicDBObject() );
     }
+    
+    /**
+     * find distinct values for a key
+     * @param key
+     * @param readPrefs
+     * @return
+     * @throws MongoException
+     */
+    public List distinct( String key, ReadPreference readPrefs ){
+        return distinct( key , new BasicDBObject(), readPrefs );
+    }
 
     /**
      * find distinct values for a key
@@ -1039,17 +1123,29 @@ public abstract class DBCollection {
      * @throws MongoException
      */
 	public List distinct( String key , DBObject query ){
+        return distinct(key, query, getReadPreference());
+    }
+
+    /**
+     * find distinct values for a key
+     * @param key
+     * @param query query to match
+     * @param readPrefs
+     * @return
+     * @throws MongoException
+     */
+	public List distinct( String key , DBObject query, ReadPreference readPrefs ){
         DBObject c = BasicDBObjectBuilder.start()
             .add( "distinct" , getName() )
             .add( "key" , key )
             .add( "query" , query )
             .get();
 
-        CommandResult res = _db.command( c, getOptions() );
+        CommandResult res = _db.command( c, getOptions(), readPrefs );
         res.throwOnError();
         return (List)(res.get( "values" ));
     }
-
+	
     /**
      * performs a map reduce operation
      * Runs the command in REPLACE output mode (saves to named collection)
