@@ -657,7 +657,7 @@ public class ReplicaSetStatus {
         final LinkedHashMap<String, String> _tags = new LinkedHashMap<String, String>( );
 
         boolean successfullyContacted = false;
-        volatile boolean _ok = false;
+        boolean _ok = false;
         float _pingTimeMS = 0;
 
         boolean _isMaster = false;
