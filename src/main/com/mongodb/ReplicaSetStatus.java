@@ -23,7 +23,18 @@ import org.bson.util.annotations.Immutable;
 import org.bson.util.annotations.ThreadSafe;
 
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Collections;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Random;
+import java.util.Date;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -142,7 +153,7 @@ public class ReplicaSetStatus {
         }
         return false;
     }
-    
+
     // Simple abstraction over a volatile ReplicaSet reference that starts as null.  The get method blocks until members
     // is not null. The set method notifies all, thus waking up all getters.
     @ThreadSafe
@@ -175,7 +186,7 @@ public class ReplicaSetStatus {
        synchronized void waitForNextUpdate() {
            try {
                wait();
-           } 
+           }
            catch (InterruptedException e) {
               throw new MongoException("Interrupted while waiting for next update to replica set status", e);
            }
@@ -185,7 +196,7 @@ public class ReplicaSetStatus {
             this.members = null;
             notifyAll();
         }
-        
+
         public String toString() {
             ReplicaSet cur = this.members;
             if (cur != null) {
@@ -225,21 +236,21 @@ public class ReplicaSetStatus {
             }
             this.goodSecondariesByTagMap = Collections.unmodifiableMap(goodSecondariesByTagMap);
             master = findMaster();
-            
+
         }
 
         public List<Node> getAll() {
             return all;
         }
-        
+
         public boolean hasMaster() {
             return getMaster() != null;
         }
-        
+
         public Node getMaster() {
             return master;
         }
-        
+
         public int getMaxBsonObjectSize() {
             if (hasMaster()) {
                 return getMaster().getMaxBsonObjectSize();
@@ -286,7 +297,6 @@ public class ReplicaSetStatus {
             }
             return null;
         }
-
 
         static float calculateBestPingTime(List<Node> members) {
             float bestPingTime = Float.MAX_VALUE;
@@ -373,7 +383,7 @@ public class ReplicaSetStatus {
         public Set<String> getNames() {
             return _names;
         }
-        
+
         public Set<Tag> getTags() {
             return _tags;
         }
@@ -575,12 +585,25 @@ public class ReplicaSetStatus {
                 }
 
             }
-            catch ( Exception e ){
-                if (_ok) {
-                    _logger.get().log( Level.WARNING , "Server seen down: " + _addr, e );
-                } else if (Math.random() < 0.1) {
-                    _logger.get().log( Level.WARNING , "Server seen down: " + _addr, e );
+            catch (final Exception e) {
+                if (!_logger.get().isLoggable(Level.WARNING)) return;
+
+                final StringBuilder logError = (new StringBuilder("Server seen down: ")).append(_addr);
+
+                if (! ((_ok) ? true : (Math.random() > 0.1))) return;
+
+                if (e instanceof IOException) {
+
+                    if (e.getMessage() != null) {
+                        logError.append(" - cause: ").append(e.getMessage());
+                    }
+
+                    _logger.get().log(Level.WARNING, logError.toString());
+
+                } else {
+                    _logger.get().log(Level.WARNING, logError.toString(), e);
                 }
+
                 _ok = false;
             }
         }
@@ -634,7 +657,7 @@ public class ReplicaSetStatus {
         final LinkedHashMap<String, String> _tags = new LinkedHashMap<String, String>( );
 
         boolean successfullyContacted = false;
-        boolean _ok = false;
+        volatile boolean _ok = false;
         float _pingTimeMS = 0;
 
         boolean _isMaster = false;
@@ -671,7 +694,7 @@ public class ReplicaSetStatus {
             try {
                 while (!Thread.interrupted()) {
                     int curUpdateIntervalMS = updaterIntervalNoMasterMS;
-                    
+
                     try {
                         updateAll();
 
@@ -762,7 +785,7 @@ public class ReplicaSetStatus {
         if (_closed) {
             return null;
         }
-        
+
         Node masterNode = getMasterNode();
         if (masterNode != null) {
             return masterNode;
