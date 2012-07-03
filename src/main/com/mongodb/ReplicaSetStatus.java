@@ -594,8 +594,10 @@ public class ReplicaSetStatus {
 
                 if (e instanceof IOException) {
 
+                    logError.append(" - ").append(IOException.class.getName());
+
                     if (e.getMessage() != null) {
-                        logError.append(" - cause: ").append(e.getMessage());
+                        logError.append(" - message: ").append(e.getMessage());
                     }
 
                     _logger.get().log(Level.WARNING, logError.toString());
