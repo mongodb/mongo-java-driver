@@ -586,11 +586,6 @@ public class ReplicaSetStatus {
 
             } catch (final Exception e) {
 
-                if (!_logger.get().isLoggable(Level.WARNING)) {
-                    _ok = false;
-                    return;
-                }
-
                 final StringBuilder logError = (new StringBuilder("Server seen down: ")).append(_addr);
 
                 if (! ((_ok) ? true : (Math.random() > 0.1))) return;
