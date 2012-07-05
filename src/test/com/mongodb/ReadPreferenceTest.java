@@ -1,7 +1,8 @@
 package com.mongodb;
 
-import com.mongodb.ReplicaSetStatus.Node;
 import com.mongodb.ReplicaSetStatus.ReplicaSet;
+import com.mongodb.ConnectionStatus.Node;
+import com.mongodb.ReplicaSetStatus.ReplicaSetNode;
 import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
 
@@ -37,17 +38,17 @@ public class ReadPreferenceTest extends TestCase  {
         float acceptablePingTime = bestPingTime + (acceptableLatencyMS/2);
         float unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1 ;
         
-        _primary = new Node(new ServerAddress("127.0.0.1", 27017), names, acceptablePingTime, _isOK, _isMaster, !_isSecondary, tagSet1, Bytes.MAX_OBJECT_SIZE );
+        _primary = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27017), names, acceptablePingTime, _isOK, _isMaster, !_isSecondary, tagSet1, Bytes.MAX_OBJECT_SIZE );
         
         names.clear();
         names.add("secondary");
-        _secondary = new Node(new ServerAddress("127.0.0.1", 27018), names, bestPingTime, _isOK, !_isMaster, _isSecondary, tagSet2, Bytes.MAX_OBJECT_SIZE );
+        _secondary = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27018), names, bestPingTime, _isOK, !_isMaster, _isSecondary, tagSet2, Bytes.MAX_OBJECT_SIZE );
         
         names.clear();
         names.add("tertiary");
-        _tertiary = new Node(new ServerAddress("127.0.0.1", 27019), names, unacceptablePingTime, _isOK, !_isMaster, _isSecondary, tagSet3, Bytes.MAX_OBJECT_SIZE );
+        _tertiary = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27019), names, unacceptablePingTime, _isOK, !_isMaster, _isSecondary, tagSet3, Bytes.MAX_OBJECT_SIZE );
         
-        List<Node> nodeList = new ArrayList<Node>();
+        List<ReplicaSetNode> nodeList = new ArrayList<ReplicaSetNode>();
         nodeList.add(_primary);
         nodeList.add(_secondary);
         nodeList.add(_tertiary);
@@ -83,7 +84,7 @@ public class ReadPreferenceTest extends TestCase  {
         ReadPreference secondaryRP = ReadPreference.secondary();
         assertTrue(secondaryRP.toString().startsWith("secondary"));
         
-        Node candidate = secondaryRP.getNode(_set);
+        ReplicaSetNode candidate = secondaryRP.getNode(_set);
         assertTrue(candidate.isOk());
         assertTrue(!candidate.master());
         
@@ -166,6 +167,6 @@ public class ReadPreferenceTest extends TestCase  {
     static boolean _isSecondary = true;
     static boolean _isOK = true;
 
-    Node _primary, _secondary, _tertiary;
+    ReplicaSetNode _primary, _secondary, _tertiary;
     ReplicaSet _set;
 }

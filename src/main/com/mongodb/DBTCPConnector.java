@@ -33,7 +33,6 @@ public class DBTCPConnector implements DBConnector {
     static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
     static Logger _createLogger = Logger.getLogger( _logger.getName() + ".connect" );
 
-
     /**
      * @param m
      * @param addr
@@ -48,8 +47,6 @@ public class DBTCPConnector implements DBConnector {
 
         setMasterAddress(addr);
         _allHosts = null;
-        _rsStatus = null;
-
     }
 
     /**
@@ -58,7 +55,7 @@ public class DBTCPConnector implements DBConnector {
      * @throws MongoException
      */
     public DBTCPConnector( Mongo m , ServerAddress ... all ){
-        this( m , Arrays.asList( all ) );
+        this(m, Arrays.asList(all));
     }
 
     /**
@@ -66,20 +63,21 @@ public class DBTCPConnector implements DBConnector {
      * @param all
      * @throws MongoException
      */
-    public DBTCPConnector( Mongo m , List<ServerAddress> all ){
+    public DBTCPConnector( Mongo m , List<ServerAddress> all ) {
         _mongo = m;
         _portHolder = new DBPortPool.Holder( m._options );
         _checkAddress( all );
 
         _allHosts = new ArrayList<ServerAddress>( all ); // make a copy so it can't be modified
-        _rsStatus = new ReplicaSetStatus( m, _allHosts );
-
         _createLogger.info( all  + " -> " + getAddress() );
+
+        _connectionStatus = new DynamicConnectionStatus(m, _allHosts);
     }
 
     public void start() {
-        if (_rsStatus != null)
-            _rsStatus.start();
+        if (_connectionStatus != null) {
+            _connectionStatus.start();
+        }
     }
 
     private static ServerAddress _checkAddress( ServerAddress addr ){
@@ -243,7 +241,7 @@ public class DBTCPConnector implements DBConnector {
      * @param coll
      * @param m
      * @param hostNeeded
-     * @param readPerf
+     * @param readPref
      * @param decoder
      * @return
      * @throws MongoException
@@ -326,8 +324,8 @@ public class DBTCPConnector implements DBConnector {
      * @throws MongoException 
      */
     public List<ServerAddress> getServerAddressList() {
-        if (_rsStatus != null) {
-            return _rsStatus.getServerAddressList();
+        if (_connectionStatus != null) {
+            return _connectionStatus.getServerAddressList();
         }
 
         ServerAddress master = getAddress();
@@ -341,7 +339,10 @@ public class DBTCPConnector implements DBConnector {
     }
 
     public ReplicaSetStatus getReplicaSetStatus() {
-        return _rsStatus;
+        if (_connectionStatus == null) {
+            return null;
+        }
+        return _connectionStatus.asReplicaSetStatus();
     }
 
     public String getConnectPoint(){
@@ -358,7 +359,7 @@ public class DBTCPConnector implements DBConnector {
      * @throws MongoException
      */
     boolean _error( Throwable t, boolean secondaryOk ){
-        if (_rsStatus == null) {
+        if (_connectionStatus == null) {
             // single server, no need to retry
             return false;
         }
@@ -366,10 +367,10 @@ public class DBTCPConnector implements DBConnector {
         // the replset has at least 1 server up, try to see if should switch master
         // if no server is up, we wont retry until the updater thread finds one
         // this is to cut down the volume of requests/errors when all servers are down
-        if ( _rsStatus.hasServerUp() ){
+        if ( _connectionStatus.hasServerUp() ){
             checkMaster( true , !secondaryOk );
         }
-        return _rsStatus.hasServerUp();
+        return _connectionStatus.hasServerUp();
     }
 
     class MyPort {
@@ -399,8 +400,8 @@ public class DBTCPConnector implements DBConnector {
                 _requestPort = null;
             }
 
-            DBPort p = null;
-            if(_rsStatus == null){
+            DBPort p;
+            if (getReplicaSetStatus() == null){
                 if (_masterPortPool == null) {
                     // this should only happen in rare case that no master was ever found
                     // may get here at startup if it's a read, slaveOk=true, and ALL servers are down
@@ -409,7 +410,7 @@ public class DBTCPConnector implements DBConnector {
                 p = _masterPortPool.get();
             }
             else {
-                ReplicaSetStatus.Node node = readPref.getNode(_rsStatus._replicaSetHolder.get());
+                ConnectionStatus.Node node = readPref.getNode(getReplicaSetStatus()._replicaSetHolder.get());
             
                 if (node == null)
                     throw new MongoException("No replica set members available for query with "+readPref.toDBObject().toString());
@@ -440,10 +441,15 @@ public class DBTCPConnector implements DBConnector {
         void error( DBPort p , Exception e ){
             p.close();
             _requestPort = null;
-//            _logger.log( Level.SEVERE , "MyPort.error called" , e );
 
             // depending on type of error, may need to close other connections in pool
-            p.getPool().gotError(e);
+            boolean recoverable = p.getPool().gotError(e);
+            if (!recoverable && _connectionStatus != null && _masterPortPool._addr.equals(p.serverAddress())) {
+                ConnectionStatus.Node newMaster = _connectionStatus.ensureMaster();
+                if (newMaster != null) {
+                    setMaster(newMaster);
+                }
+            }
         }
 
         void requestEnsureConnection(){
@@ -468,15 +474,14 @@ public class DBTCPConnector implements DBConnector {
         }
 
         DBPort _requestPort;
-//        DBPortPool _requestPool;
         boolean _inRequest;
     }
 
     void checkMaster( boolean force , boolean failIfNoMaster ){
 
-        if ( _rsStatus != null ){
+        if ( _connectionStatus != null ){
             if ( _masterPortPool == null || force ){
-                ReplicaSetStatus.Node master = _rsStatus.ensureMaster();
+                ConnectionStatus.Node master = _connectionStatus.ensureMaster();
                 if ( master == null ){
                     if ( failIfNoMaster )
                         throw new MongoException( "can't find a master" );
@@ -492,7 +497,7 @@ public class DBTCPConnector implements DBConnector {
         }
     }
 
-    synchronized void setMaster(ReplicaSetStatus.Node master) {
+    synchronized void setMaster(ConnectionStatus.Node master) {
         if (_closed.get()) {
             return;
         }
@@ -540,8 +545,8 @@ public class DBTCPConnector implements DBConnector {
 
     public String debugString(){
         StringBuilder buf = new StringBuilder( "DBTCPConnector: " );
-        if ( _rsStatus != null ) {
-            buf.append( "replica set : " ).append( _allHosts );
+        if ( _connectionStatus != null ) {
+            buf.append( "set : " ).append( _allHosts );
         } else {
             ServerAddress master = getAddress();
             buf.append( master ).append( " " ).append( master != null ? master.getSocketAddress() : null );
@@ -558,10 +563,10 @@ public class DBTCPConnector implements DBConnector {
                 _portHolder = null;
             } catch (final Throwable t) { /* nada */ }
         }
-        if ( _rsStatus != null ) {
+        if ( _connectionStatus != null ) {
             try {
-                _rsStatus.close();
-                _rsStatus = null;
+                _connectionStatus.close();
+                _connectionStatus = null;
             } catch (final Throwable t) { /* nada */ }
         }
 
@@ -612,7 +617,8 @@ public class DBTCPConnector implements DBConnector {
     private final Mongo _mongo;
     private DBPortPool.Holder _portHolder;
     private final List<ServerAddress> _allHosts;
-    private ReplicaSetStatus _rsStatus;
+    private DynamicConnectionStatus _connectionStatus;
+
     private final AtomicBoolean _closed = new AtomicBoolean(false);
 
     private final AtomicInteger _maxBsonObjectSize = new AtomicInteger(0);
