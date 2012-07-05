@@ -154,7 +154,7 @@ public class MongoURI {
                 else if ( key.equals( "w" ) ) _options.w = Integer.parseInt( value );
                 else if ( key.equals( "wtimeout" ) ) _options.wtimeout = Integer.parseInt( value );
                 else if ( key.equals( "fsync" ) ) _options.fsync = _parseBoolean( value );
-                else LOGGER.warning( "Unknown or Unsupported Option '" + value + "'" );
+                else LOGGER.warning( "Unknown or Unsupported Option '" + key + "'" );
             }
         }
     }
