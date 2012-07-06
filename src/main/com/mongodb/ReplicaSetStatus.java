@@ -105,22 +105,41 @@ public class ReplicaSetStatus {
 	}
 
     /**
-     * @param tags tags map
+     * @param tagSetList list of tag sets
      * @return a good secondary by tag value or null if can't find one
      */
-    ServerAddress getASecondary( DBObject tags ) {
-        // store the reference in local, so that it doesn't change out from under us while looping
-        List<Tag> tagList = new ArrayList<Tag>();
-        for ( String key : tags.keySet() ) {
-            tagList.add(new Tag(key, tags.get(key).toString()));
-        }
-        Node node =  _replicaSetHolder.get().getASecondary(tagList);
-        if (node != null) {
-            return node.getServerAddress();
+    ServerAddress getASecondary( DBObject... tagSetList ) {
+        for (DBObject curTagSet : tagSetList) {
+            List<Tag> tagList = new ArrayList<Tag>();
+            for (String key : curTagSet.keySet()) {
+                tagList.add(new Tag(key, curTagSet.get(key).toString()));
+            }
+            Node node = _replicaSetHolder.get().getASecondary(tagList);
+            if (node != null) {
+                return node.getServerAddress();
+            }
         }
         return null;
     }
-
+    
+    /**
+     * @param tagSetList list of tag sets
+     * @return a good member by tag value or null if can't find one
+     */
+    ServerAddress getAMember( DBObject... tagSetList ) {
+        for (DBObject curTagSet : tagSetList) {
+            List<Tag> tagList = new ArrayList<Tag>();
+            for (String key : curTagSet.keySet()) {
+                tagList.add(new Tag(key, curTagSet.get(key).toString()));
+            }
+            Node node = _replicaSetHolder.get().getASecondary(tagList);
+            if (node != null) {
+                return node.getServerAddress();
+            }
+        }
+        return null;
+    }
+    
     /**
      * @return a good secondary or null if can't find one
      */
@@ -192,6 +211,13 @@ public class ReplicaSetStatus {
             return "none";
         }
     }
+    
+    static class NodeComparator implements Comparator<Node>{
+        @Override
+        public int compare(Node nodeA, Node nodeB) {
+            return (nodeA.getPingTime() > nodeB.getPingTime() ? -1 : (nodeA.getPingTime() == nodeB.getPingTime() ? 0 : 1));
+        }
+    }
 
     // Immutable snapshot state of a replica set. Since the nodes don't change state, this class pre-computes the list
     // of good secondaries so that choosing a random good secondary is dead simple
@@ -200,30 +226,18 @@ public class ReplicaSetStatus {
         final List<Node> all;
         final Random random;
         final List<Node> goodSecondaries;
-        final Map<Tag, List<Node>> goodSecondariesByTagMap;
         final Node master;
+        private int acceptableLatencyMS;
 
         public ReplicaSet(List<Node> nodeList, Random random, int acceptableLatencyMS) {
+            
             this.random = random;
             this.all = Collections.unmodifiableList(new ArrayList<Node>(nodeList));
+            this.acceptableLatencyMS = acceptableLatencyMS;
+
             this.goodSecondaries =
                     Collections.unmodifiableList(calculateGoodSecondaries(all, calculateBestPingTime(all), acceptableLatencyMS));
-            Set<Tag> uniqueTags = new HashSet<Tag>();
-            for (Node curNode : all) {
-                for (Tag curTag : curNode._tags) {
-                    uniqueTags.add(curTag);
-                }
-            }
-            Map<Tag, List<Node>> goodSecondariesByTagMap = new HashMap<Tag, List<Node>>();
-            for (Tag curTag : uniqueTags) {
-                List<Node> taggedMembers = getMembersByTag(all, curTag);
-                goodSecondariesByTagMap.put(curTag,
-                        Collections.unmodifiableList(calculateGoodSecondaries(taggedMembers,
-                                calculateBestPingTime(taggedMembers), acceptableLatencyMS)));
-            }
-            this.goodSecondariesByTagMap = Collections.unmodifiableMap(goodSecondariesByTagMap);
             master = findMaster();
-            
         }
 
         public List<Node> getAll() {
@@ -254,16 +268,29 @@ public class ReplicaSetStatus {
         }
 
         public Node getASecondary(List<Tag> tags) {
-            for (Tag tag : tags) {
-                List<Node> goodSecondariesByTag = goodSecondariesByTagMap.get(tag);
-                if (goodSecondariesByTag != null) {
-                    Node node = goodSecondariesByTag.get(random.nextInt(goodSecondariesByTag.size()));
-                    if (node != null) {
-                        return node;
-                    }
-                }
+            // optimization
+            if (tags.isEmpty()) {
+                return getASecondary();
             }
-            return null;
+
+            List<Node> acceptableTaggedSecondaries = getGoodSecondariesByTags(tags);
+
+            if (acceptableTaggedSecondaries.isEmpty()) {
+                return null;
+            }
+            return acceptableTaggedSecondaries.get(random.nextInt(acceptableTaggedSecondaries.size()));
+        }
+
+        public List<Node> getGoodSecondariesByTags(final List<Tag> tags) {
+            List<Node> taggedSecondaries = getMembersByTags(all, tags);
+            return calculateGoodSecondaries(taggedSecondaries,
+                    calculateBestPingTime(taggedSecondaries), acceptableLatencyMS);
+        }
+        
+        public List<Node> getGoodMembersByTags(final List<Tag> tags) {
+            List<Node> taggedMembers = getMembersByTags(all, tags);
+            return calculateGoodMembers(taggedMembers,
+                    calculateBestPingTime(taggedMembers), acceptableLatencyMS);
         }
 
         @Override
@@ -299,6 +326,19 @@ public class ReplicaSetStatus {
             return bestPingTime;
         }
 
+        static List<Node> calculateGoodMembers(List<Node> members, float bestPingTime, int acceptableLatencyMS) {
+            List<Node> goodSecondaries = new ArrayList<Node>(members.size());
+            for (Node cur : members) {
+                if (!cur.isOk()) {
+                    continue;
+                }
+                if (cur._pingTime - acceptableLatencyMS <= bestPingTime ) {
+                    goodSecondaries.add(cur);
+                }
+            }
+            return goodSecondaries;
+        }
+        
         static List<Node> calculateGoodSecondaries(List<Node> members, float bestPingTime, int acceptableLatencyMS) {
             List<Node> goodSecondaries = new ArrayList<Node>(members.size());
             for (Node cur : members) {
@@ -312,17 +352,19 @@ public class ReplicaSetStatus {
             return goodSecondaries;
         }
 
-        static List<Node> getMembersByTag(List<Node> members, Tag tag) {
+        static List<Node> getMembersByTags(List<Node> members, List<Tag> tags) {
+           
             List<Node> membersByTag = new ArrayList<Node>();
-
+            
             for (Node cur : members) {
-                if (cur._tags.contains(tag)) {
+                if (tags != null && cur.getTags() != null && cur.getTags().containsAll(tags)) {
                     membersByTag.add(cur);
                 }
             }
 
             return membersByTag;
         }
+
     }
 
     // Represents the state of a node in the replica set.  Instances of this class are immutable.
@@ -374,6 +416,10 @@ public class ReplicaSetStatus {
         
         public Set<Tag> getTags() {
             return _tags;
+        }
+
+        public float getPingTime() {
+            return _pingTime;
         }
 
         public String toJSON(){
@@ -462,6 +508,11 @@ public class ReplicaSetStatus {
             int result = key != null ? key.hashCode() : 0;
             result = 31 * result + (value != null ? value.hashCode() : 0);
             return result;
+        }
+        
+        @Override
+        public String toString(){
+            return "{ \'"+key+"\' : \'"+value+"\' }";
         }
     }
 

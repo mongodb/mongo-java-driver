@@ -18,8 +18,6 @@
 
 package com.mongodb;
 
-import com.mongodb.ReadPreference.TaggedReadPreference;
-
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
@@ -196,10 +194,13 @@ public class DBTCPConnector implements DBConnector {
     @Override
     public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries, ReadPreference readPref, DBDecoder decoder ) throws MongoException{
 
+        if(readPref == null)
+            readPref = m.getReadPreference();
+        
         if (readPref == null)
             readPref = ReadPreference.PRIMARY;
 
-        if (readPref == ReadPreference.PRIMARY && m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
+        if (m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
            readPref = ReadPreference.SECONDARY;
 
         boolean secondaryOk = !(readPref == ReadPreference.PRIMARY);
@@ -344,33 +345,14 @@ public class DBTCPConnector implements DBConnector {
                 _requestPort = null;
             }
 
-            if ( !(readPref == ReadPreference.PRIMARY) && _rsStatus != null ){
-                // if not a primary read set, try to use a secondary
-                // Do they want a Secondary, or a specific tag set?
-                if (readPref == ReadPreference.SECONDARY) {
-                    ServerAddress slave = _rsStatus.getASecondary();
-                    if ( slave != null ){
-                        return _portHolder.get( slave ).get();
-                    }
-                } else if (readPref instanceof ReadPreference.TaggedReadPreference) {
-                    // Tag based read
-                    ServerAddress secondary = _rsStatus.getASecondary( ( (TaggedReadPreference) readPref ).getTags() );
-                    if (secondary != null)
-                        return _portHolder.get( secondary ).get();
-                    else
-                        throw new MongoException( "Could not find any valid secondaries with the supplied tags ('" +
-                                                  ( (TaggedReadPreference) readPref ).getTags() + "'");
-                }
-            }
+            DBPort p = null;
+            ReplicaSetStatus.Node node = readPref.getNode(_rsStatus._replicaSetHolder.get());
+            
+            if(node == null)
+                throw new MongoException("No replica set members available for query with ReadPreference "+readPref.toJSON());
+            
+            p = _portHolder.get(node.getServerAddress()).get();
 
-            if (_masterPortPool == null) {
-                // this should only happen in rare case that no master was ever found
-                // may get here at startup if it's a read, slaveOk=true, and ALL servers are down
-                throw new MongoException("Rare case where master=null, probably all servers are down");
-            }
-
-            // use master
-            DBPort p = _masterPortPool.get();
             if ( _inRequest ) {
                 // if within request, remember port to stick to same server
                 _requestPort = p;

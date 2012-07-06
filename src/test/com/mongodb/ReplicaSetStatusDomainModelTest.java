@@ -85,6 +85,10 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         LinkedHashMap<String, String> anotherTag = new LinkedHashMap<String, String>();
         anotherTag.put("bar", "2");
 
+        LinkedHashMap<String, String> twoTags = new LinkedHashMap<String, String>();
+        twoTags.putAll(aTag);
+        twoTags.putAll(anotherTag);
+
         addNodeToLists("127.0.0.1", false, 10, updatableNodes, nodes, emptyTagMap);
         addNodeToLists("127.0.0.2", true, 30, updatableNodes, nodes, emptyTagMap);
         addNodeToLists("127.0.0.3", true, 30, updatableNodes, nodes, aTag);
@@ -92,6 +96,8 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         addNodeToLists("127.0.0.5", true, 10, updatableNodes, nodes, anotherTag);
         addNodeToLists("127.0.0.6", true, 10, updatableNodes, nodes, aTag);
         addNodeToLists("127.0.0.7", true, 10, updatableNodes, nodes, aTag);
+        addNodeToLists("127.0.0.8", true, 10, updatableNodes, nodes, twoTags);
+        addNodeToLists("127.0.0.9", true, 10, updatableNodes, nodes, twoTags);
 
         ReplicaSetStatus.ReplicaSet replicaSet = new ReplicaSetStatus.ReplicaSet(nodes, random, 15);
         assertEquals(random, replicaSet.random);
@@ -99,20 +105,13 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         assertEquals(nodes.get(0), replicaSet.master);
         assertTrue(replicaSet.hasMaster());
 
-        List<ReplicaSetStatus.Node> goodSecondaries = nodes.subList(4, 7);
-        assertEquals(goodSecondaries, replicaSet.goodSecondaries);
-
-        List<ReplicaSetStatus.Node> goodSecondariesForATag = nodes.subList(5, 7);
-        List<ReplicaSetStatus.Node> goodSecondariesForAnotherTag = nodes.subList(4, 5);
-
-        assertEquals(goodSecondariesForATag, replicaSet.goodSecondariesByTagMap.get(new ReplicaSetStatus.Tag("foo", "1")));
-        assertEquals(goodSecondariesForAnotherTag, replicaSet.goodSecondariesByTagMap.get(new ReplicaSetStatus.Tag("bar", "2")));
-
         // test getting a secondary
         final Map<String, AtomicInteger> counters = new TreeMap<String, AtomicInteger>();
         counters.put("127.0.0.5", new AtomicInteger(0));
         counters.put("127.0.0.6", new AtomicInteger(0));
         counters.put("127.0.0.7", new AtomicInteger(0));
+        counters.put("127.0.0.8", new AtomicInteger(0));
+        counters.put("127.0.0.9", new AtomicInteger(0));
 
         for (int idx = 0; idx < 100000; idx++) {
             final ServerAddress addr = replicaSet.getASecondary().getServerAddress();
@@ -121,21 +120,34 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         }
         assertLess(((getHigh(counters) - getLow(counters)) / (double) getHigh(counters)), .03);
 
-        // test getting a secondary by tag
+        // test getting a secondary by multiple tags
+        List<ReplicaSetStatus.Tag> twoTagsList = new ArrayList<ReplicaSetStatus.Tag>();
+//        tags.add(new ReplicaSetStatus.Tag("baz", "3"));
+        twoTagsList.add(new ReplicaSetStatus.Tag("foo", "1"));
+        twoTagsList.add(new ReplicaSetStatus.Tag("bar", "2"));
+        ServerAddress address = replicaSet.getASecondary(twoTagsList).getServerAddress();
+        List<ReplicaSetStatus.Node> goodSecondariesByTag = replicaSet.getGoodSecondariesByTags(twoTagsList);
+        assertEquals(2, goodSecondariesByTag.size());
+        assertEquals("127.0.0.8", goodSecondariesByTag.get(0).getServerAddress().getHost());
+        assertEquals("127.0.0.9", goodSecondariesByTag.get(1).getServerAddress().getHost());
+
+        // test randomness of getting a secondary
         counters.clear();
         counters.put("127.0.0.6", new AtomicInteger(0));
         counters.put("127.0.0.7", new AtomicInteger(0));
+        counters.put("127.0.0.8", new AtomicInteger(0));
+        counters.put("127.0.0.9", new AtomicInteger(0));
 
         List<ReplicaSetStatus.Tag> tags = new ArrayList<ReplicaSetStatus.Tag>();
-        tags.add(new ReplicaSetStatus.Tag("baz", "3"));
+//        tags.add(new ReplicaSetStatus.Tag("baz", "3"));
         tags.add(new ReplicaSetStatus.Tag("foo", "1"));
-        tags.add(new ReplicaSetStatus.Tag("bar", "2"));
+//        tags.add(new ReplicaSetStatus.Tag("bar", "2"));
         for (int idx = 0; idx < 100000; idx++) {
             final ServerAddress addr = replicaSet.getASecondary(tags).getServerAddress();
             assertNotNull(addr);
             counters.get(addr.getHost()).incrementAndGet();
         }
-        assertLess(((getHigh(counters) - getLow(counters)) / (double) getHigh(counters)), .03);
+        assertLess(((getHigh(counters) - getLow(counters)) / (double) getHigh(counters)), .04);
     }
 
     private int getLow(Map<String, AtomicInteger> counters) {
