@@ -194,14 +194,16 @@ public class DBTCPConnector implements DBConnector {
     @Override
     public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries, ReadPreference readPref, DBDecoder decoder ) throws MongoException{
 
-        if(readPref == null)
+        if(readPref == null )
             readPref = m.getReadPreference();
-        
-        if (readPref == null)
-            readPref = ReadPreference.PRIMARY;
 
-        if (m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
-           readPref = ReadPreference.SECONDARY;
+        if (readPref == null ){
+            if( m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
+                readPref = ReadPreference.SECONDARY;
+            else
+                readPref = ReadPreference.PRIMARY;
+        }
+           
 
         boolean secondaryOk = !(readPref == ReadPreference.PRIMARY);
 
@@ -346,12 +348,22 @@ public class DBTCPConnector implements DBConnector {
             }
 
             DBPort p = null;
-            ReplicaSetStatus.Node node = readPref.getNode(_rsStatus._replicaSetHolder.get());
+            if(_rsStatus == null){
+                if (_masterPortPool == null) {
+                    // this should only happen in rare case that no master was ever found
+                    // may get here at startup if it's a read, slaveOk=true, and ALL servers are down
+                    throw new MongoException("Rare case where master=null, probably all servers are down");
+                }
+                p = _masterPortPool.get();
+            }
+            else {
+                ReplicaSetStatus.Node node = readPref.getNode(_rsStatus._replicaSetHolder.get());
             
-            if(node == null)
-                throw new MongoException("No replica set members available for query with ReadPreference "+readPref.toJSON());
+                if(node == null)
+                    throw new MongoException("No replica set members available for query with "+readPref.toDBObject().toString());
             
-            p = _portHolder.get(node.getServerAddress()).get();
+                p = _portHolder.get(node.getServerAddress()).get();
+            }
 
             if ( _inRequest ) {
                 // if within request, remember port to stick to same server

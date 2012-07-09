@@ -430,8 +430,14 @@ public class ReplicaSetStatus {
             buf.append( "isMaster:" ).append( _isMaster ).append( ", " );
             buf.append( "isSecondary:" ).append( _isSecondary ).append( ", " );
             buf.append( "maxBsonObjectSize:" ).append( _maxBsonObjectSize ).append( ", " );
-            if(_tags != null && _tags.size() > 0)
-                buf.append( "tags:" ).append( JSON.serialize(_tags )  );
+            if(_tags != null && _tags.size() > 0){
+                List<DBObject> tagObjects = new ArrayList<DBObject>();
+                for( Tag tag : _tags)
+                    tagObjects.add(tag.toDBObject());
+                
+                buf.append(new BasicDBObject("tags", tagObjects) );
+            }
+                
             buf.append("}");
 
             return buf.toString();
@@ -510,9 +516,8 @@ public class ReplicaSetStatus {
             return result;
         }
         
-        @Override
-        public String toString(){
-            return "{ \'"+key+"\' : \'"+value+"\' }";
+        public DBObject toDBObject(){
+            return new BasicDBObject(key, value);
         }
     }
 

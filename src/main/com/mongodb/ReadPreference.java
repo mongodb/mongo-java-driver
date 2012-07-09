@@ -26,12 +26,12 @@ public class ReadPreference {
         return null;
      }
      
-     public String toJSON() {
+     public DBObject toDBObject() {
          return null;
       }
      
     public static class PrimaryReadPreference extends ReadPreference {
-        public PrimaryReadPreference() {}
+        private PrimaryReadPreference() {}
         
         @Override
         public String toString(){
@@ -44,8 +44,8 @@ public class ReadPreference {
         }
         
         @Override
-        public String toJSON(){
-            return "{ mode: 'primary' }";
+        public DBObject toDBObject(){
+            return new BasicDBObject("mode", "primary");
         }
     }
 
@@ -66,44 +66,35 @@ public class ReadPreference {
             return _tags;
         }
         
-        public String printTags(){
-            StringBuilder sb = new StringBuilder("tags: [ ");
+        public List<DBObject> tagsToDBObjectList(){
             List<Tag> taglist = getTags();
-            
             if (taglist == null || taglist.size() <= 0)
                 return null;
             
-            boolean firstTag = true;
-            for ( Tag tag : taglist ){
-                if(firstTag){
-                    sb.append(tag.toString());
-                    firstTag = false;
-                }
-                else
-                    sb.append(", "+tag.toString());
-            }
-            
-            sb.append(" ]");
-            return sb.toString();
+            List<DBObject> tagObjects = new ArrayList<DBObject>();
+            for ( Tag tag : taglist )
+                tagObjects.add(new BasicDBObject(tag.key, tag.value));
+          
+            return tagObjects;
         }
 
         private final List<Tag> _tags;
     }
     
     public static class PrimaryPreferredReadPreference extends SecondaryReadPreference {
-        public PrimaryPreferredReadPreference() {}
+        private PrimaryPreferredReadPreference() {}
         public PrimaryPreferredReadPreference( DBObject ... tagSetList) {
             super(tagSetList);
         }
         
-        public String toJSON(){
-            StringBuilder sb = new StringBuilder("{ mode: 'primary_preferred'");
-            String tagString = printTags();
-            if(tagString != null)
-                sb.append(", "+tagString);
+        public DBObject toDBObject(){
+            DBObject readPrefObject = new BasicDBObject("mode", "primary_preferred");
             
-            sb.append(" }");
-            return sb.toString();
+            List<DBObject> tagsList = tagsToDBObjectList();
+            if(tagsList != null)
+                readPrefObject.put("tags", tagsList);
+
+            return readPrefObject;
         }
         
         @Override
@@ -119,19 +110,20 @@ public class ReadPreference {
     }
 
     public static class SecondaryReadPreference extends TaggableReadPreference {
-        public SecondaryReadPreference() {}
+        private SecondaryReadPreference() {}
         public SecondaryReadPreference(DBObject ... tagSetList){
             super(tagSetList);
         }
         
-        public String toJSON(){
-            StringBuilder sb = new StringBuilder("{ mode: 'secondary'");
-            String tagString = printTags();
-            if(tagString != null)
-                sb.append(", "+tagString);
+        @Override
+        public DBObject toDBObject(){
+            DBObject readPrefObject = new BasicDBObject("mode", "secondary");
             
-            sb.append(" }");
-            return sb.toString();
+            List<DBObject> tagsList = tagsToDBObjectList();
+            if(tagsList != null)
+                readPrefObject.put("tags", tagsList);
+
+            return readPrefObject;
         }
 
         @Override
@@ -155,7 +147,7 @@ public class ReadPreference {
     }
 
     public static class SecondaryPreferredReadPreference extends SecondaryReadPreference {
-        public SecondaryPreferredReadPreference() {}
+        private SecondaryPreferredReadPreference() {}
         public SecondaryPreferredReadPreference( DBObject ... tagSetList) {
             super(tagSetList);
         }
@@ -165,14 +157,14 @@ public class ReadPreference {
             return "ReadPreference.SECONDARY_PREFERRED";
         }
         
-        public String toJSON(){
-            StringBuilder sb = new StringBuilder("{ mode: 'secondary_preferred'");
-            String tagString = printTags();
-            if(tagString != null)
-                sb.append(", "+tagString);
+        public DBObject toDBObject(){
+            DBObject readPrefObject = new BasicDBObject("mode", "secondary_preferred");
             
-            sb.append(" }");
-            return sb.toString();
+            List<DBObject> tagsList = tagsToDBObjectList();
+            if(tagsList != null)
+                readPrefObject.put("tags", tagsList);
+
+            return readPrefObject;
         }
         
         @Override
@@ -183,7 +175,7 @@ public class ReadPreference {
     }
 
     public static class NearestReadPreference extends TaggableReadPreference {
-        public NearestReadPreference() {}
+        private NearestReadPreference() {}
         public NearestReadPreference( DBObject ... tagSetList) {
             super(tagSetList);
         }
@@ -193,14 +185,15 @@ public class ReadPreference {
             return "ReadPreference.NEAREST" ;
         }
     
-        public String toJSON(){
-            StringBuilder sb = new StringBuilder("{ mode: 'nearest'");
-            String tagString = printTags();
-            if(tagString != null)
-                sb.append(", "+tagString);
+        @Override
+        public DBObject toDBObject(){
+            DBObject readPrefObject = new BasicDBObject("mode", "nearest");
             
-            sb.append(" }");
-            return sb.toString();
+            List<DBObject> tagsList = tagsToDBObjectList();
+            if(tagsList != null)
+                readPrefObject.put("tags", tagsList);
+
+            return readPrefObject;
         }
         
         @Override
@@ -219,7 +212,7 @@ public class ReadPreference {
     }
 
     @Deprecated
-    public static class TaggedReadPreference extends SecondaryReadPreference {
+    public static class TaggedReadPreference extends SecondaryPreferredReadPreference {
         public TaggedReadPreference( DBObject tags ) {
             super(splitMapIntoMulitpleMaps(tags));
         }

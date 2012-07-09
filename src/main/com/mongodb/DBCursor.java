@@ -143,19 +143,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
     }
 
     /**
-     * Informs the database of indexed fields of the collection in order to improve performance.
-     * @param indexKeys a <code>DBObject</code> with fields and direction
-     * @return same DBCursor for chaining operations
-     */
-    public DBCursor hint( DBObject indexKeys ){
-        if ( _it != null )
-            throw new IllegalStateException( "can't hint after executing query" );
-        
-        _hintDBObj = indexKeys;
-        return this;
-    }
-
-    /**
      *  Informs the database of an indexed field of the collection in order to improve performance.
      * @param indexName the name of an index
      * @return same DBCursort for chaining operations
@@ -165,6 +152,19 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
             throw new IllegalStateException( "can't hint after executing query" );
 
         _hint = indexName;
+        return this;
+    }
+    
+    /**
+     * Informs the database of indexed fields of the collection in order to improve performance.
+     * @param indexKeys a <code>DBObject</code> with fields and direction
+     * @return same DBCursor for chaining operations
+     */
+    public DBCursor hint( DBObject indexKeys ){
+        if ( _it != null )
+            throw new IllegalStateException( "can't hint after executing query" );
+        
+        _hintDBObj = indexKeys;
         return this;
     }
 
@@ -346,7 +346,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         throws MongoException {
         if ( _it != null )
             return;
-
+        
         _lookForHints();
 
         DBObject foo = _query;
@@ -364,6 +364,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
                 foo.put("$explain", true);
             if (_snapshot)
                 foo.put("$snapshot", true);
+            if (_readPref != null) 
+                foo.put("$readPreference", _readPref.toDBObject());
         }
 
         _it = _collection.__find(foo, _keysWanted, _skip, _batchSize, _limit, _options, _readPref, getDecoder());
@@ -407,7 +409,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         if ( _orderBy != null && _orderBy.keySet().size() > 0 )
             return true;
         
-        if ( _hint != null || _hintDBObj != null || _snapshot )
+        if ( _hint != null || _hintDBObj != null || _snapshot || _readPref != null)
             return true;
 
         return _explain;

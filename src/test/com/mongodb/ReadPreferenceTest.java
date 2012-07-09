@@ -80,11 +80,11 @@ public class ReadPreferenceTest extends TestCase  {
         assertTrue(ReadPreference.SECONDARY.toString().equals("ReadPreference.SECONDARY"));
         assertTrue(!ReadPreference.SECONDARY.getNode(_set).master());
         
-        assertTrue((ReadPreference.PRIMARY).toJSON().equals("{ mode: 'primary' }"));
-        assertTrue((ReadPreference.SECONDARY).toJSON().equals("{ mode: 'secondary' }"));
-        assertTrue((ReadPreference.SECONDARY_PREFERRED).toJSON().equals("{ mode: 'secondary_preferred' }"));
-        assertTrue((ReadPreference.PRIMARY_PREFERRED).toJSON().equals("{ mode: 'primary_preferred' }"));
-        assertTrue((ReadPreference.NEAREST).toJSON().equals("{ mode: 'nearest' }"));
+        assertTrue((ReadPreference.PRIMARY).toDBObject().toString().equals("{ \"mode\" : \"primary\"}"));
+        assertTrue((ReadPreference.SECONDARY).toDBObject().toString().equals("{ \"mode\" : \"secondary\"}"));
+        assertTrue((ReadPreference.SECONDARY_PREFERRED).toDBObject().toString().equals("{ \"mode\" : \"secondary_preferred\"}"));
+        assertTrue((ReadPreference.PRIMARY_PREFERRED).toDBObject().toString().equals("{ \"mode\" : \"primary_preferred\"}"));
+        assertTrue((ReadPreference.NEAREST).toDBObject().toString().equals("{ \"mode\" : \"nearest\"}"));
     }
     
     @Test
@@ -92,7 +92,7 @@ public class ReadPreferenceTest extends TestCase  {
         if( _standalone )
             return;
         
-        ReadPreference primaryRP = new PrimaryReadPreference();
+        ReadPreference primaryRP = ReadPreference.PRIMARY;
         assertTrue(primaryRP.getNode(_set).equals(_primary));
     }
     
@@ -124,7 +124,7 @@ public class ReadPreferenceTest extends TestCase  {
         assertTrue(pref.getNode(_set).equals(_secondary));
         
         pref = new ReadPreference.SecondaryReadPreference(new BasicDBObject("madeup", "1"));
-        assertTrue(pref.toJSON().equals("{ mode: 'secondary', tags: [ { 'madeup' : '1' } ] }"));
+        assertTrue(pref.toDBObject().toString().equals("{ \"mode\" : \"secondary\" , \"tags\" : [ { \"madeup\" : \"1\"}]}"));
         assertTrue(pref.getNode(_set) == null);
     }
 
@@ -187,7 +187,7 @@ public class ReadPreferenceTest extends TestCase  {
         assertTrue(pref.getNode(_set).equals(_secondary));
         
         pref = new ReadPreference.NearestReadPreference(new BasicDBObject("madeup", "1"));
-        assertTrue(pref.toJSON().equals("{ mode: 'nearest', tags: [ { 'madeup' : '1' } ] }"));
+        assertTrue(pref.toDBObject().toString().equals("{ \"mode\" : \"nearest\" , \"tags\" : [ { \"madeup\" : \"1\"}]}"));
         assertTrue(pref.getNode(_set) == null);
     }
     
