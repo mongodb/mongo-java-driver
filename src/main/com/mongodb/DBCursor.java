@@ -144,19 +144,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
     }
 
     /**
-     *  Informs the database of an indexed field of the collection in order to improve performance.
-     * @param indexName the name of an index
-     * @return same DBCursort for chaining operations
-     */
-    public DBCursor hint( String indexName ){
-        if ( _it != null )
-            throw new IllegalStateException( "can't hint after executing query" );
-
-        _hint = indexName;
-        return this;
-    }
-    
-    /**
      * Informs the database of indexed fields of the collection in order to improve performance.
      * @param indexKeys a <code>DBObject</code> with fields and direction
      * @return same DBCursor for chaining operations
@@ -166,6 +153,19 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
             throw new IllegalStateException( "can't hint after executing query" );
         
         _hintDBObj = indexKeys;
+        return this;
+    }
+
+    /**
+     *  Informs the database of an indexed field of the collection in order to improve performance.
+     * @param indexName the name of an index
+     * @return same DBCursort for chaining operations
+     */
+    public DBCursor hint( String indexName ){
+        if ( _it != null )
+            throw new IllegalStateException( "can't hint after executing query" );
+
+        _hint = indexName;
         return this;
     }
 

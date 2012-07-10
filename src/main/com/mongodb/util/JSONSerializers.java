@@ -20,8 +20,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.Bytes;
 import com.mongodb.DBObject;
 import com.mongodb.DBRefBase;
-import com.mongodb.ReplicaSetStatus;
-
 import org.bson.types.*;
 
 import java.lang.reflect.Array;
@@ -371,7 +369,7 @@ public class JSONSerializers {
             serializer.serialize(externalForm, buf);
         }
     }
-    
+
     private static class StringSerializer extends AbstractObjectSerializer {
 
         @Override
