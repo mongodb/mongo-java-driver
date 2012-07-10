@@ -26,6 +26,13 @@ import java.io.OutputStream;
  * Encoder that only knows how to encode BSONObject instances of type LazyDBObject.
  */
 public class LazyDBEncoder implements DBEncoder {
+	
+	/**
+	 * @param buf
+	 * @param o
+	 * @return
+	 * @throws MongoException
+	 */
     @Override
     public int writeObject(final OutputBuffer buf, BSONObject o) {
         if (!(o instanceof LazyDBObject)) {

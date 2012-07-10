@@ -33,8 +33,13 @@ public class DBTCPConnector implements DBConnector {
     static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
     static Logger _createLogger = Logger.getLogger( _logger.getName() + ".connect" );
 
-    public DBTCPConnector( Mongo m , ServerAddress addr )
-        throws MongoException {
+
+    /**
+     * @param m
+     * @param addr
+     * @throws MongoException
+     */
+    public DBTCPConnector( Mongo m , ServerAddress addr ){
         _mongo = m;
         _portHolder = new DBPortPool.Holder( m._options );
         _checkAddress( addr );
@@ -47,13 +52,21 @@ public class DBTCPConnector implements DBConnector {
 
     }
 
-    public DBTCPConnector( Mongo m , ServerAddress ... all )
-        throws MongoException {
+    /**
+     * @param m
+     * @param all
+     * @throws MongoException
+     */
+    public DBTCPConnector( Mongo m , ServerAddress ... all ){
         this( m , Arrays.asList( all ) );
     }
 
-    public DBTCPConnector( Mongo m , List<ServerAddress> all )
-        throws MongoException {
+    /**
+     * @param m
+     * @param all
+     * @throws MongoException
+     */
+    public DBTCPConnector( Mongo m , List<ServerAddress> all ){
         _mongo = m;
         _portHolder = new DBPortPool.Holder( m._options );
         _checkAddress( all );
@@ -111,6 +124,9 @@ public class DBTCPConnector implements DBConnector {
         _myPort.get().requestDone();
     }
 
+    /**
+     * @throws MongoException
+     */
     @Override
     public void requestEnsureConnection(){
         _myPort.get().requestEnsureConnection();
@@ -122,22 +138,35 @@ public class DBTCPConnector implements DBConnector {
     }
 
     WriteResult _checkWriteError( DB db, DBPort port , WriteConcern concern )
-        throws MongoException, IOException {
+        throws IOException{
         CommandResult e = port.runCommand( db , concern.getCommand() );
 
         e.throwOnError();
         return new WriteResult( e , concern );
     }
 
+    /**
+     * @param db
+     * @param m
+     * @param concern
+     * @return
+     * @throws MongoException
+     */
     @Override
-    public WriteResult say( DB db , OutMessage m , WriteConcern concern )
-        throws MongoException {
+    public WriteResult say( DB db , OutMessage m , WriteConcern concern ){
         return say( db , m , concern , null );
     }
 
+    /**
+     * @param db
+     * @param m
+     * @param concern
+     * @param hostNeeded
+     * @return
+     * @throws MongoException
+     */
     @Override
-    public WriteResult say( DB db , OutMessage m , WriteConcern concern , ServerAddress hostNeeded )
-        throws MongoException {
+    public WriteResult say( DB db , OutMessage m , WriteConcern concern , ServerAddress hostNeeded ){
 
         _checkClosed();
         checkMaster( false , true );
@@ -180,19 +209,47 @@ public class DBTCPConnector implements DBConnector {
         }
     }
 
+    /**
+     * @param db
+     * @param coll
+     * @param m
+     * @param hostNeeded
+     * @param decoder
+     * @return
+     * @throws MongoException
+     */
     @Override
-    public Response call( DB db , DBCollection coll , OutMessage m, ServerAddress hostNeeded, DBDecoder decoder )
-        throws MongoException {
+    public Response call( DB db , DBCollection coll , OutMessage m, ServerAddress hostNeeded, DBDecoder decoder ){
         return call( db , coll , m , hostNeeded , 2, null, decoder );
     }
 
-
-    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries ) throws MongoException {
+    /**
+     * @param db
+     * @param coll
+     * @param m
+     * @param hostNeeded
+     * @param retries
+     * @return
+     * @throws MongoException
+     */
+    @Override
+    public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries ){
         return call( db, coll, m, hostNeeded, retries, null, null);
     }
 
+
+    /**
+     * @param db
+     * @param coll
+     * @param m
+     * @param hostNeeded
+     * @param readPerf
+     * @param decoder
+     * @return
+     * @throws MongoException
+     */
     @Override
-    public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries, ReadPreference readPref, DBDecoder decoder ) throws MongoException{
+    public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries, ReadPreference readPref, DBDecoder decoder ){
 
         if(readPref == null )
             readPref = m.getReadPreference();
@@ -271,6 +328,7 @@ public class DBTCPConnector implements DBConnector {
      * Gets the list of server addresses currently seen by the connector.
      * This includes addresses auto-discovered from a replica set.
      * @return
+     * @throws MongoException 
      */
     public List<ServerAddress> getServerAddressList() {
         if (_rsStatus != null) {
@@ -304,8 +362,7 @@ public class DBTCPConnector implements DBConnector {
      * @return true if the request should be retried, false otherwise
      * @throws MongoException
      */
-    boolean _error( Throwable t, boolean secondaryOk )
-        throws MongoException {
+    boolean _error( Throwable t, boolean secondaryOk ){
         if (_rsStatus == null) {
             // single server, no need to retry
             return false;
@@ -420,8 +477,7 @@ public class DBTCPConnector implements DBConnector {
         boolean _inRequest;
     }
 
-    void checkMaster( boolean force , boolean failIfNoMaster )
-        throws MongoException {
+    void checkMaster( boolean force , boolean failIfNoMaster ){
 
         if ( _rsStatus != null ){
             if ( _masterPortPool == null || force ){

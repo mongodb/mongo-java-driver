@@ -52,6 +52,7 @@ public class DBRef extends DBRefBase {
      * @param db the database
      * @param ref the reference
      * @return
+     * @throws MongoException
      */
     public static DBObject fetch(DB db, DBObject ref) {
         String ns;

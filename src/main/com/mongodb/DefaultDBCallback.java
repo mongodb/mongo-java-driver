@@ -75,11 +75,21 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
         return o;
     }
 
+    /**
+     * @return
+     * @throws MongoException
+     */
     @Override
     public BSONObject create(){
         return _create( null );
     }
 
+    /**
+     * @param array
+     * @param path
+     * @return
+     * @throws MongoException
+     */
     @Override
     public BSONObject create( boolean array , List<String> path ){
         if ( array )

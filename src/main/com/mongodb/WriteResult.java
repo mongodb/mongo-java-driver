@@ -67,9 +67,10 @@ public class WriteResult {
     /**
      * calls {@link WriteResult#getLastError(com.mongodb.WriteConcern)} with concern=null
      * @return
+     * @throws MongoException
      */
     public synchronized CommandResult getLastError(){
-	return getLastError(null);
+    	return getLastError(null);
     }
 
     /**
@@ -78,6 +79,7 @@ public class WriteResult {
      * - otherwise attempts to obtain a CommandResult by calling getLastError with the concern
      * @param concern the concern
      * @return
+     * @throws MongoException
      */
     public synchronized CommandResult getLastError(WriteConcern concern){
         if ( _lastErrorResult != null ) {
@@ -110,6 +112,7 @@ public class WriteResult {
     /**
      * Gets the error String ("err" field)
      * @return
+     * @throws MongoException
      */
     public String getError(){
         Object foo = getField( "err" );
@@ -122,6 +125,7 @@ public class WriteResult {
      * Gets the "n" field, which contains the number of documents
      * affected in the write operation.
      * @return
+     * @throws MongoException
      */
     public int getN(){
         return getLastError().getInt( "n" );
@@ -131,6 +135,7 @@ public class WriteResult {
      * Gets a field
      * @param name field name
      * @return
+     * @throws MongoException
      */
     public Object getField( String name ){
         return getLastError().get( name );

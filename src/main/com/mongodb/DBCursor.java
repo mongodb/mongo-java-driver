@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.util.*;
 
 import com.mongodb.DBApiLayer.Result;
+import com.mongodb.QueryOpBuilder;
 
 
 /** An iterator over database results.
@@ -195,6 +196,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * "n" : the number of records that the database returned
      * "millis" : how long it took the database to execute the query
      * @return a <code>DBObject</code>
+     * @throws MongoException
      * @dochub explain
      */
     public DBObject explain(){
@@ -261,7 +263,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * Discards a given number of elements at the beginning of the cursor.
      * @param n the number of elements to skip
      * @return a cursor pointing to the new first element of the results
-     * @throws RuntimeException if the cursor has started to be iterated through
+     * @throws IllegalStateException if the cursor has started to be iterated through
      */
     public DBCursor skip( int n ){
         if ( _it != null )
@@ -342,36 +344,27 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
 
     // ----  internal stuff ------
 
-    private void _check()
-        throws MongoException {
-        if ( _it != null )
-            return;
-        
-        _lookForHints();
+	private void _check(){
+		if (_it != null)
+			return;
 
-        DBObject foo = _query;
-        if (hasSpecialQueryFields()) {
-            foo = _specialFields == null ? new BasicDBObject() : _specialFields;
+		_lookForHints();
 
-            _addToQueryObject(foo, "query", _query, true);
-            _addToQueryObject(foo, "orderby", _orderBy, false);
-            if (_hint != null)
-                _addToQueryObject(foo, "$hint", _hint);
-            if (_hintDBObj != null)
-                _addToQueryObject(foo, "$hint", _hintDBObj);
+		DBObject queryOp = new QueryOpBuilder()
+							.addQuery(_query)
+							.addOrderBy(_orderBy)
+							.addHint(_hintDBObj)
+							.addHint(_hint)
+							.addExplain(_explain)
+							.addSnapshot(_snapshot)
+							.addSpecialFields(_specialFields)
+							.get();
+		
+		_it = _collection.__find(queryOp, _keysWanted, _skip, _batchSize, _limit,
+				_options, _readPref, getDecoder());
+	}
 
-            if (_explain)
-                foo.put("$explain", true);
-            if (_snapshot)
-                foo.put("$snapshot", true);
-            if (_readPref != null) 
-                foo.put("$readPreference", _readPref.toDBObject());
-        }
-
-        _it = _collection.__find(foo, _keysWanted, _skip, _batchSize, _limit, _options, _readPref, getDecoder());
-    }
-
-    // Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
+	// Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
     // so that the collection can use a cached decoder
     private DBDecoder getDecoder() {
         return _decoderFact != null ? _decoderFact.create() : null;
@@ -402,37 +395,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         }
     }
 
-    boolean hasSpecialQueryFields(){
-        if ( _specialFields != null )
-            return true;
-
-        if ( _orderBy != null && _orderBy.keySet().size() > 0 )
-            return true;
-        
-        if ( _hint != null || _hintDBObj != null || _snapshot || _readPref != null)
-            return true;
-
-        return _explain;
-    }
-
-    void _addToQueryObject( DBObject query , String field , DBObject thing , boolean sendEmpty ){
-        if ( thing == null )
-            return;
-
-        if ( ! sendEmpty && thing.keySet().size() == 0 )
-            return;
-
-        _addToQueryObject( query , field , thing );
-    }
-
-    void _addToQueryObject( DBObject query , String field , Object thing ){
-
-        if ( thing == null )
-            return;
-
-        query.put( field , thing );
-    }
-
     void _checkType( CursorType type ){
         if ( _cursorType == null ){
             _cursorType = type;
@@ -445,8 +407,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         throw new IllegalArgumentException( "can't switch cursor access methods" );
     }
 
-    private DBObject _next()
-        throws MongoException {
+    private DBObject _next() {
         if ( _cursorType == null )
             _checkType( CursorType.ITERATOR );
 
@@ -489,8 +450,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         throw new IllegalArgumentException("_it not a real result" );
     }
 
-    private boolean _hasNext()
-        throws MongoException {
+    private boolean _hasNext() {
         _check();
 
         if ( _limit > 0 && _num >= _limit )
@@ -514,7 +474,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return
      * @throws MongoException
      */
-    public boolean hasNext() throws MongoException {
+    public boolean hasNext() {
         _checkType( CursorType.ITERATOR );
         return _hasNext();
     }
@@ -524,7 +484,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return the next element
      * @throws MongoException
      */
-    public DBObject next() throws MongoException {
+    public DBObject next() {
         _checkType( CursorType.ITERATOR );
         return _next();
     }
@@ -548,8 +508,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
 
     //  ---- array api  -----
 
-    void _fill( int n )
-        throws MongoException {
+    void _fill( int n ){
         _checkType( CursorType.ARRAY );
         while ( n >= _all.size() && _hasNext() )
             _next();
@@ -563,8 +522,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return the number of elements in the array
      * @throws MongoException
      */
-    public int length()
-        throws MongoException {
+    public int length() {
         _checkType( CursorType.ARRAY );
         _fill( Integer.MAX_VALUE );
         return _all.size();
@@ -575,8 +533,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return an array of elements
      * @throws MongoException
      */
-    public List<DBObject> toArray()
-        throws MongoException {
+    public List<DBObject> toArray(){
         return toArray( Integer.MAX_VALUE );
     }
 
@@ -586,8 +543,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return an array of objects
      * @throws MongoException
      */
-    public List<DBObject> toArray( int max )
-        throws MongoException {
+    public List<DBObject> toArray( int max ) {
         _checkType( CursorType.ARRAY );
         _fill( max - 1 );
         return _all;
@@ -598,6 +554,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * Iterates cursor and counts objects
      * @see #count()
      * @return num objects
+     * @throws MongoException
      */
     public int itcount(){
         int n = 0;
@@ -615,14 +572,13 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return the number of objects
      * @throws MongoException
      */
-    public int count()
-        throws MongoException {
+    public int count() {
         if ( _collection == null )
             throw new IllegalArgumentException( "why is _collection null" );
         if ( _collection._db == null )
             throw new IllegalArgumentException( "why is _collection._db null" );
 
-        return (int)_collection.getCount(this._query, this._keysWanted);
+        return (int)_collection.getCount(this._query, this._keysWanted, getReadPreference());
     }
 
     /**
@@ -632,14 +588,13 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return the number of objects
      * @throws MongoException
      */
-    public int size()
-        throws MongoException {
+    public int size() {
         if ( _collection == null )
             throw new IllegalArgumentException( "why is _collection null" );
         if ( _collection._db == null )
             throw new IllegalArgumentException( "why is _collection._db null" );
 
-        return (int)_collection.getCount(this._query, this._keysWanted, this._limit, this._skip );
+        return (int)_collection.getCount(this._query, this._keysWanted, this._limit, this._skip, getReadPreference() );
     }
 
 

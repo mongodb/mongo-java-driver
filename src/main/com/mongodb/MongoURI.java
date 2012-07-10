@@ -154,7 +154,7 @@ public class MongoURI {
                 else if ( key.equals( "w" ) ) _options.w = Integer.parseInt( value );
                 else if ( key.equals( "wtimeout" ) ) _options.wtimeout = Integer.parseInt( value );
                 else if ( key.equals( "fsync" ) ) _options.fsync = _parseBoolean( value );
-                else LOGGER.warning( "Unknown or Unsupported Option '" + value + "'" );
+                else LOGGER.warning( "Unknown or Unsupported Option '" + key + "'" );
             }
         }
     }
@@ -224,7 +224,7 @@ public class MongoURI {
      * @throws UnknownHostException
      */
     public Mongo connect()
-        throws MongoException , UnknownHostException {
+        throws UnknownHostException {
         // TODO caching?
         return new Mongo( this );
     }
@@ -236,7 +236,7 @@ public class MongoURI {
      * @throws UnknownHostException
      */
     public DB connectDB()
-        throws MongoException , UnknownHostException {
+        throws UnknownHostException {
         // TODO auth
         return connect().getDB( _database );
     }

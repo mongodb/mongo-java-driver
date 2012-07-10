@@ -115,6 +115,7 @@ public class Mongo {
      * returns a database object
      * @param addr the database address
      * @return
+     * @throws MongoException
      */
     public static DB connect( DBAddress addr ){
         return new Mongo( addr ).getDB( addr.getDBName() );
@@ -126,7 +127,7 @@ public class Mongo {
      * @throws MongoException
      */
     public Mongo()
-        throws UnknownHostException , MongoException {
+        throws UnknownHostException {
         this( new ServerAddress() );
     }
 
@@ -137,7 +138,7 @@ public class Mongo {
      * @throws MongoException
      */
     public Mongo( String host )
-        throws UnknownHostException , MongoException {
+        throws UnknownHostException{
         this( new ServerAddress( host ) );
     }
 
@@ -149,7 +150,7 @@ public class Mongo {
      * @throws MongoException
      */
     public Mongo( String host , MongoOptions options )
-        throws UnknownHostException , MongoException {
+        throws UnknownHostException {
         this( new ServerAddress( host ) , options );
     }
 
@@ -161,7 +162,7 @@ public class Mongo {
      * @throws MongoException
      */
     public Mongo( String host , int port )
-        throws UnknownHostException , MongoException {
+        throws UnknownHostException {
         this( new ServerAddress( host , port ) );
     }
 
@@ -169,10 +170,9 @@ public class Mongo {
      * Creates a Mongo instance based on a (single) mongodb node
      * @see com.mongodb.ServerAddress
      * @param addr the database address
-     * @throws MongoException
+     * @throws MongoException 
      */
-    public Mongo( ServerAddress addr )
-        throws MongoException {
+    public Mongo( ServerAddress addr ) {
         this( addr , new MongoOptions() );
     }
 
@@ -183,8 +183,7 @@ public class Mongo {
      * @param options default query options
      * @throws MongoException
      */
-    public Mongo( ServerAddress addr , MongoOptions options )
-        throws MongoException {
+    public Mongo( ServerAddress addr , MongoOptions options ) {
         _addr = addr;
         _addrs = null;
         _options = options;
@@ -206,8 +205,7 @@ public class Mongo {
      * @throws MongoException
      */
     @Deprecated
-    public Mongo( ServerAddress left , ServerAddress right )
-        throws MongoException {
+    public Mongo( ServerAddress left , ServerAddress right ) {
         this( left , right , new MongoOptions() );
     }
 
@@ -223,8 +221,7 @@ public class Mongo {
      * @throws MongoException
      */
     @Deprecated
-    public Mongo( ServerAddress left , ServerAddress right , MongoOptions options )
-        throws MongoException {
+    public Mongo( ServerAddress left , ServerAddress right , MongoOptions options ) {
         _addr = null;
         _addrs = Arrays.asList( left , right );
         _options = options;
@@ -246,8 +243,7 @@ public class Mongo {
      * the system will figure out the rest.
      * @throws MongoException
      */
-    public Mongo( List<ServerAddress> replicaSetSeeds )
-        throws MongoException {
+    public Mongo( List<ServerAddress> replicaSetSeeds ) {
         this( replicaSetSeeds , new MongoOptions() );
     }
 
@@ -258,10 +254,9 @@ public class Mongo {
      * @param replicaSetSeeds put as many servers as you can in the list.
      *                       the system will figure the rest out
      * @param options default query options
-     * @throws MongoException
+     * @throws MongoException 
      */
-    public Mongo( List<ServerAddress> replicaSetSeeds , MongoOptions options )
-        throws MongoException {
+    public Mongo( List<ServerAddress> replicaSetSeeds , MongoOptions options ) {
 
         _addr = null;
         _addrs = replicaSetSeeds;
@@ -283,13 +278,13 @@ public class Mongo {
      *   <li>mongodb://127.0.0.1</li>
      *   <li>mongodb://fred:foobar@127.0.0.1/</li>
      *  </p>
-     *  @throws MongoException
+     * @throws MongoException
      * @throws UnknownHostException
      * @dochub connections
      */
 
     public Mongo( MongoURI uri )
-        throws MongoException , UnknownHostException {
+        throws UnknownHostException {
 
         _options = uri.getOptions();
         _applyMongoOptions();
@@ -345,8 +340,7 @@ public class Mongo {
      * @return
      * @throws MongoException
      */
-    public List<String> getDatabaseNames()
-        throws MongoException {
+    public List<String> getDatabaseNames(){
 
         BasicDBObject cmd = new BasicDBObject();
         cmd.put("listDatabases", 1);
@@ -371,8 +365,7 @@ public class Mongo {
      * @param dbName name of database to drop
      * @throws MongoException
      */
-    public void dropDatabase(String dbName)
-        throws MongoException {
+    public void dropDatabase(String dbName){
 
         getDB( dbName ).dropDatabase();
     }
@@ -441,6 +434,7 @@ public class Mongo {
      * Gets the list of server addresses currently seen by the connector.
      * This includes addresses auto-discovered from a replica set.
      * @return
+     * @throws MongoException 
      */
     public List<ServerAddress> getServerAddressList() {
         return _connector.getServerAddressList();
@@ -567,6 +561,7 @@ public class Mongo {
      * Note that this value may change over time depending on which server is master.
      * If the size is not known yet, a request may be sent to the master server
      * @return the maximum size
+     * @throws MongoException
      */
     public int getMaxBsonObjectSize() {
         int maxsize = _connector.getMaxBsonObjectSize();
@@ -599,6 +594,7 @@ public class Mongo {
      * This is done automatically by the server at intervals, but can be forced for better reliability. 
      * @param async if true, the fsync will be done asynchronously on the server.
      * @return 
+     * @throws MongoException
      */
     public CommandResult fsync(boolean async) {
         DBObject cmd = new BasicDBObject("fsync", 1);
@@ -612,6 +608,7 @@ public class Mongo {
      * Forces the master server to fsync the RAM data to disk, then lock all writes.
      * The database will be read-only after this command returns.
      * @return 
+     * @throws MongoException
      */
     public CommandResult fsyncAndLock() {
         DBObject cmd = new BasicDBObject("fsync", 1);
@@ -623,6 +620,7 @@ public class Mongo {
      * Unlocks the database, allowing the write operations to go through.
      * This command may be asynchronous on the server, which means there may be a small delay before the database becomes writable.
      * @return 
+     * @throws MongoException
      */
     public DBObject unlock() {
         DB db = getDB("admin");
@@ -633,6 +631,7 @@ public class Mongo {
     /**
      * Returns true if the database is locked (read-only), false otherwise.
      * @return 
+     * @throws MongoException
      */
     public boolean isLocked() {
         DB db = getDB("admin");
@@ -662,7 +661,7 @@ public class Mongo {
          * @throws UnknownHostException
          */
         public Mongo connect( MongoURI uri )
-            throws MongoException , UnknownHostException {
+            throws UnknownHostException {
 
             String key = _toKey( uri );
 

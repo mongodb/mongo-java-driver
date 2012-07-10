@@ -103,6 +103,60 @@ public class SecondaryReadTest extends TestCase {
         } finally { if (mongo != null) mongo.close(); }
     }
 
+  /*
+    @Test(groups = {"basic"})
+    public void testSecondaryCalls() throws Exception{
+    	final Mongo mongo = loadMongo();
+    	
+        try {
+            if (isStandalone(mongo)) {
+                return;
+            }
+            
+            final List<TestHost> testHosts = extractHosts(mongo);
+            final DBCollection col = loadCleanDbCollection(mongo);
+            final DB db = col.getDB();
+       
+            insertTestData(col, new WriteConcern(getSecondaryCount(testHosts) + 1));
+
+            //whole DB is secondary
+            db.setReadPreference(ReadPreference.SECONDARY);
+            
+            col.count();
+            confirmSecondary(db, extractHosts(mongo));
+            col.findOne();
+            confirmSecondary(db, extractHosts(mongo));
+            col.distinct("value");
+            confirmSecondary(db, extractHosts(mongo));
+            
+            
+            //DB is primary, Collection is secondary
+            db.setReadPreference(ReadPreference.PRIMARY);
+            db.setReadPreference(ReadPreference.SECONDARY);
+            
+            col.count();
+            confirmSecondary(db, extractHosts(mongo));
+            col.findOne();
+            confirmSecondary(db, extractHosts(mongo));
+            col.distinct("value");
+            confirmSecondary(db, extractHosts(mongo));
+            
+            
+        } finally { if (mongo != null) mongo.close(); }
+
+    }
+    */
+    
+    private void confirmSecondary(DB db, List<TestHost> pHosts) throws Exception{
+    	String server = db.getLastError().getString("serverUsed");
+    	String[] ipPort = server.split("[/:]");
+    	
+    	ServerAddress servAddress = new ServerAddress(ipPort[0], Integer.parseInt(ipPort[2]));
+    	
+    	assertTrue(serverIsSecondary(servAddress, pHosts));
+    	
+    }
+    
     private boolean serverIsSecondary(final ServerAddress pServerAddr, final List<TestHost> pHosts) {
         for (final TestHost h : pHosts) {
             if (!h.stateStr.equals("SECONDARY"))
@@ -144,9 +198,13 @@ public class SecondaryReadTest extends TestCase {
     }
 
     private DBCollection loadCleanDbCollection(final Mongo pMongo) {
-        pMongo.getDB("com_mongodb_unittest_SecondaryReadTest").dropDatabase();
-        final DB db = pMongo.getDB("com_mongodb_unittest_SecondaryReadTest");
+        getDatabase(pMongo).dropDatabase();
+        final DB db = getDatabase(pMongo);;
         return db.getCollection("testBalance");
+    }
+    
+    private DB getDatabase(final Mongo pMongo) {
+    	return pMongo.getDB("com_mongodb_unittest_SecondaryReadTest");
     }
 
     private void insertTestData(final DBCollection pCol, WriteConcern writeConcern) throws Exception {

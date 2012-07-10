@@ -155,6 +155,7 @@ public class DBAddress extends ServerAddress {
      * creates a DBAddress pointing to a different database on the same server
      * @param name database name
      * @return
+     * @throws MongoException
      */
     public DBAddress getSister( String name ){
         try {

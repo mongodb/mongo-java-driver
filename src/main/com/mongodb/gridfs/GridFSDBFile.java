@@ -53,6 +53,7 @@ public class GridFSDBFile extends GridFSFile {
      * @param filename the file name on disk
      * @return
      * @throws IOException
+     * @throws MongoException 
      */
     public long writeTo( String filename ) throws IOException {
         return writeTo( new File( filename ) );
@@ -62,6 +63,7 @@ public class GridFSDBFile extends GridFSFile {
      * @param f the File object
      * @return
      * @throws IOException
+     * @throws MongoException 
      */
     public long writeTo( File f ) throws IOException {
         
@@ -80,6 +82,7 @@ public class GridFSDBFile extends GridFSFile {
      * @param out the OutputStream
      * @return
      * @throws IOException
+     * @throws MongoException 
      */
     public long writeTo( OutputStream out )
     		throws IOException {

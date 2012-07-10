@@ -129,7 +129,7 @@ public class CommandResult extends BasicDBObject {
      * throws an exception containing the cmd name, in case the command failed, or the "err/code" information
      * @throws MongoException
      */
-    public void throwOnError() throws MongoException {
+    public void throwOnError() {
         if ( !ok() || hasErr() ){
             throw getException();
         }
@@ -146,7 +146,12 @@ public class CommandResult extends BasicDBObject {
     static class CommandFailure extends MongoException {
         private static final long serialVersionUID = 1L;
 
-        CommandFailure( CommandResult res , String msg ){
+        /**
+         * 
+         * @param res the result
+         * @param msg the message
+         */
+        public CommandFailure( CommandResult res , String msg ){
             super( ServerError.getCode( res ) , msg );
         }
     }
