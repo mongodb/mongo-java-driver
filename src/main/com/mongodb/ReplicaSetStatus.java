@@ -299,6 +299,10 @@ public class ReplicaSetStatus {
             return calculateGoodMembers(taggedMembers,
                     calculateBestPingTime(taggedMembers), acceptableLatencyMS);
         }
+        
+        public List<Node> getGoodMembers() {
+            return calculateGoodMembers(all, calculateBestPingTime(all), acceptableLatencyMS);
+        }
 
         @Override
         public String toString() {

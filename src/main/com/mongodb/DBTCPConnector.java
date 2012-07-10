@@ -251,17 +251,12 @@ public class DBTCPConnector implements DBConnector {
     @Override
     public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries, ReadPreference readPref, DBDecoder decoder ){
 
-        if(readPref == null )
-            readPref = m.getReadPreference();
+        if (readPref == null)
+            readPref = ReadPreference.PRIMARY;
 
-        if (readPref == null ){
-            if( m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
-                readPref = ReadPreference.SECONDARY;
-            else
-                readPref = ReadPreference.PRIMARY;
-        }
-           
-
+        if (readPref == ReadPreference.PRIMARY && m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
+           readPref = ReadPreference.SECONDARY;
+        
         boolean secondaryOk = !(readPref == ReadPreference.PRIMARY);
 
         _checkClosed();

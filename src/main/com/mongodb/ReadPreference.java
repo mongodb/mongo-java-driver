@@ -15,6 +15,7 @@ package com.mongodb;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import com.mongodb.ReplicaSetStatus.Node;
@@ -50,35 +51,19 @@ public class ReadPreference {
     }
 
     public static abstract class TaggableReadPreference extends ReadPreference {
-        public TaggableReadPreference() { _tags = null;}
+        public TaggableReadPreference() { _tags = null; }
         
         public TaggableReadPreference(DBObject ... tagSetList) {
-            List<Tag> tagList = new ArrayList<Tag>();
-            for (DBObject curTagSet : tagSetList) {
-                for (String key : curTagSet.keySet()) {
-                    tagList.add(new Tag(key, curTagSet.get(key).toString()));
-                }
-            }
-            _tags = tagList;
+            _tags = new ArrayList<DBObject>();
+            for (DBObject curTagSet : tagSetList)
+                _tags.add(curTagSet);
         }
         
-        public List<Tag> getTags(){
+        public List<DBObject> getTagSets(){
             return _tags;
         }
         
-        public List<DBObject> tagsToDBObjectList(){
-            List<Tag> taglist = getTags();
-            if (taglist == null || taglist.size() <= 0)
-                return null;
-            
-            List<DBObject> tagObjects = new ArrayList<DBObject>();
-            for ( Tag tag : taglist )
-                tagObjects.add(new BasicDBObject(tag.key, tag.value));
-          
-            return tagObjects;
-        }
-
-        private final List<Tag> _tags;
+        private final List<DBObject> _tags;
     }
     
     public static class PrimaryPreferredReadPreference extends SecondaryReadPreference {
@@ -90,9 +75,8 @@ public class ReadPreference {
         public DBObject toDBObject(){
             DBObject readPrefObject = new BasicDBObject("mode", "primary_preferred");
             
-            List<DBObject> tagsList = tagsToDBObjectList();
-            if(tagsList != null)
-                readPrefObject.put("tags", tagsList);
+            if(getTagSets() != null)
+                readPrefObject.put("tags", getTagSets());
 
             return readPrefObject;
         }
@@ -119,9 +103,8 @@ public class ReadPreference {
         public DBObject toDBObject(){
             DBObject readPrefObject = new BasicDBObject("mode", "secondary");
             
-            List<DBObject> tagsList = tagsToDBObjectList();
-            if(tagsList != null)
-                readPrefObject.put("tags", tagsList);
+            if(getTagSets() != null)
+                readPrefObject.put("tags", getTagSets());
 
             return readPrefObject;
         }
@@ -133,16 +116,21 @@ public class ReadPreference {
         
         @Override
         Node getNode(ReplicaSetStatus.ReplicaSet set) {
-            Node node = null;
             
-            if(getTags() == null || getTags().isEmpty())
-                node = set.getASecondary();
-            else{
-                List<Node> candidates = set.getGoodSecondariesByTags(getTags());
-                if( candidates.size() > 0 )
-                    node = candidates.get(  (new Random()).nextInt(candidates.size()) );
+            if(getTagSets() == null || getTagSets().isEmpty())
+                return set.getASecondary();
+            
+            for (DBObject curTagSet : getTagSets()) {
+                List<Tag> tagList = new ArrayList<Tag>();
+                for (String key : curTagSet.keySet()) {
+                    tagList.add(new Tag(key, curTagSet.get(key).toString()));
+                }
+                Node node = set.getASecondary(tagList);
+                if (node != null) {
+                    return node;
+                }
             }
-            return node;
+            return null;
         }
     }
 
@@ -160,9 +148,8 @@ public class ReadPreference {
         public DBObject toDBObject(){
             DBObject readPrefObject = new BasicDBObject("mode", "secondary_preferred");
             
-            List<DBObject> tagsList = tagsToDBObjectList();
-            if(tagsList != null)
-                readPrefObject.put("tags", tagsList);
+            if(getTagSets() != null)
+                readPrefObject.put("tags", getTagSets());
 
             return readPrefObject;
         }
@@ -189,36 +176,42 @@ public class ReadPreference {
         public DBObject toDBObject(){
             DBObject readPrefObject = new BasicDBObject("mode", "nearest");
             
-            List<DBObject> tagsList = tagsToDBObjectList();
-            if(tagsList != null)
-                readPrefObject.put("tags", tagsList);
+            if(getTagSets() != null)
+                readPrefObject.put("tags", getTagSets());
 
             return readPrefObject;
         }
         
         @Override
         Node getNode(ReplicaSetStatus.ReplicaSet set) {
-            List<Tag> tags = getTags();
             List<Node> candidates = null;
             
-            if(tags == null || tags.isEmpty())
-                candidates = set.getAll();
-
-            else
-                candidates = set.getGoodMembersByTags(tags);
+            if(getTagSets() == null || getTagSets().isEmpty())
+                candidates = set.getGoodMembers();
             
-            return ( candidates.size() > 0 )? candidates.get(  (new Random()).nextInt(candidates.size()) ) : null;
+            for (DBObject curTagSet : getTagSets()) {
+                List<Tag> tagList = new ArrayList<Tag>();
+                for (String key : curTagSet.keySet()) {
+                    tagList.add(new Tag(key, curTagSet.get(key).toString()));
+                }
+                candidates = set.getGoodMembersByTags(tagList);
+            }
+            return ( candidates != null && candidates.size() > 0 )? candidates.get(  (new Random()).nextInt(candidates.size()) ) : null;
         }
     }
 
     @Deprecated
-    public static class TaggedReadPreference extends SecondaryPreferredReadPreference {
+    public static class TaggedReadPreference extends ReadPreference {
+        
+        public TaggedReadPreference( Map<String, String> tags ) {
+                _tags = new BasicDBObject(tags);
+        }
+
         public TaggedReadPreference( DBObject tags ) {
-            super(splitMapIntoMulitpleMaps(tags));
+            _tags = tags;
         }
         
         private static DBObject[] splitMapIntoMulitpleMaps(DBObject tags){
-
             DBObject[] tagList = new DBObject[tags.keySet().size()];
             
             if(tags != null){
@@ -230,6 +223,24 @@ public class ReadPreference {
             }
             return tagList;
         }
+        
+        public DBObject getTags(){
+            return _tags;
+        }
+        
+        @Override
+        Node getNode(ReplicaSetStatus.ReplicaSet set) {
+            ReadPreference pref = new SecondaryReadPreference(splitMapIntoMulitpleMaps(_tags));
+            return pref.getNode(set);
+        }
+        
+        @Override
+        public DBObject toDBObject(){
+            ReadPreference pref = new SecondaryReadPreference(splitMapIntoMulitpleMaps(_tags));
+            return pref.toDBObject();
+        }
+        
+        private final DBObject _tags;
     }
     
     public static ReadPreference PRIMARY = new PrimaryReadPreference();
