@@ -493,7 +493,7 @@ public abstract class DB {
      * @return true if authenticated, false otherwise
      * @dochub authenticate
      */
-    public boolean isAuthenticated() {
+    public synchronized boolean isAuthenticated() {
 	return ( _username != null );
     }
 
@@ -506,7 +506,7 @@ public abstract class DB {
      * @throws MongoException
      * @dochub authenticate
      */
-    public boolean authenticate(String username, char[] passwd ){
+    public synchronized boolean authenticate(String username, char[] passwd ){
 
         if ( username == null || passwd == null )
             throw new NullPointerException( "username can't be null" );
@@ -532,7 +532,7 @@ public abstract class DB {
      * @throws MongoException if authentication failed due to invalid user/pass, or other exceptions like I/O
      * @dochub authenticate
      */
-    public CommandResult authenticateCommand(String username, char[] passwd ){
+    public synchronized CommandResult authenticateCommand(String username, char[] passwd ){
 
         if ( username == null || passwd == null )
             throw new NullPointerException( "username can't be null" );
@@ -556,7 +556,7 @@ public abstract class DB {
     }
     */
 
-    DBObject _authCommand( String nonce ){
+    synchronized DBObject _authCommand( String nonce ){
         if ( _username == null || _authhash == null )
             throw new IllegalStateException( "no auth info!" );
 
@@ -739,6 +739,9 @@ public abstract class DB {
 
     public abstract void cleanCursors( boolean force );
 
+    synchronized String getUsername() {
+        return _username;
+    }   
 
     final Mongo _mongo;
     final String _name;
@@ -748,7 +751,7 @@ public abstract class DB {
     private com.mongodb.ReadPreference _readPref;
     final Bytes.OptionHolder _options;
 
-    String _username;
-    byte[] _authhash = null;
+    private String _username;
+    private byte[] _authhash = null;
 
 }

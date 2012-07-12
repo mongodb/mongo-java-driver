@@ -294,7 +294,7 @@ public class DBPort {
     }
     
     void checkAuth( DB db ) throws IOException {
-        if ( db._username == null ){
+        if ( db.getUsername() == null ){
             if ( db._name.equals( "admin" ) )
                 return;
             checkAuth( db._mongo.getDB( "admin" ) );
