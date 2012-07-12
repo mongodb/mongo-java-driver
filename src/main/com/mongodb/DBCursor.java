@@ -358,6 +358,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
 							.addExplain(_explain)
 							.addSnapshot(_snapshot)
 							.addSpecialFields(_specialFields)
+							.addReadPreference(_readPref.toDBObject())
 							.get();
 		
 		_it = _collection.__find(queryOp, _keysWanted, _skip, _batchSize, _limit,

@@ -15,6 +15,7 @@ class QueryOpBuilder {
 	private String hintStr;
 	private boolean explain;
 	private boolean snapshot;
+	private DBObject readPref;
 
 	private DBObject specialFields;
 	
@@ -93,6 +94,15 @@ class QueryOpBuilder {
 		return this;
 	}
 
+    /**
+     * Adds ReadPreference to the operation
+     * @param readPref
+     * @return
+     */
+    public QueryOpBuilder addReadPreference(DBObject readPref){
+        this.readPref = readPref;
+        return this;
+    }
 	
 	/**
 	 * Constructs the query operation DBObject
@@ -120,6 +130,8 @@ class QueryOpBuilder {
                 queryop.put("$explain", true);
             if (snapshot)
                 queryop.put("$snapshot", true);
+            if(readPref != null)
+                queryop.put("$readPreference", readPref);
 
             return queryop;
 		}
@@ -128,6 +140,10 @@ class QueryOpBuilder {
 	}
 
     private boolean hasSpecialQueryFields(){
+        
+        if(readPref != null)
+            return true;
+        
         if ( specialFields != null )
             return true;
 
