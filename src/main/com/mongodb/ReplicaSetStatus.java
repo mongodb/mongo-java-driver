@@ -116,42 +116,6 @@ public class ReplicaSetStatus {
 
 		return srv.equals(getMaster());
 	}
-
-    /**
-     * @param tagSetList list of tag sets
-     * @return a good secondary by tag value or null if can't find one
-     */
-    ServerAddress getASecondary( DBObject... tagSetList ) {
-        for (DBObject curTagSet : tagSetList) {
-            List<Tag> tagList = new ArrayList<Tag>();
-            for (String key : curTagSet.keySet()) {
-                tagList.add(new Tag(key, curTagSet.get(key).toString()));
-            }
-            Node node = _replicaSetHolder.get().getASecondary(tagList);
-            if (node != null) {
-                return node.getServerAddress();
-            }
-        }
-        return null;
-    }
-    
-    /**
-     * @param tagSetList list of tag sets
-     * @return a good member by tag value or null if can't find one
-     */
-    ServerAddress getAMember( DBObject... tagSetList ) {
-        for (DBObject curTagSet : tagSetList) {
-            List<Tag> tagList = new ArrayList<Tag>();
-            for (String key : curTagSet.keySet()) {
-                tagList.add(new Tag(key, curTagSet.get(key).toString()));
-            }
-            Node node = _replicaSetHolder.get().getASecondary(tagList);
-            if (node != null) {
-                return node.getServerAddress();
-            }
-        }
-        return null;
-    }
     
     /**
      * @return a good secondary or null if can't find one
@@ -286,6 +250,28 @@ public class ReplicaSetStatus {
                 return null;
             }
             return acceptableTaggedSecondaries.get(random.nextInt(acceptableTaggedSecondaries.size()));
+        }
+        
+        public Node getAMember() {
+            List<Node> goodMembers = calculateGoodMembers(all,
+                    calculateBestPingTime(all), acceptableLatencyMS);
+            
+            if (goodMembers.isEmpty())
+                return null;
+                
+            return goodMembers.get(random.nextInt(goodMembers.size()));
+        }
+
+        public Node getAMember(List<Tag> tags) {
+            if (tags.isEmpty())
+                return getAMember();
+
+            List<Node> acceptableTaggedMembers = getGoodMembersByTags(tags);
+
+            if (acceptableTaggedMembers.isEmpty())
+                return null;
+                
+            return acceptableTaggedMembers.get(random.nextInt(acceptableTaggedMembers.size()));
         }
 
         public List<Node> getGoodSecondariesByTags(final List<Tag> tags) {

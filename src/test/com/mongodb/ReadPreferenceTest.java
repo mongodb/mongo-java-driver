@@ -77,13 +77,13 @@ public class ReadPreferenceTest extends TestCase  {
         assertTrue(ReadPreference.PRIMARY.getNode(_set).equals(_primary));
         assertTrue(ReadPreference.PRIMARY.getNode(_set).master());
 
-        assertTrue(ReadPreference.SECONDARY.toString().equals("ReadPreference.SECONDARY"));
+        assertTrue(ReadPreference.SECONDARY.toString().startsWith("ReadPreference.SECONDARY"));
         assertTrue(!ReadPreference.SECONDARY.getNode(_set).master());
         
         assertTrue((ReadPreference.PRIMARY).toDBObject().toString().equals("{ \"mode\" : \"primary\"}"));
         assertTrue((ReadPreference.SECONDARY).toDBObject().toString().equals("{ \"mode\" : \"secondary\"}"));
-        assertTrue((ReadPreference.SECONDARY_PREFERRED).toDBObject().toString().equals("{ \"mode\" : \"secondary_preferred\"}"));
-        assertTrue((ReadPreference.PRIMARY_PREFERRED).toDBObject().toString().equals("{ \"mode\" : \"primary_preferred\"}"));
+        assertTrue((ReadPreference.SECONDARY_PREFERRED).toDBObject().toString().equals("{ \"mode\" : \"secondaryPreferred\"}"));
+        assertTrue((ReadPreference.PRIMARY_PREFERRED).toDBObject().toString().equals("{ \"mode\" : \"primaryPreferred\"}"));
         assertTrue((ReadPreference.NEAREST).toDBObject().toString().equals("{ \"mode\" : \"nearest\"}"));
     }
     
@@ -102,7 +102,7 @@ public class ReadPreferenceTest extends TestCase  {
             return;
         
         ReadPreference secondaryRP = new SecondaryReadPreference();
-        assertTrue(secondaryRP.toString().equals("ReadPreference.SECONDARY"));
+        assertTrue(secondaryRP.toString().startsWith("ReadPreference.SECONDARY"));
         
         Node candidate = secondaryRP.getNode(_set);
         assertTrue(candidate.isOk());
@@ -112,7 +112,7 @@ public class ReadPreferenceTest extends TestCase  {
         DBObject[] tagArray = { new BasicDBObject("foo", "1"), new BasicDBObject("bar", "2") };
         
         ReadPreference pref = new ReadPreference.SecondaryReadPreference(tagArray);
-        assertTrue(pref.toString().equals("ReadPreference.SECONDARY"));
+        assertTrue(pref.toString().startsWith("ReadPreference.SECONDARY"));
         
         candidate  = ReadPreference.SECONDARY.getNode(_set);
         assertTrue( (candidate.equals(_secondary) || candidate.equals(_tertiary) ) && !candidate.equals(_primary) );
@@ -142,7 +142,7 @@ public class ReadPreferenceTest extends TestCase  {
         DBObject[] tagArray = { new BasicDBObject("foo", "1"), new BasicDBObject("bar", "2") };
         
         ReadPreference pref = new ReadPreference.SecondaryReadPreference(tagArray);
-        assertTrue(pref.toString().equals("ReadPreference.SECONDARY"));
+        assertTrue(pref.toString().startsWith("ReadPreference.SECONDARY"));
         
         candidate  = ReadPreference.SECONDARY.getNode(_set);
         assertTrue( (candidate.equals(_secondary) || candidate.equals(_tertiary) ) && !candidate.equals(_primary) );

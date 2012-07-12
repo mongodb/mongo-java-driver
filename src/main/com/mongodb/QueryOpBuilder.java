@@ -140,6 +140,10 @@ class QueryOpBuilder {
 	}
 
     private boolean hasSpecialQueryFields(){
+        
+        if(readPref != null)
+            return true;
+        
         if ( specialFields != null )
             return true;
 
