@@ -18,7 +18,6 @@
 
 package com.mongodb;
 
-import com.mongodb.util.JSON;
 import org.bson.util.annotations.Immutable;
 import org.bson.util.annotations.ThreadSafe;
 
@@ -31,7 +30,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Collections;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Random;
 import java.util.Date;
 import java.io.IOException;
@@ -196,6 +194,7 @@ public class ReplicaSetStatus {
         final List<Node> all;
         final Random random;
         final List<Node> goodSecondaries;
+        final List<Node> goodMembers;
         final Node master;
         private int acceptableLatencyMS;
 
@@ -207,6 +206,8 @@ public class ReplicaSetStatus {
 
             this.goodSecondaries =
                     Collections.unmodifiableList(calculateGoodSecondaries(all, calculateBestPingTime(all), acceptableLatencyMS));
+            this.goodMembers =
+                    Collections.unmodifiableList(calculateGoodMembers(all, calculateBestPingTime(all), acceptableLatencyMS));
             master = findMaster();
 
         }
@@ -253,12 +254,9 @@ public class ReplicaSetStatus {
         }
         
         public Node getAMember() {
-            List<Node> goodMembers = calculateGoodMembers(all,
-                    calculateBestPingTime(all), acceptableLatencyMS);
-            
-            if (goodMembers.isEmpty())
+            if (goodMembers.isEmpty()) {
                 return null;
-                
+            }
             return goodMembers.get(random.nextInt(goodMembers.size()));
         }
 

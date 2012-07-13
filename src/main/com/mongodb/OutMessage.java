@@ -74,7 +74,7 @@ class OutMessage extends BasicBSONEncoder {
         _readPref = readPref;
 
         //If the readPrefs are non-null and non-primary, set slaveOk query option
-        if (_readPref != null && !(_readPref instanceof ReadPreference.PrimaryReadPreference))
+        if (_readPref != null && _readPref.isSlaveOk())
 		    _queryOptions |= Bytes.QUERYOPTION_SLAVEOK;
 
         writeInt( _queryOptions );

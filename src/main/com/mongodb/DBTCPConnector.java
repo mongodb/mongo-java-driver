@@ -255,7 +255,7 @@ public class DBTCPConnector implements DBConnector {
             readPref = ReadPreference.PRIMARY;
 
         if (readPref == ReadPreference.PRIMARY && m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
-           readPref = ReadPreference.SECONDARY;
+           readPref = ReadPreference.SECONDARY_PREFERRED;
 
         boolean secondaryOk = !(readPref == ReadPreference.PRIMARY);
 
