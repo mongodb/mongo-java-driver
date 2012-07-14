@@ -116,7 +116,7 @@ class QueryOpBuilder {
 			lclQuery = new BasicDBObject();
 		}
 		
-		if(hasSpecialQueryFields()){
+		if (hasSpecialQueryFields()) {
 			DBObject queryop = (specialFields == null ? new BasicDBObject() : specialFields);
 
             addToQueryObject(queryop, "query", lclQuery, true);
@@ -130,7 +130,7 @@ class QueryOpBuilder {
                 queryop.put("$explain", true);
             if (snapshot)
                 queryop.put("$snapshot", true);
-            if(readPref != null)
+            if (readPref != null)
                 queryop.put("$readPreference", readPref);
 
             return queryop;
@@ -141,7 +141,7 @@ class QueryOpBuilder {
 
     private boolean hasSpecialQueryFields(){
         
-        if(readPref != null)
+        if ( readPref != null )
             return true;
         
         if ( specialFields != null )

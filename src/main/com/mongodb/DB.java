@@ -37,19 +37,19 @@ import com.mongodb.util.Util;
  */
 public abstract class DB {
     
-    private static final Set<String> _compatableCommands = new HashSet<String>();
+    private static final Set<String> _obedientCommands = new HashSet<String>();
     
     static {
-        _compatableCommands.add("group");
-        _compatableCommands.add("mapreduce");
-        _compatableCommands.add("aggregate");
-        _compatableCommands.add("collStats");
-        _compatableCommands.add("dbStats");
-        _compatableCommands.add("count");
-        _compatableCommands.add("distinct");
-        _compatableCommands.add("geoNear");
-        _compatableCommands.add("geoSearch");
-        _compatableCommands.add("geoWalk");
+        _obedientCommands.add("group");
+        _obedientCommands.add("mapreduce");
+        _obedientCommands.add("aggregate");
+        _obedientCommands.add("collStats");
+        _obedientCommands.add("dbStats");
+        _obedientCommands.add("count");
+        _obedientCommands.add("distinct");
+        _obedientCommands.add("geoNear");
+        _obedientCommands.add("geoSearch");
+        _obedientCommands.add("geoWalk");
     }
 
     /**
@@ -69,7 +69,7 @@ public abstract class DB {
      * @see ReadPreferences
      */
     boolean obeyReadPreference(DBObject command){
-        return (_compatableCommands.contains(command.keySet().toArray()[0]));
+        return (_obedientCommands.contains(command.keySet().iterator().next()));
     }
 
     /**
@@ -228,7 +228,7 @@ public abstract class DB {
      */
     public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs, DBEncoder encoder ){
 
-        if(!obeyReadPreference(cmd) )
+        if ( !obeyReadPreference(cmd) )
             readPrefs = ReadPreference.PRIMARY;
         
         Iterator<DBObject> i =

@@ -858,6 +858,17 @@ public abstract class DBCollection {
     public long count(DBObject query){
         return getCount(query, null);
     }
+    
+    /**
+     * returns the number of documents that match a query.
+     * @param query query to match
+     * @param readPrefs ReadPreferences for this query
+     * @return
+     * @throws MongoException
+     */
+    public long count(DBObject query, ReadPreference readPrefs ){
+        return getCount(query, null, readPrefs);
+    }
 
 
     /**
@@ -1187,6 +1198,37 @@ public abstract class DBCollection {
      */
     public MapReduceOutput mapReduce( String map , String reduce , String outputTarget , MapReduceCommand.OutputType outputType , DBObject query ){
         return mapReduce( new MapReduceCommand( this , map , reduce , outputTarget , outputType , query ) );
+    }
+
+    /**
+     * performs a map reduce operation
+     * Specify an outputType to control job execution
+     * * INLINE - Return results inline
+     * * REPLACE - Replace the output collection with the job output
+     * * MERGE - Merge the job output with the existing contents of outputTarget
+     * * REDUCE - Reduce the job output with the existing contents of
+     * outputTarget
+     *
+     * @param map
+     *            map function in javascript code
+     * @param outputTarget
+     *            optional - leave null if want to use temp collection
+     * @param outputType
+     *            set the type of job output
+     * @param reduce
+     *            reduce function in javascript code
+     * @param query
+     *            to match
+     * @param readPrefs
+     *            ReadPreferences for this operation
+     * @return
+     * @throws MongoException
+     * @dochub mapreduce
+     */
+    public MapReduceOutput mapReduce( String map , String reduce , String outputTarget , MapReduceCommand.OutputType outputType , DBObject query, ReadPreference readPrefs ){
+        MapReduceCommand command = new MapReduceCommand( this , map , reduce , outputTarget , outputType , query );
+        command.setReadPreference(readPrefs);
+        return mapReduce( command );
     }
 
     /**

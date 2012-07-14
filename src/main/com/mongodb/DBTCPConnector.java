@@ -172,7 +172,7 @@ public class DBTCPConnector implements DBConnector {
         checkMaster( false , true );
 
         MyPort mp = _myPort.get();
-        DBPort port = mp.get( true , ReadPreference.PRIMARY, hostNeeded );
+        DBPort port = mp.get( true , ReadPreference.primary(), hostNeeded );
 
         try {
             port.checkAuth( db );
@@ -255,7 +255,7 @@ public class DBTCPConnector implements DBConnector {
             readPref = ReadPreference.PRIMARY;
 
         if (readPref == ReadPreference.PRIMARY && m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
-           readPref = ReadPreference.SECONDARY_PREFERRED;
+           readPref = ReadPreference.secondaryPreferred();
 
         boolean secondaryOk = !(readPref == ReadPreference.PRIMARY);
 
@@ -411,7 +411,7 @@ public class DBTCPConnector implements DBConnector {
             else {
                 ReplicaSetStatus.Node node = readPref.getNode(_rsStatus._replicaSetHolder.get());
             
-                if(node == null)
+                if (node == null)
                     throw new MongoException("No replica set members available for query with "+readPref.toDBObject().toString());
             
                 p = _portHolder.get(node.getServerAddress()).get();

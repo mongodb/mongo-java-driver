@@ -122,7 +122,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
 
         // test getting a secondary by multiple tags
         List<ReplicaSetStatus.Tag> twoTagsList = new ArrayList<ReplicaSetStatus.Tag>();
-//        tags.add(new ReplicaSetStatus.Tag("baz", "3"));
+//        twoTagsList.add(new ReplicaSetStatus.Tag("baz", "3"));
         twoTagsList.add(new ReplicaSetStatus.Tag("foo", "1"));
         twoTagsList.add(new ReplicaSetStatus.Tag("bar", "2"));
         ServerAddress address = replicaSet.getASecondary(twoTagsList).getServerAddress();

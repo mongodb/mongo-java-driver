@@ -25,6 +25,7 @@ public class QueryOpTest extends TestCase{
 		DBObject query = QueryBuilder.start("x").greaterThan(1).get();
 		DBObject orderBy = new BasicDBObject("x", 1);
 		DBObject hintObj = new BasicDBObject("x_i", 1);
+		DBObject readPref = new BasicDBObject("$readPreference",ReadPreference.primary().toDBObject());
 		String hintStr = "y_i";
 		
 		
@@ -60,5 +61,13 @@ public class QueryOpTest extends TestCase{
 		assertNull(queryOp.get("$hint"));
 		assertNull(queryOp.get("$explain"));
 		assertNull(queryOp.get("$snapshot"));
+		
+		queryOp = new QueryOpBuilder().addQuery(query).addReadPreference(readPref).get();
+        assertEquals(queryOp.get("query"), query);
+        assertNull(queryOp.get("orderby"));
+        assertNull(queryOp.get("$hint"));
+        assertNull(queryOp.get("$explain"));
+        assertNull(queryOp.get("$snapshot"));
+        assertEquals(queryOp.get("$readPreference"), readPref);
 	}
 }
