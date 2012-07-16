@@ -136,7 +136,6 @@ class DynamicConnectionStatus extends ConnectionStatus {
         }
         connectionStatus.start();
         executorService.shutdownNow();
-        executorService = null;
     }
 
     static class DynamicNode extends UpdatableNode {
