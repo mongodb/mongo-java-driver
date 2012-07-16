@@ -18,6 +18,10 @@
 
 package com.mongodb;
 
+import com.mongodb.util.JSON;
+import org.bson.BSONObject;
+import org.bson.types.ObjectId;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,11 +35,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.bson.BSONObject;
-import org.bson.types.ObjectId;
-
-//import com.mongodb.MongoException.CursorNotFound;
-import com.mongodb.util.JSON;
 
 /** Database API
  * This cannot be directly instantiated, but the functions are available
@@ -325,17 +324,23 @@ public class DBApiLayer extends DB {
         @Override
         public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , com.mongodb.WriteConcern concern, DBEncoder encoder ){
 
+            if (o == null) {
+                throw new IllegalArgumentException("update can not be null");
+            }
+
             if (encoder == null)
                 encoder = DefaultDBEncoder.FACTORY.create();
 
-            if (o != null && !o.keySet().isEmpty()) {
+            if (!o.keySet().isEmpty()) {
                 // if 1st key doesn't start with $, then object will be inserted as is, need to check it
                 String key = o.keySet().iterator().next();
                 if (!key.startsWith("$"))
                     _checkObject(o, false, false);
             }
 
-            if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) + " " + JSON.serialize( o )  );
+            if ( willTrace() ) {
+                trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) + " " + JSON.serialize( o )  );
+            }
 
             OutMessage om = new OutMessage( _mongo , 2001, encoder );
             om.writeInt( 0 ); // reserved
