@@ -26,6 +26,8 @@ import com.mongodb.ReplicaSetStatus.Tag;
  */
 public abstract class ReadPreference {
     
+    private ReadPreference(){}
+    
     /**
      * @return <code>true</code> if this preference allows reads or commands from secondary nodes
      */
@@ -261,6 +263,11 @@ public abstract class ReadPreference {
         }
     }
 
+    /**
+     * Read from a secondary if available and matches tags, otherwise read from the primary.
+     * @deprecated  As of release 2.9, replaced by <code>ReadPeference.secondaryPreferred(DBObject... tagSetList)</code>
+     *
+     */
     @Deprecated
     public static class TaggedReadPreference extends ReadPreference {
         

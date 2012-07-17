@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
-import com.mongodb.ReadPreference.*;
 import com.mongodb.ReplicaSetStatus.Node;
 import com.mongodb.ReplicaSetStatus.ReplicaSet;
 import com.mongodb.util.TestCase;
@@ -68,10 +67,7 @@ public class ReadPreferenceTest extends TestCase  {
 
     @Test
     public void testStaticPreferences() {
-        
-        if( _standalone )
-            return;
-        
+            
         assertTrue(ReadPreference.PRIMARY.toString().equals("ReadPreference.PRIMARY"));
         assertTrue(ReadPreference.PRIMARY.toString().equals("ReadPreference.PRIMARY"));
         assertTrue(ReadPreference.PRIMARY.getNode(_set).equals(_primary));
@@ -88,7 +84,7 @@ public class ReadPreferenceTest extends TestCase  {
     }
     
     @Test
-    public void testPrimaryReadPrefernce(){
+    public void testPrimaryReadPreference(){
         if( _standalone )
             return;
         
@@ -97,7 +93,7 @@ public class ReadPreferenceTest extends TestCase  {
     }
     
     @Test
-    public void testSecondaryReadPrefernce(){
+    public void testSecondaryReadPreference(){
         if( _standalone )
             return;
         
@@ -192,6 +188,7 @@ public class ReadPreferenceTest extends TestCase  {
     }
     
     @Test
+    @SuppressWarnings( "deprecation" )
     public void testTaggedPreference(){
         if( _standalone )
             return;

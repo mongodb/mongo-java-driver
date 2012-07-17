@@ -41,7 +41,6 @@ public abstract class DB {
     
     static {
         _obedientCommands.add("group");
-        _obedientCommands.add("mapreduce");
         _obedientCommands.add("aggregate");
         _obedientCommands.add("collStats");
         _obedientCommands.add("dbStats");
@@ -69,7 +68,19 @@ public abstract class DB {
      * @see ReadPreferences
      */
     boolean obeyReadPreference(DBObject command){
-        return (_obedientCommands.contains(command.keySet().iterator().next()));
+        String comString = command.keySet().iterator().next();
+        
+        // explicitly check mapreduce commands are inline
+        if(comString.equals("mapreduce")) {
+            DBObject out = (DBObject)command.get("out");
+            if(out != null){
+                Object inline = (DBObject)out.get("inline");
+                return ( inline != null && inline.equals(1));
+            }
+            else
+                return false;
+        }
+        return (_obedientCommands.contains(comString));
     }
 
     /**
