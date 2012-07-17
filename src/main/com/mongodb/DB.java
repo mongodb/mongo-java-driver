@@ -74,7 +74,7 @@ public abstract class DB {
         if(comString.equals("mapreduce")) {
             DBObject out = (DBObject)command.get("out");
             if(out != null){
-                Object inline = (DBObject)out.get("inline");
+                Integer inline = ((Integer)out.get("inline"));
                 return ( inline != null && inline.equals(1));
             }
             else
