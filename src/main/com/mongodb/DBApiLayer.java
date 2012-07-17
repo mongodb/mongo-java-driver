@@ -18,6 +18,10 @@
 
 package com.mongodb;
 
+import com.mongodb.util.JSON;
+import org.bson.BSONObject;
+import org.bson.types.ObjectId;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,11 +35,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.bson.BSONObject;
-import org.bson.types.ObjectId;
-
-//import com.mongodb.MongoException.CursorNotFound;
-import com.mongodb.util.JSON;
 
 /** Database API
  * This cannot be directly instantiated, but the functions are available
@@ -43,7 +42,6 @@ import com.mongodb.util.JSON;
  */
 public class DBApiLayer extends DB {
 
-    static final boolean D = Boolean.getBoolean( "DEBUG.DB" );
     /** The maximum number of cursors allowed */
     static final int NUM_CURSORS_BEFORE_KILL = 100;
     static final int NUM_CURSORS_PER_BATCH = 20000;
@@ -53,18 +51,18 @@ public class DBApiLayer extends DB {
     static final Logger TRACE_LOGGER = Logger.getLogger( "com.mongodb.TRACE" );
     static final Level TRACE_LEVEL = Boolean.getBoolean( "DB.TRACE" ) ? Level.INFO : Level.FINEST;
 
-    static final boolean willTrace(){
+    static boolean willTrace(){
         return TRACE_LOGGER.isLoggable( TRACE_LEVEL );
     }
 
-    static final void trace( String s ){
+    static void trace( String s ){
         TRACE_LOGGER.log( TRACE_LEVEL , s );
     }
 
     static int chooseBatchSize(int batchSize, int limit, int fetched) {
         int bs = Math.abs(batchSize);
         int remaining = limit > 0 ? limit - fetched : 0;
-        int res = 0;
+        int res;
         if (bs == 0 && remaining > 0)
             res = remaining;
         else if (bs > 0 && remaining == 0)
@@ -123,15 +121,9 @@ public class DBApiLayer extends DB {
         return old != null ? old : c;
     }
 
-    String _removeRoot( String ns ){
-        if ( ! ns.startsWith( _rootPlusDot ) )
-            return ns;
-        return ns.substring( _root.length() + 1 );
-    }
 
-    
     /**
-     * @param force
+     * @param force true if should clean regardless of number of dead cursors
      * @throws MongoException
      */
     public void cleanCursors( boolean force ){
@@ -226,13 +218,12 @@ public class DBApiLayer extends DB {
             }
 
             if ( shouldApply ){
-                for ( int i=0; i<arr.length; i++ ){
-                    DBObject o=arr[i];
-                    apply( o );
-                    _checkObject( o , false , false );
-                    Object id = o.get( "_id" );
-                    if ( id instanceof ObjectId ){
-                        ((ObjectId)id).notNew();
+                for (DBObject o : arr) {
+                    apply(o);
+                    _checkObject(o, false, false);
+                    Object id = o.get("_id");
+                    if (id instanceof ObjectId) {
+                        ((ObjectId) id).notNew();
                     }
                 }
             }
@@ -325,17 +316,23 @@ public class DBApiLayer extends DB {
         @Override
         public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , com.mongodb.WriteConcern concern, DBEncoder encoder ){
 
+            if (o == null) {
+                throw new IllegalArgumentException("update can not be null");
+            }
+
             if (encoder == null)
                 encoder = DefaultDBEncoder.FACTORY.create();
 
-            if (o != null && !o.keySet().isEmpty()) {
+            if (!o.keySet().isEmpty()) {
                 // if 1st key doesn't start with $, then object will be inserted as is, need to check it
                 String key = o.keySet().iterator().next();
                 if (!key.startsWith("$"))
                     _checkObject(o, false, false);
             }
 
-            if ( willTrace() ) trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) + " " + JSON.serialize( o )  );
+            if ( willTrace() ) {
+                trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) + " " + JSON.serialize( o )  );
+            }
 
             OutMessage om = new OutMessage( _mongo , 2001, encoder );
             om.writeInt( 0 ); // reserved
@@ -431,7 +428,8 @@ public class DBApiLayer extends DB {
                         if ((_curResult._flags & Bytes.RESULTFLAG_AWAITCAPABLE) == 0) {
                             try {
                                 Thread.sleep(500);
-                            } catch (Exception e) {
+                            } catch (InterruptedException e) {
+                                // ignore
                             }
                         }
                     }
@@ -569,5 +567,4 @@ public class DBApiLayer extends DB {
 
     ConcurrentLinkedQueue<DeadCursor> _deadCursorIds = new ConcurrentLinkedQueue<DeadCursor>();
 
-    static final List<DBObject> EMPTY = Collections.unmodifiableList( new LinkedList<DBObject>() );
 }
