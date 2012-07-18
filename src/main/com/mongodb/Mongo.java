@@ -173,7 +173,7 @@ public class Mongo {
      * @throws MongoException 
      */
     public Mongo( ServerAddress addr ) {
-        this( addr , new MongoOptions() );
+        this(addr, new MongoOptions());
     }
 
     /**
@@ -206,7 +206,7 @@ public class Mongo {
      */
     @Deprecated
     public Mongo( ServerAddress left , ServerAddress right ) {
-        this( left , right , new MongoOptions() );
+        this(left, right, new MongoOptions());
     }
 
     /**
@@ -566,9 +566,15 @@ public class Mongo {
      */
     public int getMaxBsonObjectSize() {
         int maxsize = _connector.getMaxBsonObjectSize();
-        if (maxsize == 0)
-            maxsize = _connector.fetchMaxBsonObjectSize();
+        if (maxsize == 0) {
+            _connector.initDirectConnection();
+        }
+        maxsize = _connector.getMaxBsonObjectSize();
         return maxsize > 0 ? maxsize : Bytes.MAX_OBJECT_SIZE;
+    }
+
+    boolean isMongosConnection() {
+        return _connector.isMongosConnection();
     }
 
     final ServerAddress _addr;

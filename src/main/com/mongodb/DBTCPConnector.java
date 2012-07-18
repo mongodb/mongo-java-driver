@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -345,6 +344,21 @@ public class DBTCPConnector implements DBConnector {
         return _connectionStatus.asReplicaSetStatus();
     }
 
+    // This call can block if it's not yet known.
+    // Be careful when modifying this method, as this method is using the fact that _isMongosDirectConnection
+    // is of type Boolean and is null when uninitialized.
+    boolean isMongosConnection() {
+        if (_connectionStatus != null) {
+            return _connectionStatus.asMongosStatus() != null;
+        }
+
+        if (_isMongosDirectConnection == null) {
+            initDirectConnection();
+        }
+
+        return _isMongosDirectConnection != null ? _isMongosDirectConnection : false;
+    }
+
     public String getConnectPoint(){
         ServerAddress master = getAddress();
         return master != null ? master.toString() : null;
@@ -492,8 +506,8 @@ public class DBTCPConnector implements DBConnector {
             }
         } else {
             // single server, may have to obtain max bson size
-            if (_maxBsonObjectSize.get() == 0)
-                fetchMaxBsonObjectSize();
+            if (_maxBsonObjectSize == 0)
+                initDirectConnection();
         }
     }
 
@@ -502,32 +516,33 @@ public class DBTCPConnector implements DBConnector {
             return;
         }
         setMasterAddress(master.getServerAddress());
-        _maxBsonObjectSize.set(master.getMaxBsonObjectSize());
+        _maxBsonObjectSize = master.getMaxBsonObjectSize();
     }
 
     /**
      * Fetches the maximum size for a BSON object from the current master server
      * @return the size, or 0 if it could not be obtained
      */
-    int fetchMaxBsonObjectSize() {
+    void initDirectConnection() {
         if (_masterPortPool == null)
-            return 0;
+            return;
         DBPort port = _masterPortPool.get();
         try {
             CommandResult res = port.runCommand(_mongo.getDB("admin"), new BasicDBObject("isMaster", 1));
             // max size was added in 1.8
             if (res.containsField("maxBsonObjectSize")) {
-                _maxBsonObjectSize.set(((Integer) res.get("maxBsonObjectSize")).intValue());
+                _maxBsonObjectSize = (Integer) res.get("maxBsonObjectSize");
             } else {
-                _maxBsonObjectSize.set(Bytes.MAX_OBJECT_SIZE);
+                _maxBsonObjectSize = Bytes.MAX_OBJECT_SIZE;
             }
+
+            String msg = res.getString("msg");
+            _isMongosDirectConnection = msg != null && msg.equals("isdbgrid");
         } catch (Exception e) {
-            _logger.log(Level.WARNING, "Exception determining maxBSONObjectSize ", e);
+            _logger.log(Level.WARNING, "Exception executing isMaster command on " + port.serverAddress(), e);
         } finally {
             port.getPool().done(port);
         }
-
-        return _maxBsonObjectSize.get();
     }
 
 
@@ -605,7 +620,7 @@ public class DBTCPConnector implements DBConnector {
      * @return the maximum size, or 0 if not obtained from servers yet.
      */
     public int getMaxBsonObjectSize() {
-        return _maxBsonObjectSize.get();
+        return _maxBsonObjectSize;
     }
 
     // expose for unit testing
@@ -621,7 +636,8 @@ public class DBTCPConnector implements DBConnector {
 
     private final AtomicBoolean _closed = new AtomicBoolean(false);
 
-    private final AtomicInteger _maxBsonObjectSize = new AtomicInteger(0);
+    private volatile int _maxBsonObjectSize;
+    private volatile Boolean _isMongosDirectConnection;
 
     private ThreadLocal<MyPort> _myPort = new ThreadLocal<MyPort>(){
         protected MyPort initialValue(){

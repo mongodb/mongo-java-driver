@@ -63,6 +63,14 @@ class DynamicConnectionStatus extends ConnectionStatus {
         return null;
     }
 
+    MongosStatus asMongosStatus() {
+        ConnectionStatus connectionStatus = getConnectionStatus();
+        if (connectionStatus instanceof MongosStatus) {
+            return (MongosStatus) connectionStatus;
+        }
+        return null;
+    }
+
     @Override
     List<ServerAddress> getServerAddressList() {
         if (connectionStatus != null) {
