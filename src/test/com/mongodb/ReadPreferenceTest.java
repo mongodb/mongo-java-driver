@@ -69,12 +69,13 @@ public class ReadPreferenceTest extends TestCase  {
     public void testStaticPreferences() {
             
         assertTrue(ReadPreference.PRIMARY.toString().equals("ReadPreference.PRIMARY"));
-        assertTrue(ReadPreference.PRIMARY.toString().equals("ReadPreference.PRIMARY"));
-        assertTrue(ReadPreference.PRIMARY.getNode(_set).equals(_primary));
-        assertTrue(ReadPreference.PRIMARY.getNode(_set).master());
-
         assertTrue(ReadPreference.SECONDARY.toString().startsWith("ReadPreference.SECONDARY"));
-        assertTrue(!ReadPreference.SECONDARY.getNode(_set).master());
+        
+        if( !_standalone ) {
+            assertTrue(ReadPreference.PRIMARY.getNode(_set).equals(_primary));
+            assertTrue(ReadPreference.PRIMARY.getNode(_set).master());
+            assertTrue(!ReadPreference.SECONDARY.getNode(_set).master());
+        }
         
         assertTrue((ReadPreference.PRIMARY).toDBObject().toString().equals("{ \"mode\" : \"primary\"}"));
         assertTrue((ReadPreference.SECONDARY).toDBObject().toString().equals("{ \"mode\" : \"secondary\" , \"tags\" : [ ]}"));
