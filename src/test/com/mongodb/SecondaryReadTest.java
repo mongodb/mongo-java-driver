@@ -19,7 +19,6 @@ package com.mongodb;
 // Mongo
 
 import com.mongodb.util.TestCase;
-import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -32,7 +31,7 @@ public class SecondaryReadTest extends TestCase {
 
     private static final int TOTAL_COUNT = 5000;
 
-    private static final double MAX_DEVIATION_PERCENT = 3.0;
+    private static final double MAX_DEVIATION_PERCENT = 5.0;
 
     /**
      * Assert that the percentage of reads to each secondary does not deviate by more than 1 %
