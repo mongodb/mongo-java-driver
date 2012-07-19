@@ -849,15 +849,20 @@ public class JavaClientTest extends TestCase {
         // test exception throwing
         c.insert( new BasicDBObject( "a" , 1 ) );
         try {
-            dbObj = c.findAndModify( null, null );
-            assertTrue(false, "Exception not thrown when no update nor remove");
+            c.findAndModify( null, null );
+            fail("Exception not thrown when no update nor remove");
         } catch (MongoException e) {
         }
 
         try {
             dbObj = c.findAndModify( new BasicDBObject("a", "noexist"), null );
+            if (!serverIsAtLeastVersion(2.1)) {
+               assertNull(dbObj);
+            }
         } catch (MongoException e) {
-            assertTrue(false, "Exception thrown when matching record");
+            if (!serverIsAtLeastVersion(2.1)) {
+                fail("Exception thrown when matching record");
+            }
         }
     }
 
