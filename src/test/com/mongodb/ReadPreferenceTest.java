@@ -1,5 +1,10 @@
 package com.mongodb;
 
+import com.mongodb.ReplicaSetStatus.Node;
+import com.mongodb.ReplicaSetStatus.ReplicaSet;
+import com.mongodb.util.TestCase;
+import org.testng.annotations.Test;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -8,21 +13,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import org.testng.annotations.Test;
-
-import com.mongodb.ReplicaSetStatus.Node;
-import com.mongodb.ReplicaSetStatus.ReplicaSet;
-import com.mongodb.util.TestCase;
-
 public class ReadPreferenceTest extends TestCase  {
     public ReadPreferenceTest() throws IOException, MongoException {
-        cleanupMongo = new Mongo(new MongoURI("mongodb://127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019"));
-        
-        if (isStandalone(cleanupMongo))
-            _standalone = true;
-        
-        cleanupDB = "com_mongodb_unittest_ReadPreferenceTest";
-        
         Set<String> names = new HashSet<String>();
         names.add("primary");
         LinkedHashMap<String, String> tagSet1 = new LinkedHashMap<String, String>();
@@ -60,56 +52,44 @@ public class ReadPreferenceTest extends TestCase  {
         nodeList.add(_secondary);
         nodeList.add(_tertiary);
         
-        if(!_standalone)
-            _set  = new ReplicaSetStatus.ReplicaSet(nodeList, (new Random()), (int)acceptableLatencyMS);
-        
+        _set  = new ReplicaSetStatus.ReplicaSet(nodeList, (new Random()), (int)acceptableLatencyMS);
     }
 
     @Test
     public void testStaticPreferences() {
             
-        assertTrue(ReadPreference.PRIMARY.toString().equals("ReadPreference.PRIMARY"));
-        assertTrue(ReadPreference.SECONDARY.toString().startsWith("ReadPreference.SECONDARY"));
-        
-        if( !_standalone ) {
-            assertTrue(ReadPreference.PRIMARY.getNode(_set).equals(_primary));
-            assertTrue(ReadPreference.PRIMARY.getNode(_set).master());
-            assertTrue(!ReadPreference.SECONDARY.getNode(_set).master());
-        }
-        
-        assertTrue((ReadPreference.PRIMARY).toDBObject().toString().equals("{ \"mode\" : \"primary\"}"));
-        assertTrue((ReadPreference.SECONDARY).toDBObject().toString().equals("{ \"mode\" : \"secondary\" , \"tags\" : [ ]}"));
-        assertTrue((ReadPreference.secondaryPreferred()).toDBObject().toString().equals("{ \"mode\" : \"secondaryPreferred\" , \"tags\" : [ ]}"));
-        assertTrue((ReadPreference.primaryPreferred()).toDBObject().toString().equals("{ \"mode\" : \"primaryPreferred\" , \"tags\" : [ ]}"));
-        assertTrue((ReadPreference.nearest()).toDBObject().toString().equals("{ \"mode\" : \"nearest\" , \"tags\" : [ ]}"));
+        assertEquals("primary", ReadPreference.PRIMARY.toString());
+        assertEquals("secondary", ReadPreference.SECONDARY.toString());
+
+        assertEquals(_primary, ReadPreference.PRIMARY.getNode(_set));
+        assertTrue(ReadPreference.PRIMARY.getNode(_set).master());
+        assertFalse(ReadPreference.SECONDARY.getNode(_set).master());
+
+        assertEquals("{ \"mode\" : \"primary\"}", ReadPreference.PRIMARY.toDBObject().toString());
+        assertEquals("{ \"mode\" : \"secondary\"}", ReadPreference.SECONDARY.toDBObject().toString());
+        assertEquals("{ \"mode\" : \"secondaryPreferred\"}", ReadPreference.secondaryPreferred().toDBObject().toString());
+        assertEquals("{ \"mode\" : \"primaryPreferred\"}", ReadPreference.primaryPreferred().toDBObject().toString());
+        assertEquals("{ \"mode\" : \"nearest\"}", ReadPreference.nearest().toDBObject().toString());
     }
     
     @Test
     public void testPrimaryReadPreference(){
-        if( _standalone )
-            return;
-        
         ReadPreference primaryRP = ReadPreference.PRIMARY;
-        assertTrue(primaryRP.getNode(_set).equals(_primary));
+        assertEquals(_primary, primaryRP.getNode(_set));
     }
     
     @Test
     public void testSecondaryReadPreference(){
-        if( _standalone )
-            return;
-        
         ReadPreference secondaryRP = ReadPreference.secondary();
-        assertTrue(secondaryRP.toString().startsWith("ReadPreference.SECONDARY"));
+        assertTrue(secondaryRP.toString().startsWith("secondary"));
         
         Node candidate = secondaryRP.getNode(_set);
         assertTrue(candidate.isOk());
         assertTrue(!candidate.master());
         
         // Test SECONDARY mode, with tags
-        DBObject[] tagArray = { new BasicDBObject("foo", "1"), new BasicDBObject("bar", "2") };
-        
-        ReadPreference pref = ReadPreference.secondary(tagArray);
-        assertTrue(pref.toString().startsWith("ReadPreference.SECONDARY"));
+        ReadPreference pref = ReadPreference.secondary(new BasicDBObject("foo", "1"), new BasicDBObject("bar", "2"));
+        assertTrue(pref.toString().startsWith("secondary"));
         
         candidate  = ReadPreference.SECONDARY.getNode(_set);
         assertTrue( (candidate.equals(_secondary) || candidate.equals(_tertiary) ) && !candidate.equals(_primary) );
@@ -127,19 +107,13 @@ public class ReadPreferenceTest extends TestCase  {
 
     @Test
     public void testStaticSecondaryMode(){
-        
-        if( _standalone )
-            return;
-        
      // Test static SECONDARY mode. No tags
         Node candidate  = ReadPreference.SECONDARY.getNode(_set);
         assertTrue( (candidate.equals(_secondary) || candidate.equals(_tertiary) ) && !candidate.equals(_primary) );
         
         // Test SECONDARY mode, with tags
-        DBObject[] tagArray = { new BasicDBObject("foo", "1"), new BasicDBObject("bar", "2") };
-        
-        ReadPreference pref = ReadPreference.secondary(tagArray);
-        assertTrue(pref.toString().startsWith("ReadPreference.SECONDARY"));
+        ReadPreference pref = ReadPreference.secondary(new BasicDBObject("foo", "1"), new BasicDBObject("bar", "2"));
+        assertTrue(pref.toString().startsWith("secondary"));
         
         candidate  = ReadPreference.SECONDARY.getNode(_set);
         assertTrue( (candidate.equals(_secondary) || candidate.equals(_tertiary) ) && !candidate.equals(_primary) );
@@ -153,10 +127,6 @@ public class ReadPreferenceTest extends TestCase  {
 
     @Test
     public void testSecondaryPreferredMode(){
-        
-        if( _standalone )
-            return;
-        
         ReadPreference pref = ReadPreference.secondary(new BasicDBObject("baz", "2"));
         assertTrue(pref.getNode(_set).equals(_secondary));
         
@@ -171,9 +141,6 @@ public class ReadPreferenceTest extends TestCase  {
     
     @Test
     public void testNearestMode(){
-        if( _standalone )
-            return;
-        
         ReadPreference pref = ReadPreference.nearest();
         assertTrue(pref.getNode(_set) != null);
         
@@ -191,18 +158,14 @@ public class ReadPreferenceTest extends TestCase  {
     @Test
     @SuppressWarnings( "deprecation" )
     public void testTaggedPreference(){
-        if( _standalone )
-            return;
-        
         ReadPreference pref = new ReadPreference.TaggedReadPreference(new BasicDBObject("bar", "2"));
         assertTrue(!pref.getNode(_set).master());
     }
     
-    boolean _isMaster = true;
-    boolean _isSecondary = true;
-    boolean _isOK = true;
-    boolean _standalone = false;
-    
+    static boolean _isMaster = true;
+    static boolean _isSecondary = true;
+    static boolean _isOK = true;
+
     Node _primary, _secondary, _tertiary;
     ReplicaSet _set;
 }

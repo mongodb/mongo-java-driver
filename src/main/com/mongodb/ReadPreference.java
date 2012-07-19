@@ -14,10 +14,8 @@
 package com.mongodb;
 
 import com.mongodb.ReplicaSetStatus.Node;
-import com.mongodb.ReplicaSetStatus.Tag;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +25,7 @@ import java.util.Map;
  */
 public abstract class ReadPreference {
 
-    private ReadPreference() {
+    ReadPreference() {
     }
 
     /**
@@ -59,7 +57,7 @@ public abstract class ReadPreference {
 
         @Override
         public String toString() {
-            return "ReadPreference.PRIMARY";
+            return getName();
         }
 
         @Override
@@ -69,250 +67,43 @@ public abstract class ReadPreference {
 
         @Override
         public DBObject toDBObject() {
-            return new BasicDBObject("mode", "primary");
+            return new BasicDBObject("mode", getName());
+        }
+
+        String getName() {
+            return "primary";
         }
     }
 
     /**
-     * Abstract base class for all preference which can be combined with tags
+     * Read from a secondary if available and matches tags.
      *
-     * @author breinero
-     */
-    private static abstract class TaggableReadPreference extends ReadPreference {
-        protected TaggableReadPreference() {
-            _tags = null;
-        }
-
-        protected TaggableReadPreference(DBObject... tagSetList) {
-            _tags = new ArrayList<DBObject>();
-            Collections.addAll(_tags, tagSetList);
-        }
-
-        public List<DBObject> getTagSets() {
-            if (_tags == null)
-                return null;
-
-            List<DBObject> tags = new ArrayList<DBObject>();
-            for (DBObject tagSet : _tags) {
-                tags.add(tagSet);
-            }
-            return tags;
-        }
-
-        protected String printTags() {
-            return ((_tags != null && !_tags.isEmpty()) ? " : " + (new BasicDBObject("tags", _tags)).toString() : "");
-        }
-
-        protected final List<DBObject> _tags;
-    }
-
-    /**
-     * Read from primary if available, otherwise a secondary.
-     *
-     * @author breinero
-     */
-    private static class PrimaryPreferredReadPreference extends SecondaryReadPreference {
-        private PrimaryPreferredReadPreference(DBObject... tagSetList) {
-            super(tagSetList);
-        }
-
-        public DBObject toDBObject() {
-            DBObject readPrefObject = new BasicDBObject("mode", "primaryPreferred");
-
-            if (_tags != null)
-                readPrefObject.put("tags", _tags);
-
-            return readPrefObject;
-        }
-
-        @Override
-        public boolean isSlaveOk() {
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            return "ReadPreference.PRIMARY_PREFERRED" + printTags();
-        }
-
-        @Override
-        Node getNode(ReplicaSetStatus.ReplicaSet set) {
-            Node node = set.getMaster();
-            return (node != null) ? node : super.getNode(set);
-        }
-    }
-
-    /**
-     * Read from secondary
-     *
-     * @author breinero
-     */
-    private static class SecondaryReadPreference extends TaggableReadPreference {
-        private SecondaryReadPreference() {
-        }
-
-        private SecondaryReadPreference(DBObject... tagSetList) {
-            super(tagSetList);
-        }
-
-        @Override
-        public DBObject toDBObject() {
-            DBObject readPrefObject = new BasicDBObject("mode", "secondary");
-
-            if (_tags != null)
-                readPrefObject.put("tags", _tags);
-
-            return readPrefObject;
-        }
-
-        @Override
-        public boolean isSlaveOk() {
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            return "ReadPreference.SECONDARY" + printTags();
-        }
-
-        @Override
-        Node getNode(ReplicaSetStatus.ReplicaSet set) {
-
-            if (_tags == null || _tags.isEmpty())
-                return set.getASecondary();
-
-            for (DBObject curTagSet : _tags) {
-                List<Tag> tagList = new ArrayList<Tag>();
-                for (String key : curTagSet.keySet()) {
-                    tagList.add(new Tag(key, curTagSet.get(key).toString()));
-                }
-                Node node = set.getASecondary(tagList);
-                if (node != null) {
-                    return node;
-                }
-            }
-            return null;
-        }
-    }
-
-    /**
-     * Read from secondary if available, otherwise from primary, irrespective of tags.
-     *
-     * @author breinero
-     */
-    private static class SecondaryPreferredReadPreference extends SecondaryReadPreference {
-        private SecondaryPreferredReadPreference(DBObject... tagSetList) {
-            super(tagSetList);
-        }
-
-        @Override
-        public String toString() {
-            return "ReadPreference.SECONDARY_PREFERRED" + printTags();
-        }
-
-        public DBObject toDBObject() {
-            DBObject readPrefObject = new BasicDBObject("mode", "secondaryPreferred");
-
-            if (_tags != null)
-                readPrefObject.put("tags", _tags);
-
-            return readPrefObject;
-        }
-
-        @Override
-        Node getNode(ReplicaSetStatus.ReplicaSet set) {
-            Node node = super.getNode(set);
-            return (node != null) ? node : set.getMaster();
-        }
-    }
-
-    /**
-     * Read from nearest node respective of tags.
-     *
-     * @author breinero
-     */
-    private static class NearestReadPreference extends TaggableReadPreference {
-        private NearestReadPreference(DBObject... tagSetList) {
-            super(tagSetList);
-        }
-
-        @Override
-        public boolean isSlaveOk() {
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            return "ReadPreference.NEAREST" + printTags();
-        }
-
-        @Override
-        public DBObject toDBObject() {
-            DBObject readPrefObject = new BasicDBObject("mode", "nearest");
-
-            if (_tags != null)
-                readPrefObject.put("tags", _tags);
-
-            return readPrefObject;
-        }
-
-        @Override
-        Node getNode(ReplicaSetStatus.ReplicaSet set) {
-
-            if (_tags == null || _tags.isEmpty())
-                return set.getAMember();
-
-            for (DBObject curTagSet : _tags) {
-                List<Tag> tagList = new ArrayList<Tag>();
-                for (String key : curTagSet.keySet()) {
-                    tagList.add(new Tag(key, curTagSet.get(key).toString()));
-                }
-                Node node = set.getAMember(tagList);
-                if (node != null) {
-                    return node;
-                }
-            }
-            return null;
-        }
-    }
-
-    /**
-     * Read from a secondary if available and matches tags, otherwise read from the primary.
-     *
-     * @deprecated As of release 2.9, replaced by <code>ReadPeference.secondaryPreferred(DBObject... tagSetList)</code>
+     * @deprecated As of release 2.9, replaced by
+     * <code>ReadPreference.secondaryPreferred(DBObject firstTagSet, DBObject... remainingTagSets)</code>
      */
     @Deprecated
     public static class TaggedReadPreference extends ReadPreference {
 
         public TaggedReadPreference(Map<String, String> tags) {
-            if (tags == null) {
-                throw new IllegalArgumentException("tags can not be null");
+            if (tags == null || tags.size() == 0) {
+                throw new IllegalArgumentException("tags can not be null or empty");
             }
             _tags = new BasicDBObject(tags);
+            List<DBObject> maps = splitMapIntoMultipleMaps(_tags);
+            _pref = new TaggableReadPreference.SecondaryReadPreference(maps.get(0), getRemainingMaps(maps));
+
         }
 
         public TaggedReadPreference(DBObject tags) {
-            if (tags == null) {
-                throw new IllegalArgumentException("tags can not be null");
+            if (tags == null || tags.keySet().size() == 0) {
+                throw new IllegalArgumentException("tags can not be null or empty");
             }
             _tags = tags;
-        }
-
-        private static DBObject[] splitMapIntoMultipleMaps(DBObject tags) {
-            DBObject[] tagList = new DBObject[tags.keySet().size()];
-
-            int i = 0;
-            for (String key : tags.keySet()) {
-                tagList[i] = new BasicDBObject(key, tags.get(key).toString());
-                i++;
-            }
-            return tagList;
+            List<DBObject> maps = splitMapIntoMultipleMaps(_tags);
+            _pref = new TaggableReadPreference.SecondaryReadPreference(maps.get(0), getRemainingMaps(maps));
         }
 
         public DBObject getTags() {
-            if (_tags == null)
-                return null;
-
             DBObject tags = new BasicDBObject();
             for (String key : _tags.keySet())
                 tags.put(key, _tags.get(key));
@@ -322,22 +113,37 @@ public abstract class ReadPreference {
 
         @Override
         public boolean isSlaveOk() {
-            return true;
+            return _pref.isSlaveOk();
         }
 
         @Override
         Node getNode(ReplicaSetStatus.ReplicaSet set) {
-            ReadPreference pref = new SecondaryReadPreference(splitMapIntoMultipleMaps(_tags));
-            return pref.getNode(set);
+            return _pref.getNode(set);
         }
 
         @Override
         public DBObject toDBObject() {
-            ReadPreference pref = new SecondaryReadPreference(splitMapIntoMultipleMaps(_tags));
-            return pref.toDBObject();
+            return _pref.toDBObject();
+        }
+
+        private static List<DBObject> splitMapIntoMultipleMaps(DBObject tags) {
+            List<DBObject> tagList = new ArrayList<DBObject>(tags.keySet().size());
+
+            for (String key : tags.keySet()) {
+                tagList.add(new BasicDBObject(key, tags.get(key).toString()));
+            }
+            return tagList;
+        }
+
+        private DBObject[] getRemainingMaps(final List<DBObject> maps) {
+            if (maps.size() <= 1) {
+                return new DBObject[0];
+            }
+            return maps.subList(1, maps.size() - 1).toArray(new DBObject[maps.size() - 1]);
         }
 
         private final DBObject _tags;
+        private final ReadPreference _pref;
     }
 
     /**
@@ -348,31 +154,59 @@ public abstract class ReadPreference {
     }
 
     /**
+     * @return ReadPreference which reads primary if available.
+     */
+    public static ReadPreference primaryPreferred() {
+        return new TaggableReadPreference.PrimaryPreferredReadPreference();
+    }
+
+    /**
      * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
      */
-    public static ReadPreference primaryPreferred(DBObject... tagSetList) {
-        return new PrimaryPreferredReadPreference(tagSetList);
+    public static TaggableReadPreference primaryPreferred(DBObject firstTagSet, DBObject... remainingTagSets) {
+        return new TaggableReadPreference.PrimaryPreferredReadPreference(firstTagSet, remainingTagSets);
     }
 
     /**
-     * @return ReadPreference which reads secondary repsective of tags.
+     * @return ReadPreference which reads secondary.
      */
-    public static ReadPreference secondary(DBObject... tagSetList) {
-        return new SecondaryReadPreference(tagSetList);
+    public static ReadPreference secondary() {
+        return new TaggableReadPreference.SecondaryReadPreference();
     }
 
     /**
-     * @return ReadPreference which reads secondary if available, otherwise from primary irrespective of tags.
+     * @return ReadPreference which reads secondary respective of tags.
      */
-    public static ReadPreference secondaryPreferred(DBObject... tagSetList) {
-        return new SecondaryPreferredReadPreference(tagSetList);
+    public static TaggableReadPreference secondary(DBObject firstTagSet, DBObject... remainingTagSets) {
+        return new TaggableReadPreference.SecondaryReadPreference(firstTagSet, remainingTagSets);
     }
 
     /**
-     * @return ReadPreference which reads nearest node repsective of tags.
+     * @return ReadPreference which reads secondary if available, otherwise from primary.
      */
-    public static ReadPreference nearest(DBObject... tagSetList) {
-        return new NearestReadPreference(tagSetList);
+    public static ReadPreference secondaryPreferred() {
+        return new TaggableReadPreference.SecondaryPreferredReadPreference();
+    }
+
+    /**
+     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
+     */
+    public static TaggableReadPreference secondaryPreferred(DBObject firstTagSet, DBObject... remainingTagSets) {
+        return new TaggableReadPreference.SecondaryPreferredReadPreference(firstTagSet, remainingTagSets);
+    }
+
+    /**
+     * @return ReadPreference which reads nearest node.
+     */
+    public static ReadPreference nearest() {
+        return new TaggableReadPreference.NearestReadPreference();
+    }
+
+    /**
+     * @return ReadPreference which reads nearest node respective of tags.
+     */
+    public static TaggableReadPreference nearest(DBObject firstTagSet, DBObject... remainingTagSets) {
+        return new TaggableReadPreference.NearestReadPreference(firstTagSet, remainingTagSets);
     }
 
     public static ReadPreference PRIMARY = primary();
