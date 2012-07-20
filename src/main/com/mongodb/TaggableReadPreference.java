@@ -90,14 +90,14 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        ReplicaSetStatus.Node getNode(ReplicaSetStatus.ReplicaSet set) {
+        ReplicaSetStatus.ReplicaSetNode getNode(ReplicaSetStatus.ReplicaSet set) {
 
             if (_tags.isEmpty())
                 return set.getASecondary();
 
             for (DBObject curTagSet : _tags) {
                 List<ReplicaSetStatus.Tag> tagList = getTagListFromDBObject(curTagSet);
-                ReplicaSetStatus.Node node = set.getASecondary(tagList);
+                ReplicaSetStatus.ReplicaSetNode node = set.getASecondary(tagList);
                 if (node != null) {
                     return node;
                 }
@@ -126,8 +126,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        ReplicaSetStatus.Node getNode(ReplicaSetStatus.ReplicaSet set) {
-            ReplicaSetStatus.Node node = super.getNode(set);
+        ReplicaSetStatus.ReplicaSetNode getNode(ReplicaSetStatus.ReplicaSet set) {
+            ReplicaSetStatus.ReplicaSetNode node = super.getNode(set);
             return (node != null) ? node : set.getMaster();
         }
     }
@@ -153,14 +153,14 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
 
         @Override
-        ReplicaSetStatus.Node getNode(ReplicaSetStatus.ReplicaSet set) {
+        ReplicaSetStatus.ReplicaSetNode getNode(ReplicaSetStatus.ReplicaSet set) {
 
             if (_tags.isEmpty())
                 return set.getAMember();
 
             for (DBObject curTagSet : _tags) {
                 List<ReplicaSetStatus.Tag> tagList = getTagListFromDBObject(curTagSet);
-                ReplicaSetStatus.Node node = set.getAMember(tagList);
+                ReplicaSetStatus.ReplicaSetNode node = set.getAMember(tagList);
                 if (node != null) {
                     return node;
                 }
@@ -187,8 +187,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        ReplicaSetStatus.Node getNode(ReplicaSetStatus.ReplicaSet set) {
-            ReplicaSetStatus.Node node = set.getMaster();
+        ReplicaSetStatus.ReplicaSetNode getNode(ReplicaSetStatus.ReplicaSet set) {
+            ReplicaSetStatus.ReplicaSetNode node = set.getMaster();
             return (node != null) ? node : super.getNode(set);
         }
     }

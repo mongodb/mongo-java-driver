@@ -173,7 +173,7 @@ public class Mongo {
      * @throws MongoException 
      */
     public Mongo( ServerAddress addr ) {
-        this( addr , new MongoOptions() );
+        this(addr, new MongoOptions());
     }
 
     /**
@@ -206,7 +206,7 @@ public class Mongo {
      */
     @Deprecated
     public Mongo( ServerAddress left , ServerAddress right ) {
-        this( left , right , new MongoOptions() );
+        this(left, right, new MongoOptions());
     }
 
     /**
@@ -239,30 +239,31 @@ public class Mongo {
      * the driver will still function as if it is a replica set. If you have a standalone server,
      * use the Mongo(ServerAddress) constructor.</p>
      * @see com.mongodb.ServerAddress
-     * @param replicaSetSeeds Put as many servers as you can in the list and
-     * the system will figure out the rest.
+     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
+     *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
+     *              sharded cluster.
      * @throws MongoException
      */
-    public Mongo( List<ServerAddress> replicaSetSeeds ) {
-        this( replicaSetSeeds , new MongoOptions() );
+    public Mongo( List<ServerAddress> seeds ) {
+        this( seeds , new MongoOptions() );
     }
 
     /**
      * <p>Creates a Mongo based on a replica set, or pair.
      * It will find all members (the master will be used by default).</p>
      * @see com.mongodb.ServerAddress
-     * @param replicaSetSeeds put as many servers as you can in the list.
-     *                       the system will figure the rest out
+     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
+     *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
+     *              sharded cluster.
      * @param options default query options
      * @throws MongoException 
      */
-    public Mongo( List<ServerAddress> replicaSetSeeds , MongoOptions options ) {
-
+    public Mongo( List<ServerAddress> seeds , MongoOptions options ) {
         _addr = null;
-        _addrs = replicaSetSeeds;
+        _addrs = seeds;
         _options = options;
         _applyMongoOptions();
-        _connector = new DBTCPConnector( this , _addrs );
+        _connector = new DBTCPConnector( this , _addrs);
         _connector.start();
 
         _cleaner = new DBCleanerThread();
@@ -565,9 +566,15 @@ public class Mongo {
      */
     public int getMaxBsonObjectSize() {
         int maxsize = _connector.getMaxBsonObjectSize();
-        if (maxsize == 0)
-            maxsize = _connector.fetchMaxBsonObjectSize();
+        if (maxsize == 0) {
+            _connector.initDirectConnection();
+        }
+        maxsize = _connector.getMaxBsonObjectSize();
         return maxsize > 0 ? maxsize : Bytes.MAX_OBJECT_SIZE;
+    }
+
+    boolean isMongosConnection() {
+        return _connector.isMongosConnection();
     }
 
     final ServerAddress _addr;

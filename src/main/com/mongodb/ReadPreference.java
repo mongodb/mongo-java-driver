@@ -13,7 +13,8 @@
 
 package com.mongodb;
 
-import com.mongodb.ReplicaSetStatus.Node;
+import com.mongodb.ReplicaSetStatus.ReplicaSetNode;
+import com.mongodb.ReplicaSetStatus.Tag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,8 +33,7 @@ public abstract class ReadPreference {
      * @return <code>true</code> if this preference allows reads or commands from secondary nodes
      */
     public abstract boolean isSlaveOk();
-
-    abstract Node getNode(ReplicaSetStatus.ReplicaSet set);
+    abstract ReplicaSetNode getNode(ReplicaSetStatus.ReplicaSet set);
 
     /**
      * @return <code>DBObject</code> representation of this preference
@@ -61,7 +61,7 @@ public abstract class ReadPreference {
         }
 
         @Override
-        Node getNode(ReplicaSetStatus.ReplicaSet set) {
+        ReplicaSetNode getNode(ReplicaSetStatus.ReplicaSet set) {
             return set.getMaster();
         }
 
@@ -117,7 +117,7 @@ public abstract class ReadPreference {
         }
 
         @Override
-        Node getNode(ReplicaSetStatus.ReplicaSet set) {
+        ReplicaSetNode getNode(ReplicaSetStatus.ReplicaSet set) {
             return _pref.getNode(set);
         }
 

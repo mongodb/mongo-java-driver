@@ -50,3 +50,4 @@ src/test/ed/webtests/webtest-local.bash
 
 *.ipr
 *.iws
+atlassian-ide-plugin.xml

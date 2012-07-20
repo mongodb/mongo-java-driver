@@ -41,7 +41,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         LinkedHashMap<String, String> tags = new LinkedHashMap<String, String>();
         tags.put("foo", "1");
         tags.put("bar", "2");
-        ReplicaSetStatus.Node n = new ReplicaSetStatus.Node(addr, names, pingTime, ok, isMaster, isSecondary, tags,
+        ReplicaSetStatus.ReplicaSetNode n = new ReplicaSetStatus.ReplicaSetNode(addr, names, pingTime, ok, isMaster, isSecondary, tags,
                 maxBsonObjectSize);
         assertTrue(n.isOk());
         assertTrue(n.master());
@@ -72,8 +72,8 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
     @Test
     public void testReplicaSet() throws Exception {
 
-        List<ReplicaSetStatus.UpdatableNode> updatableNodes = new ArrayList<ReplicaSetStatus.UpdatableNode>();
-        List<ReplicaSetStatus.Node> nodes = new ArrayList<ReplicaSetStatus.Node>();
+        List<ReplicaSetStatus.UpdatableReplicaSetNode> updatableNodes = new ArrayList<ReplicaSetStatus.UpdatableReplicaSetNode>();
+        List<ReplicaSetStatus.ReplicaSetNode> nodes = new ArrayList<ReplicaSetStatus.ReplicaSetNode>();
 
         final Random random = new Random();
 
@@ -126,7 +126,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         twoTagsList.add(new ReplicaSetStatus.Tag("foo", "1"));
         twoTagsList.add(new ReplicaSetStatus.Tag("bar", "2"));
         ServerAddress address = replicaSet.getASecondary(twoTagsList).getServerAddress();
-        List<ReplicaSetStatus.Node> goodSecondariesByTag = replicaSet.getGoodSecondariesByTags(twoTagsList);
+        List<ReplicaSetStatus.ReplicaSetNode> goodSecondariesByTag = replicaSet.getGoodSecondariesByTags(twoTagsList);
         assertEquals(2, goodSecondariesByTag.size());
         assertEquals("127.0.0.8", goodSecondariesByTag.get(0).getServerAddress().getHost());
         assertEquals("127.0.0.9", goodSecondariesByTag.get(1).getServerAddress().getHost());
@@ -173,13 +173,13 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
     }
 
     private void addNodeToLists(String address, boolean isSecondary, float pingTime,
-                                List<ReplicaSetStatus.UpdatableNode> updatableNodes, List<ReplicaSetStatus.Node> nodes,
+                                List<ReplicaSetStatus.UpdatableReplicaSetNode> updatableNodes, List<ReplicaSetStatus.ReplicaSetNode> nodes,
                                 LinkedHashMap<String, String> tags)
             throws Exception {
 
         ServerAddress serverAddress = new ServerAddress(address);
-        ReplicaSetStatus.UpdatableNode updatableNode
-                = new ReplicaSetStatus.UpdatableNode(serverAddress, updatableNodes, _logger, null, _mongoOptions,
+        ReplicaSetStatus.UpdatableReplicaSetNode updatableNode
+                = new ReplicaSetStatus.UpdatableReplicaSetNode(serverAddress, updatableNodes, _logger, null, _mongoOptions,
                 _setName, _lastPrimarySignal);
         updatableNode._ok = true;
         updatableNode._pingTimeMS = pingTime;
@@ -190,7 +190,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
 
         updatableNodes.add(updatableNode);
 
-        nodes.add(new ReplicaSetStatus.Node(serverAddress, Collections.singleton(serverAddress.toString()), pingTime,
+        nodes.add(new ReplicaSetStatus.ReplicaSetNode(serverAddress, Collections.singleton(serverAddress.toString()), pingTime,
                 true, !isSecondary, isSecondary, tags, Bytes.MAX_OBJECT_SIZE));
     }
 

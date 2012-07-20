@@ -18,6 +18,12 @@
 
 package com.mongodb;
 
+import com.mongodb.util.SimplePool;
+
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,13 +33,6 @@ import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-
-import javax.management.JMException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-
-import com.mongodb.util.SimplePool;
 
 public class DBPortPool extends SimplePool<DBPort> {
 
@@ -47,6 +46,7 @@ public class DBPortPool extends SimplePool<DBPort> {
                     temp = ManagementFactory.getPlatformMBeanServer();
                 }
                 catch ( Throwable t ){
+                    // ignore
                 }
                 
                 _server = temp;
@@ -116,7 +116,7 @@ public class DBPortPool extends SimplePool<DBPort> {
         }
 
         final MongoOptions _options;
-        final Map<ServerAddress,DBPortPool> _pools = Collections.synchronizedMap( new HashMap<ServerAddress,DBPortPool>() );
+        final Map<ServerAddress,DBPortPool> _pools = Collections.synchronizedMap(new HashMap<ServerAddress, DBPortPool>());
         final MBeanServer _server;
         final int _serial = nextSerial.incrementAndGet();
 
@@ -198,17 +198,18 @@ public class DBPortPool extends SimplePool<DBPort> {
         return port;
     }
 
-    void gotError( Exception e ){
+    // return true if the exception is recoverable
+    boolean gotError( Exception e ){
         if ( e instanceof java.nio.channels.ClosedByInterruptException || 
              e instanceof InterruptedException ){
             // this is probably a request that is taking too long
             // so usually doesn't mean there is a real db problem
-            return;
+            return true;
         }
         
         if ( e instanceof java.net.SocketTimeoutException ){
             // we don't want to clear the port pool for a connection timing out
-            return;
+            return true;
         }
         Bytes.LOGGER.log( Level.WARNING , "emptying DBPortPool to " + getServerAddress() + " b/c of error" , e );
 
@@ -227,6 +228,7 @@ public class DBPortPool extends SimplePool<DBPort> {
             done(p);
         }
 
+        return false;
     }
 
     void close(){
