@@ -79,8 +79,12 @@ public class QuickTour {
 
         //  lets get all the documents in the collection and print them out
         DBCursor cur = coll.find();
-        while(cur.hasNext()) {
-            System.out.println(cur.next());
+        try {
+            while (cur.hasNext()) {
+                System.out.println(cur.next());
+            }
+        } finally {
+            cur.close();
         }
 
         //  now use a query to get 1 document out
@@ -133,5 +137,8 @@ public class QuickTour {
         System.out.println("Last error : " + db.getLastError());
 
         db.resetError();
+
+        // release resources
+        m.close();
     }
 }
