@@ -20,6 +20,7 @@ package com.mongodb;
 
 // Mongo
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1286,8 +1287,7 @@ public abstract class DBCollection {
         
         List<DBObject> pipelineOps = new ArrayList<DBObject>();
         pipelineOps.add(firstOp);
-        for ( DBObject object : additionalOps )
-            pipelineOps.add(object);
+        pipelineOps.addAll(Arrays.asList(additionalOps));
         command.put( "pipeline", pipelineOps );
         
         CommandResult res = _db.command( command );
