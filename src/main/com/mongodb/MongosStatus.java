@@ -40,7 +40,7 @@ class MongosStatus extends ConnectionStatus {
 
     @Override
     Node ensureMaster() {
-        isClosed();
+        checkClosed();
         return getPreferred();
     }
 

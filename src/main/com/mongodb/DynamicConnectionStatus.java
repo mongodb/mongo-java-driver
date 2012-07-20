@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -101,31 +102,36 @@ class DynamicConnectionStatus extends ConnectionStatus {
     }
 
     void initExecutorService() {
-        for (final ServerAddress cur : _mongosAddresses) {
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    DynamicNode node = new DynamicNode(cur, _mongo, _mongoOptions);
-                    try {
-                        while (!Thread.interrupted()) {
-                            try {
-                                node.update();
-                                if (node._ok) {
-                                    notifyOfOkNode(node);
-                                    return;
+        try {
+            for (final ServerAddress cur : _mongosAddresses) {
+                executorService.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        DynamicNode node = new DynamicNode(cur, _mongo, _mongoOptions);
+                        try {
+                            while (!Thread.interrupted()) {
+                                try {
+                                    node.update();
+                                    if (node._ok) {
+                                        notifyOfOkNode(node);
+                                        return;
+                                    }
+                                } catch (Exception e) {
+                                    logger.log(Level.WARNING, "couldn't reach " + node._addr, e);
                                 }
-                            } catch (Exception e) {
-                                logger.log(Level.WARNING, "couldn't reach " + node._addr, e);
-                            }
 
-                            int sleepTime = updaterIntervalNoMasterMS;
-                            Thread.sleep(sleepTime);
+                                int sleepTime = updaterIntervalNoMasterMS;
+                                Thread.sleep(sleepTime);
+                            }
+                        } catch (InterruptedException e) {
+                            // fall through
                         }
-                    } catch (InterruptedException e) {
-                        // fall through
                     }
-                }
-            });
+                });
+            }
+        } catch (RejectedExecutionException e) {
+            // Ignore, as this can happen if a good node is found before all jobs are submitted and the service has
+            // been shutdown.
         }
     }
 

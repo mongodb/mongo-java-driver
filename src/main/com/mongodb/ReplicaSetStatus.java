@@ -31,7 +31,6 @@ import java.util.LinkedHashMap;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
-import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -85,7 +84,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
     }
 
     ReplicaSetNode getMasterNode(){
-        isClosed();
+        checkClosed();
         return _replicaSetHolder.get().getMaster();
     }
 
@@ -516,7 +515,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
 
         void update(Set<UpdatableReplicaSetNode> seenNodes) {
             CommandResult res = update();
-            if (res == null) {
+            if (res == null || !_ok) {
                 return;
             }
 

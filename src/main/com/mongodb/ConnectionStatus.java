@@ -86,7 +86,7 @@ abstract class ConnectionStatus {
     /**
      * Whether this connection has been closed.
      */
-    void isClosed() {
+    void checkClosed() {
         if (_closed)
             throw new IllegalStateException("ReplicaSetStatus closed");
     }

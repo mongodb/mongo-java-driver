@@ -25,7 +25,11 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -42,6 +46,7 @@ public class DBPortPool extends SimplePool<DBPort> {
                     temp = ManagementFactory.getPlatformMBeanServer();
                 }
                 catch ( Throwable t ){
+                    // ignore
                 }
                 
                 _server = temp;
@@ -111,7 +116,7 @@ public class DBPortPool extends SimplePool<DBPort> {
         }
 
         final MongoOptions _options;
-        final Map<ServerAddress,DBPortPool> _pools = Collections.synchronizedMap( new HashMap<ServerAddress,DBPortPool>() );
+        final Map<ServerAddress,DBPortPool> _pools = Collections.synchronizedMap(new HashMap<ServerAddress, DBPortPool>());
         final MBeanServer _server;
         final int _serial = nextSerial.incrementAndGet();
 
