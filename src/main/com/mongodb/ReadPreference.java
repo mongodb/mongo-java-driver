@@ -21,7 +21,7 @@ import java.util.Map;
 
 
 /**
- * an abstract class that represents prefered replica set members to which a query or command can be sent
+ * an abstract class that represents preferred replica set members to which a query or command can be sent
  */
 public abstract class ReadPreference {
 

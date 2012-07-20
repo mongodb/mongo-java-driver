@@ -561,6 +561,54 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , m.get( "d" ).intValue() );
 
     }
+    
+    @Test
+    public void testAggregation(){
+        DBCollection c = _db.getCollection( "aggregationTest" );
+        c.drop();
+        
+        DBObject foo = new BasicDBObject( "name" , "foo" ) ;
+        DBObject bar = new BasicDBObject( "name" , "bar" ) ;
+        DBObject baz = new BasicDBObject( "name" , "foo" ) ;
+        foo.put( "count", 5 );
+        bar.put( "count", 2 );
+        baz.put( "count", 7 );
+        c.insert( foo );
+        c.insert( bar );
+        c.insert( baz );
+        
+        DBObject projFields = new BasicDBObject( "name", 1 );
+        projFields.put("count", 1);
+        
+        List<DBObject> groupOperations = new ArrayList<DBObject>();
+        groupOperations.add(new BasicDBObject( ));
+        groupOperations.add(new BasicDBObject( "countPerName", new BasicDBObject( "$sum", 1 )));
+        DBObject group = new BasicDBObject( );
+        group.put("_id", "$name" );
+        group.put( "docsPerName", new BasicDBObject( "$sum", 1 ));
+        group.put( "countPerName", new BasicDBObject( "$sum", "$count" ));
+        
+        AggregationOutput out = c.aggregate( new BasicDBObject( "$project", projFields ), new BasicDBObject( "$group", group) );
+        
+        Map<String, DBObject> results = new HashMap<String, DBObject>();
+        for(DBObject result : out.results())
+            results.put((String)result.get("_id"), result);
+        
+        DBObject fooResult = results.get("foo");
+        assertNotNull(fooResult);
+        assertEquals(2, fooResult.get("docsPerName"));
+        assertEquals(12, fooResult.get("countPerName"));
+        
+        DBObject barResult = results.get("bar");
+        assertNotNull(barResult);
+        assertEquals(1, barResult.get("docsPerName"));
+        assertEquals(2, barResult.get("countPerName"));
+        
+       DBObject aggregationCommand = out.getCommand();
+       assertNotNull(aggregationCommand);
+       assertEquals(c.getName(), aggregationCommand.get("aggregate"));
+       assertNotNull(aggregationCommand.get("pipeline"));
+    }
 
     String _testMulti( DBCollection c ){
         String s = "";

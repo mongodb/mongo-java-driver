@@ -1266,6 +1266,34 @@ public abstract class DBCollection {
         res.throwOnError();
         return new MapReduceOutput( this , command, res );
     }
+    
+    /**
+     * performs an aggregation operation
+     *
+     * @param firstOp
+     *          requisite first operation to be performed in the aggregation pipeline
+     *            
+     * @param additionalOps
+     *          additional operations to be performed in the aggregation pipeline
+     * @return The aggregation operation's result set
+     * 
+     */
+    public AggregationOutput aggregate( DBObject firstOp, DBObject ... additionalOps){
+        if (firstOp == null)
+            throw new IllegalArgumentException("aggregate can not accept null pipeline operation");
+        
+        DBObject command = new BasicDBObject("aggregate", _name );
+        
+        List<DBObject> pipelineOps = new ArrayList<DBObject>();
+        pipelineOps.add(firstOp);
+        for ( DBObject object : additionalOps )
+            pipelineOps.add(object);
+        command.put( "pipeline", pipelineOps );
+        
+        CommandResult res = _db.command( command );
+        res.throwOnError();
+        return new AggregationOutput( command, res );
+    }
 
     /**
      *   Return a list of the indexes for this collection.  Each object
