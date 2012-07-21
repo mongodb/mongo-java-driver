@@ -20,6 +20,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DB;
+import com.mongodb.WriteConcern;
 
 import java.util.Set;
 import java.util.List;
@@ -30,6 +31,8 @@ public class QuickTour {
 
         // connect to the local database server
         Mongo m = new Mongo();
+
+        m.setWriteConcern(WriteConcern.SAFE);
 
         // get handle to "mydb"
         DB db = m.getDB( "mydb" );
@@ -78,40 +81,52 @@ public class QuickTour {
         System.out.println("total # of documents after inserting 100 small ones (should be 101) " + coll.getCount());
 
         //  lets get all the documents in the collection and print them out
-        DBCursor cur = coll.find();
+        DBCursor cursor = coll.find();
         try {
-            while (cur.hasNext()) {
-                System.out.println(cur.next());
+            while (cursor.hasNext()) {
+                System.out.println(cursor.next());
             }
         } finally {
-            cur.close();
+            cursor.close();
         }
 
         //  now use a query to get 1 document out
         BasicDBObject query = new BasicDBObject();
         query.put("i", 71);
-        cur = coll.find(query);
+        cursor = coll.find(query);
 
-        while(cur.hasNext()) {
-            System.out.println(cur.next());
+        try {
+            while(cursor.hasNext()) {
+                System.out.println(cursor.next());
+            }
+        } finally {
+            cursor.close();
         }
 
         //  now use a range query to get a larger subset
         query = new BasicDBObject();
         query.put("i", new BasicDBObject("$gt", 50));  // i.e. find all where i > 50
-        cur = coll.find(query);
+        cursor = coll.find(query);
 
-        while(cur.hasNext()) {
-            System.out.println(cur.next());
+        try {
+        while(cursor.hasNext()) {
+            System.out.println(cursor.next());
+        }
+        } finally {
+            cursor.close();
         }
 
         // range query with multiple contstraings
         query = new BasicDBObject();
         query.put("i", new BasicDBObject("$gt", 20).append("$lte", 30));  // i.e.   20 < i <= 30
-        cur = coll.find(query);
+        cursor = coll.find(query);
 
-        while(cur.hasNext()) {
-            System.out.println(cur.next());
+        try {
+            while(cursor.hasNext()) {
+                System.out.println(cursor.next());
+            }
+        } finally {
+            cursor.close();
         }
 
         // create an index on the "i" field
