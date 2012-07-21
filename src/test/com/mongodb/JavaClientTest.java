@@ -564,6 +564,10 @@ public class JavaClientTest extends TestCase {
     
     @Test
     public void testAggregation(){
+        if (!serverIsAtLeastVersion(2.1)) {
+            return;
+        }
+
         DBCollection c = _db.getCollection( "aggregationTest" );
         c.drop();
         

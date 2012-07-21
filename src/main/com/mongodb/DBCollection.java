@@ -1287,7 +1287,7 @@ public abstract class DBCollection {
         
         List<DBObject> pipelineOps = new ArrayList<DBObject>();
         pipelineOps.add(firstOp);
-        pipelineOps.addAll(Arrays.asList(additionalOps));
+        Collections.addAll(pipelineOps, additionalOps);
         command.put( "pipeline", pipelineOps );
         
         CommandResult res = _db.command( command );
