@@ -19,8 +19,9 @@
 package com.mongodb;
 
 // Mongo
+import org.bson.types.ObjectId;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,8 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.bson.types.ObjectId;
 
 /** This class provides a skeleton implementation of a database collection.
  * <p>A typical invocation sequence is thus
@@ -1598,8 +1597,8 @@ public abstract class DBCollection {
     /**
      * makes this query ok to run on a slave node
      *
-     * @deprecated Replaced with ReadPreference.SECONDARY
-     * @see com.mongodb.ReadPreference.SECONDARY
+     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
+     * @see com.mongodb.ReadPreference#secondaryPreferred()
      */
     @Deprecated
     public void slaveOk(){
