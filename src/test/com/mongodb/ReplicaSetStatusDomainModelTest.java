@@ -41,7 +41,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         LinkedHashMap<String, String> tags = new LinkedHashMap<String, String>();
         tags.put("foo", "1");
         tags.put("bar", "2");
-        ReplicaSetStatus.ReplicaSetNode n = new ReplicaSetStatus.ReplicaSetNode(addr, names, pingTime, ok, isMaster, isSecondary, tags,
+        ReplicaSetStatus.ReplicaSetNode n = new ReplicaSetStatus.ReplicaSetNode(addr, names, "", pingTime, ok, isMaster, isSecondary, tags,
                 maxBsonObjectSize);
         assertTrue(n.isOk());
         assertTrue(n.master());
@@ -179,8 +179,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
 
         ServerAddress serverAddress = new ServerAddress(address);
         ReplicaSetStatus.UpdatableReplicaSetNode updatableNode
-                = new ReplicaSetStatus.UpdatableReplicaSetNode(serverAddress, updatableNodes, _logger, null, _mongoOptions,
-                _setName, _lastPrimarySignal);
+                = new ReplicaSetStatus.UpdatableReplicaSetNode(serverAddress, updatableNodes, _logger, null, _mongoOptions, _lastPrimarySignal);
         updatableNode._ok = true;
         updatableNode._pingTimeMS = pingTime;
         updatableNode._isSecondary = isSecondary;
@@ -190,7 +189,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
 
         updatableNodes.add(updatableNode);
 
-        nodes.add(new ReplicaSetStatus.ReplicaSetNode(serverAddress, Collections.singleton(serverAddress.toString()), pingTime,
+        nodes.add(new ReplicaSetStatus.ReplicaSetNode(serverAddress, Collections.singleton(serverAddress.toString()), "", pingTime,
                 true, !isSecondary, isSecondary, tags, Bytes.MAX_OBJECT_SIZE));
     }
 

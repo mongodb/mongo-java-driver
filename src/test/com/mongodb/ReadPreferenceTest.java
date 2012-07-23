@@ -38,15 +38,15 @@ public class ReadPreferenceTest extends TestCase  {
         float acceptablePingTime = bestPingTime + (acceptableLatencyMS/2);
         float unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1 ;
         
-        _primary = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27017), names, acceptablePingTime, _isOK, _isMaster, !_isSecondary, tagSet1, Bytes.MAX_OBJECT_SIZE );
+        _primary = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27017), names, "", acceptablePingTime, _isOK, _isMaster, !_isSecondary, tagSet1, Bytes.MAX_OBJECT_SIZE );
         
         names.clear();
         names.add("secondary");
-        _secondary = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27018), names, bestPingTime, _isOK, !_isMaster, _isSecondary, tagSet2, Bytes.MAX_OBJECT_SIZE );
+        _secondary = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27018), names, "", bestPingTime, _isOK, !_isMaster, _isSecondary, tagSet2, Bytes.MAX_OBJECT_SIZE );
         
         names.clear();
         names.add("tertiary");
-        _tertiary = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27019), names, unacceptablePingTime, _isOK, !_isMaster, _isSecondary, tagSet3, Bytes.MAX_OBJECT_SIZE );
+        _tertiary = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27019), names, "", unacceptablePingTime, _isOK, !_isMaster, _isSecondary, tagSet3, Bytes.MAX_OBJECT_SIZE );
         
         List<ReplicaSetNode> nodeList = new ArrayList<ReplicaSetNode>();
         nodeList.add(_primary);

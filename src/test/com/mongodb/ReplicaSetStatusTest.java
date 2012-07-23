@@ -16,10 +16,19 @@
 
 package com.mongodb;
 
+import com.mongodb.ReplicaSetStatus.ReplicaSetNode;
 import com.mongodb.util.TestCase;
+
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Random;
+
 
 /**
  * This is a placeholder. A node needs to be able to be created outside of ReplicaSetStatus.
@@ -42,6 +51,77 @@ public class ReplicaSetStatusTest extends TestCase {
         replicaSetStatus._updater.join(5000);
 
         assertTrue(!replicaSetStatus._updater.isAlive());
+    }
+    
+    @Test
+    public void testSetNames() throws Exception {
+        String replicaSetName = cleanupMongo.getConnector().getReplicaSetStatus().getName();
+        
+        List<ReplicaSetNode> nodes = cleanupMongo.getConnector().getReplicaSetStatus()._replicaSetHolder.get().getAll();
+        
+        for(ReplicaSetNode node : nodes){
+            assertEquals(replicaSetName, node.getSetName());
+        }
+        
+    }
+    
+    @Test(expectedExceptions = MongoException.class)
+    public void testMultipleSetNames1() throws Exception {
+        float acceptableLatencyMS = 15;
+        float bestPingTime = 50f;
+        float acceptablePingTime = bestPingTime + (acceptableLatencyMS/2);
+        
+        ReplicaSetNode primary = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27017), new HashSet<String>(Arrays.asList("primaries")) , "setName1", acceptablePingTime, true, true, false, new LinkedHashMap<String, String>(), Bytes.MAX_OBJECT_SIZE );
+        ReplicaSetNode secondary1 = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27018), new HashSet<String>(Arrays.asList("secondaries")), "setName2", bestPingTime, true, false, true, new LinkedHashMap<String, String>(), Bytes.MAX_OBJECT_SIZE );
+        ReplicaSetNode secondary2 = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27019), new HashSet<String>(Arrays.asList("secondaries")), "setName2", bestPingTime, true, false, true, new LinkedHashMap<String, String>(), Bytes.MAX_OBJECT_SIZE );
+
+        List<ReplicaSetNode> nodeList = new ArrayList<ReplicaSetNode>();
+        nodeList.add(primary);
+        nodeList.add(secondary1);
+        nodeList.add(secondary2);
+        
+        ReplicaSetStatus.ReplicaSet set  = new ReplicaSetStatus.ReplicaSet(nodeList, (new Random()), (int)acceptableLatencyMS);
+        set.getMaster();
+    }
+    
+    @Test(expectedExceptions = MongoException.class)
+    public void testMultipleSetNames2() throws Exception {
+        float acceptableLatencyMS = 15;
+        float bestPingTime = 50f;
+        float acceptablePingTime = bestPingTime + (acceptableLatencyMS/2);
+        
+        //one entry is empty
+        ReplicaSetNode primary = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27017), new HashSet<String>(Arrays.asList("primaries")) , "setName1", acceptablePingTime, true, true, false, new LinkedHashMap<String, String>(), Bytes.MAX_OBJECT_SIZE );
+        ReplicaSetNode secondary1 = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27018), new HashSet<String>(Arrays.asList("secondaries")), "setName2", bestPingTime, true, false, true, new LinkedHashMap<String, String>(), Bytes.MAX_OBJECT_SIZE );
+        ReplicaSetNode secondary2 = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27019), new HashSet<String>(Arrays.asList("secondaries")), "", bestPingTime, true, false, true, new LinkedHashMap<String, String>(), Bytes.MAX_OBJECT_SIZE );
+
+        List<ReplicaSetNode> nodeList = new ArrayList<ReplicaSetNode>();
+        nodeList.add(primary);
+        nodeList.add(secondary1);
+        nodeList.add(secondary2);
+        
+        ReplicaSetStatus.ReplicaSet set  = new ReplicaSetStatus.ReplicaSet(nodeList, (new Random()), (int)acceptableLatencyMS);
+        set.getMaster();
+    }
+    
+    @Test
+    public void testMultipleSetNames3() throws Exception {
+        float acceptableLatencyMS = 15;
+        float bestPingTime = 50f;
+        float acceptablePingTime = bestPingTime + (acceptableLatencyMS/2);
+        
+        ReplicaSetNode primary = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27017), new HashSet<String>(Arrays.asList("primaries")) , "setName1", acceptablePingTime, true, true, false, new LinkedHashMap<String, String>(), Bytes.MAX_OBJECT_SIZE );
+        ReplicaSetNode secondary1 = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27018), new HashSet<String>(Arrays.asList("secondaries")), "", bestPingTime, true, false, true, new LinkedHashMap<String, String>(), Bytes.MAX_OBJECT_SIZE );
+        ReplicaSetNode secondary2 = new ReplicaSetNode(new ServerAddress("127.0.0.1", 27019), new HashSet<String>(Arrays.asList("secondaries")), "", bestPingTime, true, false, true, new LinkedHashMap<String, String>(), Bytes.MAX_OBJECT_SIZE );
+
+        List<ReplicaSetNode> nodeList = new ArrayList<ReplicaSetNode>();
+        nodeList.add(primary);
+        nodeList.add(secondary1);
+        nodeList.add(secondary2);
+        
+        ReplicaSetStatus.ReplicaSet set  = new ReplicaSetStatus.ReplicaSet(nodeList, (new Random()), (int)acceptableLatencyMS);
+        assertEquals(primary, set.getMaster());
+        assertNotNull(set.getASecondary());
     }
 }
 
