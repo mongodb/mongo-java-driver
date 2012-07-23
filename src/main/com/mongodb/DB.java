@@ -30,6 +30,7 @@ import java.util.Set;
 
 import com.mongodb.DBApiLayer.Result;
 import com.mongodb.util.Util;
+import org.bson.BSONObject;
 
 /**
  * an abstract class that represents a logical database on a server
@@ -62,20 +63,21 @@ public abstract class DB {
     }
 
     /**
-     * Tests if database commands are read preference obediant
-     * @param command the <code>DBObject</code> to test obediance
-     * @return true if the command is obediant
-     * @see ReadPreferences
+     * Tests if database commands are read preference obedient
+     * @param command the <code>DBObject</code> to test obedience
+     * @return true if the command is obedient
+     * @see com.mongodb.ReadPreference
      */
     boolean obeyReadPreference(DBObject command){
         String comString = command.keySet().iterator().next();
         
         // explicitly check mapreduce commands are inline
         if(comString.equals("mapreduce")) {
-            DBObject out = (DBObject)command.get("out");
-            if(out != null){
-                Integer inline = ((Integer)out.get("inline"));
-                return ( inline != null && inline.equals(1));
+            Object out = command.get("out");
+            if (out instanceof BSONObject ){
+                BSONObject outMap = (BSONObject) out;
+                Integer inline = (Integer) outMap.get("inline");
+                return (inline != null && inline.equals(1));
             }
             else
                 return false;
