@@ -70,14 +70,13 @@ public abstract class DB {
      */
     boolean obeyReadPreference(DBObject command){
         String comString = command.keySet().iterator().next();
-        
+
         // explicitly check mapreduce commands are inline
         if(comString.equals("mapreduce")) {
             Object out = command.get("out");
             if (out instanceof BSONObject ){
                 BSONObject outMap = (BSONObject) out;
-                Integer inline = (Integer) outMap.get("inline");
-                return (inline != null && inline.equals(1));
+                return outMap.get("inline") != null;
             }
             else
                 return false;

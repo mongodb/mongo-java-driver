@@ -15,18 +15,14 @@
  */
 package com.mongodb;
 
-import java.io.*;
-import java.net.UnknownHostException;
-import java.util.*;
-import java.util.regex.*;
-
+import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
 
-import com.mongodb.util.*;
+import java.net.UnknownHostException;
 
 public class DBTest extends TestCase {
-    
-    public DBTest() 
+
+    public DBTest()
         throws UnknownHostException {
         super();
 	cleanupMongo = new Mongo( "127.0.0.1" );
@@ -93,6 +89,18 @@ public class DBTest extends TestCase {
         assertFalse(_db.collectionExists( "foo1" ));
     }
 
+    @Test(groups = {"basic"})
+    public void testReadPreferenceObedience() {
+        DBObject obj = new BasicDBObject("mapreduce", 1).append("out", "myColl");
+        assertFalse(_db.obeyReadPreference(obj));
+
+        obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("replace", "myColl"));
+        assertFalse(_db.obeyReadPreference(obj));
+
+        obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("inline", 1));
+        assertTrue(_db.obeyReadPreference(obj));
+    }
+
     /*public static class Person extends DBObject {
         
         public Person(){
@@ -134,9 +142,9 @@ public class DBTest extends TestCase {
         assertTrue( out instanceof Person , "didn't come out as Person" );
     }
     */
-    
+
     final DB _db;
-    
+
     public static void main( String args[] )
         throws Exception {
         (new DBTest()).runConsole();
