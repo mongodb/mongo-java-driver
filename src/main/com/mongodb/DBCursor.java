@@ -18,11 +18,13 @@
 
 package com.mongodb;
 
-import java.io.Closeable;
-import java.util.*;
-
 import com.mongodb.DBApiLayer.Result;
-import com.mongodb.QueryOpBuilder;
+
+import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 
 /** An iterator over database results.
@@ -297,7 +299,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return a copy of the same cursor (for chaining)
      *
      * @deprecated Replaced with ReadPreference.SECONDARY
-     * @see com.mongodb.ReadPreference.SECONDARY
+     * @see com.mongodb.ReadPreference#SECONDARY
      */
     @Deprecated
     public DBCursor slaveOk(){
