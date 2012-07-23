@@ -346,28 +346,30 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
 
     // ----  internal stuff ------
 
-	private void _check(){
-		if (_it != null)
-			return;
+    private void _check() {
+        if (_it != null)
+            return;
 
-		_lookForHints();
+        _lookForHints();
 
-		DBObject queryOp = new QueryOpBuilder()
-							.addQuery(_query)
-							.addOrderBy(_orderBy)
-							.addHint(_hintDBObj)
-							.addHint(_hint)
-							.addExplain(_explain)
-							.addSnapshot(_snapshot)
-							.addSpecialFields(_specialFields)
-							.addReadPreference(_readPref.toDBObject())
-							.get();
-		
-		_it = _collection.__find(queryOp, _keysWanted, _skip, _batchSize, _limit,
-				_options, _readPref, getDecoder());
-	}
+        QueryOpBuilder builder = new QueryOpBuilder()
+                .addQuery(_query)
+                .addOrderBy(_orderBy)
+                .addHint(_hintDBObj)
+                .addHint(_hint)
+                .addExplain(_explain)
+                .addSnapshot(_snapshot)
+                .addSpecialFields(_specialFields);
 
-	// Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
+        if (_collection.getDB().getMongo().isMongosConnection()) {
+            builder.addReadPreference(_readPref.toDBObject());
+        }
+
+        _it = _collection.__find(builder.get(), _keysWanted, _skip, _batchSize, _limit,
+                _options, _readPref, getDecoder());
+    }
+
+    // Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
     // so that the collection can use a cached decoder
     private DBDecoder getDecoder() {
         return _decoderFact != null ? _decoderFact.create() : null;
