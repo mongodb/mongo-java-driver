@@ -165,7 +165,7 @@ public class MongoOptions {
      * Default is false.
      *
      * @deprecated Replaced in MongoDB 2.0/Java Driver 2.7 with ReadPreference.SECONDARY
-     * @see com.mongodb.ReadPreference.SECONDARY
+     * @see com.mongodb.ReadPreference#SECONDARY
      */
     @Deprecated
     public boolean slaveOk;
