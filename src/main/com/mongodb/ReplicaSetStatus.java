@@ -205,8 +205,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
         }
 
         public List<ReplicaSetNode> getAll() {
-            if(!errorStatus.isOk())
-                throw new MongoException(errorStatus.getError());
+            checkStatus();
             
             return all;
         }
@@ -216,8 +215,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
         }
 
         public ReplicaSetNode getMaster() {
-            if(!errorStatus.isOk())
-                throw new MongoException(errorStatus.getError());
+            checkStatus();
             
             return master;
         }
@@ -231,8 +229,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
         }
 
         public ReplicaSetNode getASecondary() {
-            if(!errorStatus.isOk())
-                throw new MongoException(errorStatus.getError());
+            checkStatus();
             
             if (goodSecondaries.isEmpty()) {
                 return null;
@@ -241,8 +238,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
         }
 
         public ReplicaSetNode getASecondary(List<Tag> tags) {
-            if(!errorStatus.isOk())
-                throw new MongoException(errorStatus.getError());
+            checkStatus();
             
             // optimization
             if (tags.isEmpty()) {
@@ -258,8 +254,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
         }
         
         public ReplicaSetNode getAMember() {
-            if(!errorStatus.isOk())
-                throw new MongoException(errorStatus.getError());
+            checkStatus();
             
             if (goodMembers.isEmpty()) {
                 return null;
@@ -268,8 +263,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
         }
 
         public ReplicaSetNode getAMember(List<Tag> tags) {
-            if(!errorStatus.isOk())
-                throw new MongoException(errorStatus.getError());
+            checkStatus();
             
             if (tags.isEmpty())
                 return getAMember();
@@ -283,8 +277,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
         }
 
         public List<ReplicaSetNode> getGoodSecondariesByTags(final List<Tag> tags) {
-            if(!errorStatus.isOk())
-                throw new MongoException(errorStatus.getError());
+            checkStatus();
             
             List<ReplicaSetNode> taggedSecondaries = getMembersByTags(all, tags);
             return calculateGoodSecondaries(taggedSecondaries,
@@ -292,8 +285,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
         }
         
         public List<ReplicaSetNode> getGoodMembersByTags(final List<Tag> tags) {
-            if(!errorStatus.isOk())
-                throw new MongoException(errorStatus.getError());
+            checkStatus();
             
             List<ReplicaSetNode> taggedMembers = getMembersByTags(all, tags);
             return calculateGoodMembers(taggedMembers,
@@ -301,13 +293,14 @@ public class ReplicaSetStatus extends ConnectionStatus {
         }
         
         public List<ReplicaSetNode> getGoodMembers() {            
-            if(!errorStatus.isOk())
-                throw new MongoException(errorStatus.getError());
- 
+            checkStatus();
+            
             return calculateGoodMembers(all, calculateBestPingTime(all), acceptableLatencyMS);
         }
         
         public String getSetName() {
+            checkStatus();
+            
             return setName;
         }
         
@@ -325,6 +318,11 @@ public class ReplicaSetStatus extends ConnectionStatus {
             sb.append(" ]");
             return sb.toString();
         }
+        
+        private void checkStatus(){
+            if (!errorStatus.isOk())
+                throw new MongoException(errorStatus.getError());
+        }
 
         private ReplicaSetNode findMaster() {
             for (ReplicaSetNode node : all) {
@@ -335,10 +333,10 @@ public class ReplicaSetStatus extends ConnectionStatus {
         }
         
         private String determineSetName() {
-            for(ReplicaSetNode node : all) {
+            for (ReplicaSetNode node : all) {
                 String nodeSetName = node.getSetName();
                 
-                if(nodeSetName != null && !nodeSetName.equals("")) {
+                if (nodeSetName != null && !nodeSetName.equals("")) {
                     return nodeSetName;
                 }
             }
