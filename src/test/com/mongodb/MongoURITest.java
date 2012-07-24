@@ -18,16 +18,8 @@
 
 package com.mongodb;
 
-import java.util.*;
-import java.util.regex.*;
-import java.io.IOException;
-
+import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
-
-import com.mongodb.util.*;
-
-import org.bson.*;
-import org.bson.types.*;
 
 
 public class MongoURITest extends TestCase {
@@ -101,6 +93,22 @@ public class MongoURITest extends TestCase {
         _testOpts( uMixed._options );
     }
 
+    @Test()
+    public void testReadPreferenceOptions(){
+        MongoURI uri = new MongoURI("mongodb://localhost/?readPreference=secondaryPreferred");
+        assertEquals(ReadPreference.secondaryPreferred(), uri._options.readPreference);
+
+        uri = new MongoURI("mongodb://localhost/?readPreference=secondaryPreferred&" +
+                "readPreferenceTags=dc:ny,rack:1&readPreferenceTags=dc:ny&readPreferenceTags=");
+        assertEquals(ReadPreference.secondaryPreferred
+                (
+                        new BasicDBObject("dc", "ny").append("rack", "1"),
+                        new BasicDBObject("dc", "ny"),
+                        new BasicDBObject()
+                ),
+                uri._options.readPreference);
+    }
+
     @SuppressWarnings("deprecation")
     private void _testOpts(MongoOptions uOpt){
         assertEquals( uOpt.connectionsPerHost, 10 );
@@ -114,6 +122,7 @@ public class MongoURITest extends TestCase {
         assertEquals( uOpt.wtimeout, 2500 );
         assertTrue( uOpt.fsync );
         assertEquals( uOpt.getWriteConcern(), new WriteConcern(1, 2500, true) );
+        assertEquals( null, uOpt.readPreference);
     }
     public static void main( String args[] )
         throws Exception {

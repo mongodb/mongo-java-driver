@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,6 +38,8 @@ import java.util.logging.Logger;
  * <li>sockettimeoutms</li>
  * <li>autoconnectretry</li>
  * <li>slaveok</li>
+ * <li>readpreference</li>
+ * <li>readpreferencetags</li>
  * <li>safe</li>
  * <li>w</li>
  * <li>wtimeout</li>
@@ -135,6 +138,10 @@ public class MongoURI {
 
     @SuppressWarnings("deprecation")
     private void parseOptions( String optionsPart ){
+        String readPreferenceType = null;
+        DBObject firstTagSet = null;
+        List<DBObject> remainingTagSets = new ArrayList<DBObject>();
+
         for ( String _part : optionsPart.split( "&|;" ) ){
             int idx = _part.indexOf( "=" );
             if ( idx >= 0 ){
@@ -154,10 +161,43 @@ public class MongoURI {
                 else if ( key.equals( "w" ) ) _options.w = Integer.parseInt( value );
                 else if ( key.equals( "wtimeout" ) ) _options.wtimeout = Integer.parseInt( value );
                 else if ( key.equals( "fsync" ) ) _options.fsync = _parseBoolean( value );
-                else LOGGER.warning( "Unknown or Unsupported Option '" + key + "'" );
+                else if ( key.equals( "readpreference")) readPreferenceType = value;
+                else if ( key.equals( "readpreferencetags")) {
+                    DBObject tagSet = getTagSet(value.trim());
+                    if (firstTagSet == null) {
+                        firstTagSet = tagSet;
+                    } else {
+                        remainingTagSets.add(tagSet);
+                    }
+                }
+                else LOGGER.warning("Unknown or Unsupported Option '" + key + "'");
+            }
+        }
+
+        if (readPreferenceType != null) {
+            if (firstTagSet == null) {
+               _options.readPreference = ReadPreference.valueOf(readPreferenceType);
+            }
+            else {
+               _options.readPreference = ReadPreference.valueOf(readPreferenceType, firstTagSet,
+                       remainingTagSets.toArray(new DBObject[remainingTagSets.size()]));
             }
         }
     }
+
+    private DBObject getTagSet(String tagSetString) {
+        DBObject tagSet = new BasicDBObject();
+        if (tagSetString.length() > 0) {
+            for (String tag : tagSetString.split(",")) {
+                String[] tagKeyValuePair = tag.split(":");
+                if (tagKeyValuePair.length != 2) {
+                    throw new IllegalArgumentException("Bad read preference tags: " + tagSetString);
+                }
+                tagSet.put(tagKeyValuePair[0].trim(), tagKeyValuePair[1].trim());
+            }
+        }
+        return tagSet;
+     }
 
     boolean _parseBoolean( String _in ){
         String in = _in.trim();

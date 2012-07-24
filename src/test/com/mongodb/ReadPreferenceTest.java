@@ -155,7 +155,39 @@ public class ReadPreferenceTest extends TestCase  {
         assertTrue(pref.toDBObject().toString().equals("{ \"mode\" : \"nearest\" , \"tags\" : [ { \"madeup\" : \"1\"}]}"));
         assertTrue(pref.getNode(_set) == null);
     }
-    
+
+    @Test
+    public void testValueOf() {
+        assertEquals(ReadPreference.primary(), ReadPreference.valueOf("primary"));
+        assertEquals(ReadPreference.secondary(), ReadPreference.valueOf("secondary"));
+        assertEquals(ReadPreference.primaryPreferred(), ReadPreference.valueOf("primaryPreferred"));
+        assertEquals(ReadPreference.secondaryPreferred(), ReadPreference.valueOf("secondaryPreferred"));
+        assertEquals(ReadPreference.nearest(), ReadPreference.valueOf("nearest"));
+
+        DBObject first = new BasicDBObject("dy", "ny");
+        DBObject remaining = new BasicDBObject();
+        assertEquals(ReadPreference.secondary(first, remaining), ReadPreference.valueOf("secondary", first, remaining));
+        assertEquals(ReadPreference.primaryPreferred(first, remaining), ReadPreference.valueOf("primaryPreferred", first, remaining));
+        assertEquals(ReadPreference.secondaryPreferred(first, remaining), ReadPreference.valueOf("secondaryPreferred", first, remaining));
+        assertEquals(ReadPreference.nearest(first, remaining), ReadPreference.valueOf("nearest", first, remaining));
+    }
+
+    @Test
+    public void testGetName() {
+        assertEquals("primary", ReadPreference.primary());
+        assertEquals("secondary", ReadPreference.secondary());
+        assertEquals("primaryPreferred", ReadPreference.primaryPreferred());
+        assertEquals("secondaryPreferred", ReadPreference.secondaryPreferred());
+        assertEquals("nearest", ReadPreference.nearest());
+
+        DBObject first = new BasicDBObject("dy", "ny");
+        DBObject remaining = new BasicDBObject();
+        assertEquals(ReadPreference.secondary(first, remaining), ReadPreference.valueOf("secondary", first, remaining));
+        assertEquals(ReadPreference.primaryPreferred(first, remaining), ReadPreference.valueOf("primaryPreferred", first, remaining));
+        assertEquals(ReadPreference.secondaryPreferred(first, remaining), ReadPreference.valueOf("secondaryPreferred", first, remaining));
+        assertEquals(ReadPreference.nearest(first, remaining), ReadPreference.valueOf("nearest", first, remaining));
+    }
+
     @Test
     @SuppressWarnings( "deprecation" )
     public void testTaggedPreference(){

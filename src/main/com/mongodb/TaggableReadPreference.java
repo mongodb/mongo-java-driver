@@ -54,6 +54,25 @@ public abstract class TaggableReadPreference extends ReadPreference {
         return getName() + printTags();
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final TaggableReadPreference that = (TaggableReadPreference) o;
+
+        if (!_tags.equals(that._tags)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = _tags.hashCode();
+        result = 31 * result + getName().hashCode();
+        return result;
+    }
+
     String printTags() {
         return (_tags.isEmpty() ? "" :  " : " + new BasicDBObject("tags", _tags));
     }
@@ -66,10 +85,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         return tagList;
     }
 
-    abstract String getName();
-
     final List<DBObject> _tags;
-
 
     /**
      * Read from secondary
@@ -85,7 +101,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        String getName() {
+        public String getName() {
             return "secondary";
         }
 
@@ -121,7 +137,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        String getName() {
+        public String getName() {
             return "secondaryPreferred";
         }
 
@@ -147,7 +163,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
 
         @Override
-        String getName() {
+        public String getName() {
             return "nearest";
         }
 
@@ -182,7 +198,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        String getName() {
+        public String getName() {
             return "primaryPreferred";
         }
 

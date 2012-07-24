@@ -49,6 +49,7 @@ public class MongoOptionsTest extends TestCase {
         options.dbEncoderFactory = null;
         options.socketFactory = null;
         options.description = "cool";
+        options.readPreference = ReadPreference.secondary();
 
         final MongoOptions copy = options.copy();
         assertEquals(options.connectionsPerHost, copy.connectionsPerHost);
@@ -69,6 +70,7 @@ public class MongoOptionsTest extends TestCase {
         assertEquals(options.dbEncoderFactory, copy.dbEncoderFactory);
         assertEquals(options.socketFactory, copy.socketFactory);
         assertEquals(options.description, copy.description);
+        assertEquals(ReadPreference.secondary(), options.readPreference);
     }
     
     @Test
@@ -93,7 +95,8 @@ public class MongoOptionsTest extends TestCase {
         options.setDbEncoderFactory(null);
         options.setSocketFactory(null);
         options.setDescription("very cool");
-        
+        options.setReadPreference(ReadPreference.secondary());
+
         assertEquals(options.getConnectionsPerHost(), 100);
         assertEquals(options.getThreadsAllowedToBlockForConnectionMultiplier(), 101);
         assertEquals(options.getMaxWaitTime(), 102);
@@ -111,6 +114,7 @@ public class MongoOptionsTest extends TestCase {
         assertEquals(options.getDbEncoderFactory(), null);
         assertEquals(options.getSocketFactory(), null);
         assertEquals(options.getDescription(), "very cool");
+        assertEquals(options.getReadPreference(), ReadPreference.secondary());
     }
 }
 

@@ -14,7 +14,6 @@
 package com.mongodb;
 
 import com.mongodb.ReplicaSetStatus.ReplicaSetNode;
-import com.mongodb.ReplicaSetStatus.Tag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +40,13 @@ public abstract class ReadPreference {
     public abstract DBObject toDBObject();
 
     /**
+     * The name of this read preference.
+     *
+     * @return the name
+     */
+    public abstract String getName();
+
+    /**
      * Preference to read from primary only.
      * Cannot be combined with tags.
      *
@@ -61,6 +67,16 @@ public abstract class ReadPreference {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            return o != null && getClass() == o.getClass();
+        }
+
+        @Override
+        public int hashCode() {
+            return getName().hashCode();
+        }
+
+        @Override
         ReplicaSetNode getNode(ReplicaSetStatus.ReplicaSet set) {
             return set.getMaster();
         }
@@ -70,7 +86,8 @@ public abstract class ReadPreference {
             return new BasicDBObject("mode", getName());
         }
 
-        String getName() {
+        @Override
+        public String getName() {
             return "primary";
         }
     }
@@ -126,6 +143,11 @@ public abstract class ReadPreference {
             return _pref.toDBObject();
         }
 
+        @Override
+        public String getName() {
+            return _pref.getName();
+        }
+
         private static List<DBObject> splitMapIntoMultipleMaps(DBObject tags) {
             List<DBObject> tagList = new ArrayList<DBObject>(tags.keySet().size());
 
@@ -150,14 +172,14 @@ public abstract class ReadPreference {
      * @return ReadPreference which reads from primary only
      */
     public static ReadPreference primary() {
-        return new PrimaryReadPreference();
+        return PRIMARY;
     }
 
     /**
      * @return ReadPreference which reads primary if available.
      */
     public static ReadPreference primaryPreferred() {
-        return new TaggableReadPreference.PrimaryPreferredReadPreference();
+        return PRIMARY_PREFERRED;
     }
 
     /**
@@ -171,7 +193,7 @@ public abstract class ReadPreference {
      * @return ReadPreference which reads secondary.
      */
     public static ReadPreference secondary() {
-        return new TaggableReadPreference.SecondaryReadPreference();
+        return SECONDARY;
     }
 
     /**
@@ -185,7 +207,7 @@ public abstract class ReadPreference {
      * @return ReadPreference which reads secondary if available, otherwise from primary.
      */
     public static ReadPreference secondaryPreferred() {
-        return new TaggableReadPreference.SecondaryPreferredReadPreference();
+        return SECONDARY_PREFERRED;
     }
 
     /**
@@ -199,8 +221,60 @@ public abstract class ReadPreference {
      * @return ReadPreference which reads nearest node.
      */
     public static ReadPreference nearest() {
-        return new TaggableReadPreference.NearestReadPreference();
+        return NEAREST;
     }
+
+    public static ReadPreference valueOf(String name) {
+        if (name == null) {
+            throw new IllegalArgumentException();
+        }
+
+        name = name.toLowerCase();
+
+        if (name.equals(PRIMARY.getName().toLowerCase())) {
+            return PRIMARY;
+        }
+        if (name.equals(SECONDARY.getName().toLowerCase())) {
+            return SECONDARY;
+        }
+        if (name.equals(SECONDARY_PREFERRED.getName().toLowerCase())) {
+            return SECONDARY_PREFERRED;
+        }
+        if (name.equals(PRIMARY_PREFERRED.getName().toLowerCase())) {
+            return PRIMARY_PREFERRED;
+        }
+        if (name.equals(NEAREST.getName().toLowerCase())) {
+            return NEAREST;
+        }
+
+        throw new IllegalArgumentException("No match for read preference of " + name);
+    }
+
+    public static TaggableReadPreference valueOf(String name, DBObject firstTagSet, final DBObject... remainingTagSets) {
+        if (name == null) {
+            throw new IllegalArgumentException();
+        }
+
+        name = name.toLowerCase();
+
+        if (name.equals(SECONDARY.getName().toLowerCase())) {
+            return new TaggableReadPreference.SecondaryReadPreference(firstTagSet, remainingTagSets);
+        }
+        if (name.equals(SECONDARY_PREFERRED.getName().toLowerCase())) {
+            return new TaggableReadPreference.SecondaryPreferredReadPreference(firstTagSet, remainingTagSets);
+        }
+        if (name.equals(PRIMARY_PREFERRED.getName().toLowerCase())) {
+            return new TaggableReadPreference.PrimaryPreferredReadPreference(firstTagSet, remainingTagSets);
+        }
+        if (name.equals(NEAREST.getName().toLowerCase())) {
+            return new TaggableReadPreference.NearestReadPreference(firstTagSet, remainingTagSets);
+        }
+
+        throw new IllegalArgumentException("No match for read preference of " + name);
+    }
+
+
+
 
     /**
      * @return ReadPreference which reads nearest node respective of tags.
@@ -209,7 +283,28 @@ public abstract class ReadPreference {
         return new TaggableReadPreference.NearestReadPreference(firstTagSet, remainingTagSets);
     }
 
-    public static ReadPreference PRIMARY = primary();
-    public static ReadPreference SECONDARY = secondary();
+    public static ReadPreference PRIMARY = new PrimaryReadPreference();
+    public static ReadPreference SECONDARY = new TaggableReadPreference.SecondaryReadPreference();
 
+    /**
+     * @deprecated As of release 2.9, replaced by
+     * <code>ReadPreference.secondaryPreferred(DBObject firstTagSet, DBObject... remainingTagSets)</code>
+     */
+    @Deprecated
+    public static ReadPreference withTags(Map<String, String> tags) {
+        return new TaggedReadPreference( tags );
+    }
+
+    /**
+     * @deprecated As of release 2.9, replaced by
+     * <code>ReadPreference.secondaryPreferred(DBObject firstTagSet, DBObject... remainingTagSets)</code>
+     */
+    @Deprecated
+    public static ReadPreference withTags( final DBObject tags ) {
+        return new TaggedReadPreference( tags );
+    }
+
+    private static final ReadPreference SECONDARY_PREFERRED = new TaggableReadPreference.SecondaryPreferredReadPreference();
+    private static final ReadPreference PRIMARY_PREFERRED = new TaggableReadPreference.PrimaryPreferredReadPreference();
+    private static final ReadPreference NEAREST = new TaggableReadPreference.NearestReadPreference();
 }

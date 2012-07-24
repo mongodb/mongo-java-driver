@@ -40,6 +40,7 @@ public class MongoOptions {
         autoConnectRetry = false;
         maxAutoConnectRetryTime = 0;
         slaveOk = false;
+        readPreference = null;
         safe = false;
         w = 0;
         wtimeout = 0;
@@ -62,6 +63,7 @@ public class MongoOptions {
         m.autoConnectRetry = autoConnectRetry;
         m.maxAutoConnectRetryTime = maxAutoConnectRetryTime;
         m.slaveOk = slaveOk;
+        m.readPreference = readPreference;
         m.safe = safe;
         m.w = w;
         m.wtimeout = wtimeout;
@@ -164,11 +166,16 @@ public class MongoOptions {
      * Note that reading from secondaries can increase performance and reliability, but it may result in temporary inconsistent results.
      * Default is false.
      *
-     * @deprecated Replaced in MongoDB 2.0/Java Driver 2.7 with ReadPreference.SECONDARY
-     * @see com.mongodb.ReadPreference#SECONDARY
+     * @deprecated Use {@code readPreference} instead
+     * @see MongoOptions#readPreference
      */
     @Deprecated
     public boolean slaveOk;
+
+    /**
+     * Specifies the read preference.
+     */
+    public ReadPreference readPreference;
 
     /**
      * Override the DBCallback factory. Default is for the standard Mongo Java driver configuration.
@@ -231,6 +238,9 @@ public class MongoOptions {
         buf.append( "autoConnectRetry=" ).append( autoConnectRetry ).append( ", " );
         buf.append( "maxAutoConnectRetryTime=" ).append( maxAutoConnectRetryTime ).append( ", " );
         buf.append( "slaveOk=" ).append( slaveOk ).append( ", " );
+        if (readPreference != null) {
+            buf.append( "readPreference").append( readPreference );
+        }
         buf.append( "safe=" ).append( safe ).append( ", " );
         buf.append( "w=" ).append( w ).append( ", " );
         buf.append( "wtimeout=" ).append( wtimeout ).append( ", " );
@@ -282,7 +292,7 @@ public class MongoOptions {
 
     /**
      * 
-     * @param this multiplied with connectionsPerHost, sets the maximum number of threads that
+     * @param threads multiplied with connectionsPerHost, sets the maximum number of threads that
      * may be waiting for a connection
      */
     public synchronized void setThreadsAllowedToBlockForConnectionMultiplier(int threads) {
@@ -511,5 +521,21 @@ public class MongoOptions {
      */
     public synchronized void setSocketFactory(SocketFactory factory) {
         socketFactory = factory;
+    }
+
+    /**
+     *
+     * @return the read preference
+     */
+    public ReadPreference getReadPreference() {
+        return readPreference;
+    }
+
+    /**
+     *
+     * @param readPreference the read preference
+     */
+    public void setReadPreference(ReadPreference readPreference) {
+        this.readPreference = readPreference;
     }
 }
