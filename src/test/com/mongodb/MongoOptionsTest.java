@@ -70,7 +70,7 @@ public class MongoOptionsTest extends TestCase {
         assertEquals(options.dbEncoderFactory, copy.dbEncoderFactory);
         assertEquals(options.socketFactory, copy.socketFactory);
         assertEquals(options.description, copy.description);
-        assertEquals(ReadPreference.secondary(), options.readPreference);
+        assertEquals(options.readPreference, copy.readPreference);
     }
     
     @Test
