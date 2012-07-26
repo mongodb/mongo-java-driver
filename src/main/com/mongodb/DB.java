@@ -18,6 +18,10 @@
 
 package com.mongodb;
 
+import com.mongodb.DBApiLayer.Result;
+import com.mongodb.util.Util;
+import org.bson.BSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,10 +31,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.mongodb.DBApiLayer.Result;
-import com.mongodb.util.Util;
-import org.bson.BSONObject;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * an abstract class that represents a logical database on a server
@@ -533,33 +534,34 @@ public abstract class DB {
      * @return true if authenticated, false otherwise
      * @dochub authenticate
      */
-    public synchronized boolean isAuthenticated() {
-	return ( _username != null );
+    public boolean isAuthenticated() {
+        return authorizationCredentialsReference.get() != null;
     }
 
     /**
      *  Authenticates to db with the given name and password
      *
      * @param username name of user for this database
-     * @param passwd password of user for this database
+     * @param password password of user for this database
      * @return true if authenticated, false otherwise
      * @throws MongoException
      * @dochub authenticate
      */
-    public synchronized boolean authenticate(String username, char[] passwd ){
+    public boolean authenticate(String username, char[] password ){
 
-        if ( username == null || passwd == null )
-            throw new NullPointerException( "username can't be null" );
+        if (authorizationCredentialsReference.get() != null) {
+            throw new IllegalStateException("can't authenticate twice on the same database");
+        }
 
-        if ( _username != null )
-	    throw new IllegalStateException( "can't call authenticate twice on the same DBObject" );
-
-        String hash = _hash( username , passwd );
-        CommandResult res = _doauth( username , hash.getBytes() );
-        if ( !res.ok())
+        AuthorizationCredentials newCredentials = new AuthorizationCredentials(username, password);
+        CommandResult res = newCredentials.authorize();
+        if (!res.ok())
             return false;
-        _username = username;
-        _authhash = hash.getBytes();
+
+        boolean wasNull = authorizationCredentialsReference.compareAndSet(null, newCredentials);
+        if (!wasNull) {
+            throw new IllegalStateException("can't authenticate twice on the same database");
+        }
         return true;
     }
 
@@ -567,61 +569,25 @@ public abstract class DB {
      *  Authenticates to db with the given name and password
      *
      * @param username name of user for this database
-     * @param passwd password of user for this database
+     * @param password password of user for this database
      * @return the CommandResult from authenticate command
      * @throws MongoException if authentication failed due to invalid user/pass, or other exceptions like I/O
      * @dochub authenticate
      */
-    public synchronized CommandResult authenticateCommand(String username, char[] passwd ){
+    public synchronized CommandResult authenticateCommand(String username, char[] password ){
 
-        if ( username == null || passwd == null )
-            throw new NullPointerException( "username can't be null" );
+        if (authorizationCredentialsReference.get() != null) {
+            throw new IllegalStateException( "can't authenticate twice on the same database" );
+        }
 
-        if ( _username != null )
-	    throw new IllegalStateException( "can't call authenticate twice on the same DBObject" );
-
-        String hash = _hash( username , passwd );
-        CommandResult res = _doauth( username , hash.getBytes() );
+        AuthorizationCredentials newCredentials = new AuthorizationCredentials(username, password);
+        CommandResult res = newCredentials.authorize();
         res.throwOnError();
-        _username = username;
-        _authhash = hash.getBytes();
+        boolean wasNull = authorizationCredentialsReference.compareAndSet(null, newCredentials);
+        if (!wasNull) {
+            throw new IllegalStateException("can't authenticate twice on the same database");
+        }
         return res;
-    }
-
-    /*
-    boolean reauth(){
-        if ( _username == null || _authhash == null )
-            throw new IllegalStateException( "no auth info!" );
-        return _doauth( _username , _authhash );
-    }
-    */
-
-    synchronized DBObject _authCommand( String nonce ){
-        if ( _username == null || _authhash == null )
-            throw new IllegalStateException( "no auth info!" );
-
-        return _authCommand( nonce , _username , _authhash );
-    }
-
-    static DBObject _authCommand( String nonce , String username , byte[] hash ){
-        String key = nonce + username + new String( hash );
-
-        BasicDBObject cmd = new BasicDBObject();
-
-        cmd.put("authenticate", 1);
-        cmd.put("user", username);
-        cmd.put("nonce", nonce);
-        cmd.put("key", Util.hexMD5(key.getBytes()));
-
-        return cmd;
-    }
-
-    private CommandResult _doauth( String username , byte[] hash ) {
-        CommandResult res = command(new BasicDBObject("getnonce", 1));
-        res.throwOnError();
-
-        DBObject cmd = _authCommand( res.getString( "nonce" ) , username , hash );
-        return command(cmd);
     }
 
     /**
@@ -739,7 +705,7 @@ public abstract class DB {
      * Makes it possible to execute "read" queries on a slave node
      *
      * @deprecated Replaced with ReadPreference.SECONDARY
-     * @see com.mongodb.ReadPreference.SECONDARY
+     * @see com.mongodb.ReadPreference#SECONDARY
      */
     @Deprecated
     public void slaveOk(){
@@ -779,9 +745,9 @@ public abstract class DB {
 
     public abstract void cleanCursors( boolean force );
 
-    synchronized String getUsername() {
-        return _username;
-    }   
+    AuthorizationCredentials getAuthorizationCredentials() {
+        return authorizationCredentialsReference.get();
+    }
 
     final Mongo _mongo;
     final String _name;
@@ -791,7 +757,66 @@ public abstract class DB {
     private com.mongodb.ReadPreference _readPref;
     final Bytes.OptionHolder _options;
 
-    private String _username;
-    private byte[] _authhash = null;
+    private AtomicReference<AuthorizationCredentials> authorizationCredentialsReference =
+            new AtomicReference<AuthorizationCredentials>();
 
+    /**
+     * Encapsulate everything relating to authorization of a user on a database
+     */
+    class AuthorizationCredentials {
+        private final String userName;
+        private final byte[] authHash;
+
+        private AuthorizationCredentials(final String userName, final char[] password) {
+            if (userName == null) {
+                throw new IllegalArgumentException("userName can not be null");
+            }
+            if (password == null) {
+                throw new IllegalArgumentException("password can not be null");
+            }
+            this.userName = userName;
+            this.authHash = createHash(userName, password);
+        }
+
+        CommandResult authorize() {
+            CommandResult res = command(getNonceCommand());
+            res.throwOnError();
+
+            return command(getAuthCommand(res.getString("nonce")));
+        }
+
+        DBObject getAuthCommand( String nonce ){
+            String key = nonce + userName + new String( authHash );
+
+            BasicDBObject cmd = new BasicDBObject();
+
+            cmd.put("authenticate", 1);
+            cmd.put("user", userName);
+            cmd.put("nonce", nonce);
+            cmd.put("key", Util.hexMD5(key.getBytes()));
+
+            return cmd;
+        }
+
+        BasicDBObject getNonceCommand() {
+            return new BasicDBObject("getnonce", 1);
+        }
+
+        private byte[] createHash( String userName , char[] password ){
+            ByteArrayOutputStream bout = new ByteArrayOutputStream( userName.length() + 20 + password.length );
+            try {
+                bout.write(userName.getBytes());
+                bout.write( ":mongo:".getBytes() );
+                for (final char ch : password) {
+                    if (ch >= 128)
+                        throw new IllegalArgumentException("can't handle non-ascii passwords yet");
+                    bout.write((byte) ch);
+                }
+            }
+            catch ( IOException ioe ){
+                throw new RuntimeException( "impossible" , ioe );
+            }
+            return Util.hexMD5( bout.toByteArray() ).getBytes();
+        }
+    }
 }

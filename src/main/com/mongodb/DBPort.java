@@ -294,7 +294,8 @@ public class DBPort {
     }
     
     void checkAuth( DB db ) throws IOException {
-        if ( db.getUsername() == null ){
+        DB.AuthorizationCredentials credentials = db.getAuthorizationCredentials();
+        if ( credentials == null ){
             if ( db._name.equals( "admin" ) )
                 return;
             checkAuth( db._mongo.getDB( "admin" ) );
@@ -303,14 +304,12 @@ public class DBPort {
         if ( _authed.containsKey( db ) )
             return;
         
-        CommandResult res = runCommand( db , new BasicDBObject( "getnonce" , 1 ) );
+        CommandResult res = runCommand( db , credentials.getNonceCommand() );
         res.throwOnError();
         
-        DBObject temp = db._authCommand( res.getString( "nonce" ) );
-        
-        res = runCommand( db , temp );
+        res = runCommand( db , credentials.getAuthCommand( res.getString( "nonce" ) ) );
+        res.throwOnError();
 
-        res.throwOnError();
         _authed.put( db , true );
     }
 
