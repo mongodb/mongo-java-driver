@@ -693,6 +693,13 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         return sb.toString();
     }
 
+    boolean hasFinalizer() {
+        if (_it == null || ! (_it instanceof Result)) {
+            return false;
+        }
+        return ((Result) _it).hasFinalizer();
+    }
+
     // ----  query setup ----
     private final DBCollection _collection;
     private final DBObject _query;

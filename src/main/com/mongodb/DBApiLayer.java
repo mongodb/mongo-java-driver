@@ -378,6 +378,9 @@ public class DBApiLayer extends DB {
             _host = res._host;
             _decoder = decoder;
             init( res );
+            // Only enable finalizer if cursor finalization is enabled and there is actually a cursor that needs killing
+            _optionalFinalizer = _mongo.getMongoOptions().isCursorFinalizerEnabled() && res.cursor() != 0 ?
+                    new OptionalFinalizer() : null;
         }
 
         private void init( Response res ){
@@ -471,18 +474,6 @@ public class DBApiLayer extends DB {
             return "DBCursor";
         }
 
-        protected void finalize() throws Throwable {
-            if (_curResult != null) {
-                long curId = _curResult.cursor();
-                _curResult = null;
-                _cur = null;
-                if (curId != 0) {
-                    _deadCursorIds.add(new DeadCursor(curId, _host));
-                }
-            }
-            super.finalize();
-        }
-
         public long totalBytes(){
             return _totalBytes;
         }
@@ -533,6 +524,10 @@ public class DBApiLayer extends DB {
             return _host;
         }
 
+        boolean hasFinalizer() {
+            return _optionalFinalizer != null;
+        }
+
         Response _curResult;
         Iterator<DBObject> _cur;
         int _batchSize;
@@ -546,6 +541,23 @@ public class DBApiLayer extends DB {
         private int _numGetMores = 0;
         private List<Integer> _sizes = new ArrayList<Integer>();
         private int _numFetched = 0;
+
+        // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
+        private final OptionalFinalizer _optionalFinalizer;
+
+        private class OptionalFinalizer {
+            @Override
+            protected void finalize() {
+                if (_curResult != null) {
+                    long curId = _curResult.cursor();
+                    _curResult = null;
+                    _cur = null;
+                    if (curId != 0) {
+                        _deadCursorIds.add(new DeadCursor(curId, _host));
+                    }
+                }
+            }
+        }
 
     }  // class Result
 

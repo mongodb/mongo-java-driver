@@ -50,6 +50,7 @@ public class MongoOptions {
         dbEncoderFactory = DefaultDBEncoder.FACTORY;
         socketFactory = SocketFactory.getDefault();
         description = null;
+        cursorFinalizerEnabled = true;
     }
 
     public MongoOptions copy() {
@@ -73,6 +74,7 @@ public class MongoOptions {
         m.dbEncoderFactory = dbEncoderFactory;
         m.socketFactory = socketFactory;
         m.description = description;
+        m.cursorFinalizerEnabled = cursorFinalizerEnabled;
         return m;
     }
 
@@ -226,6 +228,16 @@ public class MongoOptions {
      */
     public SocketFactory socketFactory;
 
+    /**
+     * Sets whether there is a a finalize method created that cleans up instances of DBCursor that the client
+     * does not close.  If you are careful to always call the close method of DBCursor, then this can safely be set to false.
+     * @see com.mongodb.DBCursor#close().
+     * Default is true.
+     */
+    public boolean cursorFinalizerEnabled;
+
+
+
     public String toString(){
         StringBuilder buf = new StringBuilder();
         buf.append( "description=" ).append( description ).append( ", " );
@@ -245,7 +257,8 @@ public class MongoOptions {
         buf.append( "w=" ).append( w ).append( ", " );
         buf.append( "wtimeout=" ).append( wtimeout ).append( ", " );
         buf.append( "fsync=" ).append( fsync ).append( ", " );
-        buf.append( "j=" ).append( j );
+        buf.append( "j=" ).append(j).append( ", " );
+        buf.append( "cursorFinalizerEnabled=").append( cursorFinalizerEnabled);
 
         return buf.toString();
     }
@@ -537,5 +550,22 @@ public class MongoOptions {
      */
     public void setReadPreference(ReadPreference readPreference) {
         this.readPreference = readPreference;
+    }
+
+
+    /**
+     *
+     * @return whether DBCursor finalizer is enabled
+     */
+    public boolean isCursorFinalizerEnabled() {
+        return cursorFinalizerEnabled;
+    }
+
+    /**
+     *
+     * @param cursorFinalizerEnabled whether cursor finalizer is enabled
+     */
+    public void setCursorFinalizerEnabled(final boolean cursorFinalizerEnabled) {
+        this.cursorFinalizerEnabled = cursorFinalizerEnabled;
     }
 }
