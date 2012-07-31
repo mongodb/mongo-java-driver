@@ -80,7 +80,7 @@ public class DBTCPConnectorTest extends TestCase {
         _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
         DBPort requestPort = _connector.getMyPort()._requestPort;
         _connector.call(_db, _collection,
-                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
+                OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
                 null, 0);
         assertEquals(requestPort, _connector.getMyPort()._requestPort);
     }
@@ -96,7 +96,7 @@ public class DBTCPConnectorTest extends TestCase {
 
         _connector.requestStart();
         _connector.call(_db, _collection,
-                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.secondary()),
+                OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.secondary()),
                 null, 0, ReadPreference.secondary(), null);
         DBPort requestPort = _connector.getMyPort()._requestPort;
         _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
@@ -111,18 +111,14 @@ public class DBTCPConnectorTest extends TestCase {
     public void testConnectionReservationForReads() {
         _connector.requestStart();
         _connector.call(_db, _collection,
-                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
+                OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
                 null, 0);
         assertNotNull(_connector.getMyPort()._requestPort);
     }
 
 
     private OutMessage createOutMessageForInsert() {
-        OutMessage om = new OutMessage( cleanupMongo , 2002, new DefaultDBEncoder() );
-
-        int flags = 0;
-        om.writeInt( flags );
-        om.writeCString(_collection.getFullName());
+        OutMessage om = OutMessage.insert(_collection, new DefaultDBEncoder(), WriteConcern.NONE);
         om.putObject( new BasicDBObject() );
 
         return om;

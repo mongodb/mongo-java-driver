@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-public abstract class SimplePool<T> implements SimplePoolMBean {
+public abstract class SimplePool<T> implements SimplePoolMXBean {
 
     static final boolean TRACK_LEAKS = Boolean.getBoolean( "MONGO-TRACKLEAKS" );
     static final long _sleepTime = 2;
@@ -298,9 +298,9 @@ public abstract class SimplePool<T> implements SimplePoolMBean {
     protected final boolean _trackLeaks;
     protected final boolean _debug;
 
-    private final List<T> _avail = new ArrayList<T>();
+    protected final List<T> _avail = new ArrayList<T>();
     protected final List<T> _availSafe = Collections.unmodifiableList( _avail );
-    private final WeakBag<T> _all = new WeakBag<T>();
+    protected final WeakBag<T> _all = new WeakBag<T>();
     private final Map<Integer,Throwable> _where = new HashMap<Integer,Throwable>();
 
     private final Semaphore _waiting = new Semaphore(0);

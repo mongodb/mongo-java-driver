@@ -31,27 +31,44 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
-public class DBPortPool extends SimplePool<DBPort> {
+public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoolMXBean {
+
+    public MongoConnection[] getInUseConnections() {
+        List<MongoConnection> connectionList = new ArrayList<MongoConnection>();
+        synchronized (_avail) {
+            for (DBPort port : _all) {
+                if (!_avail.contains(port)) {
+                    OutMessage curOutMessage = port.getOutMessageBeingProcessed();
+                    if (curOutMessage != null) {
+                        connectionList.add(new MongoConnection(curOutMessage.getNamespace(),
+                                curOutMessage.getOpCode(),
+                                curOutMessage.getQuery() != null ? curOutMessage.getQuery().toString() : null));
+                    }
+                }
+            }
+        }
+        return connectionList.toArray(new MongoConnection[connectionList.size()]);
+    }
 
     static class Holder {
-        
+
         Holder( MongoOptions options ){
             _options = options;
         }
 
         DBPortPool get( ServerAddress addr ){
-            
+
             DBPortPool p = _pools.get( addr );
-            
-            if (p != null) 
+
+            if (p != null)
                 return p;
-            
+
             synchronized (_pools) {
                 p = _pools.get( addr );
                 if (p != null) {
                     return p;
                 }
-                
+
                 p = new DBPortPool( addr , _options );
                 _pools.put( addr , p);
 
@@ -105,15 +122,15 @@ public class DBPortPool extends SimplePool<DBPort> {
     }
 
     // ----
-    
+
     public static class NoMoreConnection extends MongoInternalException {
         private static final long serialVersionUID = -4415279469780082174L;
-	
+
         NoMoreConnection( String msg ){
 	        super( msg );
 	    }
     }
-    
+
     public static class SemaphoresOut extends NoMoreConnection {
         private static final long serialVersionUID = -4415279469780082174L;
         SemaphoresOut(){
@@ -129,7 +146,7 @@ public class DBPortPool extends SimplePool<DBPort> {
     }
 
     // ----
-    
+
     DBPortPool( ServerAddress addr , MongoOptions options ){
         super( "DBPortPool-" + addr.toString() + ", options = " +  options.toString() , options.connectionsPerHost , options.connectionsPerHost );
         _options = options;
@@ -154,10 +171,10 @@ public class DBPortPool extends SimplePool<DBPort> {
             return -1;
         return iThink;
     }
-    
+
     /**
      * @return
-     * @throws MongoException 
+     * @throws MongoException
      */
     public DBPort get() {
         DBPort port = null;
@@ -173,20 +190,20 @@ public class DBPortPool extends SimplePool<DBPort> {
 
         if ( port == null )
             throw new ConnectionWaitTimeOut( _options.maxWaitTime );
-        
+
             port._lastThread = System.identityHashCode(Thread.currentThread());
         return port;
     }
 
     // return true if the exception is recoverable
     boolean gotError( Exception e ){
-        if ( e instanceof java.nio.channels.ClosedByInterruptException || 
+        if ( e instanceof java.nio.channels.ClosedByInterruptException ||
              e instanceof InterruptedException ){
             // this is probably a request that is taking too long
             // so usually doesn't mean there is a real db problem
             return true;
         }
-        
+
         if ( e instanceof java.net.SocketTimeoutException ){
             // we don't want to clear the port pool for a connection timing out
             return true;
@@ -202,7 +219,7 @@ public class DBPortPool extends SimplePool<DBPort> {
                 break;
             all.add( temp );
         }
-        
+
         for ( DBPort p : all ){
             p.close();
             done(p);
@@ -222,7 +239,7 @@ public class DBPortPool extends SimplePool<DBPort> {
     public boolean ok( DBPort t ){
         return _addr.getSocketAddress().equals( t._addr );
     }
-    
+
     protected DBPort createNew(){
         return new DBPort( _addr , this , _options );
     }

@@ -267,7 +267,7 @@ public class DBTCPConnector implements DBConnector {
             boolean retry = false;
             try {
                 port.checkAuth( db );
-                res = port.call( m , coll, readPref, decoder );
+                res = port.call( m , coll, decoder );
                 if ( res._responseTo != m.getId() )
                     throw new MongoException( "ids don't match" );
             }

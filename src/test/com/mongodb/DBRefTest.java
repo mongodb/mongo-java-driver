@@ -19,6 +19,8 @@ package com.mongodb;
 import com.mongodb.util.TestCase;
 import org.bson.BSONDecoder;
 import org.bson.BasicBSONDecoder;
+import org.bson.io.BasicOutputBuffer;
+import org.bson.io.OutputBuffer;
 import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
 
@@ -61,22 +63,20 @@ public class DBRefTest extends TestCase {
     @Test(groups = {"basic"})
     public void testDBRef(){
 
-        DBRef ref = new DBRef(_db, "hello", (Object)"world");
+        DBRef ref = new DBRef(_db, "hello", "world");
         DBObject o = new BasicDBObject("!", ref);
 
-        OutMessage out = new OutMessage( cleanupMongo );
-        out.putObject( o );
+        DBEncoder encoder = DefaultDBEncoder.FACTORY.create();
+        OutputBuffer buf = new BasicOutputBuffer();
+
+        encoder.writeObject(buf, o);
 
         DefaultDBCallback cb = new DefaultDBCallback( null );
         BSONDecoder decoder = new BasicBSONDecoder();
-        decoder.decode( out.toByteArray() , cb );
+        decoder.decode( buf.toByteArray() , cb );
         DBObject read = cb.dbget();
 
-	    String correct = null;
-	    correct = "{\"!\":{\"$ref\":\"hello\",\"$id\":\"world\"}}";
-
-        String got = read.toString().replaceAll( " +" , "" );
-        assertEquals( correct , got );
+        assertEquals("{\"!\":{\"$ref\":\"hello\",\"$id\":\"world\"}}", read.toString().replaceAll( " +" , "" ));
     }
 
     @Test(groups = {"basic"})

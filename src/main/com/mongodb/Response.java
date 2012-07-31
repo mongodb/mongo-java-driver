@@ -43,8 +43,9 @@ class Response {
         _len = Bits.readInt(b, pos);
         pos += 4;
 
-        if (_len > MAX_LENGTH)
+        if (_len > MAX_LENGTH) {
             throw new IllegalArgumentException( "response too long: " + _len );
+        }
 
         _id = Bits.readInt(b, pos);
         pos += 4;

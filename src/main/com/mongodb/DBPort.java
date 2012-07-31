@@ -70,12 +70,8 @@ public class DBPort {
         return go( msg, coll );
     }
 
-    Response call( OutMessage msg , DBCollection coll , DBDecoder decoder) throws IOException{
-        return go( msg, coll, false, null, decoder);
-    }
-
-    Response call( OutMessage msg , DBCollection coll , ReadPreference readPref , DBDecoder decoder) throws IOException{
-        return go( msg, coll, false, readPref, decoder);
+    Response call(OutMessage msg, DBCollection coll, DBDecoder decoder) throws IOException{
+        return go( msg, coll, false, decoder);
     }
     
     void say( OutMessage msg )
@@ -85,14 +81,14 @@ public class DBPort {
     
     private synchronized Response go( OutMessage msg , DBCollection coll )
         throws IOException {
-        return go( msg , coll , false, null, null );
+        return go( msg , coll , false, null );
     }
 
     private synchronized Response go( OutMessage msg , DBCollection coll , DBDecoder decoder ) throws IOException{
-        return go( msg, coll, false, null, decoder );
+        return go( msg, coll, false, decoder );
     }
 
-    private synchronized Response go( OutMessage msg , DBCollection coll , boolean forceReponse , ReadPreference readPref, DBDecoder decoder)
+    private synchronized Response go(OutMessage msg, DBCollection coll, boolean forceResponse, DBDecoder decoder)
         throws IOException {
 
         if ( _processingResponse ){
@@ -114,13 +110,14 @@ public class DBPort {
             throw new IllegalStateException( "_out shouldn't be null" );
 
         try {
+            _activeOutMessage = msg;
             msg.prepare();
             msg.pipe( _out );
 
             if ( _pool != null )
                 _pool._everWorked = true;
             
-            if ( coll == null && ! forceReponse )
+            if ( coll == null && ! forceResponse )
                 return null;
             
             _processingResponse = true;
@@ -131,6 +128,7 @@ public class DBPort {
             throw ioe;
         }
         finally {
+            _activeOutMessage = null;
             _processingResponse = false;
         }
     }
@@ -141,14 +139,8 @@ public class DBPort {
     }
 
     synchronized private Response findOne( DB db , String coll , DBObject q ) throws IOException {
-        OutMessage msg = OutMessage.query( db._mongo , 0 , db.getName() + "." + coll , 0 , -1 , q , null );
+        OutMessage msg = OutMessage.query( db.getCollection(coll) , 0 , 0 , -1 , q , null );
         Response res = go( msg , db.getCollection( coll ) , null );
-        return res;
-    }
-
-    synchronized private Response findOne( String ns , DBObject q ) throws IOException{
-        OutMessage msg = OutMessage.query( null , 0 , ns , 0 , -1 , q , null );
-        Response res = go( msg , null , true, null, null  );
         return res;
     }
 
@@ -273,6 +265,10 @@ public class DBPort {
         close();
     }
 
+    OutMessage getOutMessageBeingProcessed() {
+        return _activeOutMessage;
+    }
+
     /**
      * closes the underlying connection and streams
      */
@@ -338,6 +334,7 @@ public class DBPort {
     private Map<DB,Boolean> _authed = new ConcurrentHashMap<DB, Boolean>( );
     int _lastThread;
     long _calls = 0;
+    private volatile OutMessage _activeOutMessage;
 
     private static Logger _rootLogger = Logger.getLogger( "com.mongodb.port" );
 }
