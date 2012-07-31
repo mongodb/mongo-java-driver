@@ -40,14 +40,26 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
                 if (!_avail.contains(port)) {
                     OutMessage curOutMessage = port.getOutMessageBeingProcessed();
                     if (curOutMessage != null) {
-                        connectionList.add(new MongoConnection(curOutMessage.getNamespace(),
+                        connectionList.add(new MongoConnection(port.getLocalPort(), curOutMessage.getNamespace(),
                                 curOutMessage.getOpCode(),
                                 curOutMessage.getQuery() != null ? curOutMessage.getQuery().toString() : null));
+                    } else {
+                        connectionList.add(new MongoConnection(port.getLocalPort()));
                     }
                 }
             }
         }
         return connectionList.toArray(new MongoConnection[connectionList.size()]);
+    }
+
+    @Override
+    public String getHost() {
+        return _addr.getHost();
+    }
+
+    @Override
+    public int getPort() {
+        return _addr.getPort();
     }
 
     static class Holder {

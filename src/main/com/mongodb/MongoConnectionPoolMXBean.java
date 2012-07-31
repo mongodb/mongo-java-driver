@@ -20,4 +20,6 @@ import com.mongodb.util.SimplePoolMXBean;
 
 public interface MongoConnectionPoolMXBean extends SimplePoolMXBean {
     public MongoConnection[] getInUseConnections();
+    public String getHost();
+    public int getPort();
 }

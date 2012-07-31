@@ -17,10 +17,15 @@ package com.mongodb;
 
 public class MongoConnection {
 
-    public MongoConnection(final String namespace, final OutMessage.OpCode opCode, final String query) {
+    public MongoConnection(final int localPort, final String namespace, final OutMessage.OpCode opCode, final String query) {
+        this.localPort = localPort;
         this.namespace = namespace;
         this.opCode = opCode;
         this.query = query;
+    }
+
+    public MongoConnection(final int localPort) {
+        this(localPort, null, null, null);
     }
 
     public String getNamespace() {
@@ -35,8 +40,13 @@ public class MongoConnection {
         return query;
     }
 
+    public int getLocalPort() {
+        return localPort;
+    }
+
+
     private final String namespace;
     private final OutMessage.OpCode opCode;
     private final String query;
-
+    private final int localPort;
 }

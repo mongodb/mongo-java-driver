@@ -269,6 +269,10 @@ public class DBPort {
         return _activeOutMessage;
     }
 
+    int getLocalPort() {
+        return _socket != null ? _socket.getLocalPort() : -1;
+    }
+
     /**
      * closes the underlying connection and streams
      */
