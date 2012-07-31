@@ -85,16 +85,23 @@ public class DBRefBase {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == this)
-            return true;
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-        if (obj instanceof DBRefBase) {
-            DBRefBase ref = (DBRefBase) obj;
-            if (_ns.equals(ref.getRef()) && _id.equals(ref.getId()))
-                return true;
-        }
-        return false;
+        final DBRefBase dbRefBase = (DBRefBase) o;
+
+        if (_id != null ? !_id.equals(dbRefBase._id) : dbRefBase._id != null) return false;
+        if (_ns != null ? !_ns.equals(dbRefBase._ns) : dbRefBase._ns != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = _id != null ? _id.hashCode() : 0;
+        result = 31 * result + (_ns != null ? _ns.hashCode() : 0);
+        return result;
     }
 
     final Object _id;

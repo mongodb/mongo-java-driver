@@ -16,14 +16,15 @@
 
 package com.mongodb;
 
-import java.net.*;
-import java.util.*;
+import com.mongodb.util.TestCase;
+import org.bson.BSONDecoder;
+import org.bson.BasicBSONDecoder;
+import org.bson.types.ObjectId;
+import org.testng.annotations.Test;
 
-import org.bson.*;
-import org.bson.types.*;
-import org.testng.annotations.*;
-
-import com.mongodb.util.*;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DBRefTest extends TestCase {
 
@@ -36,6 +37,16 @@ public class DBRefTest extends TestCase {
         catch(UnknownHostException e) {
             throw new MongoException("couldn't connect");
         }
+    }
+
+    @Test(groups = {"basic"})
+    public void testEqualsAndHashCode() {
+       DBRef ref = new DBRef(_db, "foo.bar", 4);
+       DBRef other = new DBRef(_db, "foo.bar", 4);
+       assertEquals(ref, ref);
+       assertEquals(ref, other);
+       assertNotEquals(ref, new DBRefBase(_db, "foo.bar", 4));
+       assertEquals(ref.hashCode(), other.hashCode());
     }
 
     @Test(groups = {"basic"})
