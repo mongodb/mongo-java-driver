@@ -583,7 +583,7 @@ public class Mongo {
     final DBTCPConnector _connector;
     final ConcurrentMap<String,DB> _dbs = new ConcurrentHashMap<String,DB>();
     private WriteConcern _concern = WriteConcern.NORMAL;
-    private ReadPreference _readPref = ReadPreference.PRIMARY;
+    private ReadPreference _readPref = ReadPreference.primary();
     final Bytes.OptionHolder _netOptions = new Bytes.OptionHolder( null );
     final DBCleanerThread _cleaner;
 

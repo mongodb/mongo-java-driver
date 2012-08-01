@@ -23,7 +23,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
@@ -81,7 +80,7 @@ public class DBTCPConnectorTest extends TestCase {
         _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
         DBPort requestPort = _connector.getMyPort()._requestPort;
         _connector.call(_db, _collection,
-                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.PRIMARY),
+                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
                 null, 0);
         assertEquals(requestPort, _connector.getMyPort()._requestPort);
     }
@@ -97,8 +96,8 @@ public class DBTCPConnectorTest extends TestCase {
 
         _connector.requestStart();
         _connector.call(_db, _collection,
-                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.SECONDARY),
-                null, 0, ReadPreference.SECONDARY, null);
+                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.secondary()),
+                null, 0, ReadPreference.secondary(), null);
         DBPort requestPort = _connector.getMyPort()._requestPort;
         _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
         assertNotEquals(requestPort, _connector.getMyPort()._requestPort);
@@ -112,7 +111,7 @@ public class DBTCPConnectorTest extends TestCase {
     public void testConnectionReservationForReads() {
         _connector.requestStart();
         _connector.call(_db, _collection,
-                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.PRIMARY),
+                OutMessage.query(cleanupMongo, 0, _collection.getFullName(), 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
                 null, 0);
         assertNotNull(_connector.getMyPort()._requestPort);
     }

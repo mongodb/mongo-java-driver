@@ -242,7 +242,7 @@ public abstract class DB {
     public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs, DBEncoder encoder ){
 
         if ( !obeyReadPreference(cmd) )
-            readPrefs = ReadPreference.PRIMARY;
+            readPrefs = ReadPreference.primary();
         
         Iterator<DBObject> i =
                 getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, readPrefs ,
@@ -704,8 +704,8 @@ public abstract class DB {
     /**
      * Makes it possible to execute "read" queries on a slave node
      *
-     * @deprecated Replaced with ReadPreference.SECONDARY
-     * @see com.mongodb.ReadPreference#SECONDARY
+     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
+     * @see ReadPreference#secondaryPreferred()
      */
     @Deprecated
     public void slaveOk(){

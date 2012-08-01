@@ -18,20 +18,20 @@
 
 package com.mongodb;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.bson.BSONObject;
 import org.bson.BasicBSONEncoder;
 import org.bson.io.PoolOutputBuffer;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class OutMessage extends BasicBSONEncoder {
 
     static AtomicInteger ID = new AtomicInteger(1);
 
     static OutMessage query( Mongo m , int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields ){
-        return query( m, options, ns, numToSkip, batchSize, query, fields, ReadPreference.PRIMARY );
+        return query( m, options, ns, numToSkip, batchSize, query, fields, ReadPreference.primary() );
     }
 
     static OutMessage query( Mongo m , int options , String ns , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref ){
@@ -161,7 +161,7 @@ class OutMessage extends BasicBSONEncoder {
     private PoolOutputBuffer _buffer;
     private int _id;
     private int _queryOptions = 0;
-    private ReadPreference _readPref = ReadPreference.PRIMARY;
+    private ReadPreference _readPref = ReadPreference.primary();
     private DBEncoder _encoder;
 
 }

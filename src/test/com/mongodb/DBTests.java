@@ -143,7 +143,7 @@ public class DBTests extends TestCase {
             mongo.close();
             mongo = new Mongo(secondary);
             DB db = mongo.getDB("secondaryTest");
-            db.setReadPreference(ReadPreference.SECONDARY);
+            db.setReadPreference(ReadPreference.secondary());
             db.getCollectionNames();
         } finally {
             mongo.close();

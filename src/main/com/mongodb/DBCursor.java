@@ -298,8 +298,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      *
      * @return a copy of the same cursor (for chaining)
      *
-     * @deprecated Replaced with ReadPreference.SECONDARY
-     * @see com.mongodb.ReadPreference#SECONDARY
+     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
+     * @see ReadPreference#secondaryPreferred()
      */
     @Deprecated
     public DBCursor slaveOk(){

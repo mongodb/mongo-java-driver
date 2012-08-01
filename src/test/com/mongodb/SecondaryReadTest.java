@@ -56,7 +56,7 @@ public class SecondaryReadTest extends TestCase {
             final int secondaryCount = getSecondaryCount(testHosts);
 
             // Perform some reads on the secondaries
-            col.setReadPreference(ReadPreference.SECONDARY);
+            col.setReadPreference(ReadPreference.secondary());
 
             for (int idx=0; idx < TOTAL_COUNT; idx++) {
                 col.findOne();
@@ -89,7 +89,7 @@ public class SecondaryReadTest extends TestCase {
             loadQueryCount(testHosts, true);
 
             // Perform some reads on the secondaries
-            col.setReadPreference(ReadPreference.SECONDARY);
+            col.setReadPreference(ReadPreference.secondary());
 
             final DBCursor cur = col.find();
 
