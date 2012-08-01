@@ -64,8 +64,4 @@ public class JMXMBeanServer implements MBeanServer {
     }
 
     private final javax.management.MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-
-    static {
-        System.out.println("Loading class...");
-    }
 }

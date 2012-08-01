@@ -31,25 +31,21 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
+/**
+ * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
+ */
 public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoolMXBean {
 
-    public MongoConnection[] getInUseConnections() {
-        List<MongoConnection> connectionList = new ArrayList<MongoConnection>();
+    public InUseConnectionInfo[] getInUseConnections() {
+        List<InUseConnectionInfo> inUseConnectionInfoList = new ArrayList<InUseConnectionInfo>();
         synchronized (_avail) {
             for (DBPort port : _all) {
                 if (!_avail.contains(port)) {
-                    OutMessage curOutMessage = port.getOutMessageBeingProcessed();
-                    if (curOutMessage != null) {
-                        connectionList.add(new MongoConnection(port.getLocalPort(), curOutMessage.getNamespace(),
-                                curOutMessage.getOpCode(),
-                                curOutMessage.getQuery() != null ? curOutMessage.getQuery().toString() : null));
-                    } else {
-                        connectionList.add(new MongoConnection(port.getLocalPort()));
-                    }
+                    inUseConnectionInfoList.add(new InUseConnectionInfo(port));
                 }
             }
         }
-        return connectionList.toArray(new MongoConnection[connectionList.size()]);
+        return inUseConnectionInfoList.toArray(new InUseConnectionInfo[inUseConnectionInfoList.size()]);
     }
 
     @Override

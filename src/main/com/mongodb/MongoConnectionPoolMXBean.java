@@ -18,8 +18,11 @@ package com.mongodb;
 
 import com.mongodb.util.SimplePoolMXBean;
 
+/**
+ * This interface is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
+ */
 public interface MongoConnectionPoolMXBean extends SimplePoolMXBean {
-    public MongoConnection[] getInUseConnections();
+    public InUseConnectionInfo[] getInUseConnections();
     public String getHost();
     public int getPort();
 }

@@ -27,6 +27,9 @@ import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
+ */
 public abstract class SimplePool<T> implements SimplePoolMXBean {
 
     static final boolean TRACK_LEAKS = Boolean.getBoolean( "MONGO-TRACKLEAKS" );
@@ -284,7 +287,7 @@ public abstract class SimplePool<T> implements SimplePoolMXBean {
         StringBuilder buf = new StringBuilder();
         buf.append( "pool: " ).append( _name )
             .append( " maxToKeep: " ).append( _maxToKeep )
-            .append( " maxTotal: " ).append( _maxToKeep )
+            .append( " maxTotal: " ).append( _maxTotal )
             .append( " where " ).append( _where.size() )
             .append( " avail " ).append( _avail.size() )
             .append( " all " ).append( _all.size() )

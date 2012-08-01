@@ -110,7 +110,7 @@ public class DBPort {
             throw new IllegalStateException( "_out shouldn't be null" );
 
         try {
-            _activeOutMessage = msg;
+            _activeState = new ActiveState(msg);
             msg.prepare();
             msg.pipe( _out );
 
@@ -128,7 +128,7 @@ public class DBPort {
             throw ioe;
         }
         finally {
-            _activeOutMessage = null;
+            _activeState = null;
             _processingResponse = false;
         }
     }
@@ -145,7 +145,7 @@ public class DBPort {
     }
 
     synchronized CommandResult runCommand( DB db , DBObject cmd ) throws IOException {
-        Response res = findOne( db , "$cmd" , cmd );
+        Response res = findOne(db, "$cmd", cmd);
         return convertToCommandResult(cmd, res);
     }
 
@@ -168,7 +168,7 @@ public class DBPort {
         if ( last != _calls )
             return null;
         
-        return getLastError( db , concern );
+        return getLastError(db, concern);
     }
 
     /**
@@ -265,8 +265,8 @@ public class DBPort {
         close();
     }
 
-    OutMessage getOutMessageBeingProcessed() {
-        return _activeOutMessage;
+    ActiveState getActiveState() {
+        return _activeState;
     }
 
     int getLocalPort() {
@@ -338,7 +338,18 @@ public class DBPort {
     private Map<DB,Boolean> _authed = new ConcurrentHashMap<DB, Boolean>( );
     int _lastThread;
     long _calls = 0;
-    private volatile OutMessage _activeOutMessage;
+    private volatile ActiveState _activeState;
+
+    class ActiveState {
+       ActiveState(final OutMessage outMessage) {
+           this.outMessage = outMessage;
+           this.startTime = System.nanoTime();
+           this.threadName = Thread.currentThread().getName();
+       }
+       final OutMessage outMessage;
+       final long startTime;
+       final String threadName;
+    }
 
     private static Logger _rootLogger = Logger.getLogger( "com.mongodb.port" );
 }
