@@ -190,8 +190,13 @@ public class Mongo {
         _applyMongoOptions();
         _connector = new DBTCPConnector( this , _addr );
         _connector.start();
-        _cleaner = new DBCleanerThread();
-        _cleaner.start();
+
+        if (options.cursorFinalizerEnabled) {
+           _cleaner = new CursorCleanerThread();
+           _cleaner.start();
+        } else {
+           _cleaner = null;
+        }
     }
 
     /**
@@ -229,8 +234,12 @@ public class Mongo {
         _connector = new DBTCPConnector( this , _addrs );
         _connector.start();
 
-        _cleaner = new DBCleanerThread();
-        _cleaner.start();
+        if (options.cursorFinalizerEnabled) {
+            _cleaner = new CursorCleanerThread();
+            _cleaner.start();
+        } else {
+            _cleaner = null;
+        }
     }
 
     /**
@@ -266,8 +275,12 @@ public class Mongo {
         _connector = new DBTCPConnector( this , _addrs);
         _connector.start();
 
-        _cleaner = new DBCleanerThread();
-        _cleaner.start();
+        if (options.cursorFinalizerEnabled) {
+            _cleaner = new CursorCleanerThread();
+            _cleaner.start();
+        } else {
+            _cleaner = null;
+        }
     }
 
     /**
@@ -305,8 +318,12 @@ public class Mongo {
         }
 
         _connector.start();
-        _cleaner = new DBCleanerThread();
-        _cleaner.start();
+        if (_options.cursorFinalizerEnabled) {
+            _cleaner = new CursorCleanerThread();
+            _cleaner.start();
+        } else {
+            _cleaner = null;
+        }
     }
 
     /**
@@ -451,12 +468,14 @@ public class Mongo {
             _connector.close();
         } catch (final Throwable t) { /* nada */ }
 
-        _cleaner.interrupt();
+        if (_cleaner != null) {
+            _cleaner.interrupt();
 
-        try {
-            _cleaner.join();
-        } catch (InterruptedException e) {
-            //end early
+            try {
+                _cleaner.join();
+            } catch (InterruptedException e) {
+                //end early
+            }
         }
     }
 
@@ -585,7 +604,7 @@ public class Mongo {
     private WriteConcern _concern = WriteConcern.NORMAL;
     private ReadPreference _readPref = ReadPreference.primary();
     final Bytes.OptionHolder _netOptions = new Bytes.OptionHolder( null );
-    final DBCleanerThread _cleaner;
+    final CursorCleanerThread _cleaner;
 
     org.bson.util.SimplePool<PoolOutputBuffer> _bufferPool =
         new org.bson.util.SimplePool<PoolOutputBuffer>( 1000 ){
@@ -706,9 +725,9 @@ public class Mongo {
 
     }
 
-    class DBCleanerThread extends Thread {
+    class CursorCleanerThread extends Thread {
 
-        DBCleanerThread() {
+        CursorCleanerThread() {
             setDaemon(true);
             setName("MongoCleaner" + hashCode());
         }
