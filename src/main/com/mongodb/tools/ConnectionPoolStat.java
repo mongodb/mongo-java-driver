@@ -56,6 +56,9 @@ public class ConnectionPoolStat {
     }
 
     /**
+     * Command line interface for displaying connection pool stats.  In order to connect to a remote JMX server to
+     * get these stats, currently you must set com.sun.management.jmxremote.port system property on the remote server
+     * and specify that port using the --port argument.
      *
      * @param args program arguments
      * @throws Exception JMX-related exceptions
