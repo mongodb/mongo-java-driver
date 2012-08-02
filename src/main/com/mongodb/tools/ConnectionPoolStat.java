@@ -148,19 +148,20 @@ public class ConnectionPoolStat {
         System.out.println("  -n [ --rowcount ] arg  number of times to print stats (0 for indefinite)");
         System.out.println();
         System.out.println("Fields");
-        System.out.println("  objectName                   - name of the JMX bean for this connection pool");
-        System.out.println("  host                         - host of the mongod/mongos server");
-        System.out.println("  port                         - port of the mongod/mongos server");
-        System.out.println("  size                         - max # of connections allowed");
-        System.out.println("  total                        - # of connections allocated");
-        System.out.println("  inUse                        - # of connections in use");
-        System.out.println("  inUseConnections             - list of all in use connections");
-        System.out.println("  inUseConnections.namespace   - namespace on which connection is operating");
-        System.out.println("  inUseConnections.opCode      - operation connection is executing");
-        System.out.println("  inUseConnections.query       - query the connection is executing (for query/update/remove)");
-        System.out.println("  inUseConnections.threadName  - name of thread on which connection is executing");
-        System.out.println("  inUseConnections.durationMS  - duration that the operation has been executing so far");
-        System.out.println("  inUseConnections.localPort   - local port of the connection");
+        System.out.println("  objectName                     - name of the JMX bean for this connection pool");
+        System.out.println("  host                           - host of the mongod/mongos server");
+        System.out.println("  port                           - port of the mongod/mongos server");
+        System.out.println("  size                           - max # of connections allowed");
+        System.out.println("  total                          - # of connections allocated");
+        System.out.println("  inUse                          - # of connections in use");
+        System.out.println("  inUseConnections               - list of all in use connections");
+        System.out.println("  inUseConnections.namespace     - namespace on which connection is operating");
+        System.out.println("  inUseConnections.opCode        - operation connection is executing");
+        System.out.println("  inUseConnections.query         - query the connection is executing (for query/update/remove)");
+        System.out.println("  inUseConnections.numDocuments  - # of documents in the message (mostly relevant for batch inserts)");
+        System.out.println("  inUseConnections.threadName    - name of thread on which connection is executing");
+        System.out.println("  inUseConnections.durationMS    - duration that the operation has been executing so far");
+        System.out.println("  inUseConnections.localPort     - local port of the connection");
     }
 
     private void print(PrintWriter pw) throws JMException, IOException {
@@ -197,6 +198,7 @@ public class ConnectionPoolStat {
             printCompositeDataAttribute("namespace", compositeData, pw);
             printCompositeDataAttribute("opCode", compositeData, pw);
             printCompositeDataAttribute("query", compositeData, pw, StringType.JSON);
+            printCompositeDataAttribute("numDocuments", compositeData, pw);
             printCompositeDataAttribute("threadName", compositeData, pw);
             printCompositeDataAttribute("durationMS", compositeData, pw);
             printCompositeDataAttribute("localPort", compositeData, pw, Position.LAST);

@@ -110,8 +110,8 @@ public class DBPort {
             throw new IllegalStateException( "_out shouldn't be null" );
 
         try {
-            _activeState = new ActiveState(msg);
             msg.prepare();
+            _activeState = new ActiveState(msg);
             msg.pipe( _out );
 
             if ( _pool != null )

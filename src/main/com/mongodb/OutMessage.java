@@ -257,13 +257,18 @@ class OutMessage extends BasicBSONEncoder {
         return _collection != null ? _collection.getFullName() : null;
     }
 
+    synchronized int getNumDocuments() {
+        return _numDocuments;
+    }
+
     @Override
-    public int putObject(BSONObject o) {
+    public synchronized int putObject(BSONObject o) {
         // check max size
         int objectSize = _encoder.writeObject(_buf, o);
         if (objectSize > Math.max(_mongo.getConnector().getMaxBsonObjectSize(), Bytes.MAX_OBJECT_SIZE)) {
             throw new MongoInternalException("DBObject of size " + objectSize + " is over Max BSON size " + _mongo.getMaxBsonObjectSize());
         }
+        _numDocuments++;
         return objectSize;
     }
 
@@ -275,4 +280,5 @@ class OutMessage extends BasicBSONEncoder {
     private final int _queryOptions;
     private final DBObject _query;
     private final DBEncoder _encoder;
+    private int _numDocuments;
 }

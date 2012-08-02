@@ -28,6 +28,7 @@ public class InUseConnectionInfo {
             opCode = null;
             query = null;
             threadName = null;
+            numDocuments = 0;
         }
         else {
             durationMS = (System.nanoTime() - activeState.startTime) / 1000000;
@@ -35,6 +36,7 @@ public class InUseConnectionInfo {
             opCode = activeState.outMessage.getOpCode();
             query = activeState.outMessage.getQuery() != null ? activeState.outMessage.getQuery().toString() : null;
             threadName = activeState.threadName;
+            numDocuments = activeState.outMessage.getNumDocuments();
         }
         localPort = port.getLocalPort();
     }
@@ -63,10 +65,15 @@ public class InUseConnectionInfo {
         return threadName;
     }
 
+    public int getNumDocuments() {
+        return numDocuments;
+    }
+
     private final String namespace;
     private final OutMessage.OpCode opCode;
     private final String query;
     private final int localPort;
     private final long durationMS;
     private final String threadName;
+    private final int numDocuments;
 }
