@@ -92,13 +92,31 @@ public class DBTest extends TestCase {
     @Test(groups = {"basic"})
     public void testReadPreferenceObedience() {
         DBObject obj = new BasicDBObject("mapreduce", 1).append("out", "myColl");
-        assertFalse(_db.obeyReadPreference(obj));
+        assertEquals(ReadPreference.primary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
 
         obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("replace", "myColl"));
-        assertFalse(_db.obeyReadPreference(obj));
+        assertEquals(ReadPreference.primary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
 
         obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("inline", 1));
-        assertTrue(_db.obeyReadPreference(obj));
+        assertEquals(ReadPreference.secondary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+
+        obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("inline", null));
+        assertEquals(ReadPreference.primary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+
+        obj = new BasicDBObject("getnonce", 1);
+        assertEquals(ReadPreference.primaryPreferred(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+
+        obj = new BasicDBObject("authenticate", 1);
+        assertEquals(ReadPreference.primaryPreferred(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+
+        obj = new BasicDBObject("count", 1);
+        assertEquals(ReadPreference.secondary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+
+        obj = new BasicDBObject("count", 1);
+        assertEquals(ReadPreference.secondary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+
+        obj = new BasicDBObject("serverStatus", 1);
+        assertEquals(ReadPreference.primary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
     }
 
     /*public static class Person extends DBObject {

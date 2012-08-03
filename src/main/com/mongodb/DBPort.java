@@ -294,7 +294,7 @@ public class DBPort {
     }
     
     void checkAuth( DB db ) throws IOException {
-        DB.AuthorizationCredentials credentials = db.getAuthorizationCredentials();
+        DB.AuthenticationCredentials credentials = db.getAuthenticationCredentials();
         if ( credentials == null ){
             if ( db._name.equals( "admin" ) )
                 return;

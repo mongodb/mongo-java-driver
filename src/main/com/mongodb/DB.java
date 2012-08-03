@@ -69,20 +69,33 @@ public abstract class DB {
      * @return true if the command is obedient
      * @see com.mongodb.ReadPreference
      */
-    boolean obeyReadPreference(DBObject command){
+    ReadPreference getCommandReadPreference(DBObject command, ReadPreference requestedPreference){
         String comString = command.keySet().iterator().next();
+
+        if (comString.equals("getnonce") || comString.equals("authenticate")) {
+            return ReadPreference.primaryPreferred();
+        }
+
+        boolean primaryRequired;
 
         // explicitly check mapreduce commands are inline
         if(comString.equals("mapreduce")) {
             Object out = command.get("out");
             if (out instanceof BSONObject ){
                 BSONObject outMap = (BSONObject) out;
-                return outMap.get("inline") != null;
+                primaryRequired = outMap.get("inline") == null;
             }
             else
-                return false;
+                primaryRequired = true;
+        } else {
+           primaryRequired =  !_obedientCommands.contains(comString);
         }
-        return (_obedientCommands.contains(comString));
+
+        if (primaryRequired) {
+            return ReadPreference.primary();
+        } else {
+            return requestedPreference;
+        }
     }
 
     /**
@@ -241,8 +254,7 @@ public abstract class DB {
      */
     public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs, DBEncoder encoder ){
 
-        if ( !obeyReadPreference(cmd) )
-            readPrefs = ReadPreference.primary();
+        readPrefs = getCommandReadPreference(cmd, readPrefs);
         
         Iterator<DBObject> i =
                 getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, readPrefs ,
@@ -535,7 +547,7 @@ public abstract class DB {
      * @dochub authenticate
      */
     public boolean isAuthenticated() {
-        return authorizationCredentialsReference.get() != null;
+        return authenticationCredentialsReference.get() != null;
     }
 
     /**
@@ -549,16 +561,16 @@ public abstract class DB {
      */
     public boolean authenticate(String username, char[] password ){
 
-        if (authorizationCredentialsReference.get() != null) {
+        if (authenticationCredentialsReference.get() != null) {
             throw new IllegalStateException("can't authenticate twice on the same database");
         }
 
-        AuthorizationCredentials newCredentials = new AuthorizationCredentials(username, password);
-        CommandResult res = newCredentials.authorize();
+        AuthenticationCredentials newCredentials = new AuthenticationCredentials(username, password);
+        CommandResult res = newCredentials.authenticate();
         if (!res.ok())
             return false;
 
-        boolean wasNull = authorizationCredentialsReference.compareAndSet(null, newCredentials);
+        boolean wasNull = authenticationCredentialsReference.compareAndSet(null, newCredentials);
         if (!wasNull) {
             throw new IllegalStateException("can't authenticate twice on the same database");
         }
@@ -576,14 +588,14 @@ public abstract class DB {
      */
     public synchronized CommandResult authenticateCommand(String username, char[] password ){
 
-        if (authorizationCredentialsReference.get() != null) {
+        if (authenticationCredentialsReference.get() != null) {
             throw new IllegalStateException( "can't authenticate twice on the same database" );
         }
 
-        AuthorizationCredentials newCredentials = new AuthorizationCredentials(username, password);
-        CommandResult res = newCredentials.authorize();
+        AuthenticationCredentials newCredentials = new AuthenticationCredentials(username, password);
+        CommandResult res = newCredentials.authenticate();
         res.throwOnError();
-        boolean wasNull = authorizationCredentialsReference.compareAndSet(null, newCredentials);
+        boolean wasNull = authenticationCredentialsReference.compareAndSet(null, newCredentials);
         if (!wasNull) {
             throw new IllegalStateException("can't authenticate twice on the same database");
         }
@@ -745,8 +757,8 @@ public abstract class DB {
 
     public abstract void cleanCursors( boolean force );
 
-    AuthorizationCredentials getAuthorizationCredentials() {
-        return authorizationCredentialsReference.get();
+    AuthenticationCredentials getAuthenticationCredentials() {
+        return authenticationCredentialsReference.get();
     }
 
     final Mongo _mongo;
@@ -757,17 +769,17 @@ public abstract class DB {
     private com.mongodb.ReadPreference _readPref;
     final Bytes.OptionHolder _options;
 
-    private AtomicReference<AuthorizationCredentials> authorizationCredentialsReference =
-            new AtomicReference<AuthorizationCredentials>();
+    private AtomicReference<AuthenticationCredentials> authenticationCredentialsReference =
+            new AtomicReference<AuthenticationCredentials>();
 
     /**
      * Encapsulate everything relating to authorization of a user on a database
      */
-    class AuthorizationCredentials {
+    class AuthenticationCredentials {
         private final String userName;
         private final byte[] authHash;
 
-        private AuthorizationCredentials(final String userName, final char[] password) {
+        private AuthenticationCredentials(final String userName, final char[] password) {
             if (userName == null) {
                 throw new IllegalArgumentException("userName can not be null");
             }
@@ -778,11 +790,16 @@ public abstract class DB {
             this.authHash = createHash(userName, password);
         }
 
-        CommandResult authorize() {
-            CommandResult res = command(getNonceCommand());
-            res.throwOnError();
+        CommandResult authenticate() {
+            requestStart();
+            try {
+               CommandResult res = command(getNonceCommand());
+               res.throwOnError();
 
-            return command(getAuthCommand(res.getString("nonce")));
+               return command(getAuthCommand(res.getString("nonce")));
+            } finally {
+                requestDone();
+            }
         }
 
         DBObject getAuthCommand( String nonce ){
