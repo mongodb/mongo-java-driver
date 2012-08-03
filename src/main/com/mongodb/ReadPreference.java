@@ -21,7 +21,9 @@ import java.util.Map;
 
 
 /**
- * an abstract class that represents preferred replica set members to which a query or command can be sent
+ * An abstract class that represents preferred replica set members to which a query or command can be sent.
+ *
+ * @mongodb.driver.manual applications/replication/#replica-set-read-preference  Read Preference
  */
 public abstract class ReadPreference {
 

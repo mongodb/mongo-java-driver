@@ -210,7 +210,8 @@ limitations under the License.
             access="protected">
             <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
             <classpath refid="classpath"/>
-            <taglet name="ApiToolsTaglet" path="build/util"/>
+            <taglet name="DochubTaglet" path="build/util"/>
+            <taglet name="ManualTaglet" path="build/util"/>
         </javadoc>
 
         <javadoc
@@ -225,7 +226,8 @@ limitations under the License.
             access="protected">
             <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
             <classpath refid="classpath"/>
-            <taglet name="ApiToolsTaglet" path="build/util"/>
+            <taglet name="DochubTaglet" path="build/util"/>
+            <taglet name="ManualTaglet" path="build/util"/>
         </javadoc>
 
     </target>
