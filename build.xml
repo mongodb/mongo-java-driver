@@ -202,7 +202,7 @@ limitations under the License.
             packagenames="com.mongodb,com.mongodb.gridfs,com.mongodb.util,org.bson,org.bson.types,org.bson.io,org.bson.util"
             sourcepath="src/main/"
             defaultexcludes="yes"
-            destdir="docs/mongo-java-driver/${build.conf.lib.version}"
+            destdir="docs/mongo-java-driver"
             author="true"
             version="true"
             source="${build.conf.javac.source}"
@@ -218,7 +218,7 @@ limitations under the License.
             packagenames="org.bson,org.bson.types,org.bson.io,org.bson.util"
             sourcepath="src/main/"
             defaultexcludes="yes"
-            destdir="docs/bson/${build.conf.lib.version}"
+            destdir="docs/bson"
             author="true"
             version="true"
             source="${build.conf.javac.source}"
@@ -239,7 +239,7 @@ limitations under the License.
     <target name="alljars" depends="jar, javadocs" description="build jar, source jar, javadoc jar">
 
         <jar jarfile="mongo-sources.jar"><fileset dir="src/main"><not><filename name="META-INF/"/></not></fileset></jar>
-        <jar jarfile="mongo-javadoc.jar"><fileset dir="docs/mongo-java-driver/${build.conf.lib.version}"/></jar>
+        <jar jarfile="mongo-javadoc.jar"><fileset dir="docs/mongo-java-driver"/></jar>
 
         <jar jarfile="bson-sources.jar">
             <fileset dir="src/main">
@@ -248,7 +248,7 @@ limitations under the License.
             </fileset>
         </jar>
 
-        <jar jarfile="bson-javadoc.jar"><fileset dir="docs/bson/${build.conf.lib.version}"/></jar>
+        <jar jarfile="bson-javadoc.jar"><fileset dir="docs/bson"/></jar>
 
     </target>
 
