@@ -257,12 +257,12 @@ class OutMessage extends BasicBSONEncoder {
         return _collection != null ? _collection.getFullName() : null;
     }
 
-    synchronized int getNumDocuments() {
+    int getNumDocuments() {
         return _numDocuments;
     }
 
     @Override
-    public synchronized int putObject(BSONObject o) {
+    public int putObject(BSONObject o) {
         // check max size
         int objectSize = _encoder.writeObject(_buf, o);
         if (objectSize > Math.max(_mongo.getConnector().getMaxBsonObjectSize(), Bytes.MAX_OBJECT_SIZE)) {
@@ -280,5 +280,5 @@ class OutMessage extends BasicBSONEncoder {
     private final int _queryOptions;
     private final DBObject _query;
     private final DBEncoder _encoder;
-    private int _numDocuments;
+    private volatile int _numDocuments; // only one thread will modify this field, so volatile is sufficient synchronization
 }
