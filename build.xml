@@ -267,6 +267,7 @@ limitations under the License.
     <target name="test" depends="compile">
         <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="true" >
             <jvmarg value="-Xmx512M" />
+            <jvmarg value="-ea" />
             <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
 
             <xmlfileset dir="." includes="testng.xml"/>
@@ -289,6 +290,7 @@ limitations under the License.
 
         <testng classpathref="classpath" outputdir="${testdir}" haltonfailure="true" verbose="1" listeners="com.mongodb.util.TestNGListener" >
             <jvmarg value="-Xmx512M" />
+            <jvmarg value="-ea" />
             <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
             <xmlfileset dir="build/test" includes="testng-single.xml"/>
         </testng>
@@ -369,6 +371,7 @@ limitations under the License.
 
         <testng classpathref="classpath.clover" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1">
             <jvmarg value="-Xmx512M" />
+            <jvmarg value="-ea" />
             <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
             <xmlfileset dir="." includes="testng.xml"/>
         </testng>
