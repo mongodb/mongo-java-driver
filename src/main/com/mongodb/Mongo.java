@@ -565,8 +565,13 @@ public class Mongo {
      */
     @SuppressWarnings("deprecation")
     void _applyMongoOptions() {
-        if (_options.slaveOk) slaveOk();
-        setWriteConcern( _options.getWriteConcern() );
+        if (_options.slaveOk) {
+            slaveOk();
+        }
+        if (_options.getReadPreference() != null) {
+           setReadPreference(_options.getReadPreference());
+        }
+        setWriteConcern(_options.getWriteConcern());
     }
 
     /**

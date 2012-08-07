@@ -24,6 +24,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 
 public class MongoTest extends TestCase {
     
@@ -51,6 +52,31 @@ public class MongoTest extends TestCase {
         mongo.close();
 
         assertFalse(mongo._cleaner.isAlive());
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void testApplyOptions() throws UnknownHostException {
+        MongoOptions options = new MongoOptions();
+
+        // test defaults
+        Mongo m = new Mongo("localhost", options);
+        assertEquals(ReadPreference.primary(), m.getReadPreference());
+        assertEquals(WriteConcern.NORMAL, m.getWriteConcern());
+        assertEquals(0, m.getOptions() & Bytes.QUERYOPTION_SLAVEOK);
+        m.close();
+
+        // test setting options
+        options.setReadPreference(ReadPreference.nearest());
+        options.slaveOk = true;
+        options.safe = true;
+
+        m = new Mongo("localhost", options);
+        assertEquals(ReadPreference.nearest(), m.getReadPreference());
+        assertEquals(WriteConcern.SAFE, m.getWriteConcern());
+        assertEquals(Bytes.QUERYOPTION_SLAVEOK, m.getOptions() & Bytes.QUERYOPTION_SLAVEOK);
+        m.close();
+
     }
 
     @AfterTest
