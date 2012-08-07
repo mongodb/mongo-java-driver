@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * if its not obvious what a weak bag should do, then, well...
- * very very not thead safe
+ * very very not thread safe
  */
 public class WeakBag<T> implements Iterable<T> {
 
@@ -64,7 +64,7 @@ public class WeakBag<T> implements Iterable<T> {
     }
 
     public boolean contains( T t ){
-        
+
         for ( Iterator<MyRef> i = _refs.iterator(); i.hasNext(); ){
             MyRef ref = i.next();
             T me = ref.get();

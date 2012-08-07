@@ -1,7 +1,5 @@
-// SimplePool.java
-
 /**
- *      Copyright (C) 2008 10gen Inc.
+ *      Copyright (C) 2008-2012 10gen Inc.
  *  
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -19,118 +17,85 @@
 package com.mongodb.util;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
  * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
  */
-public abstract class SimplePool<T> implements SimplePoolMXBean {
+public abstract class SimplePool<T> {
 
-    static final boolean TRACK_LEAKS = Boolean.getBoolean( "MONGO-TRACKLEAKS" );
-    static final long _sleepTime = 2;
-    
-    /** 
-     * See full constructor docs
-     */
-    public SimplePool( String name , int maxToKeep , int maxTotal ){
-        this( name , maxToKeep , maxTotal , false , false );
-    } 
-    
     /** Initializes a new pool of objects.
      * @param name name for the pool
-     * @param maxToKeep max to hold to at any given time. if < 0 then no limit
-     * @param maxTotal max to have allocated at any point.  if there are no more, get() will block
-     * @param trackLeaks if leaks should be tracked
+     * @param size max to hold to at any given time. if < 0 then no limit
      */
-    public SimplePool( String name , int maxToKeep , int maxTotal , boolean trackLeaks , boolean debug ){
+    public SimplePool(String name, int size){
         _name = name;
-        _maxToKeep = maxToKeep;
-        _maxTotal = maxTotal;
-        _trackLeaks = trackLeaks || TRACK_LEAKS;
-        _debug = debug;
+        _size = size;
+        _sem = new Semaphore(size);
     }
 
-    /** Creates a new object of this pool's type.
+    /** Creates a new object of this pool's type.  Implementations should throw a runtime exception if unable to create.
      * @return the new object.
      */
     protected abstract T createNew();
 
-    /** 
-     * callback to determine if an object is ok to be added back to the pool or used
-     * will be called when something is put back into the queue and when it comes out
-     * @return true if the object is ok to be added back to pool
-     */
-    public boolean ok( T t ){
-        return true;
-    }
-
     /**
      * override this if you need to do any cleanup
      */
-    public void cleanup( T t ){}
-
-    /**
-     * @return >= 0 the one to use, -1 don't use any
-     */
-    protected int pick( int iThink , boolean couldCreate ){
-        return iThink;
+    public void cleanup( T t ) {
     }
 
-    /** 
+    /**
+     * Pick a member of {@code _avail}.  This method is called with a lock held on {@code _avail}, so it may be used safely.
+     *
+     * @param recommended the recommended member to choose.
+     * @param couldCreate  true if there is room in the pool to create a new object
+     * @return >= 0 the one to use, -1 create a new one
+     */
+    protected int pick( int recommended , boolean couldCreate ){
+        return recommended;
+    }
+
+    /**
      * call done when you are done with an object form the pool
      * if there is room and the object is ok will get added
      * @param t Object to add
      */
     public void done( T t ){
-        done( t , ok( t ) );
+        synchronized ( this ) {
+            if (_closed) {
+                cleanup(t);
+                return;
+            }
+
+            assertConditions();
+
+            if (!_out.remove(t)) {
+                throw new RuntimeException("trying to put something back in the pool wasn't checked out");
+            }
+
+            _avail.add(t);
+
+        }
+        _sem.release();
     }
 
-    void done( T t , boolean ok ){
-        if ( _trackLeaks ){
-            synchronized ( _where ){
-                _where.remove( _hash( t ) );
-            }
-        }
-        
-        if ( ! ok ){
-            synchronized ( _avail ){
-                _all.remove( t );
-            }
-            return;
-        }
-
-        synchronized ( _avail ){
-            if ( _maxToKeep < 0 || _avail.size() < _maxToKeep ){
-                for ( int i=0; i<_avail.size(); i++ )
-                    if ( _avail.get( i ) == t )
-                        throw new RuntimeException( "trying to put something back in the pool that's already there" );
-                
-                // if all doesn't contain it, it probably means this was cleared, so we don't want it
-                if ( _all.contains( t ) ){
-                    _avail.add( t );
-                    _waiting.release();
-                }
-            }
-            else {
-                cleanup( t );
-            }
-        }
+    private void assertConditions() {
+        assert getTotal() <= getMaxSize();
     }
 
-    public void remove( T t ){
-        done( t , false );
+    public void remove( T t ) {
+        done(t);
     }
 
     /** Gets an object from the pool - will block if none are available
      * @return An object from the pool
      */
-    public T get(){
+    public T get() {
 	return get(-1);
     }
     
@@ -139,176 +104,106 @@ public abstract class SimplePool<T> implements SimplePoolMXBean {
      *        negative - forever
      *        0        - return immediately no matter what
      *        positive ms to wait
-     * @return An object from the pool
+     * @return An object from the pool, or null if can't get one in the given waitTime
      */
-    public T get( long waitTime ){
-        final T t = _get( waitTime );
-        if ( t != null ){
-            if ( _trackLeaks ){
-                Throwable stack = new Throwable();
-                stack.fillInStackTrace();
-                synchronized ( _where ){
-                    _where.put( _hash( t ) , stack );
-                }
-            }
+    public T get(long waitTime) {
+        if (!permitAcquired(waitTime)) {
+            return null;
         }
-        return t;
-    }
 
-    private int _hash( T t ){
-        return System.identityHashCode( t );
-    }
-    
-    private T _get( long waitTime ){
-	long totalSlept = 0;
-        while ( true ){
-            synchronized ( _avail ){
-                
-                boolean couldCreate = _maxTotal <= 0 || _all.size() < _maxTotal;
+        synchronized (this) {
+            assertConditions();
 
-                while ( _avail.size() > 0 ){
-                    int toTake = _avail.size() - 1;
-                    toTake = pick( toTake, couldCreate );
-                    if ( toTake >= 0 ){
-                        T t = _avail.remove( toTake );
-                        if ( ok( t ) ){
-                            _debug( "got an old one" );
-                            return t;
-                        }
-                        _debug( "old one was not ok" );
-                        _all.remove( t );
-                        continue;
-                    }
-                    else if ( ! couldCreate ) {
-                        throw new IllegalStateException( "can't pick nothing if can't create" );
-                    }
-                    break;
-                }
-                
-                if ( couldCreate ){
-                    _everCreated++;
-                    T t = createNew();
-                    _all.add( t );
-                    return t;
-                }
-		
-                if ( _trackLeaks && _trackPrintCount++ % 200 == 0 ){
-                    _wherePrint();
-                    _trackPrintCount = 1;
-                }
+            int toTake = pick(_avail.size() - 1, getTotal() < getMaxSize());
+            T t;
+            if (toTake >= 0) {
+                t = _avail.remove(toTake);
+            } else {
+                t = createNewAndReleasePermitIfFailure();
             }
-	    
-	    if ( waitTime == 0 )
-		return null;
+            _out.add(t);
 
-	    if ( waitTime > 0 && totalSlept >= waitTime )
-		return null;
-	    
-            long start = System.currentTimeMillis();
-            try {
-                _waiting.tryAcquire( _sleepTime , TimeUnit.MILLISECONDS );
-            }
-            catch ( InterruptedException ie ){
-            }
-
-	    totalSlept += ( System.currentTimeMillis() - start );
-
+            return t;
         }
     }
 
-    private void _wherePrint(){
-        StringBuilder buf = new StringBuilder( toString() ).append( " waiting \n" );
-        synchronized ( _where ){
-            for ( Throwable t : _where.values() ){
-                buf.append( "--\n" );
-                final StackTraceElement[] st = t.getStackTrace();
-                for ( int i=0; i<st.length; i++ )
-                    buf.append( "  " ).append( st[i] ).append( "\n" );
-                buf.append( "----\n" );
+    private T createNewAndReleasePermitIfFailure() {
+        try {
+            T newMember = createNew();
+            if (newMember == null) {
+                throw new IllegalStateException("null pool members are not allowed");
             }
+            return newMember;
+        } catch (RuntimeException e) {
+            _sem.release();
+            throw e;
+        } catch (Error e) {
+            _sem.release();
+            throw e;
         }
-        System.out.println( buf );
+    }
+
+    private boolean permitAcquired(final long waitTime) {
+        try {
+            if (waitTime > 0) {
+                return _sem.tryAcquire(waitTime, TimeUnit.MILLISECONDS);
+            } else if (waitTime < 0) {
+                _sem.acquire();
+                return true;
+            } else {
+                return _sem.tryAcquire();
+            }
+        } catch (InterruptedException e) {
+            return false;
+        }
     }
 
     /** Clears the pool of all objects. */
-    protected void clear(){
+    protected void close(){
         synchronized( _avail ){
+            _closed = true;
             for ( T t : _avail )
                 cleanup( t );
             _avail.clear();
-            _all.clear();
-            synchronized ( _where ){
-                _where.clear(); // is this correct
-            }
+            _out.clear();
         }
     }
 
-    @Override
     public String getName() {
         return _name;
     }
 
-    @Override
-    public int getTotal(){
-        return _all.size();
+    public synchronized int getTotal(){
+        return _avail.size() + _out.size();
     }
     
-    @Override
-    public int getInUse(){
-        return _all.size() - _avail.size();
+    public synchronized int getInUse(){
+        return _out.size();
     }
 
-    public Iterator<T> getAll(){
-        return _all.getAll().iterator();
+    public synchronized int getAvailable(){
+        return _avail.size();
     }
 
-    public int getAvailable(){
-        if ( _maxTotal <= 0 )
-            throw new IllegalStateException( "this pool has an infinite number of things available" );
-        return _maxTotal - getInUse();
+    public int getMaxSize(){
+        return _size;
     }
 
-    @Override
-    public int getEverCreated(){
-        return _everCreated;
-    }
-
-    private void _debug( String msg ){
-        if( _debug )
-            System.out.println( "SimplePool [" + _name + "] : " + msg );
-    }
-
-    @Override
-    public int getSize(){
-        return _maxToKeep;
-    }
-
-    public String toString(){
+    public synchronized String toString(){
         StringBuilder buf = new StringBuilder();
-        buf.append( "pool: " ).append( _name )
-            .append( " maxToKeep: " ).append( _maxToKeep )
-            .append( " maxTotal: " ).append( _maxTotal )
-            .append( " where " ).append( _where.size() )
-            .append( " avail " ).append( _avail.size() )
-            .append( " all " ).append( _all.size() )
+        buf.append("pool: ").append(_name)
+            .append(" maxToKeep: ").append(_size)
+            .append(" avail ").append(_avail.size())
+            .append(" out ").append(_out.size())
             ;
         return buf.toString();
     }
 
     protected final String _name;
-    protected final int _maxToKeep;
-    protected final int _maxTotal;
-    protected final boolean _trackLeaks;
-    protected final boolean _debug;
+    protected final int _size;
 
     protected final List<T> _avail = new ArrayList<T>();
-    protected final List<T> _availSafe = Collections.unmodifiableList( _avail );
-    protected final WeakBag<T> _all = new WeakBag<T>();
-    private final Map<Integer,Throwable> _where = new HashMap<Integer,Throwable>();
-
-    private final Semaphore _waiting = new Semaphore(0);
-
-    private int _everCreated = 0;
-    private int _trackPrintCount = 0;
-    
+    protected final Set<T> _out = new HashSet<T>();
+    private final Semaphore _sem;
+    private boolean _closed;
 }

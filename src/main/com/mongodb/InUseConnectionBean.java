@@ -15,12 +15,14 @@
  */
 package com.mongodb;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
  */
-public class InUseConnectionInfo {
+public class InUseConnectionBean {
 
-    InUseConnectionInfo(final DBPort port) {
+    InUseConnectionBean(final DBPort port, long currentNanoTime) {
         DBPort.ActiveState activeState = port.getActiveState();
         if (activeState == null) {
             durationMS = 0;
@@ -31,7 +33,7 @@ public class InUseConnectionInfo {
             numDocuments = 0;
         }
         else {
-            durationMS = (System.nanoTime() - activeState.startTime) / 1000000;
+            durationMS = TimeUnit.NANOSECONDS.toMillis(currentNanoTime - activeState.startTime);
             namespace = activeState.outMessage.getNamespace();
             opCode = activeState.outMessage.getOpCode();
             query = activeState.outMessage.getQuery() != null ? activeState.outMessage.getQuery().toString() : null;

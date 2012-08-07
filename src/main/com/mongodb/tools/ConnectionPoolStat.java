@@ -151,7 +151,7 @@ public class ConnectionPoolStat {
         System.out.println("  objectName                     - name of the JMX bean for this connection pool");
         System.out.println("  host                           - host of the mongod/mongos server");
         System.out.println("  port                           - port of the mongod/mongos server");
-        System.out.println("  size                           - max # of connections allowed");
+        System.out.println("  maxSize                        - max # of connections allowed");
         System.out.println("  total                          - # of connections allocated");
         System.out.println("  inUse                          - # of connections in use");
         System.out.println("  inUseConnections               - list of all in use connections");
@@ -175,12 +175,8 @@ public class ConnectionPoolStat {
             pw.print("     ");
             printAttribute("Host", objectName, pw);
             printAttribute("Port", objectName, pw);
-            printAttribute("Size", objectName, pw);
-            printAttribute("Total", objectName, pw);
-            printAttribute("EverCreated", objectName, pw);
-            printAttribute("InUse", objectName, pw);
-            pw.println();
-            printInUseConnections(objectName, pw);
+            printAttribute("MaxSize", objectName, pw);
+            printStatistics(pw, objectName);
             pw.println("   }" + (i == beanSet.size() - 1 ? "" : ","));
             i++;
         }
@@ -188,9 +184,22 @@ public class ConnectionPoolStat {
         pw.println("}");
     }
 
-    private void printInUseConnections(final ObjectName objectName, final PrintWriter pw) throws InstanceNotFoundException, IOException, ReflectionException, AttributeNotFoundException, MBeanException {
-        String key = "InUseConnections";
-        CompositeData[] compositeDataArray = (CompositeData[]) mBeanConnection.getAttribute(objectName, key);
+    private void printStatistics(final PrintWriter pw, final ObjectName objectName) throws InstanceNotFoundException, IOException, ReflectionException, AttributeNotFoundException, MBeanException {
+        String key = "Statistics";
+        CompositeData statistics = (CompositeData) mBeanConnection.getAttribute(objectName, key);
+        printSimpleStatistics(pw, statistics);
+        printInUseConnections(statistics, pw);
+    }
+
+    private void printSimpleStatistics(final PrintWriter pw, final CompositeData statistics) throws InstanceNotFoundException, IOException, ReflectionException, AttributeNotFoundException, MBeanException {
+        printCompositeDataAttribute("total", statistics, pw);
+        printCompositeDataAttribute("inUse", statistics, pw);
+        pw.println();
+    }
+
+    private void printInUseConnections(final CompositeData statistics, final PrintWriter pw) throws InstanceNotFoundException, IOException, ReflectionException, AttributeNotFoundException, MBeanException {
+        String key = "inUseConnections";
+        CompositeData[] compositeDataArray = (CompositeData[]) statistics.get(key);
         pw.println("     " + getKeyString(key) + ": [");
         for (int i = 0; i < compositeDataArray.length; i++) {
             CompositeData compositeData = compositeDataArray[i];

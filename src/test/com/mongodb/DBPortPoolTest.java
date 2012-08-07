@@ -18,52 +18,69 @@
 
 package com.mongodb;
 
+import org.testng.annotations.Test;
+
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 public class DBPortPoolTest extends com.mongodb.util.TestCase {
 
     @Test
     public void testReuse() throws Exception {
-        final DBPortPool pool = new DBPortPool( new ServerAddress( "localhost" ), new MongoOptions() );
+        MongoOptions options = new MongoOptions();
+        options.connectionsPerHost = 10;
+        final DBPortPool pool = new DBPortPool( new ServerAddress( "localhost" ), options );
+
+        // ensure that maximum number of connections are created
         DBPort[] ports = new DBPort[10];
-        for(int x = 0; x<10; x++) {
+        for (int x = 0; x < options.connectionsPerHost; x++) {
             ports[x] = pool.get();
             pool.done( ports[x] );
             ports[x]._lastThread = 0;
         }
-        
-        ExecutorService es = Executors.newFixedThreadPool( 20 , Executors.defaultThreadFactory() );
-        for(int x = 0; x<20; x++) {
+
+        int numTasks = 40;
+
+        final CountDownLatch ready = new CountDownLatch(numTasks);
+        final CountDownLatch start = new CountDownLatch(1);
+        final CountDownLatch done = new CountDownLatch(numTasks);
+
+        ExecutorService es = Executors.newFixedThreadPool( numTasks , Executors.defaultThreadFactory() );
+        for(int x = 0; x<numTasks; x++) {
             es.submit( new Runnable() {
                 @Override
                 public void run(){
-                    try { 
-                        Thread.sleep( 100 );
-                    } catch ( InterruptedException e ) {
+                    try {
+                        ready.countDown();
+                        start.await();
+                        DBPort p = pool.get();
+                        pool.done(p);
+                    } catch (InterruptedException e) {
+                        // nada
+                    } catch (RuntimeException e) {
+                        e.printStackTrace();
+                    } catch (Error e) {
+                        e.printStackTrace();
                     }
-                    DBPort p = pool.get();
-                    pool.done( p );
+
+                    done.countDown();
                 }
             });
         }
         
-        Thread.sleep( 3000 );
-        
+        ready.await();
+        start.countDown();
+        done.await();
         es.shutdown();
-        Assert.assertTrue(es.awaitTermination( 1, TimeUnit.SECONDS ));
+        es.awaitTermination( Integer.MAX_VALUE, TimeUnit.SECONDS);
         
         for(int x = 2; x<8; x++) {
 //            Assert.assertNotSame( 0 , ports[x]._lastThread, x + ":" + ports[x].hashCode());
         }
         
-        assertEquals( 10 , pool.getEverCreated() );
-        assertEquals( 10 , pool.getAvailable() );
-        
+        assertEquals( pool.getMaxSize() , pool.getAvailable() );
     }
 
     public static void main( String args[] ){

@@ -22,11 +22,9 @@ public class StringBuilderPool extends SimplePool<StringBuilder> {
 
     /** Initializes a pool of a given number of StringBuilders, each of a certain size.
      * @param maxToKeep the number of string builders in the pool
-     * @param maxSize the size of each string builder
      */
-    public StringBuilderPool( String name , int maxToKeep , int maxSize ){
-        super( "StringBuilderPool-" + name , maxToKeep , -1  );
-        _maxSize = maxSize;
+    public StringBuilderPool( String name , int maxToKeep  ){
+        super( "StringBuilderPool-" + name , maxToKeep );
     }
 
     /** Create a new string builder.
@@ -41,7 +39,7 @@ public class StringBuilderPool extends SimplePool<StringBuilder> {
      * @return if it is not too big
      */
     public boolean ok( StringBuilder buf ){
-        if ( buf.length() > _maxSize )
+        if ( buf.length() > getMaxSize() )
             return false;
         buf.setLength( 0 );
         return true;
@@ -50,6 +48,4 @@ public class StringBuilderPool extends SimplePool<StringBuilder> {
     protected long memSize( StringBuilder buf ){
         return buf.length() * 2;
     }
-
-    final int _maxSize;
 }

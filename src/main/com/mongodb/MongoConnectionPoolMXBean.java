@@ -16,13 +16,45 @@
 
 package com.mongodb;
 
-import com.mongodb.util.SimplePoolMXBean;
+import com.mongodb.util.ConnectionPoolStatisticsBean;
 
 /**
  * This interface is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
  */
-public interface MongoConnectionPoolMXBean extends SimplePoolMXBean {
-    public InUseConnectionInfo[] getInUseConnections();
-    public String getHost();
-    public int getPort();
+public interface MongoConnectionPoolMXBean {
+    /**
+     * Gets the name of the pool.
+     *
+     * @return the name of the pool
+     */
+    String getName();
+
+    /**
+     * Gets the maximum allowed size of the pool, including idle and in-use members.
+     *
+     * @return the maximum size
+     */
+    int getMaxSize();
+
+
+    /**
+     * Gets the host that this connection pool is connecting to.
+     *
+     * @return the host
+     */
+    String getHost();
+
+    /**
+     * Gets the port that this connection pool is connecting to.
+     *
+     * @return the port
+     */
+    int getPort();
+
+    /**
+     * Gets the statistics for this connection pool.
+     *
+     * @return the connection pool statistics
+     */
+    ConnectionPoolStatisticsBean getStatistics();
 }

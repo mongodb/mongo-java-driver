@@ -18,6 +18,7 @@
 
 package com.mongodb;
 
+import com.mongodb.util.ConnectionPoolStatisticsBean;
 import com.mongodb.util.SimplePool;
 import com.mongodb.util.management.JMException;
 import com.mongodb.util.management.MBeanServerFactory;
@@ -36,18 +37,6 @@ import java.util.logging.Level;
  */
 public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoolMXBean {
 
-    public InUseConnectionInfo[] getInUseConnections() {
-        List<InUseConnectionInfo> inUseConnectionInfoList = new ArrayList<InUseConnectionInfo>();
-        synchronized (_avail) {
-            for (DBPort port : _all) {
-                if (!_avail.contains(port)) {
-                    inUseConnectionInfoList.add(new InUseConnectionInfo(port));
-                }
-            }
-        }
-        return inUseConnectionInfoList.toArray(new InUseConnectionInfo[inUseConnectionInfoList.size()]);
-    }
-
     @Override
     public String getHost() {
         return _addr.getHost();
@@ -57,6 +46,21 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
     public int getPort() {
         return _addr.getPort();
     }
+
+    @Override
+    public synchronized ConnectionPoolStatisticsBean getStatistics() {
+        return new ConnectionPoolStatisticsBean(getTotal(), getInUse(), getInUseConnections());
+    }
+
+    private InUseConnectionBean[] getInUseConnections() {
+        List<InUseConnectionBean> inUseConnectionInfoList = new ArrayList<InUseConnectionBean>();
+        long currentNanoTime = System.nanoTime();
+        for (DBPort port : _out) {
+            inUseConnectionInfoList.add(new InUseConnectionBean(port, currentNanoTime));
+        }
+        return inUseConnectionInfoList.toArray(new InUseConnectionBean[inUseConnectionInfoList.size()]);
+    }
+
 
     static class Holder {
 
@@ -156,7 +160,7 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
     // ----
 
     DBPortPool( ServerAddress addr , MongoOptions options ){
-        super( "DBPortPool-" + addr.toString() + ", options = " +  options.toString() , options.connectionsPerHost , options.connectionsPerHost );
+        super( "DBPortPool-" + addr.toString() + ", options = " +  options.toString() , options.connectionsPerHost );
         _options = options;
         _addr = addr;
         _waitingSem = new Semaphore( _options.connectionsPerHost * _options.threadsAllowedToBlockForConnectionMultiplier );
@@ -166,24 +170,22 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
         return 0;
     }
 
-    protected int pick( int iThink , boolean couldCreate ){
-        final int id = System.identityHashCode(Thread.currentThread());
-        final int s = _availSafe.size();
-        for ( int i=0; i<s; i++ ){
-            DBPort p = _availSafe.get(i);
-            if ( p._lastThread == id )
+    @Override
+    protected int pick( int recommended, boolean couldCreate ){
+        int id = System.identityHashCode(Thread.currentThread());
+        for (int i = _avail.size() - 1; i >= 0; i--){
+            if ( _avail.get(i)._lastThread == id )
                 return i;
         }
 
-        if ( couldCreate )
-            return -1;
-        return iThink;
+        return couldCreate ? -1 : recommended;
     }
 
     /**
      * @return
      * @throws MongoException
      */
+    @Override
     public DBPort get() {
         DBPort port = null;
         if ( ! _waitingSem.tryAcquire() )
@@ -199,7 +201,7 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
         if ( port == null )
             throw new ConnectionWaitTimeOut( _options.maxWaitTime );
 
-            port._lastThread = System.identityHashCode(Thread.currentThread());
+        port._lastThread = System.identityHashCode(Thread.currentThread());
         return port;
     }
 
@@ -236,18 +238,12 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
         return false;
     }
 
-    void close(){
-        clear();
-    }
-
+    @Override
     public void cleanup( DBPort p ){
         p.close();
     }
 
-    public boolean ok( DBPort t ){
-        return _addr.getSocketAddress().equals( t._addr );
-    }
-
+    @Override
     protected DBPort createNew(){
         return new DBPort( _addr , this , _options );
     }
