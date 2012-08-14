@@ -197,6 +197,11 @@ public class DBApiLayer extends DB {
         }
 
         public WriteResult insert(DBObject[] arr, com.mongodb.WriteConcern concern, DBEncoder encoder ){
+
+            if (concern == null) {
+                throw new IllegalArgumentException("Write concern can not be null");
+            }
+
             return insert( arr, true, concern, encoder );
         }
 
@@ -249,6 +254,10 @@ public class DBApiLayer extends DB {
 
         public WriteResult remove( DBObject o , com.mongodb.WriteConcern concern, DBEncoder encoder ){
 
+            if (concern == null) {
+                throw new IllegalArgumentException("Write concern can not be null");
+            }
+
             if (encoder == null)
                 encoder = DefaultDBEncoder.FACTORY.create();
 
@@ -294,6 +303,10 @@ public class DBApiLayer extends DB {
 
             if (o == null) {
                 throw new IllegalArgumentException("update can not be null");
+            }
+
+            if (concern == null) {
+                throw new IllegalArgumentException("Write concern can not be null");
             }
 
             if (encoder == null)

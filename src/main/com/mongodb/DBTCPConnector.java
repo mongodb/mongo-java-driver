@@ -165,6 +165,10 @@ public class DBTCPConnector implements DBConnector {
     @Override
     public WriteResult say( DB db , OutMessage m , WriteConcern concern , ServerAddress hostNeeded ){
 
+        if (concern == null) {
+            throw new IllegalArgumentException("Write concern is null");
+        }
+
         _checkClosed();
         checkMaster( false , true );
 
