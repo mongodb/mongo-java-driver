@@ -135,7 +135,7 @@ class DynamicConnectionStatus extends ConnectionStatus {
         }
     }
 
-    private synchronized void notifyOfOkNode(DynamicNode node) {
+    private void notifyOfOkNode(DynamicNode node) {
         synchronized (this) {
             if (connectionStatus != null) {
                 return;
@@ -178,7 +178,7 @@ class DynamicConnectionStatus extends ConnectionStatus {
         private boolean isMongos;
     }
 
-    private synchronized ConnectionStatus getConnectionStatus() {
+    private ConnectionStatus getConnectionStatus() {
         if (connectionStatus == null) {
             try {
                 synchronized (this) {
