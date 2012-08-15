@@ -27,7 +27,7 @@ import java.util.Date;
  * <b>time</b> is seconds since epoch
  * <b>inc<b> is an ordinal
  */
-public class BSONTimestamp implements Serializable {
+public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
 
     private static final long serialVersionUID = -3268482672267936464L;
     
@@ -61,6 +61,16 @@ public class BSONTimestamp implements Serializable {
     }
 
     @Override
+    public int compareTo(BSONTimestamp ts) {
+        if(getTime() != ts.getTime()) {
+            return getTime() - ts.getTime();
+        }
+        else{
+            return getInc() - ts.getInc();
+        }
+    }
+    
+    @Override
     public boolean equals(Object obj) {
         if (obj == this)
             return true;
@@ -73,4 +83,5 @@ public class BSONTimestamp implements Serializable {
 
     final int _inc;
     final Date _time;
+
 }
