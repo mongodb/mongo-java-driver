@@ -59,7 +59,7 @@ public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
     public String toString(){
         return "TS time:" + _time + " inc:" + _inc;
     }
-
+    
     @Override
     public int compareTo(BSONTimestamp ts) {
         if(getTime() != ts.getTime()) {
@@ -68,6 +68,15 @@ public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
         else{
             return getInc() - ts.getInc();
         }
+    }
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + _inc;
+        result = prime * result + getTime();
+        return result;
     }
     
     @Override
