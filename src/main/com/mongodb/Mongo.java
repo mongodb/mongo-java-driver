@@ -29,47 +29,43 @@ import java.util.concurrent.ConcurrentMap;
 import org.bson.io.PoolOutputBuffer;
 
 /**
- * A database connection with internal pooling.
- * For most application, you should have 1 Mongo instance for the entire JVM.
- *
- * The following are equivalent, and all connect to the
- * local database running on the default port:
- *
- * <blockquote><pre>
- * Mongo mongo1 = new Mongo( "127.0.0.1" );
- * Mongo mongo2 = new Mongo( "127.0.0.1", 27017 );
- * Mongo mongo3 = new Mongo( new DBAddress( "127.0.0.1", 27017, "test" ) );
- * Mongo mongo4 = new Mongo( new ServerAddress( "127.0.0.1") );
- * </pre></blockquote>
- *
- * Mongo instances have connection pooling built in - see the requestStart
- * and requestDone methods for more information.
- * http://www.mongodb.org/display/DOCS/Java+Driver+Concurrency
- *
- * <h3>Connecting to a Replica Set</h3>
+ * A database connection with internal connection pooling. For most applications, you should have one Mongo instance
+ * for the entire JVM.
+ * <p>
+ * The following are equivalent, and all connect to the local database running on the default port:
+ * <pre>
+ * Mongo mongo1 = new Mongo();
+ * Mongo mongo1 = new Mongo("localhost");
+ * Mongo mongo2 = new Mongo("localhost", 27017);
+ * Mongo mongo4 = new Mongo(new ServerAddress("localhost"));
+ * </pre>
  * <p>
  * You can connect to a
- * <a href="http://www.mongodb.org/display/DOCS/Replica+Sets">replica set</a>
- * using the Java driver by passing several a list if ServerAddress to the
- * Mongo constructor.
- * For example:
- * </p>
- * <blockquote><pre>
- * List<ServerAddress> addrs = new ArrayList<ServerAddress>();
- * addrs.add( new ServerAddress( "127.0.0.1" , 27017 ) );
- * addrs.add( new ServerAddress( "127.0.0.1" , 27018 ) );
- * addrs.add( new ServerAddress( "127.0.0.1" , 27019 ) );
- *
- * Mongo mongo = new Mongo( addrs );
- * </pre></blockquote>
- *
+ * <a href="http://www.mongodb.org/display/DOCS/Replica+Sets">replica set</a> using the Java driver by passing
+ * a ServerAddress list to the Mongo constructor. For example:
+ * <pre>
+ * Mongo mongo = new Mongo(Arrays.asList(
+ *   new ServerAddress("localhost", 27017),
+ *   new ServerAddress("localhost", 27018),
+ *   new ServerAddress("localhost", 27019)));
+ * </pre>
+ * You can connect to a sharded cluster using the same constructor.  Mongo will auto-detect whether the servers are
+ * a list of replica set members or a list of mongos servers.
  * <p>
- * By default, all read and write operations will be made on the master.
- * But it's possible to read from the slave(s) by using slaveOk:
- * </p>
- * <blockquote><pre>
- * mongo.slaveOk();
- * </pre></blockquote>
+ * By default, all read and write operations will be made on the primary,
+ * but it's possible to read from secondaries by changing the read preference:
+ * <p>
+ * <pre>
+ * mongo.setReadPreference(ReadPreference.secondary());
+ * </pre>
+ * By default, write operations will not throw exceptions on failure, but that is easily changed too:
+ * <p>
+ * <pre>
+ * mongo.setWriteConcern(WriteConcern.SAFE);
+ * </pre>
+ *
+ * @see com.mongodb.ReadPreference
+ * @see com.mongodb.WriteConcern
  */
 public class Mongo {
 
@@ -243,10 +239,14 @@ public class Mongo {
     }
 
     /**
-     * <p>Creates a Mongo based on a replica set, or pair.
+     * Creates a Mongo based on a list of replica set members or a list of mongos.
      * It will find all members (the master will be used by default). If you pass in a single server in the list,
      * the driver will still function as if it is a replica set. If you have a standalone server,
-     * use the Mongo(ServerAddress) constructor.</p>
+     * use the Mongo(ServerAddress) constructor.
+     * <p>
+     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
+     * and automatically fail over to the next server if the closest is down.
+     *
      * @see com.mongodb.ServerAddress
      * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
      *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
@@ -258,13 +258,19 @@ public class Mongo {
     }
 
     /**
-     * <p>Creates a Mongo based on a replica set, or pair.
-     * It will find all members (the master will be used by default).</p>
+     * Creates a Mongo based on a list of replica set members or a list of mongos.
+     * It will find all members (the master will be used by default). If you pass in a single server in the list,
+     * the driver will still function as if it is a replica set. If you have a standalone server,
+     * use the Mongo(ServerAddress) constructor.
+     * <p>
+     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
+     * and automatically fail over to the next server if the closest is down.
+     *
      * @see com.mongodb.ServerAddress
      * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
      *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
      *              sharded cluster.
-     * @param options default query options
+     * @param options for configuring this Mongo instance
      * @throws MongoException 
      */
     public Mongo( List<ServerAddress> seeds , MongoOptions options ) {
@@ -289,8 +295,8 @@ public class Mongo {
      * @param uri
      * @see MongoURI
      * <p>examples:
-     *   <li>mongodb://127.0.0.1</li>
-     *   <li>mongodb://fred:foobar@127.0.0.1/</li>
+     *   <li>mongodb://localhost</li>
+     *   <li>mongodb://fred:foobar@localhost/</li>
      *  </p>
      * @throws MongoException
      * @throws UnknownHostException
