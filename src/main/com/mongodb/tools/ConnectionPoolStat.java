@@ -33,20 +33,67 @@ import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.util.Set;
 
+/**
+ * A simple class that formats Mongo Java driver connection pool statistics in an easily-accessible JSON format.
+ * It can be used to get statistics on connection pool in the same VM by using the no-args constructor, or in any
+ * VM by using the constructor that takes an MBeanServerConnection.
+ * <p>
+ * This class also exposes a command line interface modeled after mongostat.  For usage, run:
+
+ * <pre>   java -cp mongo.jar com.mongodb.util.management.jmx.ConnectionPoolStat --help}</pre>
+ *
+ * @mongodb.driver.manual reference/mongostat  mongostat
+ *
+ */
 public class ConnectionPoolStat {
 
+    /**
+     * Use the given MBean server connection to access statistics for connection pools.
+     *
+     * @param mBeanConnection the MBean server to connect to
+     */
     public ConnectionPoolStat(MBeanServerConnection mBeanConnection) {
         this.mBeanConnection = mBeanConnection;
     }
 
+    /**
+     * Use the platform MBean server.  This is useful if you want to access statistics
+     * for connection pools in the same virtual machine.
+     *
+     * @see java.lang.management.ManagementFactory#getPlatformMBeanServer()
+     */
     public ConnectionPoolStat() {
         this.mBeanConnection = ManagementFactory.getPlatformMBeanServer();
     }
 
     /**
+     * Gets the statistics for all Mongo connection pools registered with the MBean server used
+     * by this instance.  The format will always be JSON, but the specific JSON fields may change in a
+     * future release.  An example of the output, which should not be taken as a specification:
+     *
+     * <pre>
+   { pools : [
+     { objectName: 'com.mongodb:type=ConnectionPool,host=localhost/127.0.0.1,port=27018,instance=1',
+       host: 'localhost', port: 27018, maxSize: 10, total: 10, inUse: 3,
+       inUseConnections: [
+         { namespace: 'FindContention.test', opCode: 'OP_QUERY', query: { }, numDocuments: 1, threadName: 'pool-2-thread-19', durationMS: 843, localPort: 64062 },
+         { namespace: 'FindContention.test', opCode: 'OP_QUERY', query: { }, numDocuments: 1, threadName: 'pool-2-thread-1', durationMS: 4331, localPort: 64095 },
+         { namespace: 'FindContention.test', opCode: 'OP_QUERY', query: { }, numDocuments: 1, threadName: 'pool-2-thread-16', durationMS: 4343, localPort: 64087 }
+       ]
+     },
+     { objectName: 'com.mongodb:type=ConnectionPool,host=localhost/127.0.0.1,port=27017,instance=1',
+       host: 'localhost', port: 27017, maxSize: 10, total: 10, inUse: 2,
+       inUseConnections: [
+         { namespace: 'FindContention.test', opCode: 'OP_QUERY', query: { }, numDocuments: 1, threadName: 'pool-2-thread-5', durationMS: 920, localPort: 64093 },
+         { namespace: 'FindContention.test', opCode: 'OP_QUERY', query: { }, numDocuments: 1, threadName: 'pool-2-thread-11', durationMS: 1468, localPort: 64068 },
+       ]
+     }
+    ]
+   }</pre>
      *
      * @return JSON-formatted stats for all connection pools registered in JMX
-     * @throws Exception
+     * @throws JMException for any JMX-related exceptions
+     * @throws IOException for any I/O exceptions
      */
     public String getStats() throws JMException, IOException {
         CharArrayWriter charArrayWriter = new CharArrayWriter();

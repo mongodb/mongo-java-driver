@@ -199,7 +199,7 @@ limitations under the License.
     <target name="javadocs" depends="compile,utilcompile" description="Generate API docs">
         <delete dir="docs/"/>
         <javadoc
-            packagenames="com.mongodb,com.mongodb.gridfs,com.mongodb.util,org.bson,org.bson.types,org.bson.io,org.bson.util"
+            packagenames="com.mongodb,com.mongodb.gridfs,com.mongodb.util,com.mongodb.tools,org.bson,org.bson.types,org.bson.io,org.bson.util"
             sourcepath="src/main/"
             defaultexcludes="yes"
             destdir="docs/mongo-java-driver"
