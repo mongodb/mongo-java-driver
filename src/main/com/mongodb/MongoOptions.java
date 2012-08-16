@@ -168,8 +168,8 @@ public class MongoOptions {
      * Note that reading from secondaries can increase performance and reliability, but it may result in temporary inconsistent results.
      * Default is false.
      *
-     * @deprecated Use {@code readPreference} instead
-     * @see MongoOptions#readPreference
+     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
+     * @see ReadPreference#secondaryPreferred()
      */
     @Deprecated
     public boolean slaveOk;

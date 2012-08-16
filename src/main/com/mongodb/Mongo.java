@@ -18,6 +18,8 @@
 
 package com.mongodb;
 
+import org.bson.io.PoolOutputBuffer;
+
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,8 +27,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import org.bson.io.PoolOutputBuffer;
 
 /**
  * A database connection with internal connection pooling. For most applications, you should have one Mongo instance
@@ -524,10 +524,10 @@ public class Mongo {
     }
 
     /**
-     * makes it possible to run read queries on slave nodes
+     * makes it possible to run read queries on secondary nodes
      *
-     * @deprecated Replaced with ReadPreference.SECONDARY
-     * @see com.mongodb.ReadPreference.SECONDARY
+     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
+     * @see ReadPreference#secondaryPreferred()
      */
     @Deprecated
     public void slaveOk(){
