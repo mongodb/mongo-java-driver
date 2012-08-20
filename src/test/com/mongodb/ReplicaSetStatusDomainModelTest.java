@@ -119,7 +119,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
             assertNotNull(addr);
             counters.get(addr.getHost()).incrementAndGet();
         }
-        assertLess(((getHigh(counters) - getLow(counters)) / (double) getHigh(counters)), .03);
+        assertLess(((getHigh(counters) - getLow(counters)) / (double) getHigh(counters)), .05);
 
         // test getting a secondary by multiple tags
         List<ReplicaSetStatus.Tag> twoTagsList = new ArrayList<ReplicaSetStatus.Tag>();
@@ -148,7 +148,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
             assertNotNull(addr);
             counters.get(addr.getHost()).incrementAndGet();
         }
-        assertLess(((getHigh(counters) - getLow(counters)) / (double) getHigh(counters)), .04);
+        assertLess(((getHigh(counters) - getLow(counters)) / (double) getHigh(counters)), .05);
     }
     
     @Test(expectedExceptions = MongoException.class)
