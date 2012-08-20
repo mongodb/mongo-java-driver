@@ -700,13 +700,14 @@ public abstract class DBCollection {
      * @dochub find
      */
     public DBObject findOne( DBObject o, DBObject fields, DBObject orderBy, ReadPreference readPref ){
-    	
-    	DBObject queryop = new QueryOpBuilder()
-    								.addQuery(o)
-    								.addOrderBy(orderBy)
-    								.get();
-    	
-    	Iterator<DBObject> i = __find( queryop, fields , 0 , -1 , 0, getOptions(), readPref, getDecoder() );
+
+        QueryOpBuilder queryOpBuilder = new QueryOpBuilder().addQuery(o).addOrderBy(orderBy);
+
+        if (getDB().getMongo().isMongosConnection()) {
+            queryOpBuilder.addReadPreference(readPref.toDBObject());
+        }
+
+        Iterator<DBObject> i = __find(queryOpBuilder.get(), fields , 0 , -1 , 0, getOptions(), readPref, getDecoder() );
         
         DBObject obj = (i.hasNext() ? i.next() : null);
         if ( obj != null && ( fields != null && fields.keySet().size() > 0 ) ){
