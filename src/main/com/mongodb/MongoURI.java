@@ -81,7 +81,7 @@ import java.util.logging.Logger;
  *     <ul>
  *       <li>The driver adds { w : wValue } to the getLastError command. Implies {@code safe=true}.</li>
  *       <li>wValue is typically a number, but can be any string in order to allow for specifications like
- *           {@code"majority"}</li>
+ *           {@code "majority"}</li>
  *     </ul>
  *   </li>
  *   <li>{@code wtimeoutMS=ms}
