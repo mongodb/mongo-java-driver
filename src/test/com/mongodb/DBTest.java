@@ -19,6 +19,7 @@ import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
 
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
 public class DBTest extends TestCase {
 
@@ -117,6 +118,27 @@ public class DBTest extends TestCase {
 
         obj = new BasicDBObject("serverStatus", 1);
         assertEquals(ReadPreference.primary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+    }
+
+    @Test(groups = {"basic"})
+    public void testEnsureConnection() throws UnknownHostException {
+
+        Mongo m = new Mongo(Arrays.asList(new ServerAddress("localhost")));
+
+        if (isStandalone(m)) {
+            return;
+        }
+        try {
+            DB db = m.getDB("com_mongodb_unittest_DBTest");
+            db.requestStart();
+            try {
+                db.requestEnsureConnection();
+            } finally {
+                db.requestDone();
+            }
+        } finally {
+            m.close();
+        }
     }
 
     /*public static class Person extends DBObject {

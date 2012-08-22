@@ -126,6 +126,7 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public void requestEnsureConnection(){
+        checkMaster( false , true );
         _myPort.get().requestEnsureConnection();
     }
 
