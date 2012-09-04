@@ -22,13 +22,14 @@ package com.mongodb;
  * modified April 11, 2012 by Bryan Reinero
  *  added $near, $nearSphere, $centerSphere and $within $polygon tests
  */
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Pattern;
-import org.testng.annotations.*;
-
 import com.mongodb.QueryBuilder.QueryBuilderException;
 import com.mongodb.util.TestCase;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.regex.Pattern;
 
 /**
  * Test for various methods of <code/>QueryBuilder</code>
@@ -44,7 +45,42 @@ public class QueryBuilderTest extends TestCase {
         _testDB = cleanupMongo.getDB( "queryBuilderTest" );
         _testDB.dropDatabase();
     }
-	
+
+    @Test
+    public void elemMatchTest() {
+        DBObject query = QueryBuilder.start("array").elemMatch(QueryBuilder.start("x").is(1).and("y").is(2).get()).get();
+        DBObject expected = new BasicDBObject("array", new BasicDBObject("$elemMatch",
+                new BasicDBObject("x", 1).append("y", 2)));
+        assertEquals(expected, query);
+        // TODO: add integration test
+    }
+
+    @Test
+    public void notTest() {
+        Pattern pattern = Pattern.compile("\\w*");
+        DBObject query = QueryBuilder.start("x").not().regex(pattern).get();
+        DBObject expected = new BasicDBObject("x", new BasicDBObject("$not", pattern));
+        assertEquals(expected, query);
+
+        query = QueryBuilder.start("x").not().regex(pattern).and("y").is("foo").get();
+        expected = new BasicDBObject("x", new BasicDBObject("$not", pattern)).append("y", "foo");
+        assertEquals(expected, query);
+
+        query = QueryBuilder.start("x").not().greaterThan(2).get();
+        expected = new BasicDBObject("x", new BasicDBObject("$not", new BasicDBObject("$gt", 2)));
+        assertEquals(expected, query);
+
+        query = QueryBuilder.start("x").not().greaterThan(2).and("y").is("foo").get();
+        expected = new BasicDBObject("x", new BasicDBObject("$not", new BasicDBObject("$gt", 2))).append("y", "foo");
+        assertEquals(expected, query);
+
+
+        query = QueryBuilder.start("x").not().greaterThan(2).lessThan(0).get();
+        expected = new BasicDBObject("x", new BasicDBObject("$not", new BasicDBObject("$gt", 2).append("$lt", 0)));
+        assertEquals(expected, query);
+
+    }
+
     @Test
     public void greaterThanTest() {
         String key = "x";
@@ -369,6 +405,25 @@ public class QueryBuilderTest extends TestCase {
                   new BasicDBObject( "b" , 1 ) )
             .get();
         
+        assertEquals( 1 , c.find( q ).itcount() );
+    }
+
+    @Test
+    public void testMultipleAnd() {
+        if (!serverIsAtLeastVersion(2.0)) {
+            return;
+        }
+
+        DBCollection c = _testDB.getCollection( "and1" );
+        c.drop();
+        c.insert( new BasicDBObject( "a" , 1 ).append( "b" , 1) );
+        c.insert( new BasicDBObject( "b" , 1 ) );
+
+        DBObject q = QueryBuilder.start()
+                .and( new BasicDBObject( "a" , 1 ) ,
+                        new BasicDBObject( "b" , 1 ) )
+                .get();
+
         assertEquals( 1 , c.find( q ).itcount() );
     }
 
