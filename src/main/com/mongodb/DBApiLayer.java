@@ -23,6 +23,7 @@ import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -196,28 +197,28 @@ public class DBApiLayer extends DB {
             super.drop();
         }
 
-        public WriteResult insert(DBObject[] arr, com.mongodb.WriteConcern concern, DBEncoder encoder ){
+        public WriteResult insert(List<DBObject> list, com.mongodb.WriteConcern concern, DBEncoder encoder ){
 
             if (concern == null) {
                 throw new IllegalArgumentException("Write concern can not be null");
             }
 
-            return insert( arr, true, concern, encoder );
+            return insert(list, true, concern, encoder);
         }
 
-        protected WriteResult insert(DBObject[] arr, boolean shouldApply , com.mongodb.WriteConcern concern, DBEncoder encoder ){
+        protected WriteResult insert(List<DBObject> list, boolean shouldApply , com.mongodb.WriteConcern concern, DBEncoder encoder ){
 
             if (encoder == null)
                 encoder = DefaultDBEncoder.FACTORY.create();
 
             if ( willTrace() ) {
-                for (DBObject o : arr) {
+                for (DBObject o : list) {
                     trace( "save:  " + _fullNameSpace + " " + JSON.serialize( o ) );
                 }
             }
 
             if ( shouldApply ){
-                for (DBObject o : arr) {
+                for (DBObject o : list) {
                     apply(o);
                     _checkObject(o, false, false);
                     Object id = o.get("_id");
@@ -231,12 +232,12 @@ public class DBApiLayer extends DB {
 
             int cur = 0;
             int maxsize = _mongo.getMaxBsonObjectSize();
-            while ( cur < arr.length ) {
+            while ( cur < list.size() ) {
 
                OutMessage om = OutMessage.insert( this , encoder, concern );
 
-               for ( ; cur<arr.length; cur++ ){
-                    DBObject o = arr[cur];
+               for ( ; cur < list.size(); cur++ ){
+                    DBObject o = list.get(cur);
                     om.putObject( o );
 
                     // limit for batch insert is 4 x maxbson on server, use 2 x to be safe
@@ -341,7 +342,7 @@ public class DBApiLayer extends DB {
             MyCollection idxs = DBApiLayer.this.doGetCollection( "system.indexes" );
             //query first, maybe we should do an update w/upsert? -- need to test performance and lock behavior
             if ( idxs.findOne( full ) == null )
-                idxs.insert( new DBObject[] { full },  false, WriteConcern.SAFE, encoder );
+                idxs.insert(Arrays.asList(full), false, WriteConcern.SAFE, encoder);
         }
 
         final String _fullNameSpace;

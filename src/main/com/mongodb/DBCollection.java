@@ -19,9 +19,11 @@
 package com.mongodb;
 
 // Mongo
+
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -69,7 +71,9 @@ public abstract class DBCollection {
      * @throws MongoException
      * @dochub insert
      */
-    public abstract WriteResult insert(DBObject[] arr , WriteConcern concern, DBEncoder encoder);
+    public WriteResult insert(DBObject[] arr , WriteConcern concern, DBEncoder encoder) {
+        return insert(Arrays.asList(arr), concern, encoder);
+    }
 
     /**
      * Inserts a document into the database.
@@ -83,7 +87,7 @@ public abstract class DBCollection {
      * @dochub insert
      */
     public WriteResult insert(DBObject o , WriteConcern concern ){
-        return insert( new DBObject[]{ o } , concern );
+        return insert( Arrays.asList(o) , concern );
     }
 
     /**
@@ -140,8 +144,21 @@ public abstract class DBCollection {
      * @dochub insert
      */
     public WriteResult insert(List<DBObject> list, WriteConcern concern ){
-        return insert( list.toArray( new DBObject[list.size()] ) , concern );
+        return insert(list, concern, getDBEncoder() );
     }
+
+    /**
+     * Saves document(s) to the database.
+     * if doc doesn't have an _id, one will be added
+     * you can get the _id that was added from doc after the insert
+     *
+     * @param list list of documents to save
+     * @param concern the write concern
+     * @return
+     * @throws MongoException
+     * @dochub insert
+     */
+    public abstract WriteResult insert(List<DBObject> list, WriteConcern concern, DBEncoder encoder);
 
     /**
      * Performs an update operation.
