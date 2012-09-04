@@ -16,6 +16,12 @@
 
 package com.mongodb.util;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 public class SimplePoolTest extends com.mongodb.util.TestCase {
 
     class MyPool extends SimplePool<Integer> {
@@ -41,7 +47,7 @@ public class SimplePoolTest extends com.mongodb.util.TestCase {
     }
 
     @org.testng.annotations.Test
-    public void testBasic1(){
+    public void testBasic1() throws InterruptedException {
 	MyPool p = new MyPool( 10 );
 	
 	int a = p.get();
@@ -56,7 +62,7 @@ public class SimplePoolTest extends com.mongodb.util.TestCase {
     }
 
     @org.testng.annotations.Test
-    public void testMax1(){
+    public void testMax1() throws InterruptedException {
 	MyPool p = new MyPool( 10 );
 	
 	int a = p.get();
@@ -70,7 +76,7 @@ public class SimplePoolTest extends com.mongodb.util.TestCase {
     }
     
     @org.testng.annotations.Test
-    public void testMax2(){
+    public void testMax2() throws InterruptedException {
 	MyPool p = new MyPool( 10 );
 	
 	int a = p.get();
@@ -83,7 +89,7 @@ public class SimplePoolTest extends com.mongodb.util.TestCase {
     }
 
     @org.testng.annotations.Test
-    public void testMax3(){
+    public void testMax3() throws InterruptedException {
 	MyPool p = new MyPool( 10  );
 	
 	int a = p.get();
@@ -96,7 +102,7 @@ public class SimplePoolTest extends com.mongodb.util.TestCase {
     }
 
     @org.testng.annotations.Test
-    public void testThrowErrorFromCreate(){
+    public void testThrowErrorFromCreate() throws InterruptedException {
         MyPool p = new MyPool( 1 );
         p._throwError = true;
 
@@ -115,7 +121,7 @@ public class SimplePoolTest extends com.mongodb.util.TestCase {
     }
 
     @org.testng.annotations.Test
-    public void testCouldCreate() {
+    public void testCouldCreate() throws InterruptedException {
         SimplePool<Integer> p = new SimplePool<Integer>("pool", 2) {
             @Override
             protected Integer createNew() {
@@ -145,7 +151,7 @@ public class SimplePoolTest extends com.mongodb.util.TestCase {
     }
 
     @org.testng.annotations.Test
-    public void testReturnNullFromCreate(){
+    public void testReturnNullFromCreate() throws InterruptedException {
         MyPool p = new MyPool( 1 );
         p._returnNull = true;
 
@@ -163,6 +169,41 @@ public class SimplePoolTest extends com.mongodb.util.TestCase {
         assertEquals( Integer.valueOf(0) , a );
     }
 
+    @org.testng.annotations.Test()
+    public void testThrowsInterruptedException() {
+        final MyPool p = new MyPool(1);
+        try {
+            p.get();
+        } catch (InterruptedException e) {
+            fail("Should not throw InterruptedException here");
+        }
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<Boolean> callable = new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+                try {
+                    p.get();
+                    return false;
+                } catch (InterruptedException e) {
+                    // return true if interrupted
+                    return true;
+                }
+            }
+        };
+        Future<Boolean> future = executor.submit(callable);
+
+        // Interrupt the thread
+        executor.shutdownNow();
+
+        try {
+            assertEquals(true, future.get());
+        } catch (InterruptedException e) {
+            fail("Should not happen, since this thread was not interrupted");
+        } catch (ExecutionException e) {
+            fail("Should not happen");
+        }
+    }
 
     public static void main( String args[] ){
 	SimplePoolTest t = new SimplePoolTest();

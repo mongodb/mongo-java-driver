@@ -134,7 +134,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
                    wait(ReplicaSetStatus.mongoOptionsDefaults.socketTimeout);
                }
                catch (InterruptedException e) {
-                   throw new MongoException("Interrupted while waiting for next update to replica set status", e);
+                   throw new MongoInterruptedException("Interrupted while waiting for next update to replica set status", e);
                }
            }
            return members;
@@ -156,7 +156,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
                wait(ReplicaSetStatus.mongoOptionsDefaults.socketTimeout);
            }
            catch (InterruptedException e) {
-              throw new MongoException("Interrupted while waiting for next update to replica set status", e);
+              throw new MongoInterruptedException("Interrupted while waiting for next update to replica set status", e);
            }
        }
 

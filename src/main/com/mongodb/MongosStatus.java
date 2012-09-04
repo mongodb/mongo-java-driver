@@ -122,7 +122,7 @@ class MongosStatus extends ConnectionStatus {
                     wait();
                 }
             } catch (InterruptedException e) {
-                throw new MongoException("Interrupted while waiting for next update to mongos status", e);
+                throw new MongoInterruptedException("Interrupted while waiting for next update to mongos status", e);
             }
         }
         return preferred;

@@ -183,7 +183,7 @@ class DynamicConnectionStatus extends ConnectionStatus {
             try {
                 wait(_mongoOptions.connectTimeout);
             } catch (InterruptedException e) {
-                throw new MongoException("Interrupted while waiting for next update to dynamic status", e);
+                throw new MongoInterruptedException("Interrupted while waiting for next update to dynamic status", e);
             }
         }
         return connectionStatus;

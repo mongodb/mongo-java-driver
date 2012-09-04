@@ -411,7 +411,7 @@ public class DBApiLayer extends DB {
                             try {
                                 Thread.sleep(500);
                             } catch (InterruptedException e) {
-                                // ignore
+                                throw new MongoInterruptedException(e);
                             }
                         }
                     }

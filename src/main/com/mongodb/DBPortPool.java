@@ -23,6 +23,7 @@ import com.mongodb.util.SimplePool;
 import com.mongodb.util.management.JMException;
 import com.mongodb.util.management.MBeanServerFactory;
 
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -193,8 +194,9 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
 
         try {
             port = get( _options.maxWaitTime );
-        }
-        finally {
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException(e);
+        } finally {
             _waitingSem.release();
         }
 
@@ -207,15 +209,14 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
 
     // return true if the exception is recoverable
     boolean gotError( Exception e ){
-        if ( e instanceof java.nio.channels.ClosedByInterruptException ||
-             e instanceof InterruptedException ){
+        if (e instanceof java.nio.channels.ClosedByInterruptException){
             // this is probably a request that is taking too long
             // so usually doesn't mean there is a real db problem
             return true;
         }
 
-        if ( e instanceof java.net.SocketTimeoutException ){
-            // we don't want to clear the port pool for a connection timing out
+        if ( e instanceof InterruptedIOException){
+            // we don't want to clear the port pool for a connection timing out or interrupted
             return true;
         }
         Bytes.LOGGER.log( Level.WARNING , "emptying DBPortPool to " + getServerAddress() + " b/c of error" , e );
@@ -224,10 +225,14 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
 
         List<DBPort> all = new ArrayList<DBPort>();
         while ( true ){
-            DBPort temp = get(0);
-            if ( temp == null )
-                break;
-            all.add( temp );
+            try {
+                DBPort temp = get(0);
+                if ( temp == null )
+                    break;
+                all.add( temp );
+            } catch (InterruptedException interruptedException) {
+                throw new MongoInterruptedException(interruptedException);
+            }
         }
 
         for ( DBPort p : all ){
