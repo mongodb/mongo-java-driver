@@ -49,6 +49,21 @@ public class DBCollectionTest extends TestCase {
     }
 
     @Test(groups = {"basic"})
+    public void testCappedCollection() {
+        String collectionName = "testCapped";
+        int collectionSize = 1000;
+        
+        DBCollection c = _db.getCollection(collectionName);
+        c.drop();
+        
+        DBObject options = new BasicDBObject("capped", true);
+        options.put("size", collectionSize);
+        c = _db.createCollection(collectionName, options);
+        
+        assertEquals(c.isCapped(), true);
+    }
+    
+    @Test(groups = {"basic"})
     public void testDuplicateKeyException() {
         DBCollection c = _db.getCollection("testDuplicateKey");
         c.drop();
