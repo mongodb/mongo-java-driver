@@ -64,7 +64,7 @@ limitations under the License.
     <dirname property="javabase" file="${java.home}"/>
 
     <property name="test.com.mongodb.slaveAcceptableLatencyMS" value="15"/>
-    
+
     <path id="build.path">
         <pathelement path="conf" />
         <pathelement path="build/main" />
@@ -80,6 +80,7 @@ limitations under the License.
     <target name="resolve" depends="init-ivy" description="retrieve dependencies with ivy">
         <ivy:retrieve/>
         <ivy:cachepath pathid="test.path" conf="test"/>
+        <ivy:cachepath pathid="cobertura.path" conf="cobertura"/>
         <ivy:cachepath pathid="tasks.path" conf="tasks"/>
     </target>
 
@@ -100,6 +101,7 @@ limitations under the License.
         <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpathref="tasks.path"/>
         <taskdef name="testng" classname="org.testng.TestNGAntTask" classpathref="tasks.path"/>
         <taskdef resource="clirrtask.properties" classpathref="tasks.path"/>
+        <taskdef resource="tasks.properties" classpathref="cobertura.path"/>
     </target>
 
     <!-- ******************************************************************* -->
@@ -134,7 +136,7 @@ limitations under the License.
                        input="${build.conf.lib.version}"
                        regexp="(\d+)\.(\d+)\.(\d+)"
                        select="\2" />
-        
+
         <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sMAJOR_VERSION\s=\s\d+;" replace=" MAJOR_VERSION = ${lib.major};" byline="false"/>
         <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sMINOR_VERSION\s=\s\d+;" replace=" MINOR_VERSION = ${lib.minor};" byline="false"/>
         <replaceregexp file="src/main/com/mongodb/Mongo.java" match='\sFULL_VERSION\s=\s"\S*";'
@@ -387,7 +389,7 @@ limitations under the License.
             <fileset dir="${testdir}"><include name="*/*.xml"/></fileset>
             <report format="noframes"  todir="${testdir}"/>
         </junitreport>
-    </target>            
+    </target>
 
     <target name="jenkins-test" depends="compile">
         <testng outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1">
@@ -399,6 +401,27 @@ limitations under the License.
             <xmlfileset dir="." includes="testng.xml"/>
         </testng>
     </target>
+
+    <target name="jenkins-test-coverage" depends="compile">
+
+        <cobertura-instrument todir="build/instrumented" datafile="${targetdir}/cobertura.ser">
+            <fileset dir="build/main">
+                <include name="**/*.class"/>
+            </fileset>
+        </cobertura-instrument>
+
+        <testng outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1">
+            <classpath location="build/instrumented"/>
+            <classpath refid="build.path"/>
+            <classpath refid="test.path"/>
+            <classpath refid="cobertura.path"/>
+            <sysproperty key="net.sourceforge.cobertura.datafile" file="${targetdir}/cobertura.ser" />
+            <jvmarg value="-Xmx512M"/>
+            <xmlfileset dir="." includes="testng.xml"/>
+        </testng>
+        <cobertura-report format="xml" srcdir="src/main" destdir="${testdir}" datafile="${targetdir}/cobertura.ser"/>
+    </target>
+
 
     <target name="check-binary-compatibility" depends="jar">
 
