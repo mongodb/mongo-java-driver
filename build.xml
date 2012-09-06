@@ -36,27 +36,28 @@ limitations under the License.
     <property name="testdir" location="${targetdir}/test"/>
     <dirname property="javabase" file="${java.home}"/>
 
-    <property name="clover.jar" location="${env.CLOVER_HOME}/lib/clover.jar"/>
-
     <property name="test.com.mongodb.slaveAcceptableLatencyMS" value="15"/>
 
-    <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/>
     <path id="classpath">
-        <fileset dir="lib"><include name="**/*.jar"/></fileset>
+        <fileset dir="lib"><include name="*.jar"/></fileset>
         <pathelement path="conf" />
         <pathelement path="build/main" />
         <pathelement path="build/test" />
         <pathelement path="${javabase}/lib/tools.jar" />
     </path>
 
-    <path id="classpath.clover">
-        <fileset dir="lib"><include name="**/*.jar"/></fileset>
-        <pathelement path="conf" />
-        <pathelement path="build/main" />
-        <pathelement path="build/test" />
-        <pathelement path="${javabase}/lib/tools.jar" />
-        <pathelement path="${clover.jar}" />
+    <!-- ******************************************************************* -->
+    <!-- Set the Cobertura attributes.                                       -->
+    <!-- ******************************************************************* -->
+
+    <path id="cobertura.classpath">
+        <fileset dir="lib/cobertura"><include name="**/*.jar"/></fileset>
     </path>
+
+    <property name="cobertura.instrumented" location="build/instrumented"/>
+    <property name="cobertura.datafile" location="${targetdir}/cobertura.ser"/>
+
+    <taskdef classpathref="cobertura.classpath" resource="tasks.properties" />
 
     <!-- ******************************************************************* -->
     <!-- The init target.                                                    -->
@@ -353,33 +354,33 @@ limitations under the License.
         </junitreport>
     </target>
 
-	  	
-	  	
-    <target name="-check.clover">
-      <available property="clover.installed" classname="com.cenqua.clover.CloverInstr" />
-    </target>
-            
-    <target name="with.clover" depends="guard.noclover">
-        <clover-setup/>
-    </target>
-            
-    <target name="guard.noclover" depends="-check.clover" unless="clover.installed">
-      <fail message="The target you are attempting to run requires Clover, which doesn't appear to be installed"/>
-    </target>
-
     <target name="jenkins-test" depends="compile">
 
-        <testng classpathref="classpath.clover" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1">
+        <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1">
             <jvmarg value="-Xmx512M" />
             <jvmarg value="-ea" />
             <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
             <xmlfileset dir="." includes="testng.xml"/>
         </testng>
-        <!--<clover-report>-->
-            <!--<current outfile="coverage.xml">-->
-                <!--<format type="xml"/>-->
-            <!--</current>-->
-        <!--</clover-report>-->
+    </target>
+
+    <target name="jenkins-test-coverage" depends="compile">
+
+        <cobertura-instrument todir="${cobertura.instrumented}" datafile="${cobertura.datafile}">
+            <fileset dir="build/main">
+                <include name="**/*.class"/>
+            </fileset>
+        </cobertura-instrument>
+
+        <testng outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1">
+            <classpath location="${cobertura.instrumented}"/>
+            <classpath refid="classpath"/>
+            <classpath refid="cobertura.classpath"/>
+            <sysproperty key="net.sourceforge.cobertura.datafile" file="${cobertura.datafile}" />
+            <jvmarg value="-Xmx512M"/>
+            <xmlfileset dir="." includes="testng.xml"/>
+        </testng>
+        <cobertura-report format="xml" srcdir="src/main" destdir="${testdir}" datafile="${cobertura.datafile}"/>
     </target>
 
 
