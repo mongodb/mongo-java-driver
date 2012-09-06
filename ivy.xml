@@ -1,0 +1,12 @@
+<ivy-module version="2.0">
+    <info organisation="org.mongodb" module="mongo-java-driver"/>
+    <configurations>
+        <conf name="test" description="test dependances"/>
+        <conf name="tasks" description="ant tasks"/>
+    </configurations>
+    <dependencies defaultconfmapping="*->default">
+        <dependency org="ant-contrib" name="ant-contrib" rev="1.0b3" conf="tasks"/>
+        <dependency org="org.testng" name="testng" rev="6.3.1" conf="tasks,test"/>
+        <dependency org="net.sf.clirr" name="clirr-core" rev="0.6" conf="tasks"/>
+    </dependencies>
+</ivy-module>

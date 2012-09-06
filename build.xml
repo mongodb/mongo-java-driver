@@ -16,59 +16,90 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-<project name="mongo-java-driver" default="compile" basedir=".">
+<project name="mongo-java-driver" default="compile" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
 
-    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
-        <classpath>
-            <pathelement location="lib/ant-contrib-1.0b3.jar"/>
-        </classpath>
-    </taskdef>
+    <!-- ******************************************************************* -->
+    <!-- Set the ivy attributes.                                            -->
+    <!-- ******************************************************************* -->
 
-    <property environment="env"/>
+    <property name="ivy.install.version" value="2.2.0" />
+    <property name="ivy.home" value="${user.home}/.ant" />
+    <property name="ivy.jar.dir" value="${ivy.home}/lib" />
+    <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
+    <available file="${ivy.jar.file}" property="ivy-exists" />
 
-    <property file="build.properties" prefix="build.conf"/>
+    <!-- ******************************************************************* -->
+    <!-- The download-ivy target.                                            -->
+    <!-- ******************************************************************* -->
+
+    <target name="download-ivy" unless="ivy-exists">
+        <mkdir dir="${ivy.jar.dir}"/>
+        <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+             dest="${ivy.jar.file}"
+             usetimestamp="true"/>
+    </target>
+
+    <!-- ******************************************************************* -->
+    <!-- The init-ivy target.                                                -->
+    <!-- ******************************************************************* -->
+
+    <target name="init-ivy" depends="download-ivy">
+        <path id="ivy.lib.path">
+            <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
+        </path>
+        <taskdef resource="org/apache/ivy/ant/antlib.xml"
+                 uri="antlib:org.apache.ivy.ant"
+                 classpathref="ivy.lib.path"/>
+    </target>
 
     <!-- ******************************************************************* -->
     <!-- Set the base attributes.                                            -->
     <!-- ******************************************************************* -->
 
+    <property environment="env"/>
+    <property file="build.properties" prefix="build.conf"/>
+
     <property name="targetdir" location="target"/>
     <property name="testdir" location="${targetdir}/test"/>
     <dirname property="javabase" file="${java.home}"/>
 
-    <property name="clover.jar" location="${env.CLOVER_HOME}/lib/clover.jar"/>
-
     <property name="test.com.mongodb.slaveAcceptableLatencyMS" value="15"/>
-
-    <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/>
-    <path id="classpath">
-        <fileset dir="lib"><include name="**/*.jar"/></fileset>
+    
+    <path id="build.path">
         <pathelement path="conf" />
         <pathelement path="build/main" />
         <pathelement path="build/test" />
         <pathelement path="${javabase}/lib/tools.jar" />
     </path>
 
-    <path id="classpath.clover">
-        <fileset dir="lib"><include name="**/*.jar"/></fileset>
-        <pathelement path="conf" />
-        <pathelement path="build/main" />
-        <pathelement path="build/test" />
-        <pathelement path="${javabase}/lib/tools.jar" />
-        <pathelement path="${clover.jar}" />
-    </path>
+
+    <!-- ******************************************************************* -->
+    <!-- The resolve target.                                                 -->
+    <!-- ******************************************************************* -->
+
+    <target name="resolve" depends="init-ivy" description="retrieve dependencies with ivy">
+        <ivy:retrieve/>
+        <ivy:cachepath pathid="test.path" conf="test"/>
+        <ivy:cachepath pathid="tasks.path" conf="tasks"/>
+    </target>
 
     <!-- ******************************************************************* -->
     <!-- The init target.                                                    -->
     <!-- ******************************************************************* -->
 
-    <target name="init">
+    <target name="init" depends="resolve">
+        <!-- Create dirs-->
         <mkdir dir="build" />
         <mkdir dir="build/main" />
         <mkdir dir="build/test" />
         <mkdir dir="build/util" />
         <mkdir dir="logs" />
         <mkdir dir="${testdir}" />
+
+        <!-- Define tasks-->
+        <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpathref="tasks.path"/>
+        <taskdef name="testng" classname="org.testng.TestNGAntTask" classpathref="tasks.path"/>
+        <taskdef resource="clirrtask.properties" classpathref="tasks.path"/>
     </target>
 
     <!-- ******************************************************************* -->
@@ -122,7 +153,7 @@ limitations under the License.
             debug="on"
             includeantruntime="false">
             <compilerarg value="-Xlint:all,-rawtypes"/>
-            <classpath refid="classpath"/>
+            <classpath refid="build.path"/>
         </javac>
 
         <javac
@@ -135,7 +166,8 @@ limitations under the License.
             fork="true"
             debug="on"
             includeantruntime="false">
-            <classpath refid="classpath"/>
+            <classpath refid="build.path"/>
+            <classpath refid="test.path"/>
             <compilerarg value="-Xlint:all,-rawtypes"/>
         </javac>
 
@@ -159,7 +191,7 @@ limitations under the License.
             fork="true"
             debug="on"
             includeantruntime="false">
-            <classpath refid="classpath"/>
+            <classpath refid="build.path"/>
             <compilerarg value="-Xlint:all,-fallthrough"/>
         </javac>
     </target>
@@ -209,7 +241,7 @@ limitations under the License.
             use="true"
             access="protected">
             <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
-            <classpath refid="classpath"/>
+            <classpath refid="build.path"/>
             <taglet name="DochubTaglet" path="build/util"/>
             <taglet name="ManualTaglet" path="build/util"/>
         </javadoc>
@@ -225,7 +257,7 @@ limitations under the License.
             use="true"
             access="protected">
             <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
-            <classpath refid="classpath"/>
+            <classpath refid="build.path"/>
             <taglet name="DochubTaglet" path="build/util"/>
             <taglet name="ManualTaglet" path="build/util"/>
         </javadoc>
@@ -262,10 +294,10 @@ limitations under the License.
     <!-- The test targets                                                    -->
     <!-- ******************************************************************* -->
 
-    <taskdef name="testng" classpathref="classpath" classname="org.testng.TestNGAntTask"/>
-
     <target name="test" depends="compile">
-        <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="true" >
+        <testng outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="true" >
+            <classpath refid="build.path"/>
+            <classpath refid="test.path"/>
             <jvmarg value="-Xmx512M" />
             <jvmarg value="-ea" />
             <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
@@ -288,7 +320,9 @@ limitations under the License.
             <filterset><filter token="CLASS" value="${class.name}"/></filterset>
         </copy>
 
-        <testng classpathref="classpath" outputdir="${testdir}" haltonfailure="true" verbose="1" listeners="com.mongodb.util.TestNGListener" >
+        <testng outputdir="${testdir}" haltonfailure="true" verbose="1" listeners="com.mongodb.util.TestNGListener" >
+            <classpath refid="build.path"/>
+            <classpath refid="test.path"/>
             <jvmarg value="-Xmx512M" />
             <jvmarg value="-ea" />
             <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
@@ -311,12 +345,12 @@ limitations under the License.
             encoding="ISO-8859-1"
             debug="on"
             includeantruntime="false">
-            <classpath refid="classpath"/>
+            <classpath refid="build.path"/>
         </javac>
 
-        <java classname="QuickTour"><classpath refid="classpath"/></java>
+        <java classname="QuickTour"><classpath refid="build.path"/></java>
 
-        <java classname="QuickTourAdmin"><classpath refid="classpath"/></java>
+        <java classname="QuickTourAdmin"><classpath refid="build.path"/></java>
 
     </target>
 
@@ -331,10 +365,10 @@ limitations under the License.
             encoding="ISO-8859-1"
             debug="on"
             includeantruntime="false">
-            <classpath refid="classpath"/>
+            <classpath refid="build.path"/>
         </javac>
 
-        <java classname="examples.ReadOplog" fork="true"><classpath refid="classpath"/></java>
+        <java classname="examples.ReadOplog" fork="true"><classpath refid="build.path"/></java>
 
     </target>
 
@@ -343,7 +377,9 @@ limitations under the License.
     <!-- ******************************************************************* -->
 
     <target name="junit-reports" depends="compile">
-        <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" >
+        <testng outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" >
+            <classpath refid="build.path"/>
+            <classpath refid="test.path"/>
             <jvmarg value="-Xmx512M" />
             <xmlfileset dir="." includes="testng.xml"/>
         </testng>
@@ -351,40 +387,20 @@ limitations under the License.
             <fileset dir="${testdir}"><include name="*/*.xml"/></fileset>
             <report format="noframes"  todir="${testdir}"/>
         </junitreport>
-    </target>
-
-	  	
-	  	
-    <target name="-check.clover">
-      <available property="clover.installed" classname="com.cenqua.clover.CloverInstr" />
-    </target>
-            
-    <target name="with.clover" depends="guard.noclover">
-        <clover-setup/>
-    </target>
-            
-    <target name="guard.noclover" depends="-check.clover" unless="clover.installed">
-      <fail message="The target you are attempting to run requires Clover, which doesn't appear to be installed"/>
-    </target>
+    </target>            
 
     <target name="jenkins-test" depends="compile">
-
-        <testng classpathref="classpath.clover" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1">
+        <testng outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1">
+            <classpath refid="build.path"/>
+            <classpath refid="test.path"/>
             <jvmarg value="-Xmx512M" />
             <jvmarg value="-ea" />
             <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
             <xmlfileset dir="." includes="testng.xml"/>
         </testng>
-        <!--<clover-report>-->
-            <!--<current outfile="coverage.xml">-->
-                <!--<format type="xml"/>-->
-            <!--</current>-->
-        <!--</clover-report>-->
     </target>
 
-
     <target name="check-binary-compatibility" depends="jar">
-        <taskdef classpathref="classpath" resource="clirrtask.properties"/>
 
         <property name="jar.baseline" value="mongo-${build.conf.compatibility.baseline.version}.jar"/>
 
