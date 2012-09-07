@@ -1352,7 +1352,7 @@ public abstract class DBCollection {
     public boolean isCapped() {
         CommandResult stats = getStats();
         Object capped = stats.get("capped");
-        return(capped != null && (Integer)capped == 1);
+        return(capped != null && ( capped.equals(1) || capped.equals(true) ) );
     }
 
     // ------
