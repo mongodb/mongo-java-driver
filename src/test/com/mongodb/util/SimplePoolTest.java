@@ -17,6 +17,7 @@
 package com.mongodb.util;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -170,8 +171,8 @@ public class SimplePoolTest extends com.mongodb.util.TestCase {
     }
 
     @org.testng.annotations.Test()
-    public void testThrowsInterruptedException() {
-        final MyPool p = new MyPool(1);
+    public void testThrowsInterruptedException() throws InterruptedException {
+            final MyPool p = new MyPool(1);
         try {
             p.get();
         } catch (InterruptedException e) {
@@ -179,10 +180,13 @@ public class SimplePoolTest extends com.mongodb.util.TestCase {
         }
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
+        final CountDownLatch ready = new CountDownLatch(1);
+
         Callable<Boolean> callable = new Callable<Boolean>() {
             @Override
             public Boolean call() {
                 try {
+                    ready.countDown();
                     p.get();
                     return false;
                 } catch (InterruptedException e) {
@@ -193,6 +197,7 @@ public class SimplePoolTest extends com.mongodb.util.TestCase {
         };
         Future<Boolean> future = executor.submit(callable);
 
+        ready.await();
         // Interrupt the thread
         executor.shutdownNow();
 
