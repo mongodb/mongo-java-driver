@@ -18,58 +18,76 @@ limitations under the License.
 
 <project name="mongo-java-driver" default="compile" basedir=".">
 
-    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
-        <classpath>
-            <pathelement location="lib/ant-contrib-1.0b3.jar"/>
-        </classpath>
-    </taskdef>
+    <!-- ******************************************************************* -->
+    <!-- Properties                                                          -->
+    <!-- ******************************************************************* -->
 
     <property environment="env"/>
-
-    <property file="build.properties" prefix="build.conf"/>
-
-    <!-- ******************************************************************* -->
-    <!-- Set the base attributes.                                            -->
-    <!-- ******************************************************************* -->
-
-    <property name="targetdir" location="target"/>
-    <property name="testdir" location="${targetdir}/test"/>
-    <dirname property="javabase" file="${java.home}"/>
-
+    <property prefix="build.conf" file="build.properties"/>
+    <property name="build.dir" location="${basedir}/build"/>
+    <property name="build.main.dir" location="${build.dir}/main"/>
+    <property name="build.test.dir" location="${build.dir}/test"/>
+    <property name="build.util.dir" location="${build.dir}/util"/>
+    <property name="build.instrumented.dir" location="${build.dir}/instrumented"/>
+    <property name="build.logs.dir" location="${basedir}/logs"/>
+    <property name="build.docs.dir" location="${basedir}/docs"/>
+    <property name="target.dir" location="${basedir}/target"/>
+    <property name="test.dir" location="${target.dir}/test"/>
+    <property name="test.classes" value="*"/>
+    <property name="cobertura.datafile" location="${target.dir}/cobertura.ser"/>
+    <property name="cobertura.format" value="xml"/>
     <property name="test.com.mongodb.slaveAcceptableLatencyMS" value="15"/>
 
-    <path id="classpath">
-        <fileset dir="lib"><include name="*.jar"/></fileset>
-        <pathelement path="conf" />
-        <pathelement path="build/main" />
-        <pathelement path="build/test" />
-        <pathelement path="${javabase}/lib/tools.jar" />
+    <!-- ******************************************************************* -->
+    <!-- Path definition                                                     -->
+    <!-- ******************************************************************* -->
+
+    <path id="test.classpath">
+        <pathelement location="lib/testng-6.3.1.jar"/>
+        <path refid="build.classpath"/>
     </path>
-
-    <!-- ******************************************************************* -->
-    <!-- Set the Cobertura attributes.                                       -->
-    <!-- ******************************************************************* -->
-
     <path id="cobertura.classpath">
         <fileset dir="lib/cobertura"><include name="**/*.jar"/></fileset>
     </path>
+    <path id="task.classpath">
+        <pathelement location="lib/ant-contrib-1.0b3.jar"/>
+        <pathelement location="lib/clirr-core-0.6-uber.jar"/>
+        <path refid="test.classpath"/>
+        <path refid="cobertura.classpath"/>
+    </path>
+    <path id="build.classpath">
+        <pathelement path="${build.main.dir}" />
+        <pathelement path="${build.test.dir}" />
+    </path>
 
-    <property name="cobertura.instrumented" location="build/instrumented"/>
-    <property name="cobertura.datafile" location="${targetdir}/cobertura.ser"/>
+    <!-- ******************************************************************* -->
+    <!-- Tasks definition                                                    -->
+    <!-- ******************************************************************* -->
 
-    <taskdef classpathref="cobertura.classpath" resource="tasks.properties" />
+    <taskdef classpathref="task.classpath" resource="net/sf/antcontrib/antcontrib.properties"/>
+    <taskdef classpathref="task.classpath" resource="tasks.properties" />
+    <taskdef classpathref="task.classpath" resource="clirrtask.properties"/>
+    <taskdef classpathref="task.classpath" name="testng"  classname="org.testng.TestNGAntTask"/>
+
+    <!-- ******************************************************************* -->
+    <!-- Vars                                                                -->
+    <!-- ******************************************************************* -->
+
+    <var name="cobertura.arg" value="none"/>
+    <var name="test.classpath" value="test.classpath"/>
 
     <!-- ******************************************************************* -->
     <!-- The init target.                                                    -->
     <!-- ******************************************************************* -->
 
     <target name="init">
-        <mkdir dir="build" />
-        <mkdir dir="build/main" />
-        <mkdir dir="build/test" />
-        <mkdir dir="build/util" />
-        <mkdir dir="logs" />
-        <mkdir dir="${testdir}" />
+        <mkdir dir="${build.dir}" />
+        <mkdir dir="${build.main.dir}" />
+        <mkdir dir="${build.test.dir}" />
+        <mkdir dir="${build.util.dir}" />
+        <mkdir dir="${build.logs.dir}" />
+        <mkdir dir="${build.docs.dir}" />
+        <mkdir dir="${test.dir}" />
     </target>
 
     <!-- ******************************************************************* -->
@@ -77,10 +95,10 @@ limitations under the License.
     <!-- ******************************************************************* -->
 
     <target name="clean">
-        <delete dir="build"/>
-        <delete dir="target"/>
-        <delete dir="docs"/>
-        <delete dir="logs"/>
+        <delete dir="${build.dir}"/>
+        <delete dir="${target.dir}"/>
+        <delete dir="${build.logs.dir}"/>
+        <delete dir="${build.docs.dir}"/>
         <delete file="mongo.jar"/>
         <delete file="mongo-javadoc.jar"/>
         <delete file="mongo-sources.jar"/>
@@ -104,7 +122,7 @@ limitations under the License.
                        input="${build.conf.lib.version}"
                        regexp="(\d+)\.(\d+)\.(\d+)"
                        select="\2" />
-        
+
         <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sMAJOR_VERSION\s=\s\d+;" replace=" MAJOR_VERSION = ${lib.major};" byline="false"/>
         <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sMINOR_VERSION\s=\s\d+;" replace=" MINOR_VERSION = ${lib.minor};" byline="false"/>
         <replaceregexp file="src/main/com/mongodb/Mongo.java" match='\sFULL_VERSION\s=\s"\S*";'
@@ -112,23 +130,23 @@ limitations under the License.
 
         <javac
             srcdir="src/main"
-            destdir="build/main"
+            destdir="${build.main.dir}"
             optimize="off"
             deprecation="off"
             source="${build.conf.javac.source}"
-            target="${build.conf.javac.source}"
             encoding="ISO-8859-1"
-            memoryMaximumSize="256M"
             fork="true"
             debug="on"
-            includeantruntime="false">
+            includeantruntime="false"
+            target="${build.conf.javac.source}"
+            memoryMaximumSize="256M"
+            >
             <compilerarg value="-Xlint:all,-rawtypes"/>
-            <classpath refid="classpath"/>
         </javac>
 
         <javac
             srcdir="src/test"
-            destdir="build/test"
+            destdir="${build.test.dir}"
             optimize="off"
             deprecation="off"
             source="${build.conf.javac.source}"
@@ -136,7 +154,7 @@ limitations under the License.
             fork="true"
             debug="on"
             includeantruntime="false">
-            <classpath refid="classpath"/>
+            <classpath refid="test.classpath"/>
             <compilerarg value="-Xlint:all,-rawtypes"/>
         </javac>
 
@@ -150,7 +168,7 @@ limitations under the License.
 
         <javac
             srcdir="src/util"
-            destdir="build/util"
+            destdir="${build.util.dir}"
             optimize="off"
             deprecation="off"
             source="${build.conf.javac.source}"
@@ -160,7 +178,7 @@ limitations under the License.
             fork="true"
             debug="on"
             includeantruntime="false">
-            <classpath refid="classpath"/>
+            <classpath refid="build.classpath"/>
             <compilerarg value="-Xlint:all,-fallthrough"/>
         </javac>
     </target>
@@ -171,24 +189,24 @@ limitations under the License.
 
     <target name="jar" depends="compile" description="Create driver jar">
 
-        <copy file="src/main/META-INF/MANIFEST.MF" tofile="build/MANIFEST.MF" filtering="true">
+        <copy file="src/main/META-INF/MANIFEST.MF" tofile="${build.dir}/MANIFEST.MF" filtering="true">
             <filterset><filter token="VERSION" value="${build.conf.lib.version.osgi.compat}"/></filterset>
         </copy>
 
-        <copy file="src/main/META-INF/MANIFEST_BSON.MF" tofile="build/MANIFEST_BSON.MF" filtering="true">
+        <copy file="src/main/META-INF/MANIFEST_BSON.MF" tofile="${build.dir}/MANIFEST_BSON.MF" filtering="true">
             <filterset><filter token="VERSION" value="${build.conf.lib.version.osgi.compat}"/></filterset>
         </copy>
 
-        <exec executable="git" output="build/main/git-hash">
+        <exec executable="git" output="${build.main.dir}/git-hash">
             <arg value="log" />
             <arg value="--pretty=format:%H" />
             <arg value="-1" />
         </exec>
 
-        <jar jarfile="mongo.jar" manifest="build/MANIFEST.MF"><fileset dir="build/main" /></jar>
+        <jar jarfile="mongo.jar" manifest="${build.dir}/MANIFEST.MF"><fileset dir="${build.main.dir}" /></jar>
 
-        <jar jarfile="bson.jar" manifest="build/MANIFEST_BSON.MF">
-          <fileset dir="build/main"><not><filename name="com/"/></not></fileset>
+        <jar jarfile="bson.jar" manifest="${build.dir}/MANIFEST_BSON.MF">
+          <fileset dir="${build.main.dir}"><not><filename name="com/"/></not></fileset>
         </jar>
 
     </target>
@@ -198,37 +216,37 @@ limitations under the License.
     <!-- ******************************************************************* -->
 
     <target name="javadocs" depends="compile,utilcompile" description="Generate API docs">
-        <delete dir="docs/"/>
+        <delete dir="${build.docs.dir}"/>
         <javadoc
             packagenames="com.mongodb,com.mongodb.gridfs,com.mongodb.util,com.mongodb.tools,org.bson,org.bson.types,org.bson.io,org.bson.util"
             sourcepath="src/main/"
             defaultexcludes="yes"
-            destdir="docs/mongo-java-driver"
+            destdir="${build.docs.dir}/mongo-java-driver"
             author="true"
             version="true"
             source="${build.conf.javac.source}"
             use="true"
             access="protected">
             <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
-            <classpath refid="classpath"/>
-            <taglet name="DochubTaglet" path="build/util"/>
-            <taglet name="ManualTaglet" path="build/util"/>
+            <classpath refid="build.classpath"/>
+            <taglet name="DochubTaglet" path="${build.util.dir}"/>
+            <taglet name="ManualTaglet" path="${build.util.dir}"/>
         </javadoc>
 
         <javadoc
             packagenames="org.bson,org.bson.types,org.bson.io,org.bson.util"
             sourcepath="src/main/"
             defaultexcludes="yes"
-            destdir="docs/bson"
+            destdir="${build.docs.dir}/bson"
             author="true"
             version="true"
             source="${build.conf.javac.source}"
             use="true"
             access="protected">
             <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
-            <classpath refid="classpath"/>
-            <taglet name="DochubTaglet" path="build/util"/>
-            <taglet name="ManualTaglet" path="build/util"/>
+            <classpath refid="build.classpath"/>
+            <taglet name="DochubTaglet" path="${build.util.dir}"/>
+            <taglet name="ManualTaglet" path="${build.util.dir}"/>
         </javadoc>
 
     </target>
@@ -240,7 +258,7 @@ limitations under the License.
     <target name="alljars" depends="jar, javadocs" description="build jar, source jar, javadoc jar">
 
         <jar jarfile="mongo-sources.jar"><fileset dir="src/main"><not><filename name="META-INF/"/></not></fileset></jar>
-        <jar jarfile="mongo-javadoc.jar"><fileset dir="docs/mongo-java-driver"/></jar>
+        <jar jarfile="mongo-javadoc.jar"><fileset dir="${build.docs.dir}/mongo-java-driver"/></jar>
 
         <jar jarfile="bson-sources.jar">
             <fileset dir="src/main">
@@ -249,7 +267,7 @@ limitations under the License.
             </fileset>
         </jar>
 
-        <jar jarfile="bson-javadoc.jar"><fileset dir="docs/bson"/></jar>
+        <jar jarfile="bson-javadoc.jar"><fileset dir="${build.docs.dir}/bson"/></jar>
 
     </target>
 
@@ -263,38 +281,38 @@ limitations under the License.
     <!-- The test targets                                                    -->
     <!-- ******************************************************************* -->
 
-    <taskdef name="testng" classpathref="classpath" classname="org.testng.TestNGAntTask"/>
-
     <target name="test" depends="compile">
-        <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="true" >
+
+        <testng classpathref="${test.classpath}" outputdir="${test.dir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="2" >
             <jvmarg value="-Xmx512M" />
             <jvmarg value="-ea" />
             <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
-
-            <xmlfileset dir="." includes="testng.xml"/>
+            <sysproperty key="${cobertura.arg}" value="${cobertura.datafile}" />
+            <classfileset  dir="${build.test.dir}" includes="**/${test.classes}.class" />
         </testng>
     </target>
 
+    <!-- ******************************************************************* -->
+    <!-- The coverage targets                                                -->
+    <!-- ******************************************************************* -->
 
-    <target name="test-single" depends="compile">
-        <condition property="propsSpecified">
-            <and>
-                <isset property="class.name" />
-            </and>
-        </condition>
+    <target name="coverage-instrument" depends="compile">
+        <cobertura-instrument todir="${build.instrumented.dir}" datafile="${cobertura.datafile}">
+            <fileset dir="${build.main.dir}">
+                <include name="**/*.class"/>
+            </fileset>
+        </cobertura-instrument>
+        <path id="coverage.classpath">
+            <pathelement path="${build.instrumented.dir}" />
+            <path refid="test.classpath" />
+            <path refid="cobertura.classpath" />
+        </path>
+        <var name="cobertura.arg" value="net.sourceforge.cobertura.datafile"/>
+        <var name="test.classpath" value="coverage.classpath"/>
+    </target>
 
-        <fail unless="propsSpecified" message="class.name property not specified."/>
-
-        <copy todir="build/test" file="testng-single.xml" overwrite="true">
-            <filterset><filter token="CLASS" value="${class.name}"/></filterset>
-        </copy>
-
-        <testng classpathref="classpath" outputdir="${testdir}" haltonfailure="true" verbose="1" listeners="com.mongodb.util.TestNGListener" >
-            <jvmarg value="-Xmx512M" />
-            <jvmarg value="-ea" />
-            <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
-            <xmlfileset dir="build/test" includes="testng-single.xml"/>
-        </testng>
+    <target name="coverage-report" depends="coverage-instrument,test">
+        <cobertura-report format="${cobertura.format}" srcdir="src/main" destdir="${test.dir}" datafile="${cobertura.datafile}"/>
     </target>
 
     <!-- ******************************************************************* -->
@@ -305,19 +323,18 @@ limitations under the License.
 
         <javac
             srcdir="examples"
-            destdir="build/test"
+            destdir="${build.test.dir}"
             optimize="off"
             deprecation="off"
             source="${build.conf.javac.source}"
             encoding="ISO-8859-1"
             debug="on"
             includeantruntime="false">
-            <classpath refid="classpath"/>
+            <classpath refid="build.classpath"/>
         </javac>
 
-        <java classname="QuickTour"><classpath refid="classpath"/></java>
-
-        <java classname="QuickTourAdmin"><classpath refid="classpath"/></java>
+        <java classname="QuickTour"><classpath refid="build.classpath"/></java>
+        <java classname="QuickTourAdmin"><classpath refid="build.classpath"/></java>
 
     </target>
 
@@ -325,67 +342,21 @@ limitations under the License.
 
         <javac
             srcdir="examples"
-            destdir="build/test"
+            destdir="${build.test.dir}"
             optimize="off"
             deprecation="off"
             source="${build.conf.javac.source}"
             encoding="ISO-8859-1"
             debug="on"
             includeantruntime="false">
-            <classpath refid="classpath"/>
+            <classpath refid="build.classpath"/>
         </javac>
 
-        <java classname="examples.ReadOplog" fork="true"><classpath refid="classpath"/></java>
+        <java classname="examples.ReadOplog" fork="true"><classpath refid="build.classpath"/></java>
 
     </target>
-
-    <!-- ******************************************************************* -->
-    <!-- The reporting targets                                               -->
-    <!-- ******************************************************************* -->
-
-    <target name="junit-reports" depends="compile">
-        <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" >
-            <jvmarg value="-Xmx512M" />
-            <xmlfileset dir="." includes="testng.xml"/>
-        </testng>
-        <junitreport todir="${testdir}">
-            <fileset dir="${testdir}"><include name="*/*.xml"/></fileset>
-            <report format="noframes"  todir="${testdir}"/>
-        </junitreport>
-    </target>
-
-    <target name="jenkins-test" depends="compile">
-
-        <testng classpathref="classpath" outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1">
-            <jvmarg value="-Xmx512M" />
-            <jvmarg value="-ea" />
-            <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
-            <xmlfileset dir="." includes="testng.xml"/>
-        </testng>
-    </target>
-
-    <target name="jenkins-test-coverage" depends="compile">
-
-        <cobertura-instrument todir="${cobertura.instrumented}" datafile="${cobertura.datafile}">
-            <fileset dir="build/main">
-                <include name="**/*.class"/>
-            </fileset>
-        </cobertura-instrument>
-
-        <testng outputdir="${testdir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1">
-            <classpath location="${cobertura.instrumented}"/>
-            <classpath refid="classpath"/>
-            <classpath refid="cobertura.classpath"/>
-            <sysproperty key="net.sourceforge.cobertura.datafile" file="${cobertura.datafile}" />
-            <jvmarg value="-Xmx512M"/>
-            <xmlfileset dir="." includes="testng.xml"/>
-        </testng>
-        <cobertura-report format="xml" srcdir="src/main" destdir="${testdir}" datafile="${cobertura.datafile}"/>
-    </target>
-
 
     <target name="check-binary-compatibility" depends="jar">
-        <taskdef classpathref="classpath" resource="clirrtask.properties"/>
 
         <property name="jar.baseline" value="mongo-${build.conf.compatibility.baseline.version}.jar"/>
 
@@ -395,7 +366,7 @@ limitations under the License.
         <clirr failOnBinError="no" failOnSrcError="no">
             <origfiles dir="." includes="${jar.baseline}"/>
             <newfiles dir="." includes="mongo.jar"/>
-            <formatter type="plain" outfile="build/clirr.txt"/>
+            <formatter type="plain" outfile="${build.dir}/clirr.txt"/>
         </clirr>
     </target>
 
