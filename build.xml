@@ -179,6 +179,7 @@ limitations under the License.
             debug="on"
             includeantruntime="false">
             <classpath refid="build.classpath"/>
+            <classpath location="${env.JAVA_HOME}/lib/tools.jar"/>
             <compilerarg value="-Xlint:all,-fallthrough"/>
         </javac>
     </target>
@@ -283,7 +284,7 @@ limitations under the License.
 
     <target name="test" depends="compile">
 
-        <testng classpathref="${test.classpath}" outputdir="${test.dir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="2" >
+        <testng classpathref="${test.classpath}" outputdir="${test.dir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1" >
             <jvmarg value="-Xmx512M" />
             <jvmarg value="-ea" />
             <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
