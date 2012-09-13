@@ -21,6 +21,7 @@ package com.mongodb;
 import com.mongodb.DBApiLayer.Result;
 import com.mongodb.util.Util;
 import org.bson.BSONObject;
+import org.mongodb.impl.DBAdapter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -37,8 +38,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * an abstract class that represents a logical database on a server
  * @dochub databases
  */
-public abstract class DB {
-    
+public class DB implements org.mongodb.DB {
+
+    private DBAdapter adapter;
+
     private static final Set<String> _obedientCommands = new HashSet<String>();
     
     static {
@@ -58,6 +61,8 @@ public abstract class DB {
      * @param name the database name
      */
     public DB( Mongo mongo , String name ){
+        adapter = mongo.getAdapter().getDB(name);
+
         _mongo = mongo;
     	_name = name;
         _options = new Bytes.OptionHolder( _mongo._netOptions );
@@ -103,24 +108,32 @@ public abstract class DB {
      * Following this call and until requestDone() is called, all db operations should use the same underlying connection.
      * This is useful to ensure that operations happen in a certain order with predictable results.
      */
-    public abstract void requestStart();
+    public void requestStart() {
+        adapter.requestStart();
+    }
 
     /**
      * ends the current "consistent request"
      */
-    public abstract void requestDone();
+    public void requestDone() {
+        adapter.requestDone();
+    }
 
     /**
      * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)
      */
-    public abstract void requestEnsureConnection();
+    public void requestEnsureConnection() {
+        adapter.requestEnsureConnection();
+    }
 
     /**
      * Returns the collection represented by the string &lt;dbName&gt;.&lt;collectionName&gt;.
      * @param name the name of the collection
      * @return the collection
      */
-    protected abstract DBCollection doGetCollection( String name );
+    protected DBCollection doGetCollection( String name ) {
+        return new DBCollection(this, name);
+    }
 
     /**
      * Gets a collection with a given name.
@@ -129,8 +142,11 @@ public abstract class DB {
      * @return the collection
      */
     public DBCollection getCollection( String name ){
+        return doGetCollection(name);
+        /*
         DBCollection c = doGetCollection( name );
         return c;
+        */
     }
 
     /**
@@ -755,7 +771,9 @@ public abstract class DB {
         return _options.get();
     }
 
-    public abstract void cleanCursors( boolean force );
+    public void cleanCursors( boolean force ) {
+        adapter.cleanCursors(force);
+    }
 
     AuthenticationCredentials getAuthenticationCredentials() {
         return authenticationCredentialsReference.get();
@@ -771,6 +789,10 @@ public abstract class DB {
 
     private AtomicReference<AuthenticationCredentials> authenticationCredentialsReference =
             new AtomicReference<AuthenticationCredentials>();
+
+    DBAdapter getAdapter() {
+       return adapter;
+    }
 
     /**
      * Encapsulate everything relating to authorization of a user on a database

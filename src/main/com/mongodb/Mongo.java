@@ -19,6 +19,8 @@
 package com.mongodb;
 
 import org.bson.io.PoolOutputBuffer;
+import org.mongodb.MongoServer;
+import org.mongodb.impl.MongoServerAdapter;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -67,7 +69,7 @@ import java.util.concurrent.ConcurrentMap;
  * @see com.mongodb.ReadPreference
  * @see com.mongodb.WriteConcern
  */
-public class Mongo {
+public class Mongo implements MongoServer {
 
     // Make sure you don't change the format of these two static variables. A preprocessing regexp
     // is applied and updates the version based on configuration in build.properties.
@@ -180,6 +182,9 @@ public class Mongo {
      * @throws MongoException
      */
     public Mongo( ServerAddress addr , MongoOptions options ) {
+
+        adapter = new MongoServerAdapter();
+
         _addr = addr;
         _addrs = null;
         _options = options;
@@ -338,7 +343,9 @@ public class Mongo {
      * @return
      */
     public DB getDB( String dbname ){
+        return new DB(this, dbname);
 
+        /*
         DB db = _dbs.get( dbname );
         if ( db != null )
             return db;
@@ -348,6 +355,7 @@ public class Mongo {
         if ( temp != null )
             return temp;
         return db;
+        */
     }
 
     /**
@@ -625,6 +633,12 @@ public class Mongo {
         }
 
     };
+
+    private MongoServerAdapter adapter;
+
+    MongoServerAdapter getAdapter() {
+        return adapter;
+    }
 
     /**
      * Forces the master server to fsync the RAM data to disk

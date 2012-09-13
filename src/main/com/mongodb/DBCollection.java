@@ -19,7 +19,9 @@
 package com.mongodb;
 
 // Mongo
+
 import org.bson.types.ObjectId;
+import org.mongodb.impl.DBCollectionAdapter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +42,9 @@ import java.util.Set;
  * @dochub collections
  */
 @SuppressWarnings("unchecked")
-public abstract class DBCollection {
+public class DBCollection {
+
+    DBCollectionAdapter adapter;
 
     /**
      * Saves document(s) to the database.
@@ -69,7 +73,9 @@ public abstract class DBCollection {
      * @throws MongoException
      * @dochub insert
      */
-    public abstract WriteResult insert(DBObject[] arr , WriteConcern concern, DBEncoder encoder);
+    public WriteResult insert(DBObject[] arr , WriteConcern concern, DBEncoder encoder) {
+        return adapter.insert(arr, concern, encoder);
+    }
 
     /**
      * Inserts a document into the database.
@@ -174,7 +180,9 @@ public abstract class DBCollection {
      * @throws MongoException
      * @dochub update
      */
-    public abstract WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi , WriteConcern concern, DBEncoder encoder );
+    public WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi , WriteConcern concern, DBEncoder encoder ) {
+        return adapter.update(q, o, upsert, multi, concern, encoder);
+    }
 
     /**
      * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean, com.mongodb.WriteConcern)} with default WriteConcern.
@@ -216,10 +224,13 @@ public abstract class DBCollection {
     }
 
     /**
+     * TODO: remove or deprecate
      * Adds any necessary fields to a given object before saving it to the collection.
      * @param o object to which to add the fields
      */
-    protected abstract void doapply( DBObject o );
+    protected void doapply( DBObject o ) {
+
+    }
 
     /**
      * Removes objects from the database collection.
@@ -242,7 +253,9 @@ public abstract class DBCollection {
      * @throws MongoException
      * @dochub remove
      */
-    public abstract WriteResult remove( DBObject o , WriteConcern concern, DBEncoder encoder );
+    public WriteResult remove( DBObject o , WriteConcern concern, DBEncoder encoder ) {
+        return adapter.remove(o, concern, encoder);
+    }
 
     /**
      * calls {@link DBCollection#remove(com.mongodb.DBObject, com.mongodb.WriteConcern)} with the default WriteConcern
@@ -259,10 +272,14 @@ public abstract class DBCollection {
     /**
      * Finds objects
      */
-    abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options, ReadPreference readPref, DBDecoder decoder );
+    Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options, ReadPreference readPref, DBDecoder decoder ) {
+        return __find(ref, fields, numToSkip, batchSize, limit, options, readPref, decoder, DefaultDBEncoder.FACTORY.create());
+    }
 
-    abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options,
-                                        ReadPreference readPref, DBDecoder decoder, DBEncoder encoder );
+    Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options,
+                                        ReadPreference readPref, DBDecoder decoder, DBEncoder encoder ) {
+        return adapter.find(ref, fields, numToSkip, batchSize, limit, options, readPref, decoder, encoder);
+    }
 
 
     /**
@@ -474,7 +491,9 @@ public abstract class DBCollection {
      * @param encoder the DBEncoder to use
      * @throws MongoException
      */
-    public abstract void createIndex( DBObject keys , DBObject options, DBEncoder encoder );
+    public void createIndex( DBObject keys , DBObject options, DBEncoder encoder ) {
+        adapter.createIndex(keys, options, encoder);
+    }
 
     /**
      * Creates an ascending index on a field with default options, if one does not already exist.
@@ -834,11 +853,14 @@ public abstract class DBCollection {
      * @throws MongoException
      */
     public void drop(){
+        adapter.getDBCollection().drop();
+        /*
         resetIndexCache();
         CommandResult res =_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
         if (res.ok() || res.getErrorMessage().equals( "ns not found" ))
             return;
         res.throwOnError();
+        */
     }
 
     /**
@@ -867,7 +889,7 @@ public abstract class DBCollection {
      * @return
      * @throws MongoException
      */
-    public long count(DBObject query, ReadPreference readPrefs ){
+    public long count(DBObject query, ReaPreference readPrefs ){
         return getCount(query, null, readPrefs);
     }
 
@@ -1363,6 +1385,8 @@ public abstract class DBCollection {
      * @param name the name of the collection
      */
     protected DBCollection( DB base , String name ){
+        adapter = base.getAdapter().getCollection(name);
+
         _db = base;
         _name = name;
         _fullName = _db.getName() + "." + name;
