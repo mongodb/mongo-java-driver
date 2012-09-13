@@ -31,6 +31,7 @@ limitations under the License.
     <property name="build.instrumented.dir" location="${build.dir}/instrumented"/>
     <property name="build.logs.dir" location="${basedir}/logs"/>
     <property name="build.docs.dir" location="${basedir}/docs"/>
+    <property name="artifact.name" value="mongo.jar"/>
     <property name="target.dir" location="${basedir}/target"/>
     <property name="test.dir" location="${target.dir}/test"/>
     <property name="test.classes" value="*"/>
@@ -318,6 +319,15 @@ limitations under the License.
     <!-- ******************************************************************* -->
     <!-- Misc targets                                                        -->
     <!-- ******************************************************************* -->
+
+    <target name="update-classpath">
+        <path id="artifact.classpath">
+            <pathelement path="${build.test.dir}" />
+            <pathelement location="lib/testng-6.3.1.jar"/>
+            <pathelement location="${artifact.name}"/>
+        </path>
+        <var name="test.classpath" value="artifact.classpath"/>
+    </target>
 
     <target name="examples" depends="compile">
 
