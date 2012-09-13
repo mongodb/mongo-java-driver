@@ -144,20 +144,6 @@ limitations under the License.
             <compilerarg value="-Xlint:all,-rawtypes"/>
         </javac>
 
-        <javac
-            srcdir="src/test"
-            destdir="${build.test.dir}"
-            optimize="off"
-            deprecation="off"
-            source="${build.conf.javac.source}"
-            encoding="ISO-8859-1"
-            fork="true"
-            debug="on"
-            includeantruntime="false">
-            <classpath refid="test.classpath"/>
-            <compilerarg value="-Xlint:all,-rawtypes"/>
-        </javac>
-
     </target>
 
     <!-- ******************************************************************* -->
@@ -281,7 +267,23 @@ limitations under the License.
     <!-- The test targets                                                    -->
     <!-- ******************************************************************* -->
 
-    <target name="test" depends="compile">
+    <target name="test-compile" depends="compile">
+        <javac
+                srcdir="src/test"
+                destdir="${build.test.dir}"
+                optimize="off"
+                deprecation="off"
+                source="${build.conf.javac.source}"
+                encoding="ISO-8859-1"
+                fork="true"
+                debug="on"
+                includeantruntime="false">
+            <classpath refid="test.classpath"/>
+            <compilerarg value="-Xlint:all,-rawtypes"/>
+        </javac>
+    </target>
+
+    <target name="test" depends="test-compile">
 
         <testng classpathref="${test.classpath}" outputdir="${test.dir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1" >
             <jvmarg value="-Xmx512M" />
