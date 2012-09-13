@@ -373,7 +373,7 @@ public abstract class DBCollection {
             cmd.append( "remove", remove );
         else {
             if (update != null && !update.keySet().isEmpty()) {
-                // if 1st key doesnt start with $, then object will be inserted as is, need to check it
+                // if 1st key doesn't start with $, then object will be inserted as is, need to check it
                 String key = update.keySet().iterator().next();
                 if (key.charAt(0) != '$')
                     _checkObject(update, false, false);

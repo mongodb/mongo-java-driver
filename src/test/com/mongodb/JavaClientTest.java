@@ -898,6 +898,17 @@ public class JavaClientTest extends TestCase {
         assertEquals( 5 , dbObj.get( "x" ));
         assertNull( c.findOne(new BasicDBObject( "_id" , 1 ) ));
 
+        // create new one with upsert and return it
+        dbObj = c.findAndModify( new BasicDBObject( "_id" , 2 ) , null, null, false, new BasicDBObject("$set", new BasicDBObject("a", 6)), true, true);
+        assertEquals( 2 , dbObj.keySet().size());
+        assertEquals( 6 , dbObj.get( "a" ));
+        assertEquals( 6 , c.findOne(new BasicDBObject( "_id" , 2 ) ).get( "a" ));
+
+        // create new one with upsert and don't return it
+        dbObj = c.findAndModify( new BasicDBObject( "_id" , 3 ) , null, null, false, new BasicDBObject("$set", new BasicDBObject("b", 7)), false, true);
+        assertNull(dbObj);
+        assertEquals( 7 , c.findOne(new BasicDBObject( "_id" , 3 ) ).get( "b" ));
+
         // test exception throwing
         c.insert( new BasicDBObject( "a" , 1 ) );
         try {
