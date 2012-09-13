@@ -23,6 +23,7 @@
 package com.mongodb;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -32,7 +33,7 @@ import java.util.regex.Pattern;
  *
  */
 public class QueryBuilder {
-	
+
     /**
      * Creates a builder with an empty query
      */
@@ -61,7 +62,7 @@ public class QueryBuilder {
      * Adds a new key to the query if not present yet.
      * Sets this key as the current key.
      * @param key MongoDB document key
-     * @return Returns the current QueryBuilder
+     * @return this
      */
     public QueryBuilder put(String key) {
         _currentKey = key;
@@ -72,10 +73,10 @@ public class QueryBuilder {
     }
 	
     /**
-     * Equivalent to <code>QueryBuilder.put(key)</code>. Intended for compound query chains to be more readable
-     * Example: QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3)
+     * Equivalent to <code>QueryBuilder.put(key)</code>. Intended for compound query chains to be more readable, e.g.
+     * {@code QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3) }
      * @param key MongoDB document key
-     * @return Returns the current QueryBuilder with an appended key operand
+     * @return this
      */
     public QueryBuilder and(String key) {
         return put(key);
@@ -210,7 +211,19 @@ public class QueryBuilder {
         addOperand(null, regex);
         return this;
     }
-	
+
+    /**
+     * Equivalent to the $elemMatch operand
+     * @param match  the object to match
+     * @return Returns the current QueryBuilder with an appended elemMatch operator
+     */
+    public QueryBuilder elemMatch(final DBObject match) {
+        addOperand(QueryOperators.ELEM_MATCH, match);
+        return this;
+    }
+
+
+
     /**
      * Equivalent of the $within operand, used for geospatial operation
      * @param x x coordinate
@@ -219,8 +232,8 @@ public class QueryBuilder {
      * @return
      */
     public QueryBuilder withinCenter( double x , double y , double radius ){
-        addOperand( "$within" , 
-                    new BasicDBObject( "$center" , new Object[]{ new Double[]{ x , y } , radius } ) );
+        addOperand( QueryOperators.WITHIN ,
+                    new BasicDBObject(QueryOperators.CENTER, new Object[]{ new Double[]{ x , y } , radius } ) );
         return this;
     }
     
@@ -231,7 +244,7 @@ public class QueryBuilder {
      * @return
      */
     public QueryBuilder near( double x , double y  ){
-        addOperand( "$near" , 
+        addOperand(QueryOperators.NEAR,
                     new Double[]{ x , y } );
         return this;
     }
@@ -244,7 +257,7 @@ public class QueryBuilder {
      * @return
      */
     public QueryBuilder near( double x , double y , double maxDistance ){
-        addOperand( "$near" , 
+        addOperand( QueryOperators.NEAR ,
                     new Double[]{ x , y , maxDistance } );
         return this;
     }
@@ -256,7 +269,7 @@ public class QueryBuilder {
      * @return
      */
     public QueryBuilder nearSphere( double longitude , double latitude ){
-        addOperand( "$nearSphere" , 
+        addOperand(QueryOperators.NEAR_SPHERE,
                     new Double[]{ longitude , latitude } );
         return this;
     }
@@ -269,7 +282,7 @@ public class QueryBuilder {
      * @return
      */
     public QueryBuilder nearSphere( double longitude , double latitude , double maxDistance ){
-        addOperand( "$nearSphere" , 
+        addOperand( QueryOperators.NEAR_SPHERE ,
                     new Double[]{ longitude , latitude , maxDistance } );
         return this;
     }
@@ -283,8 +296,8 @@ public class QueryBuilder {
      * @return
      */
     public QueryBuilder withinCenterSphere( double longitude , double latitude , double maxDistance ){
-        addOperand( "$within" , 
-                new BasicDBObject( "$centerSphere" , new Object[]{ new Double[]{longitude , latitude} , maxDistance } ) );
+        addOperand( QueryOperators.WITHIN ,
+                new BasicDBObject(QueryOperators.CENTER_SPHERE, new Object[]{ new Double[]{longitude , latitude} , maxDistance } ) );
         return this;
     }
     
@@ -298,8 +311,8 @@ public class QueryBuilder {
      * @return
      */
     public QueryBuilder withinBox(double x, double y, double x2, double y2) {
-    	addOperand( "$within" , 
-                    new BasicDBObject( "$box" , new Object[] { new Double[] { x, y }, new Double[] { x2, y2 } } ) );
+    	addOperand( QueryOperators.WITHIN ,
+                    new BasicDBObject(QueryOperators.BOX, new Object[] { new Double[] { x, y }, new Double[] { x2, y2 } } ) );
     	return this;
     }
     
@@ -307,47 +320,56 @@ public class QueryBuilder {
      * Equivalent to a $within operand, based on a bounding polygon represented by an array of points
      * 
      * @param points an array of Double[] defining the vertices of the search area
-     * @return
+     * @return this
      */
     public QueryBuilder withinPolygon(List<Double[]> points) {
         if(points == null || points.isEmpty() || points.size() < 3)
             throw new IllegalArgumentException("Polygon insufficient number of vertices defined");
-        addOperand( "$within" , 
-                    new BasicDBObject( "$polygon" , points ) );
+        addOperand( QueryOperators.WITHIN ,
+                    new BasicDBObject(QueryOperators.POLYGON, points ) );
         return this;
     }
 
     /**
-     * Equivalent to a $or operand
-     * @param ors
-     * @return
+     * Equivalent to $not meta operator. Must be followed by an operand, not a value, e.g.
+     * {@code QueryBuilder.start("val").not().mod(Arrays.asList(10, 1)) }
+     *
+     * @return Returns the current QueryBuilder with an appended "not" meta operator
+     */
+    public QueryBuilder not() {
+        _hasNot = true;
+        return this;
+    }
+
+    /**
+     * Equivalent to an $or operand
+     * @param ors the list of conditions to or together
+     * @return Returns the current QueryBuilder with appended "or" operator
      */
     @SuppressWarnings("unchecked")
     public QueryBuilder or( DBObject ... ors ){
-        List l = (List)_query.get( "$or" );
+        List l = (List)_query.get( QueryOperators.OR );
         if ( l == null ){
             l = new ArrayList();
-            _query.put( "$or" , l );
+            _query.put( QueryOperators.OR , l );
         }
-        for ( DBObject o : ors )
-            l.add( o );
+        Collections.addAll(l, ors);
         return this;
     }
 
     /**
      * Equivalent to an $and operand
-     * @param ands
-     * @return
+     * @param ands the list of conditions to and together
+     * @return Returns the current QueryBuilder with appended "and" operator
      */
     @SuppressWarnings("unchecked")
     public QueryBuilder and( DBObject ... ands ){
-        List l = (List)_query.get( "$and" );
+        List l = (List)_query.get( QueryOperators.AND );
         if ( l == null ){
             l = new ArrayList();
-            _query.put( "$and" , l );
+            _query.put( QueryOperators.AND , l );
         }
-        for ( DBObject o : ands )
-            l.add( o );
+        Collections.addAll(l, ands);
         return this;
     }
 
@@ -367,6 +389,10 @@ public class QueryBuilder {
 	
     private void addOperand(String op, Object value) {
         if(op == null) {
+            if (_hasNot) {
+                value = new BasicDBObject(QueryOperators.NOT, value);
+                _hasNot = false;
+            }
             _query.put(_currentKey, value);
             return;
         }
@@ -375,13 +401,21 @@ public class QueryBuilder {
         BasicDBObject operand;
         if(!(storedValue instanceof DBObject)) {
             operand = new BasicDBObject();
-            _query.put(_currentKey, operand);
+            if (_hasNot) {
+                DBObject notOperand = new BasicDBObject(QueryOperators.NOT, operand);
+                _query.put(_currentKey, notOperand);
+                _hasNot = false;
+            } else {
+                _query.put(_currentKey, operand);
+            }
         } else {
             operand = (BasicDBObject)_query.get(_currentKey);
+            if (operand.get(QueryOperators.NOT) != null) {
+                operand = (BasicDBObject) operand.get(QueryOperators.NOT);
+            }
         }
         operand.put(op, value);
     }
-	
     @SuppressWarnings("serial")
 	static class QueryBuilderException extends RuntimeException {
             QueryBuilderException(String message) {
@@ -392,5 +426,6 @@ public class QueryBuilder {
 	
     private DBObject _query;
     private String _currentKey;
+    private boolean _hasNot;
 	
 }

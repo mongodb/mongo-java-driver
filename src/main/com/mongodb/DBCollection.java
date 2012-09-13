@@ -24,6 +24,7 @@ import org.bson.types.ObjectId;
 import org.mongodb.impl.DBCollectionAdapter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,7 +75,7 @@ public class DBCollection {
      * @dochub insert
      */
     public WriteResult insert(DBObject[] arr , WriteConcern concern, DBEncoder encoder) {
-        return adapter.insert(arr, concern, encoder);
+        return insert(Arrays.asList(arr), concern, encoder);
     }
 
     /**
@@ -89,7 +90,7 @@ public class DBCollection {
      * @dochub insert
      */
     public WriteResult insert(DBObject o , WriteConcern concern ){
-        return insert( new DBObject[]{ o } , concern );
+        return insert( Arrays.asList(o) , concern );
     }
 
     /**
@@ -146,7 +147,22 @@ public class DBCollection {
      * @dochub insert
      */
     public WriteResult insert(List<DBObject> list, WriteConcern concern ){
-        return insert( list.toArray( new DBObject[list.size()] ) , concern );
+        return insert(list, concern, getDBEncoder() );
+    }
+
+    /**
+     * Saves document(s) to the database.
+     * if doc doesn't have an _id, one will be added
+     * you can get the _id that was added from doc after the insert
+     *
+     * @param list list of documents to save
+     * @param concern the write concern
+     * @return
+     * @throws MongoException
+     * @dochub insert
+     */
+    public WriteResult insert(List<DBObject> list, WriteConcern concern, DBEncoder encoder) {
+        return adapter.insert(list, concern, encoder);
     }
 
     /**
@@ -889,7 +905,7 @@ public class DBCollection {
      * @return
      * @throws MongoException
      */
-    public long count(DBObject query, ReaPreference readPrefs ){
+    public long count(DBObject query, ReadPreference readPrefs ){
         return getCount(query, null, readPrefs);
     }
 
@@ -1374,7 +1390,7 @@ public class DBCollection {
     public boolean isCapped() {
         CommandResult stats = getStats();
         Object capped = stats.get("capped");
-        return(capped != null && (Integer)capped == 1);
+        return(capped != null && ( capped.equals(1) || capped.equals(true) ) );
     }
 
     // ------

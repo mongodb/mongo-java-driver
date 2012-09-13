@@ -20,9 +20,14 @@ package com.mongodb;
 
 import org.testng.annotations.Test;
 
+import java.net.UnknownHostException;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class DBPortPoolTest extends com.mongodb.util.TestCase {
@@ -76,11 +81,46 @@ public class DBPortPoolTest extends com.mongodb.util.TestCase {
         es.shutdown();
         es.awaitTermination( Integer.MAX_VALUE, TimeUnit.SECONDS);
         
-        for(int x = 2; x<8; x++) {
-//            Assert.assertNotSame( 0 , ports[x]._lastThread, x + ":" + ports[x].hashCode());
-        }
-        
         assertEquals( pool.getMaxSize() , pool.getAvailable() );
+    }
+
+    @Test
+    public void testInterruptedException() throws UnknownHostException, InterruptedException {
+        MongoOptions options = new MongoOptions();
+        options.connectionsPerHost = 1;
+        final DBPortPool pool = new DBPortPool( new ServerAddress("localhost"), options );
+        pool.get();
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        final CountDownLatch ready = new CountDownLatch(1);
+
+        Callable<Boolean> callable = new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws BrokenBarrierException, InterruptedException {
+                try {
+                    ready.countDown();
+                    pool.get();
+                    return false;
+                } catch (MongoInterruptedException e) {
+                    // return true if interrupted
+                    return true;
+                }
+            }
+        };
+        Future<Boolean> future = executor.submit(callable);
+
+        ready.await();
+        // Interrupt the thread
+        executor.shutdownNow();
+
+        try {
+            assertEquals(true, future.get());
+        } catch (InterruptedException e) {
+            fail("Should not happen, since this thread was not interrupted");
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            fail("Should not happen");
+        }
     }
 
     public static void main( String args[] ){

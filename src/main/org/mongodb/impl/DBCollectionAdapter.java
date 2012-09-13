@@ -26,6 +26,7 @@ import com.mongodb.WriteResult;
 import org.mongodb.DBCollection;
 
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * DBCollection adapter to new API.  THIS CLASS SHOULD NOT BE CONSIDERED PART OF THE PUBLIC API.
@@ -41,7 +42,7 @@ public class DBCollectionAdapter {
         return impl;
     }
 
-    public WriteResult insert(final DBObject[] arr, final WriteConcern concern, final DBEncoder encoder) {
+    public WriteResult insert(final List<DBObject> list, final WriteConcern concern, final DBEncoder encoder) {
         throw new UnsupportedOperationException();
     }
 
