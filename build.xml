@@ -31,6 +31,7 @@ limitations under the License.
     <property name="build.instrumented.dir" location="${build.dir}/instrumented"/>
     <property name="build.logs.dir" location="${basedir}/logs"/>
     <property name="build.docs.dir" location="${basedir}/docs"/>
+    <property name="artifact.name" value="mongo.jar"/>
     <property name="target.dir" location="${basedir}/target"/>
     <property name="test.dir" location="${target.dir}/test"/>
     <property name="test.classes" value="*"/>
@@ -290,6 +291,22 @@ limitations under the License.
             <jvmarg value="-ea" />
             <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
             <sysproperty key="${cobertura.arg}" value="${cobertura.datafile}" />
+            <classfileset  dir="${build.test.dir}" includes="**/${test.classes}.class" />
+        </testng>
+    </target>
+
+    <target name="test-with-artifact" depends="test-compile">
+
+        <path id="artifact.classpath">
+            <pathelement path="${build.test.dir}" />
+            <pathelement location="lib/testng-6.3.1.jar"/>
+            <pathelement location="${artifact.name}"/>
+        </path>
+
+        <testng classpathref="artifact.classpath" outputdir="${test.dir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1" >
+            <jvmarg value="-Xmx512M" />
+            <jvmarg value="-ea" />
+            <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
             <classfileset  dir="${build.test.dir}" includes="**/${test.classes}.class" />
         </testng>
     </target>
