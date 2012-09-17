@@ -34,7 +34,30 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * an abstract class that represents a logical database on a server
+ * <p>An abstract class that represents a logical database on a server. Implementation of this class expected to be concurrency ready.</p>
+ * <p>DB instance object can be achieved only from {@link Mongo} pull of DB using code like:<br>
+ * <code>
+ * Mongo m = new Mongo();<br>
+ * DB db = m.getDB( "mydb" );
+ * </code>
+ * <p>This abstract class provides several methods for working with database users, authentication, 
+ * dropping database, command (requests) executions, achieving request results, achieving last error information, 
+ * working with Collections, evaluating functions on database, etc.
+ * </p>
+ * <p>Note, that every command (using <code>command();</code> method) executed through DB class is read preference obedient.<br>
+ * <ul>
+ * <li>For the next commands {@link ReadPreference#primaryPreferred()} invocation will be used to return <code>ReadPreference</code> object:<br>
+ * <code>getnonce, authenticate</code>
+ * 
+ * <li>For the next commands <code>ReadPreference</code> object will be the default value:<br>
+ * <code>group, aggregate, collStats, dbStats, count, distinct, geoNear, geoSearch, geoWalk</code>
+ * 
+ * <li>For the <code>'mapreduce'</code> command and if <code>DBObject {out:inline}</code> is null OR for any other command not mention before - {@link ReadPreference#primary()} will be used 
+ * to achieve <code>ReadPreference</code> object.
+ * </ul>
+ * 
+ * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
+ * @see <a href="http://www.mongodb.org/display/DOCS/Java+Tutorial">Java driver tutorial</a>
  * @dochub databases
  */
 public abstract class DB {
@@ -54,6 +77,8 @@ public abstract class DB {
     }
 
     /**
+     * Constructs a newly allocated DB object to work with.
+     * 
      * @param mongo the mongo instance
      * @param name the database name
      */
@@ -64,10 +89,12 @@ public abstract class DB {
     }
 
     /**
-     * Tests if database commands are read preference obedient
+     * <p>This method tests if database commands passed as <code>DBObject</code> are read preference obedient.</p>
+     *  
      * @param command the <code>DBObject</code> to test obedience
-     * @return true if the command is obedient
-     * @see com.mongodb.ReadPreference
+     * @return same ReadPreference as input was, or new 
+     * @see ReadPreference
+     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      */
     ReadPreference getCommandReadPreference(DBObject command, ReadPreference requestedPreference){
         String comString = command.keySet().iterator().next();
@@ -99,34 +126,36 @@ public abstract class DB {
     }
 
     /**
-     * starts a new "consistent request".
-     * Following this call and until requestDone() is called, all db operations should use the same underlying connection.
-     * This is useful to ensure that operations happen in a certain order with predictable results.
+     * <p>This method starts a new "consistent request".</p><p>Following this call and until <code>requestDone()</code> is called,
+     *  all db operations should use the same underlying connection.
+     * This is useful to ensure that operations happen in a certain order with predictable results.</p>
      */
     public abstract void requestStart();
 
     /**
-     * ends the current "consistent request"
+     * <p>This method ends the current "consistent request"</p>
      */
     public abstract void requestDone();
 
     /**
-     * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)
+     * <p>This method ensures that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)</p>
      */
     public abstract void requestEnsureConnection();
 
     /**
-     * Returns the collection represented by the string &lt;dbName&gt;.&lt;collectionName&gt;.
+     * <p>Returns the collection represented by the string &lt;dbName&gt;.&lt;collectionName&gt;.</p>
+     * 
      * @param name the name of the collection
      * @return the collection
      */
     protected abstract DBCollection doGetCollection( String name );
 
     /**
-     * Gets a collection with a given name.
-     * If the collection does not exist, a new collection is created.
+     * <p>Gets a collection with a given name.
+     * If the collection does not exist, a new collection is created.</p>
+     * 
      * @param name the name of the collection to return
-     * @return the collection
+     * @return - existing or new created <code>DBCollection</code>
      */
     public DBCollection getCollection( String name ){
         DBCollection c = doGetCollection( name );
@@ -134,15 +163,15 @@ public abstract class DB {
     }
 
     /**
-     * Creates a collection with a given name and options.
-     * If the collection does not exist, a new collection is created.
-     * Note that if the options parameter is null, the creation will be deferred to when the collection is written to.
-     * Possible options:
+     * <p>Creates a collection with a given name and options. If the collection does not exist, a new collection is created.</p>
+     * Possible <code>DBObject options</code>:
      * <dl>
-     * <dt>capped</dt><dd><i>boolean</i>: if the collection is capped</dd>
+     * <dt>capped</dt><dd><i>boolean</i>: if the collection is <a href="http://www.mongodb.org/display/DOCS/Capped+Collections">capped</a></dd>
      * <dt>size</dt><dd><i>int</i>: collection size (in bytes)</dd>
      * <dt>max</dt><dd><i>int</i>: max number of documents</dd>
      * </dl>
+     * <p>Note, that if the <code>DBObject options</code> parameter is <code>null</code>, <code>DBObject options</code> will be ignored and {@link #getCollection(String)} will be invoked.</p>
+     * 
      * @param name the name of the collection to return
      * @param options options
      * @return the collection
@@ -160,9 +189,11 @@ public abstract class DB {
 
 
     /**
-     * Returns a collection matching a given string.
+     * <p>Returns a collection matching a given string, or a new collection is created.</p>
+     * 
      * @param s the name of the collection
      * @return the collection
+     * @see #getCollection(String)
      */
     public DBCollection getCollectionFromString( String s ){
         DBCollection foo = null;
@@ -184,8 +215,9 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command.
-     * This method calls {@link DB#command(com.mongodb.DBObject, int) } with 0 as query option.
+     * <p>Executes a database command.</p>
+     * <p>This method calls {@link #command(DBObject, int) } with 0 as query option.<p>
+     * 
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      * @param cmd dbobject representing the command to execute
      * @return result of command from the database
@@ -198,8 +230,9 @@ public abstract class DB {
 
 
     /**
-     * Executes a database command.
-     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.DBEncoder) } with 0 as query option.
+     * <p>Executes a database command.</p>
+     * <p>This method calls {@link #command(DBObject, int, DBEncoder) } with 0 as query option.</p>
+     * 
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      * @param cmd dbobject representing the command to execute
      * @param encoder 
@@ -212,8 +245,10 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command.
-     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with a null readPrefs.
+     * <p>Executes a database command.</p>
+     * </p>This method calls {@link #command(DBObject, int, ReadPreference, DBEncoder) } with a <code>ReadPreference</code> obtained by
+     *  {@link #getReadPreference()}.</p>
+     * 
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      * @param cmd dbobject representing the command to execute
      * @param options query options to use
@@ -227,8 +262,10 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command.
-     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with a default encoder.
+     * <p>Executes a database command.</p>
+     * <p>This method calls {@link command(DBObject, int, ReadPreference, DBEncoder) } with a default encoder.
+     * 
+     * @see DefaultDBEncoder#FACTORY
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      * @param cmd dbobject representing the command to execute
      * @param options query options to use
@@ -242,7 +279,10 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command.
+     * <p>Executes a database command.</p>
+     * <p>Note, the actual read prefrence will be checked for preference obedient in any way by call 
+     * <code>getCommandReadPreference(cmd, readPrefs);</code>.
+     * 
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      * @param cmd dbobject representing the command to execute
      * @param options query options to use
@@ -270,7 +310,10 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command.
+     * <p>Executes a database command.</p>
+     * <p>This method calls {@link #command(DBObject, int, ReadPreference)}. 
+     * <code>ReadPreference</code> object obtained by {@link #getReadPreference()}</p>
+     * 
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      * @param cmd dbobject representing the command to execute
      * @param options query options to use
@@ -283,8 +326,9 @@ public abstract class DB {
     }
     
     /**
-     * Executes a database command.
-     * This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject) }
+     * <p>Executes a database command.</p>
+     * <p>This method constructs a <code>BasicDBObject</code> and calls {@link #command(DBObject, Boolean.TRUE) }</p>
+     * 
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      * @param cmd command to execute
      * @return result of command from the database
@@ -296,8 +340,13 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command.
-     * This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject, int)  }
+     * <p>Executes a database command.</p>
+     * <p>This method constructs a <code>BasicDBObject</code> and calls {@link #command(DBObject, int)}, 
+     * <code>DBObject</code> object created as <code>new BasicDBObject( cmd , Boolean.TRUE )</code> were is the String 
+     * <code>cmd</code> is method's input String.</p>
+     * 
+     * @see DBObject
+     * @see BasicDBObject
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      * @param cmd command to execute
      * @param options query options to use
@@ -310,12 +359,15 @@ public abstract class DB {
     }
 
     /**
-     * evaluates a function on the database.
-     * This is useful if you need to touch a lot of data lightly, in which case network transfer could be a bottleneck.
+     * <p>Evaluates a function on the database.</p>
+     * <p>This is useful if you need to touch a lot of data lightly, in which case network transfer could be a bottleneck.</p>
+     * <p>Note, that <code>commnad()</code> method is used to obtain execution results.
+     * 
      * @param code the function in javascript code
      * @param args arguments to be passed to the function
      * @return The command result
      * @throws MongoException
+     * @see {@link #eval(String, Object...)}
      */
     public CommandResult doEval( String code , Object ... args ){
 
@@ -326,9 +378,10 @@ public abstract class DB {
     }
 
     /**
-     * calls {@link DB#doEval(java.lang.String, java.lang.Object[]) }.
-     * If the command is successful, the "retval" field is extracted and returned.
-     * Otherwise an exception is thrown.
+     * <p>This method calls {@link #doEval(String, Object[]) }.</p>
+     * <p>If the command is successful, 
+     * the <code>"retval"</code> field is extracted and returned as <code>Object</code>. Otherwise <code>MongoException</code> is thrown.</p>
+     * 
      * @param code the function in javascript code
      * @param args arguments to be passed to the function
      * @return The object
@@ -343,6 +396,9 @@ public abstract class DB {
 
     /**
      * Returns the result of "dbstats" command
+     * 
+     * @see #command(String)
+     * @see CommandResult
      * @return
      * @throws MongoException
      */
@@ -352,25 +408,35 @@ public abstract class DB {
 
     /**
      * Returns the name of this database.
+     * 
      * @return the name
      */
     public String getName(){
-	return _name;
+    return _name;
     }
 
     /**
-     * Makes this database read-only.
-     * Important note: this is a convenience setting that is only known on the client side and not persisted.
-     * @param b if the database should be read-only
+     * <p>Makes this database read-only.</p>
+     * <p><b>Important note:</b> this is a convenience setting that is only known on the client side and not persisted.</p>
+     * 
+     * @param b <code>Boolean.TRUE</code> if the database should be read-only, <code>Boolean.FALSE</code> otherwise.
      */
     public void setReadOnly( Boolean b ){
         _readOnly = b;
     }
 
     /**
-     * Returns a set containing the names of all collections in this database.
+     * <p>Returns a <code>Set&ltString&gt</code> containing the names of all collections in this database.</p>
+     * <p>Note, returned set is sorted before return using<br>
+     * <code>...<br>
+     * Collections.sort(set);<br>
+     * return set; 
+     * </code>.</p>
+     *  
      * @return the names of collections in this database
-     * @throws MongoException
+     * @throws RuntimeException if <code>getCollection("system.namespaces")</code> returns <code>null</code>.
+	 * @throws MongoException
+	 * @see {@link #getCollection(String)}
      */
     public Set<String> getCollectionNames(){
 
@@ -410,9 +476,10 @@ public abstract class DB {
     }
 
     /**
-     * Checks to see if a collection by name %lt;name&gt; exists.
+     * Checks to see if a collection by name &lt;name&gt; exists.
+     * 
      * @param collectionName The collection to test for existence
-     * @return false if no collection by that name exists, true if a match to an existing collection was found
+     * @return <b>false</b> if NO collection by that name exists, or  input String is <code>null</code>, or input String is 0 length, <b>true</b> if a match to an existing collection was found
      * @throws MongoException
      */
     public boolean collectionExists(String collectionName)
@@ -435,8 +502,10 @@ public abstract class DB {
 
 
     /**
-     * Returns the name of this database.
+     * Returns the name of this (current) database.
+     * 
      * @return the name
+     * @see 
      */
     @Override
     public String toString(){
@@ -444,18 +513,16 @@ public abstract class DB {
     }
 
     /**
-     * Gets the the error (if there is one) from the previous operation on this connection.
-     * The result of this command will look like
-     *
-     * <pre>
+     * <p>Gets the the error (if there is one) from the previous operation on this connection.</p>
+     * <p>The result of this command (<code>getlasterror</code> database command), will look like</p>
+     * <code>
      * { "err" :  errorMessage  , "ok" : 1.0 }
-     * </pre>
+     * </code>
+     * <p>The value for errorMessage will be <code>null</code> if no error occurred, or a description otherwise.</p>
      *
-     * The value for errorMessage will be null if no error occurred, or a description otherwise.
-     *
-     * Important note: when calling this method directly, it is undefined which connection "getLastError" is called on.
-     * You may need to explicitly use a "consistent Request", see {@link DB#requestStart()}
-     * For most purposes it is better not to call this method directly but instead use {@link WriteConcern}
+     * <p><b>Important note:</b> when calling this method directly, it is undefined which connection <code>getLastError</code> is called on.
+     * You may need to explicitly use a "consistent Request", see {@link #requestStart()}
+     * For most purposes it is better not to call this method directly but instead use {@link WriteConcern}</p>
      *
      * @return DBObject with error and status information
      * @throws MongoException
@@ -465,8 +532,11 @@ public abstract class DB {
     }
 
     /**
+     * This method returns <code>getlasterror</code> information using <code>WriteConcern</code> context.
+     * 
+     * @see {@link WriteConcern#getCommand()}
      * @see {@link DB#getLastError() }
-     * @param concern the concern associated with "getLastError" call
+     * @param concern <code>WriteConcern</code> object associated with "getLastError" call
      * @return
      * @throws MongoException
      */
@@ -475,10 +545,20 @@ public abstract class DB {
     }
 
     /**
-     * @see {@link DB#getLastError(com.mongodb.WriteConcern) }
-     * @param w
-     * @param wtimeout
-     * @param fsync
+     * This method returns <code>getlasterror</code> information using <code>WriteConcern</code> context.
+     * 
+     * <p><code>WriteConcern concern</code> object is created as new object:</p>
+     * <code>
+     * new com.mongodb.WriteConcern( w, wtimeout , fsync )
+     * </code><p>
+     *  with parameters passed to this method input.</p>
+     * 
+     * @see #command(DBObject)
+     * @see {@link WriteConcern#getCommand()}
+     * @see {@link #getLastError(com.mongodb.WriteConcern) }
+     * @param w number of writes
+     * @param wtimeout timeout for write operation
+     * @param fsync whether or not to fsync
      * @return The command result
      * @throws MongoException
      */
@@ -491,6 +571,7 @@ public abstract class DB {
      * Sets the write concern for this database. It Will be used for
      * writes to any collection in this database. See the
      * documentation for {@link WriteConcern} for more information.
+     * 
      * @param concern write concern to use
      */
     public void setWriteConcern( com.mongodb.WriteConcern concern ){
@@ -500,6 +581,9 @@ public abstract class DB {
 
     /**
      * Gets the write concern for this database.
+     * 
+     * @see Mongo#getWriteConcern()
+     * @see WriteConcern
      * @return
      */
     public com.mongodb.WriteConcern getWriteConcern(){
@@ -521,6 +605,8 @@ public abstract class DB {
 
     /**
      * Gets the default read preference
+     * 
+     * @see ReadPreference
      * @return
      */
     public ReadPreference getReadPreference(){
@@ -531,6 +617,7 @@ public abstract class DB {
 
     /**
      * Drops this database. Removes all data on disk. Use with caution.
+     * 
      * @throws MongoException
      */
     public void dropDatabase(){
@@ -551,12 +638,13 @@ public abstract class DB {
     }
 
     /**
-     *  Authenticates to db with the given name and password
+     *  Authenticates to db with the given name and password.
      *
      * @param username name of user for this database
      * @param password password of user for this database
      * @return true if authenticated, false otherwise
      * @throws MongoException
+     * @throws IllegalStateException if user already authentificated.
      * @dochub authenticate
      */
     public boolean authenticate(String username, char[] password ){
@@ -578,12 +666,14 @@ public abstract class DB {
     }
 
     /**
-     *  Authenticates to db with the given name and password
+     *  Authenticates to db with the given name and password.
      *
+     * @see CommandResult
      * @param username name of user for this database
      * @param password password of user for this database
-     * @return the CommandResult from authenticate command
+     * @return the <code>CommandResult</code> from authenticate command
      * @throws MongoException if authentication failed due to invalid user/pass, or other exceptions like I/O
+     * @throws IllegalStateException if user already authentificated.
      * @dochub authenticate
      */
     public synchronized CommandResult authenticateCommand(String username, char[] password ){
@@ -604,8 +694,9 @@ public abstract class DB {
 
     /**
      * Adds a new user for this db
+     * 
      * @param username
-     * @param passwd
+     * @param passwd is only ASCII symbols
      * @throws MongoException
      */
     public WriteResult addUser( String username , char[] passwd ){
@@ -614,8 +705,9 @@ public abstract class DB {
 
     /**
      * Adds a new user for this db
+     * 
      * @param username
-     * @param passwd
+     * @param passwd is only ASCII symbols
      * @param readOnly if true, user will only be able to read
      * @throws MongoException
      */
@@ -631,6 +723,7 @@ public abstract class DB {
 
     /**
      * Removes a user for this db
+     * 
      * @param username
      * @throws MongoException
      */
@@ -657,7 +750,7 @@ public abstract class DB {
     }
 
     /**
-     *  Returns the last error that occurred since start of database or a call to <code>resetError()</code>
+     *  Returns the last error that occurred since start of database or a call to <code>resetError()</code>, result of "<code>getpreverror</code>" database command execution.
      *
      *  The return object will look like
      *
@@ -670,7 +763,7 @@ public abstract class DB {
      *
      * Care must be taken to ensure that calls to getPreviousError go to the same connection as that
      * of the previous operation.
-     * See {@link DB#requestStart()} for more information.
+     * See {@link #requestStart()} for more information.
      *
      * @return DBObject with error and status information
      * @throws MongoException
@@ -680,8 +773,9 @@ public abstract class DB {
     }
 
     /**
-     * Resets the error memory for this database.
-     * Used to clear all errors such that {@link DB#getPreviousError()} will return no error.
+     * Resets the error memory for this database. "<code>reseterror</code>" database command execution.
+     * Used to clear all errors, so after calling this method {@link #getPreviousError()} will return no error.
+     * 
      * @throws MongoException
      */
     public void resetError(){
@@ -690,6 +784,7 @@ public abstract class DB {
 
     /**
      * For testing purposes only - this method forces an error to help test error handling
+     * 
      * @throws MongoException
      */
     public void forceError(){
@@ -697,7 +792,10 @@ public abstract class DB {
     }
 
     /**
-     * Gets the Mongo instance
+     * <p>Gets the Mongo instance</p>
+     * 
+     * @see Mongo#getDB(String)
+     * @see Mongo#getDB(String)
      * @return
      */
     public Mongo getMongo(){
@@ -706,8 +804,10 @@ public abstract class DB {
 
     /**
      * Gets another database on same server
+     * 
      * @param name name of the database
      * @return
+     * @see Mongo#getDB(String)
      */
     public DB getSisterDB( String name ){
         return _mongo.getDB( name );
@@ -726,6 +826,8 @@ public abstract class DB {
 
     /**
      * Adds the give option
+     * 
+     * @see Bytes.OptionHolder
      * @param option
      */
     public void addOption( int option ){
@@ -734,6 +836,8 @@ public abstract class DB {
 
     /**
      * Sets the query options
+     * 
+     * @see Bytes.OptionHolder
      * @param options
      */
     public void setOptions( int options ){
@@ -742,6 +846,8 @@ public abstract class DB {
 
     /**
      * Resets the query options
+     * 
+     * @see Bytes.OptionHolder
      */
     public void resetOptions(){
         _options.reset();
@@ -749,12 +855,19 @@ public abstract class DB {
 
     /**
      * Gets the query options
+     * 
+     * @see Bytes.OptionHolder
      * @return
      */
     public int getOptions(){
         return _options.get();
     }
 
+    /** 
+     * Clean cursors.
+     * 
+     * @param force <code>TRUE</code> if should clean regardless of number of dead cursors, <code>FALSE</code> otherwise.
+     */
     public abstract void cleanCursors( boolean force );
 
     AuthenticationCredentials getAuthenticationCredentials() {
@@ -773,7 +886,11 @@ public abstract class DB {
             new AtomicReference<AuthenticationCredentials>();
 
     /**
-     * Encapsulate everything relating to authorization of a user on a database
+     * Encapsulate everything relating to authorization of a user on a database. There is no need to work directly with this class.
+     * 
+     * @see DB#addUser(String, char[])
+     * @see DB#authenticate(String, char[])
+     * @see DB#isAuthenticated()
      */
     class AuthenticationCredentials {
         private final String userName;
