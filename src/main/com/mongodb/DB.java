@@ -44,7 +44,20 @@ import java.util.concurrent.atomic.AtomicReference;
  * dropping database, command (requests) executions, achieving request results, achieving last error information, 
  * working with Collections, evaluating functions on database, etc.
  * </p>
+ * <p>Note, that every command (using <code>command();</code> method) executed through DB class is read preference obedient.<br>
+ * <ul>
+ * <li>For the next commands {@link ReadPreference#primaryPreferred()} invocation will be used to return <code>ReadPreference</code> object:<br>
+ * <code>getnonce, authenticate</code>
  * 
+ * <li>For the next commands <code>ReadPreference</code> object will be the default value:<br>
+ * <code>group, aggregate, collStats, dbStats, count, distinct, geoNear, geoSearch, geoWalk</code>
+ * 
+ * <li>For the <code>'mapreduce'</code> command and if <code>DBObject {out:inline}</code> is null OR for any other command not mention before - {@link ReadPreference#primary()} will be used 
+ * to achieve <code>ReadPreference</code> object.
+ * </ul>
+ * 
+ * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
+ * @see <a href="http://www.mongodb.org/display/DOCS/Java+Tutorial">Java driver tutorial</a>
  * @dochub databases
  */
 public abstract class DB {
@@ -64,7 +77,7 @@ public abstract class DB {
     }
 
     /**
-     * Construts a newly allocated DB object to work with.
+     * Constructs a newly allocated DB object to work with.
      * 
      * @param mongo the mongo instance
      * @param name the database name
@@ -77,26 +90,6 @@ public abstract class DB {
 
     /**
      * <p>This method tests if database commands passed as <code>DBObject</code> are read preference obedient.</p>
-     * <p>For the next commands {@link ReadPreference#primaryPreferred()} invocation will be used to return <code>ReadPreference</code> object:
-     * <ul>
-     * <li><i>getnonce</i>
-     * <li><i>authenticate</i>
-     * </ul></p>
-     * <p>For the next commands <code>return ReadPreference</code> object will be input object passed in this method</p>
-     * <ul>
-     * <li><i>group</i>
-     * <li><i>aggregate</i>
-     * <li><i>collStats</i>
-     * <li><i>dbStats</i>
-     * <li><i>count</i>
-     * <li><i>distinct</i>
-     * <li><i>geoNear</i>
-     * <li><i>geoSearch</i>
-     * <li><i>geoWalk</i>
-     * </ul>
-     * </p>
-     * <p>For the 'mapreduce' command and if <code>DBObject {out:inline}</code> is null OR for any other command not mention before - {@link ReadPreference#primary()} will be used 
-     * to achieve <code>ReadPreference</code> object</p>
      *  
      * @param command the <code>DBObject</code> to test obedience
      * @return same ReadPreference as input was, or new 
@@ -253,8 +246,8 @@ public abstract class DB {
 
     /**
      * <p>Executes a database command.</p>
-     * </p>This method calls {@link #command(DBObject, int, ReadPreference, DBEncoder) } with a readPrefs received 
-     * by call of {@link #getReadPreference()}.</p>
+     * </p>This method calls {@link #command(DBObject, int, ReadPreference, DBEncoder) } with a <code>ReadPreference</code> obtained by
+     *  {@link #getReadPreference()}.</p>
      * 
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      * @param cmd dbobject representing the command to execute
@@ -319,7 +312,7 @@ public abstract class DB {
     /**
      * <p>Executes a database command.</p>
      * <p>This method calls {@link #command(DBObject, int, ReadPreference)}. 
-     * <code>ReadPreference</code> object obtained by call to {@link #getReadPreference()}</p>
+     * <code>ReadPreference</code> object obtained by {@link #getReadPreference()}</p>
      * 
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      * @param cmd dbobject representing the command to execute
@@ -368,11 +361,13 @@ public abstract class DB {
     /**
      * <p>Evaluates a function on the database.</p>
      * <p>This is useful if you need to touch a lot of data lightly, in which case network transfer could be a bottleneck.</p>
+     * <p>Note, that <code>commnad()</code> method is used to obtain execution results.
      * 
      * @param code the function in javascript code
      * @param args arguments to be passed to the function
      * @return The command result
      * @throws MongoException
+     * @see {@link #eval(String, Object...)}
      */
     public CommandResult doEval( String code , Object ... args ){
 
@@ -385,7 +380,7 @@ public abstract class DB {
     /**
      * <p>This method calls {@link #doEval(String, Object[]) }.</p>
      * <p>If the command is successful, 
-     * the <code>"retval"</code> field is extracted and returned. Otherwise an exception is thrown.</p>
+     * the <code>"retval"</code> field is extracted and returned as <code>Object</code>. Otherwise <code>MongoException</code> is thrown.</p>
      * 
      * @param code the function in javascript code
      * @param args arguments to be passed to the function
@@ -402,6 +397,7 @@ public abstract class DB {
     /**
      * Returns the result of "dbstats" command
      * 
+     * @see #command(String)
      * @see CommandResult
      * @return
      * @throws MongoException
@@ -480,10 +476,10 @@ public abstract class DB {
     }
 
     /**
-     * Checks to see if a collection by name %lt;name&gt; exists.
+     * Checks to see if a collection by name &lt;name&gt; exists.
      * 
      * @param collectionName The collection to test for existence
-     * @return <b><code>false</code></b> if NO collection by that name exists, or  input String is <code>null</code>, or input String is 0 length, <b><code>true</code></b> if a match to an existing collection was found
+     * @return <b>false</b> if NO collection by that name exists, or  input String is <code>null</code>, or input String is 0 length, <b>true</b> if a match to an existing collection was found
      * @throws MongoException
      */
     public boolean collectionExists(String collectionName)
@@ -586,6 +582,8 @@ public abstract class DB {
     /**
      * Gets the write concern for this database.
      * 
+     * @see Mongo#getWriteConcern()
+     * @see WriteConcern
      * @return
      */
     public com.mongodb.WriteConcern getWriteConcern(){
@@ -608,6 +606,7 @@ public abstract class DB {
     /**
      * Gets the default read preference
      * 
+     * @see ReadPreference
      * @return
      */
     public ReadPreference getReadPreference(){
@@ -697,7 +696,7 @@ public abstract class DB {
      * Adds a new user for this db
      * 
      * @param username
-     * @param passwd
+     * @param passwd is only ASCII symbols
      * @throws MongoException
      */
     public WriteResult addUser( String username , char[] passwd ){
@@ -708,7 +707,7 @@ public abstract class DB {
      * Adds a new user for this db
      * 
      * @param username
-     * @param passwd
+     * @param passwd is only ASCII symbols
      * @param readOnly if true, user will only be able to read
      * @throws MongoException
      */
@@ -794,8 +793,8 @@ public abstract class DB {
 
     /**
      * <p>Gets the Mongo instance</p>
-     * <p>Note, the <code>Mongo</code> instance is assigned when the object of type DB is created.
      * 
+     * @see Mongo#getDB(String)
      * @see Mongo#getDB(String)
      * @return
      */
@@ -864,7 +863,8 @@ public abstract class DB {
         return _options.get();
     }
 
-    /**
+    /** 
+     * Clean cursors.
      * 
      * @param force <code>TRUE</code> if should clean regardless of number of dead cursors, <code>FALSE</code> otherwise.
      */
@@ -886,7 +886,11 @@ public abstract class DB {
             new AtomicReference<AuthenticationCredentials>();
 
     /**
-     * Encapsulate everything relating to authorization of a user on a database
+     * Encapsulate everything relating to authorization of a user on a database. There is no need to work directly with this class.
+     * 
+     * @see DB#addUser(String, char[])
+     * @see DB#authenticate(String, char[])
+     * @see DB#isAuthenticated()
      */
     class AuthenticationCredentials {
         private final String userName;
