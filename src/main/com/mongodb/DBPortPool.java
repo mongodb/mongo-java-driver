@@ -146,8 +146,13 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
 
     public static class SemaphoresOut extends NoMoreConnection {
         private static final long serialVersionUID = -4415279469780082174L;
+        private static final String message = "Concurrent requests for database connection have exceeded limit";
         SemaphoresOut(){
-            super( "Out of semaphores to get db connection" );
+            super( message );
+        }
+        
+        SemaphoresOut(int numPermits){
+            super( message + " of " + numPermits);
         }
     }
 
@@ -190,7 +195,7 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
     public DBPort get() {
         DBPort port = null;
         if ( ! _waitingSem.tryAcquire() )
-            throw new SemaphoresOut();
+            throw new SemaphoresOut(_waitingSem.availablePermits() );
 
         try {
             port = get( _options.maxWaitTime );
