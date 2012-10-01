@@ -62,8 +62,8 @@ public class ReadPreferenceTest extends TestCase  {
     @Test
     @SuppressWarnings("deprecation")
     public void testDeprecatedStaticMembers() {
-        assertEquals(ReadPreference.primary(), ReadPreference.PRIMARY);
-        assertEquals(ReadPreference.secondaryPreferred(), ReadPreference.SECONDARY);
+        assertSame(ReadPreference.primary(), ReadPreference.PRIMARY);
+        assertSame(ReadPreference.secondaryPreferred(), ReadPreference.SECONDARY);
     }
 
     @Test
@@ -76,7 +76,7 @@ public class ReadPreferenceTest extends TestCase  {
     }
     
     @Test
-    public void testPrimaryReadPreference(){
+    public void testPrimaryReadPreference() {
         assertEquals(_primary, ReadPreference.primary().getNode(_set));
         assertNull(ReadPreference.primary().getNode(_setNoPrimary));
         assertEquals("{ \"mode\" : \"primary\"}", ReadPreference.primary().toDBObject().toString());

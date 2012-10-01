@@ -290,7 +290,7 @@ public abstract class ReadPreference {
      * @deprecated As of release 2.9.0, replaced by {@code ReadPreference.primary()}
      */
     @Deprecated
-    public static final ReadPreference PRIMARY = new PrimaryReadPreference();
+    public static final ReadPreference PRIMARY;
 
     /**
      * A secondary-preferred read preference.  Equivalent to calling
@@ -304,7 +304,7 @@ public abstract class ReadPreference {
      * @deprecated As of release 2.9.0, replaced by {@code ReadPreference.secondaryPreferred()}
      */
     @Deprecated
-    public static final ReadPreference SECONDARY = new TaggableReadPreference.SecondaryPreferredReadPreference();
+    public static final ReadPreference SECONDARY;
 
     /**
      * @deprecated As of release 2.9.0, replaced by
@@ -324,9 +324,20 @@ public abstract class ReadPreference {
         return new TaggedReadPreference( tags );
     }
 
-    private static final ReadPreference _PRIMARY = new PrimaryReadPreference();
-    private static final ReadPreference _SECONDARY = new TaggableReadPreference.SecondaryReadPreference();
-    private static final ReadPreference _SECONDARY_PREFERRED = new TaggableReadPreference.SecondaryPreferredReadPreference();
-    private static final ReadPreference _PRIMARY_PREFERRED = new TaggableReadPreference.PrimaryPreferredReadPreference();
-    private static final ReadPreference _NEAREST = new TaggableReadPreference.NearestReadPreference();
+    private static final ReadPreference _PRIMARY;
+    private static final ReadPreference _SECONDARY;
+    private static final ReadPreference _SECONDARY_PREFERRED;
+    private static final ReadPreference _PRIMARY_PREFERRED;
+    private static final ReadPreference _NEAREST;
+
+    static {
+        _PRIMARY = new PrimaryReadPreference();
+        _SECONDARY = new TaggableReadPreference.SecondaryReadPreference();
+        _SECONDARY_PREFERRED = new TaggableReadPreference.SecondaryPreferredReadPreference();
+        _PRIMARY_PREFERRED = new TaggableReadPreference.PrimaryPreferredReadPreference();
+        _NEAREST = new TaggableReadPreference.NearestReadPreference();
+
+         PRIMARY = _PRIMARY;
+         SECONDARY = _SECONDARY_PREFERRED;  // this is not a bug.  See SECONDARY Javadoc.
+    }
 }
