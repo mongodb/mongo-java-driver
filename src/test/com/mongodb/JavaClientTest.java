@@ -35,7 +35,7 @@ public class JavaClientTest extends TestCase {
 
     public JavaClientTest()
         throws IOException , MongoException {
-        _mongo = new Mongo( "localhost" );
+        _mongo = new Mongo( "localhost:30000" );
 	cleanupMongo = _mongo;
 	cleanupDB = "com_mongodb_unittest_JavaClientTest";
 	_db = cleanupMongo.getDB( cleanupDB );
@@ -906,10 +906,15 @@ public class JavaClientTest extends TestCase {
 
         // create new one with upsert and don't return it
         dbObj = c.findAndModify( new BasicDBObject( "_id" , 3 ) , null, null, false, new BasicDBObject("$set", new BasicDBObject("b", 7)), false, true);
-        assertNull(dbObj);
-        assertEquals( 7 , c.findOne(new BasicDBObject( "_id" , 3 ) ).get( "b" ));
 
-        // test exception throwing
+        assertEquals( 7 , c.findOne(new BasicDBObject( "_id" , 3 ) ).get( "b" ));
+        if (serverIsAtLeastVersion(2.1)) {
+            assertNull(dbObj);
+        } else {
+            assertEquals(0, dbObj.keySet().size());
+        }
+
+            // test exception throwing
         c.insert( new BasicDBObject( "a" , 1 ) );
         try {
             c.findAndModify( null, null );
