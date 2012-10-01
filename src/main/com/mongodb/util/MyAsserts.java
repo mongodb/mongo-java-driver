@@ -88,6 +88,11 @@ public class MyAsserts {
 	_assertEquals( a , b == null ? null : b.toString() );
     }
 
+    public static void assertSame(Object a, Object b) {
+        if ( a != b )
+            throw new MyAssert( a + " != " + b );
+    }
+
     public static void assertEquals( Object a , Object b ){
 	_assertEquals( a , b );
     }
