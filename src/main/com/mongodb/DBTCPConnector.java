@@ -263,7 +263,8 @@ public class DBTCPConnector implements DBConnector {
             boolean secondaryOk = !(readPref == ReadPreference.primary());
 
             _checkClosed();
-            checkMaster( false, !secondaryOk );
+            if (!secondaryOk)
+                checkMaster( false, !secondaryOk );
 
             final MyPort mp = _myPort.get();
             final DBPort port = mp.get( false , readPref, hostNeeded );
