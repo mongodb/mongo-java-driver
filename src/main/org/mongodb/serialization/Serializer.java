@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.serialization;
 
+import org.bson.BSONReader;
+import org.bson.BSONWriter;
 
-public interface MongoServer {
-    public Database getDB(String name);
+public interface Serializer {
+    void serialize(BSONWriter bsonWriter, Class clazz, Object value, BsonSerializationOptions options);
+
+    Object deserialize(BSONReader reader, Class clazz, BsonSerializationOptions options);
 }

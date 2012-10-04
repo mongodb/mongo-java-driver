@@ -21,7 +21,7 @@ import org.mongodb.MongoServer;
 class MongoServerImpl implements MongoServer {
 
     @Override
-    public DBImpl getDB(final String name) {
-         return new DBImpl(name);
+    public DatabaseImpl getDB(final String name) {
+         return new DatabaseImpl(name);
     }
 }

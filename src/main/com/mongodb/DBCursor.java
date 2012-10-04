@@ -71,6 +71,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         _options = _collection.getOptions();
         _readPref = preference;
         _decoderFact = collection.getDBDecoderFactory();
+        List<Object> foo = new ArrayList<Object>();
+        foo.add("");
     }
 
     /**

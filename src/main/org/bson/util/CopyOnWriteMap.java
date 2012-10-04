@@ -194,7 +194,7 @@ abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, 
      * 
      * @param map the initial map to initialize with
      * @deprecated since 0.0.12 use the versions that explicitly specify
-     * View.Type
+     * View.TYPE
      */
     @Deprecated
     protected CopyOnWriteMap(final Map<? extends K, ? extends V> map) {
@@ -205,7 +205,7 @@ abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, 
      * Create a new empty {@link CopyOnWriteMap}.
      * 
      * @deprecated since 0.0.12 use the versions that explicitly specify
-     * View.Type
+     * View.TYPE
      */
     @Deprecated
     protected CopyOnWriteMap() {

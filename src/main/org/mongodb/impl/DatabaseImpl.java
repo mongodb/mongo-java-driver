@@ -21,38 +21,25 @@ import com.mongodb.CommandResult;
 import com.mongodb.DBObject;
 import org.mongodb.Database;
 
-public class DBAdapter {
-    private final DatabaseImpl impl;
+class DatabaseImpl implements Database {
+    private final String name;
 
-    public DBAdapter(final DatabaseImpl database) {
-        this.impl = database;
+    public DatabaseImpl(final String name) {
+        this.name = name;
     }
 
-    public Database getDB() {
-        return impl;
+    @Override
+    public String getName() {
+        return name;
     }
 
-    public DBCollectionAdapter getCollection(final String name) {
-        return new DBCollectionAdapter(impl.getCollection(name));
+    public CollectionImpl getCollection(final String name) {
+        return new CollectionImpl(name, this);
     }
 
-    public void requestStart() {
-        throw new UnsupportedOperationException();
-    }
-
-    public void requestDone() {
-        throw new UnsupportedOperationException();
-    }
-
-    public void requestEnsureConnection() {
-        throw new UnsupportedOperationException();
-    }
-
-    public void cleanCursors(final boolean force) {
-        throw new UnsupportedOperationException();
-    }
-
+    @Override
     public CommandResult executeCommand(final DBObject command) {
-        return impl.executeCommand(command);
+         throw new UnsupportedOperationException();
     }
+
 }

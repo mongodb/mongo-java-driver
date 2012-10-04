@@ -21,6 +21,7 @@ package com.mongodb;
 import com.mongodb.DBApiLayer.Result;
 import com.mongodb.util.Util;
 import org.bson.BSONObject;
+import org.mongodb.Database;
 import org.mongodb.impl.DBAdapter;
 
 import java.io.ByteArrayOutputStream;
@@ -38,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * an abstract class that represents a logical database on a server
  * @dochub databases
  */
-public class DB implements org.mongodb.DB {
+public class DB implements Database {
 
     private DBAdapter adapter;
 
@@ -372,6 +373,11 @@ public class DB implements org.mongodb.DB {
      */
     public String getName(){
 	return _name;
+    }
+
+    @Override
+    public CommandResult executeCommand(final DBObject command) {
+        return adapter.executeCommand(command);
     }
 
     /**

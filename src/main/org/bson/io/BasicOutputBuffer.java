@@ -19,6 +19,8 @@
 package org.bson.io;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 
 public class BasicOutputBuffer extends OutputBuffer {
 
@@ -77,6 +79,11 @@ public class BasicOutputBuffer extends OutputBuffer {
         return _size;
     }
 
+    @Override
+    public void pipe(final SocketChannel socketChannel) throws IOException {
+        socketChannel.write(ByteBuffer.wrap(_buffer, 0, _size));
+    }
+
     /**
      * @return bytes written
      */
@@ -111,7 +118,6 @@ public class BasicOutputBuffer extends OutputBuffer {
         throws UnsupportedEncodingException {
         return new String( _buffer , 0 , _size , encoding );
     }
-
 
     private int _cur;
     private int _size;

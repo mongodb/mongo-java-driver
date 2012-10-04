@@ -54,7 +54,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
     // private final transient EntrySet entrySet = new EntrySet();
     // private final transient KeySet keySet = new KeySet();
     // private final transient Values values = new Values();
-    // private final View.Type viewType;
+    // private final View.TYPE viewType;
     private final View<K, V> view;
 
     /**

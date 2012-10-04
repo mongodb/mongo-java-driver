@@ -1,3 +1,8 @@
+package org.bson.io;
+
+import org.bson.BsonType;
+import org.bson.types.ObjectId;
+
 /**
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  * <p/>
@@ -13,10 +18,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+public interface InputBuffer {
+    int getPosition();
 
-package org.mongodb;
+    boolean readBoolean();
 
+    byte readByte();
 
-public interface MongoServer {
-    public Database getDB(String name);
+    byte[] readBytes(int size);
+
+    long readInt64();
+
+    double readDouble();
+
+    int readInt32();
+
+    String readString();
+
+    ObjectId readObjectId();
+
+    BsonType readBsonType();
+
+    String readCString();
+
+    void skipCString();
+
+    void setPosition(int position);
 }

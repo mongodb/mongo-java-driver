@@ -18,12 +18,13 @@
 
 package org.bson.io;
 
-import org.bson.*;
-import org.bson.io.*;
-import org.bson.util.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PoolOutputBuffer extends OutputBuffer {
 
@@ -40,6 +41,10 @@ public class PoolOutputBuffer extends OutputBuffer {
         for ( int i=0; i<_fromPool.size(); i++ )
             _extra.done( _fromPool.get(i) );
         _fromPool.clear();
+    }
+
+    public void close() {
+        reset();
     }
 
     public int getPosition(){
@@ -131,6 +136,15 @@ public class PoolOutputBuffer extends OutputBuffer {
         }
 
         return total;
+    }
+
+    @Override
+    public void pipe(final SocketChannel socketChannel) throws IOException {
+        for (int i = -1; i < _fromPool.size(); i++){
+            final byte[] b = _get( i );
+            final int amt = _end.len( i );
+            socketChannel.write( ByteBuffer.wrap(b, 0, amt));
+        }
     }
 
     static class Position {

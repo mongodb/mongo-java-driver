@@ -15,16 +15,12 @@
  *
  */
 
-package org.mongodb.impl;
+package org.bson;
 
-import org.mongodb.DB;
+public class BinaryWriterSettings {
+    public final int maxDocumentSize;
 
-class DBImpl implements DB {
-    public DBImpl(final String name) {
-
-    }
-
-    public DBCollectionImpl getCollection(final String name) {
-        return new DBCollectionImpl(name);
+    public BinaryWriterSettings(int maxDocumentSize) {
+        this.maxDocumentSize = maxDocumentSize;
     }
 }

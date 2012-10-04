@@ -15,18 +15,21 @@
  *
  */
 
-package org.mongodb.impl;
+package org.mongodb.serialization.serializers;
 
-import org.mongodb.DBCollection;
+import org.bson.BSONReader;
+import org.bson.BSONWriter;
+import org.mongodb.serialization.BsonSerializationOptions;
+import org.mongodb.serialization.Serializer;
 
-class DBCollectionImpl implements DBCollection {
-    private final String name;
-
-    public DBCollectionImpl(final String name) {
-        this.name = name;
+public class StringSerializer implements Serializer {
+    @Override
+    public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value, final BsonSerializationOptions options) {
+        bsonWriter.writeString((String) value);
     }
 
-    public void drop() {
-        throw new UnsupportedOperationException();
+    @Override
+    public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
+        return reader.readString();
     }
 }

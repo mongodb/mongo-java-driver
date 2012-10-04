@@ -18,12 +18,20 @@
 
 package org.bson.io;
 
-import java.io.*;
-import java.security.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.channels.SocketChannel;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public abstract class OutputBuffer extends OutputStream {
 
-    public abstract void write(byte[] b);
+    public void write(byte[] b) {
+        write(b, 0, b.length);
+    }
+
     public abstract void write(byte[] b, int off, int len);
     public abstract void write(int b);
     
@@ -43,6 +51,13 @@ public abstract class OutputBuffer extends OutputStream {
      */
     public abstract int pipe( OutputStream out )
         throws IOException;
+
+    /**
+     * Pipe into the socket channel
+     *
+     * @param socketChannel channel
+     */
+    public abstract void pipe(final SocketChannel socketChannel) throws IOException;
 
     /**
      * mostly for testing
@@ -128,7 +143,21 @@ public abstract class OutputBuffer extends OutputStream {
         write( x >> 24 );
         write( x >> 16 );
         write( x >> 8 );
-        write( x );
+        write(x);
+    }
+
+    /**
+     * Backpatches the size of a document or string by writing the size into the four bytes starting at
+     * getPosition() - size.
+     *
+     * @param size the size of the document/string
+     */
+    public void backpatchSize(int size) {
+        writeInt(getPosition() - size, size);
+    }
+
+    protected void backpatchSize(final int size, final int additionalOffset) {
+        writeInt(getPosition() - size - additionalOffset, size);
     }
 
     public void writeInt( int pos , int x ){
@@ -151,6 +180,53 @@ public abstract class OutputBuffer extends OutputStream {
 
     public void writeDouble( double x ){
         writeLong( Double.doubleToRawLongBits( x ) );
+    }
+
+    public void writeString(final String str) {
+        int lenPos = getPosition();
+        writeInt( 0 ); // making space for size
+        int strLen = writeCString(str);
+        backpatchSize( strLen, 4);
+    }
+
+    public int writeCString(final String str) {
+
+        final int len = str.length();
+        int total = 0;
+
+        for ( int i=0; i<len; ){
+            int c = Character.codePointAt( str , i );
+
+            if ( c < 0x80 ){
+                write( (byte)c );
+                total += 1;
+            }
+            else if ( c < 0x800 ){
+                write( (byte)(0xc0 + (c >> 6) ) );
+                write( (byte)(0x80 + (c & 0x3f) ) );
+                total += 2;
+            }
+            else if (c < 0x10000){
+                write( (byte)(0xe0 + (c >> 12) ) );
+                write( (byte)(0x80 + ((c >> 6) & 0x3f) ) );
+                write( (byte)(0x80 + (c & 0x3f) ) );
+                total += 3;
+            }
+            else {
+                write( (byte)(0xf0 + (c >> 18)) );
+                write( (byte)(0x80 + ((c >> 12) & 0x3f)) );
+                write( (byte)(0x80 + ((c >> 6) & 0x3f)) );
+                write( (byte)(0x80 + (c & 0x3f)) );
+                total += 4;
+            }
+
+            i += Character.charCount(c);
+        }
+
+        write( (byte)0 );
+        total++;
+        return total;
+
     }
 
     public String toString(){

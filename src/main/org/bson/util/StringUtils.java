@@ -15,7 +15,24 @@
  *
  */
 
-package org.mongodb;
+package org.bson.util;
 
-public interface DB {
+import java.util.Collection;
+import java.util.Iterator;
+
+public final class StringUtils {
+    public static String join(String delimiter, Collection<?> s) {
+        StringBuilder builder = new StringBuilder();
+        Iterator iter = s.iterator();
+        while (iter.hasNext()) {
+            builder.append(iter.next());
+            if (!iter.hasNext()) {
+                break;
+            }
+            builder.append(delimiter);
+        }
+        return builder.toString();
+    }
+
+    private StringUtils() {}
 }

@@ -17,13 +17,15 @@
 
 package org.mongodb.impl;
 
+import com.mongodb.CommandResult;
 import com.mongodb.DBDecoder;
 import com.mongodb.DBEncoder;
 import com.mongodb.DBObject;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
-import org.mongodb.DBCollection;
+import org.mongodb.Collection;
+import org.mongodb.DropCollectionCommand;
 
 import java.util.Iterator;
 import java.util.List;
@@ -32,13 +34,13 @@ import java.util.List;
  * DBCollection adapter to new API.  THIS CLASS SHOULD NOT BE CONSIDERED PART OF THE PUBLIC API.
  */
 public class DBCollectionAdapter {
-    private final DBCollectionImpl impl;
+    private final CollectionImpl impl;
 
-    public DBCollectionAdapter(final DBCollectionImpl impl) {
+    public DBCollectionAdapter(final CollectionImpl impl) {
         this.impl = impl;
     }
 
-    public DBCollection getDBCollection() {
+    public Collection getCollection() {
         return impl;
     }
 
@@ -62,5 +64,12 @@ public class DBCollectionAdapter {
 
     public void createIndex(final DBObject keys, final DBObject options, final DBEncoder encoder) {
         throw new UnsupportedClassVersionError();
+    }
+
+    public void drop() {
+        CommandResult res = new DropCollectionCommand(impl).execute();
+        if (!res.ok() && !res.getErrorMessage().equals("ns not found")) {
+            res.throwOnError();
+        }
     }
 }

@@ -21,6 +21,7 @@ package com.mongodb;
 // Mongo
 
 import org.bson.types.ObjectId;
+import org.mongodb.Collection;
 import org.mongodb.impl.DBCollectionAdapter;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ import java.util.Set;
  * @dochub collections
  */
 @SuppressWarnings("unchecked")
-public class DBCollection {
+public class DBCollection implements Collection {
 
     DBCollectionAdapter adapter;
 
@@ -869,14 +870,7 @@ public class DBCollection {
      * @throws MongoException
      */
     public void drop(){
-        adapter.getDBCollection().drop();
-        /*
-        resetIndexCache();
-        CommandResult res =_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
-        if (res.ok() || res.getErrorMessage().equals( "ns not found" ))
-            return;
-        res.throwOnError();
-        */
+        adapter.drop();
     }
 
     /**

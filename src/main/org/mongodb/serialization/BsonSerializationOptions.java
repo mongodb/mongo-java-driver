@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.serialization;
 
-
-public interface MongoServer {
-    public Database getDB(String name);
+public interface BsonSerializationOptions {
 }
