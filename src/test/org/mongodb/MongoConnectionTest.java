@@ -20,6 +20,8 @@ package org.mongodb;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
+import org.bson.BSONReader;
+import org.bson.BSONWriter;
 import org.bson.BsonType;
 import org.bson.io.PooledByteBufferOutput;
 import org.bson.types.Binary;
@@ -30,6 +32,8 @@ import org.mongodb.protocol.MongoInsertMessage;
 import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.serialization.BinarySerializer;
+import org.mongodb.serialization.BsonSerializationOptions;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.Serializers;
 import org.mongodb.serialization.serializers.DateSerializer;
 import org.mongodb.serialization.serializers.DoubleSerializer;
@@ -78,6 +82,100 @@ public class MongoConnectionTest extends Assert {
     @AfterTest
     public void tearDown() {
         connection.close();
+    }
+
+    static class Concrete {
+        ObjectId id;
+        String str;
+        int i;
+        long l;
+        double d;
+        long date;
+
+        public Concrete(final ObjectId id, final String str, final int i, final long l, final double d, final long date) {
+            this.id = id;
+            this.str = str;
+            this.i = i;
+            this.l = l;
+            this.d = d;
+            this.date = date;
+        }
+
+        public Concrete() {
+
+        }
+
+        @Override
+        public String toString() {
+            return "Concrete{" +
+                    "id=" + id +
+                    ", str='" + str + '\'' +
+                    ", i=" + i +
+                    ", l=" + l +
+                    ", d=" + d +
+                    ", date=" + date +
+                    '}';
+        }
+    }
+
+    static class ConcreteSerializer implements Serializer {
+
+        @Override
+        public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value, final BsonSerializationOptions options) {
+            Concrete c = (Concrete) value;
+            bsonWriter.writeStartDocument();
+            {
+                bsonWriter.writeObjectId("_id", c.id);
+                bsonWriter.writeString("str", c.str);
+                bsonWriter.writeInt32("i", c.i);
+                bsonWriter.writeInt64("l", c.l);
+                bsonWriter.writeDouble("d", c.d);
+                bsonWriter.writeDateTime("date", c.date);
+            }
+            bsonWriter.writeEndDocument();
+        }
+
+        @Override
+        public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
+            Concrete c = new Concrete();
+            reader.readStartDocument();
+            {
+                c.id = reader.readObjectId("_id");
+                c.str = reader.readString("str");
+                c.i = reader.readInt32("i");
+                c.l = reader.readInt64("l");
+                c.d = reader.readDouble("d");
+                c.date = reader.readDateTime("date");
+
+            }
+            reader.readEndDocument();
+            return c;
+        }
+    }
+
+    @Test
+    public void concreteClassTest() throws IOException {
+        serializers.register(Concrete.class, BsonType.DOCUMENT, new ConcreteSerializer());
+
+        Concrete c = new Concrete(new ObjectId(), "hi mom", 42, 42L, 42.0, new Date().getTime());
+
+        MongoInsertMessage insertMessage = new MongoInsertMessage("test.concrete",
+                WriteConcern.NONE, new PooledByteBufferOutput(bufferPool));
+        insertMessage.addDocument(Concrete.class, c, serializers);
+
+        connection.sendMessage(insertMessage);
+
+        final Map<String, Object> query = new HashMap<String, Object>();
+        query.put("i", 42);
+
+        MongoQueryMessage queryMessage = new MongoQueryMessage("test.concrete", 0, 0, 0,
+                query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
+
+        connection.sendMessage(queryMessage);
+
+
+        MongoReplyMessage<Concrete> replyMessage = connection.receiveMessage(serializers, Concrete.class);
+        System.out.println(replyMessage.getDocuments());
     }
 
     @Test
@@ -178,21 +276,21 @@ public class MongoConnectionTest extends Assert {
 
         List<Map<String, Object>> documents = new ArrayList<Map<String, Object>>();
 
-        Map<String, Object> doc1 = new HashMap<String, Object>();
+        Map<String, Object> doc1 = new LinkedHashMap<String, Object>();
         doc1.put("_id", new ObjectId());
         doc1.put("str", "hi mom");
         doc1.put("int", 42);
 
-        Map<String, Object> doc2 = new HashMap<String, Object>();
-        doc2.put("_id", new ObjectId());
-        doc2.put("str", "hi dad");
-        doc2.put("int", 0);
+//        Map<String, Object> doc2 = new LinkedHashMap<String, Object>();
+//        doc2.put("_id", new ObjectId());
+//        doc2.put("str", "hi dad");
+//        doc2.put("int", 0);
 
         documents.add(doc1);
-        documents.add(doc2);
+//        documents.add(doc2);
 
         message.addDocument(Map.class, doc1, serializers);
-        message.addDocument(Map.class, doc2, serializers);
+//        message.addDocument(Map.class, doc2, serializers);
 
         connection.sendMessage(message);
 
