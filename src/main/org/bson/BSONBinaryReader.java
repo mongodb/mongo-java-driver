@@ -244,7 +244,18 @@ public class BSONBinaryReader extends BSONReader {
 
     @Override
     public void readEndArray() {
-        // TODO: check preconditions
+        if (isClosed()) {
+            throw new IllegalStateException("BsonBinaryWriter");
+        }
+        if (context.contextType != ContextType.ARRAY) {
+            throwInvalidContextType("readEndArray", context.contextType, ContextType.ARRAY);
+        }
+        if (getState() == State.TYPE) {
+            readBsonType(); // will set state to EndOfArray if at end of array
+        }
+        if (getState() != State.END_OF_ARRAY) {
+            throwInvalidState("ReadEndArray", State.END_OF_ARRAY);
+        }
 
         context = context.popContext(buffer.getPosition());
         setStateOnEnd();
@@ -252,7 +263,18 @@ public class BSONBinaryReader extends BSONReader {
 
     @Override
     public void readEndDocument() {
-        // TODO: check preconditions
+        if (isClosed()) {
+            throw new IllegalStateException("BsonBinaryWriter");
+        }
+        if (context.contextType != ContextType.DOCUMENT && context.contextType != ContextType.SCOPE_DOCUMENT) {
+            throwInvalidContextType("readEndDocument", context.contextType, ContextType.DOCUMENT, ContextType.SCOPE_DOCUMENT);
+        }
+        if (getState() == State.TYPE) {
+            readBsonType(); // will set state to EndOfDocument if at end of document
+        }
+        if (getState() != State.END_OF_DOCUMENT) {
+            throwInvalidState("readEndDocument", State.END_OF_DOCUMENT);
+        }
 
         context = context.popContext(buffer.getPosition());
         if (context != null && context.contextType == ContextType.JAVASCRIPT_WITH_SCOPE) {
