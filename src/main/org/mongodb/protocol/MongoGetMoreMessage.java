@@ -24,6 +24,7 @@ public class MongoGetMoreMessage extends MongoRequestMessage {
                                OutputBuffer buffer) {
         super(collectionName, OpCode.OP_GETMORE, buffer);
         writeGetMore(cursorId, batchSize);
+        backpatchMessageLength();
     }
 
     private void writeGetMore(final long cursorId, final int batchSize) {

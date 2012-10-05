@@ -23,6 +23,7 @@ public class MongoKillCursorsMessage extends MongoRequestMessage {
     public MongoKillCursorsMessage(int numCursors, OutputBuffer buffer) {
         super(OpCode.OP_KILL_CURSORS, buffer);
         writeKillCursorsPrologue(numCursors);
+        backpatchMessageLength();
     }
 
     private void writeKillCursorsPrologue(final int numCursors) {

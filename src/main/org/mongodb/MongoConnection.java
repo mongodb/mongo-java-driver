@@ -105,9 +105,8 @@ public class MongoConnection {
         if (length > 36) {
             bodyByteBuffer = pool.get(length - 36);
 
-            bytesRead = socketChannel.read(bodyByteBuffer);
-            if (bytesRead < bodyByteBuffer.limit()) {
-                throw new MongoException("Unable to read message body: " + bytesRead);
+            while (bytesRead < bodyByteBuffer.limit()) {
+               bytesRead += socketChannel.read(bodyByteBuffer);
             }
 
             bodyByteBuffer.flip();

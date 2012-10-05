@@ -29,6 +29,7 @@ public class MongoDeleteMessage extends MongoRequestMessage {
                               Serializer serializer) {
         super(collectionName, OpCode.OP_DELETE,  query, buffer);
         writeDelete(serializer);
+        backpatchMessageLength();
     }
 
     private void writeDelete(final Serializer serializer) {

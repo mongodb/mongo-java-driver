@@ -28,6 +28,7 @@ public class MongoUpdateMessage extends MongoRequestMessage {
                        Map<String, Object> updateOperations, OutputBuffer buffer, Serializer serializer) {
         super(collectionName, OpCode.OP_UPDATE, query, buffer);
         writeUpdate(upsert, multi, query, updateOperations, serializer);
+        backpatchMessageLength();
     }
 
     void writeUpdate(final boolean upsert, final boolean multi, final Map<String, Object> query,
@@ -36,8 +37,12 @@ public class MongoUpdateMessage extends MongoRequestMessage {
         buffer.writeCString(collectionName);
 
         int flags = 0;
-        if (upsert) flags |= 1;
-        if (multi) flags |= 2;
+        if (upsert) {
+            flags |= 1;
+        }
+        if (multi) {
+            flags |= 2;
+        }
         buffer.writeInt(flags);
 
         addDocument(query.getClass(), query, serializer);

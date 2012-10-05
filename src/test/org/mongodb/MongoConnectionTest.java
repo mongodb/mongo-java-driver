@@ -28,6 +28,7 @@ import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.util.BufferPool;
 import org.bson.util.PowerOfTwoByteBufferPool;
+import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.protocol.MongoInsertMessage;
 import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyMessage;
@@ -184,10 +185,11 @@ public class MongoConnectionTest extends Assert {
 
         long startTime = System.nanoTime();
         int iterations = 64000;
-        byte[] bytes = new byte[4096];
+        byte[] bytes = new byte[8192];
         for (int i = 0; i < iterations; i++) {
-            if ((i + 1) % 10000 == 0)
+            if ((i > 0) && (i % 10000 == 0)) {
                 System.out.println("i: " + i);
+            }
 
             MongoInsertMessage message = new MongoInsertMessage("MongoConnectionTest.sendMessageTest",
                     WriteConcern.NONE, new PooledByteBufferOutput(bufferPool));
@@ -205,21 +207,52 @@ public class MongoConnectionTest extends Assert {
 
             connection.sendMessage(message);
 
-//            final Map<String, Object> query = new HashMap<String, Object>();
-//            query.put("int", 42);
-//
-//            MongoQueryMessage queryMessage = new MongoQueryMessage("MongoConnectionTest.sendMessageTest", 0, 0, 0,
-//                    query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
-//
-//            connection.sendMessage(queryMessage);
-//
-//            MongoReplyMessage<Map<String, Object>> replyMessage = connection.receiveMessage(serializers, Map.class);
-//            System.out.println(replyMessage.getDocuments());
         }
+
         long endTime = System.nanoTime();
         long elapsedTime = (endTime - startTime) / 1000000000;
         System.out.println("Time: " + elapsedTime + " sec");
         System.out.println(iterations / elapsedTime + " messages/sec");
+        System.out.flush();
+
+        System.out.println();
+
+        System.out.println("Query time...");
+
+        final Map<String, Object> query = new HashMap<String, Object>();
+
+        startTime = endTime;
+
+        MongoQueryMessage queryMessage = new MongoQueryMessage("MongoConnectionTest.sendMessageTest", 0, 0, 0,
+                query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
+
+        connection.sendMessage(queryMessage);
+
+        int totalDocuments = 0;
+
+        MongoReplyMessage<Map<String, Object>> replyMessage = connection.receiveMessage(serializers, Map.class);
+        totalDocuments += replyMessage.getNumberReturned();
+        System.out.println(" Initial: " + replyMessage.getDocuments().size());
+
+        while (replyMessage.getCursorId() != 0) {
+            MongoGetMoreMessage getMoreMessage = new MongoGetMoreMessage("MongoConnectionTest.sendMessageTest",
+                    replyMessage.getCursorId(), 0, new PooledByteBufferOutput(bufferPool));
+
+            connection.sendMessage(getMoreMessage);
+
+            replyMessage = connection.receiveMessage(serializers, Map.class);
+            totalDocuments += replyMessage.getNumberReturned();
+            System.out.println(" Get more: " + replyMessage.getDocuments().size());
+        }
+
+        System.out.println("Total: " + totalDocuments);
+
+        System.out.println();
+
+        endTime = System.nanoTime();
+        elapsedTime = (endTime - startTime) / 1000000000;
+        System.out.println("Time: " + elapsedTime + " sec");
+        System.out.println(iterations / elapsedTime + " documents/sec");
         System.out.flush();
         Thread.sleep(1000);
     }

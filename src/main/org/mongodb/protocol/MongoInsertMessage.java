@@ -24,6 +24,7 @@ public class MongoInsertMessage extends MongoRequestMessage {
     public MongoInsertMessage(String collectionName, WriteConcern concern, OutputBuffer buffer) {
         super(collectionName, OpCode.OP_INSERT, buffer);
         writeInsertPrologue(concern);
+        backpatchMessageLength();
     }
 
     private void writeInsertPrologue(final WriteConcern concern) {

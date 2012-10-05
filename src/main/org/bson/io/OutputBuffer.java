@@ -186,7 +186,7 @@ public abstract class OutputBuffer extends OutputStream {
         int lenPos = getPosition();
         writeInt( 0 ); // making space for size
         int strLen = writeCString(str);
-        backpatchSize( strLen, 4);
+        backpatchSize(strLen, 4);
     }
 
     public int writeCString(final String str) {
@@ -226,7 +226,6 @@ public abstract class OutputBuffer extends OutputStream {
         write( (byte)0 );
         total++;
         return total;
-
     }
 
     public String toString(){
