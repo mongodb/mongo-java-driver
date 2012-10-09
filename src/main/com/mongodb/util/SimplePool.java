@@ -155,14 +155,12 @@ public abstract class SimplePool<T> {
     }
 
     /** Clears the pool of all objects. */
-    protected void close(){
-        synchronized( _avail ){
-            _closed = true;
-            for ( T t : _avail )
-                cleanup( t );
-            _avail.clear();
-            _out.clear();
-        }
+    protected synchronized void close(){
+        _closed = true;
+        for (T t : _avail)
+            cleanup(t);
+        _avail.clear();
+        _out.clear();
     }
 
     public String getName() {
