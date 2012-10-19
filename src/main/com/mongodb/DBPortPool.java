@@ -36,19 +36,16 @@ import java.util.logging.Level;
 /**
  * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
  */
-public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoolMXBean {
+public class DBPortPool extends SimplePool<DBPort> {
 
-    @Override
     public String getHost() {
         return _addr.getHost();
     }
 
-    @Override
     public int getPort() {
         return _addr.getPort();
     }
 
-    @Override
     public synchronized ConnectionPoolStatisticsBean getStatistics() {
         return new ConnectionPoolStatisticsBean(getTotal(), getInUse(), getInUseConnections());
     }
@@ -82,7 +79,7 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
                     return p;
                 }
 
-                p = new DBPortPool( addr , _options );
+                p = createPool(addr);
                 _pools.put( addr , p);
 
                 try {
@@ -100,6 +97,14 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
             }
 
             return p;
+        }
+
+        private DBPortPool createPool(final ServerAddress addr) {
+            if (isJava5) {
+                return new Java5MongoConnectionPool(addr, _options);
+            } else {
+                return new MongoConnectionPool(addr, _options);
+            }
         }
 
         void close(){
@@ -126,12 +131,17 @@ public class DBPortPool extends SimplePool<DBPort> implements MongoConnectionPoo
             return name;
         }
 
+        static {
+            isJava5 = System.getProperty("java.version").startsWith("1.5");
+        }
+
         final MongoOptions _options;
         final Map<ServerAddress,DBPortPool> _pools = Collections.synchronizedMap( new HashMap<ServerAddress,DBPortPool>() );
         final int _serial = nextSerial.incrementAndGet();
 
         // we use this to give each Holder a different mbean name
         static AtomicInteger nextSerial = new AtomicInteger(0);
+        static final boolean isJava5;
     }
 
     // ----
