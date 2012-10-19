@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008 - 20112 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,18 @@
 
 package com.mongodb;
 
-import com.mongodb.util.ConnectionPoolStatisticsBean;
-
 /**
- * A standard MXBean interface for a Mongo connection pool, for use on Java 6 and above virtual machines.
+ * A standard MBean interface for a Mongo connection pool, for use on Java 5 virtual machines.
  * <p>
  * This interface is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
  */
-public interface MongoConnectionPoolMXBean {
+public interface Java5MongoConnectionPoolMBean {
     /**
      * Gets the name of the pool.
      *
      * @return the name of the pool
      */
     String getName();
-
-    /**
-     * Gets the maximum allowed size of the pool, including idle and in-use members.
-     *
-     * @return the maximum size
-     */
-    int getMaxSize();
-
 
     /**
      * Gets the host that this connection pool is connecting to.
@@ -54,9 +44,23 @@ public interface MongoConnectionPoolMXBean {
     int getPort();
 
     /**
-     * Gets the statistics for this connection pool.
+     * Gets the total number of pool members, including idle and and in-use members.
      *
-     * @return the connection pool statistics
+     * @return total number of members
      */
-    ConnectionPoolStatisticsBean getStatistics();
+    int getTotal();
+
+    /**
+     * Gets the number of pool members that are currently in use.
+     *
+     * @return number of in-use members
+     */
+    int getInUse();
+
+    /**
+     * Gets the maximum allowed size of the pool, including idle and in-use members.
+     *
+     * @return the maximum size
+     */
+    int getMaxSize();
 }
