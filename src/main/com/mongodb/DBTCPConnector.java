@@ -252,64 +252,67 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries, ReadPreference readPref, DBDecoder decoder ){
-
         try {
-            if (readPref == null)
-                readPref = ReadPreference.primary();
-
-            if (readPref == ReadPreference.primary() && m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
-               readPref = ReadPreference.secondaryPreferred();
-
-            boolean secondaryOk = !(readPref == ReadPreference.primary());
-
-            _checkClosed();
-            if (!secondaryOk)
-                checkMaster( false, !secondaryOk );
-
-            final MyPort mp = _myPort.get();
-            final DBPort port = mp.get( false , readPref, hostNeeded );
-
-            Response res = null;
-            boolean retry = false;
-            try {
-                port.checkAuth( db );
-                res = port.call( m , coll, decoder );
-                if ( res._responseTo != m.getId() )
-                    throw new MongoException( "ids don't match" );
-            }
-            catch ( IOException ioe ){
-                mp.error( port , ioe );
-                retry = retries > 0 && !coll._name.equals( "$cmd" )
-                        && !(ioe instanceof SocketTimeoutException) && _error( ioe, secondaryOk );
-                if ( !retry ){
-                    throw new MongoException.Network( "can't call something : " + port.host() + "/" + db,
-                                                      ioe );
-                }
-            }
-            catch ( RuntimeException re ){
-                mp.error( port , re );
-                throw re;
-            } finally {
-                mp.done( port );
-            }
-
-            if (retry)
-                return call( db , coll , m , hostNeeded , retries - 1 , readPref, decoder );
-
-            ServerError err = res.getError();
-
-            if ( err != null && err.isNotMasterError() ){
-                checkMaster( true , true );
-                if ( retries <= 0 ){
-                    throw new MongoException( "not talking to master and retries used up" );
-                }
-                return call( db , coll , m , hostNeeded , retries -1, readPref, decoder );
-            }
-
-            return res;
+            return innerCall(db, coll, m, hostNeeded, retries, readPref, decoder);
         } finally {
             m.doneWithMessage();
         }
+    }
+
+    private Response innerCall(final DB db, final DBCollection coll, final OutMessage m, final ServerAddress hostNeeded, final int retries, ReadPreference readPref, final DBDecoder decoder) {
+        if (readPref == null)
+            readPref = ReadPreference.primary();
+
+        if (readPref == ReadPreference.primary() && m.hasOption( Bytes.QUERYOPTION_SLAVEOK ))
+           readPref = ReadPreference.secondaryPreferred();
+
+        boolean secondaryOk = !(readPref == ReadPreference.primary());
+
+        _checkClosed();
+        if (!secondaryOk)
+            checkMaster( false, !secondaryOk );
+
+        final MyPort mp = _myPort.get();
+        final DBPort port = mp.get( false , readPref, hostNeeded );
+
+        Response res = null;
+        boolean retry = false;
+        try {
+            port.checkAuth( db );
+            res = port.call( m , coll, decoder );
+            if ( res._responseTo != m.getId() )
+                throw new MongoException( "ids don't match" );
+        }
+        catch ( IOException ioe ){
+            mp.error( port , ioe );
+            retry = retries > 0 && !coll._name.equals( "$cmd" )
+                    && !(ioe instanceof SocketTimeoutException) && _error( ioe, secondaryOk );
+            if ( !retry ){
+                throw new MongoException.Network( "can't call something : " + port.host() + "/" + db,
+                                                  ioe );
+            }
+        }
+        catch ( RuntimeException re ){
+            mp.error( port , re );
+            throw re;
+        } finally {
+            mp.done( port );
+        }
+
+        if (retry)
+            return innerCall( db , coll , m , hostNeeded , retries - 1 , readPref, decoder );
+
+        ServerError err = res.getError();
+
+        if ( err != null && err.isNotMasterError() ){
+            checkMaster( true , true );
+            if ( retries <= 0 ){
+                throw new MongoException( "not talking to master and retries used up" );
+            }
+            return innerCall( db , coll , m , hostNeeded , retries -1, readPref, decoder );
+        }
+
+        return res;
     }
 
     public ServerAddress getAddress(){
