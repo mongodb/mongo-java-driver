@@ -221,20 +221,38 @@ class OutMessage extends BasicBSONEncoder {
     }
 
     void prepare(){
+        if (_buffer == null) {
+            throw new IllegalStateException("Already closed");
+        }
+
         _buffer.writeInt( 0 , _buffer.size() );
     }
 
     void pipe( OutputStream out ) throws IOException {
+        if (_buffer == null) {
+            throw new IllegalStateException("Already closed");
+        }
+
         _buffer.pipe( out );
     }
 
-    int size(){
+    int size() {
+        if (_buffer == null) {
+            throw new IllegalStateException("Already closed");
+        }
+
         return _buffer.size();
     }
 
-    void doneWithMessage(){
+    void doneWithMessage() {
+        if (_buffer == null) {
+            throw new IllegalStateException("Only call this once per instance");
+        }
+
         _buffer.reset();
         _mongo._bufferPool.done(_buffer);
+        _buffer = null;
+        done();
     }
 
     boolean hasOption( int option ){
@@ -263,6 +281,10 @@ class OutMessage extends BasicBSONEncoder {
 
     @Override
     public int putObject(BSONObject o) {
+        if (_buffer == null) {
+            throw new IllegalStateException("Already closed");
+        }
+
         // check max size
         int objectSize = _encoder.writeObject(_buf, o);
         if (objectSize > Math.max(_mongo.getConnector().getMaxBsonObjectSize(), Bytes.MAX_OBJECT_SIZE)) {
@@ -274,7 +296,7 @@ class OutMessage extends BasicBSONEncoder {
 
     private final Mongo _mongo;
     private final DBCollection _collection;
-    private final PoolOutputBuffer _buffer;
+    private PoolOutputBuffer _buffer;
     private final int _id;
     private final OpCode _opCode;
     private final int _queryOptions;
