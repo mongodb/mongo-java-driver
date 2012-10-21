@@ -51,6 +51,7 @@ public class MongoOptions {
         socketFactory = SocketFactory.getDefault();
         description = null;
         cursorFinalizerEnabled = true;
+        alwaysUseMBeans = false;
     }
 
     public MongoOptions copy() {
@@ -75,6 +76,7 @@ public class MongoOptions {
         m.socketFactory = socketFactory;
         m.description = description;
         m.cursorFinalizerEnabled = cursorFinalizerEnabled;
+        m.alwaysUseMBeans = alwaysUseMBeans;
         return m;
     }
 
@@ -236,7 +238,15 @@ public class MongoOptions {
      */
     public boolean cursorFinalizerEnabled;
 
-
+    /**
+     * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is
+     * Java 6 or greater. If false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if
+     * the VM is Java 5.
+     * <p>
+     *     Default is false.
+     * </p>
+     */
+    public boolean alwaysUseMBeans;
 
     public String toString(){
         StringBuilder buf = new StringBuilder();
@@ -258,7 +268,8 @@ public class MongoOptions {
         buf.append( "wtimeout=" ).append( wtimeout ).append( ", " );
         buf.append( "fsync=" ).append( fsync ).append( ", " );
         buf.append( "j=" ).append(j).append( ", " );
-        buf.append( "cursorFinalizerEnabled=").append( cursorFinalizerEnabled);
+        buf.append( "cursorFinalizerEnabled=").append(cursorFinalizerEnabled).append( ", " );
+        buf.append( "alwaysUseMBeans=").append(alwaysUseMBeans);
 
         return buf.toString();
     }
@@ -567,5 +578,21 @@ public class MongoOptions {
      */
     public void setCursorFinalizerEnabled(final boolean cursorFinalizerEnabled) {
         this.cursorFinalizerEnabled = cursorFinalizerEnabled;
+    }
+
+    /**
+     *
+     * @return true if the driver should always use MBeans, regardless of VM
+     */
+    public boolean isAlwaysUseMBeans() {
+        return alwaysUseMBeans;
+    }
+
+    /**
+     *
+     * @param alwaysUseMBeans sets whether the driver should always use MBeans, regardless of VM
+     */
+    public void setAlwaysUseMBeans(final boolean alwaysUseMBeans) {
+        this.alwaysUseMBeans = alwaysUseMBeans;
     }
 }
