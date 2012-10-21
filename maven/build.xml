@@ -199,6 +199,8 @@ limitations under the License.
             <arg value="-DrepositoryId=${maven-snapshots-repository-id}"/>
             <arg value="-DpomFile=${dir.build}/maven-mongo-java-driver.xml"/>
             <arg value="-Dfile=${dir.build}/dist/mongo-java-driver-${build.conf.lib.version}.jar"/>
+            <arg value="-Dsources=${dir.build}/dist/mongo-java-driver-sources-${build.conf.lib.version}.jar"/>
+            <arg value="-Djavadoc=${dir.build}/dist/mongo-java-driver-javadoc-${build.conf.lib.version}.jar"/>
         </artifact:mvn>
 
         <artifact:mvn>
@@ -207,6 +209,8 @@ limitations under the License.
             <arg value="-DrepositoryId=${maven-snapshots-repository-id}"/>
             <arg value="-DpomFile=${dir.build}/maven-bson.xml"/>
             <arg value="-Dfile=${dir.build}/dist/bson-${build.conf.lib.version}.jar"/>
+            <arg value="-Dsources=${dir.build}/dist/bson-sources-${build.conf.lib.version}.jar"/>
+            <arg value="-Djavadoc=${dir.build}/dist/bson-javadoc-${build.conf.lib.version}.jar"/>
         </artifact:mvn>
 
     </target>
