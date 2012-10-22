@@ -82,9 +82,9 @@ public class Mongo {
      * @deprecated Replaced by <code>Mongo.getMinorVersion()</code>
      */
     @Deprecated
-    public static final int MINOR_VERSION = 9;
+    public static final int MINOR_VERSION = 10;
 
-    private static final String FULL_VERSION = "2.9.1";
+    private static final String FULL_VERSION = "2.10.0-SNAPSHOT";
 
     static int cleanerIntervalMS;
     static {
