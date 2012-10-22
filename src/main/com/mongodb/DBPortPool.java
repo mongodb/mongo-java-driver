@@ -90,9 +90,12 @@ public class DBPortPool extends SimplePool<DBPort> {
                     }
                     MBeanServerFactory.getMBeanServer().registerMBean(p, on);
                 } catch (JMException e) {
-                    Bytes.LOGGER.log(Level.WARNING, "jmx registration error: " + e + " continuing...");
+                    Bytes.LOGGER.log(Level.WARNING, "JMX registration error: " + e +
+                            "\nConsider setting com.mongodb.MongoOptions.alwaysUseMBeans property to true." +
+                            "\nContinuing...");
                 } catch (java.security.AccessControlException e) {
-                    Bytes.LOGGER.log(Level.WARNING, "jmx registration error: " + e + " continuing...");
+                    Bytes.LOGGER.log(Level.WARNING, "JMX registration error: " + e +
+                            "\nContinuing...");
                 }
             }
 
