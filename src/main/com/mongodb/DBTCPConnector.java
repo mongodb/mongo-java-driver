@@ -251,7 +251,8 @@ public class DBTCPConnector implements DBConnector {
      * @throws MongoException
      */
     @Override
-    public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries, ReadPreference readPref, DBDecoder decoder ){
+    public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries,
+                          ReadPreference readPref, DBDecoder decoder ){
         try {
             return innerCall(db, coll, m, hostNeeded, retries, readPref, decoder);
         } finally {
@@ -259,7 +260,9 @@ public class DBTCPConnector implements DBConnector {
         }
     }
 
-    private Response innerCall(final DB db, final DBCollection coll, final OutMessage m, final ServerAddress hostNeeded, final int retries, ReadPreference readPref, final DBDecoder decoder) {
+    // This method is recursive.  It calls itself to implement query retry logic.
+    private Response innerCall(final DB db, final DBCollection coll, final OutMessage m, final ServerAddress hostNeeded,
+                               final int retries, ReadPreference readPref, final DBDecoder decoder) {
         if (readPref == null)
             readPref = ReadPreference.primary();
 
