@@ -269,7 +269,8 @@ public class DBTCPConnector implements DBConnector {
         boolean secondaryOk = !(readPref == ReadPreference.primary());
 
         _checkClosed();
-        if (!secondaryOk)
+        // Don't check master on secondary reads unless connected to a replica set
+        if (!secondaryOk || getReplicaSetStatus() == null)
             checkMaster( false, !secondaryOk );
 
         final MyPort mp = _myPort.get();
