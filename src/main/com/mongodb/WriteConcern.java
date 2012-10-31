@@ -58,6 +58,12 @@ public class WriteConcern implements Serializable {
     /** Exceptions are raised for network issues, and server errors; waits on a server for the write operation */
     public final static WriteConcern SAFE = new WriteConcern(1);
 
+    /** Exceptions are raised for network issues, but not server errors */
+    public final static WriteConcern UNACKNOWLEDGED = new WriteConcern(0);
+
+    /** Exceptions are raised for network issues, and server errors; waits on a server for the write operation */
+    public final static WriteConcern ACKNOWLEDGED = new WriteConcern(1);
+
     /** Exceptions are raised for network issues, and server errors; waits on a majority of servers for the write operation */
     public final static WriteConcern MAJORITY = new Majority();
 
@@ -227,12 +233,20 @@ public class WriteConcern implements Serializable {
         _continueOnErrorForInsert = continueOnInsertError;
     }
 
-    public BasicDBObject getCommand(){
+    /**
+     * Gets the getlasterror command for this write concern.
+     *
+     * @return getlasterror command, even if <code>w <= 0</code>
+     */
+    public BasicDBObject getCommand() {
         BasicDBObject _command = new BasicDBObject( "getlasterror" , 1 );
 
-        if ( _w instanceof Integer && ( (Integer) _w > 0) ||
-            ( _w instanceof String && _w != null ) ){
+
+        if (_w instanceof Integer && ((Integer) _w > 1) || (_w instanceof String)){
             _command.put( "w" , _w );
+        }
+
+        if (_wtimeout > 0) {
             _command.put( "wtimeout" , _wtimeout );
         }
 
@@ -273,7 +287,7 @@ public class WriteConcern implements Serializable {
 
     /**
      * Gets the w parameter (the write strategy) in String format
-     * @return
+     * @return w as a string
      */
     public String getWString(){
         return _w.toString();
@@ -335,7 +349,8 @@ public class WriteConcern implements Serializable {
             for (Field f : WriteConcern.class.getFields())
                 if (Modifier.isStatic( f.getModifiers() ) && f.getType().equals( WriteConcern.class )) {
                     try {
-                        newMap.put( f.getName().toLowerCase(), (WriteConcern) f.get( null ) );
+                        String key = f.getName().toLowerCase();
+                        newMap.put(key, (WriteConcern) f.get( null ) );
                     } catch (Exception e) {
                         throw new RuntimeException( e );
                     }
@@ -350,7 +365,7 @@ public class WriteConcern implements Serializable {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return "WriteConcern " + getCommand() + " / (Continue Inserting on Errors? " + getContinueOnErrorForInsert() + ")";
     }
 

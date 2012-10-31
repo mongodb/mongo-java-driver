@@ -22,16 +22,23 @@ import com.mongodb.util.TestCase;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.UnknownHostException;
 
 public class WriteConcernTest extends TestCase {
 
     @Test
     public void testEqualityAndHashCode() {
-        Assert.assertEquals(new WriteConcern(new String("majority")), new WriteConcern(new String("majority")));
-        Assert.assertEquals(new WriteConcern(new String("majority")).hashCode(), new WriteConcern(new String("majority")).hashCode());
-        Assert.assertNotEquals(new WriteConcern(new String("majority")), new WriteConcern(1));
-        Assert.assertNotEquals(new WriteConcern(new String("majority")).hashCode(), new WriteConcern(1).hashCode());
+        Assert.assertEquals(new WriteConcern("majority"), new WriteConcern("majority"));
+        Assert.assertEquals(new WriteConcern("majority").hashCode(), new WriteConcern("majority").hashCode());
+        Assert.assertNotEquals(new WriteConcern("majority"), new WriteConcern(1));
+        Assert.assertNotEquals(new WriteConcern("majority").hashCode(), new WriteConcern(1).hashCode());
+
+        Assert.assertEquals(new WriteConcern(1), WriteConcern.ACKNOWLEDGED);
     }
 
     @Test
@@ -70,5 +77,63 @@ public class WriteConcernTest extends TestCase {
         Assert.assertEquals(false, object2.getFsync());
         Assert.assertEquals(false, object2.getJ());
         Assert.assertEquals(false, object2.getContinueOnErrorForInsert());
+    }
+
+    @Test
+    public void testCheckLastError() {
+        Assert.assertFalse(WriteConcern.NONE.callGetLastError());
+        Assert.assertFalse(WriteConcern.NORMAL.callGetLastError());
+        Assert.assertFalse(WriteConcern.UNACKNOWLEDGED.callGetLastError());
+        Assert.assertTrue(WriteConcern.SAFE.callGetLastError());
+        Assert.assertTrue(WriteConcern.ACKNOWLEDGED.callGetLastError());
+        Assert.assertTrue(WriteConcern.FSYNC_SAFE.callGetLastError());
+        Assert.assertTrue(WriteConcern.JOURNAL_SAFE.callGetLastError());
+        Assert.assertTrue(WriteConcern.MAJORITY.callGetLastError());
+        Assert.assertTrue(WriteConcern.REPLICAS_SAFE.callGetLastError());
+        Assert.assertTrue(new WriteConcern("custom").callGetLastError());
+        Assert.assertFalse(new WriteConcern(0, 1000).callGetLastError());
+        Assert.assertFalse(new WriteConcern(0, 0, true, false).callGetLastError());
+        Assert.assertFalse(new WriteConcern(0, 0, false, true).callGetLastError());
+    }
+
+    @Test
+    public void testRaiseNetworkErrors() {
+        Assert.assertFalse(WriteConcern.NONE.raiseNetworkErrors());
+        Assert.assertTrue(WriteConcern.NORMAL.raiseNetworkErrors());
+        Assert.assertTrue(WriteConcern.UNACKNOWLEDGED.raiseNetworkErrors());
+        Assert.assertTrue(WriteConcern.SAFE.raiseNetworkErrors());
+        Assert.assertTrue(WriteConcern.ACKNOWLEDGED.raiseNetworkErrors());
+        Assert.assertTrue(WriteConcern.FSYNC_SAFE.raiseNetworkErrors());
+        Assert.assertTrue(WriteConcern.JOURNAL_SAFE.raiseNetworkErrors());
+        Assert.assertTrue(WriteConcern.MAJORITY.raiseNetworkErrors());
+        Assert.assertTrue(WriteConcern.REPLICAS_SAFE.raiseNetworkErrors());
+        Assert.assertTrue(new WriteConcern("custom").raiseNetworkErrors());
+    }
+
+    @Test
+    public void testGetLastErrorCommand() {
+        assertEquals(new BasicDBObject("getlasterror", 1), WriteConcern.UNACKNOWLEDGED.getCommand());
+        assertEquals(new BasicDBObject("getlasterror", 1), WriteConcern.ACKNOWLEDGED.getCommand());
+        assertEquals(new BasicDBObject("getlasterror", 1), new WriteConcern(1).getCommand());
+        assertEquals(new BasicDBObject("getlasterror", 1).append("wtimeout", 1000), new WriteConcern(0, 1000).getCommand());
+        assertEquals(new BasicDBObject("getlasterror", 1).append("fsync", true), new WriteConcern(0, 0, true, false).getCommand());
+        assertEquals(new BasicDBObject("getlasterror", 1).append("j", true), new WriteConcern(0, 0, false, true).getCommand());
+    }
+
+
+    // integration test to ensure that server doesn't mind a getlasterror command with wtimeout but no w.
+    @Test
+    public void testGetLastError() throws UnknownHostException {
+        MongoClient mc = new MongoClient();
+        DB db = mc.getDB("WriteConcernTest");
+        DBCollection collection = db.getCollection("testGetLastError");
+        try {
+            WriteConcern wc = new WriteConcern(0, 1000);
+            WriteResult res = collection.insert(new BasicDBObject(), wc);
+            Assert.assertTrue(res.getLastError().ok());
+        } finally {
+            db.dropDatabase();
+            mc.close();
+        }
     }
 }

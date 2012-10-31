@@ -64,8 +64,11 @@ import java.util.concurrent.ConcurrentMap;
  * mongo.setWriteConcern(WriteConcern.SAFE);
  * </pre>
  *
- * @see com.mongodb.ReadPreference
- * @see com.mongodb.WriteConcern
+ * Note: This class has been superseded by {@code MongoClient}, and may be deprecated in a future release.
+ *
+ * @see MongoClient
+ * @see ReadPreference
+ * @see WriteConcern
  */
 public class Mongo {
 

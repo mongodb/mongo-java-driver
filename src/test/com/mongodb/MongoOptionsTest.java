@@ -74,7 +74,7 @@ public class MongoOptionsTest extends TestCase {
         assertEquals(options.readPreference, copy.readPreference);
         assertEquals(options.cursorFinalizerEnabled, copy.cursorFinalizerEnabled);
     }
-    
+
     @Test
     public void testGetterSetters() throws Exception {
 
@@ -119,6 +119,28 @@ public class MongoOptionsTest extends TestCase {
         assertEquals(options.getDescription(), "very cool");
         assertEquals(options.getReadPreference(), ReadPreference.secondary());
         assertEquals(options.isCursorFinalizerEnabled(), true);
+    }
+
+    @Test
+    public void testGetWriteConcern() {
+        MongoOptions options = new MongoOptions();
+        assertEquals(WriteConcern.NORMAL, options.getWriteConcern());
+
+        options.reset();
+        options.safe = true;
+        assertEquals(WriteConcern.SAFE, options.getWriteConcern());
+
+        options.reset();
+        options.w = 3;
+        assertEquals(new WriteConcern(3), options.getWriteConcern());
+
+        options.reset();
+        options.wtimeout = 3000;
+        assertEquals(new WriteConcern(0, 3000), options.getWriteConcern());
+
+        options.reset();
+        options.fsync = true;
+        assertEquals(new WriteConcern(0, 0, true), options.getWriteConcern());
     }
 }
 
