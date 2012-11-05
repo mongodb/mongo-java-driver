@@ -350,8 +350,9 @@ public class MongoURI {
      */
     public DB connectDB()
         throws UnknownHostException {
-        // TODO auth
-        return connect().getDB( _database );
+        DB db = connect().getDB(_database);
+        authenticateIfNecessary( db );
+        return db;
     }
 
     /**
@@ -360,8 +361,9 @@ public class MongoURI {
      * @return
      */
     public DB connectDB( Mongo m ){
-        // TODO auth
-        return m.getDB( _database );
+        DB db = m.getDB(_database);
+        authenticateIfNecessary( db );
+        return db;
     }
 
     /**
@@ -380,6 +382,19 @@ public class MongoURI {
      */
     public DBCollection connectCollection( Mongo m ){
         return connectDB( m ).getCollection( _collection );
+    }
+
+    private boolean authenticateIfNecessary( DB db ){
+        if ( getUsername() != null && getUsername().length() > 0 ){
+            CommandResult authenticationResult = db.authenticateCommand( getUsername(), getPassword() );
+            if ( authenticationResult.ok() ){
+                return true;
+            }
+            else if ( authenticationResult.hasErr() ) {
+                throw new MongoException( authenticationResult.getErrorMessage() );
+            }
+        }
+        return false;
     }
 
     // ---------------------------------
