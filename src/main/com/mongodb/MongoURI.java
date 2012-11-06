@@ -384,17 +384,19 @@ public class MongoURI {
         return connectDB( m ).getCollection( _collection );
     }
 
-    private boolean authenticateIfNecessary( DB db ){
+    /**
+     * authenticates against the database if the username field is populated.
+     *
+     * @param db database
+     * @throws MongoException if authentication fails
+     */
+    private void authenticateIfNecessary( DB db ){
         if ( getUsername() != null && getUsername().length() > 0 ){
             CommandResult authenticationResult = db.authenticateCommand( getUsername(), getPassword() );
-            if ( authenticationResult.ok() ){
-                return true;
-            }
-            else if ( authenticationResult.hasErr() ) {
+            if ( authenticationResult.hasErr() ){
                 throw new MongoException( authenticationResult.getErrorMessage() );
             }
         }
-        return false;
     }
 
     // ---------------------------------
