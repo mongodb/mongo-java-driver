@@ -17,8 +17,16 @@
 
 package org.mongodb.impl;
 
+import com.mongodb.MongoException;
+import com.mongodb.MongoInterruptedException;
+import org.mongodb.WriteConcern;
+import org.bson.io.PooledByteBufferOutput;
 import org.mongodb.Collection;
-import org.mongodb.Database;
+import org.mongodb.MongoConnection;
+import org.mongodb.protocol.MongoInsertMessage;
+import org.mongodb.serialization.Serializer;
+
+import java.io.IOException;
 
 class CollectionImpl implements Collection {
     private final String name;
@@ -29,12 +37,42 @@ class CollectionImpl implements Collection {
         this.database = database;
     }
 
-    public Database getDatabase() {
+    @Override
+    public MongoClientImpl getMongoServer() {
+        return getDatabase().getMongo();
+    }
+
+    @Override
+    public DatabaseImpl getDatabase() {
         return database;
     }
 
     @Override
     public String getName() {
         return name;
+    }
+
+    public <T> void insert(T doc, WriteConcern writeConcern, Serializer serializer) {
+        MongoInsertMessage insertMessage = new MongoInsertMessage(getFullName(), writeConcern,
+                new PooledByteBufferOutput(getMongoServer().getBufferPool()));
+        insertMessage.addDocument(doc.getClass(), doc, serializer);
+
+        MongoConnection mongoConnection = null;
+        try {
+            mongoConnection = getMongoServer().getConnectionPool().get();
+            mongoConnection.sendMessage(insertMessage);
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException(e);
+        } catch (IOException e) {
+            throw new MongoException("insert", e);
+        } finally {
+            if (mongoConnection != null) {
+                getMongoServer().getConnectionPool().done(mongoConnection);
+            }
+        }
+    }
+
+    private String getFullName() {
+        return getDatabase().getName() + "." + getName();
     }
 }

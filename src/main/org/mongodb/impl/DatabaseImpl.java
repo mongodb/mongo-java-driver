@@ -22,9 +22,11 @@ import com.mongodb.DBObject;
 import org.mongodb.Database;
 
 class DatabaseImpl implements Database {
+    private final MongoClientImpl mongo;
     private final String name;
 
-    public DatabaseImpl(final String name) {
+    public DatabaseImpl(final String name, final MongoClientImpl mongo) {
+        this.mongo = mongo;
         this.name = name;
     }
 
@@ -40,6 +42,10 @@ class DatabaseImpl implements Database {
     @Override
     public CommandResult executeCommand(final DBObject command) {
          throw new UnsupportedOperationException();
+    }
+
+    MongoClientImpl getMongo() {
+        return mongo;
     }
 
 }

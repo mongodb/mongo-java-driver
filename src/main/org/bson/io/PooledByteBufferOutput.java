@@ -69,7 +69,7 @@ public class PooledByteBufferOutput extends OutputBuffer {
 
     private ByteBuffer getByteBufferAtIndex(final int index) {
         if (bufferList.size() < index + 1) {
-            bufferList.add(pool.get(1024 << (index)));
+            bufferList.add(pool.get(1024 << index));
         }
         return bufferList.get(index);
     }
@@ -134,7 +134,10 @@ public class PooledByteBufferOutput extends OutputBuffer {
     public void pipe(final SocketChannel socketChannel) throws IOException {
         for (ByteBuffer cur : bufferList) {
             cur.flip();
-            socketChannel.write(cur);
+        }
+
+        for (long bytesRead = 0; bytesRead < size();) {
+            bytesRead += socketChannel.write(bufferList.toArray(new ByteBuffer[bufferList.size()]), 0, bufferList.size());
         }
     }
 

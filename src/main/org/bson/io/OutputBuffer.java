@@ -57,7 +57,7 @@ public abstract class OutputBuffer extends OutputStream {
      *
      * @param socketChannel channel
      */
-    public abstract void pipe(final SocketChannel socketChannel) throws IOException;
+    public abstract void pipe(SocketChannel socketChannel) throws IOException;
 
     /**
      * mostly for testing
@@ -162,9 +162,9 @@ public abstract class OutputBuffer extends OutputStream {
 
     public void writeInt( int pos , int x ){
         final int save = getPosition();
-        setPosition( pos );
-        writeInt( x );
-        setPosition( save );
+        setPosition(pos);
+        writeInt(x);
+        setPosition(save);
     }
 
     public void writeLong( long x ){
@@ -175,11 +175,11 @@ public abstract class OutputBuffer extends OutputStream {
         write( (byte)(0xFFL & ( x >> 32 ) ) );
         write( (byte)(0xFFL & ( x >> 40 ) ) );
         write( (byte)(0xFFL & ( x >> 48 ) ) );
-        write( (byte)(0xFFL & ( x >> 56 ) ) );
+        write((byte) (0xFFL & (x >> 56)));
     }
 
     public void writeDouble( double x ){
-        writeLong( Double.doubleToRawLongBits( x ) );
+        writeLong(Double.doubleToRawLongBits(x));
     }
 
     public void writeString(final String str) {

@@ -80,4 +80,8 @@ public interface Collection {
 //    UpdateResults updateFirst(Query query, Map<String, Object> document, boolean createIfMissing, WriteConcern writeConcern);
 
 //    Database getDatabase();
+
+    Database getDatabase();
+
+    MongoClient getMongoServer();
 }

@@ -53,8 +53,7 @@ public class MongoRequestMessage {
         this(collectionName, opCode, null, -1, null, buffer);
     }
 
-    MongoRequestMessage(String collectionName, OpCode opCode, Map<String, Object> query,
-                        OutputBuffer buffer) {
+    MongoRequestMessage(String collectionName, OpCode opCode, Map<String, Object> query, OutputBuffer buffer) {
         this(collectionName, opCode, query, 0, null, buffer);
     }
 

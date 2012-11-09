@@ -27,11 +27,7 @@ import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.protocol.MongoRequestMessage;
 import org.mongodb.serialization.Serializer;
 
-import javax.net.SocketFactory;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
@@ -41,17 +37,12 @@ import java.nio.channels.SocketChannel;
  *
  */
 public class MongoConnection {
-    private final SocketFactory socketFactory;
-    private final BufferPool<ByteBuffer> pool;
     private final ServerAddress address;
-    private Socket socket;
-    private InputStream in;
-    private OutputStream out;
     private SocketChannel socketChannel;
+    private final BufferPool<ByteBuffer> pool;
 
-    public MongoConnection(final ServerAddress address, final SocketFactory socketFactory, BufferPool<ByteBuffer> pool) {
+    public MongoConnection(final ServerAddress address, BufferPool<ByteBuffer> pool) {
         this.address = address;
-        this.socketFactory = socketFactory;
         this.pool = pool;
     }
 
@@ -65,27 +56,6 @@ public class MongoConnection {
         buffer.pipe(socketChannel);
         message.done();
     }
-
-//    public <T> MongoReplyMessage<T> receiveMessage(Serializer serializer, Class clazz) throws IOException {
-//
-//        final byte[] headerBytes = new byte[36];
-//        ByteBuffer headerBytesBuffer = ByteBuffer.wrap(headerBytes);
-//        int bytesRead = socketChannel.read(headerBytesBuffer);
-//        headerBytesBuffer.flip();
-//        InputBuffer headerBuffer = new ByteBufferInput(headerBytesBuffer);
-//        int length = headerBuffer.readInt32();
-//        headerBuffer.setPosition(0);
-//
-//        byte[] messageBytes = new byte[length];
-//        ByteBuffer messageBuffer = ByteBuffer.wrap(messageBytes);
-//        messageBuffer.put(headerBytesBuffer);
-//        bytesRead = socketChannel.read(messageBuffer);
-//
-//        messageBuffer.flip();
-//        ByteBufferInput input = new ByteBufferInput(messageBuffer);
-//
-//        return new MongoReplyMessage<T>(input, serializer, clazz);
-//    }
 
     public <T> MongoReplyMessage<T> receiveMessage(Serializer serializer, Class clazz) throws IOException {
         ByteBuffer headerByteBuffer = pool.get(36);
@@ -129,9 +99,6 @@ public class MongoConnection {
 
     public void close() {
         try {
-            if (socket != null) {
-                socket.close();
-            }
             if (socketChannel != null) {
                 socketChannel.close();
             }
@@ -139,5 +106,4 @@ public class MongoConnection {
             // ignore
         }
     }
-
 }

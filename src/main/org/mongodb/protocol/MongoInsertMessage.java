@@ -17,7 +17,7 @@
 
 package org.mongodb.protocol;
 
-import com.mongodb.WriteConcern;
+import org.mongodb.WriteConcern;
 import org.bson.io.OutputBuffer;
 
 public class MongoInsertMessage extends MongoRequestMessage {

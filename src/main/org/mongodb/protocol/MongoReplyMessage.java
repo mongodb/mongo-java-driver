@@ -39,7 +39,7 @@ public class MongoReplyMessage<T> {
     public MongoReplyMessage(final InputBuffer headerInputBuffer, final InputBuffer bodyInputBuffer, final Serializer serializer, Class<T> clazz) {
         messageLength = headerInputBuffer.readInt32();
         requestId = headerInputBuffer.readInt32();
-        responseTo = headerInputBuffer.readInt32();
+        responseTo = headerInputBuffer.readInt32();  // TODO: validate that this is a response to the expected message
         int opCode = headerInputBuffer.readInt32();  // ignore  TODO: check for validity
         responseFlags = headerInputBuffer.readInt32();
         cursorId = headerInputBuffer.readInt64();
