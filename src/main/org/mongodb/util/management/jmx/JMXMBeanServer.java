@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.mongodb.util.management.jmx;
+package org.mongodb.util.management.jmx;
 
-import com.mongodb.util.management.JMException;
-import com.mongodb.util.management.MBeanServer;
+import org.mongodb.util.management.JMException;
+import org.mongodb.util.management.MBeanServer;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;

@@ -17,8 +17,7 @@
 
 package org.mongodb.protocol;
 
-import com.mongodb.Bytes;
-import com.mongodb.ReadPreference;
+import org.mongodb.ReadPreference;
 import org.bson.io.OutputBuffer;
 import org.mongodb.serialization.Serializer;
 
@@ -32,7 +31,7 @@ public class MongoQueryMessage extends MongoRequestMessage {
 
         int allOptions = options;
         if (readPref != null && readPref.isSlaveOk()) {
-            allOptions |= Bytes.QUERYOPTION_SLAVEOK;
+            allOptions |= QueryOptions.SLAVEOK;
         }
 
         queryOptions = allOptions;

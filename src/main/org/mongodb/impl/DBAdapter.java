@@ -17,42 +17,42 @@
 
 package org.mongodb.impl;
 
-import com.mongodb.CommandResult;
-import com.mongodb.DBObject;
-import org.mongodb.Database;
-
+//import com.mongodb.CommandResult;
+//import com.mongodb.DBObject;
+//import org.mongodb.Database;
+//
 public class DBAdapter {
     private final DatabaseImpl impl;
 
     public DBAdapter(final DatabaseImpl database) {
         this.impl = database;
     }
-
-    public Database getDB() {
-        return impl;
-    }
-
-    public DBCollectionAdapter getCollection(final String name) {
-        return new DBCollectionAdapter(impl.getCollection(name));
-    }
-
-    public void requestStart() {
-        throw new UnsupportedOperationException();
-    }
-
-    public void requestDone() {
-        throw new UnsupportedOperationException();
-    }
-
-    public void requestEnsureConnection() {
-        throw new UnsupportedOperationException();
-    }
-
-    public void cleanCursors(final boolean force) {
-        throw new UnsupportedOperationException();
-    }
-
-    public CommandResult executeCommand(final DBObject command) {
-        return impl.executeCommand(command);
-    }
+//
+//    public Database getDB() {
+//        return impl;
+//    }
+//
+//    public DBCollectionAdapter getCollection(final String name) {
+//        return new DBCollectionAdapter(impl.getCollection(name));
+//    }
+//
+//    public void requestStart() {
+//        throw new UnsupportedOperationException();
+//    }
+//
+//    public void requestDone() {
+//        throw new UnsupportedOperationException();
+//    }
+//
+//    public void requestEnsureConnection() {
+//        throw new UnsupportedOperationException();
+//    }
+//
+//    public void cleanCursors(final boolean force) {
+//        throw new UnsupportedOperationException();
+//    }
+//
+//    public CommandResult executeCommand(final DBObject command) {
+//        return impl.executeCommand(command);
+//    }
 }

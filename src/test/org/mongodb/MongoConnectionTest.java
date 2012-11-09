@@ -17,8 +17,6 @@
 
 package org.mongodb;
 
-import com.mongodb.ReadPreference;
-import com.mongodb.ServerAddress;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;
@@ -66,7 +64,7 @@ public class MongoConnectionTest extends Assert {
     @BeforeTest
     public void setUp() throws UnknownHostException, SocketException {
         bufferPool = new PowerOfTwoByteBufferPool(24);
-        connection = new MongoConnection(new ServerAddress("localhost", 30000), bufferPool);
+        connection = new MongoConnection(new ServerAddress("localhost", 27017), bufferPool);
         serializers = new Serializers();
         serializers.register(Map.class, BsonType.DOCUMENT, new MapSerializer(serializers));
         serializers.register(ObjectId.class, BsonType.OBJECT_ID, new ObjectIdSerializer());
@@ -114,23 +112,6 @@ public class MongoConnectionTest extends Assert {
                     ", d=" + d +
                     ", date=" + date +
                     '}';
-        }
-    }
-
-    static class MorphiaSerializer<T> implements Serializer {
-        public MorphiaSerializer(Class<T> clazz) {
-            // introspect on clazz
-        }
-
-
-        @Override
-        public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value, final BsonSerializationOptions options) {
-            //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
-        public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
         }
     }
 
@@ -199,7 +180,7 @@ public class MongoConnectionTest extends Assert {
         dropCollection();
 
         long startTime = System.nanoTime();
-        int iterations = 64000;
+        int iterations = 1000;
         byte[] bytes = new byte[8192];
         for (int i = 0; i < iterations; i++) {
             if ((i > 0) && (i % 10000 == 0)) {
@@ -225,7 +206,7 @@ public class MongoConnectionTest extends Assert {
         }
 
         long endTime = System.nanoTime();
-        long elapsedTime = (endTime - startTime) / 1000000000;
+        double elapsedTime = (endTime - startTime) / (double) 1000000000;
         System.out.println("Time: " + elapsedTime + " sec");
         System.out.println(iterations / elapsedTime + " messages/sec");
         System.out.flush();
@@ -265,7 +246,7 @@ public class MongoConnectionTest extends Assert {
         System.out.println();
 
         endTime = System.nanoTime();
-        elapsedTime = (endTime - startTime) / 1000000000;
+        elapsedTime = (endTime - startTime) / (double) 1000000000;
         System.out.println("Time: " + elapsedTime + " sec");
         System.out.println(iterations / elapsedTime + " documents/sec");
         System.out.flush();

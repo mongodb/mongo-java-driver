@@ -17,6 +17,22 @@
 
 package org.mongodb;
 
-public interface Command {
-    CommandResult execute();
+/**
+ * A non-checked exception indicating that the driver has been interrupted by a call to Thread.interrupt.
+ *
+ * @see Thread#interrupt()
+ * @see InterruptedException
+ */
+public class MongoInterruptedException extends MongoException {
+    private static final long serialVersionUID = -4110417867718417860L;
+
+    public MongoInterruptedException(final InterruptedException e) {
+        super("A driver operation has been interrupted", e);
+    }
+
+    public MongoInterruptedException(final String message, final InterruptedException e) {
+        super(message, e);
+    }
 }
+
+

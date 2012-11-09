@@ -17,7 +17,8 @@
 
 package org.mongodb.impl;
 
-import com.mongodb.ServerAddress;
+
+import org.mongodb.ServerAddress;
 
 /**
  * THIS IS NOT PART OF THE PUBLIC API.

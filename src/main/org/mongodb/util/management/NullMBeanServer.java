@@ -13,31 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.util.management;
 
-import com.mongodb.util.management.jmx.JMXMBeanServer;
+package org.mongodb.util.management;
 
 /**
  * This class is NOT part of the public API.  It may change at any time without notification.
- *
- * This class is used to insulate the rest of the driver from the possibility that JMX is not available,
- * as currently is the case on Android VM
  */
-public class MBeanServerFactory {
-    static {
-        MBeanServer tmp;
-        try {
-            tmp = new JMXMBeanServer();
-        } catch (Throwable e) {
-            tmp =  new NullMBeanServer();
-        }
-
-        mBeanServer = tmp;
+public class NullMBeanServer implements MBeanServer {
+    @Override
+    public boolean isRegistered(String mBeanName) {
+        return false;
     }
 
-    public static MBeanServer getMBeanServer() {
-        return mBeanServer;
+    @Override
+    public void unregisterMBean(String mBeanName) {
     }
 
-    private static final MBeanServer mBeanServer;
+    @Override
+    public void registerMBean(Object mBean, String mBeanName) {
+    }
 }

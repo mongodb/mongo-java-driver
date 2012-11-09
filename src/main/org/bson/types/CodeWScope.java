@@ -18,21 +18,21 @@
 
 package org.bson.types;
 
-import org.bson.*;
+import org.mongodb.MongoDocument;
 
-/** 
+/**
  * for using the CodeWScope type
  */
 public class CodeWScope extends Code {
 
     private static final long serialVersionUID = -6284832275113680002L;
 
-    public CodeWScope( String code , BSONObject scope ){
+    public CodeWScope( String code , MongoDocument scope ){
         super( code );
         _scope = scope;
     }
 
-    public BSONObject getScope(){
+    public MongoDocument getScope(){
         return _scope;
     }
 
@@ -48,6 +48,6 @@ public class CodeWScope extends Code {
         return _code.hashCode() ^ _scope.hashCode();
     }
 
-    final BSONObject _scope;
+    final MongoDocument _scope;
 }
 

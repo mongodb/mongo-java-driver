@@ -17,9 +17,6 @@
 
 package org.mongodb;
 
-import com.mongodb.CommandResult;
-import com.mongodb.DBObject;
-
 public abstract class AbstractCommand implements Command {
     protected final Collection collection;
 
@@ -29,9 +26,8 @@ public abstract class AbstractCommand implements Command {
 
     @Override
     public CommandResult execute() {
-//         return collection.getDatabase().executeCommand(asDBObject());
         throw new UnsupportedOperationException();
     }
 
-    public abstract DBObject asDBObject();
+    public abstract MongoDocument asDBObject();
 }

@@ -18,6 +18,7 @@
 package org.bson;
 
 import org.bson.types.*;
+import org.mongodb.MongoDocument;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -108,7 +109,7 @@ public class BSONTypeSerializableTest extends Assert {
 
     @Test
     public void testSerializeCodeWScope() throws Exception {
-        BSONObject scope = new BasicBSONObject("t", 1);
+        MongoDocument scope = new MongoDocument("t", 1);
         CodeWScope object = new CodeWScope("function() {}", scope);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

@@ -16,12 +16,12 @@
 
 package org.mongodb.impl;
 
-import com.mongodb.ServerAddress;
-import com.mongodb.util.SimplePool;
 import org.bson.util.BufferPool;
 import org.bson.util.PowerOfTwoByteBufferPool;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoConnection;
+import org.mongodb.ServerAddress;
+import org.mongodb.util.pool.SimplePool;
 
 import java.nio.ByteBuffer;
 

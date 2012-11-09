@@ -17,8 +17,6 @@
 
 package org.mongodb;
 
-import com.mongodb.MongoException;
-import com.mongodb.ServerAddress;
 import org.bson.io.ByteBufferInput;
 import org.bson.io.InputBuffer;
 import org.bson.io.OutputBuffer;

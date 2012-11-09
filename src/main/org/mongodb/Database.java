@@ -17,13 +17,10 @@
 
 package org.mongodb;
 
-import com.mongodb.CommandResult;
-import com.mongodb.DBObject;
-
 public interface Database {
     String getName();
 
-    CommandResult executeCommand(DBObject command);
+    CommandResult executeCommand(MongoDocument command);
 
 //    <T> Collection<T> getCollection(String name);
 }

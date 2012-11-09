@@ -17,9 +17,9 @@
 
 package org.mongodb.impl;
 
-import com.mongodb.CommandResult;
-import com.mongodb.DBObject;
+import org.mongodb.CommandResult;
 import org.mongodb.Database;
+import org.mongodb.MongoDocument;
 
 class DatabaseImpl implements Database {
     private final MongoClientImpl mongo;
@@ -40,7 +40,7 @@ class DatabaseImpl implements Database {
     }
 
     @Override
-    public CommandResult executeCommand(final DBObject command) {
+    public CommandResult executeCommand(final MongoDocument command) {
          throw new UnsupportedOperationException();
     }
 

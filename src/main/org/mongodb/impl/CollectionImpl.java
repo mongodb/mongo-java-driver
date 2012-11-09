@@ -17,12 +17,12 @@
 
 package org.mongodb.impl;
 
-import com.mongodb.MongoException;
-import com.mongodb.MongoInterruptedException;
-import org.mongodb.WriteConcern;
 import org.bson.io.PooledByteBufferOutput;
 import org.mongodb.Collection;
 import org.mongodb.MongoConnection;
+import org.mongodb.MongoException;
+import org.mongodb.MongoInterruptedException;
+import org.mongodb.WriteConcern;
 import org.mongodb.protocol.MongoInsertMessage;
 import org.mongodb.serialization.Serializer;
 

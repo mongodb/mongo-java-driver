@@ -204,7 +204,7 @@ limitations under the License.
     <target name="javadocs" depends="compile,utilcompile" description="Generate API docs">
         <delete dir="${build.docs.dir}"/>
         <javadoc
-            packagenames="com.mongodb,com.mongodb.gridfs,com.mongodb.util,com.mongodb.tools,org.bson,org.bson.types,org.bson.io,org.bson.util"
+            packagenames="com.mongodb,com.mongodb.gridfs,org.mongodb,org.mongodb.protocol,org.mongodb.rs,org.mongodb.serialization,org.mongodb.util,org.bson,org.bson.types,org.bson.io,org.bson.util"
             sourcepath="src/main/"
             defaultexcludes="yes"
             destdir="${build.docs.dir}/mongo-java-driver"
@@ -284,8 +284,7 @@ limitations under the License.
     </target>
 
     <target name="test" depends="test-compile">
-
-        <testng classpathref="${test.classpath}" outputdir="${test.dir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1" >
+        <testng classpathref="${test.classpath}" outputdir="${test.dir}" haltonfailure="false" verbose="1" >
             <jvmarg value="-Xmx512M" />
             <jvmarg value="-ea" />
             <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
@@ -320,43 +319,6 @@ limitations under the License.
     <!-- ******************************************************************* -->
     <!-- Misc targets                                                        -->
     <!-- ******************************************************************* -->
-
-    <target name="examples" depends="compile">
-
-        <javac
-            srcdir="examples"
-            destdir="${build.test.dir}"
-            optimize="off"
-            deprecation="off"
-            source="${build.conf.javac.source}"
-            encoding="ISO-8859-1"
-            debug="on"
-            includeantruntime="false">
-            <classpath refid="build.classpath"/>
-        </javac>
-
-        <java classname="QuickTour"><classpath refid="build.classpath"/></java>
-        <java classname="QuickTourAdmin"><classpath refid="build.classpath"/></java>
-
-    </target>
-
-    <target name="readoplog" depends="compile">
-
-        <javac
-            srcdir="examples"
-            destdir="${build.test.dir}"
-            optimize="off"
-            deprecation="off"
-            source="${build.conf.javac.source}"
-            encoding="ISO-8859-1"
-            debug="on"
-            includeantruntime="false">
-            <classpath refid="build.classpath"/>
-        </javac>
-
-        <java classname="examples.ReadOplog" fork="true"><classpath refid="build.classpath"/></java>
-
-    </target>
 
     <target name="check-binary-compatibility" depends="jar">
 

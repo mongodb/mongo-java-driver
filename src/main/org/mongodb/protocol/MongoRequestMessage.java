@@ -17,11 +17,11 @@
 
 package org.mongodb.protocol;
 
-import com.mongodb.ReadPreference;
 import org.bson.BSONBinaryWriter;
 import org.bson.BinaryWriterSettings;
 import org.bson.BsonWriterSettings;
 import org.bson.io.OutputBuffer;
+import org.mongodb.ReadPreference;
 import org.mongodb.serialization.Serializer;
 
 import java.io.IOException;

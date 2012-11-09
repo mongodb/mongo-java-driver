@@ -17,46 +17,36 @@
 
 package org.mongodb;
 
-import com.mongodb.MongoException;
-import com.mongodb.MongoInterruptedException;
-import com.mongodb.ServerAddress;
-import com.mongodb.util.SimplePool;
-import org.bson.util.BufferPool;
-import org.mongodb.protocol.MongoReplyMessage;
-import org.mongodb.protocol.MongoRequestMessage;
-
-import java.io.IOException;
-
 class MongoServer {
-    private SimplePool<MongoConnection> pool;
-    private final ServerAddress address;
-    private final BufferPool bufferPool;
-
-    MongoServer(ServerAddress address, BufferPool bufferPool, int poolSize) {
-        this.address = address;
-        this.bufferPool = bufferPool;
-        // TODO: This needs to be it's own class with JMX, etc
-        pool = new SimplePool<MongoConnection>(address.toString(), poolSize) {
-            @Override
-            protected MongoConnection createNew() {
-                return new MongoConnection(MongoServer.this.address, MongoServer.this.bufferPool);
-            }
-        };
-    }
-
-     <T> MongoReplyMessage<T> sendMessage(MongoRequestMessage requestMessage, WriteConcern writeConcern) {
-         try {
-             MongoConnection mongoConnection = pool.get();
-             try {
-                mongoConnection.sendMessage(requestMessage);
-             } catch (IOException e) {
-                 throw new MongoException("Unable to send message", e);
-             } finally {
-                 pool.done(mongoConnection);
-             }
-         } catch (InterruptedException e) {
-             throw new MongoInterruptedException(e);
-         }
-         return null;
-     }
+//    private SimplePool<MongoConnection> pool;
+//    private final ServerAddress address;
+//    private final BufferPool bufferPool;
+//
+//    MongoServer(ServerAddress address, BufferPool bufferPool, int poolSize) {
+//        this.address = address;
+//        this.bufferPool = bufferPool;
+//        // TODO: This needs to be it's own class with JMX, etc
+//        pool = new SimplePool<MongoConnection>(address.toString(), poolSize) {
+//            @Override
+//            protected MongoConnection createNew() {
+//                return new MongoConnection(MongoServer.this.address, MongoServer.this.bufferPool);
+//            }
+//        };
+//    }
+//
+//     <T> MongoReplyMessage<T> sendMessage(MongoRequestMessage requestMessage, WriteConcern writeConcern) {
+//         try {
+//             MongoConnection mongoConnection = pool.get();
+//             try {
+//                mongoConnection.sendMessage(requestMessage);
+//             } catch (IOException e) {
+//                 throw new MongoException("Unable to send message", e);
+//             } finally {
+//                 pool.done(mongoConnection);
+//             }
+//         } catch (InterruptedException e) {
+//             throw new MongoInterruptedException(e);
+//         }
+//         return null;
+//     }
 }

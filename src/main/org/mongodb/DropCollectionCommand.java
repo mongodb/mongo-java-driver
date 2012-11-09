@@ -17,16 +17,14 @@
 
 package org.mongodb;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-
 public class DropCollectionCommand extends AbstractCommand {
     public DropCollectionCommand(Collection collection) {
         super(collection);
     }
 
     @Override
-    public DBObject asDBObject() {
-        return new BasicDBObject("drop", collection.getName());
+    public MongoDocument asDBObject() {
+        MongoDocument document = new MongoDocument("drop", collection.getName());
+        return document;
     }
 }

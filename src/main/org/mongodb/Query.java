@@ -17,7 +17,6 @@
 
 package org.mongodb;
 
-import com.mongodb.ReadPreference;
 import org.bson.types.CodeWScope;
 
 public interface Query {

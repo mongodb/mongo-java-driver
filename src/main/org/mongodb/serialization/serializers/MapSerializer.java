@@ -17,7 +17,7 @@
 
 package org.mongodb.serialization.serializers;
 
-import com.mongodb.MongoException;
+import org.mongodb.MongoException;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.util.management;
+package org.mongodb.util.management;
 
 /**
  *
