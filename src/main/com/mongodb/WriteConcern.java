@@ -25,62 +25,98 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>WriteConcern control the write behavior for with various options, as well as exception raising on error conditions.</p>
- *
+ * <p>WriteConcern control the acknowledgment of write operations with various options.
  * <p>
  * <b>w</b>
  * <ul>
- * 	<li>-1 = don't even report network errors </li>
- *  <li> 0 = default, don't call getLastError by default </li>
- *  <li> 1 = basic, call getLastError, but don't wait for slaves</li>
- *  <li> 2+= wait for slaves </li>
+ *  <li>-1 = Don't even report network errors </li>
+ *  <li> 0 = Don't wait for acknowledgement from the server </li>
+ *  <li> 1 = Wait for acknowledgement, but don't wait for secondaries to replicate</li>
+ *  <li> 2+= Wait for one or more secondaries to also acknowledge </li>
  * </ul>
  * <b>wtimeout</b> how long to wait for slaves before failing
  * <ul>
- *   <li>0 = indefinite </li>
- *   <li>> 0 = ms to wait </li>
+ *   <li>0: indefinite </li>
+ *   <li>greater than 0: ms to wait </li>
  * </ul>
  * </p>
- * <p><b>fsync</b> force fsync to disk </p>
- *
+ * <p>
+ * Other options:
+ * <ul>
+ *   <li><b>j</b>: wait for group commit to journal</li>
+ *   <li><b>fsync</b>: force fsync to disk</li>
+ * </ul>
  * @dochub databases
  */
 public class WriteConcern implements Serializable {
 
     private static final long serialVersionUID = 1884671104750417011L;
 
-    /** No exceptions are raised, even for network issues */
-    public final static WriteConcern NONE = new WriteConcern(-1);
-
-    /** Exceptions are raised for network issues, but not server errors */
-    public final static WriteConcern NORMAL = new WriteConcern(0);
-
-    /** Exceptions are raised for network issues, and server errors; waits on a server for the write operation */
-    public final static WriteConcern SAFE = new WriteConcern(1);
-
-    /** Exceptions are raised for network issues, but not server errors */
+    /**
+     * Write operations that use this write concern will wait for acknowledgement from the primary server before returning.
+     * Exceptions are raised for network issues, and server errors.
+     * @since 2.10.0
+     */
+    public final static WriteConcern ACKNOWLEDGED = new WriteConcern(1);
+    /**
+     * Write operations that use this write concern will return as soon as the message is written to the socket.
+     * Exceptions are raised for network issues, but not server errors.
+     * @since 2.10.0
+     */
     public final static WriteConcern UNACKNOWLEDGED = new WriteConcern(0);
 
-    /** Exceptions are raised for network issues, and server errors; waits on a server for the write operation */
-    public final static WriteConcern ACKNOWLEDGED = new WriteConcern(1);
+    /**
+     * No exceptions are raised, even for network issues.
+     */
+    public final static WriteConcern NONE = new WriteConcern(-1);
 
-    /** Exceptions are raised for network issues, and server errors; waits on a majority of servers for the write operation */
+    /**
+     * Write operations that use this write concern will return as soon as the message is written to the socket.
+     * Exceptions are raised for network issues, but not server errors.
+     * <p>
+     * This field has been superseded by {@code WriteConcern.UNACKNOWLEDGED}, and may be deprecated in a future release.
+     * @see WriteConcern#UNACKNOWLEDGED
+     */
+    public final static WriteConcern NORMAL = new WriteConcern(0);
+
+    /**
+     * Write operations that use this write concern will wait for acknowledgement from the primary server before returning.
+     * Exceptions are raised for network issues, and server errors.
+     * <p>
+     * This field has been superseded by {@code WriteConcern.ACKNOWLEDGED}, and may be deprecated in a future release.
+     * @see WriteConcern#ACKNOWLEDGED
+     */
+    public final static WriteConcern SAFE = new WriteConcern(1);
+
+    /**
+     * Exceptions are raised for network issues, and server errors; waits on a majority of servers for the write operation.
+     */
     public final static WriteConcern MAJORITY = new Majority();
 
-    /** Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to disk*/
+    /**
+     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush
+     * the data to disk.
+     */
     public final static WriteConcern FSYNC_SAFE = new WriteConcern(true);
 
-    /** Exceptions are raised for network issues, and server errors; the write operation waits for the server to group commit to the journal file on disk*/
+    /**
+     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to
+     * group commit to the journal file on disk.
+     */
     public final static WriteConcern JOURNAL_SAFE = new WriteConcern( 1, 0, false, true );
 
-    /** Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation*/
+    /**
+     * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
+     */
     public final static WriteConcern REPLICAS_SAFE = new WriteConcern(2);
 
     // map of the constants from above for use by fromString
     private static Map<String, WriteConcern> _namedConcerns = null;
 
     /**
-     * Default constructor keeping all options as default
+     * Default constructor keeping all options as default.  Be careful using this constructor, as it's equivalent to
+     * {@code WriteConcern.UNACKNOWLEDGED}, so writes may be lost without any errors being reported.
+     * @see WriteConcern#UNACKNOWLEDGED
      */
     public WriteConcern(){
         this(0);
@@ -240,7 +276,6 @@ public class WriteConcern implements Serializable {
      */
     public BasicDBObject getCommand() {
         BasicDBObject _command = new BasicDBObject( "getlasterror" , 1 );
-
 
         if (_w instanceof Integer && ((Integer) _w > 1) || (_w instanceof String)){
             _command.put( "w" , _w );
