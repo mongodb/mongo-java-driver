@@ -141,6 +141,10 @@ public class MongoOptionsTest extends TestCase {
         options.reset();
         options.fsync = true;
         assertEquals(new WriteConcern(0, 0, true), options.getWriteConcern());
+
+        options.reset();
+        options.j = true;
+        assertEquals(new WriteConcern(0, 0, false, true), options.getWriteConcern());
     }
 }
 

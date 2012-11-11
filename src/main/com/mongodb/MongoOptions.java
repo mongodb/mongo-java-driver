@@ -106,8 +106,8 @@ public class MongoOptions {
     public WriteConcern getWriteConcern() {
         if (writeConcern != null) {
             return writeConcern;
-        } else if ( w != 0 || wtimeout != 0 || fsync ) {
-            return new WriteConcern( w , wtimeout , fsync );
+        } else if ( w != 0 || wtimeout != 0 || fsync | j) {
+            return new WriteConcern( w , wtimeout , fsync, j );
         } else if (safe) {
             return WriteConcern.SAFE;
         } else {
