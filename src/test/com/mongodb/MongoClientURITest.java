@@ -82,7 +82,25 @@ public class MongoClientURITest extends TestCase {
 
     @Test()
     public void testWriteConcern() {
-        MongoClientURI uri = new MongoClientURI("mongodb://localhost/?safe=true");
+        MongoClientURI uri = new MongoClientURI("mongodb://localhost");
+        assertEquals(WriteConcern.ACKNOWLEDGED, uri.getOptions().getWriteConcern());
+
+        uri = new MongoClientURI("mongodb://localhost/?wTimeout=5");
+        assertEquals(new WriteConcern(1, 5, false, false), uri.getOptions().getWriteConcern());
+
+        uri = new MongoClientURI("mongodb://localhost/?fsync=true");
+        assertEquals(new WriteConcern(1, 0, true, false), uri.getOptions().getWriteConcern());
+
+        uri = new MongoClientURI("mongodb://localhost/?j=true");
+        assertEquals(new WriteConcern(1, 0, false, true), uri.getOptions().getWriteConcern());
+
+        uri = new MongoClientURI("mongodb://localhost/?w=2&wtimeout=5&fsync=true&j=true");
+        assertEquals(new WriteConcern(2, 5, true, true), uri.getOptions().getWriteConcern());
+
+        uri = new MongoClientURI("mongodb://localhost/?w=majority&wtimeout=5&fsync=true&j=true");
+        assertEquals(new WriteConcern("majority", 5, true, true), uri.getOptions().getWriteConcern());
+
+        uri = new MongoClientURI("mongodb://localhost/?safe=true");
         assertEquals(WriteConcern.ACKNOWLEDGED, uri.getOptions().getWriteConcern());
 
         uri = new MongoClientURI("mongodb://localhost/?safe=false");
