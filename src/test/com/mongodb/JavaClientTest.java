@@ -44,7 +44,7 @@ public class JavaClientTest extends TestCase {
     @Test
     public void test1()
         throws MongoException {
-        DBCollection c = _db.getCollection( "test1" );;
+        DBCollection c = _db.getCollection( "test1" );
         c.drop();
 
         DBObject m = new BasicDBObject();
@@ -62,7 +62,7 @@ public class JavaClientTest extends TestCase {
     @Test
     public void test2()
         throws MongoException {
-        DBCollection c = _db.getCollection( "test2" );;
+        DBCollection c = _db.getCollection( "test2" );
         c.drop();
 
         DBObject m = new BasicDBObject();
@@ -584,9 +584,6 @@ public class JavaClientTest extends TestCase {
         DBObject projFields = new BasicDBObject( "name", 1 );
         projFields.put("count", 1);
         
-        List<DBObject> groupOperations = new ArrayList<DBObject>();
-        groupOperations.add(new BasicDBObject( ));
-        groupOperations.add(new BasicDBObject( "countPerName", new BasicDBObject( "$sum", 1 )));
         DBObject group = new BasicDBObject( );
         group.put("_id", "$name" );
         group.put( "docsPerName", new BasicDBObject( "$sum", 1 ));
@@ -646,25 +643,122 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
-    public void testAuth(){
-        assertEquals( "26e3d12bd197368526409177b3e8aab6" , _db._hash( "e" , new char[]{ 'j' } ) );
+    public void testAuthenticate() throws UnknownHostException {
+        assertEquals( "26e3d12bd197368526409177b3e8aab6" , _db._hash( "e" , "j".toCharArray() ) );
 
-        DBCollection u = _db.getCollection( "system.users" );
+        Mongo m = new Mongo();
+        DB db = m.getDB(cleanupDB);
+        DBCollection u = db.getCollection( "system.users" );
 
         try {
             assertEquals( 0 , u.find().count() );
 
-            _db.addUser( "xx" , new char[]{ 'e' } );
+            db.addUser("xx" , "e".toCharArray() );
             assertEquals( 1 , u.find().count() );
 
-            assertEquals( false , _db.authenticate( "xx" , new char[]{ 'f' } ) );
-            assertEquals( true , _db.authenticate( "xx" , new char[]{ 'e' } ) );
+            assertEquals(false, db.authenticate( "xx" , "f".toCharArray() ) );
+            assertEquals(true, db.authenticate( "xx" , "e".toCharArray() ) );
+            assertEquals(true, db.authenticate( "xx" , "e".toCharArray() ) );
+            try {
+                db.authenticateCommand("xx", "f".toCharArray());
+                fail("can't auth with different credentials");
+            } catch (IllegalStateException e) {
+                // all good;
+            }
         }
         finally {
             u.remove( new BasicDBObject() );
+            m.close();
+        }
+    }
+
+    @Test
+    public void testAuthenticateCommand() throws UnknownHostException {
+        Mongo m = new Mongo();
+        DB db = m.getDB(cleanupDB);
+        DBCollection u = db.getCollection( "system.users" );
+
+        try {
             assertEquals( 0 , u.find().count() );
+
+            db.addUser("xx", "e".toCharArray());
+            assertEquals( 1 , u.find().count() );
+
+            try {
+                db.authenticateCommand( "xx" , "f".toCharArray());
+                fail("Auth should have failed");
+            } catch (CommandResult.CommandFailure e) {
+                // all good
+            }
+            assertTrue(db.authenticateCommand("xx", "e".toCharArray()).ok());
+            assertTrue(db.authenticateCommand("xx", "e".toCharArray()).ok());
+            try {
+                db.authenticateCommand("xx", "f".toCharArray());
+                fail("can't auth with different credentials");
+            } catch (IllegalStateException e) {
+                // all good;
+            }
+        }
+        finally {
+            u.remove(new BasicDBObject());
+            m.close();
+        }
+    }
+
+    @Test
+    public void testAuthenticateWithCredentialsInURI() throws UnknownHostException {
+        // First add the user
+        Mongo m = new Mongo(new MongoURI("mongodb://localhost"));
+        DB db = m.getDB(cleanupDB);
+        DBCollection u = db.getCollection( "system.users" );
+        try {
+            assertEquals( 0 , u.find().count() );
+
+            db.addUser( "xx" , "e".toCharArray() );
+            assertEquals( 1 , u.find().count() );
+        }
+        finally {
+            m.close();
         }
 
+        m = new Mongo(new MongoURI("mongodb://xx:e@localhost/" + cleanupDB));
+        db = m.getDB(cleanupDB);
+
+        try {
+            assertEquals(true, db.authenticate("xx", "e".toCharArray()) );
+        }
+        finally {
+            db.getCollection( "system.users" ).remove(new BasicDBObject());
+            m.close();
+        }
+    }
+
+    @Test
+    public void testAuthenticateCommandWithCredentialsInURI() throws UnknownHostException {
+        // First add the user
+        Mongo m = new Mongo(new MongoURI("mongodb://localhost"));
+        DB db = m.getDB(cleanupDB);
+        DBCollection u = db.getCollection( "system.users" );
+        try {
+            assertEquals( 0 , u.find().count() );
+
+            db.addUser( "xx" , "e".toCharArray() );
+            assertEquals( 1 , u.find().count() );
+        }
+        finally {
+            m.close();
+        }
+
+        m = new Mongo(new MongoURI("mongodb://xx:e@localhost/" + cleanupDB));
+        db = m.getDB(cleanupDB);
+
+        try {
+            assertTrue(db.authenticateCommand("xx", "e".toCharArray()).ok());
+        }
+        finally {
+            db.getCollection( "system.users" ).remove(new BasicDBObject());
+            m.close();
+        }
     }
 
     @Test
@@ -769,9 +863,9 @@ public class JavaClientTest extends TestCase {
         DBCollection c = _db.getCollection( "udpate5" );
         c.drop();
 
-        c.insert( new BasicDBObject( "x" , new Integer( 5 ) ) );
+        c.insert( new BasicDBObject( "x" , 5) );
         assertEquals( Integer.class , c.findOne().get("x").getClass() );
-        assertEquals( new Integer(5) , c.findOne().get("x") );
+        assertEquals(5, c.findOne().get("x") );
 
         c.update( new BasicDBObject() , new BasicDBObject( "$set" , new BasicDBObject( "x" , 5.6D ) ) );
         assertEquals( Double.class , c.findOne().get("x").getClass() );
@@ -799,8 +893,8 @@ public class JavaClientTest extends TestCase {
         DBCollection c = _db.getCollection( "writeresultwfle1" );
         c.drop();
 
-        WriteResult res = c.insert( new BasicDBObject( "_id" , 1 ) );
-        res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
+        c.insert( new BasicDBObject( "_id" , 1 ) );
+        WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
         assertEquals( 1 , res.getN() );
         assertTrue( res.isLazy() );
 
@@ -837,8 +931,8 @@ public class JavaClientTest extends TestCase {
         DBCollection c = _db.getCollection( "writeresult2" );
         c.drop();
 
-        WriteResult res = c.insert( new BasicDBObject( "_id" , 1 ) );
-        res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
+        c.insert( new BasicDBObject( "_id" , 1 ) );
+        WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
         assertEquals( 1 , res.getN() );
         assertTrue( res.isLazy() );
 

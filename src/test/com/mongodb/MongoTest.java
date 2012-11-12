@@ -79,6 +79,13 @@ public class MongoTest extends TestCase {
 
     }
 
+    @Test
+    public void testMongoURIWithAuth() throws UnknownHostException {
+        Mongo mongo = new Mongo(new MongoURI("mongodb://user:pwd@localhost/authTest"));
+        assertNotNull(mongo.getDB("authTest").getAuthenticationCredentials());
+        assertNull(mongo.getDB("test").getAuthenticationCredentials());
+    }
+
     @AfterTest
     public void tearDown() {
         Mongo.cleanerIntervalMS = _originalCleanerIntervalMs;

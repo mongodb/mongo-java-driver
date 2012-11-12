@@ -99,6 +99,26 @@ public class DBApiLayer extends DB {
         _connector = connector;
     }
 
+    /**
+     *
+     * @param mongo the Mongo instance
+     * @param name the database name
+     * @param connector the connector
+     * @param username username to authenticate database against
+     * @param password password to authenticate database against
+     */
+    protected DBApiLayer(final Mongo mongo, final String name, final DBTCPConnector connector, final String username, final char[] password) {
+        super(mongo, name, username, password);
+
+        if ( connector == null )
+            throw new IllegalArgumentException( "need a connector: " + name );
+
+        _root = name;
+        _rootPlusDot = _root + ".";
+
+        _connector = connector;
+    }
+
     public void requestStart(){
         _connector.requestStart();
     }

@@ -295,6 +295,8 @@ public class Mongo {
     /**
      * Creates a Mongo described by a URI.
      * If only one address is used it will only connect to that node, otherwise it will discover all nodes.
+     * If the URI contains database credentials, the database will be authenticated lazily on first use
+     * with those credentials.
      * @param uri
      * @see MongoURI
      * <p>examples:
@@ -324,6 +326,11 @@ public class Mongo {
             _addr = null;
             _addrs = replicaSetSeeds;
             _connector = new DBTCPConnector( this , replicaSetSeeds );
+        }
+
+        if (uri.getDatabase() != null && uri.getUsername() != null) {
+            DB db = new DBApiLayer(this, uri.getDatabase() , _connector, uri.getUsername(), uri.getPassword());
+            _dbs.put(db.getName(), db);
         }
 
         _connector.start();

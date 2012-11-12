@@ -192,7 +192,8 @@ public class MongoURI {
 
     /**
      * creates a Mongo instance based on the URI
-     * @return
+     * @return a new Mongo instance.  There is no caching, so each call will create a new instance, each of which
+     * must be closed manually.
      * @throws MongoException
      * @throws UnknownHostException
      */
@@ -205,29 +206,27 @@ public class MongoURI {
 
     /**
      * returns the DB object from a newly created Mongo instance based on this URI
-     * @return
+     * @return the database specified in the URI.  This will implicitly create a new Mongo instance,
+     * which must be closed manually.
      * @throws MongoException
      * @throws UnknownHostException
      */
-    public DB connectDB()
-            throws UnknownHostException {
-        // TODO auth
-        return connect().getDB( getDatabase() );
+    public DB connectDB() throws UnknownHostException {
+        return connect().getDB(getDatabase());
     }
 
     /**
      * returns the URI's DB object from a given Mongo instance
-     * @param m
-     * @return
+     * @param mongo the Mongo instance to get the database from.
+     * @return the database specified in this URI
      */
-    public DB connectDB( Mongo m ){
-        // TODO auth
-        return m.getDB( getDatabase() );
+    public DB connectDB( Mongo mongo ){
+        return mongo.getDB( getDatabase() );
     }
 
     /**
      * returns the URI's Collection from a given DB object
-     * @param db
+     * @param db the database to get the collection from
      * @return
      */
     public DBCollection connectCollection( DB db ){
@@ -236,11 +235,11 @@ public class MongoURI {
 
     /**
      * returns the URI's Collection from a given Mongo instance
-     * @param m
-     * @return
+     * @param mongo the mongo instance to get the collection from
+     * @return the collection specified in this URI
      */
-    public DBCollection connectCollection( Mongo m ){
-        return connectDB( m ).getCollection( getCollection() );
+    public DBCollection connectCollection( Mongo mongo ){
+        return connectDB( mongo ).getCollection( getCollection() );
     }
 
     // ---------------------------------
