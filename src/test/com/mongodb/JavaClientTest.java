@@ -706,6 +706,35 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
+    public void testAuthenticateWithCredentialsInURIAndNoDatabase() throws UnknownHostException {
+        // First add the user
+        Mongo m = new Mongo(new MongoURI("mongodb://localhost"));
+        DB db = m.getDB("admin");
+        DBCollection u = db.getCollection( "system.users" );
+        try {
+            assertEquals( 0 , u.find().count() );
+
+            db.addUser( "xx" , "e".toCharArray() );
+            assertEquals( 1 , u.find().count() );
+        }
+        finally {
+            m.close();
+        }
+
+        m = new Mongo(new MongoURI("mongodb://xx:e@localhost"));
+        db = m.getDB("admin");
+
+        try {
+            assertNotNull(db.getAuthenticationCredentials());
+            assertEquals(true, db.authenticate("xx", "e".toCharArray()) );
+        }
+        finally {
+            db.getCollection( "system.users" ).remove(new BasicDBObject());
+            m.close();
+        }
+    }
+
+    @Test
     public void testAuthenticateWithCredentialsInURI() throws UnknownHostException {
         // First add the user
         Mongo m = new Mongo(new MongoURI("mongodb://localhost"));
@@ -725,6 +754,7 @@ public class JavaClientTest extends TestCase {
         db = m.getDB(cleanupDB);
 
         try {
+            assertNotNull(db.getAuthenticationCredentials());
             assertEquals(true, db.authenticate("xx", "e".toCharArray()) );
         }
         finally {
@@ -753,6 +783,7 @@ public class JavaClientTest extends TestCase {
         db = m.getDB(cleanupDB);
 
         try {
+            assertNotNull(db.getAuthenticationCredentials());
             assertTrue(db.authenticateCommand("xx", "e".toCharArray()).ok());
         }
         finally {
