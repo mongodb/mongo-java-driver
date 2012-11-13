@@ -152,6 +152,9 @@ public class MongoClientURI {
         {
             int idx = uri.lastIndexOf("/");
             if (idx < 0) {
+                if (uri.contains("?")) {
+                    throw new IllegalArgumentException("URI contains options without trailing slash");
+                }
                 serverPart = uri;
                 nsPart = null;
                 optionsPart = "";

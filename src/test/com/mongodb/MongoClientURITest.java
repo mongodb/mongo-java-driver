@@ -24,8 +24,29 @@ import javax.net.SocketFactory;
 
 public class MongoClientURITest extends TestCase {
 
+    @Test
+    public void testOptionsWithoutTrailingSlash() {
+        try {
+            new MongoClientURI("mongodb://localhost?wTimeout=5");
+            fail("This is not allowed");
+        } catch (IllegalArgumentException e) {
+            // ok
+        }
+
+    }
     @Test()
-    public void testBasic1() {
+    public void testSingleServer() {
+        MongoClientURI u = new MongoClientURI("mongodb://db.example.com");
+        assertEquals(1, u.getHosts().size());
+        assertEquals("db.example.com", u.getHosts().get(0));
+        assertNull(u.getDatabase());
+        assertNull(u.getCollection());
+        assertNull( u.getUsername());
+        assertEquals(null, u.getPassword());
+    }
+
+    @Test()
+    public void testWithDatabase() {
         MongoClientURI u = new MongoClientURI("mongodb://foo/bar");
         assertEquals(1, u.getHosts().size());
         assertEquals("foo", u.getHosts().get(0));
@@ -36,7 +57,7 @@ public class MongoClientURITest extends TestCase {
     }
 
     @Test()
-    public void testCollection() {
+    public void testWithCollection() {
         MongoClientURI u = new MongoClientURI("mongodb://localhost/test.my.coll");
         assertEquals("test", u.getDatabase());
         assertEquals("my.coll", u.getCollection());
@@ -111,12 +132,12 @@ public class MongoClientURITest extends TestCase {
 
     @Test()
     public void testOptions() {
-        MongoClientURI uAmp = new MongoClientURI("mongodb://localhost/test?" +
+        MongoClientURI uAmp = new MongoClientURI("mongodb://localhost/?" +
                 "maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&" +
                 "connectTimeoutMS=2500&socketTimeoutMS=5500&autoConnectRetry=true&" +
                 "slaveOk=true&safe=false&w=1&wtimeout=2500&fsync=true");
         assertOnOptions(uAmp.getOptions());
-        MongoClientURI uSemi = new MongoClientURI("mongodb://localhost/test?" +
+        MongoClientURI uSemi = new MongoClientURI("mongodb://localhost/?" +
                 "maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;" +
                 "connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;" +
                 "slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true");
