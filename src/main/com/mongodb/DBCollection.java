@@ -35,9 +35,9 @@ import java.util.Set;
 /** This class provides a skeleton implementation of a database collection.
  * <p>A typical invocation sequence is thus
  * <blockquote><pre>
- *     Mongo mongo = new Mongo( new DBAddress( "localhost", 127017 ) );
- *     DB db = mongo.getDB( "mydb" );
- *     DBCollection collection = db.getCollection( "test" );
+ *     MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", 27017));
+ *     DB db = mongo.getDB("mydb");
+ *     DBCollection collection = db.getCollection("test");
  * </pre></blockquote>
  * @dochub collections
  */
