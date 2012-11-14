@@ -124,41 +124,39 @@ public class ReplicaSetStatus extends ConnectionStatus {
     // Simple abstraction over a volatile ReplicaSet reference that starts as null.  The get method blocks until members
     // is not null. The set method notifies all, thus waking up all getters.
     @ThreadSafe
-    static class ReplicaSetHolder {
-       private volatile ReplicaSet members;
+    class ReplicaSetHolder {
+        private volatile ReplicaSet members;
 
-       // blocks until replica set is set, or a timeout occurs
-       synchronized ReplicaSet get() {
-           while (members == null) {
-               try {
-                   wait(ReplicaSetStatus.mongoOptionsDefaults.socketTimeout);
-               }
-               catch (InterruptedException e) {
-                   throw new MongoInterruptedException("Interrupted while waiting for next update to replica set status", e);
-               }
-           }
-           return members;
-       }
+        // blocks until replica set is set, or a timeout occurs
+        synchronized ReplicaSet get() {
+            while (members == null) {
+                try {
+                    wait(_mongo.getMongoOptions().getConnectTimeout());
+                } catch (InterruptedException e) {
+                    throw new MongoInterruptedException("Interrupted while waiting for next update to replica set status", e);
+                }
+            }
+            return members;
+        }
 
-       // set the replica set to a non-null value and notifies all threads waiting.
-       synchronized void set(ReplicaSet members) {
-           if (members == null) {
-               throw new IllegalArgumentException("members can not be null");
-           }
-           
-           this.members = members;
-           notifyAll();
-       }
+        // set the replica set to a non-null value and notifies all threads waiting.
+        synchronized void set(ReplicaSet members) {
+            if (members == null) {
+                throw new IllegalArgumentException("members can not be null");
+            }
 
-       // blocks until the replica set is set again
-       synchronized void waitForNextUpdate() {
-           try {
-               wait(ReplicaSetStatus.mongoOptionsDefaults.socketTimeout);
-           }
-           catch (InterruptedException e) {
-              throw new MongoInterruptedException("Interrupted while waiting for next update to replica set status", e);
-           }
-       }
+            this.members = members;
+            notifyAll();
+        }
+
+        // blocks until the replica set is set again
+        synchronized void waitForNextUpdate() {
+            try {
+                wait(_mongo.getMongoOptions().getConnectTimeout());
+            } catch (InterruptedException e) {
+                throw new MongoInterruptedException("Interrupted while waiting for next update to replica set status", e);
+            }
+        }
 
         public synchronized void close() {
             this.members = null;

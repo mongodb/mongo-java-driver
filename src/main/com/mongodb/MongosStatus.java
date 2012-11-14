@@ -119,7 +119,7 @@ class MongosStatus extends ConnectionStatus {
         if (preferred == null) {
             try {
                 synchronized (this) {
-                    wait();
+                    wait(_mongo.getMongoOptions().getConnectTimeout());
                 }
             } catch (InterruptedException e) {
                 throw new MongoInterruptedException("Interrupted while waiting for next update to mongos status", e);
