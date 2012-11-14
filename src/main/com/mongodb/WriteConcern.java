@@ -53,6 +53,11 @@ public class WriteConcern implements Serializable {
     private static final long serialVersionUID = 1884671104750417011L;
 
     /**
+     * No exceptions are raised, even for network issues.
+     */
+    public final static WriteConcern ERRORS_IGNORED = new WriteConcern(-1);
+
+    /**
      * Write operations that use this write concern will wait for acknowledgement from the primary server before returning.
      * Exceptions are raised for network issues, and server errors.
      * @since 2.10.0
@@ -66,7 +71,27 @@ public class WriteConcern implements Serializable {
     public final static WriteConcern UNACKNOWLEDGED = new WriteConcern(0);
 
     /**
+     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush
+     * the data to disk.
+     */
+    public final static WriteConcern FSYNCED = new WriteConcern(true);
+
+    /**
+     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to
+     * group commit to the journal file on disk.
+     */
+    public final static WriteConcern JOURNALED = new WriteConcern( 1, 0, false, true );
+
+    /**
+     * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
+     */
+    public final static WriteConcern REPLICA_ACKNOWLEDGED= new WriteConcern(2);
+
+    /**
      * No exceptions are raised, even for network issues.
+     * <p>
+     * This field has been superseded by {@code WriteConcern.ERRORS_IGNORED}, and may be deprecated in a future release.
+     * @see WriteConcern#ERRORS_IGNORED
      */
     public final static WriteConcern NONE = new WriteConcern(-1);
 
@@ -96,17 +121,26 @@ public class WriteConcern implements Serializable {
     /**
      * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush
      * the data to disk.
+     * <p>
+     * This field has been superseded by {@code WriteConcern.FSYNCED}, and may be deprecated in a future release.
+     * @see WriteConcern#FSYNCED
      */
     public final static WriteConcern FSYNC_SAFE = new WriteConcern(true);
 
     /**
      * Exceptions are raised for network issues, and server errors; the write operation waits for the server to
      * group commit to the journal file on disk.
+     * <p>
+     * This field has been superseded by {@code WriteConcern.JOURNALED}, and may be deprecated in a future release.
+     * @see WriteConcern#JOURNALED
      */
     public final static WriteConcern JOURNAL_SAFE = new WriteConcern( 1, 0, false, true );
 
     /**
      * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
+     * <p>
+     * This field has been superseded by {@code WriteConcern.REPLICA_ACKNOWLEDGED}, and may be deprecated in a future release.
+     * @see WriteConcern#REPLICA_ACKNOWLEDGED
      */
     public final static WriteConcern REPLICAS_SAFE = new WriteConcern(2);
 

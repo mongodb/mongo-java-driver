@@ -88,12 +88,34 @@ public class WriteConcernTest extends TestCase {
         Assert.assertTrue(WriteConcern.ACKNOWLEDGED.callGetLastError());
         Assert.assertTrue(WriteConcern.FSYNC_SAFE.callGetLastError());
         Assert.assertTrue(WriteConcern.JOURNAL_SAFE.callGetLastError());
+        Assert.assertFalse(WriteConcern.ERRORS_IGNORED.callGetLastError());
+        Assert.assertTrue(WriteConcern.JOURNALED.callGetLastError());
+        Assert.assertTrue(WriteConcern.FSYNCED.callGetLastError());
+        Assert.assertTrue(WriteConcern.REPLICA_ACKNOWLEDGED.callGetLastError());
         Assert.assertTrue(WriteConcern.MAJORITY.callGetLastError());
         Assert.assertTrue(WriteConcern.REPLICAS_SAFE.callGetLastError());
         Assert.assertTrue(new WriteConcern("custom").callGetLastError());
         Assert.assertFalse(new WriteConcern(0, 1000).callGetLastError());
         Assert.assertFalse(new WriteConcern(0, 0, true, false).callGetLastError());
         Assert.assertFalse(new WriteConcern(0, 0, false, true).callGetLastError());
+    }
+
+    @Test
+    public void testW() {
+        Assert.assertEquals(-1, WriteConcern.NONE.getW());
+        Assert.assertEquals(0, WriteConcern.NORMAL.getW());
+        Assert.assertEquals(0, WriteConcern.UNACKNOWLEDGED.getW());
+        Assert.assertEquals(1, WriteConcern.SAFE.getW());
+        Assert.assertEquals(1, WriteConcern.ACKNOWLEDGED.getW());
+        Assert.assertEquals(1, WriteConcern.FSYNC_SAFE.getW());
+        Assert.assertEquals(1, WriteConcern.JOURNAL_SAFE.getW());
+        Assert.assertEquals(-1, WriteConcern.ERRORS_IGNORED.getW());
+        Assert.assertEquals(1, WriteConcern.JOURNALED.getW());
+        Assert.assertEquals(1, WriteConcern.FSYNCED.getW());
+        Assert.assertEquals(2, WriteConcern.REPLICA_ACKNOWLEDGED.getW());
+        Assert.assertEquals("majority", WriteConcern.MAJORITY.getWString());
+        Assert.assertEquals(2, WriteConcern.REPLICAS_SAFE.getW());
+        Assert.assertEquals("custom", new WriteConcern("custom").getWString());
     }
 
     @Test
@@ -105,6 +127,10 @@ public class WriteConcernTest extends TestCase {
         Assert.assertTrue(WriteConcern.ACKNOWLEDGED.raiseNetworkErrors());
         Assert.assertTrue(WriteConcern.FSYNC_SAFE.raiseNetworkErrors());
         Assert.assertTrue(WriteConcern.JOURNAL_SAFE.raiseNetworkErrors());
+        Assert.assertFalse(WriteConcern.ERRORS_IGNORED.raiseNetworkErrors());
+        Assert.assertTrue(WriteConcern.JOURNALED.raiseNetworkErrors());
+        Assert.assertTrue(WriteConcern.FSYNCED.raiseNetworkErrors());
+        Assert.assertTrue(WriteConcern.REPLICA_ACKNOWLEDGED.raiseNetworkErrors());
         Assert.assertTrue(WriteConcern.MAJORITY.raiseNetworkErrors());
         Assert.assertTrue(WriteConcern.REPLICAS_SAFE.raiseNetworkErrors());
         Assert.assertTrue(new WriteConcern("custom").raiseNetworkErrors());
