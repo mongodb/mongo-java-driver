@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 
 import javax.net.SocketFactory;
 import java.net.UnknownHostException;
+import javax.net.ssl.SSLSocketFactory;
 
 public class MongoClientURITest extends TestCase {
 
@@ -151,6 +152,14 @@ public class MongoClientURITest extends TestCase {
 
     }
 
+    @Test
+    public void testSSLOption() {
+        MongoClientURI uri = new MongoClientURI("mongodb://localhost/?ssl=false");
+        assertFalse(uri.getOptions().getSocketFactory() instanceof SSLSocketFactory);
+
+        uri = new MongoClientURI("mongodb://localhost/?ssl=true");
+        assertTrue(uri.getOptions().getSocketFactory() instanceof SSLSocketFactory);
+    }
 
     @Test()
     public void testOptions() {

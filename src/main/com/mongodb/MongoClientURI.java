@@ -17,6 +17,7 @@
 
 package com.mongodb;
 
+import javax.net.ssl.SSLSocketFactory;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ import java.util.logging.Logger;
  * </ul>
  * <p>Connection Configuration:</p>
  * <ul>
+ * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * </ul>
@@ -254,6 +256,7 @@ public class MongoClientURI {
         generalOptionsKeys.add("sockettimeoutms");
         generalOptionsKeys.add("sockettimeoutms");
         generalOptionsKeys.add("autoconnectretry");
+        generalOptionsKeys.add("ssl");
 
         readPreferenceKeys.add("slaveok");
         readPreferenceKeys.add("readpreference");
@@ -301,6 +304,10 @@ public class MongoClientURI {
                 builder.socketTimeout(Integer.parseInt(value));
             } else if (key.equals("autoconnectretry")) {
                 builder.autoConnectRetry(_parseBoolean(value));
+            } else if (key.equals("ssl")) {
+                if (_parseBoolean(value)) {
+                    builder.socketFactory(SSLSocketFactory.getDefault());
+                }
             }
         }
 
