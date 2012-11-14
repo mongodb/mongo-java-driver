@@ -1,15 +1,13 @@
 package com.mongodb;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-
-
 /**
  * Utility for constructing Query operation command with query, orderby, hint, explain, snapshot.
  */
 class QueryOpBuilder {
-	
-	private DBObject query;
+
+    static final String READ_PREFERENCE_META_OPERATOR = "$readPreference";
+
+    private DBObject query;
 	private DBObject orderBy;
 	private DBObject hintObj;
 	private String hintStr;
@@ -131,7 +129,7 @@ class QueryOpBuilder {
             if (snapshot)
                 queryop.put("$snapshot", true);
             if (readPref != null)
-                queryop.put("$readPreference", readPref);
+                queryop.put(READ_PREFERENCE_META_OPERATOR, readPref);
 
             return queryop;
 		}

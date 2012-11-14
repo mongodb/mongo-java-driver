@@ -64,9 +64,10 @@ public abstract class DB {
     }
 
     /**
-     * Tests if database commands are read preference obedient
-     * @param command the <code>DBObject</code> to test obedience
-     * @return true if the command is obedient
+     * Determines the read preference that should be used for the given command.
+     * @param command the <code>DBObject</code> representing the command
+     * @param requestedPreference the preference requested by the client.
+     * @return the read preference to use for the given command.  It will never return null.
      * @see com.mongodb.ReadPreference
      */
     ReadPreference getCommandReadPreference(DBObject command, ReadPreference requestedPreference){
@@ -92,6 +93,8 @@ public abstract class DB {
         }
 
         if (primaryRequired) {
+            return ReadPreference.primary();
+        } else if (requestedPreference == null) {
             return ReadPreference.primary();
         } else {
             return requestedPreference;
@@ -253,9 +256,13 @@ public abstract class DB {
      * @dochub commands
      */
     public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs, DBEncoder encoder ){
-
         readPrefs = getCommandReadPreference(cmd, readPrefs);
-        
+
+        // TODO: automate an integration test for this condition
+        if (getMongo().isMongosConnection()) {
+            cmd.put(QueryOpBuilder.READ_PREFERENCE_META_OPERATOR, readPrefs.toDBObject());
+        }
+
         Iterator<DBObject> i =
                 getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, readPrefs ,
                         DefaultDBDecoder.FACTORY.create(), encoder);
