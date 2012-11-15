@@ -569,7 +569,7 @@ public class DBTCPConnector implements DBConnector {
             return false;
 
         if (  _masterPortPool != null )
-            _logger.log(Level.WARNING, "Master switching from " + _masterPortPool.getServerAddress() + " to " + addr);
+            _logger.log(Level.WARNING, "Primary switching from " + _masterPortPool.getServerAddress() + " to " + addr);
         _masterPortPool = newPool;
         return true;
     }
