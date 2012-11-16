@@ -208,7 +208,7 @@ public class DBPortPool extends SimplePool<DBPort> {
     public DBPort get() {
         DBPort port = null;
         if ( ! _waitingSem.tryAcquire() )
-            throw new SemaphoresOut(_waitingSem.availablePermits() );
+            throw new SemaphoresOut(_options.connectionsPerHost * _options.threadsAllowedToBlockForConnectionMultiplier);
 
         try {
             port = get( _options.maxWaitTime );
