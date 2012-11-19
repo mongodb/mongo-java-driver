@@ -66,4 +66,10 @@ public class MongoURITest extends TestCase {
         assertEquals(options.slaveOk, false);
         assertEquals(options.isCursorFinalizerEnabled(), true);
     }
+
+    @Test
+    public void testOptionSameInstance() {
+        MongoURI mongoURI = new MongoURI( "mongodb://localhost");
+        assertSame(mongoURI.getOptions(), mongoURI.getOptions());
+    }
 }

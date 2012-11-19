@@ -126,6 +126,7 @@ public class MongoURI {
     public static final String MONGODB_PREFIX = "mongodb://";
 
     private final MongoClientURI mongoClientURI;
+    private final MongoOptions mongoOptions;
 
     /**
      * Creates a MongoURI from a string.
@@ -134,10 +135,12 @@ public class MongoURI {
      */
     public MongoURI( String uri ) {
         this.mongoClientURI = new MongoClientURI(uri, new MongoClientOptions.Builder().legacyDefaults());
+        mongoOptions = new MongoOptions(mongoClientURI.getOptions());
     }
 
     public MongoURI(final MongoClientURI mongoClientURI) {
         this.mongoClientURI = mongoClientURI;
+        mongoOptions = new MongoOptions(mongoClientURI.getOptions());
     }
 
     // ---------------------------------
@@ -183,11 +186,12 @@ public class MongoURI {
     }
 
     /**
-     * Gets the options
-     * @return
+     * Gets the options.  This method will return the same instance of {@code MongoOptions} for every call, so it's
+     * possible to mutate the returned instance to change the defaults.
+     * @return the mongo options
      */
     public MongoOptions getOptions(){
-        return new MongoOptions(mongoClientURI.getOptions());
+        return mongoOptions;
     }
 
     /**
