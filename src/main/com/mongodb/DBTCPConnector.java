@@ -440,10 +440,11 @@ public class DBTCPConnector implements DBConnector {
                 p = _masterPortPool.get();
             }
             else {
-                ConnectionStatus.Node node = readPref.getNode(getReplicaSetStatus()._replicaSetHolder.get());
+                ReplicaSetStatus.ReplicaSet replicaSet = getReplicaSetStatus()._replicaSetHolder.get();
+                ConnectionStatus.Node node = readPref.getNode(replicaSet);
             
                 if (node == null)
-                    throw new MongoException("No replica set members available for query with "+readPref.toDBObject().toString());
+                    throw new MongoException("No replica set members available in " +  replicaSet + " for " + readPref.toDBObject().toString());
             
                 p = _portHolder.get(node.getServerAddress()).get();
             }
