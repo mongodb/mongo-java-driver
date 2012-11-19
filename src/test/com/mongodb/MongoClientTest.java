@@ -26,42 +26,54 @@ import java.util.Arrays;
 public class MongoClientTest {
     @Test
     public void testConstructors() throws UnknownHostException {
+        MongoClientOptions customClientOptions = new MongoClientOptions.Builder().connectionsPerHost(500).build();
+        MongoOptions customOptions = new MongoOptions(customClientOptions);
+        MongoOptions defaultOptions = new MongoOptions(new MongoClientOptions.Builder().build());
         MongoClient mc;
 
         mc = new MongoClient();
-        Assert.assertEquals(WriteConcern.ACKNOWLEDGED, mc.getWriteConcern());
+        Assert.assertEquals(new ServerAddress(), mc.getAddress());
+        Assert.assertEquals(defaultOptions, mc.getMongoOptions());
         mc.close();
 
-        mc = new MongoClient("localhost");
-        Assert.assertEquals(WriteConcern.ACKNOWLEDGED, mc.getWriteConcern());
+        mc = new MongoClient("127.0.0.1");
+        Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
+        Assert.assertEquals(defaultOptions, mc.getMongoOptions());
         mc.close();
 
-        mc = new MongoClient("localhost", new MongoClientOptions.Builder().build());
-        Assert.assertEquals(WriteConcern.ACKNOWLEDGED, mc.getWriteConcern());
+        mc = new MongoClient("127.0.0.1", customClientOptions);
+        Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
+        Assert.assertEquals(customOptions, mc.getMongoOptions());
         mc.close();
 
-        mc = new MongoClient("localhost", 27017);
-        Assert.assertEquals(WriteConcern.ACKNOWLEDGED, mc.getWriteConcern());
+        mc = new MongoClient("127.0.0.1", 27018);
+        Assert.assertEquals(new ServerAddress("127.0.0.1", 27018), mc.getAddress());
+        Assert.assertEquals(defaultOptions, mc.getMongoOptions());
         mc.close();
 
-        mc = new MongoClient(new ServerAddress("localhost"));
-        Assert.assertEquals(WriteConcern.ACKNOWLEDGED, mc.getWriteConcern());
+        mc = new MongoClient(new ServerAddress("127.0.0.1"));
+        Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
+        Assert.assertEquals(defaultOptions, mc.getMongoOptions());
         mc.close();
 
-        mc = new MongoClient(new ServerAddress("localhost"), new MongoClientOptions.Builder().build());
-        Assert.assertEquals(WriteConcern.ACKNOWLEDGED, mc.getWriteConcern());
+        mc = new MongoClient(new ServerAddress("127.0.0.1"), customClientOptions);
+        Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
+        Assert.assertEquals(customOptions, mc.getMongoOptions());
         mc.close();
 
-        mc = new MongoClient(Arrays.asList(new ServerAddress("localhost")));
-        Assert.assertEquals(WriteConcern.ACKNOWLEDGED, mc.getWriteConcern());
+        mc = new MongoClient(Arrays.asList(new ServerAddress("localhost", 27017), new ServerAddress("127.0.0.1", 27018)));
+        Assert.assertEquals(Arrays.asList(new ServerAddress("localhost", 27017), new ServerAddress("127.0.0.1", 27018)), mc.getAllAddress());
+        Assert.assertEquals(defaultOptions, mc.getMongoOptions());
         mc.close();
 
-        mc = new MongoClient(Arrays.asList(new ServerAddress("localhost")), new MongoClientOptions.Builder().build());
-        Assert.assertEquals(WriteConcern.ACKNOWLEDGED, mc.getWriteConcern());
+        mc = new MongoClient(Arrays.asList(new ServerAddress("localhost", 27017), new ServerAddress("127.0.0.1", 27018)), customClientOptions);
+        Assert.assertEquals(Arrays.asList(new ServerAddress("localhost", 27017), new ServerAddress("127.0.0.1", 27018)), mc.getAllAddress());
+        Assert.assertEquals(customOptions, mc.getMongoOptions());
         mc.close();
 
-        mc = new MongoClient(new MongoClientURI("mongodb://localhost"));
-        Assert.assertEquals(WriteConcern.ACKNOWLEDGED, mc.getWriteConcern());
+        mc = new MongoClient(new MongoClientURI("mongodb://127.0.0.1"));
+        Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
+        Assert.assertEquals(defaultOptions, mc.getMongoOptions());
         mc.close();
     }
 }

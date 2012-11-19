@@ -115,6 +115,70 @@ public class MongoOptions {
         }
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final MongoOptions options = (MongoOptions) o;
+
+        if (autoConnectRetry != options.autoConnectRetry) return false;
+        if (connectTimeout != options.connectTimeout) return false;
+        if (connectionsPerHost != options.connectionsPerHost) return false;
+        if (cursorFinalizerEnabled != options.cursorFinalizerEnabled) return false;
+        if (fsync != options.fsync) return false;
+        if (j != options.j) return false;
+        if (maxAutoConnectRetryTime != options.maxAutoConnectRetryTime) return false;
+        if (maxWaitTime != options.maxWaitTime) return false;
+        if (safe != options.safe) return false;
+        if (slaveOk != options.slaveOk) return false;
+        if (socketKeepAlive != options.socketKeepAlive) return false;
+        if (socketTimeout != options.socketTimeout) return false;
+        if (threadsAllowedToBlockForConnectionMultiplier != options.threadsAllowedToBlockForConnectionMultiplier)
+            return false;
+        if (w != options.w) return false;
+        if (wtimeout != options.wtimeout) return false;
+        if (dbDecoderFactory != null ? !dbDecoderFactory.equals(options.dbDecoderFactory) : options.dbDecoderFactory != null)
+            return false;
+        if (dbEncoderFactory != null ? !dbEncoderFactory.equals(options.dbEncoderFactory) : options.dbEncoderFactory != null)
+            return false;
+        if (description != null ? !description.equals(options.description) : options.description != null) return false;
+        if (readPreference != null ? !readPreference.equals(options.readPreference) : options.readPreference != null)
+            return false;
+        if (socketFactory != null ? !socketFactory.equals(options.socketFactory) : options.socketFactory != null)
+            return false;
+        if (writeConcern != null ? !writeConcern.equals(options.writeConcern) : options.writeConcern != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = description != null ? description.hashCode() : 0;
+        result = 31 * result + connectionsPerHost;
+        result = 31 * result + threadsAllowedToBlockForConnectionMultiplier;
+        result = 31 * result + maxWaitTime;
+        result = 31 * result + connectTimeout;
+        result = 31 * result + socketTimeout;
+        result = 31 * result + (socketKeepAlive ? 1 : 0);
+        result = 31 * result + (autoConnectRetry ? 1 : 0);
+        result = 31 * result + (int) (maxAutoConnectRetryTime ^ (maxAutoConnectRetryTime >>> 32));
+        result = 31 * result + (slaveOk ? 1 : 0);
+        result = 31 * result + (readPreference != null ? readPreference.hashCode() : 0);
+        result = 31 * result + (dbDecoderFactory != null ? dbDecoderFactory.hashCode() : 0);
+        result = 31 * result + (dbEncoderFactory != null ? dbEncoderFactory.hashCode() : 0);
+        result = 31 * result + (safe ? 1 : 0);
+        result = 31 * result + w;
+        result = 31 * result + wtimeout;
+        result = 31 * result + (fsync ? 1 : 0);
+        result = 31 * result + (j ? 1 : 0);
+        result = 31 * result + (socketFactory != null ? socketFactory.hashCode() : 0);
+        result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
+        result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
+        return result;
+    }
+
     /**
      * <p>The description for <code>Mongo</code> instances created with these options. This is used in various places like logging.</p>
      */

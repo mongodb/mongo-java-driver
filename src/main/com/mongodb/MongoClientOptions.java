@@ -310,7 +310,7 @@ public class MongoClientOptions {
      * Those connections will be kept in a pool when idle.
      * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.
      * <p>
-     * Default is 10.
+     * Default is 100.
      * @return the maximum size of the connection pool per host
      * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
      */

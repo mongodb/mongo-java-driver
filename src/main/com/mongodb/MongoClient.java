@@ -53,6 +53,9 @@ import java.util.List;
  * By default, all write operations will wait for acknowledgment by the server, as the default write concern is
  * {@code WriteConcern.ACKNOWLEDGED}.
  * <p>
+ * In general, users of this class will pick up all of the default options specified in {@code MongoClientOptions}.  In
+ * particular, note that the default value of the connectionsPerHost option has been increased from 10 to 100.
+ * <p>
  * Note: This class supersedes the {@code Mongo} class.  While it extends {@code Mongo}, it differs from it in that
  * the default write concern is to wait for acknowledgment from the server of all write operations.  In addition, its
  * constructors accept instances of {@code MongoClientOptions} and {@code MongoClientURI}, which both also
@@ -73,8 +76,7 @@ public class MongoClient extends Mongo {
      * @throws MongoException
      */
     public MongoClient() throws UnknownHostException {
-        super();
-        setWriteConcern(WriteConcern.ACKNOWLEDGED);
+        this(new ServerAddress());
     }
 
     /**
@@ -85,8 +87,7 @@ public class MongoClient extends Mongo {
      * @throws MongoException
      */
     public MongoClient(String host) throws UnknownHostException {
-        super(host);
-        setWriteConcern(WriteConcern.ACKNOWLEDGED);
+        this(new ServerAddress(host));
     }
 
     /**
@@ -98,7 +99,7 @@ public class MongoClient extends Mongo {
      * @throws MongoException
      */
     public MongoClient(String host, MongoClientOptions options) throws UnknownHostException {
-        super(host, new MongoOptions(options));
+        this(new ServerAddress(host), options);
     }
 
     /**
@@ -110,8 +111,7 @@ public class MongoClient extends Mongo {
      * @throws MongoException
      */
     public MongoClient(String host, int port) throws UnknownHostException {
-        super(host, port);
-        setWriteConcern(WriteConcern.ACKNOWLEDGED);
+        this(new ServerAddress(host, port));
     }
 
     /**
@@ -122,8 +122,7 @@ public class MongoClient extends Mongo {
      * @see com.mongodb.ServerAddress
      */
     public MongoClient(ServerAddress addr) {
-        super(addr);
-        setWriteConcern(WriteConcern.ACKNOWLEDGED);
+        this(addr, new MongoClientOptions.Builder().build());
     }
 
     /**
@@ -154,8 +153,7 @@ public class MongoClient extends Mongo {
      * @see com.mongodb.ServerAddress
      */
     public MongoClient(List<ServerAddress> seeds) {
-        super(seeds);
-        setWriteConcern(WriteConcern.ACKNOWLEDGED);
+        this(seeds, new MongoClientOptions.Builder().build());
     }
 
 
