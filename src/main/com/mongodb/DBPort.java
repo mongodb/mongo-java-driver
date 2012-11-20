@@ -304,7 +304,7 @@ public class DBPort {
         _socket = null;
     }
     
-    void checkAuth(DB db, final boolean writePrivilegesRequired) throws IOException {
+    void checkAuth(DB db) throws IOException {
         // TODO: add support for retry when credentials ticket times out
         if (db.getMongo().getCredentials() != null) {
             if (!globallyAuthed) {
@@ -314,14 +314,14 @@ public class DBPort {
                 new GSSAPIAuthenticator(this, db.getMongo()).authenticate();
                 globallyAuthed = true;
             }
-            saslAquireDatabasePrivileges(db, writePrivilegesRequired);
+            saslAcquirePrivilegeForDatabase(db);
         }
         else {
             DB.AuthenticationCredentials credentials = db.getAuthenticationCredentials();
             if (credentials == null) {
                 if (db._name.equals("admin"))
                     return;
-                checkAuth(db._mongo.getDB("admin"), writePrivilegesRequired);
+                checkAuth(db._mongo.getDB("admin"));
                 return;
             }
             if (_authed.containsKey(db))
@@ -337,24 +337,15 @@ public class DBPort {
         }
     }
 
-    private void saslAquireDatabasePrivileges(final DB db, final boolean writePrivilegesRequired) throws IOException {
+    private void saslAcquirePrivilegeForDatabase(final DB db) throws IOException {
         BasicDBObject acquirePrivilegeCmd = new BasicDBObject("acquirePrivilege", 1).
-                append("principal", db.getMongo().getCredentials().getUserName()).append("resource", db.getName());
-        if (writePrivilegesRequired) {
-            if (_saslWriteAuthed.get(db) == null) {
-                acquirePrivilegeCmd.append("actions", Arrays.asList("oldWrite"));
-                CommandResult res = runCommand(db.getSisterDB("admin"), acquirePrivilegeCmd);
-                res.throwOnError();
-                _saslWriteAuthed.put(db, true);
-                _saslReadAuthed.put(db, true);
-            }
-        } else {
-            if (_saslReadAuthed.get(db) == null) {
-                acquirePrivilegeCmd.append("actions", Arrays.asList("oldRead"));
-                CommandResult res = runCommand(db.getSisterDB("admin"), acquirePrivilegeCmd);
-                res.throwOnError();
-                _saslReadAuthed.put(db, true);
-            }
+                append("principal", db.getMongo().getCredentials().getUserName()).
+                append("resource", db.getName());
+        if (_saslAuthed.get(db) == null) {
+            acquirePrivilegeCmd.append("actions", Arrays.asList("oldWrite"));
+            CommandResult res = runCommand(db.getSisterDB("admin"), acquirePrivilegeCmd);
+            res.throwOnError();
+            _saslAuthed.put(db, true);
         }
     }
 
@@ -381,8 +372,7 @@ public class DBPort {
     private boolean _processingResponse;
 
     private Map<DB,Boolean> _authed = new ConcurrentHashMap<DB, Boolean>( );
-    private Map<DB,Boolean> _saslReadAuthed = new ConcurrentHashMap<DB, Boolean>( );
-    private Map<DB,Boolean> _saslWriteAuthed = new ConcurrentHashMap<DB, Boolean>( );
+    private Map<DB,Boolean> _saslAuthed = new ConcurrentHashMap<DB, Boolean>( );
     int _lastThread;
     long _calls = 0;
     private volatile ActiveState _activeState;
