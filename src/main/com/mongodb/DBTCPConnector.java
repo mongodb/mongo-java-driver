@@ -177,7 +177,7 @@ public class DBTCPConnector implements DBConnector {
         DBPort port = mp.get( true , ReadPreference.primary(), hostNeeded );
 
         try {
-            port.checkAuth( db );
+            port.checkAuth( db, true);
             port.say( m );
             if ( concern.callGetLastError() ){
                 return _checkWriteError( db , port , concern );
@@ -282,7 +282,7 @@ public class DBTCPConnector implements DBConnector {
         Response res = null;
         boolean retry = false;
         try {
-            port.checkAuth( db );
+            port.checkAuth( db, false);
             res = port.call( m , coll, decoder );
             if ( res._responseTo != m.getId() )
                 throw new MongoException( "ids don't match" );

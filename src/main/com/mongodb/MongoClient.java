@@ -191,4 +191,14 @@ public class MongoClient extends Mongo {
     public MongoClient(MongoClientURI uri) throws UnknownHostException {
         super(new MongoURI(uri));
     }
+
+    /**
+     * Creates a Mongo based on an authority.
+     *
+     * @param authority the authority
+     * @param options the options
+     */
+    public MongoClient(MongoClientAuthority authority, MongoClientOptions options) {
+        super(authority, new MongoOptions(options));
+    }
 }

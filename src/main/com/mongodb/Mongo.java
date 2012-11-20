@@ -352,6 +352,50 @@ public class Mongo {
         }
     }
 
+    // TODO: reimplement above constructor in terms of this one
+    public Mongo(MongoClientAuthority authority, MongoOptions options) {
+        _options = options;
+        _applyMongoOptions();
+
+        if ( authority.isDirect() ){
+            _addr = authority.getServerAddress();
+            _addrs = null;
+            _connector = new DBTCPConnector( this , _addr );
+        }
+        else {
+            _addr = null;
+            _addrs = authority.getServerAddresses();
+            _connector = new DBTCPConnector( this , _addrs );
+        }
+
+        if (authority.getCredentials() != null) {
+            if (authority.getCredentials().getMechanism().equals(MongoClientCredentials.MONGODB_MECHANISM)) {
+                String databaseName;
+                if (authority.getCredentials().getDatabase() != null) {
+                    databaseName = authority.getCredentials().getDatabase();
+                } else {
+                    databaseName = ADMIN_DATABASE_NAME;
+                }
+
+                DB db = new DBApiLayer(this, databaseName, _connector, authority.getCredentials().getUserName(), authority.getCredentials().getPassword());
+                _dbs.put(db.getName(), db);
+            }
+            // Just store them and let someone else figure out what to do with them
+            else {
+                // TODO: Make sure MongoURI support user names with @
+                _credentials = authority.getCredentials();
+            }
+        }
+
+        _connector.start();
+        if (_options.cursorFinalizerEnabled) {
+            _cleaner = new CursorCleanerThread();
+            _cleaner.start();
+        } else {
+            _cleaner = null;
+        }
+    }
+
     /**
      * gets a database object
      * @param dbname the database name
@@ -585,6 +629,10 @@ public class Mongo {
         return _netOptions.get();
     }
 
+    public MongoClientCredentials getCredentials() {
+        return _credentials;
+    }
+
     /**
      * Helper method for setting up MongoOptions at instantiation
      * so that any options which affect this connection can be set.
@@ -636,6 +684,7 @@ public class Mongo {
     private ReadPreference _readPref = ReadPreference.primary();
     final Bytes.OptionHolder _netOptions = new Bytes.OptionHolder( null );
     final CursorCleanerThread _cleaner;
+    MongoClientCredentials _credentials;
 
     org.bson.util.SimplePool<PoolOutputBuffer> _bufferPool =
         new org.bson.util.SimplePool<PoolOutputBuffer>( 1000 ){

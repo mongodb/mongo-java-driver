@@ -19,13 +19,23 @@
 package com.mongodb;
 
 import com.mongodb.util.ThreadUtil;
+import org.ietf.jgss.GSSCredential;
+import org.ietf.jgss.GSSException;
+import org.ietf.jgss.GSSManager;
+import org.ietf.jgss.GSSName;
+import org.ietf.jgss.Oid;
 
+import javax.security.sasl.Sasl;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslException;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -45,6 +55,7 @@ public class DBPort {
     static final boolean USE_NAGLE = false;
     
     static final long CONN_RETRY_TIME_MS = 15000;
+    private boolean globallyAuthed = false;
 
     /**
      * creates a new DBPort
@@ -293,24 +304,58 @@ public class DBPort {
         _socket = null;
     }
     
-    void checkAuth( DB db ) throws IOException {
-        DB.AuthenticationCredentials credentials = db.getAuthenticationCredentials();
-        if ( credentials == null ){
-            if ( db._name.equals( "admin" ) )
-                return;
-            checkAuth( db._mongo.getDB( "admin" ) );
-            return;
+    void checkAuth(DB db, final boolean writePrivilegesRequired) throws IOException {
+        // TODO: add support for retry when credentials ticket times out
+        if (db.getMongo().getCredentials() != null) {
+            if (!globallyAuthed) {
+                if (!db.getMongo().getCredentials().getMechanism().equals(MongoClientCredentials.GSSAPI_MECHANISM)) {
+                    throw new MongoException("Unsupported authentication mechanism: " + db.getMongo().getCredentials().getMechanism());
+                }
+                new GSSAPIAuthenticator(this, db.getMongo()).authenticate();
+                globallyAuthed = true;
+            }
+            saslAquireDatabasePrivileges(db, writePrivilegesRequired);
         }
-        if ( _authed.containsKey( db ) )
-            return;
-        
-        CommandResult res = runCommand( db , credentials.getNonceCommand() );
-        res.throwOnError();
-        
-        res = runCommand( db , credentials.getAuthCommand( res.getString( "nonce" ) ) );
-        res.throwOnError();
+        else {
+            DB.AuthenticationCredentials credentials = db.getAuthenticationCredentials();
+            if (credentials == null) {
+                if (db._name.equals("admin"))
+                    return;
+                checkAuth(db._mongo.getDB("admin"), writePrivilegesRequired);
+                return;
+            }
+            if (_authed.containsKey(db))
+                return;
 
-        _authed.put( db , true );
+            CommandResult res = runCommand(db, credentials.getNonceCommand());
+            res.throwOnError();
+
+            res = runCommand(db, credentials.getAuthCommand(res.getString("nonce")));
+            res.throwOnError();
+
+            _authed.put(db, true);
+        }
+    }
+
+    private void saslAquireDatabasePrivileges(final DB db, final boolean writePrivilegesRequired) throws IOException {
+        BasicDBObject acquirePrivilegeCmd = new BasicDBObject("acquirePrivilege", 1).
+                append("principal", db.getMongo().getCredentials().getUserName()).append("resource", db.getName());
+        if (writePrivilegesRequired) {
+            if (_saslWriteAuthed.get(db) == null) {
+                acquirePrivilegeCmd.append("actions", Arrays.asList("oldWrite"));
+                CommandResult res = runCommand(db.getSisterDB("admin"), acquirePrivilegeCmd);
+                res.throwOnError();
+                _saslWriteAuthed.put(db, true);
+                _saslReadAuthed.put(db, true);
+            }
+        } else {
+            if (_saslReadAuthed.get(db) == null) {
+                acquirePrivilegeCmd.append("actions", Arrays.asList("oldRead"));
+                CommandResult res = runCommand(db.getSisterDB("admin"), acquirePrivilegeCmd);
+                res.throwOnError();
+                _saslReadAuthed.put(db, true);
+            }
+        }
     }
 
     /**
@@ -336,6 +381,8 @@ public class DBPort {
     private boolean _processingResponse;
 
     private Map<DB,Boolean> _authed = new ConcurrentHashMap<DB, Boolean>( );
+    private Map<DB,Boolean> _saslReadAuthed = new ConcurrentHashMap<DB, Boolean>( );
+    private Map<DB,Boolean> _saslWriteAuthed = new ConcurrentHashMap<DB, Boolean>( );
     int _lastThread;
     long _calls = 0;
     private volatile ActiveState _activeState;
@@ -349,6 +396,94 @@ public class DBPort {
        final OutMessage outMessage;
        final long startTime;
        final String threadName;
+    }
+
+    //TODO: add password support
+    static class GSSAPIAuthenticator extends SaslAuthenticator {
+        public static final String GSSAPI_OID = "1.2.840.113554.1.2.2";
+        public static final String GSSAPI_MECHANISM = "GSSAPI";
+        public static final String MONGODB_PROTOCOL = "mongodb";
+
+        GSSAPIAuthenticator(DBPort port, final Mongo mongo) {
+            super(port, mongo);
+            try {
+                Map<String, Object> props = new HashMap<String, Object>();
+                // NOTE: I couldn't find this part documented anywhere
+                props.put(Sasl.CREDENTIALS, getGSSCredential(mongo.getCredentials().getUserName()));
+
+                saslClient = Sasl.createSaslClient(new String[]{GSSAPI_MECHANISM}, mongo.getCredentials().getUserName(), MONGODB_PROTOCOL,
+                        port.serverAddress().getHost(), props, null);
+            } catch (SaslException e) {
+                throw new MongoException("Exception initializing SASL client", e);
+            } catch (GSSException e) {
+                throw new MongoException("Exception initializing GSSAPI credentials", e);
+            }
+        }
+
+        private GSSCredential getGSSCredential(String userName) throws GSSException {
+            Oid krb5Mechanism = new Oid(GSSAPI_OID);
+            GSSManager manager = GSSManager.getInstance();
+            GSSName name = manager.createName(userName, GSSName.NT_USER_NAME);
+            return manager.createCredential(name, GSSCredential.INDEFINITE_LIFETIME,
+                    krb5Mechanism, GSSCredential.INITIATE_ONLY);
+        }
+    }
+
+    static class SaslAuthenticator {
+        final DBPort port;
+        final Mongo mongo;
+        Integer conversationId;
+        SaslClient saslClient;
+
+        SaslAuthenticator(final DBPort port, final Mongo mongo) {
+            this.port = port;
+            this.mongo = mongo;
+        }
+
+        void authenticate() throws SaslException {
+            try {
+            // Get optional initial response
+            byte[] response = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
+            CommandResult res = sendSaslStart(response);
+            res.throwOnError();
+
+            while (!saslClient.isComplete() && (res.get("done").equals(Boolean.FALSE))) {
+                // Evaluate server challenge
+                response = saslClient.evaluateChallenge((byte[]) res.get("payload"));
+
+                if (res.get("done").equals(Boolean.TRUE)) {
+                    // done; server doesn't expect any more SASL data
+                    if (response != null) {
+                        throw new MongoException("SASL protocol error: attempting to send response after completion");
+                    }
+                    break;
+                } else {
+                    res = sendSaslContinue(response);
+                    res.throwOnError();
+                }
+            }
+            } catch (IOException e) {
+                // TODO: Fix exception message.
+                throw new MongoException("", e);
+            }
+        }
+
+        private CommandResult sendSaslStart(final byte[] outToken) throws IOException {
+//            System.out.println("Sending saslStart with num bytes: " + outToken.length);
+            DB adminDB = mongo.getDB("admin");
+            DBObject cmd = new BasicDBObject("saslStart", 1).append("mechanism", "GSSAPI").append("payload", outToken);
+            CommandResult res = port.runCommand(adminDB, cmd);
+            conversationId = (Integer) res.get("conversationId");
+            return res;
+        }
+
+        private CommandResult sendSaslContinue(final byte[] outToken) throws IOException {
+//            System.out.println("Sending saslContinue with num bytes: " + outToken.length);
+            DB adminDB = mongo.getDB("admin");
+            DBObject cmd = new BasicDBObject("saslContinue", 1).append("conversationId", conversationId).
+                    append("payload", outToken);
+            return port.runCommand(adminDB, cmd);
+        }
     }
 
     private static Logger _rootLogger = Logger.getLogger( "com.mongodb.port" );
