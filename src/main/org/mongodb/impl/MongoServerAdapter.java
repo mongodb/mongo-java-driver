@@ -32,6 +32,6 @@ public class MongoServerAdapter {
     }
 
     public DBAdapter getDB(final String name) {
-        return new DBAdapter(impl.getDB(name));
+        return new DBAdapter(impl.getDatabase(name));
     }
 }

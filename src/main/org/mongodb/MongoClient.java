@@ -18,5 +18,5 @@ package org.mongodb;
 
 
 public interface MongoClient {
-    public Database getDB(String name);
+    public Database getDatabase(String name);
 }

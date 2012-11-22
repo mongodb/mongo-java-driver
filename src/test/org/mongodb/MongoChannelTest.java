@@ -56,15 +56,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MongoConnectionTest extends Assert {
-    MongoConnection connection;
+public class MongoChannelTest extends Assert {
+    MongoChannel channel;
     Serializers serializers;
     BufferPool<ByteBuffer> bufferPool;
 
     @BeforeTest
     public void setUp() throws UnknownHostException, SocketException {
         bufferPool = new PowerOfTwoByteBufferPool(24);
-        connection = new MongoConnection(new ServerAddress("localhost", 27017), bufferPool);
+        channel = new MongoChannel(new ServerAddress("localhost", 27017), bufferPool);
         serializers = new Serializers();
         serializers.register(Map.class, BsonType.DOCUMENT, new MapSerializer(serializers));
         serializers.register(ObjectId.class, BsonType.OBJECT_ID, new ObjectIdSerializer());
@@ -78,7 +78,7 @@ public class MongoConnectionTest extends Assert {
 
     @AfterTest
     public void tearDown() {
-        connection.close();
+        channel.close();
     }
 
     static class Concrete {
@@ -160,7 +160,7 @@ public class MongoConnectionTest extends Assert {
                 WriteConcern.NONE, new PooledByteBufferOutput(bufferPool));
         insertMessage.addDocument(Concrete.class, c, serializers);
 
-        connection.sendMessage(insertMessage);
+        channel.sendMessage(insertMessage);
 
         final Map<String, Object> query = new HashMap<String, Object>();
         query.put("i", 42);
@@ -168,10 +168,10 @@ public class MongoConnectionTest extends Assert {
         MongoQueryMessage queryMessage = new MongoQueryMessage("test.concrete", 0, 0, 0,
                 query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
 
-        connection.sendMessage(queryMessage);
+        channel.sendMessage(queryMessage);
 
 
-        MongoReplyMessage<Concrete> replyMessage = connection.receiveMessage(serializers, Concrete.class);
+        MongoReplyMessage<Concrete> replyMessage = channel.receiveMessage(serializers, Concrete.class);
         System.out.println(replyMessage.getDocuments());
     }
 
@@ -180,7 +180,7 @@ public class MongoConnectionTest extends Assert {
         dropCollection();
 
         long startTime = System.nanoTime();
-        int iterations = 1000;
+        int iterations = 10000;
         byte[] bytes = new byte[8192];
         for (int i = 0; i < iterations; i++) {
             if ((i > 0) && (i % 10000 == 0)) {
@@ -201,7 +201,7 @@ public class MongoConnectionTest extends Assert {
 
             message.addDocument(Map.class, doc1, serializers);
 
-            connection.sendMessage(message);
+            channel.sendMessage(message);
 
         }
 
@@ -219,26 +219,26 @@ public class MongoConnectionTest extends Assert {
 
         startTime = endTime;
 
-        MongoQueryMessage queryMessage = new MongoQueryMessage("MongoConnectionTest.sendMessageTest", 0, 0, 0,
+        MongoQueryMessage queryMessage = new MongoQueryMessage("MongoConnectionTest.sendMessageTest", 0, 0, 4000000,
                 query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
 
-        connection.sendMessage(queryMessage);
+        channel.sendMessage(queryMessage);
 
         int totalDocuments = 0;
 
-        MongoReplyMessage<Map<String, Object>> replyMessage = connection.receiveMessage(serializers, Map.class);
+        MongoReplyMessage<Map<String, Object>> replyMessage = channel.receiveMessage(serializers, Map.class);
         totalDocuments += replyMessage.getNumberReturned();
-        System.out.println(" Initial: " + replyMessage.getDocuments().size());
+        System.out.println(" Initial: " + replyMessage.getDocuments().size() + " documents, " + replyMessage.getMessageLength() + " bytes");
 
         while (replyMessage.getCursorId() != 0) {
             MongoGetMoreMessage getMoreMessage = new MongoGetMoreMessage("MongoConnectionTest.sendMessageTest",
                     replyMessage.getCursorId(), 0, new PooledByteBufferOutput(bufferPool));
 
-            connection.sendMessage(getMoreMessage);
+            channel.sendMessage(getMoreMessage);
 
-            replyMessage = connection.receiveMessage(serializers, Map.class);
+            replyMessage = channel.receiveMessage(serializers, Map.class);
             totalDocuments += replyMessage.getNumberReturned();
-            System.out.println(" Get more: " + replyMessage.getDocuments().size());
+            System.out.println(" Get more: " + replyMessage.getDocuments().size() + " documents, " + replyMessage.getMessageLength() + " bytes");
         }
 
         System.out.println("Total: " + totalDocuments);
@@ -273,9 +273,9 @@ public class MongoConnectionTest extends Assert {
             MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.sendMessageTest", 0, 0, 0,
                     query, fields, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
 
-            connection.sendMessage(message);
+            channel.sendMessage(message);
 
-            MongoReplyMessage<Map<String, Object>> replyMessage = connection.receiveMessage(serializers, Map.class);
+            MongoReplyMessage<Map<String, Object>> replyMessage = channel.receiveMessage(serializers, Map.class);
 
 //            assertEquals(replyMessage.getDocuments().size(), 101);
         }
@@ -292,9 +292,9 @@ public class MongoConnectionTest extends Assert {
 
         MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.$cmd", 0, 0, -1,
                 query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
-        connection.sendMessage(message);
+        channel.sendMessage(message);
 
-        MongoReplyMessage<Map<String, Object>> replyMessage = connection.receiveMessage(serializers, Map.class);
+        MongoReplyMessage<Map<String, Object>> replyMessage = channel.receiveMessage(serializers, Map.class);
 
         assertEquals(1, replyMessage.getDocuments().size());
     }
@@ -321,7 +321,7 @@ public class MongoConnectionTest extends Assert {
         message.addDocument(Map.class, doc1, serializers);
 //        message.addDocument(Map.class, doc2, serializers);
 
-        connection.sendMessage(message);
+        channel.sendMessage(message);
 
         return documents;
     }

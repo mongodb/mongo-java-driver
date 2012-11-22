@@ -30,16 +30,16 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 // TODO: port over all the DBPort configuration
-
+// TODO: authentication
 /**
  *
  */
-public class MongoConnection {
+public class MongoChannel {
     private final ServerAddress address;
     private SocketChannel socketChannel;
     private final BufferPool<ByteBuffer> pool;
 
-    public MongoConnection(final ServerAddress address, BufferPool<ByteBuffer> pool) {
+    public MongoChannel(final ServerAddress address, BufferPool<ByteBuffer> pool) {
         this.address = address;
         this.pool = pool;
     }

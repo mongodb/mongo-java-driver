@@ -19,7 +19,7 @@ package org.mongodb.impl;
 
 import org.bson.io.PooledByteBufferOutput;
 import org.mongodb.Collection;
-import org.mongodb.MongoConnection;
+import org.mongodb.MongoChannel;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.WriteConcern;
@@ -57,17 +57,17 @@ class CollectionImpl implements Collection {
                 new PooledByteBufferOutput(getMongoServer().getBufferPool()));
         insertMessage.addDocument(doc.getClass(), doc, serializer);
 
-        MongoConnection mongoConnection = null;
+        MongoChannel mongoChannel = null;
         try {
-            mongoConnection = getMongoServer().getConnectionPool().get();
-            mongoConnection.sendMessage(insertMessage);
+            mongoChannel = getMongoServer().getChannelPool().get();
+            mongoChannel.sendMessage(insertMessage);
         } catch (InterruptedException e) {
             throw new MongoInterruptedException(e);
         } catch (IOException e) {
             throw new MongoException("insert", e);
         } finally {
-            if (mongoConnection != null) {
-                getMongoServer().getConnectionPool().done(mongoConnection);
+            if (mongoChannel != null) {
+                getMongoServer().getChannelPool().done(mongoChannel);
             }
         }
     }

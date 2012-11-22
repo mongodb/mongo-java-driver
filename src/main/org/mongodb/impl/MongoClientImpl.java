@@ -19,7 +19,7 @@ package org.mongodb.impl;
 import org.bson.util.BufferPool;
 import org.bson.util.PowerOfTwoByteBufferPool;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoConnection;
+import org.mongodb.MongoChannel;
 import org.mongodb.ServerAddress;
 import org.mongodb.util.pool.SimplePool;
 
@@ -27,22 +27,22 @@ import java.nio.ByteBuffer;
 
 class MongoClientImpl implements MongoClient {
 
-    private final SimplePool<MongoConnection> connectionPool;
+    private final SimplePool<MongoChannel> channelPool;
     private final BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool(24);
     private final ServerAddress serverAddress;
 
     public MongoClientImpl(ServerAddress serverAddress) {
         this.serverAddress = serverAddress;
-        connectionPool = new SimplePool<MongoConnection>(serverAddress.toString(), 100) {
+        channelPool = new SimplePool<MongoChannel>(serverAddress.toString(), 100) {
              @Override
-             protected MongoConnection createNew() {
-                 return new MongoConnection(MongoClientImpl.this.serverAddress, bufferPool);
+             protected MongoChannel createNew() {
+                 return new MongoChannel(MongoClientImpl.this.serverAddress, bufferPool);
              }
          };
     }
 
     @Override
-    public DatabaseImpl getDB(final String name) {
+    public DatabaseImpl getDatabase(final String name) {
          return new DatabaseImpl(name, this);
     }
 
@@ -50,7 +50,7 @@ class MongoClientImpl implements MongoClient {
         return bufferPool;
     }
 
-    SimplePool<MongoConnection> getConnectionPool() {
-        return connectionPool;
+    SimplePool<MongoChannel> getChannelPool() {
+        return channelPool;
     }
 }
