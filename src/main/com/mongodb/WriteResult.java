@@ -41,7 +41,7 @@ public class WriteResult {
     WriteResult( DB db , DBPort p , WriteConcern concern ){
         _db = db;
         _port = p;
-        _lastCall = p._calls;
+        _lastCall = p._calls.get();
         _lastConcern = concern;
         _lazy = true;
     }

@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,7 +56,6 @@ public class DBPort {
     static final boolean USE_NAGLE = false;
     
     static final long CONN_RETRY_TIME_MS = 15000;
-    private boolean globallyAuthed = false;
 
     /**
      * creates a new DBPort
@@ -112,7 +112,7 @@ public class DBPort {
             }
         }
 
-        _calls++;
+        _calls.incrementAndGet();
 
         if ( _socket == null )
             _open();
@@ -176,7 +176,7 @@ public class DBPort {
     }
 
     synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern) throws IOException {
-        if ( last != _calls )
+        if ( last != _calls.get() )
             return null;
         
         return getLastError(db, concern);
@@ -288,6 +288,9 @@ public class DBPort {
      * closes the underlying connection and streams
      */
     protected void close(){
+        if (_saslAuthenticator != null) {
+           _saslAuthenticator.clear();
+        }
         _authed.clear();
                 
         if ( _socket != null ){
@@ -307,14 +310,10 @@ public class DBPort {
     void checkAuth(DB db) throws IOException {
         // TODO: add support for retry when credentials ticket times out
         if (db.getMongo().getCredentials() != null) {
-            if (!globallyAuthed) {
-                if (!db.getMongo().getCredentials().getMechanism().equals(MongoClientCredentials.GSSAPI_MECHANISM)) {
-                    throw new MongoException("Unsupported authentication mechanism: " + db.getMongo().getCredentials().getMechanism());
-                }
-                new GSSAPIAuthenticator(this, db.getMongo()).authenticate();
-                globallyAuthed = true;
+            if (_saslAuthenticator == null) {
+                _saslAuthenticator = new GSSAPIAuthenticator(db.getMongo());
             }
-            saslAcquirePrivilegeForDatabase(db);
+            _saslAuthenticator.acquirePrivilegeForDatabase(db);
         }
         else {
             DB.AuthenticationCredentials credentials = db.getAuthenticationCredentials();
@@ -337,18 +336,6 @@ public class DBPort {
         }
     }
 
-    private void saslAcquirePrivilegeForDatabase(final DB db) throws IOException {
-        BasicDBObject acquirePrivilegeCmd = new BasicDBObject("acquirePrivilege", 1).
-                append("principal", db.getMongo().getCredentials().getUserName()).
-                append("resource", db.getName());
-        if (_saslAuthed.get(db) == null) {
-            acquirePrivilegeCmd.append("actions", Arrays.asList("oldWrite"));
-            CommandResult res = runCommand(db.getSisterDB("admin"), acquirePrivilegeCmd);
-            res.throwOnError();
-            _saslAuthed.put(db, true);
-        }
-    }
-
     /**
      * Gets the pool that this port belongs to
      * @return
@@ -365,16 +352,17 @@ public class DBPort {
     final Logger _logger;
     final DBDecoder _decoder;
     
-    private Socket _socket;
-    private InputStream _in;
-    private OutputStream _out;
+    private volatile Socket _socket;
+    private volatile InputStream _in;
+    private volatile OutputStream _out;
 
-    private boolean _processingResponse;
+    private volatile boolean _processingResponse;
 
-    private Map<DB,Boolean> _authed = new ConcurrentHashMap<DB, Boolean>( );
-    private Map<DB,Boolean> _saslAuthed = new ConcurrentHashMap<DB, Boolean>( );
-    int _lastThread;
-    long _calls = 0;
+    private volatile SaslAuthenticator _saslAuthenticator;
+    private final Map<DB,Boolean> _authed = new ConcurrentHashMap<DB, Boolean>( );
+
+    volatile int _lastThread;
+    final AtomicLong _calls = new AtomicLong();
     private volatile ActiveState _activeState;
 
     class ActiveState {
@@ -388,21 +376,27 @@ public class DBPort {
        final String threadName;
     }
 
-    //TODO: add password support
-    static class GSSAPIAuthenticator extends SaslAuthenticator {
+    class GSSAPIAuthenticator extends SaslAuthenticator {
         public static final String GSSAPI_OID = "1.2.840.113554.1.2.2";
         public static final String GSSAPI_MECHANISM = "GSSAPI";
         public static final String MONGODB_PROTOCOL = "mongodb";
 
-        GSSAPIAuthenticator(DBPort port, final Mongo mongo) {
-            super(port, mongo);
+        GSSAPIAuthenticator(final Mongo mongo) {
+            super(mongo);
+
+            if (!mongo.getCredentials().getMechanism().equals(MongoClientCredentials.GSSAPI_MECHANISM)) {
+                throw new MongoException("Unsupported authentication mechanism: " + mongo.getCredentials().getMechanism());
+            }
+        }
+
+        @Override
+        protected SaslClient createSaslClient() {
             try {
                 Map<String, Object> props = new HashMap<String, Object>();
-                // NOTE: I couldn't find this part documented anywhere
                 props.put(Sasl.CREDENTIALS, getGSSCredential(mongo.getCredentials().getUserName()));
 
-                saslClient = Sasl.createSaslClient(new String[]{GSSAPI_MECHANISM}, mongo.getCredentials().getUserName(), MONGODB_PROTOCOL,
-                        port.serverAddress().getHost(), props, null);
+                return Sasl.createSaslClient(new String[]{GSSAPI_MECHANISM}, mongo.getCredentials().getUserName(), MONGODB_PROTOCOL,
+                        serverAddress().getHost(), props, null);
             } catch (SaslException e) {
                 throw new MongoException("Exception initializing SASL client", e);
             } catch (GSSException e) {
@@ -419,60 +413,91 @@ public class DBPort {
         }
     }
 
-    static class SaslAuthenticator {
-        final DBPort port;
-        final Mongo mongo;
-        Integer conversationId;
-        SaslClient saslClient;
+    abstract class SaslAuthenticator {
+        protected final Mongo mongo;
+        private final Map<DB, Boolean> authorizeDatabases = new ConcurrentHashMap<DB, Boolean>();
+        private volatile boolean authenticated;
 
-        SaslAuthenticator(final DBPort port, final Mongo mongo) {
-            this.port = port;
+        SaslAuthenticator(final Mongo mongo) {
             this.mongo = mongo;
         }
 
-        void authenticate() throws SaslException {
-            try {
-            // Get optional initial response
-            byte[] response = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
-            CommandResult res = sendSaslStart(response);
-            res.throwOnError();
+        void clear() {
+            authorizeDatabases.clear();
+            authenticated = false;
+        }
 
-            while (!saslClient.isComplete() && (res.get("done").equals(Boolean.FALSE))) {
-                // Evaluate server challenge
-                response = saslClient.evaluateChallenge((byte[]) res.get("payload"));
-
-                if (res.get("done").equals(Boolean.TRUE)) {
-                    // done; server doesn't expect any more SASL data
-                    if (response != null) {
-                        throw new MongoException("SASL protocol error: attempting to send response after completion");
-                    }
-                    break;
-                } else {
-                    res = sendSaslContinue(response);
-                    res.throwOnError();
-                }
+        void authenticate()  {
+            if (authenticated) {
+                return;
             }
+
+            SaslClient saslClient = createSaslClient();
+            try {
+                // Get optional initial response
+                byte[] response = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
+                CommandResult res = sendSaslStart(response);
+                res.throwOnError();
+
+                int conversationId = (Integer) res.get("conversationId");
+
+                while (!saslClient.isComplete() && (res.get("done").equals(Boolean.FALSE))) {
+                    // Evaluate server challenge
+                    response = saslClient.evaluateChallenge((byte[]) res.get("payload"));
+
+                    if (res.get("done").equals(Boolean.TRUE)) {
+                        // done; server doesn't expect any more SASL data
+                        if (response != null) {
+                            throw new MongoException("SASL protocol error: attempting to send response after completion");
+                        }
+                        break;
+                    } else {
+                        res = sendSaslContinue(conversationId, response);
+                        res.throwOnError();
+                    }
+                }
+                authenticated = true;
             } catch (IOException e) {
                 // TODO: Fix exception message.
-                throw new MongoException("", e);
+                throw new MongoException("Exception authenticating with SASL", e);
+            } finally {
+                try {
+                    saslClient.dispose();
+                } catch (SaslException e) {
+                    // ignore
+                }
             }
         }
+
+        protected abstract SaslClient createSaslClient();
 
         private CommandResult sendSaslStart(final byte[] outToken) throws IOException {
 //            System.out.println("Sending saslStart with num bytes: " + outToken.length);
             DB adminDB = mongo.getDB("admin");
             DBObject cmd = new BasicDBObject("saslStart", 1).append("mechanism", "GSSAPI").append("payload", outToken);
-            CommandResult res = port.runCommand(adminDB, cmd);
-            conversationId = (Integer) res.get("conversationId");
-            return res;
+            return runCommand(adminDB, cmd);
         }
 
-        private CommandResult sendSaslContinue(final byte[] outToken) throws IOException {
+        private CommandResult sendSaslContinue(final int conversationId, final byte[] outToken) throws IOException {
 //            System.out.println("Sending saslContinue with num bytes: " + outToken.length);
             DB adminDB = mongo.getDB("admin");
             DBObject cmd = new BasicDBObject("saslContinue", 1).append("conversationId", conversationId).
                     append("payload", outToken);
-            return port.runCommand(adminDB, cmd);
+            return runCommand(adminDB, cmd);
+        }
+
+        public void acquirePrivilegeForDatabase(final DB db) throws IOException {
+            authenticate();
+
+            if (authorizeDatabases.get(db) == null) {
+                BasicDBObject acquirePrivilegeCmd = new BasicDBObject("acquirePrivilege", 1).
+                        append("principal", db.getMongo().getCredentials().getUserName()).
+                        append("resource", db.getName()).
+                        append("actions", Arrays.asList("oldWrite"));
+                CommandResult res = runCommand(db.getSisterDB("admin"), acquirePrivilegeCmd);
+                res.throwOnError();
+                authorizeDatabases.put(db, true);
+            }
         }
     }
 
