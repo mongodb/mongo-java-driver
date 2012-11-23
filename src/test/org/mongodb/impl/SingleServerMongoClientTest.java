@@ -21,6 +21,7 @@ import junit.framework.Assert;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoDocument;
 import org.mongodb.ServerAddress;
+import org.mongodb.WriteConcern;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -40,5 +41,14 @@ public class SingleServerMongoClientTest extends Assert {
         CommandResult res = mongoClient.executeCommand("test", cmd);
         assertNotNull(res);
         assertTrue(res.getMongoDocument().get("n") instanceof Double);
+    }
+
+    @Test
+    public void testInsertion() {
+        mongoClient.executeCommand("test", new MongoDocument("drop", "test"));
+        MongoDocument doc = new MongoDocument();
+        mongoClient.insert("test.test", doc, WriteConcern.NONE);
+        CommandResult res = mongoClient.executeCommand("test", new MongoDocument("count", "test"));
+        assertEquals(1.0, res.getMongoDocument().get("n"));
     }
 }

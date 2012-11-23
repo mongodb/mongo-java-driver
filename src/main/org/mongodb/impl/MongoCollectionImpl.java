@@ -20,7 +20,6 @@ package org.mongodb.impl;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.WriteConcern;
-import org.mongodb.serialization.Serializer;
 
 class MongoCollectionImpl implements MongoCollection {
     private final String name;
@@ -46,8 +45,8 @@ class MongoCollectionImpl implements MongoCollection {
         return name;
     }
 
-    public <T> void insert(T doc, WriteConcern writeConcern, Serializer serializer) {
-        getMongoClient().insert(getFullName(), doc, writeConcern, serializer);
+    public <T> void insert(T doc, WriteConcern writeConcern) {
+        getMongoClient().insert(getFullName(), doc, writeConcern);
     }
 
     private String getFullName() {

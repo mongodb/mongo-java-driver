@@ -17,7 +17,6 @@
 package org.mongodb.impl;
 
 import org.bson.BsonType;
-import org.bson.io.PooledByteBufferOutput;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.util.BufferPool;
@@ -27,14 +26,8 @@ import org.mongodb.InsertResult;
 import org.mongodb.MongoChannel;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoDocument;
-import org.mongodb.MongoException;
-import org.mongodb.MongoInterruptedException;
-import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.WriteConcern;
-import org.mongodb.protocol.MongoInsertMessage;
-import org.mongodb.protocol.MongoQueryMessage;
-import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.serialization.BinarySerializer;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.Serializers;
@@ -47,7 +40,6 @@ import org.mongodb.serialization.serializers.ObjectIdSerializer;
 import org.mongodb.serialization.serializers.StringSerializer;
 import org.mongodb.util.pool.SimplePool;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Date;
 
@@ -89,47 +81,27 @@ class SingleServerMongoClient implements MongoClient {
 
     @Override
     public CommandResult executeCommand(final String database, final MongoDocument command) {
+        MongoClient mongoClient = new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializer);
         try {
-            MongoChannel channel = channelPool.get();
-            try {
-                MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", 0, 0, -1,
-                        command, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializer);
-                channel.sendMessage(message);
-
-                MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(serializer, MongoDocument.class);
-
-                return new CommandResult(replyMessage.getDocuments().get(0));
-            } catch (IOException e) {
-                throw new MongoException("", e);
-            } finally {
-                channelPool.done(channel);
-            }
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException(e);
+            return mongoClient.executeCommand(database, command);
+        } finally {
+            mongoClient.close();
         }
     }
 
     @Override
-    public <T> InsertResult insert(final String namespace, final T doc, final WriteConcern writeConcern, final Serializer serializer) {
-        MongoInsertMessage insertMessage = new MongoInsertMessage(namespace, writeConcern,
-                new PooledByteBufferOutput(getBufferPool()));
-        insertMessage.addDocument(doc.getClass(), doc, serializer);
-
-        MongoChannel mongoChannel = null;
+    public <T> InsertResult insert(final String namespace, final T doc, final WriteConcern writeConcern) {
+        MongoClient mongoClient = new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializer);
         try {
-            mongoChannel = getChannelPool().get();
-            mongoChannel.sendMessage(insertMessage);
-            return null;
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException(e);
-        } catch (IOException e) {
-            throw new MongoException("insert", e);
+            return mongoClient.insert(namespace, doc, writeConcern);
         } finally {
-            if (mongoChannel != null) {
-                getChannelPool().done(mongoChannel);
-            }
+            mongoClient.close();
         }
+    }
 
+    @Override
+    public void close() {
+        // TODO: close pool, release buffers
     }
 
     BufferPool<ByteBuffer> getBufferPool() {
