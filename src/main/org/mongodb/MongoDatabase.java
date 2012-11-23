@@ -15,23 +15,13 @@
  *
  */
 
-package org.mongodb.impl;
+package org.mongodb;
 
+public interface MongoDatabase {
+    String getName();
 
-import org.mongodb.ServerAddress;
+    CommandResult executeCommand(MongoDocument command);
 
-/**
- * THIS IS NOT PART OF THE PUBLIC API.
- */
-public class MongoServerAdapter {
-
-    private SingleServerMongoClient impl;
-
-    public MongoServerAdapter(ServerAddress serverAddress) {
-        impl = new SingleServerMongoClient(serverAddress);
-    }
-
-    public DBAdapter getDB(final String name) {
-        return new DBAdapter(impl.getDatabase(name));
-    }
+    MongoClient getMongoClient();
+//    <T> Collection<T> getCollection(String name);
 }

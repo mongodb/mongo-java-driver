@@ -37,7 +37,7 @@ import org.mongodb.serialization.serializers.DateSerializer;
 import org.mongodb.serialization.serializers.DoubleSerializer;
 import org.mongodb.serialization.serializers.IntegerSerializer;
 import org.mongodb.serialization.serializers.LongSerializer;
-import org.mongodb.serialization.serializers.MapSerializer;
+import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 import org.mongodb.serialization.serializers.ObjectIdSerializer;
 import org.mongodb.serialization.serializers.StringSerializer;
 import org.testng.Assert;
@@ -51,7 +51,6 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +65,7 @@ public class MongoChannelTest extends Assert {
         bufferPool = new PowerOfTwoByteBufferPool(24);
         channel = new MongoChannel(new ServerAddress("localhost", 27017), bufferPool);
         serializers = new Serializers();
-        serializers.register(Map.class, BsonType.DOCUMENT, new MapSerializer(serializers));
+        serializers.register(MongoDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
         serializers.register(ObjectId.class, BsonType.OBJECT_ID, new ObjectIdSerializer());
         serializers.register(Integer.class, BsonType.INT32, new IntegerSerializer());
         serializers.register(Long.class, BsonType.INT64, new LongSerializer());
@@ -162,8 +161,7 @@ public class MongoChannelTest extends Assert {
 
         channel.sendMessage(insertMessage);
 
-        final Map<String, Object> query = new HashMap<String, Object>();
-        query.put("i", 42);
+        final MongoDocument query = new MongoDocument("i", 42);
 
         MongoQueryMessage queryMessage = new MongoQueryMessage("test.concrete", 0, 0, 0,
                 query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
@@ -177,7 +175,7 @@ public class MongoChannelTest extends Assert {
 
     @Test
     public void sendMessageTest() throws IOException, InterruptedException {
-        dropCollection();
+        dropCollection("sendMessageTest");
 
         long startTime = System.nanoTime();
         int iterations = 10000;
@@ -215,7 +213,7 @@ public class MongoChannelTest extends Assert {
 
         System.out.println("Query time...");
 
-        final Map<String, Object> query = new HashMap<String, Object>();
+        final MongoDocument query = new MongoDocument();
 
         startTime = endTime;
 
@@ -255,7 +253,7 @@ public class MongoChannelTest extends Assert {
 
     @Test
     public void receiveMessageTest() throws IOException {
-        dropCollection();
+        dropCollection("sendMessageTest");
 
         List<Map<String, Object>> documents = insertTwoDocuments();
 
@@ -265,13 +263,10 @@ public class MongoChannelTest extends Assert {
                 System.out.println("i: " + i);
 
 
-            final Map<String, Object> query = new HashMap<String, Object>();
-            query.put("int", 42);
-
-            final Map<String, Object> fields = null;
+            final MongoDocument query = new MongoDocument("int", 42);
 
             MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.sendMessageTest", 0, 0, 0,
-                    query, fields, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
+                    query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
 
             channel.sendMessage(message);
 
@@ -286,9 +281,8 @@ public class MongoChannelTest extends Assert {
 
     }
 
-    private void dropCollection() throws IOException {
-        final Map<String, Object> query = new HashMap<String, Object>();
-        query.put("drop", "sendMessageTest");
+    private void dropCollection(String collectionName) throws IOException {
+        final MongoDocument query = new MongoDocument("drop", collectionName);
 
         MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.$cmd", 0, 0, -1,
                 query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);

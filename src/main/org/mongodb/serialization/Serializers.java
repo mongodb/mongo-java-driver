@@ -20,6 +20,7 @@ package org.mongodb.serialization;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;
+import org.mongodb.MongoException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,7 +55,9 @@ public class Serializers implements Serializer{
     public void serialize(final BSONWriter writer, final Class clazz, final Object value,
                           final BsonSerializationOptions options) {
         Serializer serializer = classSerializerMap.get(clazz);
-        // TODO: handle null case
+        if (serializer == null) {
+            throw new MongoException("No serializer for class " + clazz);
+        }
         serializer.serialize(writer, clazz, value, options);
     }
 
@@ -62,6 +65,9 @@ public class Serializers implements Serializer{
     public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
         Serializer serializer = classSerializerMap.get(clazz);
         // TODO: handle null case
+        if (serializer == null) {
+            throw new MongoException("No serializer for class " + clazz);
+        }
         return serializer.deserialize(reader, clazz, options);
     }
 

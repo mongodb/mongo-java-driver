@@ -1,0 +1,4 @@
+1. How to handle "lazy" serializer.  We can't use BsonReader/BsonWriter for this, so there needs to be a way around
+   that to go straight to the to InputBuffer/OutputBuffer
+
+2. Design a proper exception hierarchy and standard message formats

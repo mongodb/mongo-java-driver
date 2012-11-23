@@ -21,6 +21,7 @@ import org.bson.BSONBinaryWriter;
 import org.bson.BinaryWriterSettings;
 import org.bson.BsonWriterSettings;
 import org.bson.io.OutputBuffer;
+import org.mongodb.MongoDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.serialization.Serializer;
 
@@ -41,7 +42,7 @@ public class MongoRequestMessage {
     protected final OutputBuffer buffer;
     private final int id;
     private final OpCode opCode;
-    protected final Map<String, Object> query;
+    protected final MongoDocument query;
     private volatile int numDocuments; // only one thread will modify this field, so volatile is sufficient synchronization
     private int messageStartPosition;
 
@@ -53,17 +54,17 @@ public class MongoRequestMessage {
         this(collectionName, opCode, null, -1, null, buffer);
     }
 
-    MongoRequestMessage(String collectionName, OpCode opCode, Map<String, Object> query, OutputBuffer buffer) {
+    MongoRequestMessage(String collectionName, OpCode opCode, MongoDocument query, OutputBuffer buffer) {
         this(collectionName, opCode, query, 0, null, buffer);
     }
 
-    MongoRequestMessage(String collectionName, Map<String, Object> query, int options, ReadPreference readPref,
+    MongoRequestMessage(String collectionName, MongoDocument query, int options, ReadPreference readPref,
                         OutputBuffer buffer) {
         this(collectionName, OpCode.OP_QUERY, query, options, readPref, buffer);
     }
 
-    MongoRequestMessage(final String collectionName, OpCode opCode, final Map<String, Object> query,
-                        final int options, final ReadPreference readPref, OutputBuffer buffer) {
+    MongoRequestMessage(final String collectionName, OpCode opCode, final MongoDocument query,
+                        final int options, final ReadPreference readPreference, OutputBuffer buffer) {
         this.collectionName = collectionName;
 
         this.buffer = buffer;

@@ -17,15 +17,16 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.ReadPreference;
 import org.bson.io.OutputBuffer;
+import org.mongodb.MongoDocument;
+import org.mongodb.ReadPreference;
 import org.mongodb.serialization.Serializer;
 
 import java.util.Map;
 
 public class MongoQueryMessage extends MongoRequestMessage {
     public MongoQueryMessage(String collectionName, int options, int numToSkip, int batchSize,
-                             Map<String, Object> query, Map<String, Object> fields, ReadPreference readPref,
+                             MongoDocument query, Map<String, Integer> fields, ReadPreference readPref,
                              OutputBuffer buffer, Serializer serializer) {
         super(collectionName, query, options, readPref, buffer);
 
@@ -45,7 +46,7 @@ public class MongoQueryMessage extends MongoRequestMessage {
     }
 
 
-    private void writeQuery(final Map<String, Object> fields, final int numToSkip, final int batchSize,
+    private void writeQuery(final Map<String, Integer> fields, final int numToSkip, final int batchSize,
                             final Serializer serializer) {
         buffer.writeInt(queryOptions);
         buffer.writeCString(collectionName);
@@ -53,7 +54,7 @@ public class MongoQueryMessage extends MongoRequestMessage {
         buffer.writeInt(numToSkip);
         buffer.writeInt(batchSize);
 
-        addDocument(Map.class, query, serializer);
+        addDocument(MongoDocument.class, query, serializer);
         if (fields != null)
             addDocument(Map.class, fields, serializer);
     }

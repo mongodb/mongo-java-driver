@@ -20,6 +20,11 @@ package org.mongodb;
 import java.util.LinkedHashMap;
 
 public class MongoDocument extends LinkedHashMap<String, Object> {
+
+    public MongoDocument() {
+
+    }
+
     public MongoDocument(final String key, final Object value) {
         put(key, value);
     }

@@ -19,13 +19,13 @@ package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
 import org.bson.types.ObjectId;
+import org.mongodb.MongoDocument;
 import org.mongodb.serialization.Serializer;
 
 import java.util.Collection;
-import java.util.Map;
 
 public class MongoDeleteMessage extends MongoRequestMessage {
-    public MongoDeleteMessage(String collectionName, final Map<String, Object> query, OutputBuffer buffer,
+    public MongoDeleteMessage(String collectionName, final MongoDocument query, OutputBuffer buffer,
                               Serializer serializer) {
         super(collectionName, OpCode.OP_DELETE,  query, buffer);
         writeDelete(serializer);

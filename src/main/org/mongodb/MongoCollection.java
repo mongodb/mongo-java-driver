@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-public interface Collection {
+public interface MongoCollection {
 
 
     /**
@@ -81,7 +81,7 @@ public interface Collection {
 
 //    Database getDatabase();
 
-    Database getDatabase();
+    MongoDatabase getDatabase();
 
-    MongoClient getMongoServer();
+    MongoClient getMongoClient();
 }

@@ -18,5 +18,4 @@
 package org.mongodb;
 
 public interface Command {
-    CommandResult execute();
 }

@@ -18,14 +18,15 @@
 package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
+import org.mongodb.MongoDocument;
 import org.mongodb.serialization.Serializer;
 
 import java.util.Map;
 
 public class MongoUpdateMessage extends MongoRequestMessage {
     MongoUpdateMessage(String collectionName, boolean upsert, boolean multi,
-                       Map<String, Object> query,
-                       Map<String, Object> updateOperations, OutputBuffer buffer, Serializer serializer) {
+                       MongoDocument query,
+                       MongoDocument updateOperations, OutputBuffer buffer, Serializer serializer) {
         super(collectionName, OpCode.OP_UPDATE, query, buffer);
         writeUpdate(upsert, multi, query, updateOperations, serializer);
         backpatchMessageLength();

@@ -17,35 +17,28 @@
 
 package org.mongodb.impl;
 
+import junit.framework.Assert;
 import org.mongodb.CommandResult;
-import org.mongodb.Database;
 import org.mongodb.MongoDocument;
+import org.mongodb.ServerAddress;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
-class DatabaseImpl implements Database {
-    private final MongoClientImpl mongo;
-    private final String name;
+import java.net.UnknownHostException;
 
-    public DatabaseImpl(final String name, final MongoClientImpl mongo) {
-        this.mongo = mongo;
-        this.name = name;
+public class SingleServerMongoClientTest extends Assert {
+    private SingleServerMongoClient mongoClient;
+
+    @BeforeTest
+    public void setUp() throws UnknownHostException {
+        mongoClient = new SingleServerMongoClient(new ServerAddress());
     }
 
-    @Override
-    public String getName() {
-        return name;
+    @Test
+    public void testCommandExecution() {
+        MongoDocument cmd = new MongoDocument("count", "test");
+        CommandResult res = mongoClient.executeCommand("test", cmd);
+        assertNotNull(res);
+        assertTrue(res.getMongoDocument().get("n") instanceof Double);
     }
-
-    public CollectionImpl getCollection(final String name) {
-        return new CollectionImpl(name, this);
-    }
-
-    @Override
-    public CommandResult executeCommand(final MongoDocument command) {
-         throw new UnsupportedOperationException();
-    }
-
-    MongoClientImpl getMongo() {
-        return mongo;
-    }
-
 }

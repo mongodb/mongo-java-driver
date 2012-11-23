@@ -72,7 +72,7 @@ public class MongoChannel {
 
         if (length > 36) {
             bodyByteBuffer = pool.get(length - 36);
-
+            bytesRead = 0;
             while (bytesRead < bodyByteBuffer.limit()) {
                bytesRead += socketChannel.read(bodyByteBuffer);
             }

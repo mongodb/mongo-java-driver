@@ -17,6 +17,13 @@
 package org.mongodb;
 
 
+import org.mongodb.serialization.Serializer;
+
 public interface MongoClient {
-    public Database getDatabase(String name);
+    MongoDatabase getDatabase(String name);
+
+    CommandResult executeCommand(String database, MongoDocument command);
+
+    <T> InsertResult insert(final String namespace, T doc, WriteConcern writeConcern, Serializer serializer);
+
 }

@@ -17,10 +17,5 @@
 
 package org.mongodb;
 
-public interface Database {
-    String getName();
-
-    CommandResult executeCommand(MongoDocument command);
-
-//    <T> Collection<T> getCollection(String name);
+public class InsertResult {
 }

@@ -22,9 +22,9 @@ package org.mongodb.impl;
 //import org.mongodb.Database;
 //
 public class DBAdapter {
-    private final DatabaseImpl impl;
+    private final MongoDatabaseImpl impl;
 
-    public DBAdapter(final DatabaseImpl database) {
+    public DBAdapter(final MongoDatabaseImpl database) {
         this.impl = database;
     }
 //

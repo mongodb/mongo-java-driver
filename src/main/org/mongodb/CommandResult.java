@@ -18,4 +18,13 @@
 package org.mongodb;
 
 public class CommandResult {
+    private final MongoDocument mongoDocument;
+
+    public CommandResult(final MongoDocument mongoDocument) {
+        this.mongoDocument = mongoDocument;
+    }
+
+    public MongoDocument getMongoDocument() {
+        return mongoDocument;
+    }
 }

@@ -17,14 +17,19 @@
 
 package org.mongodb;
 
+/**
+ *
+ */
 public class DropCollectionCommand extends AbstractCommand {
-    public DropCollectionCommand(Collection collection) {
-        super(collection);
+    private final String collectionName;
+
+    public DropCollectionCommand(MongoDatabase database, final String collectionName) {
+        super(database.getMongoClient(), database.getName());
+        this.collectionName = collectionName;
     }
 
     @Override
-    public MongoDocument asDBObject() {
-        MongoDocument document = new MongoDocument("drop", collection.getName());
-        return document;
+    public MongoDocument asDocument() {
+        return new MongoDocument("drop", collectionName);
     }
 }

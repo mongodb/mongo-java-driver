@@ -18,16 +18,17 @@
 package org.mongodb;
 
 public abstract class AbstractCommand implements Command {
-    protected final Collection collection;
+    private final MongoClient mongoClient;
+    private final String database;
 
-    public AbstractCommand(final Collection collection) {
-        this.collection = collection;
+    public AbstractCommand(final MongoClient mongoClient, final String database) {
+        this.mongoClient = mongoClient;
+        this.database = database;
     }
 
-    @Override
-    public CommandResult execute() {
-        throw new UnsupportedOperationException();
+    protected CommandResult execute() {
+        return mongoClient.executeCommand(database, asDocument());
     }
 
-    public abstract MongoDocument asDBObject();
+    public abstract MongoDocument asDocument();
 }
