@@ -53,13 +53,14 @@ import java.util.List;
  * By default, all write operations will wait for acknowledgment by the server, as the default write concern is
  * {@code WriteConcern.ACKNOWLEDGED}.
  * <p>
- * In general, users of this class will pick up all of the default options specified in {@code MongoClientOptions}.  In
- * particular, note that the default value of the connectionsPerHost option has been increased from 10 to 100.
- * <p>
  * Note: This class supersedes the {@code Mongo} class.  While it extends {@code Mongo}, it differs from it in that
  * the default write concern is to wait for acknowledgment from the server of all write operations.  In addition, its
  * constructors accept instances of {@code MongoClientOptions} and {@code MongoClientURI}, which both also
  * set the same default write concern.
+ * <p>
+ * In general, users of this class will pick up all of the default options specified in {@code MongoClientOptions}.  In
+ * particular, note that the default value of the connectionsPerHost option has been increased to 100 from the old
+ * default value of 10 used by the superceded {@code Mongo} class.
  *
  * @see ReadPreference#primary()
  * @see com.mongodb.WriteConcern#ACKNOWLEDGED
