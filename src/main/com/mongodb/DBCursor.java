@@ -161,7 +161,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
     /**
      *  Informs the database of an indexed field of the collection in order to improve performance.
      * @param indexName the name of an index
-     * @return same DBCursort for chaining operations
+     * @return same DBCursor for chaining operations
      */
     public DBCursor hint( String indexName ){
         if ( _it != null )
