@@ -218,12 +218,19 @@ public class GridFS {
     public List<GridFSDBFile> find( DBObject query , DBObject sort){
         List<GridFSDBFile> files = new ArrayList<GridFSDBFile>();
 
-        DBCursor c = _filesCollection.find( query );
-        if (sort != null) {
-            c.sort(sort);
-        }
-        while ( c.hasNext() ){
-            files.add( _fix( c.next() ) );
+        DBCursor c = null;
+        try {
+            c = _filesCollection.find( query );
+            if (sort != null) {
+                c.sort(sort);
+            }
+            while ( c.hasNext() ){
+                files.add( _fix( c.next() ) );
+            }
+        } finally {
+             if (c != null){
+                 c.close();
+             }
         }
         return files;
     }
