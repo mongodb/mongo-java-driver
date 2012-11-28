@@ -18,7 +18,9 @@
 package com.mongodb;
 
 /**
- * Represents  credentials to authenticate to a mongo server
+ * Represents credentials to authenticate to a mongo server.
+ * <p>
+ * Note: This constructor is provisional and is subject to change before the final release
  */
 public class MongoClientCredentials {
     public static final String MONGODB_MECHANISM = "mongodb";

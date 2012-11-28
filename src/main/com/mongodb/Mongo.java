@@ -353,6 +353,14 @@ public class Mongo {
     }
 
     // TODO: reimplement above constructor in terms of this one
+    /**
+     * Creates a Mongo based on an authority and options.
+     * <p>
+     * Note: This constructor is provisional and is subject to change before the final release
+     *
+     * @param authority the authority
+     * @param options the options
+     */
     public Mongo(MongoClientAuthority authority, MongoOptions options) {
         _options = options;
         _applyMongoOptions();

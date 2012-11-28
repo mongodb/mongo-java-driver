@@ -21,6 +21,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 //TODO: Add a constructor that takes a MongoURI or MongoClientURI
+/**
+ * This class represents the authority to which this client is connecting.  It includes
+ * both the server address(es) and optional authentication credentials.
+ * <p>
+ * Note: This constructor is provisional and is subject to change before the final release
+ */
 public class MongoClientAuthority {
     private final ServerAddress serverAddress;
     private final List<ServerAddress> serverAddresses;
