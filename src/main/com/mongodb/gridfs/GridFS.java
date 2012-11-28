@@ -111,7 +111,7 @@ public class GridFS {
      * @return cursor of file objects
      */
     public DBCursor getFileList(){
-        return _filesCollection.find().sort(new BasicDBObject("filename",1));
+        return getFileList(new BasicDBObject());
     }
 
     /**
@@ -121,7 +121,18 @@ public class GridFS {
      * @return cursor of file objects
      */
     public DBCursor getFileList( DBObject query ){
-        return _filesCollection.find( query ).sort(new BasicDBObject("filename",1));
+        return getFileList(query, new BasicDBObject("filename",1));
+    }
+
+    /**
+     * gets a filtered list of files stored in this gridfs, sorted by param sort
+     *
+     * @param query filter to apply
+     * @param sort sorting to apply
+     * @return cursor of file objects
+     */
+    public DBCursor getFileList( DBObject query, DBObject sort){
+        return _filesCollection.find( query ).sort(sort);
     }
 
 
@@ -173,25 +184,51 @@ public class GridFS {
      * @throws MongoException 
      */
     public List<GridFSDBFile> find( String filename ){
-        return find( new BasicDBObject( "filename" , filename ) );
+        return find( filename, null );
     }
+
+    /**
+     * finds a list of files matching the given filename
+     * @param filename
+     * @param sort
+     * @return
+     * @throws MongoException
+     */
+    public List<GridFSDBFile> find( String filename , DBObject sort){
+        return find( new BasicDBObject( "filename" , filename ), sort );
+    }
+
     /**
      * finds a list of files matching the given query
      * @param query
      * @return
-     * @throws MongoException 
+     * @throws MongoException
      */
     public List<GridFSDBFile> find( DBObject query ){
+        return find(query, null);
+    }
+
+    /**
+     * finds a list of files matching the given query
+     * @param query
+     * @param sort
+     * @return
+     * @throws MongoException 
+     */
+    public List<GridFSDBFile> find( DBObject query , DBObject sort){
         List<GridFSDBFile> files = new ArrayList<GridFSDBFile>();
 
         DBCursor c = _filesCollection.find( query );
+        if (sort != null) {
+            c.sort(sort);
+        }
         while ( c.hasNext() ){
             files.add( _fix( c.next() ) );
         }
         return files;
     }
 
-    private GridFSDBFile _fix( Object o ){
+    protected GridFSDBFile _fix( Object o ){
         if ( o == null )
             return null;
 
