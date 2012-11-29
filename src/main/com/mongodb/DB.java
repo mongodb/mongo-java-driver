@@ -269,11 +269,7 @@ public abstract class DB {
      */
     public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs, DBEncoder encoder ){
         readPrefs = getCommandReadPreference(cmd, readPrefs);
-
-        // TODO: automate an integration test for this condition
-        if (getMongo().isMongosConnection()) {
-            cmd.put(QueryOpBuilder.READ_PREFERENCE_META_OPERATOR, readPrefs.toDBObject());
-        }
+        cmd = wrapCommand(cmd, readPrefs);
 
         Iterator<DBObject> i =
                 getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, readPrefs ,
@@ -286,6 +282,22 @@ public abstract class DB {
         CommandResult cr = new CommandResult(cmd, sa);
         cr.putAll( res );
         return cr;
+    }
+
+    // Only append $readPreference meta-operator if connected to a mongos, read preference is not primary
+    // or secondary preferred,
+    // and command is an instance of BasicDBObject.  The last condition is unfortunate, but necessary in case
+    // the encoder is not capable of encoding a BasicDBObject
+    // Due to issues with compatibility between different versions of mongos, also wrap the command in a
+    // $query field, so that the $readPreference is not rejected
+    private DBObject wrapCommand(DBObject cmd, final ReadPreference readPrefs) {
+        if (getMongo().isMongosConnection() &&
+                !(ReadPreference.primary().equals(readPrefs) || ReadPreference.secondaryPreferred().equals(readPrefs)) &&
+                cmd instanceof BasicDBObject) {
+            cmd = new BasicDBObject("$query", cmd)
+                    .append(QueryOpBuilder.READ_PREFERENCE_META_OPERATOR, readPrefs.toDBObject());
+        }
+        return cmd;
     }
 
     /**
