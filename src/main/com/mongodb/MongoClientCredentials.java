@@ -25,32 +25,26 @@ package com.mongodb;
 public class MongoClientCredentials {
     public static final String MONGODB_MECHANISM = "mongodb";
     public static final String GSSAPI_MECHANISM = "GSSAPI";
+    public static final String CRAM_MD5_MECHANISM = "CRAM-MD5";
 
     private final String mechanism;
     private final String userName;
     private final char[] password;
     private final String database;
 
-
-    public MongoClientCredentials(final String userName, final char[] password) {
-        this.userName = userName;
-        this.password = password;
-        database = null;
-        mechanism = MONGODB_MECHANISM;
-    }
-
-    public MongoClientCredentials(final String userName, final char[] password, String database) {
-        this.userName = userName;
-        this.password = password;
-        this.database = database;
-        mechanism = MONGODB_MECHANISM;
+    public MongoClientCredentials(final String userName, final char[] password, String mechanism) {
+        this(userName, password, mechanism, null);
     }
 
     public MongoClientCredentials(final String userName, final String mechanism) {
+        this(userName, null, mechanism);
+    }
+
+    public MongoClientCredentials(final String userName, final char[] password, String mechanism, String database) {
         this.userName = userName;
+        this.password = password;
+        this.database = database;
         this.mechanism = mechanism;
-        this.password = null;
-        this.database = null;
     }
 
     public String getMechanism() {
