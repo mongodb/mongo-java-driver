@@ -349,10 +349,10 @@ public class MongoOptions {
         buf.append( "maxAutoConnectRetryTime=" ).append( maxAutoConnectRetryTime ).append( ", " );
         buf.append( "slaveOk=" ).append( slaveOk ).append( ", " );
         if (readPreference != null) {
-            buf.append( "readPreference").append( readPreference );
+            buf.append( "readPreference=" ).append( readPreference ).append( ", " );
         }
         if (writeConcern != null) {
-            buf.append( "writeConcern").append( writeConcern );
+            buf.append( "writeConcern=" ).append( writeConcern ).append( ", " );
         }
         buf.append( "safe=" ).append( safe ).append( ", " );
         buf.append( "w=" ).append( w ).append( ", " );
