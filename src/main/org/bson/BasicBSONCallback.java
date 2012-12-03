@@ -133,7 +133,7 @@ public class BasicBSONCallback implements BSONCallback {
         _put( name , v );
     }
     public void gotSymbol( String name , String v ){
-        _put( name , v );
+        _put( name , new Symbol(v) );
     }
 
     public void gotTimestamp( String name , int time , int inc ){
