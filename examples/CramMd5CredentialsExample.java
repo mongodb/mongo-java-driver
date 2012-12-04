@@ -20,44 +20,40 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientAuthority;
 import com.mongodb.MongoClientCredentials;
 import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteResult;
 
 import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
  * Example usage of CRAM-MD5 credentials.
+ * <p>
+ * Usage:
+ * </p>
+ * <pre>
+ *     java CramMd5CredentialsExample server userName password databaseName
+ * </pre>
  */
 public class CramMd5CredentialsExample {
     public static void main(String[] args) throws UnknownHostException, InterruptedException {
+        String server = args[0];
+        String user = args[1];
+        String pwd = args[2];
+        String db = args[3];
         MongoClient mongo = new MongoClient(
-                new MongoClientAuthority(new ServerAddress("kdc.10gen.me"),
-                        new MongoClientCredentials("dev0", "a".toCharArray(),
-                                MongoClientCredentials.CRAM_MD5_MECHANISM, "test")),
+                new MongoClientAuthority(new ServerAddress(server),
+                        new MongoClientCredentials(user, pwd.toCharArray(),
+                                MongoClientCredentials.CRAM_MD5_MECHANISM, db)),
                 new MongoClientOptions.Builder().socketKeepAlive(true).socketTimeout(30000).build());
-        DB testDB = mongo.getDB("test");
+        DB testDB = mongo.getDB(db);
         System.out.println("Find     one: " + testDB.getCollection("test").findOne());
         System.out.println("Count: " + testDB.getCollection("test").count());
         WriteResult writeResult = testDB.getCollection("test").insert(new BasicDBObject());
         System.out.println("Write result: " + writeResult);
 
         System.out.println();
-        System.out.println("Trying a query once every 15 seconds...");
-        System.out.println();
 
-        for (; ; ) {
-            try {
-                System.out.println(new SimpleDateFormat().format(new Date()));
-                System.out.println("Count: " + testDB.getCollection("test").count());
-                System.out.println();
-            } catch (MongoException e) {
-                e.printStackTrace();
-                System.out.println();
-            }
-            Thread.sleep(15000);
-        }
+        System.out.println("Count: " + testDB.getCollection("test").count());
+
     }
 }
