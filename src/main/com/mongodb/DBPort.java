@@ -414,13 +414,18 @@ public class DBPort {
             return CRAM_MD5_MECHANISM;
         }
 
+        @Override
+        protected String getUserNameForMechanism() {
+            return mongo.getCredentials().getDatabase() + "$" + mongo.getCredentials().getUserName();
+        }
+
         class CredentialsHandlingCallbackHandler implements CallbackHandler {
 
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 for (Callback callback : callbacks) {
                     if (callback instanceof NameCallback) {
                         NameCallback nameCallback = (NameCallback) callback;
-                        nameCallback.setName(mongo.getCredentials().getDatabase() + "$" + mongo.getCredentials().getUserName());
+                        nameCallback.setName(getUserNameForMechanism());
                     }
                     if (callback instanceof PasswordCallback) {
                         PasswordCallback passwordCallback = (PasswordCallback) callback;
@@ -481,6 +486,11 @@ public class DBPort {
         @Override
         protected Object getMechanism() {
             return GSSAPI_MECHANISM;
+        }
+
+        @Override
+        protected String getUserNameForMechanism() {
+            return mongo.getCredentials().getUserName();
         }
 
         private GSSCredential getGSSCredential(String userName) throws GSSException {
@@ -554,6 +564,8 @@ public class DBPort {
 
         protected abstract Object getMechanism();
 
+        protected abstract String getUserNameForMechanism();
+
         private CommandResult sendSaslStart(final byte[] outToken) throws IOException {
             DBObject cmd = new BasicDBObject("saslStart", 1).append("mechanism", getMechanism()).append("payload",
                     outToken != null ? outToken : new byte[0]);
@@ -572,7 +584,7 @@ public class DBPort {
 
             if (authorizeDatabases.get(db) == null) {
                 BasicDBObject acquirePrivilegeCmd = new BasicDBObject("acquirePrivilege", 1).
-                        append("principal", db.getMongo().getCredentials().getUserName()).
+                        append("principal", getUserNameForMechanism()).
                         append("resource", db.getName()).
                         append("actions", Arrays.asList("oldWrite"));
                 CommandResult res = runCommand(db.getSisterDB("admin"), acquirePrivilegeCmd);
