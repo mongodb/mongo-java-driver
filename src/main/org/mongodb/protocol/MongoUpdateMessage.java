@@ -24,7 +24,7 @@ import org.mongodb.serialization.Serializer;
 import java.util.Map;
 
 public class MongoUpdateMessage extends MongoRequestMessage {
-    MongoUpdateMessage(String collectionName, boolean upsert, boolean multi,
+    public MongoUpdateMessage(String collectionName, boolean upsert, boolean multi,
                        MongoDocument query,
                        MongoDocument updateOperations, OutputBuffer buffer, Serializer serializer) {
         super(collectionName, OpCode.OP_UPDATE, query, buffer);

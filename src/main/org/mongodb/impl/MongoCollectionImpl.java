@@ -19,9 +19,10 @@ package org.mongodb.impl;
 
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
+import org.mongodb.MongoCollectionName;
 import org.mongodb.WriteConcern;
 
-class MongoCollectionImpl implements MongoCollection {
+class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final String name;
     private final MongoDatabaseImpl database;
 
@@ -46,10 +47,10 @@ class MongoCollectionImpl implements MongoCollection {
     }
 
     public <T> void insert(T doc, WriteConcern writeConcern) {
-        getMongoClient().insert(getFullName(), doc, writeConcern);
+        getMongoClient().getOperations().insert(getFullName(), doc, writeConcern);
     }
 
-    private String getFullName() {
-        return getDatabase().getName() + "." + getName();
+    private MongoCollectionName getFullName() {
+        return new MongoCollectionName(getDatabase().getName(), getName());
     }
 }

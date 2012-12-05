@@ -17,18 +17,24 @@
 
 package org.mongodb;
 
-public abstract class AbstractCommand implements Command {
-    private final MongoClient mongoClient;
-    private final String database;
+import org.mongodb.protocol.MongoReplyMessage;
 
-    public AbstractCommand(final MongoClient mongoClient, final String database) {
-        this.mongoClient = mongoClient;
-        this.database = database;
+import java.util.List;
+
+public class QueryResult<T> extends MongoResult {
+    private final long cursorId;
+    private List<T> results;
+
+    public QueryResult(final MongoReplyMessage<T> replyMessage) {
+        cursorId = replyMessage.getCursorId();
+        results = replyMessage.getDocuments();
     }
 
-    protected CommandResult execute() {
-        return mongoClient.getOperations().executeCommand(database, asDocument());
+    public long getCursorId() {
+        return cursorId;
     }
 
-    public abstract MongoDocument asDocument();
+    public List<T> getResults() {
+        return results;
+    }
 }

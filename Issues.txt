@@ -1,4 +1,9 @@
 1. How to handle "lazy" serializer.  We can't use BsonReader/BsonWriter for this, so there needs to be a way around
    that to go straight to the to InputBuffer/OutputBuffer
 
-2. Design a proper exception hierarchy and standard message formats
+2. Design a proper exception hierarchy and standard message formats.
+
+3. Final decision on how to instantiate MongoClient, whether MongoClient is an interface, abstract class, or concrete
+   class
+
+4. Better design for Serializer.

@@ -20,10 +20,14 @@ package org.mongodb.protocol;
 import org.bson.io.OutputBuffer;
 
 public class MongoKillCursorsMessage extends MongoRequestMessage {
-    public MongoKillCursorsMessage(int numCursors, OutputBuffer buffer) {
+    public MongoKillCursorsMessage(OutputBuffer buffer, long cursorId, long... cursorIds) {
         super(OpCode.OP_KILL_CURSORS, buffer);
-        writeKillCursorsPrologue(numCursors);
+        writeKillCursorsPrologue(cursorIds.length + 1);
         backpatchMessageLength();
+        buffer.writeLong(cursorId);
+        for (long curCursorId : cursorIds) {
+            buffer.writeLong(curCursorId);
+        }
     }
 
     private void writeKillCursorsPrologue(final int numCursors) {

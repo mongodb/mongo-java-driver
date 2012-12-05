@@ -17,12 +17,14 @@
 package org.mongodb;
 
 
-public interface MongoClient {
+import java.io.Closeable;
+
+public interface MongoClient extends Closeable {
     MongoDatabase getDatabase(String name);
 
-    CommandResult executeCommand(String database, MongoDocument command);
+    MongoOperations getOperations();
 
-    <T> InsertResult insert(final String namespace, T doc, WriteConcern writeConcern);
+    MongoClient bindToChannel();
 
     void close();
 }

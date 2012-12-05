@@ -21,7 +21,6 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -230,8 +229,8 @@ public class WriteConcern implements Serializable {
         _continueOnErrorForInsert = continueOnInsertError;
     }
 
-    public Map<String, Object> getCommand(){
-        Map<String, Object> command = new LinkedHashMap<String, Object>();
+    public MongoDocument getCommand(){
+        MongoDocument command = new MongoDocument();
         command.put("getlasterror", 1);
 
         if (_w instanceof Integer && ((Integer) _w > 0) || (_w instanceof String)){

@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-public interface MongoCollection {
+public interface MongoCollection<T> {
 
 
     /**

@@ -48,10 +48,9 @@ public class MongoReplyMessage<T> {
 
         documents = new ArrayList<T>(numberReturned);
 
-        // TODO: warning for unchecked cast
         while (documents.size() < numberReturned) {
             BSONReader reader = new BSONBinaryReader(new BsonReaderSettings(), bodyInputBuffer);
-            documents.add((T) serializer.deserialize(reader, clazz, null));
+            documents.add(clazz.cast(serializer.deserialize(reader, clazz, null)));
             reader.close();
         }
     }
