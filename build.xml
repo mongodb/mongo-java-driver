@@ -44,6 +44,8 @@ limitations under the License.
 
     <path id="test.classpath">
         <pathelement location="lib/testng-6.3.1.jar"/>
+        <pathelement location="lib/junit-4.11.jar"/>
+        <pathelement location="lib/hamcrest-core-1.3.jar"/>
         <path refid="build.classpath"/>
     </path>
     <path id="cobertura.classpath">
@@ -284,13 +286,22 @@ limitations under the License.
     </target>
 
     <target name="test" depends="test-compile">
-        <testng classpathref="${test.classpath}" outputdir="${test.dir}" haltonfailure="false" verbose="1" >
-            <jvmarg value="-Xmx512M" />
-            <jvmarg value="-ea" />
-            <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
-            <sysproperty key="${cobertura.arg}" value="${cobertura.datafile}" />
-            <classfileset  dir="${build.test.dir}" includes="**/${test.classes}.class" />
-        </testng>
+        <junit fork="off">
+           <classpath refid="${test.classpath}"/>
+            <batchtest fork="off" todir="${test.dir}">
+                <fileset dir="src/test">
+                    <include name="**/*Test.java"/>
+                </fileset>
+            </batchtest>
+            <formatter type="plain"/>
+        </junit>
+        <!--<testng classpathref="${test.classpath}" outputdir="${test.dir}" haltonfailure="false" verbose="1" >-->
+            <!--<jvmarg value="-Xmx512M" />-->
+            <!--<jvmarg value="-ea" />-->
+            <!--<jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>-->
+            <!--<sysproperty key="${cobertura.arg}" value="${cobertura.datafile}" />-->
+            <!--<classfileset  dir="${build.test.dir}" includes="**/${test.classes}.class" />-->
+        <!--</testng>-->
     </target>
 
     <!-- ******************************************************************* -->

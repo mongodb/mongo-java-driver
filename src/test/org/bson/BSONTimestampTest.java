@@ -1,10 +1,12 @@
 package org.bson;
 
 import org.bson.types.BSONTimestamp;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-public class BSONTimestampTest extends Assert{
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+public class BSONTimestampTest {
 
     @Test
     public void testComparable(){

@@ -36,8 +36,8 @@ class MongoDatabaseImpl implements MongoDatabase {
         return name;
     }
 
-    public MongoCollectionImpl getCollection(final String name) {
-        return new MongoCollectionImpl(name, this);
+    public MongoCollectionImpl<MongoDocument> getCollection(final String name) {
+        return new MongoCollectionImpl<MongoDocument>(name, this);
     }
 
     @Override

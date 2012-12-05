@@ -36,7 +36,7 @@ import org.mongodb.WriteConcern;
 import java.net.UnknownHostException;
 
 import static org.junit.Assert.*;
-import static org.testng.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotEquals;
 
 @RunWith(JUnit4.class)
 public class SingleChannelMongoClientTest {
@@ -97,7 +97,7 @@ public class SingleChannelMongoClientTest {
         QueryResult<MongoDocument> queryResult = mongoClient.getOperations().query(new MongoCollectionName(dbName, colName), query, MongoDocument.class);
         assertNotNull(queryResult);
         assertEquals(101, queryResult.getResults().size());
-        assertNotEquals(0, queryResult.getCursorId());
+        assertNotEquals(0L, queryResult.getCursorId());
 
         GetMoreResult<MongoDocument> getMoreResult = mongoClient.getOperations().getMore(new MongoCollectionName(dbName, colName),
                 queryResult.getCursorId(), MongoDocument.class);

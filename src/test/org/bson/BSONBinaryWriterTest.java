@@ -20,20 +20,21 @@ package org.bson;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferInput;
 import org.bson.types.ObjectId;
-import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class BSONBinaryWriterTest extends Assert {
+import static org.junit.Assert.assertEquals;
+
+public class BSONBinaryWriterTest  {
 
     BSONBinaryWriter writer;
     BasicOutputBuffer buffer;
 
-    @BeforeTest
+    @Before
     public void setup() {
         buffer = new BasicOutputBuffer();
 

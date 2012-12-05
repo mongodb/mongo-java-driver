@@ -55,7 +55,7 @@ public class MongoChannel {
         message.done();
     }
 
-    public <T> MongoReplyMessage<T> receiveMessage(Serializer serializer, Class clazz) throws IOException {
+    public <T> MongoReplyMessage<T> receiveMessage(Serializer serializer, Class<T> clazz) throws IOException {
         ByteBuffer headerByteBuffer = pool.get(36);
         int bytesRead = socketChannel.read(headerByteBuffer);
         if (bytesRead < headerByteBuffer.limit()) {

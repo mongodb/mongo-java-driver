@@ -25,6 +25,9 @@ import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.util.BufferPool;
 import org.bson.util.PowerOfTwoByteBufferPool;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.protocol.MongoInsertMessage;
 import org.mongodb.protocol.MongoQueryMessage;
@@ -40,10 +43,6 @@ import org.mongodb.serialization.serializers.LongSerializer;
 import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 import org.mongodb.serialization.serializers.ObjectIdSerializer;
 import org.mongodb.serialization.serializers.StringSerializer;
-import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.net.SocketException;
@@ -51,16 +50,17 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MongoChannelTest extends Assert {
+import static org.junit.Assert.assertEquals;
+
+public class MongoChannelTest  {
     MongoChannel channel;
     Serializers serializers;
     BufferPool<ByteBuffer> bufferPool;
 
-    @BeforeTest
+    @Before
     public void setUp() throws UnknownHostException, SocketException {
         bufferPool = new PowerOfTwoByteBufferPool(24);
         channel = new MongoChannel(new ServerAddress("localhost", 27017), bufferPool);
@@ -75,7 +75,7 @@ public class MongoChannelTest extends Assert {
         serializers.register(Date.class, BsonType.DATE_TIME, new DateSerializer());
     }
 
-    @AfterTest
+    @After
     public void tearDown() {
         channel.close();
     }
@@ -188,7 +188,7 @@ public class MongoChannelTest extends Assert {
             MongoInsertMessage message = new MongoInsertMessage("MongoConnectionTest.sendMessageTest",
                     WriteConcern.NONE, new PooledByteBufferOutput(bufferPool));
 
-            Map<String, Object> doc1 = new LinkedHashMap<String, Object>();
+            Map<String, Object> doc1 = new MongoDocument();
             doc1.put("_id", new ObjectId());
             doc1.put("str", "hi mom");
             doc1.put("int", 42);
@@ -197,7 +197,7 @@ public class MongoChannelTest extends Assert {
             doc1.put("date", new Date());
             doc1.put("binary", new Binary(bytes));
 
-            message.addDocument(Map.class, doc1, serializers);
+            message.addDocument(MongoDocument.class, doc1, serializers);
 
             channel.sendMessage(message);
 
@@ -224,7 +224,7 @@ public class MongoChannelTest extends Assert {
 
         int totalDocuments = 0;
 
-        MongoReplyMessage<Map<String, Object>> replyMessage = channel.receiveMessage(serializers, Map.class);
+        MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(serializers, MongoDocument.class);
         totalDocuments += replyMessage.getNumberReturned();
         System.out.println(" Initial: " + replyMessage.getDocuments().size() + " documents, " + replyMessage.getMessageLength() + " bytes");
 
@@ -234,7 +234,7 @@ public class MongoChannelTest extends Assert {
 
             channel.sendMessage(getMoreMessage);
 
-            replyMessage = channel.receiveMessage(serializers, Map.class);
+            replyMessage = channel.receiveMessage(serializers, MongoDocument.class);
             totalDocuments += replyMessage.getNumberReturned();
             System.out.println(" Get more: " + replyMessage.getDocuments().size() + " documents, " + replyMessage.getMessageLength() + " bytes");
         }
@@ -270,7 +270,7 @@ public class MongoChannelTest extends Assert {
 
             channel.sendMessage(message);
 
-            MongoReplyMessage<Map<String, Object>> replyMessage = channel.receiveMessage(serializers, Map.class);
+            MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(serializers, MongoDocument.class);
 
 //            assertEquals(replyMessage.getDocuments().size(), 101);
         }
@@ -288,7 +288,7 @@ public class MongoChannelTest extends Assert {
                 query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
         channel.sendMessage(message);
 
-        MongoReplyMessage<Map<String, Object>> replyMessage = channel.receiveMessage(serializers, Map.class);
+        MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(serializers, MongoDocument.class);
 
         assertEquals(1, replyMessage.getDocuments().size());
     }
@@ -299,7 +299,7 @@ public class MongoChannelTest extends Assert {
 
         List<Map<String, Object>> documents = new ArrayList<Map<String, Object>>();
 
-        Map<String, Object> doc1 = new LinkedHashMap<String, Object>();
+        Map<String, Object> doc1 = new MongoDocument();
         doc1.put("_id", new ObjectId());
         doc1.put("str", "hi mom");
         doc1.put("int", 42);
@@ -309,11 +309,8 @@ public class MongoChannelTest extends Assert {
 //        doc2.put("str", "hi dad");
 //        doc2.put("int", 0);
 
-        documents.add(doc1);
-//        documents.add(doc2);
-
-        message.addDocument(Map.class, doc1, serializers);
-//        message.addDocument(Map.class, doc2, serializers);
+        message.addDocument(MongoDocument.class, doc1, serializers);
+//        message.addDocument(MongoDocument.class, doc2, serializers);
 
         channel.sendMessage(message);
 

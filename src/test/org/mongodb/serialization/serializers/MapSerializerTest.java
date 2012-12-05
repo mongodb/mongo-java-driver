@@ -22,20 +22,19 @@ import org.bson.BinaryWriterSettings;
 import org.bson.BsonType;
 import org.bson.BsonWriterSettings;
 import org.bson.io.BasicOutputBuffer;
+import org.junit.Before;
+import org.junit.Test;
 import org.mongodb.serialization.Serializers;
-import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class MapSerializerTest extends Assert {
+public class MapSerializerTest  {
     MapSerializer mapSerializer;
     private BSONBinaryWriter bsonWriter;
     private BasicOutputBuffer buffer;
 
-    @BeforeTest
+    @Before
     public void setUp() {
         Serializers serializers = new Serializers();
         mapSerializer = new MapSerializer(serializers);
