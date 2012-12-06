@@ -18,6 +18,8 @@
 package org.bson;
 
 public class InvalidOperationException extends RuntimeException {
+    private static final long serialVersionUID = 7684248076818601418L;
+
     public InvalidOperationException(String message) {
         super(message);
     }

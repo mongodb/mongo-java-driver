@@ -21,6 +21,8 @@ import java.util.LinkedHashMap;
 
 public class MongoDocument extends LinkedHashMap<String, Object> implements MongoQueryFilter {
 
+    private static final long serialVersionUID = -1492763563349589447L;
+
     public MongoDocument() {
 
     }
