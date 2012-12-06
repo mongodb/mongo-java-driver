@@ -21,5 +21,6 @@ import org.mongodb.protocol.MongoReplyMessage;
 
 public class UpdateResult extends MongoResult {
     public UpdateResult(final MongoReplyMessage<MongoDocument> replyMessage) {
+        super(replyMessage);
     }
 }

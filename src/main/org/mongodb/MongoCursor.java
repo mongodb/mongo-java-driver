@@ -25,32 +25,42 @@ public class MongoCursor<T> implements Iterator<T>, Closeable {
     private final MongoCollectionName namespace;
     private final MongoDocument query;
     private final MongoDocument fields;
+    private final Class<T> clazz;
+    QueryResult<T> currentResult;
+    Iterator<T> currentIterator;
 
     public MongoCursor(final MongoClient mongoClient, final MongoCollectionName namespace, final MongoDocument query,
-                       final MongoDocument fields) {
+                       final MongoDocument fields, Class<T> clazz) {
         this.mongoClient = mongoClient;
         this.namespace = namespace;
         this.query = query;
         this.fields = fields;
+        this.clazz = clazz;
+        currentResult = mongoClient.getOperations().query(namespace, query, clazz);
+        currentIterator = currentResult.getResults().iterator();
     }
 
     @Override
     public void close() {
-
+        if (currentResult != null && currentResult.getCursorId() != 0) {
+            mongoClient.getOperations().killCursors(currentResult.getCursorId());
+        }
     }
 
     @Override
     public boolean hasNext() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        // TODO: Handle getMore
+        return currentIterator.hasNext();
     }
 
     @Override
     public T next() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        // TODO: Handle getMore
+        return currentIterator.next();
     }
 
     @Override
     public void remove() {
-        //To change body of implemented methods use File | Settings | File Templates.
+        throw new UnsupportedOperationException("MongoCursor does not support remove");
     }
 }

@@ -17,44 +17,7 @@
 
 package org.mongodb;
 
-import org.bson.types.CodeWScope;
-
-public interface Query {
-
-    /**
-     * <p>Create a filter based on the specified condition and value.
-     * </p><p>
-     * <b>Note</b>: Property is in the form of "name op" ("age >").
-     * </p><p>
-     * Valid operators are ["=", "==","!=", "<>", ">", "<", ">=", "<=", "in", "nin", "all", "size", "exists"]
-     * </p>
-     * <p>Examples:</p>
-     *
-     * <ul>
-     * <li>{@code filter("yearsOfOperation >", 5)}</li>
-     * <li>{@code filter("rooms.maxBeds >=", 2)}</li>
-     * <li>{@code filter("rooms.bathrooms exists", 1)}</li>
-     * <li>{@code filter("stars in", new Long[]{3,4}) //3 and 4 stars (midrange?)}</li>
-     * <li>{@code filter("age >=", age)}</li>
-     * <li>{@code filter("age =", age)}</li>
-     * <li>{@code filter("age", age)} (if no operator, = is assumed)</li>
-     * <li>{@code filter("age !=", age)}</li>
-     * <li>{@code filter("age in", ageList)}</li>
-     * <li>{@code filter("customers.loyaltyYears in", yearsList)}</li>
-     * </ul>
-     */
-    Query filter(String condition, Object value);
-
-
-    /**
-     * Limit the query using this javascript block; only one per query
-     */
-    Query where(String js);
-
-    /**
-     * Limit the query using this javascript block; only one per query
-     */
-    Query where(CodeWScope js);
+public interface MongoQuery<T> {
 
     /**
      * <p>Sorts based on a property (defines return order).  Examples:</p>
@@ -66,78 +29,66 @@ public interface Query {
      * <li>{@code order("age,-date")} (age ascending, date descending)</li>
      * </ul>
      */
-    Query order(String condition);
+    MongoQuery order(String condition);
 
     /**
      * Limit the fetched result set to a certain number of values.
      *
      * @param value must be >= 0.  A value of 0 indicates no limit.
      */
-    Query limit(int value);
+    MongoQuery limit(int value);
 
     /**
      * Batch-size of the fetched result (cursor).
      *
      * @param value must be >= 0.  A value of 0 indicates the server default.
      */
-    Query batchSize(int value);
+    MongoQuery batchSize(int value);
 
     /**
      * Starts the query results at a particular zero-based offset.
      *
      * @param value must be >= 0
      */
-    Query offset(int value);
-
-    @Deprecated
-    Query skip(int value);
-
-    /**
-     * Turns on validation (for all calls made after); by default validation is on
-     */
-    Query enableValidation();
-
-    /**
-     * Turns off validation (for all calls made after)
-     */
-    Query disableValidation();
+    MongoQuery offset(int value);
 
     /**
      * Hints as to which index should be used.
      */
-    Query hintIndex(String idxName);
+    MongoQuery hintIndex(String idxName);
 
     /**
      * Limits the fields retrieved
      */
-    Query retrievedFields(boolean include, String... fields);
+    MongoQuery retrievedFields(boolean include, String... fields);
 
     /**
      * Enabled snapshot mode where duplicate results
      * (which may be updated during the lifetime of the cursor)
      * will not be returned. Not compatible with order/sort and hint.
      */
-    Query enableSnapshotMode();
+    MongoQuery enableSnapshotMode();
 
     /**
      * Disable snapshot mode (default mode). This will be faster
      * but changes made during the cursor may cause duplicates.
      */
-    Query disableSnapshotMode();
+    MongoQuery disableSnapshotMode();
 
     /**
      * Set the read preference for this query
      */
-    Query readPreference(ReadPreference readPreference);
+    MongoQuery readPreference(ReadPreference readPreference);
 
     /**
      * Disables cursor timeout on server.
      */
-    Query disableTimeout();
+    MongoQuery disableTimeout();
 
     /**
      * Enables cursor timeout on server.
      */
-    Query enableTimeout();
+    MongoQuery enableTimeout();
 
+    MongoCursor<T> entries();
 }

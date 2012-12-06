@@ -27,4 +27,6 @@ public interface MongoClient extends Closeable {
     MongoClient bindToChannel();
 
     void close();
+
+    WriteConcern getWriteConcern();
 }

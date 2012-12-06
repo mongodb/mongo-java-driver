@@ -21,7 +21,8 @@ import org.mongodb.protocol.MongoReplyMessage;
 
 import java.util.List;
 
-public class QueryResult<T> extends MongoResult {
+// TODO: Should this extend MongoResult, and if so, would have to make it generic
+public class QueryResult<T> {
     private final long cursorId;
     private List<T> results;
 

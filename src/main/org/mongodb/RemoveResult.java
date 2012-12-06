@@ -19,7 +19,8 @@ package org.mongodb;
 
 import org.mongodb.protocol.MongoReplyMessage;
 
-public class DeleteResult extends MongoResult {
-    public DeleteResult(final MongoReplyMessage<MongoDocument> replyMessage) {
+public class RemoveResult extends MongoResult {
+    public RemoveResult(final MongoReplyMessage<MongoDocument> replyMessage) {
+        super(replyMessage);
     }
 }

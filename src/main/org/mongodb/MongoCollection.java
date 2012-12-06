@@ -18,70 +18,68 @@ package org.mongodb;
 
 public interface MongoCollection<T> {
 
+    /**
+     * Gets the database in which this collection resides.
+     *
+     * @return the database
+     */
+    MongoDatabase getDatabase();
 
     /**
-     * Gets the name of this collection.
+     * Gets the name of this collection.  This is the simple name of the collection and is not prefixed with the database name.
      *
      * @return the collection name
      */
     String getName();
 
-    /**
-     * Gets the database that this collection is a part of.
-     *
-     * @return the database
-     */
-//    Database getDatabase();
+    MongoQuery<T> find(MongoQueryFilter filter);
 
-    /**
-     * @return
-     */
-//    Query query();
+    // TODO: should these return anything?
+    InsertResult insert(T document);
 
-//    void save(Map<String, Object> document);
+    InsertResult insert(T document, WriteConcern writeConcern);
 
-//    void save(Map<String, Object> document, WriteConcern writeConcern);
 
-//    void insert(Iterable<Map<String, Object>> document);
-//
-//    void insert(Iterable<Map<String, Object>> document, WriteConcern writeConcern);
-//
-//    void delete(Query query);
-//
-//    void delete(Query query, WriteConcern writeConcern);
-//
-//    UpdateResults update(Query query, UpdateOperations ops);
+    // TODO: Iterable or List?
+    InsertResult insert(Iterable<T> documents);
+
+    InsertResult insert(Iterable<T> documents, WriteConcern writeConcern);
+
+    RemoveResult remove(MongoQueryFilter filter);
+
+    RemoveResult remove(MongoQueryFilter filter, WriteConcern writeConcern);
+
+
+//    void save(T document);
+
+//    void save(T document, WriteConcern writeConcern);
+
+//    UpdateResult update(MongoQueryFilter filter, UpdateOperations ops);
 //
 //    /**
-//     * updates all entities found with the operations, if nothing is found insert the update as an entity if "createIfMissing" is true; this is an atomic operation per entity
+//     * updates all entities found with the operations
 //     */
-//    UpdateResults update(Query query, UpdateOperations ops, WriteConcern writeConcern);
+//    UpdateResult update(MongoQueryFilter filter, UpdateOperations ops, WriteConcern writeConcern);
 //
 //    /**
-//     * updates the first entity found with the operations; this is an atomic operation
+//     * updates the first entity found with the operations
 //     */
-//    UpdateResults updateFirst(Query query, UpdateOperations ops);
+//    UpdateResult updateFirst(MongoQueryFilter filter, UpdateOperations ops);
 //
 //    /**
-//     * updates the first entity found with the operations, if nothing is found insert the update as an entity if "createIfMissing" is true; this is an atomic operation per entity
+//     * updates the first entity found with the operations, if nothing is found insert the update as an entity if "upsert" is true
 //     */
-//    UpdateResults updateFirst(Query query, UpdateOperations ops, boolean createIfMissing);
+//    UpdateResult updateFirst(MongoQueryFilter filter, UpdateOperations ops, boolean upsert);
 //
-//    UpdateResults updateFirst(Query query, UpdateOperations ops, boolean createIfMissing, WriteConcern writeConcern);
-//
-//    /**
-//     * updates the first entity found with the operations, if nothing is found insert the update as an entity if "createIfMissing" is true; this is an atomic operation per entity
-//     */
-//    UpdateResults updateFirst(Query query, Map<String, Object> document, boolean createIfMissing);
+//    UpdateResult updateFirst(MongoQueryFilter filter, UpdateOperations ops, boolean upsert, WriteConcern writeConcern);
 //
 //    /**
-//     * updates the first entity found with the operations, if nothing is found insert the update as an entity if "createIfMissing" is true; this is an atomic operation per entity
+//     * updates the first entity found with the operations, if nothing is found insert the update as an entity if "upsert" is true
 //     */
-//    UpdateResults updateFirst(Query query, Map<String, Object> document, boolean createIfMissing, WriteConcern writeConcern);
-
-//    Database getDatabase();
-
-    MongoDatabase getDatabase();
-
-    MongoClient getMongoClient();
+//    UpdateResult replace(MongoQueryFilter filter, T document, boolean upsert);
+//
+//    /**
+//     * updates the first entity found with the operations, if nothing is found insert the update as an entity if "upsert" is true
+//     */
+//    UpdateResult replace(MongoQueryFilter filter, T document, boolean upsert, WriteConcern writeConcern);
 }

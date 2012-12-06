@@ -20,7 +20,7 @@ package org.mongodb.impl;
 import org.bson.io.PooledByteBufferOutput;
 import org.bson.util.BufferPool;
 import org.mongodb.CommandResult;
-import org.mongodb.DeleteResult;
+import org.mongodb.RemoveResult;
 import org.mongodb.GetMoreResult;
 import org.mongodb.InsertResult;
 import org.mongodb.MongoChannel;
@@ -54,13 +54,15 @@ class SingleChannelMongoClient implements MongoClient {
     private final SimplePool<MongoChannel> channelPool;
     private final BufferPool<ByteBuffer> bufferPool;
     private final Serializer serializer;
+    private final WriteConcern writeConcern;
     private MongoChannel channel;
 
     SingleChannelMongoClient(final SimplePool<MongoChannel> channelPool, final BufferPool<ByteBuffer> bufferPool,
-                             final Serializer serializer) {
+                             final Serializer serializer, final WriteConcern writeConcern) {
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.serializer = serializer;
+        this.writeConcern = writeConcern;
         try {
             this.channel = channelPool.get();
         } catch (InterruptedException e) {
@@ -80,6 +82,7 @@ class SingleChannelMongoClient implements MongoClient {
     }
 
 
+    // TODO: Revisit this
     @Override
     public MongoClient bindToChannel() {
         return this;
@@ -91,6 +94,11 @@ class SingleChannelMongoClient implements MongoClient {
             channelPool.done(channel);
             channel = null;
         }
+    }
+
+    @Override
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
     }
 
     private BufferPool<ByteBuffer> getBufferPool() {
@@ -134,10 +142,21 @@ class SingleChannelMongoClient implements MongoClient {
         }
 
         @Override
-        public <T> InsertResult insert(final MongoCollectionName namespace, final T doc, final WriteConcern writeConcern) {
+        public <T> InsertResult insert(final MongoCollectionName namespace, final T document, final WriteConcern writeConcern) {
             MongoInsertMessage insertMessage = new MongoInsertMessage(namespace.getFullName(), writeConcern,
                     new PooledByteBufferOutput(getBufferPool()));
-            insertMessage.addDocument(doc.getClass(), doc, serializer);
+            insertMessage.addDocument(document.getClass(), document, serializer);
+
+            return new InsertResult(sendWriteMessage(namespace, insertMessage, writeConcern));
+        }
+
+        @Override
+        public <T> InsertResult insert(final MongoCollectionName namespace, final Iterable<T> documents, final WriteConcern writeConcern) {
+            MongoInsertMessage insertMessage = new MongoInsertMessage(namespace.getFullName(), writeConcern,
+                    new PooledByteBufferOutput(getBufferPool()));
+            for (T document : documents) {
+              insertMessage.addDocument(document.getClass(), document, serializer);
+            }
 
             return new InsertResult(sendWriteMessage(namespace, insertMessage, writeConcern));
         }
@@ -181,11 +200,11 @@ class SingleChannelMongoClient implements MongoClient {
         }
 
         @Override
-        public DeleteResult delete(final MongoCollectionName namespace, MongoDocument query,
+        public RemoveResult delete(final MongoCollectionName namespace, MongoDocument query,
                                    WriteConcern writeConcern) {
             MongoDeleteMessage message = new MongoDeleteMessage(namespace.getFullName(), query,
                     new PooledByteBufferOutput(bufferPool), serializer);
-            return new DeleteResult(sendWriteMessage(namespace, message, writeConcern));
+            return new RemoveResult(sendWriteMessage(namespace, message, writeConcern));
         }
 
         @Override

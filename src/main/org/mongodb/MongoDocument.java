@@ -19,7 +19,7 @@ package org.mongodb;
 
 import java.util.LinkedHashMap;
 
-public class MongoDocument extends LinkedHashMap<String, Object> {
+public class MongoDocument extends LinkedHashMap<String, Object> implements MongoQueryFilter {
 
     public MongoDocument() {
 
@@ -27,5 +27,10 @@ public class MongoDocument extends LinkedHashMap<String, Object> {
 
     public MongoDocument(final String key, final Object value) {
         put(key, value);
+    }
+
+    @Override
+    public MongoDocument asDocument() {
+        return this;
     }
 }

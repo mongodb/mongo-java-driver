@@ -17,14 +17,12 @@
 
 package org.mongodb;
 
-import java.util.Collection;
-
 public interface MongoDatabase {
     String getName();
 
     CommandResult executeCommand(MongoDocument command);
 
-    MongoClient getMongoClient();
+    MongoClient getClient();
 
     MongoCollection<MongoDocument> getCollection(String name);
 }

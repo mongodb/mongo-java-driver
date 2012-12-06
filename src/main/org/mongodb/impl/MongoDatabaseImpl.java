@@ -21,10 +21,12 @@ import org.mongodb.CommandResult;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDocument;
+import org.mongodb.WriteConcern;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoClient mongo;
     private final String name;
+    private WriteConcern writeConcern;
 
     public MongoDatabaseImpl(final String name, final MongoClient mongo) {
         this.mongo = mongo;
@@ -37,7 +39,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     public MongoCollectionImpl<MongoDocument> getCollection(final String name) {
-        return new MongoCollectionImpl<MongoDocument>(name, this);
+        return new MongoCollectionImpl<MongoDocument>(name, this, MongoDocument.class);
     }
 
     @Override
@@ -46,7 +48,14 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public MongoClient getMongoClient() {
+    public MongoClient getClient() {
         return mongo;
+    }
+
+    public WriteConcern getWriteConcern() {
+        if (writeConcern != null) {
+            return writeConcern;
+        }
+        return getClient().getWriteConcern();
     }
 }

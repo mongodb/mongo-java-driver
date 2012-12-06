@@ -30,6 +30,8 @@ public interface MongoOperations {
     UpdateResult update(final MongoCollectionName namespace, MongoDocument query,
                         MongoDocument updateOperations, WriteConcern writeConcern);
 
-    DeleteResult delete(final MongoCollectionName namespace, MongoDocument query,
+    RemoveResult delete(final MongoCollectionName namespace, MongoDocument query,
                         WriteConcern writeConcern);
+
+    <T> InsertResult insert(MongoCollectionName namespace, Iterable<T> documents, WriteConcern writeConcern);
 }

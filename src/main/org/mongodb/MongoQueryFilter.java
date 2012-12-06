@@ -1,3 +1,5 @@
+package org.mongodb;
+
 /**
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
@@ -15,21 +17,6 @@
  *
  */
 
-package org.mongodb;
-
-/**
- *
- */
-public class DropCollectionCommand extends AbstractCommand {
-    private final String collectionName;
-
-    public DropCollectionCommand(MongoDatabase database, final String collectionName) {
-        super(database.getClient(), database.getName());
-        this.collectionName = collectionName;
-    }
-
-    @Override
-    public MongoDocument asDocument() {
-        return new MongoDocument("drop", collectionName);
-    }
+public interface MongoQueryFilter {
+    MongoDocument asDocument();
 }

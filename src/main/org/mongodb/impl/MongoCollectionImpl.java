@@ -17,23 +17,25 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.RemoveResult;
+import org.mongodb.InsertResult;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCollectionName;
+import org.mongodb.MongoQuery;
+import org.mongodb.MongoQueryFilter;
 import org.mongodb.WriteConcern;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final String name;
     private final MongoDatabaseImpl database;
+    private final Class<T> clazz;
+    private WriteConcern writeConcern;
 
-    public MongoCollectionImpl(final String name, MongoDatabaseImpl database) {
+    public MongoCollectionImpl(final String name, MongoDatabaseImpl database, Class<T> clazz) {
         this.name = name;
         this.database = database;
-    }
-
-    @Override
-    public MongoClient getMongoClient() {
-        return getDatabase().getMongoClient();
+        this.clazz = clazz;
     }
 
     @Override
@@ -46,11 +48,53 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         return name;
     }
 
-    public <T> void insert(T doc, WriteConcern writeConcern) {
-        getMongoClient().getOperations().insert(getFullName(), doc, writeConcern);
+    @Override
+    public MongoQuery<T> find(MongoQueryFilter filter) {
+        return new MongoQueryImpl<T>(this, filter, clazz);
+    }
+
+    @Override
+    public InsertResult insert(final T document) {
+        return insert(document, getWriteConcern());
+    }
+
+    @Override
+    public InsertResult insert(T document, WriteConcern writeConcern) {
+        return getMongoClient().getOperations().insert(getFullName(), document, writeConcern);
+    }
+
+    @Override
+    public InsertResult insert(final Iterable<T> documents) {
+        return insert(documents, getWriteConcern());
+    }
+
+    @Override
+    public InsertResult insert(final Iterable<T> documents, final WriteConcern writeConcern) {
+        return getMongoClient().getOperations().insert(getFullName(), documents, writeConcern);
+    }
+
+    @Override
+    public RemoveResult remove(final MongoQueryFilter filter) {
+        return remove(filter, getWriteConcern());
+    }
+
+    @Override
+    public RemoveResult remove(final MongoQueryFilter filter, final WriteConcern writeConcern) {
+        return getMongoClient().getOperations().delete(getFullName(), filter.asDocument(), getWriteConcern());
     }
 
     private MongoCollectionName getFullName() {
         return new MongoCollectionName(getDatabase().getName(), getName());
+    }
+
+    private MongoClient getMongoClient() {
+        return getDatabase().getClient();
+    }
+
+    public WriteConcern getWriteConcern() {
+        if (writeConcern != null) {
+            return writeConcern;
+        }
+        return getDatabase().getWriteConcern();
     }
 }

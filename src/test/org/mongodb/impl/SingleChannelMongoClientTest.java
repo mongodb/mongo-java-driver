@@ -79,7 +79,7 @@ public class SingleChannelMongoClientTest {
     public void testInsertion() {
         String colName = "insertion";
         MongoDocument doc = new MongoDocument();
-        mongoClient.getOperations().insert(new MongoCollectionName(dbName, colName), doc, WriteConcern.SAFE);
+        mongoClient.getOperations().insert(new MongoCollectionName(dbName, colName), doc, WriteConcern.ACKNOWLEDGED);
         CommandResult res = mongoClient.getOperations().executeCommand(dbName, new MongoDocument("count", colName));
         assertEquals(1.0, res.getMongoDocument().get("n"));
     }

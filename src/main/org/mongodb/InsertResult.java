@@ -21,6 +21,6 @@ import org.mongodb.protocol.MongoReplyMessage;
 
 public class InsertResult extends MongoResult {
     public InsertResult(final MongoReplyMessage<MongoDocument> replyMessage) {
-
+        super(replyMessage);
     }
 }

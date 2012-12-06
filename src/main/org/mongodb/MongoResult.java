@@ -17,5 +17,9 @@
 
 package org.mongodb;
 
+import org.mongodb.protocol.MongoReplyMessage;
+
 public class MongoResult {
+    public MongoResult(final MongoReplyMessage<MongoDocument> replyMessage) {
+    }
 }
