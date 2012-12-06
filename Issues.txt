@@ -7,3 +7,5 @@
    class
 
 4. Better design for Serializer.
+
+5. What to do about the GridFS API.  Move it to org.mongodb as well?
