@@ -24,6 +24,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mongodb.MongoCommand;
+import org.mongodb.ReadPreference;
 import org.mongodb.result.CommandResult;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.GetMore;
@@ -48,7 +50,8 @@ public class SingleChannelMongoClientTest {
     @BeforeClass
     public static void setUpClass() throws UnknownHostException {
         singleServerMongoClient = new SingleServerMongoClient(new ServerAddress());
-        singleServerMongoClient.getOperations().executeCommand(dbName, new MongoDocument("dropDatabase", 1));
+        singleServerMongoClient.getOperations().executeCommand(dbName,
+                new MongoCommand(new MongoDocument("dropDatabase", 1)).readPreference(ReadPreference.primary()));
 
     }
 
@@ -70,7 +73,7 @@ public class SingleChannelMongoClientTest {
 
     @Test
     public void testCommandExecution() {
-        MongoDocument cmd = new MongoDocument("count", "test");
+        MongoCommand cmd = new MongoCommand(new MongoDocument("count", "test")).readPreference(ReadPreference.primary());
         CommandResult res = mongoClient.getOperations().executeCommand(dbName, cmd);
         assertNotNull(res);
         assertTrue(res.getMongoDocument().get("n") instanceof Double);
@@ -81,7 +84,8 @@ public class SingleChannelMongoClientTest {
         String colName = "insertion";
         MongoInsert<MongoDocument> insert = new MongoInsert<MongoDocument>(new MongoDocument());
         mongoClient.getOperations().insert(new MongoNamespace(dbName, colName), insert, MongoDocument.class);
-        CommandResult res = mongoClient.getOperations().executeCommand(dbName, new MongoDocument("count", colName));
+        CommandResult res = mongoClient.getOperations().executeCommand(dbName,
+                new MongoCommand(new MongoDocument("count", colName)).readPreference(ReadPreference.primary()));
         assertEquals(1.0, res.getMongoDocument().get("n"));
     }
 
@@ -94,7 +98,7 @@ public class SingleChannelMongoClientTest {
             mongoClient.getOperations().insert(new MongoNamespace(dbName, colName), insert, MongoDocument.class);
         }
 
-        MongoQuery query = new MongoQuery(new MongoDocument());
+        MongoQuery query = new MongoQuery(new MongoDocument()).readPreference(ReadPreference.primary());
         QueryResult<MongoDocument> queryResult = mongoClient.getOperations().query(new MongoNamespace(dbName, colName), query, MongoDocument.class);
         assertNotNull(queryResult);
         assertEquals(101, queryResult.getResults().size());

@@ -32,4 +32,6 @@ public interface MongoClient extends Closeable {
     void close();
 
     WriteConcern getWriteConcern();
+
+    ReadPreference getReadPreference();
 }

@@ -17,6 +17,7 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.ReadPreference;
 import org.mongodb.result.InsertResult;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
@@ -33,17 +34,19 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final MongoDatabaseImpl database;
     private final Class<T> clazz;
     private WriteConcern writeConcern;
+    private ReadPreference readPreference;
 
     public MongoCollectionImpl(final String name, MongoDatabaseImpl database, Class<T> clazz) {
-        this(name, database, clazz, null);
+        this(name, database, clazz, null, null);
     }
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database, final Class<T> clazz,
-                               final WriteConcern writeConcern) {
+                               final WriteConcern writeConcern, ReadPreference readPreference) {
         this.name = name;
         this.database = database;
         this.clazz = clazz;
         this.writeConcern = writeConcern;
+        this.readPreference = readPreference;
     }
 
     @Override
@@ -58,27 +61,27 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public MongoCursor<T> find(MongoQuery query) {
-        return new MongoCursor<T>(this, query, clazz);
+        return new MongoCursor<T>(this, query.readPreferenceIfAbsent(readPreference), clazz);
     }
 
     @Override
     public InsertResult insert(final MongoInsert<T> insert) {
-        return getClient().getOperations().insert(getNamespace(), insert, clazz);
+        return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(getWriteConcern()), clazz);
     }
 
     @Override
     public RemoveResult remove(final MongoDelete delete) {
-        return getClient().getOperations().delete(getNamespace(), delete);
+        return getClient().getOperations().delete(getNamespace(), delete.writeConcernIfAbsent(getWriteConcern()));
     }
 
     @Override
     public MongoCollection<T> withClient(final MongoClient client) {
-        return new MongoCollectionImpl<T>(name, database.withClient(client), clazz, writeConcern);
+        return new MongoCollectionImpl<T>(name, database.withClient(client), clazz, writeConcern, readPreference);
     }
 
     @Override
     public MongoCollection<T> withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoCollectionImpl<T>(name, database, clazz, writeConcern);
+        return new MongoCollectionImpl<T>(name, database, clazz, writeConcern, readPreference);
     }
 
     @Override
@@ -92,6 +95,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return writeConcern;
         }
         return getDatabase().getWriteConcern();
+    }
+
+    @Override
+    public ReadPreference getReadPreference() {
+        if (readPreference != null) {
+            return readPreference;
+        }
+        return getDatabase().getReadPreference();
     }
 
     @Override

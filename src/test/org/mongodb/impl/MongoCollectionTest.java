@@ -24,6 +24,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mongodb.MongoCommand;
+import org.mongodb.ReadPreference;
 import org.mongodb.result.InsertResult;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
@@ -50,7 +52,8 @@ public class MongoCollectionTest {
     @BeforeClass
     public static void setUpClass() throws UnknownHostException {
         singleServerMongoClient = new SingleServerMongoClient(new ServerAddress());
-        singleServerMongoClient.getOperations().executeCommand(dbName, new MongoDocument("dropDatabase", 1));
+        singleServerMongoClient.getOperations().executeCommand(dbName,
+                new MongoCommand(new MongoDocument("dropDatabase", 1)).readPreference(ReadPreference.primary()));
     }
 
     @AfterClass

@@ -35,7 +35,7 @@ public interface MongoOperations {
     // TODO: needs to take a MongoQuery or equivalent
     // TODO: should this really be a separate call from query?
     // TODO: how to custom serialize a piece of the command?
-    CommandResult executeCommand(String database, MongoDocument command);
+    CommandResult executeCommand(String database, MongoCommand command);
 
     <T> QueryResult<T> query(final MongoNamespace namespace, MongoQuery query, Class<T> clazz);
 

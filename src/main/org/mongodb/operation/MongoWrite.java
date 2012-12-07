@@ -28,10 +28,11 @@ public abstract class MongoWrite {
         return this;
     }
 
-    public void setWriteConcernIfAbsent(final WriteConcern writeConcern) {
+    public MongoWrite writeConcernIfAbsent(final WriteConcern writeConcern) {
         if (this.writeConcern == null) {
             this.writeConcern = writeConcern;
         }
+        return this;
     }
 
     public WriteConcern getWriteConcern() {

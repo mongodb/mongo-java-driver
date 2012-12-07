@@ -17,16 +17,20 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.result.CommandResult;
 import org.mongodb.MongoClient;
+import org.mongodb.MongoCollection;
+import org.mongodb.MongoCommand;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDocument;
+import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
+import org.mongodb.result.CommandResult;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoClient client;
     private final String name;
     private WriteConcern writeConcern;
+    private ReadPreference readPreference;
 
     public MongoDatabaseImpl(final String name, final MongoClient client) {
         this(name, client, null);
@@ -48,6 +52,11 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
+    public <T> MongoCollection<T> getTypedCollection(final String name, final Class<T> clazz) {
+        return new MongoCollectionImpl<T>(name, this, clazz);
+    }
+
+    @Override
     public MongoDatabaseImpl withClient(final MongoClient client) {
         return new MongoDatabaseImpl(name, client);
     }
@@ -58,7 +67,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public CommandResult executeCommand(final MongoDocument command) {
+    public CommandResult executeCommand(final MongoCommand command) {
          return client.getOperations().executeCommand(getName(), command);
     }
 
@@ -72,5 +81,12 @@ class MongoDatabaseImpl implements MongoDatabase {
             return writeConcern;
         }
         return getClient().getWriteConcern();
+    }
+
+    public ReadPreference getReadPreference() {
+        if (readPreference != null) {
+            return readPreference;
+        }
+        return getClient().getReadPreference();
     }
 }
