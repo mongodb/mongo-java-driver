@@ -17,12 +17,12 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.InsertResult;
+import org.mongodb.result.InsertResult;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoCursor;
-import org.mongodb.RemoveResult;
+import org.mongodb.result.RemoveResult;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.MongoDelete;
 import org.mongodb.operation.MongoInsert;

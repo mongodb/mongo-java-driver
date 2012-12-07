@@ -28,6 +28,7 @@ import org.bson.util.PowerOfTwoByteBufferPool;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.io.MongoChannel;
 import org.mongodb.operation.MongoQuery;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoInsert;

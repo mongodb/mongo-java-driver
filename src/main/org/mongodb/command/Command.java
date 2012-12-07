@@ -15,12 +15,7 @@
  *
  */
 
-package org.mongodb;
+package org.mongodb.command;
 
-import org.mongodb.protocol.MongoReplyMessage;
-
-public class RemoveResult extends MongoResult {
-    public RemoveResult(final MongoReplyMessage<MongoDocument> replyMessage) {
-        super(replyMessage);
-    }
+public interface Command {
 }

@@ -24,14 +24,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mongodb.CommandResult;
+import org.mongodb.result.CommandResult;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.GetMore;
-import org.mongodb.GetMoreResult;
+import org.mongodb.result.GetMoreResult;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoDocument;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.QueryResult;
+import org.mongodb.result.QueryResult;
 import org.mongodb.ServerAddress;
 import org.mongodb.operation.MongoQuery;
 

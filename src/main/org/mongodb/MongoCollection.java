@@ -19,6 +19,8 @@ package org.mongodb;
 import org.mongodb.operation.MongoDelete;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoQuery;
+import org.mongodb.result.InsertResult;
+import org.mongodb.result.RemoveResult;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.

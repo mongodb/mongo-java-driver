@@ -1,3 +1,7 @@
+package org.mongodb.operation;
+
+import org.mongodb.MongoDocument;
+
 /**
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
@@ -15,12 +19,6 @@
  *
  */
 
-package org.mongodb;
-
-import org.mongodb.protocol.MongoReplyMessage;
-
-public class UpdateResult extends MongoResult {
-    public UpdateResult(final MongoReplyMessage<MongoDocument> replyMessage) {
-        super(replyMessage);
-    }
+public interface MongoQueryFilter {
+    MongoDocument asDocument();
 }

@@ -17,6 +17,8 @@
 
 package org.mongodb;
 
+import org.mongodb.result.CommandResult;
+
 /**
  * Additions to this interface will not be considered to break binary compatibility.
  */

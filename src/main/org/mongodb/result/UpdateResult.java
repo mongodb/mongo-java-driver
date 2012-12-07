@@ -15,12 +15,14 @@
  *
  */
 
-package org.mongodb;
+package org.mongodb.result;
 
+import org.mongodb.MongoDocument;
 import org.mongodb.protocol.MongoReplyMessage;
+import org.mongodb.result.MongoResult;
 
-public class InsertResult extends MongoResult {
-    public InsertResult(final MongoReplyMessage<MongoDocument> replyMessage) {
+public class UpdateResult extends MongoResult {
+    public UpdateResult(final MongoReplyMessage<MongoDocument> replyMessage) {
         super(replyMessage);
     }
 }

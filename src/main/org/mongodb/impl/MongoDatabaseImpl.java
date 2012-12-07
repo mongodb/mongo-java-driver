@@ -17,7 +17,7 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.CommandResult;
+import org.mongodb.result.CommandResult;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDocument;

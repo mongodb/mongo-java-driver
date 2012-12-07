@@ -15,7 +15,27 @@
  *
  */
 
-package org.mongodb;
+package org.mongodb.result;
 
-public class UpdateOperations {
+import org.mongodb.protocol.MongoReplyMessage;
+
+import java.util.List;
+
+// TODO: Should this extend MongoResult, and if so, would have to make it generic
+public class QueryResult<T> {
+    private final long cursorId;
+    private List<T> results;
+
+    public QueryResult(final MongoReplyMessage<T> replyMessage) {
+        cursorId = replyMessage.getCursorId();
+        results = replyMessage.getDocuments();
+    }
+
+    public long getCursorId() {
+        return cursorId;
+    }
+
+    public List<T> getResults() {
+        return results;
+    }
 }

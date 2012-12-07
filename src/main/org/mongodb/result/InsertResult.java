@@ -15,16 +15,13 @@
  *
  */
 
-package org.mongodb;
+package org.mongodb.result;
 
-public class CommandResult {
-    private final MongoDocument mongoDocument;
+import org.mongodb.MongoDocument;
+import org.mongodb.protocol.MongoReplyMessage;
 
-    public CommandResult(final MongoDocument mongoDocument) {
-        this.mongoDocument = mongoDocument;
-    }
-
-    public MongoDocument getMongoDocument() {
-        return mongoDocument;
+public class InsertResult extends MongoResult {
+    public InsertResult(final MongoReplyMessage<MongoDocument> replyMessage) {
+        super(replyMessage);
     }
 }

@@ -19,6 +19,7 @@ package org.mongodb;
 
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.MongoQuery;
+import org.mongodb.result.QueryResult;
 
 import java.io.Closeable;
 import java.util.Iterator;

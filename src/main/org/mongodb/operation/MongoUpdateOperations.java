@@ -15,12 +15,7 @@
  *
  */
 
-package org.mongodb;
+package org.mongodb.operation;
 
-import org.mongodb.protocol.MongoReplyMessage;
-
-public class GetMoreResult<T> extends QueryResult<T> {
-    public GetMoreResult(final MongoReplyMessage<T> replyMessage) {
-        super(replyMessage);
-    }
+public class MongoUpdateOperations {
 }

@@ -15,21 +15,14 @@
  *
  */
 
-package org.mongodb;
+package org.mongodb.result;
 
-/**
- *
- */
-public class DropCollectionCommand extends AbstractCommand {
-    private final String collectionName;
+import org.mongodb.MongoDocument;
+import org.mongodb.protocol.MongoReplyMessage;
+import org.mongodb.result.MongoResult;
 
-    public DropCollectionCommand(MongoDatabase database, final String collectionName) {
-        super(database.getClient(), database.getName());
-        this.collectionName = collectionName;
-    }
-
-    @Override
-    public MongoDocument asDocument() {
-        return new MongoDocument("drop", collectionName);
+public class RemoveResult extends MongoResult {
+    public RemoveResult(final MongoReplyMessage<MongoDocument> replyMessage) {
+        super(replyMessage);
     }
 }

@@ -17,7 +17,6 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.MongoQueryFilter;
 import org.mongodb.WriteConcern;
 
 public class MongoDelete extends MongoWrite {

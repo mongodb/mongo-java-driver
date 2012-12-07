@@ -22,6 +22,12 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.MongoQuery;
 import org.mongodb.operation.MongoUpdate;
+import org.mongodb.result.CommandResult;
+import org.mongodb.result.GetMoreResult;
+import org.mongodb.result.InsertResult;
+import org.mongodb.result.QueryResult;
+import org.mongodb.result.RemoveResult;
+import org.mongodb.result.UpdateResult;
 
 public interface MongoOperations {
 

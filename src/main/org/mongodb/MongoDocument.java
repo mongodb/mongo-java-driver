@@ -17,6 +17,8 @@
 
 package org.mongodb;
 
+import org.mongodb.operation.MongoQueryFilter;
+
 import java.util.LinkedHashMap;
 
 public class MongoDocument extends LinkedHashMap<String, Object> implements MongoQueryFilter {

@@ -15,12 +15,14 @@
  *
  */
 
-package org.mongodb;
+package org.mongodb.io;
 
 import org.bson.io.ByteBufferInput;
 import org.bson.io.InputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.util.BufferPool;
+import org.mongodb.MongoException;
+import org.mongodb.ServerAddress;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.protocol.MongoRequestMessage;
 import org.mongodb.serialization.Serializer;

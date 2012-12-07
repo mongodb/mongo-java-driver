@@ -17,17 +17,15 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.MongoQueryFilter;
-import org.mongodb.UpdateOperations;
 import org.mongodb.WriteConcern;
 
 public class MongoUpdate extends MongoWrite {
     private final MongoQueryFilter filter;
-    private final UpdateOperations updateOperations;
+    private final MongoUpdateOperations updateOperations;
     private boolean isMulti = false;
     private boolean isUpsert = false;
 
-    public MongoUpdate(MongoQueryFilter filter, UpdateOperations updateOperations) {
+    public MongoUpdate(MongoQueryFilter filter, MongoUpdateOperations updateOperations) {
 
         this.filter = filter;
         this.updateOperations = updateOperations;
@@ -37,7 +35,7 @@ public class MongoUpdate extends MongoWrite {
         return filter;
     }
 
-    public UpdateOperations getUpdateOperations() {
+    public MongoUpdateOperations getUpdateOperations() {
         return updateOperations;
     }
 

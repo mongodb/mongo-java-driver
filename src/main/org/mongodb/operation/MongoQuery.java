@@ -18,7 +18,6 @@
 package org.mongodb.operation;
 
 import org.mongodb.MongoDocument;
-import org.mongodb.MongoQueryFilter;
 import org.mongodb.ReadPreference;
 
 // TODO: Probably just get rename to MongoQuery

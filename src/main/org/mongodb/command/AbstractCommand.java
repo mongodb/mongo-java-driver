@@ -1,5 +1,3 @@
-package org.mongodb;
-
 /**
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
@@ -17,6 +15,24 @@ package org.mongodb;
  *
  */
 
-public interface MongoQueryFilter {
-    MongoDocument asDocument();
+package org.mongodb.command;
+
+import org.mongodb.result.CommandResult;
+import org.mongodb.MongoClient;
+import org.mongodb.MongoDocument;
+
+public abstract class AbstractCommand implements Command {
+    private final MongoClient mongoClient;
+    private final String database;
+
+    public AbstractCommand(final MongoClient mongoClient, final String database) {
+        this.mongoClient = mongoClient;
+        this.database = database;
+    }
+
+    protected CommandResult execute() {
+        return mongoClient.getOperations().executeCommand(database, asDocument());
+    }
+
+    public abstract MongoDocument asDocument();
 }
