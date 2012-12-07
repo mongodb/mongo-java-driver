@@ -17,11 +17,11 @@
 
 package org.mongodb;
 
-public final class MongoCollectionName {
+public final class MongoNamespace {
     private final String databaseName;
     private final String collectionName;
 
-    public MongoCollectionName(String databaseName, String collectionName) {
+    public MongoNamespace(String databaseName, String collectionName) {
         // TODO: check args
 
         this.databaseName = databaseName;
@@ -45,7 +45,7 @@ public final class MongoCollectionName {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final MongoCollectionName that = (MongoCollectionName) o;
+        final MongoNamespace that = (MongoNamespace) o;
 
         if (collectionName != null ? !collectionName.equals(that.collectionName) : that.collectionName != null)
             return false;

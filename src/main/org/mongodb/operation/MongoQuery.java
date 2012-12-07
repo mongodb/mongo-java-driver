@@ -15,86 +15,91 @@
  *
  */
 
-package org.mongodb.impl;
+package org.mongodb.operation;
 
-import org.mongodb.MongoCollection;
-import org.mongodb.MongoCollectionName;
-import org.mongodb.MongoCursor;
 import org.mongodb.MongoDocument;
-import org.mongodb.MongoQuery;
 import org.mongodb.MongoQueryFilter;
 import org.mongodb.ReadPreference;
 
-public class MongoQueryImpl<T> implements MongoQuery<T> {
-    private final MongoCollection<T> collection;
+// TODO: Probably just get rename to MongoQuery
+public class MongoQuery {
     private final MongoQueryFilter filter;
-    private final Class<T> clazz;
+    private ReadPreference readPreference;
+    private int batchSize;
 
-    public MongoQueryImpl(final MongoCollection<T> collection, final MongoQueryFilter filter, Class<T> clazz) {
-        this.collection = collection;
+    public MongoQuery(final MongoQueryFilter filter) {
         this.filter = filter;
-        this.clazz = clazz;
     }
 
-    @Override
+    public MongoQueryFilter getFilter() {
+        return filter;
+    }
+
     public MongoQuery order(final String condition) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public MongoQuery limit(final int value) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public MongoQuery batchSize(final int value) {
-        throw new UnsupportedOperationException();
+    public MongoQuery batchSize(final int batchSize) {
+        this.batchSize = batchSize;
+        return this;
     }
 
-    @Override
     public MongoQuery offset(final int value) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public MongoQuery hintIndex(final String idxName) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public MongoQuery retrievedFields(final boolean include, final String... fields) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public MongoQuery enableSnapshotMode() {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public MongoQuery disableSnapshotMode() {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public MongoQuery readPreference(final ReadPreference readPreference) {
-        throw new UnsupportedOperationException();
+        this.readPreference = readPreference;
+        return this;
     }
 
-    @Override
     public MongoQuery disableTimeout() {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public MongoQuery enableTimeout() {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public MongoCursor<T> entries() {
-        return new MongoCursor<T>(collection.getDatabase().getClient(),
-                new MongoCollectionName(collection.getDatabase().getName(), collection.getName()),
-                filter.asDocument(), new MongoDocument(), clazz);
+    public int getOptions() {
+        return 0;
+    }
+
+
+    public ReadPreference getReadPreference() {
+        return ReadPreference.primary();
+    }
+
+
+    public int getNumToSkip() {
+        return 0;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public MongoDocument getFields() {
+        return null;
     }
 }

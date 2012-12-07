@@ -28,6 +28,9 @@ import org.bson.util.PowerOfTwoByteBufferPool;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.operation.MongoQuery;
+import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoInsert;
 import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.protocol.MongoInsertMessage;
 import org.mongodb.protocol.MongoQueryMessage;
@@ -155,16 +158,16 @@ public class MongoChannelTest  {
 
         Concrete c = new Concrete(new ObjectId(), "hi mom", 42, 42L, 42.0, new Date().getTime());
 
-        MongoInsertMessage insertMessage = new MongoInsertMessage("test.concrete",
-                WriteConcern.NONE, new PooledByteBufferOutput(bufferPool));
-        insertMessage.addDocument(Concrete.class, c, serializers);
+        MongoInsertMessage<Concrete> insertMessage = new MongoInsertMessage<Concrete>("test.concrete",
+                new MongoInsert<Concrete>(c).writeConcern(WriteConcern.UNACKNOWLEDGED), Concrete.class,
+                new PooledByteBufferOutput(bufferPool), serializers);
 
         channel.sendMessage(insertMessage);
 
-        final MongoDocument query = new MongoDocument("i", 42);
+        final MongoDocument filter = new MongoDocument("i", 42);
 
-        MongoQueryMessage queryMessage = new MongoQueryMessage("test.concrete", 0, 0, 0,
-                query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
+        MongoQueryMessage queryMessage = new MongoQueryMessage("test.concrete", new MongoQuery(filter),
+                new PooledByteBufferOutput(bufferPool), serializers);
 
         channel.sendMessage(queryMessage);
 
@@ -185,10 +188,7 @@ public class MongoChannelTest  {
                 System.out.println("i: " + i);
             }
 
-            MongoInsertMessage message = new MongoInsertMessage("MongoConnectionTest.sendMessageTest",
-                    WriteConcern.NONE, new PooledByteBufferOutput(bufferPool));
-
-            Map<String, Object> doc1 = new MongoDocument();
+            MongoDocument doc1 = new MongoDocument();
             doc1.put("_id", new ObjectId());
             doc1.put("str", "hi mom");
             doc1.put("int", 42);
@@ -197,7 +197,9 @@ public class MongoChannelTest  {
             doc1.put("date", new Date());
             doc1.put("binary", new Binary(bytes));
 
-            message.addDocument(MongoDocument.class, doc1, serializers);
+            MongoInsertMessage<MongoDocument> message = new MongoInsertMessage<MongoDocument>("MongoConnectionTest.sendMessageTest",
+                    new MongoInsert<MongoDocument>(doc1), MongoDocument.class,
+                    new PooledByteBufferOutput(bufferPool), serializers);
 
             channel.sendMessage(message);
 
@@ -213,12 +215,12 @@ public class MongoChannelTest  {
 
         System.out.println("Query time...");
 
-        final MongoDocument query = new MongoDocument();
+        final MongoDocument filter = new MongoDocument();
 
         startTime = endTime;
 
-        MongoQueryMessage queryMessage = new MongoQueryMessage("MongoConnectionTest.sendMessageTest", 0, 0, 4000000,
-                query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
+        MongoQueryMessage queryMessage = new MongoQueryMessage("MongoConnectionTest.sendMessageTest",
+                new MongoQuery(filter).batchSize(4000000), new PooledByteBufferOutput(bufferPool), serializers);
 
         channel.sendMessage(queryMessage);
 
@@ -230,7 +232,7 @@ public class MongoChannelTest  {
 
         while (replyMessage.getCursorId() != 0) {
             MongoGetMoreMessage getMoreMessage = new MongoGetMoreMessage("MongoConnectionTest.sendMessageTest",
-                    replyMessage.getCursorId(), 0, new PooledByteBufferOutput(bufferPool));
+                    new GetMore(replyMessage.getCursorId(), 0), new PooledByteBufferOutput(bufferPool));
 
             channel.sendMessage(getMoreMessage);
 
@@ -255,7 +257,7 @@ public class MongoChannelTest  {
     public void receiveMessageTest() throws IOException {
         dropCollection("sendMessageTest");
 
-        List<Map<String, Object>> documents = insertTwoDocuments();
+        List<MongoDocument> documents = insertTwoDocuments();
 
         long startTime = System.nanoTime();
         for (int i = 0; i < 1; i++) {
@@ -263,10 +265,10 @@ public class MongoChannelTest  {
                 System.out.println("i: " + i);
 
 
-            final MongoDocument query = new MongoDocument("int", 42);
+            final MongoDocument filter = new MongoDocument("int", 42);
 
-            MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.sendMessageTest", 0, 0, 0,
-                    query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
+            MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.sendMessageTest", new MongoQuery(filter),
+                    new PooledByteBufferOutput(bufferPool), serializers);
 
             channel.sendMessage(message);
 
@@ -282,10 +284,10 @@ public class MongoChannelTest  {
     }
 
     private void dropCollection(String collectionName) throws IOException {
-        final MongoDocument query = new MongoDocument("drop", collectionName);
+        final MongoDocument filter = new MongoDocument("drop", collectionName);
 
-        MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.$cmd", 0, 0, -1,
-                query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializers);
+        MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.$cmd", new MongoQuery(filter).batchSize(-1),
+                new PooledByteBufferOutput(bufferPool), serializers);
         channel.sendMessage(message);
 
         MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(serializers, MongoDocument.class);
@@ -293,11 +295,8 @@ public class MongoChannelTest  {
         assertEquals(1, replyMessage.getDocuments().size());
     }
 
-    private List<Map<String, Object>> insertTwoDocuments() throws IOException {
-        MongoInsertMessage message = new MongoInsertMessage("MongoConnectionTest.sendMessageTest",
-                WriteConcern.NONE, new PooledByteBufferOutput(bufferPool));
-
-        List<Map<String, Object>> documents = new ArrayList<Map<String, Object>>();
+    private List<MongoDocument> insertTwoDocuments() throws IOException {
+        List<MongoDocument> documents = new ArrayList<MongoDocument>();
 
         Map<String, Object> doc1 = new MongoDocument();
         doc1.put("_id", new ObjectId());
@@ -308,6 +307,12 @@ public class MongoChannelTest  {
 //        doc2.put("_id", new ObjectId());
 //        doc2.put("str", "hi dad");
 //        doc2.put("int", 0);
+
+
+        MongoInsertMessage<MongoDocument> message = new MongoInsertMessage<MongoDocument>("MongoConnectionTest.sendMessageTest",
+                new MongoInsert<MongoDocument>(documents).writeConcern(WriteConcern.UNACKNOWLEDGED), MongoDocument.class,
+                new PooledByteBufferOutput(bufferPool), serializers);
+
 
         message.addDocument(MongoDocument.class, doc1, serializers);
 //        message.addDocument(MongoDocument.class, doc2, serializers);

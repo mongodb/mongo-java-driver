@@ -25,18 +25,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mongodb.CommandResult;
+import org.mongodb.MongoNamespace;
+import org.mongodb.operation.GetMore;
 import org.mongodb.GetMoreResult;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoCollectionName;
 import org.mongodb.MongoDocument;
+import org.mongodb.operation.MongoInsert;
 import org.mongodb.QueryResult;
 import org.mongodb.ServerAddress;
-import org.mongodb.WriteConcern;
+import org.mongodb.operation.MongoQuery;
 
 import java.net.UnknownHostException;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertNotEquals;
 
 @RunWith(JUnit4.class)
 public class SingleChannelMongoClientTest {
@@ -78,8 +79,8 @@ public class SingleChannelMongoClientTest {
     @Test
     public void testInsertion() {
         String colName = "insertion";
-        MongoDocument doc = new MongoDocument();
-        mongoClient.getOperations().insert(new MongoCollectionName(dbName, colName), doc, WriteConcern.ACKNOWLEDGED);
+        MongoInsert<MongoDocument> insert = new MongoInsert<MongoDocument>(new MongoDocument());
+        mongoClient.getOperations().insert(new MongoNamespace(dbName, colName), insert, MongoDocument.class);
         CommandResult res = mongoClient.getOperations().executeCommand(dbName, new MongoDocument("count", colName));
         assertEquals(1.0, res.getMongoDocument().get("n"));
     }
@@ -89,18 +90,18 @@ public class SingleChannelMongoClientTest {
         String colName = "query";
 
         for (int i = 0; i < 400; i++) {
-            MongoDocument doc = new MongoDocument();
-            mongoClient.getOperations().insert(new MongoCollectionName(dbName, colName), doc, WriteConcern.NONE);
+            MongoInsert<MongoDocument> insert = new MongoInsert<MongoDocument>(new MongoDocument());
+            mongoClient.getOperations().insert(new MongoNamespace(dbName, colName), insert, MongoDocument.class);
         }
 
-        MongoDocument query = new MongoDocument();
-        QueryResult<MongoDocument> queryResult = mongoClient.getOperations().query(new MongoCollectionName(dbName, colName), query, MongoDocument.class);
+        MongoQuery query = new MongoQuery(new MongoDocument());
+        QueryResult<MongoDocument> queryResult = mongoClient.getOperations().query(new MongoNamespace(dbName, colName), query, MongoDocument.class);
         assertNotNull(queryResult);
         assertEquals(101, queryResult.getResults().size());
         assertNotEquals(0L, queryResult.getCursorId());
 
-        GetMoreResult<MongoDocument> getMoreResult = mongoClient.getOperations().getMore(new MongoCollectionName(dbName, colName),
-                queryResult.getCursorId(), MongoDocument.class);
+        GetMoreResult<MongoDocument> getMoreResult = mongoClient.getOperations().getMore(new MongoNamespace(dbName, colName),
+                new GetMore(queryResult.getCursorId(), 0), MongoDocument.class);
         assertNotNull(getMoreResult);
         assertEquals(299, getMoreResult.getResults().size());
         assertEquals(0, getMoreResult.getCursorId());

@@ -17,33 +17,32 @@
 
 package org.mongodb;
 
+import org.mongodb.operation.MongoKillCursor;
+import org.mongodb.operation.MongoQuery;
+
 import java.io.Closeable;
 import java.util.Iterator;
 
+// TODO: Handle getmore
 public class MongoCursor<T> implements Iterator<T>, Closeable {
-    private final MongoClient mongoClient;
-    private final MongoCollectionName namespace;
-    private final MongoDocument query;
-    private final MongoDocument fields;
+    private final MongoCollection<T> collection;
+    private final MongoQuery query;
     private final Class<T> clazz;
-    QueryResult<T> currentResult;
-    Iterator<T> currentIterator;
+    private QueryResult<T> currentResult;
+    private Iterator<T> currentIterator;
 
-    public MongoCursor(final MongoClient mongoClient, final MongoCollectionName namespace, final MongoDocument query,
-                       final MongoDocument fields, Class<T> clazz) {
-        this.mongoClient = mongoClient;
-        this.namespace = namespace;
+    public MongoCursor(final MongoCollection<T> collection, final MongoQuery query, Class<T> clazz) {
+        this.collection = collection;
         this.query = query;
-        this.fields = fields;
         this.clazz = clazz;
-        currentResult = mongoClient.getOperations().query(namespace, query, clazz);
+        currentResult = collection.getClient().getOperations().query(collection.getNamespace(), query, clazz);
         currentIterator = currentResult.getResults().iterator();
     }
 
     @Override
     public void close() {
         if (currentResult != null && currentResult.getCursorId() != 0) {
-            mongoClient.getOperations().killCursors(currentResult.getCursorId());
+            collection.getClient().getOperations().killCursors(new MongoKillCursor(currentResult.getCursorId()));
         }
     }
 

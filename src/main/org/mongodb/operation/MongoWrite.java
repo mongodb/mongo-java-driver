@@ -1,10 +1,10 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -15,24 +15,26 @@
  *
  */
 
-package org.mongodb.protocol;
+package org.mongodb.operation;
 
-import org.bson.io.OutputBuffer;
-import org.mongodb.operation.GetMore;
+import org.mongodb.WriteConcern;
 
-public class MongoGetMoreMessage extends MongoRequestMessage {
-    public MongoGetMoreMessage(String collectionName, GetMore getMore,
-                               OutputBuffer buffer) {
-        super(collectionName, OpCode.OP_GETMORE, buffer);
-        writeGetMore(getMore);
-        backpatchMessageLength();
+public abstract class MongoWrite {
+    private WriteConcern writeConcern;
+
+    // TODO: discuss this builder pattern.  It doesn't work so well with subclasses
+    public MongoWrite writeConcern(final WriteConcern writeConcern) {
+        this.writeConcern = writeConcern;
+        return this;
     }
 
-    private void writeGetMore(GetMore getMore) {
-        buffer.writeInt(0);
-        buffer.writeCString(collectionName);
-        buffer.writeInt(getMore.getBatchSize());
-        buffer.writeLong(getMore.getCursorId());
+    public void setWriteConcernIfAbsent(final WriteConcern writeConcern) {
+        if (this.writeConcern == null) {
+            this.writeConcern = writeConcern;
+        }
     }
 
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
+    }
 }

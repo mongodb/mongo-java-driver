@@ -19,25 +19,25 @@ package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoDocument;
-import org.mongodb.ReadPreference;
+import org.mongodb.operation.MongoQuery;
 import org.mongodb.serialization.Serializer;
 
 import java.util.Map;
 
 public class MongoQueryMessage extends MongoRequestMessage {
-    public MongoQueryMessage(String collectionName, int options, int numToSkip, int batchSize,
-                             MongoDocument query, Map<String, Integer> fields, ReadPreference readPref,
-                             OutputBuffer buffer, Serializer serializer) {
-        super(collectionName, query, options, readPref, buffer);
 
-        int allOptions = options;
-        if (readPref != null && readPref.isSlaveOk()) {
+    public MongoQueryMessage(String collectionName, MongoQuery query,
+                             OutputBuffer buffer, Serializer serializer) {
+        super(collectionName, query.getFilter().asDocument(), query.getOptions(), query.getReadPreference(), buffer);
+
+        int allOptions = query.getOptions();
+        if (query.getReadPreference().isSlaveOk()) {
             allOptions |= QueryOptions.SLAVEOK;
         }
 
         queryOptions = allOptions;
 
-        writeQuery(fields, numToSkip, batchSize, serializer);
+        writeQuery(query, serializer);
         backpatchMessageLength();
     }
 
@@ -46,17 +46,17 @@ public class MongoQueryMessage extends MongoRequestMessage {
     }
 
 
-    private void writeQuery(final Map<String, Integer> fields, final int numToSkip, final int batchSize,
+    private void writeQuery(final MongoQuery query,
                             final Serializer serializer) {
         buffer.writeInt(queryOptions);
         buffer.writeCString(collectionName);
 
-        buffer.writeInt(numToSkip);
-        buffer.writeInt(batchSize);
+        buffer.writeInt(query.getNumToSkip());
+        buffer.writeInt(query.getBatchSize());
 
-        addDocument(MongoDocument.class, query, serializer);
-        if (fields != null)
-            addDocument(Map.class, fields, serializer);
+        addDocument(MongoDocument.class, query.getFilter().asDocument(), serializer);
+        if (query.getFields() != null)
+            addDocument(Map.class, query.getFields().asDocument(), serializer);
     }
 
     private final int queryOptions;

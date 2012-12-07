@@ -16,6 +16,15 @@
 
 package org.mongodb;
 
+import org.mongodb.operation.MongoDelete;
+import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.MongoQuery;
+
+/**
+ * Additions to this interface will not be considered to break binary compatibility.
+ *
+ * @param <T> The type that this collection will serialize documents from and to
+ */
 public interface MongoCollection<T> {
 
     /**
@@ -32,22 +41,40 @@ public interface MongoCollection<T> {
      */
     String getName();
 
-    MongoQuery<T> find(MongoQueryFilter filter);
+    MongoNamespace getNamespace();
 
-    // TODO: should these return anything?
-    InsertResult insert(T document);
+    MongoClient getClient();
 
-    InsertResult insert(T document, WriteConcern writeConcern);
+    WriteConcern getWriteConcern();
+
+    /**
+     * The same collection but with a different MongoClient.  Useful when binding to a channel.
+     * @see org.mongodb.MongoClient#bindToChannel()
+     */
+    MongoCollection<T> withClient(MongoClient client);
+
+    /**
+     * The same collection but with a different default write concern.
+     */
+    MongoCollection<T> withWriteConcern(WriteConcern writeConcern);
+
+    MongoCursor<T> find(MongoQuery query);
+
+    InsertResult insert(MongoInsert<T> insert);
+
+    RemoveResult remove(MongoDelete delete);
+
+    // TODO: add
+    // update
+    // count
+    // findAndModify
+    // group
+    // distinct
+    // mapReduce
+    // aggregate
 
 
-    // TODO: Iterable or List?
-    InsertResult insert(Iterable<T> documents);
-
-    InsertResult insert(Iterable<T> documents, WriteConcern writeConcern);
-
-    RemoveResult remove(MongoQueryFilter filter);
-
-    RemoveResult remove(MongoQueryFilter filter, WriteConcern writeConcern);
+}
 
 
 //    void save(T document);
@@ -82,4 +109,5 @@ public interface MongoCollection<T> {
 //     * updates the first entity found with the operations, if nothing is found insert the update as an entity if "upsert" is true
 //     */
 //    UpdateResult replace(MongoQueryFilter filter, T document, boolean upsert, WriteConcern writeConcern);
-}
+
+

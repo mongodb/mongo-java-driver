@@ -19,22 +19,14 @@ package org.mongodb.impl;
 
 import org.bson.io.PooledByteBufferOutput;
 import org.bson.util.BufferPool;
-import org.mongodb.CommandResult;
-import org.mongodb.RemoveResult;
-import org.mongodb.GetMoreResult;
-import org.mongodb.InsertResult;
-import org.mongodb.MongoChannel;
-import org.mongodb.MongoClient;
-import org.mongodb.MongoCollectionName;
-import org.mongodb.MongoDatabase;
-import org.mongodb.MongoDocument;
-import org.mongodb.MongoException;
-import org.mongodb.MongoInterruptedException;
-import org.mongodb.MongoOperations;
-import org.mongodb.QueryResult;
-import org.mongodb.ReadPreference;
-import org.mongodb.UpdateResult;
-import org.mongodb.WriteConcern;
+import org.mongodb.*;
+import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoDelete;
+import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.MongoKillCursor;
+import org.mongodb.operation.MongoQuery;
+import org.mongodb.operation.MongoUpdate;
+import org.mongodb.operation.MongoWrite;
 import org.mongodb.protocol.MongoDeleteMessage;
 import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.protocol.MongoInsertMessage;
@@ -105,18 +97,17 @@ class SingleChannelMongoClient implements MongoClient {
         return bufferPool;
     }
 
-    private <T> MongoReplyMessage<MongoDocument> sendWriteMessage(final MongoCollectionName namespace,
+    private <T> MongoReplyMessage<MongoDocument> sendWriteMessage(final MongoNamespace namespace,
                                                                   final MongoRequestMessage writeMessage,
-                                                                  final WriteConcern writeConcern) {
+                                                                  final MongoWrite write) {
         try {
             channel.sendMessage(writeMessage);
-            if (writeConcern.callGetLastError()) {
+            if (write.getWriteConcern().callGetLastError()) {
                 MongoQueryMessage getLastErrorMessage = new MongoQueryMessage(namespace.getFullName(),
-                        0, 0, -1, writeConcern.getCommand(), null, null, new PooledByteBufferOutput(getBufferPool()),
+                        new MongoQuery(writeConcern.getCommand()), new PooledByteBufferOutput(getBufferPool()),
                         serializer);
                 channel.sendMessage(getLastErrorMessage);
-                MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(serializer, MongoDocument.class);
-                return replyMessage;
+                return channel.receiveMessage(serializer, MongoDocument.class);
             } else {
                 return null;
             }
@@ -129,8 +120,8 @@ class SingleChannelMongoClient implements MongoClient {
         @Override
         public CommandResult executeCommand(final String database, final MongoDocument command) {
             try {
-                MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", 0, 0, -1,
-                        command, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializer);
+                MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd",
+                        new MongoQuery(command).batchSize(-1), new PooledByteBufferOutput(bufferPool), serializer);
                 channel.sendMessage(message);
 
                 MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(serializer, MongoDocument.class);
@@ -142,30 +133,18 @@ class SingleChannelMongoClient implements MongoClient {
         }
 
         @Override
-        public <T> InsertResult insert(final MongoCollectionName namespace, final T document, final WriteConcern writeConcern) {
-            MongoInsertMessage insertMessage = new MongoInsertMessage(namespace.getFullName(), writeConcern,
-                    new PooledByteBufferOutput(getBufferPool()));
-            insertMessage.addDocument(document.getClass(), document, serializer);
-
-            return new InsertResult(sendWriteMessage(namespace, insertMessage, writeConcern));
+        public <T> InsertResult insert(final MongoNamespace namespace, final MongoInsert<T> insert, Class<T> clazz) {
+            insert.setWriteConcernIfAbsent(writeConcern);
+            MongoInsertMessage<T> insertMessage = new MongoInsertMessage<T>(namespace.getFullName(), insert,
+                    clazz, new PooledByteBufferOutput(getBufferPool()), serializer);
+            return new InsertResult(sendWriteMessage(namespace, insertMessage, insert));
         }
 
         @Override
-        public <T> InsertResult insert(final MongoCollectionName namespace, final Iterable<T> documents, final WriteConcern writeConcern) {
-            MongoInsertMessage insertMessage = new MongoInsertMessage(namespace.getFullName(), writeConcern,
-                    new PooledByteBufferOutput(getBufferPool()));
-            for (T document : documents) {
-              insertMessage.addDocument(document.getClass(), document, serializer);
-            }
-
-            return new InsertResult(sendWriteMessage(namespace, insertMessage, writeConcern));
-        }
-
-        @Override
-        public <T> QueryResult<T> query(final MongoCollectionName namespace, final MongoDocument query, Class<T> clazz) {
+        public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoQuery query, Class<T> clazz) {
             try {
-                MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), 0, 0, 0,
-                        query, null, ReadPreference.primary(), new PooledByteBufferOutput(bufferPool), serializer);
+                MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), query,
+                        new PooledByteBufferOutput(bufferPool), serializer);
                 channel.sendMessage(message);
 
                 MongoReplyMessage<T> replyMessage = channel.receiveMessage(serializer, clazz);
@@ -177,9 +156,9 @@ class SingleChannelMongoClient implements MongoClient {
         }
 
         @Override
-        public <T> GetMoreResult<T> getMore(final MongoCollectionName namespace, long cursorId, Class<T> clazz) {
+        public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Class<T> clazz) {
             try {
-                MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), cursorId, 0,
+                MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
                         new PooledByteBufferOutput(bufferPool));
                 channel.sendMessage(message);
 
@@ -192,26 +171,26 @@ class SingleChannelMongoClient implements MongoClient {
         }
 
         @Override
-        public UpdateResult update(final MongoCollectionName namespace, MongoDocument query,
-                                   MongoDocument updateOperations, WriteConcern writeConcern) {
-            MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), false, false, query,
-                    updateOperations, new PooledByteBufferOutput(bufferPool), serializer);
-            return new UpdateResult(sendWriteMessage(namespace, message, writeConcern));
-        }
-
-        @Override
-        public RemoveResult delete(final MongoCollectionName namespace, MongoDocument query,
-                                   WriteConcern writeConcern) {
-            MongoDeleteMessage message = new MongoDeleteMessage(namespace.getFullName(), query,
+        public UpdateResult update(final MongoNamespace namespace, MongoUpdate update) {
+            update.setWriteConcernIfAbsent(writeConcern);
+            MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), update,
                     new PooledByteBufferOutput(bufferPool), serializer);
-            return new RemoveResult(sendWriteMessage(namespace, message, writeConcern));
+            return new UpdateResult(sendWriteMessage(namespace, message, update));
         }
 
         @Override
-        public void killCursors(final long cursorId, final long... cursorIds) {
+        public RemoveResult delete(final MongoNamespace namespace, MongoDelete delete) {
+            delete.setWriteConcernIfAbsent(writeConcern);
+            MongoDeleteMessage message = new MongoDeleteMessage(namespace.getFullName(), delete,
+                    new PooledByteBufferOutput(bufferPool), serializer);
+            return new RemoveResult(sendWriteMessage(namespace, message, delete));
+        }
+
+        @Override
+        public void killCursors(MongoKillCursor killCursor) {
             try {
                 MongoKillCursorsMessage message = new MongoKillCursorsMessage(new PooledByteBufferOutput(bufferPool),
-                        cursorId, cursorIds);
+                        killCursor);
                 channel.sendMessage(message);
             } catch (IOException e) {
                 throw new MongoException("", e);

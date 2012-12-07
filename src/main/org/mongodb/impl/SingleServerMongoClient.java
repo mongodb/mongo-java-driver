@@ -22,18 +22,24 @@ import org.bson.types.ObjectId;
 import org.bson.util.BufferPool;
 import org.bson.util.PowerOfTwoByteBufferPool;
 import org.mongodb.CommandResult;
-import org.mongodb.RemoveResult;
 import org.mongodb.GetMoreResult;
 import org.mongodb.InsertResult;
 import org.mongodb.MongoChannel;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoCollectionName;
+import org.mongodb.MongoNamespace;
 import org.mongodb.MongoDocument;
 import org.mongodb.MongoOperations;
 import org.mongodb.QueryResult;
+import org.mongodb.RemoveResult;
 import org.mongodb.ServerAddress;
 import org.mongodb.UpdateResult;
 import org.mongodb.WriteConcern;
+import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoDelete;
+import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.MongoKillCursor;
+import org.mongodb.operation.MongoQuery;
+import org.mongodb.operation.MongoUpdate;
 import org.mongodb.serialization.BinarySerializer;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.Serializers;
@@ -129,7 +135,7 @@ class SingleServerMongoClient implements MongoClient {
         }
 
         @Override
-        public <T> QueryResult<T> query(final MongoCollectionName namespace, final MongoDocument query, final Class<T> clazz) {
+        public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoQuery query, final Class<T> clazz) {
             MongoClient mongoClient = new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializer, writeConcern);
             try {
                 return mongoClient.getOperations().query(namespace, query, clazz);
@@ -139,60 +145,50 @@ class SingleServerMongoClient implements MongoClient {
         }
 
         @Override
-        public <T> GetMoreResult<T> getMore(final MongoCollectionName namespace, final long cursorId, final Class<T> clazz) {
+        public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, final Class<T> clazz) {
             MongoClient mongoClient = new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializer, writeConcern);
             try {
-                return mongoClient.getOperations().getMore(namespace, cursorId, clazz);
+                return mongoClient.getOperations().getMore(namespace, getMore, clazz);
             } finally {
                 mongoClient.close();
             }
         }
 
         @Override
-        public <T> InsertResult insert(final MongoCollectionName namespace, final T doc, final WriteConcern writeConcern) {
+        public <T> InsertResult insert(final MongoNamespace namespace, final MongoInsert<T> insert, Class<T> clazz) {
             MongoClient mongoClient = new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializer, writeConcern);
             try {
-                return mongoClient.getOperations().insert(namespace, doc, writeConcern);
+                return mongoClient.getOperations().insert(namespace, insert, clazz);
             } finally {
                 mongoClient.close();
             }
         }
 
         @Override
-        public UpdateResult update(final MongoCollectionName namespace, final MongoDocument query, final MongoDocument updateOperations, final WriteConcern writeConcern) {
+        public UpdateResult update(final MongoNamespace namespace, MongoUpdate update) {
             MongoClient mongoClient = new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializer, writeConcern);
             try {
-                return mongoClient.getOperations().update(namespace, query, updateOperations, writeConcern);
+                return mongoClient.getOperations().update(namespace, update);
             } finally {
                 mongoClient.close();
             }
         }
 
         @Override
-        public RemoveResult delete(final MongoCollectionName namespace, final MongoDocument query, final WriteConcern writeConcern) {
+        public RemoveResult delete(final MongoNamespace namespace, final MongoDelete delete) {
             MongoClient mongoClient = new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializer, writeConcern);
             try {
-                return mongoClient.getOperations().delete(namespace, query, writeConcern);
+                return mongoClient.getOperations().delete(namespace, delete);
             } finally {
                 mongoClient.close();
             }
         }
 
         @Override
-        public <T> InsertResult insert(final MongoCollectionName namespace, final Iterable<T> documents, final WriteConcern writeConcern) {
+        public void killCursors(MongoKillCursor killCursor) {
             MongoClient mongoClient = new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializer, writeConcern);
             try {
-                return mongoClient.getOperations().insert(namespace, documents, writeConcern);
-            } finally {
-                mongoClient.close();
-            }
-        }
-
-        @Override
-        public void killCursors(final long cursorId, final long... cursorIds) {
-            MongoClient mongoClient = new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializer, writeConcern);
-            try {
-                mongoClient.getOperations().killCursors(cursorId, cursorIds);
+                mongoClient.getOperations().killCursors(killCursor);
             } finally {
                 mongoClient.close();
             }

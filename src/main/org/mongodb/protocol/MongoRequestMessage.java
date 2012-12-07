@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MongoRequestMessage {
 
     // TODO: probably only needs to be unique per connection, not VM
+    // TODO: is rollover a problem
     static AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
     protected final String collectionName;

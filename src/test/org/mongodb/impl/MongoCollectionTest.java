@@ -30,8 +30,9 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDocument;
+import org.mongodb.operation.MongoInsert;
 import org.mongodb.ServerAddress;
-import org.mongodb.WriteConcern;
+import org.mongodb.operation.MongoQuery;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -78,7 +79,7 @@ public class MongoCollectionTest {
             documents.add(doc);
         }
 
-        InsertResult res = collection.insert(documents);
+        InsertResult res = collection.insert(new MongoInsert<MongoDocument>(documents));
         assertNotNull(res);
     }
 
@@ -88,10 +89,10 @@ public class MongoCollectionTest {
 
         for (int i = 0; i < 101; i++) {
             MongoDocument doc = new MongoDocument("_id", i);
-            collection.insert(doc, WriteConcern.ACKNOWLEDGED);
+            collection.insert(new MongoInsert<MongoDocument>(doc));  // TODO: Why is this a compiler warning?
         }
 
-        MongoCursor<MongoDocument> cursor = collection.find(new MongoDocument()).entries();
+        MongoCursor<MongoDocument> cursor = collection.find(new MongoQuery(new MongoDocument()));
         try {
             while (cursor.hasNext()) {
                 MongoDocument cur = cursor.next();

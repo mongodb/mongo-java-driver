@@ -17,14 +17,21 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.WriteConcern;
 import org.bson.io.OutputBuffer;
+import org.mongodb.operation.MongoInsert;
+import org.mongodb.WriteConcern;
+import org.mongodb.serialization.Serializer;
 
-public class MongoInsertMessage extends MongoRequestMessage {
-    public MongoInsertMessage(String collectionName, WriteConcern concern, OutputBuffer buffer) {
+public class MongoInsertMessage<T> extends MongoRequestMessage {
+   public MongoInsertMessage(String collectionName, MongoInsert<T> insert, Class<T> clazz, OutputBuffer buffer,
+                                  Serializer serializer) {
         super(collectionName, OpCode.OP_INSERT, buffer);
-        writeInsertPrologue(concern);
+        writeInsertPrologue(insert.getWriteConcern());
         backpatchMessageLength();
+        for (T document : insert.getDocuments()) {
+            addDocument(clazz, document, serializer);
+        }
+
     }
 
     private void writeInsertPrologue(final WriteConcern concern) {

@@ -24,13 +24,18 @@ import org.mongodb.MongoDocument;
 import org.mongodb.WriteConcern;
 
 class MongoDatabaseImpl implements MongoDatabase {
-    private final MongoClient mongo;
+    private final MongoClient client;
     private final String name;
     private WriteConcern writeConcern;
 
-    public MongoDatabaseImpl(final String name, final MongoClient mongo) {
-        this.mongo = mongo;
+    public MongoDatabaseImpl(final String name, final MongoClient client) {
+        this(name, client, null);
+    }
+
+    public MongoDatabaseImpl(final String name, final MongoClient client, final WriteConcern writeConcern) {
         this.name = name;
+        this.client = client;
+        this.writeConcern = writeConcern;
     }
 
     @Override
@@ -43,13 +48,23 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
+    public MongoDatabaseImpl withClient(final MongoClient client) {
+        return new MongoDatabaseImpl(name, client);
+    }
+
+    @Override
+    public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
+        return new MongoDatabaseImpl(name, client, writeConcern);
+    }
+
+    @Override
     public CommandResult executeCommand(final MongoDocument command) {
-         return mongo.getOperations().executeCommand(getName(), command);
+         return client.getOperations().executeCommand(getName(), command);
     }
 
     @Override
     public MongoClient getClient() {
-        return mongo;
+        return client;
     }
 
     public WriteConcern getWriteConcern() {

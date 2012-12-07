@@ -17,6 +17,9 @@
 
 package org.mongodb;
 
+/**
+ * Additions to this interface will not be considered to break binary compatibility.
+ */
 public interface MongoDatabase {
     String getName();
 
@@ -25,4 +28,9 @@ public interface MongoDatabase {
     MongoClient getClient();
 
     MongoCollection<MongoDocument> getCollection(String name);
+
+    MongoDatabase withClient(MongoClient client);
+
+    MongoDatabase withWriteConcern(WriteConcern writeConcern);
+
 }

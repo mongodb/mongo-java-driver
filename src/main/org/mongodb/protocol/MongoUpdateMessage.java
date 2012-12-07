@@ -18,35 +18,30 @@
 package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
-import org.mongodb.MongoDocument;
+import org.mongodb.operation.MongoUpdate;
 import org.mongodb.serialization.Serializer;
 
-import java.util.Map;
-
 public class MongoUpdateMessage extends MongoRequestMessage {
-    public MongoUpdateMessage(String collectionName, boolean upsert, boolean multi,
-                       MongoDocument query,
-                       MongoDocument updateOperations, OutputBuffer buffer, Serializer serializer) {
-        super(collectionName, OpCode.OP_UPDATE, query, buffer);
-        writeUpdate(upsert, multi, query, updateOperations, serializer);
+    public MongoUpdateMessage(String collectionName, MongoUpdate update, OutputBuffer buffer, Serializer serializer) {
+        super(collectionName, OpCode.OP_UPDATE, update.getFilter().asDocument(), buffer);
+        writeUpdate(update, serializer);
         backpatchMessageLength();
     }
 
-    void writeUpdate(final boolean upsert, final boolean multi, final Map<String, Object> query,
-                     final Map<String, Object> updateOperations, final Serializer serializer) {
+    void writeUpdate(MongoUpdate update, final Serializer serializer) {
         buffer.writeInt(0); // reserved
         buffer.writeCString(collectionName);
 
         int flags = 0;
-        if (upsert) {
+        if (update.isUpsert()) {
             flags |= 1;
         }
-        if (multi) {
+        if (update.isMulti()) {
             flags |= 2;
         }
         buffer.writeInt(flags);
 
         addDocument(query.getClass(), query, serializer);
-        addDocument(updateOperations.getClass(), updateOperations, serializer);
+        addDocument(update.getUpdateOperations().getClass(), update.getUpdateOperations(), serializer);
     }
 }
