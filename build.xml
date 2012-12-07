@@ -295,13 +295,6 @@ limitations under the License.
             </batchtest>
             <formatter type="xml"/>
         </junit>
-        <!--<testng classpathref="${test.classpath}" outputdir="${test.dir}" haltonfailure="false" verbose="1" >-->
-            <!--<jvmarg value="-Xmx512M" />-->
-            <!--<jvmarg value="-ea" />-->
-            <!--<jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>-->
-            <!--<sysproperty key="${cobertura.arg}" value="${cobertura.datafile}" />-->
-            <!--<classfileset  dir="${build.test.dir}" includes="**/${test.classes}.class" />-->
-        <!--</testng>-->
     </target>
 
     <!-- ******************************************************************* -->
