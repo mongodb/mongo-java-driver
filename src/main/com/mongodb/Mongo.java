@@ -18,14 +18,14 @@
 package com.mongodb;
 
 import org.mongodb.MongoClient;
-import org.mongodb.MongoClients;
+import org.mongodb.impl.SingleServerMongoClient;
 
 import java.net.UnknownHostException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class Mongo {
-    private final MongoClient client;
+    private final SingleServerMongoClient client;
     private final ConcurrentMap<String,DB> dbCache = new ConcurrentHashMap<String,DB>();
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
@@ -35,7 +35,7 @@ public class Mongo {
     }
 
     public Mongo(final ServerAddress serverAddress) {
-        client = MongoClients.create(serverAddress.toNew());
+        client = new SingleServerMongoClient(serverAddress.toNew());
     }
 
 
@@ -61,5 +61,13 @@ public class Mongo {
 
     MongoClient getNew() {
         return client;
+    }
+
+    void requestStart() {
+       client.bindToConnection();
+    }
+
+    void requestDone() {
+        client.unbindFromConnection();
     }
 }

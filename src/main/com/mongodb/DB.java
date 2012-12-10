@@ -41,6 +41,29 @@ public class DB {
         return writeConcern != null ? writeConcern : mongo.getWriteConcern();
     }
 
+    /**
+     * starts a new "consistent request".
+     * Following this call and until requestDone() is called, all db operations should use the same underlying connection.
+     * This is useful to ensure that operations happen in a certain order with predictable results.
+     */
+    public void requestStart() {
+        mongo.requestStart();
+    }
+
+    /**
+     * ends the current "consistent request"
+     */
+    public void requestDone() {
+        mongo.requestDone();
+    }
+
+    /**
+     * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)
+     */
+    public void requestEnsureConnection() {
+        requestStart();
+    }
+
 
     public DBCollection getCollection(String name) {
         DBCollection collection = collectionCache.get(name);
