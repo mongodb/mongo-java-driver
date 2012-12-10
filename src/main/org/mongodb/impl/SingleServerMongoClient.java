@@ -58,6 +58,7 @@ import org.mongodb.util.pool.SimplePool;
 import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 // TODO: should this be a public class?
 public class SingleServerMongoClient implements MongoClient {
@@ -118,10 +119,12 @@ public class SingleServerMongoClient implements MongoClient {
     }
 
     @Override
-    public <T> T withConnection(final Callable<T> callable) throws Exception {
+    public <T> T withConnection(final Callable<T> callable) throws ExecutionException {
         boundClient.set(new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializer, writeConcern, readPreference));
         try {
             return callable.call();
+        } catch (Exception e) {
+            throw new ExecutionException(e);
         } finally {
             boundClient.remove();
         }
