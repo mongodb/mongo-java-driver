@@ -31,6 +31,7 @@ limitations under the License.
     <property name="build.instrumented.dir" location="${build.dir}/instrumented"/>
     <property name="build.logs.dir" location="${basedir}/logs"/>
     <property name="build.docs.dir" location="${basedir}/docs"/>
+    <property name="artifact.name" value="mongo.jar"/>
     <property name="target.dir" location="${basedir}/target"/>
     <property name="test.dir" location="${target.dir}/test"/>
     <property name="test.classes" value="*"/>
@@ -287,7 +288,25 @@ limitations under the License.
 
     <target name="test" depends="test-compile">
         <junit fork="off">
-           <classpath refid="${test.classpath}"/>
+            <classpath refid="test.classpath"/>
+            <batchtest fork="off" todir="${test.dir}">
+                <fileset dir="src/test">
+                    <include name="**/*Test.java"/>
+                </fileset>
+            </batchtest>
+            <formatter type="xml"/>
+        </junit>
+    </target>
+
+    <target name="test-with-artifact" depends="test-compile">
+
+        <path id="artifact.classpath">
+            <path refid="test.classpath"/>
+            <pathelement location="${artifact.name}"/>
+        </path>
+
+        <junit fork="off">
+            <classpath refid="artifact.classpath"/>
             <batchtest fork="off" todir="${test.dir}">
                 <fileset dir="src/test">
                     <include name="**/*Test.java"/>
