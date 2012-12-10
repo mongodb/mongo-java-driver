@@ -17,22 +17,6 @@
 
 package org.mongodb.operation;
 
-import java.util.Arrays;
-import java.util.List;
+public class MongoFindAndUpdate extends MongoFindAndModify {
 
-public class MongoKillCursor extends MongoOperation{
-    private final List<Long> cursorIds;
-
-    public MongoKillCursor(long cursorId) {
-        cursorIds = Arrays.asList(cursorId);
-    }
-
-    public MongoKillCursor(final List<Long> cursorIds) {
-        this.cursorIds = cursorIds;
-    }
-
-
-    public List<Long> getCursorIds() {
-        return cursorIds;
-    }
 }

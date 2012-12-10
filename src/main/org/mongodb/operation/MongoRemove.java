@@ -17,22 +17,28 @@
 
 package org.mongodb.operation;
 
-import java.util.Arrays;
-import java.util.List;
+import org.mongodb.WriteConcern;
 
-public class MongoKillCursor extends MongoOperation{
-    private final List<Long> cursorIds;
+public class MongoRemove extends MongoWrite {
+    final MongoQueryFilter filter;
 
-    public MongoKillCursor(long cursorId) {
-        cursorIds = Arrays.asList(cursorId);
+    public MongoRemove(final MongoQueryFilter filter) {
+        this.filter = filter;
     }
 
-    public MongoKillCursor(final List<Long> cursorIds) {
-        this.cursorIds = cursorIds;
+    public MongoQueryFilter getFilter() {
+        return filter;
     }
 
+    @Override
+    public MongoRemove writeConcern(final WriteConcern writeConcern) {
+        super.writeConcern(writeConcern);
+        return this;
+    }
 
-    public List<Long> getCursorIds() {
-        return cursorIds;
+    @Override
+    public MongoRemove writeConcernIfAbsent(final WriteConcern writeConcern) {
+        super.writeConcernIfAbsent(writeConcern);
+        return this;
     }
 }

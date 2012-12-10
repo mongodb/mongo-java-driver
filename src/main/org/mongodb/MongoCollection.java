@@ -16,9 +16,10 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.MongoDelete;
+import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoFindAndModify;
+import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoQuery;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 
@@ -72,11 +73,24 @@ public interface MongoCollection<T> {
      */
     MongoCollection<T> withWriteConcern(WriteConcern writeConcern);
 
-    MongoCursor<T> find(MongoQuery query);
+    MongoCursor<T> find(MongoFind find);
+
+    T findOne(MongoFind find);  // TODO: MongoQuery has too many options for findOne
+
+    long count();
+
+    long count(MongoFind find);  // TODO: MongQuery has too many options for count
+
+    T findAndModify(MongoFindAndModify findAndModify);
+
+
+
 
     InsertResult insert(MongoInsert<T> insert);
 
-    RemoveResult remove(MongoDelete delete);
+    RemoveResult remove(MongoRemove remove);
+
+
 }
 
 

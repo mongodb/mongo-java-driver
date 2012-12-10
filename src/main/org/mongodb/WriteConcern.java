@@ -307,8 +307,8 @@ public class WriteConcern implements Serializable {
      *
      * @return getlasterror command, even if <code>w <= 0</code>
      */
-    public MongoDocument getCommand() {
-        MongoDocument _command = new MongoDocument( "getlasterror" , 1 );
+    public MongoQueryFilterDocument getCommand() {
+        MongoQueryFilterDocument _command = new MongoQueryFilterDocument( "getlasterror" , 1 );
 
         if (_w instanceof Integer && ((Integer) _w > 1) || (_w instanceof String)){
             _command.put( "w" , _w );

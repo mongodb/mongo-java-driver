@@ -19,43 +19,43 @@ package com.mongodb;
 
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
-import org.mongodb.operation.MongoQuery;
+import org.mongodb.operation.MongoFind;
 
 public class DBCursor {
     private final MongoCollection<DBObject> collection;
-    private final MongoQuery query;
+    private final MongoFind find;
     private MongoCursor<DBObject> cursor;
 
-    public DBCursor(final MongoCollection<DBObject> collection, MongoQuery query) {
+    public DBCursor(final MongoCollection<DBObject> collection, MongoFind find) {
         this.collection = collection;
-        this.query = query;
+        this.find = find;
     }
 
     public DBCursor limit(int limit) {
-        query.limit(limit);
+        find.limit(limit);
         return this;
     }
 
     public DBCursor batchSize(int batchSize) {
-        query.batchSize(batchSize);
+        find.batchSize(batchSize);
         return this;
     }
 
     public DBCursor skip(int skip) {
-        query.offset(skip);
+        find.offset(skip);
         return this;
     }
 
     public boolean hasNext() {
         if (cursor == null) {
-            cursor = collection.find(query);
+            cursor = collection.find(find);
         }
         return cursor.hasNext();
     }
 
     public DBObject next() {
         if (cursor == null) {
-            cursor = collection.find(query);
+            cursor = collection.find(find);
         }
         return cursor.next();
     }

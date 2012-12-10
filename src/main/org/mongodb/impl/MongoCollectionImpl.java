@@ -18,6 +18,9 @@
 package org.mongodb.impl;
 
 import org.mongodb.ReadPreference;
+import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoFindAndModify;
+import org.mongodb.operation.MongoRemove;
 import org.mongodb.result.InsertResult;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
@@ -25,9 +28,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoCursor;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.MongoDelete;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoQuery;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final String name;
@@ -60,8 +61,28 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoCursor<T> find(MongoQuery query) {
-        return new MongoCursor<T>(this, query.readPreferenceIfAbsent(readPreference), clazz);
+    public MongoCursor<T> find(MongoFind find) {
+        return new MongoCursor<T>(this, find.readPreferenceIfAbsent(readPreference), clazz);
+    }
+
+    @Override
+    public T findOne(final MongoFind find) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long count() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long count(final MongoFind find) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public T findAndModify(final MongoFindAndModify findAndModify) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -70,8 +91,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public RemoveResult remove(final MongoDelete delete) {
-        return getClient().getOperations().delete(getNamespace(), delete.writeConcernIfAbsent(getWriteConcern()));
+    public RemoveResult remove(final MongoRemove remove) {
+        return getClient().getOperations().delete(getNamespace(), remove.writeConcernIfAbsent(getWriteConcern()));
     }
 
     @Override

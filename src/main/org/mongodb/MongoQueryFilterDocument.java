@@ -15,30 +15,23 @@
  *
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-import org.mongodb.WriteConcern;
+import org.mongodb.operation.MongoQueryFilter;
 
-public class MongoDelete extends MongoWrite {
-    final MongoQueryFilter filter;
+public class MongoQueryFilterDocument extends MongoDocument implements MongoQueryFilter {
 
-    public MongoDelete(final MongoQueryFilter filter) {
-        this.filter = filter;
+
+    public MongoQueryFilterDocument(final String key, final Object value) {
+        super(key, value);
     }
 
-    public MongoQueryFilter getFilter() {
-        return filter;
-    }
-
-    @Override
-    public MongoDelete writeConcern(final WriteConcern writeConcern) {
-        super.writeConcern(writeConcern);
-        return this;
+    public MongoQueryFilterDocument() {
     }
 
     @Override
-    public MongoDelete writeConcernIfAbsent(final WriteConcern writeConcern) {
-        super.writeConcernIfAbsent(writeConcern);
+    public MongoDocument toMongoDocument() {
         return this;
     }
+
 }

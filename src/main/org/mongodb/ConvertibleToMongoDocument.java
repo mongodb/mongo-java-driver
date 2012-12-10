@@ -17,26 +17,6 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.MongoQuery;
-
-public class MongoCommand {
-    private final MongoDocument commandDocument;
-    private ReadPreference readPreference;
-
-    public MongoCommand(MongoDocument commandDocument) {
-        this.commandDocument = commandDocument;
-    }
-
-    public ReadPreference getReadPreference() {
-        return readPreference;
-    }
-
-    public MongoCommand readPreference(final ReadPreference readPreference) {
-        this.readPreference = readPreference;
-        return this;
-    }
-
-    public MongoQuery asQuery() {
-        return new MongoQuery(commandDocument).batchSize(-1).readPreference(readPreference);
-    }
+public interface ConvertibleToMongoDocument {
+    MongoDocument toMongoDocument();
 }

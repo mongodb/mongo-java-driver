@@ -17,22 +17,8 @@
 
 package org.mongodb.operation;
 
-import java.util.Arrays;
-import java.util.List;
+import org.mongodb.ConvertibleToMongoDocument;
 
-public class MongoKillCursor extends MongoOperation{
-    private final List<Long> cursorIds;
-
-    public MongoKillCursor(long cursorId) {
-        cursorIds = Arrays.asList(cursorId);
-    }
-
-    public MongoKillCursor(final List<Long> cursorIds) {
-        this.cursorIds = cursorIds;
-    }
-
-
-    public List<Long> getCursorIds() {
-        return cursorIds;
-    }
+// TODO: This name clashes with MongoCommand in org.mongodb
+public interface MongoCommand extends ConvertibleToMongoDocument {
 }

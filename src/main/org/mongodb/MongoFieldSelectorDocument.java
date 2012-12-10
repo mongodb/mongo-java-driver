@@ -15,24 +15,13 @@
  *
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-import java.util.Arrays;
-import java.util.List;
+import org.mongodb.operation.MongoFieldSelector;
 
-public class MongoKillCursor extends MongoOperation{
-    private final List<Long> cursorIds;
-
-    public MongoKillCursor(long cursorId) {
-        cursorIds = Arrays.asList(cursorId);
-    }
-
-    public MongoKillCursor(final List<Long> cursorIds) {
-        this.cursorIds = cursorIds;
-    }
-
-
-    public List<Long> getCursorIds() {
-        return cursorIds;
+public class MongoFieldSelectorDocument extends MongoDocument implements MongoFieldSelector {
+    @Override
+    public MongoDocument toMongoDocument() {
+        return this;
     }
 }

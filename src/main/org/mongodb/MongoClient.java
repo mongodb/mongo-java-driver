@@ -18,20 +18,53 @@ package org.mongodb;
 
 
 import java.io.Closeable;
+import java.util.concurrent.Callable;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
  */
 public interface MongoClient extends Closeable {
+    /**
+     *
+     * @param name
+     * @return
+     */
     MongoDatabase getDatabase(String name);
 
+    /**
+     *
+     * @return
+     */
     MongoOperations getOperations();
 
-    MongoClient bindToChannel();
+    /**
+     * Run the given Runnable in the scope of a single connection.
+     *
+     * @param runnable what to do with the connection
+     */
+    void withConnection(Runnable runnable);
 
+    /**
+     * Run the given Callable in the scope of a single connection.
+     *
+     * @param callable what to do with the connection
+     */
+    <T> T withConnection(final Callable<T> callable) throws Exception;
+
+    /**
+     *
+     */
     void close();
 
+    /**
+     *
+     * @return
+     */
     WriteConcern getWriteConcern();
 
+    /**
+     *
+     * @return
+     */
     ReadPreference getReadPreference();
 }

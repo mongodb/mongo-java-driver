@@ -17,63 +17,50 @@
 
 package org.mongodb.impl;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mongodb.MongoCommand;
+import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.MongoCommandDocument;
+import org.mongodb.MongoQueryFilterDocument;
 import org.mongodb.ReadPreference;
+import org.mongodb.operation.MongoFind;
 import org.mongodb.result.CommandResult;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.GetMore;
 import org.mongodb.result.GetMoreResult;
-import org.mongodb.MongoClient;
 import org.mongodb.MongoDocument;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.QueryResult;
 import org.mongodb.ServerAddress;
-import org.mongodb.operation.MongoQuery;
 
 import java.net.UnknownHostException;
 
 import static org.junit.Assert.*;
 
 @RunWith(JUnit4.class)
-public class SingleChannelMongoClientTest {
-    private static SingleServerMongoClient singleServerMongoClient;
+public class SingleServerMongoClientTest {
+    private static SingleServerMongoClient mongoClient;
     private static String dbName = "SingleChannelMongoClientTest";
-    private MongoClient mongoClient;
 
     @BeforeClass
     public static void setUpClass() throws UnknownHostException {
-        singleServerMongoClient = new SingleServerMongoClient(new ServerAddress());
-        singleServerMongoClient.getOperations().executeCommand(dbName,
-                new MongoCommand(new MongoDocument("dropDatabase", 1)).readPreference(ReadPreference.primary()));
+        mongoClient = new SingleServerMongoClient(new ServerAddress());
+        mongoClient.getOperations().executeCommand(dbName,
+                new MongoCommandOperation(new MongoCommandDocument("dropDatabase", 1)).readPreference(ReadPreference.primary()));
 
     }
 
     @AfterClass
     public static void tearDownClass() {
-        singleServerMongoClient.close();
-    }
-
-    @Before
-    public void setUp() throws UnknownHostException {
-        mongoClient = singleServerMongoClient.bindToChannel();
-    }
-
-    @After
-    public void tearDown() {
         mongoClient.close();
     }
 
-
     @Test
     public void testCommandExecution() {
-        MongoCommand cmd = new MongoCommand(new MongoDocument("count", "test")).readPreference(ReadPreference.primary());
+        MongoCommandOperation cmd = new MongoCommandOperation(new MongoCommandDocument("count", "test")).readPreference(ReadPreference.primary());
         CommandResult res = mongoClient.getOperations().executeCommand(dbName, cmd);
         assertNotNull(res);
         assertTrue(res.getMongoDocument().get("n") instanceof Double);
@@ -85,7 +72,7 @@ public class SingleChannelMongoClientTest {
         MongoInsert<MongoDocument> insert = new MongoInsert<MongoDocument>(new MongoDocument());
         mongoClient.getOperations().insert(new MongoNamespace(dbName, colName), insert, MongoDocument.class);
         CommandResult res = mongoClient.getOperations().executeCommand(dbName,
-                new MongoCommand(new MongoDocument("count", colName)).readPreference(ReadPreference.primary()));
+                new MongoCommandOperation(new MongoCommandDocument("count", colName)).readPreference(ReadPreference.primary()));
         assertEquals(1.0, res.getMongoDocument().get("n"));
     }
 
@@ -98,8 +85,8 @@ public class SingleChannelMongoClientTest {
             mongoClient.getOperations().insert(new MongoNamespace(dbName, colName), insert, MongoDocument.class);
         }
 
-        MongoQuery query = new MongoQuery(new MongoDocument()).readPreference(ReadPreference.primary());
-        QueryResult<MongoDocument> queryResult = mongoClient.getOperations().query(new MongoNamespace(dbName, colName), query, MongoDocument.class);
+        MongoFind find = new MongoFind(new MongoQueryFilterDocument()).readPreference(ReadPreference.primary());
+        QueryResult<MongoDocument> queryResult = mongoClient.getOperations().query(new MongoNamespace(dbName, colName), find, MongoDocument.class);
         assertNotNull(queryResult);
         assertEquals(101, queryResult.getResults().size());
         assertNotEquals(0L, queryResult.getCursorId());

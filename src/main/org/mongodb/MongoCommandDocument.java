@@ -15,24 +15,20 @@
  *
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-import java.util.Arrays;
-import java.util.List;
-
-public class MongoKillCursor extends MongoOperation{
-    private final List<Long> cursorIds;
-
-    public MongoKillCursor(long cursorId) {
-        cursorIds = Arrays.asList(cursorId);
+// TODO: This probably should not subclass MongoQueryFilterDocument, since it's not... a query filter
+// Did it this way so that I can pass it to MongoQueryMessage constructor
+public class MongoCommandDocument extends MongoQueryFilterDocument implements org.mongodb.operation.MongoCommand {
+    public MongoCommandDocument() {
     }
 
-    public MongoKillCursor(final List<Long> cursorIds) {
-        this.cursorIds = cursorIds;
+    public MongoCommandDocument(final String key, final Object value) {
+        super(key, value);
     }
 
-
-    public List<Long> getCursorIds() {
-        return cursorIds;
+    @Override
+    public MongoDocument toMongoDocument() {
+        return this;
     }
 }

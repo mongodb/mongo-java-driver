@@ -17,8 +17,8 @@
 
 package org.mongodb;
 
+import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoKillCursor;
-import org.mongodb.operation.MongoQuery;
 import org.mongodb.result.QueryResult;
 
 import java.io.Closeable;
@@ -27,16 +27,16 @@ import java.util.Iterator;
 // TODO: Handle getmore
 public class MongoCursor<T> implements Iterator<T>, Closeable {
     private final MongoCollection<T> collection;
-    private final MongoQuery query;
+    private final MongoFind find;
     private final Class<T> clazz;
     private QueryResult<T> currentResult;
     private Iterator<T> currentIterator;
 
-    public MongoCursor(final MongoCollection<T> collection, final MongoQuery query, Class<T> clazz) {
+    public MongoCursor(final MongoCollection<T> collection, final MongoFind find, Class<T> clazz) {
         this.collection = collection;
-        this.query = query;
+        this.find = find;
         this.clazz = clazz;
-        currentResult = collection.getClient().getOperations().query(collection.getNamespace(), query, clazz);
+        currentResult = collection.getClient().getOperations().query(collection.getNamespace(), find, clazz);
         currentIterator = currentResult.getResults().iterator();
     }
 

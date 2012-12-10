@@ -15,24 +15,14 @@
  *
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-import java.util.Arrays;
-import java.util.List;
+import org.mongodb.operation.MongoUpdateOperations;
 
-public class MongoKillCursor extends MongoOperation{
-    private final List<Long> cursorIds;
-
-    public MongoKillCursor(long cursorId) {
-        cursorIds = Arrays.asList(cursorId);
+public class MongoUpdateOperationsDocument extends MongoDocument implements MongoUpdateOperations {
+    @Override
+    public MongoDocument toMongoDocument() {
+        return this;
     }
 
-    public MongoKillCursor(final List<Long> cursorIds) {
-        this.cursorIds = cursorIds;
-    }
-
-
-    public List<Long> getCursorIds() {
-        return cursorIds;
-    }
 }

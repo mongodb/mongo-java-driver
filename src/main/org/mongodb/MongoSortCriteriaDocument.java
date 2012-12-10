@@ -15,24 +15,21 @@
  *
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-import java.util.Arrays;
-import java.util.List;
+import org.mongodb.operation.MongoSortCriteria;
 
-public class MongoKillCursor extends MongoOperation{
-    private final List<Long> cursorIds;
+public class MongoSortCriteriaDocument extends MongoDocument implements MongoSortCriteria {
 
-    public MongoKillCursor(long cursorId) {
-        cursorIds = Arrays.asList(cursorId);
+    public MongoSortCriteriaDocument() {
     }
 
-    public MongoKillCursor(final List<Long> cursorIds) {
-        this.cursorIds = cursorIds;
+    public MongoSortCriteriaDocument(final String key, final Object value) {
+        super(key, value);
     }
 
-
-    public List<Long> getCursorIds() {
-        return cursorIds;
+    @Override
+    public MongoDocument toMongoDocument() {
+        return this;
     }
 }

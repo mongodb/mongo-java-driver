@@ -23,7 +23,7 @@ import org.mongodb.serialization.Serializer;
 
 public class MongoUpdateMessage extends MongoRequestMessage {
     public MongoUpdateMessage(String collectionName, MongoUpdate update, OutputBuffer buffer, Serializer serializer) {
-        super(collectionName, OpCode.OP_UPDATE, update.getFilter().asDocument(), buffer);
+        super(collectionName, OpCode.OP_UPDATE, update.getFilter().toMongoDocument(), buffer);
         writeUpdate(update, serializer);
         backpatchMessageLength();
     }

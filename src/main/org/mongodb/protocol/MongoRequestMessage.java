@@ -43,7 +43,7 @@ public class MongoRequestMessage {
     protected final OutputBuffer buffer;
     private final int id;
     private final OpCode opCode;
-    protected final MongoDocument query;
+    protected final MongoDocument query;  // TODO: does this field need to exist?
     private volatile int numDocuments; // only one thread will modify this field, so volatile is sufficient synchronization
     private int messageStartPosition;
 
