@@ -17,5 +17,8 @@
 
 package org.mongodb.command;
 
+import org.mongodb.result.CommandResult;
+
 public interface Command {
+    CommandResult execute();
 }

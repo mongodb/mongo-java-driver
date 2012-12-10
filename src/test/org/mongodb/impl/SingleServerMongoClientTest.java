@@ -22,19 +22,18 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.MongoCommandDocument;
+import org.mongodb.MongoDocument;
+import org.mongodb.MongoNamespace;
 import org.mongodb.MongoQueryFilterDocument;
 import org.mongodb.ReadPreference;
-import org.mongodb.operation.MongoFind;
-import org.mongodb.result.CommandResult;
-import org.mongodb.MongoNamespace;
-import org.mongodb.operation.GetMore;
-import org.mongodb.result.GetMoreResult;
-import org.mongodb.MongoDocument;
-import org.mongodb.operation.MongoInsert;
-import org.mongodb.result.QueryResult;
 import org.mongodb.ServerAddress;
+import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoInsert;
+import org.mongodb.result.GetMoreResult;
+import org.mongodb.result.QueryResult;
 
 import java.net.UnknownHostException;
 
@@ -61,9 +60,9 @@ public class SingleServerMongoClientTest {
     @Test
     public void testCommandExecution() {
         MongoCommandOperation cmd = new MongoCommandOperation(new MongoCommandDocument("count", "test")).readPreference(ReadPreference.primary());
-        CommandResult res = mongoClient.getOperations().executeCommand(dbName, cmd);
-        assertNotNull(res);
-        assertTrue(res.getMongoDocument().get("n") instanceof Double);
+        MongoDocument document = mongoClient.getOperations().executeCommand(dbName, cmd);
+        assertNotNull(document);
+        assertTrue(document.get("n") instanceof Double);
     }
 
     @Test
@@ -71,9 +70,9 @@ public class SingleServerMongoClientTest {
         String colName = "insertion";
         MongoInsert<MongoDocument> insert = new MongoInsert<MongoDocument>(new MongoDocument());
         mongoClient.getOperations().insert(new MongoNamespace(dbName, colName), insert, MongoDocument.class);
-        CommandResult res = mongoClient.getOperations().executeCommand(dbName,
+        MongoDocument document = mongoClient.getOperations().executeCommand(dbName,
                 new MongoCommandOperation(new MongoCommandDocument("count", colName)).readPreference(ReadPreference.primary()));
-        assertEquals(1.0, res.getMongoDocument().get("n"));
+        assertEquals(1.0, document.get("n"));
     }
 
     @Test

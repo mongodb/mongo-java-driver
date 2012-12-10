@@ -20,7 +20,6 @@ package org.mongodb.impl;
 import org.bson.io.PooledByteBufferOutput;
 import org.bson.util.BufferPool;
 import org.mongodb.MongoClient;
-import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDocument;
 import org.mongodb.MongoException;
@@ -31,10 +30,11 @@ import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.io.MongoChannel;
 import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
+import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoWrite;
 import org.mongodb.protocol.MongoDeleteMessage;
@@ -45,7 +45,6 @@ import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.protocol.MongoRequestMessage;
 import org.mongodb.protocol.MongoUpdateMessage;
-import org.mongodb.result.CommandResult;
 import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.QueryResult;
@@ -150,7 +149,7 @@ public class SingleChannelMongoClient implements MongoClient {
 
     private class SingleChannelMongoOperations implements MongoOperations {
         @Override
-        public CommandResult executeCommand(final String database, final MongoCommandOperation commandOperation) {
+        public MongoDocument executeCommand(final String database, final MongoCommandOperation commandOperation) {
             try {
                 commandOperation.readPreferenceIfAbsent(getReadPreference());
                 MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd",
@@ -159,7 +158,7 @@ public class SingleChannelMongoClient implements MongoClient {
 
                 MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(serializer, MongoDocument.class);
 
-                return new CommandResult(replyMessage.getDocuments().get(0));
+                return replyMessage.getDocuments().get(0);
             } catch (IOException e) {
                 throw new MongoException("", e);
             }

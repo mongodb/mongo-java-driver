@@ -68,7 +68,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public CommandResult executeCommand(final MongoCommandOperation commandOperation) {
-         return client.getOperations().executeCommand(getName(), commandOperation);
+         return new CommandResult(client.getOperations().executeCommand(getName(), commandOperation));
     }
 
     @Override

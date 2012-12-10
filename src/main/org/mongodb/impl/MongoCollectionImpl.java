@@ -17,18 +17,19 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.ReadPreference;
-import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoFindAndModify;
-import org.mongodb.operation.MongoRemove;
-import org.mongodb.result.InsertResult;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
-import org.mongodb.MongoNamespace;
 import org.mongodb.MongoCursor;
-import org.mongodb.result.RemoveResult;
+import org.mongodb.MongoNamespace;
+import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
+import org.mongodb.command.CountCommand;
+import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoFindAndModify;
 import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.MongoRemove;
+import org.mongodb.result.InsertResult;
+import org.mongodb.result.RemoveResult;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final String name;
@@ -72,12 +73,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public long count() {
-        throw new UnsupportedOperationException();
+        return new CountCommand(getClient(), getNamespace()).execute().getCount();
     }
 
     @Override
     public long count(final MongoFind find) {
-        throw new UnsupportedOperationException();
+        return new CountCommand(getClient(), getNamespace(), find).execute().getCount();
     }
 
     @Override
@@ -93,11 +94,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public RemoveResult remove(final MongoRemove remove) {
         return getClient().getOperations().delete(getNamespace(), remove.writeConcernIfAbsent(getWriteConcern()));
-    }
-
-    @Override
-    public MongoCollection<T> withClient(final MongoClient client) {
-        return new MongoCollectionImpl<T>(name, database.withClient(client), clazz, writeConcern, readPreference);
     }
 
     @Override

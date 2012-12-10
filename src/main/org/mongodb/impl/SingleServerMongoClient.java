@@ -25,6 +25,7 @@ import org.mongodb.MongoClient;
 import org.mongodb.MongoDocument;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
+import org.mongodb.MongoQueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.WriteConcern;
@@ -36,7 +37,6 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoUpdate;
-import org.mongodb.result.CommandResult;
 import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.QueryResult;
@@ -85,6 +85,9 @@ public class SingleServerMongoClient implements MongoClient {
     // TODO: find a better home for this.
     Serializer createDefaultSerializer() {
         Serializers serializers = new Serializers();
+        serializers.register(MongoQueryFilterDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
+        serializers.register(MongoDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
+        serializers.register(MongoDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
         serializers.register(MongoDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
         serializers.register(ObjectId.class, BsonType.OBJECT_ID, new ObjectIdSerializer());
         serializers.register(Integer.class, BsonType.INT32, new IntegerSerializer());
@@ -190,7 +193,7 @@ public class SingleServerMongoClient implements MongoClient {
 
     private class SingleServerMongoOperations implements MongoOperations {
         @Override
-        public CommandResult executeCommand(final String database, final MongoCommandOperation commandOperation) {
+        public MongoDocument executeCommand(final String database, final MongoCommandOperation commandOperation) {
             SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().executeCommand(database, commandOperation);

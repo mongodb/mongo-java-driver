@@ -62,35 +62,25 @@ public interface MongoCollection<T> {
 
     ReadPreference getReadPreference();
 
-    /**
-     * The same collection but with a different MongoClient.  Useful when binding to a channel.
-     * @see org.mongodb.MongoClient#bindToChannel()
-     */
-    MongoCollection<T> withClient(MongoClient client);
-
-    /**
-     * The same collection but with a different default write concern.
-     */
-    MongoCollection<T> withWriteConcern(WriteConcern writeConcern);
-
     MongoCursor<T> find(MongoFind find);
 
-    T findOne(MongoFind find);  // TODO: MongoQuery has too many options for findOne
+    T findOne(MongoFind find);  // TODO: MongoFind has too many options for findOne
 
     long count();
 
-    long count(MongoFind find);  // TODO: MongQuery has too many options for count
+    long count(MongoFind find);  // TODO: MongoFind has too many options for count
 
     T findAndModify(MongoFindAndModify findAndModify);
-
-
-
 
     InsertResult insert(MongoInsert<T> insert);
 
     RemoveResult remove(MongoRemove remove);
 
-
+    /**
+     * The same collection but with a different default write concern.
+     * TODO: not sure this is such a good idea
+     */
+    MongoCollection<T> withWriteConcern(WriteConcern writeConcern);
 }
 
 

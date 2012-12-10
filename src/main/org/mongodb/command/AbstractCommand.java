@@ -30,10 +30,20 @@ public abstract class AbstractCommand implements Command {
         this.database = database;
     }
 
-    protected CommandResult execute() {
-        return mongoClient.getOperations().executeCommand(database, new MongoCommandOperation(asMongoCommand()));
+    public MongoClient getMongoClient() {
+        return mongoClient;
+    }
+
+    public String getDatabase() {
+        return database;
+    }
+
+    public CommandResult execute() {
+        return new CommandResult(mongoClient.getOperations().executeCommand(database, new MongoCommandOperation(asMongoCommand())));
     }
 
     // TODO: the class of the return type is weird for a command
     public abstract org.mongodb.operation.MongoCommand asMongoCommand();
+
+
 }

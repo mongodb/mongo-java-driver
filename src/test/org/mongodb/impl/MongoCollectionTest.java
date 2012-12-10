@@ -40,6 +40,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @RunWith(JUnit4.class)
@@ -85,7 +86,7 @@ public class MongoCollectionTest {
 
         for (int i = 0; i < 101; i++) {
             MongoDocument doc = new MongoDocument("_id", i);
-            collection.insert(new MongoInsert<MongoDocument>(doc));  // TODO: Why is this a compiler warning?
+            collection.insert(new MongoInsert<MongoDocument>(doc));
         }
 
         MongoCursor<MongoDocument> cursor = collection.find(new MongoFind(new MongoQueryFilterDocument()));
@@ -97,5 +98,21 @@ public class MongoCollectionTest {
         } finally {
             cursor.close();
         }
+    }
+
+    @Test
+    public void testCount() {
+        MongoCollection<MongoDocument> collection = mongoDatabase.getCollection("count");
+
+        for (int i = 0; i < 11; i++) {
+            MongoDocument doc = new MongoDocument("_id", i);
+            collection.insert(new MongoInsert<MongoDocument>(doc));
+        }
+
+        long count = collection.count(new MongoFind(new MongoQueryFilterDocument()));
+        assertEquals(11, count);
+
+        count = collection.count(new MongoFind(new MongoQueryFilterDocument("_id", 10)));
+        assertEquals(1, count);
     }
 }

@@ -19,11 +19,10 @@ package org.mongodb;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
+import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoUpdate;
-import org.mongodb.result.CommandResult;
 import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.QueryResult;
@@ -36,7 +35,7 @@ public interface MongoOperations {
     // TODO: needs to take a MongoQuery or equivalent
     // TODO: should this really be a separate call from query?
     // TODO: how to custom serialize a piece of the command?
-    CommandResult executeCommand(String database, MongoCommandOperation commandOperation);
+    MongoDocument executeCommand(String database, MongoCommandOperation commandOperation);
 
     <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Class<T> clazz);
 
