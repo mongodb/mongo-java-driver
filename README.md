@@ -13,6 +13,7 @@
 * Antoine Girbal       antoine@10gen.com
 * Scott Hernandez      scott@10gen.com
 * Brendan McAdams      brendan@10gen.com
+* Trisha Gee           trisha.gee@10gen.com
 
 ### Contributors:
 * Eliot Horowitz       eliot@10gen.com
