@@ -63,5 +63,10 @@ public class MongoUpdate extends MongoWrite {
         return this;
     }
 
+    @Override
+    public MongoUpdate writeConcernIfAbsent(final WriteConcern writeConcern) {
+        super.writeConcernIfAbsent(writeConcern);
+        return this;
+    }
 }
 

@@ -22,6 +22,16 @@ import org.mongodb.operation.MongoQuery;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 
+// TODO: add these
+// update
+// count
+// findAndModify
+// group
+// distinct
+// mapReduce
+// aggregate
+
+
 /**
  * Additions to this interface will not be considered to break binary compatibility.
  *
@@ -49,6 +59,8 @@ public interface MongoCollection<T> {
 
     WriteConcern getWriteConcern();
 
+    ReadPreference getReadPreference();
+
     /**
      * The same collection but with a different MongoClient.  Useful when binding to a channel.
      * @see org.mongodb.MongoClient#bindToChannel()
@@ -65,17 +77,6 @@ public interface MongoCollection<T> {
     InsertResult insert(MongoInsert<T> insert);
 
     RemoveResult remove(MongoDelete delete);
-
-    // TODO: add
-    // update
-    // count
-    // findAndModify
-    // group
-    // distinct
-    // mapReduce
-    // aggregate
-
-
 }
 
 

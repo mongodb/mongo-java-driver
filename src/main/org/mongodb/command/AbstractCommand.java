@@ -17,6 +17,7 @@
 
 package org.mongodb.command;
 
+import org.mongodb.MongoCommand;
 import org.mongodb.result.CommandResult;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoDocument;
@@ -31,7 +32,7 @@ public abstract class AbstractCommand implements Command {
     }
 
     protected CommandResult execute() {
-        return mongoClient.getOperations().executeCommand(database, asDocument());
+        return mongoClient.getOperations().executeCommand(database, new MongoCommand(asDocument()));
     }
 
     public abstract MongoDocument asDocument();

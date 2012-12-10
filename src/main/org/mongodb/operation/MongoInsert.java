@@ -25,7 +25,6 @@ import java.util.List;
 
 public class MongoInsert<T> extends MongoWrite {
     final Iterable<T> documents;
-    private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED; // TODO: pick up default from container
 
     // TODO: why are calls to this generating compiler warnings?
     public MongoInsert(T document, T...remainingDocuments) {
@@ -43,13 +42,15 @@ public class MongoInsert<T> extends MongoWrite {
         return documents;
     }
 
-    public WriteConcern getWriteConcern() {
-        return writeConcern;
-    }
-
     @Override
     public MongoInsert<T> writeConcern(final WriteConcern writeConcern) {
         super.writeConcern(writeConcern);
+        return this;
+    }
+
+    @Override
+    public MongoInsert<T> writeConcernIfAbsent(final WriteConcern writeConcern) {
+        super.writeConcernIfAbsent(writeConcern);
         return this;
     }
 }

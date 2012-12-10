@@ -20,11 +20,14 @@ package org.mongodb.operation;
 import org.mongodb.MongoDocument;
 import org.mongodb.ReadPreference;
 
-// TODO: Probably just get rename to MongoQuery
 public class MongoQuery {
-    private final MongoQueryFilter filter;
+    private MongoQueryFilter filter;
     private ReadPreference readPreference;
     private int batchSize;
+    private MongoDocument fields;
+
+    public MongoQuery() {
+    }
 
     public MongoQuery(final MongoQueryFilter filter) {
         this.filter = filter;
@@ -33,6 +36,18 @@ public class MongoQuery {
     public MongoQueryFilter getFilter() {
         return filter;
     }
+
+    public MongoQuery where(MongoQueryFilter filter) {
+        this.filter = filter;
+        return this;
+    }
+
+    // TODO: Add MongoQuerySelector interface
+    public MongoQuery select(MongoDocument fields) {
+        this.fields = fields;
+        return this;
+    }
+
 
     public MongoQuery order(final String condition) {
         throw new UnsupportedOperationException();
@@ -67,8 +82,16 @@ public class MongoQuery {
         throw new UnsupportedOperationException();
     }
 
+    // TODO: it's basically required that you call this.  Not too friendly
     public MongoQuery readPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
+        return this;
+    }
+
+    public MongoQuery readPreferenceIfAbsent(final ReadPreference readPreference) {
+        if (this.readPreference == null) {
+            this.readPreference = readPreference;
+        }
         return this;
     }
 
@@ -84,11 +107,9 @@ public class MongoQuery {
         return 0;
     }
 
-
     public ReadPreference getReadPreference() {
-        return ReadPreference.primary();
+        return readPreference;
     }
-
 
     public int getNumToSkip() {
         return 0;
@@ -99,6 +120,6 @@ public class MongoQuery {
     }
 
     public MongoDocument getFields() {
-        return null;
+        return fields;
     }
 }

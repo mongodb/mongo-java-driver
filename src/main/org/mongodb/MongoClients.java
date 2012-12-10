@@ -15,30 +15,15 @@
  *
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-import org.mongodb.WriteConcern;
+import org.mongodb.impl.SingleServerMongoClient;
 
-public class MongoDelete extends MongoWrite {
-    final MongoQueryFilter filter;
-
-    public MongoDelete(final MongoQueryFilter filter) {
-        this.filter = filter;
+public class MongoClients {
+    private MongoClients() {
     }
 
-    public MongoQueryFilter getFilter() {
-        return filter;
-    }
-
-    @Override
-    public MongoDelete writeConcern(final WriteConcern writeConcern) {
-        super.writeConcern(writeConcern);
-        return this;
-    }
-
-    @Override
-    public MongoDelete writeConcernIfAbsent(final WriteConcern writeConcern) {
-        super.writeConcernIfAbsent(writeConcern);
-        return this;
+    public static MongoClient create(ServerAddress serverAddress) {
+        return new SingleServerMongoClient(serverAddress);
     }
 }

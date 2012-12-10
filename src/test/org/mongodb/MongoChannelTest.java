@@ -167,7 +167,7 @@ public class MongoChannelTest  {
 
         final MongoDocument filter = new MongoDocument("i", 42);
 
-        MongoQueryMessage queryMessage = new MongoQueryMessage("test.concrete", new MongoQuery(filter),
+        MongoQueryMessage queryMessage = new MongoQueryMessage("test.concrete", new MongoQuery(filter).readPreference(ReadPreference.primary()),
                 new PooledByteBufferOutput(bufferPool), serializers);
 
         channel.sendMessage(queryMessage);
@@ -199,7 +199,7 @@ public class MongoChannelTest  {
             doc1.put("binary", new Binary(bytes));
 
             MongoInsertMessage<MongoDocument> message = new MongoInsertMessage<MongoDocument>("MongoConnectionTest.sendMessageTest",
-                    new MongoInsert<MongoDocument>(doc1), MongoDocument.class,
+                    new MongoInsert<MongoDocument>(doc1).writeConcern(WriteConcern.ACKNOWLEDGED), MongoDocument.class,
                     new PooledByteBufferOutput(bufferPool), serializers);
 
             channel.sendMessage(message);
@@ -221,7 +221,8 @@ public class MongoChannelTest  {
         startTime = endTime;
 
         MongoQueryMessage queryMessage = new MongoQueryMessage("MongoConnectionTest.sendMessageTest",
-                new MongoQuery(filter).batchSize(4000000), new PooledByteBufferOutput(bufferPool), serializers);
+                new MongoQuery(filter).batchSize(4000000).readPreference(ReadPreference.primary()),
+                new PooledByteBufferOutput(bufferPool), serializers);
 
         channel.sendMessage(queryMessage);
 
@@ -268,7 +269,8 @@ public class MongoChannelTest  {
 
             final MongoDocument filter = new MongoDocument("int", 42);
 
-            MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.sendMessageTest", new MongoQuery(filter),
+            MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.sendMessageTest",
+                    new MongoQuery(filter).readPreference(ReadPreference.primary()),
                     new PooledByteBufferOutput(bufferPool), serializers);
 
             channel.sendMessage(message);
@@ -287,7 +289,8 @@ public class MongoChannelTest  {
     private void dropCollection(String collectionName) throws IOException {
         final MongoDocument filter = new MongoDocument("drop", collectionName);
 
-        MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.$cmd", new MongoQuery(filter).batchSize(-1),
+        MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.$cmd",
+                new MongoQuery(filter).batchSize(-1).readPreference(ReadPreference.primary()),
                 new PooledByteBufferOutput(bufferPool), serializers);
         channel.sendMessage(message);
 

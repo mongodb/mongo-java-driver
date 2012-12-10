@@ -25,11 +25,13 @@ import org.mongodb.result.CommandResult;
 public interface MongoDatabase {
     String getName();
 
-    CommandResult executeCommand(MongoDocument command);
+    CommandResult executeCommand(MongoCommand command);
 
     MongoClient getClient();
 
     MongoCollection<MongoDocument> getCollection(String name);
+
+    <T> MongoCollection<T> getTypedCollection(String name, Class<T> clazz);
 
     MongoDatabase withClient(MongoClient client);
 

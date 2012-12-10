@@ -15,30 +15,18 @@
  *
  */
 
-package org.mongodb.operation;
+package com.mongodb;
 
-import org.mongodb.WriteConcern;
+import java.net.UnknownHostException;
 
-public class MongoDelete extends MongoWrite {
-    final MongoQueryFilter filter;
-
-    public MongoDelete(final MongoQueryFilter filter) {
-        this.filter = filter;
-    }
-
-    public MongoQueryFilter getFilter() {
-        return filter;
-    }
-
-    @Override
-    public MongoDelete writeConcern(final WriteConcern writeConcern) {
-        super.writeConcern(writeConcern);
-        return this;
-    }
-
-    @Override
-    public MongoDelete writeConcernIfAbsent(final WriteConcern writeConcern) {
-        super.writeConcernIfAbsent(writeConcern);
-        return this;
+public class ServerAddress {
+    org.mongodb.ServerAddress toNew() {
+        try {
+            return new org.mongodb.ServerAddress();
+        } catch (UnknownHostException e) {
+            // ignore
+            // TODO: figure out what to throw here
+            throw new RuntimeException("this can't happen");
+        }
     }
 }

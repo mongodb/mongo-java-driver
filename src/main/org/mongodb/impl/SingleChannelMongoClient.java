@@ -19,7 +19,16 @@ package org.mongodb.impl;
 
 import org.bson.io.PooledByteBufferOutput;
 import org.bson.util.BufferPool;
-import org.mongodb.*;
+import org.mongodb.MongoClient;
+import org.mongodb.MongoCommand;
+import org.mongodb.MongoDatabase;
+import org.mongodb.MongoDocument;
+import org.mongodb.MongoException;
+import org.mongodb.MongoInterruptedException;
+import org.mongodb.MongoNamespace;
+import org.mongodb.MongoOperations;
+import org.mongodb.ReadPreference;
+import org.mongodb.WriteConcern;
 import org.mongodb.io.MongoChannel;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoDelete;
@@ -48,27 +57,29 @@ import org.mongodb.util.pool.SimplePool;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-class SingleChannelMongoClient implements MongoClient {
+// TODO: should this be a public class?
+public class SingleChannelMongoClient implements MongoClient {
 
     private final SimplePool<MongoChannel> channelPool;
     private final BufferPool<ByteBuffer> bufferPool;
     private final Serializer serializer;
     private final WriteConcern writeConcern;
+    private final ReadPreference readPreference;
     private MongoChannel channel;
 
     SingleChannelMongoClient(final SimplePool<MongoChannel> channelPool, final BufferPool<ByteBuffer> bufferPool,
-                             final Serializer serializer, final WriteConcern writeConcern) {
+                             final Serializer serializer, WriteConcern writeConcern, ReadPreference readPreference) {
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.serializer = serializer;
         this.writeConcern = writeConcern;
+        this.readPreference = readPreference;
         try {
             this.channel = channelPool.get();
         } catch (InterruptedException e) {
             throw new MongoInterruptedException(e);
         }
     }
-
 
     @Override
     public MongoDatabase getDatabase(final String name) {
@@ -100,19 +111,24 @@ class SingleChannelMongoClient implements MongoClient {
         return writeConcern;
     }
 
+    @Override
+    public ReadPreference getReadPreference() {
+        return readPreference;
+    }
+
     private BufferPool<ByteBuffer> getBufferPool() {
         return bufferPool;
     }
 
-    private <T> MongoReplyMessage<MongoDocument> sendWriteMessage(final MongoNamespace namespace,
-                                                                  final MongoRequestMessage writeMessage,
-                                                                  final MongoWrite write) {
+    private MongoReplyMessage<MongoDocument> sendWriteMessage(final MongoNamespace namespace,
+                                                              final MongoRequestMessage writeMessage,
+                                                              final MongoWrite write) {
         try {
             channel.sendMessage(writeMessage);
             if (write.getWriteConcern().callGetLastError()) {
                 MongoQueryMessage getLastErrorMessage = new MongoQueryMessage(namespace.getFullName(),
-                        new MongoQuery(writeConcern.getCommand()), new PooledByteBufferOutput(getBufferPool()),
-                        serializer);
+                        new MongoQuery(writeConcern.getCommand()).readPreference(ReadPreference.primary()),
+                        new PooledByteBufferOutput(getBufferPool()), serializer);
                 channel.sendMessage(getLastErrorMessage);
                 return channel.receiveMessage(serializer, MongoDocument.class);
             } else {
@@ -125,10 +141,12 @@ class SingleChannelMongoClient implements MongoClient {
 
     private class SingleChannelMongoOperations implements MongoOperations {
         @Override
-        public CommandResult executeCommand(final String database, final MongoDocument command) {
+        public CommandResult executeCommand(final String database, final MongoCommand command) {
             try {
+                MongoQuery query = command.asQuery().readPreferenceIfAbsent(getReadPreference());
                 MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd",
-                        new MongoQuery(command).batchSize(-1), new PooledByteBufferOutput(bufferPool), serializer);
+                        query,
+                        new PooledByteBufferOutput(bufferPool), serializer);
                 channel.sendMessage(message);
 
                 MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(serializer, MongoDocument.class);
@@ -141,7 +159,7 @@ class SingleChannelMongoClient implements MongoClient {
 
         @Override
         public <T> InsertResult insert(final MongoNamespace namespace, final MongoInsert<T> insert, Class<T> clazz) {
-            insert.setWriteConcernIfAbsent(writeConcern);
+            insert.writeConcernIfAbsent(writeConcern);
             MongoInsertMessage<T> insertMessage = new MongoInsertMessage<T>(namespace.getFullName(), insert,
                     clazz, new PooledByteBufferOutput(getBufferPool()), serializer);
             return new InsertResult(sendWriteMessage(namespace, insertMessage, insert));
@@ -150,6 +168,7 @@ class SingleChannelMongoClient implements MongoClient {
         @Override
         public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoQuery query, Class<T> clazz) {
             try {
+                query.readPreferenceIfAbsent(getReadPreference());
                 MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), query,
                         new PooledByteBufferOutput(bufferPool), serializer);
                 channel.sendMessage(message);
@@ -165,6 +184,7 @@ class SingleChannelMongoClient implements MongoClient {
         @Override
         public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Class<T> clazz) {
             try {
+                // TODO: set read preference on getMore
                 MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
                         new PooledByteBufferOutput(bufferPool));
                 channel.sendMessage(message);
@@ -179,7 +199,7 @@ class SingleChannelMongoClient implements MongoClient {
 
         @Override
         public UpdateResult update(final MongoNamespace namespace, MongoUpdate update) {
-            update.setWriteConcernIfAbsent(writeConcern);
+            update.writeConcernIfAbsent(writeConcern);
             MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), update,
                     new PooledByteBufferOutput(bufferPool), serializer);
             return new UpdateResult(sendWriteMessage(namespace, message, update));
@@ -187,7 +207,7 @@ class SingleChannelMongoClient implements MongoClient {
 
         @Override
         public RemoveResult delete(final MongoNamespace namespace, MongoDelete delete) {
-            delete.setWriteConcernIfAbsent(writeConcern);
+            delete.writeConcernIfAbsent(writeConcern);
             MongoDeleteMessage message = new MongoDeleteMessage(namespace.getFullName(), delete,
                     new PooledByteBufferOutput(bufferPool), serializer);
             return new RemoveResult(sendWriteMessage(namespace, message, delete));
