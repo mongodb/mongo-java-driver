@@ -9,3 +9,5 @@
 4. Better design for Serializer.
 
 5. What to do about the GridFS API.  Move it to org.mongodb as well?
+
+6. Configurable retry logic for reads
