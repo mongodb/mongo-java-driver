@@ -17,5 +17,10 @@
 
 package org.mongodb.operation;
 
-public class MongoFindAndReplace extends MongoFindAndModify {
+public class MongoFindAndReplace<T> extends MongoFindAndModify {
+    private T replacement;
+
+    public T getReplacement() {
+        return replacement;
+    }
 }

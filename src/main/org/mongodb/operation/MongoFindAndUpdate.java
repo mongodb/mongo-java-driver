@@ -18,5 +18,45 @@
 package org.mongodb.operation;
 
 public class MongoFindAndUpdate extends MongoFindAndModify {
+    private MongoUpdateOperations updateOperations;
+
+    public MongoFindAndUpdate updateWith(final MongoUpdateOperations updateOperations) {
+        this.updateOperations = updateOperations;
+        return this;
+    }
+
+    public MongoUpdateOperations getUpdateOperations() {
+        return updateOperations;
+    }
+
+    @Override
+    public MongoFindAndUpdate where(final MongoQueryFilter filter) {
+        super.where(filter);
+        return this;
+    }
+
+    @Override
+    public MongoFindAndUpdate select(final MongoFieldSelector selector) {
+        super.select(selector);
+        return this;
+    }
+
+    @Override
+    public MongoFindAndUpdate sortBy(final MongoSortCriteria sortCriteria) {
+        super.sortBy(sortCriteria);
+        return this;
+    }
+
+    @Override
+    public MongoFindAndUpdate returnNew(final boolean returnNew) {
+        super.returnNew(returnNew);
+        return this;
+    }
+
+    @Override
+    public MongoFindAndUpdate upsert(final boolean upsert) {
+        super.upsert(upsert);
+        return this;
+    }
 
 }

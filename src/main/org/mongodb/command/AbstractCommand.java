@@ -17,9 +17,10 @@
 
 package org.mongodb.command;
 
+import org.mongodb.MongoClient;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
-import org.mongodb.MongoClient;
 
 public abstract class AbstractCommand implements Command {
     private final MongoClient mongoClient;
@@ -39,11 +40,9 @@ public abstract class AbstractCommand implements Command {
     }
 
     public CommandResult execute() {
-        return new CommandResult(mongoClient.getOperations().executeCommand(database, new MongoCommandOperation(asMongoCommand())));
+        return new CommandResult(mongoClient.getOperations().executeCommand(database, new MongoCommandOperation(asMongoCommand()), null));
     }
 
     // TODO: the class of the return type is weird for a command
-    public abstract org.mongodb.operation.MongoCommand asMongoCommand();
-
-
+    public abstract MongoCommand asMongoCommand();
 }

@@ -15,21 +15,19 @@
  *
  */
 
-package org.mongodb;
+package org.mongodb.command;
 
-import org.mongodb.operation.MongoUpdateOperations;
+import org.mongodb.MongoClient;
+import org.mongodb.MongoCommandDocument;
+import org.mongodb.operation.MongoCommand;
 
-public class MongoUpdateOperationsDocument extends MongoDocument implements MongoUpdateOperations {
-    public MongoUpdateOperationsDocument() {
-    }
-
-    public MongoUpdateOperationsDocument(final String key, final Object value) {
-        super(key, value);
+public class DropDatabaseCommand extends AbstractCommand {
+    public DropDatabaseCommand(final MongoClient mongoClient, final String database) {
+        super(mongoClient, database);
     }
 
     @Override
-    public MongoDocument toMongoDocument() {
-        return this;
+    public MongoCommand asMongoCommand() {
+        return new MongoCommandDocument("dropDatabase", 1);
     }
-
 }

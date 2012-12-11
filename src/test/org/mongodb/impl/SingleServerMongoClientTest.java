@@ -28,6 +28,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoQueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
+import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFind;
@@ -47,9 +48,7 @@ public class SingleServerMongoClientTest {
     @BeforeClass
     public static void setUpClass() throws UnknownHostException {
         mongoClient = new SingleServerMongoClient(new ServerAddress());
-        mongoClient.getOperations().executeCommand(dbName,
-                new MongoCommandOperation(new MongoCommandDocument("dropDatabase", 1)).readPreference(ReadPreference.primary()));
-
+        new DropDatabaseCommand(mongoClient, dbName).execute();
     }
 
     @AfterClass
@@ -60,7 +59,7 @@ public class SingleServerMongoClientTest {
     @Test
     public void testCommandExecution() {
         MongoCommandOperation cmd = new MongoCommandOperation(new MongoCommandDocument("count", "test")).readPreference(ReadPreference.primary());
-        MongoDocument document = mongoClient.getOperations().executeCommand(dbName, cmd);
+        MongoDocument document = mongoClient.getOperations().executeCommand(dbName, cmd, null);
         assertNotNull(document);
         assertTrue(document.get("n") instanceof Double);
     }
@@ -69,9 +68,9 @@ public class SingleServerMongoClientTest {
     public void testInsertion() {
         String colName = "insertion";
         MongoInsert<MongoDocument> insert = new MongoInsert<MongoDocument>(new MongoDocument());
-        mongoClient.getOperations().insert(new MongoNamespace(dbName, colName), insert, MongoDocument.class);
+        mongoClient.getOperations().insert(new MongoNamespace(dbName, colName), insert, MongoDocument.class, null);
         MongoDocument document = mongoClient.getOperations().executeCommand(dbName,
-                new MongoCommandOperation(new MongoCommandDocument("count", colName)).readPreference(ReadPreference.primary()));
+                new MongoCommandOperation(new MongoCommandDocument("count", colName)).readPreference(ReadPreference.primary()), null);
         assertEquals(1.0, document.get("n"));
     }
 
@@ -81,17 +80,17 @@ public class SingleServerMongoClientTest {
 
         for (int i = 0; i < 400; i++) {
             MongoInsert<MongoDocument> insert = new MongoInsert<MongoDocument>(new MongoDocument());
-            mongoClient.getOperations().insert(new MongoNamespace(dbName, colName), insert, MongoDocument.class);
+            mongoClient.getOperations().insert(new MongoNamespace(dbName, colName), insert, MongoDocument.class, null);
         }
 
         MongoFind find = new MongoFind(new MongoQueryFilterDocument()).readPreference(ReadPreference.primary());
-        QueryResult<MongoDocument> queryResult = mongoClient.getOperations().query(new MongoNamespace(dbName, colName), find, MongoDocument.class);
+        QueryResult<MongoDocument> queryResult = mongoClient.getOperations().query(new MongoNamespace(dbName, colName), find, MongoDocument.class, null);
         assertNotNull(queryResult);
         assertEquals(101, queryResult.getResults().size());
         assertNotEquals(0L, queryResult.getCursorId());
 
         GetMoreResult<MongoDocument> getMoreResult = mongoClient.getOperations().getMore(new MongoNamespace(dbName, colName),
-                new GetMore(queryResult.getCursorId(), 0), MongoDocument.class);
+                new GetMore(queryResult.getCursorId(), 0), MongoDocument.class, null);
         assertNotNull(getMoreResult);
         assertEquals(299, getMoreResult.getResults().size());
         assertEquals(0, getMoreResult.getCursorId());

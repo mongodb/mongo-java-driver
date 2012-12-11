@@ -19,12 +19,13 @@ package org.mongodb.impl;
 
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
-import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
+import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
+import org.mongodb.serialization.Serializers;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoClient client;
@@ -57,6 +58,11 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
+    public <T> MongoCollection<T> getTypedCollection(final String name, final Class<T> clazz, final Serializers serializers) {
+        return new MongoCollectionImpl<T>(name, this, clazz, serializers);
+    }
+
+    @Override
     public MongoDatabaseImpl withClient(final MongoClient client) {
         return new MongoDatabaseImpl(name, client);
     }
@@ -68,7 +74,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public CommandResult executeCommand(final MongoCommandOperation commandOperation) {
-         return new CommandResult(client.getOperations().executeCommand(getName(), commandOperation));
+         return new CommandResult(client.getOperations().executeCommand(getName(), commandOperation, null));
     }
 
     @Override
@@ -88,5 +94,9 @@ class MongoDatabaseImpl implements MongoDatabase {
             return readPreference;
         }
         return getClient().getReadPreference();
+    }
+
+    public Serializers getSerializers() {
+        return getClient().getSerializers();
     }
 }

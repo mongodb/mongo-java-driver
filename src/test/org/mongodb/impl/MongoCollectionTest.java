@@ -17,6 +17,10 @@
 
 package org.mongodb.impl;
 
+import org.bson.BSONReader;
+import org.bson.BSONWriter;
+import org.bson.BsonType;
+import org.bson.types.ObjectId;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -24,17 +28,20 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mongodb.MongoCollection;
-import org.mongodb.MongoCommandDocument;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDocument;
 import org.mongodb.MongoQueryFilterDocument;
-import org.mongodb.ReadPreference;
+import org.mongodb.MongoUpdateOperationsDocument;
 import org.mongodb.ServerAddress;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.InsertResult;
+import org.mongodb.serialization.BsonSerializationOptions;
+import org.mongodb.serialization.Serializer;
+import org.mongodb.serialization.Serializers;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -48,12 +55,13 @@ public class MongoCollectionTest {
     // TODO: this is untenable
     private static SingleServerMongoClient mongoClient;
     private static String dbName = "MongoCollectionTest";
-    private MongoDatabase mongoDatabase;
+    private static MongoDatabase mongoDatabase;
     @BeforeClass
     public static void setUpClass() throws UnknownHostException {
         mongoClient = new SingleServerMongoClient(new ServerAddress());
-        mongoClient.getOperations().executeCommand(dbName,
-                new MongoCommandOperation(new MongoCommandDocument("dropDatabase", 1)).readPreference(ReadPreference.primary()));
+        new DropDatabaseCommand(mongoClient, dbName).execute();
+        mongoDatabase = mongoClient.getDatabase(dbName);
+        new DropDatabaseCommand(mongoClient, dbName).execute();
     }
 
     @AfterClass
@@ -63,7 +71,6 @@ public class MongoCollectionTest {
 
     @Before
     public void setUp() throws UnknownHostException {
-        mongoDatabase = mongoClient.getDatabase(dbName);
     }
 
    @Test
@@ -115,4 +122,106 @@ public class MongoCollectionTest {
         count = collection.count(new MongoFind(new MongoQueryFilterDocument("_id", 10)));
         assertEquals(1, count);
     }
+
+    @Test
+    public void testFindAndUpdate() {
+        MongoCollection<MongoDocument> collection = mongoDatabase.getCollection("findAndUpdate");
+
+        MongoDocument doc = new MongoDocument("_id", 1);
+        doc.put("x", true);
+        collection.insert(new MongoInsert<MongoDocument>(doc));
+
+        MongoDocument newDoc = collection.findAndUpdate(new MongoFindAndUpdate().
+                where(new MongoQueryFilterDocument("x", true)).
+                updateWith(new MongoUpdateOperationsDocument("$set", new MongoDocument("x", false))));
+
+
+        assertNotNull(newDoc);
+        assertEquals(doc, newDoc);
+    }
+
+    @Test
+    public void testFindAndUpdateWithGenerics() {
+        Serializers serializers= Serializers.createDefaultSerializers();
+        serializers.register(Concrete.class, BsonType.DOCUMENT, new ConcreteSerializer());
+        MongoCollection<Concrete> collection = mongoDatabase.getTypedCollection("findAndUpdateWithGenerics", Concrete.class,
+                serializers);
+
+        Concrete doc = new Concrete(new ObjectId(), true);
+        collection.insert(new MongoInsert<Concrete>(doc));
+
+        Concrete newDoc = collection.findAndUpdate(new MongoFindAndUpdate().
+                where(new MongoQueryFilterDocument("x", true)).
+                updateWith(new MongoUpdateOperationsDocument("$set", new MongoDocument("x", false))));
+
+
+        assertNotNull(newDoc);
+        assertEquals(doc, newDoc);
+    }
+
 }
+
+class Concrete {
+    ObjectId id;
+    boolean x;
+
+    public Concrete(final ObjectId id, final boolean x) {
+        this.id = id;
+        this.x = x;
+    }
+
+    public Concrete() {
+    }
+
+    @Override
+    public String toString() {
+        return "Concrete{" + "id=" + id + ", x='" + x + '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final Concrete concrete = (Concrete) o;
+
+        if (x != concrete.x) return false;
+        if (!id.equals(concrete.id)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id.hashCode();
+        result = 31 * result + (x ? 1 : 0);
+        return result;
+    }
+}
+
+class ConcreteSerializer implements Serializer {
+
+    @Override
+    public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value, final BsonSerializationOptions options) {
+        Concrete c = (Concrete) value;
+        bsonWriter.writeStartDocument();
+        {
+            bsonWriter.writeObjectId("_id", c.id);
+            bsonWriter.writeBoolean("x", c.x);
+        }
+        bsonWriter.writeEndDocument();
+    }
+
+    @Override
+    public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
+        Concrete c = new Concrete();
+        reader.readStartDocument();
+        {
+            c.id = reader.readObjectId("_id");
+            c.x = reader.readBoolean("x");
+        }
+        reader.readEndDocument();
+        return c;
+    }
+}
+

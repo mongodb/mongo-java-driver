@@ -17,16 +17,17 @@
 package org.mongodb;
 
 import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoFindAndModify;
-import org.mongodb.operation.MongoRemove;
+import org.mongodb.operation.MongoFindAndRemove;
+import org.mongodb.operation.MongoFindAndReplace;
+import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.MongoRemove;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
+import org.mongodb.serialization.Serializers;
 
 // TODO: add these
 // update
-// count
-// findAndModify
 // group
 // distinct
 // mapReduce
@@ -70,7 +71,11 @@ public interface MongoCollection<T> {
 
     long count(MongoFind find);  // TODO: MongoFind has too many options for count
 
-    T findAndModify(MongoFindAndModify findAndModify);
+    T findAndUpdate(MongoFindAndUpdate findAndUpdate);
+
+    T findAndReplace(MongoFindAndReplace<T> findAndReplace);
+
+    T findAndRemove(MongoFindAndRemove findAndRemove);
 
     InsertResult insert(MongoInsert<T> insert);
 
@@ -81,6 +86,8 @@ public interface MongoCollection<T> {
      * TODO: not sure this is such a good idea
      */
     MongoCollection<T> withWriteConcern(WriteConcern writeConcern);
+
+    Serializers getSerializers();
 }
 
 

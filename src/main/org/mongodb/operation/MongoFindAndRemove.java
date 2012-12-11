@@ -18,4 +18,7 @@
 package org.mongodb.operation;
 
 public class MongoFindAndRemove extends MongoFindAndModify {
+    public boolean isRemove() {
+        return true;
+    }
 }

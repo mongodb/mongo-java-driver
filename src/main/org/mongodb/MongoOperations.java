@@ -28,27 +28,25 @@ import org.mongodb.result.InsertResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
+import org.mongodb.serialization.Serializer;
 
 public interface MongoOperations {
 
-    // TODO: how to deal with custom serialization for commands like findAndModify
-    // TODO: needs to take a MongoQuery or equivalent
     // TODO: should this really be a separate call from query?
-    // TODO: how to custom serialize a piece of the command?
-    MongoDocument executeCommand(String database, MongoCommandOperation commandOperation);
+    MongoDocument executeCommand(String database, MongoCommandOperation commandOperation, Serializer serializer);
 
-    <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Class<T> clazz);
+    <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Class<T> clazz, Serializer serializer);
 
     // TODO: needs a ServerAddress or doesn't make sense for some MongoClient implementations
-    <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Class<T> clazz);
+    <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Class<T> clazz, Serializer serializer);
 
     // TODO: needs a ServerAddress or doesn't make sense for some MongoClient implementations
     void killCursors(MongoKillCursor killCursor);
 
-    <T> InsertResult insert(MongoNamespace namespace, MongoInsert<T> insert, Class<T> clazz);
+    <T> InsertResult insert(MongoNamespace namespace, MongoInsert<T> insert, Class<T> clazz, Serializer serializer);
 
     // TODO: Need to handle update where you have to custom serialize the update document
-    UpdateResult update(final MongoNamespace namespace, MongoUpdate update);
+    UpdateResult update(final MongoNamespace namespace, MongoUpdate update, Serializer serializer);
 
-    RemoveResult delete(final MongoNamespace namespace, MongoRemove remove);
+    RemoveResult delete(final MongoNamespace namespace, MongoRemove remove, Serializer serializer);
 }

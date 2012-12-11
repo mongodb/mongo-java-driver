@@ -51,27 +51,34 @@ public class MongoDocumentSerializer implements Serializer {
 
     @Override
     public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
-        // TODO: allow control over Map implementation class
         MongoDocument map = new MongoDocument();
 
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT)
         {
-            String key = reader.readName();
+            String fieldName = reader.readName();
             BsonType bsonType = reader.getNextBsonType();
-            Class valueClass = serializers.findClassByBsonType(bsonType);
+            Class valueClass = getClassByBsonType(bsonType, fieldName);
             if (valueClass == null) {
-                throw new MongoException("Unable to find value class for BSON type " + bsonType);
+                throw new MongoException("Unable to find value class for BSON type " + bsonType + " of field " + fieldName);
             }
             Serializer valueSerializer = serializers.lookup(valueClass);
             if (valueSerializer == null) {
                 throw new MongoException("Unable to find deserializer for class " + valueClass.getName());
             }
             Object value = valueSerializer.deserialize(reader, Object.class, options);
-            map.put(key, value);
+            map.put(fieldName, value);
         }
         reader.readEndDocument();
 
         return map;
+    }
+
+    protected Class getClassByBsonType(final BsonType bsonType, String fieldName) {
+        return serializers.findClassByBsonType(bsonType);
+    }
+
+    protected Serializers getSerializers() {
+        return serializers;
     }
 }

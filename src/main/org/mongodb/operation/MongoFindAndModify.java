@@ -24,8 +24,6 @@ public abstract class MongoFindAndModify extends MongoQuery {
     private MongoQueryFilter filter;
     private MongoFieldSelector selector;
     private MongoSortCriteria sortCriteria;
-    private MongoUpdateOperations updateOperations;
-    private boolean remove;
     private boolean returnNew;
     private boolean upsert;
 
@@ -44,22 +42,12 @@ public abstract class MongoFindAndModify extends MongoQuery {
         return this;
     }
 
-    // TODO: need to support T as well
-    public MongoFindAndModify updateWith(final MongoUpdateOperations updateOperations) {
-        this.updateOperations = updateOperations;
-        return this;
-    }
-
-    public MongoFindAndModify remove(final boolean remove) {
-        this.remove = remove;
-        return this;
-    }
-
     public MongoFindAndModify returnNew(final boolean returnNew) {
         this.returnNew = returnNew;
         return this;
     }
 
+    // TODO: doesn't make sense for find and remove
     public MongoFindAndModify upsert(final boolean upsert) {
         this.upsert = upsert;
         return this;
@@ -77,14 +65,11 @@ public abstract class MongoFindAndModify extends MongoQuery {
         return sortCriteria;
     }
 
-    public MongoUpdateOperations getUpdateOperations() {
-        return updateOperations;
-    }
-
     public boolean isRemove() {
-        return remove;
+        return false;
     }
 
+    // TODO: Doesn't make sense for find and remove
     public boolean isReturnNew() {
         return returnNew;
     }

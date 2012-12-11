@@ -19,6 +19,7 @@ package org.mongodb;
 
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
+import org.mongodb.serialization.Serializers;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
@@ -34,8 +35,9 @@ public interface MongoDatabase {
 
     <T> MongoCollection<T> getTypedCollection(String name, Class<T> clazz);
 
+    <T> MongoCollection<T> getTypedCollection(String findAndUpdateWithGenerics, Class<T> clazz, Serializers serializers);
+
     MongoDatabase withClient(MongoClient client);
 
     MongoDatabase withWriteConcern(WriteConcern writeConcern);
-
 }

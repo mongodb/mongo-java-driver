@@ -24,12 +24,18 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.command.CountCommand;
+import org.mongodb.command.FindAndRemoveCommand;
+import org.mongodb.command.FindAndReplaceCommand;
+import org.mongodb.command.FindAndUpdateCommand;
 import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoFindAndModify;
+import org.mongodb.operation.MongoFindAndRemove;
+import org.mongodb.operation.MongoFindAndReplace;
+import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
+import org.mongodb.serialization.Serializers;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final String name;
@@ -37,18 +43,25 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final Class<T> clazz;
     private WriteConcern writeConcern;
     private ReadPreference readPreference;
+    private final Serializers serializers;
 
     public MongoCollectionImpl(final String name, MongoDatabaseImpl database, Class<T> clazz) {
-        this(name, database, clazz, null, null);
+        this(name, database, clazz, null, null, null);
     }
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database, final Class<T> clazz,
-                               final WriteConcern writeConcern, ReadPreference readPreference) {
+                               final WriteConcern writeConcern, ReadPreference readPreference, Serializers serializers) {
         this.name = name;
         this.database = database;
         this.clazz = clazz;
         this.writeConcern = writeConcern;
         this.readPreference = readPreference;
+        this.serializers = serializers;
+    }
+
+    public MongoCollectionImpl(final String name, final MongoDatabaseImpl database, final Class<T> clazz,
+                               final Serializers serializers) {
+        this(name, database, clazz, null, null, serializers);
     }
 
     @Override
@@ -82,23 +95,41 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public T findAndModify(final MongoFindAndModify findAndModify) {
-        throw new UnsupportedOperationException();
+    public T findAndUpdate(final MongoFindAndUpdate findAndUpdate) {
+        return new FindAndUpdateCommand<T>(getClient(), getNamespace(), findAndUpdate, getSerializers(), clazz).execute().getValue();
+    }
+
+    @Override
+    public T findAndReplace(final MongoFindAndReplace<T> findAndReplace) {
+        return new FindAndReplaceCommand<T>(getClient(), getNamespace(), findAndReplace, getSerializers(), clazz).execute().getValue();
+    }
+
+    @Override
+    public T findAndRemove(final MongoFindAndRemove findAndRemove) {
+        return new FindAndRemoveCommand<T>(getClient(), getNamespace(), findAndRemove, getSerializers(), clazz).execute().getValue();
     }
 
     @Override
     public InsertResult insert(final MongoInsert<T> insert) {
-        return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(getWriteConcern()), clazz);
+        return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(getWriteConcern()), clazz, getSerializers());
     }
 
     @Override
     public RemoveResult remove(final MongoRemove remove) {
-        return getClient().getOperations().delete(getNamespace(), remove.writeConcernIfAbsent(getWriteConcern()));
+        return getClient().getOperations().delete(getNamespace(), remove.writeConcernIfAbsent(getWriteConcern()), getSerializers());
     }
 
     @Override
     public MongoCollection<T> withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoCollectionImpl<T>(name, database, clazz, writeConcern, readPreference);
+        return new MongoCollectionImpl<T>(name, database, clazz, writeConcern, readPreference, getSerializers());
+    }
+
+    @Override
+    public Serializers getSerializers() {
+        if (serializers != null) {
+            return serializers;
+        }
+        return getDatabase().getSerializers();
     }
 
     @Override

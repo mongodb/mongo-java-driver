@@ -20,8 +20,26 @@ package org.mongodb.serialization;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;
+import org.bson.types.Binary;
+import org.bson.types.ObjectId;
+import org.mongodb.MongoCommandDocument;
+import org.mongodb.MongoDocument;
 import org.mongodb.MongoException;
+import org.mongodb.MongoFieldSelectorDocument;
+import org.mongodb.MongoQueryFilterDocument;
+import org.mongodb.MongoSortCriteriaDocument;
+import org.mongodb.MongoUpdateOperationsDocument;
+import org.mongodb.serialization.serializers.BooleanSerializer;
+import org.mongodb.serialization.serializers.DateSerializer;
+import org.mongodb.serialization.serializers.DoubleSerializer;
+import org.mongodb.serialization.serializers.IntegerSerializer;
+import org.mongodb.serialization.serializers.LongSerializer;
+import org.mongodb.serialization.serializers.MongoDocumentSerializer;
+import org.mongodb.serialization.serializers.NullSerializer;
+import org.mongodb.serialization.serializers.ObjectIdSerializer;
+import org.mongodb.serialization.serializers.StringSerializer;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,19 +48,25 @@ import java.util.Map;
 /**
  * Holder for all the serializer mappings.
  */
-public class Serializers implements Serializer{
+public class Serializers implements Serializer {
     private Map<Class, Serializer> classSerializerMap = new HashMap<Class, Serializer>();
     private Map<BsonType, Class> bsonTypeClassMap = new HashMap<BsonType, Class>();
+
+    public Serializers(final Serializers serializers) {
+        classSerializerMap = new HashMap<Class, Serializer>(serializers.classSerializerMap);
+        bsonTypeClassMap = new HashMap<BsonType, Class>(serializers.bsonTypeClassMap);
+    }
+
+    public Serializers() {
+    }
 
     public Serializer lookup(Class clazz) {
         return classSerializerMap.get(clazz);
     }
 
     /**
-     *
-     *
-     * @param clazz the class
-     * @param bsonType the BSON type that this serializer handles
+     * @param clazz      the class
+     * @param bsonType   the BSON type that this serializer handles
      * @param serializer the serializer  @return the previously registered serializer for this class
      */
     public Serializer register(Class clazz, BsonType bsonType, Serializer serializer) {
@@ -73,5 +97,26 @@ public class Serializers implements Serializer{
 
     public Class findClassByBsonType(BsonType bsonType) {
         return bsonTypeClassMap.get(bsonType);
+    }
+
+    // TODO: find a proper way to do this...
+    public static Serializers createDefaultSerializers() {
+        Serializers serializers = new Serializers();
+        serializers.register(MongoQueryFilterDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
+        serializers.register(MongoSortCriteriaDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
+        serializers.register(MongoUpdateOperationsDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
+        serializers.register(MongoFieldSelectorDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
+        serializers.register(MongoCommandDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
+        serializers.register(MongoDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
+        serializers.register(ObjectId.class, BsonType.OBJECT_ID, new ObjectIdSerializer());
+        serializers.register(Integer.class, BsonType.INT32, new IntegerSerializer());
+        serializers.register(Long.class, BsonType.INT64, new LongSerializer());
+        serializers.register(String.class, BsonType.STRING, new StringSerializer());
+        serializers.register(Double.class, BsonType.DOUBLE, new DoubleSerializer());
+        serializers.register(Binary.class, BsonType.BINARY, new BinarySerializer());
+        serializers.register(Date.class, BsonType.DATE_TIME, new DateSerializer());
+        serializers.register(Boolean.class, BsonType.BOOLEAN, new BooleanSerializer());
+        serializers.register(Void.class, BsonType.NULL, new NullSerializer());
+        return serializers;
     }
 }

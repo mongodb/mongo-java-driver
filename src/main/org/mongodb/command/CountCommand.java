@@ -44,7 +44,7 @@ public class CountCommand extends AbstractCommand {
     @Override
     public CountCommandResult execute() {
         return new CountCommandResult(getMongoClient().getOperations().executeCommand(getDatabase(),
-                new MongoCommandOperation(asMongoCommand())));
+                new MongoCommandOperation(asMongoCommand()), null));
     }
 
     @Override
