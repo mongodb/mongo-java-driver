@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="cobertura">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/cobertura/cobertura-1.9.4.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/cobertura/asm-3.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/cobertura/jakarta-oro-2.0.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/cobertura/log4j-1.2.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/cobertura/asm-tree-3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
