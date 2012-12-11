@@ -17,7 +17,7 @@
 
 package org.mongodb.operation;
 
-public class GetMore {
+public class GetMore extends MongoOperation{
     private final int batchSize;
     private final long cursorId;
 

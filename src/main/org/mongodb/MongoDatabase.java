@@ -17,6 +17,7 @@
 
 package org.mongodb;
 
+import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 
 /**
@@ -25,7 +26,7 @@ import org.mongodb.result.CommandResult;
 public interface MongoDatabase {
     String getName();
 
-    CommandResult executeCommand(MongoCommand command);
+    CommandResult executeCommand(MongoCommandOperation commandOperation);
 
     MongoClient getClient();
 

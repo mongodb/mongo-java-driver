@@ -17,62 +17,56 @@
 
 package org.mongodb.impl;
 
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mongodb.MongoCommand;
-import org.mongodb.ReadPreference;
-import org.mongodb.result.InsertResult;
-import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
+import org.mongodb.MongoCommandDocument;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDocument;
-import org.mongodb.operation.MongoInsert;
+import org.mongodb.MongoQueryFilterDocument;
+import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
-import org.mongodb.operation.MongoQuery;
+import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoInsert;
+import org.mongodb.result.InsertResult;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @RunWith(JUnit4.class)
 public class MongoCollectionTest {
     // TODO: this is untenable
-    private static SingleServerMongoClient singleServerMongoClient;
+    private static SingleServerMongoClient mongoClient;
     private static String dbName = "MongoCollectionTest";
-    private MongoClient mongoClient;
     private MongoDatabase mongoDatabase;
     @BeforeClass
     public static void setUpClass() throws UnknownHostException {
-        singleServerMongoClient = new SingleServerMongoClient(new ServerAddress());
-        singleServerMongoClient.getOperations().executeCommand(dbName,
-                new MongoCommand(new MongoDocument("dropDatabase", 1)).readPreference(ReadPreference.primary()));
+        mongoClient = new SingleServerMongoClient(new ServerAddress());
+        mongoClient.getOperations().executeCommand(dbName,
+                new MongoCommandOperation(new MongoCommandDocument("dropDatabase", 1)).readPreference(ReadPreference.primary()));
     }
 
     @AfterClass
     public static void tearDownClass() {
-        singleServerMongoClient.close();
+        mongoClient.close();
     }
 
     @Before
     public void setUp() throws UnknownHostException {
-        mongoClient = singleServerMongoClient.bindToChannel();
         mongoDatabase = mongoClient.getDatabase(dbName);
     }
 
-    @After
-    public void tearDown() {
-        mongoClient.close();
-    }
-
-    @Test
+   @Test
     public void testInsertMultiple() {
         MongoCollection<MongoDocument> collection = mongoDatabase.getCollection("insertMultiple");
 
@@ -92,10 +86,10 @@ public class MongoCollectionTest {
 
         for (int i = 0; i < 101; i++) {
             MongoDocument doc = new MongoDocument("_id", i);
-            collection.insert(new MongoInsert<MongoDocument>(doc));  // TODO: Why is this a compiler warning?
+            collection.insert(new MongoInsert<MongoDocument>(doc));
         }
 
-        MongoCursor<MongoDocument> cursor = collection.find(new MongoQuery(new MongoDocument()));
+        MongoCursor<MongoDocument> cursor = collection.find(new MongoFind(new MongoQueryFilterDocument()));
         try {
             while (cursor.hasNext()) {
                 MongoDocument cur = cursor.next();
@@ -104,5 +98,21 @@ public class MongoCollectionTest {
         } finally {
             cursor.close();
         }
+    }
+
+    @Test
+    public void testCount() {
+        MongoCollection<MongoDocument> collection = mongoDatabase.getCollection("count");
+
+        for (int i = 0; i < 11; i++) {
+            MongoDocument doc = new MongoDocument("_id", i);
+            collection.insert(new MongoInsert<MongoDocument>(doc));
+        }
+
+        long count = collection.count(new MongoFind(new MongoQueryFilterDocument()));
+        assertEquals(11, count);
+
+        count = collection.count(new MongoFind(new MongoQueryFilterDocument("_id", 10)));
+        assertEquals(1, count);
     }
 }

@@ -20,7 +20,6 @@ package org.mongodb.impl;
 import org.bson.io.PooledByteBufferOutput;
 import org.bson.util.BufferPool;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoCommand;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDocument;
 import org.mongodb.MongoException;
@@ -31,10 +30,11 @@ import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.io.MongoChannel;
 import org.mongodb.operation.GetMore;
-import org.mongodb.operation.MongoDelete;
+import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
-import org.mongodb.operation.MongoQuery;
+import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoWrite;
 import org.mongodb.protocol.MongoDeleteMessage;
@@ -45,7 +45,6 @@ import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.protocol.MongoRequestMessage;
 import org.mongodb.protocol.MongoUpdateMessage;
-import org.mongodb.result.CommandResult;
 import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.QueryResult;
@@ -56,6 +55,8 @@ import org.mongodb.util.pool.SimplePool;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 // TODO: should this be a public class?
 public class SingleChannelMongoClient implements MongoClient {
@@ -91,11 +92,18 @@ public class SingleChannelMongoClient implements MongoClient {
         return new SingleChannelMongoOperations();
     }
 
-
-    // TODO: Revisit this
     @Override
-    public MongoClient bindToChannel() {
-        return this;
+    public void withConnection(final Runnable runnable) {
+        runnable.run();
+    }
+
+    @Override
+    public <T> T withConnection(final Callable<T> callable) throws ExecutionException {
+        try {
+            return callable.call();
+        } catch (Exception e) {
+            throw new ExecutionException(e);
+        }
     }
 
     @Override
@@ -127,7 +135,7 @@ public class SingleChannelMongoClient implements MongoClient {
             channel.sendMessage(writeMessage);
             if (write.getWriteConcern().callGetLastError()) {
                 MongoQueryMessage getLastErrorMessage = new MongoQueryMessage(namespace.getFullName(),
-                        new MongoQuery(writeConcern.getCommand()).readPreference(ReadPreference.primary()),
+                        new MongoFind(writeConcern.getCommand()).readPreference(ReadPreference.primary()),
                         new PooledByteBufferOutput(getBufferPool()), serializer);
                 channel.sendMessage(getLastErrorMessage);
                 return channel.receiveMessage(serializer, MongoDocument.class);
@@ -141,17 +149,16 @@ public class SingleChannelMongoClient implements MongoClient {
 
     private class SingleChannelMongoOperations implements MongoOperations {
         @Override
-        public CommandResult executeCommand(final String database, final MongoCommand command) {
+        public MongoDocument executeCommand(final String database, final MongoCommandOperation commandOperation) {
             try {
-                MongoQuery query = command.asQuery().readPreferenceIfAbsent(getReadPreference());
+                commandOperation.readPreferenceIfAbsent(getReadPreference());
                 MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd",
-                        query,
-                        new PooledByteBufferOutput(bufferPool), serializer);
+                        commandOperation, new PooledByteBufferOutput(bufferPool), serializer);
                 channel.sendMessage(message);
 
                 MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(serializer, MongoDocument.class);
 
-                return new CommandResult(replyMessage.getDocuments().get(0));
+                return replyMessage.getDocuments().get(0);
             } catch (IOException e) {
                 throw new MongoException("", e);
             }
@@ -166,10 +173,10 @@ public class SingleChannelMongoClient implements MongoClient {
         }
 
         @Override
-        public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoQuery query, Class<T> clazz) {
+        public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find, Class<T> clazz) {
             try {
-                query.readPreferenceIfAbsent(getReadPreference());
-                MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), query,
+                find.readPreferenceIfAbsent(getReadPreference());
+                MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find,
                         new PooledByteBufferOutput(bufferPool), serializer);
                 channel.sendMessage(message);
 
@@ -206,11 +213,11 @@ public class SingleChannelMongoClient implements MongoClient {
         }
 
         @Override
-        public RemoveResult delete(final MongoNamespace namespace, MongoDelete delete) {
-            delete.writeConcernIfAbsent(writeConcern);
-            MongoDeleteMessage message = new MongoDeleteMessage(namespace.getFullName(), delete,
+        public RemoveResult delete(final MongoNamespace namespace, MongoRemove remove) {
+            remove.writeConcernIfAbsent(writeConcern);
+            MongoDeleteMessage message = new MongoDeleteMessage(namespace.getFullName(), remove,
                     new PooledByteBufferOutput(bufferPool), serializer);
-            return new RemoveResult(sendWriteMessage(namespace, message, delete));
+            return new RemoveResult(sendWriteMessage(namespace, message, remove));
         }
 
         @Override

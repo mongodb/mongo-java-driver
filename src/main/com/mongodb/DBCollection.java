@@ -18,9 +18,9 @@
 package com.mongodb;
 
 import org.mongodb.MongoCollection;
-import org.mongodb.operation.MongoDelete;
+import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoQuery;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 
@@ -66,16 +66,16 @@ public class DBCollection {
 
 
     public WriteResult remove(DBObject filter, WriteConcern writeConcern) {
-        MongoDelete delete = new MongoDelete(DBObjects.toDocument(filter));
-        RemoveResult result = collection.remove(delete);
+    MongoRemove remove = new MongoRemove(DBObjects.toQueryFilterDocument(filter));
+        RemoveResult result = collection.remove(remove);
         return new WriteResult(result, writeConcern.toNew());
     }
 
     public DBCursor find(DBObject filter, DBObject fields) {
         return new DBCursor(collection,
-                new MongoQuery().
-                        where(DBObjects.toDocument(filter)).
-                        select(DBObjects.toDocument(fields)).
+                new MongoFind().
+                        where(DBObjects.toQueryFilterDocument(filter)).
+                        select(DBObjects.toFieldSelectorDocument(fields)).
                         readPreference(getReadPreference().toNew()));
     }
 

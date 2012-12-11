@@ -18,4 +18,5 @@
 package com.mongodb;
 
 public class MongoException extends RuntimeException {
+    private static final long serialVersionUID = 6162057356884083482L;
 }

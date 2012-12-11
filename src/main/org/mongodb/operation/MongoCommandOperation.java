@@ -17,22 +17,24 @@
 
 package org.mongodb.operation;
 
-import java.util.Arrays;
-import java.util.List;
+import org.mongodb.ReadPreference;
 
-public class MongoKillCursor extends MongoOperation{
-    private final List<Long> cursorIds;
 
-    public MongoKillCursor(long cursorId) {
-        cursorIds = Arrays.asList(cursorId);
+// TODO: Name is inconsistent with other operations.  Did this so as not to clash with MongoCommand
+public class MongoCommandOperation extends MongoQuery {
+    private final MongoCommand command;
+
+    public MongoCommandOperation(MongoCommand commandDocument) {
+        this.command = commandDocument;
+        batchSize = -1;
     }
 
-    public MongoKillCursor(final List<Long> cursorIds) {
-        this.cursorIds = cursorIds;
+    public MongoCommandOperation readPreference(final ReadPreference readPreference) {
+        super.readPreference(readPreference);
+        return this;
     }
 
-
-    public List<Long> getCursorIds() {
-        return cursorIds;
+    public MongoCommand getCommand() {
+        return command;
     }
 }

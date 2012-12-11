@@ -22,21 +22,21 @@ import org.bson.types.ObjectId;
 import org.bson.util.BufferPool;
 import org.bson.util.PowerOfTwoByteBufferPool;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoCommand;
 import org.mongodb.MongoDocument;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
+import org.mongodb.MongoQueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.WriteConcern;
 import org.mongodb.io.MongoChannel;
 import org.mongodb.operation.GetMore;
-import org.mongodb.operation.MongoDelete;
+import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
-import org.mongodb.operation.MongoQuery;
+import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoUpdate;
-import org.mongodb.result.CommandResult;
 import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.QueryResult;
@@ -57,6 +57,8 @@ import org.mongodb.util.pool.SimplePool;
 
 import java.nio.ByteBuffer;
 import java.util.Date;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 // TODO: should this be a public class?
 public class SingleServerMongoClient implements MongoClient {
@@ -67,6 +69,7 @@ public class SingleServerMongoClient implements MongoClient {
     private final Serializer serializer;
     private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
     private ReadPreference readPreference = ReadPreference.primary();
+    private final ThreadLocal<SingleChannelMongoClient> boundClient = new ThreadLocal<SingleChannelMongoClient>();
 
     public SingleServerMongoClient(ServerAddress serverAddress) {
         this.serverAddress = serverAddress;
@@ -82,6 +85,9 @@ public class SingleServerMongoClient implements MongoClient {
     // TODO: find a better home for this.
     Serializer createDefaultSerializer() {
         Serializers serializers = new Serializers();
+        serializers.register(MongoQueryFilterDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
+        serializers.register(MongoDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
+        serializers.register(MongoDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
         serializers.register(MongoDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
         serializers.register(ObjectId.class, BsonType.OBJECT_ID, new ObjectIdSerializer());
         serializers.register(Integer.class, BsonType.INT32, new IntegerSerializer());
@@ -104,9 +110,44 @@ public class SingleServerMongoClient implements MongoClient {
         return new SingleServerMongoOperations();
     }
 
+
     @Override
-    public MongoClient bindToChannel() {
-        return new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializer, writeConcern, readPreference);
+    public void withConnection(final Runnable runnable) {
+        boundClient.set(getChannelClient());
+        try {
+            runnable.run();
+        } finally {
+            releaseChannelClient(boundClient.get());
+        }
+    }
+
+    @Override
+    public <T> T withConnection(final Callable<T> callable) throws ExecutionException {
+        boundClient.set(getChannelClient());
+        try {
+            return callable.call();
+        } catch (Exception e) {
+            throw new ExecutionException(e);
+        } finally {
+            releaseChannelClient(boundClient.get());
+        }
+    }
+
+    /**
+     * Bind to a connection, but not lexically scoped.  This is not part of the public MongoClient API, as this is only
+     * offered so that com.mongodb.DB#requestStart can be implemented.
+     */
+    public void bindToConnection() {
+        boundClient.set(getChannelClient());
+
+    }
+
+    /**
+     * Unbind from a connection, but not lexically scoped.  This is not part of the public MongoClient API, as this is only
+     * offered so that com.mongodb.DB#requestDone can be implemented.
+     */
+    public void unbindFromConnection() {
+        releaseChannelClient(boundClient.get());
     }
 
     @Override
@@ -132,74 +173,92 @@ public class SingleServerMongoClient implements MongoClient {
         return channelPool;
     }
 
+    private SingleChannelMongoClient getChannelClient() {
+        if (boundClient.get() != null) {
+            return boundClient.get();
+        }
+        return new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializer, writeConcern, readPreference);
+    }
+
+    private void releaseChannelClient(SingleChannelMongoClient mongoClient) {
+        if (boundClient.get() != null) {
+            if (boundClient.get() != mongoClient) {
+                throw new IllegalArgumentException("Can't unbind from a different client than you are bound to");
+            }
+        } else {
+            mongoClient.close();
+        }
+    }
+
+
     private class SingleServerMongoOperations implements MongoOperations {
         @Override
-        public CommandResult executeCommand(final String database, final MongoCommand command) {
-            MongoClient mongoClient = bindToChannel();
+        public MongoDocument executeCommand(final String database, final MongoCommandOperation commandOperation) {
+            SingleChannelMongoClient mongoClient = getChannelClient();
             try {
-                return mongoClient.getOperations().executeCommand(database, command);
+                return mongoClient.getOperations().executeCommand(database, commandOperation);
             } finally {
-                mongoClient.close();
+                releaseChannelClient(mongoClient);
             }
         }
 
         @Override
-        public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoQuery query, final Class<T> clazz) {
-            MongoClient mongoClient = bindToChannel();
+        public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find, final Class<T> clazz) {
+            SingleChannelMongoClient mongoClient = getChannelClient();
             try {
-                return mongoClient.getOperations().query(namespace, query, clazz);
+                return mongoClient.getOperations().query(namespace, find, clazz);
             } finally {
-                mongoClient.close();
+                releaseChannelClient(mongoClient);
             }
         }
 
         @Override
         public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, final Class<T> clazz) {
-            MongoClient mongoClient = bindToChannel();
+            SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().getMore(namespace, getMore, clazz);
             } finally {
-                mongoClient.close();
+                releaseChannelClient(mongoClient);
             }
         }
 
         @Override
         public <T> InsertResult insert(final MongoNamespace namespace, final MongoInsert<T> insert, Class<T> clazz) {
-            MongoClient mongoClient = bindToChannel();
+            SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().insert(namespace, insert, clazz);
             } finally {
-                mongoClient.close();
+                releaseChannelClient(mongoClient);
             }
         }
 
         @Override
         public UpdateResult update(final MongoNamespace namespace, MongoUpdate update) {
-            MongoClient mongoClient = bindToChannel();
+            SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().update(namespace, update);
             } finally {
-                mongoClient.close();
+                releaseChannelClient(mongoClient);
             }
         }
 
         @Override
-        public RemoveResult delete(final MongoNamespace namespace, final MongoDelete delete) {
-            MongoClient mongoClient = bindToChannel();
+        public RemoveResult delete(final MongoNamespace namespace, final MongoRemove remove) {
+            SingleChannelMongoClient mongoClient = getChannelClient();
             try {
-                return mongoClient.getOperations().delete(namespace, delete);
+                return mongoClient.getOperations().delete(namespace, remove);
             } finally {
-                mongoClient.close();
+                releaseChannelClient(mongoClient);
             }
         }
 
         @Override
         public void killCursors(MongoKillCursor killCursor) {
-            MongoClient mongoClient = bindToChannel();
+            SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 mongoClient.getOperations().killCursors(killCursor);
             } finally {
-                mongoClient.close();
+                releaseChannelClient(mongoClient);
             }
         }
     }

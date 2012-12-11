@@ -1,6 +1,6 @@
 package org.mongodb.operation;
 
-import org.mongodb.MongoDocument;
+import org.mongodb.ConvertibleToMongoDocument;
 
 /**
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
@@ -19,6 +19,6 @@ import org.mongodb.MongoDocument;
  *
  */
 
-public interface MongoQueryFilter {
-    MongoDocument asDocument();
+// TODO: different package
+public interface MongoQueryFilter extends ConvertibleToMongoDocument {
 }

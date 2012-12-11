@@ -18,7 +18,9 @@
 package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
+import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.MongoDocument;
+import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoQuery;
 import org.mongodb.serialization.Serializer;
 
@@ -26,38 +28,41 @@ import java.util.Map;
 
 public class MongoQueryMessage extends MongoRequestMessage {
 
-    public MongoQueryMessage(String collectionName, MongoQuery query,
+    public MongoQueryMessage(String collectionName, MongoFind find,
                              OutputBuffer buffer, Serializer serializer) {
-        super(collectionName, query.getFilter().asDocument(), query.getOptions(), query.getReadPreference(), buffer);
+        super(collectionName, find.getFilter().toMongoDocument(), find.getOptions(), find.getReadPreference(), buffer);
 
-        int allOptions = query.getOptions();
+        init(find);
+        addDocument(MongoDocument.class, find.getFilter().toMongoDocument(), serializer);
+        if (find.getFields() != null)
+            addDocument(Map.class, find.getFields().toMongoDocument(), serializer);
+        backpatchMessageLength();
+    }
+
+    public MongoQueryMessage(String collectionName, MongoCommandOperation commandOperation,
+                             OutputBuffer buffer, Serializer serializer) {
+        super(collectionName, commandOperation.getCommand().toMongoDocument(), 0, commandOperation.getReadPreference(), buffer);
+
+        init(commandOperation);
+        addDocument(MongoDocument.class, commandOperation.getCommand().toMongoDocument(), serializer);
+        backpatchMessageLength();
+    }
+
+    private void init(final MongoQuery query) {
+        int allOptions = 0;
         if (query.getReadPreference().isSlaveOk()) {
             allOptions |= QueryOptions.SLAVEOK;
         }
 
-        queryOptions = allOptions;
-
-        writeQuery(query, serializer);
-        backpatchMessageLength();
+        writeQueryPrologue(allOptions, query);
     }
 
-    public boolean hasOption(int option) {
-        return (queryOptions & option) != 0;
-    }
-
-
-    private void writeQuery(final MongoQuery query,
-                            final Serializer serializer) {
+    private void writeQueryPrologue(final int queryOptions,
+                                    final MongoQuery query) {
         buffer.writeInt(queryOptions);
         buffer.writeCString(collectionName);
 
         buffer.writeInt(query.getNumToSkip());
         buffer.writeInt(query.getBatchSize());
-
-        addDocument(MongoDocument.class, query.getFilter().asDocument(), serializer);
-        if (query.getFields() != null)
-            addDocument(Map.class, query.getFields().asDocument(), serializer);
     }
-
-    private final int queryOptions;
 }

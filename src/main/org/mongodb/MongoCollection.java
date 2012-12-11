@@ -16,9 +16,10 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.MongoDelete;
+import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoFindAndModify;
+import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoQuery;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 
@@ -61,22 +62,25 @@ public interface MongoCollection<T> {
 
     ReadPreference getReadPreference();
 
-    /**
-     * The same collection but with a different MongoClient.  Useful when binding to a channel.
-     * @see org.mongodb.MongoClient#bindToChannel()
-     */
-    MongoCollection<T> withClient(MongoClient client);
+    MongoCursor<T> find(MongoFind find);
 
-    /**
-     * The same collection but with a different default write concern.
-     */
-    MongoCollection<T> withWriteConcern(WriteConcern writeConcern);
+    T findOne(MongoFind find);  // TODO: MongoFind has too many options for findOne
 
-    MongoCursor<T> find(MongoQuery query);
+    long count();
+
+    long count(MongoFind find);  // TODO: MongoFind has too many options for count
+
+    T findAndModify(MongoFindAndModify findAndModify);
 
     InsertResult insert(MongoInsert<T> insert);
 
-    RemoveResult remove(MongoDelete delete);
+    RemoveResult remove(MongoRemove remove);
+
+    /**
+     * The same collection but with a different default write concern.
+     * TODO: not sure this is such a good idea
+     */
+    MongoCollection<T> withWriteConcern(WriteConcern writeConcern);
 }
 
 

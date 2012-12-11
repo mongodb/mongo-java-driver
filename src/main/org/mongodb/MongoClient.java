@@ -18,20 +18,54 @@ package org.mongodb;
 
 
 import java.io.Closeable;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
  */
 public interface MongoClient extends Closeable {
+    /**
+     *
+     * @param name
+     * @return
+     */
     MongoDatabase getDatabase(String name);
 
-    MongoOperations getOperations();
+    /**
+     *
+     * @return operations over this client
+     */
+    MongoOperations getOperations();    // TODO: I think we should get rid of this.   It's at the wrong level of abstraction.
 
-    MongoClient bindToChannel();
+    /**
+     * Run the given Runnable in the scope of a single connection.
+     *
+     * @param runnable what to do with the connection
+     */
+    void withConnection(Runnable runnable);
 
+    /**
+     * Run the given Callable in the scope of a single connection.
+     *
+     * @param callable what to do with the connection
+     */
+    <T> T withConnection(final Callable<T> callable) throws ExecutionException;
+
+    /**
+     *
+     */
     void close();
 
+    /**
+     *
+     * @return
+     */
     WriteConcern getWriteConcern();
 
+    /**
+     *
+     * @return
+     */
     ReadPreference getReadPreference();
 }

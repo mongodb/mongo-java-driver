@@ -19,7 +19,7 @@ package org.mongodb.impl;
 
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
-import org.mongodb.MongoCommand;
+import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDocument;
 import org.mongodb.ReadPreference;
@@ -67,8 +67,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public CommandResult executeCommand(final MongoCommand command) {
-         return client.getOperations().executeCommand(getName(), command);
+    public CommandResult executeCommand(final MongoCommandOperation commandOperation) {
+         return new CommandResult(client.getOperations().executeCommand(getName(), commandOperation));
     }
 
     @Override

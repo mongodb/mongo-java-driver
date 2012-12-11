@@ -17,24 +17,16 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.MongoQueryFilter;
-
 import java.util.LinkedHashMap;
 
-public class MongoDocument extends LinkedHashMap<String, Object> implements MongoQueryFilter {
+public class MongoDocument extends LinkedHashMap<String, Object> {
 
     private static final long serialVersionUID = -1492763563349589447L;
 
     public MongoDocument() {
-
     }
 
     public MongoDocument(final String key, final Object value) {
         put(key, value);
-    }
-
-    @Override
-    public MongoDocument asDocument() {
-        return this;
     }
 }

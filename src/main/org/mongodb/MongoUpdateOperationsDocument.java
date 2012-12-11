@@ -1,10 +1,10 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -15,10 +15,14 @@
  *
  */
 
-package org.mongodb.command;
+package org.mongodb;
 
-import org.mongodb.result.CommandResult;
+import org.mongodb.operation.MongoUpdateOperations;
 
-public interface Command {
-    CommandResult execute();
+public class MongoUpdateOperationsDocument extends MongoDocument implements MongoUpdateOperations {
+    @Override
+    public MongoDocument toMongoDocument() {
+        return this;
+    }
+
 }

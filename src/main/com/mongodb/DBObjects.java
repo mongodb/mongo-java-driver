@@ -18,6 +18,9 @@
 package com.mongodb;
 
 import org.mongodb.MongoDocument;
+import org.mongodb.MongoFieldSelectorDocument;
+import org.mongodb.MongoQueryFilterDocument;
+import org.mongodb.operation.MongoFieldSelector;
 
 // TODO: Implement these methods
 public class DBObjects {
@@ -28,7 +31,15 @@ public class DBObjects {
         return new MongoDocument();
     }
 
+    public static MongoQueryFilterDocument toQueryFilterDocument(DBObject obj) {
+        return new MongoQueryFilterDocument();
+    }
+
     public static DBObject toDBObject(MongoDocument document) {
         return new DBObject();
+    }
+
+    public static MongoFieldSelector toFieldSelectorDocument(final DBObject fields) {
+        return new MongoFieldSelectorDocument();
     }
 }

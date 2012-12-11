@@ -19,7 +19,7 @@ package org.mongodb.operation;
 
 import org.mongodb.WriteConcern;
 
-public abstract class MongoWrite {
+public abstract class MongoWrite extends MongoOperation {
     private WriteConcern writeConcern;
 
     // TODO: discuss this builder pattern.  It doesn't work so well with subclasses
