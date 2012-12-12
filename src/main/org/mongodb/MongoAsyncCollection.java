@@ -28,7 +28,7 @@ import org.mongodb.result.RemoveResult;
 
 import java.util.concurrent.Future;
 
-public interface MongoAsyncCollection<T> {
+public interface MongoAsyncCollection<T> extends MongoCollectionBase<T> {
     MongoAsyncCursor<T> find(MongoFind find);
 
     Future<T> findOne(MongoFind find);  // TODO: MongoFind has too many options for findOne

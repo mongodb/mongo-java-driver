@@ -33,16 +33,20 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final MongoClient client;
     private final String name;
     private final WriteConcern writeConcern;
-    private ReadPreference readPreference;
+    private final ReadPreference readPreference;
+    private final PrimitiveSerializers primitiveSerializers;
 
     public MongoDatabaseImpl(final String name, final MongoClient client) {
-        this(name, client, null);
+        this(name, client, null, null, null);
     }
 
-    public MongoDatabaseImpl(final String name, final MongoClient client, final WriteConcern writeConcern) {
+    public MongoDatabaseImpl(final String name, final MongoClient client, final WriteConcern writeConcern,
+                             final ReadPreference readPreference, final PrimitiveSerializers primitiveSerializers) {
         this.name = name;
         this.client = client;
         this.writeConcern = writeConcern;
+        this.readPreference = readPreference;
+        this.primitiveSerializers = primitiveSerializers;
     }
 
     @Override
@@ -51,7 +55,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     public MongoCollectionImpl<MongoDocument> getCollection(final String name) {
-        return getTypedCollection(name, getSerializers(), new MongoDocumentSerializer(getSerializers()));
+        return getTypedCollection(name, getPrimitiveSerializers(), new MongoDocumentSerializer(getPrimitiveSerializers()));
     }
 
     public <T> MongoCollectionImpl<T> getTypedCollection(final String name,
@@ -96,7 +100,11 @@ class MongoDatabaseImpl implements MongoDatabase {
         return getClient().getReadPreference();
     }
 
-    public PrimitiveSerializers getSerializers() {
+    @Override
+    public PrimitiveSerializers getPrimitiveSerializers() {
+        if (primitiveSerializers != null) {
+            return primitiveSerializers;
+        }
         return getClient().getPrimitiveSerializers();
     }
 }

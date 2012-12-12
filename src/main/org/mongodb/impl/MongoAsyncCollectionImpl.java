@@ -34,10 +34,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class MongoAsyncCollectionImpl<T> implements MongoAsyncCollection<T> {
+public class MongoAsyncCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements MongoAsyncCollection<T> {
     private final MongoCollection<T> proxiedCollection;
 
     public MongoAsyncCollectionImpl(final MongoCollection<T> proxiedCollection) {
+        super(proxiedCollection);
         this.proxiedCollection = proxiedCollection;
     }
 

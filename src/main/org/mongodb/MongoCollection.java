@@ -24,8 +24,6 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
-import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.PrimitiveSerializers;
 
 // TODO: add these
 // update
@@ -40,30 +38,7 @@ import org.mongodb.serialization.PrimitiveSerializers;
  *
  * @param <T> The type that this collection will serialize documents from and to
  */
-public interface MongoCollection<T> {
-
-    /**
-     * Gets the database in which this collection resides.
-     *
-     * @return the database
-     */
-    MongoDatabase getDatabase();
-
-    /**
-     * Gets the name of this collection.  This is the simple name of the collection and is not prefixed with the
-     * database name.
-     *
-     * @return the collection name
-     */
-    String getName();
-
-    MongoNamespace getNamespace();
-
-    MongoClient getClient();
-
-    WriteConcern getWriteConcern();
-
-    ReadPreference getReadPreference();
+public interface MongoCollection<T> extends MongoCollectionBase<T> {
 
     MongoCursor<T> find(MongoFind find);
 
@@ -83,9 +58,6 @@ public interface MongoCollection<T> {
 
     RemoveResult remove(MongoRemove remove);
 
-    PrimitiveSerializers getBasePrimitiveSerializers();
-
-    Serializer<T> getSerializer();
 }
 
 

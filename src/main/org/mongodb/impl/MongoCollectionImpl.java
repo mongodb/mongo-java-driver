@@ -17,11 +17,9 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDocument;
-import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.command.CountCommand;
@@ -36,37 +34,16 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
-import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 
-class MongoCollectionImpl<T> implements MongoCollection<T> {
-    private final String name;
-    private final MongoDatabaseImpl database;
-    private WriteConcern writeConcern;
-    private ReadPreference readPreference;
-    private final PrimitiveSerializers basePrimitiveSerializers;
-    private final Serializer<T> serializer;
+class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements MongoCollection<T> {
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final PrimitiveSerializers basePrimitiveSerializers, final Serializer<T> serializer,
+                               final PrimitiveSerializers primitiveSerializers, final Serializer<T> serializer,
                                final WriteConcern writeConcern, final ReadPreference readPreference) {
-        this.name = name;
-        this.database = database;
-        this.basePrimitiveSerializers = basePrimitiveSerializers;
-        this.serializer = serializer;
-        this.writeConcern = writeConcern;
-        this.readPreference = readPreference;
-    }
-
-    @Override
-    public MongoDatabaseImpl getDatabase() {
-        return database;
-    }
-
-    @Override
-    public String getName() {
-        return name;
+        super(serializer, name, database, writeConcern, readPreference, primitiveSerializers);
     }
 
     @Override
@@ -91,17 +68,17 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public T findAndUpdate(final MongoFindAndUpdate findAndUpdate) {
-        return new FindAndUpdateCommand<T>(getClient(), getNamespace(), findAndUpdate, getBasePrimitiveSerializers(), getSerializer()).execute().getValue();
+        return new FindAndUpdateCommand<T>(getClient(), getNamespace(), findAndUpdate, getPrimitiveSerializers(), getSerializer()).execute().getValue();
     }
 
     @Override
     public T findAndReplace(final MongoFindAndReplace<T> findAndReplace) {
-        return new FindAndReplaceCommand<T>(getClient(), getNamespace(), findAndReplace, getBasePrimitiveSerializers(), getSerializer()).execute().getValue();
+        return new FindAndReplaceCommand<T>(getClient(), getNamespace(), findAndReplace, getPrimitiveSerializers(), getSerializer()).execute().getValue();
     }
 
     @Override
     public T findAndRemove(final MongoFindAndRemove findAndRemove) {
-        return new FindAndRemoveCommand<T>(getClient(), getNamespace(), findAndRemove, getBasePrimitiveSerializers(), getSerializer()).execute().getValue();
+        return new FindAndRemoveCommand<T>(getClient(), getNamespace(), findAndRemove, getPrimitiveSerializers(), getSerializer()).execute().getValue();
     }
 
     @Override
@@ -116,46 +93,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 getMongoDocumentSerializer());
     }
 
-    @Override
-    public PrimitiveSerializers getBasePrimitiveSerializers() {
-        if (basePrimitiveSerializers != null) {
-            return basePrimitiveSerializers;
-        }
-        return getDatabase().getSerializers();
-    }
-
-    @Override
-    public Serializer<T> getSerializer() {
-        return serializer;
-    }
-
-    @Override
-    public MongoClient getClient() {
-        return getDatabase().getClient();
-    }
-
-    @Override
-    public WriteConcern getWriteConcern() {
-        if (writeConcern != null) {
-            return writeConcern;
-        }
-        return getDatabase().getWriteConcern();
-    }
-
-    @Override
-    public ReadPreference getReadPreference() {
-        if (readPreference != null) {
-            return readPreference;
-        }
-        return getDatabase().getReadPreference();
-    }
-
-    @Override
-    public MongoNamespace getNamespace() {
-        return new MongoNamespace(getDatabase().getName(), getName());
-    }
-
     private Serializer<MongoDocument> getMongoDocumentSerializer() {
-        return new MongoDocumentSerializer(basePrimitiveSerializers);
+        return new MongoDocumentSerializer(primitiveSerializers);
     }
 }

@@ -32,6 +32,12 @@ public interface MongoDatabase {
 
     MongoClient getClient();
 
+    WriteConcern getWriteConcern();
+
+    ReadPreference getReadPreference();
+
+    PrimitiveSerializers getPrimitiveSerializers();
+
     MongoCollection<MongoDocument> getCollection(String name);
 
     <T> MongoCollection<T> getTypedCollection(String name, final PrimitiveSerializers basePrimitiveSerializers,
