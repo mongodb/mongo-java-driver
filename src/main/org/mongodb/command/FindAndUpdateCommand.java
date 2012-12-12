@@ -22,13 +22,14 @@ import org.mongodb.MongoCommandDocument;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFindAndUpdate;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.Serializers;
 
 public class FindAndUpdateCommand<T> extends FindAndModifyCommand<T> {
     private final MongoFindAndUpdate findAndUpdate;
     public FindAndUpdateCommand(final MongoClient mongoClient, final MongoNamespace namespace,
-                                final MongoFindAndUpdate findAndUpdate, Serializers serializers, final Class<T> clazz) {
-        super(mongoClient, namespace, findAndUpdate, serializers, clazz);
+                                final MongoFindAndUpdate findAndUpdate, Serializers serializers, Serializer<T> serializer) {
+        super(mongoClient, namespace, findAndUpdate, serializers, serializer);
         this.findAndUpdate = findAndUpdate;
     }
 

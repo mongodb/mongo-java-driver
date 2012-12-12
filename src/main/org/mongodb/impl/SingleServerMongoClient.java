@@ -167,7 +167,8 @@ public class SingleServerMongoClient implements MongoClient {
 
     private class SingleServerMongoOperations implements MongoOperations {
         @Override
-        public MongoDocument executeCommand(final String database, final MongoCommandOperation commandOperation, Serializer serializer) {
+        public MongoDocument executeCommand(final String database, final MongoCommandOperation commandOperation,
+                                            Serializer<MongoDocument> serializer) {
             SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().executeCommand(database, commandOperation, serializer);
@@ -177,37 +178,40 @@ public class SingleServerMongoClient implements MongoClient {
         }
 
         @Override
-        public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find, final Class<T> clazz, Serializer serializer) {
+        public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
+                                        Serializer<MongoDocument> baseSerializer,
+                                        Serializer<T> serializer) {
             SingleChannelMongoClient mongoClient = getChannelClient();
             try {
-                return mongoClient.getOperations().query(namespace, find, clazz, serializer);
+                return mongoClient.getOperations().query(namespace, find, baseSerializer, serializer);
             } finally {
                 releaseChannelClient(mongoClient);
             }
         }
 
         @Override
-        public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, final Class<T> clazz, Serializer serializer) {
+        public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> serializer) {
             SingleChannelMongoClient mongoClient = getChannelClient();
             try {
-                return mongoClient.getOperations().getMore(namespace, getMore, clazz, serializer);
+                return mongoClient.getOperations().getMore(namespace, getMore, serializer);
             } finally {
                 releaseChannelClient(mongoClient);
             }
         }
 
         @Override
-        public <T> InsertResult insert(final MongoNamespace namespace, final MongoInsert<T> insert, Class<T> clazz, Serializer serializer) {
+        public <T> InsertResult insert(final MongoNamespace namespace, final MongoInsert<T> insert,
+                                       Serializer<T> serializer) {
             SingleChannelMongoClient mongoClient = getChannelClient();
             try {
-                return mongoClient.getOperations().insert(namespace, insert, clazz, serializer);
+                return mongoClient.getOperations().insert(namespace, insert, serializer);
             } finally {
                 releaseChannelClient(mongoClient);
             }
         }
 
         @Override
-        public UpdateResult update(final MongoNamespace namespace, MongoUpdate update, Serializer serializer) {
+        public UpdateResult update(final MongoNamespace namespace, MongoUpdate update, Serializer<MongoDocument> serializer) {
             SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().update(namespace, update, serializer);
@@ -217,10 +221,11 @@ public class SingleServerMongoClient implements MongoClient {
         }
 
         @Override
-        public RemoveResult delete(final MongoNamespace namespace, final MongoRemove remove, Serializer serializer) {
+        public RemoveResult remove(final MongoNamespace namespace, final MongoRemove remove,
+                                   Serializer<MongoDocument> serializer) {
             SingleChannelMongoClient mongoClient = getChannelClient();
             try {
-                return mongoClient.getOperations().delete(namespace, remove, serializer);
+                return mongoClient.getOperations().remove(namespace, remove, serializer);
             } finally {
                 releaseChannelClient(mongoClient);
             }

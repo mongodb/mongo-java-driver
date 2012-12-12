@@ -33,20 +33,21 @@ import org.mongodb.serialization.Serializer;
 public interface MongoOperations {
 
     // TODO: should this really be a separate call from query?
-    MongoDocument executeCommand(String database, MongoCommandOperation commandOperation, Serializer serializer);
+    MongoDocument executeCommand(String database, MongoCommandOperation commandOperation, Serializer<MongoDocument> serializer);
 
-    <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Class<T> clazz, Serializer serializer);
+    <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Serializer<MongoDocument> baseSerializer,
+                             Serializer<T> serializer);
 
     // TODO: needs a ServerAddress or doesn't make sense for some MongoClient implementations
-    <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Class<T> clazz, Serializer serializer);
+    <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> serializer);
 
     // TODO: needs a ServerAddress or doesn't make sense for some MongoClient implementations
     void killCursors(MongoKillCursor killCursor);
 
-    <T> InsertResult insert(MongoNamespace namespace, MongoInsert<T> insert, Class<T> clazz, Serializer serializer);
+    <T> InsertResult insert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer);
 
     // TODO: Need to handle update where you have to custom serialize the update document
-    UpdateResult update(final MongoNamespace namespace, MongoUpdate update, Serializer serializer);
+    UpdateResult update(final MongoNamespace namespace, MongoUpdate update, Serializer<MongoDocument> serializer);
 
-    RemoveResult delete(final MongoNamespace namespace, MongoRemove remove, Serializer serializer);
+    RemoveResult remove(final MongoNamespace namespace, MongoRemove remove, Serializer<MongoDocument> serializer);
 }

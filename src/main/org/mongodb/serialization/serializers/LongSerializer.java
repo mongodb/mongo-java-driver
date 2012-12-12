@@ -22,14 +22,14 @@ import org.bson.BSONWriter;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
-public class LongSerializer implements Serializer {
+public class LongSerializer implements Serializer<Long> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value, final BsonSerializationOptions options) {
-        bsonWriter.writeInt64((Long) value);
+    public void serialize(final BSONWriter bsonWriter, final Long value, final BsonSerializationOptions options) {
+        bsonWriter.writeInt64(value);
     }
 
     @Override
-    public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
+    public Long deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         return reader.readInt64();
     }
 }

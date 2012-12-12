@@ -17,26 +17,22 @@
 
 package org.mongodb.serialization;
 
+import com.sun.org.apache.xalan.internal.xsltc.compiler.Pattern;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
-import org.mongodb.MongoCommandDocument;
-import org.mongodb.MongoDocument;
 import org.mongodb.MongoException;
-import org.mongodb.MongoFieldSelectorDocument;
-import org.mongodb.MongoQueryFilterDocument;
-import org.mongodb.MongoSortCriteriaDocument;
-import org.mongodb.MongoUpdateOperationsDocument;
+import org.mongodb.serialization.serializers.BinarySerializer;
 import org.mongodb.serialization.serializers.BooleanSerializer;
 import org.mongodb.serialization.serializers.DateSerializer;
 import org.mongodb.serialization.serializers.DoubleSerializer;
 import org.mongodb.serialization.serializers.IntegerSerializer;
 import org.mongodb.serialization.serializers.LongSerializer;
-import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 import org.mongodb.serialization.serializers.NullSerializer;
 import org.mongodb.serialization.serializers.ObjectIdSerializer;
+import org.mongodb.serialization.serializers.PatternSerializer;
 import org.mongodb.serialization.serializers.StringSerializer;
 
 import java.util.Date;
@@ -67,7 +63,8 @@ public class Serializers implements Serializer {
     /**
      * @param clazz      the class
      * @param bsonType   the BSON type that this serializer handles
-     * @param serializer the serializer  @return the previously registered serializer for this class
+     * @param serializer the serializer
+     * @return the previously registered serializer for this class
      */
     public Serializer register(Class clazz, BsonType bsonType, Serializer serializer) {
         bsonTypeClassMap.put(bsonType, clazz);
@@ -76,23 +73,32 @@ public class Serializers implements Serializer {
     }
 
     @Override
-    public void serialize(final BSONWriter writer, final Class clazz, final Object value,
+    public void serialize(final BSONWriter writer, final Object value,
                           final BsonSerializationOptions options) {
-        Serializer serializer = classSerializerMap.get(clazz);
+        Serializer serializer = classSerializerMap.get(value.getClass());
         if (serializer == null) {
-            throw new MongoException("No serializer for class " + clazz);
+            throw new MongoException("No serializer for class " + value.getClass());
         }
-        serializer.serialize(writer, clazz, value, options);
+        serializer.serialize(writer, value, options);  // TODO: unchecked call
     }
 
     @Override
-    public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
-        Serializer serializer = classSerializerMap.get(clazz);
+    public Object deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+        BsonType bsonType = reader.getCurrentBsonType();
+        Class valueClass = findClassByBsonType(bsonType);
+        if (valueClass == null) {
+            throw new MongoException("Unable to find value class for BSON type " + bsonType + " of field ");
+        }
+        Serializer valueSerializer = lookup(valueClass);
+        if (valueSerializer == null) {
+            throw new MongoException("Unable to find deserializer for class " + valueClass.getName());
+        }
+        Serializer serializer = classSerializerMap.get(valueClass);
         // TODO: handle null case
         if (serializer == null) {
-            throw new MongoException("No serializer for class " + clazz);
+            throw new MongoException("No serializer for class " + valueClass);
         }
-        return serializer.deserialize(reader, clazz, options);
+        return serializer.deserialize(reader, options);
     }
 
     public Class findClassByBsonType(BsonType bsonType) {
@@ -102,12 +108,6 @@ public class Serializers implements Serializer {
     // TODO: find a proper way to do this...
     public static Serializers createDefaultSerializers() {
         Serializers serializers = new Serializers();
-        serializers.register(MongoQueryFilterDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
-        serializers.register(MongoSortCriteriaDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
-        serializers.register(MongoUpdateOperationsDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
-        serializers.register(MongoFieldSelectorDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
-        serializers.register(MongoCommandDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
-        serializers.register(MongoDocument.class, BsonType.DOCUMENT, new MongoDocumentSerializer(serializers));
         serializers.register(ObjectId.class, BsonType.OBJECT_ID, new ObjectIdSerializer());
         serializers.register(Integer.class, BsonType.INT32, new IntegerSerializer());
         serializers.register(Long.class, BsonType.INT64, new LongSerializer());
@@ -116,7 +116,8 @@ public class Serializers implements Serializer {
         serializers.register(Binary.class, BsonType.BINARY, new BinarySerializer());
         serializers.register(Date.class, BsonType.DATE_TIME, new DateSerializer());
         serializers.register(Boolean.class, BsonType.BOOLEAN, new BooleanSerializer());
-        serializers.register(Void.class, BsonType.NULL, new NullSerializer());
+        serializers.register(Pattern.class, BsonType.REGULAR_EXPRESSION, new PatternSerializer());
+        serializers.register(Void.class, BsonType.NULL, new NullSerializer()); // TODO: void class?  This won't work
         return serializers;
     }
 }

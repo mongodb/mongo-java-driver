@@ -19,7 +19,6 @@ package org.mongodb.impl;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.BsonType;
 import org.bson.types.ObjectId;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -38,6 +37,7 @@ import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.MongoRemove;
 import org.mongodb.result.InsertResult;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
@@ -56,6 +56,7 @@ public class MongoCollectionTest {
     private static SingleServerMongoClient mongoClient;
     private static String dbName = "MongoCollectionTest";
     private static MongoDatabase mongoDatabase;
+
     @BeforeClass
     public static void setUpClass() throws UnknownHostException {
         mongoClient = new SingleServerMongoClient(new ServerAddress());
@@ -73,7 +74,7 @@ public class MongoCollectionTest {
     public void setUp() throws UnknownHostException {
     }
 
-   @Test
+    @Test
     public void testInsertMultiple() {
         MongoCollection<MongoDocument> collection = mongoDatabase.getCollection("insertMultiple");
 
@@ -84,7 +85,23 @@ public class MongoCollectionTest {
         }
 
         InsertResult res = collection.insert(new MongoInsert<MongoDocument>(documents));
+        assertEquals(10, collection.count());
         assertNotNull(res);
+    }
+
+    @Test
+    public void testRemove() {
+        MongoCollection<MongoDocument> collection = mongoDatabase.getCollection("insertMultiple");
+
+        List<MongoDocument> documents = new ArrayList<MongoDocument>();
+        for (int i = 0; i < 10; i++) {
+            MongoDocument doc = new MongoDocument("_id", i);
+            documents.add(doc);
+        }
+
+        collection.insert(new MongoInsert<MongoDocument>(documents));
+        collection.remove(new MongoRemove(new MongoQueryFilterDocument("_id", 5)));
+        assertEquals(9, collection.count());
     }
 
     @Test
@@ -142,10 +159,9 @@ public class MongoCollectionTest {
 
     @Test
     public void testFindAndUpdateWithGenerics() {
-        Serializers serializers= Serializers.createDefaultSerializers();
-        serializers.register(Concrete.class, BsonType.DOCUMENT, new ConcreteSerializer());
-        MongoCollection<Concrete> collection = mongoDatabase.getTypedCollection("findAndUpdateWithGenerics", Concrete.class,
-                serializers);
+        Serializers serializers = Serializers.createDefaultSerializers();
+        MongoCollection<Concrete> collection = mongoDatabase.getTypedCollection("findAndUpdateWithGenerics",
+                serializers, new ConcreteSerializer());
 
         Concrete doc = new Concrete(new ObjectId(), true);
         collection.insert(new MongoInsert<Concrete>(doc));
@@ -199,10 +215,10 @@ class Concrete {
     }
 }
 
-class ConcreteSerializer implements Serializer {
+class ConcreteSerializer implements Serializer<Concrete> {
 
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Concrete value, final BsonSerializationOptions options) {
         Concrete c = (Concrete) value;
         bsonWriter.writeStartDocument();
         {
@@ -213,7 +229,7 @@ class ConcreteSerializer implements Serializer {
     }
 
     @Override
-    public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
+    public Concrete deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         Concrete c = new Concrete();
         reader.readStartDocument();
         {

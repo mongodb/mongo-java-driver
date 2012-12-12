@@ -24,13 +24,12 @@ import org.mongodb.serialization.Serializer;
 
 public class NullSerializer implements Serializer {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value,
-                          final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
         bsonWriter.writeNull();
     }
 
     @Override
-    public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
+    public Object deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         reader.readNull();
         return null;
     }

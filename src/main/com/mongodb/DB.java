@@ -18,6 +18,7 @@
 package com.mongodb;
 
 import org.mongodb.MongoDatabase;
+import org.mongodb.serialization.Serializers;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -70,7 +71,8 @@ public class DB {
         if (collection != null)
             return collection;
 
-        collection = new DBCollection(database.getTypedCollection(name, DBObject.class), this);
+        Serializers serializers = Serializers.createDefaultSerializers();
+        collection = new DBCollection(database.getTypedCollection(name, serializers, new DBObjectSerializer(serializers)), this);
         DBCollection old = collectionCache.putIfAbsent(name, collection);
         return old != null ? old : collection;
     }

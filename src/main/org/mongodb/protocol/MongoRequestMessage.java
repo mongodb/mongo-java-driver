@@ -121,14 +121,14 @@ public class MongoRequestMessage {
         return numDocuments;
     }
 
-    public void addDocument(Class clazz, Object obj, Serializer serializer) {
+    public <T> void addDocument(T obj, Serializer<T> serializer) {
         // TODO fix this constructor call to remove hard coding
         BSONBinaryWriter writer = new BSONBinaryWriter(new BsonWriterSettings(100),
                 new BinaryWriterSettings(1024 * 1024 * 16), buffer);
 
         try {
             // TODO: deal with serialization options
-            serializer.serialize(writer, clazz, obj, null);
+            serializer.serialize(writer, obj, null);
         } finally {
             writer.close();
         }

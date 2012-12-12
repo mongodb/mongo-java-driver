@@ -24,14 +24,14 @@ import org.mongodb.serialization.Serializer;
 
 import java.util.Date;
 
-public class DateSerializer implements Serializer {
+public class DateSerializer implements Serializer<Date> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value, final BsonSerializationOptions options) {
-        bsonWriter.writeDateTime(((Date) value).getTime());
+    public void serialize(final BSONWriter bsonWriter, final Date value, final BsonSerializationOptions options) {
+        bsonWriter.writeDateTime(value.getTime());
     }
 
     @Override
-    public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
+    public Date deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         return new Date(reader.readDateTime());
     }
 }

@@ -32,7 +32,7 @@ public class CountCommand extends AbstractCommand {
     private final MongoFind find;
 
     public CountCommand(final MongoClient mongoClient, MongoNamespace namespace) {
-        this(mongoClient, namespace, null);
+        this(mongoClient, namespace, new MongoFind());
     }
 
     public CountCommand(final MongoClient client, final MongoNamespace namespace, final MongoFind find) {
@@ -44,7 +44,7 @@ public class CountCommand extends AbstractCommand {
     @Override
     public CountCommandResult execute() {
         return new CountCommandResult(getMongoClient().getOperations().executeCommand(getDatabase(),
-                new MongoCommandOperation(asMongoCommand()), null));
+                new MongoCommandOperation(asMongoCommand()), createResultSerializer()));
     }
 
     @Override

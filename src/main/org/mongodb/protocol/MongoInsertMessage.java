@@ -18,20 +18,19 @@
 package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
-import org.mongodb.operation.MongoInsert;
 import org.mongodb.WriteConcern;
+import org.mongodb.operation.MongoInsert;
 import org.mongodb.serialization.Serializer;
 
 public class MongoInsertMessage<T> extends MongoRequestMessage {
-   public MongoInsertMessage(String collectionName, MongoInsert<T> insert, Class<T> clazz, OutputBuffer buffer,
-                                  Serializer serializer) {
+    public MongoInsertMessage(String collectionName, MongoInsert<T> insert, OutputBuffer buffer,
+                              Serializer<T> serializer) {
         super(collectionName, OpCode.OP_INSERT, buffer);
         writeInsertPrologue(insert.getWriteConcern());
         backpatchMessageLength();
         for (T document : insert.getDocuments()) {
-            addDocument(clazz, document, serializer);
+            addDocument(document, serializer);
         }
-
     }
 
     private void writeInsertPrologue(final WriteConcern concern) {

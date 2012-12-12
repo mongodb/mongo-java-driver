@@ -15,20 +15,22 @@
  *
  */
 
-package org.mongodb.serialization;
+package org.mongodb.serialization.serializers;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.Binary;
+import org.mongodb.serialization.BsonSerializationOptions;
+import org.mongodb.serialization.Serializer;
 
-public class BinarySerializer implements Serializer {
+public class BinarySerializer implements Serializer<Binary> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value, final BsonSerializationOptions options) {
-        bsonWriter.writeBinaryData((Binary) value);
+    public void serialize(final BSONWriter bsonWriter, final Binary value, final BsonSerializationOptions options) {
+        bsonWriter.writeBinaryData(value);
     }
 
     @Override
-    public Object deserialize(final BSONReader bsonReader, final Class clazz, final BsonSerializationOptions options) {
+    public Binary deserialize(final BSONReader bsonReader, final BsonSerializationOptions options) {
         return bsonReader.readBinaryData();
     }
 }

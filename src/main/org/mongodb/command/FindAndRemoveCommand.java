@@ -22,12 +22,13 @@ import org.mongodb.MongoCommandDocument;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFindAndModify;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.Serializers;
 
 public class FindAndRemoveCommand<T> extends FindAndModifyCommand<T> {
     public FindAndRemoveCommand(final MongoClient mongoClient, final MongoNamespace namespace,
-                                final MongoFindAndModify findAndModify, Serializers serializers, final Class<T> clazz) {
-        super(mongoClient, namespace, findAndModify, serializers, clazz);
+                                final MongoFindAndModify findAndModify, Serializers serializers, Serializer<T> serializer) {
+        super(mongoClient, namespace, findAndModify, serializers, serializer);
     }
 
     @Override

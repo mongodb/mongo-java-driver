@@ -17,7 +17,6 @@
 
 package org.mongodb.command;
 
-import org.bson.BsonType;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCommandDocument;
 import org.mongodb.MongoDocument;
@@ -25,6 +24,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFindAndModify;
 import org.mongodb.result.CommandResult;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.Serializers;
 import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 
@@ -32,27 +32,23 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
     private final MongoNamespace namespace;
     private final MongoFindAndModify findAndModify;
     private final Serializers serializers;
+    private final Serializer<T> serializer;
 
     public FindAndModifyCommand(final MongoClient mongoClient, final MongoNamespace namespace,
-                                MongoFindAndModify findAndModify, Serializers serializers, Class<T> clazz) {
+                                MongoFindAndModify findAndModify, Serializers serializers, Serializer<T> serializer) {
         super(mongoClient, namespace.getDatabaseName());
         this.namespace = namespace;
         this.findAndModify = findAndModify;
-        this.serializers = createSerializers(serializers, clazz);
+        this.serializers = serializers;
+        this.serializer = serializer;
     }
 
     @Override
     public FindAndModifyCommandResult<T> execute() {
         return new FindAndModifyCommandResult<T>(getMongoClient().getOperations().executeCommand(getDatabase(),
-                new MongoCommandOperation(asMongoCommand()), serializers));
+                new MongoCommandOperation(asMongoCommand()),
+                new FindAndModifyCommandResultSerializer<T>(serializers, serializer)));
 
-    }
-
-    private Serializers createSerializers(final Serializers serializers, final Class<T> clazz) {
-        Serializers newSerializers = new Serializers(serializers);
-        newSerializers.register(MongoDocument.class, BsonType.DOCUMENT,
-                new FindAndModifyCommandResultSerializer<T>(newSerializers, clazz));
-        return newSerializers;
     }
 
     protected MongoCommandDocument getBaseCommandDocument() {
@@ -86,28 +82,27 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
             super(mongoDocument);
         }
 
-        // TODO: How will the Serializer know to deserialize value into a T and not a MongoDocument?  Custom serializer?
         public T getValue() {
-            return (T) getMongoDocument().get("value");
+            return (T) getMongoDocument().get("value"); // TODO: any way to remove the warning?
         }
     }
 
     private class FindAndModifyCommandResultSerializer<T> extends MongoDocumentSerializer {
 
-        private final Class<T> clazz;
+        private final Serializer<T> serializer;
 
-        public FindAndModifyCommandResultSerializer(final Serializers serializers, Class<T> clazz) {
+        public FindAndModifyCommandResultSerializer(Serializers serializers, Serializer<T> serializer) {
             super(serializers);
-            this.clazz = clazz;
+            this.serializer = serializer;
         }
 
         @Override
-        protected Class getClassByBsonType(final BsonType bsonType, final String fieldName) {
+        protected Serializer getSerializer(final String fieldName) {
             // TODO: this is a bug waiting to happen.  What if there are other fields named "value" in sub-documents?
             if (fieldName.equals("value")) {
-                return clazz;
+                return serializer;
             }
-            return super.getClassByBsonType(bsonType, fieldName);
+            return super.getSerializer(fieldName);
         }
     }
 }

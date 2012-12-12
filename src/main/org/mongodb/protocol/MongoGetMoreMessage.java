@@ -21,8 +21,7 @@ import org.bson.io.OutputBuffer;
 import org.mongodb.operation.GetMore;
 
 public class MongoGetMoreMessage extends MongoRequestMessage {
-    public MongoGetMoreMessage(String collectionName, GetMore getMore,
-                               OutputBuffer buffer) {
+    public MongoGetMoreMessage(String collectionName, GetMore getMore, OutputBuffer buffer) {
         super(collectionName, OpCode.OP_GETMORE, buffer);
         writeGetMore(getMore);
         backpatchMessageLength();

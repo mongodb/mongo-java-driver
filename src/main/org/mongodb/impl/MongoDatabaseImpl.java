@@ -18,14 +18,15 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoClient;
-import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoClient client;
@@ -49,27 +50,13 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     public MongoCollectionImpl<MongoDocument> getCollection(final String name) {
-        return new MongoCollectionImpl<MongoDocument>(name, this, MongoDocument.class);
+        return getTypedCollection(name, getSerializers(), new MongoDocumentSerializer(getSerializers()));
     }
 
     @Override
-    public <T> MongoCollection<T> getTypedCollection(final String name, final Class<T> clazz) {
-        return new MongoCollectionImpl<T>(name, this, clazz);
-    }
-
-    @Override
-    public <T> MongoCollection<T> getTypedCollection(final String name, final Class<T> clazz, final Serializers serializers) {
-        return new MongoCollectionImpl<T>(name, this, clazz, serializers);
-    }
-
-    @Override
-    public MongoDatabaseImpl withClient(final MongoClient client) {
-        return new MongoDatabaseImpl(name, client);
-    }
-
-    @Override
-    public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoDatabaseImpl(name, client, writeConcern);
+    public <T> MongoCollectionImpl<T> getTypedCollection(final String name, final Serializers baseSerializers,
+                                                     final Serializer<T> serializer) {
+        return new MongoCollectionImpl<T>(name, this, baseSerializers, serializer, null, null);
     }
 
     @Override

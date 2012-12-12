@@ -18,9 +18,12 @@
 package org.mongodb.command;
 
 import org.mongodb.MongoClient;
+import org.mongodb.MongoDocument;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
+import org.mongodb.serialization.Serializer;
+import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 
 public abstract class AbstractCommand implements Command {
     private final MongoClient mongoClient;
@@ -40,9 +43,16 @@ public abstract class AbstractCommand implements Command {
     }
 
     public CommandResult execute() {
-        return new CommandResult(mongoClient.getOperations().executeCommand(database, new MongoCommandOperation(asMongoCommand()), null));
+        return new CommandResult(mongoClient.getOperations().executeCommand(database,
+                new MongoCommandOperation(asMongoCommand()), createResultSerializer()));
     }
 
     // TODO: the class of the return type is weird for a command
     public abstract MongoCommand asMongoCommand();
+
+    protected Serializer<MongoDocument> createResultSerializer() {
+        return new MongoDocumentSerializer(mongoClient.getSerializers());
+    }
+
+
 }

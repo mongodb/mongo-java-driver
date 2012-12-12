@@ -18,33 +18,31 @@
 package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
-import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.MongoDocument;
+import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoQuery;
 import org.mongodb.serialization.Serializer;
 
-import java.util.Map;
-
 public class MongoQueryMessage extends MongoRequestMessage {
 
     public MongoQueryMessage(String collectionName, MongoFind find,
-                             OutputBuffer buffer, Serializer serializer) {
+                             OutputBuffer buffer, Serializer<MongoDocument> serializer) {
         super(collectionName, find.getFilter().toMongoDocument(), find.getOptions(), find.getReadPreference(), buffer);
 
         init(find);
-        addDocument(MongoDocument.class, find.getFilter().toMongoDocument(), serializer);
+        addDocument(find.getFilter().toMongoDocument(), serializer);
         if (find.getFields() != null)
-            addDocument(Map.class, find.getFields().toMongoDocument(), serializer);
+            addDocument(find.getFields().toMongoDocument(), serializer);
         backpatchMessageLength();
     }
 
     public MongoQueryMessage(String collectionName, MongoCommandOperation commandOperation,
-                             OutputBuffer buffer, Serializer serializer) {
+                             OutputBuffer buffer, Serializer<MongoDocument> serializer) {
         super(collectionName, commandOperation.getCommand().toMongoDocument(), 0, commandOperation.getReadPreference(), buffer);
 
         init(commandOperation);
-        addDocument(MongoDocument.class, commandOperation.getCommand().toMongoDocument(), serializer);
+        addDocument(commandOperation.getCommand().toMongoDocument(), serializer);
         backpatchMessageLength();
     }
 

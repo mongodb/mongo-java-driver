@@ -36,7 +36,7 @@ public class DBObjects {
     }
 
     public static DBObject toDBObject(MongoDocument document) {
-        return new DBObject();
+        return new BasicDBObject();
     }
 
     public static MongoFieldSelector toFieldSelectorDocument(final DBObject fields) {

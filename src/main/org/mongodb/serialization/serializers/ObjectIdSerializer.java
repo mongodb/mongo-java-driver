@@ -23,14 +23,14 @@ import org.bson.types.ObjectId;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
-public class ObjectIdSerializer implements Serializer {
+public class ObjectIdSerializer implements Serializer<ObjectId> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final ObjectId value, final BsonSerializationOptions options) {
         bsonWriter.writeObjectId((ObjectId) value);
     }
 
     @Override
-    public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
+    public ObjectId deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         return reader.readObjectId();
     }
 }

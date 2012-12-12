@@ -19,6 +19,7 @@ package org.mongodb;
 
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.Serializers;
 
 /**
@@ -33,11 +34,10 @@ public interface MongoDatabase {
 
     MongoCollection<MongoDocument> getCollection(String name);
 
-    <T> MongoCollection<T> getTypedCollection(String name, Class<T> clazz);
+    <T> MongoCollection<T> getTypedCollection(String name, final Serializers baseSerializers,
+                                              final Serializer<T> serializer);
 
-    <T> MongoCollection<T> getTypedCollection(String findAndUpdateWithGenerics, Class<T> clazz, Serializers serializers);
-
-    MongoDatabase withClient(MongoClient client);
-
-    MongoDatabase withWriteConcern(WriteConcern writeConcern);
+//    MongoDatabase withClient(MongoClient client);
+//
+//    MongoDatabase withWriteConcern(WriteConcern writeConcern);
 }

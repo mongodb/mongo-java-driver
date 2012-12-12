@@ -36,7 +36,8 @@ public class MongoReplyMessage<T> {
     final int numberReturned;
     final List<T> documents;
 
-    public MongoReplyMessage(final InputBuffer headerInputBuffer, final InputBuffer bodyInputBuffer, final Serializer serializer, Class<T> clazz) {
+    public MongoReplyMessage(final InputBuffer headerInputBuffer, final InputBuffer bodyInputBuffer,
+                             final Serializer<T> serializer) {
         messageLength = headerInputBuffer.readInt32();
         requestId = headerInputBuffer.readInt32();
         responseTo = headerInputBuffer.readInt32();  // TODO: validate that this is a response to the expected message
@@ -50,7 +51,7 @@ public class MongoReplyMessage<T> {
 
         while (documents.size() < numberReturned) {
             BSONReader reader = new BSONBinaryReader(new BsonReaderSettings(), bodyInputBuffer);
-            documents.add(clazz.cast(serializer.deserialize(reader, clazz, null)));
+            documents.add(serializer.deserialize(reader, null));
             reader.close();
         }
     }

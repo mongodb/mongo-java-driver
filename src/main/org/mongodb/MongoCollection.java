@@ -24,6 +24,7 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.Serializers;
 
 // TODO: add these
@@ -81,13 +82,9 @@ public interface MongoCollection<T> {
 
     RemoveResult remove(MongoRemove remove);
 
-    /**
-     * The same collection but with a different default write concern.
-     * TODO: not sure this is such a good idea
-     */
-    MongoCollection<T> withWriteConcern(WriteConcern writeConcern);
+    Serializers getBaseSerializers();
 
-    Serializers getSerializers();
+    Serializer<T> getSerializer();
 }
 
 

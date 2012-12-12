@@ -19,6 +19,7 @@ package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
 import org.bson.types.ObjectId;
+import org.mongodb.MongoDocument;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.serialization.Serializer;
 
@@ -26,13 +27,13 @@ import java.util.Collection;
 
 public class MongoDeleteMessage extends MongoRequestMessage {
     public MongoDeleteMessage(String collectionName, MongoRemove remove, OutputBuffer buffer,
-                              Serializer serializer) {
+                              Serializer<MongoDocument> serializer) {
         super(collectionName, OpCode.OP_DELETE,  remove.getFilter().toMongoDocument(), buffer);
         writeDelete(serializer);
         backpatchMessageLength();
     }
 
-    private void writeDelete(final Serializer serializer) {
+    private void writeDelete(final Serializer<MongoDocument> serializer) {
         buffer.writeInt(0); // reserved
         buffer.writeCString(collectionName);
 
@@ -44,7 +45,7 @@ public class MongoDeleteMessage extends MongoRequestMessage {
         else
             buffer.writeInt(0);
 
-        addDocument(query.getClass(), query, serializer);
+        addDocument(query, serializer);
     }
 
 

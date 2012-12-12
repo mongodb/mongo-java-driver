@@ -19,7 +19,7 @@ package org.mongodb.operation;
 
 import org.mongodb.ReadPreference;
 
-public abstract class MongoQuery extends MongoOperation{
+public abstract class MongoQuery extends MongoOperation {
     private ReadPreference readPreference;
     protected int batchSize;  // TODO: add setter, make private
     private int numToSkip;    // TODO: add setter

@@ -20,6 +20,7 @@ package org.mongodb;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.result.QueryResult;
+import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -28,16 +29,15 @@ import java.util.Iterator;
 public class MongoCursor<T> implements Iterator<T>, Closeable {
     private final MongoCollection<T> collection;
     private final MongoFind find;
-    private final Class<T> clazz;
     private QueryResult<T> currentResult;
     private Iterator<T> currentIterator;
 
-    public MongoCursor(final MongoCollection<T> collection, final MongoFind find, Class<T> clazz) {
+    public MongoCursor(final MongoCollection<T> collection, final MongoFind find) {
         this.collection = collection;
         this.find = find;
-        this.clazz = clazz;
-        currentResult = collection.getClient().getOperations().query(collection.getNamespace(), find, clazz,
-                collection.getSerializers());
+        currentResult = collection.getClient().getOperations().query(collection.getNamespace(), find,
+                new MongoDocumentSerializer(collection.getBaseSerializers()),
+                        collection.getSerializer());
         currentIterator = currentResult.getResults().iterator();
     }
 

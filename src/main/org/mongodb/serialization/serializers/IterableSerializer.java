@@ -23,7 +23,7 @@ import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.Serializers;
 
-public class IterableSerializer implements Serializer {
+public class IterableSerializer implements Serializer<Iterable> {
     private final Serializers serializers;
 
     public IterableSerializer(Serializers serializers) {
@@ -31,19 +31,18 @@ public class IterableSerializer implements Serializer {
     }
 
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value,
+    public void serialize(final BSONWriter bsonWriter, final Iterable iterable,
                           final BsonSerializationOptions options) {
-        Iterable collection = (Iterable) value;
         bsonWriter.writeStartArray();
-        for (Object cur : collection) {
+        for (Object cur : iterable) {
             // TODO: deal with options.  C# driver sends different options
-            serializers.serialize(bsonWriter, cur.getClass(), cur, options);
+            serializers.serialize(bsonWriter, cur, options);
         }
         bsonWriter.writeEndArray();
     }
 
     @Override
-    public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
-        throw new UnsupportedOperationException();
+    public Iterable deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+        throw new UnsupportedOperationException();  // TODO: support this
     }
 }

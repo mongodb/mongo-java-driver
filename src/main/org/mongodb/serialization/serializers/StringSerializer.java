@@ -22,14 +22,14 @@ import org.bson.BSONWriter;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
-public class StringSerializer implements Serializer {
+public class StringSerializer implements Serializer<String> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final String value, final BsonSerializationOptions options) {
         bsonWriter.writeString((String) value);
     }
 
     @Override
-    public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
+    public String deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         return reader.readString();
     }
 }

@@ -15,26 +15,27 @@
  *
  */
 
-package org.mongodb.serialization;
+package org.mongodb.serialization.serializers;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.RegularExpression;
+import org.mongodb.serialization.BsonSerializationOptions;
+import org.mongodb.serialization.Serializer;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public class PatternSerializer implements Serializer {
+public class PatternSerializer implements Serializer<Pattern> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Class clazz, final Object value,
+    public void serialize(final BSONWriter bsonWriter, final Pattern value,
                           final BsonSerializationOptions options) {
-        Pattern pattern = (Pattern) value;
-        bsonWriter.writeRegularExpression(new RegularExpression(pattern.pattern(), getOptionsAsString(pattern)));
+        bsonWriter.writeRegularExpression(new RegularExpression(value.pattern(), getOptionsAsString(value)));
     }
 
     @Override
-    public Object deserialize(final BSONReader reader, final Class clazz, final BsonSerializationOptions options) {
+    public Pattern deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         RegularExpression regularExpression = reader.readRegularExpression();
         return Pattern.compile(regularExpression.getPattern(), getOptionsAsInt(regularExpression));
     }
