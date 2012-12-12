@@ -22,9 +22,11 @@ import org.bson.BSONWriter;
 import org.bson.BsonType;
 import org.mongodb.MongoDocument;
 import org.mongodb.serialization.BsonSerializationOptions;
-import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 //TODO: handle array type
@@ -41,13 +43,27 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
         bsonWriter.writeStartDocument();
         for (Map.Entry<String, Object> entry : document.entrySet()) {
             bsonWriter.writeName(entry.getKey());
-            if (entry.getValue() instanceof MongoDocument) {
-                serialize(bsonWriter, (MongoDocument) entry.getValue(), options);
-            } else {
-                primitiveSerializers.serialize(bsonWriter, entry.getValue(), options);
-            }
+            writeValue(bsonWriter, entry.getValue(), options);
         }
         bsonWriter.writeEndDocument();
+    }
+
+    private void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
+        if (value instanceof MongoDocument) {
+            serialize(bsonWriter, (MongoDocument) value, options);
+        } else if (value instanceof Iterable) {
+            serializeArray(bsonWriter, (Iterable) value, options);
+        } else {
+            primitiveSerializers.serialize(bsonWriter, value, options);
+        }
+    }
+
+    private void serializeArray(final BSONWriter bsonWriter, final Iterable iterable, final BsonSerializationOptions options) {
+        bsonWriter.writeStartArray();
+        for (Object cur : iterable) {
+            writeValue(bsonWriter, cur, options);
+        }
+        bsonWriter.writeEndArray();
     }
 
     @Override
@@ -57,18 +73,33 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String fieldName = reader.readName();
-            BsonType bsonType = reader.getNextBsonType();
-            if (bsonType.equals(BsonType.DOCUMENT)) {
-                document.put(fieldName, getDocumentDeserializerForField(fieldName).deserialize(reader, options));
-            } else {
-                Object value = primitiveSerializers.deserialize(reader, options);
-                document.put(fieldName, value);
-            }
+            document.put(fieldName, readValue(reader, options, fieldName));
         }
 
         reader.readEndDocument();
 
         return document;
+    }
+
+    private Object readValue(final BSONReader reader, final BsonSerializationOptions options, final String fieldName) {
+        BsonType bsonType = reader.getCurrentBsonType();
+        if (bsonType.equals(BsonType.DOCUMENT)) {
+            return getDocumentDeserializerForField(fieldName).deserialize(reader, options);
+        } else if (bsonType.equals(BsonType.ARRAY)) {
+            return readArray(reader, options);
+        } else {
+            return primitiveSerializers.deserialize(reader, options);
+        }
+    }
+
+    private List readArray(final BSONReader reader, final BsonSerializationOptions options) {
+        reader.readStartArray();
+        List list = new ArrayList();  // TODO: figure out a way to change concrete class
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+            list.add(readValue(reader, options, null));   // TODO: why is this a warning?
+        }
+        reader.readEndArray();
+        return list;
     }
 
     @Override
