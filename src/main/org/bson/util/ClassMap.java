@@ -1,19 +1,17 @@
-// ClassMap.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.bson.util;
@@ -27,7 +25,7 @@ import java.util.Map;
  * walks the up superclass and interface graph of 'c' to find matches. Derived
  * matches of this sort are then "cached" in the registry so that matches are
  * faster on future gets.
- * 
+ *
  * This is a very useful class for Class based registries.
  * 
  * Example:
@@ -44,32 +42,32 @@ public class ClassMap<T>  {
      * right. Duplicates are removed such that no Class will appear in the list
      * before one of its subtypes.
      */
-    public static <T> List<Class<?>> getAncestry(Class<T> c) {
+    public static <T> List<Class<?>> getAncestry(final Class<T> c) {
         return ClassAncestry.getAncestry(c);
     }
 
     private final class ComputeFunction implements Function<Class<?>, T> {
         @Override
-        public T apply(Class<?> a) {
-            for (Class<?> cls : getAncestry(a)) {
-                T result = map.get(cls);
+        public T apply(final Class<?> a) {
+            for (final Class<?> cls : getAncestry(a)) {
+                final T result = map.get(cls);
                 if (result != null) {
                     return result;
                 }
             }
             return null;
         }
-    };
+    }
 
     private final Map<Class<?>, T> map = CopyOnWriteMap.newHashMap();
     private final Map<Class<?>, T> cache = ComputingMap.create(new ComputeFunction());
 
 
-    public T get(Object key) {
+    public T get(final Object key) {
         return cache.get(key);
     }
 
-    public T put(Class<?> key, T value) {
+    public T put(final Class<?> key, final T value) {
         try {
             return map.put(key, value);
         } finally {
@@ -77,7 +75,7 @@ public class ClassMap<T>  {
         }
     }
 
-    public T remove(Object key) {
+    public T remove(final Object key) {
         try {
             return map.remove(key);
         } finally {

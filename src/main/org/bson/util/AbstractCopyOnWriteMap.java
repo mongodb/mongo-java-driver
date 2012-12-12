@@ -1,16 +1,16 @@
 /**
- * Copyright 2008 Atlassian Pty Ltd 
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); 
+ * Copyright 2008 Atlassian Pty Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at 
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0 
- * 
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
@@ -19,6 +19,7 @@ package org.bson.util;
 import static org.bson.util.Assertions.notNull;
 import static java.util.Collections.unmodifiableCollection;
 import static java.util.Collections.unmodifiableSet;
+
 import org.bson.util.annotations.GuardedBy;
 import org.bson.util.annotations.ThreadSafe;
 
@@ -33,13 +34,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Abstract base class for COW {@link Map} implementations that delegate to an
- * internal map.
- * 
+ * Abstract base class for COW {@link Map} implementations that delegate to an internal map.
+ *
  * @param <K> The key type
  * @param <V> The value type
- * @param <M> the internal {@link Map} or extension for things like sorted and
- * navigable maps.
+ * @param <M> the internal {@link Map} or extension for things like sorted and navigable maps.
  */
 @ThreadSafe
 abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements ConcurrentMap<K, V>, Serializable {
@@ -58,10 +57,9 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
     private final View<K, V> view;
 
     /**
-     * Create a new {@link CopyOnWriteMap} with the supplied {@link Map} to
-     * initialize the values.
-     * 
-     * @param map the initial map to initialize with
+     * Create a new {@link CopyOnWriteMap} with the supplied {@link Map} to initialize the values.
+     *
+     * @param map      the initial map to initialize with
      * @param viewType for writable or read-only key, value and entrySet views
      */
     protected <N extends Map<? extends K, ? extends V>> AbstractCopyOnWriteMap(final N map, final View.Type viewType) {
@@ -71,7 +69,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
 
     /**
      * Copy function, implemented by sub-classes.
-     * 
+     *
      * @param <N> the map to copy and return.
      * @param map the initial values of the newly created map.
      * @return a new map. Will never be modified after construction.
@@ -86,7 +84,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
     public final void clear() {
         lock.lock();
         try {
-            set(copy(Collections.<K, V> emptyMap()));
+            set(copy(Collections.<K, V>emptyMap()));
         } finally {
             lock.unlock();
         }
@@ -480,7 +478,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         }
     }
 
-    protected static abstract class CollectionView<E> implements Collection<E> {
+    protected abstract static class CollectionView<E> implements Collection<E> {
 
         abstract Collection<E> getDelegate();
 
@@ -552,11 +550,11 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
     }
 
     /**
-     * Provides access to the views of the underlying key, value and entry
-     * collections.
+     * Provides access to the views of the underlying key, value and entry collections.
      */
-    public static abstract class View<K, V> {
-        View() {}
+    public abstract static class View<K, V> {
+        View() {
+        }
 
         abstract Set<K> keySet();
 
@@ -580,6 +578,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
                     return host.new Mutable();
                 }
             };
+
             abstract <K, V, M extends Map<K, V>> View<K, V> get(AbstractCopyOnWriteMap<K, V, M> host);
         }
     }

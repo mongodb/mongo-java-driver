@@ -32,12 +32,12 @@ public class MBeanServerFactory {
             tmp =  new NullMBeanServer();
         }
 
-        mBeanServer = tmp;
+        M_BEAN_SERVER = tmp;
     }
 
     public static MBeanServer getMBeanServer() {
-        return mBeanServer;
+        return M_BEAN_SERVER;
     }
 
-    private static final MBeanServer mBeanServer;
+    private static final MBeanServer M_BEAN_SERVER;
 }

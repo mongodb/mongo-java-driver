@@ -49,6 +49,5 @@ public class MongoDeleteMessage extends MongoRequestMessage {
 
         addDocument(query, serializer);
     }
-
-
 }
+
