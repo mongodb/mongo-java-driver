@@ -33,45 +33,45 @@ public class DBCollection {
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
-    DBCollection(MongoCollection<DBObject> collection, DB database) {
+    DBCollection(final MongoCollection<DBObject> collection, final DB database) {
         this.collection = collection;
         this.database = database;
     }
 
-    public WriteResult insert(DBObject document, WriteConcern writeConcern) {
+    public WriteResult insert(final DBObject document, final WriteConcern writeConcern) {
         return insert(Arrays.asList(document), writeConcern);
     }
 
-    public WriteResult insert(DBObject... documents) {
+    public WriteResult insert(final DBObject... documents) {
         return insert(Arrays.asList(documents), getWriteConcern());
     }
 
-    public WriteResult insert(WriteConcern writeConcern, DBObject... documents) {
+    public WriteResult insert(final WriteConcern writeConcern, final DBObject... documents) {
         return insert(documents, writeConcern);
     }
 
-    public WriteResult insert(DBObject[] documents, WriteConcern writeConcern) {
+    public WriteResult insert(final DBObject[] documents, final WriteConcern writeConcern) {
         return insert(Arrays.asList(documents), writeConcern);
     }
 
-    public WriteResult insert(List<DBObject> documents) {
+    public WriteResult insert(final List<DBObject> documents) {
         return insert(documents, getWriteConcern());
     }
 
-    public WriteResult insert(List<DBObject> documents, WriteConcern writeConcern) {
-        MongoInsert<DBObject> insert = new MongoInsert<DBObject>(documents).writeConcern(writeConcern.toNew());
-        InsertResult result = collection.insert(insert);
+    public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern) {
+        final MongoInsert<DBObject> insert = new MongoInsert<DBObject>(documents).writeConcern(writeConcern.toNew());
+        final InsertResult result = collection.insert(insert);
         return new WriteResult(result, writeConcern.toNew());
     }
 
 
-    public WriteResult remove(DBObject filter, WriteConcern writeConcern) {
-    MongoRemove remove = new MongoRemove(DBObjects.toQueryFilterDocument(filter));
-        RemoveResult result = collection.remove(remove);
+    public WriteResult remove(final DBObject filter, final WriteConcern writeConcern) {
+    final MongoRemove remove = new MongoRemove(DBObjects.toQueryFilterDocument(filter));
+        final RemoveResult result = collection.remove(remove);
         return new WriteResult(result, writeConcern.toNew());
     }
 
-    public DBCursor find(DBObject filter, DBObject fields) {
+    public DBCursor find(final DBObject filter, final DBObject fields) {
         return new DBCursor(collection,
                 new MongoFind().
                         where(DBObjects.toQueryFilterDocument(filter)).

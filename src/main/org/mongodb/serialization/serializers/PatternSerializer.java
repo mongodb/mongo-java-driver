@@ -36,7 +36,7 @@ public class PatternSerializer implements Serializer<Pattern> {
 
     @Override
     public Pattern deserialize(final BSONReader reader, final BsonSerializationOptions options) {
-        RegularExpression regularExpression = reader.readRegularExpression();
+        final RegularExpression regularExpression = reader.readRegularExpression();
         return Pattern.compile(regularExpression.getPattern(), getOptionsAsInt(regularExpression));
     }
 
@@ -45,35 +45,37 @@ public class PatternSerializer implements Serializer<Pattern> {
         return Pattern.class;
     }
 
-    public String getOptionsAsString(Pattern pattern) {
+    public String getOptionsAsString(final Pattern pattern) {
         int flags = pattern.flags();
-        StringBuilder buf = new StringBuilder();
+        final StringBuilder buf = new StringBuilder();
 
-        for( RegexFlag flag : RegexFlag.values() ) {
-            if( ( pattern.flags() & flag.javaFlag ) > 0 ) {
-                buf.append( flag.flagChar );
+        for (final RegexFlag flag : RegexFlag.values()) {
+            if ((pattern.flags() & flag.javaFlag) > 0) {
+                buf.append(flag.flagChar);
                 flags -= flag.javaFlag;
             }
         }
 
-        if( flags > 0 )
-            throw new IllegalArgumentException( "some flags could not be recognized." );
+        if (flags > 0) {
+            throw new IllegalArgumentException("some flags could not be recognized.");
+        }
 
         return buf.toString();
     }
 
-    public static int getOptionsAsInt(RegularExpression regularExpression){
+    public static int getOptionsAsInt(final RegularExpression regularExpression) {
         int optionsInt = 0;
 
         String optionsString = regularExpression.getOptions();
 
-        if ( optionsString == null || optionsString.length() == 0 )
+        if (optionsString == null || optionsString.length() == 0) {
             return optionsInt;
+        }
 
         optionsString = optionsString.toLowerCase();
 
         for (int i = 0; i < optionsString.length(); i++) {
-            RegexFlag flag = RegexFlag.getByCharacter(optionsString.charAt(i));
+            final RegexFlag flag = RegexFlag.getByCharacter(optionsString.charAt(i));
             if (flag != null) {
                 optionsInt |= flag.javaFlag;
                 if (flag.unsupported != null) {
@@ -83,7 +85,7 @@ public class PatternSerializer implements Serializer<Pattern> {
             }
             else {
                 // TODO: throw a better exception here
-                throw new IllegalArgumentException("unrecognized flag ["+optionsString.charAt( i ) + "] " + (int)optionsString.charAt(i));
+                throw new IllegalArgumentException("unrecognized flag [" + optionsString.charAt(i) + "] " + (int) optionsString.charAt(i));
             }
         }
         return optionsInt;
@@ -93,32 +95,33 @@ public class PatternSerializer implements Serializer<Pattern> {
     private static final int GLOBAL_FLAG = 256;
 
     private static enum RegexFlag {
-        CANON_EQ( Pattern.CANON_EQ, 'c', "Pattern.CANON_EQ" ),
-        UNIX_LINES(Pattern.UNIX_LINES, 'd', "Pattern.UNIX_LINES" ),
-        GLOBAL( GLOBAL_FLAG, 'g', null ),
-        CASE_INSENSITIVE( Pattern.CASE_INSENSITIVE, 'i', null ),
-        MULTILINE(Pattern.MULTILINE, 'm', null ),
-        DOTALL( Pattern.DOTALL, 's', "Pattern.DOTALL" ),
-        LITERAL( Pattern.LITERAL, 't', "Pattern.LITERAL" ),
-        UNICODE_CASE( Pattern.UNICODE_CASE, 'u', "Pattern.UNICODE_CASE" ),
-        COMMENTS( Pattern.COMMENTS, 'x', null );
+        CANON_EQ(Pattern.CANON_EQ, 'c', "Pattern.CANON_EQ"),
+        UNIX_LINES(Pattern.UNIX_LINES, 'd', "Pattern.UNIX_LINES"),
+        GLOBAL(GLOBAL_FLAG, 'g', null),
+        CASE_INSENSITIVE(Pattern.CASE_INSENSITIVE, 'i', null),
+        MULTILINE(Pattern.MULTILINE, 'm', null),
+        DOTALL(Pattern.DOTALL, 's', "Pattern.DOTALL"),
+        LITERAL(Pattern.LITERAL, 't', "Pattern.LITERAL"),
+        UNICODE_CASE(Pattern.UNICODE_CASE, 'u', "Pattern.UNICODE_CASE"),
+        COMMENTS(Pattern.COMMENTS, 'x', null);
 
         private static final Map<Character, RegexFlag> byCharacter = new HashMap<Character, RegexFlag>();
 
         static {
-            for (RegexFlag flag : values()) {
+            for (final RegexFlag flag : values()) {
                 byCharacter.put(flag.flagChar, flag);
             }
         }
 
-        public static RegexFlag getByCharacter(char ch) {
+        public static RegexFlag getByCharacter(final char ch) {
             return byCharacter.get(ch);
         }
+
         public final int javaFlag;
         public final char flagChar;
         public final String unsupported;
 
-        RegexFlag( int f, char ch, String u ) {
+        RegexFlag(final int f, final char ch, final String u) {
             javaFlag = f;
             flagChar = ch;
             unsupported = u;

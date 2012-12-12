@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -31,7 +31,7 @@ public class CountCommand extends AbstractCommand {
     private final MongoNamespace namespace;
     private final MongoFind find;
 
-    public CountCommand(final MongoClient mongoClient, MongoNamespace namespace) {
+    public CountCommand(final MongoClient mongoClient, final MongoNamespace namespace) {
         this(mongoClient, namespace, new MongoFind());
     }
 
@@ -49,14 +49,15 @@ public class CountCommand extends AbstractCommand {
 
     @Override
     public MongoCommand asMongoCommand() {
-        MongoCommandDocument document =new MongoCommandDocument("count", namespace.getCollectionName());
+        final MongoCommandDocument document = new MongoCommandDocument("count", namespace.getCollectionName());
 
         if (find.getFilter() != null) {
             document.put("query", find.getFilter().toMongoDocument());
         }
 
-        if ( find.getLimit() > 0 )
-            document.put( "limit" , find.getLimit());
+        if (find.getLimit() > 0) {
+            document.put("limit", find.getLimit());
+        }
 
         if (find.getNumToSkip() > 0) {
             document.put("skip", find.getNumToSkip());

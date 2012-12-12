@@ -41,32 +41,32 @@ public class MongoChannel {
     private SocketChannel socketChannel;
     private final BufferPool<ByteBuffer> pool;
 
-    public MongoChannel(final ServerAddress address, BufferPool<ByteBuffer> pool) {
+    public MongoChannel(final ServerAddress address, final BufferPool<ByteBuffer> pool) {
         this.address = address;
         this.pool = pool;
     }
 
     // TODO: piggy back getLastError onto same buffer
-    public void sendMessage(MongoRequestMessage message) throws IOException {
+    public void sendMessage(final MongoRequestMessage message) throws IOException {
         if (socketChannel == null) {
             open();
         }
 
-        OutputBuffer buffer = message.getBuffer();
+        final OutputBuffer buffer = message.getBuffer();
         buffer.pipe(socketChannel);
         message.done();
     }
 
-    public <T> MongoReplyMessage<T> receiveMessage(Serializer<T> serializer) throws IOException {
-        ByteBuffer headerByteBuffer = pool.get(36);
+    public <T> MongoReplyMessage<T> receiveMessage(final Serializer<T> serializer) throws IOException {
+        final ByteBuffer headerByteBuffer = pool.get(36);
         int bytesRead = socketChannel.read(headerByteBuffer);
         if (bytesRead < headerByteBuffer.limit()) {
             throw new MongoException("Unable to read message header: " + bytesRead);
         }
 
         headerByteBuffer.flip();
-        InputBuffer headerInputBuffer = new ByteBufferInput(headerByteBuffer);
-        int length = headerInputBuffer.readInt32();
+        final InputBuffer headerInputBuffer = new ByteBufferInput(headerByteBuffer);
+        final int length = headerInputBuffer.readInt32();
         headerInputBuffer.setPosition(0);
 
         ByteBuffer bodyByteBuffer = null;
@@ -83,7 +83,7 @@ public class MongoChannel {
             bodyInputBuffer = new ByteBufferInput(bodyByteBuffer);
         }
 
-        MongoReplyMessage<T> retVal = new MongoReplyMessage<T>(headerInputBuffer, bodyInputBuffer, serializer);
+        final MongoReplyMessage<T> retVal = new MongoReplyMessage<T>(headerInputBuffer, bodyInputBuffer, serializer);
 
         pool.done(headerByteBuffer);
         if (bodyByteBuffer != null) {

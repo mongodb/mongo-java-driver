@@ -23,7 +23,7 @@ import org.mongodb.ServerAddress;
 @Immutable
 public class Node {
 
-    Node(float pingTime, ServerAddress addr, int maxBsonObjectSize, boolean ok) {
+    Node(final float pingTime, final ServerAddress addr, final int maxBsonObjectSize, final boolean ok) {
         this._pingTime = pingTime;
         this._addr = addr;
         this._maxBsonObjectSize = maxBsonObjectSize;
@@ -49,15 +49,27 @@ public class Node {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final Node node = (Node) o;
 
-        if (_maxBsonObjectSize != node._maxBsonObjectSize) return false;
-        if (_ok != node._ok) return false;
-        if (Float.compare(node._pingTime, _pingTime) != 0) return false;
-        if (!_addr.equals(node._addr)) return false;
+        if (_maxBsonObjectSize != node._maxBsonObjectSize) {
+            return false;
+        }
+        if (_ok != node._ok) {
+            return false;
+        }
+        if (Float.compare(node._pingTime, _pingTime) != 0) {
+            return false;
+        }
+        if (!_addr.equals(node._addr)) {
+            return false;
+        }
 
         return true;
     }
@@ -72,7 +84,7 @@ public class Node {
     }
 
     public String toJSON() {
-        StringBuilder buf = new StringBuilder();
+        final StringBuilder buf = new StringBuilder();
         buf.append("{");
         buf.append("address:'").append(_addr).append("', ");
         buf.append("ok:").append(_ok).append(", ");

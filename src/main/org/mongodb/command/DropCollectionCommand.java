@@ -27,7 +27,7 @@ import org.mongodb.operation.MongoCommand;
 public class DropCollectionCommand extends AbstractCommand {
     private final String collectionName;
 
-    public DropCollectionCommand(MongoDatabase database, final String collectionName) {
+    public DropCollectionCommand(final MongoDatabase database, final String collectionName) {
         super(database.getClient(), database.getName());
         this.collectionName = collectionName;
     }

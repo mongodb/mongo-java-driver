@@ -27,15 +27,15 @@ public class DBObjects {
     private DBObjects() {
     }
 
-    public static MongoDocument toDocument(DBObject obj) {
+    public static MongoDocument toDocument(final DBObject obj) {
         return new MongoDocument();
     }
 
-    public static MongoQueryFilterDocument toQueryFilterDocument(DBObject obj) {
+    public static MongoQueryFilterDocument toQueryFilterDocument(final DBObject obj) {
         return new MongoQueryFilterDocument();
     }
 
-    public static DBObject toDBObject(MongoDocument document) {
+    public static DBObject toDBObject(final MongoDocument document) {
         return new BasicDBObject();
     }
 

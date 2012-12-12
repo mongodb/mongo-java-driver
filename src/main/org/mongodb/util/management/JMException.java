@@ -23,7 +23,7 @@ package org.mongodb.util.management;
 public class JMException extends Exception {
     static final long serialVersionUID = -2052972874393271421L;
 
-    public JMException(Throwable cause) {
+    public JMException(final Throwable cause) {
         super(cause);
     }
 }

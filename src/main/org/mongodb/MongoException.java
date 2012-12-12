@@ -19,6 +19,7 @@ package org.mongodb;
 
 /**
  * A general exception raised in Mongo
+ *
  * @author antoine
  */
 public class MongoException extends RuntimeException {
@@ -28,39 +29,36 @@ public class MongoException extends RuntimeException {
     /**
      * @param msg the message
      */
-    public MongoException( String msg ){
-        super( msg );
+    public MongoException(final String msg) {
+        super(msg);
         _code = -3;
     }
 
     /**
-     *
      * @param code the error code
-     * @param msg the message
+     * @param msg  the message
      */
-    public MongoException( int code , String msg ){
-        super( msg );
+    public MongoException(final int code, final String msg) {
+        super(msg);
         _code = code;
     }
 
     /**
-     *
      * @param msg the message
-     * @param t the throwable cause
+     * @param t   the throwable cause
      */
-    public MongoException( String msg , Throwable t ){
-        super( msg , _massage( t ) );
+    public MongoException(final String msg, final Throwable t) {
+        super(msg, _massage(t));
         _code = -4;
     }
 
     /**
-     *
      * @param code the error code
-     * @param msg the message
-     * @param t the throwable cause
+     * @param msg  the message
+     * @param t    the throwable cause
      */
-    public MongoException( int code , String msg , Throwable t ){
-        super( msg , _massage( t ) );
+    public MongoException(final int code, final String msg, final Throwable t) {
+        super(msg, _massage(t));
         _code = code;
     }
 
@@ -80,9 +78,10 @@ public class MongoException extends RuntimeException {
 //    }
 
 
-    static Throwable _massage( Throwable t ){
-        if ( t instanceof Network )
-            return ((Network)t)._ioe;
+    static Throwable _massage(final Throwable t) {
+        if (t instanceof Network) {
+            return ((Network) t)._ioe;
+        }
         return t;
     }
 
@@ -94,21 +93,19 @@ public class MongoException extends RuntimeException {
         private static final long serialVersionUID = -4415279469780082174L;
 
         /**
-         *
          * @param msg the message
          * @param ioe the cause
          */
-        public Network( String msg , java.io.IOException ioe ){
-            super( -2 , msg , ioe );
+        public Network(final String msg, final java.io.IOException ioe) {
+            super(-2, msg, ioe);
             _ioe = ioe;
         }
 
         /**
-         *
          * @param ioe the cause
          */
-        public Network( java.io.IOException ioe ){
-            super( ioe.toString() , ioe );
+        public Network(final java.io.IOException ioe) {
+            super(ioe.toString(), ioe);
             _ioe = ioe;
         }
 
@@ -123,12 +120,11 @@ public class MongoException extends RuntimeException {
         private static final long serialVersionUID = -4415279469780082174L;
 
         /**
-         *
          * @param code the error code
-         * @param msg the message
+         * @param msg  the message
          */
-        public DuplicateKey( int code , String msg ){
-            super( code , msg );
+        public DuplicateKey(final int code, final String msg) {
+            super(code, msg);
         }
     }
 
@@ -143,18 +139,18 @@ public class MongoException extends RuntimeException {
         private final ServerAddress serverAddress;
 
         /**
-         *
-         * @param cursorId cursor
+         * @param cursorId      cursor
          * @param serverAddress server address
          */
-        public CursorNotFound(long cursorId, ServerAddress serverAddress){
-            super( -5 , "cursor " + cursorId + " not found on server " + serverAddress );
+        public CursorNotFound(final long cursorId, final ServerAddress serverAddress) {
+            super(-5, "cursor " + cursorId + " not found on server " + serverAddress);
             this.cursorId = cursorId;
             this.serverAddress = serverAddress;
         }
 
         /**
          * Get the cursor id that wasn't found.
+         *
          * @return
          */
         public long getCursorId() {
@@ -163,6 +159,7 @@ public class MongoException extends RuntimeException {
 
         /**
          * The server address where the cursor is.
+         *
          * @return
          */
         public ServerAddress getServerAddress() {
@@ -172,9 +169,10 @@ public class MongoException extends RuntimeException {
 
     /**
      * Gets the exception code
+     *
      * @return
      */
-    public int getCode(){
+    public int getCode() {
         return _code;
     }
 

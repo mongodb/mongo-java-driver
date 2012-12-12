@@ -21,15 +21,15 @@ package org.mongodb.util.management;
  */
 public class NullMBeanServer implements MBeanServer {
     @Override
-    public boolean isRegistered(String mBeanName) {
+    public boolean isRegistered(final String mBeanName) {
         return false;
     }
 
     @Override
-    public void unregisterMBean(String mBeanName) {
+    public void unregisterMBean(final String mBeanName) {
     }
 
     @Override
-    public void registerMBean(Object mBean, String mBeanName) {
+    public void registerMBean(final Object mBean, final String mBeanName) {
     }
 }

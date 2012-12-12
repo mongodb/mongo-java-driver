@@ -26,9 +26,9 @@ import org.mongodb.serialization.Serializer;
 import java.util.Collection;
 
 public class MongoDeleteMessage extends MongoRequestMessage {
-    public MongoDeleteMessage(String collectionName, MongoRemove remove, OutputBuffer buffer,
-                              Serializer<MongoDocument> serializer) {
-        super(collectionName, OpCode.OP_DELETE,  remove.getFilter().toMongoDocument(), buffer);
+    public MongoDeleteMessage(final String collectionName, final MongoRemove remove, final OutputBuffer buffer,
+                              final Serializer<MongoDocument> serializer) {
+        super(collectionName, OpCode.OP_DELETE, remove.getFilter().toMongoDocument(), buffer);
         writeDelete(serializer);
         backpatchMessageLength();
     }
@@ -37,13 +37,15 @@ public class MongoDeleteMessage extends MongoRequestMessage {
         buffer.writeInt(0); // reserved
         buffer.writeCString(collectionName);
 
-        Collection<String> keys = query.keySet();
+        final Collection<String> keys = query.keySet();
 
-        if (keys.size() == 1 && keys.iterator().next().equals("_id") &&
-                query.get(keys.iterator().next()) instanceof ObjectId)
+        if (keys.size() == 1 && keys.iterator().next().equals("_id")
+                && query.get(keys.iterator().next()) instanceof ObjectId) {
             buffer.writeInt(1);
-        else
+        }
+        else {
             buffer.writeInt(0);
+        }
 
         addDocument(query, serializer);
     }

@@ -23,20 +23,20 @@ import org.bson.util.annotations.Immutable;
  * NOT PART OF PUBLIC API YET
  */
 @Immutable
-public class ReplicaSetErrorStatus{
+public class ReplicaSetErrorStatus {
     final boolean ok;
     final String error;
 
-    ReplicaSetErrorStatus(boolean ok, String error){
+    ReplicaSetErrorStatus(final boolean ok, final String error) {
         this.ok = ok;
         this.error = error;
     }
 
-    public boolean isOk(){
+    public boolean isOk() {
         return ok;
     }
 
-    public String getError(){
+    public String getError() {
         return error;
     }
 }

@@ -28,14 +28,15 @@ import org.mongodb.serialization.PrimitiveSerializers;
 public class FindAndUpdateCommand<T> extends FindAndModifyCommand<T> {
     private final MongoFindAndUpdate findAndUpdate;
     public FindAndUpdateCommand(final MongoClient mongoClient, final MongoNamespace namespace,
-                                final MongoFindAndUpdate findAndUpdate, PrimitiveSerializers primitiveSerializers, Serializer<T> serializer) {
+                                final MongoFindAndUpdate findAndUpdate, final PrimitiveSerializers primitiveSerializers,
+                                final Serializer<T> serializer) {
         super(mongoClient, namespace, findAndUpdate, primitiveSerializers, serializer);
         this.findAndUpdate = findAndUpdate;
     }
 
     @Override
     public MongoCommand asMongoCommand() {
-        MongoCommandDocument cmd = getBaseCommandDocument();
+        final MongoCommandDocument cmd = getBaseCommandDocument();
         cmd.put("update", findAndUpdate.getUpdateOperations());
         return cmd;
     }

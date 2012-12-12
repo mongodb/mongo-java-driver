@@ -19,7 +19,12 @@ package org.mongodb.util.management.jmx;
 import org.mongodb.util.management.JMException;
 import org.mongodb.util.management.MBeanServer;
 
-import javax.management.*;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 
 /**
@@ -27,12 +32,12 @@ import java.lang.management.ManagementFactory;
  */
 public class JMXMBeanServer implements MBeanServer {
     @Override
-    public boolean isRegistered(String mBeanName) throws JMException {
+    public boolean isRegistered(final String mBeanName) throws JMException {
         return server.isRegistered(createObjectName(mBeanName));
     }
 
     @Override
-    public void unregisterMBean(String mBeanName) throws JMException {
+    public void unregisterMBean(final String mBeanName) throws JMException {
         try {
             server.unregisterMBean(createObjectName(mBeanName));
         } catch (InstanceNotFoundException e) {
@@ -43,7 +48,7 @@ public class JMXMBeanServer implements MBeanServer {
     }
 
     @Override
-    public void registerMBean(Object mBean, String mBeanName) throws JMException {
+    public void registerMBean(final Object mBean, final String mBeanName) throws JMException {
         try {
             server.registerMBean(mBean, createObjectName(mBeanName));
         } catch (InstanceAlreadyExistsException e) {
@@ -55,7 +60,7 @@ public class JMXMBeanServer implements MBeanServer {
         }
     }
 
-    private ObjectName createObjectName(String mBeanName) throws JMException {
+    private ObjectName createObjectName(final String mBeanName) throws JMException {
         try {
             return new ObjectName(mBeanName);
         } catch (MalformedObjectNameException e) {

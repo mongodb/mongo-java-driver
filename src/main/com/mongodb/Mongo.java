@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class Mongo {
     private final SingleServerMongoClient client;
-    private final ConcurrentMap<String,DB> dbCache = new ConcurrentHashMap<String,DB>();
+    private final ConcurrentMap<String, DB> dbCache = new ConcurrentHashMap<String, DB>();
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
@@ -47,15 +47,17 @@ public class Mongo {
         return writeConcern;
     }
 
-    public DB getDB(String dbName) {
+    public DB getDB(final String dbName) {
         DB db = dbCache.get(dbName);
-        if (db != null)
+        if (db != null) {
             return db;
+        }
 
         db = new DB(this, dbName);
-        DB temp = dbCache.putIfAbsent(dbName, db);
-        if (temp != null)
+        final DB temp = dbCache.putIfAbsent(dbName, db);
+        if (temp != null) {
             return temp;
+        }
         return db;
     }
 
@@ -64,7 +66,7 @@ public class Mongo {
     }
 
     void requestStart() {
-       client.bindToConnection();
+        client.bindToConnection();
     }
 
     void requestDone() {

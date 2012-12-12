@@ -53,11 +53,11 @@ public class SingleServerMongoClient implements MongoClient {
     private final BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool(24);
     private final ServerAddress serverAddress;
     private final PrimitiveSerializers primitiveSerializers;
-    private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
-    private ReadPreference readPreference = ReadPreference.primary();
+    private final WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
+    private final ReadPreference readPreference = ReadPreference.primary();
     private final ThreadLocal<SingleChannelMongoClient> boundClient = new ThreadLocal<SingleChannelMongoClient>();
 
-    public SingleServerMongoClient(ServerAddress serverAddress) {
+    public SingleServerMongoClient(final ServerAddress serverAddress) {
         this.serverAddress = serverAddress;
         channelPool = new SimplePool<MongoChannel>(serverAddress.toString(), 100) {
             @Override
@@ -153,7 +153,7 @@ public class SingleServerMongoClient implements MongoClient {
         return new SingleChannelMongoClient(getChannelPool(), getBufferPool(), primitiveSerializers, writeConcern, readPreference);
     }
 
-    private void releaseChannelClient(SingleChannelMongoClient mongoClient) {
+    private void releaseChannelClient(final SingleChannelMongoClient mongoClient) {
         if (boundClient.get() != null) {
             if (boundClient.get() != mongoClient) {
                 throw new IllegalArgumentException("Can't unbind from a different client than you are bound to");
@@ -168,8 +168,8 @@ public class SingleServerMongoClient implements MongoClient {
     private class SingleServerMongoOperations implements MongoOperations {
         @Override
         public MongoDocument executeCommand(final String database, final MongoCommandOperation commandOperation,
-                                            Serializer<MongoDocument> serializer) {
-            SingleChannelMongoClient mongoClient = getChannelClient();
+                                            final Serializer<MongoDocument> serializer) {
+            final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().executeCommand(database, commandOperation, serializer);
             } finally {
@@ -179,9 +179,9 @@ public class SingleServerMongoClient implements MongoClient {
 
         @Override
         public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
-                                        Serializer<MongoDocument> baseSerializer,
-                                        Serializer<T> serializer) {
-            SingleChannelMongoClient mongoClient = getChannelClient();
+                                        final Serializer<MongoDocument> baseSerializer,
+                                        final Serializer<T> serializer) {
+            final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().query(namespace, find, baseSerializer, serializer);
             } finally {
@@ -190,8 +190,8 @@ public class SingleServerMongoClient implements MongoClient {
         }
 
         @Override
-        public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> serializer) {
-            SingleChannelMongoClient mongoClient = getChannelClient();
+        public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer) {
+            final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().getMore(namespace, getMore, serializer);
             } finally {
@@ -201,8 +201,8 @@ public class SingleServerMongoClient implements MongoClient {
 
         @Override
         public <T> InsertResult insert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                       Serializer<T> serializer) {
-            SingleChannelMongoClient mongoClient = getChannelClient();
+                                       final Serializer<T> serializer) {
+            final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().insert(namespace, insert, serializer);
             } finally {
@@ -211,8 +211,8 @@ public class SingleServerMongoClient implements MongoClient {
         }
 
         @Override
-        public UpdateResult update(final MongoNamespace namespace, MongoUpdate update, Serializer<MongoDocument> serializer) {
-            SingleChannelMongoClient mongoClient = getChannelClient();
+        public UpdateResult update(final MongoNamespace namespace, final MongoUpdate update, final Serializer<MongoDocument> serializer) {
+            final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().update(namespace, update, serializer);
             } finally {
@@ -222,8 +222,8 @@ public class SingleServerMongoClient implements MongoClient {
 
         @Override
         public RemoveResult remove(final MongoNamespace namespace, final MongoRemove remove,
-                                   Serializer<MongoDocument> serializer) {
-            SingleChannelMongoClient mongoClient = getChannelClient();
+                                   final Serializer<MongoDocument> serializer) {
+            final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().remove(namespace, remove, serializer);
             } finally {
@@ -232,8 +232,8 @@ public class SingleServerMongoClient implements MongoClient {
         }
 
         @Override
-        public void killCursors(MongoKillCursor killCursor) {
-            SingleChannelMongoClient mongoClient = getChannelClient();
+        public void killCursors(final MongoKillCursor killCursor) {
+            final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 mongoClient.getOperations().killCursors(killCursor);
             } finally {

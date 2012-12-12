@@ -24,7 +24,7 @@ import java.util.List;
 // TODO: Should this extend MongoResult, and if so, would have to make it generic
 public class QueryResult<T> {
     private final long cursorId;
-    private List<T> results;
+    private final List<T> results;
 
     public QueryResult(final MongoReplyMessage<T> replyMessage) {
         cursorId = replyMessage.getCursorId();

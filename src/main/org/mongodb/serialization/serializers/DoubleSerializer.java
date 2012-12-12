@@ -25,7 +25,7 @@ import org.mongodb.serialization.Serializer;
 public class DoubleSerializer implements Serializer<Double> {
     @Override
     public void serialize(final BSONWriter bsonWriter, final Double value, final BsonSerializationOptions options) {
-        bsonWriter.writeDouble((Double) value);
+        bsonWriter.writeDouble(value);
     }
 
     @Override

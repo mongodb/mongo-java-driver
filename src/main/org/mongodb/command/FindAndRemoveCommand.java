@@ -27,13 +27,14 @@ import org.mongodb.serialization.PrimitiveSerializers;
 
 public class FindAndRemoveCommand<T> extends FindAndModifyCommand<T> {
     public FindAndRemoveCommand(final MongoClient mongoClient, final MongoNamespace namespace,
-                                final MongoFindAndModify findAndModify, PrimitiveSerializers primitiveSerializers, Serializer<T> serializer) {
+                                final MongoFindAndModify findAndModify, final PrimitiveSerializers primitiveSerializers,
+                                final Serializer<T> serializer) {
         super(mongoClient, namespace, findAndModify, primitiveSerializers, serializer);
     }
 
     @Override
     public MongoCommand asMongoCommand() {
-        MongoCommandDocument cmd = getBaseCommandDocument();
+        final MongoCommandDocument cmd = getBaseCommandDocument();
         cmd.put("remove", true);
         return cmd;
     }

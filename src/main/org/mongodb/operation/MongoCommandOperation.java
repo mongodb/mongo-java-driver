@@ -24,7 +24,7 @@ import org.mongodb.ReadPreference;
 public class MongoCommandOperation extends MongoQuery {
     private final MongoCommand command;
 
-    public MongoCommandOperation(MongoCommand commandDocument) {
+    public MongoCommandOperation(final MongoCommand commandDocument) {
         this.command = commandDocument;
         batchSize = -1;
     }

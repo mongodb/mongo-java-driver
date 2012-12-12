@@ -25,9 +25,9 @@ import org.mongodb.ServerAddress;
  */
 public class MongoServerAdapter {
 
-    private SingleServerMongoClient impl;
+    private final SingleServerMongoClient impl;
 
-    public MongoServerAdapter(ServerAddress serverAddress) {
+    public MongoServerAdapter(final ServerAddress serverAddress) {
         impl = new SingleServerMongoClient(serverAddress);
     }
 

@@ -25,7 +25,7 @@ import org.mongodb.serialization.Serializer;
 public class StringSerializer implements Serializer<String> {
     @Override
     public void serialize(final BSONWriter bsonWriter, final String value, final BsonSerializationOptions options) {
-        bsonWriter.writeString((String) value);
+        bsonWriter.writeString(value);
     }
 
     @Override

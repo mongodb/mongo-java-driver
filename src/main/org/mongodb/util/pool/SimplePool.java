@@ -28,17 +28,21 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class SimplePool<T> {
 
-    /** Initializes a new pool of objects.
+    /**
+     * Initializes a new pool of objects.
+     *
      * @param name name for the pool
      * @param size max to hold to at any given time. if < 0 then no limit
      */
-    public SimplePool(String name, int size){
+    public SimplePool(final String name, final int size) {
         _name = name;
         _size = size;
         _sem = new Semaphore(size);
     }
 
-    /** Creates a new object of this pool's type.  Implementations should throw a runtime exception if unable to create.
+    /**
+     * Creates a new object of this pool's type.  Implementations should throw a runtime exception if unable to create.
+     *
      * @return the new object.
      */
     protected abstract T createNew();
@@ -46,27 +50,28 @@ public abstract class SimplePool<T> {
     /**
      * override this if you need to do any cleanup
      */
-    public void cleanup( T t ) {
+    public void cleanup(final T t) {
     }
 
     /**
-     * Pick a member of {@code _avail}.  This method is called with a lock held on {@code _avail}, so it may be used safely.
+     * Pick a member of {@code _avail}.  This method is called with a lock held on {@code _avail}, so it may be used
+     * safely.
      *
      * @param recommended the recommended member to choose.
-     * @param couldCreate  true if there is room in the pool to create a new object
+     * @param couldCreate true if there is room in the pool to create a new object
      * @return >= 0 the one to use, -1 create a new one
      */
-    protected int pick( int recommended , boolean couldCreate ){
+    protected int pick(final int recommended, final boolean couldCreate) {
         return recommended;
     }
 
     /**
-     * call done when you are done with an object form the pool
-     * if there is room and the object is ok will get added
+     * call done when you are done with an object form the pool if there is room and the object is ok will get added
+     *
      * @param t Object to add
      */
-    public void done( T t ){
-        synchronized ( this ) {
+    public void done(final T t) {
+        synchronized (this) {
             if (_closed) {
                 cleanup(t);
                 return;
@@ -88,25 +93,26 @@ public abstract class SimplePool<T> {
         assert getTotal() <= getMaxSize();
     }
 
-    public void remove( T t ) {
+    public void remove(final T t) {
         done(t);
     }
 
-    /** Gets an object from the pool - will block if none are available
+    /**
+     * Gets an object from the pool - will block if none are available
+     *
      * @return An object from the pool
      */
     public T get() throws InterruptedException {
         return get(-1);
     }
 
-    /** Gets an object from the pool - will block if none are available
-     * @param waitTime
-     *        negative - forever
-     *        0        - return immediately no matter what
-     *        positive ms to wait
+    /**
+     * Gets an object from the pool - will block if none are available
+     *
+     * @param waitTime negative - forever 0        - return immediately no matter what positive ms to wait
      * @return An object from the pool, or null if can't get one in the given waitTime
      */
-    public T get(long waitTime) throws InterruptedException {
+    public T get(final long waitTime) throws InterruptedException {
         if (!permitAcquired(waitTime)) {
             return null;
         }
@@ -114,11 +120,12 @@ public abstract class SimplePool<T> {
         synchronized (this) {
             assertConditions();
 
-            int toTake = pick(_avail.size() - 1, getTotal() < getMaxSize());
-            T t;
+            final int toTake = pick(_avail.size() - 1, getTotal() < getMaxSize());
+            final T t;
             if (toTake >= 0) {
                 t = _avail.remove(toTake);
-            } else {
+            }
+            else {
                 t = createNewAndReleasePermitIfFailure();
             }
             _out.add(t);
@@ -129,7 +136,7 @@ public abstract class SimplePool<T> {
 
     private T createNewAndReleasePermitIfFailure() {
         try {
-            T newMember = createNew();
+            final T newMember = createNew();
             if (newMember == null) {
                 throw new IllegalStateException("null pool members are not allowed");
             }
@@ -146,19 +153,24 @@ public abstract class SimplePool<T> {
     private boolean permitAcquired(final long waitTime) throws InterruptedException {
         if (waitTime > 0) {
             return _sem.tryAcquire(waitTime, TimeUnit.MILLISECONDS);
-        } else if (waitTime < 0) {
+        }
+        else if (waitTime < 0) {
             _sem.acquire();
             return true;
-        } else {
+        }
+        else {
             return _sem.tryAcquire();
         }
     }
 
-    /** Clears the pool of all objects. */
-    protected synchronized void close(){
+    /**
+     * Clears the pool of all objects.
+     */
+    protected synchronized void close() {
         _closed = true;
-        for (T t : _avail)
+        for (final T t : _avail) {
             cleanup(t);
+        }
         _avail.clear();
         _out.clear();
     }
@@ -167,29 +179,28 @@ public abstract class SimplePool<T> {
         return _name;
     }
 
-    public synchronized int getTotal(){
+    public synchronized int getTotal() {
         return _avail.size() + _out.size();
     }
 
-    public synchronized int getInUse(){
+    public synchronized int getInUse() {
         return _out.size();
     }
 
-    public synchronized int getAvailable(){
+    public synchronized int getAvailable() {
         return _avail.size();
     }
 
-    public int getMaxSize(){
+    public int getMaxSize() {
         return _size;
     }
 
-    public synchronized String toString(){
-        StringBuilder buf = new StringBuilder();
+    public synchronized String toString() {
+        final StringBuilder buf = new StringBuilder();
         buf.append("pool: ").append(_name)
                 .append(" maxToKeep: ").append(_size)
                 .append(" avail ").append(_avail.size())
-                .append(" out ").append(_out.size())
-        ;
+                .append(" out ").append(_out.size());
         return buf.toString();
     }
 

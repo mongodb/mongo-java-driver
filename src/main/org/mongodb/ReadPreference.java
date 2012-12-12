@@ -50,8 +50,7 @@ public abstract class ReadPreference {
     abstract ReplicaSetNode getNode(ReplicaSet set);
 
     /**
-     * Preference to read from primary only.
-     * Cannot be combined with tags.
+     * Preference to read from primary only. Cannot be combined with tags.
      *
      * @author breinero
      */
@@ -80,7 +79,7 @@ public abstract class ReadPreference {
         }
 
         @Override
-        ReplicaSetNode getNode(ReplicaSet set) {
+        ReplicaSetNode getNode(final ReplicaSet set) {
             return set.getMaster();
         }
 
@@ -113,7 +112,7 @@ public abstract class ReadPreference {
     /**
      * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
      */
-    public static TaggableReadPreference primaryPreferred(MongoDocument firstTagSet, MongoDocument... remainingTagSets) {
+    public static TaggableReadPreference primaryPreferred(final MongoDocument firstTagSet, final MongoDocument... remainingTagSets) {
         return new TaggableReadPreference.PrimaryPreferredReadPreference(firstTagSet, remainingTagSets);
     }
 
@@ -127,7 +126,7 @@ public abstract class ReadPreference {
     /**
      * @return ReadPreference which reads secondary respective of tags.
      */
-    public static TaggableReadPreference secondary(MongoDocument firstTagSet, MongoDocument... remainingTagSets) {
+    public static TaggableReadPreference secondary(final MongoDocument firstTagSet, final MongoDocument... remainingTagSets) {
         return new TaggableReadPreference.SecondaryReadPreference(firstTagSet, remainingTagSets);
     }
 
@@ -139,9 +138,10 @@ public abstract class ReadPreference {
     }
 
     /**
-     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
+     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective
+     *         of tags.
      */
-    public static TaggableReadPreference secondaryPreferred(MongoDocument firstTagSet, MongoDocument... remainingTagSets) {
+    public static TaggableReadPreference secondaryPreferred(final MongoDocument firstTagSet, final MongoDocument... remainingTagSets) {
         return new TaggableReadPreference.SecondaryPreferredReadPreference(firstTagSet, remainingTagSets);
     }
 
@@ -178,7 +178,8 @@ public abstract class ReadPreference {
         throw new IllegalArgumentException("No match for read preference of " + name);
     }
 
-    public static TaggableReadPreference valueOf(String name, MongoDocument firstTagSet, final MongoDocument... remainingTagSets) {
+    public static TaggableReadPreference valueOf(String name, final MongoDocument firstTagSet,
+                                                 final MongoDocument... remainingTagSets) {
         if (name == null) {
             throw new IllegalArgumentException();
         }
@@ -204,10 +205,10 @@ public abstract class ReadPreference {
     /**
      * @return ReadPreference which reads nearest node respective of tags.
      */
-    public static TaggableReadPreference nearest(MongoDocument firstTagSet, MongoDocument... remainingTagSets) {
+    public static TaggableReadPreference nearest(final MongoDocument firstTagSet,
+                                                 final MongoDocument... remainingTagSets) {
         return new TaggableReadPreference.NearestReadPreference(firstTagSet, remainingTagSets);
     }
-
 
     private static final ReadPreference _PRIMARY;
     private static final ReadPreference _SECONDARY;

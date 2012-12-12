@@ -25,7 +25,7 @@ public class MongoUpdate extends MongoWrite {
     private boolean isMulti = false;
     private boolean isUpsert = false;
 
-    public MongoUpdate(MongoQueryFilter filter, MongoUpdateOperations updateOperations) {
+    public MongoUpdate(final MongoQueryFilter filter, final MongoUpdateOperations updateOperations) {
 
         this.filter = filter;
         this.updateOperations = updateOperations;

@@ -26,7 +26,7 @@ import org.mongodb.serialization.Serializer;
 public class ObjectIdSerializer implements Serializer<ObjectId> {
     @Override
     public void serialize(final BSONWriter bsonWriter, final ObjectId value, final BsonSerializationOptions options) {
-        bsonWriter.writeObjectId((ObjectId) value);
+        bsonWriter.writeObjectId(value);
     }
 
     @Override

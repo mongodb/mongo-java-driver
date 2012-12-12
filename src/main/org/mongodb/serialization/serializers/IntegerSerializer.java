@@ -25,7 +25,7 @@ import org.mongodb.serialization.Serializer;
 public class IntegerSerializer implements Serializer<Integer> {
     @Override
     public void serialize(final BSONWriter bsonWriter, final Integer value, final BsonSerializationOptions options) {
-        bsonWriter.writeInt32((Integer) value);
+        bsonWriter.writeInt32(value);
     }
 
     @Override

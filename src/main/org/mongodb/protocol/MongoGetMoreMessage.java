@@ -21,13 +21,13 @@ import org.bson.io.OutputBuffer;
 import org.mongodb.operation.GetMore;
 
 public class MongoGetMoreMessage extends MongoRequestMessage {
-    public MongoGetMoreMessage(String collectionName, GetMore getMore, OutputBuffer buffer) {
+    public MongoGetMoreMessage(final String collectionName, final GetMore getMore, final OutputBuffer buffer) {
         super(collectionName, OpCode.OP_GETMORE, buffer);
         writeGetMore(getMore);
         backpatchMessageLength();
     }
 
-    private void writeGetMore(GetMore getMore) {
+    private void writeGetMore(final GetMore getMore) {
         buffer.writeInt(0);
         buffer.writeCString(collectionName);
         buffer.writeInt(getMore.getBatchSize());

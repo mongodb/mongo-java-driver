@@ -27,15 +27,17 @@ import org.mongodb.serialization.PrimitiveSerializers;
 
 public class FindAndReplaceCommand<T> extends FindAndModifyCommand<T> {
     private final MongoFindAndReplace<T> findAndReplace;
+
     public FindAndReplaceCommand(final MongoClient mongoClient, final MongoNamespace namespace,
-                                 final MongoFindAndReplace<T> findAndReplace, PrimitiveSerializers primitiveSerializers, Serializer<T> serializer) {
+                                 final MongoFindAndReplace<T> findAndReplace,
+                                 final PrimitiveSerializers primitiveSerializers, final Serializer<T> serializer) {
         super(mongoClient, namespace, findAndReplace, primitiveSerializers, serializer);
         this.findAndReplace = findAndReplace;
     }
 
     @Override
     public MongoCommand asMongoCommand() {
-        MongoCommandDocument cmd = getBaseCommandDocument();
+        final MongoCommandDocument cmd = getBaseCommandDocument();
         // TODO: I don't think this will work, as we don't have a Class<T> to make sure that serialization works properly
         cmd.put("update", findAndReplace.getReplacement());
         return cmd;

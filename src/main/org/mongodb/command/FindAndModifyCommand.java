@@ -35,7 +35,8 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
     private final Serializer<T> serializer;
 
     public FindAndModifyCommand(final MongoClient mongoClient, final MongoNamespace namespace,
-                                MongoFindAndModify findAndModify, PrimitiveSerializers primitiveSerializers, Serializer<T> serializer) {
+                                final MongoFindAndModify findAndModify, final PrimitiveSerializers primitiveSerializers,
+                                final Serializer<T> serializer) {
         super(mongoClient, namespace.getDatabaseName());
         this.namespace = namespace;
         this.findAndModify = findAndModify;
@@ -52,7 +53,7 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
     }
 
     protected MongoCommandDocument getBaseCommandDocument() {
-        MongoCommandDocument cmd = new MongoCommandDocument("findandmodify", namespace.getCollectionName());
+        final MongoCommandDocument cmd = new MongoCommandDocument("findandmodify", namespace.getCollectionName());
         if (findAndModify.getFilter() != null) {
             cmd.put("query", findAndModify.getFilter());
         }
@@ -92,7 +93,7 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
 
         private final Serializer<T> serializer;
 
-        public FindAndModifyCommandResultSerializer(PrimitiveSerializers primitiveSerializers, Serializer<T> serializer) {
+        public FindAndModifyCommandResultSerializer(final PrimitiveSerializers primitiveSerializers, final Serializer<T> serializer) {
             super(primitiveSerializers);
             this.serializer = serializer;
         }

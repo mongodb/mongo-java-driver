@@ -30,14 +30,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *  Represents the state of a node in the replica set.  Instances of this class are immutable.
- * <p>
+ * Represents the state of a node in the replica set.  Instances of this class are immutable.
+ * <p/>
  * NOT PART OF PUBLIC API YET
  */
 @Immutable
 public class ReplicaSetNode extends Node {
-    ReplicaSetNode(ServerAddress addr, Set<String> names, String setName, float pingTime, boolean ok, boolean isMaster, boolean isSecondary,
-                   LinkedHashMap<String, String> tags, int maxBsonObjectSize) {
+    ReplicaSetNode(final ServerAddress addr, final Set<String> names, final String setName, final float pingTime,
+                   final boolean ok, final boolean isMaster, final boolean isSecondary,
+                   final LinkedHashMap<String, String> tags, final int maxBsonObjectSize) {
         super(pingTime, addr, maxBsonObjectSize, ok);
         this._names = Collections.unmodifiableSet(new HashSet<String>(names));
         this._setName = setName;
@@ -46,9 +47,9 @@ public class ReplicaSetNode extends Node {
         this._tags = Collections.unmodifiableSet(getTagsFromMap(tags));
     }
 
-    private static Set<Tag> getTagsFromMap(LinkedHashMap<String, String> tagMap) {
-        Set<Tag> tagSet = new HashSet<Tag>();
-        for (Map.Entry<String, String> curEntry : tagMap.entrySet()) {
+    private static Set<Tag> getTagsFromMap(final LinkedHashMap<String, String> tagMap) {
+        final Set<Tag> tagSet = new HashSet<Tag>();
+        for (final Map.Entry<String, String> curEntry : tagMap.entrySet()) {
             tagSet.add(new Tag(curEntry.getKey(), curEntry.getValue()));
         }
         return tagSet;
@@ -79,7 +80,7 @@ public class ReplicaSetNode extends Node {
     }
 
     public String toJSON() {
-        StringBuilder buf = new StringBuilder();
+        final StringBuilder buf = new StringBuilder();
         buf.append("{ address:'").append(_addr).append("', ");
         buf.append("ok:").append(_ok).append(", ");
         buf.append("ping:").append(_pingTime).append(", ");
@@ -88,9 +89,10 @@ public class ReplicaSetNode extends Node {
         buf.append("setName:").append(_setName).append(", ");
         buf.append("maxBsonObjectSize:").append(_maxBsonObjectSize).append(", ");
         if (_tags != null && _tags.size() > 0) {
-            List<MongoDocument> tagObjects = new ArrayList<MongoDocument>();
-            for (Tag tag : _tags)
+            final List<MongoDocument> tagObjects = new ArrayList<MongoDocument>();
+            for (final Tag tag : _tags) {
                 tagObjects.add(tag.toDBObject());
+            }
 
             buf.append(new MongoDocument("tags", tagObjects));
         }
@@ -101,21 +103,43 @@ public class ReplicaSetNode extends Node {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
-        ReplicaSetNode node = (ReplicaSetNode) o;
+        final ReplicaSetNode node = (ReplicaSetNode) o;
 
-        if (_isMaster != node._isMaster) return false;
-        if (_maxBsonObjectSize != node._maxBsonObjectSize) return false;
-        if (_isSecondary != node._isSecondary) return false;
-        if (_ok != node._ok) return false;
-        if (Float.compare(node._pingTime, _pingTime) != 0) return false;
-        if (!_addr.equals(node._addr)) return false;
-        if (!_names.equals(node._names)) return false;
-        if (!_tags.equals(node._tags)) return false;
-        if (!_setName.equals(node._setName)) return false;
+        if (_isMaster != node._isMaster) {
+            return false;
+        }
+        if (_maxBsonObjectSize != node._maxBsonObjectSize) {
+            return false;
+        }
+        if (_isSecondary != node._isSecondary) {
+            return false;
+        }
+        if (_ok != node._ok) {
+            return false;
+        }
+        if (Float.compare(node._pingTime, _pingTime) != 0) {
+            return false;
+        }
+        if (!_addr.equals(node._addr)) {
+            return false;
+        }
+        if (!_names.equals(node._names)) {
+            return false;
+        }
+        if (!_tags.equals(node._tags)) {
+            return false;
+        }
+        if (!_setName.equals(node._setName)) {
+            return false;
+        }
 
         return true;
     }

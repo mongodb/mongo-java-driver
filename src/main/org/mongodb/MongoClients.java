@@ -23,7 +23,7 @@ public class MongoClients {
     private MongoClients() {
     }
 
-    public static MongoClient create(ServerAddress serverAddress) {
+    public static MongoClient create(final ServerAddress serverAddress) {
         return new SingleServerMongoClient(serverAddress);
     }
 }

@@ -20,10 +20,10 @@ package org.mongodb.operation;
 import java.util.Arrays;
 import java.util.List;
 
-public class MongoKillCursor extends MongoOperation{
+public class MongoKillCursor extends MongoOperation {
     private final List<Long> cursorIds;
 
-    public MongoKillCursor(long cursorId) {
+    public MongoKillCursor(final long cursorId) {
         cursorIds = Arrays.asList(cursorId);
     }
 

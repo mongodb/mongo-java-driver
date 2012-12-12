@@ -26,22 +26,22 @@ public class DBCursor {
     private final MongoFind find;
     private MongoCursor<DBObject> cursor;
 
-    public DBCursor(final MongoCollection<DBObject> collection, MongoFind find) {
+    public DBCursor(final MongoCollection<DBObject> collection, final MongoFind find) {
         this.collection = collection;
         this.find = find;
     }
 
-    public DBCursor limit(int limit) {
+    public DBCursor limit(final int limit) {
         find.limit(limit);
         return this;
     }
 
-    public DBCursor batchSize(int batchSize) {
+    public DBCursor batchSize(final int batchSize) {
         find.batchSize(batchSize);
         return this;
     }
 
-    public DBCursor skip(int skip) {
+    public DBCursor skip(final int skip) {
         find.offset(skip);
         return this;
     }

@@ -37,7 +37,7 @@ public class MongoRequestMessage {
 
     // TODO: probably only needs to be unique per connection, not VM
     // TODO: is rollover a problem
-    static AtomicInteger REQUEST_ID = new AtomicInteger(1);
+    static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
     protected final String collectionName;
     protected final OutputBuffer buffer;
@@ -45,27 +45,27 @@ public class MongoRequestMessage {
     private final OpCode opCode;
     protected final MongoDocument query;  // TODO: does this field need to exist?
     private volatile int numDocuments; // only one thread will modify this field, so volatile is sufficient synchronization
-    private int messageStartPosition;
+    private final int messageStartPosition;
 
-    MongoRequestMessage(OpCode opCode, OutputBuffer buffer) {
+    MongoRequestMessage(final OpCode opCode, final OutputBuffer buffer) {
         this(null, opCode, buffer);
     }
 
-    MongoRequestMessage(String collectionName, OpCode opCode, OutputBuffer buffer) {
+    MongoRequestMessage(final String collectionName, final OpCode opCode, final OutputBuffer buffer) {
         this(collectionName, opCode, null, -1, null, buffer);
     }
 
-    MongoRequestMessage(String collectionName, OpCode opCode, MongoDocument query, OutputBuffer buffer) {
+    MongoRequestMessage(final String collectionName, final OpCode opCode, final MongoDocument query, final OutputBuffer buffer) {
         this(collectionName, opCode, query, 0, null, buffer);
     }
 
-    MongoRequestMessage(String collectionName, MongoDocument query, int options, ReadPreference readPref,
-                        OutputBuffer buffer) {
+    MongoRequestMessage(final String collectionName, final MongoDocument query, final int options, final ReadPreference readPref,
+                        final OutputBuffer buffer) {
         this(collectionName, OpCode.OP_QUERY, query, options, readPref, buffer);
     }
 
-    MongoRequestMessage(final String collectionName, OpCode opCode, final MongoDocument query,
-                        final int options, final ReadPreference readPreference, OutputBuffer buffer) {
+    MongoRequestMessage(final String collectionName, final OpCode opCode, final MongoDocument query,
+                        final int options, final ReadPreference readPreference, final OutputBuffer buffer) {
         this.collectionName = collectionName;
 
         this.buffer = buffer;
@@ -85,7 +85,7 @@ public class MongoRequestMessage {
         buffer.writeInt(opCode.getValue());
     }
 
-    void pipe(OutputStream out) throws IOException {
+    void pipe(final OutputStream out) throws IOException {
         buffer.pipe(out);
     }
 
@@ -121,9 +121,9 @@ public class MongoRequestMessage {
         return numDocuments;
     }
 
-    public <T> void addDocument(T obj, Serializer<T> serializer) {
+    public <T> void addDocument(final T obj, final Serializer<T> serializer) {
         // TODO fix this constructor call to remove hard coding
-        BSONBinaryWriter writer = new BSONBinaryWriter(new BsonWriterSettings(100),
+        final BSONBinaryWriter writer = new BSONBinaryWriter(new BsonWriterSettings(100),
                 new BinaryWriterSettings(1024 * 1024 * 16), buffer);
 
         try {
@@ -139,7 +139,7 @@ public class MongoRequestMessage {
     }
 
     protected void backpatchMessageLength() {
-        int messageLength = buffer.getPosition() - messageStartPosition;
+        final int messageLength = buffer.getPosition() - messageStartPosition;
         buffer.backpatchSize(messageLength);
     }
 
@@ -159,7 +159,7 @@ public class MongoRequestMessage {
         OP_DELETE(2006),
         OP_KILL_CURSORS(2007);
 
-        OpCode(int value) {
+        OpCode(final int value) {
             this.value = value;
         }
 

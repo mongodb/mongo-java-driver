@@ -34,13 +34,13 @@ public class MongoFind extends MongoQuery {
         return filter;
     }
 
-    public MongoFind where(MongoQueryFilter filter) {
+    public MongoFind where(final MongoQueryFilter filter) {
         this.filter = filter;
         return this;
     }
 
     // TODO: Add MongoQuerySelector interface
-    public MongoFind select(MongoFieldSelector fields) {
+    public MongoFind select(final MongoFieldSelector fields) {
         this.fields = fields;
         return this;
     }
@@ -91,6 +91,7 @@ public class MongoFind extends MongoQuery {
         super.readPreference(readPreference);
         return this;
     }
+
     public MongoFind readPreferenceIfAbsent(final ReadPreference readPreference) {
         super.readPreferenceIfAbsent(readPreference);
         return this;

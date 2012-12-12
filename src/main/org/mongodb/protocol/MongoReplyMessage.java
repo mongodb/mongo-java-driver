@@ -41,7 +41,7 @@ public class MongoReplyMessage<T> {
         messageLength = headerInputBuffer.readInt32();
         requestId = headerInputBuffer.readInt32();
         responseTo = headerInputBuffer.readInt32();  // TODO: validate that this is a response to the expected message
-        int opCode = headerInputBuffer.readInt32();  // ignore  TODO: check for validity
+        final int opCode = headerInputBuffer.readInt32();  // ignore  TODO: check for validity
         responseFlags = headerInputBuffer.readInt32();
         cursorId = headerInputBuffer.readInt64();
         startingFrom = headerInputBuffer.readInt32();
@@ -50,7 +50,7 @@ public class MongoReplyMessage<T> {
         documents = new ArrayList<T>(numberReturned);
 
         while (documents.size() < numberReturned) {
-            BSONReader reader = new BSONBinaryReader(new BsonReaderSettings(), bodyInputBuffer);
+            final BSONReader reader = new BSONBinaryReader(new BsonReaderSettings(), bodyInputBuffer);
             documents.add(serializer.deserialize(reader, null));
             reader.close();
         }

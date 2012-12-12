@@ -22,7 +22,7 @@ import org.mongodb.MongoDocument;
 
 /**
  * Simple class to hold a single tag, both key and value
- * <p>
+ * <p/>
  * NOT PART OF PUBLIC API YET
  */
 @Immutable
@@ -30,20 +30,28 @@ public final class Tag {
     final String key;
     final String value;
 
-    public Tag(String key, String value) {
+    public Tag(final String key, final String value) {
         this.key = key;
         this.value = value;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
-        Tag tag = (Tag) o;
+        final Tag tag = (Tag) o;
 
-        if (key != null ? !key.equals(tag.key) : tag.key != null) return false;
-        if (value != null ? !value.equals(tag.value) : tag.value != null) return false;
+        if (key != null ? !key.equals(tag.key) : tag.key != null) {
+            return false;
+        }
+        if (value != null ? !value.equals(tag.value) : tag.value != null) {
+            return false;
+        }
 
         return true;
     }
@@ -55,7 +63,7 @@ public final class Tag {
         return result;
     }
 
-    public MongoDocument toDBObject(){
+    public MongoDocument toDBObject() {
         return new MongoDocument(key, value);
     }
 }

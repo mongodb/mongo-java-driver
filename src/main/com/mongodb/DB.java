@@ -43,9 +43,9 @@ public class DB {
     }
 
     /**
-     * starts a new "consistent request".
-     * Following this call and until requestDone() is called, all db operations should use the same underlying connection.
-     * This is useful to ensure that operations happen in a certain order with predictable results.
+     * starts a new "consistent request". Following this call and until requestDone() is called, all db operations
+     * should use the same underlying connection. This is useful to ensure that operations happen in a certain order
+     * with predictable results.
      */
     public void requestStart() {
         mongo.requestStart();
@@ -59,21 +59,25 @@ public class DB {
     }
 
     /**
-     * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)
+     * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a
+     * replica set)
      */
     public void requestEnsureConnection() {
         requestStart();
     }
 
 
-    public DBCollection getCollection(String name) {
+    public DBCollection getCollection(final String name) {
         DBCollection collection = collectionCache.get(name);
-        if (collection != null)
+        if (collection != null) {
             return collection;
+        }
 
-        PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
-        collection = new DBCollection(database.getTypedCollection(name, primitiveSerializers, new DBObjectSerializer(primitiveSerializers)), this);
-        DBCollection old = collectionCache.putIfAbsent(name, collection);
+        final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
+        collection = new DBCollection(database.getTypedCollection(name,
+                primitiveSerializers,
+                new DBObjectSerializer(primitiveSerializers)), this);
+        final DBCollection old = collectionCache.putIfAbsent(name, collection);
         return old != null ? old : collection;
     }
 
