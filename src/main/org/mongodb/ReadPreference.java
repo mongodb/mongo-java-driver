@@ -17,6 +17,7 @@
 
 package org.mongodb;
 
+import org.bson.types.Document;
 import org.mongodb.rs.ReplicaSet;
 import org.mongodb.rs.ReplicaSetNode;
 
@@ -38,7 +39,7 @@ public abstract class ReadPreference {
     /**
      * @return <code>DBObject</code> representation of this preference
      */
-    public abstract MongoDocument toMongoDocument();
+    public abstract Document toMongoDocument();
 
     /**
      * The name of this read preference.
@@ -84,8 +85,8 @@ public abstract class ReadPreference {
         }
 
         @Override
-        public MongoDocument toMongoDocument() {
-            return new MongoDocument("mode", getName());
+        public Document toMongoDocument() {
+            return new Document("mode", getName());
         }
 
         @Override
@@ -112,7 +113,7 @@ public abstract class ReadPreference {
     /**
      * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
      */
-    public static TaggableReadPreference primaryPreferred(final MongoDocument firstTagSet, final MongoDocument... remainingTagSets) {
+    public static TaggableReadPreference primaryPreferred(final Document firstTagSet, final Document... remainingTagSets) {
         return new TaggableReadPreference.PrimaryPreferredReadPreference(firstTagSet, remainingTagSets);
     }
 
@@ -126,7 +127,7 @@ public abstract class ReadPreference {
     /**
      * @return ReadPreference which reads secondary respective of tags.
      */
-    public static TaggableReadPreference secondary(final MongoDocument firstTagSet, final MongoDocument... remainingTagSets) {
+    public static TaggableReadPreference secondary(final Document firstTagSet, final Document... remainingTagSets) {
         return new TaggableReadPreference.SecondaryReadPreference(firstTagSet, remainingTagSets);
     }
 
@@ -141,7 +142,7 @@ public abstract class ReadPreference {
      * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective
      *         of tags.
      */
-    public static TaggableReadPreference secondaryPreferred(final MongoDocument firstTagSet, final MongoDocument... remainingTagSets) {
+    public static TaggableReadPreference secondaryPreferred(final Document firstTagSet, final Document... remainingTagSets) {
         return new TaggableReadPreference.SecondaryPreferredReadPreference(firstTagSet, remainingTagSets);
     }
 
@@ -178,8 +179,8 @@ public abstract class ReadPreference {
         throw new IllegalArgumentException("No match for read preference of " + name);
     }
 
-    public static TaggableReadPreference valueOf(String name, final MongoDocument firstTagSet,
-                                                 final MongoDocument... remainingTagSets) {
+    public static TaggableReadPreference valueOf(String name, final Document firstTagSet,
+                                                 final Document... remainingTagSets) {
         if (name == null) {
             throw new IllegalArgumentException();
         }
@@ -205,8 +206,8 @@ public abstract class ReadPreference {
     /**
      * @return ReadPreference which reads nearest node respective of tags.
      */
-    public static TaggableReadPreference nearest(final MongoDocument firstTagSet,
-                                                 final MongoDocument... remainingTagSets) {
+    public static TaggableReadPreference nearest(final Document firstTagSet,
+                                                 final Document... remainingTagSets) {
         return new TaggableReadPreference.NearestReadPreference(firstTagSet, remainingTagSets);
     }
 

@@ -22,7 +22,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * this is used for internal increment values. for storing normal dates in MongoDB, you should use java.util.Date
+ * this is used for internal increment values. for normal dates you should use java.util.Date
  * <b>time</b> is seconds since epoch <b>inc<b> is an ordinal
  */
 public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {

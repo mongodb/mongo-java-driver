@@ -18,8 +18,8 @@ package org.mongodb.impl;
 
 import org.bson.util.BufferPool;
 import org.bson.util.PowerOfTwoByteBufferPool;
+import org.bson.types.Document;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoDocument;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.ReadPreference;
@@ -168,8 +168,8 @@ public class SingleServerMongoClient implements MongoClient {
 
     private class SingleServerMongoOperations implements MongoOperations {
         @Override
-        public MongoDocument executeCommand(final String database, final MongoCommandOperation commandOperation,
-                                            final Serializer<MongoDocument> serializer) {
+        public Document executeCommand(final String database, final MongoCommandOperation commandOperation,
+                                            final Serializer<Document> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().executeCommand(database, commandOperation, serializer);
@@ -180,7 +180,7 @@ public class SingleServerMongoClient implements MongoClient {
 
         @Override
         public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
-                                        final Serializer<MongoDocument> baseSerializer,
+                                        final Serializer<Document> baseSerializer,
                                         final Serializer<T> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
@@ -212,7 +212,7 @@ public class SingleServerMongoClient implements MongoClient {
         }
 
         @Override
-        public UpdateResult update(final MongoNamespace namespace, final MongoUpdate update, final Serializer<MongoDocument> serializer) {
+        public UpdateResult update(final MongoNamespace namespace, final MongoUpdate update, final Serializer<Document> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().update(namespace, update, serializer);
@@ -223,7 +223,7 @@ public class SingleServerMongoClient implements MongoClient {
 
         @Override
         public RemoveResult remove(final MongoNamespace namespace, final MongoRemove remove,
-                                   final Serializer<MongoDocument> serializer) {
+                                   final Serializer<Document> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().remove(namespace, remove, serializer);

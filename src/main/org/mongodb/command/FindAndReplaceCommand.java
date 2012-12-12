@@ -17,8 +17,8 @@
 
 package org.mongodb.command;
 
+import org.mongodb.CommandDocument;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoCommandDocument;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFindAndReplace;
@@ -37,7 +37,7 @@ public class FindAndReplaceCommand<T> extends FindAndModifyCommand<T> {
 
     @Override
     public MongoCommand asMongoCommand() {
-        final MongoCommandDocument cmd = getBaseCommandDocument();
+        final CommandDocument cmd = getBaseCommandDocument();
         // TODO: I don't think this will work, as we don't have a Class<T> to make sure that serialization works properly
         cmd.put("update", findAndReplace.getReplacement());
         return cmd;

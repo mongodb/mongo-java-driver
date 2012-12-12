@@ -17,9 +17,9 @@
 
 package org.mongodb.command;
 
+import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoCommandDocument;
-import org.mongodb.MongoDocument;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFindAndModify;
@@ -52,8 +52,8 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
 
     }
 
-    protected MongoCommandDocument getBaseCommandDocument() {
-        final MongoCommandDocument cmd = new MongoCommandDocument("findandmodify", namespace.getCollectionName());
+    protected CommandDocument getBaseCommandDocument() {
+        final CommandDocument cmd = new CommandDocument("findandmodify", namespace.getCollectionName());
         if (findAndModify.getFilter() != null) {
             cmd.put("query", findAndModify.getFilter());
         }
@@ -80,13 +80,13 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
 
     public static class FindAndModifyCommandResult<T> extends CommandResult {
 
-        public FindAndModifyCommandResult(final MongoDocument mongoDocument) {
-            super(mongoDocument);
+        public FindAndModifyCommandResult(final Document document) {
+            super(document);
         }
 
         public T getValue() {
             // TODO: any way to remove the warning?  This could be a design flaw
-            return (T) getMongoDocument().get("value");
+            return (T) getDocument().get("value");
         }
     }
 

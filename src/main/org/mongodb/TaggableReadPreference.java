@@ -17,6 +17,7 @@
 
 package org.mongodb;
 
+import org.bson.types.Document;
 import org.mongodb.rs.ReplicaSet;
 import org.mongodb.rs.ReplicaSetNode;
 import org.mongodb.rs.Tag;
@@ -31,17 +32,17 @@ import java.util.List;
  * @author breinero
  */
 public abstract class TaggableReadPreference extends ReadPreference {
-    private static final List<MongoDocument> EMPTY = new ArrayList<MongoDocument>();
+    private static final List<Document> EMPTY = new ArrayList<Document>();
 
     TaggableReadPreference() {
         _tags = EMPTY;
     }
 
-    TaggableReadPreference(final MongoDocument firstTagSet, final MongoDocument... remainingTagSets) {
+    TaggableReadPreference(final Document firstTagSet, final Document... remainingTagSets) {
         if (firstTagSet == null) {
             throw new IllegalArgumentException("Must have at least one tag set");
         }
-        _tags = new ArrayList<MongoDocument>();
+        _tags = new ArrayList<Document>();
         _tags.add(firstTagSet);
         Collections.addAll(_tags, remainingTagSets);
     }
@@ -52,8 +53,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
     }
 
     @Override
-    public MongoDocument toMongoDocument() {
-        final MongoDocument readPrefObject = new MongoDocument("mode", getName());
+    public Document toMongoDocument() {
+        final Document readPrefObject = new Document("mode", getName());
 
         if (!_tags.isEmpty()) {
             readPrefObject.put("tags", _tags);
@@ -63,9 +64,9 @@ public abstract class TaggableReadPreference extends ReadPreference {
     }
 
 
-    public List<MongoDocument> getTagSets() {
-        final List<MongoDocument> tags = new ArrayList<MongoDocument>();
-        for (final MongoDocument tagSet : _tags) {
+    public List<Document> getTagSets() {
+        final List<Document> tags = new ArrayList<Document>();
+        for (final Document tagSet : _tags) {
             tags.add(tagSet);
         }
         return tags;
@@ -98,10 +99,10 @@ public abstract class TaggableReadPreference extends ReadPreference {
     }
 
     String printTags() {
-        return (_tags.isEmpty() ? "" : " : " + new MongoDocument("tags", _tags));
+        return (_tags.isEmpty() ? "" : " : " + new Document("tags", _tags));
     }
 
-    private static List<Tag> getTagListFromMongoDocument(final MongoDocument curTagSet) {
+    private static List<Tag> getTagListFromMongoDocument(final Document curTagSet) {
         final List<Tag> tagList = new ArrayList<Tag>();
         for (final String key : curTagSet.keySet()) {
             tagList.add(new Tag(key, curTagSet.get(key).toString()));
@@ -109,7 +110,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         return tagList;
     }
 
-    final List<MongoDocument> _tags;
+    final List<Document> _tags;
 
     /**
      * Read from secondary
@@ -120,7 +121,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         SecondaryReadPreference() {
         }
 
-        SecondaryReadPreference(final MongoDocument firstTagSet, final MongoDocument... remainingTagSets) {
+        SecondaryReadPreference(final Document firstTagSet, final Document... remainingTagSets) {
             super(firstTagSet, remainingTagSets);
         }
 
@@ -136,7 +137,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
                 return set.getASecondary();
             }
 
-            for (final MongoDocument curTagSet : _tags) {
+            for (final Document curTagSet : _tags) {
                 final List<Tag> tagList = getTagListFromMongoDocument(curTagSet);
                 final ReplicaSetNode node = set.getASecondary(tagList);
                 if (node != null) {
@@ -157,7 +158,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         SecondaryPreferredReadPreference() {
         }
 
-        SecondaryPreferredReadPreference(final MongoDocument firstTagSet, final MongoDocument... remainingTagSets) {
+        SecondaryPreferredReadPreference(final Document firstTagSet, final Document... remainingTagSets) {
             super(firstTagSet, remainingTagSets);
         }
 
@@ -182,7 +183,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         NearestReadPreference() {
         }
 
-        NearestReadPreference(final MongoDocument firstTagSet, final MongoDocument... remainingTagSets) {
+        NearestReadPreference(final Document firstTagSet, final Document... remainingTagSets) {
             super(firstTagSet, remainingTagSets);
         }
 
@@ -200,7 +201,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
                 return set.getAMember();
             }
 
-            for (final MongoDocument curTagSet : _tags) {
+            for (final Document curTagSet : _tags) {
                 final List<Tag> tagList = getTagListFromMongoDocument(curTagSet);
                 final ReplicaSetNode node = set.getAMember(tagList);
                 if (node != null) {
@@ -220,7 +221,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         PrimaryPreferredReadPreference() {
         }
 
-        PrimaryPreferredReadPreference(final MongoDocument firstTagSet, final MongoDocument... remainingTagSets) {
+        PrimaryPreferredReadPreference(final Document firstTagSet, final Document... remainingTagSets) {
             super(firstTagSet, remainingTagSets);
         }
 

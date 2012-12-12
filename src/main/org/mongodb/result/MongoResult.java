@@ -17,10 +17,10 @@
 
 package org.mongodb.result;
 
-import org.mongodb.MongoDocument;
+import org.bson.types.Document;
 import org.mongodb.protocol.MongoReplyMessage;
 
 public class MongoResult {
-    public MongoResult(final MongoReplyMessage<MongoDocument> replyMessage) {
+    public MongoResult(final MongoReplyMessage<Document> replyMessage) {
     }
 }

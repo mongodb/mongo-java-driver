@@ -17,19 +17,19 @@
 package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
-import org.mongodb.MongoDocument;
+import org.bson.types.Document;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.serialization.Serializer;
 
 public class MongoUpdateMessage extends MongoRequestMessage {
     public MongoUpdateMessage(final String collectionName, final MongoUpdate update, final OutputBuffer buffer,
-                              final Serializer<MongoDocument> serializer) {
+                              final Serializer<Document> serializer) {
         super(collectionName, OpCode.OP_UPDATE, update.getFilter().toMongoDocument(), buffer);
         writeUpdate(update, serializer);
         backpatchMessageLength();
     }
 
-    void writeUpdate(final MongoUpdate update, final Serializer<MongoDocument> serializer) {
+    void writeUpdate(final MongoUpdate update, final Serializer<Document> serializer) {
         buffer.writeInt(0); // reserved
         buffer.writeCString(collectionName);
 

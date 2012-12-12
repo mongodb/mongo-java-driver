@@ -16,21 +16,21 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.MongoQueryFilter;
+import org.bson.types.Document;
+import org.mongodb.operation.MongoSortCriteria;
 
-public class MongoQueryFilterDocument extends MongoDocument implements MongoQueryFilter {
-    private static final long serialVersionUID = -4703247391554552538L;
+public class SortCriteriaDocument extends Document implements MongoSortCriteria {
+    private static final long serialVersionUID = 6952982470406819852L;
 
-    public MongoQueryFilterDocument(final String key, final Object value) {
+    public SortCriteriaDocument() {
+    }
+
+    public SortCriteriaDocument(final String key, final Object value) {
         super(key, value);
     }
 
-    public MongoQueryFilterDocument() {
-    }
-
     @Override
-    public MongoDocument toMongoDocument() {
+    public Document toMongoDocument() {
         return this;
     }
-
 }

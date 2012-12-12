@@ -19,7 +19,7 @@ package org.mongodb.serialization.serializers;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;
-import org.mongodb.MongoDocument;
+import org.bson.types.Document;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 //TODO: handle array type
-public class MongoDocumentSerializer implements Serializer<MongoDocument> {
+public class MongoDocumentSerializer implements Serializer<Document> {
     private final PrimitiveSerializers primitiveSerializers;
 
     public MongoDocumentSerializer(final PrimitiveSerializers primitiveSerializers) {
@@ -38,7 +38,7 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
 
     // TODO: deal with options.  C# driver sends different options.  For one, to write _id field first
     @Override
-    public void serialize(final BSONWriter bsonWriter, final MongoDocument document, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Document document, final BsonSerializationOptions options) {
         bsonWriter.writeStartDocument();
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
             bsonWriter.writeName(entry.getKey());
@@ -48,8 +48,8 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
     }
 
     private void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
-        if (value instanceof MongoDocument) {
-            serialize(bsonWriter, (MongoDocument) value, options);
+        if (value instanceof Document) {
+            serialize(bsonWriter, (Document) value, options);
         }
         else if (value instanceof Iterable) {
             serializeArray(bsonWriter, (Iterable) value, options);
@@ -68,8 +68,8 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
     }
 
     @Override
-    public MongoDocument deserialize(final BSONReader reader, final BsonSerializationOptions options) {
-        final MongoDocument document = new MongoDocument();
+    public Document deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+        final Document document = new Document();
 
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
@@ -106,8 +106,8 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
     }
 
     @Override
-    public Class<MongoDocument> getSerializationClass() {
-        return MongoDocument.class;
+    public Class<Document> getSerializationClass() {
+        return Document.class;
     }
 
     protected PrimitiveSerializers getPrimitiveSerializers() {

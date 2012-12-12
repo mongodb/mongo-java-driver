@@ -16,9 +16,9 @@
 
 package org.mongodb.impl;
 
+import org.bson.types.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.command.CountCommand;
@@ -93,7 +93,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                 getMongoDocumentSerializer());
     }
 
-    private Serializer<MongoDocument> getMongoDocumentSerializer() {
+    private Serializer<Document> getMongoDocumentSerializer() {
         return new MongoDocumentSerializer(primitiveSerializers);
     }
 }

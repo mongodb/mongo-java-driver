@@ -18,7 +18,7 @@
 package org.mongodb.rs;
 
 import org.bson.util.annotations.Immutable;
-import org.mongodb.MongoDocument;
+import org.bson.types.Document;
 
 /**
  * Simple class to hold a single tag, both key and value
@@ -63,7 +63,7 @@ public final class Tag {
         return result;
     }
 
-    public MongoDocument toDBObject() {
-        return new MongoDocument(key, value);
+    public Document toDBObject() {
+        return new Document(key, value);
     }
 }

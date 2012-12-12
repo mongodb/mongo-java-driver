@@ -17,7 +17,7 @@
 
 package org.mongodb.command;
 
-import org.mongodb.MongoCommandDocument;
+import org.mongodb.CommandDocument;
 import org.mongodb.MongoDatabase;
 import org.mongodb.operation.MongoCommand;
 
@@ -34,6 +34,6 @@ public class DropCollectionCommand extends AbstractCommand {
 
     @Override
     public MongoCommand asMongoCommand() {
-        return new MongoCommandDocument("drop", collectionName);
+        return new CommandDocument("drop", collectionName);
     }
 }

@@ -17,16 +17,16 @@
 
 package org.mongodb.result;
 
-import org.mongodb.MongoDocument;
+import org.bson.types.Document;
 
 public class CommandResult {
-    private final MongoDocument mongoDocument;
+    private final Document document;
 
-    public CommandResult(final MongoDocument mongoDocument) {
-        this.mongoDocument = mongoDocument;
+    public CommandResult(final Document document) {
+        this.document = document;
     }
 
-    public MongoDocument getMongoDocument() {
-        return mongoDocument;
+    public Document getDocument() {
+        return document;
     }
 }

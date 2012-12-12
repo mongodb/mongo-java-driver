@@ -83,55 +83,6 @@ public abstract class OutputBuffer extends OutputStream {
     }
 
 
-    //    public String hex(){
-//        final StringBuilder buf = new StringBuilder();
-//        try {
-//            pipe( new OutputStream(){
-//                    public void write( int b ){
-//                        String s = Integer.toHexString(0xff & b);
-//
-//                        if (s.length() < 2)
-//                            buf.append("0");
-//                        buf.append(s);
-//                    }
-//                }
-//                );
-//        }
-//        catch ( IOException ioe ){
-//            throw new RuntimeException( "impossible" );
-//        }
-//        return buf.toString();
-//    }
-//
-//    public String md5(){
-//        final MessageDigest md5 ;
-//        try {
-//            md5 = MessageDigest.getInstance("MD5");
-//        }
-//        catch (NoSuchAlgorithmException e) {
-//            throw new RuntimeException("Error - this implementation of Java doesn't support MD5.");
-//        }
-//        md5.reset();
-//
-//        try {
-//            pipe( new OutputStream(){
-//                    public void write( byte[] b , int off , int len ){
-//                        md5.update( b , off , len );
-//                    }
-//
-//                    public void write( int b ){
-//                        md5.update( (byte)(b&0xFF) );
-//                    }
-//                }
-//                );
-//        }
-//        catch ( IOException ioe ){
-//            throw new RuntimeException( "impossible" );
-//        }
-//
-//        return org.mongodb.util.Util.toHex( md5.digest() );
-//    }
-//
     public void writeInt(final int x) {
         write(x >> 0);
         write(x >> 8);

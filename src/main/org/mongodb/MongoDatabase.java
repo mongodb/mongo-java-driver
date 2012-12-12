@@ -17,6 +17,7 @@
 
 package org.mongodb;
 
+import org.bson.types.Document;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.Serializer;
@@ -38,12 +39,12 @@ public interface MongoDatabase {
 
     PrimitiveSerializers getPrimitiveSerializers();
 
-    MongoCollection<MongoDocument> getCollection(String name);
+    MongoCollection<Document> getCollection(String name);
 
     <T> MongoCollection<T> getTypedCollection(String name, final PrimitiveSerializers basePrimitiveSerializers,
                                               final Serializer<T> serializer);
 
-    MongoAsyncCollection<MongoDocument> getAsyncCollection(String name);
+    MongoAsyncCollection<Document> getAsyncCollection(String name);
 
     <T> MongoAsyncCollection<T> getAsyncTypedCollection(String name, final PrimitiveSerializers basePrimitiveSerializers,
                                               final Serializer<T> serializer);

@@ -17,9 +17,9 @@
 
 package org.mongodb.command;
 
+import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoCommandDocument;
-import org.mongodb.MongoDocument;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoCommandOperation;
@@ -49,7 +49,7 @@ public class CountCommand extends AbstractCommand {
 
     @Override
     public MongoCommand asMongoCommand() {
-        final MongoCommandDocument document = new MongoCommandDocument("count", namespace.getCollectionName());
+        final CommandDocument document = new CommandDocument("count", namespace.getCollectionName());
 
         if (find.getFilter() != null) {
             document.put("query", find.getFilter().toMongoDocument());
@@ -68,12 +68,12 @@ public class CountCommand extends AbstractCommand {
 
     public static class CountCommandResult extends CommandResult {
 
-        public CountCommandResult(final MongoDocument mongoDocument) {
-            super(mongoDocument);
+        public CountCommandResult(final Document document) {
+            super(document);
         }
 
         public long getCount() {
-            return ((Double) getMongoDocument().get("n")).longValue();
+            return ((Double) getDocument().get("n")).longValue();
         }
     }
 }

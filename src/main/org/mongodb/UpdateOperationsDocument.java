@@ -16,20 +16,21 @@
 
 package org.mongodb;
 
+import org.bson.types.Document;
 import org.mongodb.operation.MongoUpdateOperations;
 
-public class MongoUpdateOperationsDocument extends MongoDocument implements MongoUpdateOperations {
+public class UpdateOperationsDocument extends Document implements MongoUpdateOperations {
     private static final long serialVersionUID = -4512149060002740385L;
 
-    public MongoUpdateOperationsDocument() {
+    public UpdateOperationsDocument() {
     }
 
-    public MongoUpdateOperationsDocument(final String key, final Object value) {
+    public UpdateOperationsDocument(final String key, final Object value) {
         super(key, value);
     }
 
     @Override
-    public MongoDocument toMongoDocument() {
+    public Document toMongoDocument() {
         return this;
     }
 

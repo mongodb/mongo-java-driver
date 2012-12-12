@@ -16,13 +16,22 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.MongoFieldSelector;
+import org.bson.types.Document;
 
-public class MongoFieldSelectorDocument extends MongoDocument implements MongoFieldSelector {
-    private static final long serialVersionUID = 3906786454116702406L;
+// TODO: This probably should not subclass MongoQueryFilterDocument, since it's not... a query filter
+// Did it this way so that I can pass it to MongoQueryMessage constructor
+public class CommandDocument extends QueryFilterDocument implements org.mongodb.operation.MongoCommand {
+    private static final long serialVersionUID = -986632617844878612L;
+
+    public CommandDocument() {
+    }
+
+    public CommandDocument(final String key, final Object value) {
+        super(key, value);
+    }
 
     @Override
-    public MongoDocument toMongoDocument() {
+    public Document toMongoDocument() {
         return this;
     }
 }

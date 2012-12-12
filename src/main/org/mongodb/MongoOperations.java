@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import org.bson.types.Document;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFind;
@@ -33,9 +34,9 @@ import org.mongodb.serialization.Serializer;
 public interface MongoOperations {
 
     // TODO: should this really be a separate call from query?
-    MongoDocument executeCommand(String database, MongoCommandOperation commandOperation, Serializer<MongoDocument> serializer);
+    Document executeCommand(String database, MongoCommandOperation commandOperation, Serializer<Document> serializer);
 
-    <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Serializer<MongoDocument> baseSerializer,
+    <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Serializer<Document> baseSerializer,
                              Serializer<T> serializer);
 
     // TODO: needs a ServerAddress or doesn't make sense for some MongoClient implementations
@@ -47,7 +48,7 @@ public interface MongoOperations {
     <T> InsertResult insert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer);
 
     // TODO: Need to handle update where you have to custom serialize the update document
-    UpdateResult update(final MongoNamespace namespace, MongoUpdate update, Serializer<MongoDocument> serializer);
+    UpdateResult update(final MongoNamespace namespace, MongoUpdate update, Serializer<Document> serializer);
 
-    RemoveResult remove(final MongoNamespace namespace, MongoRemove remove, Serializer<MongoDocument> serializer);
+    RemoveResult remove(final MongoNamespace namespace, MongoRemove remove, Serializer<Document> serializer);
 }

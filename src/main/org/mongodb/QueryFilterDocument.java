@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +12,26 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb;
 
-import java.util.LinkedHashMap;
+import org.bson.types.Document;
+import org.mongodb.operation.MongoQueryFilter;
 
-public class MongoDocument extends LinkedHashMap<String, Object> {
+public class QueryFilterDocument extends Document implements MongoQueryFilter {
+    private static final long serialVersionUID = -4703247391554552538L;
 
-    private static final long serialVersionUID = -1492763563349589447L;
-
-    public MongoDocument() {
+    public QueryFilterDocument(final String key, final Object value) {
+        super(key, value);
     }
 
-    public MongoDocument(final String key, final Object value) {
-        put(key, value);
+    public QueryFilterDocument() {
     }
+
+    @Override
+    public Document toMongoDocument() {
+        return this;
+    }
+
 }

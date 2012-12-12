@@ -17,11 +17,11 @@
 
 package org.mongodb.result;
 
-import org.mongodb.MongoDocument;
+import org.bson.types.Document;
 import org.mongodb.protocol.MongoReplyMessage;
 
 public class InsertResult extends MongoResult {
-    public InsertResult(final MongoReplyMessage<MongoDocument> replyMessage) {
+    public InsertResult(final MongoReplyMessage<Document> replyMessage) {
         super(replyMessage);
     }
 }

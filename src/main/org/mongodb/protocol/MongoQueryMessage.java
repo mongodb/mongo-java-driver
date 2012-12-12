@@ -17,7 +17,7 @@
 package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
-import org.mongodb.MongoDocument;
+import org.bson.types.Document;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoQuery;
@@ -26,7 +26,7 @@ import org.mongodb.serialization.Serializer;
 public class MongoQueryMessage extends MongoRequestMessage {
 
     public MongoQueryMessage(final String collectionName, final MongoFind find, final OutputBuffer buffer,
-                             final Serializer<MongoDocument> serializer) {
+                             final Serializer<Document> serializer) {
         super(collectionName, find.getFilter().toMongoDocument(), find.getOptions(), find.getReadPreference(), buffer);
 
         init(find);
@@ -38,7 +38,7 @@ public class MongoQueryMessage extends MongoRequestMessage {
     }
 
     public MongoQueryMessage(final String collectionName, final MongoCommandOperation commandOperation,
-                             final OutputBuffer buffer, final Serializer<MongoDocument> serializer) {
+                             final OutputBuffer buffer, final Serializer<Document> serializer) {
         super(collectionName, commandOperation.getCommand().toMongoDocument(), 0, commandOperation.getReadPreference(), buffer);
 
         init(commandOperation);

@@ -29,7 +29,7 @@ import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.MongoDocument;
+import org.bson.types.Document;
 import org.mongodb.serialization.PrimitiveSerializers;
 
 import java.io.ByteArrayOutputStream;
@@ -55,7 +55,7 @@ public class MongoDocumentSerializerTest {
 
     @Test
     public void testPrimitiveBsonTypeSerialization() throws IOException {
-        final MongoDocument doc = new MongoDocument();
+        final Document doc = new Document();
         doc.put("oid", new ObjectId());
         doc.put("integer", 1);
         doc.put("long", 2L);
@@ -70,32 +70,32 @@ public class MongoDocumentSerializerTest {
         serializer.serialize(writer, doc, null);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final MongoDocument deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
+        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
         assertEquals(doc, deserializedDoc);
     }
 
 
     @Test
     public void testArraySerialization() throws IOException {
-        final MongoDocument doc = new MongoDocument();
+        final Document doc = new Document();
         doc.put("array", Arrays.asList(1, 2, 3, 4, 5));
 
         serializer.serialize(writer, doc, null);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final MongoDocument deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
+        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
         assertEquals(doc, deserializedDoc);
     }
 
     @Test
     public void testNestedDocumentSerialization() throws IOException {
-        final MongoDocument doc = new MongoDocument();
-        doc.put("nested", new MongoDocument("x", 1));
+        final Document doc = new Document();
+        doc.put("nested", new Document("x", 1));
 
         serializer.serialize(writer, doc, null);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final MongoDocument deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
+        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
         assertEquals(doc, deserializedDoc);
     }
 

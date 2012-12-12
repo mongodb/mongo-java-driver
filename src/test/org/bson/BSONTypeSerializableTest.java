@@ -26,7 +26,7 @@ import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.bson.types.Symbol;
 import org.junit.Test;
-import org.mongodb.MongoDocument;
+import org.bson.types.Document;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -116,7 +116,7 @@ public class BSONTypeSerializableTest {
 
     @Test
     public void testSerializeCodeWScope() throws Exception {
-        final MongoDocument scope = new MongoDocument("t", 1);
+        final Document scope = new Document("t", 1);
         final CodeWScope object = new CodeWScope("function() {}", scope);
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

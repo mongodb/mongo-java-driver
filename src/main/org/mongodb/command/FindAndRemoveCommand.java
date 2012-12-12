@@ -17,8 +17,8 @@
 
 package org.mongodb.command;
 
+import org.mongodb.CommandDocument;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoCommandDocument;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFindAndModify;
@@ -34,7 +34,7 @@ public class FindAndRemoveCommand<T> extends FindAndModifyCommand<T> {
 
     @Override
     public MongoCommand asMongoCommand() {
-        final MongoCommandDocument cmd = getBaseCommandDocument();
+        final CommandDocument cmd = getBaseCommandDocument();
         cmd.put("remove", true);
         return cmd;
     }

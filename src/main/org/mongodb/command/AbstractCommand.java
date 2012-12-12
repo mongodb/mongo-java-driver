@@ -17,8 +17,8 @@
 
 package org.mongodb.command;
 
+import org.bson.types.Document;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoDocument;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
@@ -50,7 +50,7 @@ public abstract class AbstractCommand implements Command {
     // TODO: the class of the return type is weird for a command
     public abstract MongoCommand asMongoCommand();
 
-    protected Serializer<MongoDocument> createResultSerializer() {
+    protected Serializer<Document> createResultSerializer() {
         return new MongoDocumentSerializer(mongoClient.getPrimitiveSerializers());
     }
 

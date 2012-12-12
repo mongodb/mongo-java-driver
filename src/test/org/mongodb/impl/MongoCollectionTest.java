@@ -25,12 +25,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.bson.types.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
-import org.mongodb.MongoDocument;
-import org.mongodb.MongoQueryFilterDocument;
-import org.mongodb.MongoUpdateOperationsDocument;
+import org.mongodb.QueryFilterDocument;
+import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.ServerAddress;
 import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.operation.MongoFind;
@@ -75,47 +75,47 @@ public class MongoCollectionTest {
 
     @Test
     public void testInsertMultiple() {
-        final MongoCollection<MongoDocument> collection = mongoDatabase.getCollection("insertMultiple");
+        final MongoCollection<Document> collection = mongoDatabase.getCollection("insertMultiple");
 
-        final List<MongoDocument> documents = new ArrayList<MongoDocument>();
+        final List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
-            final MongoDocument doc = new MongoDocument("_id", i);
+            final Document doc = new Document("_id", i);
             documents.add(doc);
         }
 
-        final InsertResult res = collection.insert(new MongoInsert<MongoDocument>(documents));
+        final InsertResult res = collection.insert(new MongoInsert<Document>(documents));
         assertEquals(10, collection.count());
         assertNotNull(res);
     }
 
     @Test
     public void testRemove() {
-        final MongoCollection<MongoDocument> collection = mongoDatabase.getCollection("insertMultiple");
+        final MongoCollection<Document> collection = mongoDatabase.getCollection("insertMultiple");
 
-        final List<MongoDocument> documents = new ArrayList<MongoDocument>();
+        final List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
-            final MongoDocument doc = new MongoDocument("_id", i);
+            final Document doc = new Document("_id", i);
             documents.add(doc);
         }
 
-        collection.insert(new MongoInsert<MongoDocument>(documents));
-        collection.remove(new MongoRemove(new MongoQueryFilterDocument("_id", 5)));
+        collection.insert(new MongoInsert<Document>(documents));
+        collection.remove(new MongoRemove(new QueryFilterDocument("_id", 5)));
         assertEquals(9, collection.count());
     }
 
     @Test
     public void testFind() {
-        final MongoCollection<MongoDocument> collection = mongoDatabase.getCollection("find");
+        final MongoCollection<Document> collection = mongoDatabase.getCollection("find");
 
         for (int i = 0; i < 101; i++) {
-            final MongoDocument doc = new MongoDocument("_id", i);
-            collection.insert(new MongoInsert<MongoDocument>(doc));
+            final Document doc = new Document("_id", i);
+            collection.insert(new MongoInsert<Document>(doc));
         }
 
-        final MongoCursor<MongoDocument> cursor = collection.find(new MongoFind(new MongoQueryFilterDocument()));
+        final MongoCursor<Document> cursor = collection.find(new MongoFind(new QueryFilterDocument()));
         try {
             while (cursor.hasNext()) {
-                final MongoDocument cur = cursor.next();
+                final Document cur = cursor.next();
                 System.out.println(cur);
             }
         } finally {
@@ -125,31 +125,31 @@ public class MongoCollectionTest {
 
     @Test
     public void testCount() {
-        final MongoCollection<MongoDocument> collection = mongoDatabase.getCollection("count");
+        final MongoCollection<Document> collection = mongoDatabase.getCollection("count");
 
         for (int i = 0; i < 11; i++) {
-            final MongoDocument doc = new MongoDocument("_id", i);
-            collection.insert(new MongoInsert<MongoDocument>(doc));
+            final Document doc = new Document("_id", i);
+            collection.insert(new MongoInsert<Document>(doc));
         }
 
-        long count = collection.count(new MongoFind(new MongoQueryFilterDocument()));
+        long count = collection.count(new MongoFind(new QueryFilterDocument()));
         assertEquals(11, count);
 
-        count = collection.count(new MongoFind(new MongoQueryFilterDocument("_id", 10)));
+        count = collection.count(new MongoFind(new QueryFilterDocument("_id", 10)));
         assertEquals(1, count);
     }
 
     @Test
     public void testFindAndUpdate() {
-        final MongoCollection<MongoDocument> collection = mongoDatabase.getCollection("findAndUpdate");
+        final MongoCollection<Document> collection = mongoDatabase.getCollection("findAndUpdate");
 
-        final MongoDocument doc = new MongoDocument("_id", 1);
+        final Document doc = new Document("_id", 1);
         doc.put("x", true);
-        collection.insert(new MongoInsert<MongoDocument>(doc));
+        collection.insert(new MongoInsert<Document>(doc));
 
-        final MongoDocument newDoc = collection.findAndUpdate(new MongoFindAndUpdate().
-                where(new MongoQueryFilterDocument("x", true)).
-                updateWith(new MongoUpdateOperationsDocument("$set", new MongoDocument("x", false))));
+        final Document newDoc = collection.findAndUpdate(new MongoFindAndUpdate().
+                where(new QueryFilterDocument("x", true)).
+                updateWith(new UpdateOperationsDocument("$set", new Document("x", false))));
 
 
         assertNotNull(newDoc);
@@ -166,8 +166,8 @@ public class MongoCollectionTest {
         collection.insert(new MongoInsert<Concrete>(doc));
 
         final Concrete newDoc = collection.findAndUpdate(new MongoFindAndUpdate().
-                where(new MongoQueryFilterDocument("x", true)).
-                updateWith(new MongoUpdateOperationsDocument("$set", new MongoDocument("x", false))));
+                where(new QueryFilterDocument("x", true)).
+                updateWith(new UpdateOperationsDocument("$set", new Document("x", false))));
 
 
         assertNotNull(newDoc);

@@ -17,10 +17,10 @@
 
 package org.mongodb.impl;
 
+import org.bson.types.Document;
 import org.mongodb.MongoAsyncCollection;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoDatabase;
-import org.mongodb.MongoDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.MongoCommandOperation;
@@ -54,7 +54,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         return name;
     }
 
-    public MongoCollectionImpl<MongoDocument> getCollection(final String name) {
+    public MongoCollectionImpl<Document> getCollection(final String name) {
         return getTypedCollection(name, getPrimitiveSerializers(), new MongoDocumentSerializer(getPrimitiveSerializers()));
     }
 
@@ -65,8 +65,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public MongoAsyncCollection<MongoDocument> getAsyncCollection(final String name) {
-        return new MongoAsyncCollectionImpl<MongoDocument>(getCollection(name));
+    public MongoAsyncCollection<Document> getAsyncCollection(final String name) {
+        return new MongoAsyncCollectionImpl<Document>(getCollection(name));
     }
 
     @Override

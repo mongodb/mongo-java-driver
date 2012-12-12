@@ -17,12 +17,11 @@
 
 package org.mongodb.result;
 
-import org.mongodb.MongoDocument;
+import org.bson.types.Document;
 import org.mongodb.protocol.MongoReplyMessage;
-import org.mongodb.result.MongoResult;
 
 public class RemoveResult extends MongoResult {
-    public RemoveResult(final MongoReplyMessage<MongoDocument> replyMessage) {
+    public RemoveResult(final MongoReplyMessage<Document> replyMessage) {
         super(replyMessage);
     }
 }

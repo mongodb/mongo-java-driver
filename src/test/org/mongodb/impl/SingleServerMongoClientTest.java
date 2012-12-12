@@ -22,10 +22,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mongodb.MongoCommandDocument;
-import org.mongodb.MongoDocument;
+import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoQueryFilterDocument;
+import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.command.DropDatabaseCommand;
@@ -60,8 +60,8 @@ public class SingleServerMongoClientTest {
 
     @Test
     public void testCommandExecution() {
-        final MongoCommandOperation cmd = new MongoCommandOperation(new MongoCommandDocument("count", "test")).readPreference(ReadPreference.primary());
-        final MongoDocument document = mongoClient.getOperations().executeCommand(DB_NAME, cmd, new MongoDocumentSerializer(PrimitiveSerializers.createDefault()));
+        final MongoCommandOperation cmd = new MongoCommandOperation(new CommandDocument("count", "test")).readPreference(ReadPreference.primary());
+        final Document document = mongoClient.getOperations().executeCommand(DB_NAME, cmd, new MongoDocumentSerializer(PrimitiveSerializers.createDefault()));
         assertNotNull(document);
         assertTrue(document.get("n") instanceof Double);
     }
@@ -70,10 +70,10 @@ public class SingleServerMongoClientTest {
     public void testInsertion() {
         final String colName = "insertion";
         final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
-        final MongoInsert<MongoDocument> insert = new MongoInsert<MongoDocument>(new MongoDocument());
+        final MongoInsert<Document> insert = new MongoInsert<Document>(new Document());
         mongoClient.getOperations().insert(new MongoNamespace(DB_NAME, colName), insert, new MongoDocumentSerializer(primitiveSerializers));
-        final MongoDocument document = mongoClient.getOperations().executeCommand(DB_NAME,
-                new MongoCommandOperation(new MongoCommandDocument("count", colName)).readPreference(ReadPreference.primary()),
+        final Document document = mongoClient.getOperations().executeCommand(DB_NAME,
+                new MongoCommandOperation(new CommandDocument("count", colName)).readPreference(ReadPreference.primary()),
                 new MongoDocumentSerializer(primitiveSerializers));
         assertEquals(1.0, document.get("n"));
     }
@@ -84,18 +84,18 @@ public class SingleServerMongoClientTest {
         final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
         final MongoDocumentSerializer serializer = new MongoDocumentSerializer(primitiveSerializers);
         for (int i = 0; i < 400; i++) {
-            final MongoInsert<MongoDocument> insert = new MongoInsert<MongoDocument>(new MongoDocument());
+            final MongoInsert<Document> insert = new MongoInsert<Document>(new Document());
             mongoClient.getOperations().insert(new MongoNamespace(DB_NAME, colName), insert, serializer);
         }
 
-        final MongoFind find = new MongoFind(new MongoQueryFilterDocument()).readPreference(ReadPreference.primary());
-        final QueryResult<MongoDocument> queryResult = mongoClient.getOperations().query(
+        final MongoFind find = new MongoFind(new QueryFilterDocument()).readPreference(ReadPreference.primary());
+        final QueryResult<Document> queryResult = mongoClient.getOperations().query(
                 new MongoNamespace(DB_NAME, colName), find, serializer, serializer);
         assertNotNull(queryResult);
         assertEquals(101, queryResult.getResults().size());
         assertNotEquals(0L, queryResult.getCursorId());
 
-        final GetMoreResult<MongoDocument> getMoreResult = mongoClient.getOperations().getMore(new MongoNamespace(DB_NAME, colName),
+        final GetMoreResult<Document> getMoreResult = mongoClient.getOperations().getMore(new MongoNamespace(DB_NAME, colName),
                 new GetMore(queryResult.getCursorId(), 0), new MongoDocumentSerializer(primitiveSerializers));
         assertNotNull(getMoreResult);
         assertEquals(299, getMoreResult.getResults().size());

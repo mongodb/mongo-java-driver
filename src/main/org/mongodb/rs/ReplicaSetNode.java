@@ -18,7 +18,7 @@
 package org.mongodb.rs;
 
 import org.bson.util.annotations.Immutable;
-import org.mongodb.MongoDocument;
+import org.bson.types.Document;
 import org.mongodb.ServerAddress;
 
 import java.util.ArrayList;
@@ -89,12 +89,12 @@ public class ReplicaSetNode extends Node {
         buf.append("setName:").append(_setName).append(", ");
         buf.append("maxBsonObjectSize:").append(_maxBsonObjectSize).append(", ");
         if (_tags != null && _tags.size() > 0) {
-            final List<MongoDocument> tagObjects = new ArrayList<MongoDocument>();
+            final List<Document> tagObjects = new ArrayList<Document>();
             for (final Tag tag : _tags) {
                 tagObjects.add(tag.toDBObject());
             }
 
-            buf.append(new MongoDocument("tags", tagObjects));
+            buf.append(new Document("tags", tagObjects));
         }
 
         buf.append("}");

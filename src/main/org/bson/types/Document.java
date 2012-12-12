@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,24 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package org.mongodb;
+package org.bson.types;
 
-import org.mongodb.operation.MongoSortCriteria;
+import java.util.LinkedHashMap;
 
-public class MongoSortCriteriaDocument extends MongoDocument implements MongoSortCriteria {
-    private static final long serialVersionUID = 6952982470406819852L;
+public class Document extends LinkedHashMap<String, Object> {
 
-    public MongoSortCriteriaDocument() {
+    private static final long serialVersionUID = -1492763563349589447L;
+
+    public Document() {
     }
 
-    public MongoSortCriteriaDocument(final String key, final Object value) {
-        super(key, value);
-    }
-
-    @Override
-    public MongoDocument toMongoDocument() {
-        return this;
+    public Document(final String key, final Object value) {
+        put(key, value);
     }
 }

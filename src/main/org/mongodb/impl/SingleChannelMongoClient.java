@@ -19,9 +19,9 @@ package org.mongodb.impl;
 
 import org.bson.io.PooledByteBufferOutput;
 import org.bson.util.BufferPool;
+import org.bson.types.Document;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoDatabase;
-import org.mongodb.MongoDocument;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.MongoNamespace;
@@ -137,17 +137,17 @@ public class SingleChannelMongoClient implements MongoClient {
     }
 
 
-    private Serializer<MongoDocument> withDocumentSerializer(final Serializer<MongoDocument> serializer) {
+    private Serializer<Document> withDocumentSerializer(final Serializer<Document> serializer) {
         if (serializer != null) {
             return serializer;
         }
         return new MongoDocumentSerializer(this.primitiveSerializers);
     }
 
-    private MongoReplyMessage<MongoDocument> sendWriteMessage(final MongoNamespace namespace,
+    private MongoReplyMessage<Document> sendWriteMessage(final MongoNamespace namespace,
                                                               final MongoRequestMessage writeMessage,
                                                               final MongoWrite write,
-                                                              final Serializer<MongoDocument> serializer) {
+                                                              final Serializer<Document> serializer) {
         try {
             channel.sendMessage(writeMessage);
             if (write.getWriteConcern().callGetLastError()) {
@@ -167,8 +167,8 @@ public class SingleChannelMongoClient implements MongoClient {
 
     private class SingleChannelMongoOperations implements MongoOperations {
         @Override
-        public MongoDocument executeCommand(final String database, final MongoCommandOperation commandOperation,
-                                            final Serializer<MongoDocument> serializer) {
+        public Document executeCommand(final String database, final MongoCommandOperation commandOperation,
+                                            final Serializer<Document> serializer) {
             try {
                 commandOperation.readPreferenceIfAbsent(getReadPreference());
                 final MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd",
@@ -176,7 +176,7 @@ public class SingleChannelMongoClient implements MongoClient {
                 channel.sendMessage(message);
 
                 // TODO: not sure about the serializer we're passing in here
-                final MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(serializer);
+                final MongoReplyMessage<Document> replyMessage = channel.receiveMessage(serializer);
 
                 return replyMessage.getDocuments().get(0);
             } catch (IOException e) {
@@ -194,7 +194,7 @@ public class SingleChannelMongoClient implements MongoClient {
 
         @Override
         public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
-                                        final Serializer<MongoDocument> baseSerializer,
+                                        final Serializer<Document> baseSerializer,
                                         final Serializer<T> serializer) {
             try {
                 find.readPreferenceIfAbsent(getReadPreference());
@@ -227,7 +227,7 @@ public class SingleChannelMongoClient implements MongoClient {
         }
 
         @Override
-        public UpdateResult update(final MongoNamespace namespace, final MongoUpdate update, final Serializer<MongoDocument> serializer) {
+        public UpdateResult update(final MongoNamespace namespace, final MongoUpdate update, final Serializer<Document> serializer) {
             update.writeConcernIfAbsent(writeConcern);
             final MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), update,
                     new PooledByteBufferOutput(bufferPool), withDocumentSerializer(serializer));
@@ -235,7 +235,7 @@ public class SingleChannelMongoClient implements MongoClient {
         }
 
         @Override
-        public RemoveResult remove(final MongoNamespace namespace, final MongoRemove remove, final Serializer<MongoDocument> serializer) {
+        public RemoveResult remove(final MongoNamespace namespace, final MongoRemove remove, final Serializer<Document> serializer) {
             remove.writeConcernIfAbsent(writeConcern);
             final MongoDeleteMessage message = new MongoDeleteMessage(namespace.getFullName(), remove,
                     new PooledByteBufferOutput(bufferPool), withDocumentSerializer(serializer));
