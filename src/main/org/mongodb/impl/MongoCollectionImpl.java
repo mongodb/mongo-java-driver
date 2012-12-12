@@ -20,6 +20,7 @@ package org.mongodb.impl;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
+import org.mongodb.MongoDocument;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
@@ -37,6 +38,7 @@ import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final String name;
@@ -104,13 +106,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public InsertResult insert(final MongoInsert<T> insert) {
-        return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(getWriteConcern()), serializer);
+        return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(getWriteConcern()), getSerializer());
     }
 
     @Override
     public RemoveResult remove(final MongoRemove remove) {
         // TODO: need a serializer to pass in here
-        return getClient().getOperations().remove(getNamespace(), remove.writeConcernIfAbsent(getWriteConcern()), null);
+        return getClient().getOperations().remove(getNamespace(), remove.writeConcernIfAbsent(getWriteConcern()),
+                getMongoDocumentSerializer());
     }
 
     @Override
@@ -152,4 +155,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         return new MongoNamespace(getDatabase().getName(), getName());
     }
 
+    private Serializer<MongoDocument> getMongoDocumentSerializer() {
+        return new MongoDocumentSerializer(baseSerializers);
+    }
 }
