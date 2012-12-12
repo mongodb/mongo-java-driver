@@ -52,7 +52,12 @@ public class PrimitiveSerializers implements Serializer<Object> {
     @Override
     public void serialize(final BSONWriter writer, final Object value,
                           final BsonSerializationOptions options) {
-        Serializer serializer = classSerializerMap.get(value.getClass());
+        Serializer serializer;
+        if (value == null) {
+            serializer = classSerializerMap.get(null);
+        } else {
+            serializer = classSerializerMap.get(value.getClass());
+        }
         if (serializer == null) {
             throw new MongoException("No serializer for class " + value.getClass().getName());
         }
@@ -85,17 +90,17 @@ public class PrimitiveSerializers implements Serializer<Object> {
     // TODO: find a proper way to do this...
     public static PrimitiveSerializers createDefault() {
         return builder()
-        .objectIdSerializer(new ObjectIdSerializer())
-        .integerSerializer(new IntegerSerializer())
-        .longSerializer(new LongSerializer())
-        .stringSerializer(new StringSerializer())
-        .doubleSerializer(new DoubleSerializer())
-        .binarySerializer(new BinarySerializer())
-        .dateSerializer(new DateSerializer())
-        .booleanSerializer(new BooleanSerializer())
-        .patternSerializer(new PatternSerializer())
-        .nullSerializer(new NullSerializer())
-        .build();
+                .objectIdSerializer(new ObjectIdSerializer())
+                .integerSerializer(new IntegerSerializer())
+                .longSerializer(new LongSerializer())
+                .stringSerializer(new StringSerializer())
+                .doubleSerializer(new DoubleSerializer())
+                .binarySerializer(new BinarySerializer())
+                .dateSerializer(new DateSerializer())
+                .booleanSerializer(new BooleanSerializer())
+                .patternSerializer(new PatternSerializer())
+                .nullSerializer(new NullSerializer())
+                .build();
     }
 
 
