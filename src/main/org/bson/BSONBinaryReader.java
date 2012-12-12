@@ -191,7 +191,7 @@ public class BSONBinaryReader extends BSONReader {
     public RegularExpression readRegularExpression() {
         checkPreconditions("readRegularExpression", BsonType.REGULAR_EXPRESSION);
         setState(getNextState());
-        return new RegularExpression(buffer.readString(), buffer.readString());
+        return new RegularExpression(buffer.readCString(), buffer.readCString());
     }
 
     @Override
