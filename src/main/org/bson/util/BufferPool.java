@@ -20,6 +20,8 @@ package org.bson.util;
 public abstract class BufferPool<T> {
 
     public abstract T get(int size);
+
     public abstract void done(T buffer);
+
     public abstract T createNew(int size);
 }

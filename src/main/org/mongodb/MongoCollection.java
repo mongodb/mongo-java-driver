@@ -50,7 +50,8 @@ public interface MongoCollection<T> {
     MongoDatabase getDatabase();
 
     /**
-     * Gets the name of this collection.  This is the simple name of the collection and is not prefixed with the database name.
+     * Gets the name of this collection.  This is the simple name of the collection and is not prefixed with the
+     * database name.
      *
      * @return the collection name
      */

@@ -116,7 +116,8 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
                 map.remove(key);
                 set(map);
                 return true;
-            } else {
+            }
+            else {
                 return false;
             }
         } finally {

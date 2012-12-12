@@ -1,12 +1,12 @@
 /**
  *      Copyright (C) 2010 10gen Inc.
- *  
+ *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
  *   You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *   Unless required by applicable law or agreed to in writing, software
  *   distributed under the License is distributed on an "AS IS" BASIS,
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +22,14 @@ import java.util.Set;
 public class StringRangeSet implements Set<String> {
 
     private final int size;
-    
+
     private final static int NUMSTR_LEN = 100;
     private final static String[] NUMSTRS = new String[100];
+
     static {
-        for (int i = 0; i < NUMSTR_LEN; ++i)
+        for (int i = 0; i < NUMSTR_LEN; ++i) {
             NUMSTRS[i] = String.valueOf(i);
+        }
     }
 
     public StringRangeSet(int size) {
@@ -48,11 +50,12 @@ public class StringRangeSet implements Set<String> {
             }
 
             public String next() {
-                if (index < NUMSTR_LEN)
+                if (index < NUMSTR_LEN) {
                     return NUMSTRS[index++];
+                }
                 return String.valueOf(index++);
             }
-            
+
             public void remove() {
                 throw new UnsupportedOperationException();
             }
@@ -116,7 +119,8 @@ public class StringRangeSet implements Set<String> {
         for (int i = 0; i < size; ++i) {
             if (i < NUMSTR_LEN) {
                 array[i] = NUMSTRS[i];
-            } else {
+            }
+            else {
                 array[i] = String.valueOf(i);
             }
         }

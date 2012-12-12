@@ -26,47 +26,52 @@ public class BSONException extends RuntimeException {
     /**
      * @param msg The error message.
      */
-    public BSONException( final String msg ) {
-        super( msg );
+    public BSONException(final String msg) {
+        super(msg);
     }
 
     /**
      * @param errorCode The error code.
-     * @param msg The error message.
+     * @param msg       The error message.
      */
-    public BSONException( final int errorCode, final String msg ) {
-        super( msg );
+    public BSONException(final int errorCode, final String msg) {
+        super(msg);
         _errorCode = errorCode;
     }
 
     /**
      * @param msg The error message.
-     * @param t The throwable cause.
+     * @param t   The throwable cause.
      */
-    public BSONException( final String msg , final Throwable t ) {
-        super( msg,  t );
+    public BSONException(final String msg, final Throwable t) {
+        super(msg, t);
     }
 
     /**
      * @param errorCode The error code.
-     * @param msg The error message.
-     * @param t The throwable cause.
+     * @param msg       The error message.
+     * @param t         The throwable cause.
      */
-    public BSONException( final int errorCode, final String msg, final Throwable t ) {
-        super( msg,  t );
+    public BSONException(final int errorCode, final String msg, final Throwable t) {
+        super(msg, t);
         _errorCode = errorCode;
     }
 
     /**
      * Returns the error code.
+     *
      * @return The error code.
      */
-    public Integer getErrorCode() { return _errorCode; }
+    public Integer getErrorCode() {
+        return _errorCode;
+    }
 
     /**
      * Returns true if the error code is set (i.e., not null).
      */
-    public boolean hasErrorCode() { return (_errorCode != null); }
+    public boolean hasErrorCode() {
+        return (_errorCode != null);
+    }
 
     private Integer _errorCode = null;
 }

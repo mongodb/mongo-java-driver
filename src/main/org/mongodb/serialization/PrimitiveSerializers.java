@@ -55,7 +55,8 @@ public class PrimitiveSerializers implements Serializer<Object> {
         Serializer serializer;
         if (value == null) {
             serializer = classSerializerMap.get(null);
-        } else {
+        }
+        else {
             serializer = classSerializerMap.get(value.getClass());
         }
         if (serializer == null) {

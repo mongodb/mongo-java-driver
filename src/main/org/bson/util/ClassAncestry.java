@@ -12,14 +12,12 @@ class ClassAncestry {
 
     /**
      * getAncestry
-     * 
-     * Walks superclass and interface graph, superclasses first, then
-     * interfaces, to compute an ancestry list. Supertypes are visited left to
-     * right. Duplicates are removed such that no Class will appear in the list
-     * before one of its subtypes.
-     * 
-     * Does not need to be synchronized, races are harmless as the Class graph
-     * does not change at runtime.
+     * <p/>
+     * Walks superclass and interface graph, superclasses first, then interfaces, to compute an ancestry list.
+     * Supertypes are visited left to right. Duplicates are removed such that no Class will appear in the list before
+     * one of its subtypes.
+     * <p/>
+     * Does not need to be synchronized, races are harmless as the Class graph does not change at runtime.
      */
     public static <T> List<Class<?>> getAncestry(Class<T> c) {
         final ConcurrentMap<Class<?>, List<Class<?>>> cache = getClassAncestryCache();
@@ -57,8 +55,9 @@ class ClassAncestry {
         // next superclass
         computeAncestry(c.getSuperclass(), result);
 
-        if (!result.contains(c))
+        if (!result.contains(c)) {
             result.add(c);
+        }
     }
 
     /**

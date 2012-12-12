@@ -156,7 +156,8 @@ public class SingleChannelMongoClient implements MongoClient {
                         new PooledByteBufferOutput(getBufferPool()), withDocumentSerializer(null));
                 channel.sendMessage(getLastErrorMessage);
                 return channel.receiveMessage(serializer);
-            } else {
+            }
+            else {
                 return null;
             }
         } catch (IOException e) {

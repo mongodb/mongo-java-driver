@@ -20,8 +20,7 @@ package org.bson;
 /// <summary>
 /// Used by BsonReaders and BsonWriters to represent the current context.
 /// </summary>
-public enum ContextType
-{
+public enum ContextType {
     /// <summary>
     /// The top level of a BSON document.
     /// </summary>

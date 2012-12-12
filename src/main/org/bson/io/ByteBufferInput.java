@@ -106,8 +106,9 @@ public class ByteBufferInput implements InputBuffer {
     }
 
     private void readUntilNullByte() {
-        while (buffer.get() != 0)
+        while (buffer.get() != 0) {
             ;
+        }
     }
 
     @Override

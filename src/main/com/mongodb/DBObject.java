@@ -23,11 +23,12 @@ import java.util.Set;
 public interface DBObject {
     /**
      * Sets a name/value pair in this object.
+     *
      * @param key Name to set
-     * @param v Corresponding value
+     * @param v   Corresponding value
      * @return <tt>v</tt>
      */
-    public Object put( String key , Object v );
+    public Object put(String key, Object v);
 
     /**
      * Sets all key/value pairs from an object into this object
@@ -37,41 +38,47 @@ public interface DBObject {
 
     /**
      * Sets all key/value pairs from a map into this object
+     *
      * @param m the map
      */
-    public void putAll( Map m );
+    public void putAll(Map m);
 
     /**
      * Gets a field from this object by a given name.
+     *
      * @param key The name of the field fetch
      * @return The field, if found
      */
-    public Object get( String key );
+    public Object get(String key);
 
     /**
      * Returns a map representing this BSONObject.
+     *
      * @return the map
      */
     public Map toMap();
 
     /**
      * Removes a field with a given name from this object.
+     *
      * @param key The name of the field to remove
      * @return The value removed from this object
      */
-    public Object removeField( String key );
+    public Object removeField(String key);
 
     /**
      * Deprecated
+     *
      * @param s
      * @return True if the key is present
      * @deprecated
      */
     @Deprecated
-    public boolean containsKey( String s );
+    public boolean containsKey(String s);
 
     /**
      * Checks if this object contains a field with the given name.
+     *
      * @param s Field name for which to check
      * @return True if the field is present
      */
@@ -79,19 +86,20 @@ public interface DBObject {
 
     /**
      * Returns this object's fields' names
+     *
      * @return The names of the fields in this object
      */
     public Set<String> keySet();
 
     /**
-     * if this object was retrieved with only some fields (using a field filter)
-     * this method will be called to mark it as such.
+     * if this object was retrieved with only some fields (using a field filter) this method will be called to mark it
+     * as such.
      */
     public void markAsPartialObject();
 
     /**
-     * whether markAsPartialObject was ever called
-     * only matters if you are going to upsert and do not want to risk losing fields
+     * whether markAsPartialObject was ever called only matters if you are going to upsert and do not want to risk
+     * losing fields
      */
     public boolean isPartialObject();
 }

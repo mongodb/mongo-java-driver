@@ -27,7 +27,7 @@ public class MongoInsert<T> extends MongoWrite {
     final Iterable<T> documents;
 
     // TODO: why are calls to this generating compiler warnings?
-    public MongoInsert(final T document, final T...remainingDocuments) {
+    public MongoInsert(final T document, final T... remainingDocuments) {
         final List<T> documentList = new ArrayList<T>();
         documentList.add(document);
         Collections.addAll(documentList, remainingDocuments);

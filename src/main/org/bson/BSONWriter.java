@@ -174,8 +174,7 @@ public abstract class BSONWriter implements Closeable {
     /// <param name="name">The name of the element.</param>
     /// <param name="bytes">The binary data.</param>
     /// <param name="subType">The binary data subtype.</param>
-    public void writeBinaryData(String name, Binary binary)
-    {
+    public void writeBinaryData(String name, Binary binary) {
         writeName(name);
         writeBinaryData(binary);
     }
@@ -532,7 +531,7 @@ public abstract class BSONWriter implements Closeable {
     /// <param name="actualContextType">The actual ContextType.</param>
     /// <param name="validContextTypes">The valid ContextTypes.</param>
     protected void throwInvalidContextType(String methodName, ContextType actualContextType,
-            ContextType... validContextTypes) {
+                                           ContextType... validContextTypes) {
         String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
         String message = String.format(
                 "%s can only be called when ContextType is %s, not when ContextType is %s.",

@@ -94,6 +94,7 @@ public class MongoException extends RuntimeException {
         private static final long serialVersionUID = -4415279469780082174L;
 
         private final IOException rootCause;
+
         /**
          * @param msg the message
          * @param ioe the cause

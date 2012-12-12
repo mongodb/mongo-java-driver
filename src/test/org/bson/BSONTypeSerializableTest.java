@@ -67,7 +67,7 @@ public class BSONTypeSerializableTest {
 
     @Test
     public void testSerializeBinary() throws Exception {
-        Binary binary = new Binary((byte)0x00 , "hello world".getBytes());
+        Binary binary = new Binary((byte) 0x00, "hello world".getBytes());
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);

@@ -16,8 +16,7 @@
 
 package org.bson;
 
-public enum BsonType
-{
+public enum BsonType {
     /// <summary>
     /// Not a real BSON type. Used to signal the end of a document.
     /// </summary>
@@ -110,14 +109,14 @@ public enum BsonType
     BsonType(int value) {
         this.value = value;
     }
-    
+
     private final int value;
 
     private static BsonType[] lookupTable = new BsonType[MIN_KEY.getValue() + 1];
 
     static {
         for (BsonType cur : BsonType.values()) {
-           lookupTable[cur.getValue()] = cur;
+            lookupTable[cur.getValue()] = cur;
         }
     }
 }

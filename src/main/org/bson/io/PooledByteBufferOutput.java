@@ -86,8 +86,8 @@ public class PooledByteBufferOutput extends OutputBuffer {
     }
 
     /**
-     * Backpatches the size of a document or message by writing the size into the four bytes starting at
-     * getPosition() - size.
+     * Backpatches the size of a document or message by writing the size into the four bytes starting at getPosition() -
+     * size.
      *
      * @param size the size of the document or message
      */
@@ -136,7 +136,7 @@ public class PooledByteBufferOutput extends OutputBuffer {
             cur.flip();
         }
 
-        for (long bytesRead = 0; bytesRead < size();) {
+        for (long bytesRead = 0; bytesRead < size(); ) {
             bytesRead += socketChannel.write(bufferList.toArray(new ByteBuffer[bufferList.size()]), 0, bufferList.size());
         }
     }

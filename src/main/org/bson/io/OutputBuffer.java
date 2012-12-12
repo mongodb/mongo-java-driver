@@ -31,14 +31,17 @@ public abstract class OutputBuffer extends OutputStream {
     }
 
     public abstract void write(byte[] b, int off, int len);
+
     public abstract void write(int b);
-    
+
     public abstract int getPosition();
-    public abstract void setPosition( int position );
-    
+
+    public abstract void setPosition(int position);
+
     public abstract void seekEnd();
+
     public abstract void seekStart();
-    
+
     /**
      * @return size of data so far
      */
@@ -47,8 +50,8 @@ public abstract class OutputBuffer extends OutputStream {
     /**
      * @return bytes written
      */
-    public abstract int pipe( OutputStream out )
-        throws IOException;
+    public abstract int pipe(OutputStream out)
+            throws IOException;
 
     /**
      * Pipe into the socket channel
@@ -60,28 +63,27 @@ public abstract class OutputBuffer extends OutputStream {
     /**
      * mostly for testing
      */
-    public byte [] toByteArray(){
+    public byte[] toByteArray() {
         try {
-            final ByteArrayOutputStream bout = new ByteArrayOutputStream( size() );
-            pipe( bout );
+            final ByteArrayOutputStream bout = new ByteArrayOutputStream(size());
+            pipe(bout);
             return bout.toByteArray();
+        } catch (IOException ioe) {
+            throw new RuntimeException("should be impossible", ioe);
         }
-        catch ( IOException ioe ){
-            throw new RuntimeException( "should be impossible" , ioe );
-        }
     }
 
-    public String asString(){
-        return new String( toByteArray() );
+    public String asString() {
+        return new String(toByteArray());
     }
 
-    public String asString( String encoding )
-        throws UnsupportedEncodingException {
-        return new String( toByteArray() , encoding );
+    public String asString(String encoding)
+            throws UnsupportedEncodingException {
+        return new String(toByteArray(), encoding);
     }
 
 
-//    public String hex(){
+    //    public String hex(){
 //        final StringBuilder buf = new StringBuilder();
 //        try {
 //            pipe( new OutputStream(){
@@ -130,23 +132,23 @@ public abstract class OutputBuffer extends OutputStream {
 //        return org.mongodb.util.Util.toHex( md5.digest() );
 //    }
 //
-    public void writeInt( int x ){
-        write( x >> 0 );
-        write( x >> 8 );
-        write( x >> 16 );
-        write( x >> 24 );
+    public void writeInt(int x) {
+        write(x >> 0);
+        write(x >> 8);
+        write(x >> 16);
+        write(x >> 24);
     }
 
-    public void writeIntBE( int x ){
-        write( x >> 24 );
-        write( x >> 16 );
-        write( x >> 8 );
+    public void writeIntBE(int x) {
+        write(x >> 24);
+        write(x >> 16);
+        write(x >> 8);
         write(x);
     }
 
     /**
-     * Backpatches the size of a document or string by writing the size into the four bytes starting at
-     * getPosition() - size.
+     * Backpatches the size of a document or string by writing the size into the four bytes starting at getPosition() -
+     * size.
      *
      * @param size the size of the document/string
      */
@@ -158,31 +160,31 @@ public abstract class OutputBuffer extends OutputStream {
         writeInt(getPosition() - size - additionalOffset, size);
     }
 
-    public void writeInt( int pos , int x ){
+    public void writeInt(int pos, int x) {
         final int save = getPosition();
         setPosition(pos);
         writeInt(x);
         setPosition(save);
     }
 
-    public void writeLong( long x ){
-        write( (byte)(0xFFL & ( x >> 0 ) ) );
-        write( (byte)(0xFFL & ( x >> 8 ) ) );
-        write( (byte)(0xFFL & ( x >> 16 ) ) );
-        write( (byte)(0xFFL & ( x >> 24 ) ) );
-        write( (byte)(0xFFL & ( x >> 32 ) ) );
-        write( (byte)(0xFFL & ( x >> 40 ) ) );
-        write( (byte)(0xFFL & ( x >> 48 ) ) );
+    public void writeLong(long x) {
+        write((byte) (0xFFL & (x >> 0)));
+        write((byte) (0xFFL & (x >> 8)));
+        write((byte) (0xFFL & (x >> 16)));
+        write((byte) (0xFFL & (x >> 24)));
+        write((byte) (0xFFL & (x >> 32)));
+        write((byte) (0xFFL & (x >> 40)));
+        write((byte) (0xFFL & (x >> 48)));
         write((byte) (0xFFL & (x >> 56)));
     }
 
-    public void writeDouble( double x ){
+    public void writeDouble(double x) {
         writeLong(Double.doubleToRawLongBits(x));
     }
 
     public void writeString(final String str) {
         int lenPos = getPosition();
-        writeInt( 0 ); // making space for size
+        writeInt(0); // making space for size
         int strLen = writeCString(str);
         backpatchSize(strLen, 4);
     }
@@ -192,41 +194,41 @@ public abstract class OutputBuffer extends OutputStream {
         final int len = str.length();
         int total = 0;
 
-        for ( int i=0; i<len; ){
-            int c = Character.codePointAt( str , i );
+        for (int i = 0; i < len; ) {
+            int c = Character.codePointAt(str, i);
 
-            if ( c < 0x80 ){
-                write( (byte)c );
+            if (c < 0x80) {
+                write((byte) c);
                 total += 1;
             }
-            else if ( c < 0x800 ){
-                write( (byte)(0xc0 + (c >> 6) ) );
-                write( (byte)(0x80 + (c & 0x3f) ) );
+            else if (c < 0x800) {
+                write((byte) (0xc0 + (c >> 6)));
+                write((byte) (0x80 + (c & 0x3f)));
                 total += 2;
             }
-            else if (c < 0x10000){
-                write( (byte)(0xe0 + (c >> 12) ) );
-                write( (byte)(0x80 + ((c >> 6) & 0x3f) ) );
-                write( (byte)(0x80 + (c & 0x3f) ) );
+            else if (c < 0x10000) {
+                write((byte) (0xe0 + (c >> 12)));
+                write((byte) (0x80 + ((c >> 6) & 0x3f)));
+                write((byte) (0x80 + (c & 0x3f)));
                 total += 3;
             }
             else {
-                write( (byte)(0xf0 + (c >> 18)) );
-                write( (byte)(0x80 + ((c >> 12) & 0x3f)) );
-                write( (byte)(0x80 + ((c >> 6) & 0x3f)) );
-                write( (byte)(0x80 + (c & 0x3f)) );
+                write((byte) (0xf0 + (c >> 18)));
+                write((byte) (0x80 + ((c >> 12) & 0x3f)));
+                write((byte) (0x80 + ((c >> 6) & 0x3f)));
+                write((byte) (0x80 + (c & 0x3f)));
                 total += 4;
             }
 
             i += Character.charCount(c);
         }
 
-        write( (byte)0 );
+        write((byte) 0);
         total++;
         return total;
     }
 
-    public String toString(){
-        return getClass().getName() + " size: " + size() + " pos: " + getPosition() ;
+    public String toString() {
+        return getClass().getName() + " size: " + size() + " pos: " + getPosition();
     }
 }

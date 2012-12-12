@@ -65,7 +65,7 @@ public class DBCollection {
 
 
     public WriteResult remove(final DBObject filter, final WriteConcern writeConcernToUse) {
-    final MongoRemove remove = new MongoRemove(DBObjects.toQueryFilterDocument(filter));
+        final MongoRemove remove = new MongoRemove(DBObjects.toQueryFilterDocument(filter));
         final RemoveResult result = collection.remove(remove);
         return new WriteResult(result, writeConcernToUse.toNew());
     }

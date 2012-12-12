@@ -40,7 +40,8 @@ public class DBObjectSerializer implements Serializer<DBObject> {
             Object value = document.get(field);
             if (value instanceof DBObject) {
                 serialize(bsonWriter, (DBObject) value, options);
-            } else {
+            }
+            else {
                 primitiveSerializers.serialize(bsonWriter, value, options);
             }
         }
@@ -57,7 +58,8 @@ public class DBObjectSerializer implements Serializer<DBObject> {
             BsonType bsonType = reader.getNextBsonType();
             if (bsonType.equals(BsonType.DOCUMENT)) {
                 deserialize(reader, options);
-            } else {
+            }
+            else {
                 Object value = primitiveSerializers.deserialize(reader, options);
                 document.put(fieldName, value);
             }

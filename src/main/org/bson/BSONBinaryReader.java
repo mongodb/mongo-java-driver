@@ -41,15 +41,13 @@ public class BSONBinaryReader extends BSONReader {
             throw new IllegalStateException("BsonBinaryWriter");
         }
 
-        if (getState() == State.INITIAL || getState() == State.DONE || getState() == State.SCOPE_DOCUMENT)
-        {
+        if (getState() == State.INITIAL || getState() == State.DONE || getState() == State.SCOPE_DOCUMENT) {
             // there is an implied type of Document for the top level and for scope documents
             setCurrentBsonType(BsonType.DOCUMENT);
             setState(State.VALUE);
             return getCurrentBsonType();
         }
-        if (getState() != State.TYPE)
-        {
+        if (getState() != State.TYPE) {
             throwInvalidState("ReadBsonType", State.TYPE);
         }
 
@@ -285,8 +283,7 @@ public class BSONBinaryReader extends BSONReader {
     }
 
     private void setStateOnEnd() {
-        switch (context.contextType)
-        {
+        switch (context.contextType) {
             case ARRAY:
             case DOCUMENT:
                 setState(State.TYPE);

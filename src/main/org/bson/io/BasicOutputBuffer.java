@@ -25,39 +25,42 @@ import java.nio.channels.SocketChannel;
 public class BasicOutputBuffer extends OutputBuffer {
 
     @Override
-    public void write(byte[] b){
-        write( b , 0 , b.length );
+    public void write(byte[] b) {
+        write(b, 0, b.length);
     }
 
     @Override
-    public void write(byte[] b, int off, int len){
-        _ensure( len );
-        System.arraycopy( b , off , _buffer , _cur , len );
+    public void write(byte[] b, int off, int len) {
+        _ensure(len);
+        System.arraycopy(b, off, _buffer, _cur, len);
         _cur += len;
-        _size = Math.max( _cur , _size );
-    }
-    @Override
-    public void write(int b){
-        _ensure(1);
-        _buffer[_cur++] = (byte)(0xFF&b);
-        _size = Math.max( _cur , _size );
+        _size = Math.max(_cur, _size);
     }
 
     @Override
-    public int getPosition(){
+    public void write(int b) {
+        _ensure(1);
+        _buffer[_cur++] = (byte) (0xFF & b);
+        _size = Math.max(_cur, _size);
+    }
+
+    @Override
+    public int getPosition() {
         return _cur;
     }
+
     @Override
-    public void setPosition( int position ){
+    public void setPosition(int position) {
         _cur = position;
     }
 
     @Override
-    public void seekEnd(){
+    public void seekEnd() {
         _cur = _size;
     }
+
     @Override
-    public void seekStart(){
+    public void seekStart() {
         _cur = 0;
     }
 
@@ -65,7 +68,7 @@ public class BasicOutputBuffer extends OutputBuffer {
      * @return size of data so far
      */
     @Override
-    public int size(){
+    public int size() {
         return _size;
     }
 
@@ -73,9 +76,9 @@ public class BasicOutputBuffer extends OutputBuffer {
      * @return bytes written
      */
     @Override
-    public int pipe( OutputStream out )
-        throws IOException {
-        out.write( _buffer , 0 , _size );
+    public int pipe(OutputStream out)
+            throws IOException {
+        out.write(_buffer, 0, _size);
         return _size;
     }
 
@@ -87,36 +90,38 @@ public class BasicOutputBuffer extends OutputBuffer {
     /**
      * @return bytes written
      */
-    public int pipe( DataOutput out )
-        throws IOException {
-        out.write( _buffer , 0 , _size );
+    public int pipe(DataOutput out)
+            throws IOException {
+        out.write(_buffer, 0, _size);
         return _size;
     }
 
 
-    void _ensure( int more ){
+    void _ensure(int more) {
         final int need = _cur + more;
-        if ( need < _buffer.length )
+        if (need < _buffer.length) {
             return;
+        }
 
-        int newSize = _buffer.length*2;
-        if ( newSize <= need )
+        int newSize = _buffer.length * 2;
+        if (newSize <= need) {
             newSize = need + 128;
+        }
 
         byte[] n = new byte[newSize];
-        System.arraycopy( _buffer , 0 , n , 0 , _size );
+        System.arraycopy(_buffer, 0, n, 0, _size);
         _buffer = n;
     }
 
     @Override
-    public String asString(){
-        return new String( _buffer , 0 , _size );
+    public String asString() {
+        return new String(_buffer, 0, _size);
     }
 
     @Override
-    public String asString( String encoding )
-        throws UnsupportedEncodingException {
-        return new String( _buffer , 0 , _size , encoding );
+    public String asString(String encoding)
+            throws UnsupportedEncodingException {
+        return new String(_buffer, 0, _size, encoding);
     }
 
     private int _cur;

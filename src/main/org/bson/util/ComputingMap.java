@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentMap;
 final class ComputingMap<K, V> implements Map<K, V>, Function<K, V> {
 
     public static <K, V> Map<K, V> create(Function<K, V> function) {
-        return new ComputingMap<K, V>(CopyOnWriteMap.<K, V> newHashMap(), function);
+        return new ComputingMap<K, V>(CopyOnWriteMap.<K, V>newHashMap(), function);
     }
 
     private final ConcurrentMap<K, V> map;
@@ -24,13 +24,15 @@ final class ComputingMap<K, V> implements Map<K, V>, Function<K, V> {
     public V get(Object key) {
         while (true) {
             V v = map.get(key);
-            if (v != null)
+            if (v != null) {
                 return v;
+            }
             @SuppressWarnings("unchecked")
             K k = (K) key;
             V value = function.apply(k);
-            if (value == null)
+            if (value == null) {
                 return null;
+            }
             map.putIfAbsent(k, value);
         }
     }

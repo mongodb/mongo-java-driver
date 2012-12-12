@@ -37,8 +37,7 @@ public abstract class BSONReader implements Closeable {
     /// Initializes a new instance of the BsonReader class.
     /// </summary>
     /// <param name="settings">The reader settings.</param>
-    protected BSONReader(BsonReaderSettings settings)
-    {
+    protected BSONReader(BsonReaderSettings settings) {
         _settings = settings;
         _state = State.INITIAL;
     }
@@ -51,8 +50,7 @@ public abstract class BSONReader implements Closeable {
         return _currentBsonType;
     }
 
-    protected void setCurrentBsonType(BsonType newType)
-    {
+    protected void setCurrentBsonType(BsonType newType) {
         _currentBsonType = newType;
     }
 
@@ -165,14 +163,11 @@ public abstract class BSONReader implements Closeable {
     /// Gets the current BsonType (calls readBsonType if necessary).
     /// </summary>
     /// <returns>The current BsonType.</returns>
-    public BsonType getNextBsonType()
-    {
-        if (_state == State.INITIAL || _state == State.DONE || _state == State.SCOPE_DOCUMENT || _state == State.TYPE)
-        {
+    public BsonType getNextBsonType() {
+        if (_state == State.INITIAL || _state == State.DONE || _state == State.SCOPE_DOCUMENT || _state == State.TYPE) {
             readBsonType();
         }
-        if (_state != State.VALUE)
-        {
+        if (_state != State.VALUE) {
             throwInvalidState("GetCurrentBsonType", State.VALUE);
         }
         return _currentBsonType;
@@ -184,15 +179,14 @@ public abstract class BSONReader implements Closeable {
     /// <param name="bytes">The binary data.</param>
     /// <param name="subType">The binary data subtype.</param>
     public abstract Binary readBinaryData();
-    
+
     /// <summary>
     /// Reads a BSON binary data element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="bytes">The binary data.</param>
     /// <param name="subType">The binary data subtype.</param>
-    public Binary readBinaryData(String name)
-    {
+    public Binary readBinaryData(String name) {
         return readBinaryData(name);
     }
 
@@ -207,8 +201,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>A Boolean.</returns>
-    public boolean readBoolean(String name)
-    {
+    public boolean readBoolean(String name) {
         verifyName(name);
         return readBoolean();
     }
@@ -230,8 +223,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>The number of milliseconds since the Unix epoch.</returns>
-    public long readDateTime(String name)
-    {
+    public long readDateTime(String name) {
         verifyName(name);
         return readDateTime();
     }
@@ -247,8 +239,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>A Double.</returns>
-    public double readDouble(String name)
-    {
+    public double readDouble(String name) {
         verifyName(name);
         return readDouble();
     }
@@ -274,8 +265,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>An INT32.</returns>
-    public int readInt32(String name)
-    {
+    public int readInt32(String name) {
         verifyName(name);
         return readInt32();
     }
@@ -291,8 +281,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>An Int64.</returns>
-    public long readInt64(String name)
-    {
+    public long readInt64(String name) {
         verifyName(name);
         return readInt64();
     }
@@ -308,8 +297,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>A string.</returns>
-    public String readJavaScript(String name)
-    {
+    public String readJavaScript(String name) {
         verifyName(name);
         return readJavaScript();
     }
@@ -325,8 +313,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>A string.</returns>
-    public String readJavaScriptWithScope(String name)
-    {
+    public String readJavaScriptWithScope(String name) {
         verifyName(name);
         return readJavaScriptWithScope();
     }
@@ -340,8 +327,7 @@ public abstract class BSONReader implements Closeable {
     /// Reads a BSON MaxKey element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void readMaxKey(String name)
-    {
+    public void readMaxKey(String name) {
         verifyName(name);
         readMaxKey();
     }
@@ -355,8 +341,7 @@ public abstract class BSONReader implements Closeable {
     /// Reads a BSON MinKey element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void readMinKey(String name)
-    {
+    public void readMinKey(String name) {
         verifyName(name);
         readMinKey();
     }
@@ -365,14 +350,11 @@ public abstract class BSONReader implements Closeable {
     /// Reads the name of an element from the reader.
     /// </summary>
     /// <returns>The name of the element.</returns>
-    public String readName()
-    {
-        if (_state == State.TYPE)
-        {
+    public String readName() {
+        if (_state == State.TYPE) {
             readBsonType();
         }
-        if (_state != State.NAME)
-        {
+        if (_state != State.NAME) {
             throwInvalidState("ReadName", State.NAME);
         }
 
@@ -384,8 +366,7 @@ public abstract class BSONReader implements Closeable {
     /// Reads the name of an element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void readName(String name)
-    {
+    public void readName(String name) {
         verifyName(name);
     }
 
@@ -398,8 +379,7 @@ public abstract class BSONReader implements Closeable {
     /// Reads a BSON null element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void readNull(String name)
-    {
+    public void readNull(String name) {
         verifyName(name);
         readNull();
     }
@@ -421,8 +401,7 @@ public abstract class BSONReader implements Closeable {
     /// <param name="machine">The machine hash.</param>
     /// <param name="pid">The PID.</param>
     /// <param name="increment">The increment.</param>
-    public ObjectId readObjectId(String name)
-    {
+    public ObjectId readObjectId(String name) {
         verifyName(name);
         return readObjectId();
     }
@@ -436,8 +415,7 @@ public abstract class BSONReader implements Closeable {
     /// Reads a BSON regular expression element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public RegularExpression readRegularExpression(String name)
-    {
+    public RegularExpression readRegularExpression(String name) {
         verifyName(name);
         return readRegularExpression();
     }
@@ -463,8 +441,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <returns>A String.</returns>
     /// <param name="name">The name of the element.</param>
-    public String readString(String name)
-    {
+    public String readString(String name) {
         verifyName(name);
         return readString();
     }
@@ -480,8 +457,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>A string.</returns>
-    public String readSymbol(String name)
-    {
+    public String readSymbol(String name) {
         verifyName(name);
         return readSymbol();
     }
@@ -497,8 +473,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <returns>The combined timestamp/increment.</returns>
     /// <param name="name">The name of the element.</param>
-    public long readTimestamp(String name)
-    {
+    public long readTimestamp(String name) {
         verifyName(name);
         return readTimestamp();
     }
@@ -512,8 +487,7 @@ public abstract class BSONReader implements Closeable {
     /// Reads a BSON undefined element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void readUndefined(String name)
-    {
+    public void readUndefined(String name) {
         verifyName(name);
         readUndefined();
     }
@@ -543,8 +517,7 @@ public abstract class BSONReader implements Closeable {
     protected void throwInvalidContextType(
             String methodName,
             ContextType actualContextType,
-            ContextType ... validContextTypes)
-    {
+            ContextType... validContextTypes) {
         String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
         String message = String.format(
                 "%s can only be called when ContextType is %s, not when ContextType is %s.",
@@ -557,8 +530,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="methodName">The name of the method.</param>
     /// <param name="validStates">The valid states.</param>
-    protected void throwInvalidState(String methodName, State... validStates)
-    {
+    protected void throwInvalidState(String methodName, State... validStates) {
         String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
         String message = String.format(
                 "%s can only be called when State is %s, not when State is %s.",
@@ -571,23 +543,18 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="methodName">The name of the method calling this one.</param>
     /// <param name="requiredBsonType">The required BSON type.</param>
-    protected void verifyBsonType(String methodName, BsonType requiredBsonType)
-    {
-        if (_state == State.INITIAL || _state == State.SCOPE_DOCUMENT || _state == State.TYPE)
-        {
+    protected void verifyBsonType(String methodName, BsonType requiredBsonType) {
+        if (_state == State.INITIAL || _state == State.SCOPE_DOCUMENT || _state == State.TYPE) {
             readBsonType();
         }
-        if (_state == State.NAME)
-        {
+        if (_state == State.NAME) {
             // ignore name
             skipName();
         }
-        if (_state != State.VALUE)
-        {
+        if (_state != State.VALUE) {
             throwInvalidState(methodName, State.VALUE);
         }
-        if (_currentBsonType != requiredBsonType)
-        {
+        if (_currentBsonType != requiredBsonType) {
             String message = String.format(
                     "%s can only be called when CurrentBsonType is %s, not when CurrentBsonType is %s.",
                     methodName, requiredBsonType, _currentBsonType);
@@ -599,12 +566,10 @@ public abstract class BSONReader implements Closeable {
     /// Verifies the name of the current element.
     /// </summary>
     /// <param name="expectedName">The expected name.</param>
-    protected void verifyName(String expectedName)
-    {
+    protected void verifyName(String expectedName) {
         readBsonType();
         String actualName = readName();
-        if (!actualName.equals(expectedName))
-        {
+        if (!actualName.equals(expectedName)) {
             String message = String.format(
                     "Expected element name to be '%s', not '%s'.",
                     expectedName, actualName);
@@ -612,8 +577,7 @@ public abstract class BSONReader implements Closeable {
         }
     }
 
-    protected enum State
-    {
+    protected enum State {
         /// <summary>
         /// The initial state.
         /// </summary>

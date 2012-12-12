@@ -51,9 +51,11 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
     private void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
         if (value instanceof MongoDocument) {
             serialize(bsonWriter, (MongoDocument) value, options);
-        } else if (value instanceof Iterable) {
+        }
+        else if (value instanceof Iterable) {
             serializeArray(bsonWriter, (Iterable) value, options);
-        } else {
+        }
+        else {
             primitiveSerializers.serialize(bsonWriter, value, options);
         }
     }
@@ -85,9 +87,11 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
         BsonType bsonType = reader.getCurrentBsonType();
         if (bsonType.equals(BsonType.DOCUMENT)) {
             return getDocumentDeserializerForField(fieldName).deserialize(reader, options);
-        } else if (bsonType.equals(BsonType.ARRAY)) {
+        }
+        else if (bsonType.equals(BsonType.ARRAY)) {
             return readArray(reader, options);
-        } else {
+        }
+        else {
             return primitiveSerializers.deserialize(reader, options);
         }
     }

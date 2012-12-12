@@ -32,8 +32,9 @@ public class MongoQueryMessage extends MongoRequestMessage {
 
         init(find);
         addDocument(find.getFilter().toMongoDocument(), serializer);
-        if (find.getFields() != null)
+        if (find.getFields() != null) {
             addDocument(find.getFields().toMongoDocument(), serializer);
+        }
         backpatchMessageLength();
     }
 

@@ -22,54 +22,53 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * this is used for internal increment values.
- * for storing normal dates in MongoDB, you should use java.util.Date
- * <b>time</b> is seconds since epoch
- * <b>inc<b> is an ordinal
+ * this is used for internal increment values. for storing normal dates in MongoDB, you should use java.util.Date
+ * <b>time</b> is seconds since epoch <b>inc<b> is an ordinal
  */
 public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
 
     private static final long serialVersionUID = -3268482672267936464L;
-    
-    static final boolean D = Boolean.getBoolean( "DEBUG.DBTIMESTAMP" );
 
-    public BSONTimestamp(){
+    static final boolean D = Boolean.getBoolean("DEBUG.DBTIMESTAMP");
+
+    public BSONTimestamp() {
         _inc = 0;
         _time = null;
     }
 
-    public BSONTimestamp(int time, int inc ){
-        _time = new Date( time * 1000L );
+    public BSONTimestamp(int time, int inc) {
+        _time = new Date(time * 1000L);
         _inc = inc;
     }
 
     /**
      * @return get time in seconds since epoch
      */
-    public int getTime(){
-        if ( _time == null )
+    public int getTime() {
+        if (_time == null) {
             return 0;
-        return (int)(_time.getTime() / 1000);
+        }
+        return (int) (_time.getTime() / 1000);
     }
-    
-    public int getInc(){
+
+    public int getInc() {
         return _inc;
     }
 
-    public String toString(){
+    public String toString() {
         return "TS time:" + _time + " inc:" + _inc;
     }
-    
+
     @Override
     public int compareTo(BSONTimestamp ts) {
-        if(getTime() != ts.getTime()) {
+        if (getTime() != ts.getTime()) {
             return getTime() - ts.getTime();
         }
-        else{
+        else {
             return getInc() - ts.getInc();
         }
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -78,11 +77,12 @@ public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
         result = prime * result + getTime();
         return result;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
-        if (obj == this)
+        if (obj == this) {
             return true;
+        }
         if (obj instanceof BSONTimestamp) {
             BSONTimestamp t2 = (BSONTimestamp) obj;
             return getTime() == t2.getTime() && getInc() == t2.getInc();

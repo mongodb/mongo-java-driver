@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 
-public class BSONBinaryWriterTest  {
+public class BSONBinaryWriterTest {
 
     BSONBinaryWriter writer;
     BasicOutputBuffer buffer;

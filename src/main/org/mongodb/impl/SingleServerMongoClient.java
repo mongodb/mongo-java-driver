@@ -111,8 +111,8 @@ public class SingleServerMongoClient implements MongoClient {
     }
 
     /**
-     * Unbind from a connection, but not lexically scoped.  This is not part of the public MongoClient API, as this is only
-     * offered so that com.mongodb.DB#requestDone can be implemented.
+     * Unbind from a connection, but not lexically scoped.  This is not part of the public MongoClient API, as this is
+     * only offered so that com.mongodb.DB#requestDone can be implemented.
      */
     public void unbindFromConnection() {
         releaseChannelClient(boundClient.get());
@@ -159,7 +159,8 @@ public class SingleServerMongoClient implements MongoClient {
                 throw new IllegalArgumentException("Can't unbind from a different client than you are bound to");
             }
             boundClient.remove();
-        } else {
+        }
+        else {
             mongoClient.close();
         }
     }

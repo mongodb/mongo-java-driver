@@ -195,13 +195,21 @@ class Concrete {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final Concrete concrete = (Concrete) o;
 
-        if (x != concrete.x) return false;
-        if (!id.equals(concrete.id)) return false;
+        if (x != concrete.x) {
+            return false;
+        }
+        if (!id.equals(concrete.id)) {
+            return false;
+        }
 
         return true;
     }

@@ -34,5 +34,6 @@ public final class StringUtils {
         return builder.toString();
     }
 
-    private StringUtils() {}
+    private StringUtils() {
+    }
 }

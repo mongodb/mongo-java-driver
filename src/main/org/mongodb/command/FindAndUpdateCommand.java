@@ -27,6 +27,7 @@ import org.mongodb.serialization.PrimitiveSerializers;
 
 public class FindAndUpdateCommand<T> extends FindAndModifyCommand<T> {
     private final MongoFindAndUpdate findAndUpdate;
+
     public FindAndUpdateCommand(final MongoClient mongoClient, final MongoNamespace namespace,
                                 final MongoFindAndUpdate findAndUpdate, final PrimitiveSerializers primitiveSerializers,
                                 final Serializer<T> serializer) {

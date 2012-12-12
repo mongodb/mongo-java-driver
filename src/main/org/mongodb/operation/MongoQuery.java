@@ -24,6 +24,7 @@ public abstract class MongoQuery extends MongoOperation {
     protected int batchSize;  // TODO: add setter, make private
     private int numToSkip;    // TODO: add setter
     private long limit;        // TODO: add setter
+
     public MongoQuery readPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
         return this;

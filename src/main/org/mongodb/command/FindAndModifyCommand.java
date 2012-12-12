@@ -65,7 +65,8 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
         }
         if (findAndModify.isRemove()) {
             cmd.put("remove", true);
-        } else {
+        }
+        else {
             if (findAndModify.isReturnNew()) {
                 cmd.put("new", true);
             }

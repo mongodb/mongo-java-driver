@@ -28,14 +28,12 @@ import java.util.concurrent.ExecutionException;
  */
 public interface MongoClient extends Closeable {
     /**
-     *
      * @param name
      * @return
      */
     MongoDatabase getDatabase(String name);
 
     /**
-     *
      * @return operations over this client
      */
     MongoOperations getOperations();    // TODO: I think we should get rid of this.   It's at the wrong level of abstraction.
@@ -60,13 +58,11 @@ public interface MongoClient extends Closeable {
     void close();
 
     /**
-     *
      * @return
      */
     WriteConcern getWriteConcern();
 
     /**
-     *
      * @return
      */
     ReadPreference getReadPreference();

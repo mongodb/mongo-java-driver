@@ -20,6 +20,6 @@ package com.mongodb;
 // TODO: build this out.
 public class ReadPreference {
     org.mongodb.ReadPreference toNew() {
-       return org.mongodb.ReadPreference.primary();
+        return org.mongodb.ReadPreference.primary();
     }
 }

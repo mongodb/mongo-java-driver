@@ -19,9 +19,9 @@ import org.mongodb.util.management.jmx.JMXMBeanServer;
 
 /**
  * This class is NOT part of the public API.  It may change at any time without notification.
- *
- * This class is used to insulate the rest of the driver from the possibility that JMX is not available,
- * as currently is the case on Android VM
+ * <p/>
+ * This class is used to insulate the rest of the driver from the possibility that JMX is not available, as currently is
+ * the case on Android VM
  */
 public class MBeanServerFactory {
     static {
@@ -29,7 +29,7 @@ public class MBeanServerFactory {
         try {
             tmp = new JMXMBeanServer();
         } catch (Throwable e) {
-            tmp =  new NullMBeanServer();
+            tmp = new NullMBeanServer();
         }
 
         M_BEAN_SERVER = tmp;

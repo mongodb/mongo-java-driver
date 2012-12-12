@@ -50,7 +50,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class MongoChannelTest  {
+public class MongoChannelTest {
     MongoChannel channel;
     PrimitiveSerializers primitiveSerializers;
     BufferPool<ByteBuffer> bufferPool;
@@ -248,8 +248,9 @@ public class MongoChannelTest  {
 
         final long startTime = System.nanoTime();
         for (int i = 0; i < 1; i++) {
-            if (i % 10000 == 0)
+            if (i % 10000 == 0) {
                 System.out.println("i: " + i);
+            }
 
 
             final MongoQueryFilterDocument filter = new MongoQueryFilterDocument("int", 42);

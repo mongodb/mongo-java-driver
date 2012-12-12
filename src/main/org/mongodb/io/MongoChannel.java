@@ -33,6 +33,7 @@ import java.nio.channels.SocketChannel;
 
 // TODO: port over all the DBPort configuration
 // TODO: authentication
+
 /**
  *
  */
@@ -76,7 +77,7 @@ public class MongoChannel {
             bodyByteBuffer = pool.get(length - 36);
             bytesRead = 0;
             while (bytesRead < bodyByteBuffer.limit()) {
-               bytesRead += socketChannel.read(bodyByteBuffer);
+                bytesRead += socketChannel.read(bodyByteBuffer);
             }
 
             bodyByteBuffer.flip();
