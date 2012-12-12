@@ -37,6 +37,11 @@ public interface MongoDatabase {
     <T> MongoCollection<T> getTypedCollection(String name, final PrimitiveSerializers basePrimitiveSerializers,
                                               final Serializer<T> serializer);
 
+    MongoAsyncCollection<MongoDocument> getAsyncCollection(String name);
+
+    <T> MongoAsyncCollection<T> getAsyncTypedCollection(String name, final PrimitiveSerializers basePrimitiveSerializers,
+                                              final Serializer<T> serializer);
+
 //    MongoDatabase withClient(MongoClient client);
 //
 //    MongoDatabase withWriteConcern(WriteConcern writeConcern);

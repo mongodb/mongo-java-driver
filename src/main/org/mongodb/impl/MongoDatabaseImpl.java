@@ -17,6 +17,7 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoAsyncCollection;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDocument;
@@ -53,11 +54,22 @@ class MongoDatabaseImpl implements MongoDatabase {
         return getTypedCollection(name, getSerializers(), new MongoDocumentSerializer(getSerializers()));
     }
 
-    @Override
     public <T> MongoCollectionImpl<T> getTypedCollection(final String name,
                                                          final PrimitiveSerializers basePrimitiveSerializers,
                                                          final Serializer<T> serializer) {
         return new MongoCollectionImpl<T>(name, this, basePrimitiveSerializers, serializer, null, null);
+    }
+
+    @Override
+    public MongoAsyncCollection<MongoDocument> getAsyncCollection(final String name) {
+        return new MongoAsyncCollectionImpl<MongoDocument>(getCollection(name));
+    }
+
+    @Override
+    public <T> MongoAsyncCollection<T> getAsyncTypedCollection(final String name,
+                                                               final PrimitiveSerializers primitiveSerializers,
+                                                               final Serializer<T> serializer) {
+        return new MongoAsyncCollectionImpl<T>(getTypedCollection(name, primitiveSerializers, serializer));
     }
 
     @Override
