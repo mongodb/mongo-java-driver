@@ -10,33 +10,9 @@
 
 ### Maintainers
 * Jeff Yemin           jeff.yemin@10gen.com
-* Antoine Girbal       antoine@10gen.com
-* Scott Hernandez      scott@10gen.com
-* Brendan McAdams      brendan@10gen.com
 * Trisha Gee           trisha.gee@10gen.com
 
 ### Contributors:
-* Eliot Horowitz       eliot@10gen.com
-* Kristina Chodorow    kristina@10gen.com
-* Geir Magnusson       geir@pobox.com
-* Keith Branton        mongoDBjira@branton.co.uk
-* Dave Brosius         dbrosius@mebigfatguy.com
-* Scott Hernandez      scotthernandez@gmail.com
-* Hans Meiser          hmeiser@example.com
-* Benedikt Waldvogel   mail@bwaldvogel.de
-* William Shulman      william.shulman@gmail.com
-* Daniel Spilker       mail@daniel-spilker.com
-* Kyle Banker          kylebanker@gmail.com
-* Ville Lautanala      ville.lautanala@nodeta.fi
-* Dan Simpson          dan.simpson@gmail.com
-* Tim Nelson           tnelly27@gmail.com
-* Jon Hoffman          jonhoffman@gmail.com
-* Daniel Kunnath       dan@gameattain.com
-* Harry Heymann        harryh@gmail.com
-* Mike Dirolf          mike@10gen.com
-* Zsombor Gegesy       gzsombor@gmail.com
-* Richard Kreuter      richard@10gen.com
-* Matthew Foemmel      git@foemmel.com
-* Jim Dickinson        jdickinson@shopwiki.com
-* Jorge Ortiz          jorge.ortiz@gmail.com
-* Ryan Nitz         
+* Scott Hernandez      scott@10gen.com
+* Craig Wilson         craig.wilson@10gen.com
+* Ryan Nitz            ryan@10gen.com
