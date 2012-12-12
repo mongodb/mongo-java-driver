@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.bson.io;
@@ -33,7 +32,7 @@ public class PooledByteBufferOutput extends OutputBuffer {
     private int curBufferIndex = 0;
     private int position = 0;
 
-    public PooledByteBufferOutput(BufferPool<ByteBuffer> pool) {
+    public PooledByteBufferOutput(final BufferPool<ByteBuffer> pool) {
         this.pool = pool;
     }
 
@@ -42,8 +41,8 @@ public class PooledByteBufferOutput extends OutputBuffer {
         int currentOffset = offset;
         int remainingLen = len;
         while (remainingLen > 0) {
-            ByteBuffer buf = getCurrentByteBuffer();
-            int bytesToPutInCurrentBuffer = Math.min(buf.remaining(), remainingLen);
+            final ByteBuffer buf = getCurrentByteBuffer();
+            final int bytesToPutInCurrentBuffer = Math.min(buf.remaining(), remainingLen);
             buf.put(b, currentOffset, bytesToPutInCurrentBuffer);
             remainingLen -= bytesToPutInCurrentBuffer;
             currentOffset += bytesToPutInCurrentBuffer;
@@ -58,7 +57,7 @@ public class PooledByteBufferOutput extends OutputBuffer {
     }
 
     private ByteBuffer getCurrentByteBuffer() {
-        ByteBuffer curByteBuffer = getByteBufferAtIndex(curBufferIndex);
+        final ByteBuffer curByteBuffer = getByteBufferAtIndex(curBufferIndex);
         if (curByteBuffer.hasRemaining()) {
             return curByteBuffer;
         }
@@ -132,7 +131,7 @@ public class PooledByteBufferOutput extends OutputBuffer {
 
     @Override
     public void pipe(final SocketChannel socketChannel) throws IOException {
-        for (ByteBuffer cur : bufferList) {
+        for (final ByteBuffer cur : bufferList) {
             cur.flip();
         }
 
@@ -143,15 +142,15 @@ public class PooledByteBufferOutput extends OutputBuffer {
 
     @Override
     public void close() {
-        for (ByteBuffer cur : bufferList) {
+        for (final ByteBuffer cur : bufferList) {
             pool.done(cur);
         }
         bufferList.clear();
     }
 
     // TODO: go backwards instead of forwards?  Probably doesn't matter with power of 2
-    private void backpatchSizeWithOffset(int size, int additionalOffset) {
-        int backpatchPosition = position - size - additionalOffset;
+    private void backpatchSizeWithOffset(final int size, final int additionalOffset) {
+        final int backpatchPosition = position - size - additionalOffset;
         int backpatchPositionInBuffer = backpatchPosition;
         int bufferIndex = 0;
         int bufferSize = 1024;
@@ -164,7 +163,7 @@ public class PooledByteBufferOutput extends OutputBuffer {
         }
 
         // TODO: deal with buffer boundary
-        ByteBuffer startBackpatchBuffer = getByteBufferAtIndex(bufferIndex);
+        final ByteBuffer startBackpatchBuffer = getByteBufferAtIndex(bufferIndex);
         if (startBackpatchBuffer.capacity() < backpatchPositionInBuffer + 4) {
             throw new IllegalStateException("TODO: fix this");
         }

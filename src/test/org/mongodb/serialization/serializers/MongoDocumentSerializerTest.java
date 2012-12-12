@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.serialization.serializers;
@@ -56,7 +55,7 @@ public class MongoDocumentSerializerTest {
 
     @Test
     public void testPrimitiveBsonTypeSerialization() throws IOException {
-        MongoDocument doc = new MongoDocument();
+        final MongoDocument doc = new MongoDocument();
         doc.put("oid", new ObjectId());
         doc.put("integer", 1);
         doc.put("long", 2L);
@@ -70,39 +69,39 @@ public class MongoDocumentSerializerTest {
 
         serializer.serialize(writer, doc, null);
 
-        InputBuffer inputBuffer = createInputBuffer();
-        MongoDocument deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
+        final InputBuffer inputBuffer = createInputBuffer();
+        final MongoDocument deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
         assertEquals(doc, deserializedDoc);
     }
 
 
     @Test
     public void testArraySerialization() throws IOException {
-        MongoDocument doc = new MongoDocument();
+        final MongoDocument doc = new MongoDocument();
         doc.put("array", Arrays.asList(1, 2, 3, 4, 5));
 
         serializer.serialize(writer, doc, null);
 
-        InputBuffer inputBuffer = createInputBuffer();
-        MongoDocument deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
+        final InputBuffer inputBuffer = createInputBuffer();
+        final MongoDocument deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
         assertEquals(doc, deserializedDoc);
     }
 
     @Test
     public void testNestedDocumentSerialization() throws IOException {
-        MongoDocument doc = new MongoDocument();
+        final MongoDocument doc = new MongoDocument();
         doc.put("nested", new MongoDocument("x", 1));
 
         serializer.serialize(writer, doc, null);
 
-        InputBuffer inputBuffer = createInputBuffer();
-        MongoDocument deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
+        final InputBuffer inputBuffer = createInputBuffer();
+        final MongoDocument deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
         assertEquals(doc, deserializedDoc);
     }
 
     // TODO: factor into common base class;
     private InputBuffer createInputBuffer() throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         buffer.pipe(baos);
         return new ByteBufferInput(ByteBuffer.wrap(baos.toByteArray()));
     }

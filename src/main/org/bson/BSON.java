@@ -1,20 +1,20 @@
-// BSON.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// BSON.java
 
 package org.bson;
 
@@ -81,7 +81,7 @@ public class BSON {
         flags = flags.toLowerCase();
 
         for (int i = 0; i < flags.length(); i++) {
-            RegexFlag flag = RegexFlag.getByCharacter(flags.charAt(i));
+            final RegexFlag flag = RegexFlag.getByCharacter(flags.charAt(i));
             if (flag != null) {
                 fint |= flag.javaFlag;
                 if (flag.unsupported != null) {
@@ -95,8 +95,8 @@ public class BSON {
         return fint;
     }
 
-    public static int regexFlag(char c) {
-        RegexFlag flag = RegexFlag.getByCharacter(c);
+    public static int regexFlag(final char c) {
+        final RegexFlag flag = RegexFlag.getByCharacter(c);
         if (flag == null) {
             throw new IllegalArgumentException("unrecognized flag [" + c + "]");
         }
@@ -116,9 +116,9 @@ public class BSON {
      * @return the flags for the database
      */
     public static String regexFlags(int flags) {
-        StringBuilder buf = new StringBuilder();
+        final StringBuilder buf = new StringBuilder();
 
-        for (RegexFlag flag : RegexFlag.values()) {
+        for (final RegexFlag flag : RegexFlag.values()) {
             if ((flags & flag.javaFlag) > 0) {
                 buf.append(flag.flagChar);
                 flags -= flag.javaFlag;
@@ -146,12 +146,12 @@ public class BSON {
         private static final Map<Character, RegexFlag> byCharacter = new HashMap<Character, RegexFlag>();
 
         static {
-            for (RegexFlag flag : values()) {
+            for (final RegexFlag flag : values()) {
                 byCharacter.put(flag.flagChar, flag);
             }
         }
 
-        public static RegexFlag getByCharacter(char ch) {
+        public static RegexFlag getByCharacter(final char ch) {
             return byCharacter.get(ch);
         }
 
@@ -159,14 +159,14 @@ public class BSON {
         public final char flagChar;
         public final String unsupported;
 
-        RegexFlag(int f, char ch, String u) {
+        RegexFlag(final int f, final char ch, final String u) {
             javaFlag = f;
             flagChar = ch;
             unsupported = u;
         }
     }
 
-    private static void _warnUnsupportedRegex(String flag) {
+    private static void _warnUnsupportedRegex(final String flag) {
         LOGGER.info("flag " + flag + " not supported by db.");
     }
 

@@ -1,17 +1,17 @@
-/**
- *      Copyright (C) 2010 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.bson.util;
 
@@ -32,7 +32,7 @@ public class StringRangeSet implements Set<String> {
         }
     }
 
-    public StringRangeSet(int size) {
+    public StringRangeSet(final int size) {
         this.size = size;
     }
 
@@ -63,12 +63,12 @@ public class StringRangeSet implements Set<String> {
     }
 
     @Override
-    public boolean add(String e) {
+    public boolean add(final String e) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean addAll(Collection<? extends String> c) {
+    public boolean addAll(final Collection<? extends String> c) {
         throw new UnsupportedOperationException();
     }
 
@@ -78,14 +78,14 @@ public class StringRangeSet implements Set<String> {
     }
 
     @Override
-    public boolean contains(Object o) {
-        int t = Integer.parseInt(String.valueOf(o));
+    public boolean contains(final Object o) {
+        final int t = Integer.parseInt(String.valueOf(o));
         return t >= 0 && t < size;
     }
 
     @Override
-    public boolean containsAll(Collection<?> c) {
-        for (Object o : c) {
+    public boolean containsAll(final Collection<?> c) {
+        for (final Object o : c) {
             if (!contains(o)) {
                 return false;
             }
@@ -99,23 +99,23 @@ public class StringRangeSet implements Set<String> {
     }
 
     @Override
-    public boolean remove(Object o) {
+    public boolean remove(final Object o) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean removeAll(Collection<?> c) {
+    public boolean removeAll(final Collection<?> c) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean retainAll(Collection<?> c) {
+    public boolean retainAll(final Collection<?> c) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public Object[] toArray() {
-        String[] array = new String[size()];
+        final String[] array = new String[size()];
         for (int i = 0; i < size; ++i) {
             if (i < NUMSTR_LEN) {
                 array[i] = NUMSTRS[i];
@@ -128,7 +128,7 @@ public class StringRangeSet implements Set<String> {
     }
 
     @Override
-    public <T> T[] toArray(T[] a) {
+    public <T> T[] toArray(final T[] a) {
         throw new UnsupportedOperationException();
     }
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.serialization;
@@ -52,7 +51,7 @@ public class PrimitiveSerializers implements Serializer<Object> {
     @Override
     public void serialize(final BSONWriter writer, final Object value,
                           final BsonSerializationOptions options) {
-        Serializer serializer;
+        final Serializer serializer;
         if (value == null) {
             serializer = classSerializerMap.get(null);
         }
@@ -67,8 +66,8 @@ public class PrimitiveSerializers implements Serializer<Object> {
 
     @Override
     public Object deserialize(final BSONReader reader, final BsonSerializationOptions options) {
-        BsonType bsonType = reader.getCurrentBsonType();
-        Serializer serializer = bsonTypeSerializerMap.get(bsonType);
+        final BsonType bsonType = reader.getCurrentBsonType();
+        final Serializer serializer = bsonTypeSerializerMap.get(bsonType);
         if (serializer == null) {
             throw new MongoException("Unable to find deserializer for BSON type " + bsonType);
         }
@@ -84,7 +83,7 @@ public class PrimitiveSerializers implements Serializer<Object> {
         return new Builder();
     }
 
-    public static Builder builder(PrimitiveSerializers base) {
+    public static Builder builder(final PrimitiveSerializers base) {
         return new Builder(base);
     }
 
@@ -106,8 +105,8 @@ public class PrimitiveSerializers implements Serializer<Object> {
 
 
     public static class Builder {
-        private Map<Class, Serializer> classSerializerMap = new HashMap<Class, Serializer>();
-        private Map<BsonType, Serializer> bsonTypeSerializerMap = new HashMap<BsonType, Serializer>();
+        private final Map<Class, Serializer> classSerializerMap = new HashMap<Class, Serializer>();
+        private final Map<BsonType, Serializer> bsonTypeSerializerMap = new HashMap<BsonType, Serializer>();
 
         public Builder() {
         }
@@ -118,52 +117,52 @@ public class PrimitiveSerializers implements Serializer<Object> {
         }
 
 
-        public Builder objectIdSerializer(Serializer serializer) {
+        public Builder objectIdSerializer(final Serializer serializer) {
             registerSerializer(BsonType.OBJECT_ID, serializer);
             return this;
         }
 
-        public Builder integerSerializer(Serializer serializer) {
+        public Builder integerSerializer(final Serializer serializer) {
             registerSerializer(BsonType.INT32, serializer);
             return this;
         }
 
-        public Builder longSerializer(Serializer serializer) {
+        public Builder longSerializer(final Serializer serializer) {
             registerSerializer(BsonType.INT64, serializer);
             return this;
         }
 
-        public Builder stringSerializer(Serializer serializer) {
+        public Builder stringSerializer(final Serializer serializer) {
             registerSerializer(BsonType.STRING, serializer);
             return this;
         }
 
-        public Builder doubleSerializer(Serializer serializer) {
+        public Builder doubleSerializer(final Serializer serializer) {
             registerSerializer(BsonType.DOUBLE, serializer);
             return this;
         }
 
-        public Builder binarySerializer(Serializer serializer) {
+        public Builder binarySerializer(final Serializer serializer) {
             registerSerializer(BsonType.BINARY, serializer);
             return this;
         }
 
-        public Builder dateSerializer(Serializer serializer) {
+        public Builder dateSerializer(final Serializer serializer) {
             registerSerializer(BsonType.DATE_TIME, serializer);
             return this;
         }
 
-        public Builder booleanSerializer(Serializer serializer) {
+        public Builder booleanSerializer(final Serializer serializer) {
             registerSerializer(BsonType.BOOLEAN, serializer);
             return this;
         }
 
-        public Builder patternSerializer(Serializer serializer) {
+        public Builder patternSerializer(final Serializer serializer) {
             registerSerializer(BsonType.REGULAR_EXPRESSION, serializer);
             return this;
         }
 
-        public Builder nullSerializer(Serializer serializer) {
+        public Builder nullSerializer(final Serializer serializer) {
             registerSerializer(BsonType.NULL, serializer);
             return this;
         }

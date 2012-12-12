@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.bson.util;
@@ -26,7 +25,7 @@ public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
 
     final Map<Integer, SimplePool<ByteBuffer>> powerOfTwoToPoolMap = new HashMap<Integer, SimplePool<ByteBuffer>>();
 
-    public PowerOfTwoByteBufferPool(int highestPowerOfTwo) {
+    public PowerOfTwoByteBufferPool(final int highestPowerOfTwo) {
         int x = 1;
         for (int i = 0; i <= highestPowerOfTwo; i++) {
             final int size = x;
@@ -43,8 +42,8 @@ public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
 
     @Override
     public ByteBuffer get(final int size) {
-        SimplePool<ByteBuffer> simplePool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
-        ByteBuffer byteBuffer = simplePool.get();
+        final SimplePool<ByteBuffer> simplePool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
+        final ByteBuffer byteBuffer = simplePool.get();
         byteBuffer.clear();
         byteBuffer.limit(size);
         return byteBuffer;
@@ -57,12 +56,12 @@ public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
 
     @Override
     public ByteBuffer createNew(final int size) {
-        ByteBuffer buf = ByteBuffer.allocateDirect(size);
+        final ByteBuffer buf = ByteBuffer.allocateDirect(size);
         buf.order(ByteOrder.LITTLE_ENDIAN);
         return buf;
     }
 
-    static int roundUpToNextHighestPowerOfTwo(int size) {
+    static int roundUpToNextHighestPowerOfTwo(final int size) {
         int v = size;
         v--;
         v |= v >> 1;

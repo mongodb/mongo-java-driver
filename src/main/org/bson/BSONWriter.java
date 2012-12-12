@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.bson;
@@ -26,7 +25,7 @@ import java.io.Closeable;
 import java.util.Arrays;
 
 public abstract class BSONWriter implements Closeable {
-    private BsonWriterSettings settings;
+    private final BsonWriterSettings settings;
     private State state;
     private String name;
     private boolean checkElementNames;
@@ -39,7 +38,7 @@ public abstract class BSONWriter implements Closeable {
     /// Initializes a new instance of the BsonWriter class.
     /// </summary>
     /// <param name="settings">The writer settings.</param>
-    protected BSONWriter(BsonWriterSettings settings) {
+    protected BSONWriter(final BsonWriterSettings settings) {
         this.settings = settings;
         state = State.INITIAL;
     }
@@ -52,7 +51,7 @@ public abstract class BSONWriter implements Closeable {
         return closed;
     }
 
-    protected void setState(State state) {
+    protected void setState(final State state) {
         this.state = state;
     }
 
@@ -174,7 +173,7 @@ public abstract class BSONWriter implements Closeable {
     /// <param name="name">The name of the element.</param>
     /// <param name="bytes">The binary data.</param>
     /// <param name="subType">The binary data subtype.</param>
-    public void writeBinaryData(String name, Binary binary) {
+    public void writeBinaryData(final String name, final Binary binary) {
         writeName(name);
         writeBinaryData(binary);
     }
@@ -190,7 +189,7 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="value">The Boolean value.</param>
-    public void writeBoolean(String name, boolean value) {
+    public void writeBoolean(final String name, final boolean value) {
         writeName(name);
         writeBoolean(value);
     }
@@ -206,7 +205,7 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="value">The number of milliseconds since the Unix epoch.</param>
-    public void writeDateTime(String name, long value) {
+    public void writeDateTime(final String name, final long value) {
         writeName(name);
         writeDateTime(value);
     }
@@ -222,7 +221,7 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="value">The Double value.</param>
-    public void writeDouble(String name, double value) {
+    public void writeDouble(final String name, final double value) {
         writeName(name);
         writeDouble(value);
     }
@@ -252,7 +251,7 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="value">The INT32 value.</param>
-    public void writeInt32(String name, int value) {
+    public void writeInt32(final String name, final int value) {
         writeName(name);
         writeInt32(value);
     }
@@ -268,7 +267,7 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="value">The Int64 value.</param>
-    public void writeInt64(String name, long value) {
+    public void writeInt64(final String name, final long value) {
         writeName(name);
         writeInt64(value);
     }
@@ -284,7 +283,7 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="code">The JavaScript code.</param>
-    public void writeJavaScript(String name, String code) {
+    public void writeJavaScript(final String name, final String code) {
         writeName(name);
         writeJavaScript(code);
     }
@@ -300,7 +299,7 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="code">The JavaScript code.</param>
-    public void writeJavaScriptWithScope(String name, String code) {
+    public void writeJavaScriptWithScope(final String name, final String code) {
         writeName(name);
         writeJavaScriptWithScope(code);
     }
@@ -314,7 +313,7 @@ public abstract class BSONWriter implements Closeable {
     /// Writes a BSON MaxKey element to the writer.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void writeMaxKey(String name) {
+    public void writeMaxKey(final String name) {
         writeName(name);
         writeMaxKey();
     }
@@ -328,7 +327,7 @@ public abstract class BSONWriter implements Closeable {
     /// Writes a BSON MinKey element to the writer.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void writeMinKey(String name) {
+    public void writeMinKey(final String name) {
         writeName(name);
         writeMinKey();
     }
@@ -337,7 +336,7 @@ public abstract class BSONWriter implements Closeable {
     /// Writes the name of an element to the writer.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void writeName(String name) {
+    public void writeName(final String name) {
         if (state != State.NAME) {
             throwInvalidState("WriteName", State.NAME);
         }
@@ -356,7 +355,7 @@ public abstract class BSONWriter implements Closeable {
     /// Writes a BSON null element to the writer.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void writeNull(String name) {
+    public void writeNull(final String name) {
         writeName(name);
         writeNull();
     }
@@ -378,7 +377,7 @@ public abstract class BSONWriter implements Closeable {
     /// <param name="machine">The machine hash.</param>
     /// <param name="pid">The PID.</param>
     /// <param name="increment">The increment.</param>
-    public void writeObjectId(String name, ObjectId objectId) {
+    public void writeObjectId(final String name, final ObjectId objectId) {
         writeName(name);
         writeObjectId(objectId);
     }
@@ -392,7 +391,7 @@ public abstract class BSONWriter implements Closeable {
     /// Writes a BSON regular expression element to the writer.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void writeRegularExpression(String name, RegularExpression regularExpression) {
+    public void writeRegularExpression(final String name, final RegularExpression regularExpression) {
         writeName(name);
         writeRegularExpression(regularExpression);
     }
@@ -403,7 +402,8 @@ public abstract class BSONWriter implements Closeable {
     public void writeStartArray() {
         serializationDepth++;
         if (serializationDepth > settings.maxSerializationDepth) {
-            throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being serialized have a circular reference?).");
+            throw new BsonSerializationException("Maximum serialization depth exceeded " +
+                    "(does the object being serialized have a circular reference?).");
         }
     }
 
@@ -411,7 +411,7 @@ public abstract class BSONWriter implements Closeable {
     /// Writes the start of a BSON array element to the writer.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void writeStartArray(String name) {
+    public void writeStartArray(final String name) {
         writeName(name);
         writeStartArray();
     }
@@ -422,7 +422,8 @@ public abstract class BSONWriter implements Closeable {
     public void writeStartDocument() {
         serializationDepth++;
         if (serializationDepth > settings.maxSerializationDepth) {
-            throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being serialized have a circular reference?).");
+            throw new BsonSerializationException("Maximum serialization depth exceeded " +
+                    "(does the object being serialized have a circular reference?).");
         }
     }
 
@@ -430,7 +431,7 @@ public abstract class BSONWriter implements Closeable {
     /// Writes the start of a BSON document element to the writer.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void writeStartDocument(String name) {
+    public void writeStartDocument(final String name) {
         writeName(name);
         writeStartDocument();
     }
@@ -446,7 +447,7 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="value">The String value.</param>
-    public void writeString(String name, String value) {
+    public void writeString(final String name, final String value) {
         writeName(name);
         writeString(value);
     }
@@ -462,7 +463,7 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="value">The symbol.</param>
-    public void writeSymbol(String name, String value) {
+    public void writeSymbol(final String name, final String value) {
         writeName(name);
         writeSymbol(value);
     }
@@ -478,7 +479,7 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="value">The combined timestamp/increment value.</param>
-    public void writeTimestamp(String name, long value) {
+    public void writeTimestamp(final String name, final long value) {
         writeName(name);
         writeTimestamp(value);
     }
@@ -492,7 +493,7 @@ public abstract class BSONWriter implements Closeable {
     /// Writes a BSON undefined element to the writer.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void writeUndefined(String name) {
+    public void writeUndefined(final String name) {
         writeName(name);
         writeUndefined();
     }
@@ -502,7 +503,7 @@ public abstract class BSONWriter implements Closeable {
     /// Checks that the element name is valid.
     /// </summary>
     /// <param name="name">The element name to be checked.</param>
-    protected void checkElementName(String name) {
+    protected void checkElementName(final String name) {
         if (checkUpdateDocument) {
             checkElementNames = (name.charAt(0) != '$');
             checkUpdateDocument = false;
@@ -513,12 +514,12 @@ public abstract class BSONWriter implements Closeable {
             if (name.charAt(0) == '$') {
                 // a few element names starting with $ have to be allowed for historical reasons
                 if (!(name.equals("$code") || name.equals("$db") || name.equals("$ref") || name.equals("$scope") || name.equals("$id"))) {
-                    String message = String.format("Element name '%s' is not valid because it starts with a '$'.", name);
+                    final String message = String.format("Element name '%s' is not valid because it starts with a '$'.", name);
                     throw new BsonSerializationException(message);
                 }
             }
             if (name.indexOf('.') != -1) {
-                String message = String.format("Element name '%s' is not valid because it contains a '.'.", name);
+                final String message = String.format("Element name '%s' is not valid because it contains a '.'.", name);
                 throw new BsonSerializationException(message);
             }
         }
@@ -530,10 +531,10 @@ public abstract class BSONWriter implements Closeable {
     /// <param name="methodName">The name of the method.</param>
     /// <param name="actualContextType">The actual ContextType.</param>
     /// <param name="validContextTypes">The valid ContextTypes.</param>
-    protected void throwInvalidContextType(String methodName, ContextType actualContextType,
-                                           ContextType... validContextTypes) {
-        String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
-        String message = String.format(
+    protected void throwInvalidContextType(final String methodName, final ContextType actualContextType,
+                                           final ContextType... validContextTypes) {
+        final String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
+        final String message = String.format(
                 "%s can only be called when ContextType is %s, not when ContextType is %s.",
                 methodName, validContextTypesString, actualContextType);
         throw new InvalidOperationException(message);
@@ -544,8 +545,8 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     /// <param name="methodName">The name of the method.</param>
     /// <param name="validStates">The valid states.</param>
-    protected void throwInvalidState(String methodName, State... validStates) {
-        String message;
+    protected void throwInvalidState(final String methodName, final State... validStates) {
+        final String message;
         if (state == State.INITIAL || state == State.SCOPE_DOCUMENT || state == State.DONE) {
             if (!methodName.startsWith("end") && !methodName.equals("writeName")) {
                 String typeName = methodName.substring(5);
@@ -563,7 +564,7 @@ public abstract class BSONWriter implements Closeable {
             }
         }
 
-        String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
+        final String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
         message = String.format(
                 "%s can only be called when State is %s, not when State is %s",
                 methodName, validStatesString, state);

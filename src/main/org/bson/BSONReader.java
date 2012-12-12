@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.bson;
@@ -26,10 +25,10 @@ import java.io.Closeable;
 import java.util.Arrays;
 
 public abstract class BSONReader implements Closeable {
-    private BsonReaderSettings _settings;
-    private State _state;
-    private BsonType _currentBsonType;
-    private String _currentName;
+    private final BsonReaderSettings settings;
+    private State state;
+    private BsonType currentBsonType;
+    private String currentName;
     private boolean closed;
 
     // constructors
@@ -37,9 +36,9 @@ public abstract class BSONReader implements Closeable {
     /// Initializes a new instance of the BsonReader class.
     /// </summary>
     /// <param name="settings">The reader settings.</param>
-    protected BSONReader(BsonReaderSettings settings) {
-        _settings = settings;
-        _state = State.INITIAL;
+    protected BSONReader(final BsonReaderSettings settings) {
+        this.settings = settings;
+        state = State.INITIAL;
     }
 
     // public properties
@@ -47,29 +46,29 @@ public abstract class BSONReader implements Closeable {
     /// Gets the current BsonType.
     /// </summary>
     public BsonType getCurrentBsonType() {
-        return _currentBsonType;
+        return currentBsonType;
     }
 
-    protected void setCurrentBsonType(BsonType newType) {
-        _currentBsonType = newType;
+    protected void setCurrentBsonType(final BsonType newType) {
+        currentBsonType = newType;
     }
 
     /// <summary>
     /// Gets the settings of the reader.
     /// </summary>
     public BsonReaderSettings getSettings() {
-        return _settings;
+        return settings;
     }
 
     /// <summary>
     /// Gets the current state of the reader.
     /// </summary>
     public State getState() {
-        return _state;
+        return state;
     }
 
-    protected void setState(State newState) {
-        _state = newState;
+    protected void setState(final State newState) {
+        state = newState;
     }
 
     // protected properties
@@ -77,11 +76,11 @@ public abstract class BSONReader implements Closeable {
     /// Gets the current name.
     /// </summary>
     protected String getCurrentName() {
-        return _currentName;
+        return currentName;
     }
 
-    protected void setCurrentName(String newName) {
-        _currentName = newName;
+    protected void setCurrentName(final String newName) {
+        currentName = newName;
     }
 
     // public methods
@@ -104,7 +103,7 @@ public abstract class BSONReader implements Closeable {
 //    public bool FindElement(string name)
 //    {
 //        if (_disposed) { ThrowObjectDisposedException(); }
-//        if (_state != State.TYPE)
+//        if (state != State.TYPE)
 //        {
 //            ThrowInvalidState("FindElement", State.TYPE);
 //        }
@@ -131,7 +130,7 @@ public abstract class BSONReader implements Closeable {
 //    public string FindStringElement(string name)
 //    {
 //        if (_disposed) { ThrowObjectDisposedException(); }
-//        if (_state != State.TYPE)
+//        if (state != State.TYPE)
 //        {
 //            ThrowInvalidState("FindStringElement", State.TYPE);
 //        }
@@ -164,13 +163,13 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <returns>The current BsonType.</returns>
     public BsonType getNextBsonType() {
-        if (_state == State.INITIAL || _state == State.DONE || _state == State.SCOPE_DOCUMENT || _state == State.TYPE) {
+        if (state == State.INITIAL || state == State.DONE || state == State.SCOPE_DOCUMENT || state == State.TYPE) {
             readBsonType();
         }
-        if (_state != State.VALUE) {
+        if (state != State.VALUE) {
             throwInvalidState("GetCurrentBsonType", State.VALUE);
         }
-        return _currentBsonType;
+        return currentBsonType;
     }
 
     /// <summary>
@@ -186,7 +185,7 @@ public abstract class BSONReader implements Closeable {
     /// <param name="name">The name of the element.</param>
     /// <param name="bytes">The binary data.</param>
     /// <param name="subType">The binary data subtype.</param>
-    public Binary readBinaryData(String name) {
+    public Binary readBinaryData(final String name) {
         return readBinaryData(name);
     }
 
@@ -201,7 +200,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>A Boolean.</returns>
-    public boolean readBoolean(String name) {
+    public boolean readBoolean(final String name) {
         verifyName(name);
         return readBoolean();
     }
@@ -223,7 +222,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>The number of milliseconds since the Unix epoch.</returns>
-    public long readDateTime(String name) {
+    public long readDateTime(final String name) {
         verifyName(name);
         return readDateTime();
     }
@@ -239,7 +238,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>A Double.</returns>
-    public double readDouble(String name) {
+    public double readDouble(final String name) {
         verifyName(name);
         return readDouble();
     }
@@ -265,7 +264,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>An INT32.</returns>
-    public int readInt32(String name) {
+    public int readInt32(final String name) {
         verifyName(name);
         return readInt32();
     }
@@ -281,7 +280,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>An Int64.</returns>
-    public long readInt64(String name) {
+    public long readInt64(final String name) {
         verifyName(name);
         return readInt64();
     }
@@ -297,7 +296,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>A string.</returns>
-    public String readJavaScript(String name) {
+    public String readJavaScript(final String name) {
         verifyName(name);
         return readJavaScript();
     }
@@ -313,7 +312,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>A string.</returns>
-    public String readJavaScriptWithScope(String name) {
+    public String readJavaScriptWithScope(final String name) {
         verifyName(name);
         return readJavaScriptWithScope();
     }
@@ -327,7 +326,7 @@ public abstract class BSONReader implements Closeable {
     /// Reads a BSON MaxKey element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void readMaxKey(String name) {
+    public void readMaxKey(final String name) {
         verifyName(name);
         readMaxKey();
     }
@@ -341,7 +340,7 @@ public abstract class BSONReader implements Closeable {
     /// Reads a BSON MinKey element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void readMinKey(String name) {
+    public void readMinKey(final String name) {
         verifyName(name);
         readMinKey();
     }
@@ -351,22 +350,22 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <returns>The name of the element.</returns>
     public String readName() {
-        if (_state == State.TYPE) {
+        if (state == State.TYPE) {
             readBsonType();
         }
-        if (_state != State.NAME) {
+        if (state != State.NAME) {
             throwInvalidState("ReadName", State.NAME);
         }
 
-        _state = State.VALUE;
-        return _currentName;
+        state = State.VALUE;
+        return currentName;
     }
 
     /// <summary>
     /// Reads the name of an element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void readName(String name) {
+    public void readName(final String name) {
         verifyName(name);
     }
 
@@ -379,7 +378,7 @@ public abstract class BSONReader implements Closeable {
     /// Reads a BSON null element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void readNull(String name) {
+    public void readNull(final String name) {
         verifyName(name);
         readNull();
     }
@@ -401,7 +400,7 @@ public abstract class BSONReader implements Closeable {
     /// <param name="machine">The machine hash.</param>
     /// <param name="pid">The PID.</param>
     /// <param name="increment">The increment.</param>
-    public ObjectId readObjectId(String name) {
+    public ObjectId readObjectId(final String name) {
         verifyName(name);
         return readObjectId();
     }
@@ -415,7 +414,7 @@ public abstract class BSONReader implements Closeable {
     /// Reads a BSON regular expression element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public RegularExpression readRegularExpression(String name) {
+    public RegularExpression readRegularExpression(final String name) {
         verifyName(name);
         return readRegularExpression();
     }
@@ -441,7 +440,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <returns>A String.</returns>
     /// <param name="name">The name of the element.</param>
-    public String readString(String name) {
+    public String readString(final String name) {
         verifyName(name);
         return readString();
     }
@@ -457,7 +456,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <returns>A string.</returns>
-    public String readSymbol(String name) {
+    public String readSymbol(final String name) {
         verifyName(name);
         return readSymbol();
     }
@@ -473,7 +472,7 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <returns>The combined timestamp/increment.</returns>
     /// <param name="name">The name of the element.</param>
-    public long readTimestamp(String name) {
+    public long readTimestamp(final String name) {
         verifyName(name);
         return readTimestamp();
     }
@@ -487,7 +486,7 @@ public abstract class BSONReader implements Closeable {
     /// Reads a BSON undefined element from the reader.
     /// </summary>
     /// <param name="name">The name of the element.</param>
-    public void readUndefined(String name) {
+    public void readUndefined(final String name) {
         verifyName(name);
         readUndefined();
     }
@@ -514,12 +513,10 @@ public abstract class BSONReader implements Closeable {
     /// <param name="methodName">The name of the method.</param>
     /// <param name="actualContextType">The actual ContextType.</param>
     /// <param name="validContextTypes">The valid ContextTypes.</param>
-    protected void throwInvalidContextType(
-            String methodName,
-            ContextType actualContextType,
-            ContextType... validContextTypes) {
-        String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
-        String message = String.format(
+    protected void throwInvalidContextType(final String methodName, final ContextType actualContextType,
+                                           final ContextType... validContextTypes) {
+        final String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
+        final String message = String.format(
                 "%s can only be called when ContextType is %s, not when ContextType is %s.",
                 methodName, validContextTypesString, actualContextType);
         throw new InvalidOperationException(message);
@@ -530,11 +527,11 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="methodName">The name of the method.</param>
     /// <param name="validStates">The valid states.</param>
-    protected void throwInvalidState(String methodName, State... validStates) {
-        String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
-        String message = String.format(
+    protected void throwInvalidState(final String methodName, final State... validStates) {
+        final String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
+        final String message = String.format(
                 "%s can only be called when State is %s, not when State is %s.",
-                methodName, validStatesString, _state);
+                methodName, validStatesString, state);
         throw new InvalidOperationException(message);
     }
 
@@ -543,21 +540,21 @@ public abstract class BSONReader implements Closeable {
     /// </summary>
     /// <param name="methodName">The name of the method calling this one.</param>
     /// <param name="requiredBsonType">The required BSON type.</param>
-    protected void verifyBsonType(String methodName, BsonType requiredBsonType) {
-        if (_state == State.INITIAL || _state == State.SCOPE_DOCUMENT || _state == State.TYPE) {
+    protected void verifyBsonType(final String methodName, final BsonType requiredBsonType) {
+        if (state == State.INITIAL || state == State.SCOPE_DOCUMENT || state == State.TYPE) {
             readBsonType();
         }
-        if (_state == State.NAME) {
+        if (state == State.NAME) {
             // ignore name
             skipName();
         }
-        if (_state != State.VALUE) {
+        if (state != State.VALUE) {
             throwInvalidState(methodName, State.VALUE);
         }
-        if (_currentBsonType != requiredBsonType) {
-            String message = String.format(
+        if (currentBsonType != requiredBsonType) {
+            final String message = String.format(
                     "%s can only be called when CurrentBsonType is %s, not when CurrentBsonType is %s.",
-                    methodName, requiredBsonType, _currentBsonType);
+                    methodName, requiredBsonType, currentBsonType);
             throw new InvalidOperationException(message);
         }
     }
@@ -566,11 +563,11 @@ public abstract class BSONReader implements Closeable {
     /// Verifies the name of the current element.
     /// </summary>
     /// <param name="expectedName">The expected name.</param>
-    protected void verifyName(String expectedName) {
+    protected void verifyName(final String expectedName) {
         readBsonType();
-        String actualName = readName();
+        final String actualName = readName();
         if (!actualName.equals(expectedName)) {
-            String message = String.format(
+            final String message = String.format(
                     "Expected element name to be '%s', not '%s'.",
                     expectedName, actualName);
             throw new BsonSerializationException(message);

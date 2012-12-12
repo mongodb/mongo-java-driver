@@ -1,20 +1,20 @@
-// OutputBuffer.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// OutputBuffer.java
 
 package org.bson.io;
 
@@ -26,7 +26,7 @@ import java.nio.channels.SocketChannel;
 
 public abstract class OutputBuffer extends OutputStream {
 
-    public void write(byte[] b) {
+    public void write(final byte[] b) {
         write(b, 0, b.length);
     }
 
@@ -77,7 +77,7 @@ public abstract class OutputBuffer extends OutputStream {
         return new String(toByteArray());
     }
 
-    public String asString(String encoding)
+    public String asString(final String encoding)
             throws UnsupportedEncodingException {
         return new String(toByteArray(), encoding);
     }
@@ -132,14 +132,14 @@ public abstract class OutputBuffer extends OutputStream {
 //        return org.mongodb.util.Util.toHex( md5.digest() );
 //    }
 //
-    public void writeInt(int x) {
+    public void writeInt(final int x) {
         write(x >> 0);
         write(x >> 8);
         write(x >> 16);
         write(x >> 24);
     }
 
-    public void writeIntBE(int x) {
+    public void writeIntBE(final int x) {
         write(x >> 24);
         write(x >> 16);
         write(x >> 8);
@@ -152,7 +152,7 @@ public abstract class OutputBuffer extends OutputStream {
      *
      * @param size the size of the document/string
      */
-    public void backpatchSize(int size) {
+    public void backpatchSize(final int size) {
         writeInt(getPosition() - size, size);
     }
 
@@ -160,14 +160,14 @@ public abstract class OutputBuffer extends OutputStream {
         writeInt(getPosition() - size - additionalOffset, size);
     }
 
-    public void writeInt(int pos, int x) {
+    public void writeInt(final int pos, final int x) {
         final int save = getPosition();
         setPosition(pos);
         writeInt(x);
         setPosition(save);
     }
 
-    public void writeLong(long x) {
+    public void writeLong(final long x) {
         write((byte) (0xFFL & (x >> 0)));
         write((byte) (0xFFL & (x >> 8)));
         write((byte) (0xFFL & (x >> 16)));
@@ -178,14 +178,14 @@ public abstract class OutputBuffer extends OutputStream {
         write((byte) (0xFFL & (x >> 56)));
     }
 
-    public void writeDouble(double x) {
+    public void writeDouble(final double x) {
         writeLong(Double.doubleToRawLongBits(x));
     }
 
     public void writeString(final String str) {
-        int lenPos = getPosition();
+        final int lenPos = getPosition();
         writeInt(0); // making space for size
-        int strLen = writeCString(str);
+        final int strLen = writeCString(str);
         backpatchSize(strLen, 4);
     }
 
@@ -195,7 +195,7 @@ public abstract class OutputBuffer extends OutputStream {
         int total = 0;
 
         for (int i = 0; i < len; ) {
-            int c = Character.codePointAt(str, i);
+            final int c = Character.codePointAt(str, i);
 
             if (c < 0x80) {
                 write((byte) c);

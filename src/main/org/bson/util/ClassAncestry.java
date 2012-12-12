@@ -1,12 +1,28 @@
-package org.bson.util;
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-import static java.util.Collections.unmodifiableList;
-import static org.bson.util.CopyOnWriteMap.newHashMap;
+package org.bson.util;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+
+import static java.util.Collections.unmodifiableList;
+import static org.bson.util.CopyOnWriteMap.newHashMap;
 
 class ClassAncestry {
 
@@ -19,10 +35,10 @@ class ClassAncestry {
      * <p/>
      * Does not need to be synchronized, races are harmless as the Class graph does not change at runtime.
      */
-    public static <T> List<Class<?>> getAncestry(Class<T> c) {
+    public static <T> List<Class<?>> getAncestry(final Class<T> c) {
         final ConcurrentMap<Class<?>, List<Class<?>>> cache = getClassAncestryCache();
         while (true) {
-            List<Class<?>> cachedResult = cache.get(c);
+            final List<Class<?>> cachedResult = cache.get(c);
             if (cachedResult != null) {
                 return cachedResult;
             }
@@ -33,7 +49,7 @@ class ClassAncestry {
     /**
      * computeAncestry, starting with children and going back to parents
      */
-    private static List<Class<?>> computeAncestry(Class<?> c) {
+    private static List<Class<?>> computeAncestry(final Class<?> c) {
         final List<Class<?>> result = new ArrayList<Class<?>>();
         result.add(Object.class);
         computeAncestry(c, result);
@@ -41,13 +57,13 @@ class ClassAncestry {
         return unmodifiableList(new ArrayList<Class<?>>(result));
     }
 
-    private static <T> void computeAncestry(Class<T> c, List<Class<?>> result) {
+    private static <T> void computeAncestry(final Class<T> c, final List<Class<?>> result) {
         if ((c == null) || (c == Object.class)) {
             return;
         }
 
         // first interfaces (looks backwards but is not)
-        Class<?>[] interfaces = c.getInterfaces();
+        final Class<?>[] interfaces = c.getInterfaces();
         for (int i = interfaces.length - 1; i >= 0; i--) {
             computeAncestry(interfaces[i], result);
         }

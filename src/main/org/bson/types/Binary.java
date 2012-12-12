@@ -1,23 +1,20 @@
-// Binary.java
-
-/**
- *  See the NOTICE.txt file distributed with this work for
- *  information regarding copyright ownership.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *  The authors license this file to you under the
- *  Apache License, Version 2.0 (the "License"); you may not use
- *  this file except in compliance with the License.  You may
- *  obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// Binary.java
 
 package org.bson.types;
 
@@ -38,7 +35,7 @@ public class Binary implements Serializable {
      *
      * @param data raw data
      */
-    public Binary(byte[] data) {
+    public Binary(final byte[] data) {
         this(BSON.B_GENERAL, data);
     }
 
@@ -48,7 +45,7 @@ public class Binary implements Serializable {
      * @param type type of the field as encoded in BSON
      * @param data raw data
      */
-    public Binary(byte type, byte[] data) {
+    public Binary(final byte type, final byte[] data) {
         _type = type;
         _data = data;
     }

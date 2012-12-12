@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.bson;
@@ -25,12 +24,13 @@ import org.bson.types.RegularExpression;
 import static org.bson.BSON.B_BINARY;
 
 public class BSONBinaryWriter extends BSONWriter {
+    private final BinaryWriterSettings binaryWriterSettings;
 
     private final OutputBuffer buffer;
     private Context context;
-    private BinaryWriterSettings binaryWriterSettings;
 
-    public BSONBinaryWriter(BsonWriterSettings settings, BinaryWriterSettings binaryWriterSettings, OutputBuffer buffer) {
+    public BSONBinaryWriter(final BsonWriterSettings settings, final BinaryWriterSettings binaryWriterSettings,
+                            final OutputBuffer buffer) {
         super(settings);
         this.binaryWriterSettings = binaryWriterSettings;
         this.buffer = buffer;
@@ -173,7 +173,7 @@ public class BSONBinaryWriter extends BSONWriter {
     }
 
     @Override
-    public void writeObjectId(ObjectId objectId) {
+    public void writeObjectId(final ObjectId objectId) {
         checkPreconditions("writeObjectId", State.VALUE);
 
         buffer.write(BSON.OID);
@@ -188,7 +188,7 @@ public class BSONBinaryWriter extends BSONWriter {
     }
 
     @Override
-    public void writeRegularExpression(RegularExpression regularExpression) {
+    public void writeRegularExpression(final RegularExpression regularExpression) {
         checkPreconditions("writeRegularExpression", State.VALUE);
 
         buffer.write(BSON.REGEX);
@@ -275,7 +275,7 @@ public class BSONBinaryWriter extends BSONWriter {
             buffer.write(BSON.OBJECT);
             writeCurrentName();
         }
-        ContextType contextType = (getState() == State.SCOPE_DOCUMENT) ? ContextType.SCOPE_DOCUMENT : ContextType.DOCUMENT;
+        final ContextType contextType = (getState() == State.SCOPE_DOCUMENT) ? ContextType.SCOPE_DOCUMENT : ContextType.DOCUMENT;
         context = new Context(context, ContextType.DOCUMENT, buffer.getPosition());
         buffer.writeInt(0); // reserve space for size
 
@@ -347,7 +347,7 @@ public class BSONBinaryWriter extends BSONWriter {
         }
     }
 
-    private void checkPreconditions(String methodName, final State... validStates) {
+    private void checkPreconditions(final String methodName, final State... validStates) {
         if (isClosed()) {
             throw new IllegalStateException("BsonBinaryWriter");
         }
@@ -358,7 +358,7 @@ public class BSONBinaryWriter extends BSONWriter {
     }
 
     private boolean checkState(final State[] validStates) {
-        for (State cur : validStates) {
+        for (final State cur : validStates) {
             if (cur == getState()) {
                 return true;
             }
@@ -367,9 +367,9 @@ public class BSONBinaryWriter extends BSONWriter {
     }
 
     private void backpatchSize() {
-        int size = buffer.getPosition() - context.startPosition;
+        final int size = buffer.getPosition() - context.startPosition;
         if (size > binaryWriterSettings.maxDocumentSize) {
-            String message = String.format("Size %d is larger than MaxDocumentSize %d.", size, binaryWriterSettings.maxDocumentSize);
+            final String message = String.format("Size %d is larger than MaxDocumentSize %d.", size, binaryWriterSettings.maxDocumentSize);
             throw new BsonSerializationException(message);
         }
         buffer.backpatchSize(size);
@@ -382,7 +382,7 @@ public class BSONBinaryWriter extends BSONWriter {
         private final int startPosition;
         private int index; // used when contextType is an array
 
-        Context(Context parentContext, ContextType contextType, int startPosition) {
+        Context(final Context parentContext, final ContextType contextType, final int startPosition) {
             this.parentContext = parentContext;
             this.contextType = contextType;
             this.startPosition = startPosition;

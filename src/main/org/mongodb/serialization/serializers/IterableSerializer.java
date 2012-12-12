@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.serialization.serializers;
@@ -20,13 +19,13 @@ package org.mongodb.serialization.serializers;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.mongodb.serialization.BsonSerializationOptions;
-import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 
 public class IterableSerializer implements Serializer<Iterable> {
     private final PrimitiveSerializers primitiveSerializers;
 
-    public IterableSerializer(PrimitiveSerializers primitiveSerializers) {
+    public IterableSerializer(final PrimitiveSerializers primitiveSerializers) {
         this.primitiveSerializers = primitiveSerializers;
     }
 
@@ -34,7 +33,7 @@ public class IterableSerializer implements Serializer<Iterable> {
     public void serialize(final BSONWriter bsonWriter, final Iterable iterable,
                           final BsonSerializationOptions options) {
         bsonWriter.writeStartArray();
-        for (Object cur : iterable) {
+        for (final Object cur : iterable) {
             // TODO: deal with options.  C# driver sends different options
             primitiveSerializers.serialize(bsonWriter, cur, options);
         }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.bson.io;
@@ -25,11 +24,11 @@ import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
 public class ByteBufferInput implements InputBuffer {
-    static Charset UTF8_CHARSET = Charset.forName("UTF8");
+    private static final Charset UTF8_CHARSET = Charset.forName("UTF8");
 
-    ByteBuffer buffer;
+    private final ByteBuffer buffer;
 
-    public ByteBufferInput(ByteBuffer buffer) {
+    public ByteBufferInput(final ByteBuffer buffer) {
         this.buffer = buffer;
         buffer.order(ByteOrder.LITTLE_ENDIAN);
     }
@@ -52,7 +51,7 @@ public class ByteBufferInput implements InputBuffer {
     @Override
     public byte[] readBytes(final int size) {
         // TODO: should we really allocate byte array here?
-        byte[] bytes = new byte[size];
+        final byte[] bytes = new byte[size];
         buffer.get(bytes);
         return bytes;
     }
@@ -74,8 +73,8 @@ public class ByteBufferInput implements InputBuffer {
 
     @Override
     public String readString() {
-        int size = readInt32();
-        byte[] bytes = readBytes(size);
+        final int size = readInt32();
+        final byte[] bytes = readBytes(size);
         // TODO: this is 1.6 only...
         return new String(bytes, 0, size - 1, UTF8_CHARSET);
     }
@@ -93,12 +92,12 @@ public class ByteBufferInput implements InputBuffer {
     @Override
     public String readCString() {
         // TODO: potentially optimize this
-        int mark = buffer.position();
+        final int mark = buffer.position();
         readUntilNullByte();
-        int size = buffer.position() - mark - 1;
+        final int size = buffer.position() - mark - 1;
         buffer.position(mark);
 
-        byte[] bytes = readBytes(size);
+        final byte[] bytes = readBytes(size);
         readByte();  // read the trailing null bytes
 
         // TODO: this is 1.6 only...
@@ -117,7 +116,7 @@ public class ByteBufferInput implements InputBuffer {
     }
 
     @Override
-    public void setPosition(int position) {
+    public void setPosition(final int position) {
         buffer.position(position);
     }
 
@@ -126,7 +125,7 @@ public class ByteBufferInput implements InputBuffer {
         x |= (0xFF & buffer.get()) << 24;
         x |= (0xFF & buffer.get()) << 16;
         x |= (0xFF & buffer.get()) << 8;
-        x |= (0xFF & buffer.get()) << 0;
+        x |= (0xFF & buffer.get());
         return x;
     }
 }

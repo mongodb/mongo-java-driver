@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.serialization.serializers;
@@ -33,7 +32,7 @@ import java.util.Map;
 public class MongoDocumentSerializer implements Serializer<MongoDocument> {
     private final PrimitiveSerializers primitiveSerializers;
 
-    public MongoDocumentSerializer(PrimitiveSerializers primitiveSerializers) {
+    public MongoDocumentSerializer(final PrimitiveSerializers primitiveSerializers) {
         this.primitiveSerializers = primitiveSerializers;
     }
 
@@ -41,7 +40,7 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
     @Override
     public void serialize(final BSONWriter bsonWriter, final MongoDocument document, final BsonSerializationOptions options) {
         bsonWriter.writeStartDocument();
-        for (Map.Entry<String, Object> entry : document.entrySet()) {
+        for (final Map.Entry<String, Object> entry : document.entrySet()) {
             bsonWriter.writeName(entry.getKey());
             writeValue(bsonWriter, entry.getValue(), options);
         }
@@ -62,7 +61,7 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
 
     private void serializeArray(final BSONWriter bsonWriter, final Iterable iterable, final BsonSerializationOptions options) {
         bsonWriter.writeStartArray();
-        for (Object cur : iterable) {
+        for (final Object cur : iterable) {
             writeValue(bsonWriter, cur, options);
         }
         bsonWriter.writeEndArray();
@@ -70,11 +69,11 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
 
     @Override
     public MongoDocument deserialize(final BSONReader reader, final BsonSerializationOptions options) {
-        MongoDocument document = new MongoDocument();
+        final MongoDocument document = new MongoDocument();
 
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            String fieldName = reader.readName();
+            final String fieldName = reader.readName();
             document.put(fieldName, readValue(reader, options, fieldName));
         }
 
@@ -84,7 +83,7 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
     }
 
     private Object readValue(final BSONReader reader, final BsonSerializationOptions options, final String fieldName) {
-        BsonType bsonType = reader.getCurrentBsonType();
+        final BsonType bsonType = reader.getCurrentBsonType();
         if (bsonType.equals(BsonType.DOCUMENT)) {
             return getDocumentDeserializerForField(fieldName).deserialize(reader, options);
         }
@@ -98,7 +97,7 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
 
     private List readArray(final BSONReader reader, final BsonSerializationOptions options) {
         reader.readStartArray();
-        List list = new ArrayList();  // TODO: figure out a way to change concrete class
+        final List list = new ArrayList();  // TODO: figure out a way to change concrete class
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             list.add(readValue(reader, options, null));   // TODO: why is this a warning?
         }

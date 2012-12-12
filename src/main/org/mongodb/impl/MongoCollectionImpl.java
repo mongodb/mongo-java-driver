@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.impl;
@@ -83,7 +82,8 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public InsertResult insert(final MongoInsert<T> insert) {
-        return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(getWriteConcern()), getSerializer());
+        return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(getWriteConcern()),
+                getSerializer());
     }
 
     @Override

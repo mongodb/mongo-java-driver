@@ -21,6 +21,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class BasicDBObject extends LinkedHashMap<String, Object> implements DBObject {
+    private static final long serialVersionUID = 5315876917536897629L;
+
     @Override
     public void putAll(final Map m) {
         throw new UnsupportedOperationException();
@@ -42,6 +44,7 @@ public class BasicDBObject extends LinkedHashMap<String, Object> implements DBOb
     }
 
     @Override
+    @Deprecated
     public boolean containsKey(final String s) {
         throw new UnsupportedOperationException();
     }

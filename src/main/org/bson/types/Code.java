@@ -1,27 +1,24 @@
-// Code.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// Code.java
 
 package org.bson.types;
 
 import java.io.Serializable;
-import java.util.*;
-
-import org.bson.*;
 
 /**
  * for using the Code type
@@ -30,7 +27,7 @@ public class Code implements Serializable {
 
     private static final long serialVersionUID = 475535263314046697L;
 
-    public Code(String code) {
+    public Code(final String code) {
         _code = code;
     }
 
@@ -38,12 +35,12 @@ public class Code implements Serializable {
         return _code;
     }
 
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (!(o instanceof Code)) {
             return false;
         }
 
-        Code c = (Code) o;
+        final Code c = (Code) o;
         return _code.equals(c._code);
     }
 

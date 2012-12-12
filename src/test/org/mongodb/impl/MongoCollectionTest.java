@@ -39,8 +39,8 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.result.InsertResult;
 import org.mongodb.serialization.BsonSerializationOptions;
-import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;

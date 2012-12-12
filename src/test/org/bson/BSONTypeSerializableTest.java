@@ -1,20 +1,20 @@
-// BSONTypeSerializableTest.java
-
-/**
- *      Copyright (C) 2010 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// BSONTypeSerializableTest.java
 package org.bson;
 
 import org.bson.types.BSONTimestamp;
@@ -39,60 +39,60 @@ public class BSONTypeSerializableTest {
 
     @Test
     public void testSerializeMinKey() throws Exception {
-        MinKey key = new MinKey();
+        final MinKey key = new MinKey();
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
 
         objectOutputStream.writeObject(key);
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-        MinKey key2 = (MinKey) objectInputStream.readObject();
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        final MinKey key2 = (MinKey) objectInputStream.readObject();
     }
 
     @Test
     public void testSerializeMaxKey() throws Exception {
-        MaxKey key = new MaxKey();
+        final MaxKey key = new MaxKey();
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
 
         objectOutputStream.writeObject(key);
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-        MaxKey key2 = (MaxKey) objectInputStream.readObject();
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        final MaxKey key2 = (MaxKey) objectInputStream.readObject();
     }
 
     @Test
     public void testSerializeBinary() throws Exception {
-        Binary binary = new Binary((byte) 0x00, "hello world".getBytes());
+        final Binary binary = new Binary((byte) 0x00, "hello world".getBytes());
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
 
         objectOutputStream.writeObject(binary);
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-        Binary binary2 = (Binary) objectInputStream.readObject();
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        final Binary binary2 = (Binary) objectInputStream.readObject();
 
         assertEquals(binary, binary2);
     }
 
     @Test
     public void testSerializeBSONTimestamp() throws Exception {
-        BSONTimestamp object = new BSONTimestamp(100, 100);
+        final BSONTimestamp object = new BSONTimestamp(100, 100);
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
 
         objectOutputStream.writeObject(object);
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-        BSONTimestamp object2 = (BSONTimestamp) objectInputStream.readObject();
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        final BSONTimestamp object2 = (BSONTimestamp) objectInputStream.readObject();
 
         assertEquals(object.getTime(), object2.getTime());
         assertEquals(object.getInc(), object2.getInc());
@@ -100,33 +100,33 @@ public class BSONTypeSerializableTest {
 
     @Test
     public void testSerializeCode() throws Exception {
-        Code object = new Code("function() {}");
+        final Code object = new Code("function() {}");
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
 
         objectOutputStream.writeObject(object);
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-        Code object2 = (Code) objectInputStream.readObject();
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        final Code object2 = (Code) objectInputStream.readObject();
 
         assertEquals(object.getCode(), object2.getCode());
     }
 
     @Test
     public void testSerializeCodeWScope() throws Exception {
-        MongoDocument scope = new MongoDocument("t", 1);
-        CodeWScope object = new CodeWScope("function() {}", scope);
+        final MongoDocument scope = new MongoDocument("t", 1);
+        final CodeWScope object = new CodeWScope("function() {}", scope);
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
 
         objectOutputStream.writeObject(object);
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-        CodeWScope object2 = (CodeWScope) objectInputStream.readObject();
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        final CodeWScope object2 = (CodeWScope) objectInputStream.readObject();
 
         assertEquals(object.getCode(), object2.getCode());
         assertEquals(object.getScope().get("t"), object2.getScope().get("t"));
@@ -134,32 +134,32 @@ public class BSONTypeSerializableTest {
 
     @Test
     public void testSerializeSymbol() throws Exception {
-        Symbol object = new Symbol("symbol");
+        final Symbol object = new Symbol("symbol");
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
 
         objectOutputStream.writeObject(object);
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-        Symbol object2 = (Symbol) objectInputStream.readObject();
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        final Symbol object2 = (Symbol) objectInputStream.readObject();
 
         assertEquals(object.getSymbol(), object2.getSymbol());
     }
 
     @Test
     public void testSerializeObjectID() throws Exception {
-        ObjectId object = new ObjectId("001122334455667788990011");
+        final ObjectId object = new ObjectId("001122334455667788990011");
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
 
         objectOutputStream.writeObject(object);
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-        ObjectId object2 = (ObjectId) objectInputStream.readObject();
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        final ObjectId object2 = (ObjectId) objectInputStream.readObject();
 
         assertEquals(object, object2);
     }

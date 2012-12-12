@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb;
@@ -29,8 +28,8 @@ import java.util.Iterator;
 public class MongoCursor<T> implements Iterator<T>, Closeable {
     private final MongoCollection<T> collection;
     private final MongoFind find;
-    private QueryResult<T> currentResult;
-    private Iterator<T> currentIterator;
+    private final QueryResult<T> currentResult;
+    private final Iterator<T> currentIterator;
 
     public MongoCursor(final MongoCollection<T> collection, final MongoFind find) {
         this.collection = collection;

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.protocol;
@@ -27,14 +26,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MongoReplyMessage<T> {
-    final int messageLength;
-    final int requestId;
-    final int responseTo;
-    final int responseFlags;
-    final long cursorId;
-    final int startingFrom;
-    final int numberReturned;
-    final List<T> documents;
+    private final int messageLength;
+    private final int requestId;
+    private final int responseTo;
+    private final int responseFlags;
+    private final long cursorId;
+    private final int startingFrom;
+    private final int numberReturned;
+    private final List<T> documents;
 
     public MongoReplyMessage(final InputBuffer headerInputBuffer, final InputBuffer bodyInputBuffer,
                              final Serializer<T> serializer) {

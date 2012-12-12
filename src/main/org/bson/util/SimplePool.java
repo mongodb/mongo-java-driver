@@ -1,61 +1,60 @@
-// SimplePool.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// SimplePool.java
 
 package org.bson.util;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class SimplePool<T> {
+    private final int max;
+    private final Queue<T> stored = new ConcurrentLinkedQueue<T>();
 
-    public SimplePool(int max) {
-        _max = max;
+    public SimplePool(final int max) {
+        this.max = max;
     }
 
     public SimplePool() {
-        _max = 1000;
+        max = 1000;
     }
 
     protected abstract T createNew();
 
-    protected boolean ok(T t) {
+    protected boolean ok(final T t) {
         return true;
     }
 
     public T get() {
-        T t = _stored.poll();
+        final T t = stored.poll();
         if (t != null) {
             return t;
         }
         return createNew();
     }
 
-    public void done(T t) {
+    public void done(final T t) {
         if (!ok(t)) {
             return;
         }
 
-        if (_stored.size() > _max) {
+        if (stored.size() > max) {
             return;
         }
-        _stored.add(t);
+        stored.add(t);
     }
-
-    final int _max;
-    private Queue<T> _stored = new ConcurrentLinkedQueue<T>();
 }

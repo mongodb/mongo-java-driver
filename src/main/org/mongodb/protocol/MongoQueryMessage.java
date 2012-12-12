@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.protocol;
@@ -26,8 +25,8 @@ import org.mongodb.serialization.Serializer;
 
 public class MongoQueryMessage extends MongoRequestMessage {
 
-    public MongoQueryMessage(String collectionName, MongoFind find,
-                             OutputBuffer buffer, Serializer<MongoDocument> serializer) {
+    public MongoQueryMessage(final String collectionName, final MongoFind find, final OutputBuffer buffer,
+                             final Serializer<MongoDocument> serializer) {
         super(collectionName, find.getFilter().toMongoDocument(), find.getOptions(), find.getReadPreference(), buffer);
 
         init(find);
@@ -38,8 +37,8 @@ public class MongoQueryMessage extends MongoRequestMessage {
         backpatchMessageLength();
     }
 
-    public MongoQueryMessage(String collectionName, MongoCommandOperation commandOperation,
-                             OutputBuffer buffer, Serializer<MongoDocument> serializer) {
+    public MongoQueryMessage(final String collectionName, final MongoCommandOperation commandOperation,
+                             final OutputBuffer buffer, final Serializer<MongoDocument> serializer) {
         super(collectionName, commandOperation.getCommand().toMongoDocument(), 0, commandOperation.getReadPreference(), buffer);
 
         init(commandOperation);
