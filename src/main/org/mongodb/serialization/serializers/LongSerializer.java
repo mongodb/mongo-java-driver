@@ -32,4 +32,9 @@ public class LongSerializer implements Serializer<Long> {
     public Long deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         return reader.readInt64();
     }
+
+    @Override
+    public Class<Long> getSerializationClass() {
+        return Long.class;
+    }
 }

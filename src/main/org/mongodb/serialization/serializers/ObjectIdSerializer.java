@@ -33,4 +33,9 @@ public class ObjectIdSerializer implements Serializer<ObjectId> {
     public ObjectId deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         return reader.readObjectId();
     }
+
+    @Override
+    public Class<ObjectId> getSerializationClass() {
+        return ObjectId.class;
+    }
 }

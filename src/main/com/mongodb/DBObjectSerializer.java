@@ -22,13 +22,13 @@ import org.bson.BSONWriter;
 import org.bson.BsonType;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 
 public class DBObjectSerializer implements Serializer<DBObject> {
-    private final Serializers serializers;
+    private final PrimitiveSerializers primitiveSerializers;
 
-    public DBObjectSerializer(final Serializers serializers) {
-        this.serializers = serializers;
+    public DBObjectSerializer(final PrimitiveSerializers primitiveSerializers) {
+        this.primitiveSerializers = primitiveSerializers;
     }
 
     // TODO: deal with options.  C# driver sends different options.  For one, to write _id field first
@@ -41,7 +41,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
             if (value instanceof DBObject) {
                 serialize(bsonWriter, (DBObject) value, options);
             } else {
-                serializers.serialize(bsonWriter, value, options);
+                primitiveSerializers.serialize(bsonWriter, value, options);
             }
         }
         bsonWriter.writeEndDocument();
@@ -58,7 +58,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
             if (bsonType.equals(BsonType.DOCUMENT)) {
                 deserialize(reader, options);
             } else {
-                Object value = serializers.deserialize(reader, options);
+                Object value = primitiveSerializers.deserialize(reader, options);
                 document.put(fieldName, value);
             }
         }
@@ -66,6 +66,11 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         reader.readEndDocument();
 
         return document;
+    }
+
+    @Override
+    public Class<DBObject> getSerializationClass() {
+        return DBObject.class;
     }
 
 }

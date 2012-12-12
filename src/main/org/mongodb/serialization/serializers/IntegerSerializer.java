@@ -32,4 +32,9 @@ public class IntegerSerializer implements Serializer<Integer> {
     public Integer deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         return reader.readInt32();
     }
+
+    @Override
+    public Class<Integer> getSerializationClass() {
+        return Integer.class;
+    }
 }

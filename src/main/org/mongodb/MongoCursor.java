@@ -36,7 +36,7 @@ public class MongoCursor<T> implements Iterator<T>, Closeable {
         this.collection = collection;
         this.find = find;
         currentResult = collection.getClient().getOperations().query(collection.getNamespace(), find,
-                new MongoDocumentSerializer(collection.getBaseSerializers()),
+                new MongoDocumentSerializer(collection.getBasePrimitiveSerializers()),
                         collection.getSerializer());
         currentIterator = currentResult.getResults().iterator();
     }

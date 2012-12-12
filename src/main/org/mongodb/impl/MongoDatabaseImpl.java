@@ -25,7 +25,7 @@ import org.mongodb.WriteConcern;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 
 class MongoDatabaseImpl implements MongoDatabase {
@@ -54,9 +54,9 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public <T> MongoCollectionImpl<T> getTypedCollection(final String name, final Serializers baseSerializers,
+    public <T> MongoCollectionImpl<T> getTypedCollection(final String name, final PrimitiveSerializers basePrimitiveSerializers,
                                                      final Serializer<T> serializer) {
-        return new MongoCollectionImpl<T>(name, this, baseSerializers, serializer, null, null);
+        return new MongoCollectionImpl<T>(name, this, basePrimitiveSerializers, serializer, null, null);
     }
 
     @Override
@@ -83,7 +83,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         return getClient().getReadPreference();
     }
 
-    public Serializers getSerializers() {
-        return getClient().getSerializers();
+    public PrimitiveSerializers getSerializers() {
+        return getClient().getPrimitiveSerializers();
     }
 }

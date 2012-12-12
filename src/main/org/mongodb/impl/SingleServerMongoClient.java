@@ -39,7 +39,7 @@ import org.mongodb.result.QueryResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.util.pool.SimplePool;
 
 import java.nio.ByteBuffer;
@@ -52,7 +52,7 @@ public class SingleServerMongoClient implements MongoClient {
     private final SimplePool<MongoChannel> channelPool;
     private final BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool(24);
     private final ServerAddress serverAddress;
-    private final Serializers serializers;
+    private final PrimitiveSerializers primitiveSerializers;
     private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
     private ReadPreference readPreference = ReadPreference.primary();
     private final ThreadLocal<SingleChannelMongoClient> boundClient = new ThreadLocal<SingleChannelMongoClient>();
@@ -65,7 +65,7 @@ public class SingleServerMongoClient implements MongoClient {
                 return new MongoChannel(SingleServerMongoClient.this.serverAddress, bufferPool);
             }
         };
-        serializers = Serializers.createDefaultSerializers();
+        primitiveSerializers = PrimitiveSerializers.createDefault();
     }
 
     @Override
@@ -134,8 +134,8 @@ public class SingleServerMongoClient implements MongoClient {
     }
 
     @Override
-    public Serializers getSerializers() {
-        return serializers;
+    public PrimitiveSerializers getPrimitiveSerializers() {
+        return primitiveSerializers;
     }
 
     BufferPool<ByteBuffer> getBufferPool() {
@@ -150,7 +150,7 @@ public class SingleServerMongoClient implements MongoClient {
         if (boundClient.get() != null) {
             return boundClient.get();
         }
-        return new SingleChannelMongoClient(getChannelPool(), getBufferPool(), serializers, writeConcern, readPreference);
+        return new SingleChannelMongoClient(getChannelPool(), getBufferPool(), primitiveSerializers, writeConcern, readPreference);
     }
 
     private void releaseChannelClient(SingleChannelMongoClient mongoClient) {

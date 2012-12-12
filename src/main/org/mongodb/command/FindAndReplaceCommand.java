@@ -23,13 +23,13 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFindAndReplace;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 
 public class FindAndReplaceCommand<T> extends FindAndModifyCommand<T> {
     private final MongoFindAndReplace<T> findAndReplace;
     public FindAndReplaceCommand(final MongoClient mongoClient, final MongoNamespace namespace,
-                                 final MongoFindAndReplace<T> findAndReplace, Serializers serializers, Serializer<T> serializer) {
-        super(mongoClient, namespace, findAndReplace, serializers, serializer);
+                                 final MongoFindAndReplace<T> findAndReplace, PrimitiveSerializers primitiveSerializers, Serializer<T> serializer) {
+        super(mongoClient, namespace, findAndReplace, primitiveSerializers, serializer);
         this.findAndReplace = findAndReplace;
     }
 

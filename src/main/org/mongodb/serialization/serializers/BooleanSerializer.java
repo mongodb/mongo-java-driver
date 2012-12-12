@@ -32,4 +32,9 @@ public class BooleanSerializer implements Serializer<Boolean> {
     public Boolean deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         return reader.readBoolean();
     }
+
+    @Override
+    public Class<Boolean> getSerializationClass() {
+        return Boolean.class;
+    }
 }

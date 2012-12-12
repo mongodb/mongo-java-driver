@@ -37,7 +37,7 @@ import org.mongodb.operation.MongoRemove;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
@@ -45,15 +45,15 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final MongoDatabaseImpl database;
     private WriteConcern writeConcern;
     private ReadPreference readPreference;
-    private final Serializers baseSerializers;
+    private final PrimitiveSerializers basePrimitiveSerializers;
     private final Serializer<T> serializer;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final Serializers baseSerializers, final Serializer<T> serializer,
+                               final PrimitiveSerializers basePrimitiveSerializers, final Serializer<T> serializer,
                                final WriteConcern writeConcern, final ReadPreference readPreference) {
         this.name = name;
         this.database = database;
-        this.baseSerializers = baseSerializers;
+        this.basePrimitiveSerializers = basePrimitiveSerializers;
         this.serializer = serializer;
         this.writeConcern = writeConcern;
         this.readPreference = readPreference;
@@ -91,17 +91,17 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public T findAndUpdate(final MongoFindAndUpdate findAndUpdate) {
-        return new FindAndUpdateCommand<T>(getClient(), getNamespace(), findAndUpdate, getBaseSerializers(), getSerializer()).execute().getValue();
+        return new FindAndUpdateCommand<T>(getClient(), getNamespace(), findAndUpdate, getBasePrimitiveSerializers(), getSerializer()).execute().getValue();
     }
 
     @Override
     public T findAndReplace(final MongoFindAndReplace<T> findAndReplace) {
-        return new FindAndReplaceCommand<T>(getClient(), getNamespace(), findAndReplace, getBaseSerializers(), getSerializer()).execute().getValue();
+        return new FindAndReplaceCommand<T>(getClient(), getNamespace(), findAndReplace, getBasePrimitiveSerializers(), getSerializer()).execute().getValue();
     }
 
     @Override
     public T findAndRemove(final MongoFindAndRemove findAndRemove) {
-        return new FindAndRemoveCommand<T>(getClient(), getNamespace(), findAndRemove, getBaseSerializers(), getSerializer()).execute().getValue();
+        return new FindAndRemoveCommand<T>(getClient(), getNamespace(), findAndRemove, getBasePrimitiveSerializers(), getSerializer()).execute().getValue();
     }
 
     @Override
@@ -117,9 +117,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public Serializers getBaseSerializers() {
-        if (baseSerializers != null) {
-            return baseSerializers;
+    public PrimitiveSerializers getBasePrimitiveSerializers() {
+        if (basePrimitiveSerializers != null) {
+            return basePrimitiveSerializers;
         }
         return getDatabase().getSerializers();
     }
@@ -156,6 +156,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private Serializer<MongoDocument> getMongoDocumentSerializer() {
-        return new MongoDocumentSerializer(baseSerializers);
+        return new MongoDocumentSerializer(basePrimitiveSerializers);
     }
 }

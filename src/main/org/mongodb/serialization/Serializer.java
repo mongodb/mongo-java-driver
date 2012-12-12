@@ -24,4 +24,7 @@ public interface Serializer<T> {
     void serialize(BSONWriter bsonWriter, T value, BsonSerializationOptions options);
 
     T deserialize(BSONReader reader, BsonSerializationOptions options);
+
+    // necessary because Java doesn't reify generics
+    Class<T> getSerializationClass();
 }

@@ -32,4 +32,9 @@ public class StringSerializer implements Serializer<String> {
     public String deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         return reader.readString();
     }
+
+    @Override
+    public Class<String> getSerializationClass() {
+        return String.class;
+    }
 }

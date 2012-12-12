@@ -21,13 +21,13 @@ import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 
 public class IterableSerializer implements Serializer<Iterable> {
-    private final Serializers serializers;
+    private final PrimitiveSerializers primitiveSerializers;
 
-    public IterableSerializer(Serializers serializers) {
-        this.serializers = serializers;
+    public IterableSerializer(PrimitiveSerializers primitiveSerializers) {
+        this.primitiveSerializers = primitiveSerializers;
     }
 
     @Override
@@ -36,7 +36,7 @@ public class IterableSerializer implements Serializer<Iterable> {
         bsonWriter.writeStartArray();
         for (Object cur : iterable) {
             // TODO: deal with options.  C# driver sends different options
-            serializers.serialize(bsonWriter, cur, options);
+            primitiveSerializers.serialize(bsonWriter, cur, options);
         }
         bsonWriter.writeEndArray();
     }
@@ -44,5 +44,10 @@ public class IterableSerializer implements Serializer<Iterable> {
     @Override
     public Iterable deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         throw new UnsupportedOperationException();  // TODO: support this
+    }
+
+    @Override
+    public Class<Iterable> getSerializationClass() {
+        return Iterable.class;
     }
 }

@@ -23,16 +23,16 @@ import org.bson.BsonType;
 import org.mongodb.MongoDocument;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 
 import java.util.Map;
 
 //TODO: handle array type
 public class MongoDocumentSerializer implements Serializer<MongoDocument> {
-    private final Serializers serializers;
+    private final PrimitiveSerializers primitiveSerializers;
 
-    public MongoDocumentSerializer(Serializers serializers) {
-        this.serializers = serializers;
+    public MongoDocumentSerializer(PrimitiveSerializers primitiveSerializers) {
+        this.primitiveSerializers = primitiveSerializers;
     }
 
     // TODO: deal with options.  C# driver sends different options.  For one, to write _id field first
@@ -44,7 +44,7 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
             if (entry.getValue() instanceof MongoDocument) {
                 serialize(bsonWriter, (MongoDocument) entry.getValue(), options);
             } else {
-                serializers.serialize(bsonWriter, entry.getValue(), options);
+                primitiveSerializers.serialize(bsonWriter, entry.getValue(), options);
             }
         }
         bsonWriter.writeEndDocument();
@@ -59,9 +59,9 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
             String fieldName = reader.readName();
             BsonType bsonType = reader.getNextBsonType();
             if (bsonType.equals(BsonType.DOCUMENT)) {
-                document.put(fieldName, getSerializer(fieldName).deserialize(reader, options));
+                document.put(fieldName, getDocumentDeserializerForField(fieldName).deserialize(reader, options));
             } else {
-                Object value = serializers.deserialize(reader, options);
+                Object value = primitiveSerializers.deserialize(reader, options);
                 document.put(fieldName, value);
             }
         }
@@ -71,7 +71,16 @@ public class MongoDocumentSerializer implements Serializer<MongoDocument> {
         return document;
     }
 
-    protected Serializer getSerializer(final String fieldName) {
+    @Override
+    public Class<MongoDocument> getSerializationClass() {
+        return MongoDocument.class;
+    }
+
+    protected PrimitiveSerializers getPrimitiveSerializers() {
+        return primitiveSerializers;
+    }
+
+    protected Serializer getDocumentDeserializerForField(final String fieldName) {
         return this;
     }
 

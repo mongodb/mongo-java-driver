@@ -25,21 +25,21 @@ import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFindAndModify;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 
 public abstract class FindAndModifyCommand<T> extends AbstractCommand {
     private final MongoNamespace namespace;
     private final MongoFindAndModify findAndModify;
-    private final Serializers serializers;
+    private final PrimitiveSerializers primitiveSerializers;
     private final Serializer<T> serializer;
 
     public FindAndModifyCommand(final MongoClient mongoClient, final MongoNamespace namespace,
-                                MongoFindAndModify findAndModify, Serializers serializers, Serializer<T> serializer) {
+                                MongoFindAndModify findAndModify, PrimitiveSerializers primitiveSerializers, Serializer<T> serializer) {
         super(mongoClient, namespace.getDatabaseName());
         this.namespace = namespace;
         this.findAndModify = findAndModify;
-        this.serializers = serializers;
+        this.primitiveSerializers = primitiveSerializers;
         this.serializer = serializer;
     }
 
@@ -47,7 +47,7 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
     public FindAndModifyCommandResult<T> execute() {
         return new FindAndModifyCommandResult<T>(getMongoClient().getOperations().executeCommand(getDatabase(),
                 new MongoCommandOperation(asMongoCommand()),
-                new FindAndModifyCommandResultSerializer<T>(serializers, serializer)));
+                new FindAndModifyCommandResultSerializer<T>(primitiveSerializers, serializer)));
 
     }
 
@@ -83,7 +83,8 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
         }
 
         public T getValue() {
-            return (T) getMongoDocument().get("value"); // TODO: any way to remove the warning?
+            // TODO: any way to remove the warning?  This could be a design flaw
+            return (T) getMongoDocument().get("value");
         }
     }
 
@@ -91,18 +92,17 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
 
         private final Serializer<T> serializer;
 
-        public FindAndModifyCommandResultSerializer(Serializers serializers, Serializer<T> serializer) {
-            super(serializers);
+        public FindAndModifyCommandResultSerializer(PrimitiveSerializers primitiveSerializers, Serializer<T> serializer) {
+            super(primitiveSerializers);
             this.serializer = serializer;
         }
 
         @Override
-        protected Serializer getSerializer(final String fieldName) {
-            // TODO: this is a bug waiting to happen.  What if there are other fields named "value" in sub-documents?
+        protected Serializer getDocumentDeserializerForField(final String fieldName) {
             if (fieldName.equals("value")) {
                 return serializer;
             }
-            return super.getSerializer(fieldName);
+            return new MongoDocumentSerializer(getPrimitiveSerializers());
         }
     }
 }

@@ -40,6 +40,11 @@ public class PatternSerializer implements Serializer<Pattern> {
         return Pattern.compile(regularExpression.getPattern(), getOptionsAsInt(regularExpression));
     }
 
+    @Override
+    public Class<Pattern> getSerializationClass() {
+        return Pattern.class;
+    }
+
     public String getOptionsAsString(Pattern pattern) {
         int flags = pattern.flags();
         StringBuilder buf = new StringBuilder();

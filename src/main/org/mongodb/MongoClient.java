@@ -17,7 +17,7 @@
 package org.mongodb;
 
 
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 
 import java.io.Closeable;
 import java.util.concurrent.Callable;
@@ -71,5 +71,5 @@ public interface MongoClient extends Closeable {
      */
     ReadPreference getReadPreference();
 
-    Serializers getSerializers();
+    PrimitiveSerializers getPrimitiveSerializers();
 }

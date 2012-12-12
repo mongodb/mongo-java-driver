@@ -51,7 +51,7 @@ import org.mongodb.result.QueryResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.MongoDocumentSerializer;
 import org.mongodb.util.pool.SimplePool;
 
@@ -65,16 +65,16 @@ public class SingleChannelMongoClient implements MongoClient {
 
     private final SimplePool<MongoChannel> channelPool;
     private final BufferPool<ByteBuffer> bufferPool;
-    private final Serializers serializers;
+    private final PrimitiveSerializers primitiveSerializers;
     private final WriteConcern writeConcern;
     private final ReadPreference readPreference;
     private MongoChannel channel;
 
     SingleChannelMongoClient(final SimplePool<MongoChannel> channelPool, final BufferPool<ByteBuffer> bufferPool,
-                             final Serializers serializers, WriteConcern writeConcern, ReadPreference readPreference) {
+                             final PrimitiveSerializers primitiveSerializers, WriteConcern writeConcern, ReadPreference readPreference) {
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
-        this.serializers = serializers;
+        this.primitiveSerializers = primitiveSerializers;
         this.writeConcern = writeConcern;
         this.readPreference = readPreference;
         try {
@@ -127,8 +127,8 @@ public class SingleChannelMongoClient implements MongoClient {
     }
 
     @Override
-    public Serializers getSerializers() {
-        return serializers;
+    public PrimitiveSerializers getPrimitiveSerializers() {
+        return primitiveSerializers;
     }
 
     private BufferPool<ByteBuffer> getBufferPool() {
@@ -140,7 +140,7 @@ public class SingleChannelMongoClient implements MongoClient {
         if (serializer != null) {
             return serializer;
         }
-        return new MongoDocumentSerializer(this.serializers);
+        return new MongoDocumentSerializer(this.primitiveSerializers);
     }
 
     private MongoReplyMessage<MongoDocument> sendWriteMessage(final MongoNamespace namespace,

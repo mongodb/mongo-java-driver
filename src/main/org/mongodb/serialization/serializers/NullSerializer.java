@@ -33,4 +33,9 @@ public class NullSerializer implements Serializer {
         reader.readNull();
         return null;
     }
+
+    @Override
+    public Class getSerializationClass() {
+        return null;
+    }
 }

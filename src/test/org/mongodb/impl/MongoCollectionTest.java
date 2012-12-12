@@ -41,7 +41,7 @@ import org.mongodb.operation.MongoRemove;
 import org.mongodb.result.InsertResult;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -159,9 +159,9 @@ public class MongoCollectionTest {
 
     @Test
     public void testFindAndUpdateWithGenerics() {
-        Serializers serializers = Serializers.createDefaultSerializers();
+        PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
         MongoCollection<Concrete> collection = mongoDatabase.getTypedCollection("findAndUpdateWithGenerics",
-                serializers, new ConcreteSerializer());
+                primitiveSerializers, new ConcreteSerializer());
 
         Concrete doc = new Concrete(new ObjectId(), true);
         collection.insert(new MongoInsert<Concrete>(doc));
@@ -238,6 +238,11 @@ class ConcreteSerializer implements Serializer<Concrete> {
         }
         reader.readEndDocument();
         return c;
+    }
+
+    @Override
+    public Class<Concrete> getSerializationClass() {
+        return Concrete.class;
     }
 }
 

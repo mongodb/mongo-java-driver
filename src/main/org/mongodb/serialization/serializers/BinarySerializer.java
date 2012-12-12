@@ -33,4 +33,9 @@ public class BinarySerializer implements Serializer<Binary> {
     public Binary deserialize(final BSONReader bsonReader, final BsonSerializationOptions options) {
         return bsonReader.readBinaryData();
     }
+
+    @Override
+    public Class<Binary> getSerializationClass() {
+        return Binary.class;
+    }
 }

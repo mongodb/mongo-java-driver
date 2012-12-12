@@ -51,7 +51,7 @@ public abstract class AbstractCommand implements Command {
     public abstract MongoCommand asMongoCommand();
 
     protected Serializer<MongoDocument> createResultSerializer() {
-        return new MongoDocumentSerializer(mongoClient.getSerializers());
+        return new MongoDocumentSerializer(mongoClient.getPrimitiveSerializers());
     }
 
 

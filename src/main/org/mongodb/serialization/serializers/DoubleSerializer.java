@@ -32,4 +32,9 @@ public class DoubleSerializer implements Serializer<Double> {
     public Double deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         return reader.readDouble();
     }
+
+    @Override
+    public Class<Double> getSerializationClass() {
+        return Double.class;
+    }
 }

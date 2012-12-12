@@ -20,7 +20,7 @@ package org.mongodb;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
@@ -34,7 +34,7 @@ public interface MongoDatabase {
 
     MongoCollection<MongoDocument> getCollection(String name);
 
-    <T> MongoCollection<T> getTypedCollection(String name, final Serializers baseSerializers,
+    <T> MongoCollection<T> getTypedCollection(String name, final PrimitiveSerializers basePrimitiveSerializers,
                                               final Serializer<T> serializer);
 
 //    MongoDatabase withClient(MongoClient client);

@@ -25,7 +25,7 @@ import org.mongodb.operation.MongoRemove;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.Serializers;
+import org.mongodb.serialization.PrimitiveSerializers;
 
 // TODO: add these
 // update
@@ -82,7 +82,7 @@ public interface MongoCollection<T> {
 
     RemoveResult remove(MongoRemove remove);
 
-    Serializers getBaseSerializers();
+    PrimitiveSerializers getBasePrimitiveSerializers();
 
     Serializer<T> getSerializer();
 }

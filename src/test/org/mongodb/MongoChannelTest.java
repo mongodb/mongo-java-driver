@@ -19,7 +19,6 @@ package org.mongodb;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.BsonType;
 import org.bson.io.PooledByteBufferOutput;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
@@ -36,17 +35,10 @@ import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.protocol.MongoInsertMessage;
 import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyMessage;
-import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.serializers.BinarySerializer;
 import org.mongodb.serialization.BsonSerializationOptions;
-import org.mongodb.serialization.Serializers;
-import org.mongodb.serialization.serializers.DateSerializer;
-import org.mongodb.serialization.serializers.DoubleSerializer;
-import org.mongodb.serialization.serializers.IntegerSerializer;
-import org.mongodb.serialization.serializers.LongSerializer;
+import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.MongoDocumentSerializer;
-import org.mongodb.serialization.serializers.ObjectIdSerializer;
-import org.mongodb.serialization.serializers.StringSerializer;
 
 import java.io.IOException;
 import java.net.SocketException;
@@ -60,21 +52,14 @@ import static org.junit.Assert.assertEquals;
 
 public class MongoChannelTest  {
     MongoChannel channel;
-    Serializers serializers;
+    PrimitiveSerializers primitiveSerializers;
     BufferPool<ByteBuffer> bufferPool;
 
     @Before
     public void setUp() throws UnknownHostException, SocketException {
         bufferPool = new PowerOfTwoByteBufferPool(24);
         channel = new MongoChannel(new ServerAddress("localhost", 27017), bufferPool);
-        serializers = new Serializers();
-        serializers.register(ObjectId.class, BsonType.OBJECT_ID, new ObjectIdSerializer());
-        serializers.register(Integer.class, BsonType.INT32, new IntegerSerializer());
-        serializers.register(Long.class, BsonType.INT64, new LongSerializer());
-        serializers.register(String.class, BsonType.STRING, new StringSerializer());
-        serializers.register(Double.class, BsonType.DOUBLE, new DoubleSerializer());
-        serializers.register(Binary.class, BsonType.BINARY, new BinarySerializer());
-        serializers.register(Date.class, BsonType.DATE_TIME, new DateSerializer());
+        primitiveSerializers = PrimitiveSerializers.createDefault();
     }
 
     @After
@@ -148,6 +133,11 @@ public class MongoChannelTest  {
             reader.readEndDocument();
             return c;
         }
+
+        @Override
+        public Class<Concrete> getSerializationClass() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     @Test
@@ -163,7 +153,7 @@ public class MongoChannelTest  {
         final MongoQueryFilterDocument filter = new MongoQueryFilterDocument("i", 42);
 
         MongoQueryMessage queryMessage = new MongoQueryMessage("test.concrete", new MongoFind(filter).readPreference(ReadPreference.primary()),
-                new PooledByteBufferOutput(bufferPool), new MongoDocumentSerializer(serializers));
+                new PooledByteBufferOutput(bufferPool), new MongoDocumentSerializer(primitiveSerializers));
 
         channel.sendMessage(queryMessage);
 
@@ -195,7 +185,7 @@ public class MongoChannelTest  {
 
             MongoInsertMessage<MongoDocument> message = new MongoInsertMessage<MongoDocument>("MongoConnectionTest.sendMessageTest",
                     new MongoInsert<MongoDocument>(doc1).writeConcern(WriteConcern.ACKNOWLEDGED),
-                    new PooledByteBufferOutput(bufferPool), new MongoDocumentSerializer(serializers));
+                    new PooledByteBufferOutput(bufferPool), new MongoDocumentSerializer(primitiveSerializers));
 
             channel.sendMessage(message);
 
@@ -217,13 +207,13 @@ public class MongoChannelTest  {
 
         MongoQueryMessage queryMessage = new MongoQueryMessage("MongoConnectionTest.sendMessageTest",
                 new MongoFind(filter).batchSize(4000000).readPreference(ReadPreference.primary()),
-                new PooledByteBufferOutput(bufferPool), new MongoDocumentSerializer(serializers));
+                new PooledByteBufferOutput(bufferPool), new MongoDocumentSerializer(primitiveSerializers));
 
         channel.sendMessage(queryMessage);
 
         int totalDocuments = 0;
 
-        MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(new MongoDocumentSerializer(serializers));
+        MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(new MongoDocumentSerializer(primitiveSerializers));
         totalDocuments += replyMessage.getNumberReturned();
         System.out.println(" Initial: " + replyMessage.getDocuments().size() + " documents, " + replyMessage.getMessageLength() + " bytes");
 
@@ -233,7 +223,7 @@ public class MongoChannelTest  {
 
             channel.sendMessage(getMoreMessage);
 
-            replyMessage = channel.receiveMessage(new MongoDocumentSerializer(serializers));
+            replyMessage = channel.receiveMessage(new MongoDocumentSerializer(primitiveSerializers));
             totalDocuments += replyMessage.getNumberReturned();
             System.out.println(" Get more: " + replyMessage.getDocuments().size() + " documents, " + replyMessage.getMessageLength() + " bytes");
         }
@@ -266,11 +256,11 @@ public class MongoChannelTest  {
 
             MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.sendMessageTest",
                     new MongoFind(filter).readPreference(ReadPreference.primary()),
-                    new PooledByteBufferOutput(bufferPool), new MongoDocumentSerializer(serializers));
+                    new PooledByteBufferOutput(bufferPool), new MongoDocumentSerializer(primitiveSerializers));
 
             channel.sendMessage(message);
 
-            MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(new MongoDocumentSerializer(serializers));
+            MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(new MongoDocumentSerializer(primitiveSerializers));
 
 //            assertEquals(replyMessage.getDocuments().size(), 101);
         }
@@ -286,10 +276,10 @@ public class MongoChannelTest  {
 
         MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.$cmd",
                 new MongoFind(filter).batchSize(-1).readPreference(ReadPreference.primary()),
-                new PooledByteBufferOutput(bufferPool), new MongoDocumentSerializer(serializers));
+                new PooledByteBufferOutput(bufferPool), new MongoDocumentSerializer(primitiveSerializers));
         channel.sendMessage(message);
 
-        MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(new MongoDocumentSerializer(serializers));
+        MongoReplyMessage<MongoDocument> replyMessage = channel.receiveMessage(new MongoDocumentSerializer(primitiveSerializers));
 
         assertEquals(1, replyMessage.getDocuments().size());
     }
@@ -306,10 +296,10 @@ public class MongoChannelTest  {
 
         MongoInsertMessage<MongoDocument> message = new MongoInsertMessage<MongoDocument>("MongoConnectionTest.sendMessageTest",
                 new MongoInsert<MongoDocument>(documents).writeConcern(WriteConcern.UNACKNOWLEDGED),
-                new PooledByteBufferOutput(bufferPool), new MongoDocumentSerializer(serializers));
+                new PooledByteBufferOutput(bufferPool), new MongoDocumentSerializer(primitiveSerializers));
 
 
-        message.addDocument(doc1, new MongoDocumentSerializer(serializers));
+        message.addDocument(doc1, new MongoDocumentSerializer(primitiveSerializers));
 
         channel.sendMessage(message);
 

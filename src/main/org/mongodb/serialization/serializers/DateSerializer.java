@@ -34,4 +34,9 @@ public class DateSerializer implements Serializer<Date> {
     public Date deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         return new Date(reader.readDateTime());
     }
+
+    @Override
+    public Class<Date> getSerializationClass() {
+        return Date.class;
+    }
 }
