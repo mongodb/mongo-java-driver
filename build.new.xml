@@ -361,8 +361,6 @@ limitations under the License.
         <test classpathref="artifact.classpath"
               dir="${src.driver-compat}/test"
               includes="**/*Test.java"/>
-
-        <antcall target="test"/>
     </target>
 
     <!-- ******************************************************************* -->
