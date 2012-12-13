@@ -28,6 +28,20 @@ subprojects {
     dependencies {
         testCompile group: 'junit', name: 'junit', version: '4.11'
     }
+
+    sourceSets {
+        main {
+            java {
+                srcDir 'src/main'
+            }
+        }
+        test {
+            java {
+                srcDir 'src/test'
+            }
+        }
+    }
+
 }
 
 project(':driver') {
