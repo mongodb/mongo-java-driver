@@ -1,1 +1,1 @@
-include 'bson', 'driver'
+include 'bson', 'driver', 'driver-compat'
