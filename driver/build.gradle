@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'idea'
-    group = 'org.mongodb'
-    version = '3.0.0-SNAPSHOT'
-    sourceCompatibility = '1.5'
-    targetCompatibility = '1.5'
-
-    repositories {
-        mavenCentral()
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main'
+        }
     }
-    dependencies {
-        testCompile group: 'junit', name: 'junit', version: '4.11'
+    test {
+        java {
+            srcDir 'src/test'
+        }
     }
 }
 
-project(':driver') {
-    dependencies {
-        compile project(':bson')
-    }
-}
