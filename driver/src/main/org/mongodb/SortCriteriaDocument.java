@@ -30,7 +30,7 @@ public class SortCriteriaDocument extends Document implements MongoSortCriteria 
     }
 
     @Override
-    public Document toMongoDocument() {
+    public Document toDocument() {
         return this;
     }
 }

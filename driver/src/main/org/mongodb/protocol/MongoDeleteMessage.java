@@ -28,7 +28,7 @@ import java.util.Collection;
 public class MongoDeleteMessage extends MongoRequestMessage {
     public MongoDeleteMessage(final String collectionName, final MongoRemove remove, final OutputBuffer buffer,
                               final Serializer<Document> serializer) {
-        super(collectionName, OpCode.OP_DELETE, remove.getFilter().toMongoDocument(), buffer);
+        super(collectionName, OpCode.OP_DELETE, remove.getFilter().toDocument(), buffer);
         writeDelete(serializer);
         backpatchMessageLength();
     }

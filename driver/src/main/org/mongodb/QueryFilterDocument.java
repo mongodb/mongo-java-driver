@@ -30,7 +30,7 @@ public class QueryFilterDocument extends Document implements MongoQueryFilter {
     }
 
     @Override
-    public Document toMongoDocument() {
+    public Document toDocument() {
         return this;
     }
 

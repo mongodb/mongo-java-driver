@@ -17,10 +17,10 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.ConvertibleToMongoDocument;
+import org.mongodb.ConvertibleToDocument;
 
 /**
  *
  */
-public interface MongoSortCriteria extends ConvertibleToMongoDocument {
+public interface MongoSortCriteria extends ConvertibleToDocument {
 }

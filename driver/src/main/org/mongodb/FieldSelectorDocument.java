@@ -23,7 +23,7 @@ public class FieldSelectorDocument extends Document implements MongoFieldSelecto
     private static final long serialVersionUID = 3906786454116702406L;
 
     @Override
-    public Document toMongoDocument() {
+    public Document toDocument() {
         return this;
     }
 }

@@ -52,7 +52,7 @@ public class CountCommand extends AbstractCommand {
         final CommandDocument document = new CommandDocument("count", namespace.getCollectionName());
 
         if (find.getFilter() != null) {
-            document.put("query", find.getFilter().toMongoDocument());
+            document.put("query", find.getFilter().toDocument());
         }
 
         if (find.getLimit() > 0) {

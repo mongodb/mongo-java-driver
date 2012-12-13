@@ -19,6 +19,6 @@ package org.mongodb;
 
 import org.bson.types.Document;
 
-public interface ConvertibleToMongoDocument {
-    Document toMongoDocument();
+public interface ConvertibleToDocument {
+    Document toDocument();
 }

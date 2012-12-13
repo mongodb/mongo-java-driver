@@ -30,7 +30,7 @@ public class UpdateOperationsDocument extends Document implements MongoUpdateOpe
     }
 
     @Override
-    public Document toMongoDocument() {
+    public Document toDocument() {
         return this;
     }
 

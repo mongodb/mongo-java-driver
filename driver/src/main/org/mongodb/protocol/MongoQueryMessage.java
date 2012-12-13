@@ -27,22 +27,22 @@ public class MongoQueryMessage extends MongoRequestMessage {
 
     public MongoQueryMessage(final String collectionName, final MongoFind find, final OutputBuffer buffer,
                              final Serializer<Document> serializer) {
-        super(collectionName, find.getFilter().toMongoDocument(), find.getOptions(), find.getReadPreference(), buffer);
+        super(collectionName, find.getFilter().toDocument(), find.getOptions(), find.getReadPreference(), buffer);
 
         init(find);
-        addDocument(find.getFilter().toMongoDocument(), serializer);
+        addDocument(find.getFilter().toDocument(), serializer);
         if (find.getFields() != null) {
-            addDocument(find.getFields().toMongoDocument(), serializer);
+            addDocument(find.getFields().toDocument(), serializer);
         }
         backpatchMessageLength();
     }
 
     public MongoQueryMessage(final String collectionName, final MongoCommandOperation commandOperation,
                              final OutputBuffer buffer, final Serializer<Document> serializer) {
-        super(collectionName, commandOperation.getCommand().toMongoDocument(), 0, commandOperation.getReadPreference(), buffer);
+        super(collectionName, commandOperation.getCommand().toDocument(), 0, commandOperation.getReadPreference(), buffer);
 
         init(commandOperation);
-        addDocument(commandOperation.getCommand().toMongoDocument(), serializer);
+        addDocument(commandOperation.getCommand().toDocument(), serializer);
         backpatchMessageLength();
     }
 

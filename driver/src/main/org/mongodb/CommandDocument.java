@@ -31,7 +31,7 @@ public class CommandDocument extends QueryFilterDocument implements org.mongodb.
     }
 
     @Override
-    public Document toMongoDocument() {
+    public Document toDocument() {
         return this;
     }
 }

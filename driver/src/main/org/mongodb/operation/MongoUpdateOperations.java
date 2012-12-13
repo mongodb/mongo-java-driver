@@ -17,8 +17,8 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.ConvertibleToMongoDocument;
+import org.mongodb.ConvertibleToDocument;
 
 // TODO: different package
-public interface MongoUpdateOperations extends ConvertibleToMongoDocument {
+public interface MongoUpdateOperations extends ConvertibleToDocument {
 }

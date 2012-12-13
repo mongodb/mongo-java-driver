@@ -17,7 +17,7 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.ConvertibleToMongoDocument;
+import org.mongodb.ConvertibleToDocument;
 
-public interface MongoFieldSelector extends ConvertibleToMongoDocument {
+public interface MongoFieldSelector extends ConvertibleToDocument {
 }
