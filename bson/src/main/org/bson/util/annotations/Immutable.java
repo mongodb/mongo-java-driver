@@ -22,6 +22,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+
+// TODO: Move these to a different package at least
 /**
  * The class to which this annotation is applied is immutable.  This means that its state cannot be seen to change by
  * callers, which implies that <ul> <li> all public fields are final, </li> <li> all public final reference fields refer

@@ -21,6 +21,9 @@ package org.bson.util;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+// TODO: either make this class safe or replace it.
+// TODO: it's also not efficient in the way it manages memory
+// TODO: it should keep a list of what's been removed from the pool and only add things that have been removed
 public abstract class SimplePool<T> {
     private final int max;
     private final Queue<T> stored = new ConcurrentLinkedQueue<T>();
