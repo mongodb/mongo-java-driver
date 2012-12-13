@@ -126,10 +126,9 @@ limitations under the License.
                        regexp="(\d+)\.(\d+)\.(\d+)"
                        select="\2" />
 
-        <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sMAJOR_VERSION\s=\s\d+;" replace=" MAJOR_VERSION = ${lib.major};" byline="false"/>
-        <replaceregexp file="src/main/com/mongodb/Mongo.java" match="\sMINOR_VERSION\s=\s\d+;" replace=" MINOR_VERSION = ${lib.minor};" byline="false"/>
-        <replaceregexp file="src/main/com/mongodb/Mongo.java" match='\sFULL_VERSION\s=\s"\S*";'
-                       replace=' FULL_VERSION = "${build.conf.lib.version}";' byline="false"/>
+        <replaceregexp file="driver-compat/src/main/com/mongodb/Mongo.java" match="\sMAJOR_VERSION\s=\s\d+;"  replace=" MAJOR_VERSION = ${lib.major};" byline="false"/>
+        <replaceregexp file="driver-compat/src/main/com/mongodb/Mongo.java" match="\sMINOR_VERSION\s=\s\d+;"  replace=" MINOR_VERSION = ${lib.minor};" byline="false"/>
+        <replaceregexp file="driver-compat/src/main/com/mongodb/Mongo.java" match='\sFULL_VERSION\s=\s"\S*";' replace=' FULL_VERSION = "${build.conf.lib.version}";' byline="false"/>
 
         <javac
             destdir="${build.main.dir}"
@@ -145,6 +144,7 @@ limitations under the License.
             >
             <src path="bson/src/main"/>
             <src path="driver/src/main"/>
+            <src path="driver-compat/src/main"/>
             <compilerarg value="-Xlint:all,-rawtypes"/>
         </javac>
 
@@ -157,7 +157,6 @@ limitations under the License.
     <target name="utilcompile" depends="init">
 
         <javac
-            srcdir="driver/src/util"
             destdir="${build.util.dir}"
             optimize="off"
             deprecation="off"
@@ -168,6 +167,7 @@ limitations under the License.
             fork="true"
             debug="on"
             includeantruntime="false">
+            <src path="driver/src/util"/>
             <classpath location="${env.JAVA_HOME}/lib/tools.jar"/>
             <compilerarg value="-Xlint:all,-fallthrough"/>
         </javac>
@@ -179,11 +179,11 @@ limitations under the License.
 
     <target name="jar" depends="compile" description="Create driver jar">
 
-        <copy file="src/main/META-INF/MANIFEST.MF" tofile="${build.dir}/MANIFEST.MF" filtering="true">
+        <copy file="driver/src/main/META-INF/MANIFEST.MF" tofile="${build.dir}/MANIFEST.MF" filtering="true">
             <filterset><filter token="VERSION" value="${build.conf.lib.version.osgi.compat}"/></filterset>
         </copy>
 
-        <copy file="src/main/META-INF/MANIFEST_BSON.MF" tofile="${build.dir}/MANIFEST_BSON.MF" filtering="true">
+        <copy file="bson/src/main/META-INF/MANIFEST.MF" tofile="${build.dir}/MANIFEST_BSON.MF" filtering="true">
             <filterset><filter token="VERSION" value="${build.conf.lib.version.osgi.compat}"/></filterset>
         </copy>
 
@@ -196,7 +196,14 @@ limitations under the License.
         <jar jarfile="mongo.jar" manifest="${build.dir}/MANIFEST.MF"><fileset dir="${build.main.dir}" /></jar>
 
         <jar jarfile="bson.jar" manifest="${build.dir}/MANIFEST_BSON.MF">
-          <fileset dir="${build.main.dir}"><not><filename name="com/"/></not></fileset>
+          <fileset dir="${build.main.dir}">
+              <not>
+                  <filename name="com/"/>
+              </not>
+              <not>
+                  <filename name="org/mongodb/"/>
+              </not>
+          </fileset>
         </jar>
 
     </target>
@@ -209,7 +216,6 @@ limitations under the License.
         <delete dir="${build.docs.dir}"/>
         <javadoc
             packagenames="com.mongodb,com.mongodb.gridfs,org.mongodb,org.mongodb.protocol,org.mongodb.rs,org.mongodb.serialization,org.mongodb.util,org.bson,org.bson.types,org.bson.io,org.bson.util"
-            sourcepath="src/main/"
             defaultexcludes="yes"
             destdir="${build.docs.dir}/mongo-java-driver"
             author="true"
@@ -217,6 +223,9 @@ limitations under the License.
             source="${build.conf.javac.source}"
             use="true"
             access="protected">
+            <sourcepath path="bson/src/main"/>
+            <sourcepath path="driver/src/main"/>
+            <sourcepath path="driver-compat/src/main"/>
             <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
             <classpath refid="build.classpath"/>
             <taglet name="DochubTaglet" path="${build.util.dir}"/>
@@ -225,7 +234,6 @@ limitations under the License.
 
         <javadoc
             packagenames="org.bson,org.bson.types,org.bson.io,org.bson.util"
-            sourcepath="src/main/"
             defaultexcludes="yes"
             destdir="${build.docs.dir}/bson"
             author="true"
@@ -233,6 +241,7 @@ limitations under the License.
             source="${build.conf.javac.source}"
             use="true"
             access="protected">
+            <sourcepath path="bson/src/main"/>
             <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
             <classpath refid="build.classpath"/>
             <taglet name="DochubTaglet" path="${build.util.dir}"/>
@@ -247,17 +256,32 @@ limitations under the License.
 
     <target name="alljars" depends="jar, javadocs" description="build jar, source jar, javadoc jar">
 
-        <jar jarfile="mongo-sources.jar"><fileset dir="src/main"><not><filename name="META-INF/"/></not></fileset></jar>
-        <jar jarfile="mongo-javadoc.jar"><fileset dir="${build.docs.dir}/mongo-java-driver"/></jar>
+        <jar jarfile="mongo-sources.jar">
+            <fileset dir="bson/src/main">
+                <not><filename name="META-INF/"/></not>
+            </fileset>
+            <fileset dir="driver/src/main">
+                <not><filename name="META-INF/"/></not>
+            </fileset>
+            <fileset dir="driver-compat/src/main">
+                <not><filename name="META-INF/"/></not>
+            </fileset>
+        </jar>
+
+        <jar jarfile="mongo-javadoc.jar">
+            <fileset dir="${build.docs.dir}/mongo-java-driver"/>
+        </jar>
 
         <jar jarfile="bson-sources.jar">
-            <fileset dir="src/main">
-            <not><filename name="com/"/></not>
+            <fileset dir="bson/src/main">
             <not><filename name="META-INF/"/></not>
             </fileset>
         </jar>
 
-        <jar jarfile="bson-javadoc.jar"><fileset dir="${build.docs.dir}/bson"/></jar>
+        <jar jarfile="bson-javadoc.jar">
+            <fileset dir="${build.docs.dir}/bson"/>
+        </jar>
+
 
     </target>
 
@@ -283,6 +307,7 @@ limitations under the License.
                 includeantruntime="false">
             <src path="bson/src/test"/>
             <src path="driver/src/test"/>
+            <src path="driver-compat/src/test"/>
             <classpath refid="test.classpath"/>
             <compilerarg value="-Xlint:all,-rawtypes"/>
         </javac>
@@ -296,6 +321,9 @@ limitations under the License.
                     <include name="**/*Test.java"/>
                 </fileset>
                 <fileset dir="driver/src/test">
+                    <include name="**/*Test.java"/>
+                </fileset>
+                <fileset dir="driver-compat/src/test">
                     <include name="**/*Test.java"/>
                 </fileset>
             </batchtest>
@@ -317,6 +345,9 @@ limitations under the License.
                     <include name="**/*Test.java"/>
                 </fileset>
                 <fileset dir="driver/src/test">
+                    <include name="**/*Test.java"/>
+                </fileset>
+                <fileset dir="driver-compat/src/test">
                     <include name="**/*Test.java"/>
                 </fileset>
             </batchtest>
@@ -344,7 +375,11 @@ limitations under the License.
     </target>
 
     <target name="coverage-report" depends="coverage-instrument,test">
-        <cobertura-report format="${cobertura.format}" srcdir="src/main" destdir="${test.dir}" datafile="${cobertura.datafile}"/>
+        <cobertura-report format="${cobertura.format}" srcdir="src/main" destdir="${test.dir}" datafile="${cobertura.datafile}">
+            <fileset dir="bson/src/main"/>
+            <fileset dir="driver/src/main"/>
+            <fileset dir="driver-compat/src/main"/>
+        </cobertura-report>
     </target>
 
     <!-- ******************************************************************* -->
