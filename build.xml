@@ -220,7 +220,6 @@ limitations under the License.
     <target name="javadocs" depends="compile,utilcompile" description="Generate API docs">
         <delete dir="${build.docs.dir}"/>
         <javadoc
-            packagenames="com.mongodb,com.mongodb.gridfs,org.mongodb,org.mongodb.protocol,org.mongodb.rs,org.mongodb.serialization,org.mongodb.util,org.bson,org.bson.types,org.bson.io,org.bson.util"
             defaultexcludes="yes"
             destdir="${build.docs.dir}/mongo-java-driver"
             author="true"
@@ -238,7 +237,7 @@ limitations under the License.
         </javadoc>
 
         <javadoc
-            packagenames="org.bson,org.bson.types,org.bson.io,org.bson.util"
+            packagenames="org.bson,org.bson.types,org.bson.io,org.bson.util,org.bson.util.annotations"
             defaultexcludes="yes"
             destdir="${build.docs.dir}/bson"
             author="true"
