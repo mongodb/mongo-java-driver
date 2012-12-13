@@ -9,6 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="driver" />
+    <orderEntry type="module" module-name="bson" />
   </component>
 </module>
 
