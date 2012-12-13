@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/src/Mongo-java-driver.iml" filepath="$PROJECT_DIR$/src/Mongo-java-driver.iml" />
       <module fileurl="file://$PROJECT_DIR$/bson/src/bson.iml" filepath="$PROJECT_DIR$/bson/src/bson.iml" />
       <module fileurl="file://$PROJECT_DIR$/driver/src/driver.iml" filepath="$PROJECT_DIR$/driver/src/driver.iml" />
+      <module fileurl="file://$PROJECT_DIR$/driver-compat/driver-compat.iml" filepath="$PROJECT_DIR$/driver-compat/driver-compat.iml" />
     </modules>
   </component>
 </project>
