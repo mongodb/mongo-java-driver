@@ -132,7 +132,7 @@ limitations under the License.
                        replace=' FULL_VERSION = "${build.conf.lib.version}";' byline="false"/>
 
         <javac
-            srcdir="src/main"
+            srcdir="driver/src/main"
             destdir="${build.main.dir}"
             optimize="off"
             deprecation="off"
@@ -156,7 +156,7 @@ limitations under the License.
     <target name="utilcompile" depends="init">
 
         <javac
-            srcdir="src/util"
+            srcdir="driver/src/util"
             destdir="${build.util.dir}"
             optimize="off"
             deprecation="off"
@@ -272,7 +272,7 @@ limitations under the License.
 
     <target name="test-compile" depends="compile">
         <javac
-                srcdir="src/test"
+                srcdir="driver/src/test"
                 destdir="${build.test.dir}"
                 optimize="off"
                 deprecation="off"
@@ -290,7 +290,7 @@ limitations under the License.
         <junit fork="off">
             <classpath refid="test.classpath"/>
             <batchtest fork="off" todir="${test.dir}">
-                <fileset dir="src/test">
+                <fileset dir="driver/src/test">
                     <include name="**/*Test.java"/>
                 </fileset>
             </batchtest>
