@@ -132,7 +132,6 @@ limitations under the License.
                        replace=' FULL_VERSION = "${build.conf.lib.version}";' byline="false"/>
 
         <javac
-            srcdir="driver/src/main"
             destdir="${build.main.dir}"
             optimize="off"
             deprecation="off"
@@ -144,6 +143,8 @@ limitations under the License.
             target="${build.conf.javac.source}"
             memoryMaximumSize="256M"
             >
+            <src path="bson/src/main"/>
+            <src path="driver/src/main"/>
             <compilerarg value="-Xlint:all,-rawtypes"/>
         </javac>
 
@@ -272,7 +273,6 @@ limitations under the License.
 
     <target name="test-compile" depends="compile">
         <javac
-                srcdir="driver/src/test"
                 destdir="${build.test.dir}"
                 optimize="off"
                 deprecation="off"
@@ -281,6 +281,8 @@ limitations under the License.
                 fork="true"
                 debug="on"
                 includeantruntime="false">
+            <src path="bson/src/test"/>
+            <src path="driver/src/test"/>
             <classpath refid="test.classpath"/>
             <compilerarg value="-Xlint:all,-rawtypes"/>
         </javac>
@@ -290,6 +292,9 @@ limitations under the License.
         <junit fork="off">
             <classpath refid="test.classpath"/>
             <batchtest fork="off" todir="${test.dir}">
+                <fileset dir="bson/src/test">
+                    <include name="**/*Test.java"/>
+                </fileset>
                 <fileset dir="driver/src/test">
                     <include name="**/*Test.java"/>
                 </fileset>
@@ -308,7 +313,10 @@ limitations under the License.
         <junit fork="off">
             <classpath refid="artifact.classpath"/>
             <batchtest fork="off" todir="${test.dir}">
-                <fileset dir="src/test">
+                <fileset dir="bson/src/test">
+                    <include name="**/*Test.java"/>
+                </fileset>
+                <fileset dir="driver/src/test">
                     <include name="**/*Test.java"/>
                 </fileset>
             </batchtest>
