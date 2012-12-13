@@ -130,24 +130,29 @@ limitations under the License.
         <replaceregexp file="driver-compat/src/main/com/mongodb/Mongo.java" match="\sMINOR_VERSION\s=\s\d+;"  replace=" MINOR_VERSION = ${lib.minor};" byline="false"/>
         <replaceregexp file="driver-compat/src/main/com/mongodb/Mongo.java" match='\sFULL_VERSION\s=\s"\S*";' replace=' FULL_VERSION = "${build.conf.lib.version}";' byline="false"/>
 
-        <javac
-            destdir="${build.main.dir}"
-            optimize="off"
-            deprecation="off"
-            source="${build.conf.javac.source}"
-            encoding="ISO-8859-1"
-            fork="true"
-            debug="on"
-            includeantruntime="false"
-            target="${build.conf.javac.source}"
-            memoryMaximumSize="256M"
-            >
+        <javac destdir="${build.main.dir}" optimize="off" deprecation="off" source="${build.conf.javac.source}"
+               encoding="ISO-8859-1" fork="true" debug="on" includeantruntime="false"
+               target="${build.conf.javac.source}"
+               memoryMaximumSize="256M">
             <src path="bson/src/main"/>
-            <src path="driver/src/main"/>
-            <src path="driver-compat/src/main"/>
             <compilerarg value="-Xlint:all,-rawtypes"/>
         </javac>
 
+        <javac destdir="${build.main.dir}" optimize="off" deprecation="off" source="${build.conf.javac.source}"
+               encoding="ISO-8859-1" fork="true" debug="on" includeantruntime="false"
+               target="${build.conf.javac.source}"
+               memoryMaximumSize="256M">
+            <src path="driver/src/main"/>
+            <compilerarg value="-Xlint:all,-rawtypes"/>
+        </javac>
+
+        <javac destdir="${build.main.dir}" optimize="off" deprecation="off" source="${build.conf.javac.source}"
+               encoding="ISO-8859-1" fork="true" debug="on" includeantruntime="false"
+               target="${build.conf.javac.source}"
+               memoryMaximumSize="256M">
+            <src path="driver-compat/src/main"/>
+            <compilerarg value="-Xlint:all,-rawtypes"/>
+        </javac>
     </target>
 
     <!-- ******************************************************************* -->
