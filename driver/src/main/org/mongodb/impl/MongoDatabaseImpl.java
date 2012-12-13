@@ -27,7 +27,7 @@ import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.serializers.MongoDocumentSerializer;
+import org.mongodb.serialization.serializers.DocumentSerializer;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoClient client;
@@ -55,7 +55,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     public MongoCollectionImpl<Document> getCollection(final String name) {
-        return getTypedCollection(name, getPrimitiveSerializers(), new MongoDocumentSerializer(getPrimitiveSerializers()));
+        return getTypedCollection(name, getPrimitiveSerializers(), new DocumentSerializer(getPrimitiveSerializers()));
     }
 
     public <T> MongoCollectionImpl<T> getTypedCollection(final String name,

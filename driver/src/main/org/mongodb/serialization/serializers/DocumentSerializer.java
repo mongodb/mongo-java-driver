@@ -29,10 +29,10 @@ import java.util.List;
 import java.util.Map;
 
 //TODO: handle array type
-public class MongoDocumentSerializer implements Serializer<Document> {
+public class DocumentSerializer implements Serializer<Document> {
     private final PrimitiveSerializers primitiveSerializers;
 
-    public MongoDocumentSerializer(final PrimitiveSerializers primitiveSerializers) {
+    public DocumentSerializer(final PrimitiveSerializers primitiveSerializers) {
         this.primitiveSerializers = primitiveSerializers;
     }
 

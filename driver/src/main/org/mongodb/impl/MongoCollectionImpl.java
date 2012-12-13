@@ -35,7 +35,7 @@ import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.serializers.MongoDocumentSerializer;
+import org.mongodb.serialization.serializers.DocumentSerializer;
 
 class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements MongoCollection<T> {
 
@@ -94,6 +94,6 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     private Serializer<Document> getMongoDocumentSerializer() {
-        return new MongoDocumentSerializer(primitiveSerializers);
+        return new DocumentSerializer(primitiveSerializers);
     }
 }

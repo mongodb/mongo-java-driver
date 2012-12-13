@@ -36,7 +36,7 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.serializers.MongoDocumentSerializer;
+import org.mongodb.serialization.serializers.DocumentSerializer;
 
 import java.net.UnknownHostException;
 
@@ -61,7 +61,7 @@ public class SingleServerMongoClientTest {
     @Test
     public void testCommandExecution() {
         final MongoCommandOperation cmd = new MongoCommandOperation(new CommandDocument("count", "test")).readPreference(ReadPreference.primary());
-        final Document document = mongoClient.getOperations().executeCommand(DB_NAME, cmd, new MongoDocumentSerializer(PrimitiveSerializers.createDefault()));
+        final Document document = mongoClient.getOperations().executeCommand(DB_NAME, cmd, new DocumentSerializer(PrimitiveSerializers.createDefault()));
         assertNotNull(document);
         assertTrue(document.get("n") instanceof Double);
     }
@@ -71,10 +71,10 @@ public class SingleServerMongoClientTest {
         final String colName = "insertion";
         final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
         final MongoInsert<Document> insert = new MongoInsert<Document>(new Document());
-        mongoClient.getOperations().insert(new MongoNamespace(DB_NAME, colName), insert, new MongoDocumentSerializer(primitiveSerializers));
+        mongoClient.getOperations().insert(new MongoNamespace(DB_NAME, colName), insert, new DocumentSerializer(primitiveSerializers));
         final Document document = mongoClient.getOperations().executeCommand(DB_NAME,
                 new MongoCommandOperation(new CommandDocument("count", colName)).readPreference(ReadPreference.primary()),
-                new MongoDocumentSerializer(primitiveSerializers));
+                new DocumentSerializer(primitiveSerializers));
         assertEquals(1.0, document.get("n"));
     }
 
@@ -82,7 +82,7 @@ public class SingleServerMongoClientTest {
     public void testQuery() {
         final String colName = "query";
         final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
-        final MongoDocumentSerializer serializer = new MongoDocumentSerializer(primitiveSerializers);
+        final DocumentSerializer serializer = new DocumentSerializer(primitiveSerializers);
         for (int i = 0; i < 400; i++) {
             final MongoInsert<Document> insert = new MongoInsert<Document>(new Document());
             mongoClient.getOperations().insert(new MongoNamespace(DB_NAME, colName), insert, serializer);
@@ -96,7 +96,7 @@ public class SingleServerMongoClientTest {
         assertNotEquals(0L, queryResult.getCursorId());
 
         final GetMoreResult<Document> getMoreResult = mongoClient.getOperations().getMore(new MongoNamespace(DB_NAME, colName),
-                new GetMore(queryResult.getCursorId(), 0), new MongoDocumentSerializer(primitiveSerializers));
+                new GetMore(queryResult.getCursorId(), 0), new DocumentSerializer(primitiveSerializers));
         assertNotNull(getMoreResult);
         assertEquals(299, getMoreResult.getResults().size());
         assertEquals(0, getMoreResult.getCursorId());

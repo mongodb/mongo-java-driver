@@ -26,7 +26,7 @@ import org.mongodb.operation.MongoFindAndModify;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.serializers.MongoDocumentSerializer;
+import org.mongodb.serialization.serializers.DocumentSerializer;
 
 public abstract class FindAndModifyCommand<T> extends AbstractCommand {
     private final MongoNamespace namespace;
@@ -90,7 +90,7 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
         }
     }
 
-    private class FindAndModifyCommandResultSerializer<T> extends MongoDocumentSerializer {
+    private class FindAndModifyCommandResultSerializer<T> extends DocumentSerializer {
 
         private final Serializer<T> serializer;
 
@@ -104,7 +104,7 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
             if (fieldName.equals("value")) {
                 return serializer;
             }
-            return new MongoDocumentSerializer(getPrimitiveSerializers());
+            return new DocumentSerializer(getPrimitiveSerializers());
         }
     }
 }

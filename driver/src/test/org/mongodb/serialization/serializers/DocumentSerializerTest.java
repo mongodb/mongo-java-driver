@@ -41,16 +41,16 @@ import java.util.Date;
 import static org.junit.Assert.assertEquals;
 
 // straight up unit test
-public class MongoDocumentSerializerTest {
+public class DocumentSerializerTest {
     private BasicOutputBuffer buffer;
-    private MongoDocumentSerializer serializer;
+    private DocumentSerializer serializer;
     private BSONWriter writer;
 
     @Before
     public void setUp() {
         buffer = new BasicOutputBuffer();
         writer = new BSONBinaryWriter(new BsonWriterSettings(100), new BinaryWriterSettings(1024 * 1024), buffer);
-        serializer = new MongoDocumentSerializer(PrimitiveSerializers.createDefault());
+        serializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
     }
 
     @Test

@@ -52,7 +52,7 @@ import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.serializers.MongoDocumentSerializer;
+import org.mongodb.serialization.serializers.DocumentSerializer;
 import org.mongodb.util.pool.SimplePool;
 
 import java.io.IOException;
@@ -141,7 +141,7 @@ public class SingleChannelMongoClient implements MongoClient {
         if (serializer != null) {
             return serializer;
         }
-        return new MongoDocumentSerializer(this.primitiveSerializers);
+        return new DocumentSerializer(this.primitiveSerializers);
     }
 
     private MongoReplyMessage<Document> sendWriteMessage(final MongoNamespace namespace,

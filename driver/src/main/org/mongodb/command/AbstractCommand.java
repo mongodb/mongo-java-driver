@@ -23,7 +23,7 @@ import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.serializers.MongoDocumentSerializer;
+import org.mongodb.serialization.serializers.DocumentSerializer;
 
 public abstract class AbstractCommand implements Command {
     private final MongoClient mongoClient;
@@ -51,7 +51,7 @@ public abstract class AbstractCommand implements Command {
     public abstract MongoCommand asMongoCommand();
 
     protected Serializer<Document> createResultSerializer() {
-        return new MongoDocumentSerializer(mongoClient.getPrimitiveSerializers());
+        return new DocumentSerializer(mongoClient.getPrimitiveSerializers());
     }
 
 
