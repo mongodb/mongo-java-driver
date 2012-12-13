@@ -54,3 +54,4 @@ atlassian-ide-plugin.xml
 
 .gradle
 workspace.xml
+out
