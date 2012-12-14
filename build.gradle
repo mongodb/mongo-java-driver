@@ -45,13 +45,26 @@ subprojects {
 }
 
 project(':driver') {
+    jar {
+        baseName = 'driver-dist'
+        dependsOn classes
+        from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    }
+
     dependencies {
         compile project(':bson')
     }
 }
 
 project(':driver-compat') {
+    jar {
+        baseName = 'driver-compat-dist'
+        dependsOn classes
+        from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    }
+
     dependencies {
         compile project(':driver')
     }
 }
+
