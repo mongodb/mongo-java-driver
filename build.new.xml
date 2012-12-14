@@ -102,7 +102,7 @@ limitations under the License.
     </target>
 
     <!-- ******************************************************************* -->
-    <!-- The compile target.                                                 -->
+    <!-- The compile targets.                                                 -->
     <!-- ******************************************************************* -->
 
 
@@ -147,10 +147,6 @@ limitations under the License.
                 />
     </target>
 
-    <!-- ******************************************************************* -->
-    <!-- The util compile target.                                            -->
-    <!-- ******************************************************************* -->
-
     <target name="util-compile" depends="init">
         <mkdir dir="${build.util}"/>
 
@@ -161,6 +157,26 @@ limitations under the License.
         <compile srcdir="${src.driver}/util"
                  destdir="${build.util}"
                  classpathref="util.classpath"/>
+    </target>
+
+    <target name="tests-compile" depends="compile">
+        <mkdir dir="${test.classes}"/>
+
+        <path id="test.classpath">
+            <path refid="build.classpath"/>
+            <path refid="test.lib.classpath"/>
+            <pathelement location="${test.classes}"/>
+        </path>
+
+        <compile classpathref="test.classpath"
+                 srcdir="${src.bson}/test"
+                 destdir="${test.classes}"/>
+        <compile classpathref="test.classpath"
+                 srcdir="${src.driver-compat}/test"
+                 destdir="${test.classes}"/>
+        <compile classpathref="test.classpath"
+                 srcdir="${src.driver}/test"
+                 destdir="${test.classes}"/>
     </target>
 
     <!-- ******************************************************************* -->
@@ -265,6 +281,12 @@ limitations under the License.
         </jar>
     </target>
 
+    <target name="tests-jar" description="Assemble MongoDB Tests JAR file" depends="tests-compile">
+        <jar jarfile="${build.dir}/${ant.project.name}-${build.conf.lib.version}-tests.jar">
+            <fileset dir="${test.classes}"/>
+        </jar>
+    </target>
+
     <target name="dist" depends="jar,javadocs-jar, sources-jar">
         <mkdir dir="${dist.dir}"/>
         <copy todir="${dist.dir}">
@@ -275,17 +297,16 @@ limitations under the License.
 
     </target>
 
+
     <!-- ******************************************************************* -->
     <!-- The test targets                                                    -->
     <!-- ******************************************************************* -->
 
     <macrodef name="test">
-        <attribute name="dir"/>
-        <attribute name="includes" default="**/*.java"/>
         <attribute name="fork" default="yes"/>
         <attribute name="forkmode" default="once"/>
         <attribute name="classpathref"/>
-        <element name="filesets"/>
+        <element name="resources"/>
         <sequential>
             <mkdir dir="${test.output}"/>
             <junit fork="@{fork}" forkmode="@{forkmode}" maxmemory="1024m">
@@ -295,15 +316,13 @@ limitations under the License.
                 <classpath refid="@{classpathref}">
                 </classpath>
                 <batchtest todir="${test.output}">
-                    <fileset dir="@{dir}" includes="@{includes}">
-                    </fileset>
+                    <resources/>
                 </batchtest>
             </junit>
         </sequential>
     </macrodef>
 
-    <target name="test" depends="compile">
-       <mkdir dir="${test.classes}"/>
+    <target name="test" depends="compile, tests-compile">
 
         <path id="test.classpath">
             <pathelement location="${cobertura.classes}"/>
@@ -313,25 +332,11 @@ limitations under the License.
             <pathelement location="${test.classes}"/>
         </path>
 
-       <compile classpathref="test.classpath"
-                srcdir="${src.bson}/test"
-                destdir="${test.classes}"/>
-        <compile classpathref="test.classpath"
-                 srcdir="${src.driver-compat}/test"
-                 destdir="${test.classes}"/>
-        <compile classpathref="test.classpath"
-                 srcdir="${src.driver}/test"
-                 destdir="${test.classes}"/>
-
-       <test classpathref="test.classpath"
-             dir="${src.bson}/test"
-             includes="**/*Test.java"/>
-       <test classpathref="test.classpath"
-              dir="${src.driver}/test"
-              includes="**/*Test.java"/>
-       <test classpathref="test.classpath"
-              dir="${src.driver-compat}/test"
-              includes="**/*Test.java"/>
+       <test classpathref="test.classpath">
+           <resources>
+               <fileset dir="${test.classes}" includes="**/*Test.class"/>
+           </resources>
+       </test>
     </target>
 
     <target name="artifact-test">
@@ -339,28 +344,14 @@ limitations under the License.
         <path id="artifact.classpath">
             <pathelement location="${artifact.file}"/>
             <path refid="test.lib.classpath"/>
-            <pathelement location="${test.classes}"/>
+            <pathelement location="${tests.file}"/>
         </path>
 
-        <compile classpathref="artifact.classpath"
-                 srcdir="${src.bson}/test"
-                 destdir="${test.classes}"/>
-        <compile classpathref="artifact.classpath"
-                 srcdir="${src.driver-compat}/test"
-                 destdir="${test.classes}"/>
-        <compile classpathref="artifact.classpath"
-                 srcdir="${src.driver}/test"
-                 destdir="${test.classes}"/>
-
-        <test classpathref="artifact.classpath"
-              dir="${src.bson}/test"
-              includes="**/*Test.java"/>
-        <test classpathref="artifact.classpath"
-              dir="${src.driver}/test"
-              includes="**/*Test.java"/>
-        <test classpathref="artifact.classpath"
-              dir="${src.driver-compat}/test"
-              includes="**/*Test.java"/>
+        <test classpathref="artifact.classpath">
+            <resources>
+                <zipfileset src="${tests.file}" includes="**/*Test.class"/>
+            </resources>
+        </test>
     </target>
 
     <!-- ******************************************************************* -->
