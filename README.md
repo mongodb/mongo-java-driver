@@ -1,3 +1,5 @@
+[![Build Status](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/)
+
 ## MongoDB Java Driver ##
  * release notes: http://github.com/mongodb/mongo-java-driver/wiki/Release-Notes
  * driver home: http://github.com/mongodb/mongo-java-driver
