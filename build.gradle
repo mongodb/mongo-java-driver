@@ -45,14 +45,29 @@ subprojects {
 }
 
 project(':driver') {
+    sourceSets {
+        acceptance {
+            java {
+                srcDir 'src/acceptancetest'
+            }
+        }
+    }
+
     jar {
         baseName = 'driver-dist'
         dependsOn classes
         from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     }
 
+    task acceptanceTest(type: Test) {
+        testClassesDir = sourceSets.acceptance.output.classesDir
+        classpath = sourceSets.acceptance.runtimeClasspath
+    }
+
     dependencies {
         compile project(':bson')
+        acceptanceCompile group: 'junit', name: 'junit', version: '4.11'
+        acceptanceCompile sourceSets.main.runtimeClasspath
     }
 }
 
