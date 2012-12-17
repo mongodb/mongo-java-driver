@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
- * <p/>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,9 +16,9 @@
 
 package org.mongodb.impl;
 
+import org.bson.types.Document;
 import org.bson.util.BufferPool;
 import org.bson.util.PowerOfTwoByteBufferPool;
-import org.bson.types.Document;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
@@ -38,8 +38,8 @@ import org.mongodb.result.InsertResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
-import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.util.pool.SimplePool;
 
 import java.nio.ByteBuffer;
@@ -70,11 +70,13 @@ public class SingleServerMongoClient implements MongoClient {
 
     @Override
     public MongoDatabaseImpl getDatabase(final String name) {
+        //TODO: we're not caching this?
         return new MongoDatabaseImpl(name, this);
     }
 
     @Override
     public MongoOperations getOperations() {
+        //TODO: we're not caching this?
         return new SingleServerMongoOperations();
     }
 
@@ -138,6 +140,11 @@ public class SingleServerMongoClient implements MongoClient {
         return primitiveSerializers;
     }
 
+    @Override
+    public MongoClientCommands commands() {
+        return new MongoClientCommands(getOperations());
+    }
+
     BufferPool<ByteBuffer> getBufferPool() {
         return bufferPool;
     }
@@ -150,7 +157,8 @@ public class SingleServerMongoClient implements MongoClient {
         if (boundClient.get() != null) {
             return boundClient.get();
         }
-        return new SingleChannelMongoClient(getChannelPool(), getBufferPool(), primitiveSerializers, writeConcern, readPreference);
+        return new SingleChannelMongoClient(getChannelPool(), getBufferPool(), primitiveSerializers, writeConcern,
+                                            readPreference);
     }
 
     private void releaseChannelClient(final SingleChannelMongoClient mongoClient) {
@@ -169,7 +177,7 @@ public class SingleServerMongoClient implements MongoClient {
     private class SingleServerMongoOperations implements MongoOperations {
         @Override
         public Document executeCommand(final String database, final MongoCommandOperation commandOperation,
-                                            final Serializer<Document> serializer) {
+                                       final Serializer<Document> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().executeCommand(database, commandOperation, serializer);
@@ -180,8 +188,7 @@ public class SingleServerMongoClient implements MongoClient {
 
         @Override
         public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
-                                        final Serializer<Document> baseSerializer,
-                                        final Serializer<T> serializer) {
+                                        final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().query(namespace, find, baseSerializer, serializer);
@@ -191,7 +198,8 @@ public class SingleServerMongoClient implements MongoClient {
         }
 
         @Override
-        public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer) {
+        public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
+                                            final Serializer<T> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().getMore(namespace, getMore, serializer);
@@ -212,7 +220,8 @@ public class SingleServerMongoClient implements MongoClient {
         }
 
         @Override
-        public UpdateResult update(final MongoNamespace namespace, final MongoUpdate update, final Serializer<Document> serializer) {
+        public UpdateResult update(final MongoNamespace namespace, final MongoUpdate update,
+                                   final Serializer<Document> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().update(namespace, update, serializer);

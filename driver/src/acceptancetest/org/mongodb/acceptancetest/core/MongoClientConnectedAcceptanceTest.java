@@ -16,17 +16,12 @@
 
 package org.mongodb.acceptancetest.core;
 
-import org.bson.types.Document;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mongodb.CommandDocument;
 import org.mongodb.MongoClient;
 import org.mongodb.ServerAddress;
 import org.mongodb.impl.SingleServerMongoClient;
-import org.mongodb.operation.MongoCommandOperation;
-import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.serializers.DocumentSerializer;
 
 import java.net.UnknownHostException;
 
@@ -49,13 +44,9 @@ public class MongoClientConnectedAcceptanceTest {
     public void shouldBeConnectedToMongoAsSoonAsNewSingleServerMongoClientIsCreated() {
         final MongoClient mongoClient = new SingleServerMongoClient(serverAddress);
 
-        final MongoCommandOperation pingCommand = new MongoCommandOperation(new CommandDocument("ping", 1));
-        final DocumentSerializer basicSerializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
-        final Document pingResult = mongoClient.getOperations().executeCommand("anyDatabase",
-                                                                               pingCommand,
-                                                                               basicSerializer);
+        final double pingValue = mongoClient.commands().ping();
 
-        assertThat((Double) pingResult.get("ok"), is(1.0));
+        assertThat(pingValue, is(1.0));
     }
 
     @Test
@@ -65,12 +56,8 @@ public class MongoClientConnectedAcceptanceTest {
 
         mongoClient.close();
 
-        final MongoCommandOperation pingCommand = new MongoCommandOperation(new CommandDocument("ping", 1));
-        final DocumentSerializer basicSerializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
-        final Document pingResult = mongoClient.getOperations().executeCommand("anyDatabase",
-                                                                               pingCommand,
-                                                                               basicSerializer);
+        final double pingValue = mongoClient.commands().ping();
 
-        assertThat((Double) pingResult.get("ok"), not(1.0));
+        assertThat(pingValue, not(1.0));
     }
 }
