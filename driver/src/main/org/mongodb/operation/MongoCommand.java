@@ -19,6 +19,5 @@ package org.mongodb.operation;
 
 import org.mongodb.ConvertibleToDocument;
 
-// TODO: This name clashes with MongoCommand in org.mongodb
 public interface MongoCommand extends ConvertibleToDocument {
 }

@@ -34,6 +34,7 @@ import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.MongoRemove;
+import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoWrite;
 import org.mongodb.protocol.MongoDeleteMessage;
@@ -246,6 +247,17 @@ public class SingleChannelMongoClient implements MongoClient {
                                                                       new PooledByteBufferOutput(bufferPool),
                                                                       withDocumentSerializer(serializer));
             return new UpdateResult(sendWriteMessage(namespace, message, update, withDocumentSerializer(null)));
+        }
+
+        @Override
+        public <T> UpdateResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
+                                        final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+            replace.writeConcernIfAbsent(writeConcern);
+            final MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), replace,
+                                                                      new PooledByteBufferOutput(bufferPool),
+                                                                      withDocumentSerializer(baseSerializer),
+                                                                      serializer);
+            return new UpdateResult(sendWriteMessage(namespace, message, replace, withDocumentSerializer(null)));
         }
 
         @Override

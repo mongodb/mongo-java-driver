@@ -32,6 +32,7 @@ import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.MongoRemove;
+import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.InsertResult;
@@ -227,6 +228,17 @@ public class SingleServerMongoClient implements MongoClient {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().update(namespace, update, serializer);
+            } finally {
+                releaseChannelClient(mongoClient);
+            }
+        }
+
+        @Override
+        public <T> UpdateResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
+                                        final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+            final SingleChannelMongoClient mongoClient = getChannelClient();
+            try {
+                return mongoClient.getOperations().replace(namespace, replace, baseSerializer, serializer);
             } finally {
                 releaseChannelClient(mongoClient);
             }

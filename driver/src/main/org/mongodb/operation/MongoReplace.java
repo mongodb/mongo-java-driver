@@ -19,39 +19,36 @@ package org.mongodb.operation;
 
 import org.mongodb.WriteConcern;
 
-public class MongoUpdate extends MongoUpdateBase {
-    private final MongoUpdateOperations updateOperations;
-    private boolean isMulti = false;
+public class MongoReplace<T> extends MongoUpdateBase {
+    private final T replacement;
 
-    public MongoUpdate(final MongoQueryFilter filter, final MongoUpdateOperations updateOperations) {
+    public MongoReplace(final MongoQueryFilter filter, T replacement) {
         super(filter);
-
-        this.updateOperations = updateOperations;
+        this.replacement = replacement;
     }
 
-    public MongoUpdateOperations getUpdateOperations() {
-        return updateOperations;
+    public T getReplacement() {
+        return replacement;
     }
 
-    public boolean isMulti() {
-        return isMulti;
-    }
-
-    public MongoUpdate isMulti(final boolean isMulti) {
-        this.isMulti = isMulti;
+    public MongoReplace<T> isUpsert(final boolean isUpsert) {
+        super.isUpsert(isUpsert);
         return this;
     }
 
-    public MongoUpdate writeConcern(final WriteConcern writeConcern) {
+    @Override
+    public boolean isMulti() {
+        return false;
+    }
+
+    public MongoReplace<T> writeConcern(final WriteConcern writeConcern) {
         super.writeConcern(writeConcern);
         return this;
     }
 
-    public MongoUpdate writeConcernIfAbsent(final WriteConcern writeConcern) {
+    public MongoReplace<T> writeConcernIfAbsent(final WriteConcern writeConcern) {
         super.writeConcernIfAbsent(writeConcern);
         return this;
     }
 
-
 }
-

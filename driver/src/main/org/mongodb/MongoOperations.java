@@ -23,6 +23,7 @@ import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.MongoRemove;
+import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.InsertResult;
@@ -47,8 +48,10 @@ public interface MongoOperations {
 
     <T> InsertResult insert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer);
 
-    // TODO: Need to handle update where you have to custom serialize the update document
     UpdateResult update(final MongoNamespace namespace, MongoUpdate update, Serializer<Document> serializer);
+
+    <T> UpdateResult replace(MongoNamespace namespace, MongoReplace<T> replace, Serializer<Document> baseSerializer,
+                             Serializer<T> serializer);
 
     RemoveResult remove(final MongoNamespace namespace, MongoRemove remove, Serializer<Document> serializer);
 }

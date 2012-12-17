@@ -22,8 +22,11 @@ import org.mongodb.operation.MongoFindAndReplace;
 import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
+import org.mongodb.operation.MongoReplace;
+import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
+import org.mongodb.result.UpdateResult;
 
 // TODO: add these
 // update
@@ -55,6 +58,10 @@ public interface MongoCollection<T> extends MongoCollectionBase<T> {
     T findAndRemove(MongoFindAndRemove findAndRemove);
 
     InsertResult insert(MongoInsert<T> insert);
+
+    UpdateResult update(MongoUpdate update);
+
+    UpdateResult replace(MongoReplace<T> replace);
 
     RemoveResult remove(MongoRemove remove);
 

@@ -31,8 +31,11 @@ import org.mongodb.operation.MongoFindAndReplace;
 import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
+import org.mongodb.operation.MongoReplace;
+import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
+import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
@@ -84,6 +87,16 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     public InsertResult insert(final MongoInsert<T> insert) {
         return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(getWriteConcern()),
                 getSerializer());
+    }
+
+    @Override
+    public UpdateResult update(final MongoUpdate update) {
+        return getClient().getOperations().update(getNamespace(), update.writeConcernIfAbsent(getWriteConcern()), getMongoDocumentSerializer());
+    }
+
+    @Override
+    public UpdateResult replace(final MongoReplace<T> replace) {
+        return getClient().getOperations().replace(getNamespace(), replace.writeConcernIfAbsent(getWriteConcern()), getMongoDocumentSerializer(), getSerializer());
     }
 
     @Override

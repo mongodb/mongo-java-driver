@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,31 +12,31 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package org.mongodb;
+package org.mongodb.operation;
 
-import org.bson.types.Document;
-import org.mongodb.operation.MongoQueryFilter;
+public abstract class MongoUpdateBase extends MongoWrite {
+    protected final MongoQueryFilter filter;
+    private boolean isUpsert = false;
 
-public class QueryFilterDocument extends Document implements MongoQueryFilter {
-    private static final long serialVersionUID = -4703247391554552538L;
-
-    public QueryFilterDocument(final String key, final Object value) {
-        super(key, value);
+    public MongoUpdateBase(final MongoQueryFilter filter) {
+        this.filter = filter;
     }
 
-    public QueryFilterDocument() {
+    public MongoQueryFilter getFilter() {
+        return filter;
     }
 
-    @Override
-    public Document toDocument() {
+    public boolean isUpsert() {
+        return isUpsert;
+    }
+
+    MongoUpdateBase isUpsert(final boolean isUpsert) {
+        this.isUpsert = isUpsert;
         return this;
     }
 
-    @Override
-    public QueryFilterDocument append(final String key, Object value) {
-        put(key, value);
-        return this;
-    }
+    public abstract boolean isMulti();
 }

@@ -18,18 +18,29 @@ package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
 import org.bson.types.Document;
+import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
+import org.mongodb.operation.MongoUpdateBase;
 import org.mongodb.serialization.Serializer;
 
 public class MongoUpdateMessage extends MongoRequestMessage {
     public MongoUpdateMessage(final String collectionName, final MongoUpdate update, final OutputBuffer buffer,
                               final Serializer<Document> serializer) {
         super(collectionName, OpCode.OP_UPDATE, update.getFilter().toDocument(), buffer);
-        writeUpdate(update, serializer);
+        writeBaseUpdate(update, serializer);
+        addDocument(update.getUpdateOperations().toDocument(), serializer);
         backpatchMessageLength();
     }
 
-    void writeUpdate(final MongoUpdate update, final Serializer<Document> serializer) {
+    public <T> MongoUpdateMessage(final String collectionName, final MongoReplace<T> replace,
+                              final OutputBuffer buffer,
+                              final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+        super(collectionName, OpCode.OP_UPDATE, replace.getFilter().toDocument(), buffer);
+        writeBaseUpdate(replace, baseSerializer);
+        addDocument(replace.getReplacement(), serializer);
+    }
+
+    void writeBaseUpdate(final MongoUpdateBase update, final Serializer<Document> serializer) {
         buffer.writeInt(0); // reserved
         buffer.writeCString(collectionName);
 
@@ -43,6 +54,5 @@ public class MongoUpdateMessage extends MongoRequestMessage {
         buffer.writeInt(flags);
 
         addDocument(query, serializer);
-        addDocument(update.getUpdateOperations().toDocument(), serializer);
     }
 }

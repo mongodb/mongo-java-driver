@@ -18,6 +18,7 @@ package org.mongodb.impl;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
+import org.bson.types.Document;
 import org.bson.types.ObjectId;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -25,18 +26,19 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.bson.types.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
 import org.mongodb.QueryFilterDocument;
-import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.ServerAddress;
+import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
+import org.mongodb.operation.MongoReplace;
+import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.InsertResult;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.PrimitiveSerializers;
@@ -89,8 +91,35 @@ public class MongoCollectionTest {
     }
 
     @Test
+    public void testUpdate() {
+        final MongoCollection<Document> collection = mongoDatabase.getCollection("update");
+
+        collection.insert(new MongoInsert<Document>(new Document("_id", 1)));
+
+        collection.update(new MongoUpdate(new QueryFilterDocument("_id", 1),
+                                          new UpdateOperationsDocument("$set", new Document("x", 1))));
+
+        assertEquals(1, collection.count(new MongoFind(new QueryFilterDocument("_id", 1).append("x", 1))));
+    }
+
+    @Test
+    public void testReplace() {
+        final MongoCollection<Document> collection = mongoDatabase.getCollection("replace");
+
+        collection.insert(new MongoInsert<Document>(new Document("_id", 1).append("x", 1)));
+
+        // TODO: there is nothing to stop you from passing a QueryFilterDocument instance to a MongoReplace<Document> constructor
+        collection.replace(
+                new MongoReplace<Document>(new QueryFilterDocument("_id", 1), new Document("_id", 1).append("y", 2)));
+
+        assertEquals(0, collection.count(new MongoFind(new QueryFilterDocument("_id", 1).append("x", 1))));
+        assertEquals(1, collection.count(new MongoFind(new QueryFilterDocument("_id", 1).append("y", 2))));
+    }
+
+
+    @Test
     public void testRemove() {
-        final MongoCollection<Document> collection = mongoDatabase.getCollection("insertMultiple");
+        final MongoCollection<Document> collection = mongoDatabase.getCollection("remove");
 
         final List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
@@ -160,7 +189,8 @@ public class MongoCollectionTest {
     public void testFindAndUpdateWithGenerics() {
         final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
         final MongoCollection<Concrete> collection = mongoDatabase.getTypedCollection("findAndUpdateWithGenerics",
-                primitiveSerializers, new ConcreteSerializer());
+                                                                                      primitiveSerializers,
+                                                                                      new ConcreteSerializer());
 
         final Concrete doc = new Concrete(new ObjectId(), true);
         collection.insert(new MongoInsert<Concrete>(doc));
