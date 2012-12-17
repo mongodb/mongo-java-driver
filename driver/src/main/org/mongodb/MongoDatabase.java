@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb;
 
 import org.bson.types.Document;
+import org.mongodb.impl.MongoDatabaseCommands;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
-import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
@@ -46,10 +46,13 @@ public interface MongoDatabase {
 
     MongoAsyncCollection<Document> getAsyncCollection(String name);
 
-    <T> MongoAsyncCollection<T> getAsyncTypedCollection(String name, final PrimitiveSerializers basePrimitiveSerializers,
-                                              final Serializer<T> serializer);
+    <T> MongoAsyncCollection<T> getAsyncTypedCollection(String name,
+                                                        final PrimitiveSerializers basePrimitiveSerializers,
+                                                        final Serializer<T> serializer);
 
-//    MongoDatabase withClient(MongoClient client);
-//
-//    MongoDatabase withWriteConcern(WriteConcern writeConcern);
+    MongoDatabaseCommands commands();
+
+    //    MongoDatabase withClient(MongoClient client);
+    //
+    //    MongoDatabase withWriteConcern(WriteConcern writeConcern);
 }

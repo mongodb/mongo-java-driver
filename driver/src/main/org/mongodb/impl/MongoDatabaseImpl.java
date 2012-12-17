@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.impl;
@@ -25,8 +24,8 @@ import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
-import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
 class MongoDatabaseImpl implements MongoDatabase {
@@ -35,6 +34,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final WriteConcern writeConcern;
     private final ReadPreference readPreference;
     private final PrimitiveSerializers primitiveSerializers;
+    private final MongoDatabaseCommands commands;
 
     public MongoDatabaseImpl(final String name, final MongoClient client) {
         this(name, client, null, null, null);
@@ -47,6 +47,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         this.writeConcern = writeConcern;
         this.readPreference = readPreference;
         this.primitiveSerializers = primitiveSerializers;
+        this.commands = new MongoDatabaseCommands(name, client.getOperations(), client.getPrimitiveSerializers());
     }
 
     @Override
@@ -74,6 +75,11 @@ class MongoDatabaseImpl implements MongoDatabase {
                                                                final PrimitiveSerializers primitiveSerializers,
                                                                final Serializer<T> serializer) {
         return new MongoAsyncCollectionImpl<T>(getTypedCollection(name, primitiveSerializers, serializer));
+    }
+
+    @Override
+    public MongoDatabaseCommands commands() {
+        return commands;
     }
 
     @Override

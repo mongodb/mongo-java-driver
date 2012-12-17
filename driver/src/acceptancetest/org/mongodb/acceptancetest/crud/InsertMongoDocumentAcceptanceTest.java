@@ -24,7 +24,6 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
 import org.mongodb.QueryFilterDocument;
-import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 
@@ -33,7 +32,6 @@ import static org.junit.Assert.assertThat;
 import static org.mongodb.acceptancetest.Fixture.createMongoClient;
 
 public class InsertMongoDocumentAcceptanceTest {
-
     private static final String DB_NAME = "InsertMongoDocumentAcceptanceTest";
     private MongoCollection<Document> collection;
 
@@ -42,8 +40,7 @@ public class InsertMongoDocumentAcceptanceTest {
         final MongoClient mongoClient = createMongoClient();
 
         final MongoDatabase database = mongoClient.getDatabase(DB_NAME);
-        //Note: this is the existing way to run commands
-        new DropDatabaseCommand(mongoClient, DB_NAME).execute();
+        database.commands().drop();
 
         collection = database.getCollection("collection");
     }
@@ -59,7 +56,7 @@ public class InsertMongoDocumentAcceptanceTest {
         final MongoCursor<Document> insertTestDocumentMongoCursor = collection.find(new MongoFind(queryFilter));
 
         assertThat(insertTestDocumentMongoCursor.hasNext(), is(true));
-        assertThat((String)insertTestDocumentMongoCursor.next().get("name"), is("Billy"));
+        assertThat((String) insertTestDocumentMongoCursor.next().get("name"), is("Billy"));
         assertThat(insertTestDocumentMongoCursor.hasNext(), is(false));
     }
 

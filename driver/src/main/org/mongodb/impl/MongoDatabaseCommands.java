@@ -16,40 +16,34 @@
 
 package org.mongodb.impl;
 
-import org.bson.types.Document;
 import org.mongodb.CommandDocument;
 import org.mongodb.MongoOperations;
 import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
-/**
- * Contains the commands that can be run on MongoDB that do not require a database to be selected first.  These commands
- * can be accessed via MongoClient.
- */
-public class MongoClientCommands {
-    private static final String ADMIN_DATABASE = "admin";
-    private static final MongoClientCommands.PingCommand PING_COMMAND = new PingCommand();
+public class MongoDatabaseCommands {
+    private static final DropDatabase DROP_DATABASE = new DropDatabase();
 
-    private final DocumentSerializer documentSerializer;
     private final MongoOperations operations;
+    private final String databaseName;
+    private final DocumentSerializer documentSerializer;
 
-    MongoClientCommands(final MongoOperations operations, final PrimitiveSerializers primitiveSerializers) {
+    public MongoDatabaseCommands(final String databaseName, final MongoOperations operations,
+                                 final PrimitiveSerializers primitiveSerializers) {
         this.operations = operations;
+        this.databaseName = databaseName;
         documentSerializer = new DocumentSerializer(primitiveSerializers);
     }
 
-    //TODO: it's not clear from the documentation what the return type should be
-    //http://docs.mongodb.org/manual/reference/command/ping/
-    public double ping() {
-        final Document pingResult = operations.executeCommand(ADMIN_DATABASE, PING_COMMAND, documentSerializer);
-
-        return (Double) pingResult.get("ok");
+    public void drop() {
+        new CommandResult(operations.executeCommand(databaseName, DROP_DATABASE, documentSerializer));
     }
 
-    private static final class PingCommand extends MongoCommandOperation {
-        private PingCommand() {
-            super(new CommandDocument("ping", 1));
+    private static final class DropDatabase extends MongoCommandOperation {
+        private DropDatabase() {
+            super(new CommandDocument("dropDatabase", 1));
         }
     }
 }

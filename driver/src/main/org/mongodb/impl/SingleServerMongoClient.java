@@ -56,6 +56,7 @@ public class SingleServerMongoClient implements MongoClient {
     private final WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
     private final ReadPreference readPreference = ReadPreference.primary();
     private final ThreadLocal<SingleChannelMongoClient> boundClient = new ThreadLocal<SingleChannelMongoClient>();
+    private final MongoClientCommands commands;
 
     public SingleServerMongoClient(final ServerAddress serverAddress) {
         this.serverAddress = serverAddress;
@@ -66,6 +67,7 @@ public class SingleServerMongoClient implements MongoClient {
             }
         };
         primitiveSerializers = PrimitiveSerializers.createDefault();
+        commands = new MongoClientCommands(getOperations(), primitiveSerializers);
     }
 
     @Override
@@ -142,7 +144,7 @@ public class SingleServerMongoClient implements MongoClient {
 
     @Override
     public MongoClientCommands commands() {
-        return new MongoClientCommands(getOperations());
+        return commands;
     }
 
     BufferPool<ByteBuffer> getBufferPool() {
