@@ -29,4 +29,9 @@ public class Document extends LinkedHashMap<String, Object> {
     public Document(final String key, final Object value) {
         put(key, value);
     }
+
+    public Document append(final String key, Object value) {
+        put(key, value);
+        return this;
+    }
 }
