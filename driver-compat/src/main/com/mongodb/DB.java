@@ -85,6 +85,6 @@ public class DB {
      * @throws MongoException
      */
     public void dropDatabase(){
-        database.commands().drop();
+        database.admin().drop();
     }
 }
