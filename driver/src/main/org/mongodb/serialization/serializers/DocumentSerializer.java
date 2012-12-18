@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-//TODO: handle array type
 public class DocumentSerializer implements Serializer<Document> {
     private final PrimitiveSerializers primitiveSerializers;
 
@@ -36,18 +35,32 @@ public class DocumentSerializer implements Serializer<Document> {
         this.primitiveSerializers = primitiveSerializers;
     }
 
-    // TODO: deal with options.  C# driver sends different options.  For one, to write _id field first
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Document document, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Document document,
+                          final BsonSerializationOptions options) {
         bsonWriter.writeStartDocument();
+
+        beforeFields(bsonWriter, document, options);
+
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
+            if (skipField(entry.getKey())) {
+                continue;
+            }
             bsonWriter.writeName(entry.getKey());
             writeValue(bsonWriter, entry.getValue(), options);
         }
         bsonWriter.writeEndDocument();
     }
 
-    private void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
+    protected void beforeFields(final BSONWriter bsonWriter, final Document document,
+                                final BsonSerializationOptions options) {
+    }
+
+    protected boolean skipField(String key) {
+        return false;
+    }
+
+    protected void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
         if (value instanceof Document) {
             serialize(bsonWriter, (Document) value, options);
         }
@@ -59,7 +72,8 @@ public class DocumentSerializer implements Serializer<Document> {
         }
     }
 
-    private void serializeArray(final BSONWriter bsonWriter, final Iterable iterable, final BsonSerializationOptions options) {
+    private void serializeArray(final BSONWriter bsonWriter, final Iterable iterable,
+                                final BsonSerializationOptions options) {
         bsonWriter.writeStartArray();
         for (final Object cur : iterable) {
             writeValue(bsonWriter, cur, options);

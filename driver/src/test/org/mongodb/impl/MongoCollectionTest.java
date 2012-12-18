@@ -92,6 +92,18 @@ public class MongoCollectionTest {
     }
 
     @Test
+    public void testIdGeneration() {
+        final MongoCollection<Document> collection = mongoDatabase.getCollection("idGeneration");
+
+        final Document doc = new Document();
+        collection.insert(new MongoInsert<Document>(doc));
+        assertNotNull(doc.get("_id"));
+        assertEquals(ObjectId.class, doc.get("_id").getClass());
+        assertEquals(1, collection.count(new MongoFind(new QueryFilterDocument("_id", doc.get("_id")))));
+        assertEquals(1, collection.findOne(new MongoFind(new QueryFilterDocument("_id", doc.get("_id")))).size());
+    }
+
+    @Test
     public void testUpdate() {
         final MongoCollection<Document> collection = mongoDatabase.getCollection("update");
 
