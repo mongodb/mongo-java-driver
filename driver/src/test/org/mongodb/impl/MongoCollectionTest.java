@@ -50,6 +50,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 @RunWith(JUnit4.class)
 public class MongoCollectionTest {
@@ -150,6 +151,18 @@ public class MongoCollectionTest {
         } finally {
             cursor.close();
         }
+    }
+
+    @Test
+    public void testFindOne() {
+        final MongoCollection<Document> collection = mongoDatabase.getCollection("findOne");
+
+        assertNull(collection.findOne(new MongoFind(new QueryFilterDocument())));
+
+        collection.insert(new MongoInsert<Document>(new Document("_id", 1)));
+        collection.insert(new MongoInsert<Document>(new Document("_id", 2)));
+
+        assertNotNull(collection.findOne(new MongoFind(new QueryFilterDocument())));
     }
 
     @Test

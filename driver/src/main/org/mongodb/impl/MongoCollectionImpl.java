@@ -34,6 +34,7 @@ import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.InsertResult;
+import org.mongodb.result.QueryResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.PrimitiveSerializers;
@@ -55,7 +56,14 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public T findOne(final MongoFind find) {
-        throw new UnsupportedOperationException();
+        QueryResult<T> res = getClient().getOperations().query(getNamespace(), find.batchSize(-1),
+                                                               new DocumentSerializer(getPrimitiveSerializers()),
+                                                               getSerializer());
+        if (res.getResults().isEmpty()) {
+            return null;
+        }
+
+        return res.getResults().get(0);
     }
 
     @Override
@@ -70,40 +78,45 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public T findAndUpdate(final MongoFindAndUpdate findAndUpdate) {
-        return new FindAndUpdateCommand<T>(getClient(), getNamespace(), findAndUpdate, getPrimitiveSerializers(), getSerializer()).execute().getValue();
+        return new FindAndUpdateCommand<T>(getClient(), getNamespace(), findAndUpdate, getPrimitiveSerializers(),
+                                           getSerializer()).execute().getValue();
     }
 
     @Override
     public T findAndReplace(final MongoFindAndReplace<T> findAndReplace) {
-        return new FindAndReplaceCommand<T>(getClient(), getNamespace(), findAndReplace, getPrimitiveSerializers(), getSerializer()).execute().getValue();
+        return new FindAndReplaceCommand<T>(getClient(), getNamespace(), findAndReplace, getPrimitiveSerializers(),
+                                            getSerializer()).execute().getValue();
     }
 
     @Override
     public T findAndRemove(final MongoFindAndRemove findAndRemove) {
-        return new FindAndRemoveCommand<T>(getClient(), getNamespace(), findAndRemove, getPrimitiveSerializers(), getSerializer()).execute().getValue();
+        return new FindAndRemoveCommand<T>(getClient(), getNamespace(), findAndRemove, getPrimitiveSerializers(),
+                                           getSerializer()).execute().getValue();
     }
 
     @Override
     public InsertResult insert(final MongoInsert<T> insert) {
         return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(getWriteConcern()),
-                getSerializer());
+                                                  getSerializer());
     }
 
     @Override
     public UpdateResult update(final MongoUpdate update) {
-        return getClient().getOperations().update(getNamespace(), update.writeConcernIfAbsent(getWriteConcern()), getMongoDocumentSerializer());
+        return getClient().getOperations().update(getNamespace(), update.writeConcernIfAbsent(getWriteConcern()),
+                                                  getMongoDocumentSerializer());
     }
 
     @Override
     public UpdateResult replace(final MongoReplace<T> replace) {
-        return getClient().getOperations().replace(getNamespace(), replace.writeConcernIfAbsent(getWriteConcern()), getMongoDocumentSerializer(), getSerializer());
+        return getClient().getOperations().replace(getNamespace(), replace.writeConcernIfAbsent(getWriteConcern()),
+                                                   getMongoDocumentSerializer(), getSerializer());
     }
 
     @Override
     public RemoveResult remove(final MongoRemove remove) {
         // TODO: need a serializer to pass in here
         return getClient().getOperations().remove(getNamespace(), remove.writeConcernIfAbsent(getWriteConcern()),
-                getMongoDocumentSerializer());
+                                                  getMongoDocumentSerializer());
     }
 
     private Serializer<Document> getMongoDocumentSerializer() {
