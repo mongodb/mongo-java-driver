@@ -36,7 +36,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final WriteConcern writeConcern;
     private final ReadPreference readPreference;
     private final PrimitiveSerializers primitiveSerializers;
-    private final DatabaseAdmin commands;
+    private final DatabaseAdmin admin;
 
     public MongoDatabaseImpl(final String name, final MongoClient client) {
         this(name, client, null, null, null);
@@ -49,7 +49,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         this.writeConcern = writeConcern;
         this.readPreference = readPreference;
         this.primitiveSerializers = primitiveSerializers;
-        this.commands = new DatabaseAdminImpl(name, client.getOperations(), client.getPrimitiveSerializers());
+        this.admin = new DatabaseAdminImpl(name, client.getOperations(), client.getPrimitiveSerializers());
     }
 
     @Override
@@ -82,7 +82,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public DatabaseAdmin admin() {
-        return commands;
+        return admin;
     }
 
     @Override

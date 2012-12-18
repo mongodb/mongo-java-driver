@@ -52,12 +52,12 @@ public class InsertMongoDocumentAcceptanceTest {
         final MongoInsert<Document> insertStatement = new MongoInsert<Document>(simpleDocument);
         collection.insert(insertStatement);
 
+        assertThat(collection.count(), is(1L));
+
         final QueryFilterDocument queryFilter = new QueryFilterDocument("name", "Billy");
         final MongoCursor<Document> insertTestDocumentMongoCursor = collection.find(new MongoFind(queryFilter));
 
-        assertThat(insertTestDocumentMongoCursor.hasNext(), is(true));
         assertThat((String) insertTestDocumentMongoCursor.next().get("name"), is("Billy"));
-        assertThat(insertTestDocumentMongoCursor.hasNext(), is(false));
     }
 
 }
