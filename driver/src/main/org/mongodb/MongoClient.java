@@ -17,7 +17,6 @@
 package org.mongodb;
 
 
-import org.mongodb.impl.MongoClientCommands;
 import org.mongodb.serialization.PrimitiveSerializers;
 
 import java.io.Closeable;
@@ -29,10 +28,10 @@ import java.util.concurrent.ExecutionException;
  */
 public interface MongoClient extends Closeable {
     /**
-     * @param name
-     * @return
+     * @param databaseName the name of the database to retrieve
+     * @return a MongoDatabase representing the specified database
      */
-    MongoDatabase getDatabase(String name);
+    MongoDatabase getDatabase(String databaseName);
 
     /**
      * @return operations over this client
@@ -70,5 +69,8 @@ public interface MongoClient extends Closeable {
 
     PrimitiveSerializers getPrimitiveSerializers();
 
-    MongoClientCommands commands();
+    /**
+     * @return the ClientAdmin that provides admin methods that can be performed
+     */
+    ClientAdmin admin();
 }

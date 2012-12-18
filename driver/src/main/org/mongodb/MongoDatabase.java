@@ -17,7 +17,6 @@
 package org.mongodb;
 
 import org.bson.types.Document;
-import org.mongodb.impl.MongoDatabaseCommands;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.PrimitiveSerializers;
@@ -50,7 +49,7 @@ public interface MongoDatabase {
                                                         final PrimitiveSerializers basePrimitiveSerializers,
                                                         final Serializer<T> serializer);
 
-    MongoDatabaseCommands commands();
+    DatabaseAdmin admin();
 
     //    MongoDatabase withClient(MongoClient client);
     //

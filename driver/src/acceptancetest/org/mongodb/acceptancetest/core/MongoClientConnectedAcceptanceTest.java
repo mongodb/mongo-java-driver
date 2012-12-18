@@ -44,7 +44,7 @@ public class MongoClientConnectedAcceptanceTest {
     public void shouldBeConnectedToMongoAsSoonAsNewSingleServerMongoClientIsCreated() {
         final MongoClient mongoClient = new SingleServerMongoClient(serverAddress);
 
-        final double pingValue = mongoClient.commands().ping();
+        final double pingValue = mongoClient.admin().ping();
 
         assertThat(pingValue, is(1.0));
     }
@@ -56,7 +56,7 @@ public class MongoClientConnectedAcceptanceTest {
 
         mongoClient.close();
 
-        final double pingValue = mongoClient.commands().ping();
+        final double pingValue = mongoClient.admin().ping();
 
         assertThat(pingValue, not(1.0));
     }

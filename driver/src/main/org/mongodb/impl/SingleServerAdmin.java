@@ -17,6 +17,7 @@
 package org.mongodb.impl;
 
 import org.bson.types.Document;
+import org.mongodb.ClientAdmin;
 import org.mongodb.CommandDocument;
 import org.mongodb.MongoOperations;
 import org.mongodb.operation.MongoCommandOperation;
@@ -27,20 +28,21 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
  * Contains the commands that can be run on MongoDB that do not require a database to be selected first.  These commands
  * can be accessed via MongoClient.
  */
-public class MongoClientCommands {
+public class SingleServerAdmin implements ClientAdmin {
     private static final String ADMIN_DATABASE = "admin";
-    private static final MongoClientCommands.PingCommand PING_COMMAND = new PingCommand();
+    private static final PingCommand PING_COMMAND = new PingCommand();
 
     private final DocumentSerializer documentSerializer;
     private final MongoOperations operations;
 
-    MongoClientCommands(final MongoOperations operations, final PrimitiveSerializers primitiveSerializers) {
+    SingleServerAdmin(final MongoOperations operations, final PrimitiveSerializers primitiveSerializers) {
         this.operations = operations;
         documentSerializer = new DocumentSerializer(primitiveSerializers);
     }
 
     //TODO: it's not clear from the documentation what the return type should be
     //http://docs.mongodb.org/manual/reference/command/ping/
+    @Override
     public double ping() {
         final Document pingResult = operations.executeCommand(ADMIN_DATABASE, PING_COMMAND, documentSerializer);
 

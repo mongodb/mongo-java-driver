@@ -19,6 +19,7 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
 import org.bson.util.PowerOfTwoByteBufferPool;
+import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
@@ -57,7 +58,7 @@ public class SingleServerMongoClient implements MongoClient {
     private final WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
     private final ReadPreference readPreference = ReadPreference.primary();
     private final ThreadLocal<SingleChannelMongoClient> boundClient = new ThreadLocal<SingleChannelMongoClient>();
-    private final MongoClientCommands commands;
+    private final ClientAdmin commands;
 
     public SingleServerMongoClient(final ServerAddress serverAddress) {
         this.serverAddress = serverAddress;
@@ -68,13 +69,13 @@ public class SingleServerMongoClient implements MongoClient {
             }
         };
         primitiveSerializers = PrimitiveSerializers.createDefault();
-        commands = new MongoClientCommands(getOperations(), primitiveSerializers);
+        commands = new SingleServerAdmin(getOperations(), primitiveSerializers);
     }
 
     @Override
-    public MongoDatabaseImpl getDatabase(final String name) {
+    public MongoDatabaseImpl getDatabase(final String databaseName) {
         //TODO: we're not caching this?
-        return new MongoDatabaseImpl(name, this);
+        return new MongoDatabaseImpl(databaseName, this);
     }
 
     @Override
@@ -144,7 +145,7 @@ public class SingleServerMongoClient implements MongoClient {
     }
 
     @Override
-    public MongoClientCommands commands() {
+    public ClientAdmin admin() {
         return commands;
     }
 

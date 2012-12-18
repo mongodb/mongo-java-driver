@@ -19,6 +19,7 @@ package org.mongodb.impl;
 import org.bson.io.PooledByteBufferOutput;
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
+import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoException;
@@ -86,8 +87,8 @@ public class SingleChannelMongoClient implements MongoClient {
     }
 
     @Override
-    public MongoDatabase getDatabase(final String name) {
-        return new MongoDatabaseImpl(name, this);
+    public MongoDatabase getDatabase(final String databaseName) {
+        return new MongoDatabaseImpl(databaseName, this);
     }
 
     @Override
@@ -133,7 +134,7 @@ public class SingleChannelMongoClient implements MongoClient {
     }
 
     @Override
-    public MongoClientCommands commands() {
+    public ClientAdmin admin() {
         //TODO - when will this be used via this class
         throw new IllegalStateException("Not implemented yet!");
     }

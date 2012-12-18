@@ -40,7 +40,7 @@ public class InsertMongoDocumentAcceptanceTest {
         final MongoClient mongoClient = createMongoClient();
 
         final MongoDatabase database = mongoClient.getDatabase(DB_NAME);
-        database.commands().drop();
+        database.admin().drop();
 
         collection = database.getCollection("collection");
     }
