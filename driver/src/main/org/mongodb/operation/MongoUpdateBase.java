@@ -33,7 +33,7 @@ public abstract class MongoUpdateBase extends MongoWrite {
         return isUpsert;
     }
 
-    MongoUpdateBase isUpsert(final boolean isUpsert) {
+    public MongoUpdateBase isUpsert(final boolean isUpsert) {
         this.isUpsert = isUpsert;
         return this;
     }

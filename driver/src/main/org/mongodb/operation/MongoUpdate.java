@@ -42,6 +42,13 @@ public class MongoUpdate extends MongoUpdateBase {
         return this;
     }
 
+    @Override
+    public MongoUpdateBase isUpsert(final boolean isUpsert) {
+        super.isUpsert(isUpsert);
+        return this;
+    }
+
+
     public MongoUpdate writeConcern(final WriteConcern writeConcern) {
         super.writeConcern(writeConcern);
         return this;

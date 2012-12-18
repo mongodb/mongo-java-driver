@@ -39,23 +39,23 @@ public class MongoFind extends MongoQuery {
         return this;
     }
 
-    // TODO: Add MongoQuerySelector interface
     public MongoFind select(final MongoFieldSelector fields) {
         this.fields = fields;
         return this;
     }
 
-
+    // TODO: implement order
     public MongoFind order(final String condition) {
         throw new UnsupportedOperationException();
     }
 
-    public MongoFind limit(final int value) {
-        throw new UnsupportedOperationException();
+    public MongoFind limit(final long limit) {
+        super.limit(limit);
+        return this;
     }
 
     public MongoFind batchSize(final int batchSize) {
-        this.batchSize = batchSize;
+        super.batchSize(batchSize);
         return this;
     }
 
@@ -97,4 +97,9 @@ public class MongoFind extends MongoQuery {
         return this;
     }
 
+    @Override
+    public MongoFind skip(final int skip) {
+        super.skip(skip);
+        return this;
+    }
 }

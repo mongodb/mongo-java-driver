@@ -60,7 +60,7 @@ public class MongoQueryMessage extends MongoRequestMessage {
         buffer.writeInt(queryOptions);
         buffer.writeCString(collectionName);
 
-        buffer.writeInt(query.getNumToSkip());
+        buffer.writeInt(query.getSkip());
         buffer.writeInt(query.getBatchSize());
     }
 }

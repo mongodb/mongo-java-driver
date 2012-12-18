@@ -59,8 +59,8 @@ public class CountCommand extends AbstractCommand {
             document.put("limit", find.getLimit());
         }
 
-        if (find.getNumToSkip() > 0) {
-            document.put("skip", find.getNumToSkip());
+        if (find.getSkip() > 0) {
+            document.put("skip", find.getSkip());
         }
 
         return document;
