@@ -125,7 +125,7 @@ public class SingleServerMongoClient implements MongoClient {
 
     @Override
     public void close() {
-        // TODO: close pool, release buffers
+        channelPool.close();
     }
 
     @Override
