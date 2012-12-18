@@ -24,30 +24,33 @@ import org.mongodb.serialization.IdGenerator;
 import org.mongodb.serialization.PrimitiveSerializers;
 
 /**
- * Serializer for documents that go in collections, and therefore have an _id.
+ * Serializer for documents that go in collections, and therefore have an _id.  Ensures that the _id field is written
+ * first.
  */
 public class CollectibleDocumentSerializer extends DocumentSerializer {
     public static final String ID_FIELD_NAME = "_id";
     private final IdGenerator idGenerator;
 
-    public CollectibleDocumentSerializer(final PrimitiveSerializers primitiveSerializers, final IdGenerator idGenerator) {
+    public CollectibleDocumentSerializer(final PrimitiveSerializers primitiveSerializers,
+                                         final IdGenerator idGenerator) {
         super(primitiveSerializers);
+        if (idGenerator == null) {
+            throw new IllegalArgumentException("idGenerator is null");
+        }
         this.idGenerator = idGenerator;
     }
 
     protected void beforeFields(final BSONWriter bsonWriter, final Document document,
                                 final BsonSerializationOptions options) {
-        if (idGenerator != null) {
-            if (document.get(ID_FIELD_NAME) == null) {
-                document.put(ID_FIELD_NAME, idGenerator.generate());
-            }
-            bsonWriter.writeName(ID_FIELD_NAME);
-            writeValue(bsonWriter, document.get(ID_FIELD_NAME), options);
+        if (document.get(ID_FIELD_NAME) == null) {
+            document.put(ID_FIELD_NAME, idGenerator.generate());
         }
+        bsonWriter.writeName(ID_FIELD_NAME);
+        writeValue(bsonWriter, document.get(ID_FIELD_NAME), options);
     }
 
     protected boolean skipField(String key) {
-        return idGenerator != null && key.equals(ID_FIELD_NAME);
+        return key.equals(ID_FIELD_NAME);
     }
 
 

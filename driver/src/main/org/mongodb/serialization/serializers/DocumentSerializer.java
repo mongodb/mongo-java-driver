@@ -32,6 +32,9 @@ public class DocumentSerializer implements Serializer<Document> {
     private final PrimitiveSerializers primitiveSerializers;
 
     public DocumentSerializer(final PrimitiveSerializers primitiveSerializers) {
+        if (primitiveSerializers == null) {
+            throw new IllegalArgumentException("primitiveSerializers is null");
+        }
         this.primitiveSerializers = primitiveSerializers;
     }
 
