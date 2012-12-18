@@ -16,13 +16,21 @@
 
 package org.mongodb.impl;
 
+import org.bson.types.Document;
 import org.mongodb.CommandDocument;
 import org.mongodb.DatabaseAdmin;
+import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
+import org.mongodb.QueryFilterDocument;
 import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoFind;
 import org.mongodb.result.CommandResult;
+import org.mongodb.result.QueryResult;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are
@@ -31,6 +39,7 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
  */
 public class DatabaseAdminImpl implements DatabaseAdmin {
     private static final DropDatabase DROP_DATABASE = new DropDatabase();
+    private static final MongoFind FIND_ALL = new MongoFind(new QueryFilterDocument());
 
     private final MongoOperations operations;
     private final String databaseName;
@@ -46,6 +55,24 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void drop() {
         new CommandResult(operations.executeCommand(databaseName, DROP_DATABASE, documentSerializer));
+    }
+
+    @Override
+    public Set<String> getCollectionNames() {
+        final MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
+        final QueryResult<Document> query = operations.query(namespacesCollection, FIND_ALL,
+                                                             documentSerializer, documentSerializer);
+
+        final HashSet<String> collections = new HashSet<String>();
+        final int lengthOfDatabaseName = databaseName.length();
+        for (final Document namespace : query.getResults()) {
+            final String collectionName = (String) namespace.get("name");
+            if (!collectionName.contains("$")) {
+                final String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
+                collections.add(collectionNameWithoutDatabasePrefix);
+            }
+        }
+        return collections;
     }
 
     private static final class DropDatabase extends MongoCommandOperation {
