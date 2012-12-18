@@ -113,6 +113,9 @@ public abstract class SimplePool<T> {
      * @return An object from the pool, or null if can't get one in the given waitTime
      */
     public T get(final long waitTime) throws InterruptedException {
+        if (_closed) {
+            throw new IllegalStateException("The pool is closed");
+        }
         if (!permitAcquired(waitTime)) {
             return null;
         }
@@ -166,7 +169,7 @@ public abstract class SimplePool<T> {
     /**
      * Clears the pool of all objects.
      */
-    protected synchronized void close() {
+    public synchronized void close() {
         _closed = true;
         for (final T t : _avail) {
             cleanup(t);
@@ -210,5 +213,5 @@ public abstract class SimplePool<T> {
     protected final List<T> _avail = new ArrayList<T>();
     protected final Set<T> _out = new HashSet<T>();
     private final Semaphore _sem;
-    private boolean _closed;
+    private volatile boolean _closed;
 }
