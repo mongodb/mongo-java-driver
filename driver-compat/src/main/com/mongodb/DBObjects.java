@@ -20,6 +20,7 @@ package com.mongodb;
 import org.bson.types.Document;
 import org.mongodb.FieldSelectorDocument;
 import org.mongodb.QueryFilterDocument;
+import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.operation.MongoFieldSelector;
 
 // TODO: Implement these methods
@@ -27,19 +28,44 @@ public class DBObjects {
     private DBObjects() {
     }
 
-    public static Document toDocument(final DBObject obj) {
-        return new Document();
-    }
-
     public static QueryFilterDocument toQueryFilterDocument(final DBObject obj) {
-        return new QueryFilterDocument();
-    }
-
-    public static DBObject toDBObject(final Document document) {
-        return new BasicDBObject();
+        QueryFilterDocument doc = new QueryFilterDocument();
+        fill(obj, doc);
+        return doc;
     }
 
     public static MongoFieldSelector toFieldSelectorDocument(final DBObject fields) {
-        return new FieldSelectorDocument();
+        if (fields == null) {
+            return null;
+        }
+        FieldSelectorDocument doc = new FieldSelectorDocument();
+        fill(fields, doc);
+        return doc;
     }
+
+    public static UpdateOperationsDocument toUpdateOperationsDocument(final DBObject o) {
+        if (o == null) {
+            return null;
+        }
+
+        UpdateOperationsDocument doc = new UpdateOperationsDocument();
+        fill(o, doc);
+        return doc;
+    }
+
+    // TODO: This needs to be recursive, to translate nested DBObject and DBList and arrays...
+    private static void fill(final DBObject obj, final Document document) {
+        for (String key : obj.keySet()) {
+            Object value = obj.get(key);
+            if (value instanceof DBObject) {
+                Document nestedDocument = new Document();
+                fill((DBObject) value, nestedDocument);
+                document.put(key, nestedDocument);
+            }
+            else {
+                document.put(key, obj.get(key));
+            }
+        }
+    }
+
 }

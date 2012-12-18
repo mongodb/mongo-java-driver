@@ -15,15 +15,10 @@
  *
  */
 
-package com.mongodb;
+package com.mongodb.util;
 
-// TODO: build this out.
-public class ReadPreference {
-    org.mongodb.ReadPreference toNew() {
-        return org.mongodb.ReadPreference.primary();
-    }
-
-    public static ReadPreference primary() {
-        return new ReadPreference();
+public class JSON {
+    public static String serialize(final Object o) {
+        return "{}";  // TODO: re-implement this
     }
 }

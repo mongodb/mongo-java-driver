@@ -23,6 +23,8 @@ import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 
+// TODO: Add support for generating _id if missing and putting it first
+// TODO: Add support for lists
 public class DBObjectSerializer implements Serializer<DBObject> {
     private final PrimitiveSerializers primitiveSerializers;
 

@@ -80,4 +80,11 @@ public class DB {
         return old != null ? old : collection;
     }
 
+    /**
+     * Drops this database. Removes all data on disk. Use with caution.
+     * @throws MongoException
+     */
+    public void dropDatabase(){
+        database.commands().drop();
+    }
 }

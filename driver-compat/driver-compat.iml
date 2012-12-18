@@ -11,6 +11,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="driver" />
     <orderEntry type="module" module-name="bson" />
+    <orderEntry type="library" name="lib" level="project" />
   </component>
 </module>
 

@@ -27,8 +27,8 @@ import java.util.concurrent.ConcurrentMap;
 public class Mongo {
     private final SingleServerMongoClient client;
     private final ConcurrentMap<String, DB> dbCache = new ConcurrentHashMap<String, DB>();
-    private volatile ReadPreference readPreference;
-    private volatile WriteConcern writeConcern;
+    private volatile ReadPreference readPreference = ReadPreference.primary();
+    private volatile WriteConcern writeConcern = WriteConcern.UNACKNOWLEDGED; // TODO: !!!!!
 
     public Mongo() throws UnknownHostException {
         this(new ServerAddress());
@@ -71,5 +71,9 @@ public class Mongo {
 
     void requestDone() {
         client.unbindFromConnection();
+    }
+
+    public void close() {
+        client.close();
     }
 }
