@@ -24,9 +24,11 @@ the Git-Flow branching model where the traditional master branch is
 known as release and the master (default) branch is considered under
 development.
 
-Code should compile and tests should pass under all Java interpreters 
+Code should compile and tests should pass under all Java versions 
 which the driver currently supports.  Currently the Java driver supports
-a minimum version of Java 5.  Please run 'ant test' to confirm.
+a minimum version of Java 5.  Please run 'ant test' to confirm.  If your
+tests modify code related to replica sets, please ensure that you run the
+tests with a replica set where the primary is on port 27017.
 
 The results of pull request testing will be appended to the request.
 If any tests do not pass, or relevant tests are not included the pull
