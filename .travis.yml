@@ -1,0 +1,23 @@
+language: java
+
+jdk:
+  - oraclejdk7
+  - openjdk6
+
+rvm:
+  - 1.8.7
+  - 1.9.3
+  - jruby
+  - ruby-head
+  - jruby-head
+
+notifications:
+  email: false
+  flowdock: 1da4416b8ff98d1880986472428b1b1b
+
+services:
+  - mongodb
+
+branches:
+  only:
+    - master
