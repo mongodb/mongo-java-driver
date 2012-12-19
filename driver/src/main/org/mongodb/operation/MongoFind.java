@@ -17,6 +17,7 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 
 public class MongoFind extends MongoQuery {
@@ -24,6 +25,7 @@ public class MongoFind extends MongoQuery {
     private MongoFieldSelector fields;
 
     public MongoFind() {
+    	this.filter = new QueryFilterDocument();
     }
 
     public MongoFind(final MongoQueryFilter filter) {
