@@ -6,7 +6,6 @@ jdk:
 
 notifications:
   email: false
-  flowdock: 1da4416b8ff98d1880986472428b1b1b
 
 services:
   - mongodb
