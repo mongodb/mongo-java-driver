@@ -4,6 +4,7 @@ import org.bson.types.Document;
 import org.mongodb.CollectionAdmin;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
+import org.mongodb.OrderBy;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.MongoFind;
@@ -34,13 +35,13 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
     @Override
     //TODO: need to support compound indexes
-    public void ensureIndex(final String key, final Order order) {
+    public void ensureIndex(final String key, final OrderBy order) {
         // TODO: check for index ??
         //        final List<Document> indexes = getIndexes();
 
         final Document indexDetails = new Document("ns", databaseName + "." + collectionName);
 
-        Index index = new Index(key, order.intRepresentation);
+        Index index = new Index(key, order.getIntRepresentation());
         indexDetails.append("name", generateIndexName(index));
         indexDetails.append("key", index);
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
@@ -66,7 +67,6 @@ public class CollectionAdminImpl implements CollectionAdmin {
      * @return a string representation of this index's fields
      */
     private static String generateIndexName(final Map<String, Object> keys) {
-        //TODO nasty old code
         final StringBuilder indexName = new StringBuilder();
         for (String keyNames : keys.keySet()) {
             if (indexName.length() != 0) {
@@ -83,19 +83,9 @@ public class CollectionAdminImpl implements CollectionAdmin {
     }
 
     private static final class Index extends Document {
-        //        private Map<String, Object> indexes = new HashMap<String, Object>();
-        //
         public Index(final String key, final int value) {
             super(key, value);
         }
     }
 
-    public static enum Order {
-        ASC(1), DESC(-1);
-        private final int intRepresentation;
-
-        private Order(final int intRepresentation) {
-            this.intRepresentation = intRepresentation;
-        }
-    }
 }
