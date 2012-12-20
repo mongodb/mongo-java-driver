@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-    <component name="CheckStyle-IDEA">
-        <option name="configuration">
-            <map>
-                <entry key="active-configuration" value="file:$PROJECT_DIR$/config/checkstyle.xml:Checkstyle" />
-                <entry key="check-nonjava-files" value="false" />
-                <entry key="check-test-classes" value="false" />
-                <entry key="location-0" value="CLASSPATH:/sun_checks.xml:The default CheckStyle rules" />
-                <entry key="location-1" value="FILE:$PROJECT_DIR$/config/checkstyle.xml:Checkstyle" />
-                <entry key="thirdparty-classpath" value="" />
-            </map>
-        </option>
-    </component>
-    <component name="EntryPointsManager">
-        <entry_points version="2.0" />
-    </component>
-    <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
-        <output url="file://$APPLICATION_HOME_DIR$/bin/out" />
-    </component>
+  <component name="CheckStyle-IDEA">
+    <option name="configuration">
+      <map>
+        <entry key="active-configuration" value="file:$PROJECT_DIR$/config/checkstyle.xml:Checkstyle" />
+        <entry key="check-nonjava-files" value="false" />
+        <entry key="check-test-classes" value="false" />
+        <entry key="location-0" value="CLASSPATH:/sun_checks.xml:The default CheckStyle rules" />
+        <entry key="location-1" value="file:$PROJECT_DIR$/config/checkstyle.xml:Checkstyle" />
+        <entry key="thirdparty-classpath" value="" />
+      </map>
+    </option>
+  </component>
+  <component name="EntryPointsManager">
+    <entry_points version="2.0" />
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
+    <output url="file://$APPLICATION_HOME_DIR$/bin/out" />
+  </component>
 </project>
 
