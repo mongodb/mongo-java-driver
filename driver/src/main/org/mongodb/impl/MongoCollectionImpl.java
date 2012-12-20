@@ -108,20 +108,20 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     @Override
     public UpdateResult update(final MongoUpdate update) {
         return getClient().getOperations().update(getNamespace(), update.writeConcernIfAbsent(getWriteConcern()),
-                                                  getMongoDocumentSerializer());
+                                                  getDocumentSerializer());
     }
 
     @Override
     public UpdateResult replace(final MongoReplace<T> replace) {
         return getClient().getOperations().replace(getNamespace(), replace.writeConcernIfAbsent(getWriteConcern()),
-                                                   getMongoDocumentSerializer(), getSerializer());
+                                                   getDocumentSerializer(), getSerializer());
     }
 
     @Override
     public RemoveResult remove(final MongoRemove remove) {
         // TODO: need a serializer to pass in here
         return getClient().getOperations().remove(getNamespace(), remove.writeConcernIfAbsent(getWriteConcern()),
-                                                  getMongoDocumentSerializer());
+                                                  getDocumentSerializer());
     }
 
     @Override
@@ -129,7 +129,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         return admin;
     }
 
-    private Serializer<Document> getMongoDocumentSerializer() {
+    private Serializer<Document> getDocumentSerializer() {
         return new DocumentSerializer(primitiveSerializers);
     }
 }

@@ -28,6 +28,7 @@ import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.CollectibleDocumentSerializer;
+import org.mongodb.serialization.serializers.DocumentSerializer;
 import org.mongodb.serialization.serializers.ObjectIdGenerator;
 
 class MongoDatabaseImpl implements MongoDatabase {
@@ -59,7 +60,8 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     public MongoCollectionImpl<Document> getCollection(final String collectionName) {
         return getTypedCollection(collectionName, getPrimitiveSerializers(),
-                                  new CollectibleDocumentSerializer(getPrimitiveSerializers(), new ObjectIdGenerator()));
+                                  new CollectibleDocumentSerializer(getPrimitiveSerializers(),
+                                                                    new ObjectIdGenerator()));
     }
 
     public <T> MongoCollectionImpl<T> getTypedCollection(final String collectionName,
@@ -87,7 +89,8 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public CommandResult executeCommand(final MongoCommandOperation commandOperation) {
-        return new CommandResult(client.getOperations().executeCommand(getName(), commandOperation, null));
+        return new CommandResult(client.getOperations().executeCommand(getName(), commandOperation,
+                                                                       new DocumentSerializer(getPrimitiveSerializers())));
     }
 
     @Override

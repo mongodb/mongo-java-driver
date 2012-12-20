@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.serializers.CollectibleDBObjectSerializer;
 import org.mongodb.MongoDatabase;
+import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.ObjectIdGenerator;
 
@@ -137,7 +138,9 @@ public class DB {
     }
 
     public CommandResult command(final DBObject cmd) {
-        throw new UnsupportedOperationException();
+        org.mongodb.result.CommandResult baseCommandResult = database.executeCommand(
+                new MongoCommandOperation(DBObjects.toCommandDocument(cmd)).readPreference(getReadPreference().toNew()));
+        return DBObjects.toCommandResult(cmd, new ServerAddress(baseCommandResult.getAddress()), baseCommandResult.getResponse());
     }
 
     /**

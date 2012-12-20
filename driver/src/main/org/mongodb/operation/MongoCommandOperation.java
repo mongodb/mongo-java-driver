@@ -37,4 +37,21 @@ public class MongoCommandOperation extends MongoQuery {
     public MongoCommand getCommand() {
         return command;
     }
+
+    /**
+     * Commands always have a batch size of -1.
+     * @return -1
+     */
+    public int getBatchSize() {
+        return -1;
+    }
+
+    public int getSkip() {
+        return 0;
+    }
+
+    public int getLimit() {
+        return 0;
+    }
+
 }

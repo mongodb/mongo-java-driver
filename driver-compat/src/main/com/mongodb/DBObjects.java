@@ -19,12 +19,13 @@ package com.mongodb;
 
 import org.bson.BSONObject;
 import org.bson.types.Document;
+import org.mongodb.CommandDocument;
 import org.mongodb.FieldSelectorDocument;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.SortCriteriaDocument;
 import org.mongodb.UpdateOperationsDocument;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFieldSelector;
-import org.mongodb.operation.MongoSortCriteria;
 
 import java.util.List;
 import java.util.Map;
@@ -59,7 +60,7 @@ public class DBObjects {
         return doc;
     }
 
-    public static MongoSortCriteria toSortCriteriaDocument(final DBObject o) {
+    public static SortCriteriaDocument toSortCriteriaDocument(final DBObject o) {
         if (o == null) {
             return null;
         }
@@ -68,6 +69,14 @@ public class DBObjects {
         fill(o, doc);
         return doc;
     }
+
+
+    public static MongoCommand toCommandDocument(final DBObject commandObject) {
+        CommandDocument doc = new CommandDocument();
+        fill(commandObject, doc);
+        return doc;
+    }
+
 
     public static CommandResult toCommandResult(DBObject command, ServerAddress serverAddress, final Document document) {
         CommandResult res = new CommandResult(command, serverAddress);
