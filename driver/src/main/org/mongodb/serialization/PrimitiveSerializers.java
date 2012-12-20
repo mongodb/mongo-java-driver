@@ -22,13 +22,17 @@ import org.bson.BsonType;
 import org.mongodb.MongoException;
 import org.mongodb.serialization.serializers.BinarySerializer;
 import org.mongodb.serialization.serializers.BooleanSerializer;
+import org.mongodb.serialization.serializers.ByteArraySerializer;
+import org.mongodb.serialization.serializers.ByteSerializer;
 import org.mongodb.serialization.serializers.DateSerializer;
 import org.mongodb.serialization.serializers.DoubleSerializer;
+import org.mongodb.serialization.serializers.FloatSerializer;
 import org.mongodb.serialization.serializers.IntegerSerializer;
 import org.mongodb.serialization.serializers.LongSerializer;
 import org.mongodb.serialization.serializers.NullSerializer;
 import org.mongodb.serialization.serializers.ObjectIdSerializer;
 import org.mongodb.serialization.serializers.PatternSerializer;
+import org.mongodb.serialization.serializers.ShortSerializer;
 import org.mongodb.serialization.serializers.StringSerializer;
 
 import java.util.HashMap;
@@ -100,6 +104,10 @@ public class PrimitiveSerializers implements Serializer<Object> {
                 .booleanSerializer(new BooleanSerializer())
                 .patternSerializer(new PatternSerializer())
                 .nullSerializer(new NullSerializer())
+                .otherSerializer(new FloatSerializer())
+                .otherSerializer(new ShortSerializer())
+                .otherSerializer(new ByteSerializer())
+                .otherSerializer(new ByteArraySerializer())
                 .build();
     }
 
@@ -164,6 +172,16 @@ public class PrimitiveSerializers implements Serializer<Object> {
 
         public Builder nullSerializer(final Serializer serializer) {
             registerSerializer(BsonType.NULL, serializer);
+            return this;
+        }
+
+        /**
+         * Used to register one-way serializers.  Ignored for deserialization.
+         * @param serializer
+         * @return this
+         */
+        public Builder otherSerializer(final Serializer serializer) {
+            classSerializerMap.put(serializer.getSerializationClass(), serializer);
             return this;
         }
 
