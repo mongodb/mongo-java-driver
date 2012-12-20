@@ -3,16 +3,14 @@
  */
 package com.google.code.morphia.mapping;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.code.morphia.TestBase;
+import com.google.code.morphia.annotations.Id;
 import junit.framework.Assert;
-
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
-import com.google.code.morphia.TestBase;
-import com.google.code.morphia.annotations.Id;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author scotthernandez
@@ -25,6 +23,7 @@ public class ListOfDoubleArrayMappingTest extends TestBase {
 	}
 	
 
+    // TODO: Fails with Java 7
 	@Test
 	public void testMapping() throws Exception {
 		morphia.map(ContainsListDoubleArray.class);

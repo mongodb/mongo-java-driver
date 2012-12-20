@@ -3,16 +3,15 @@
  */
 package com.google.code.morphia.mapping.validation.fieldrules;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
-
 import com.google.code.morphia.TestBase;
 import com.google.code.morphia.annotations.PreSave;
 import com.google.code.morphia.annotations.Serialized;
 import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.testutil.TestEntity;
 import com.mongodb.DBObject;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
@@ -29,8 +28,7 @@ public class SerializedNameTest extends TestBase {
 		
 		@PreSave
 		public void preSave(DBObject o) {
-			document = o.toString();
-//			System.out.println(document);
+			document = new String((byte[]) o.get("changedName"));
 		}
 		
 		@Transient
@@ -43,6 +41,7 @@ public class SerializedNameTest extends TestBase {
 		E e = new E();
 		ds.save(e);
 		
-		Assert.assertTrue(e.document.contains("changedName"));
+		assertEquals("foo", e.document);
+
 	}
 }
