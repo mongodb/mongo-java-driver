@@ -65,6 +65,7 @@ public interface MongoCollection<T> extends MongoCollectionBase<T> {
 
     RemoveResult remove(MongoRemove remove);
 
+    CollectionAdmin admin();
 }
 
 

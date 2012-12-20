@@ -17,6 +17,7 @@
 package org.mongodb.impl;
 
 import org.bson.types.Document;
+import org.mongodb.CollectionAdmin;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.ReadPreference;
@@ -43,10 +44,14 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
 
 class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements MongoCollection<T> {
 
+    private CollectionAdmin admin;
+
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
                                final PrimitiveSerializers primitiveSerializers, final Serializer<T> serializer,
                                final WriteConcern writeConcern, final ReadPreference readPreference) {
         super(serializer, name, database, writeConcern, readPreference, primitiveSerializers);
+        admin = new CollectionAdminImpl(database.getClient().getOperations(), primitiveSerializers, database.getName(),
+                                        name);
     }
 
     @Override
@@ -117,6 +122,11 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         // TODO: need a serializer to pass in here
         return getClient().getOperations().remove(getNamespace(), remove.writeConcernIfAbsent(getWriteConcern()),
                                                   getMongoDocumentSerializer());
+    }
+
+    @Override
+    public CollectionAdmin admin() {
+        return admin;
     }
 
     private Serializer<Document> getMongoDocumentSerializer() {
