@@ -90,11 +90,11 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
     public void setReadPreference(final ReadPreference readPreference) {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException();      // TODO: Support this
     }
 
     public DBObject getQuery() {
-        throw new UnsupportedOperationException();
+        return DBObjects.toDBObject(find.getFilter().toDocument());
     }
 
     @Override
