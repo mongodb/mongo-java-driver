@@ -78,7 +78,7 @@ public class DB {
         final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
         collection = new DBCollection(database.getTypedCollection(name,
                 primitiveSerializers,
-                new CollectibleDBObjectSerializer(primitiveSerializers, new ObjectIdGenerator())), this);
+                new CollectibleDBObjectSerializer(this, primitiveSerializers, new ObjectIdGenerator())), this);
         final DBCollection old = collectionCache.putIfAbsent(name, collection);
         return old != null ? old : collection;
     }
