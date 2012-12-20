@@ -19,11 +19,14 @@ package org.mongodb.serialization.serializers;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;
+import org.bson.types.Binary;
 import org.bson.types.Document;
+import org.mongodb.DBRef;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -75,25 +78,60 @@ public class DocumentSerializer implements Serializer<Document> {
     }
 
     protected void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
-        if (value instanceof Map) {
+        // TODO: is this a good idea to allow DBRef to be treated all special?
+        if (value instanceof DBRef) {
+            serializeDBRef(bsonWriter, (DBRef) value, options);
+        }
+        else if (value instanceof Map) {
             serializeMap(bsonWriter, (Map<String, Object>) value, options);
         }
         else if (value instanceof Iterable) {
-            serializeArray(bsonWriter, (Iterable) value, options);
+            serializeIterable(bsonWriter, (Iterable) value, options);
+        }
+        // TODO: Is this a good idea to allow byte[] to be treated all special?
+        else if (value instanceof byte[]) {
+            primitiveSerializers.serialize(bsonWriter, new Binary((byte[]) value), options);
+        }
+        else if (value != null && value.getClass().isArray()) {
+            serializeArray(bsonWriter, value, options);
         }
         else {
             primitiveSerializers.serialize(bsonWriter, value, options);
         }
     }
 
-    private void serializeArray(final BSONWriter bsonWriter, final Iterable iterable,
+    private void serializeDBRef(final BSONWriter bsonWriter, final DBRef dbRef,
                                 final BsonSerializationOptions options) {
+        bsonWriter.writeStartDocument();
+
+        bsonWriter.writeString("$ref", dbRef.getRef());
+        bsonWriter.writeName("$id");
+        writeValue(bsonWriter, dbRef.getId(), options);
+
+        bsonWriter.writeEndDocument();
+    }
+
+    private void serializeIterable(final BSONWriter bsonWriter, final Iterable iterable,
+                                   final BsonSerializationOptions options) {
         bsonWriter.writeStartArray();
         for (final Object cur : iterable) {
             writeValue(bsonWriter, cur, options);
         }
         bsonWriter.writeEndArray();
     }
+
+    private void serializeArray(final BSONWriter bsonWriter, final Object value,
+                                final BsonSerializationOptions options) {
+        bsonWriter.writeStartArray();
+
+        int size = Array.getLength(value);
+        for (int i = 0; i < size; i++) {
+            writeValue(bsonWriter, Array.get(value, i), options);
+        }
+
+        bsonWriter.writeEndArray();
+    }
+
 
     @Override
     public Document deserialize(final BSONReader reader, final BsonSerializationOptions options) {

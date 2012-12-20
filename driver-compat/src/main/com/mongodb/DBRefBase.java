@@ -21,7 +21,7 @@ package com.mongodb;
 /**
  * represents a database reference, which points to an object stored in the database
  */
-public class DBRefBase {
+public class DBRefBase extends org.mongodb.DBRef {
 
 
     /**
@@ -32,10 +32,19 @@ public class DBRefBase {
      * @param id the object id
      */
     public DBRefBase(DB db, String ns, Object id) {
+        super(id, ns);
         _db = db;
-        _ns = ns.intern();
-        _id = id;
     }
+
+    /**
+     * Gets the database
+     *
+     * @return
+     */
+    public DB getDB() {
+        return _db;
+    }
+
 
     /**
      * fetches the object referenced from the database
@@ -52,75 +61,13 @@ public class DBRefBase {
             throw new RuntimeException("no db");
         }
 
-        final DBCollection coll = _db.getCollectionFromString(_ns);
+        final DBCollection coll = _db.getCollectionFromString(getRef());
 
-        _pointedTo = coll.findOne(_id);
+        _pointedTo = coll.findOne(getId());
         _loadedPointedTo = true;
         return _pointedTo;
     }
 
-    @Override
-    public String toString() {
-        return "{ \"$ref\" : \"" + _ns + "\", \"$id\" : \"" + _id + "\" }";
-    }
-
-    /**
-     * Gets the object's id
-     *
-     * @return
-     */
-    public Object getId() {
-        return _id;
-    }
-
-    /**
-     * Gets the object's namespace (collection name)
-     *
-     * @return
-     */
-    public String getRef() {
-        return _ns;
-    }
-
-    /**
-     * Gets the database
-     *
-     * @return
-     */
-    public DB getDB() {
-        return _db;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        final DBRefBase dbRefBase = (DBRefBase) o;
-
-        if (_id != null ? !_id.equals(dbRefBase._id) : dbRefBase._id != null) {
-            return false;
-        }
-        if (_ns != null ? !_ns.equals(dbRefBase._ns) : dbRefBase._ns != null) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = _id != null ? _id.hashCode() : 0;
-        result = 31 * result + (_ns != null ? _ns.hashCode() : 0);
-        return result;
-    }
-
-    final Object _id;
-    final String _ns;
     final DB _db;
 
     private boolean _loadedPointedTo = false;
