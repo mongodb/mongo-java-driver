@@ -16,7 +16,9 @@
 
 package com.mongodb;
 
+import org.bson.types.Document;
 import org.mongodb.MongoCollection;
+import org.mongodb.OrderBy;
 import org.mongodb.command.DropCollectionCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
@@ -30,6 +32,7 @@ import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -68,7 +71,7 @@ public class DBCollection {
     public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern) {
         final MongoInsert<DBObject> insert = new MongoInsert<DBObject>(documents).writeConcern(writeConcern.toNew());
         final InsertResult result = collection.insert(insert);
-        return new WriteResult(result, writeConcern.toNew());
+        return new WriteResult(result, writeConcern);
     }
 
 
@@ -117,7 +120,7 @@ public class DBCollection {
             replace.isUpsert(upsert);
             result = collection.replace(replace);
         }
-        return new WriteResult(result, concern.toNew());
+        return new WriteResult(result, concern);
 
     }
 
@@ -174,7 +177,7 @@ public class DBCollection {
     public WriteResult remove(final DBObject filter, final WriteConcern writeConcernToUse) {
         final MongoRemove remove = new MongoRemove(DBObjects.toQueryFilterDocument(filter));
         final RemoveResult result = collection.remove(remove);
-        return new WriteResult(result, writeConcernToUse.toNew());
+        return new WriteResult(result, writeConcernToUse);
     }
 
     public DBCursor find(final DBObject filter, final DBObject fields) {
@@ -470,6 +473,15 @@ public class DBCollection {
 
     public void ensureIndex(final BasicDBObject fields, final BasicDBObject opts) {
         // TODO: implement this
+        if (fields.size() > 1) {
+            return;
+        }
+        else {
+            String field = fields.keySet().iterator().next();
+            Integer orderBy = (Integer) fields.get(field);
+            collection.admin().ensureIndex(field, OrderBy.fromInt(orderBy));
+        }
+
     }
 
     /**
@@ -608,6 +620,11 @@ public class DBCollection {
      * @throws MongoException
      */
     public List<DBObject> getIndexInfo() {
-        throw new UnsupportedOperationException();
+        ArrayList<DBObject> res = new ArrayList<DBObject>();
+        List<Document> indexes = collection.admin().getIndexes();
+        for (Document curIndex : indexes) {
+            res.add(DBObjects.toDBObject(curIndex));
+        }
+        return res;
     }
 }

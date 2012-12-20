@@ -19,7 +19,16 @@ package com.mongodb;
 
 import java.net.UnknownHostException;
 
+// TO DO: fill out
 public class ServerAddress {
+    public ServerAddress(final org.mongodb.ServerAddress address) {
+
+    }
+
+    public ServerAddress() {
+
+    }
+
     org.mongodb.ServerAddress toNew() {
         try {
             return new org.mongodb.ServerAddress();

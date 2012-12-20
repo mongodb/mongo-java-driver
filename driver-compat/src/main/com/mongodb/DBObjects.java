@@ -27,6 +27,7 @@ import org.mongodb.operation.MongoFieldSelector;
 import org.mongodb.operation.MongoSortCriteria;
 
 import java.util.List;
+import java.util.Map;
 
 // TODO: Implement these methods
 public class DBObjects {
@@ -68,6 +69,17 @@ public class DBObjects {
         return doc;
     }
 
+    public static CommandResult toCommandResult(DBObject command, ServerAddress serverAddress, final Document document) {
+        CommandResult res = new CommandResult(command, serverAddress);
+        fill(document, res);
+        return res;
+    }
+
+    public static DBObject toDBObject(final Document document) {
+        BasicDBObject res = new BasicDBObject();
+        fill(document, res);
+        return res;
+    }
 
     // TODO: This needs to be recursive, to translate nested DBObject and DBList and arrays...
     private static void fill(final DBObject obj, final Document document) {
@@ -87,4 +99,19 @@ public class DBObjects {
         }
     }
 
+    private static void fill(final Document document, final DBObject obj) {
+        for (Map.Entry<String, Object> cur : document.entrySet()) {
+            if (cur.getValue() instanceof List) {
+                obj.put(cur.getKey(), cur.getValue());
+            }
+            else if (cur.getValue() instanceof Document) {
+                DBObject nestedObj = new BasicDBObject();
+                fill((Document) cur.getValue(), nestedObj);
+                obj.put(cur.getKey(), nestedObj);
+            }
+            else {
+                obj.put(cur.getKey(), cur.getValue());
+            }
+        }
+    }
 }

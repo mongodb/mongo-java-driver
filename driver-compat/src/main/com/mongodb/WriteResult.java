@@ -17,25 +17,36 @@
 
 package com.mongodb;
 
-import org.mongodb.WriteConcern;
-import org.mongodb.result.MongoResult;
-
 public class WriteResult {
 
-    WriteResult(final MongoResult result, final WriteConcern writeConcern) {
+    private final org.mongodb.result.WriteResult result;
+    private final com.mongodb.WriteConcern writeConcern;
+    private final CommandResult getLastErrorResult;
 
+    WriteResult(final org.mongodb.result.WriteResult result, final WriteConcern writeConcern) {
+        this.result = result;
+        this.writeConcern = writeConcern;
+        if (result.getGetLastErrorResult() != null) {
+            // TODO: need command and server address fer realz
+            getLastErrorResult = DBObjects.toCommandResult(DBObjects.toDBObject(result.getGetLastErrorResult().getCommand()),
+                                                           new ServerAddress(result.getGetLastErrorResult().getAddress()),
+                                                           result.getGetLastErrorResult().getResponse());
+        }
+        else {
+            getLastErrorResult = null;
+        }
     }
 
 
     public com.mongodb.CommandResult getLastError() {
-        throw new UnsupportedOperationException();
+        return getCachedLastError();  // TODO: Support getasterror after write op is already done?  Maybe not
     }
 
-    public DBObject getLastConcern() {
-        throw new UnsupportedOperationException();
+    public WriteConcern getLastConcern() {
+        return writeConcern;
     }
 
     public CommandResult getCachedLastError() {
-        throw new UnsupportedOperationException();
+         return getLastErrorResult;
     }
 }
