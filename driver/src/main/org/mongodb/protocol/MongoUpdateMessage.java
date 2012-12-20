@@ -26,7 +26,7 @@ import org.mongodb.serialization.Serializer;
 public class MongoUpdateMessage extends MongoRequestMessage {
     public MongoUpdateMessage(final String collectionName, final MongoUpdate update, final OutputBuffer buffer,
                               final Serializer<Document> serializer) {
-        super(collectionName, OpCode.OP_UPDATE, update.getFilter().toDocument(), buffer);
+        super(collectionName, OpCode.OP_UPDATE, buffer);
         writeBaseUpdate(update, serializer);
         addDocument(update.getUpdateOperations().toDocument(), serializer);
         backpatchMessageLength();
@@ -35,7 +35,7 @@ public class MongoUpdateMessage extends MongoRequestMessage {
     public <T> MongoUpdateMessage(final String collectionName, final MongoReplace<T> replace,
                               final OutputBuffer buffer,
                               final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
-        super(collectionName, OpCode.OP_UPDATE, replace.getFilter().toDocument(), buffer);
+        super(collectionName, OpCode.OP_UPDATE, buffer);
         writeBaseUpdate(replace, baseSerializer);
         addDocument(replace.getReplacement(), serializer);
     }
@@ -53,6 +53,6 @@ public class MongoUpdateMessage extends MongoRequestMessage {
         }
         buffer.writeInt(flags);
 
-        addDocument(query, serializer);
+        addDocument(update.getFilter().toDocument(), serializer);
     }
 }

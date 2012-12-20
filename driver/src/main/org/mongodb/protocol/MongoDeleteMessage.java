@@ -28,26 +28,28 @@ import java.util.Collection;
 public class MongoDeleteMessage extends MongoRequestMessage {
     public MongoDeleteMessage(final String collectionName, final MongoRemove remove, final OutputBuffer buffer,
                               final Serializer<Document> serializer) {
-        super(collectionName, OpCode.OP_DELETE, remove.getFilter().toDocument(), buffer);
-        writeDelete(serializer);
+        super(collectionName, OpCode.OP_DELETE, buffer);
+        writeDelete(remove, serializer);
         backpatchMessageLength();
     }
 
-    private void writeDelete(final Serializer<Document> serializer) {
+    private void writeDelete(MongoRemove remove, final Serializer<Document> serializer) {
         buffer.writeInt(0); // reserved
         buffer.writeCString(collectionName);
 
-        final Collection<String> keys = query.keySet();
+        Document queryFilterDocument = remove.getFilter().toDocument();
+
+        final Collection<String> keys = queryFilterDocument.keySet();
 
         if (keys.size() == 1 && keys.iterator().next().equals("_id")
-                && query.get(keys.iterator().next()) instanceof ObjectId) {
+                && queryFilterDocument.get(keys.iterator().next()) instanceof ObjectId) {
             buffer.writeInt(1);
         }
         else {
             buffer.writeInt(0);
         }
 
-        addDocument(query, serializer);
+        addDocument(queryFilterDocument, serializer);
     }
 }
 

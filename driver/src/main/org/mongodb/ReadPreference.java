@@ -39,7 +39,7 @@ public abstract class ReadPreference {
     /**
      * @return <code>DBObject</code> representation of this preference
      */
-    public abstract Document toMongoDocument();
+    public abstract Document toDocument();
 
     /**
      * The name of this read preference.
@@ -85,7 +85,7 @@ public abstract class ReadPreference {
         }
 
         @Override
-        public Document toMongoDocument() {
+        public Document toDocument() {
             return new Document("mode", getName());
         }
 

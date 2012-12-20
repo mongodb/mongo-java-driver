@@ -20,7 +20,36 @@ package org.mongodb.operation;
 public class MongoFindAndReplace<T> extends MongoFindAndModify {
     private T replacement;
 
+    public MongoFindAndReplace(T replacement) {
+        this.replacement = replacement;
+    }
+
     public T getReplacement() {
         return replacement;
     }
+
+    @Override
+    public MongoFindAndReplace<T> sortBy(final MongoSortCriteria sortCriteria) {
+        super.sortBy(sortCriteria);
+        return this;
+    }
+
+    @Override
+    public MongoFindAndReplace<T> returnNew(final boolean returnNew) {
+        super.returnNew(returnNew);
+        return this;
+    }
+
+    @Override
+    public MongoFindAndReplace<T> upsert(final boolean upsert) {
+        super.upsert(upsert);
+        return this;
+    }
+
+    @Override
+    public MongoFindAndReplace where(final MongoQueryFilter filter) {
+        super.where(filter);
+        return this;
+    }
+
 }

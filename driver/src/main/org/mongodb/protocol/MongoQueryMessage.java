@@ -27,10 +27,10 @@ public class MongoQueryMessage extends MongoRequestMessage {
 
     public MongoQueryMessage(final String collectionName, final MongoFind find, final OutputBuffer buffer,
                              final Serializer<Document> serializer) {
-        super(collectionName, find.getFilter().toDocument(), find.getOptions(), find.getReadPreference(), buffer);
+        super(collectionName, find.getOptions(), find.getReadPreference(), buffer);
 
         init(find);
-        addDocument(find.getFilter().toDocument(), serializer);
+        addDocument(getQueryDocument(find), serializer);
         if (find.getFields() != null) {
             addDocument(find.getFields().toDocument(), serializer);
         }
@@ -39,7 +39,7 @@ public class MongoQueryMessage extends MongoRequestMessage {
 
     public MongoQueryMessage(final String collectionName, final MongoCommandOperation commandOperation,
                              final OutputBuffer buffer, final Serializer<Document> serializer) {
-        super(collectionName, commandOperation.getCommand().toDocument(), 0, commandOperation.getReadPreference(), buffer);
+        super(collectionName, 0, commandOperation.getReadPreference(), buffer);
 
         init(commandOperation);
         addDocument(commandOperation.getCommand().toDocument(), serializer);
@@ -55,12 +55,55 @@ public class MongoQueryMessage extends MongoRequestMessage {
         writeQueryPrologue(allOptions, query);
     }
 
-    private void writeQueryPrologue(final int queryOptions,
-                                    final MongoQuery query) {
+    private void writeQueryPrologue(final int queryOptions, final MongoQuery query) {
         buffer.writeInt(queryOptions);
         buffer.writeCString(collectionName);
 
         buffer.writeInt(query.getSkip());
-        buffer.writeInt(query.getBatchSize());
+        buffer.writeInt(chooseBatchSize(query.getBatchSize(), query.getLimit(), 0));
+    }
+
+    // TODO: test this, extensively
+    private int chooseBatchSize(int batchSize, int limit, int fetched) {
+        int bs = Math.abs(batchSize);
+        int remaining = limit > 0 ? limit - fetched : 0;
+        int res;
+        if (bs == 0 && remaining > 0) {
+            res = remaining;
+        }
+        else if (bs > 0 && remaining == 0) {
+            res = bs;
+        }
+        else {
+            res = Math.min(bs, remaining);
+        }
+
+        if (batchSize < 0) {
+            // force close
+            res = -res;
+        }
+
+        if (res == 1) {
+            // optimization: use negative batchsize to close cursor
+            res = -1;
+        }
+        return res;
+    }
+
+    private Document getQueryDocument(final MongoFind find) {
+        Document document = new Document();
+        document.put("query", find.getFilter().toDocument());
+        if (find.getOrder() != null && !find.getOrder().toDocument().isEmpty()) {
+            document.put("orderby", find.getOrder().toDocument());
+        }
+        if (find.isSnapshotMode()) {
+            document.put("$snapshot", true);
+        }
+        // TODO: only to mongos according to spec
+        if (find.getReadPreference() != null) {
+            document.put("$readPreference", find.getReadPreference().toDocument());
+        }
+        // TODO: explain and hint
+        return document;
     }
 }

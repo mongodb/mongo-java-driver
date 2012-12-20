@@ -55,6 +55,17 @@ public class DocumentSerializer implements Serializer<Document> {
         bsonWriter.writeEndDocument();
     }
 
+    private void serializeMap(final BSONWriter bsonWriter, final Map<String, Object> document,
+                          final BsonSerializationOptions options) {
+        bsonWriter.writeStartDocument();
+
+        for (final Map.Entry<String, Object> entry : document.entrySet()) {
+            bsonWriter.writeName(entry.getKey());
+            writeValue(bsonWriter, entry.getValue(), options);
+        }
+        bsonWriter.writeEndDocument();
+    }
+
     protected void beforeFields(final BSONWriter bsonWriter, final Document document,
                                 final BsonSerializationOptions options) {
     }
@@ -64,8 +75,8 @@ public class DocumentSerializer implements Serializer<Document> {
     }
 
     protected void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
-        if (value instanceof Document) {
-            serialize(bsonWriter, (Document) value, options);
+        if (value instanceof Map) {
+            serializeMap(bsonWriter, (Map<String, Object>) value, options);
         }
         else if (value instanceof Iterable) {
             serializeArray(bsonWriter, (Iterable) value, options);

@@ -40,6 +40,7 @@ public class CollectibleDocumentSerializer extends DocumentSerializer {
         this.idGenerator = idGenerator;
     }
 
+    @Override
     protected void beforeFields(final BSONWriter bsonWriter, final Document document,
                                 final BsonSerializationOptions options) {
         if (document.get(ID_FIELD_NAME) == null) {
@@ -49,6 +50,7 @@ public class CollectibleDocumentSerializer extends DocumentSerializer {
         writeValue(bsonWriter, document.get(ID_FIELD_NAME), options);
     }
 
+    @Override
     protected boolean skipField(String key) {
         return key.equals(ID_FIELD_NAME);
     }

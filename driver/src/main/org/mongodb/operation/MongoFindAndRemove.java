@@ -21,4 +21,11 @@ public class MongoFindAndRemove extends MongoFindAndModify {
     public boolean isRemove() {
         return true;
     }
+
+    @Override
+    public MongoFindAndRemove where(final MongoQueryFilter filter) {
+        super.where(filter);
+        return this;
+    }
+
 }

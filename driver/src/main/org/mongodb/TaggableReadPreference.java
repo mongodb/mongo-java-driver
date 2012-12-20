@@ -53,7 +53,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
     }
 
     @Override
-    public Document toMongoDocument() {
+    public Document toDocument() {
         final Document readPrefObject = new Document("mode", getName());
 
         if (!_tags.isEmpty()) {

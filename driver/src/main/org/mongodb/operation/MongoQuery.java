@@ -21,9 +21,9 @@ import org.mongodb.ReadPreference;
 
 public abstract class MongoQuery extends MongoOperation {
     private ReadPreference readPreference;
-    protected int batchSize;  // TODO: add setter, make private
-    private int skip;    // TODO: add setter
-    private long limit;        // TODO: add setter
+    protected int batchSize;  // TODO: make private
+    private int skip;
+    private int limit;
 
     public MongoQuery readPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
@@ -54,7 +54,7 @@ public abstract class MongoQuery extends MongoOperation {
         return skip;
     }
 
-    public long getLimit() {
+    public int getLimit() {
         return limit;
     }
 
@@ -63,7 +63,7 @@ public abstract class MongoQuery extends MongoOperation {
         return this;
     }
 
-    public MongoQuery limit(final long limit) {
+    public MongoQuery limit(final int limit) {
         this.limit = limit;
         return this;
     }

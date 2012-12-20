@@ -23,6 +23,8 @@ import org.mongodb.ReadPreference;
 public class MongoFind extends MongoQuery {
     private MongoQueryFilter filter;
     private MongoFieldSelector fields;
+    private MongoSortCriteria sortCriteria;
+    private boolean snapshotMode;
 
     public MongoFind() {
     	this.filter = new QueryFilterDocument();
@@ -36,6 +38,14 @@ public class MongoFind extends MongoQuery {
         return filter;
     }
 
+    public MongoSortCriteria getOrder() {
+        return sortCriteria;
+    }
+
+    public boolean isSnapshotMode() {
+        return snapshotMode;
+    }
+
     public MongoFind where(final MongoQueryFilter filter) {
         this.filter = filter;
         return this;
@@ -47,34 +57,30 @@ public class MongoFind extends MongoQuery {
     }
 
     // TODO: implement order
-    public MongoFind order(final String condition) {
-        throw new UnsupportedOperationException();
+    public MongoFind order(MongoSortCriteria sortCriteria) {
+        this.sortCriteria = sortCriteria;
+        return this;
     }
 
-    public MongoFind limit(final long limit) {
+    @Override
+    public MongoFind limit(final int limit) {
         super.limit(limit);
         return this;
     }
 
+    @Override
     public MongoFind batchSize(final int batchSize) {
         super.batchSize(batchSize);
         return this;
-    }
-
-    public MongoFind offset(final int value) {
-        throw new UnsupportedOperationException();
     }
 
     public MongoFind hintIndex(final String idxName) {
         throw new UnsupportedOperationException();
     }
 
-    public MongoFind enableSnapshotMode() {
-        throw new UnsupportedOperationException();
-    }
-
-    public MongoFind disableSnapshotMode() {
-        throw new UnsupportedOperationException();
+    public MongoFind snapshot() {
+        this.snapshotMode = true;
+        return this;
     }
 
     public MongoFind disableTimeout() {

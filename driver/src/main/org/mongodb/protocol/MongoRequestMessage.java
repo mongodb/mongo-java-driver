@@ -21,13 +21,11 @@ import org.bson.BSONBinaryWriter;
 import org.bson.BinaryWriterSettings;
 import org.bson.BsonWriterSettings;
 import org.bson.io.OutputBuffer;
-import org.bson.types.Document;
 import org.mongodb.ReadPreference;
 import org.mongodb.serialization.Serializer;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -43,7 +41,6 @@ public class MongoRequestMessage {
     protected final OutputBuffer buffer;
     private final int id;
     private final OpCode opCode;
-    protected final Document query;  // TODO: does this field need to exist?
     private volatile int numDocuments; // only one thread will modify this field, so volatile is sufficient synchronization
     private final int messageStartPosition;
 
@@ -52,19 +49,15 @@ public class MongoRequestMessage {
     }
 
     MongoRequestMessage(final String collectionName, final OpCode opCode, final OutputBuffer buffer) {
-        this(collectionName, opCode, null, -1, null, buffer);
+        this(collectionName, opCode, -1, null, buffer);
     }
 
-    MongoRequestMessage(final String collectionName, final OpCode opCode, final Document query, final OutputBuffer buffer) {
-        this(collectionName, opCode, query, 0, null, buffer);
-    }
-
-    MongoRequestMessage(final String collectionName, final Document query, final int options, final ReadPreference readPref,
+    MongoRequestMessage(final String collectionName, final int options, final ReadPreference readPref,
                         final OutputBuffer buffer) {
-        this(collectionName, OpCode.OP_QUERY, query, options, readPref, buffer);
+        this(collectionName, OpCode.OP_QUERY, options, readPref, buffer);
     }
 
-    MongoRequestMessage(final String collectionName, final OpCode opCode, final Document query,
+    MongoRequestMessage(final String collectionName, final OpCode opCode,
                         final int options, final ReadPreference readPreference, final OutputBuffer buffer) {
         this.collectionName = collectionName;
 
@@ -73,7 +66,6 @@ public class MongoRequestMessage {
 
         id = REQUEST_ID.getAndIncrement();
         this.opCode = opCode;
-        this.query = query;
 
         writeMessagePrologue(opCode);
     }
@@ -107,10 +99,6 @@ public class MongoRequestMessage {
 
     OpCode getOpCode() {
         return opCode;
-    }
-
-    Map<String, Object> getQuery() {
-        return query;
     }
 
     String getNamespace() {
