@@ -18,7 +18,6 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.bson.types.Document;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.MongoCommand;
@@ -68,12 +67,12 @@ public class CountCommand extends AbstractCommand {
 
     public static class CountCommandResult extends CommandResult {
 
-        public CountCommandResult(final Document document) {
-            super(document);
+        public CountCommandResult(final CommandResult baseResult) {
+            super(baseResult);
         }
 
         public long getCount() {
-            return ((Double) getDocument().get("n")).longValue();
+            return ((Double) getResponse().get("n")).longValue();
         }
     }
 }

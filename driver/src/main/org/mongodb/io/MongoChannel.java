@@ -47,6 +47,10 @@ public class MongoChannel {
         this.pool = pool;
     }
 
+    public ServerAddress getAddress() {
+        return address;
+    }
+
     // TODO: piggy back getLastError onto same buffer
     public void sendMessage(final MongoRequestMessage message) throws IOException {
         if (socketChannel == null) {

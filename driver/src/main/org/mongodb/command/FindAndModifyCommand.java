@@ -18,14 +18,13 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.bson.types.Document;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFindAndModify;
 import org.mongodb.result.CommandResult;
-import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
 public abstract class FindAndModifyCommand<T> extends AbstractCommand {
@@ -80,13 +79,13 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
 
     public static class FindAndModifyCommandResult<T> extends CommandResult {
 
-        public FindAndModifyCommandResult(final Document document) {
-            super(document);
+        public FindAndModifyCommandResult(final CommandResult baseResult) {
+            super(baseResult);
         }
 
         public T getValue() {
             // TODO: any way to remove the warning?  This could be a design flaw
-            return (T) getDocument().get("value");
+            return (T) getResponse().get("value");
         }
     }
 

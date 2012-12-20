@@ -33,6 +33,7 @@ import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
+import org.mongodb.result.CommandResult;
 import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.serialization.PrimitiveSerializers;
@@ -61,9 +62,9 @@ public class SingleServerMongoClientTest {
     @Test
     public void testCommandExecution() {
         final MongoCommandOperation cmd = new MongoCommandOperation(new CommandDocument("count", "test")).readPreference(ReadPreference.primary());
-        final Document document = mongoClient.getOperations().executeCommand(DB_NAME, cmd, new DocumentSerializer(PrimitiveSerializers.createDefault()));
-        assertNotNull(document);
-        assertTrue(document.get("n") instanceof Double);
+        final CommandResult res = mongoClient.getOperations().executeCommand(DB_NAME, cmd, new DocumentSerializer(PrimitiveSerializers.createDefault()));
+        assertNotNull(res);
+        assertTrue(res.getResponse().get("n") instanceof Double);
     }
 
     @Test
@@ -72,10 +73,10 @@ public class SingleServerMongoClientTest {
         final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
         final MongoInsert<Document> insert = new MongoInsert<Document>(new Document());
         mongoClient.getOperations().insert(new MongoNamespace(DB_NAME, colName), insert, new DocumentSerializer(primitiveSerializers));
-        final Document document = mongoClient.getOperations().executeCommand(DB_NAME,
+        final CommandResult res = mongoClient.getOperations().executeCommand(DB_NAME,
                 new MongoCommandOperation(new CommandDocument("count", colName)).readPreference(ReadPreference.primary()),
                 new DocumentSerializer(primitiveSerializers));
-        assertEquals(1.0, document.get("n"));
+        assertEquals(1.0, res.getResponse().get("n"));
     }
 
     @Test

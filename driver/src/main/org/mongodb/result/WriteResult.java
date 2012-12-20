@@ -1,10 +1,10 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -17,5 +17,23 @@
 
 package org.mongodb.result;
 
-public class MongoResult {
+import org.mongodb.operation.MongoWrite;
+
+public class WriteResult extends MongoResult {
+    private final MongoWrite write;
+    private final CommandResult getLastErrorResult;
+
+    public WriteResult(final MongoWrite write, final CommandResult getLastErrorResult) {
+        this.write = write;
+        this.getLastErrorResult = getLastErrorResult;
+    }
+
+    public MongoWrite getWrite() {
+        return write;
+    }
+
+
+    public CommandResult getGetLastErrorResult() {
+        return getLastErrorResult;
+    }
 }

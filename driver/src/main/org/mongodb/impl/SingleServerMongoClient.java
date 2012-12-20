@@ -35,6 +35,7 @@ import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
+import org.mongodb.result.CommandResult;
 import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.QueryResult;
@@ -180,8 +181,8 @@ public class SingleServerMongoClient implements MongoClient {
 
     private class SingleServerMongoOperations implements MongoOperations {
         @Override
-        public Document executeCommand(final String database, final MongoCommandOperation commandOperation,
-                                       final Serializer<Document> serializer) {
+        public CommandResult executeCommand(final String database, final MongoCommandOperation commandOperation,
+                                            final Serializer<Document> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().executeCommand(database, commandOperation, serializer);

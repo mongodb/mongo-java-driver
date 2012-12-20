@@ -18,15 +18,40 @@
 package org.mongodb.result;
 
 import org.bson.types.Document;
+import org.mongodb.ServerAddress;
 
 public class CommandResult {
-    private final Document document;
+    private final Document command;
+    private final ServerAddress address;
+    private final Document response;
 
-    public CommandResult(final Document document) {
-        this.document = document;
+    public CommandResult(final Document response) {
+        this.response = response;
+        address = null;
+        command = null;
     }
 
-    public Document getDocument() {
-        return document;
+    public CommandResult(final Document command, final ServerAddress address, final Document response) {
+        this.command = command;
+        this.address = address;
+        this.response = response;
+    }
+
+    public CommandResult(final CommandResult baseResult) {
+        this.command = baseResult.command;
+        this.address = baseResult.address;
+        this.response = baseResult.response;
+    }
+
+    public Document getCommand() {
+        return command;
+    }
+
+    public ServerAddress getAddress() {
+        return address;
+    }
+
+    public Document getResponse() {
+        return response;
     }
 }

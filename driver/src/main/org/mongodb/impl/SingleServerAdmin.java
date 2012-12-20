@@ -16,11 +16,11 @@
 
 package org.mongodb.impl;
 
-import org.bson.types.Document;
 import org.mongodb.ClientAdmin;
 import org.mongodb.CommandDocument;
 import org.mongodb.MongoOperations;
 import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
@@ -44,9 +44,9 @@ public class SingleServerAdmin implements ClientAdmin {
     //http://docs.mongodb.org/manual/reference/command/ping/
     @Override
     public double ping() {
-        final Document pingResult = operations.executeCommand(ADMIN_DATABASE, PING_COMMAND, documentSerializer);
+        final CommandResult pingResult = operations.executeCommand(ADMIN_DATABASE, PING_COMMAND, documentSerializer);
 
-        return (Double) pingResult.get("ok");
+        return (Double) pingResult.getResponse().get("ok");
     }
 
     private static final class PingCommand extends MongoCommandOperation {

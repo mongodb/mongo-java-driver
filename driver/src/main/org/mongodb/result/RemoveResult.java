@@ -17,11 +17,10 @@
 
 package org.mongodb.result;
 
-import org.bson.types.Document;
-import org.mongodb.protocol.MongoReplyMessage;
+import org.mongodb.operation.MongoRemove;
 
-public class RemoveResult extends MongoResult {
-    public RemoveResult(final MongoReplyMessage<Document> replyMessage) {
-        super(replyMessage);
+public class RemoveResult extends WriteResult {
+    public RemoveResult(final MongoRemove remove, final CommandResult getLastErrorResult) {
+        super(remove, getLastErrorResult);
     }
 }
