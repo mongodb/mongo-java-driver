@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.result.QueryResult;
@@ -23,20 +24,22 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
 
 import java.io.Closeable;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 // TODO: Handle getmore
 public class MongoCursor<T> implements Iterator<T>, Closeable {
     private final MongoCollection<T> collection;
     private final MongoFind find;
-    private final QueryResult<T> currentResult;
-    private final Iterator<T> currentIterator;
+    private QueryResult<T> currentResult;
+    private Iterator<T> currentIterator;
 
     public MongoCursor(final MongoCollection<T> collection, final MongoFind find) {
         this.collection = collection;
         this.find = find;
         currentResult = collection.getClient().getOperations().query(collection.getNamespace(), find,
-                new DocumentSerializer(collection.getPrimitiveSerializers()),
-                collection.getSerializer());
+                                                                     new DocumentSerializer(
+                                                                             collection.getPrimitiveSerializers()),
+                                                                     collection.getSerializer());
         currentIterator = currentResult.getResults().iterator();
     }
 
@@ -49,14 +52,38 @@ public class MongoCursor<T> implements Iterator<T>, Closeable {
 
     @Override
     public boolean hasNext() {
-        // TODO: Handle getMore
+        if (currentIterator.hasNext()) {
+            return true;
+        }
+
+        if (currentResult.getCursorId() == 0) {
+            return false;
+        }
+
+        getMore();
         return currentIterator.hasNext();
     }
 
     @Override
     public T next() {
-        // TODO: Handle getMore
+        if (currentIterator.hasNext()) {
+            return currentIterator.next();
+        }
+
+        if (currentResult.getCursorId() == 0) {
+            throw new NoSuchElementException();
+        }
+
+        getMore();
         return currentIterator.next();
+    }
+
+    private void getMore() {
+        currentResult = collection.getClient().
+                getOperations().getMore(collection.getNamespace(),
+                                        new GetMore(currentResult.getCursorId(), find.getBatchSize()),
+                                        collection.getSerializer());
+        currentIterator = currentResult.getResults().iterator();
     }
 
     @Override
