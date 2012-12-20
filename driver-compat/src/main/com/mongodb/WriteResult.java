@@ -21,9 +21,21 @@ import org.mongodb.WriteConcern;
 import org.mongodb.result.MongoResult;
 
 public class WriteResult {
+
     WriteResult(final MongoResult result, final WriteConcern writeConcern) {
 
     }
 
 
+    public com.mongodb.CommandResult getLastError() {
+        throw new UnsupportedOperationException();
+    }
+
+    public DBObject getLastConcern() {
+        throw new UnsupportedOperationException();
+    }
+
+    public CommandResult getCachedLastError() {
+        throw new UnsupportedOperationException();
+    }
 }

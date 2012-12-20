@@ -20,7 +20,11 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.operation.MongoFind;
 
-public class DBCursor {
+import java.io.Closeable;
+import java.util.Iterator;
+import java.util.List;
+
+public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeable {
     private final MongoCollection<DBObject> collection;
     private final MongoFind find;
     private MongoCursor<DBObject> cursor;
@@ -41,7 +45,7 @@ public class DBCursor {
     }
 
     public DBCursor skip(final int skip) {
-        find.offset(skip);
+        find.skip(skip);
         return this;
     }
 
@@ -59,5 +63,69 @@ public class DBCursor {
         return cursor.next();
     }
 
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException();
+    }
+
+
+    public void addOption(final int option) {
+        throw new UnsupportedOperationException();
+    }
+
+    public DBCursor snapshot() {
+        return this;
+    }
+
+    public DBCursor sort(final DBObject sort) {
+        find.order(DBObjects.toSortCriteriaDocument(sort));
+        return this;
+    }
+
+    /**
+     * @param hint
+     */
+    public DBCursor hint(final String hint) {
+        return this;
+    }
+
+    public void setReadPreference(final ReadPreference readPreference) {
+        throw new UnsupportedOperationException();
+    }
+
+    public DBObject getQuery() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void close() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Iterator<DBObject> iterator() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Converts this cursor to an array.
+     *
+     * @return an array of elements
+     * @throws MongoException
+     */
+    public List<DBObject> toArray() {
+        return toArray(Integer.MAX_VALUE);
+    }
+
+    /**
+     * Converts this cursor to an array.
+     *
+     * @param max the maximum number of objects to return
+     * @return an array of objects
+     * @throws MongoException
+     */
+    public List<DBObject> toArray(int max) {
+        throw new UnsupportedOperationException();
+    }
 
 }

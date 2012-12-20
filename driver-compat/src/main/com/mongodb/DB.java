@@ -16,9 +16,12 @@
 
 package com.mongodb;
 
+import com.mongodb.serializers.CollectibleDBObjectSerializer;
 import org.mongodb.MongoDatabase;
 import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.serializers.ObjectIdGenerator;
 
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DB {
@@ -75,7 +78,7 @@ public class DB {
         final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
         collection = new DBCollection(database.getTypedCollection(name,
                 primitiveSerializers,
-                new DBObjectSerializer(primitiveSerializers)), this);
+                new CollectibleDBObjectSerializer(primitiveSerializers, new ObjectIdGenerator())), this);
         final DBCollection old = collectionCache.putIfAbsent(name, collection);
         return old != null ? old : collection;
     }
@@ -86,5 +89,95 @@ public class DB {
      */
     public void dropDatabase(){
         database.admin().drop();
+    }
+    /**
+     * Returns a collection matching a given string.
+     * @param s the name of the collection
+     * @return the collection
+     */
+    public DBCollection getCollectionFromString( String s ){
+        DBCollection foo = null;
+
+        int idx = s.indexOf( "." );
+        while ( idx >= 0 ){
+            String b = s.substring( 0 , idx );
+            s = s.substring( idx + 1 );
+            if ( foo == null )
+                foo = getCollection( b );
+            else
+                foo = foo.getCollection( b );
+            idx = s.indexOf( "." );
+        }
+
+        if ( foo != null )
+            return foo.getCollection( s );
+        return getCollection( s );
+    }
+
+    public String getName() {
+        return database.getName();
+    }
+
+    /**
+     * Returns a set containing the names of all collections in this database.
+     * @return the names of collections in this database
+     * @throws MongoException
+     */
+    public Set<String> getCollectionNames() {
+        return database.admin().getCollectionNames();
+    }
+
+    public void createCollection(final String collName, final DBObject dbObject) {
+        throw new UnsupportedOperationException();
+
+    }
+
+    public boolean authenticate(final String username, final char[] password) {
+        throw new UnsupportedOperationException();
+    }
+
+    public CommandResult command(final DBObject cmd) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Executes a database command.
+     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
+     * @param cmd dbobject representing the command to execute
+     * @param options query options to use
+     * @param readPrefs ReadPreferences for this command (nodes selection is the biggest part of this)
+     * @return result of command from the database
+     * @throws MongoException
+     * @dochub commands
+     */
+    public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs ){
+//        readPrefs = getCommandReadPreference(cmd, readPrefs);
+//        cmd = wrapCommand(cmd, readPrefs);
+//
+//        Iterator<DBObject> i =
+//                getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, readPrefs ,
+//                                             DefaultDBDecoder.FACTORY.create(), encoder);
+//        if ( i == null || ! i.hasNext() )
+//            return null;
+//
+//        DBObject res = i.next();
+//        ServerAddress sa = (i instanceof Result) ? ((Result) i).getServerAddress() : null;
+//        CommandResult cr = new CommandResult(cmd, sa);
+//        cr.putAll( res );
+//        return cr;
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Gets another database on same server
+     * @param name name of the database
+     * @return
+     */
+    public DB getSisterDB( String name ){
+        return mongo.getDB( name );
+    }
+
+    MongoDatabase toNew() {
+        return database;
     }
 }

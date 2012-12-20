@@ -17,7 +17,11 @@
 package com.mongodb;
 
 import org.mongodb.MongoCollection;
+import org.mongodb.command.DropCollectionCommand;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoFindAndRemove;
+import org.mongodb.operation.MongoFindAndReplace;
+import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
@@ -65,6 +69,16 @@ public class DBCollection {
         final MongoInsert<DBObject> insert = new MongoInsert<DBObject>(documents).writeConcern(writeConcern.toNew());
         final InsertResult result = collection.insert(insert);
         return new WriteResult(result, writeConcern.toNew());
+    }
+
+
+    public WriteResult save(final DBObject obj) {
+        return save(obj, getWriteConcern());
+    }
+
+    public WriteResult save(final DBObject obj, final WriteConcern wc) {
+        // TODO: wrong semantics!!!  Should be an insert if _id is null.  See existing implementation
+        return update(new BasicDBObject("_id", obj.get("_id")), obj, true, false);
     }
 
     /**
@@ -152,6 +166,10 @@ public class DBCollection {
         return update(q, o, false, true);
     }
 
+    public WriteResult remove(final DBObject filter) {
+        return remove(filter, getWriteConcern());
+    }
+
 
     public WriteResult remove(final DBObject filter, final WriteConcern writeConcernToUse) {
         final MongoRemove remove = new MongoRemove(DBObjects.toQueryFilterDocument(filter));
@@ -165,6 +183,17 @@ public class DBCollection {
                 select(DBObjects.toFieldSelectorDocument(fields)).
                 readPreference(getReadPreference().toNew()));
     }
+
+    /**
+     * Queries for all objects in this collection.
+     *
+     * @return a cursor which will iterate over every object
+     * @dochub find
+     */
+    public DBCursor find() {
+        return find(new BasicDBObject(), null);
+    }
+
 
     /**
      * Returns a single object from this collection.
@@ -366,12 +395,12 @@ public class DBCollection {
      *
      * @param query     query to match
      * @param fields    fields to return
-     * @param readPrefs ReadPreferences for this command
+     * @param readPreference ReadPreferences for this command
      * @return
      * @throws MongoException
      */
-    public long getCount(DBObject query, DBObject fields, ReadPreference readPrefs) {
-        return getCount(query, fields, 0, 0, readPrefs);
+    public long getCount(DBObject query, DBObject fields, ReadPreference readPreference) {
+        return getCount(query, fields, 0, 0, readPreference);
     }
 
     /**
@@ -396,23 +425,189 @@ public class DBCollection {
      * @param fields    fields to return. This is ignored.
      * @param limit     limit the count to this value
      * @param skip      number of entries to skip
-     * @param readPrefs ReadPreferences for this command
+     * @param readPreference ReadPreferences for this command
      * @return number of documents that match query and fields
      * @throws MongoException
      */
 
-    public long getCount(DBObject query, DBObject fields, long limit, long skip, ReadPreference readPrefs) {
+    public long getCount(DBObject query, DBObject fields, long limit, long skip, ReadPreference readPreference) {
+        if (limit > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("limit is too large: " + limit);
+        }
+
+        if (skip > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("skip is too large: " + skip);
+        }
         MongoFind find = new MongoFind(DBObjects.toQueryFilterDocument(query));
-        find.limit(limit).skip((int) skip).readPreference(
-                readPrefs.toNew());   // TODO: investigate case of int to long for skip
+        find.limit((int) limit).skip((int) skip).readPreference(readPreference.toNew());   // TODO: investigate case of int to long for skip
         return collection.count(find);
     }
 
-    public ReadPreference getReadPreference() {
-        return readPreference != null ? readPreference : database.getReadPreference();
+    public String getName() {
+        return collection.getName();
     }
 
+    /**
+     * Finds a collection that is prefixed with this collection's name. A typical use of this might be
+     * <blockquote><pre>
+     *    DBCollection users = mongo.getCollection( "wiki" ).getCollection( "users" );
+     * </pre></blockquote>
+     * Which is equivalent to
+     * <pre><blockquote>
+     *   DBCollection users = mongo.getCollection( "wiki.users" );
+     * </pre></blockquote>
+     *
+     * @param n the name of the collection to find
+     * @return the matching collection
+     */
+    public DBCollection getCollection(String n) {
+        return database.getCollection(getName() + "." + n);
+    }
+
+    public void ensureIndex(final BasicDBObject fields) {
+        ensureIndex(fields, null);
+    }
+
+    public void ensureIndex(final BasicDBObject fields, final BasicDBObject opts) {
+        // TODO: implement this
+    }
+
+    /**
+     * Finds the first document in the query and updates it.
+     *
+     * @param query     query to match
+     * @param fields    fields to be returned
+     * @param sort      sort to apply before picking first document
+     * @param remove    if true, document found will be removed
+     * @param update    update to apply
+     * @param returnNew if true, the updated document is returned, otherwise the old document is returned (or it would
+     *                  be lost forever)
+     * @param upsert    do upsert (insert if document not present)
+     * @return the document
+     * @throws MongoException
+     */
+    public DBObject findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update,
+                                  boolean returnNew, boolean upsert) {
+        if (remove) {
+            MongoFindAndRemove findAndRemove = new MongoFindAndRemove().where(DBObjects.toQueryFilterDocument(query))
+                    .where(DBObjects.toQueryFilterDocument(query));
+            return collection.findAndRemove(findAndRemove);
+        }
+        if (update != null && !update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
+            MongoFindAndUpdate findAndUpdate = new MongoFindAndUpdate()
+                    .where(DBObjects.toQueryFilterDocument(query))
+                    .updateWith(DBObjects.toUpdateOperationsDocument(update))
+                    .returnNew(returnNew)
+                    .upsert(upsert)
+                    .sortBy(DBObjects.toSortCriteriaDocument(sort));
+            return collection.findAndUpdate(findAndUpdate);
+        }
+        else {
+            MongoFindAndReplace findAndReplace = new MongoFindAndReplace<DBObject>(update)
+                    .where(DBObjects.toQueryFilterDocument(query))
+                    .returnNew(returnNew)
+                    .upsert(upsert)
+                    .sortBy(DBObjects.toSortCriteriaDocument(sort));
+            return collection.findAndReplace(findAndReplace);
+        }
+    }
+
+    /**
+     * Returns the database this collection is a member of.
+     *
+     * @return this collection's database
+     */
+    public DB getDB() {
+        return database;
+    }
+
+    /**
+     * Set the write concern for this collection. Will be used for writes to this collection. Overrides any setting of
+     * write concern at the DB level. See the documentation for {@link WriteConcern} for more information.
+     *
+     * @param concern write concern to use
+     */
+    public void setWriteConcern(WriteConcern concern) {
+        concern = concern;
+    }
+
+    /**
+     * Get the write concern for this collection.
+     *
+     * @return
+     */
     public WriteConcern getWriteConcern() {
-        return writeConcern != null ? writeConcern : database.getWriteConcern();
+        if (writeConcern != null) {
+            return writeConcern;
+        }
+        return database.getWriteConcern();
+    }
+
+    /**
+     * Sets the read preference for this collection. Will be used as default for reads from this collection; overrides
+     * DB & Connection level settings. See the * documentation for {@link ReadPreference} for more information.
+     *
+     * @param preference Read Preference to use
+     */
+    public void setReadPreference(ReadPreference preference) {
+        this.readPreference = preference;
+    }
+
+    /**
+     * Gets the read preference
+     *
+     * @return
+     */
+    public ReadPreference getReadPreference() {
+        if (readPreference != null) {
+            return readPreference;
+        }
+        return database.getReadPreference();
+    }
+
+
+    /**
+     * Drops (deletes) this collection. Use with care.
+     *
+     * @throws MongoException
+     */
+    public void drop() {
+        new DropCollectionCommand(database.toNew(), getName()).execute();
+    }
+
+    /**
+     * performs a map reduce operation
+     *
+     * @param command object representing the parameters
+     * @return
+     * @throws MongoException
+     */
+    public MapReduceOutput mapReduce(MapReduceCommand command) {
+        DBObject cmd = command.toDBObject();
+        // if type in inline, then query options like slaveOk is fine
+        CommandResult res = null;
+        if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
+            res = database.command(cmd, getOptions(),
+                                   command.getReadPreference() != null ? command.getReadPreference() : getReadPreference());
+        }
+        else {
+            res = database.command(cmd);
+        }
+        res.throwOnError();
+        return new MapReduceOutput(this, cmd, res);
+    }
+
+    public int getOptions() {
+        return 0;   // TODO: Support options
+    }
+
+    /**
+     * Return a list of the indexes for this collection.  Each object in the list is the "info document" from MongoDB
+     *
+     * @return list of index documents
+     * @throws MongoException
+     */
+    public List<DBObject> getIndexInfo() {
+        throw new UnsupportedOperationException();
     }
 }

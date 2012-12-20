@@ -23,7 +23,53 @@ public class ReadPreference {
         return org.mongodb.ReadPreference.primary();
     }
 
+    /**
+     * @return ReadPreference which reads from primary only
+     */
     public static ReadPreference primary() {
-        return new ReadPreference();
+        return _PRIMARY;
     }
+
+    /**
+     * @return ReadPreference which reads primary if available.
+     */
+    public static ReadPreference primaryPreferred() {
+        return _PRIMARY_PREFERRED;
+    }
+
+     /**
+     * @return ReadPreference which reads secondary.
+     */
+    public static ReadPreference secondary() {
+        return _SECONDARY;
+    }
+
+    /**
+     * @return ReadPreference which reads secondary if available, otherwise from primary.
+     */
+    public static ReadPreference secondaryPreferred() {
+        return _SECONDARY_PREFERRED;
+    }
+
+    /**
+     * @return ReadPreference which reads nearest node.
+     */
+    public static ReadPreference nearest() {
+        return _NEAREST;
+    }
+
+    private static final ReadPreference _PRIMARY;
+    private static final ReadPreference _SECONDARY;
+    private static final ReadPreference _SECONDARY_PREFERRED;
+    private static final ReadPreference _PRIMARY_PREFERRED;
+    private static final ReadPreference _NEAREST;
+
+    static {
+        _PRIMARY = new ReadPreference();
+        _SECONDARY = _PRIMARY;
+        _SECONDARY_PREFERRED = _PRIMARY;
+        _PRIMARY_PREFERRED = _PRIMARY;
+        _NEAREST = _PRIMARY;
+    }
+
 }

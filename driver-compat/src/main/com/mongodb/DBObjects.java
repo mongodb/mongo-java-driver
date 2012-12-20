@@ -17,11 +17,16 @@
 
 package com.mongodb;
 
+import org.bson.BSONObject;
 import org.bson.types.Document;
 import org.mongodb.FieldSelectorDocument;
 import org.mongodb.QueryFilterDocument;
+import org.mongodb.SortCriteriaDocument;
 import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.operation.MongoFieldSelector;
+import org.mongodb.operation.MongoSortCriteria;
+
+import java.util.List;
 
 // TODO: Implement these methods
 public class DBObjects {
@@ -53,11 +58,25 @@ public class DBObjects {
         return doc;
     }
 
+    public static MongoSortCriteria toSortCriteriaDocument(final DBObject o) {
+        if (o == null) {
+            return null;
+        }
+
+        SortCriteriaDocument doc = new SortCriteriaDocument();
+        fill(o, doc);
+        return doc;
+    }
+
+
     // TODO: This needs to be recursive, to translate nested DBObject and DBList and arrays...
     private static void fill(final DBObject obj, final Document document) {
         for (String key : obj.keySet()) {
             Object value = obj.get(key);
-            if (value instanceof DBObject) {
+            if (value instanceof List) {
+               document.put(key, value);
+            }
+            else if (value instanceof BSONObject) {
                 Document nestedDocument = new Document();
                 fill((DBObject) value, nestedDocument);
                 document.put(key, nestedDocument);
