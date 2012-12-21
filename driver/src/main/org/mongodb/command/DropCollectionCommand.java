@@ -18,22 +18,22 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.MongoDatabase;
+import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommand;
 
 /**
  *
  */
 public class DropCollectionCommand extends AbstractCommand {
-    private final String collectionName;
+    private final MongoCollection collection;
 
-    public DropCollectionCommand(final MongoDatabase database, final String collectionName) {
-        super(database.getClient(), database.getName());
-        this.collectionName = collectionName;
+    public DropCollectionCommand(MongoCollection collection) {
+        super(collection.getDatabase());
+        this.collection = collection;
     }
 
     @Override
     public MongoCommand asMongoCommand() {
-        return new CommandDocument("drop", collectionName);
+        return new CommandDocument("drop", collection.getName());
     }
 }

@@ -18,18 +18,17 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.MongoClient;
-import org.mongodb.MongoNamespace;
+import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFindAndModify;
-import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 
 public class FindAndRemoveCommand<T> extends FindAndModifyCommand<T> {
-    public FindAndRemoveCommand(final MongoClient mongoClient, final MongoNamespace namespace,
+    public FindAndRemoveCommand(final MongoCollection<T> collection,
                                 final MongoFindAndModify findAndModify, final PrimitiveSerializers primitiveSerializers,
                                 final Serializer<T> serializer) {
-        super(mongoClient, namespace, findAndModify, primitiveSerializers, serializer);
+        super(collection, findAndModify, primitiveSerializers, serializer);
     }
 
     @Override

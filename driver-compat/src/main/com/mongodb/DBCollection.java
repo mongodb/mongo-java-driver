@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import org.bson.types.Document;
+import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.OrderBy;
 import org.mongodb.command.DropCollectionCommand;
@@ -471,17 +472,13 @@ public class DBCollection {
         ensureIndex(fields, null);
     }
 
+    // TODO: don't ignore opts
     public void ensureIndex(final BasicDBObject fields, final BasicDBObject opts) {
-        // TODO: implement this
-        if (fields.size() > 1) {
-            return;
+        List<Index.Key> keys = new ArrayList<Index.Key>();
+        for (String key : fields.keySet()) {
+            keys.add(new Index.Key(key, OrderBy.fromInt((Integer) fields.get(key))));
         }
-        else {
-            String field = fields.keySet().iterator().next();
-            Integer orderBy = (Integer) fields.get(field);
-            collection.admin().ensureIndex(field, OrderBy.fromInt(orderBy));
-        }
-
+        collection.admin().ensureIndex(new Index(keys.toArray(new Index.Key[keys.size()])));
     }
 
     /**
@@ -584,7 +581,7 @@ public class DBCollection {
      * @throws MongoException
      */
     public void drop() {
-        new DropCollectionCommand(database.toNew(), getName()).execute();
+        new DropCollectionCommand(collection).execute();
     }
 
     /**

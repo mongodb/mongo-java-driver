@@ -18,8 +18,7 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.MongoClient;
-import org.mongodb.MongoNamespace;
+import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFindAndModify;
 import org.mongodb.result.CommandResult;
@@ -28,16 +27,16 @@ import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
 public abstract class FindAndModifyCommand<T> extends AbstractCommand {
-    private final MongoNamespace namespace;
+    private final MongoCollection<T> collection;
     private final MongoFindAndModify findAndModify;
     private final PrimitiveSerializers primitiveSerializers;
     private final Serializer<T> serializer;
 
-    public FindAndModifyCommand(final MongoClient mongoClient, final MongoNamespace namespace,
+    public FindAndModifyCommand(MongoCollection<T> collection,
                                 final MongoFindAndModify findAndModify, final PrimitiveSerializers primitiveSerializers,
                                 final Serializer<T> serializer) {
-        super(mongoClient, namespace.getDatabaseName());
-        this.namespace = namespace;
+        super(collection.getDatabase());
+        this.collection = collection;
         this.findAndModify = findAndModify;
         this.primitiveSerializers = primitiveSerializers;
         this.serializer = serializer;
@@ -45,14 +44,14 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
 
     @Override
     public FindAndModifyCommandResult<T> execute() {
-        return new FindAndModifyCommandResult<T>(getMongoClient().getOperations().executeCommand(getDatabase(),
+        return new FindAndModifyCommandResult<T>(getMongoClient().getOperations().executeCommand(getDatabaseName(),
                 new MongoCommandOperation(asMongoCommand()),
                 new FindAndModifyCommandResultSerializer<T>(primitiveSerializers, serializer)));
 
     }
 
     protected CommandDocument getBaseCommandDocument() {
-        final CommandDocument cmd = new CommandDocument("findandmodify", namespace.getCollectionName());
+        final CommandDocument cmd = new CommandDocument("findandmodify", collection.getName());
         if (findAndModify.getFilter() != null) {
             cmd.put("query", findAndModify.getFilter());
         }

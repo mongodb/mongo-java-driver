@@ -16,7 +16,7 @@
 
 package org.mongodb.command;
 
-import org.mongodb.MongoClient;
+import org.mongodb.MongoDatabase;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.MongoCommand;
 
@@ -26,8 +26,8 @@ import org.mongodb.operation.MongoCommand;
 public class GetLastErrorCommand extends AbstractCommand {
     private final WriteConcern writeConcern;
 
-    public GetLastErrorCommand(final MongoClient mongoClient, final String database, WriteConcern writeConcern) {
-        super(mongoClient, database);
+    public GetLastErrorCommand(final MongoDatabase database, WriteConcern writeConcern) {
+        super(database);
         this.writeConcern = writeConcern;
     }
 

@@ -45,9 +45,8 @@ public class MongoCursorTest {
     @BeforeClass
     public static void setUpClass() throws UnknownHostException {
         mongoClient = new SingleServerMongoClient(new ServerAddress());
-        new DropDatabaseCommand(mongoClient, DB_NAME).execute();
         mongoDatabase = mongoClient.getDatabase(DB_NAME);
-        new DropDatabaseCommand(mongoClient, DB_NAME).execute();
+        new DropDatabaseCommand(mongoDatabase).execute();
     }
 
     @AfterClass

@@ -158,7 +158,7 @@ public class SingleChannelMongoClient implements MongoClient {
         try {
             channel.sendMessage(writeMessage);
             if (write.getWriteConcern().callGetLastError()) {
-                return new GetLastErrorCommand(this, namespace.getDatabaseName(), write.getWriteConcern()).execute();
+                return new GetLastErrorCommand(getDatabase(namespace.getDatabaseName()), write.getWriteConcern()).execute();
             }
             else {
                 return null;

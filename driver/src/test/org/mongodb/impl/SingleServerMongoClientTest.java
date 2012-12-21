@@ -51,7 +51,7 @@ public class SingleServerMongoClientTest {
     @BeforeClass
     public static void setUpClass() throws UnknownHostException {
         mongoClient = new SingleServerMongoClient(new ServerAddress());
-        new DropDatabaseCommand(mongoClient, DB_NAME).execute();
+        new DropDatabaseCommand(mongoClient.getDatabase(DB_NAME)).execute();
     }
 
     @AfterClass

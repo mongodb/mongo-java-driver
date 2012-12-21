@@ -19,6 +19,7 @@ package org.mongodb.command;
 
 import org.bson.types.Document;
 import org.mongodb.MongoClient;
+import org.mongodb.MongoDatabase;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
@@ -26,32 +27,33 @@ import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
 public abstract class AbstractCommand implements Command {
-    private final MongoClient mongoClient;
-    private final String database;
+    private final MongoDatabase database;
 
-    public AbstractCommand(final MongoClient mongoClient, final String database) {
-        this.mongoClient = mongoClient;
+    public AbstractCommand(final MongoDatabase database) {
         this.database = database;
     }
 
     public MongoClient getMongoClient() {
-        return mongoClient;
+        return database.getClient();
     }
 
-    public String getDatabase() {
+    public String getDatabaseName() {
+        return database.getName();
+    }
+
+    public MongoDatabase getDatabase() {
         return database;
     }
 
     public CommandResult execute() {
-        return new CommandResult(mongoClient.getOperations().executeCommand(database,
-                new MongoCommandOperation(asMongoCommand()), createResultSerializer()));
+        return database.executeCommand(new MongoCommandOperation(asMongoCommand()));
     }
 
-    // TODO: the class of the return type is weird for a command
     public abstract MongoCommand asMongoCommand();
 
+    // TODO: this may need to use collection's serializers
     protected Serializer<Document> createResultSerializer() {
-        return new DocumentSerializer(mongoClient.getPrimitiveSerializers());
+        return new DocumentSerializer(database.getPrimitiveSerializers());
     }
 
 

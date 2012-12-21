@@ -18,37 +18,30 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.MongoClient;
-import org.mongodb.MongoNamespace;
+import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommand;
-import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.result.CommandResult;
 
 // TODO: deal with !ok responses where the reason is because the collection does not exist.
 public class CountCommand extends AbstractCommand {
-    private final MongoNamespace namespace;
+    private final MongoCollection collection;
     private final MongoFind find;
 
-    public CountCommand(final MongoClient mongoClient, final MongoNamespace namespace) {
-        this(mongoClient, namespace, new MongoFind());
-    }
-
-    public CountCommand(final MongoClient client, final MongoNamespace namespace, final MongoFind find) {
-        super(client, namespace.getDatabaseName());
-        this.namespace = namespace;
+    public CountCommand(final MongoCollection collection, final MongoFind find) {
+        super(collection.getDatabase());
+        this.collection = collection;
         this.find = find;
     }
 
     @Override
     public CountCommandResult execute() {
-        return new CountCommandResult(getMongoClient().getOperations().executeCommand(getDatabase(),
-                new MongoCommandOperation(asMongoCommand()), createResultSerializer()));
+        return new CountCommandResult(super.execute());
     }
 
     @Override
     public MongoCommand asMongoCommand() {
-        final CommandDocument document = new CommandDocument("count", namespace.getCollectionName());
+        final CommandDocument document = new CommandDocument("count", collection.getName());
 
         if (find.getFilter() != null) {
             document.put("query", find.getFilter().toDocument());

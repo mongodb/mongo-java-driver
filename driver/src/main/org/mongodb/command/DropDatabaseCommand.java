@@ -17,12 +17,12 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.MongoClient;
+import org.mongodb.MongoDatabase;
 import org.mongodb.operation.MongoCommand;
 
 public class DropDatabaseCommand extends AbstractCommand {
-    public DropDatabaseCommand(final MongoClient mongoClient, final String database) {
-        super(mongoClient, database);
+    public DropDatabaseCommand(MongoDatabase database) {
+        super(database);
     }
 
     @Override

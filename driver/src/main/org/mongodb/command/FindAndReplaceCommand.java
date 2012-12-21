@@ -18,20 +18,19 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.MongoClient;
-import org.mongodb.MongoNamespace;
+import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFindAndReplace;
-import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 
 public class FindAndReplaceCommand<T> extends FindAndModifyCommand<T> {
     private final MongoFindAndReplace<T> findAndReplace;
 
-    public FindAndReplaceCommand(final MongoClient mongoClient, final MongoNamespace namespace,
+    public FindAndReplaceCommand(final MongoCollection<T> collection,
                                  final MongoFindAndReplace<T> findAndReplace,
                                  final PrimitiveSerializers primitiveSerializers, final Serializer<T> serializer) {
-        super(mongoClient, namespace, findAndReplace, primitiveSerializers, serializer);
+        super(collection, findAndReplace, primitiveSerializers, serializer);
         this.findAndReplace = findAndReplace;
     }
 

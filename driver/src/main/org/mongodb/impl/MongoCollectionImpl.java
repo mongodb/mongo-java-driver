@@ -73,29 +73,29 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public long count() {
-        return new CountCommand(getClient(), getNamespace()).execute().getCount();
+        return new CountCommand(this, new MongoFind()).execute().getCount();
     }
 
     @Override
     public long count(final MongoFind find) {
-        return new CountCommand(getClient(), getNamespace(), find).execute().getCount();
+        return new CountCommand(this, find).execute().getCount();
     }
 
     @Override
     public T findAndUpdate(final MongoFindAndUpdate findAndUpdate) {
-        return new FindAndUpdateCommand<T>(getClient(), getNamespace(), findAndUpdate, getPrimitiveSerializers(),
+        return new FindAndUpdateCommand<T>(this, findAndUpdate, getPrimitiveSerializers(),
                                            getSerializer()).execute().getValue();
     }
 
     @Override
     public T findAndReplace(final MongoFindAndReplace<T> findAndReplace) {
-        return new FindAndReplaceCommand<T>(getClient(), getNamespace(), findAndReplace, getPrimitiveSerializers(),
+        return new FindAndReplaceCommand<T>(this, findAndReplace, getPrimitiveSerializers(),
                                             getSerializer()).execute().getValue();
     }
 
     @Override
     public T findAndRemove(final MongoFindAndRemove findAndRemove) {
-        return new FindAndRemoveCommand<T>(getClient(), getNamespace(), findAndRemove, getPrimitiveSerializers(),
+        return new FindAndRemoveCommand<T>(this, findAndRemove, getPrimitiveSerializers(),
                                            getSerializer()).execute().getValue();
     }
 
