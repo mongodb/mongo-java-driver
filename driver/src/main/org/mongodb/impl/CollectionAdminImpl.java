@@ -74,7 +74,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
                 operations.executeCommand(databaseName, collStatsCommand, documentSerializer));
         handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
 
-        Object capped = commandResult.getDocument().get("capped");
+        Object capped = commandResult.getResponse().get("capped");
         return capped != null && ((Boolean) capped);
     }
 
