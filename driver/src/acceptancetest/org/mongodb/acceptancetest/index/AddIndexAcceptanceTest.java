@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.mongodb.acceptancetest.index;
 
 import org.bson.types.Document;
@@ -14,6 +30,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.mongodb.Index.GeoKey;
+import static org.mongodb.Index.OrderedKey;
 import static org.mongodb.OrderBy.ASC;
 import static org.mongodb.OrderBy.DESC;
 import static org.mongodb.OrderBy.fromInt;
@@ -49,8 +67,7 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldCreateIndexOnCollectionWithoutIndex() {
-        final Index index = new Index("theField");
-        collection.admin().ensureIndex(index);
+        collection.admin().ensureIndex(new Index("theField"));
 
         assertThat("Should be default index and new index on the database now", collection.admin().getIndexes().size(),
                    is(2));
@@ -58,8 +75,7 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldCreateIndexWithNameOfFieldPlusOrder() {
-        final Index index = new Index("theField", ASC);
-        collection.admin().ensureIndex(index);
+        collection.admin().ensureIndex(new Index("theField", ASC));
 
         String nameOfCreatedIndex = (String) collection.admin().getIndexes().get(1).get("name");
         assertThat("Should be an index with name of field, ascending", nameOfCreatedIndex, is("theField_1"));
@@ -106,8 +122,7 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldCreateIndexOfUniqueValues() {
-        final Index index = new Index("field", DESC, true);
-        collection.admin().ensureIndex(index);
+        collection.admin().ensureIndex(new Index("field", DESC, true));
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
         Boolean unique = (Boolean) newIndexDetails.get("unique");
@@ -116,8 +131,7 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldSupportCompoundIndexes() {
-        final Index index = new Index("theFirstField", "theSecondField");
-        collection.admin().ensureIndex(index);
+        collection.admin().ensureIndex(new Index("theFirstField", "theSecondField"));
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
 
@@ -138,7 +152,7 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldSupportCompoundIndexesWithDifferentOrders() {
-        final Index index = new Index(new Index.Key("theFirstField", ASC), new Index.Key("theSecondField", DESC));
+        final Index index = new Index(new OrderedKey("theFirstField", ASC), new OrderedKey("theSecondField", DESC));
         collection.admin().ensureIndex(index);
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
@@ -157,8 +171,7 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldOnlyReturnIndexesForTheSelectedCollection() {
-        final Index index = new Index("theField");
-        collection.admin().ensureIndex(index);
+        collection.admin().ensureIndex(new Index("theField"));
 
         MongoCollection<Document> anotherCollection = database.getCollection("anotherCollection");
         anotherCollection.admin().ensureIndex(new Index("someOtherField"));
@@ -168,6 +181,34 @@ public class AddIndexAcceptanceTest {
 
         assertThat("Should be default index and new index on the second database",
                    anotherCollection.admin().getIndexes().size(), is(2));
+    }
+
+    @Test
+    public void shouldBeAbleToAddGeoIndexes() {
+        collection.admin().ensureIndex(new Index(new GeoKey("theField")));
+        assertThat("Should be default index and new index on the database now", collection.admin().getIndexes().size(),
+                   is(2));
+    }
+
+    @Test
+    public void shouldSupportCompoundIndexesOfOrderedFieldsAndGeoFields() {
+        collection.admin().ensureIndex(new Index(new GeoKey("locationField"), new OrderedKey("someOtherField", ASC)));
+
+        Document newIndexDetails = collection.admin().getIndexes().get(1);
+
+        Document keys = (Document) newIndexDetails.get("key");
+        Object geoField = keys.get("locationField");
+        assertThat("Index should contain the first key", geoField, is(notNullValue()));
+        String geoIndexValue = geoField.toString();
+        assertThat("Index created should be a geo index", geoIndexValue, is("2d"));
+
+        Object orderedField = keys.get("someOtherField");
+        assertThat("Index should contain the second key", orderedField, is(notNullValue()));
+        OrderBy orderBy = fromInt((Integer) orderedField);
+        assertThat("Index created should be ascending", orderBy, is(ASC));
+
+        assertThat("Index name should contain both field names", (String) newIndexDetails.get("name"),
+                   is("locationField_2d_someOtherField_1"));
     }
 
     //TODO: sparse
