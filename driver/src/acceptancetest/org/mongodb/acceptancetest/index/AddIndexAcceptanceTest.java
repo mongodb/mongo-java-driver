@@ -10,11 +10,13 @@ import org.mongodb.MongoDatabase;
 import org.mongodb.OrderBy;
 import org.mongodb.operation.MongoInsert;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.OrderBy.ASC;
 import static org.mongodb.OrderBy.DESC;
+import static org.mongodb.OrderBy.fromInt;
 import static org.mongodb.acceptancetest.Fixture.createMongoClient;
 
 public class AddIndexAcceptanceTest {
@@ -68,7 +70,7 @@ public class AddIndexAcceptanceTest {
         collection.admin().ensureIndex(index);
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
-        OrderBy order = OrderBy.fromInt((Integer) ((Document) newIndexDetails.get("key")).get("theFieldToIndex"));
+        OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("theFieldToIndex"));
         assertThat("Index created should be ascending", order, is(ASC));
     }
 
@@ -78,7 +80,7 @@ public class AddIndexAcceptanceTest {
         collection.admin().ensureIndex(index);
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
-        OrderBy order = OrderBy.fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
+        OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
         assertThat("Index created should be ascending", order, is(ASC));
     }
 
@@ -88,7 +90,7 @@ public class AddIndexAcceptanceTest {
         collection.admin().ensureIndex(index);
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
-        OrderBy order = OrderBy.fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
+        OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
         assertThat("Index created should be descending", order, is(DESC));
     }
 
@@ -109,6 +111,51 @@ public class AddIndexAcceptanceTest {
         Document newIndexDetails = collection.admin().getIndexes().get(1);
         Boolean unique = (Boolean) newIndexDetails.get("unique");
         assertThat("Index created should be unique", unique, is(true));
+    }
+
+    @Test
+    public void shouldSupportCompoundIndexes() {
+        final Index index = new Index();
+        index.addKey("theFirstField");
+        index.addKey("theSecondField");
+        collection.admin().ensureIndex(index);
+
+        Document newIndexDetails = collection.admin().getIndexes().get(1);
+
+        Document keys = (Document) newIndexDetails.get("key");
+        Object theFirstField = keys.get("theFirstField");
+        assertThat("Index should contain the first key", theFirstField, is(notNullValue()));
+        OrderBy orderBy = fromInt((Integer) theFirstField);
+        assertThat("Index created should be ascending", orderBy, is(ASC));
+
+        Object theSecondField = keys.get("theSecondField");
+        assertThat("Index should contain the second key", theSecondField, is(notNullValue()));
+        orderBy = fromInt((Integer) theSecondField);
+        assertThat("Index created should be ascending", orderBy, is(ASC));
+
+        assertThat("Index name should contain both field names", (String)newIndexDetails.get("name"),
+                   is("theFirstField_1_theSecondField_1"));
+    }
+
+    @Test
+    public void shouldSupportCompoundIndexesWithDifferentOrders() {
+        final Index index = new Index();
+        index.addKey("theFirstField", ASC);
+        index.addKey("theSecondField", DESC);
+        collection.admin().ensureIndex(index);
+
+        Document newIndexDetails = collection.admin().getIndexes().get(1);
+
+        Document keys = (Document) newIndexDetails.get("key");
+
+        OrderBy orderBy = fromInt((Integer) keys.get("theFirstField"));
+        assertThat("First index should be ascending", orderBy, is(ASC));
+
+        orderBy = fromInt((Integer) keys.get("theSecondField"));
+        assertThat("Second index should be descending", orderBy, is(DESC));
+
+        assertThat("Index name should contain both field names", (String)newIndexDetails.get("name"),
+                   is("theFirstField_1_theSecondField_-1"));
     }
 
 }
