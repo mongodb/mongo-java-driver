@@ -2,7 +2,6 @@
   <library name="lib">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/junit-4.11.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/testng-6.3.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/clirr-core-0.6-uber.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/ant-contrib-1.0b3.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/hamcrest-core-1.3.jar!/" />
