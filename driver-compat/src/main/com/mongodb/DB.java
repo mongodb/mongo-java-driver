@@ -136,7 +136,7 @@ public class DB {
             capped = (Boolean) options.get("capped");
         }
         if (options.get("size") != null) {
-            sizeInBytes = (Integer) options.get("size");
+            sizeInBytes = ((Number) options.get("size")).intValue();
         }
         if (options.get("autoIndexId") != null) {
             autoIndex = (Boolean) options.get("autoIndexId");
