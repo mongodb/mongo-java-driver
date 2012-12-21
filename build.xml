@@ -44,7 +44,6 @@ limitations under the License.
     <!-- ******************************************************************* -->
 
     <path id="test.classpath">
-        <pathelement location="lib/testng-6.3.1.jar"/>
         <pathelement location="lib/junit-4.11.jar"/>
         <pathelement location="lib/hamcrest-core-1.3.jar"/>
         <path refid="build.classpath"/>
@@ -70,7 +69,6 @@ limitations under the License.
     <taskdef classpathref="task.classpath" resource="net/sf/antcontrib/antcontrib.properties"/>
     <taskdef classpathref="task.classpath" resource="tasks.properties" />
     <taskdef classpathref="task.classpath" resource="clirrtask.properties"/>
-    <taskdef classpathref="task.classpath" name="testng"  classname="org.testng.TestNGAntTask"/>
 
     <!-- ******************************************************************* -->
     <!-- Vars                                                                -->
