@@ -14,26 +14,24 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb;
 
-import org.bson.types.Document;
 import org.junit.Before;
-import org.mongodb.command.DropCollectionCommand;
 
 import java.net.UnknownHostException;
 
-public abstract class MongoClientBaseTest {
+public abstract class MongoClientTestBase {
     static private MongoClient mongoClient;
-    static private MongoDatabase database;
+    static private DB database;
 
-    protected MongoCollection<Document> collection;
+    protected DBCollection collection;
 
-    protected MongoClientBaseTest() {
+    protected MongoClientTestBase() {
         if (mongoClient == null) {
             try {
-                mongoClient = MongoClients.create(new ServerAddress());
-                database = mongoClient.getDatabase("driver-test");
-                database.admin().drop();
+                mongoClient = new MongoClient();
+                database = mongoClient.getDB("driver-compat-test");
+                database.dropDatabase();
             } catch (UnknownHostException e) {
                 throw new IllegalArgumentException(e);
             }
@@ -42,15 +40,15 @@ public abstract class MongoClientBaseTest {
 
     @Before
     public void before() {
-        collection = getDatabase().getCollection(getClass().getSimpleName());
-        new DropCollectionCommand(collection).execute();
+        collection = getDB().getCollection(getClass().getSimpleName());
+        collection.drop();
     }
 
     MongoClient getClient() {
         return mongoClient;
     }
 
-    MongoDatabase getDatabase() {
+    DB getDB() {
         return database;
     }
 }

@@ -25,7 +25,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-public class GetLastErrorTest extends MongoClientBaseTest {
+public class GetLastErrorTest extends MongoClientTestBase {
     @Test
     public void testDuplicateKeyException() {
         Document doc = new Document("_id", 1);

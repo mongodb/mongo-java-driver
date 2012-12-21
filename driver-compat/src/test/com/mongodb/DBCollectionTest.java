@@ -25,7 +25,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-public class DBCollectionTest extends MongoClientBaseTest{
+public class DBCollectionTest extends MongoClientTestBase {
     @Test
     public void testInsert() {
         WriteResult res = collection.insert(new BasicDBObject("_id", 1).append("x", 2));
