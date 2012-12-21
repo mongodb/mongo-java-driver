@@ -20,6 +20,8 @@ import org.mongodb.MongoException;
 import org.mongodb.result.CommandResult;
 
 public class MongoCommandException extends MongoException {
+    static final long serialVersionUID = -50109343643507362L;
+
     private final CommandResult commandResult;
 
     public MongoCommandException(final CommandResult commandResult) {

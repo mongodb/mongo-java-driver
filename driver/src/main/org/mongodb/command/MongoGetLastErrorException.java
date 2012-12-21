@@ -19,6 +19,8 @@ package org.mongodb.command;
 import org.mongodb.result.CommandResult;
 
 public class MongoGetLastErrorException extends MongoCommandException {
+    private static final long serialVersionUID = -1139302724723542251L;
+
     public MongoGetLastErrorException(final CommandResult commandResult) {
         super(commandResult);
     }

@@ -19,6 +19,8 @@ package org.mongodb.command;
 import org.mongodb.result.CommandResult;
 
 public class MongoDuplicateKeyException extends MongoGetLastErrorException {
+    private static final long serialVersionUID = 3661905154229799985L;
+
     public MongoDuplicateKeyException(final CommandResult commandResult) {
         super(commandResult);
     }
