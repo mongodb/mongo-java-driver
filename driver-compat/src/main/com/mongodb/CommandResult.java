@@ -24,10 +24,6 @@ package com.mongodb;
  */
 public class CommandResult extends BasicDBObject {
 
-    CommandResult(ServerAddress srv) {
-        this(null, srv);
-    }
-
     CommandResult(DBObject cmd, ServerAddress srv) {
         if (srv == null) {
             throw new IllegalArgumentException("server address is null");

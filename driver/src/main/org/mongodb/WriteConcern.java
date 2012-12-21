@@ -293,8 +293,8 @@ public class WriteConcern implements Serializable {
      *
      * @return getlasterror command, even if <code>w <= 0</code>
      */
-    public QueryFilterDocument getCommand() {
-        final QueryFilterDocument _command = new QueryFilterDocument("getlasterror", 1);
+    public CommandDocument getCommand() {
+        final CommandDocument _command = new CommandDocument("getlasterror", 1);
 
         if (_w instanceof Integer && ((Integer) _w > 1) || (_w instanceof String)) {
             _command.put("w", _w);

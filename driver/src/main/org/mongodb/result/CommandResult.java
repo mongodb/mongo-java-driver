@@ -25,12 +25,6 @@ public class CommandResult {
     private final ServerAddress address;
     private final Document response;
 
-    public CommandResult(final Document response) {
-        this.response = response;
-        address = null;
-        command = null;
-    }
-
     public CommandResult(final Document command, final ServerAddress address, final Document response) {
         this.command = command;
         this.address = address;

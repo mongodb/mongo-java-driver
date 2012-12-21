@@ -28,6 +28,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
+import org.mongodb.command.GetLastErrorCommand;
 import org.mongodb.io.MongoChannel;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommandOperation;
@@ -153,23 +154,17 @@ public class SingleChannelMongoClient implements MongoClient {
     }
 
     private CommandResult sendWriteMessage(final MongoNamespace namespace, final MongoRequestMessage writeMessage,
-                                           final MongoWrite write, final Serializer<Document> serializer) {
+                                           final MongoWrite write) {
         try {
             channel.sendMessage(writeMessage);
             if (write.getWriteConcern().callGetLastError()) {
-                final MongoQueryMessage getLastErrorMessage = new MongoQueryMessage(
-                        namespace.getDatabaseName() + ".$cmd",
-                        new MongoFind(writeConcern.getCommand()).readPreference(ReadPreference.primary()).batchSize(-1),
-                        new PooledByteBufferOutput(getBufferPool()), withDocumentSerializer(null));
-                channel.sendMessage(getLastErrorMessage);
-                return new CommandResult(writeConcern.getCommand(), channel.getAddress(),
-                                         channel.receiveMessage(serializer).getDocuments().get(0));
+                return new GetLastErrorCommand(this, namespace.getDatabaseName(), write.getWriteConcern()).execute();
             }
             else {
                 return null;
             }
         } catch (IOException e) {
-            throw new MongoException("insert", e);
+            throw new MongoException("Write failed", e);
         }
     }
 
@@ -201,7 +196,7 @@ public class SingleChannelMongoClient implements MongoClient {
                                                                                   new PooledByteBufferOutput(
                                                                                           getBufferPool()), serializer);
             return new InsertResult(insert,
-                                    sendWriteMessage(namespace, insertMessage, insert, withDocumentSerializer(null)));
+                                    sendWriteMessage(namespace, insertMessage, insert));
         }
 
         @Override
@@ -246,7 +241,7 @@ public class SingleChannelMongoClient implements MongoClient {
             final MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), update,
                                                                       new PooledByteBufferOutput(bufferPool),
                                                                       withDocumentSerializer(serializer));
-            return new UpdateResult(update, sendWriteMessage(namespace, message, update, withDocumentSerializer(null)));
+            return new UpdateResult(update, sendWriteMessage(namespace, message, update));
         }
 
         @Override
@@ -258,7 +253,7 @@ public class SingleChannelMongoClient implements MongoClient {
                                                                       withDocumentSerializer(baseSerializer),
                                                                       serializer);
             return new UpdateResult(replace,
-                                    sendWriteMessage(namespace, message, replace, withDocumentSerializer(null)));
+                                    sendWriteMessage(namespace, message, replace));
         }
 
         @Override
@@ -268,7 +263,7 @@ public class SingleChannelMongoClient implements MongoClient {
             final MongoDeleteMessage message = new MongoDeleteMessage(namespace.getFullName(), remove,
                                                                       new PooledByteBufferOutput(bufferPool),
                                                                       withDocumentSerializer(serializer));
-            return new RemoveResult(remove, sendWriteMessage(namespace, message, remove, withDocumentSerializer(null)));
+            return new RemoveResult(remove, sendWriteMessage(namespace, message, remove));
         }
 
         @Override
