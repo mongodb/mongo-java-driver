@@ -29,6 +29,10 @@ public class MongoCommandException extends MongoException {
         this.commandResult = commandResult;
     }
 
+    public CommandResult getCommandResult() {
+        return commandResult;
+    }
+
     private static int getErrorCode(final CommandResult commandResult) {
         return (Integer) commandResult.getResponse().get("code");
     }
