@@ -21,7 +21,7 @@ import java.util.List;
 import static org.mongodb.impl.ErrorHandling.handleErrors;
 
 public class CollectionAdminImpl implements CollectionAdmin {
-    private static final MongoFind FIND_ALL = new MongoFind(new QueryFilterDocument());
+    private static final String NAMESPACE_KAY_NAME = "ns";
 
     private final MongoOperations operations;
     private final String databaseName;
@@ -30,6 +30,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
     private final MongoNamespace indexesNamespace;
     private final MongoNamespace collectionNamespace;
     private final CollStats collStatsCommand;
+    private final MongoFind queryForCollectionNamespace;
 
     //TODO: pass in namespace
     CollectionAdminImpl(final MongoOperations operations, final PrimitiveSerializers primitiveSerializers,
@@ -40,6 +41,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
         indexesNamespace = new MongoNamespace(this.databaseName, "system.indexes");
         collectionNamespace = new MongoNamespace(this.databaseName, collectionName);
         collStatsCommand = new CollStats(collectionNamespace.getCollectionName());
+        queryForCollectionNamespace = new MongoFind(new QueryFilterDocument(NAMESPACE_KAY_NAME, collectionNamespace.getFullName()));
     }
 
     @Override
@@ -47,7 +49,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
         // TODO: check for index ??
         //        final List<Document> indexes = getIndexes();
 
-        final Document indexDetails = new Document("ns", collectionNamespace.getFullName());
+        final Document indexDetails = new Document(NAMESPACE_KAY_NAME, collectionNamespace.getFullName());
         indexDetails.append("name", index.getName());
         indexDetails.append("key", index.getAsDocument());
         indexDetails.append("unique", index.isUnique());
@@ -60,8 +62,8 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
     @Override
     public List<Document> getIndexes() {
-        final QueryResult<Document> systemCollection = operations.query(indexesNamespace, FIND_ALL, documentSerializer,
-                                                                        documentSerializer);
+        final QueryResult<Document> systemCollection = operations.query(indexesNamespace, queryForCollectionNamespace,
+                                                                        documentSerializer, documentSerializer);
         return systemCollection.getResults();
     }
 

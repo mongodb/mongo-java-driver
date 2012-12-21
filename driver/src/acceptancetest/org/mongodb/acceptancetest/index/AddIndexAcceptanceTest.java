@@ -22,12 +22,13 @@ import static org.mongodb.acceptancetest.Fixture.createMongoClient;
 public class AddIndexAcceptanceTest {
     private static final String DB_NAME = "AddIndexAcceptanceTest";
     private MongoCollection<Document> collection;
+    private MongoDatabase database;
 
     @Before
     public void setUp() {
         final MongoClient mongoClient = createMongoClient();
 
-        final MongoDatabase database = mongoClient.getDatabase(DB_NAME);
+        database = mongoClient.getDatabase(DB_NAME);
         database.admin().drop();
 
         collection = database.getCollection("collection");
@@ -154,8 +155,22 @@ public class AddIndexAcceptanceTest {
                    is("theFirstField_1_theSecondField_-1"));
     }
 
+    @Test
+    public void shouldOnlyReturnIndexesForTheSelectedCollection() {
+        final Index index = new Index("theField");
+        collection.admin().ensureIndex(index);
+
+        MongoCollection<Document> anotherCollection = database.getCollection("anotherCollection");
+        anotherCollection.admin().ensureIndex(new Index("someOtherField"));
+
+        assertThat("Should be default index and new index on the first database",
+                   collection.admin().getIndexes().size(), is(2));
+
+        assertThat("Should be default index and new index on the second database",
+                   anotherCollection.admin().getIndexes().size(), is(2));
+    }
+
     //TODO: sparse
     //TODO: other ordering options
     //TODO: can you disable the index on ID for non-capped collections?
-    //TODO: test to prove that all indexes for the DB are coming back, not just those for the collection
 }
