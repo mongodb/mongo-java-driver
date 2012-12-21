@@ -29,6 +29,11 @@ public class MongoException extends RuntimeException {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
+    public MongoException(final org.mongodb.MongoException e) {
+        super(e.getMessage(), e);
+        _code = e.getCode();
+    }
+
     /**
      * @param msg the message
      */

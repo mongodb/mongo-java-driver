@@ -51,14 +51,22 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
     public boolean hasNext() {
         if (cursor == null) {
-            cursor = collection.find(find);
+            getCursor();
         }
         return cursor.hasNext();
     }
 
+    private void getCursor() {
+        try {
+            cursor = collection.find(find);
+        } catch (org.mongodb.MongoException e) {
+            throw new MongoException(e);
+        }
+    }
+
     public DBObject next() {
         if (cursor == null) {
-            cursor = collection.find(find);
+            getCursor();
         }
         return cursor.next();
     }
