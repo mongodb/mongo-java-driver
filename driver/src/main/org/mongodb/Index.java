@@ -7,13 +7,22 @@ import static org.mongodb.OrderBy.ASC;
 public class Index {
     private final boolean unique;
     private final Document keys = new Document();
+    private final String name;
 
-    private String name;
-
-    //TODO: now this object isn't immutable
-    //add builder?
-    public Index() {
+    public Index(final Key... keys) {
+        for (final Key key : keys) {
+            addKey(key);
+        }
         unique = false;
+        name = generateIndexName();
+    }
+
+    public Index(final String... fields) {
+        for (String field : fields) {
+            addKey(field, ASC);
+        }
+        unique = false;
+        name = generateIndexName();
     }
 
     public Index(final String key) {
@@ -27,18 +36,11 @@ public class Index {
     public Index(final String key, final OrderBy orderBy, final boolean unique) {
         addKey(key, orderBy);
         this.unique = unique;
+        this.name = generateIndexName();
     }
 
     public boolean isUnique() {
         return unique;
-    }
-
-    public void addKey(final String fieldName) {
-        addKey(fieldName, ASC);
-    }
-
-    public void addKey(final String fieldName, final OrderBy orderBy) {
-        keys.append(fieldName, orderBy.getIntRepresentation());
     }
 
     public Document getAsDocument() {
@@ -46,10 +48,15 @@ public class Index {
     }
 
     public String getName() {
-        if (name == null) {
-            name = generateIndexName();
-        }
         return name;
+    }
+
+    private void addKey(final Key key) {
+        keys.append(key.fieldName, key.orderBy.getIntRepresentation());
+    }
+
+    private void addKey(final String fieldName, final OrderBy orderBy) {
+        keys.append(fieldName, orderBy.getIntRepresentation());
     }
 
     /**
@@ -71,5 +78,15 @@ public class Index {
             }
         }
         return indexName.toString();
+    }
+
+    public static class Key {
+        private String fieldName;
+        private OrderBy orderBy;
+
+        public Key(final String fieldName, final OrderBy orderBy) {
+            this.fieldName = fieldName;
+            this.orderBy = orderBy;
+        }
     }
 }

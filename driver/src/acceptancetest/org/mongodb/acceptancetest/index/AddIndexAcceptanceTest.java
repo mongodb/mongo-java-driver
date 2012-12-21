@@ -115,9 +115,7 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldSupportCompoundIndexes() {
-        final Index index = new Index();
-        index.addKey("theFirstField");
-        index.addKey("theSecondField");
+        final Index index = new Index("theFirstField", "theSecondField");
         collection.admin().ensureIndex(index);
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
@@ -139,9 +137,8 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldSupportCompoundIndexesWithDifferentOrders() {
-        final Index index = new Index();
-        index.addKey("theFirstField", ASC);
-        index.addKey("theSecondField", DESC);
+        final Index index = new Index(new Index.Key("theFirstField", ASC),
+                                      new Index.Key("theSecondField", DESC));
         collection.admin().ensureIndex(index);
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
