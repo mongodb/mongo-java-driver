@@ -23,6 +23,7 @@ import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
+import org.mongodb.operation.MongoSave;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
@@ -66,6 +67,8 @@ public interface MongoCollection<T> extends MongoCollectionBase<T> {
     RemoveResult remove(MongoRemove remove);
 
     CollectionAdmin admin();
+
+    UpdateResult save(MongoSave<T> save);
 }
 
 

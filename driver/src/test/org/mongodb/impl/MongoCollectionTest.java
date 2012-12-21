@@ -41,8 +41,8 @@ import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.InsertResult;
 import org.mongodb.serialization.BsonSerializationOptions;
+import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.Serializer;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -276,7 +276,7 @@ class Concrete {
     }
 }
 
-class ConcreteSerializer implements Serializer<Concrete> {
+class ConcreteSerializer implements CollectibleSerializer<Concrete> {
 
     @Override
     public void serialize(final BSONWriter bsonWriter, final Concrete value, final BsonSerializationOptions options) {
@@ -303,6 +303,11 @@ class ConcreteSerializer implements Serializer<Concrete> {
     @Override
     public Class<Concrete> getSerializationClass() {
         return Concrete.class;
+    }
+
+    @Override
+    public Object getId(final Concrete document) {
+        return document.id;
     }
 }
 

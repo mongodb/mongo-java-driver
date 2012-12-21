@@ -1,10 +1,10 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -15,12 +15,8 @@
  *
  */
 
-package org.mongodb.result;
+package org.mongodb.serialization;
 
-import org.mongodb.operation.MongoWrite;
-
-public class UpdateResult extends WriteResult {
-    public UpdateResult(final MongoWrite update, final CommandResult getLastErrorResult) {
-        super(update, getLastErrorResult);
-    }
+public interface CollectibleSerializer<T> extends Serializer<T> {
+    Object getId(T document);
 }

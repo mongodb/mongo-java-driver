@@ -183,5 +183,4 @@ public class DocumentSerializer implements Serializer<Document> {
     protected Serializer getDocumentDeserializerForField(final String fieldName) {
         return this;
     }
-
 }

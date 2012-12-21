@@ -20,6 +20,7 @@ import org.bson.types.Document;
 import org.mongodb.CollectionAdmin;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
+import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.command.CountCommand;
@@ -33,11 +34,13 @@ import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
+import org.mongodb.operation.MongoSave;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
+import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
@@ -47,7 +50,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     private CollectionAdmin admin;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final PrimitiveSerializers primitiveSerializers, final Serializer<T> serializer,
+                               final PrimitiveSerializers primitiveSerializers, final CollectibleSerializer<T> serializer,
                                final WriteConcern writeConcern, final ReadPreference readPreference) {
         super(serializer, name, database, writeConcern, readPreference, primitiveSerializers);
         admin = new CollectionAdminImpl(database.getClient().getOperations(), primitiveSerializers, database.getName(),
@@ -109,6 +112,17 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     public UpdateResult update(final MongoUpdate update) {
         return getClient().getOperations().update(getNamespace(), update.writeConcernIfAbsent(getWriteConcern()),
                                                   getDocumentSerializer());
+    }
+
+    @Override
+    public UpdateResult save(final MongoSave<T> save) {
+        Object id = serializer.getId(save.getDocument());
+        if (id == null) {
+            return insert(new MongoInsert<T>(save.getDocument()));
+        }
+        else {
+            return replace(new MongoReplace<T>(new QueryFilterDocument("_id", id), save.getDocument()));
+        }
     }
 
     @Override

@@ -23,18 +23,18 @@ import org.mongodb.MongoDatabase;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
+import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.Serializer;
 
 public class MongoCollectionBaseImpl<T> implements MongoCollectionBase<T> {
     protected final String name;
     protected final MongoDatabase database;
     protected final PrimitiveSerializers primitiveSerializers;
-    protected final Serializer<T> serializer;
+    protected final CollectibleSerializer<T> serializer;
     protected final WriteConcern writeConcern;
     protected final ReadPreference readPreference;
 
-    public MongoCollectionBaseImpl(final Serializer<T> serializer, final String name, final MongoDatabaseImpl database,
+    public MongoCollectionBaseImpl(final CollectibleSerializer<T> serializer, final String name, final MongoDatabaseImpl database,
                                    final WriteConcern writeConcern, final ReadPreference readPreference,
                                    final PrimitiveSerializers primitiveSerializers) {
         this.serializer = serializer;
@@ -73,7 +73,7 @@ public class MongoCollectionBaseImpl<T> implements MongoCollectionBase<T> {
     }
 
     @Override
-    public Serializer<T> getSerializer() {
+    public CollectibleSerializer<T> getSerializer() {
         return serializer;
     }
 

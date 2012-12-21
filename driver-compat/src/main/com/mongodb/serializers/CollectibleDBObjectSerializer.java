@@ -21,6 +21,7 @@ import com.mongodb.DB;
 import com.mongodb.DBObject;
 import org.bson.BSONWriter;
 import org.mongodb.serialization.BsonSerializationOptions;
+import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.IdGenerator;
 import org.mongodb.serialization.PrimitiveSerializers;
 
@@ -28,7 +29,7 @@ import org.mongodb.serialization.PrimitiveSerializers;
  * Serializer for documents that go in collections, and therefore have an _id.  Ensures that the _id field is written
  * first.
  */
-public class CollectibleDBObjectSerializer extends DBObjectSerializer {
+public class CollectibleDBObjectSerializer extends DBObjectSerializer implements CollectibleSerializer<DBObject> {
     public static final String ID_FIELD_NAME = "_id";
     private final IdGenerator idGenerator;
 
@@ -55,4 +56,8 @@ public class CollectibleDBObjectSerializer extends DBObjectSerializer {
     }
 
 
+    @Override
+    public Object getId(final DBObject document) {
+        return document.get(ID_FIELD_NAME);
+    }
 }

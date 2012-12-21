@@ -25,8 +25,8 @@ import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
+import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.CollectibleDocumentSerializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 import org.mongodb.serialization.serializers.ObjectIdGenerator;
@@ -66,7 +66,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     public <T> MongoCollectionImpl<T> getTypedCollection(final String collectionName,
                                                          final PrimitiveSerializers basePrimitiveSerializers,
-                                                         final Serializer<T> serializer) {
+                                                         final CollectibleSerializer<T> serializer) {
         return new MongoCollectionImpl<T>(collectionName, this, basePrimitiveSerializers, serializer, null, null);
     }
 
@@ -78,7 +78,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public <T> MongoAsyncCollection<T> getAsyncTypedCollection(final String collectionName,
                                                                final PrimitiveSerializers primitiveSerializers,
-                                                               final Serializer<T> serializer) {
+                                                               final CollectibleSerializer<T> serializer) {
         return new MongoAsyncCollectionImpl<T>(getTypedCollection(collectionName, primitiveSerializers, serializer));
     }
 

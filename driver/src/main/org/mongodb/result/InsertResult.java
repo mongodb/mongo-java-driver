@@ -19,7 +19,7 @@ package org.mongodb.result;
 
 import org.mongodb.operation.MongoWrite;
 
-public class InsertResult extends WriteResult {
+public class InsertResult extends UpdateResult {
     public InsertResult(final MongoWrite write, final CommandResult getLastErrorResult) {
         super(write, getLastErrorResult);
     }

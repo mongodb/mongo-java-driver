@@ -29,6 +29,7 @@ import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
+import org.mongodb.operation.MongoSave;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
@@ -87,8 +88,12 @@ public class DBCollection {
     }
 
     public WriteResult save(final DBObject obj, final WriteConcern wc) {
-        // TODO: wrong semantics!!!  Should be an insert if _id is null.  See existing implementation
-        return update(new BasicDBObject("_id", obj.get("_id")), obj, true, false);
+        try {
+            UpdateResult result = collection.save(new MongoSave<DBObject>(obj).writeConcern(wc.toNew()));
+            return new WriteResult(result, wc);
+        } catch (org.mongodb.MongoException e) {
+            throw new MongoException(e);
+        }
     }
 
     /**

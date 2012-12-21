@@ -17,8 +17,8 @@
 
 package org.mongodb;
 
+import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.Serializer;
 
 // TODO: Not such a good name
 public interface MongoCollectionBase<T> {
@@ -47,5 +47,5 @@ public interface MongoCollectionBase<T> {
 
     PrimitiveSerializers getPrimitiveSerializers();
 
-    Serializer<T> getSerializer();
+    CollectibleSerializer<T> getSerializer();
 }

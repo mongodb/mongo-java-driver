@@ -19,8 +19,8 @@ package org.mongodb;
 import org.bson.types.Document;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
+import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.Serializer;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
@@ -41,13 +41,13 @@ public interface MongoDatabase {
     MongoCollection<Document> getCollection(String name);
 
     <T> MongoCollection<T> getTypedCollection(String name, final PrimitiveSerializers basePrimitiveSerializers,
-                                              final Serializer<T> serializer);
+                                              final CollectibleSerializer<T> serializer);
 
     MongoAsyncCollection<Document> getAsyncCollection(String name);
 
     <T> MongoAsyncCollection<T> getAsyncTypedCollection(String name,
                                                         final PrimitiveSerializers basePrimitiveSerializers,
-                                                        final Serializer<T> serializer);
+                                                        final CollectibleSerializer<T> serializer);
 
     DatabaseAdmin admin();
 
