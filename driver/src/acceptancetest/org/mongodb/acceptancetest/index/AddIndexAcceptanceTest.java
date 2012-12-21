@@ -131,14 +131,13 @@ public class AddIndexAcceptanceTest {
         orderBy = fromInt((Integer) theSecondField);
         assertThat("Index created should be ascending", orderBy, is(ASC));
 
-        assertThat("Index name should contain both field names", (String)newIndexDetails.get("name"),
+        assertThat("Index name should contain both field names", (String) newIndexDetails.get("name"),
                    is("theFirstField_1_theSecondField_1"));
     }
 
     @Test
     public void shouldSupportCompoundIndexesWithDifferentOrders() {
-        final Index index = new Index(new Index.Key("theFirstField", ASC),
-                                      new Index.Key("theSecondField", DESC));
+        final Index index = new Index(new Index.Key("theFirstField", ASC), new Index.Key("theSecondField", DESC));
         collection.admin().ensureIndex(index);
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
@@ -151,8 +150,12 @@ public class AddIndexAcceptanceTest {
         orderBy = fromInt((Integer) keys.get("theSecondField"));
         assertThat("Second index should be descending", orderBy, is(DESC));
 
-        assertThat("Index name should contain both field names", (String)newIndexDetails.get("name"),
+        assertThat("Index name should contain both field names", (String) newIndexDetails.get("name"),
                    is("theFirstField_1_theSecondField_-1"));
     }
 
+    //TODO: sparse
+    //TODO: other ordering options
+    //TODO: can you disable the index on ID for non-capped collections?
+    //TODO: test to prove that all indexes for the DB are coming back, not just those for the collection
 }

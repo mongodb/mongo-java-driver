@@ -32,10 +32,12 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.mongodb.impl.ErrorHandling.handleErrors;
+
 /**
  * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are
- * not implemented in MongoDatabase in order to keep the API very simple, these should be the methods that are
- * not commonly used by clients of the driver.
+ * not implemented in MongoDatabase in order to keep the API very simple, these should be the methods that are not
+ * commonly used by clients of the driver.
  */
 public class DatabaseAdminImpl implements DatabaseAdmin {
     private static final DropDatabase DROP_DATABASE = new DropDatabase();
@@ -54,14 +56,15 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
 
     @Override
     public void drop() {
+        //TODO: should inspect the CommandResult to make sure it went OK
         new CommandResult(operations.executeCommand(databaseName, DROP_DATABASE, documentSerializer));
     }
 
     @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
-        final QueryResult<Document> query = operations.query(namespacesCollection, FIND_ALL,
-                                                             documentSerializer, documentSerializer);
+        final QueryResult<Document> query = operations.query(namespacesCollection, FIND_ALL, documentSerializer,
+                                                             documentSerializer);
 
         final HashSet<String> collections = new HashSet<String>();
         final int lengthOfDatabaseName = databaseName.length();
@@ -73,6 +76,41 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
             }
         }
         return collections;
+    }
+
+    @Override
+    public void createCollection(final String collectionName) {
+        createCollection(collectionName, false, 0);
+    }
+
+    @Override
+    public void createCollection(final String collectionName, final boolean capped, final int sizeInBytes) {
+        createCollection(collectionName, capped, sizeInBytes, true);
+    }
+
+    @Override
+    public void createCollection(final String collectionName, final boolean capped, final int sizeInBytes,
+                                 final boolean autoIndex) {
+        CommandResult commandResult = new CommandResult(
+                operations.executeCommand(databaseName, new Create(collectionName, capped, sizeInBytes, autoIndex),
+                                          documentSerializer));
+        handleErrors(commandResult, "Error creating collection '" + collectionName + "'");
+    }
+
+    private static final class Create extends MongoCommandOperation {
+        private Create(final String collectionName, final boolean capped, final int sizeInBytes,
+                       final boolean autoIndex) {
+            super(createCreateCollectionCommand(collectionName, capped, sizeInBytes, autoIndex));
+        }
+    }
+
+    private static CommandDocument createCreateCollectionCommand(final String collectionName, final boolean capped,
+                                                                 final int sizeInBytes, final boolean autoIndex) {
+        final CommandDocument create = new CommandDocument("create", collectionName);
+        create.put("capped", capped);
+        create.put("size", sizeInBytes);
+        create.put("autoIndexId", autoIndex);
+        return create;
     }
 
     private static final class DropDatabase extends MongoCommandOperation {

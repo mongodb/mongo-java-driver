@@ -17,4 +17,10 @@ public interface DatabaseAdmin {
      * @return a Set of the names of all the collections in this database
      */
     Set<String> getCollectionNames();
+
+    void createCollection(String collectionName);
+
+    void createCollection(String collectionName, boolean capped, int sizeInBytes);
+
+    void createCollection(String collectionName, boolean capped, int sizeInBytes, boolean autoIndex);
 }

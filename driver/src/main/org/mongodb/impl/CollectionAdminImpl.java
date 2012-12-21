@@ -2,18 +2,23 @@ package org.mongodb.impl;
 
 import org.bson.types.Document;
 import org.mongodb.CollectionAdmin;
+import org.mongodb.CommandDocument;
 import org.mongodb.Index;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.WriteConcern;
+import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
+import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
 import java.util.List;
+
+import static org.mongodb.impl.ErrorHandling.handleErrors;
 
 public class CollectionAdminImpl implements CollectionAdmin {
     private static final MongoFind FIND_ALL = new MongoFind(new QueryFilterDocument());
@@ -22,16 +27,19 @@ public class CollectionAdminImpl implements CollectionAdmin {
     private final String databaseName;
     //TODO: need to do something about these default serialisers, they're created everywhere
     private final DocumentSerializer documentSerializer;
-    private final String collectionName;
     private final MongoNamespace indexesNamespace;
+    private final MongoNamespace collectionNamespace;
+    private final CollStats collStatsCommand;
 
+    //TODO: pass in namespace
     CollectionAdminImpl(final MongoOperations operations, final PrimitiveSerializers primitiveSerializers,
                         final String databaseName, final String collectionName) {
         this.operations = operations;
         this.databaseName = databaseName;
-        this.collectionName = collectionName;
         this.documentSerializer = new DocumentSerializer(primitiveSerializers);
         indexesNamespace = new MongoNamespace(this.databaseName, "system.indexes");
+        collectionNamespace = new MongoNamespace(this.databaseName, collectionName);
+        collStatsCommand = new CollStats(collectionNamespace.getCollectionName());
     }
 
     @Override
@@ -39,7 +47,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
         // TODO: check for index ??
         //        final List<Document> indexes = getIndexes();
 
-        final Document indexDetails = new Document("ns", databaseName + "." + collectionName);
+        final Document indexDetails = new Document("ns", collectionNamespace.getFullName());
         indexDetails.append("name", index.getName());
         indexDetails.append("key", index.getAsDocument());
         indexDetails.append("unique", index.isUnique());
@@ -55,6 +63,22 @@ public class CollectionAdminImpl implements CollectionAdmin {
         final QueryResult<Document> systemCollection = operations.query(indexesNamespace, FIND_ALL, documentSerializer,
                                                                         documentSerializer);
         return systemCollection.getResults();
+    }
+
+    @Override
+    public boolean isCapped() {
+        CommandResult commandResult = new CommandResult(
+                operations.executeCommand(databaseName, collStatsCommand, documentSerializer));
+        handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
+
+        Object capped = commandResult.getDocument().get("capped");
+        return capped != null && ((Boolean) capped);
+    }
+
+    private final class CollStats extends MongoCommandOperation {
+        private CollStats(final String collectionName) {
+            super(new CommandDocument("collStats", collectionName));
+        }
     }
 
 }
