@@ -1,10 +1,29 @@
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.mongodb;
 
 import org.bson.types.Document;
 
 import static org.mongodb.OrderBy.ASC;
 
-public class Index {
+/**
+ * Represents an index to create on the database.  Used as an argument in ensureIndex
+ */
+public class Index implements ConvertibleToDocument {
     private final boolean unique;
     private final Document keys = new Document();
     private final String name;
@@ -43,12 +62,13 @@ public class Index {
         return unique;
     }
 
-    public Document getAsDocument() {
-        return keys;
-    }
-
     public String getName() {
         return name;
+    }
+
+    @Override
+    public Document toDocument() {
+        return keys;
     }
 
     private void addKey(final Key key) {
@@ -80,9 +100,12 @@ public class Index {
         return indexName.toString();
     }
 
+    /**
+     * Contains the pair that is the field name and the ordering value for each key of an index
+     */
     public static class Key {
-        private String fieldName;
-        private OrderBy orderBy;
+        private final String fieldName;
+        private final OrderBy orderBy;
 
         public Key(final String fieldName, final OrderBy orderBy) {
             this.fieldName = fieldName;

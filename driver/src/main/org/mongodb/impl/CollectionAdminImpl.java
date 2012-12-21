@@ -41,7 +41,8 @@ public class CollectionAdminImpl implements CollectionAdmin {
         indexesNamespace = new MongoNamespace(this.databaseName, "system.indexes");
         collectionNamespace = new MongoNamespace(this.databaseName, collectionName);
         collStatsCommand = new CollStats(collectionNamespace.getCollectionName());
-        queryForCollectionNamespace = new MongoFind(new QueryFilterDocument(NAMESPACE_KAY_NAME, collectionNamespace.getFullName()));
+        queryForCollectionNamespace = new MongoFind(
+                new QueryFilterDocument(NAMESPACE_KAY_NAME, collectionNamespace.getFullName()));
     }
 
     @Override
@@ -51,7 +52,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
         final Document indexDetails = new Document(NAMESPACE_KAY_NAME, collectionNamespace.getFullName());
         indexDetails.append("name", index.getName());
-        indexDetails.append("key", index.getAsDocument());
+        indexDetails.append("key", index.toDocument());
         indexDetails.append("unique", index.isUnique());
 
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);

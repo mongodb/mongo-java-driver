@@ -18,6 +18,7 @@ package org.mongodb.impl;
 
 import org.bson.types.Document;
 import org.mongodb.CommandDocument;
+import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseAdmin;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
@@ -80,37 +81,20 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
 
     @Override
     public void createCollection(final String collectionName) {
-        createCollection(collectionName, false, 0);
+        createCollection(new CreateCollectionOptions(collectionName));
     }
 
     @Override
-    public void createCollection(final String collectionName, final boolean capped, final int sizeInBytes) {
-        createCollection(collectionName, capped, sizeInBytes, true);
-    }
-
-    @Override
-    public void createCollection(final String collectionName, final boolean capped, final int sizeInBytes,
-                                 final boolean autoIndex) {
+    public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         CommandResult commandResult = new CommandResult(
-                operations.executeCommand(databaseName, new Create(collectionName, capped, sizeInBytes, autoIndex),
-                                          documentSerializer));
-        handleErrors(commandResult, "Error creating collection '" + collectionName + "'");
+                operations.executeCommand(databaseName, new Create(createCollectionOptions), documentSerializer));
+        handleErrors(commandResult, "Error creating collection '" + createCollectionOptions.getCollectionName() + "'");
     }
 
     private static final class Create extends MongoCommandOperation {
-        private Create(final String collectionName, final boolean capped, final int sizeInBytes,
-                       final boolean autoIndex) {
-            super(createCreateCollectionCommand(collectionName, capped, sizeInBytes, autoIndex));
+        public Create(final CreateCollectionOptions createCollectionOptions) {
+            super(createCollectionOptions.asCommandDocument());
         }
-    }
-
-    private static CommandDocument createCreateCollectionCommand(final String collectionName, final boolean capped,
-                                                                 final int sizeInBytes, final boolean autoIndex) {
-        final CommandDocument create = new CommandDocument("create", collectionName);
-        create.put("capped", capped);
-        create.put("size", sizeInBytes);
-        create.put("autoIndexId", autoIndex);
-        return create;
     }
 
     private static final class DropDatabase extends MongoCommandOperation {

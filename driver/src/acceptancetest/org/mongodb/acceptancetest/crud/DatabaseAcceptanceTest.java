@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.mongodb.acceptancetest.crud;
 
 import org.bson.types.Document;
@@ -5,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
@@ -40,7 +57,7 @@ public class DatabaseAcceptanceTest {
     @Test
     public void shouldCreateCappedCollection() {
         String collectionName = "newCollectionName";
-        database.admin().createCollection(collectionName, true, 40 * 1024);
+        database.admin().createCollection(new CreateCollectionOptions(collectionName, true, 40 * 1024));
 
         Set<String> collections = database.admin().getCollectionNames();
         assertThat(collections.contains("newCollectionName"), is(true));
@@ -54,7 +71,7 @@ public class DatabaseAcceptanceTest {
     @Test
     public void shouldCreateCappedCollectionWithoutAutoIndex() {
         String collectionName = "newCollectionName";
-        database.admin().createCollection(collectionName, true, 40 * 1024, false);
+        database.admin().createCollection(new CreateCollectionOptions(collectionName, true, 40 * 1024, false));
 
         Set<String> collections = database.admin().getCollectionNames();
         assertThat(collections.contains("newCollectionName"), is(true));
