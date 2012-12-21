@@ -46,7 +46,8 @@ public abstract class AbstractCommand implements Command {
     }
 
     public CommandResult execute() {
-        return database.executeCommand(new MongoCommandOperation(asMongoCommand()));
+        CommandResult res = database.executeCommand(new MongoCommandOperation(asMongoCommand()));
+        return res;
     }
 
     public abstract MongoCommand asMongoCommand();

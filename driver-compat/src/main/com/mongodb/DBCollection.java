@@ -21,6 +21,7 @@ import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.OrderBy;
 import org.mongodb.command.DropCollectionCommand;
+import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
 import org.mongodb.operation.MongoFindAndReplace;
@@ -70,9 +71,13 @@ public class DBCollection {
     }
 
     public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern) {
-        final MongoInsert<DBObject> insert = new MongoInsert<DBObject>(documents).writeConcern(writeConcern.toNew());
-        final InsertResult result = collection.insert(insert);
-        return new WriteResult(result, writeConcern);
+        try {
+            final MongoInsert<DBObject> insert = new MongoInsert<DBObject>(documents).writeConcern(writeConcern.toNew());
+            final InsertResult result = collection.insert(insert);
+            return new WriteResult(result, writeConcern);
+        } catch (MongoDuplicateKeyException e) {
+            throw new MongoException.DuplicateKey(e);
+        }
     }
 
 

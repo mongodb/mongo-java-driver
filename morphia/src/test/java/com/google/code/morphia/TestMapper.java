@@ -1,18 +1,16 @@
 package com.google.code.morphia;
 
-import java.io.Serializable;
-
-import junit.framework.Assert;
-
-import org.bson.types.ObjectId;
-import org.junit.Test;
-
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.PostLoad;
 import com.google.code.morphia.annotations.Property;
 import com.google.code.morphia.annotations.Reference;
 import com.google.code.morphia.mapping.lazy.LazyFeatureDependencies;
+import junit.framework.Assert;
+import org.bson.types.ObjectId;
+import org.junit.Test;
+
+import java.io.Serializable;
 
 /**
  * Tests mapper functions; this is tied to some of the internals.
@@ -141,6 +139,7 @@ public class TestMapper extends TestBase {
 	
 	@Test
 	public void SingleLookup() throws Exception {
+        A.loadCount = 0;
 		A a = new A();
 		HoldsMultipleA holder = new HoldsMultipleA();
 		holder.a1 = a;

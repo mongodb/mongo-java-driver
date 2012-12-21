@@ -16,14 +16,14 @@
 
 package com.google.code.morphia;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
-
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
+import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -45,7 +45,7 @@ public class TestWriteConcern  extends TestBase{
 		try {
 			aDs.insert(new Simple("simple"), ds.getDefaultWriteConcern());
 			aDs.insert(new Simple("simple"), ds.getDefaultWriteConcern());
-		} catch (Exception e) {
+		} catch (MongoException.DuplicateKey e) {
 			failed = true;
 		}
 		assertEquals(1L, ds.getCount(Simple.class));
@@ -59,7 +59,7 @@ public class TestWriteConcern  extends TestBase{
 		try {
 			aDs.insert(new Simple("simple"));
 			aDs.insert(new Simple("simple"), WriteConcern.SAFE);
-		} catch (Exception e) {
+		} catch (MongoException.DuplicateKey e) {
 			failed = true;
 		}
 		assertEquals(1L, ds.getCount(Simple.class));
@@ -74,7 +74,7 @@ public class TestWriteConcern  extends TestBase{
 		try {
 			aDs.insert(new Simple("simple"));
 			aDs.insert(new Simple("simple"));
-		} catch (Exception e) {
+		} catch (MongoException.DuplicateKey e) {
 			failed = true;
 		}
 		assertEquals(1L, ds.getCount(Simple.class));

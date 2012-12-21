@@ -17,48 +17,41 @@
 
 package com.mongodb;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.net.UnknownHostException;
-
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
-public class DBCollectionTest {
-    static Mongo mongoClient;
-    static String DB_NAME = "DBCollectionTest";
-    static DB database;
-
-    @BeforeClass
-    public static void setUpClass() throws UnknownHostException {
-        mongoClient = new MongoClient();
-        database = mongoClient.getDB(DB_NAME);
-        database.dropDatabase();
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-        mongoClient.close();
+public class DBCollectionTest extends MongoClientBaseTest{
+    @Test
+    public void testInsert() {
+        WriteResult res = collection.insert(new BasicDBObject("_id", 1).append("x", 2));
+        assertNotNull(res);
+        assertEquals(1L, collection.count());
+        assertEquals(new BasicDBObject("_id", 1).append("x", 2), collection.findOne());
     }
 
     @Test
-    public void testInsert() {
-        DBCollection c = database.getCollection("insert");
-        WriteResult res = c.insert(new BasicDBObject("_id", 1).append("x", 2));
-        assertNotNull(res);
-        assertEquals(1L, c.count());
-        assertEquals(new BasicDBObject("_id", 1).append("x", 2), c.findOne());
+    public void testInsertDuplicateKeyException() {
+        DBObject doc = new BasicDBObject("_id", 1);
+        collection.insert(doc, WriteConcern.ACKNOWLEDGED);
+        try {
+            collection.insert(doc, WriteConcern.ACKNOWLEDGED);
+            fail("should throw DuplicateKey exception");
+        } catch (MongoException.DuplicateKey e) {
+            assertThat(e.getCode(), is(11000));
+        }
     }
 
     @Test
     public void testUpdate() {
-        DBCollection c = database.getCollection("update");
-        WriteResult res = c.update(new BasicDBObject("_id", 1), new BasicDBObject("$set", new BasicDBObject("x", 2)),
+        WriteResult res = collection.update(new BasicDBObject("_id", 1), new BasicDBObject("$set", new BasicDBObject("x", 2)),
                                    true, false);
         assertNotNull(res);
-        assertEquals(1L, c.count());
-        assertEquals(new BasicDBObject("_id", 1).append("x", 2), c.findOne());
+        assertEquals(1L, collection.count());
+        assertEquals(new BasicDBObject("_id", 1).append("x", 2), collection.findOne());
     }
 }

@@ -16,12 +16,9 @@
 
 package org.mongodb;
 
-import java.io.IOException;
-
 /**
  * A general exception raised in Mongo
  *
- * @author antoine
  */
 public class MongoException extends RuntimeException {
     private static final long serialVersionUID = -4415279469780082174L;
@@ -50,7 +47,7 @@ public class MongoException extends RuntimeException {
      * @param t   the throwable cause
      */
     public MongoException(final String msg, final Throwable t) {
-        super(msg, convertToRootCauseIfNecessary(t));
+        super(msg, t);
         errorCode = -4;
     }
 
@@ -60,112 +57,8 @@ public class MongoException extends RuntimeException {
      * @param t    the throwable cause
      */
     public MongoException(final int code, final String msg, final Throwable t) {
-        super(msg, convertToRootCauseIfNecessary(t));
+        super(msg, t);
         errorCode = code;
-    }
-
-//    /**
-//     * Creates a MongoException from a BSON object representing an error
-//     * @param o
-//     */
-//    public MongoException( BSONObject o ){
-//        this( ServerError.getCode(o) , ServerError.getMsg( o , "UNKNOWN" ) );
-//    }
-//
-//    static MongoException parse( BSONObject o ){
-//        String s = ServerError.getMsg( o , null );
-//        if ( s == null )
-//            return null;
-//        return new MongoException( ServerError.getCode( o ) , s );
-//    }
-
-
-    private static Throwable convertToRootCauseIfNecessary(final Throwable t) {
-        if (t instanceof Network) {
-            return ((Network) t).rootCause;
-        }
-        return t;
-    }
-
-    /**
-     * Subclass of MongoException representing a network-related exception
-     */
-    public static class Network extends MongoException {
-        private static final long serialVersionUID = -4415279469780082174L;
-
-        private final IOException rootCause;
-
-        /**
-         * @param msg the message
-         * @param ioe the cause
-         */
-        public Network(final String msg, final IOException ioe) {
-            super(-2, msg, ioe);
-            rootCause = ioe;
-        }
-
-        /**
-         * @param ioe the cause
-         */
-        public Network(final IOException ioe) {
-            super(ioe.toString(), ioe);
-            rootCause = ioe;
-        }
-    }
-
-    /**
-     * Subclass of MongoException representing a duplicate key exception
-     */
-    public static class DuplicateKey extends MongoException {
-
-        private static final long serialVersionUID = -4415279469780082174L;
-
-        /**
-         * @param code the error code
-         * @param msg  the message
-         */
-        public DuplicateKey(final int code, final String msg) {
-            super(code, msg);
-        }
-    }
-
-    /**
-     * Subclass of MongoException representing a cursor-not-found exception
-     */
-    public static class CursorNotFound extends MongoException {
-
-        private static final long serialVersionUID = -4415279469780082174L;
-
-        private final long cursorId;
-        private final ServerAddress serverAddress;
-
-        /**
-         * @param cursorId      cursor
-         * @param serverAddress server address
-         */
-        public CursorNotFound(final long cursorId, final ServerAddress serverAddress) {
-            super(-5, "cursor " + cursorId + " not found on server " + serverAddress);
-            this.cursorId = cursorId;
-            this.serverAddress = serverAddress;
-        }
-
-        /**
-         * Get the cursor id that wasn't found.
-         *
-         * @return
-         */
-        public long getCursorId() {
-            return cursorId;
-        }
-
-        /**
-         * The server address where the cursor is.
-         *
-         * @return
-         */
-        public ServerAddress getServerAddress() {
-            return serverAddress;
-        }
     }
 
     /**

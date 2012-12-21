@@ -19,6 +19,7 @@
 package com.mongodb;
 
 import org.bson.BSONObject;
+import org.mongodb.command.MongoDuplicateKeyException;
 
 /**
  * A general exception raised in Mongo
@@ -125,6 +126,13 @@ public class MongoException extends RuntimeException {
 
         private static final long serialVersionUID = -4415279469780082174L;
 
+        /**
+         * Chaining the exception
+         * @param e
+         */
+        public DuplicateKey(MongoDuplicateKeyException e) {
+            super(e.getCode(), e.getMessage(), e);
+        }
         /**
          *
          * @param code the error code
