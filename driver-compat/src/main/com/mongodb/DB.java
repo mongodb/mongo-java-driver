@@ -128,9 +128,20 @@ public class DB {
         return database.admin().getCollectionNames();
     }
 
-    public void createCollection(final String collName, final DBObject dbObject) {
-        throw new UnsupportedOperationException();
-
+    public void createCollection(final String collName, final DBObject options) {
+        boolean capped = false;
+        int sizeInBytes = 0;
+        boolean autoIndex = true;
+        if (options.get("capped") != null) {
+            capped = (Boolean) options.get("capped");
+        }
+        if (options.get("size") != null) {
+            sizeInBytes = (Integer) options.get("size");
+        }
+        if (options.get("autoIndexId") != null) {
+            autoIndex = (Boolean) options.get("autoIndexId");
+        }
+        database.admin().createCollection(collName, capped, sizeInBytes, autoIndex);
     }
 
     public boolean authenticate(final String username, final char[] password) {
