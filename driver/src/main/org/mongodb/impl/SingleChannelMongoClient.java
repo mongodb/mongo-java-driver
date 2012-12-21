@@ -156,9 +156,10 @@ public class SingleChannelMongoClient implements MongoClient {
     private CommandResult sendWriteMessage(final MongoNamespace namespace, final MongoRequestMessage writeMessage,
                                            final MongoWrite write) {
         try {
-            channel.sendMessage(writeMessage);
+            channel.sendOneWayMessage(writeMessage);
             if (write.getWriteConcern().callGetLastError()) {
-                return new GetLastErrorCommand(getDatabase(namespace.getDatabaseName()), write.getWriteConcern()).execute();
+                return new GetLastErrorCommand(getDatabase(namespace.getDatabaseName()),
+                                               write.getWriteConcern()).execute();
             }
             else {
                 return null;
@@ -177,12 +178,11 @@ public class SingleChannelMongoClient implements MongoClient {
                 final MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", commandOperation,
                                                                         new PooledByteBufferOutput(bufferPool),
                                                                         withDocumentSerializer(serializer));
-                channel.sendMessage(message);
-
                 // TODO: not sure about the serializer we're passing in here
-                final MongoReplyMessage<Document> replyMessage = channel.receiveMessage(serializer);
+                final MongoReplyMessage<Document> replyMessage = channel.sendQueryMessage(message, serializer);
 
-                return new CommandResult(commandOperation.getCommand().toDocument(), channel.getAddress(), replyMessage.getDocuments().get(0));
+                return new CommandResult(commandOperation.getCommand().toDocument(), channel.getAddress(),
+                                         replyMessage.getDocuments().get(0));
             } catch (IOException e) {
                 throw new MongoException("", e);
             }
@@ -195,8 +195,7 @@ public class SingleChannelMongoClient implements MongoClient {
             final MongoInsertMessage<T> insertMessage = new MongoInsertMessage<T>(namespace.getFullName(), insert,
                                                                                   new PooledByteBufferOutput(
                                                                                           getBufferPool()), serializer);
-            return new InsertResult(insert,
-                                    sendWriteMessage(namespace, insertMessage, insert));
+            return new InsertResult(insert, sendWriteMessage(namespace, insertMessage, insert));
         }
 
         @Override
@@ -207,11 +206,7 @@ public class SingleChannelMongoClient implements MongoClient {
                 final MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find,
                                                                         new PooledByteBufferOutput(bufferPool),
                                                                         withDocumentSerializer(baseSerializer));
-                channel.sendMessage(message);
-
-                final MongoReplyMessage<T> replyMessage = channel.receiveMessage(serializer);
-
-                return new QueryResult<T>(replyMessage);
+                return new QueryResult<T>(channel.sendQueryMessage(message, serializer));
             } catch (IOException e) {
                 throw new MongoException("", e);
             }
@@ -221,14 +216,9 @@ public class SingleChannelMongoClient implements MongoClient {
         public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
                                             final Serializer<T> serializer) {
             try {
-                // TODO: set read preference on getMore
                 final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
                                                                             new PooledByteBufferOutput(bufferPool));
-                channel.sendMessage(message);
-
-                final MongoReplyMessage<T> replyMessage = channel.receiveMessage(serializer);
-
-                return new GetMoreResult<T>(replyMessage);
+                return new GetMoreResult<T>(channel.sendGetMoreMessage(message, serializer));
             } catch (IOException e) {
                 throw new MongoException("", e);
             }
@@ -252,8 +242,7 @@ public class SingleChannelMongoClient implements MongoClient {
                                                                       new PooledByteBufferOutput(bufferPool),
                                                                       withDocumentSerializer(baseSerializer),
                                                                       serializer);
-            return new UpdateResult(replace,
-                                    sendWriteMessage(namespace, message, replace));
+            return new UpdateResult(replace, sendWriteMessage(namespace, message, replace));
         }
 
         @Override
@@ -271,7 +260,7 @@ public class SingleChannelMongoClient implements MongoClient {
             try {
                 final MongoKillCursorsMessage message = new MongoKillCursorsMessage(
                         new PooledByteBufferOutput(bufferPool), killCursor);
-                channel.sendMessage(message);
+                channel.sendOneWayMessage(message);
             } catch (IOException e) {
                 throw new MongoException("", e);
             }

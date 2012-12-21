@@ -1,10 +1,10 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -15,27 +15,19 @@
  *
  */
 
-package org.mongodb.result;
+package org.mongodb;
 
-import org.mongodb.protocol.MongoReplyMessage;
+import org.bson.types.Document;
 
-import java.util.List;
+public class MongoQueryFailureException extends MongoException {
+    private final Document errorDocument;
 
-// TODO: Should this extend MongoResult, and if so, would have to make it generic
-public class QueryResult<T> {
-    private final long cursorId;
-    private final List<T> results;
-
-    public QueryResult(final MongoReplyMessage<T> replyMessage) {
-        cursorId = replyMessage.getReplyHeader().getCursorId();
-        results = replyMessage.getDocuments();
+    public MongoQueryFailureException(final ServerAddress address, final Document errorDocument) {
+        super((Integer) errorDocument.get("code"), "Error executing a query: " + errorDocument.get("$err") + " on server " + address);
+        this.errorDocument = errorDocument;
     }
 
-    public long getCursorId() {
-        return cursorId;
-    }
-
-    public List<T> getResults() {
-        return results;
+    public Document getErrorDocument() {
+        return errorDocument;
     }
 }

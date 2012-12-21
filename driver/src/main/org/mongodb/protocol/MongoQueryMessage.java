@@ -83,10 +83,6 @@ public class MongoQueryMessage extends MongoRequestMessage {
             res = -res;
         }
 
-        if (res == 1) {
-            // optimization: use negative batchsize to close cursor
-            res = -1;
-        }
         return res;
     }
 

@@ -21,8 +21,10 @@ import org.bson.io.OutputBuffer;
 import org.mongodb.operation.GetMore;
 
 public class MongoGetMoreMessage extends MongoRequestMessage {
+    final long cursorId;
     public MongoGetMoreMessage(final String collectionName, final GetMore getMore, final OutputBuffer buffer) {
         super(collectionName, OpCode.OP_GETMORE, buffer);
+        cursorId = getMore.getCursorId();
         writeGetMore(getMore);
         backpatchMessageLength();
     }
@@ -34,4 +36,7 @@ public class MongoGetMoreMessage extends MongoRequestMessage {
         buffer.writeLong(getMore.getCursorId());
     }
 
+    public long getCursorId() {
+        return cursorId;
+    }
 }

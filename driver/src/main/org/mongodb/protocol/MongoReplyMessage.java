@@ -26,61 +26,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MongoReplyMessage<T> {
-    private final int messageLength;
-    private final int requestId;
-    private final int responseTo;
-    private final int responseFlags;
-    private final long cursorId;
-    private final int startingFrom;
-    private final int numberReturned;
+
+    private final MongoReplyHeader replyHeader;
     private final List<T> documents;
 
-    public MongoReplyMessage(final InputBuffer headerInputBuffer, final InputBuffer bodyInputBuffer,
+    public MongoReplyMessage(final MongoReplyHeader replyHeader, final InputBuffer bodyInputBuffer,
                              final Serializer<T> serializer) {
-        messageLength = headerInputBuffer.readInt32();
-        requestId = headerInputBuffer.readInt32();
-        responseTo = headerInputBuffer.readInt32();  // TODO: validate that this is a response to the expected message
-        final int opCode = headerInputBuffer.readInt32();  // TODO: check for validity
-        responseFlags = headerInputBuffer.readInt32();
-        cursorId = headerInputBuffer.readInt64();
-        startingFrom = headerInputBuffer.readInt32();
-        numberReturned = headerInputBuffer.readInt32();
+        this.replyHeader = replyHeader;
 
-        documents = new ArrayList<T>(numberReturned);
+        documents = new ArrayList<T>(replyHeader.getNumberReturned());
 
-        while (documents.size() < numberReturned) {
+        while (documents.size() < replyHeader.getNumberReturned()) {
             final BSONReader reader = new BSONBinaryReader(new BsonReaderSettings(), bodyInputBuffer);
             documents.add(serializer.deserialize(reader, null));
             reader.close();
         }
     }
 
-    public int getMessageLength() {
-        return messageLength;
-    }
-
-    public int getRequestId() {
-        return requestId;
-    }
-
-    public int getResponseTo() {
-        return responseTo;
-    }
-
-    public int getResponseFlags() {
-        return responseFlags;
-    }
-
-    public long getCursorId() {
-        return cursorId;
-    }
-
-    public int getStartingFrom() {
-        return startingFrom;
-    }
-
-    public int getNumberReturned() {
-        return numberReturned;
+    public MongoReplyHeader getReplyHeader() {
+        return replyHeader;
     }
 
     public List<T> getDocuments() {

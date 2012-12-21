@@ -1,10 +1,10 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -15,27 +15,21 @@
  *
  */
 
-package org.mongodb.result;
+package org.mongodb;
 
-import org.mongodb.protocol.MongoReplyMessage;
-
-import java.util.List;
-
-// TODO: Should this extend MongoResult, and if so, would have to make it generic
-public class QueryResult<T> {
+// TODO: need ServerAddress and cursorId
+/**
+ * Exception thrown when a getmore is executed but the cursorId is no longer available on the server
+ */
+public class MongoCursorNotFoundException extends MongoException {
     private final long cursorId;
-    private final List<T> results;
 
-    public QueryResult(final MongoReplyMessage<T> replyMessage) {
-        cursorId = replyMessage.getReplyHeader().getCursorId();
-        results = replyMessage.getDocuments();
+    public MongoCursorNotFoundException(final ServerAddress address, final long cursorId) {
+        super("The cursor with id " + cursorId + " was not found on server " + address);
+        this.cursorId = cursorId;
     }
 
     public long getCursorId() {
         return cursorId;
-    }
-
-    public List<T> getResults() {
-        return results;
     }
 }

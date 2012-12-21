@@ -78,6 +78,14 @@ public class MongoCursor<T> implements Iterator<T>, Closeable {
         return currentIterator.next();
     }
 
+    /**
+     * Gets the cursor id.
+     * @return the cursor id
+     */
+    public long getCursorId() {
+        return currentResult.getCursorId();
+    }
+
     private void getMore() {
         currentResult = collection.getClient().
                 getOperations().getMore(collection.getNamespace(),

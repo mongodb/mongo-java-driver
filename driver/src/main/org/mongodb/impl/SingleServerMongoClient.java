@@ -43,6 +43,7 @@ import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
+import org.mongodb.serialization.serializers.DocumentSerializer;
 import org.mongodb.util.pool.SimplePool;
 
 import java.nio.ByteBuffer;
@@ -63,13 +64,14 @@ public class SingleServerMongoClient implements MongoClient {
 
     public SingleServerMongoClient(final ServerAddress serverAddress) {
         this.serverAddress = serverAddress;
+        primitiveSerializers = PrimitiveSerializers.createDefault();
         channelPool = new SimplePool<MongoChannel>(serverAddress.toString(), 100) {
             @Override
             protected MongoChannel createNew() {
-                return new MongoChannel(SingleServerMongoClient.this.serverAddress, bufferPool);
+                return new MongoChannel(SingleServerMongoClient.this.serverAddress, bufferPool,
+                                        new DocumentSerializer(primitiveSerializers));
             }
         };
-        primitiveSerializers = PrimitiveSerializers.createDefault();
         admin = new SingleServerAdmin(getOperations(), primitiveSerializers);
     }
 
