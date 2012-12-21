@@ -24,11 +24,16 @@ import org.mongodb.impl.SingleServerMongoClient;
 import java.net.UnknownHostException;
 
 public class Fixture {
+    static MongoClient mongoClient;
+
     private static final String SERVER_NAME = "localhost";
     private static final int PORT = 27017;
 
-    public static MongoClient createMongoClient() {
-        return new SingleServerMongoClient(createServerAddress());
+    public static synchronized MongoClient createMongoClient() {
+        if (mongoClient == null) {
+            mongoClient = new SingleServerMongoClient(createServerAddress());
+        }
+        return mongoClient;
     }
 
     private static ServerAddress createServerAddress() {
