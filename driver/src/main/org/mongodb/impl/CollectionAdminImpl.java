@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.mongodb.impl;
 
 import org.bson.types.Document;
@@ -21,7 +37,7 @@ import java.util.List;
 import static org.mongodb.impl.ErrorHandling.handleErrors;
 
 public class CollectionAdminImpl implements CollectionAdmin {
-    private static final String NAMESPACE_KAY_NAME = "ns";
+    private static final String NAMESPACE_KEY_NAME = "ns";
 
     private final MongoOperations operations;
     private final String databaseName;
@@ -42,7 +58,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
         collectionNamespace = new MongoNamespace(this.databaseName, collectionName);
         collStatsCommand = new CollStats(collectionNamespace.getCollectionName());
         queryForCollectionNamespace = new MongoFind(
-                new QueryFilterDocument(NAMESPACE_KAY_NAME, collectionNamespace.getFullName()));
+                new QueryFilterDocument(NAMESPACE_KEY_NAME, collectionNamespace.getFullName()));
     }
 
     @Override
@@ -50,10 +66,8 @@ public class CollectionAdminImpl implements CollectionAdmin {
         // TODO: check for index ??
         //        final List<Document> indexes = getIndexes();
 
-        final Document indexDetails = new Document(NAMESPACE_KAY_NAME, collectionNamespace.getFullName());
-        indexDetails.append("name", index.getName());
-        indexDetails.append("key", index.toDocument());
-        indexDetails.append("unique", index.isUnique());
+        Document indexDetails = index.toDocument();
+        indexDetails.append(NAMESPACE_KEY_NAME, collectionNamespace.getFullName());
 
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
         insertIndexOperation.writeConcern(WriteConcern.SAFE);

@@ -25,8 +25,8 @@ import static org.mongodb.OrderBy.ASC;
  */
 public class Index implements ConvertibleToDocument {
     private final boolean unique;
-    private final Document keys = new Document();
     private final String name;
+    private final Document keys = new Document();
 
     public Index(final Key... keys) {
         for (final Key key : keys) {
@@ -58,21 +58,18 @@ public class Index implements ConvertibleToDocument {
         this.name = generateIndexName();
     }
 
-    public boolean isUnique() {
-        return unique;
-    }
-
-    public String getName() {
-        return name;
-    }
-
     @Override
     public Document toDocument() {
-        return keys;
+        final Document indexDetails = new Document();
+        indexDetails.append("name", name);
+        indexDetails.append("key", keys);
+        indexDetails.append("unique", unique);
+
+        return indexDetails;
     }
 
     private void addKey(final Key key) {
-        keys.append(key.fieldName, key.orderBy.getIntRepresentation());
+        keys.append(key.getFieldName(), key.getValue());
     }
 
     private void addKey(final String fieldName, final OrderBy orderBy) {
@@ -103,13 +100,47 @@ public class Index implements ConvertibleToDocument {
     /**
      * Contains the pair that is the field name and the ordering value for each key of an index
      */
-    public static class Key {
+    public static class OrderedKey implements Key<Integer> {
         private final String fieldName;
         private final OrderBy orderBy;
 
-        public Key(final String fieldName, final OrderBy orderBy) {
+        public OrderedKey(final String fieldName, final OrderBy orderBy) {
             this.fieldName = fieldName;
             this.orderBy = orderBy;
         }
+
+        @Override
+        public String getFieldName() {
+            return fieldName;
+        }
+
+        @Override
+        public Integer getValue() {
+            return orderBy.getIntRepresentation();
+        }
+    }
+
+    public static class GeoKey implements Key<String> {
+        private final String fieldName;
+
+        public GeoKey(final String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getFieldName() {
+            return fieldName;
+        }
+
+        @Override
+        public String getValue() {
+            return "2d";
+        }
+    }
+
+    public interface Key<T> {
+        String getFieldName();
+
+        T getValue();
     }
 }

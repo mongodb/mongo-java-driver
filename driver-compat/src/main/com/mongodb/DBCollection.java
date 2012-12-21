@@ -481,7 +481,7 @@ public class DBCollection {
     public void ensureIndex(final BasicDBObject fields, final BasicDBObject opts) {
         List<Index.Key> keys = new ArrayList<Index.Key>();
         for (String key : fields.keySet()) {
-            keys.add(new Index.Key(key, OrderBy.fromInt((Integer) fields.get(key))));
+            keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
         }
         collection.admin().ensureIndex(new Index(keys.toArray(new Index.Key[keys.size()])));
     }
