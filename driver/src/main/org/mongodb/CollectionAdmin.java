@@ -6,16 +6,14 @@ import java.util.List;
 
 public interface CollectionAdmin {
     /**
-     * @param key the field to add the index to
+     * @param index all the details of the index to add
+     * @see Index
      * @see <a href="http://docs.mongodb.org/manual/reference/javascript/#db.collection.ensureIndex">ensureIndex</a>
      */
-    void ensureIndex(String key, OrderBy orderBy);
-
-    void ensureIndex(String key, OrderBy orderBy, boolean unique);
+    void ensureIndex(Index index);
 
     /**
      * @return a MongoCollection containing all the indexes on this collection
      */
     List<Document> getIndexes();
-
 }

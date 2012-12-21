@@ -2,6 +2,7 @@ package org.mongodb.impl;
 
 import org.bson.types.Document;
 import org.mongodb.CollectionAdmin;
+import org.mongodb.Index;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.OrderBy;
@@ -34,19 +35,18 @@ public class CollectionAdminImpl implements CollectionAdmin {
     }
 
     @Override
-    //TODO: need to support compound indexes
-    public void ensureIndex(final String key, final OrderBy orderBy) {
-        ensureIndex(key, orderBy, false);
+    public void ensureIndex(final Index index) {
+        ensureIndex(index.getKey(), index.getOrderBy(), index.isUnique());
     }
 
-    @Override
-    public void ensureIndex(final String key, final OrderBy orderBy, final boolean unique) {
+    //TODO: need to support compound indexes
+    private void ensureIndex(final String key, final OrderBy orderBy, final boolean unique) {
         // TODO: check for index ??
         //        final List<Document> indexes = getIndexes();
 
         final Document indexDetails = new Document("ns", databaseName + "." + collectionName);
 
-        Index index = new Index(key, orderBy.getIntRepresentation());
+        IndexThingies index = new IndexThingies(key, orderBy.getIntRepresentation());
         indexDetails.append("name", generateIndexName(index));
         indexDetails.append("key", index);
         indexDetails.append("unique", unique);
@@ -88,8 +88,8 @@ public class CollectionAdminImpl implements CollectionAdmin {
         return indexName.toString();
     }
 
-    private static final class Index extends Document {
-        public Index(final String key, final int value) {
+    private static final class IndexThingies extends Document {
+        public IndexThingies(final String key, final int value) {
             super(key, value);
         }
     }

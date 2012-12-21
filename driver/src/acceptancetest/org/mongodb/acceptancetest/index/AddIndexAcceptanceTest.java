@@ -1,9 +1,9 @@
 package org.mongodb.acceptancetest.index;
 
 import org.bson.types.Document;
-import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.Index;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
@@ -46,7 +46,8 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldCreateIndexOnCollectionWithoutIndex() {
-        collection.admin().ensureIndex("theField", OrderBy.ASC);
+        final Index index = new Index("theField");
+        collection.admin().ensureIndex(index);
 
         assertThat("Should be default index and new index on the database now", collection.admin().getIndexes().size(),
                    is(2));
@@ -54,17 +55,27 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldCreateIndexWithNameOfFieldPlusOrder() {
-
-        collection.insert(new MongoInsert<Document>(new Document("theField", "yourName")));
-        collection.admin().ensureIndex("theField", OrderBy.ASC);
+        final Index index = new Index("theField", ASC);
+        collection.admin().ensureIndex(index);
 
         String nameOfCreatedIndex = (String) collection.admin().getIndexes().get(1).get("name");
         assertThat("Should be an index with name of field, ascending", nameOfCreatedIndex, is("theField_1"));
     }
 
     @Test
+    public void shouldCreateAscendingIndexByDefault() {
+        final Index index = new Index("theFieldToIndex");
+        collection.admin().ensureIndex(index);
+
+        Document newIndexDetails = collection.admin().getIndexes().get(1);
+        OrderBy order = OrderBy.fromInt((Integer) ((Document) newIndexDetails.get("key")).get("theFieldToIndex"));
+        assertThat("Index created should be ascending", order, is(ASC));
+    }
+
+    @Test
     public void shouldCreateAnAscendingIndex() {
-        collection.admin().ensureIndex("field", OrderBy.ASC);
+        final Index index = new Index("field", ASC);
+        collection.admin().ensureIndex(index);
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
         OrderBy order = OrderBy.fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
@@ -73,7 +84,8 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldCreateADescendingIndex() {
-        collection.admin().ensureIndex("field", DESC);
+        final Index index = new Index("field", DESC);
+        collection.admin().ensureIndex(index);
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
         OrderBy order = OrderBy.fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
@@ -82,7 +94,8 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldCreateNonUniqueIndexByDefault() {
-        collection.admin().ensureIndex("field", DESC);
+        final Index index = new Index("field", DESC);
+        collection.admin().ensureIndex(index);
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
         assertThat("Index created should not be unique", newIndexDetails.get("unique"), is(nullValue()));
@@ -90,7 +103,8 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldCreateIndexOfUniqueValues() {
-        collection.admin().ensureIndex("field", DESC, true);
+        final Index index = new Index("field", DESC, true);
+        collection.admin().ensureIndex(index);
 
         Document newIndexDetails = collection.admin().getIndexes().get(1);
         Boolean unique = (Boolean) newIndexDetails.get("unique");
