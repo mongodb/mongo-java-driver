@@ -1,4 +1,4 @@
-## Contributing to the MongoDB Ruby Driver
+## Contributing to the MongoDB Java Driver
 
 Thank you for your interest in contributing to the MongoDB Java driver.
 
