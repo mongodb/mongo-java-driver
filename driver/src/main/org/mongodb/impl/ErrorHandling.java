@@ -19,6 +19,7 @@ package org.mongodb.impl;
 import org.mongodb.MongoException;
 import org.mongodb.result.CommandResult;
 
+// TODO: should also check for ok?
 public class ErrorHandling {
     static void handleErrors(final CommandResult commandResult, final String message) {
         Object serverErrorMessage = commandResult.getResponse().get("errmsg");

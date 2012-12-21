@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.serializers.CollectibleDBObjectSerializer;
+import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.serialization.PrimitiveSerializers;
@@ -132,6 +133,7 @@ public class DB {
         boolean capped = false;
         int sizeInBytes = 0;
         boolean autoIndex = true;
+        int maxDocuments = 0;
         if (options.get("capped") != null) {
             capped = (Boolean) options.get("capped");
         }
@@ -141,7 +143,10 @@ public class DB {
         if (options.get("autoIndexId") != null) {
             autoIndex = (Boolean) options.get("autoIndexId");
         }
-        database.admin().createCollection(collName, capped, sizeInBytes, autoIndex);
+        if (options.get("max") != null) {
+            maxDocuments = ((Number) options.get("max")).intValue();
+        }
+        database.admin().createCollection(new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex, maxDocuments));
     }
 
     public boolean authenticate(final String username, final char[] password) {

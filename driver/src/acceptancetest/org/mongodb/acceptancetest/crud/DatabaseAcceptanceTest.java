@@ -17,9 +17,7 @@
 package org.mongodb.acceptancetest.crud;
 
 import org.bson.types.Document;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoClient;
@@ -83,9 +81,18 @@ public class DatabaseAcceptanceTest {
     }
 
     @Test
-    @Ignore("This test is here to remind us that this functionality has not been implemented yet and is required")
     public void shouldSupportMaxNumberOfDocumentsInACappedCollection() {
-        Assert.fail("functionality has not been implemented for this yet");
+        int maxDocuments = 5;
+        String collectionName = "newCollectionName";
+        database.admin().createCollection(new CreateCollectionOptions(collectionName, true, 40 * 1024, false, maxDocuments));
+
+        Set<String> collections = database.admin().getCollectionNames();
+        assertThat(collections.contains("newCollectionName"), is(true));
+
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+        Document collectionStatistics = collection.admin().getStatistics();
+
+        assertThat("max is set correctly in collection statistics", (Integer) collectionStatistics.get("max"), is(maxDocuments));
     }
 
     @Test

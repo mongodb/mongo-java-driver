@@ -25,4 +25,10 @@ public interface CollectionAdmin {
      * @return true is this is a capped collection
      */
     boolean isCapped();
+
+    /**
+     * Return statistics document for this collection, from collstats command
+     * @return statistics document
+     */
+    Document getStatistics();
 }
