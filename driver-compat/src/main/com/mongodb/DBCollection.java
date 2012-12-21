@@ -481,7 +481,17 @@ public class DBCollection {
     public void ensureIndex(final BasicDBObject fields, final BasicDBObject opts) {
         List<Index.Key> keys = new ArrayList<Index.Key>();
         for (String key : fields.keySet()) {
-            keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
+            Object keyType = fields.get(key);
+            if (keyType instanceof Integer) {
+               keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
+            }
+            else if (keyType.equals("2d")) {
+                keys.add(new Index.GeoKey(key));
+            }
+            else {
+                throw new UnsupportedOperationException("Unsupported index type: " + keyType);
+            }
+
         }
         collection.admin().ensureIndex(new Index(keys.toArray(new Index.Key[keys.size()])));
     }
