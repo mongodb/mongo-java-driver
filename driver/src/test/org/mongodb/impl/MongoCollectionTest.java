@@ -157,7 +157,6 @@ public class MongoCollectionTest {
         try {
             while (cursor.hasNext()) {
                 final Document cur = cursor.next();
-                System.out.println(cur);
             }
         } finally {
             cursor.close();

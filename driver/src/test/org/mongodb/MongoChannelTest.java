@@ -157,7 +157,6 @@ public class MongoChannelTest {
                 new PooledByteBufferOutput(bufferPool), new DocumentSerializer(primitiveSerializers));
 
         final MongoReplyMessage<Concrete> replyMessage =  channel.sendQueryMessage(queryMessage, new ConcreteSerializer());
-        System.out.println(replyMessage.getDocuments());
     }
 
     @Test

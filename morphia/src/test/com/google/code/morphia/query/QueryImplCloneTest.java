@@ -3,17 +3,15 @@
  */
 package com.google.code.morphia.query;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.List;
-
+import com.google.code.morphia.TestBase;
+import com.google.code.morphia.annotations.Id;
 import junit.framework.Assert;
-
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
-import com.google.code.morphia.TestBase;
-import com.google.code.morphia.annotations.Id;
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author doc
@@ -34,8 +32,6 @@ public class QueryImplCloneTest extends TestBase {
 			
 			Object v1 = f.get(q1);
 			Object v2 = f.get(q2);
-			
-			System.out.println("checking field " + f.getName() + " v1=" + v1 + " v2=" + v2);
 			
 			if (v1 == null && v2 == null)
 				continue;
