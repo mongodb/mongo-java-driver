@@ -12,7 +12,6 @@ import com.google.code.morphia.dao.BasicDAO;
 import com.google.code.morphia.logging.MorphiaLoggerFactory;
 import com.mongodb.Mongo;
 import com.mongodb.MongoException;
-import junit.framework.TestCase;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -28,7 +27,7 @@ import java.util.logging.Logger;
 @RunWith(ConcurrentJunitRunner.class)
 @Concurrent(threads = 4)
 @Ignore
-public class ExampleServiceTest extends TestCase {
+public class ExampleServiceTest {
 
 	// private ExampleService service = new ExampleService();
 	// @Autowired
