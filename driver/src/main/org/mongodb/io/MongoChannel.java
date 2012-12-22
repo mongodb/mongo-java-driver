@@ -19,7 +19,6 @@ package org.mongodb.io;
 
 import org.bson.io.ByteBufferInput;
 import org.bson.io.InputBuffer;
-import org.bson.io.OutputBuffer;
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
 import org.mongodb.MongoCursorNotFoundException;
@@ -44,9 +43,9 @@ import java.nio.channels.SocketChannel;
  */
 public class MongoChannel {
     private final ServerAddress address;
-    private SocketChannel socketChannel;
     private final BufferPool<ByteBuffer> pool;
     private final Serializer<Document> errorSerializer;
+    private volatile SocketChannel socketChannel;
 
     public MongoChannel(final ServerAddress address, final BufferPool<ByteBuffer> pool,
                         Serializer<Document> errorSerializer) {
@@ -66,9 +65,7 @@ public class MongoChannel {
                 open();
             }
 
-            final OutputBuffer buffer = message.getBuffer();
-            buffer.pipe(socketChannel);
-            message.done();
+            message.pipeAndClose(socketChannel);
         } catch (IOException e) {
             throw new MongoSocketException("Exception sending message", address, e);
         }

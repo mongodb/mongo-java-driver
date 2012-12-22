@@ -256,9 +256,6 @@ public class MongoChannelTest {
                 new MongoInsert<Document>(documents).writeConcern(WriteConcern.UNACKNOWLEDGED),
                 new PooledByteBufferOutput(bufferPool), new DocumentSerializer(primitiveSerializers));
 
-
-        message.addDocument(doc1, new DocumentSerializer(primitiveSerializers));
-
         channel.sendOneWayMessage(message);
 
         return documents;

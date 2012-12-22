@@ -25,7 +25,7 @@ import org.mongodb.ReadPreference;
 import org.mongodb.serialization.Serializer;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -38,7 +38,7 @@ public class MongoRequestMessage {
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
     protected final String collectionName;
-    protected final OutputBuffer buffer;
+    protected volatile OutputBuffer buffer;
     private final int id;
     private final OpCode opCode;
     private volatile int numDocuments; // only one thread will modify this field, so volatile is sufficient synchronization
@@ -77,39 +77,32 @@ public class MongoRequestMessage {
         buffer.writeInt(opCode.getValue());
     }
 
-    void pipe(final OutputStream out) throws IOException {
+    public void pipeAndClose(final SocketChannel out) throws IOException {
         buffer.pipe(out);
+        done();
     }
 
-    int size() {
+    public int size() {
         return buffer.size();
     }
 
-    void doneWithMessage() {
-        try {
-            buffer.close();
-        } catch (IOException e) {
-            // TODO: Maybe not throw IOException from close()
-        }
-    }
-
-    int getId() {
+    public int getId() {
         return id;
     }
 
-    OpCode getOpCode() {
+    public OpCode getOpCode() {
         return opCode;
     }
 
-    String getNamespace() {
+    public String getNamespace() {
         return collectionName != null ? collectionName : null;
     }
 
-    int getNumDocuments() {
+    public int getNumDocuments() {
         return numDocuments;
     }
 
-    public <T> void addDocument(final T obj, final Serializer<T> serializer) {
+    protected  <T> void addDocument(final T obj, final Serializer<T> serializer) {
         // TODO fix this constructor call to remove hard coding
         final BSONBinaryWriter writer = new BSONBinaryWriter(new BsonWriterSettings(100),
                 new BinaryWriterSettings(1024 * 1024 * 16), buffer);
@@ -137,6 +130,7 @@ public class MongoRequestMessage {
 
     public void done() throws IOException {
         buffer.close();
+        buffer = null;
     }
 
     enum OpCode {
