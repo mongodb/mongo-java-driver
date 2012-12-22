@@ -3,12 +3,6 @@
  */
 package com.google.code.morphia.converters;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.google.code.morphia.logging.Logr;
 import com.google.code.morphia.logging.MorphiaLoggerFactory;
 import com.google.code.morphia.mapping.MappedField;
@@ -17,6 +11,12 @@ import com.google.code.morphia.mapping.MapperOptions;
 import com.google.code.morphia.mapping.MappingException;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Default encoders
@@ -42,7 +42,7 @@ public class DefaultConverters {
 		//Pass-through DBObject or else the MapOfValuesConverter will process it.
 		addConverter(new PassthroughConverter(DBObject.class, BasicDBObject.class));
 		//Pass-through byte[] for the driver to handle
-		addConverter(new PassthroughConverter(byte[].class));
+        addConverter(new ByteArrayConverter());
 		addConverter(new EnumSetConverter());
 		addConverter(new EnumConverter());
 		addConverter(new StringConverter());

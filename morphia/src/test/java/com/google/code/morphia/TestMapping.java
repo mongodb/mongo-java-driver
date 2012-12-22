@@ -16,29 +16,6 @@
 
 package com.google.code.morphia;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.io.Serializable;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.Vector;
-
-import org.bson.types.ObjectId;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.google.code.morphia.TestInheritanceMappings.MapLike;
 import com.google.code.morphia.annotations.AlsoLoad;
 import com.google.code.morphia.annotations.Embedded;
@@ -64,6 +41,28 @@ import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
+import org.bson.types.ObjectId;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.io.Serializable;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.Vector;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Olafur Gauti Gudmundsson
@@ -638,7 +637,7 @@ public class TestMapping  extends TestBase {
 	}
 	
 	@Test
-    public void testbyteArrayMapping() throws Exception {
+    public void testByteArrayMapping() throws Exception {
 		morphia.map(ContainsbyteArray.class);
 		Key<ContainsbyteArray> savedKey = ds.save(new ContainsbyteArray());
 		ContainsbyteArray loaded = ds.get(ContainsbyteArray.class, savedKey.getId());
