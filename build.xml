@@ -192,6 +192,9 @@ limitations under the License.
                  srcdir="${src.driver}/test"
                  destdir="${test.classes}"/>
         <compile classpathref="test.classpath"
+                 srcdir="${src.driver}/acceptancetest"
+                 destdir="${test.classes}"/>
+        <compile classpathref="test.classpath"
                  srcdir="${src.driver-compat}/test"
                  destdir="${test.classes}"/>
         <compile classpathref="test.classpath"
