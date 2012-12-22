@@ -489,7 +489,7 @@ public class DBCollection {
         ensureIndex(fields, null);
     }
 
-    // TODO: don't ignore opts
+    // TODO: check if these are all the supported options
     public void ensureIndex(final BasicDBObject fields, final BasicDBObject opts) {
         String name = null;
         boolean unique = false;

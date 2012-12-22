@@ -98,12 +98,6 @@ public class CommandResult extends BasicDBObject {
 
                 int code = getCode();
 
-                // TODO: Move this code somewhere better
-//                String s = foo.toString();
-//                if (code == 11000 || code == 11001 || s.startsWith("E11000") || s.startsWith("E11001")) {
-//                    return new MongoException.DuplicateKey(code, s);
-//                }
-
                 return new MongoException(code, errObj.toString());
             }
         }
