@@ -23,7 +23,6 @@ import org.bson.io.OutputBuffer;
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
 import org.mongodb.MongoCursorNotFoundException;
-import org.mongodb.MongoException;
 import org.mongodb.MongoQueryFailureException;
 import org.mongodb.ServerAddress;
 import org.mongodb.protocol.MongoGetMoreMessage;
@@ -49,7 +48,8 @@ public class MongoChannel {
     private final BufferPool<ByteBuffer> pool;
     private final Serializer<Document> errorSerializer;
 
-    public MongoChannel(final ServerAddress address, final BufferPool<ByteBuffer> pool, Serializer<Document> errorSerializer) {
+    public MongoChannel(final ServerAddress address, final BufferPool<ByteBuffer> pool,
+                        Serializer<Document> errorSerializer) {
         this.address = address;
         this.pool = pool;
         this.errorSerializer = errorSerializer;
@@ -59,37 +59,38 @@ public class MongoChannel {
         return address;
     }
 
-    public void sendOneWayMessage(final MongoRequestMessage message) throws IOException {
-        if (socketChannel == null) {
-            open();
+    public void sendOneWayMessage(final MongoRequestMessage message) {
+
+        try {
+            if (socketChannel == null) {
+                open();
+            }
+
+            final OutputBuffer buffer = message.getBuffer();
+            buffer.pipe(socketChannel);
+            message.done();
+        } catch (IOException e) {
+            throw new MongoSocketException("Exception sending message", address, e);
         }
-
-        final OutputBuffer buffer = message.getBuffer();
-        buffer.pipe(socketChannel);
-        message.done();
     }
 
-    public <T> MongoReplyMessage<T> sendQueryMessage(final MongoQueryMessage message, Serializer<T> serializer) throws IOException {
+    public <T> MongoReplyMessage<T> sendQueryMessage(final MongoQueryMessage message, Serializer<T> serializer) {
         sendOneWayMessage(message);
         return receiveMessage(message, serializer);
     }
 
-    public <T> MongoReplyMessage<T> sendGetMoreMessage(final MongoGetMoreMessage message, Serializer<T> serializer) throws IOException {
+    public <T> MongoReplyMessage<T> sendGetMoreMessage(final MongoGetMoreMessage message, Serializer<T> serializer) {
         sendOneWayMessage(message);
         return receiveMessage(message, serializer);
     }
 
-    public <T> MongoReplyMessage<T> receiveMessage(final MongoRequestMessage message, final Serializer<T> serializer) throws IOException {
+    public <T> MongoReplyMessage<T> receiveMessage(final MongoRequestMessage message, final Serializer<T> serializer) {
         ByteBuffer headerByteBuffer = null;
         ByteBuffer bodyByteBuffer = null;
         try {
             headerByteBuffer = pool.get(36);
-            int bytesRead = socketChannel.read(headerByteBuffer);
-            if (bytesRead < headerByteBuffer.limit()) {
-                throw new MongoException("Unable to read message header: " + bytesRead);
-            }
+            fillAndFlipBuffer(headerByteBuffer);
 
-            headerByteBuffer.flip();
             final InputBuffer headerInputBuffer = new ByteBufferInput(headerByteBuffer);
             final int length = headerInputBuffer.readInt32();
             headerInputBuffer.setPosition(0);
@@ -98,12 +99,8 @@ public class MongoChannel {
 
             if (length > 36) {
                 bodyByteBuffer = pool.get(length - 36);
-                bytesRead = 0;
-                while (bytesRead < bodyByteBuffer.limit()) {
-                    bytesRead += socketChannel.read(bodyByteBuffer);
-                }
+                fillAndFlipBuffer(bodyByteBuffer);
 
-                bodyByteBuffer.flip();
                 bodyInputBuffer = new ByteBufferInput(bodyByteBuffer);
             }
 
@@ -112,10 +109,13 @@ public class MongoChannel {
                 throw new MongoCursorNotFoundException(address, ((MongoGetMoreMessage) message).getCursorId());
             }
             else if (replyHeader.isQueryFailure()) {
-                Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer, errorSerializer).getDocuments().get(0);
+                Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,
+                                                                         errorSerializer).getDocuments().get(0);
                 throw new MongoQueryFailureException(address, errorDocument);
             }
             return new MongoReplyMessage<T>(replyHeader, bodyInputBuffer, serializer);
+        } catch (IOException e) {
+          throw new MongoSocketException("Exception receiving message", address, e);
         } finally {
             if (headerByteBuffer != null) {
                 pool.done(headerByteBuffer);
@@ -126,8 +126,24 @@ public class MongoChannel {
         }
     }
 
-    private void open() throws IOException {
-        socketChannel = SocketChannel.open(address.getSocketAddress());
+    private void fillAndFlipBuffer(final ByteBuffer buffer) throws IOException {
+        int totalBytesRead = 0;
+        while (totalBytesRead < buffer.limit()) {
+            int bytesRead = socketChannel.read(buffer);
+            if (bytesRead == -1) {
+                throw new MongoSocketException("Prematurely reached end of stream", address);
+            }
+            totalBytesRead += bytesRead;
+        }
+        buffer.flip();
+    }
+
+    private void open() {
+        try {
+            socketChannel = SocketChannel.open(address.getSocketAddress());
+        } catch (IOException e) {
+            throw new MongoSocketException("Exception opening socket", address, e);
+        }
     }
 
     public void close() {

@@ -23,11 +23,17 @@ public class MongoQueryFailureException extends MongoException {
     private final Document errorDocument;
 
     public MongoQueryFailureException(final ServerAddress address, final Document errorDocument) {
-        super((Integer) errorDocument.get("code"), "Error executing a query: " + errorDocument.get("$err") + " on server " + address);
+        super("Query failed with error code " + errorDocument.get("code") + " and error message + '" +
+                errorDocument.get("$err") + "' on server " + address, address);
         this.errorDocument = errorDocument;
     }
 
+    // TODO: Create bean for the error document similar to CommandResult
     public Document getErrorDocument() {
         return errorDocument;
+    }
+
+    public int getErrorCode() {
+        return (Integer) errorDocument.get("code");
     }
 }

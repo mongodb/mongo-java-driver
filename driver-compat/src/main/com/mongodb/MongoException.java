@@ -19,10 +19,13 @@
 package com.mongodb;
 
 import org.bson.BSONObject;
+import org.mongodb.MongoQueryFailureException;
+import org.mongodb.command.MongoCommandException;
 import org.mongodb.command.MongoDuplicateKeyException;
 
 /**
  * A general exception raised in Mongo
+ *
  * @author antoine
  */
 public class MongoException extends RuntimeException {
@@ -31,67 +34,75 @@ public class MongoException extends RuntimeException {
 
     public MongoException(final org.mongodb.MongoException e) {
         super(e.getMessage(), e);
-        _code = e.getCode();
+        if (e instanceof MongoCommandException) {
+            code = ((MongoCommandException) e).getCommandResult().getErrorCode();
+        }
+        else if (e instanceof MongoQueryFailureException){
+            code = ((MongoQueryFailureException) e).getErrorCode();
+        }
+        else{
+            code = -1;
+        }
     }
 
     /**
      * @param msg the message
      */
-    public MongoException( String msg ){
-        super( msg );
-        _code = -3;
+    public MongoException(String msg) {
+        super(msg);
+        code = -3;
     }
 
     /**
-     *
      * @param code the error code
-     * @param msg the message
+     * @param msg  the message
      */
-    public MongoException( int code , String msg ){
-        super( msg );
-        _code = code;
+    public MongoException(int code, String msg) {
+        super(msg);
+        this.code = code;
     }
 
     /**
-     *
      * @param msg the message
-     * @param t the throwable cause
+     * @param t   the throwable cause
      */
-    public MongoException( String msg , Throwable t ){
-        super( msg , _massage( t ) );
-        _code = -4;
+    public MongoException(String msg, Throwable t) {
+        super(msg, _massage(t));
+        code = -4;
     }
 
     /**
-     *
      * @param code the error code
-     * @param msg the message
-     * @param t the throwable cause
+     * @param msg  the message
+     * @param t    the throwable cause
      */
-    public MongoException( int code , String msg , Throwable t ){
-        super( msg , _massage( t ) );
-        _code = code;
+    public MongoException(int code, String msg, Throwable t) {
+        super(msg, _massage(t));
+        this.code = code;
     }
 
     /**
      * Creates a MongoException from a BSON object representing an error
+     *
      * @param o
      */
-    public MongoException( BSONObject o ){
-        this( ServerError.getCode(o) , ServerError.getMsg( o , "UNKNOWN" ) );
+    public MongoException(BSONObject o) {
+        this(ServerError.getCode(o), ServerError.getMsg(o, "UNKNOWN"));
     }
 
-    static MongoException parse( BSONObject o ){
-        String s = ServerError.getMsg( o , null );
-        if ( s == null )
+    static MongoException parse(BSONObject o) {
+        String s = ServerError.getMsg(o, null);
+        if (s == null) {
             return null;
-        return new MongoException( ServerError.getCode( o ) , s );
+        }
+        return new MongoException(ServerError.getCode(o), s);
     }
 
 
-    static Throwable _massage( Throwable t ){
-        if ( t instanceof Network )
-            return ((Network)t)._ioe;
+    static Throwable _massage(Throwable t) {
+        if (t instanceof Network) {
+            return ((Network) t)._ioe;
+        }
         return t;
     }
 
@@ -103,21 +114,19 @@ public class MongoException extends RuntimeException {
         private static final long serialVersionUID = -4415279469780082174L;
 
         /**
-         *
          * @param msg the message
          * @param ioe the cause
          */
-        public Network( String msg , java.io.IOException ioe ){
-            super( -2 , msg , ioe );
+        public Network(String msg, java.io.IOException ioe) {
+            super(-2, msg, ioe);
             _ioe = ioe;
         }
 
         /**
-         *
          * @param ioe the cause
          */
-        public Network( java.io.IOException ioe ){
-            super( ioe.toString() , ioe );
+        public Network(java.io.IOException ioe) {
+            super(ioe.toString(), ioe);
             _ioe = ioe;
         }
 
@@ -133,18 +142,19 @@ public class MongoException extends RuntimeException {
 
         /**
          * Chaining the exception
+         *
          * @param e
          */
         public DuplicateKey(MongoDuplicateKeyException e) {
-            super(e.getCode(), e.getMessage(), e);
+            super(e.getCommandResult().getErrorCode(), e.getMessage(), e);
         }
+
         /**
-         *
          * @param code the error code
-         * @param msg the message
+         * @param msg  the message
          */
-        public DuplicateKey( int code , String msg ){
-            super( code , msg );
+        public DuplicateKey(int code, String msg) {
+            super(code, msg);
         }
     }
 
@@ -159,18 +169,18 @@ public class MongoException extends RuntimeException {
         private final ServerAddress serverAddress;
 
         /**
-         *
-         * @param cursorId cursor
+         * @param cursorId      cursor
          * @param serverAddress server address
          */
-        public CursorNotFound(long cursorId, ServerAddress serverAddress){
-            super( -5 , "cursor " + cursorId + " not found on server " + serverAddress );
+        public CursorNotFound(long cursorId, ServerAddress serverAddress) {
+            super(-5, "cursor " + cursorId + " not found on server " + serverAddress);
             this.cursorId = cursorId;
             this.serverAddress = serverAddress;
         }
 
         /**
          * Get the cursor id that wasn't found.
+         *
          * @return
          */
         public long getCursorId() {
@@ -179,6 +189,7 @@ public class MongoException extends RuntimeException {
 
         /**
          * The server address where the cursor is.
+         *
          * @return
          */
         public ServerAddress getServerAddress() {
@@ -188,11 +199,12 @@ public class MongoException extends RuntimeException {
 
     /**
      * Gets the exception code
+     *
      * @return
      */
-    public int getCode(){
-        return _code;
+    public int getCode() {
+        return code;
     }
 
-    final int _code;
+    final int code;
 }

@@ -16,30 +16,23 @@
 
 package org.mongodb;
 
+import java.io.IOException;
+
 /**
- * A general exception raised in Mongo
+ * A general exception raised in response to some sort of problem communicating with a MongoDB server.  This could
+ * represent network errors, server errors, or application-level errors.
  *
  */
 public class MongoException extends RuntimeException {
     private static final long serialVersionUID = -4415279469780082174L;
 
-    private final int errorCode;
+    private ServerAddress address;
 
     /**
      * @param msg the message
      */
     public MongoException(final String msg) {
         super(msg);
-        errorCode = -3;
-    }
-
-    /**
-     * @param code the error code
-     * @param msg  the message
-     */
-    public MongoException(final int code, final String msg) {
-        super(msg);
-        errorCode = code;
     }
 
     /**
@@ -48,26 +41,19 @@ public class MongoException extends RuntimeException {
      */
     public MongoException(final String msg, final Throwable t) {
         super(msg, t);
-        errorCode = -4;
     }
 
-    /**
-     * @param code the error code
-     * @param msg  the message
-     * @param t    the throwable cause
-     */
-    public MongoException(final int code, final String msg, final Throwable t) {
-        super(msg, t);
-        errorCode = code;
+    public MongoException(final String message, final ServerAddress address) {
+        super(message);
+        this.address = address;
     }
 
-    /**
-     * Gets the exception code
-     *
-     * @return
-     */
-    public int getCode() {
-        return errorCode;
+    public MongoException(final String message, final ServerAddress address, final IOException e) {
+        super(message, e);
+        this.address = address;
     }
 
+    public ServerAddress getAddress() {
+        return address;
+    }
 }

@@ -167,10 +167,6 @@ public class MongoChannelTest {
         final int iterations = 10000;
         final byte[] bytes = new byte[8192];
         for (int i = 0; i < iterations; i++) {
-            if ((i > 0) && (i % 10000 == 0)) {
-                System.out.println("i: " + i);
-            }
-
             final Document doc1 = new Document();
             doc1.put("_id", new ObjectId());
             doc1.put("str", "hi mom");
@@ -185,18 +181,11 @@ public class MongoChannelTest {
                     new PooledByteBufferOutput(bufferPool), new DocumentSerializer(primitiveSerializers));
 
             channel.sendOneWayMessage(message);
-
         }
 
         long endTime = System.nanoTime();
         double elapsedTime = (endTime - startTime) / (double) 1000000000;
-        System.out.println("Time: " + elapsedTime + " sec");
-        System.out.println(iterations / elapsedTime + " messages/sec");
-        System.out.flush();
-
-        System.out.println();
-
-        System.out.println("Query time...");
+        System.out.println("Inserted " + iterations / elapsedTime + " messages/sec");
 
         final QueryFilterDocument filter = new QueryFilterDocument();
 
@@ -206,31 +195,20 @@ public class MongoChannelTest {
                 new MongoFind(filter).batchSize(4000000).readPreference(ReadPreference.primary()),
                 new PooledByteBufferOutput(bufferPool), new DocumentSerializer(primitiveSerializers));
 
-        int totalDocuments = 0;
-
         MongoReplyMessage<Document> replyMessage = channel.sendQueryMessage(queryMessage, new DocumentSerializer(primitiveSerializers));
-        totalDocuments += replyMessage.getReplyHeader().getNumberReturned();
-        System.out.println(" Initial: " + replyMessage.getDocuments().size() + " documents, " + replyMessage.getReplyHeader().getMessageLength() + " bytes");
+        replyMessage.getReplyHeader().getNumberReturned();
 
         while (replyMessage.getReplyHeader().getCursorId() != 0) {
             final MongoGetMoreMessage getMoreMessage = new MongoGetMoreMessage("MongoConnectionTest.sendMessageTest",
                     new GetMore(replyMessage.getReplyHeader().getCursorId(), 0), new PooledByteBufferOutput(bufferPool));
 
             replyMessage = channel.sendGetMoreMessage(getMoreMessage, new DocumentSerializer(primitiveSerializers));
-            totalDocuments += replyMessage.getReplyHeader().getNumberReturned();
-            System.out.println(" Get more: " + replyMessage.getDocuments().size() + " documents, " + replyMessage.getReplyHeader().getMessageLength() + " bytes");
+            replyMessage.getReplyHeader().getNumberReturned();
         }
-
-        System.out.println("Total: " + totalDocuments);
-
-        System.out.println();
 
         endTime = System.nanoTime();
         elapsedTime = (endTime - startTime) / (double) 1000000000;
-        System.out.println("Time: " + elapsedTime + " sec");
-        System.out.println(iterations / elapsedTime + " documents/sec");
-        System.out.flush();
-        Thread.sleep(1000);
+        System.out.println("Queried " + iterations / elapsedTime + " documents/sec");
     }
 
     @Test

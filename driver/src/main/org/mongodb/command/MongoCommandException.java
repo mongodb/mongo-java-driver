@@ -19,25 +19,22 @@ package org.mongodb.command;
 import org.mongodb.MongoException;
 import org.mongodb.result.CommandResult;
 
+/**
+ * Exception thrown when a command fails.
+ */
 public class MongoCommandException extends MongoException {
-    static final long serialVersionUID = -50109343643507362L;
+    private static final long serialVersionUID = -50109343643507362L;
 
     private final CommandResult commandResult;
 
     public MongoCommandException(final CommandResult commandResult) {
-        super(getErrorCode(commandResult), getErrorMessage(commandResult));
+        super("Command failed with error code " + commandResult.getErrorCode() + " and error message '" +
+                      commandResult.getErrorMessage() + "' on server " + commandResult.getAddress(),
+              commandResult.getAddress());
         this.commandResult = commandResult;
     }
 
     public CommandResult getCommandResult() {
         return commandResult;
-    }
-
-    private static int getErrorCode(final CommandResult commandResult) {
-        return (Integer) commandResult.getResponse().get("code");
-    }
-
-    private static String getErrorMessage(final CommandResult commandResult) {
-        return (String) commandResult.getResponse().get("err");
     }
 }

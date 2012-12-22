@@ -33,7 +33,7 @@ public class MongoFindTest extends MongoClientTestBase {
             collection.findOne(new MongoFind(new QueryFilterDocument("loc", new Document("$near", new double[] {0, 0}))));
             fail("Should be a query failure since there is no 2d index");
         } catch (MongoQueryFailureException e) {
-            assertEquals(13038, e.getCode());
+            assertEquals(13038, e.getErrorCode());
         }
     }
 }

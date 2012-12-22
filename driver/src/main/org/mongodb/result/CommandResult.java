@@ -48,4 +48,13 @@ public class CommandResult {
     public Document getResponse() {
         return response;
     }
+
+    public int getErrorCode() {
+        return (Integer) getResponse().get("code");
+    }
+
+    public String getErrorMessage() {
+        return (String) getResponse().get("err");
+    }
+
 }

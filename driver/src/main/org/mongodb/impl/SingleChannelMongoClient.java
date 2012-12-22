@@ -22,7 +22,6 @@ import org.bson.util.BufferPool;
 import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoDatabase;
-import org.mongodb.MongoException;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
@@ -58,7 +57,6 @@ import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 import org.mongodb.util.pool.SimplePool;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -155,17 +153,12 @@ public class SingleChannelMongoClient implements MongoClient {
 
     private CommandResult sendWriteMessage(final MongoNamespace namespace, final MongoRequestMessage writeMessage,
                                            final MongoWrite write) {
-        try {
-            channel.sendOneWayMessage(writeMessage);
-            if (write.getWriteConcern().callGetLastError()) {
-                return new GetLastErrorCommand(getDatabase(namespace.getDatabaseName()),
-                                               write.getWriteConcern()).execute();
-            }
-            else {
-                return null;
-            }
-        } catch (IOException e) {
-            throw new MongoException("Write failed", e);
+        channel.sendOneWayMessage(writeMessage);
+        if (write.getWriteConcern().callGetLastError()) {
+            return new GetLastErrorCommand(getDatabase(namespace.getDatabaseName()), write.getWriteConcern()).execute();
+        }
+        else {
+            return null;
         }
     }
 
@@ -173,19 +166,15 @@ public class SingleChannelMongoClient implements MongoClient {
         @Override
         public CommandResult executeCommand(final String database, final MongoCommandOperation commandOperation,
                                             final Serializer<Document> serializer) {
-            try {
-                commandOperation.readPreferenceIfAbsent(getReadPreference());
-                final MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", commandOperation,
-                                                                        new PooledByteBufferOutput(bufferPool),
-                                                                        withDocumentSerializer(serializer));
-                // TODO: not sure about the serializer we're passing in here
-                final MongoReplyMessage<Document> replyMessage = channel.sendQueryMessage(message, serializer);
+            commandOperation.readPreferenceIfAbsent(getReadPreference());
+            final MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", commandOperation,
+                                                                    new PooledByteBufferOutput(bufferPool),
+                                                                    withDocumentSerializer(serializer));
+            // TODO: not sure about the serializer we're passing in here
+            final MongoReplyMessage<Document> replyMessage = channel.sendQueryMessage(message, serializer);
 
-                return new CommandResult(commandOperation.getCommand().toDocument(), channel.getAddress(),
-                                         replyMessage.getDocuments().get(0));
-            } catch (IOException e) {
-                throw new MongoException("", e);
-            }
+            return new CommandResult(commandOperation.getCommand().toDocument(), channel.getAddress(),
+                                     replyMessage.getDocuments().get(0));
         }
 
         @Override
@@ -201,27 +190,19 @@ public class SingleChannelMongoClient implements MongoClient {
         @Override
         public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
                                         final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
-            try {
-                find.readPreferenceIfAbsent(getReadPreference());
-                final MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find,
-                                                                        new PooledByteBufferOutput(bufferPool),
-                                                                        withDocumentSerializer(baseSerializer));
-                return new QueryResult<T>(channel.sendQueryMessage(message, serializer));
-            } catch (IOException e) {
-                throw new MongoException("", e);
-            }
+            find.readPreferenceIfAbsent(getReadPreference());
+            final MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find,
+                                                                    new PooledByteBufferOutput(bufferPool),
+                                                                    withDocumentSerializer(baseSerializer));
+            return new QueryResult<T>(channel.sendQueryMessage(message, serializer));
         }
 
         @Override
         public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
                                             final Serializer<T> serializer) {
-            try {
-                final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
-                                                                            new PooledByteBufferOutput(bufferPool));
-                return new GetMoreResult<T>(channel.sendGetMoreMessage(message, serializer));
-            } catch (IOException e) {
-                throw new MongoException("", e);
-            }
+            final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
+                                                                        new PooledByteBufferOutput(bufferPool));
+            return new GetMoreResult<T>(channel.sendGetMoreMessage(message, serializer));
         }
 
         @Override
@@ -257,13 +238,9 @@ public class SingleChannelMongoClient implements MongoClient {
 
         @Override
         public void killCursors(final MongoKillCursor killCursor) {
-            try {
-                final MongoKillCursorsMessage message = new MongoKillCursorsMessage(
-                        new PooledByteBufferOutput(bufferPool), killCursor);
-                channel.sendOneWayMessage(message);
-            } catch (IOException e) {
-                throw new MongoException("", e);
-            }
+            final MongoKillCursorsMessage message = new MongoKillCursorsMessage(new PooledByteBufferOutput(bufferPool),
+                                                                                killCursor);
+            channel.sendOneWayMessage(message);
         }
     }
 }
