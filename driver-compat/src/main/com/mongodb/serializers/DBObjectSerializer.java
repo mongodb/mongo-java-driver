@@ -54,6 +54,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         beforeFields(bsonWriter, document, options);
 
         for (String key : document.keySet()) {
+            validateField(key);
             if (skipField(key)) {
                 continue;
             }
@@ -68,6 +69,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         bsonWriter.writeStartDocument();
 
         for (String key : document.keySet()) {
+            validateField(key);
             bsonWriter.writeName(key);
             writeValue(bsonWriter, document.get(key), options);
         }
@@ -79,6 +81,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         bsonWriter.writeStartDocument();
 
         for (String key : document.keySet()) {
+            validateField(key);
             bsonWriter.writeName(key);
             writeValue(bsonWriter, document.get(key), options);
         }
@@ -91,6 +94,9 @@ public class DBObjectSerializer implements Serializer<DBObject> {
 
     protected boolean skipField(String key) {
         return false;
+    }
+
+    protected void validateField(String key) {
     }
 
     protected void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
@@ -107,7 +113,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
             serializeIterable(bsonWriter, (Iterable) value, options);
         }
         else if (value instanceof byte[]) {
-             primitiveSerializers.serialize(bsonWriter, new Binary((byte[]) value), options);
+            primitiveSerializers.serialize(bsonWriter, new Binary((byte[]) value), options);
         }
         else if (value != null && value.getClass().isArray()) {
             serializeArray(bsonWriter, value, options);

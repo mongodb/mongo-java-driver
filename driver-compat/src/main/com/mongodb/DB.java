@@ -150,7 +150,7 @@ public class DB {
     }
 
     public boolean authenticate(final String username, final char[] password) {
-        throw new UnsupportedOperationException();
+        return false;  // TODO: Implement authentication!!!!
     }
 
     public CommandResult command(final DBObject cmd) {

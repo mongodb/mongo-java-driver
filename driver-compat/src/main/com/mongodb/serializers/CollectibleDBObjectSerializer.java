@@ -33,7 +33,8 @@ public class CollectibleDBObjectSerializer extends DBObjectSerializer implements
     public static final String ID_FIELD_NAME = "_id";
     private final IdGenerator idGenerator;
 
-    public CollectibleDBObjectSerializer(final DB db, final PrimitiveSerializers primitiveSerializers, final IdGenerator idGenerator) {
+    public CollectibleDBObjectSerializer(final DB db, final PrimitiveSerializers primitiveSerializers,
+                                         final IdGenerator idGenerator) {
         super(db, primitiveSerializers);
         if (idGenerator == null) {
             throw new IllegalArgumentException("idGenerator is null");
@@ -51,10 +52,21 @@ public class CollectibleDBObjectSerializer extends DBObjectSerializer implements
         writeValue(bsonWriter, document.get(ID_FIELD_NAME), options);
     }
 
+    @Override
     protected boolean skipField(String key) {
         return key.equals(ID_FIELD_NAME);
     }
 
+    @Override
+    protected void validateField(final String key) {
+        if (key.contains(".")) {
+            throw new IllegalArgumentException(
+                    "fields stored in the db can't have . in them. (Bad Key: '" + key + "')");
+        }
+        if (key.startsWith("$")) {
+            throw new IllegalArgumentException("fields stored in the db can't start with '$' (Bad Key: '" + key + "')");
+        }
+    }
 
     @Override
     public Object getId(final DBObject document) {

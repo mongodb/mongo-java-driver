@@ -56,6 +56,16 @@ public class CollectibleDocumentSerializer extends DocumentSerializer implements
         return key.equals(ID_FIELD_NAME);
     }
 
+    @Override
+    protected void validateField(final String key) {
+        if (key.contains(".")) {
+            throw new IllegalArgumentException(
+                    "fields stored in the db can't have . in them. (Bad Key: '" + key + "')");
+        }
+        if (key.startsWith("$")) {
+            throw new IllegalArgumentException("fields stored in the db can't start with '$' (Bad Key: '" + key + "')");
+        }
+    }
 
     @Override
     public Object getId(final Document document) {

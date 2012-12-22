@@ -49,6 +49,8 @@ public class DocumentSerializer implements Serializer<Document> {
         beforeFields(bsonWriter, document, options);
 
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
+            validateField(entry.getKey());
+
             if (skipField(entry.getKey())) {
                 continue;
             }
@@ -63,6 +65,7 @@ public class DocumentSerializer implements Serializer<Document> {
         bsonWriter.writeStartDocument();
 
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
+            validateField(entry.getKey());
             bsonWriter.writeName(entry.getKey());
             writeValue(bsonWriter, entry.getValue(), options);
         }
@@ -75,6 +78,9 @@ public class DocumentSerializer implements Serializer<Document> {
 
     protected boolean skipField(String key) {
         return false;
+    }
+
+    protected void validateField(final String key) {
     }
 
     protected void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
