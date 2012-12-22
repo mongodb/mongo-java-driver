@@ -25,8 +25,9 @@ limitations under the License.
     <property environment="env"/>
 
     <property name="src.bson" location="${basedir}/bson/src"/>
-    <property name="src.driver-compat" location="${basedir}/driver-compat/src"/>
     <property name="src.driver" location="${basedir}/driver/src"/>
+    <property name="src.driver-compat" location="${basedir}/driver-compat/src"/>
+    <property name="src.morphia" location="${basedir}/morphia/src"/>
 
 
     <property prefix="build.conf" file="build.properties"/>
@@ -53,6 +54,8 @@ limitations under the License.
     <!-- ******************************************************************* -->
 
     <path id="build.classpath">
+        <pathelement location="lib/cglib-nodep-2.2.2.jar"/>
+        <pathelement location="lib/proxytoys-1.0.jar"/>
         <pathelement path="${build.classes}" />
     </path>
 
@@ -144,6 +147,11 @@ limitations under the License.
                 destdir="${build.classes}"
                 classpathref="build.classpath"
                 />
+        <compile
+                srcdir="${src.morphia}/main"
+                destdir="${build.classes}"
+                classpathref="build.classpath"
+                />
     </target>
 
     <target name="util-compile" depends="init">
@@ -171,10 +179,13 @@ limitations under the License.
                  srcdir="${src.bson}/test"
                  destdir="${test.classes}"/>
         <compile classpathref="test.classpath"
+                 srcdir="${src.driver}/test"
+                 destdir="${test.classes}"/>
+        <compile classpathref="test.classpath"
                  srcdir="${src.driver-compat}/test"
                  destdir="${test.classes}"/>
         <compile classpathref="test.classpath"
-                 srcdir="${src.driver}/test"
+                 srcdir="${src.morphia}/test"
                  destdir="${test.classes}"/>
     </target>
 
@@ -198,6 +209,7 @@ limitations under the License.
             <sourcepath path="${src.bson}/main"/>
             <sourcepath path="${src.driver}/main"/>
             <sourcepath path="${src.driver-compat}/main"/>
+            <sourcepath path="${src.morphia}/main"/>
         </javadoc>
     </target>
 
@@ -269,6 +281,9 @@ limitations under the License.
                 <exclude name="META-INF/*"/>
             </fileset>
             <fileset dir="${src.driver-compat}/main">
+                <exclude name="META-INF/*"/>
+            </fileset>
+            <fileset dir="${src.morphia}/main">
                 <exclude name="META-INF/*"/>
             </fileset>
         </jar>
@@ -375,12 +390,14 @@ limitations under the License.
             <fileset dir="${src.bson}/main"/>
             <fileset dir="${src.driver}/main"/>
             <fileset dir="${src.driver-compat}/main"/>
+            <fileset dir="${src.morphia}/main"/>
         </cobertura-report>
         <cobertura-report format="xml" destdir="${cobertura.output}"
                           datafile="${cobertura.datafile}">
             <fileset dir="${src.bson}/main"/>
             <fileset dir="${src.driver}/main"/>
             <fileset dir="${src.driver-compat}/main"/>
+            <fileset dir="${src.morphia}/main"/>
         </cobertura-report>
 
     </target>
