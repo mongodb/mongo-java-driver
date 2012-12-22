@@ -60,6 +60,8 @@ limitations under the License.
     <path id="build.classpath">
         <pathelement path="${build.main.dir}" />
         <pathelement path="${build.test.dir}" />
+        <pathelement location="lib/cglib-nodep-2.2.2.jar"/>
+        <pathelement location="lib/proxytoys-1.0.jar"/>
     </path>
 
     <!-- ******************************************************************* -->
@@ -151,6 +153,14 @@ limitations under the License.
             <src path="driver-compat/src/main"/>
             <compilerarg value="-Xlint:all,-rawtypes"/>
         </javac>
+
+        <javac destdir="${build.main.dir}" optimize="off" deprecation="off" source="${build.conf.javac.source}"
+               encoding="ISO-8859-1" fork="true" debug="on" includeantruntime="false"
+               target="${build.conf.javac.source}"
+               memoryMaximumSize="256M" classpathref="build.classpath">
+            <src path="morphia/src/main"/>
+            <compilerarg value="-Xlint:all,-rawtypes"/>
+        </javac>
     </target>
 
     <!-- ******************************************************************* -->
@@ -228,6 +238,7 @@ limitations under the License.
             <sourcepath path="bson/src/main"/>
             <sourcepath path="driver/src/main"/>
             <sourcepath path="driver-compat/src/main"/>
+            <sourcepath path="morphia/src/main"/>
             <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
             <classpath refid="build.classpath"/>
             <taglet name="DochubTaglet" path="${build.util.dir}"/>
@@ -266,6 +277,9 @@ limitations under the License.
                 <not><filename name="META-INF/"/></not>
             </fileset>
             <fileset dir="driver-compat/src/main">
+                <not><filename name="META-INF/"/></not>
+            </fileset>
+            <fileset dir="morphia/src/main">
                 <not><filename name="META-INF/"/></not>
             </fileset>
         </jar>
@@ -310,6 +324,7 @@ limitations under the License.
             <src path="bson/src/test"/>
             <src path="driver/src/test"/>
             <src path="driver-compat/src/test"/>
+            <src path="morphia/src/test"/>
             <classpath refid="test.classpath"/>
             <compilerarg value="-Xlint:all,-rawtypes"/>
         </javac>
@@ -326,6 +341,9 @@ limitations under the License.
                     <include name="**/*Test.java"/>
                 </fileset>
                 <fileset dir="driver-compat/src/test">
+                    <include name="**/*Test.java"/>
+                </fileset>
+                <fileset dir="morphia/src/test">
                     <include name="**/*Test.java"/>
                 </fileset>
             </batchtest>
@@ -350,6 +368,9 @@ limitations under the License.
                     <include name="**/*Test.java"/>
                 </fileset>
                 <fileset dir="driver-compat/src/test">
+                    <include name="**/*Test.java"/>
+                </fileset>
+                <fileset dir="morphia/src/test">
                     <include name="**/*Test.java"/>
                 </fileset>
             </batchtest>
@@ -381,6 +402,7 @@ limitations under the License.
             <fileset dir="bson/src/main"/>
             <fileset dir="driver/src/main"/>
             <fileset dir="driver-compat/src/main"/>
+            <fileset dir="morphia/src/main"/>
         </cobertura-report>
     </target>
 
