@@ -20,6 +20,11 @@ package org.mongodb.protocol;
 import org.bson.io.InputBuffer;
 
 public class MongoReplyHeader {
+    /**
+     * The length of the reply header in the MongoDB wire protocol.
+     */
+    public static final int REPLY_HEADER_LENGTH = 36;
+
     private static final int CURSOR_NOT_FOUND_RESPONSE_FLAG = 1;
     private static final int QUERY_FAILURE_RESPONSE_FLAG = 2;
 

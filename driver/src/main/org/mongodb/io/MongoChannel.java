@@ -32,8 +32,12 @@ import org.mongodb.protocol.MongoRequestMessage;
 import org.mongodb.serialization.Serializer;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+
+import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
 // TODO: migrate all the DBPort configuration
 // TODO: authentication
@@ -67,7 +71,7 @@ public class MongoChannel {
 
             message.pipeAndClose(socketChannel);
         } catch (IOException e) {
-            throw new MongoSocketException("Exception sending message", address, e);
+            throw new MongoSocketWriteException("Exception sending message", address, e);
         }
     }
 
@@ -85,23 +89,21 @@ public class MongoChannel {
         ByteBuffer headerByteBuffer = null;
         ByteBuffer bodyByteBuffer = null;
         try {
-            headerByteBuffer = pool.get(36);
+            headerByteBuffer = pool.get(REPLY_HEADER_LENGTH);
             fillAndFlipBuffer(headerByteBuffer);
-
             final InputBuffer headerInputBuffer = new ByteBufferInput(headerByteBuffer);
-            final int length = headerInputBuffer.readInt32();
-            headerInputBuffer.setPosition(0);
+
+            MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
 
             InputBuffer bodyInputBuffer = null;
 
-            if (length > 36) {
-                bodyByteBuffer = pool.get(length - 36);
+            if (replyHeader.getNumberReturned() > 0) {
+                bodyByteBuffer = pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
                 fillAndFlipBuffer(bodyByteBuffer);
 
                 bodyInputBuffer = new ByteBufferInput(bodyByteBuffer);
             }
 
-            MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
             if (replyHeader.isCursorNotFound()) {
                 throw new MongoCursorNotFoundException(address, ((MongoGetMoreMessage) message).getCursorId());
             }
@@ -111,8 +113,12 @@ public class MongoChannel {
                 throw new MongoQueryFailureException(address, errorDocument);
             }
             return new MongoReplyMessage<T>(replyHeader, bodyInputBuffer, serializer);
+        } catch (SocketTimeoutException e) {
+            throw new MongoSocketReadTimeoutException("Exception receiving message", address, e);
+        } catch (InterruptedIOException e) {
+            throw new MongoSocketInterruptedReadException("Exception receiving message", address, e);
         } catch (IOException e) {
-          throw new MongoSocketException("Exception receiving message", address, e);
+          throw new MongoSocketReadException("Exception receiving message", address, e);
         } finally {
             if (headerByteBuffer != null) {
                 pool.done(headerByteBuffer);
@@ -128,7 +134,7 @@ public class MongoChannel {
         while (totalBytesRead < buffer.limit()) {
             int bytesRead = socketChannel.read(buffer);
             if (bytesRead == -1) {
-                throw new MongoSocketException("Prematurely reached end of stream", address);
+                throw new MongoSocketReadException("Prematurely reached end of stream", address);
             }
             totalBytesRead += bytesRead;
         }
@@ -139,7 +145,7 @@ public class MongoChannel {
         try {
             socketChannel = SocketChannel.open(address.getSocketAddress());
         } catch (IOException e) {
-            throw new MongoSocketException("Exception opening socket", address, e);
+            throw new MongoSocketOpenException("Exception opening socket", address, e);
         }
     }
 

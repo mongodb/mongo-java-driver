@@ -19,8 +19,7 @@
 package com.mongodb;
 
 import org.bson.BSONObject;
-import org.mongodb.MongoQueryFailureException;
-import org.mongodb.command.MongoCommandException;
+import org.mongodb.MongoServerException;
 import org.mongodb.command.MongoDuplicateKeyException;
 
 /**
@@ -33,12 +32,9 @@ public class MongoException extends RuntimeException {
     private static final long serialVersionUID = -4415279469780082174L;
 
     public MongoException(final org.mongodb.MongoException e) {
-        super(e.getMessage(), e);
-        if (e instanceof MongoCommandException) {
-            code = ((MongoCommandException) e).getCommandResult().getErrorCode();
-        }
-        else if (e instanceof MongoQueryFailureException){
-            code = ((MongoQueryFailureException) e).getErrorCode();
+        super("Chained exception", e);
+        if (e instanceof MongoServerException) {
+            code = ((MongoServerException) e).getErrorCode();
         }
         else{
             code = -1;
