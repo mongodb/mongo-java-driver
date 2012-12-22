@@ -23,45 +23,57 @@ limitations under the License.
     <!-- ******************************************************************* -->
 
     <property environment="env"/>
+
+    <property name="src.bson" location="${basedir}/bson/src"/>
+    <property name="src.driver" location="${basedir}/driver/src"/>
+    <property name="src.driver-compat" location="${basedir}/driver-compat/src"/>
+    <property name="src.morphia" location="${basedir}/morphia/src"/>
+
+
     <property prefix="build.conf" file="build.properties"/>
+
     <property name="build.dir" location="${basedir}/build"/>
-    <property name="build.main.dir" location="${build.dir}/main"/>
-    <property name="build.test.dir" location="${build.dir}/test"/>
-    <property name="build.util.dir" location="${build.dir}/util"/>
-    <property name="build.instrumented.dir" location="${build.dir}/instrumented"/>
-    <property name="build.logs.dir" location="${basedir}/logs"/>
-    <property name="build.docs.dir" location="${basedir}/docs"/>
-    <property name="artifact.name" value="mongo.jar"/>
-    <property name="target.dir" location="${basedir}/target"/>
-    <property name="test.dir" location="${target.dir}/test"/>
-    <property name="test.classes" value="*"/>
-    <property name="cobertura.datafile" location="${target.dir}/cobertura.ser"/>
-    <property name="cobertura.format" value="xml"/>
-    <property name="test.com.mongodb.slaveAcceptableLatencyMS" value="15"/>
+    <property name="build.classes" value="${build.dir}/classes"/>
+    <property name="build.util" value="${build.dir}/util"/>
+
+    <property name="test.dir" value="${build.dir}/test"/>
+    <property name="test.classes" value="${test.dir}/classes"/>
+    <property name="test.output" value="${test.dir}/output"/>
+
+    <property name="cobertura.dir" value="${build.dir}/cobertura"/>
+    <property name="cobertura.datafile" location="${cobertura.dir}/cobertura.ser"/>
+    <property name="cobertura.classes" location="${cobertura.dir}/classes"/>
+    <property name="cobertura.output" value="${cobertura.dir}/output"/>
+
+    <property name="dist.dir" value="${basedir}/dist"/>
+    <property name="docs.dir" value="${basedir}/docs"/>
+
 
     <!-- ******************************************************************* -->
     <!-- Path definition                                                     -->
     <!-- ******************************************************************* -->
 
-    <path id="test.classpath">
+    <path id="build.classpath">
+        <pathelement path="${build.classes}" />
+    </path>
+
+    <path id="test.lib.classpath">
         <pathelement location="lib/junit-4.11.jar"/>
         <pathelement location="lib/hamcrest-core-1.3.jar"/>
-        <path refid="build.classpath"/>
     </path>
-    <path id="cobertura.classpath">
+
+    <path id="morphia.lib.classpath">
+        <pathelement location="lib/cglib-nodep-2.2.2.jar"/>
+        <pathelement location="lib/proxytoys-1.0.jar"/>
+    </path>
+
+    <path id="cobertura.lib.classpath">
         <fileset dir="lib/cobertura"><include name="**/*.jar"/></fileset>
     </path>
+
     <path id="task.classpath">
         <pathelement location="lib/ant-contrib-1.0b3.jar"/>
         <pathelement location="lib/clirr-core-0.6-uber.jar"/>
-        <path refid="test.classpath"/>
-        <path refid="cobertura.classpath"/>
-    </path>
-    <path id="build.classpath">
-        <pathelement path="${build.main.dir}" />
-        <pathelement path="${build.test.dir}" />
-        <pathelement location="lib/cglib-nodep-2.2.2.jar"/>
-        <pathelement location="lib/proxytoys-1.0.jar"/>
     </path>
 
     <!-- ******************************************************************* -->
@@ -69,15 +81,8 @@ limitations under the License.
     <!-- ******************************************************************* -->
 
     <taskdef classpathref="task.classpath" resource="net/sf/antcontrib/antcontrib.properties"/>
-    <taskdef classpathref="task.classpath" resource="tasks.properties" />
+    <taskdef classpathref="cobertura.lib.classpath" resource="tasks.properties" />
     <taskdef classpathref="task.classpath" resource="clirrtask.properties"/>
-
-    <!-- ******************************************************************* -->
-    <!-- Vars                                                                -->
-    <!-- ******************************************************************* -->
-
-    <var name="cobertura.arg" value="none"/>
-    <var name="test.classpath" value="test.classpath"/>
 
     <!-- ******************************************************************* -->
     <!-- The init target.                                                    -->
@@ -85,326 +90,329 @@ limitations under the License.
 
     <target name="init">
         <mkdir dir="${build.dir}" />
-        <mkdir dir="${build.main.dir}" />
-        <mkdir dir="${build.test.dir}" />
-        <mkdir dir="${build.util.dir}" />
-        <mkdir dir="${build.logs.dir}" />
-        <mkdir dir="${build.docs.dir}" />
-        <mkdir dir="${test.dir}" />
+        <mkdir dir="${build.classes}" />
     </target>
 
     <!-- ******************************************************************* -->
     <!-- The clean target.                                                   -->
     <!-- ******************************************************************* -->
 
-    <target name="clean">
+    <target name="clean" description="Remove all locally created artifacts">
         <delete dir="${build.dir}"/>
-        <delete dir="${target.dir}"/>
-        <delete dir="${build.logs.dir}"/>
-        <delete dir="${build.docs.dir}"/>
-        <delete file="mongo.jar"/>
-        <delete file="mongo-javadoc.jar"/>
-        <delete file="mongo-sources.jar"/>
-        <delete file="bson.jar"/>
-        <delete file="bson-javadoc.jar"/>
-        <delete file="bson-sources.jar"/>
+    </target>
+
+    <target name="cleanall" depends="clean">
+        <delete dir="${dist.dir}"/>
+        <delete dir="${docs.dir}"/>
     </target>
 
     <!-- ******************************************************************* -->
-    <!-- The compile target.                                                 -->
+    <!-- The compile targets.                                                 -->
     <!-- ******************************************************************* -->
+
+
+    <macrodef name="compile">
+        <attribute name="srcdir"/>
+        <attribute name="destdir"/>
+        <attribute name="classpathref"/>
+        <sequential>
+            <javac classpathref="@{classpathref}"
+                    srcdir="@{srcdir}"
+                    destdir="@{destdir}"
+                    optimize="off"
+                    deprecation="off"
+                    source="${build.conf.javac.source}"
+                    target="${build.conf.javac.source}"
+                    encoding="ISO-8859-1"
+                    fork="true"
+                    debug="on"
+                    includeantruntime="false"
+                    memoryMaximumSize="256M"
+                    >
+                <compilerarg value="-Xlint:all,-rawtypes"/>
+            </javac>
+        </sequential>
+    </macrodef>
 
     <target name="compile" depends="init">
+        <compile
+                srcdir="${src.bson}/main"
+                destdir="${build.classes}"
+                classpathref="build.classpath"
+                />
+        <compile
+                srcdir="${src.driver}/main"
+                destdir="${build.classes}"
+                classpathref="build.classpath"
+                />
+        <compile
+                srcdir="${src.driver-compat}/main"
+                destdir="${build.classes}"
+                classpathref="build.classpath"
+                />
 
-        <propertyregex property="lib.major"
-                       input="${build.conf.lib.version}"
-                       regexp="(\d+)\.(\d+)\.(\d+)"
-                       select="\1" />
+        <path id="morphia.classpath">
+            <path refid="build.classpath"/>
+            <path refid="morphia.lib.classpath"/>
+        </path>
 
-        <propertyregex property="lib.minor"
-                       input="${build.conf.lib.version}"
-                       regexp="(\d+)\.(\d+)\.(\d+)"
-                       select="\2" />
-
-        <replaceregexp file="driver-compat/src/main/com/mongodb/Mongo.java" match="\sMAJOR_VERSION\s=\s\d+;"  replace=" MAJOR_VERSION = ${lib.major};" byline="false"/>
-        <replaceregexp file="driver-compat/src/main/com/mongodb/Mongo.java" match="\sMINOR_VERSION\s=\s\d+;"  replace=" MINOR_VERSION = ${lib.minor};" byline="false"/>
-        <replaceregexp file="driver-compat/src/main/com/mongodb/Mongo.java" match='\sFULL_VERSION\s=\s"\S*";' replace=' FULL_VERSION = "${build.conf.lib.version}";' byline="false"/>
-
-        <javac destdir="${build.main.dir}" optimize="off" deprecation="off" source="${build.conf.javac.source}"
-               encoding="ISO-8859-1" fork="true" debug="on" includeantruntime="false"
-               target="${build.conf.javac.source}"
-               memoryMaximumSize="256M">
-            <src path="bson/src/main"/>
-            <compilerarg value="-Xlint:all,-rawtypes"/>
-        </javac>
-
-        <javac destdir="${build.main.dir}" optimize="off" deprecation="off" source="${build.conf.javac.source}"
-               encoding="ISO-8859-1" fork="true" debug="on" includeantruntime="false"
-               target="${build.conf.javac.source}"
-               memoryMaximumSize="256M">
-            <src path="driver/src/main"/>
-            <compilerarg value="-Xlint:all,-rawtypes"/>
-        </javac>
-
-        <javac destdir="${build.main.dir}" optimize="off" deprecation="off" source="${build.conf.javac.source}"
-               encoding="ISO-8859-1" fork="true" debug="on" includeantruntime="false"
-               target="${build.conf.javac.source}"
-               memoryMaximumSize="256M">
-            <src path="driver-compat/src/main"/>
-            <compilerarg value="-Xlint:all,-rawtypes"/>
-        </javac>
-
-        <javac destdir="${build.main.dir}" optimize="off" deprecation="off" source="${build.conf.javac.source}"
-               encoding="ISO-8859-1" fork="true" debug="on" includeantruntime="false"
-               target="${build.conf.javac.source}"
-               memoryMaximumSize="256M" classpathref="build.classpath">
-            <src path="morphia/src/main"/>
-            <compilerarg value="-Xlint:all,-rawtypes"/>
-        </javac>
+        <compile
+                srcdir="${src.morphia}/main"
+                destdir="${build.classes}"
+                classpathref="morphia.classpath"
+                />
     </target>
 
-    <!-- ******************************************************************* -->
-    <!-- The util compile target.                                            -->
-    <!-- ******************************************************************* -->
+    <target name="util-compile" depends="init">
+        <mkdir dir="${build.util}"/>
 
-    <target name="utilcompile" depends="init">
+        <path id="util.classpath">
+            <pathelement location="${env.JAVA_HOME}/lib/tools.jar"/>
+        </path>
 
-        <javac
-            destdir="${build.util.dir}"
-            optimize="off"
-            deprecation="off"
-            source="${build.conf.javac.source}"
-            target="${build.conf.javac.source}"
-            encoding="ISO-8859-1"
-            memoryMaximumSize="256M"
-            fork="true"
-            debug="on"
-            includeantruntime="false">
-            <src path="driver/src/util"/>
-            <classpath location="${env.JAVA_HOME}/lib/tools.jar"/>
-            <compilerarg value="-Xlint:all,-fallthrough"/>
-        </javac>
+        <compile srcdir="${src.driver}/util"
+                 destdir="${build.util}"
+                 classpathref="util.classpath"/>
     </target>
 
-    <!-- ******************************************************************* -->
-    <!-- The jar target.                                                     -->
-    <!-- ******************************************************************* -->
+    <target name="tests-compile" depends="compile">
+        <mkdir dir="${test.classes}"/>
 
-    <target name="jar" depends="compile" description="Create driver jar">
+        <path id="test.classpath">
+            <path refid="build.classpath"/>
+            <path refid="morphia.lib.classpath"/>
+            <path refid="test.lib.classpath"/>
+            <pathelement location="${test.classes}"/>
+        </path>
 
-        <copy file="driver/src/main/META-INF/MANIFEST.MF" tofile="${build.dir}/MANIFEST.MF" filtering="true">
-            <filterset><filter token="VERSION" value="${build.conf.lib.version.osgi.compat}"/></filterset>
-        </copy>
-
-        <copy file="bson/src/main/META-INF/MANIFEST.MF" tofile="${build.dir}/MANIFEST_BSON.MF" filtering="true">
-            <filterset><filter token="VERSION" value="${build.conf.lib.version.osgi.compat}"/></filterset>
-        </copy>
-
-        <exec executable="git" output="${build.main.dir}/git-hash">
-            <arg value="log" />
-            <arg value="--pretty=format:%H" />
-            <arg value="-1" />
-        </exec>
-
-        <jar jarfile="mongo.jar" manifest="${build.dir}/MANIFEST.MF"><fileset dir="${build.main.dir}" /></jar>
-
-        <jar jarfile="bson.jar" manifest="${build.dir}/MANIFEST_BSON.MF">
-          <fileset dir="${build.main.dir}">
-              <not>
-                  <filename name="com/"/>
-              </not>
-              <not>
-                  <filename name="org/mongodb/"/>
-              </not>
-          </fileset>
-        </jar>
-
+        <compile classpathref="test.classpath"
+                 srcdir="${src.bson}/test"
+                 destdir="${test.classes}"/>
+        <compile classpathref="test.classpath"
+                 srcdir="${src.driver}/test"
+                 destdir="${test.classes}"/>
+        <compile classpathref="test.classpath"
+                 srcdir="${src.driver-compat}/test"
+                 destdir="${test.classes}"/>
+        <compile classpathref="test.classpath"
+                 srcdir="${src.morphia}/test"
+                 destdir="${test.classes}"/>
     </target>
 
     <!-- ******************************************************************* -->
     <!-- The javadocs target.                                                -->
     <!-- ******************************************************************* -->
 
-    <target name="javadocs" depends="compile,utilcompile" description="Generate API docs">
-        <delete dir="${build.docs.dir}"/>
+    <target name="javadocs" description="Generate API docs">
+        <antcall target="util-compile"/>
+        <mkdir dir="${docs.dir}"/>
         <javadoc
-            defaultexcludes="yes"
-            destdir="${build.docs.dir}/mongo-java-driver"
-            author="true"
-            version="true"
-            source="${build.conf.javac.source}"
-            use="true"
-            access="protected">
-            <sourcepath path="bson/src/main"/>
-            <sourcepath path="driver/src/main"/>
-            <sourcepath path="driver-compat/src/main"/>
-            <sourcepath path="morphia/src/main"/>
+                destdir="${docs.dir}"
+                author="true"
+                version="true"
+                source="${build.conf.javac.source}"
+                use="true"
+                access="protected">
             <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
-            <classpath refid="build.classpath"/>
-            <taglet name="DochubTaglet" path="${build.util.dir}"/>
-            <taglet name="ManualTaglet" path="${build.util.dir}"/>
+            <taglet name="DochubTaglet" path="${build.util}"/>
+            <taglet name="ManualTaglet" path="${build.util}"/>
+            <sourcepath path="${src.bson}/main"/>
+            <sourcepath path="${src.driver}/main"/>
+            <sourcepath path="${src.driver-compat}/main"/>
+            <sourcepath path="${src.morphia}/main"/>
         </javadoc>
+    </target>
 
-        <javadoc
-            packagenames="org.bson,org.bson.types,org.bson.io,org.bson.util,org.bson.util.annotations"
-            defaultexcludes="yes"
-            destdir="${build.docs.dir}/bson"
-            author="true"
-            version="true"
-            source="${build.conf.javac.source}"
-            use="true"
-            access="protected">
-            <sourcepath path="bson/src/main"/>
-            <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
-            <classpath refid="build.classpath"/>
-            <taglet name="DochubTaglet" path="${build.util.dir}"/>
-            <taglet name="ManualTaglet" path="${build.util.dir}"/>
-        </javadoc>
+
+    <!-- ******************************************************************* -->
+    <!-- The jar targets.                                                     -->
+    <!-- ******************************************************************* -->
+
+    <target name="jar" depends="compile" description="Assemble MongoDB Java Driver JAR files">
+
+        <mkdir dir="${build.classes}/META-INF" />
+        <copy file="LICENSE.txt" tofile="${build.classes}/META-INF/LICENSE.txt"/>
+
+        <copy file="${src.driver}/main/META-INF/MANIFEST.MF"
+              tofile="${build.classes}/META-INF/MANIFEST.MF"
+              filtering="true">
+            <filterset>
+                <filter token="VERSION" value="${build.conf.lib.version.osgi.compat}"/>
+            </filterset>
+        </copy>
+
+        <copy file="${src.bson}/main/META-INF/MANIFEST.MF"
+              tofile="${build.classes}/META-INF/MANIFEST_BSON.MF"
+              filtering="true">
+            <filterset>
+                <filter token="VERSION" value="${build.conf.lib.version.osgi.compat}"/>
+            </filterset>
+        </copy>
+
+        <exec executable="git" output="${build.classes}/git-hash">
+            <arg value="log" />
+            <arg value="--pretty=format:%H" />
+            <arg value="-1" />
+        </exec>
+
+        <jar jarfile="${build.dir}/${ant.project.name}-${build.conf.lib.version}.jar"
+             manifest="${build.classes}/META-INF/MANIFEST.MF">
+            <fileset dir="${build.classes}">
+                <exclude name="${build.classes}/META-INF/*"/>
+            </fileset>
+        </jar>
+
+        <jar jarfile="${build.dir}/bson-${build.conf.lib.version}.jar"
+             manifest="${build.classes}/META-INF/MANIFEST_BSON.MF">
+          <fileset dir="${build.classes}">
+              <include name="org/bson/**"/>
+              <include name="git-hash"/>
+          </fileset>
+        </jar>
+    </target>
+
+    <target name="javadocs-jar" depends="javadocs" description="Assemble MongoDB JavaDoc JAR files">
+        <jar jarfile="${build.dir}/${ant.project.name}-${build.conf.lib.version}-javadoc.jar"
+             basedir="${docs.dir}"/>
+
+        <jar jarfile="${build.dir}/bson-${build.conf.lib.version}-javadoc.jar">
+            <fileset dir="${docs.dir}">
+                <include name="org/bson/**"/>
+            </fileset>
+        </jar>
+    </target>
+
+    <target name="sources-jar" description="Assemble MongoDB Sources JAR files">
+        <jar jarfile="${build.dir}/${ant.project.name}-${build.conf.lib.version}-sources.jar">
+            <fileset dir="${src.bson}/main">
+                <exclude name="META-INF/*"/>
+            </fileset>
+            <fileset dir="${src.driver}/main">
+                <exclude name="META-INF/*"/>
+            </fileset>
+            <fileset dir="${src.driver-compat}/main">
+                <exclude name="META-INF/*"/>
+            </fileset>
+            <fileset dir="${src.morphia}/main">
+                <exclude name="META-INF/*"/>
+            </fileset>
+        </jar>
+
+        <jar jarfile="${build.dir}/bson-${build.conf.lib.version}-sources.jar">
+            <fileset dir="${src.bson}/main">
+                <exclude name="META-INF/*"/>
+            </fileset>
+        </jar>
+    </target>
+
+    <target name="tests-jar" description="Assemble MongoDB Tests JAR file" depends="tests-compile">
+        <jar jarfile="${build.dir}/${ant.project.name}-${build.conf.lib.version}-tests.jar">
+            <fileset dir="${test.classes}"/>
+        </jar>
+    </target>
+
+    <target name="dist" depends="jar,javadocs-jar, sources-jar">
+        <mkdir dir="${dist.dir}"/>
+        <copy todir="${dist.dir}">
+            <fileset dir="${build.dir}">
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
 
     </target>
 
-    <!-- ******************************************************************* -->
-    <!-- Jar the rest of the files.                                          -->
-    <!-- ******************************************************************* -->
-
-    <target name="alljars" depends="jar, javadocs" description="build jar, source jar, javadoc jar">
-
-        <jar jarfile="mongo-sources.jar">
-            <fileset dir="bson/src/main">
-                <not><filename name="META-INF/"/></not>
-            </fileset>
-            <fileset dir="driver/src/main">
-                <not><filename name="META-INF/"/></not>
-            </fileset>
-            <fileset dir="driver-compat/src/main">
-                <not><filename name="META-INF/"/></not>
-            </fileset>
-            <fileset dir="morphia/src/main">
-                <not><filename name="META-INF/"/></not>
-            </fileset>
-        </jar>
-
-        <jar jarfile="mongo-javadoc.jar">
-            <fileset dir="${build.docs.dir}/mongo-java-driver"/>
-        </jar>
-
-        <jar jarfile="bson-sources.jar">
-            <fileset dir="bson/src/main">
-            <not><filename name="META-INF/"/></not>
-            </fileset>
-        </jar>
-
-        <jar jarfile="bson-javadoc.jar">
-            <fileset dir="${build.docs.dir}/bson"/>
-        </jar>
-
-
-    </target>
-
-    <!-- ******************************************************************* -->
-    <!-- The clean compile target                                            -->
-    <!-- ******************************************************************* -->
-
-    <target name="rebuild" depends="clean, compile"/>
 
     <!-- ******************************************************************* -->
     <!-- The test targets                                                    -->
     <!-- ******************************************************************* -->
 
-    <target name="test-compile" depends="compile">
-        <javac
-                destdir="${build.test.dir}"
-                optimize="off"
-                deprecation="off"
-                source="${build.conf.javac.source}"
-                encoding="ISO-8859-1"
-                fork="true"
-                debug="on"
-                includeantruntime="false">
-            <src path="bson/src/test"/>
-            <src path="driver/src/test"/>
-            <src path="driver-compat/src/test"/>
-            <src path="morphia/src/test"/>
-            <classpath refid="test.classpath"/>
-            <compilerarg value="-Xlint:all,-rawtypes"/>
-        </javac>
-    </target>
+    <macrodef name="test">
+        <attribute name="fork" default="yes"/>
+        <attribute name="forkmode" default="once"/>
+        <attribute name="classpathref"/>
+        <element name="resources"/>
+        <sequential>
+            <mkdir dir="${test.output}"/>
+            <junit fork="@{fork}" forkmode="@{forkmode}" maxmemory="1024m">
+                <sysproperty key="net.sourceforge.cobertura.datafile" file="${cobertura.datafile}"/>
+                <formatter type="xml" usefile="true"/>
+                <formatter type="brief" usefile="false"/>
+                <classpath refid="@{classpathref}">
+                </classpath>
+                <batchtest todir="${test.output}">
+                    <resources/>
+                </batchtest>
+            </junit>
+        </sequential>
+    </macrodef>
 
-    <target name="test" depends="test-compile">
-        <junit fork="off">
-            <classpath refid="test.classpath"/>
-            <batchtest fork="off" todir="${test.dir}">
-                <fileset dir="bson/src/test">
-                    <include name="**/*Test.java"/>
-                </fileset>
-                <fileset dir="driver/src/test">
-                    <include name="**/*Test.java"/>
-                </fileset>
-                <fileset dir="driver-compat/src/test">
-                    <include name="**/*Test.java"/>
-                </fileset>
-                <fileset dir="morphia/src/test">
-                    <include name="**/*Test.java"/>
-                </fileset>
-            </batchtest>
-            <formatter type="xml"/>
-        </junit>
-    </target>
+    <target name="test" depends="compile, tests-compile">
 
-    <target name="test-with-artifact" depends="test-compile">
-
-        <path id="artifact.classpath">
-            <path refid="test.classpath"/>
-            <pathelement location="${artifact.name}"/>
+        <path id="test.classpath">
+            <pathelement location="${cobertura.classes}"/>
+            <path refid="cobertura.lib.classpath"/>
+            <path refid="build.classpath"/>
+            <path refid="test.lib.classpath"/>
+            <pathelement location="${test.classes}"/>
         </path>
 
-        <junit fork="off">
-            <classpath refid="artifact.classpath"/>
-            <batchtest fork="off" todir="${test.dir}">
-                <fileset dir="bson/src/test">
-                    <include name="**/*Test.java"/>
-                </fileset>
-                <fileset dir="driver/src/test">
-                    <include name="**/*Test.java"/>
-                </fileset>
-                <fileset dir="driver-compat/src/test">
-                    <include name="**/*Test.java"/>
-                </fileset>
-                <fileset dir="morphia/src/test">
-                    <include name="**/*Test.java"/>
-                </fileset>
-            </batchtest>
-            <formatter type="xml"/>
-        </junit>
+       <test classpathref="test.classpath">
+           <resources>
+               <fileset dir="${test.classes}" includes="**/*Test.class"/>
+           </resources>
+       </test>
+    </target>
+
+    <target name="artifact-test">
+        <mkdir dir="${test.classes}"/>
+        <path id="artifact.classpath">
+            <pathelement location="${artifact.file}"/>
+            <path refid="test.lib.classpath"/>
+            <pathelement location="${tests.file}"/>
+        </path>
+
+        <test classpathref="artifact.classpath">
+            <resources>
+                <zipfileset src="${tests.file}" includes="**/*Test.class"/>
+            </resources>
+        </test>
     </target>
 
     <!-- ******************************************************************* -->
     <!-- The coverage targets                                                -->
     <!-- ******************************************************************* -->
 
-    <target name="coverage-instrument" depends="compile">
-        <cobertura-instrument todir="${build.instrumented.dir}" datafile="${cobertura.datafile}">
-            <fileset dir="${build.main.dir}">
+    <target name="cobertura-instrument" depends="compile">
+
+        <delete file="${cobertura.datafile}"/>
+
+        <cobertura-instrument todir="${cobertura.classes}" datafile="${cobertura.datafile}">
+            <fileset dir="${build.classes}">
                 <include name="**/*.class"/>
             </fileset>
         </cobertura-instrument>
-        <path id="coverage.classpath">
-            <pathelement path="${build.instrumented.dir}" />
-            <path refid="test.classpath" />
-            <path refid="cobertura.classpath" />
-        </path>
-        <var name="cobertura.arg" value="net.sourceforge.cobertura.datafile"/>
-        <var name="test.classpath" value="coverage.classpath"/>
+
     </target>
 
-    <target name="coverage-report" depends="coverage-instrument,test">
-        <cobertura-report format="${cobertura.format}" srcdir="src/main" destdir="${test.dir}" datafile="${cobertura.datafile}">
-            <fileset dir="bson/src/main"/>
-            <fileset dir="driver/src/main"/>
-            <fileset dir="driver-compat/src/main"/>
-            <fileset dir="morphia/src/main"/>
+    <target name="cobertura-report">
+        <cobertura-report format="html" destdir="${cobertura.output}"
+                          datafile="${cobertura.datafile}">
+            <fileset dir="${src.bson}/main"/>
+            <fileset dir="${src.driver}/main"/>
+            <fileset dir="${src.driver-compat}/main"/>
+            <fileset dir="${src.morphia}/main"/>
         </cobertura-report>
+        <cobertura-report format="xml" destdir="${cobertura.output}"
+                          datafile="${cobertura.datafile}">
+            <fileset dir="${src.bson}/main"/>
+            <fileset dir="${src.driver}/main"/>
+            <fileset dir="${src.driver-compat}/main"/>
+            <fileset dir="${src.morphia}/main"/>
+        </cobertura-report>
+
     </target>
+
+    <target name="coverage" depends="cobertura-instrument, test, cobertura-report"/>
 
     <!-- ******************************************************************* -->
     <!-- Misc targets                                                        -->
@@ -423,7 +431,5 @@ limitations under the License.
             <formatter type="plain" outfile="${build.dir}/clirr.txt"/>
         </clirr>
     </target>
-
-  <!-- NOTE: publish-local is now located in maven/ -->
 
 </project>
