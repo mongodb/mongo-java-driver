@@ -121,7 +121,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             return insert(new MongoInsert<T>(save.getDocument()));
         }
         else {
-            return replace(new MongoReplace<T>(new QueryFilterDocument("_id", id), save.getDocument()));
+            return replace(new MongoReplace<T>(new QueryFilterDocument("_id", id), save.getDocument()).isUpsert(true));
         }
     }
 
