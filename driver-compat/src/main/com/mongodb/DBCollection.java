@@ -91,6 +91,8 @@ public class DBCollection {
         try {
             UpdateResult result = collection.save(new MongoSave<DBObject>(obj).writeConcern(wc.toNew()));
             return new WriteResult(result, wc);
+        } catch (MongoDuplicateKeyException e) {
+            throw new MongoException.DuplicateKey(e);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
@@ -489,6 +491,16 @@ public class DBCollection {
 
     // TODO: don't ignore opts
     public void ensureIndex(final BasicDBObject fields, final BasicDBObject opts) {
+        String name = null;
+        boolean unique = false;
+        if (opts != null) {
+            if (opts.get("name") != null) {
+                name = (String) opts.get("name");
+            }
+            if (opts.get("unique") != null) {
+                unique = (Boolean) opts.get("unique");
+            }
+        }
         List<Index.Key> keys = new ArrayList<Index.Key>();
         for (String key : fields.keySet()) {
             Object keyType = fields.get(key);
@@ -503,7 +515,7 @@ public class DBCollection {
             }
 
         }
-        collection.admin().ensureIndex(new Index(keys.toArray(new Index.Key[keys.size()])));
+        collection.admin().ensureIndex(new Index(name, unique, keys.toArray(new Index.Key[keys.size()])));
     }
 
     /**

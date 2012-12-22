@@ -303,6 +303,7 @@ public class TestMapping  extends TestBase {
 	}
 
 	@Test
+    @Ignore("Ignore until driver support UUID serialization") // TODO: Un-ignore this
     public void testUUID() throws Exception {
 		morphia.map(ContainsUUID.class);
 		ContainsUUID cuuid = new ContainsUUID();
@@ -323,6 +324,7 @@ public class TestMapping  extends TestBase {
 	}
 	
 	@Test
+    @Ignore("Ignore until driver support UUID serialization") // TODO: Un-ignore this
     public void testUuidId() throws Exception {
 		morphia.map(ContainsUuidId.class);
 		ContainsUuidId cuuidId = new ContainsUuidId();

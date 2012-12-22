@@ -47,6 +47,18 @@ public class DBCollectionTest extends MongoClientTestBase {
     }
 
     @Test
+    public void testSaveDuplicateKeyException() {
+        collection.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
+        collection.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
+        try {
+            collection.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
+            fail("should throw DuplicateKey exception");
+        } catch (MongoException.DuplicateKey e) {
+            assertThat(e.getCode(), is(11000));
+        }
+    }
+
+    @Test
     public void testUpdate() {
         WriteResult res = collection.update(new BasicDBObject("_id", 1), new BasicDBObject("$set", new BasicDBObject("x", 2)),
                                    true, false);

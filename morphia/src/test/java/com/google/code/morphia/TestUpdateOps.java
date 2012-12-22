@@ -16,20 +16,6 @@
 
 package com.google.code.morphia;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.bson.types.ObjectId;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
 import com.google.code.morphia.TestQuery.ContainsPic;
 import com.google.code.morphia.TestQuery.Pic;
 import com.google.code.morphia.annotations.Entity;
@@ -41,6 +27,19 @@ import com.google.code.morphia.testmodel.Circle;
 import com.google.code.morphia.testmodel.Rectangle;
 import com.google.code.morphia.testutil.StandardTests;
 import com.mongodb.WriteConcern;
+import org.bson.types.ObjectId;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  *
@@ -152,6 +151,7 @@ public class TestUpdateOps  extends TestBase {
 	}
 
 	@Test
+    @Ignore("Ignore until driver support getlasterror after the fact") // TODO: Un-ignore this if driver decides to support this
     public void testInsertUpdatesUnsafe() throws Exception {
 		UpdateResults<Circle> res = ds.update(ds.createQuery(Circle.class).field("radius").equal(0), ds.createUpdateOperations(Circle.class).inc("radius",1D), true, WriteConcern.NONE);
 		assertInserted(res);
