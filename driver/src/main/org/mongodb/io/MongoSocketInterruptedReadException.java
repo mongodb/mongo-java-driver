@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,26 +12,25 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.io;
 
-import org.mongodb.MongoException;
 import org.mongodb.ServerAddress;
 
-import java.io.IOException;
+import java.io.InterruptedIOException;
 
 /**
- * Unchecked exception thrown when the driver gets an IOException from the underlying Socket, or reaches end of stream
- * prematurely.
+ * This exception is thrown when there the thread reading a response from the socket is interrupted.
  */
-public abstract class MongoSocketException extends MongoException {
-    public MongoSocketException(final String message, final ServerAddress address, final IOException e) {
+public class MongoSocketInterruptedReadException extends MongoSocketReadException {
+    public MongoSocketInterruptedReadException(final String message, final ServerAddress address,
+                                               final InterruptedIOException e) {
         super(message, address, e);
     }
 
-    public MongoSocketException(final String message, final ServerAddress address) {
-        super(message, address);
+    @Override
+    public InterruptedIOException getCause() {
+        return (InterruptedIOException) super.getCause();
     }
 }

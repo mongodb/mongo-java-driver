@@ -39,17 +39,13 @@ public class GetLastErrorCommand extends AbstractCommand {
 
     @Override
     public CommandResult execute() {
-        try {
-            CommandResult res = super.execute();
-            Integer code = (Integer) res.getResponse().get("code");
-            if (duplicateKeyErrorCodes.contains(code)) {
-                throw new MongoDuplicateKeyException(res);
-            }
-
-            return res;
-        } catch (MongoCommandException e) {
-            throw e;
+        CommandResult res = super.execute();
+        Integer code = (Integer) res.getResponse().get("code");
+        if (duplicateKeyErrorCodes.contains(code)) {
+            throw new MongoDuplicateKeyException(res);
         }
+
+        return res;
     }
 
     @Override

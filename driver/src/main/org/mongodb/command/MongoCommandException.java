@@ -16,13 +16,13 @@
 
 package org.mongodb.command;
 
-import org.mongodb.MongoException;
+import org.mongodb.MongoServerException;
 import org.mongodb.result.CommandResult;
 
 /**
  * Exception thrown when a command fails.
  */
-public class MongoCommandException extends MongoException {
+public class MongoCommandException extends MongoServerException {
     private static final long serialVersionUID = -50109343643507362L;
 
     private final CommandResult commandResult;
@@ -36,5 +36,15 @@ public class MongoCommandException extends MongoException {
 
     public CommandResult getCommandResult() {
         return commandResult;
+    }
+
+    @Override
+    public int getErrorCode() {
+        return commandResult.getErrorCode();
+    }
+
+    @Override
+    public String getErrorMessage() {
+        return commandResult.getErrorMessage();
     }
 }

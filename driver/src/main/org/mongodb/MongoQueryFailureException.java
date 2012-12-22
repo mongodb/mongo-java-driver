@@ -19,12 +19,12 @@ package org.mongodb;
 
 import org.bson.types.Document;
 
-public class MongoQueryFailureException extends MongoException {
+public class MongoQueryFailureException extends MongoServerException {
     private final Document errorDocument;
 
     public MongoQueryFailureException(final ServerAddress address, final Document errorDocument) {
-        super("Query failed with error code " + errorDocument.get("code") + " and error message + '" +
-                errorDocument.get("$err") + "' on server " + address, address);
+        super("Query failed with error code " + getErrorCode(errorDocument) + " and error message + '" +
+                getErrorMessage(errorDocument) + "' on server " + address, address);
         this.errorDocument = errorDocument;
     }
 
@@ -34,6 +34,19 @@ public class MongoQueryFailureException extends MongoException {
     }
 
     public int getErrorCode() {
+        return getErrorCode(errorDocument);
+    }
+
+    @Override
+    public String getErrorMessage() {
+        return getErrorMessage(errorDocument);
+    }
+
+    private static String getErrorMessage(final Document errorDocument) {
+        return (String) errorDocument.get("$err");
+    }
+
+    private static int getErrorCode(Document errorDocument) {
         return (Integer) errorDocument.get("code");
     }
 }
