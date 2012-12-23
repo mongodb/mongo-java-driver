@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -460,6 +461,20 @@ public class DBCursorTest extends TestCase {
         	int val = (Integer)cur.next().get("y");
         	assertTrue( val > curmax);
         	curmax = val;
+        }
+    }
+
+    @Test
+    public void iteratorShouldThrowTheCorrectException_whenNoMoreElementsAreFound() {
+        DBCollection c = _db.getCollection("test");
+
+        DBCursor cursor = c.find();
+
+        try {
+            cursor.next();
+            fail("expected an exception to be thrown");
+        } catch (NoSuchElementException ignore) {
+            //expected exception
         }
     }
 
