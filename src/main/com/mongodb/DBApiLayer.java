@@ -22,14 +22,7 @@ import com.mongodb.util.JSON;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
@@ -406,7 +399,7 @@ public class DBApiLayer extends DB {
             }
 
             if ( ! _curResult.hasGetMore( _options ) )
-                throw new RuntimeException( "no more" );
+                throw new NoSuchElementException("no more");
 
             _advance();
             return next();
