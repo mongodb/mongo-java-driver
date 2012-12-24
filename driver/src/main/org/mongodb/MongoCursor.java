@@ -19,6 +19,7 @@ package org.mongodb;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoKillCursor;
+import org.mongodb.result.ServerCursor;
 import org.mongodb.result.QueryResult;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
@@ -26,7 +27,6 @@ import java.io.Closeable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-// TODO: Handle getmore
 public class MongoCursor<T> implements Iterator<T>, Closeable {
     private final MongoCollection<T> collection;
     private final MongoFind find;
@@ -45,8 +45,8 @@ public class MongoCursor<T> implements Iterator<T>, Closeable {
 
     @Override
     public void close() {
-        if (currentResult != null && currentResult.getCursorId() != 0) {
-            collection.getClient().getOperations().killCursors(new MongoKillCursor(currentResult.getCursorId()));
+        if (currentResult != null && currentResult.getCursor() != null) {
+            collection.getClient().getOperations().killCursors(new MongoKillCursor(currentResult.getCursor()));
         }
     }
 
@@ -56,7 +56,7 @@ public class MongoCursor<T> implements Iterator<T>, Closeable {
             return true;
         }
 
-        if (currentResult.getCursorId() == 0) {
+        if (currentResult.getCursor() == null) {
             return false;
         }
 
@@ -70,7 +70,7 @@ public class MongoCursor<T> implements Iterator<T>, Closeable {
             return currentIterator.next();
         }
 
-        if (currentResult.getCursorId() == 0) {
+        if (currentResult.getCursor() == null) {
             throw new NoSuchElementException();
         }
 
@@ -82,14 +82,14 @@ public class MongoCursor<T> implements Iterator<T>, Closeable {
      * Gets the cursor id.
      * @return the cursor id
      */
-    public long getCursorId() {
-        return currentResult.getCursorId();
+    public ServerCursor getServerCursor() {
+        return currentResult.getCursor();
     }
 
     private void getMore() {
         currentResult = collection.getClient().
                 getOperations().getMore(collection.getNamespace(),
-                                        new GetMore(currentResult.getCursorId(), find.getBatchSize()),
+                                        new GetMore(currentResult.getCursor(), find.getBatchSize()),
                                         collection.getSerializer());
         currentIterator = currentResult.getResults().iterator();
     }

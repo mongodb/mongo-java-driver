@@ -32,8 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Abstract base class for all MongoDB Wire Protocol request messages.
  */
 public class MongoRequestMessage {
-
-    // TODO: probably only needs to be unique per connection, not VM
     // TODO: is rollover a problem
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
@@ -77,9 +75,8 @@ public class MongoRequestMessage {
         buffer.writeInt(opCode.getValue());
     }
 
-    public void pipeAndClose(final SocketChannel out) throws IOException {
+    public void pipe(final SocketChannel out) throws IOException {
         buffer.pipe(out);
-        done();
     }
 
     public int size() {
@@ -124,11 +121,10 @@ public class MongoRequestMessage {
         buffer.backpatchSize(messageLength);
     }
 
-    public OutputBuffer getBuffer() {
-        return buffer;
-    }
-
-    public void done() throws IOException {
+    public void close() {
+        if (buffer == null) {
+            throw new IllegalStateException("Buffer is already closed");
+        }
         buffer.close();
         buffer = null;
     }

@@ -16,20 +16,22 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.result.ServerCursor;
+
 public class GetMore extends MongoOperation {
     private final int batchSize;
-    private final long cursorId;
+    private final ServerCursor serverCursor;
 
-    public GetMore(final long cursorId, final int batchSize) {
+    public GetMore(final ServerCursor serverCursor, final int batchSize) {
+        this.serverCursor = serverCursor;
         this.batchSize = batchSize;
-        this.cursorId = cursorId;
     }
 
     public int getBatchSize() {
         return batchSize;
     }
 
-    public long getCursorId() {
-        return cursorId;
+    public ServerCursor getServerCursor() {
+        return serverCursor;
     }
 }

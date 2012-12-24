@@ -24,7 +24,7 @@ public class MongoGetMoreMessage extends MongoRequestMessage {
     final long cursorId;
     public MongoGetMoreMessage(final String collectionName, final GetMore getMore, final OutputBuffer buffer) {
         super(collectionName, OpCode.OP_GETMORE, buffer);
-        cursorId = getMore.getCursorId();
+        cursorId = getMore.getServerCursor().getId();
         writeGetMore(getMore);
         backpatchMessageLength();
     }
@@ -33,7 +33,7 @@ public class MongoGetMoreMessage extends MongoRequestMessage {
         buffer.writeInt(0);
         buffer.writeCString(collectionName);
         buffer.writeInt(getMore.getBatchSize());
-        buffer.writeLong(getMore.getCursorId());
+        buffer.writeLong(getMore.getServerCursor().getId());
     }
 
     public long getCursorId() {

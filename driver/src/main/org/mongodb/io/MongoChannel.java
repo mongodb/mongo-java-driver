@@ -29,6 +29,7 @@ import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyHeader;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.protocol.MongoRequestMessage;
+import org.mongodb.result.ServerCursor;
 import org.mongodb.serialization.Serializer;
 
 import java.io.IOException;
@@ -69,8 +70,9 @@ public class MongoChannel {
                 open();
             }
 
-            message.pipeAndClose(socketChannel);
+            message.pipe(socketChannel);
         } catch (IOException e) {
+            message.close();
             throw new MongoSocketWriteException("Exception sending message", address, e);
         }
     }
@@ -105,7 +107,7 @@ public class MongoChannel {
             }
 
             if (replyHeader.isCursorNotFound()) {
-                throw new MongoCursorNotFoundException(address, ((MongoGetMoreMessage) message).getCursorId());
+                throw new MongoCursorNotFoundException(new ServerCursor(((MongoGetMoreMessage) message).getCursorId(), address));
             }
             else if (replyHeader.isQueryFailure()) {
                 Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,

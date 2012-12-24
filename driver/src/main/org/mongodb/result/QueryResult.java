@@ -17,22 +17,28 @@
 
 package org.mongodb.result;
 
+import org.mongodb.ServerAddress;
 import org.mongodb.protocol.MongoReplyMessage;
 
 import java.util.List;
 
 // TODO: Should this extend MongoResult, and if so, would have to make it generic
 public class QueryResult<T> {
-    private final long cursorId;
-    private final List<T> results;
+    private final List<T> results;  // TODO: Make this iterable
+    private final ServerCursor serverCursor;
 
-    public QueryResult(final MongoReplyMessage<T> replyMessage) {
-        cursorId = replyMessage.getReplyHeader().getCursorId();
+    public QueryResult(final MongoReplyMessage<T> replyMessage, final ServerAddress address) {
+        if (replyMessage.getReplyHeader().getCursorId() != 0) {
+            serverCursor = new ServerCursor(replyMessage.getReplyHeader().getCursorId(), address);
+        }
+        else {
+            serverCursor = null;
+        }
         results = replyMessage.getDocuments();
     }
 
-    public long getCursorId() {
-        return cursorId;
+    public ServerCursor getCursor() {
+        return serverCursor;
     }
 
     public List<T> getResults() {

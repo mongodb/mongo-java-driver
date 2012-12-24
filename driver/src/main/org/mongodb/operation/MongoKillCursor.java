@@ -17,22 +17,20 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.result.ServerCursor;
+
 import java.util.Arrays;
 import java.util.List;
 
 public class MongoKillCursor extends MongoOperation {
-    private final List<Long> cursorIds;
+    private final List<ServerCursor> serverCursors;
 
-    public MongoKillCursor(final long cursorId) {
-        cursorIds = Arrays.asList(cursorId);
-    }
-
-    public MongoKillCursor(final List<Long> cursorIds) {
-        this.cursorIds = cursorIds;
+    public MongoKillCursor(final ServerCursor serverCursor) {
+        serverCursors = Arrays.asList(serverCursor);
     }
 
 
-    public List<Long> getCursorIds() {
-        return cursorIds;
+    public List<ServerCursor> getServerCursors() {
+        return serverCursors;
     }
 }

@@ -30,6 +30,10 @@ public abstract class OutputBuffer extends OutputStream {
         write(b, 0, b.length);
     }
 
+    @Override
+    public void close() {
+    }
+
     public abstract void write(byte[] b, int off, int len);
 
     public abstract void write(int b);
