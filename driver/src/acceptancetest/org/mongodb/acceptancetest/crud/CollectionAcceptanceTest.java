@@ -6,7 +6,6 @@ import org.junit.Test;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
-import org.mongodb.operation.MongoInsert;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
@@ -31,7 +30,7 @@ public class CollectionAcceptanceTest {
     public void shouldCountNumberOfDocumentsInCollection() {
         assertThat(collection.count(), is(0L));
 
-        collection.insert(new MongoInsert<Document>(new Document("myField", "myValue")));
+        collection.insert(new Document("myField", "myValue"));
 
         assertThat(collection.count(), is(1L));
     }

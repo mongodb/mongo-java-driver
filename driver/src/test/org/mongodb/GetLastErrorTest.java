@@ -19,7 +19,6 @@ package org.mongodb;
 import org.bson.types.Document;
 import org.junit.Test;
 import org.mongodb.command.MongoDuplicateKeyException;
-import org.mongodb.operation.MongoInsert;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -29,9 +28,9 @@ public class GetLastErrorTest extends MongoClientTestBase {
     @Test
     public void testDuplicateKeyException() {
         Document doc = new Document("_id", 1);
-        collection.insert(new MongoInsert<Document>(doc));
+        collection.insert(doc);
         try {
-            collection.insert(new MongoInsert<Document>(doc));
+            collection.insert(doc);
             fail("should throw exception");
         } catch (MongoDuplicateKeyException e) {
             assertThat(e.getCommandResult().getErrorCode(), is(11000));

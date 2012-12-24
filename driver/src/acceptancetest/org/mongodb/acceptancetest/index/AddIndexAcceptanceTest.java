@@ -24,7 +24,6 @@ import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
 import org.mongodb.OrderBy;
-import org.mongodb.operation.MongoInsert;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -57,7 +56,7 @@ public class AddIndexAcceptanceTest {
 
     @Test
     public void shouldGetExistingIndexesOnDatabase() {
-        collection.insert(new MongoInsert<Document>(new Document("new", "value")));
+        collection.insert(new Document("new", "value"));
 
         assertThat("Should have the default index on _id when a document exists",
                    collection.admin().getIndexes().size(), is(1));

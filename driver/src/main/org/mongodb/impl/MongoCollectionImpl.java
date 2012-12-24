@@ -40,7 +40,6 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoQueryFilter;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
-import org.mongodb.operation.MongoSave;
 import org.mongodb.operation.MongoSortCriteria;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoUpdateOperations;
@@ -143,24 +142,32 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
-    public InsertResult insert(final MongoInsert<T> insert) {
-        return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(getWriteConcern()),
+    public InsertResult insert(final T document) {
+        return insert(document, getWriteConcern());
+    }
+
+    @Override
+    public InsertResult insert(final Iterable<T> documents) {
+        return insert(documents, getWriteConcern());
+    }
+
+    @Override
+    public InsertResult insert(final T document, final WriteConcern writeConcern) {
+        return getClient().getOperations().insert(getNamespace(),
+                                                  new MongoInsert<T>(document).writeConcern(writeConcern),
                                                   getSerializer());
     }
 
     @Override
-    public InsertResult insert(final T doc) {
-        return insert(new MongoInsert<T>(doc));
+    public InsertResult insert(final Iterable<T> documents, final WriteConcern writeConcern) {
+        return getClient().getOperations().insert(getNamespace(),
+                                                  new MongoInsert<T>(documents).writeConcern(writeConcern),
+                                                  getSerializer());
     }
 
     @Override
-    public InsertResult insert(final Iterable<T> doc) {
-        return insert(new MongoInsert<T>(doc));
-    }
-
-    @Override
-    public UpdateResult save(final T doc) {
-        return save(new MongoSave<T>(doc));
+    public UpdateResult save(final T document) {
+        return save(document, getWriteConcern());
     }
 
     public UpdateResult update(final MongoUpdate update) {
@@ -169,14 +176,15 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
-    public UpdateResult save(final MongoSave<T> save) {
-        Object id = serializer.getId(save.getDocument());
+    public UpdateResult save(final T document, WriteConcern writeConcern) {
+        Object id = serializer.getId(document);
         if (id == null) {
-            return insert(save.getDocument());
+            return insert(document);
         }
         else {
-            return replace(new MongoReplace<T>(new QueryFilterDocument("_id", id), save.getDocument()).upsert(
-                    true).writeConcernIfAbsent(getWriteConcern()));
+            return replace(
+                    new MongoReplace<T>(new QueryFilterDocument("_id", id), document).upsert(true).writeConcernIfAbsent(
+                            getWriteConcern()));
         }
     }
 

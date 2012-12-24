@@ -33,7 +33,6 @@ import org.mongodb.QueryFilterDocument;
 import org.mongodb.ServerAddress;
 import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.command.DropDatabaseCommand;
-import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.InsertResult;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.CollectibleSerializer;
@@ -80,7 +79,7 @@ public class MongoCollectionTest {
             documents.add(doc);
         }
 
-        final InsertResult res = collection.insert(new MongoInsert<Document>(documents));
+        final InsertResult res = collection.insert(documents);
         assertEquals(10, collection.count());
         assertNotNull(res);
     }
@@ -90,7 +89,7 @@ public class MongoCollectionTest {
         final MongoCollection<Document> collection = mongoDatabase.getCollection("idGeneration");
 
         final Document doc = new Document();
-        collection.insert(new MongoInsert<Document>(doc));
+        collection.insert(doc);
         assertNotNull(doc.get("_id"));
         assertEquals(ObjectId.class, doc.get("_id").getClass());
         assertEquals(1, collection.filter(new QueryFilterDocument("_id", doc.get("_id"))).count());
@@ -101,7 +100,7 @@ public class MongoCollectionTest {
     public void testUpdate() {
         final MongoCollection<Document> collection = mongoDatabase.getCollection("update");
 
-        collection.insert(new MongoInsert<Document>(new Document("_id", 1)));
+        collection.insert(new Document("_id", 1));
 
         collection.filter(new QueryFilterDocument("_id", 1))
                                           .update(new UpdateOperationsDocument("$set", new Document("x", 1)));
@@ -113,7 +112,7 @@ public class MongoCollectionTest {
     public void testReplace() {
         final MongoCollection<Document> collection = mongoDatabase.getCollection("replace");
 
-        collection.insert(new MongoInsert<Document>(new Document("_id", 1).append("x", 1)));
+        collection.insert(new Document("_id", 1).append("x", 1));
 
         // TODO: there is nothing to stop you from passing a QueryFilterDocument instance to a MongoReplace<Document> constructor
         collection.filter(new QueryFilterDocument("_id", 1)).replace(new Document("_id", 1).append("y", 2));
@@ -205,7 +204,7 @@ public class MongoCollectionTest {
                                                                                       new ConcreteSerializer());
 
         final Concrete doc = new Concrete(new ObjectId(), true);
-        collection.insert(new MongoInsert<Concrete>(doc));
+        collection.insert(doc);
 
         final Concrete newDoc = collection.filter(new QueryFilterDocument("x", true)).
                 findAndUpdate(new UpdateOperationsDocument("$set", new Document("x", false)));

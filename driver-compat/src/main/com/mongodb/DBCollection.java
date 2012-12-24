@@ -24,8 +24,6 @@ import org.mongodb.MongoWritableStream;
 import org.mongodb.OrderBy;
 import org.mongodb.command.DropCollectionCommand;
 import org.mongodb.command.MongoDuplicateKeyException;
-import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoSave;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
@@ -68,9 +66,7 @@ public class DBCollection {
 
     public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern) {
         try {
-            final MongoInsert<DBObject> insert = new MongoInsert<DBObject>(documents).writeConcern(
-                    writeConcern.toNew());
-            final InsertResult result = collection.insert(insert);
+            final InsertResult result = collection.insert(documents, writeConcern.toNew());
             return new WriteResult(result, writeConcern);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
@@ -84,7 +80,7 @@ public class DBCollection {
 
     public WriteResult save(final DBObject obj, final WriteConcern wc) {
         try {
-            UpdateResult result = collection.save(new MongoSave<DBObject>(obj).writeConcern(wc.toNew()));
+            UpdateResult result = collection.save(obj, wc.toNew());
             return new WriteResult(result, wc);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);

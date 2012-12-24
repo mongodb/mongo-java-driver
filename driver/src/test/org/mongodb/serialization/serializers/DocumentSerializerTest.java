@@ -31,7 +31,6 @@ import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.MongoClientTestBase;
-import org.mongodb.operation.MongoSave;
 import org.mongodb.serialization.PrimitiveSerializers;
 
 import java.io.ByteArrayOutputStream;
@@ -105,14 +104,14 @@ public class DocumentSerializerTest extends MongoClientTestBase {
     @Test
     public void testDotsInKeys() {
         try {
-            collection.save(new MongoSave<Document>(new Document("x.y", 1)));
+            collection.save(new Document("x.y", 1));
             fail("Should throw exception");
         } catch (IllegalArgumentException e) {
             // all good
         }
 
         try {
-            collection.save(new MongoSave<Document>(new Document("x", new Document("a.b", 1))));
+            collection.save(new Document("x", new Document("a.b", 1)));
             fail("Should throw exception");
         } catch (IllegalArgumentException e) {
             // all good
