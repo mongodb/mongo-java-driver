@@ -19,18 +19,13 @@ package com.mongodb;
 import org.bson.types.Document;
 import org.mongodb.Index;
 import org.mongodb.MongoCollection;
+import org.mongodb.MongoStream;
+import org.mongodb.MongoWritableStream;
 import org.mongodb.OrderBy;
 import org.mongodb.command.DropCollectionCommand;
 import org.mongodb.command.MongoDuplicateKeyException;
-import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoFindAndRemove;
-import org.mongodb.operation.MongoFindAndReplace;
-import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoRemove;
-import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoSave;
-import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
@@ -121,19 +116,28 @@ public class DBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
+        MongoStream<DBObject> stream = collection.filter(DBObjects.toQueryFilterDocument(q));
         final UpdateResult result;
 
         try {
             if (!o.keySet().isEmpty() && o.keySet().iterator().next().startsWith("$")) {
-                MongoUpdate update = new MongoUpdate(DBObjects.toQueryFilterDocument(q),
-                                                     DBObjects.toUpdateOperationsDocument(o));
-                update.isMulti(multi).isUpsert(upsert).writeConcern(concern.toNew());
-                result = collection.update(update);
+                if (multi) {
+                    stream = stream.noLimit();
+                }
+                if (upsert) {
+                    result = stream.upsert().update(DBObjects.toUpdateOperationsDocument(o));
+                }
+                else {
+                    result = stream.update(DBObjects.toUpdateOperationsDocument(o));
+                }
             }
             else {
-                MongoReplace<DBObject> replace = new MongoReplace<DBObject>(DBObjects.toQueryFilterDocument(q), o);
-                replace.isUpsert(upsert);
-                result = collection.replace(replace);
+                if (upsert) {
+                    result = stream.upsert().replace(o);
+                }
+                else {
+                    result = stream.replace(o);
+                }
             }
             return new WriteResult(result, concern);
         } catch (org.mongodb.MongoException e) {
@@ -192,8 +196,8 @@ public class DBCollection {
 
 
     public WriteResult remove(final DBObject filter, final WriteConcern writeConcernToUse) {
-        final MongoRemove remove = new MongoRemove(DBObjects.toQueryFilterDocument(filter));
-        final RemoveResult result = collection.remove(remove);
+        final RemoveResult result = collection.filter(DBObjects.toQueryFilterDocument(filter)).writeConcern(
+                writeConcernToUse.toNew()).remove();
         return new WriteResult(result, writeConcernToUse);
     }
 
@@ -202,10 +206,8 @@ public class DBCollection {
     }
 
     public DBCursor find(final DBObject filter, final DBObject fields) {
-        return new DBCursor(collection, new MongoFind().
-                where(DBObjects.toQueryFilterDocument(filter)).
-                select(DBObjects.toFieldSelectorDocument(fields)).
-                readPreference(getReadPreference().toNew()));
+        return new DBCursor(collection, DBObjects.toQueryFilterDocument(filter),
+                            DBObjects.toFieldSelectorDocument(fields), getReadPreference());
     }
 
     /**
@@ -293,11 +295,8 @@ public class DBCollection {
      */
     public DBObject findOne(DBObject o, DBObject fields, DBObject orderBy, ReadPreference readPref) {
 
-        MongoFind find = new MongoFind(DBObjects.toQueryFilterDocument(o)).select(
-                DBObjects.toFieldSelectorDocument(fields));
-        find.readPreference(readPref.toNew());
-
-        DBObject obj = collection.findOne(find);
+        DBObject obj = collection.filter(DBObjects.toQueryFilterDocument(o)).select(
+                DBObjects.toFieldSelectorDocument(fields)).readPreference(readPref.toNew()).findOne();
 
         if (obj != null && (fields != null && fields.keySet().size() > 0)) {
             obj.markAsPartialObject();
@@ -462,10 +461,12 @@ public class DBCollection {
         if (skip > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("skip is too large: " + skip);
         }
-        MongoFind find = new MongoFind(DBObjects.toQueryFilterDocument(query));
-        find.limit((int) limit).skip((int) skip).readPreference(
-                readPreference.toNew());   // TODO: investigate case of int to long for skip
-        return collection.count(find);
+        MongoStream<DBObject> stream = collection;
+        if (query != null) {
+            stream = stream.filter(DBObjects.toQueryFilterDocument(query));
+        }
+        // TODO: investigate case of int to long for skip
+        return stream.limit((int) limit).skip((int) skip).readPreference(readPreference.toNew()).count();
     }
 
     public String getName() {
@@ -538,23 +539,27 @@ public class DBCollection {
      */
     public DBObject findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update,
                                   boolean returnNew, boolean upsert) {
+        MongoStream<DBObject> stream = collection;
+        stream = stream.filter(DBObjects.toQueryFilterDocument(query));
+        stream = stream.select(DBObjects.toFieldSelectorDocument(fields));
+        stream = stream.sort(DBObjects.toSortCriteriaDocument(sort));
         if (remove) {
-            MongoFindAndRemove findAndRemove = new MongoFindAndRemove().where(
-                    DBObjects.toQueryFilterDocument(query)).where(DBObjects.toQueryFilterDocument(query));
-            return collection.findAndRemove(findAndRemove);
-        }
-        if (update != null && !update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-            MongoFindAndUpdate findAndUpdate = new MongoFindAndUpdate().where(
-                    DBObjects.toQueryFilterDocument(query)).updateWith(
-                    DBObjects.toUpdateOperationsDocument(update)).returnNew(returnNew).upsert(upsert).sortBy(
-                    DBObjects.toSortCriteriaDocument(sort));
-            return collection.findAndUpdate(findAndUpdate);
+            return stream.findAndRemove();
         }
         else {
-            MongoFindAndReplace findAndReplace = new MongoFindAndReplace<DBObject>(update).where(
-                    DBObjects.toQueryFilterDocument(query)).returnNew(returnNew).upsert(upsert).sortBy(
-                    DBObjects.toSortCriteriaDocument(sort));
-            return collection.findAndReplace(findAndReplace);
+            MongoWritableStream<DBObject> writableStream = stream;
+            if (returnNew) {
+                writableStream = writableStream.returnNew();
+            }
+            if (upsert) {
+                writableStream = stream.upsert();
+            }
+            if (update != null && !update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
+                return writableStream.findAndUpdate(DBObjects.toUpdateOperationsDocument(update));
+            }
+            else {
+                return writableStream.findAndReplace(update);
+            }
         }
     }
 
@@ -563,6 +568,7 @@ public class DBCollection {
      *
      * @return this collection's database
      */
+
     public DB getDB() {
         return database;
     }

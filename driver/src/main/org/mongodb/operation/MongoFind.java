@@ -34,6 +34,11 @@ public class MongoFind extends MongoQuery {
         this.filter = filter;
     }
 
+    public MongoFind filter(final MongoQueryFilter filter) {
+        this.filter = filter;
+        return this;
+    }
+
     public MongoQueryFilter getFilter() {
         return filter;
     }

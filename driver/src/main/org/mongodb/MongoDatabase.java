@@ -43,12 +43,6 @@ public interface MongoDatabase {
     <T> MongoCollection<T> getTypedCollection(String name, final PrimitiveSerializers basePrimitiveSerializers,
                                               final CollectibleSerializer<T> serializer);
 
-    MongoAsyncCollection<Document> getAsyncCollection(String name);
-
-    <T> MongoAsyncCollection<T> getAsyncTypedCollection(String name,
-                                                        final PrimitiveSerializers basePrimitiveSerializers,
-                                                        final CollectibleSerializer<T> serializer);
-
     DatabaseAdmin admin();
 
     //    MongoDatabase withClient(MongoClient client);

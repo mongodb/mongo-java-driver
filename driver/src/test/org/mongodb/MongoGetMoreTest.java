@@ -19,9 +19,9 @@ package org.mongodb;
 
 import org.bson.types.Document;
 import org.junit.Test;
-import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -29,11 +29,9 @@ import static org.junit.Assert.fail;
 public class MongoGetMoreTest extends MongoClientTestBase {
     @Test
     public void shouldThrowCursorNotFoundException() {
-        collection.insert(new MongoInsert<Document>(new Document()));
-        collection.insert(new MongoInsert<Document>(new Document()));
-        collection.insert(new MongoInsert<Document>(new Document()));
+        collection.insert(Arrays.asList(new Document(), new Document(), new Document()));
 
-        MongoCursor<Document> cursor = collection.find(new MongoFind().batchSize(2));
+        MongoCursor<Document> cursor = collection.batchSize(2).find();
         getClient().getOperations().killCursors(new MongoKillCursor(cursor.getServerCursor()));
         cursor.next();
         cursor.next();

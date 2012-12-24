@@ -31,8 +31,8 @@ public class MongoReplace<T> extends MongoUpdateBase {
         return replacement;
     }
 
-    public MongoReplace<T> isUpsert(final boolean isUpsert) {
-        super.isUpsert(isUpsert);
+    public MongoReplace<T> upsert(final boolean isUpsert) {
+        super.upsert(isUpsert);
         return this;
     }
 

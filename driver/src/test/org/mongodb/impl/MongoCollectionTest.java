@@ -33,12 +33,7 @@ import org.mongodb.QueryFilterDocument;
 import org.mongodb.ServerAddress;
 import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.command.DropDatabaseCommand;
-import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoRemove;
-import org.mongodb.operation.MongoReplace;
-import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.InsertResult;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.CollectibleSerializer;
@@ -98,8 +93,8 @@ public class MongoCollectionTest {
         collection.insert(new MongoInsert<Document>(doc));
         assertNotNull(doc.get("_id"));
         assertEquals(ObjectId.class, doc.get("_id").getClass());
-        assertEquals(1, collection.count(new MongoFind(new QueryFilterDocument("_id", doc.get("_id")))));
-        assertEquals(1, collection.findOne(new MongoFind(new QueryFilterDocument("_id", doc.get("_id")))).size());
+        assertEquals(1, collection.filter(new QueryFilterDocument("_id", doc.get("_id"))).count());
+        assertEquals(1, collection.filter(new QueryFilterDocument("_id", doc.get("_id"))).findOne().size());
     }
 
     @Test
@@ -108,10 +103,10 @@ public class MongoCollectionTest {
 
         collection.insert(new MongoInsert<Document>(new Document("_id", 1)));
 
-        collection.update(new MongoUpdate(new QueryFilterDocument("_id", 1),
-                                          new UpdateOperationsDocument("$set", new Document("x", 1))));
+        collection.filter(new QueryFilterDocument("_id", 1))
+                                          .update(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
-        assertEquals(1, collection.count(new MongoFind(new QueryFilterDocument("_id", 1).append("x", 1))));
+        assertEquals(1, collection.filter(new QueryFilterDocument("_id", 1).append("x", 1)).count());
     }
 
     @Test
@@ -121,13 +116,11 @@ public class MongoCollectionTest {
         collection.insert(new MongoInsert<Document>(new Document("_id", 1).append("x", 1)));
 
         // TODO: there is nothing to stop you from passing a QueryFilterDocument instance to a MongoReplace<Document> constructor
-        collection.replace(
-                new MongoReplace<Document>(new QueryFilterDocument("_id", 1), new Document("_id", 1).append("y", 2)));
+        collection.filter(new QueryFilterDocument("_id", 1)).replace(new Document("_id", 1).append("y", 2));
 
-        assertEquals(0, collection.count(new MongoFind(new QueryFilterDocument("_id", 1).append("x", 1))));
-        assertEquals(1, collection.count(new MongoFind(new QueryFilterDocument("_id", 1).append("y", 2))));
+        assertEquals(0, collection.filter(new QueryFilterDocument("_id", 1).append("x", 1)).count());
+        assertEquals(1, collection.filter(new QueryFilterDocument("_id", 1).append("y", 2)).count());
     }
-
 
     @Test
     public void testRemove() {
@@ -139,8 +132,8 @@ public class MongoCollectionTest {
             documents.add(doc);
         }
 
-        collection.insert(new MongoInsert<Document>(documents));
-        collection.remove(new MongoRemove(new QueryFilterDocument("_id", 5)));
+        collection.insert(documents);
+        collection.filter(new QueryFilterDocument("_id", 5)).remove();
         assertEquals(9, collection.count());
     }
 
@@ -150,10 +143,10 @@ public class MongoCollectionTest {
 
         for (int i = 0; i < 101; i++) {
             final Document doc = new Document("_id", i);
-            collection.insert(new MongoInsert<Document>(doc));
+            collection.insert(doc);
         }
 
-        final MongoCursor<Document> cursor = collection.find(new MongoFind(new QueryFilterDocument()));
+        final MongoCursor<Document> cursor = collection.find();
         try {
             while (cursor.hasNext()) {
                 final Document cur = cursor.next();
@@ -167,12 +160,12 @@ public class MongoCollectionTest {
     public void testFindOne() {
         final MongoCollection<Document> collection = mongoDatabase.getCollection("findOne");
 
-        assertNull(collection.findOne(new MongoFind(new QueryFilterDocument())));
+        assertNull(collection.findOne());
 
-        collection.insert(new MongoInsert<Document>(new Document("_id", 1)));
-        collection.insert(new MongoInsert<Document>(new Document("_id", 2)));
+        collection.insert(new Document("_id", 1));
+        collection.insert(new Document("_id", 2));
 
-        assertNotNull(collection.findOne(new MongoFind(new QueryFilterDocument())));
+        assertNotNull(collection.findOne());
     }
 
     @Test
@@ -181,13 +174,13 @@ public class MongoCollectionTest {
 
         for (int i = 0; i < 11; i++) {
             final Document doc = new Document("_id", i);
-            collection.insert(new MongoInsert<Document>(doc));
+            collection.insert(doc);
         }
 
-        long count = collection.count(new MongoFind(new QueryFilterDocument()));
+        long count = collection.count();
         assertEquals(11, count);
 
-        count = collection.count(new MongoFind(new QueryFilterDocument("_id", 10)));
+        count = collection.filter(new QueryFilterDocument("_id", 10)).count();
         assertEquals(1, count);
     }
 
@@ -195,17 +188,13 @@ public class MongoCollectionTest {
     public void testFindAndUpdate() {
         final MongoCollection<Document> collection = mongoDatabase.getCollection("findAndUpdate");
 
-        final Document doc = new Document("_id", 1);
-        doc.put("x", true);
-        collection.insert(new MongoInsert<Document>(doc));
+        collection.insert(new Document("_id", 1).append("x", true));
 
-        final Document newDoc = collection.findAndUpdate(new MongoFindAndUpdate().
-                where(new QueryFilterDocument("x", true)).
-                updateWith(new UpdateOperationsDocument("$set", new Document("x", false))));
-
+        final Document newDoc = collection.filter(new QueryFilterDocument("x", true)).
+                findAndUpdate(new UpdateOperationsDocument("$set", new Document("x", false)));
 
         assertNotNull(newDoc);
-        assertEquals(doc, newDoc);
+        assertEquals(new Document("_id", 1).append("x", true), newDoc);
     }
 
     @Test
@@ -218,10 +207,8 @@ public class MongoCollectionTest {
         final Concrete doc = new Concrete(new ObjectId(), true);
         collection.insert(new MongoInsert<Concrete>(doc));
 
-        final Concrete newDoc = collection.findAndUpdate(new MongoFindAndUpdate().
-                where(new QueryFilterDocument("x", true)).
-                updateWith(new UpdateOperationsDocument("$set", new Document("x", false))));
-
+        final Concrete newDoc = collection.filter(new QueryFilterDocument("x", true)).
+                findAndUpdate(new UpdateOperationsDocument("$set", new Document("x", false)));
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);

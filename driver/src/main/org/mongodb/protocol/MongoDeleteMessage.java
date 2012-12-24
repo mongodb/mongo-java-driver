@@ -18,7 +18,6 @@
 package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
-import org.bson.types.ObjectId;
 import org.bson.types.Document;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.serialization.Serializer;
@@ -41,9 +40,8 @@ public class MongoDeleteMessage extends MongoRequestMessage {
 
         final Collection<String> keys = queryFilterDocument.keySet();
 
-        if (keys.size() == 1 && keys.iterator().next().equals("_id")
-                && queryFilterDocument.get(keys.iterator().next()) instanceof ObjectId) {
-            buffer.writeInt(1);
+        if (remove.isMulti()) {
+            buffer.writeInt(0);
         }
         else {
             buffer.writeInt(0);

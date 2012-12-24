@@ -15,28 +15,8 @@
  *
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-public abstract class MongoUpdateBase extends MongoWrite {
-    protected final MongoQueryFilter filter;
-    private boolean isUpsert = false;
-
-    public MongoUpdateBase(final MongoQueryFilter filter) {
-        this.filter = filter;
-    }
-
-    public MongoQueryFilter getFilter() {
-        return filter;
-    }
-
-    public boolean isUpsert() {
-        return isUpsert;
-    }
-
-    public MongoUpdateBase upsert(final boolean isUpsert) {
-        this.isUpsert = isUpsert;
-        return this;
-    }
-
-    public abstract boolean isMulti();
+public interface Block<T> {
+    void run(T t);
 }
