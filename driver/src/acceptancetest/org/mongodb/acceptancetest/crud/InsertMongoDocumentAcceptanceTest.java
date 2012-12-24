@@ -24,7 +24,6 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
 import org.mongodb.QueryFilterDocument;
-import org.mongodb.operation.MongoInsert;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -47,9 +46,7 @@ public class InsertMongoDocumentAcceptanceTest {
     @Test
     public void shouldInsertSimpleUntypedDocument() {
         final Document simpleDocument = new Document("name", "Billy");
-        //Why do you need this in the default case?
-        final MongoInsert<Document> insertStatement = new MongoInsert<Document>(simpleDocument);
-        collection.insert(insertStatement);
+        collection.insert(simpleDocument);
 
         assertThat(collection.count(), is(1L));
 

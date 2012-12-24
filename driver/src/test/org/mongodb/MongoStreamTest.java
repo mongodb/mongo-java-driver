@@ -19,14 +19,13 @@ package org.mongodb;
 
 import org.bson.types.Document;
 import org.junit.Test;
-import org.mongodb.operation.MongoInsert;
 
 public class MongoStreamTest extends MongoClientTestBase {
 
     @Test
     public void testFind() {
         for (int i = 0; i < 10; i++) {
-            collection.insert(new MongoInsert<>(new Document("_id", i)));
+            collection.insert(new Document("_id", i));
         }
 
         for (Document cur : collection) {
@@ -71,7 +70,7 @@ public class MongoStreamTest extends MongoClientTestBase {
 
     @Test
     public void testUpdate() {
-        collection.insert(new MongoInsert<>(new Document("_id", 1)));
+        collection.insert(new Document("_id", 1));
 
         collection.update(new UpdateOperationsDocument("$set", new Document("x", 1)));
 

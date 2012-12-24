@@ -25,7 +25,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.impl.SingleServerMongoClient;
-import org.mongodb.operation.MongoInsert;
 
 import java.net.UnknownHostException;
 import java.util.NoSuchElementException;
@@ -82,7 +81,7 @@ public class MongoCursorTest {
     public void testNextWithoutHasNextWithGetMore() {
         MongoCollection<Document> collection = mongoDatabase.getCollection("nextWithoutHasNextWithGetMore");
         for (int i = 0; i < 10; i++) {
-            collection.insert(new MongoInsert<Document>(new Document("_id", i)));
+            collection.insert(new Document("_id", i));
         }
 
         MongoCursor<Document> cursor = collection.sort(new SortCriteriaDocument("_id", 1)).batchSize(2).find();

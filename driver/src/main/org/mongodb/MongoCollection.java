@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoSave;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.UpdateResult;
 
@@ -36,15 +34,17 @@ import org.mongodb.result.UpdateResult;
  */
 public interface MongoCollection<T> extends MongoCollectionBase<T>, MongoStream<T> {
 
-    InsertResult insert(MongoInsert<T> insert);
+    InsertResult insert(T document);
 
-    InsertResult insert(T doc);
+    InsertResult insert(Iterable<T> document);
 
-    InsertResult insert(Iterable<T> doc);
+    InsertResult insert(final T document, final WriteConcern writeConcern);
 
-    UpdateResult save(T doc);
+    InsertResult insert(final Iterable<T> documents, final WriteConcern writeConcern);
 
-    UpdateResult save(MongoSave<T> save);
+    UpdateResult save(T document);
+
+    UpdateResult save(T document, WriteConcern writeConcern);
 
     CollectionAdmin admin();
 }
