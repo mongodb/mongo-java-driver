@@ -16,17 +16,9 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoFindAndRemove;
-import org.mongodb.operation.MongoFindAndReplace;
-import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoRemove;
-import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoSave;
-import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.InsertResult;
-import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 
 // TODO: add these
@@ -42,33 +34,19 @@ import org.mongodb.result.UpdateResult;
  *
  * @param <T> The type that this collection will serialize documents from and to
  */
-public interface MongoCollection<T> extends MongoCollectionBase<T> {
-
-    MongoCursor<T> find(MongoFind find);
-
-    T findOne(MongoFind find);  // TODO: MongoFind has too many options for findOne
-
-    long count();
-
-    long count(MongoFind find);  // TODO: MongoFind has too many options for count
-
-    T findAndUpdate(MongoFindAndUpdate findAndUpdate);
-
-    T findAndReplace(MongoFindAndReplace<T> findAndReplace);
-
-    T findAndRemove(MongoFindAndRemove findAndRemove);
+public interface MongoCollection<T> extends MongoCollectionBase<T>, MongoStream<T> {
 
     InsertResult insert(MongoInsert<T> insert);
 
-    UpdateResult update(MongoUpdate update);
+    InsertResult insert(T doc);
 
-    UpdateResult replace(MongoReplace<T> replace);
+    InsertResult insert(Iterable<T> doc);
 
-    RemoveResult remove(MongoRemove remove);
-
-    CollectionAdmin admin();
+    UpdateResult save(T doc);
 
     UpdateResult save(MongoSave<T> save);
+
+    CollectionAdmin admin();
 }
 
 

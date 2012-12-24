@@ -21,6 +21,7 @@ import org.mongodb.WriteConcern;
 
 public class MongoRemove extends MongoWrite {
     final MongoQueryFilter filter;
+    boolean isMulti = false;
 
     public MongoRemove(final MongoQueryFilter filter) {
         this.filter = filter;
@@ -28,6 +29,15 @@ public class MongoRemove extends MongoWrite {
 
     public MongoQueryFilter getFilter() {
         return filter;
+    }
+
+    public MongoRemove multi(boolean isMulti) {
+        this.isMulti = isMulti;
+        return this;
+    }
+
+    public boolean isMulti() {
+        return isMulti;
     }
 
     @Override

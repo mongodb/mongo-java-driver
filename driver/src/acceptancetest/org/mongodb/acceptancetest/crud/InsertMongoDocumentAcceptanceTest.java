@@ -24,7 +24,6 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
 import org.mongodb.QueryFilterDocument;
-import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 
 import static org.hamcrest.core.Is.is;
@@ -55,7 +54,7 @@ public class InsertMongoDocumentAcceptanceTest {
         assertThat(collection.count(), is(1L));
 
         final QueryFilterDocument queryFilter = new QueryFilterDocument("name", "Billy");
-        final MongoCursor<Document> insertTestDocumentMongoCursor = collection.find(new MongoFind(queryFilter));
+        final MongoCursor<Document> insertTestDocumentMongoCursor = collection.filter(queryFilter).find();
 
         assertThat((String) insertTestDocumentMongoCursor.next().get("name"), is("Billy"));
     }

@@ -25,7 +25,6 @@ import org.mongodb.QueryFilterDocument;
 import org.mongodb.SortCriteriaDocument;
 import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.operation.MongoCommand;
-import org.mongodb.operation.MongoFieldSelector;
 
 import java.util.List;
 import java.util.Map;
@@ -41,7 +40,7 @@ public class DBObjects {
         return doc;
     }
 
-    public static MongoFieldSelector toFieldSelectorDocument(final DBObject fields) {
+    public static FieldSelectorDocument toFieldSelectorDocument(final DBObject fields) {
         if (fields == null) {
             return null;
         }

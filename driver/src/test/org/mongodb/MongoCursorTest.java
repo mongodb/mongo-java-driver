@@ -25,7 +25,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.impl.SingleServerMongoClient;
-import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 
 import java.net.UnknownHostException;
@@ -62,10 +61,10 @@ public class MongoCursorTest {
     public void testNormalLoopWithGetMore() {
         MongoCollection<Document> collection = mongoDatabase.getCollection("normalLoopWithGetMore");
         for (int i = 0; i < 10; i++) {
-            collection.insert(new MongoInsert<Document>(new Document("_id", i)));
+            collection.insert(new Document("_id", i));
         }
 
-        MongoCursor<Document> cursor = collection.find(new MongoFind().batchSize(2).order(new SortCriteriaDocument("_id", 1)));
+        MongoCursor<Document> cursor = collection.sort(new SortCriteriaDocument("_id", 1)).batchSize(2).find();
         try {
             int i = 0;
             while (cursor.hasNext()) {
@@ -86,7 +85,7 @@ public class MongoCursorTest {
             collection.insert(new MongoInsert<Document>(new Document("_id", i)));
         }
 
-        MongoCursor<Document> cursor = collection.find(new MongoFind().batchSize(2).order(new SortCriteriaDocument("_id", 1)));
+        MongoCursor<Document> cursor = collection.sort(new SortCriteriaDocument("_id", 1)).batchSize(2).find();
         try {
             for (int i = 0; i < 10; i++) {
                 Document cur = cursor.next();

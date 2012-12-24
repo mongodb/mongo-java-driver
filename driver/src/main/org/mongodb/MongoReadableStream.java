@@ -15,28 +15,26 @@
  *
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-public abstract class MongoUpdateBase extends MongoWrite {
-    protected final MongoQueryFilter filter;
-    private boolean isUpsert = false;
+import java.util.Collection;
 
-    public MongoUpdateBase(final MongoQueryFilter filter) {
-        this.filter = filter;
-    }
+public interface MongoReadableStream<T> extends Iterable<T> {
 
-    public MongoQueryFilter getFilter() {
-        return filter;
-    }
+    MongoReadableStream<T> batchSize(int batchSize);
 
-    public boolean isUpsert() {
-        return isUpsert;
-    }
+    MongoReadableStream<T> readPreference(ReadPreference readPreference);
 
-    public MongoUpdateBase upsert(final boolean isUpsert) {
-        this.isUpsert = isUpsert;
-        return this;
-    }
+    @Override
+    MongoCursor<T> iterator();
 
-    public abstract boolean isMulti();
+    MongoCursor<T> find();
+
+    T findOne();
+
+    long count();
+
+    void forEach(Block<? super T> block);
+
+    <A extends Collection<? super T>> A into(A target);
 }

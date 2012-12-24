@@ -28,4 +28,27 @@ public class MongoFindAndRemove extends MongoFindAndModify {
         return this;
     }
 
+    @Override
+    public MongoFindAndRemove select(final MongoFieldSelector selector) {
+        super.select(selector);
+        return this;
+    }
+
+    @Override
+    public MongoFindAndRemove sortBy(final MongoSortCriteria sortCriteria) {
+        super.sortBy(sortCriteria);
+        return this;
+    }
+
+    @Override
+    public MongoFindAndRemove returnNew(final boolean returnNew) {
+        super.returnNew(returnNew);
+        return this;
+    }
+
+    @Override
+    public MongoFindAndRemove upsert(final boolean upsert) {
+        throw new UnsupportedOperationException("Can't upsert a remove");
+    }
+
 }

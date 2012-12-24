@@ -19,8 +19,6 @@ package org.mongodb;
 
 import org.bson.types.Document;
 import org.junit.Test;
-import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoSave;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -28,25 +26,24 @@ import static org.junit.Assert.assertThat;
 public class MongoSaveTest extends MongoClientTestBase{
     @Test
     public void shouldInsertIfAbsent() {
-        Document document = new Document();
-        collection.save(new MongoSave<Document>(document));
+        collection.save(new Document());
         assertThat("Did not insert the document", collection.count(), is(1L));
     }
 
     @Test
     public void shouldReplaceIfPresent() {
         Document document = new Document();
-        collection.save(new MongoSave<Document>(document));
+        collection.save(document);
 
         document.put("x", 1);
-        collection.save(new MongoSave<Document>(document));
-        assertThat("Did not replace the document", collection.findOne(new MongoFind()), is(document));
+        collection.save(document);
+        assertThat("Did not replace the document", collection.findOne(), is(document));
     }
 
     @Test
     public void shouldUpsertIfAbsent() {
         Document document = new Document("_id", 1);
-        collection.save(new MongoSave<Document>(document));
-        assertThat("Did not upsert the document", collection.findOne(new MongoFind()), is(document));
+        collection.save(document);
+        assertThat("Did not upsert the document", collection.findOne(), is(document));
     }
 }

@@ -19,7 +19,6 @@ package org.mongodb;
 
 import org.bson.types.Document;
 import org.junit.Test;
-import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 
 import static org.junit.Assert.assertEquals;
@@ -30,7 +29,7 @@ public class MongoFindTest extends MongoClientTestBase {
     public void shouldThrowQueryFailureException() {
         collection.insert(new MongoInsert<Document>(new Document("loc", new double[] {0, 0})));
         try {
-            collection.findOne(new MongoFind(new QueryFilterDocument("loc", new Document("$near", new double[] {0, 0}))));
+            collection.filter(new QueryFilterDocument("loc", new Document("$near", new double[] {0, 0}))).findOne();
             fail("Should be a query failure since there is no 2d index");
         } catch (MongoQueryFailureException e) {
             assertEquals(13038, e.getErrorCode());

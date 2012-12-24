@@ -37,14 +37,14 @@ public class MongoUpdate extends MongoUpdateBase {
         return isMulti;
     }
 
-    public MongoUpdate isMulti(final boolean isMulti) {
+    public MongoUpdate multi(final boolean isMulti) {
         this.isMulti = isMulti;
         return this;
     }
 
     @Override
-    public MongoUpdateBase isUpsert(final boolean isUpsert) {
-        super.isUpsert(isUpsert);
+    public MongoUpdate upsert(final boolean isUpsert) {
+        super.upsert(isUpsert);
         return this;
     }
 

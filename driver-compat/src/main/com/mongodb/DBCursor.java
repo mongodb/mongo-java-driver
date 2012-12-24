@@ -16,8 +16,10 @@
 
 package com.mongodb;
 
+import org.mongodb.FieldSelectorDocument;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
+import org.mongodb.QueryFilterDocument;
 import org.mongodb.operation.MongoFind;
 
 import java.io.Closeable;
@@ -26,12 +28,13 @@ import java.util.List;
 
 public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeable {
     private final MongoCollection<DBObject> collection;
-    private final MongoFind find;
     private MongoCursor<DBObject> cursor;
+    private final MongoFind find = new MongoFind();
 
-    public DBCursor(final MongoCollection<DBObject> collection, final MongoFind find) {
+    public DBCursor(final MongoCollection<DBObject> collection, final QueryFilterDocument filter,
+                    final FieldSelectorDocument selector, final ReadPreference readPreference) {
         this.collection = collection;
-        this.find = find;
+        find.where(filter).select(selector).readPreference(readPreference.toNew());
     }
 
     public DBCursor limit(final int limit) {
@@ -58,7 +61,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
     private void getCursor() {
         try {
-            cursor = collection.find(find);
+            cursor = collection.filter(find.getFilter()).select(find.getFields()).sort(find.getOrder())
+                    .skip(find.getSkip()).limit(find.getLimit()).batchSize(find.getBatchSize()).readPreference(find.getReadPreference()).find();
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
