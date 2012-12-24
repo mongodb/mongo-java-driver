@@ -94,12 +94,12 @@ public class SingleServerMongoClientTest {
                 new MongoNamespace(DB_NAME, colName), find, serializer, serializer);
         assertNotNull(queryResult);
         assertEquals(101, queryResult.getResults().size());
-        assertNotEquals(0L, queryResult.getCursorId());
+        assertNotEquals(0L, queryResult.getCursor());
 
         final GetMoreResult<Document> getMoreResult = mongoClient.getOperations().getMore(new MongoNamespace(DB_NAME, colName),
-                new GetMore(queryResult.getCursorId(), 0), new DocumentSerializer(primitiveSerializers));
+                new GetMore(queryResult.getCursor(), 0), new DocumentSerializer(primitiveSerializers));
         assertNotNull(getMoreResult);
         assertEquals(299, getMoreResult.getResults().size());
-        assertEquals(0, getMoreResult.getCursorId());
+        assertEquals(null, getMoreResult.getCursor());
     }
 }

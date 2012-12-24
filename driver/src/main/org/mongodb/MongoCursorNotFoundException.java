@@ -18,18 +18,21 @@
 package org.mongodb;
 
 // TODO: need ServerAddress and cursorId
+
+import org.mongodb.result.ServerCursor;
+
 /**
  * Exception thrown when a getmore is executed but the cursorId is no longer available on the server
  */
 public class MongoCursorNotFoundException extends MongoException {
-    private final long cursorId;
+    private final ServerCursor cursor;
 
-    public MongoCursorNotFoundException(final ServerAddress address, final long cursorId) {
-        super("The cursor with id " + cursorId + " was not found on server " + address);
-        this.cursorId = cursorId;
+    public MongoCursorNotFoundException(ServerCursor cursor) {
+        super("The cursor was not found: " + cursor);
+        this.cursor = cursor;
     }
 
-    public long getCursorId() {
-        return cursorId;
+    public ServerCursor getCursor() {
+        return cursor;
     }
 }

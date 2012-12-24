@@ -20,6 +20,8 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
     apply plugin: 'checkstyle'
+    apply plugin: 'maven'
+
 
     group = 'org.mongodb'
     version = '3.0.0-SNAPSHOT'
@@ -61,7 +63,7 @@ project(':driver') {
     }
 
     jar {
-        baseName = 'driver-dist'
+        baseName = 'mongo-driver'
         dependsOn classes
         from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     }
@@ -80,7 +82,7 @@ project(':driver') {
 
 project(':driver-compat') {
     jar {
-        baseName = 'driver-compat-dist'
+        baseName = 'mongo-driver-compat'
         dependsOn classes
         from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     }

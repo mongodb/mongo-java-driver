@@ -194,7 +194,7 @@ public class SingleChannelMongoClient implements MongoClient {
             final MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find,
                                                                     new PooledByteBufferOutput(bufferPool),
                                                                     withDocumentSerializer(baseSerializer));
-            return new QueryResult<T>(channel.sendQueryMessage(message, serializer));
+            return new QueryResult<T>(channel.sendQueryMessage(message, serializer), channel.getAddress());
         }
 
         @Override
@@ -202,7 +202,7 @@ public class SingleChannelMongoClient implements MongoClient {
                                             final Serializer<T> serializer) {
             final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
                                                                         new PooledByteBufferOutput(bufferPool));
-            return new GetMoreResult<T>(channel.sendGetMoreMessage(message, serializer));
+            return new GetMoreResult<T>(channel.sendGetMoreMessage(message, serializer), channel.getAddress());
         }
 
         @Override

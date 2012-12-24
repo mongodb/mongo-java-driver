@@ -35,6 +35,7 @@ import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.protocol.MongoInsertMessage;
 import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyMessage;
+import org.mongodb.result.ServerCursor;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
@@ -200,7 +201,7 @@ public class MongoChannelTest {
 
         while (replyMessage.getReplyHeader().getCursorId() != 0) {
             final MongoGetMoreMessage getMoreMessage = new MongoGetMoreMessage("MongoConnectionTest.sendMessageTest",
-                    new GetMore(replyMessage.getReplyHeader().getCursorId(), 0), new PooledByteBufferOutput(bufferPool));
+                    new GetMore(new ServerCursor(replyMessage.getReplyHeader().getCursorId(), new ServerAddress()), 0), new PooledByteBufferOutput(bufferPool));
 
             replyMessage = channel.sendGetMoreMessage(getMoreMessage, new DocumentSerializer(primitiveSerializers));
             replyMessage.getReplyHeader().getNumberReturned();

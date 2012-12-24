@@ -34,14 +34,14 @@ public class MongoGetMoreTest extends MongoClientTestBase {
         collection.insert(new MongoInsert<Document>(new Document()));
 
         MongoCursor<Document> cursor = collection.find(new MongoFind().batchSize(2));
-        getClient().getOperations().killCursors(new MongoKillCursor(cursor.getCursorId()));
+        getClient().getOperations().killCursors(new MongoKillCursor(cursor.getServerCursor()));
         cursor.next();
         cursor.next();
         try {
             cursor.next();
             fail("Should throw exception");
         } catch (MongoCursorNotFoundException e) {
-            assertEquals(cursor.getCursorId(), e.getCursorId());
+            assertEquals(cursor.getServerCursor(), e.getCursor());
         }
     }
 }
