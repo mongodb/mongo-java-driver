@@ -16,9 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.result.InsertResult;
-import org.mongodb.result.UpdateResult;
-
 // TODO: add these
 // update
 // group
@@ -33,19 +30,6 @@ import org.mongodb.result.UpdateResult;
  * @param <T> The type that this collection will serialize documents from and to
  */
 public interface MongoCollection<T> extends MongoCollectionBase<T>, MongoStream<T> {
-
-    InsertResult insert(T document);
-
-    InsertResult insert(Iterable<T> document);
-
-    InsertResult insert(final T document, final WriteConcern writeConcern);
-
-    InsertResult insert(final Iterable<T> documents, final WriteConcern writeConcern);
-
-    UpdateResult save(T document);
-
-    UpdateResult save(T document, WriteConcern writeConcern);
-
     CollectionAdmin admin();
 }
 
