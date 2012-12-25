@@ -16,9 +16,14 @@
 
 def configDir = new File(rootDir, 'config')
 
+
+allprojects {
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+}
+
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'idea'
     apply plugin: 'checkstyle'
 
     group = 'org.mongodb'
@@ -28,13 +33,21 @@ subprojects {
 
     checkstyle {
         configFile = new File("$configDir/checkstyle.xml")
+        ignoreFailures = true
     }
 
     repositories {
         mavenCentral()
     }
     dependencies {
-        testCompile group: 'junit', name: 'junit', version: '4.11'
+        testCompile 'junit:junit:4.11'
+    }
+
+    tasks.withType(Compile) {
+        options.encoding = 'ISO-8859-1'
+        options.fork = true
+        options.debug = true
+        options.compilerArgs = ['-Xlint:all']
     }
 
     sourceSets {
@@ -49,9 +62,58 @@ subprojects {
             }
         }
     }
+
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc
+    }
+
+    task testsJar(type: Jar) {
+        classifier = 'tests'
+        from sourceSets.test.output
+    }
+
+    javadoc {
+        options.author = true
+        options.version = true
+        options.links 'http://download.oracle.com/javase/1.5.0/docs/api/'
+        options.tagletPath file("$rootDir/buildSrc/build/classes/main")
+        options.taglets 'DochubTaglet', 'ManualTaglet'
+    }
+
+    artifacts {
+        archives sourcesJar
+        archives javadocJar
+        archives testsJar
+    }
+}
+
+project(':bson') {
+    jar {
+        manifest {
+            attributes(
+                    'Manifest-Version': 1.0,
+                    'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
+                    'Bundle-ManifestVersion': 2,
+                    'Bundle-Name': 'BSON',
+                    'Bundle-SymbolicName': 'org.mongodb.bson',
+                    'Bundle-Version': version,
+                    'Export-Package': "org.bson;version=\"$version\","
+                            + "org.bson.util;version=\"$version\","
+                            + "org.bson.types;version=\"$version\","
+                            + "org.bson.io;version=\"$version\""
+            )
+        }
+    }
 }
 
 project(':driver') {
+
     sourceSets {
         acceptance {
             java {
@@ -62,8 +124,28 @@ project(':driver') {
 
     jar {
         baseName = 'driver-dist'
-        dependsOn classes
-        from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+        from project(':bson').sourceSets.main.output
+        manifest {
+            attributes(
+                    'Manifest-Version': 1.0,
+                    'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
+                    'Bundle-ManifestVersion': 2,
+                    'Bundle-Name': 'MongoDB Java Driver',
+                    'Bundle-SymbolicName': 'org.mongodb.mongo-java-driver',
+                    'Bundle-Version': version,
+                    'Import-Package': 'javax.management, javax.net, javax.net.ssl',
+                    'Export-Package': "com.mongodb;version=\"$version\","
+                            + "com.mongodb.io;version=\"$version\","
+                            + "com.mongodb.util;version=\"$version\","
+                            + "com.mongodb.gridfs;version=\"$version\","
+                            + "org.bson;version=\"$version\","
+                            + "org.bson.util;version=\"$version\","
+                            + "org.bson.util.annotations;version=\"$version\","
+                            + "org.bson.types;version=\"$version\","
+                            + "org.bson.io;version=\"$version\""
+
+            )
+        }
     }
 
     task acceptanceTest(type: Test) {
@@ -71,9 +153,22 @@ project(':driver') {
         classpath = sourceSets.acceptance.runtimeClasspath
     }
 
+
+    sourcesJar {
+        from project(':bson').sourceSets.main.allSource
+    }
+
+    javadoc {
+        source project(':bson').sourceSets.main.allJava
+    }
+
+    testsJar {
+        from sourceSets.acceptance.output
+    }
+
     dependencies {
         compile project(':bson')
-        acceptanceCompile group: 'junit', name: 'junit', version: '4.11'
+        acceptanceCompile 'junit:junit:4.11'
         acceptanceCompile sourceSets.main.runtimeClasspath
     }
 }
@@ -81,12 +176,50 @@ project(':driver') {
 project(':driver-compat') {
     jar {
         baseName = 'driver-compat-dist'
-        dependsOn classes
-        from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+        from project(':bson').sourceSets.main.output
+        from project(':driver').sourceSets.main.output
+        manifest {
+            attributes(
+                    'Manifest-Version': 1.0,
+                    'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
+                    'Bundle-ManifestVersion': 2,
+                    'Bundle-Name': 'MongoDB Java Driver',
+                    'Bundle-SymbolicName': 'org.mongodb.mongo-java-driver',
+                    'Bundle-Version': version,
+                    'Import-Package': 'javax.management, javax.net, javax.net.ssl',
+                    'Export-Package': "com.mongodb;version=\"$version\","
+                            + "com.mongodb.io;version=\"$version\","
+                            + "com.mongodb.util;version=\"$version\","
+                            + "com.mongodb.gridfs;version=\"$version\","
+                            + "org.bson;version=\"$version\","
+                            + "org.bson.util;version=\"$version\","
+                            + "org.bson.util.annotations;version=\"$version\","
+                            + "org.bson.types;version=\"$version\","
+                            + "org.bson.io;version=\"$version\""
+
+            )
+        }
+    }
+
+    sourcesJar {
+        from project(':bson').sourceSets.main.allSource
+        from project(':driver').sourceSets.main.allSource
+    }
+
+    javadoc {
+        source project(':bson').sourceSets.main.allJava
+        source project(':driver').sourceSets.main.allJava
     }
 
     dependencies {
         compile project(':driver')
+    }
+}
+
+project(':morphia') {
+    dependencies {
+        compile 'com.thoughtworks.proxytoys:proxytoys:1.0'
+        compile project(':driver-compat')
     }
 }
 

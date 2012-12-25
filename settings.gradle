@@ -1,1 +1,1 @@
-include 'bson', 'driver', 'driver-compat'
+include 'bson', 'driver', 'driver-compat', 'morphia'
