@@ -66,7 +66,7 @@ public class DBCollection {
 
     public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern) {
         try {
-            final InsertResult result = collection.insert(documents, writeConcern.toNew());
+            final InsertResult result = collection.writeConcern(writeConcern.toNew()).insert(documents);
             return new WriteResult(result, writeConcern);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
@@ -80,7 +80,7 @@ public class DBCollection {
 
     public WriteResult save(final DBObject obj, final WriteConcern wc) {
         try {
-            UpdateResult result = collection.save(obj, wc.toNew());
+            UpdateResult result = collection.writeConcern(wc.toNew()).save(obj);
             return new WriteResult(result, wc);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);

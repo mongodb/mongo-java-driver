@@ -18,11 +18,18 @@
 package org.mongodb;
 
 import org.mongodb.operation.MongoUpdateOperations;
+import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 
 public interface MongoWritableStream<T> {
     MongoWritableStream<T> writeConcern(WriteConcern writeConcern);
+
+    InsertResult insert(T document);
+
+    InsertResult insert(Iterable<T> document);
+
+    UpdateResult save(T document);
 
     MongoWritableStream<T> upsert();
 
