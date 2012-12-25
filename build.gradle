@@ -16,7 +16,6 @@
 
 def configDir = new File(rootDir, 'config')
 
-
 allprojects {
     apply plugin: 'idea'
     apply plugin: 'eclipse'
@@ -25,6 +24,8 @@ allprojects {
 subprojects {
     apply plugin: 'java'
     apply plugin: 'checkstyle'
+    apply plugin: 'pmd'
+    apply plugin: 'findbugs'
 
     group = 'org.mongodb'
     version = '3.0.0-SNAPSHOT'
@@ -33,6 +34,14 @@ subprojects {
 
     checkstyle {
         configFile = new File("$configDir/checkstyle.xml")
+        ignoreFailures = true
+    }
+
+    findbugs {
+        ignoreFailures = true
+    }
+
+    pmd {
         ignoreFailures = true
     }
 
