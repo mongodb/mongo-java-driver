@@ -113,27 +113,21 @@ public class DBCollection {
         }
 
         MongoStream<DBObject> stream = collection.filter(DBObjects.toQueryFilterDocument(q));
-        final UpdateResult result;
+        if (multi) {
+            stream = stream.noLimit();
+        }
+        MongoWritableStream<DBObject> writableStream = stream.writeConcern(concern.toNew());
+        if (upsert) {
+            writableStream = writableStream.upsert();
+        }
 
         try {
+            final UpdateResult result;
             if (!o.keySet().isEmpty() && o.keySet().iterator().next().startsWith("$")) {
-                if (multi) {
-                    stream = stream.noLimit();
-                }
-                if (upsert) {
-                    result = stream.upsert().update(DBObjects.toUpdateOperationsDocument(o));
-                }
-                else {
-                    result = stream.update(DBObjects.toUpdateOperationsDocument(o));
-                }
+                result = writableStream.update(DBObjects.toUpdateOperationsDocument(o));
             }
             else {
-                if (upsert) {
-                    result = stream.upsert().replace(o);
-                }
-                else {
-                    result = stream.replace(o);
-                }
+                result = writableStream.replace(o);
             }
             return new WriteResult(result, concern);
         } catch (org.mongodb.MongoException e) {
@@ -535,26 +529,28 @@ public class DBCollection {
      */
     public DBObject findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update,
                                   boolean returnNew, boolean upsert) {
-        MongoStream<DBObject> stream = collection;
-        stream = stream.filter(DBObjects.toQueryFilterDocument(query));
-        stream = stream.select(DBObjects.toFieldSelectorDocument(fields));
-        stream = stream.sort(DBObjects.toSortCriteriaDocument(sort));
+        MongoWritableStream<DBObject> stream = collection.filter(DBObjects.toQueryFilterDocument(query))
+                .select(DBObjects.toFieldSelectorDocument(fields))
+                .sort(DBObjects.toSortCriteriaDocument(sort))
+                .writeConcern(getWriteConcern().toNew());
         if (remove) {
             return stream.findAndRemove();
         }
         else {
-            MongoWritableStream<DBObject> writableStream = stream;
+            if (update == null) {
+                throw new IllegalArgumentException("update document can not be null");
+            }
             if (returnNew) {
-                writableStream = writableStream.returnNew();
+                stream = stream.returnNew();
             }
             if (upsert) {
-                writableStream = stream.upsert();
+                stream = stream.upsert();
             }
-            if (update != null && !update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-                return writableStream.findAndUpdate(DBObjects.toUpdateOperationsDocument(update));
+            if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
+                return stream.findAndUpdate(DBObjects.toUpdateOperationsDocument(update));
             }
             else {
-                return writableStream.findAndReplace(update);
+                return stream.findAndReplace(update);
             }
         }
     }
