@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -461,6 +462,15 @@ public class DBCursorTest extends TestCase {
         	assertTrue( val > curmax);
         	curmax = val;
         }
+    }
+
+    @Test(expectedExceptions = NoSuchElementException.class)
+    public void testShouldThrowNoSuchElementException() {
+        DBCollection c = _db.getCollection("emptyCollection");
+
+        DBCursor cursor = c.find();
+
+        cursor.next();
     }
 
     @Test
