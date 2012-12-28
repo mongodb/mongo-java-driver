@@ -138,7 +138,7 @@ public class MongoChannelTest {
 
         @Override
         public Class<Concrete> getSerializationClass() {
-            throw new UnsupportedOperationException();
+            return Concrete.class;
         }
     }
 

@@ -27,6 +27,8 @@ public abstract class MongoFindAndModify extends MongoQuery {
     private boolean returnNew;
     private boolean upsert;
 
+    public MongoFindAndModify() {}
+
     public MongoFindAndModify where(final MongoQueryFilter filter) {
         this.filter = filter;
         return this;

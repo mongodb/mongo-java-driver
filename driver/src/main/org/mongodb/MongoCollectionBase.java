@@ -20,7 +20,7 @@ package org.mongodb;
 import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.PrimitiveSerializers;
 
-// TODO: Not such a good name
+// TODO: Not such a good name, and may be unnecessary without MongoAsyncCollection
 public interface MongoCollectionBase<T> {
     /**
      * Gets the database in which this collection resides.

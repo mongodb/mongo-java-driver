@@ -34,6 +34,14 @@ public class MongoFind extends MongoQuery {
         this.filter = filter;
     }
 
+    public MongoFind(final MongoFind from) {
+        super(from);
+        filter = from.filter;
+        fields = from.fields;
+        sortCriteria = from.sortCriteria;
+        snapshotMode = from.snapshotMode;
+    }
+
     public MongoFind filter(final MongoQueryFilter filter) {
         this.filter = filter;
         return this;
