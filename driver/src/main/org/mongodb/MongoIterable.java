@@ -1,10 +1,10 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -15,10 +15,17 @@
  *
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-import org.mongodb.ConvertibleToDocument;
+import java.util.Collection;
 
-// TODO: different package, different name
-public interface MongoUpdateOperations extends ConvertibleToDocument {
+public interface MongoIterable<T> extends Iterable<T> {
+    @Override
+    MongoCursor<T> iterator();
+
+    void forEach(Block<? super T> block);
+
+    <A extends Collection<? super T>> A into(A target);
+
+    <U> MongoIterable<U> map(Function<T, U> mapper);
 }

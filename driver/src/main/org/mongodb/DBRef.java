@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+// TODO: change name to DocumentReference
+// TODO: support database as well as collection
 public class DBRef {
     private final Object id;
     private final String ref;

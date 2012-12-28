@@ -25,6 +25,16 @@ public abstract class MongoQuery extends MongoOperation {
     private int skip;
     private int limit;
 
+    public MongoQuery() {
+    }
+
+    public MongoQuery(final MongoQuery from) {
+        readPreference = from.readPreference;
+        batchSize = from.batchSize;
+        skip = from.skip;
+        limit = from.limit;
+    }
+
     public MongoQuery readPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
         return this;

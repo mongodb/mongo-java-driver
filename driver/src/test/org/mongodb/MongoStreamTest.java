@@ -17,8 +17,17 @@
 
 package org.mongodb;
 
+import org.bson.BSONReader;
+import org.bson.BSONWriter;
 import org.bson.types.Document;
+import org.bson.types.ObjectId;
 import org.junit.Test;
+import org.mongodb.serialization.BsonSerializationOptions;
+import org.mongodb.serialization.CollectibleSerializer;
+import org.mongodb.serialization.PrimitiveSerializers;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MongoStreamTest extends MongoClientTestBase {
 
@@ -30,6 +39,15 @@ public class MongoStreamTest extends MongoClientTestBase {
 
         for (Document cur : collection) {
             System.out.println(cur);
+        }
+
+        MongoCursor<Document> cursor = collection.find();
+        try {
+            while (cursor.hasNext()) {
+                System.out.println(cursor.next());
+            }
+        } finally {
+            cursor.close();
         }
 
         for (Document cur : collection.filter(new QueryFilterDocument("_id", 1))) {
@@ -66,7 +84,18 @@ public class MongoStreamTest extends MongoClientTestBase {
                 System.out.println(document);
             }
         });
+
+        for (Integer id : collection.map(document -> (Integer) document.get("_id"))) {
+            System.out.println(id);
+        }
+
+        collection.map(document -> (Integer) document.get("_id")).forEach(System.out::println);
+
+        List<Integer> idList = collection.map(document -> (Integer) document.get("_id")).into(new ArrayList<Integer>());
+
+        System.out.println(idList);
     }
+
 
     @Test
     public void testUpdate() {
@@ -84,5 +113,98 @@ public class MongoStreamTest extends MongoClientTestBase {
         Document doc = collection.filter(new QueryFilterDocument("_id", 1)).
                 findAndUpdate(new UpdateOperationsDocument("$set", new Document("x", 1)));
         System.out.println(doc);
+    }
+
+    @Test
+    public void testTypeCollection() {
+        MongoCollection<Concrete> concreteCollection = getDatabase().getTypedCollection(collection.getName(),
+                                                                                        PrimitiveSerializers.createDefault(),
+                                                                                        new ConcreteSerializer());
+        concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
+        concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
+
+        System.out.println(
+                concreteCollection.filter(new QueryFilterDocument("i", 1))
+                        .map((final Concrete concrete) -> concrete.id).into(new ArrayList<ObjectId>()));
+    }
+}
+
+class Concrete {
+    ObjectId id;
+    String str;
+    int i;
+    long l;
+    double d;
+    long date;
+
+    public Concrete(final String str, final int i, final long l, final double d, final long date) {
+        this.str = str;
+        this.i = i;
+        this.l = l;
+        this.d = d;
+        this.date = date;
+    }
+
+    public Concrete() {
+
+    }
+
+    @Override
+    public String toString() {
+        return "Concrete{" +
+                "id=" + id +
+                ", str='" + str + '\'' +
+                ", i=" + i +
+                ", l=" + l +
+                ", d=" + d +
+                ", date=" + date +
+                '}';
+    }
+}
+
+class ConcreteSerializer implements CollectibleSerializer<Concrete> {
+
+    @Override
+    public void serialize(final BSONWriter bsonWriter, final Concrete c, final BsonSerializationOptions options) {
+        bsonWriter.writeStartDocument();
+        {
+            if (c.id == null) {
+                c.id = new ObjectId();
+            }
+            bsonWriter.writeObjectId("_id", c.id);
+            bsonWriter.writeString("str", c.str);
+            bsonWriter.writeInt32("i", c.i);
+            bsonWriter.writeInt64("l", c.l);
+            bsonWriter.writeDouble("d", c.d);
+            bsonWriter.writeDateTime("date", c.date);
+        }
+        bsonWriter.writeEndDocument();
+    }
+
+    @Override
+    public Concrete deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+        final Concrete c = new Concrete();
+        reader.readStartDocument();
+        {
+            c.id = reader.readObjectId("_id");
+            c.str = reader.readString("str");
+            c.i = reader.readInt32("i");
+            c.l = reader.readInt64("l");
+            c.d = reader.readDouble("d");
+            c.date = reader.readDateTime("date");
+
+        }
+        reader.readEndDocument();
+        return c;
+    }
+
+    @Override
+    public Class<Concrete> getSerializationClass() {
+        return Concrete.class;
+    }
+
+    @Override
+    public Object getId(final Concrete document) {
+        return document.id;
     }
 }
