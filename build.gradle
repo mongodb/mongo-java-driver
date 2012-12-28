@@ -26,6 +26,7 @@ subprojects {
     apply plugin: 'checkstyle'
     apply plugin: 'pmd'
     apply plugin: 'findbugs'
+    apply plugin: 'maven'
 
     group = 'org.mongodb'
     version = '3.0.0-SNAPSHOT'
