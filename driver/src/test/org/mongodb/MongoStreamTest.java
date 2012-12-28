@@ -41,13 +41,10 @@ public class MongoStreamTest extends MongoClientTestBase {
             System.out.println(cur);
         }
 
-        MongoCursor<Document> cursor = collection.find();
-        try {
+        try (MongoCursor<Document> cursor = collection.find()) {
             while (cursor.hasNext()) {
                 System.out.println(cursor.next());
             }
-        } finally {
-            cursor.close();
         }
 
         for (Document cur : collection.filter(new QueryFilterDocument("_id", 1))) {
@@ -103,11 +100,10 @@ public class MongoStreamTest extends MongoClientTestBase {
 
         collection.update(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
-        collection.filter(
-                new QueryFilterDocument("_id", 1)).update(new UpdateOperationsDocument("$set", new Document("x", 1)));
+        collection.filter(new QueryFilterDocument("_id", 1)).update(
+                new UpdateOperationsDocument("$set", new Document("x", 1)));
 
-        collection.filter(
-                new QueryFilterDocument("_id", 2)).upsert().update(
+        collection.filter(new QueryFilterDocument("_id", 2)).upsert().update(
                 new UpdateOperationsDocument("$set", new Document("x", 1)));
 
         Document doc = collection.filter(new QueryFilterDocument("_id", 1)).
@@ -123,9 +119,8 @@ public class MongoStreamTest extends MongoClientTestBase {
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
 
-        System.out.println(
-                concreteCollection.filter(new QueryFilterDocument("i", 1))
-                        .map((final Concrete concrete) -> concrete.id).into(new ArrayList<ObjectId>()));
+        System.out.println(concreteCollection.filter(new QueryFilterDocument("i", 1)).map(concrete -> concrete.id).map(
+                ObjectId::toString).into(new ArrayList<String>()));
     }
 }
 
