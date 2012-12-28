@@ -430,7 +430,7 @@ limitations under the License.
 
         <clirr failOnBinError="no" failOnSrcError="no">
             <origfiles dir="." includes="${jar.baseline}"/>
-            <newfiles dir="." includes="mongo.jar"/>
+            <newfiles dir="${build.dir}" includes="${ant.project.name}-${build.conf.lib.version}.jar"/>
             <formatter type="plain" outfile="${build.dir}/clirr.txt"/>
         </clirr>
     </target>
