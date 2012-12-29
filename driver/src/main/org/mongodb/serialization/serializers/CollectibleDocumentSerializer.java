@@ -57,7 +57,11 @@ public class CollectibleDocumentSerializer extends DocumentSerializer implements
     }
 
     @Override
-    protected void validateField(final String key) {
+    protected void validateFieldName(final String key) {
+        if (key == null) {
+            throw new IllegalArgumentException("key can not be null");
+        }
+
         if (key.contains(".")) {
             throw new IllegalArgumentException(
                     "fields stored in the db can't have . in them. (Bad Key: '" + key + "')");
