@@ -35,6 +35,20 @@ public class DBObjects {
     private DBObjects() {
     }
 
+    public static Document toDocument(final DBObject obj) {
+        Document res = new Document();
+        fill(obj, res);
+        return res;
+    }
+
+    public static Document[] toDocumentArray(final DBObject[] dbObjects) {
+        Document[] res = new Document[dbObjects.length];
+        for (int i = 0; i < dbObjects.length; i++) {
+            res[i] = toDocument(dbObjects[i]);
+        }
+        return res;
+    }
+
     public static QueryFilterDocument toQueryFilterDocument(final DBObject obj) {
         QueryFilterDocument doc = new QueryFilterDocument();
         fill(obj, doc);
@@ -70,7 +84,6 @@ public class DBObjects {
         return doc;
     }
 
-
     public static MongoCommand toCommandDocument(final DBObject commandObject) {
         CommandDocument doc = new CommandDocument();
         fill(commandObject, doc);
@@ -84,7 +97,7 @@ public class DBObjects {
         return res;
     }
 
-    public static DBObject toDBObject(final Document document) {
+    public static BasicDBObject toDBObject(final Document document) {
         BasicDBObject res = new BasicDBObject();
         fill(document, res);
         return res;
