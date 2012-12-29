@@ -197,6 +197,10 @@ public class DBCollection {
         return new WriteResult(result, writeConcernToUse);
     }
 
+    public DBCursor find(final DBObject filter) {
+        return find(filter, null);
+    }
+
     public DBCursor find(final DBObject filter, final DBObject fields) {
         return new DBCursor(collection, new MongoFind().
                 where(DBObjects.toQueryFilterDocument(filter)).
