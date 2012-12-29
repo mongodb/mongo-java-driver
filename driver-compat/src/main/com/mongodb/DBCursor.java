@@ -107,7 +107,10 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
     @Override
     public void close() {
-        throw new UnsupportedOperationException();
+        if (cursor != null) {
+            cursor.close();
+            cursor = null;
+        }
     }
 
     @Override
