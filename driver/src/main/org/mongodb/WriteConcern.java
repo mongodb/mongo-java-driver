@@ -38,6 +38,19 @@ public class WriteConcern implements Serializable {
 
     private static final long serialVersionUID = 1884671104750417011L;
 
+    // map of the constants from above for use by valueOf
+    private static final Map<String, WriteConcern> _namedConcerns;
+
+    private final Object w;
+
+    private final int wtimeout;
+
+    private final boolean fsync;
+
+    private final boolean j;
+
+    private final boolean continueOnErrorForInsert;
+
     /**
      * No exceptions are raised, even for network issues.
      */
@@ -46,15 +59,12 @@ public class WriteConcern implements Serializable {
     /**
      * Write operations that use this write concern will wait for acknowledgement from the primary server before
      * returning. Exceptions are raised for network issues, and server errors.
-     *
-     * @since 2.10.0
      */
     public static final WriteConcern ACKNOWLEDGED = new WriteConcern(1);
+
     /**
      * Write operations that use this write concern will return as soon as the message is written to the socket.
      * Exceptions are raised for network issues, but not server errors.
-     *
-     * @since 2.10.0
      */
     public static final WriteConcern UNACKNOWLEDGED = new WriteConcern(0);
 
@@ -77,75 +87,14 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(2);
 
     /**
-     * No exceptions are raised, even for network issues.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.ERRORS_IGNORED}, and may be deprecated in a future
-     * release.
+     * Gets the WriteConcern constants by name (matching is done case insensitively).
      *
-     * @see WriteConcern#ERRORS_IGNORED
+     * @param name
+     * @return
      */
-    public static final WriteConcern NONE = new WriteConcern(-1);
-
-    /**
-     * Write operations that use this write concern will return as soon as the message is written to the socket.
-     * Exceptions are raised for network issues, but not server errors.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.UNACKNOWLEDGED}, and may be deprecated in a future
-     * release.
-     *
-     * @see WriteConcern#UNACKNOWLEDGED
-     */
-    public static final WriteConcern NORMAL = new WriteConcern(0);
-
-    /**
-     * Write operations that use this write concern will wait for acknowledgement from the primary server before
-     * returning. Exceptions are raised for network issues, and server errors.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.ACKNOWLEDGED}, and may be deprecated in a future release.
-     *
-     * @see WriteConcern#ACKNOWLEDGED
-     */
-    public static final WriteConcern SAFE = new WriteConcern(1);
-
-    /**
-     * Exceptions are raised for network issues, and server errors; waits on a majority of servers for the write
-     * operation.
-     */
-    public static final WriteConcern MAJORITY = new Majority();
-
-    /**
-     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush
-     * the data to disk.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.FSYNCED}, and may be deprecated in a future release.
-     *
-     * @see WriteConcern#FSYNCED
-     */
-    public static final WriteConcern FSYNC_SAFE = new WriteConcern(true);
-
-    /**
-     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to group
-     * commit to the journal file on disk.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.JOURNALED}, and may be deprecated in a future release.
-     *
-     * @see WriteConcern#JOURNALED
-     */
-    public static final WriteConcern JOURNAL_SAFE = new WriteConcern(1, 0, false, true);
-
-    /**
-     * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write
-     * operation.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.REPLICA_ACKNOWLEDGED}, and may be deprecated in a future
-     * release.
-     *
-     * @see WriteConcern#REPLICA_ACKNOWLEDGED
-     */
-    public static final WriteConcern REPLICAS_SAFE = new WriteConcern(2);
-
-    // map of the constants from above for use by fromString
-    private static Map<String, WriteConcern> _namedConcerns = null;
+    public static WriteConcern valueOf(final String name) {
+        return _namedConcerns.get(name.toLowerCase());
+    }
 
     /**
      * Default constructor keeping all options as default.  Be careful using this constructor, as it's equivalent to
@@ -236,14 +185,14 @@ public class WriteConcern implements Serializable {
      * @param wtimeout              timeout for write operation
      * @param fsync                 whether or not to fsync
      * @param j                     whether writes should wait for a journaling group commit
-     * @param continueOnInsertError if batch inserts should continue after the first error
+     * @param continueOnErrorForInsert if batch inserts should continue after the first error
      */
-    public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnInsertError) {
-        _w = w;
-        _wtimeout = wtimeout;
-        _fsync = fsync;
-        _j = j;
-        _continueOnErrorForInsert = continueOnInsertError;
+    public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnErrorForInsert) {
+        this.w = w;
+        this.wtimeout = wtimeout;
+        this.fsync = fsync;
+        this.j = j;
+        this.continueOnErrorForInsert = continueOnErrorForInsert;
     }
 
     /**
@@ -273,19 +222,18 @@ public class WriteConcern implements Serializable {
      * @param wtimeout              timeout for write operation
      * @param fsync                 whether or not to fsync
      * @param j                     whether writes should wait for a journaling group commit
-     * @param continueOnInsertError if batch inserts should continue after the first error
-     * @return
+     * @param continueOnErrorForInsert if batch inserts should continue after the first error
      */
-    public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnInsertError) {
+    public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnErrorForInsert) {
         if (w == null) {
             throw new IllegalArgumentException("w can not be null");
         }
 
-        _w = w;
-        _wtimeout = wtimeout;
-        _fsync = fsync;
-        _j = j;
-        _continueOnErrorForInsert = continueOnInsertError;
+        this.w = w;
+        this.wtimeout = wtimeout;
+        this.fsync = fsync;
+        this.j = j;
+        this.continueOnErrorForInsert = continueOnErrorForInsert;
     }
 
     /**
@@ -294,37 +242,25 @@ public class WriteConcern implements Serializable {
      * @return getlasterror command, even if <code>w <= 0</code>
      */
     public CommandDocument getCommand() {
-        final CommandDocument _command = new CommandDocument("getlasterror", 1);
+        final CommandDocument command = new CommandDocument("getlasterror", 1);
 
-        if (_w instanceof Integer && ((Integer) _w > 1) || (_w instanceof String)) {
-            _command.put("w", _w);
+        if (w instanceof Integer && ((Integer) w > 1) || (w instanceof String)) {
+            command.put("w", w);
         }
 
-        if (_wtimeout > 0) {
-            _command.put("wtimeout", _wtimeout);
+        if (wtimeout > 0) {
+            command.put("wtimeout", wtimeout);
         }
 
-        if (_fsync) {
-            _command.put("fsync", true);
+        if (fsync) {
+            command.put("fsync", true);
         }
 
-        if (_j) {
-            _command.put("j", true);
+        if (j) {
+            command.put("j", true);
         }
 
-        return _command;
-    }
-
-    /**
-     * Sets the w value (the write strategy)
-     *
-     * @param w
-     */
-    public void setWObject(final Object w) {
-        if (!(w instanceof Integer) && !(w instanceof String)) {
-            throw new IllegalArgumentException("The w parameter must be an int or a String");
-        }
-        this._w = w;
+        return command;
     }
 
     /**
@@ -333,7 +269,7 @@ public class WriteConcern implements Serializable {
      * @return
      */
     public Object getWObject() {
-        return _w;
+        return w;
     }
 
     /**
@@ -342,7 +278,7 @@ public class WriteConcern implements Serializable {
      * @return
      */
     public int getW() {
-        return (Integer) _w;
+        return (Integer) w;
     }
 
     /**
@@ -351,7 +287,7 @@ public class WriteConcern implements Serializable {
      * @return w as a string
      */
     public String getWString() {
-        return _w.toString();
+        return (String) w;
     }
 
     /**
@@ -360,7 +296,7 @@ public class WriteConcern implements Serializable {
      * @return
      */
     public int getWtimeout() {
-        return _wtimeout;
+        return wtimeout;
     }
 
     /**
@@ -369,16 +305,85 @@ public class WriteConcern implements Serializable {
      * @return
      */
     public boolean getFsync() {
-        return _fsync;
+        return fsync;
     }
 
     /**
-     * Gets the fsync flag (fsync to disk on the server)
+     * Gets the j parameter (journal syncing)
      *
      * @return
      */
-    public boolean fsync() {
-        return _fsync;
+    public boolean getJ() {
+        return j;
+    }
+
+    /**
+     * Gets the "continue inserts on error" mode
+     *
+     * @return
+     */
+    public boolean getContinueOnErrorForInsert() {
+        return continueOnErrorForInsert;
+    }
+
+    /**
+     *
+     * @param w
+     * @return
+     */
+    public WriteConcern withW(int w) {
+        return new WriteConcern(w, getWtimeout(), getFsync(), getJ(), getContinueOnErrorForInsert());
+    }
+
+    /**
+     *
+     * @param w
+     * @return
+     */
+    public WriteConcern withW(String w) {
+        return new WriteConcern(w, getWtimeout(), getFsync(), getJ(), getContinueOnErrorForInsert());
+    }
+
+    /**
+     *
+     * @param fsync
+     * @return
+     */
+    public WriteConcern withFsync(boolean fsync) {
+        if (getWObject() instanceof Integer) {
+            return new WriteConcern(getW(), getWtimeout(), fsync, getJ(), getContinueOnErrorForInsert());
+        }
+        else {
+            return new WriteConcern(getWString(), getWtimeout(), fsync, getJ(), getContinueOnErrorForInsert());
+        }
+    }
+
+    /**
+     *
+     * @param j
+     * @return
+     */
+    public WriteConcern withJ(boolean j) {
+        if (getWObject() instanceof Integer) {
+            return new WriteConcern(getW(), getWtimeout(), getFsync(), j, getContinueOnErrorForInsert());
+        }
+        else {
+            return new WriteConcern(getWString(), getWtimeout(), getFsync(), j, getContinueOnErrorForInsert());
+        }
+    }
+
+    /**
+     *
+     * @param continueOnErrorForInsert
+     * @return
+     */
+    public WriteConcern withContinueOnErrorForInsert(boolean continueOnErrorForInsert) {
+        if (getWObject() instanceof Integer) {
+            return new WriteConcern(getW(), getWtimeout(), getFsync(), getJ(), continueOnErrorForInsert);
+        }
+        else {
+            return new WriteConcern(getWString(), getWtimeout(), getFsync(), getJ(), continueOnErrorForInsert);
+        }
     }
 
     /**
@@ -387,10 +392,10 @@ public class WriteConcern implements Serializable {
      * @return
      */
     public boolean raiseNetworkErrors() {
-        if (_w instanceof Integer) {
-            return (Integer) _w >= 0;
+        if (w instanceof Integer) {
+            return (Integer) w >= 0;
         }
-        return _w != null;
+        return w != null;
     }
 
     /**
@@ -399,44 +404,22 @@ public class WriteConcern implements Serializable {
      * @return
      */
     public boolean callGetLastError() {
-        if (_w instanceof Integer) {
-            return (Integer) _w > 0;
+        if (w instanceof Integer) {
+            return (Integer) w > 0;
         }
-        return _w != null;
+        return w != null;
     }
 
-    /**
-     * Gets the WriteConcern constants by name: NONE, NORMAL, SAFE, FSYNC_SAFE, REPLICA_SAFE. (matching is done case
-     * insensitively)
-     *
-     * @param name
-     * @return
-     */
-    public static WriteConcern valueOf(final String name) {
-        if (_namedConcerns == null) {
-            final HashMap<String, WriteConcern> newMap = new HashMap<String, WriteConcern>(8, 1);
-            for (final Field f : WriteConcern.class.getFields()) {
-                if (Modifier.isStatic(f.getModifiers()) && f.getType().equals(WriteConcern.class)) {
-                    try {
-                        final String key = f.getName().toLowerCase();
-                        newMap.put(key, (WriteConcern) f.get(null));
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-
-            // Thought about doing a synchronize but this seems just as safe and
-            // I don't care about race conditions.
-            _namedConcerns = newMap;
-        }
-
-        return _namedConcerns.get(name.toLowerCase());
-    }
 
     @Override
     public String toString() {
-        return "WriteConcern " + getCommand() + " / (Continue Inserting on Errors? " + getContinueOnErrorForInsert() + ")";
+        return "WriteConcern{" +
+                "w=" + w +
+                ", wtimeout=" + wtimeout +
+                ", fsync=" + fsync +
+                ", j=" + j +
+                ", continueOnErrorForInsert=" + continueOnErrorForInsert +
+                '}';
     }
 
     @Override
@@ -450,19 +433,19 @@ public class WriteConcern implements Serializable {
 
         final WriteConcern that = (WriteConcern) o;
 
-        if (_continueOnErrorForInsert != that._continueOnErrorForInsert) {
+        if (continueOnErrorForInsert != that.continueOnErrorForInsert) {
             return false;
         }
-        if (_fsync != that._fsync) {
+        if (fsync != that.fsync) {
             return false;
         }
-        if (_j != that._j) {
+        if (j != that.j) {
             return false;
         }
-        if (_wtimeout != that._wtimeout) {
+        if (wtimeout != that.wtimeout) {
             return false;
         }
-        if (!_w.equals(that._w)) {
+        if (!w.equals(that.w)) {
             return false;
         }
 
@@ -471,85 +454,25 @@ public class WriteConcern implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = _w.hashCode();
-        result = 31 * result + _wtimeout;
-        result = 31 * result + (_fsync ? 1 : 0);
-        result = 31 * result + (_j ? 1 : 0);
-        result = 31 * result + (_continueOnErrorForInsert ? 1 : 0);
+        int result = w.hashCode();
+        result = 31 * result + wtimeout;
+        result = 31 * result + (fsync ? 1 : 0);
+        result = 31 * result + (j ? 1 : 0);
+        result = 31 * result + (continueOnErrorForInsert ? 1 : 0);
         return result;
     }
 
-    /**
-     * Gets the j parameter (journal syncing)
-     *
-     * @return
-     */
-    public boolean getJ() {
-        return _j;
-    }
-
-    /**
-     * Toggles the "continue inserts on error" mode. This only applies to server side errors. If there is a document
-     * which does not validate in the client, an exception will still be thrown in the client. This will return a *NEW
-     * INSTANCE* of WriteConcern with your preferred continueOnInsert value
-     *
-     * @param continueOnErrorForInsert
-     */
-    public WriteConcern continueOnErrorForInsert(final boolean continueOnErrorForInsert) {
-        if (_w instanceof Integer) {
-            return new WriteConcern((Integer) _w, _wtimeout, _fsync, _j, continueOnErrorForInsert);
+    static {
+        _namedConcerns = new HashMap<String, WriteConcern>();
+        for (Field f : WriteConcern.class.getFields()) {
+            if (Modifier.isStatic(f.getModifiers()) && f.getType().equals(WriteConcern.class)) {
+                String key = f.getName().toLowerCase();
+                try {
+                    _namedConcerns.put(key, (WriteConcern) f.get(null));
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
-        else if (_w instanceof String) {
-            return new WriteConcern((String) _w, _wtimeout, _fsync, _j, continueOnErrorForInsert);
-        }
-        else {
-            throw new IllegalStateException("The w parameter must be an int or a String");
-        }
-    }
-
-    /**
-     * Gets the "continue inserts on error" mode
-     *
-     * @return
-     */
-    public boolean getContinueOnErrorForInsert() {
-        return _continueOnErrorForInsert;
-    }
-
-    /**
-     * Create a Majority Write Concern that requires a majority of servers to acknowledge the write.
-     *
-     * @param wtimeout timeout for write operation
-     * @param fsync    whether or not to fsync
-     * @param j        whether writes should wait for a journaling group commit
-     */
-    public static Majority majorityWriteConcern(final int wtimeout, final boolean fsync, final boolean j) {
-        return new Majority(wtimeout, fsync, j);
-    }
-
-
-    private Object _w = 0;
-    private int _wtimeout = 0;
-    private boolean _fsync = false;
-    private boolean _j = false;
-    private boolean _continueOnErrorForInsert = false;
-
-    public static class Majority extends WriteConcern {
-
-        private static final long serialVersionUID = -4128295115883875212L;
-
-        public Majority() {
-            super("majority", 0, false, false);
-        }
-
-        public Majority(final int wtimeout, final boolean fsync, final boolean j) {
-            super("majority", wtimeout, fsync, j);
-        }
-
-        @Override
-        public String toString() {
-            return "[Majority] WriteConcern " + getCommand();
-        }
-
     }
 }

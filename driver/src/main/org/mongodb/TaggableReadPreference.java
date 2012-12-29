@@ -27,9 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Abstract base class for all preference which can be combined with tags
- *
- * @author breinero
+ * Abstract class for all preference which can be combined with tags
  */
 public abstract class TaggableReadPreference extends ReadPreference {
     private static final List<Document> EMPTY = new ArrayList<Document>();

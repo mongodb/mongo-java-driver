@@ -17,25 +17,71 @@
 
 package com.mongodb;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
-// TO DO: fill out
 public class ServerAddress {
-    public ServerAddress(final org.mongodb.ServerAddress address) {
+    private final org.mongodb.ServerAddress proxied;
 
+    public ServerAddress() throws UnknownHostException {
+        proxied = new org.mongodb.ServerAddress();
     }
 
-    public ServerAddress() {
+    public ServerAddress(final String host) throws UnknownHostException {
+        proxied = new org.mongodb.ServerAddress(host);
+    }
 
+    public ServerAddress(final String host, final int port) throws UnknownHostException {
+        proxied = new org.mongodb.ServerAddress(host, port);
+    }
+
+    public ServerAddress(final InetAddress addr) {
+        proxied = new org.mongodb.ServerAddress(addr);
+    }
+
+    public ServerAddress(final InetAddress addr, final int port) {
+        proxied = new org.mongodb.ServerAddress(addr, port);
+    }
+
+    public ServerAddress(final InetSocketAddress addr) {
+        proxied = new org.mongodb.ServerAddress(addr);
+    }
+
+    public ServerAddress(final org.mongodb.ServerAddress address) {
+        proxied = address;
+    }
+
+    /**
+     * Gets the hostname
+     * @return hostname
+     */
+    public String getHost(){
+        return proxied.getHost();
+    }
+
+    /**
+     * Gets the port number
+     * @return port
+     */
+    public int getPort(){
+        return proxied.getPort();
+    }
+
+    /**
+     * Gets the underlying socket address
+     * @return socket address
+     */
+    public InetSocketAddress getSocketAddress(){
+        return proxied.getSocketAddress();
+    }
+
+    @Override
+    public String toString(){
+        return proxied.toString();
     }
 
     org.mongodb.ServerAddress toNew() {
-        try {
-            return new org.mongodb.ServerAddress();
-        } catch (UnknownHostException e) {
-            // ignore
-            // TODO: figure out what to throw here
-            throw new RuntimeException("this can't happen");
-        }
+        return proxied;
     }
 }

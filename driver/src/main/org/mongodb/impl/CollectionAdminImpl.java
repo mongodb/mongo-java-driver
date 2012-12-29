@@ -70,7 +70,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
         indexDetails.append(NAMESPACE_KEY_NAME, collectionNamespace.getFullName());
 
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
-        insertIndexOperation.writeConcern(WriteConcern.SAFE);
+        insertIndexOperation.writeConcern(WriteConcern.ACKNOWLEDGED);
 
         operations.insert(indexesNamespace, insertIndexOperation, documentSerializer);
     }

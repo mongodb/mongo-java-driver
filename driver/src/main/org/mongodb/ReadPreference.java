@@ -26,7 +26,7 @@ import org.mongodb.rs.ReplicaSetNode;
  *
  * @mongodb.driver.manual applications/replication/#replica-set-read-preference  Read Preference
  */
-public abstract class ReadPreference {
+public abstract class ReadPreference implements ConvertibleToDocument {
 
     ReadPreference() {
     }
@@ -39,6 +39,7 @@ public abstract class ReadPreference {
     /**
      * @return <code>DBObject</code> representation of this preference
      */
+    @Override
     public abstract Document toDocument();
 
     /**
@@ -52,8 +53,6 @@ public abstract class ReadPreference {
 
     /**
      * Preference to read from primary only. Cannot be combined with tags.
-     *
-     * @author breinero
      */
     private static class PrimaryReadPreference extends ReadPreference {
         private PrimaryReadPreference() {
@@ -80,7 +79,7 @@ public abstract class ReadPreference {
         }
 
         @Override
-        ReplicaSetNode getNode(final ReplicaSet set) {
+        public ReplicaSetNode getNode(final ReplicaSet set) {
             return set.getMaster();
         }
 

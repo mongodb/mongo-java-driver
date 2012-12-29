@@ -36,7 +36,7 @@ import java.util.Set;
  */
 @Immutable
 public class ReplicaSetNode extends Node {
-    ReplicaSetNode(final ServerAddress addr, final Set<String> names, final String setName, final float pingTime,
+    public ReplicaSetNode(final ServerAddress addr, final Set<String> names, final String setName, final float pingTime,
                    final boolean ok, final boolean isMaster, final boolean isSecondary,
                    final LinkedHashMap<String, String> tags, final int maxBsonObjectSize) {
         super(pingTime, addr, maxBsonObjectSize, ok);

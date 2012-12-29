@@ -17,10 +17,62 @@
 
 package com.mongodb;
 
-// TODO: build this out.
+/**
+ * A class that represents preferred replica set members to which a query or command can be sent.
+ *
+ * @mongodb.driver.manual applications/replication/#replica-set-read-preference  Read Preference
+ */
 public class ReadPreference {
+    /**
+     * A primary read preference.  Equivalent to calling {@code ReadPreference.primary()}.
+     *
+     * @see ReadPreference#primary()
+     * @deprecated As of release 2.9.0, replaced by {@code ReadPreference.primary()}
+     */
+    @Deprecated
+    public static final ReadPreference PRIMARY;
+
+    /**
+     * A secondary-preferred read preference.  Equivalent to calling
+     * {@code ReadPreference.secondaryPreferred}.  This reference should really have been called
+     * {@code ReadPreference.SECONDARY_PREFERRED}, but the naming of it preceded the idea of distinguishing
+     * between secondary and secondary-preferred, so for backwards compatibility, leaving the name as is with
+     * the behavior as it was when it was created.
+     *
+     * @see ReadPreference#secondary()
+     * @see ReadPreference#secondaryPreferred()
+     * @deprecated As of release 2.9.0, replaced by {@code ReadPreference.secondaryPreferred()}
+     */
+    @Deprecated
+    public static final ReadPreference SECONDARY;
+
+
+    private static final ReadPreference _PRIMARY;
+    private static final ReadPreference _SECONDARY;
+    private static final ReadPreference _SECONDARY_PREFERRED;
+    private static final ReadPreference _PRIMARY_PREFERRED;
+    private static final ReadPreference _NEAREST;
+
+    private final org.mongodb.ReadPreference proxied;
+
+    ReadPreference(final org.mongodb.ReadPreference proxied) {
+        this.proxied = proxied;
+    }
+
     org.mongodb.ReadPreference toNew() {
-        return org.mongodb.ReadPreference.primary();
+        return proxied;
+    }
+
+    public boolean isSlaveOk() {
+        return proxied.isSlaveOk();
+    }
+
+    public DBObject toDBObject() {
+        return DBObjects.toDBObject(proxied.toDocument());
+    }
+
+    public String getName() {
+        return proxied.getName();
     }
 
     /**
@@ -37,11 +89,27 @@ public class ReadPreference {
         return _PRIMARY_PREFERRED;
     }
 
-     /**
+    /**
+     * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
+     */
+    public static TaggableReadPreference primaryPreferred(DBObject firstTagSet, DBObject... remainingTagSets) {
+        return new TaggableReadPreference(org.mongodb.ReadPreference.primaryPreferred(
+                DBObjects.toDocument(firstTagSet), DBObjects.toDocumentArray(remainingTagSets)));
+    }
+
+    /**
      * @return ReadPreference which reads secondary.
      */
     public static ReadPreference secondary() {
         return _SECONDARY;
+    }
+
+    /**
+     * @return ReadPreference which reads secondary respective of tags.
+     */
+    public static TaggableReadPreference secondary(DBObject firstTagSet, DBObject... remainingTagSets) {
+        return new TaggableReadPreference(org.mongodb.ReadPreference.secondary(
+                DBObjects.toDocument(firstTagSet), DBObjects.toDocumentArray(remainingTagSets)));
     }
 
     /**
@@ -52,24 +120,110 @@ public class ReadPreference {
     }
 
     /**
+     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
+     */
+    public static TaggableReadPreference secondaryPreferred(DBObject firstTagSet, DBObject... remainingTagSets) {
+        return new TaggableReadPreference(org.mongodb.ReadPreference.secondaryPreferred(
+                DBObjects.toDocument(firstTagSet), DBObjects.toDocumentArray(remainingTagSets)));
+    }
+
+    /**
      * @return ReadPreference which reads nearest node.
      */
     public static ReadPreference nearest() {
         return _NEAREST;
     }
 
-    private static final ReadPreference _PRIMARY;
-    private static final ReadPreference _SECONDARY;
-    private static final ReadPreference _SECONDARY_PREFERRED;
-    private static final ReadPreference _PRIMARY_PREFERRED;
-    private static final ReadPreference _NEAREST;
+    /**
+     * @return ReadPreference which reads nearest node respective of tags.
+     */
+    public static TaggableReadPreference nearest(DBObject firstTagSet, DBObject... remainingTagSets) {
+        return new TaggableReadPreference(org.mongodb.ReadPreference.nearest(
+                DBObjects.toDocument(firstTagSet), DBObjects.toDocumentArray(remainingTagSets)));
+    }
+
+    public static ReadPreference valueOf(String name) {
+        if (name == null) {
+            throw new IllegalArgumentException();
+        }
+
+        name = name.toLowerCase();
+
+        if (name.equals(_PRIMARY.getName().toLowerCase())) {
+            return _PRIMARY;
+        }
+        if (name.equals(_SECONDARY.getName().toLowerCase())) {
+            return _SECONDARY;
+        }
+        if (name.equals(_SECONDARY_PREFERRED.getName().toLowerCase())) {
+            return _SECONDARY_PREFERRED;
+        }
+        if (name.equals(_PRIMARY_PREFERRED.getName().toLowerCase())) {
+            return _PRIMARY_PREFERRED;
+        }
+        if (name.equals(_NEAREST.getName().toLowerCase())) {
+            return _NEAREST;
+        }
+
+        throw new IllegalArgumentException("No match for read preference of " + name);
+    }
+
+    public static TaggableReadPreference valueOf(String name, DBObject firstTagSet, final DBObject... remainingTagSets) {
+        if (name == null) {
+            throw new IllegalArgumentException();
+        }
+
+        name = name.toLowerCase();
+
+        if (name.equals(_SECONDARY.getName().toLowerCase())) {
+            return secondary(firstTagSet, remainingTagSets);
+        }
+        if (name.equals(_SECONDARY_PREFERRED.getName().toLowerCase())) {
+            return secondaryPreferred(firstTagSet, remainingTagSets);
+        }
+        if (name.equals(_PRIMARY_PREFERRED.getName().toLowerCase())) {
+            return primaryPreferred(firstTagSet, remainingTagSets);
+        }
+        if (name.equals(_NEAREST.getName().toLowerCase())) {
+            return nearest(firstTagSet, remainingTagSets);
+        }
+
+        throw new IllegalArgumentException("No match for read preference of " + name);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final ReadPreference that = (ReadPreference) o;
+
+        if (!proxied.equals(that.proxied)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return proxied.hashCode();
+    }
 
     static {
-        _PRIMARY = new ReadPreference();
-        _SECONDARY = _PRIMARY;
-        _SECONDARY_PREFERRED = _PRIMARY;
-        _PRIMARY_PREFERRED = _PRIMARY;
-        _NEAREST = _PRIMARY;
+        _PRIMARY = new ReadPreference(org.mongodb.ReadPreference.primary());
+        _SECONDARY = new ReadPreference(org.mongodb.ReadPreference.secondary());
+        _SECONDARY_PREFERRED = new ReadPreference(org.mongodb.ReadPreference.secondaryPreferred());
+        _PRIMARY_PREFERRED = new ReadPreference(org.mongodb.ReadPreference.primaryPreferred());
+        _NEAREST = new ReadPreference(org.mongodb.ReadPreference.nearest());
+
+        PRIMARY = _PRIMARY;
+        SECONDARY = _SECONDARY_PREFERRED;  // this is not a bug.  See SECONDARY Javadoc.
+
     }
 
 }
