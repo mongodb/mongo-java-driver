@@ -130,6 +130,7 @@ public class TestPerf  extends TestBase{
 		public long var2;
 	}
 
+	// TODO: remove try/catch
 	@Test
 	public void testDifference() {
         try {
