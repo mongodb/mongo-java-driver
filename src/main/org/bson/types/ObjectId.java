@@ -358,6 +358,18 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
                     while ( e.hasMoreElements() ){
                         NetworkInterface ni = e.nextElement();
                         sb.append( ni.toString() );
+                        byte[] mac = ni.getHardwareAddress();
+            			if (mac != null) {
+            				// expecting a 6 byte MAC
+            				ByteBuffer bb = ByteBuffer.wrap(mac);
+            				try{
+            					sb.append(bb.getChar());
+            					sb.append(bb.getChar());
+            					sb.append(bb.getChar());
+            				}catch(BufferUnderflowException shortHardwareAddressException){
+            					// mac with less than 6 bytes. continue
+            				}
+            			}
                     }
                     machinePiece = sb.toString().hashCode() << 16;
                 } catch (Throwable e) {
