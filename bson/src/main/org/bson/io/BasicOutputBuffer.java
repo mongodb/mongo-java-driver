@@ -21,7 +21,6 @@ package org.bson.io;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
@@ -48,23 +47,21 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     @Override
+    public void writeInt(final int pos, final int x) {
+        final int save = getPosition();
+        setPosition(pos);
+        writeInt(x);
+        setPosition(save);
+    }
+
+    @Override
+    public void backpatchSize(final int size) {
+        writeInt(getPosition() - size, size);
+    }
+
+    @Override
     public int getPosition() {
         return _cur;
-    }
-
-    @Override
-    public void setPosition(final int position) {
-        _cur = position;
-    }
-
-    @Override
-    public void seekEnd() {
-        _cur = _size;
-    }
-
-    @Override
-    public void seekStart() {
-        _cur = 0;
     }
 
     /**
@@ -93,8 +90,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     /**
      * @return bytes written
      */
-    public int pipe(final DataOutput out)
-            throws IOException {
+    public int pipe(final DataOutput out) throws IOException {
         out.write(_buffer, 0, _size);
         return _size;
     }
@@ -116,15 +112,8 @@ public class BasicOutputBuffer extends OutputBuffer {
         _buffer = n;
     }
 
-    @Override
-    public String asString() {
-        return new String(_buffer, 0, _size);
-    }
-
-    @Override
-    public String asString(final String encoding)
-            throws UnsupportedEncodingException {
-        return new String(_buffer, 0, _size, encoding);
+    private void setPosition(final int position) {
+        _cur = position;
     }
 
     private int _cur;

@@ -101,31 +101,12 @@ public class PooledByteBufferOutput extends OutputBuffer {
         backpatchSizeWithOffset(size, additionalOffset);
     }
 
-
-    @Override
-    public void setPosition(final int position) {
-        // TODO: remove this method from the API
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void seekEnd() {
-        // TODO: remove the method
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void seekStart() {
-        // TODO: remove the method
-        throw new UnsupportedOperationException();
-    }
-
     @Override
     public int size() {
         return position;
     }
 
-    @Override
+    @Override // TODO: Implement this
     public int pipe(final OutputStream out) throws IOException {
         throw new UnsupportedOperationException();
     }
