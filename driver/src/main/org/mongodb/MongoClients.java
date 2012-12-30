@@ -26,4 +26,8 @@ public class MongoClients {
     public static MongoClient create(final ServerAddress serverAddress) {
         return new SingleServerMongoClient(serverAddress);
     }
+
+    public static MongoClient create(final ServerAddress serverAddress, MongoClientOptions options) {
+        return new SingleServerMongoClient(serverAddress, options);
+    }
 }

@@ -19,39 +19,31 @@ package org.mongodb.impl;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCollectionBase;
+import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ReadPreference;
-import org.mongodb.WriteConcern;
 import org.mongodb.serialization.CollectibleSerializer;
-import org.mongodb.serialization.PrimitiveSerializers;
 
 public class MongoCollectionBaseImpl<T> implements MongoCollectionBase<T> {
     protected final String name;
     protected final MongoDatabase database;
-    protected final PrimitiveSerializers primitiveSerializers;
+    protected final MongoCollectionOptions options;
     protected final CollectibleSerializer<T> serializer;
-    protected final WriteConcern writeConcern;
-    protected final ReadPreference readPreference;
-
-    public MongoCollectionBaseImpl(final CollectibleSerializer<T> serializer, final String name, final MongoDatabaseImpl database,
-                                   final WriteConcern writeConcern, final ReadPreference readPreference,
-                                   final PrimitiveSerializers primitiveSerializers) {
-        this.serializer = serializer;
-        this.name = name;
-        this.database = database;
-        this.writeConcern = writeConcern;
-        this.primitiveSerializers = primitiveSerializers;
-        this.readPreference = readPreference;
-    }
 
     public MongoCollectionBaseImpl(final MongoCollection<T> from) {
         this.serializer = from.getSerializer();
         this.name = from.getName();
         this.database = from.getDatabase();
-        this.writeConcern = from.getWriteConcern();
-        this.readPreference = from.getReadPreference();
-        this.primitiveSerializers = from.getPrimitiveSerializers();
+        this.options = from.getOptions();
+    }
+
+    public MongoCollectionBaseImpl(final CollectibleSerializer<T> serializer, final String name,
+                                   final MongoDatabaseImpl database, final MongoCollectionOptions options) {
+
+        this.serializer = serializer;
+        this.name = name;
+        this.database = database;
+        this.options = options;
     }
 
     @Override
@@ -65,14 +57,6 @@ public class MongoCollectionBaseImpl<T> implements MongoCollectionBase<T> {
     }
 
     @Override
-    public PrimitiveSerializers getPrimitiveSerializers() {
-        if (primitiveSerializers != null) {
-            return primitiveSerializers;
-        }
-        return getDatabase().getPrimitiveSerializers();
-    }
-
-    @Override
     public CollectibleSerializer<T> getSerializer() {
         return serializer;
     }
@@ -83,19 +67,8 @@ public class MongoCollectionBaseImpl<T> implements MongoCollectionBase<T> {
     }
 
     @Override
-    public WriteConcern getWriteConcern() {
-        if (writeConcern != null) {
-            return writeConcern;
-        }
-        return getDatabase().getWriteConcern();
-    }
-
-    @Override
-    public ReadPreference getReadPreference() {
-        if (readPreference != null) {
-            return readPreference;
-        }
-        return getDatabase().getReadPreference();
+    public MongoCollectionOptions getOptions() {
+        return options;
     }
 
     @Override

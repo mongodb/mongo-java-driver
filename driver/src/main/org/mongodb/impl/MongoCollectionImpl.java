@@ -19,10 +19,9 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.mongodb.CollectionAdmin;
 import org.mongodb.MongoCollection;
+import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryFilterDocument;
-import org.mongodb.ReadPreference;
-import org.mongodb.WriteConcern;
 import org.mongodb.command.CountCommand;
 import org.mongodb.command.FindAndRemoveCommand;
 import org.mongodb.command.FindAndReplaceCommand;
@@ -41,7 +40,6 @@ import org.mongodb.result.QueryResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.CollectibleSerializer;
-import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
@@ -50,22 +48,22 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     private CollectionAdmin admin;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final PrimitiveSerializers primitiveSerializers, final CollectibleSerializer<T> serializer,
-                               final WriteConcern writeConcern, final ReadPreference readPreference) {
-        super(serializer, name, database, writeConcern, readPreference, primitiveSerializers);
-        admin = new CollectionAdminImpl(database.getClient().getOperations(), primitiveSerializers, database.getName(),
+                               final CollectibleSerializer<T> serializer,
+                               final MongoCollectionOptions options) {
+        super(serializer, name, database, options);
+        admin = new CollectionAdminImpl(database.getClient().getOperations(), options.getPrimitiveSerializers(), database.getName(),
                                         name);
     }
 
     @Override
     public MongoCursor<T> find(MongoFind find) {
-        return new MongoCursor<T>(this, find.readPreferenceIfAbsent(readPreference));
+        return new MongoCursor<T>(this, find.readPreferenceIfAbsent(options.getReadPreference()));
     }
 
     @Override
     public T findOne(final MongoFind find) {
         QueryResult<T> res = getClient().getOperations().query(getNamespace(), find.batchSize(-1),
-                                                               new DocumentSerializer(getPrimitiveSerializers()),
+                                                               new DocumentSerializer(options.getPrimitiveSerializers()),
                                                                getSerializer());
         if (res.getResults().isEmpty()) {
             return null;
@@ -86,31 +84,31 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public T findAndUpdate(final MongoFindAndUpdate findAndUpdate) {
-        return new FindAndUpdateCommand<T>(this, findAndUpdate, getPrimitiveSerializers(),
+        return new FindAndUpdateCommand<T>(this, findAndUpdate, options.getPrimitiveSerializers(),
                                            getSerializer()).execute().getValue();
     }
 
     @Override
     public T findAndReplace(final MongoFindAndReplace<T> findAndReplace) {
-        return new FindAndReplaceCommand<T>(this, findAndReplace, getPrimitiveSerializers(),
+        return new FindAndReplaceCommand<T>(this, findAndReplace, options.getPrimitiveSerializers(),
                                             getSerializer()).execute().getValue();
     }
 
     @Override
     public T findAndRemove(final MongoFindAndRemove findAndRemove) {
-        return new FindAndRemoveCommand<T>(this, findAndRemove, getPrimitiveSerializers(),
+        return new FindAndRemoveCommand<T>(this, findAndRemove, options.getPrimitiveSerializers(),
                                            getSerializer()).execute().getValue();
     }
 
     @Override
     public InsertResult insert(final MongoInsert<T> insert) {
-        return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(getWriteConcern()),
+        return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(options.getWriteConcern()),
                                                   getSerializer());
     }
 
     @Override
     public UpdateResult update(final MongoUpdate update) {
-        return getClient().getOperations().update(getNamespace(), update.writeConcernIfAbsent(getWriteConcern()),
+        return getClient().getOperations().update(getNamespace(), update.writeConcernIfAbsent(options.getWriteConcern()),
                                                   getDocumentSerializer());
     }
 
@@ -127,14 +125,14 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public UpdateResult replace(final MongoReplace<T> replace) {
-        return getClient().getOperations().replace(getNamespace(), replace.writeConcernIfAbsent(getWriteConcern()),
+        return getClient().getOperations().replace(getNamespace(), replace.writeConcernIfAbsent(options.getWriteConcern()),
                                                    getDocumentSerializer(), getSerializer());
     }
 
     @Override
     public RemoveResult remove(final MongoRemove remove) {
         // TODO: need a serializer to pass in here
-        return getClient().getOperations().remove(getNamespace(), remove.writeConcernIfAbsent(getWriteConcern()),
+        return getClient().getOperations().remove(getNamespace(), remove.writeConcernIfAbsent(options.getWriteConcern()),
                                                   getDocumentSerializer());
     }
 
@@ -144,6 +142,6 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     private Serializer<Document> getDocumentSerializer() {
-        return new DocumentSerializer(primitiveSerializers);
+        return new DocumentSerializer(options.getPrimitiveSerializers());
     }
 }

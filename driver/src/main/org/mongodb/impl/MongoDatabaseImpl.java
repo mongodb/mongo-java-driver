@@ -20,9 +20,9 @@ import org.bson.types.Document;
 import org.mongodb.DatabaseAdmin;
 import org.mongodb.MongoAsyncCollection;
 import org.mongodb.MongoClient;
+import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoDatabase;
-import org.mongodb.ReadPreference;
-import org.mongodb.WriteConcern;
+import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.CollectibleSerializer;
@@ -33,24 +33,15 @@ import org.mongodb.serialization.serializers.ObjectIdGenerator;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoClient client;
+    private final MongoDatabaseOptions options;
     private final String name;
-    private final WriteConcern writeConcern;
-    private final ReadPreference readPreference;
-    private final PrimitiveSerializers primitiveSerializers;
     private final DatabaseAdmin admin;
 
-    public MongoDatabaseImpl(final String name, final MongoClient client) {
-        this(name, client, null, null, null);
-    }
-
-    public MongoDatabaseImpl(final String name, final MongoClient client, final WriteConcern writeConcern,
-                             final ReadPreference readPreference, final PrimitiveSerializers primitiveSerializers) {
+    public MongoDatabaseImpl(final String name, final MongoClient client, final MongoDatabaseOptions options) {
         this.name = name;
         this.client = client;
-        this.writeConcern = writeConcern;
-        this.readPreference = readPreference;
-        this.primitiveSerializers = primitiveSerializers;
-        this.admin = new DatabaseAdminImpl(name, client.getOperations(), client.getPrimitiveSerializers());
+        this.options = options;
+        this.admin = new DatabaseAdminImpl(name, client.getOperations(), client.getOptions().getPrimitiveSerializers());
     }
 
     @Override
@@ -59,15 +50,25 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     public MongoCollectionImpl<Document> getCollection(final String collectionName) {
-        return getTypedCollection(collectionName, getPrimitiveSerializers(),
-                                  new CollectibleDocumentSerializer(getPrimitiveSerializers(),
-                                                                    new ObjectIdGenerator()));
+        return getCollection(collectionName, MongoCollectionOptions.builder().build());
     }
 
-    public <T> MongoCollectionImpl<T> getTypedCollection(final String collectionName,
-                                                         final PrimitiveSerializers basePrimitiveSerializers,
-                                                         final CollectibleSerializer<T> serializer) {
-        return new MongoCollectionImpl<T>(collectionName, this, basePrimitiveSerializers, serializer, null, null);
+    @Override
+    public MongoCollectionImpl<Document> getCollection(final String collectionName,
+                                                       final MongoCollectionOptions options) {
+        return getTypedCollection(collectionName, new CollectibleDocumentSerializer(
+                options.withDefaults(this.options).getPrimitiveSerializers(), new ObjectIdGenerator()), options);
+    }
+
+    @Override
+    public <T> MongoCollectionImpl<T> getTypedCollection(final String name, final CollectibleSerializer<T> serializer) {
+        return getTypedCollection(name, serializer, MongoCollectionOptions.builder().build());
+    }
+
+    @Override
+    public <T> MongoCollectionImpl<T> getTypedCollection(final String name, final CollectibleSerializer<T> serializer,
+                                                         final MongoCollectionOptions options) {
+        return new MongoCollectionImpl<T>(name, this, serializer, options.withDefaults(this.options));
     }
 
     @Override
@@ -79,7 +80,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     public <T> MongoAsyncCollection<T> getAsyncTypedCollection(final String collectionName,
                                                                final PrimitiveSerializers primitiveSerializers,
                                                                final CollectibleSerializer<T> serializer) {
-        return new MongoAsyncCollectionImpl<T>(getTypedCollection(collectionName, primitiveSerializers, serializer));
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -90,7 +91,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public CommandResult executeCommand(final MongoCommandOperation commandOperation) {
         return new CommandResult(client.getOperations().executeCommand(getName(), commandOperation,
-                                                                       new DocumentSerializer(getPrimitiveSerializers())));
+                                                                       new DocumentSerializer(
+                                                                               options.getPrimitiveSerializers())));
     }
 
     @Override
@@ -98,25 +100,8 @@ class MongoDatabaseImpl implements MongoDatabase {
         return client;
     }
 
-    public WriteConcern getWriteConcern() {
-        if (writeConcern != null) {
-            return writeConcern;
-        }
-        return getClient().getWriteConcern();
-    }
-
-    public ReadPreference getReadPreference() {
-        if (readPreference != null) {
-            return readPreference;
-        }
-        return getClient().getReadPreference();
-    }
-
     @Override
-    public PrimitiveSerializers getPrimitiveSerializers() {
-        if (primitiveSerializers != null) {
-            return primitiveSerializers;
-        }
-        return getClient().getPrimitiveSerializers();
+    public MongoDatabaseOptions getOptions() {
+        return options;
     }
 }

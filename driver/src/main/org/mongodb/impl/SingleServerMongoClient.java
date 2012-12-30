@@ -21,11 +21,11 @@ import org.bson.util.BufferPool;
 import org.bson.util.PowerOfTwoByteBufferPool;
 import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClient;
+import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
-import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
-import org.mongodb.WriteConcern;
 import org.mongodb.io.MongoChannel;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommandOperation;
@@ -41,7 +41,6 @@ import org.mongodb.result.InsertResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
-import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 import org.mongodb.util.pool.SimplePool;
@@ -53,32 +52,38 @@ import java.util.concurrent.ExecutionException;
 // TODO: should this be a public class?
 public class SingleServerMongoClient implements MongoClient {
 
+    private final ServerAddress serverAddress;
+    private final MongoClientOptions options;
     private final SimplePool<MongoChannel> channelPool;
     private final BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool(24);
-    private final ServerAddress serverAddress;
-    private final PrimitiveSerializers primitiveSerializers;
-    private final WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
-    private final ReadPreference readPreference = ReadPreference.primary();
     private final ThreadLocal<SingleChannelMongoClient> boundClient = new ThreadLocal<SingleChannelMongoClient>();
     private final ClientAdmin admin;
 
     public SingleServerMongoClient(final ServerAddress serverAddress) {
+        this(serverAddress, MongoClientOptions.builder().build());
+    }
+
+    public SingleServerMongoClient(final ServerAddress serverAddress, final MongoClientOptions options) {
         this.serverAddress = serverAddress;
-        primitiveSerializers = PrimitiveSerializers.createDefault();
-        channelPool = new SimplePool<MongoChannel>(serverAddress.toString(), 100) {
+        this.options = options;
+        channelPool = new SimplePool<MongoChannel>(serverAddress.toString(), options.getConnectionsPerHost()) {
             @Override
             protected MongoChannel createNew() {
                 return new MongoChannel(SingleServerMongoClient.this.serverAddress, bufferPool,
-                                        new DocumentSerializer(primitiveSerializers));
+                                        new DocumentSerializer(options.getPrimitiveSerializers()));
             }
         };
-        admin = new SingleServerAdmin(getOperations(), primitiveSerializers);
+        admin = new SingleServerAdmin(getOperations(), options.getPrimitiveSerializers());
     }
 
     @Override
     public MongoDatabaseImpl getDatabase(final String databaseName) {
-        //TODO: we're not caching this?
-        return new MongoDatabaseImpl(databaseName, this);
+        return getDatabase(databaseName, MongoDatabaseOptions.builder().build());
+    }
+
+    @Override
+    public MongoDatabaseImpl getDatabase(final String databaseName, final MongoDatabaseOptions options) {
+        return new MongoDatabaseImpl(databaseName, this, options.withDefaults(this.getOptions()));
     }
 
     @Override
@@ -133,18 +138,8 @@ public class SingleServerMongoClient implements MongoClient {
     }
 
     @Override
-    public WriteConcern getWriteConcern() {
-        return writeConcern;
-    }
-
-    @Override
-    public ReadPreference getReadPreference() {
-        return readPreference;
-    }
-
-    @Override
-    public PrimitiveSerializers getPrimitiveSerializers() {
-        return primitiveSerializers;
+    public MongoClientOptions getOptions() {
+        return options;
     }
 
     @Override
@@ -164,8 +159,7 @@ public class SingleServerMongoClient implements MongoClient {
         if (boundClient.get() != null) {
             return boundClient.get();
         }
-        return new SingleChannelMongoClient(getChannelPool(), getBufferPool(), primitiveSerializers, writeConcern,
-                                            readPreference);
+        return new SingleChannelMongoClient(getChannelPool(), getBufferPool(), options);
     }
 
     private void releaseChannelClient(final SingleChannelMongoClient mongoClient) {

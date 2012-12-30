@@ -54,7 +54,7 @@ public abstract class AbstractCommand implements Command {
 
     // TODO: this may need to use collection's serializers
     protected Serializer<Document> createResultSerializer() {
-        return new DocumentSerializer(database.getPrimitiveSerializers());
+        return new DocumentSerializer(database.getOptions().getPrimitiveSerializers());
     }
 
 
