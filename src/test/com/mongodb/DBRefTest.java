@@ -80,6 +80,18 @@ public class DBRefTest extends TestCase {
     }
 
     @Test(groups = {"basic"})
+    public void testDBRefHashCodeObeysEqualityContract(){
+
+        ObjectId id = new ObjectId("123456789012345678901234");
+        DBRefBase ref = new DBRefBase(_db, "foo.bar", id);
+
+        DBRefBase ref2 = new DBRefBase(_db, "foo.bar", id);
+
+        assertEquals(ref, ref2);
+        assertEquals(ref.hashCode(), ref2.hashCode());
+    }
+
+    @Test(groups = {"basic"})
     public void testDBRefFetches(){
         DBCollection coll = _db.getCollection("x");
         coll.drop();
