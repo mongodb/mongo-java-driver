@@ -41,10 +41,20 @@ public class MongoStreamTest extends MongoClientTestBase {
             System.out.println(cur);
         }
 
+<<<<<<< HEAD
         try (MongoCursor<Document> cursor = collection.find()) {
             while (cursor.hasNext()) {
                 System.out.println(cursor.next());
             }
+=======
+        MongoCursor<Document> cursor = collection.find();
+        try {
+            while (cursor.hasNext()) {
+                System.out.println(cursor.next());
+            }
+        } finally {
+            cursor.close();
+>>>>>>> 2581ac438f6a37fd91f641fef480bce7be5877d1
         }
 
         for (Document cur : collection.filter(new QueryFilterDocument("_id", 1))) {
@@ -100,10 +110,18 @@ public class MongoStreamTest extends MongoClientTestBase {
 
         collection.update(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
+<<<<<<< HEAD
         collection.filter(new QueryFilterDocument("_id", 1)).update(
                 new UpdateOperationsDocument("$set", new Document("x", 1)));
 
         collection.filter(new QueryFilterDocument("_id", 2)).upsert().update(
+=======
+        collection.filter(
+                new QueryFilterDocument("_id", 1)).update(new UpdateOperationsDocument("$set", new Document("x", 1)));
+
+        collection.filter(
+                new QueryFilterDocument("_id", 2)).upsert().update(
+>>>>>>> 2581ac438f6a37fd91f641fef480bce7be5877d1
                 new UpdateOperationsDocument("$set", new Document("x", 1)));
 
         Document doc = collection.filter(new QueryFilterDocument("_id", 1)).
@@ -119,8 +137,14 @@ public class MongoStreamTest extends MongoClientTestBase {
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
 
+<<<<<<< HEAD
         System.out.println(concreteCollection.filter(new QueryFilterDocument("i", 1)).map(concrete -> concrete.id).map(
                 ObjectId::toString).into(new ArrayList<String>()));
+=======
+        System.out.println(
+                concreteCollection.filter(new QueryFilterDocument("i", 1))
+                        .map((final Concrete concrete) -> concrete.id).into(new ArrayList<ObjectId>()));
+>>>>>>> 2581ac438f6a37fd91f641fef480bce7be5877d1
     }
 }
 
