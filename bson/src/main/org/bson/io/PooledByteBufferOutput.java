@@ -27,6 +27,7 @@ import java.util.List;
 
 public class PooledByteBufferOutput extends OutputBuffer {
 
+    public static final int INITIAL_BUFFER_SIZE = 1024;
     private final BufferPool<ByteBuffer> pool;
     private final List<ByteBuffer> bufferList = new ArrayList<ByteBuffer>();
     private int curBufferIndex = 0;
@@ -68,7 +69,7 @@ public class PooledByteBufferOutput extends OutputBuffer {
 
     private ByteBuffer getByteBufferAtIndex(final int index) {
         if (bufferList.size() < index + 1) {
-            bufferList.add(pool.get(1024 << index));
+            bufferList.add(pool.get(INITIAL_BUFFER_SIZE << index));
         }
         return bufferList.get(index);
     }
@@ -136,7 +137,8 @@ public class PooledByteBufferOutput extends OutputBuffer {
         }
 
         for (long bytesRead = 0; bytesRead < size(); ) {
-            bytesRead += socketChannel.write(bufferList.toArray(new ByteBuffer[bufferList.size()]), 0, bufferList.size());
+            bytesRead += socketChannel.write(bufferList.toArray(new ByteBuffer[bufferList.size()]), 0,
+                                             bufferList.size());
         }
     }
 
@@ -148,26 +150,49 @@ public class PooledByteBufferOutput extends OutputBuffer {
         bufferList.clear();
     }
 
-    // TODO: go backwards instead of forwards?  Probably doesn't matter with power of 2
+    // TODO: go backwards instead of forwards?  Probably doesn't matter with power of two
+    // TODO: desperately seeking unit test
     private void backpatchSizeWithOffset(final int size, final int additionalOffset) {
         final int backpatchPosition = position - size - additionalOffset;
         int backpatchPositionInBuffer = backpatchPosition;
         int bufferIndex = 0;
-        int bufferSize = 1024;
+        int bufferSize = INITIAL_BUFFER_SIZE;
         int startPositionOfBuffer = 0;
-        while (startPositionOfBuffer > backpatchPosition) {
+        while (startPositionOfBuffer + bufferSize <= backpatchPosition) {
             bufferIndex++;
             startPositionOfBuffer += bufferSize;
             backpatchPositionInBuffer -= bufferSize;
             bufferSize <<= 1;
         }
 
-        // TODO: deal with buffer boundary
-        final ByteBuffer startBackpatchBuffer = getByteBufferAtIndex(bufferIndex);
-        if (startBackpatchBuffer.capacity() < backpatchPositionInBuffer + 4) {
-            throw new IllegalStateException("TODO: fix this");
+        new BufferPositionPair(bufferIndex, backpatchPositionInBuffer).putInt(size);
+    }
+
+    class BufferPositionPair {
+        int bufferIndex;
+        int position;
+
+        BufferPositionPair(final int bufferIndex, final int position) {
+            this.bufferIndex = bufferIndex;
+            this.position = position;
         }
-        startBackpatchBuffer.putInt(backpatchPositionInBuffer, size);
+
+        public void putInt(final int val) {
+            put((byte) (val >> 0));
+            put((byte) (val >> 8));
+            put((byte) (val >> 16));
+            put((byte) (val >> 24));
+        }
+
+        void put(byte b) {
+            ByteBuffer byteBuffer = getByteBufferAtIndex(bufferIndex);
+            byteBuffer.put(position++, b);
+
+            if (position >= byteBuffer.capacity()) {
+                bufferIndex++;
+                position = 0;
+            }
+        }
     }
 
 }
