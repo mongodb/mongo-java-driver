@@ -1,13 +1,5 @@
 package com.google.code.morphia.mapping.lazy;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.Assert;
-
-import org.junit.Test;
-
 import com.google.code.morphia.TestBase;
 import com.google.code.morphia.annotations.Embedded;
 import com.google.code.morphia.annotations.Entity;
@@ -15,6 +7,11 @@ import com.google.code.morphia.annotations.Property;
 import com.google.code.morphia.annotations.Reference;
 import com.google.code.morphia.query.Query;
 import com.google.code.morphia.testutil.TestEntity;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author josephpachod
@@ -69,7 +66,7 @@ public class LazyInEmbeddedTest extends TestBase
         private String name;
     }
 
-    public static class EmbedWithRef implements Serializable
+    public static class EmbedWithRef
     {
 
 		@Reference(lazy = true)

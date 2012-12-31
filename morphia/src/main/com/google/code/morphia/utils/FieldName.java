@@ -76,7 +76,9 @@ public class FieldName {
 	};
 	
 	public static class FieldNameNotFoundException extends RuntimeException {
-		public FieldNameNotFoundException(String msg) {
+        private static final long serialVersionUID = 52124742120586573L;
+
+        public FieldNameNotFoundException(String msg) {
 			super(msg);
 		}
 	}

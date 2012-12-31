@@ -475,7 +475,7 @@ public class Mapper {
 			dbObject.put(CLASS_NAME_FIELDNAME, entity.getClass().getName());
 
 		if (lifecycle)
-			dbObject = (DBObject) mc.callLifecycleMethods(PrePersist.class, entity, dbObject, this);
+			dbObject = mc.callLifecycleMethods(PrePersist.class, entity, dbObject, this);
 		
 		for (MappedField mf : mc.getPersistenceFields()) {
 			try {
@@ -514,7 +514,7 @@ public class Mapper {
 		
 		MappedClass mc = getMappedClass(entity);
 		
-		dbObject = (DBObject) mc.callLifecycleMethods(PreLoad.class, entity, dbObject, this);
+		dbObject = mc.callLifecycleMethods(PreLoad.class, entity, dbObject, this);
 		try {
 			for (MappedField mf : mc.getPersistenceFields()) {
 				readMappedField(dbObject, mf, entity, cache);

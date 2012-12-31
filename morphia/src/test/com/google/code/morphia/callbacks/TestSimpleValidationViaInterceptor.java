@@ -3,18 +3,6 @@
  */
 package com.google.code.morphia.callbacks;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.util.Date;
-import java.util.List;
-
-import org.junit.Assert;
-
-import org.bson.types.ObjectId;
-import org.junit.Test;
-
 import com.google.code.morphia.AbstractEntityInterceptor;
 import com.google.code.morphia.TestBase;
 import com.google.code.morphia.annotations.Id;
@@ -24,6 +12,16 @@ import com.google.code.morphia.mapping.MappedClass;
 import com.google.code.morphia.mapping.MappedField;
 import com.google.code.morphia.mapping.Mapper;
 import com.mongodb.DBObject;
+import org.bson.types.ObjectId;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
@@ -68,8 +66,10 @@ public class TestSimpleValidationViaInterceptor extends TestBase {
 		}
 		
 		static class NonNullValidationException extends RuntimeException {
-			
-			public NonNullValidationException(MappedField mf) {
+
+            private static final long serialVersionUID = 8441727716383001380L;
+
+            public NonNullValidationException(MappedField mf) {
 				super("NonNull field is null " + mf.getFullName());
 			}
 

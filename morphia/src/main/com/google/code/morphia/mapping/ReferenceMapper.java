@@ -3,11 +3,6 @@
  */
 package com.google.code.morphia.mapping;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 import com.google.code.morphia.DatastoreImpl;
 import com.google.code.morphia.Key;
 import com.google.code.morphia.annotations.Reference;
@@ -26,6 +21,11 @@ import com.google.code.morphia.utils.ReflectionUtils;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 class ReferenceMapper implements CustomMapper {
@@ -236,7 +236,7 @@ class ReferenceMapper implements CustomMapper {
 		} else {
 			Object dbVal = mf.getDbObjectValue(dbObject);
 			final Collection refs = references;
-			new IterHelper<String, Object>().loopOrSingle((Object)dbVal, new IterCallback<Object>() {
+			new IterHelper<String, Object>().loopOrSingle(dbVal, new IterCallback<Object>() {
 				@Override
 				public void eval(Object val) {
 					DBRef dbRef = (DBRef) val;
@@ -285,7 +285,7 @@ class ReferenceMapper implements CustomMapper {
 			return cached;
 		
 		//TODO: if _db is null, set it?
-		DBObject refDbObject = (DBObject) dbRef.fetch();
+		DBObject refDbObject = dbRef.fetch();
 		
 		if (refDbObject != null) {
 			Object refObj = mapr.getOptions().objectFactory.createInstance(mapr, mf, refDbObject);

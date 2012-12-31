@@ -1,12 +1,12 @@
 package com.google.code.morphia.query;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
 import com.google.code.morphia.mapping.Mapper;
 import com.google.code.morphia.mapping.cache.EntityCache;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * 
@@ -52,12 +52,12 @@ public class MorphiaIterator<T, V> implements Iterable<V>, Iterator<V>{
     	long start = System.currentTimeMillis();
 		V item = convertItem(dbObj);
     	mapperTime += System.currentTimeMillis() - start;
-		return (V) item;
+		return item;
 	}
 	
 	protected DBObject getNext() {
 		long start = System.currentTimeMillis();
-		DBObject dbObj = (DBObject) wrapped.next();
+		DBObject dbObj = wrapped.next();
     	driverTime += System.currentTimeMillis() - start;
     	return dbObj;
 	}

@@ -71,9 +71,7 @@ import static org.junit.Assert.assertTrue;
 @SuppressWarnings({"unchecked", "rawtypes", "unused"})
 public class TestMapping  extends TestBase {
 
-	public static abstract class BaseEntity implements Serializable{
-		private static final long serialVersionUID = 1L;
-
+	public static abstract class BaseEntity {
 		public BaseEntity() {}
 	
 		// generally a bad thing but left over...

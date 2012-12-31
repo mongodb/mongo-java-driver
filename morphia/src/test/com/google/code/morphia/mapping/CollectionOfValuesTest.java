@@ -3,19 +3,17 @@
  */
 package com.google.code.morphia.mapping;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.Assert;
-
-import org.bson.types.ObjectId;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.google.code.morphia.Key;
 import com.google.code.morphia.TestBase;
 import com.google.code.morphia.annotations.Embedded;
 import com.google.code.morphia.annotations.Id;
+import org.bson.types.ObjectId;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
@@ -45,7 +43,7 @@ public class CollectionOfValuesTest extends TestBase {
 		Key<ContainsTwoDimensionalArray> savedKey = ds.save(entity);
 		ContainsTwoDimensionalArray loaded = ds.get(ContainsTwoDimensionalArray.class, savedKey.getId());
 		Assert.assertNotNull(loaded.twoDimArray);
-		Assert.assertEquals(test2DimBa, loaded.twoDimArray);
+		Assert.assertArrayEquals(test2DimBa, loaded.twoDimArray);
 		Assert.assertNotNull(loaded.id);
 	}
 

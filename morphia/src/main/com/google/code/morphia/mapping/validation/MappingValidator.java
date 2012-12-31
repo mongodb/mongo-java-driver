@@ -4,14 +4,6 @@ package com.google.code.morphia.mapping.validation;
  * 
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-
 import com.google.code.morphia.annotations.Embedded;
 import com.google.code.morphia.annotations.Property;
 import com.google.code.morphia.annotations.Reference;
@@ -36,6 +28,14 @@ import com.google.code.morphia.mapping.validation.fieldrules.MapNotSerializable;
 import com.google.code.morphia.mapping.validation.fieldrules.MisplacedProperty;
 import com.google.code.morphia.mapping.validation.fieldrules.ReferenceToUnidentifiable;
 import com.google.code.morphia.mapping.validation.fieldrules.VersionMisuse;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
@@ -127,8 +127,10 @@ public class MappingValidator {
 			switch (v.getLevel()) {
 				case SEVERE:
 					logger.error(v.render());
+                    break;
 				case WARNING:
 					logger.warning(v.render());
+                    break;
 				case INFO:
 					logger.info(v.render());
 					break;

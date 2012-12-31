@@ -1,14 +1,11 @@
 package com.google.code.morphia.issueA;
 
-import java.io.Serializable;
-
-import org.bson.types.ObjectId;
-import org.junit.Test;
-
 import com.google.code.morphia.TestBase;
 import com.google.code.morphia.annotations.Embedded;
 import com.google.code.morphia.annotations.Id;
 import com.mongodb.DBObject;
+import org.bson.types.ObjectId;
+import org.junit.Test;
 
 
 /**
@@ -35,7 +32,7 @@ public class TestMapping extends TestBase {
     	K getK();
     }
     
-    private static class Class_level_one <K> implements Interface_one<K>, Cloneable, Serializable{
+    private static class Class_level_one <K> implements Interface_one<K>, Cloneable {
     	K k;
     	public K getK() {
     		return k;

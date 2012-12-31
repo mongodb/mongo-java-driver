@@ -3,12 +3,6 @@
  */
 package com.google.code.morphia.optimisticlocks;
 
-import java.util.ConcurrentModificationException;
-
-import org.junit.Assert;
-
-import org.junit.Test;
-
 import com.google.code.morphia.TestBase;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
@@ -17,6 +11,10 @@ import com.google.code.morphia.mapping.MappedField;
 import com.google.code.morphia.mapping.validation.ConstraintViolationException;
 import com.google.code.morphia.testutil.AssertedFailure;
 import com.google.code.morphia.testutil.TestEntity;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.ConcurrentModificationException;
 
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
@@ -101,7 +99,7 @@ public class VersionTest extends TestBase {
 	@Test
 	public void testConcurrentModDetectionLong() throws Exception {
 		ALong a = new ALong();
-		Assert.assertEquals(null, (Long) a.v);
+		Assert.assertEquals(null, a.v);
 		ds.save(a);
 		final ALong a1 = a;
 		
@@ -118,7 +116,7 @@ public class VersionTest extends TestBase {
 	@Test
     public void testConcurrentModDetectionLongWithMerge() throws Exception {
         ALong a = new ALong();
-        Assert.assertEquals(null, (Long) a.v);
+        Assert.assertEquals(null, a.v);
         ds.save(a);
         final ALong a1 = a;
         
