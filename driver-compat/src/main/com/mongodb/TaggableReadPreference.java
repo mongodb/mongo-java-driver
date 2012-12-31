@@ -18,10 +18,12 @@
 package com.mongodb;
 
 import org.bson.types.Document;
+import org.bson.util.annotations.Immutable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Immutable
 public class TaggableReadPreference extends ReadPreference {
     private final org.mongodb.TaggableReadPreference proxiedTaggable;
 

@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import org.bson.util.annotations.ThreadSafe;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
 import org.mongodb.operation.MongoFindAndReplace;
@@ -42,6 +43,7 @@ import org.mongodb.result.UpdateResult;
  *
  * @param <T> The type that this collection will serialize documents from and to
  */
+@ThreadSafe
 public interface MongoCollection<T> extends MongoCollectionBase<T> {
 
     MongoCursor<T> find(MongoFind find);

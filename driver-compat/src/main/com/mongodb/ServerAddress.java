@@ -17,10 +17,13 @@
 
 package com.mongodb;
 
+import org.bson.util.annotations.Immutable;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+@Immutable
 public class ServerAddress {
     private final org.mongodb.ServerAddress proxied;
 

@@ -18,10 +18,12 @@
 package org.mongodb;
 
 import org.bson.types.Document;
+import org.bson.util.annotations.Immutable;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
+@Immutable
 public class MongoDatabaseOptions {
     final PrimitiveSerializers primitiveSerializers;
     final WriteConcern writeConcern;

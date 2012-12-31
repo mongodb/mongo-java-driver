@@ -17,6 +17,7 @@
 
 package com.mongodb;
 
+import org.bson.util.annotations.ThreadSafe;
 import org.mongodb.MongoClient;
 import org.mongodb.impl.SingleServerMongoClient;
 
@@ -24,6 +25,7 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+@ThreadSafe
 public class Mongo {
     private final SingleServerMongoClient client;
     private final ConcurrentMap<String, DB> dbCache = new ConcurrentHashMap<String, DB>();

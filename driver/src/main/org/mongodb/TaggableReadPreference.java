@@ -18,6 +18,7 @@
 package org.mongodb;
 
 import org.bson.types.Document;
+import org.bson.util.annotations.Immutable;
 import org.mongodb.rs.ReplicaSet;
 import org.mongodb.rs.ReplicaSetNode;
 import org.mongodb.rs.Tag;
@@ -29,6 +30,7 @@ import java.util.List;
 /**
  * Abstract class for all preference which can be combined with tags
  */
+@Immutable
 public abstract class TaggableReadPreference extends ReadPreference {
     private static final List<Document> EMPTY = new ArrayList<Document>();
 

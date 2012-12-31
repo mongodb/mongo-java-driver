@@ -16,17 +16,18 @@
 
 package org.mongodb;
 
+import org.bson.util.annotations.NotThreadSafe;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoKillCursor;
-import org.mongodb.result.ServerCursor;
 import org.mongodb.result.QueryResult;
-import org.mongodb.serialization.serializers.DocumentSerializer;
+import org.mongodb.result.ServerCursor;
 
 import java.io.Closeable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+@NotThreadSafe
 public class MongoCursor<T> implements Iterator<T>, Closeable {
     private final MongoCollection<T> collection;
     private final MongoFind find;
@@ -37,8 +38,7 @@ public class MongoCursor<T> implements Iterator<T>, Closeable {
         this.collection = collection;
         this.find = find;
         currentResult = collection.getClient().getOperations().query(collection.getNamespace(), find,
-                                                                     new DocumentSerializer(
-                                                                             collection.getOptions().getPrimitiveSerializers()),
+                                                                     collection.getOptions().getDocumentSerializer(),
                                                                      collection.getSerializer());
         currentIterator = currentResult.getResults().iterator();
     }

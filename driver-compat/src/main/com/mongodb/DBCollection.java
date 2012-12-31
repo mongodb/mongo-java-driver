@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import org.bson.types.Document;
+import org.bson.util.annotations.ThreadSafe;
 import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.OrderBy;
@@ -39,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@ThreadSafe
 public class DBCollection {
     private final MongoCollection<DBObject> collection;
     private final DB database;

@@ -17,6 +17,8 @@
 
 package org.mongodb;
 
+import org.bson.util.annotations.Immutable;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -24,6 +26,7 @@ import java.net.UnknownHostException;
 /**
  * Represents the location of a Mongo server - i.e. server name and port number
  */
+@Immutable
 public class ServerAddress {
     private final String _host;
     private final int _port;

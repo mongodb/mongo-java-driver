@@ -17,6 +17,8 @@
 package org.mongodb;
 
 
+import org.bson.util.annotations.ThreadSafe;
+
 import java.io.Closeable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -24,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * Additions to this interface will not be considered to break binary compatibility.
  */
+@ThreadSafe
 public interface MongoClient extends Closeable {
     /**
      * @param databaseName the name of the database to retrieve

@@ -18,6 +18,8 @@
 
 package com.mongodb;
 
+import org.bson.util.annotations.Immutable;
+
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -36,6 +38,7 @@ import java.util.Map;
  *
  * @dochub databases
  */
+@Immutable
 public class WriteConcern implements Serializable {
 
     private static final long serialVersionUID = 1884671104750417011L;

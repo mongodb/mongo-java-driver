@@ -131,7 +131,6 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public RemoveResult remove(final MongoRemove remove) {
-        // TODO: need a serializer to pass in here
         return getClient().getOperations().remove(getNamespace(), remove.writeConcernIfAbsent(options.getWriteConcern()),
                                                   getDocumentSerializer());
     }
@@ -142,6 +141,6 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     private Serializer<Document> getDocumentSerializer() {
-        return new DocumentSerializer(options.getPrimitiveSerializers());
+        return options.getDocumentSerializer();
     }
 }

@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.serializers.CollectibleDBObjectSerializer;
 import com.mongodb.serializers.DocumentSerializer;
+import org.bson.util.annotations.ThreadSafe;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
@@ -28,6 +29,7 @@ import org.mongodb.serialization.serializers.ObjectIdGenerator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+@ThreadSafe
 public class DB {
     private final Mongo mongo;
     private final MongoDatabase database;

@@ -18,9 +18,11 @@
 package org.mongodb;
 
 import org.bson.types.Document;
+import org.bson.util.annotations.Immutable;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 
+@Immutable
 public class MongoCollectionOptions extends MongoDatabaseOptions {
     public static Builder builder() {
         return new Builder();

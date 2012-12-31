@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import org.bson.types.Document;
+import org.bson.util.annotations.ThreadSafe;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.CollectibleSerializer;
@@ -25,6 +26,7 @@ import org.mongodb.serialization.PrimitiveSerializers;
 /**
  * Additions to this interface will not be considered to break binary compatibility.
  */
+@ThreadSafe
 public interface MongoDatabase {
     String getName();
 
