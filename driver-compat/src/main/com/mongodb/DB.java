@@ -17,9 +17,12 @@
 package com.mongodb;
 
 import com.mongodb.serializers.CollectibleDBObjectSerializer;
+import com.mongodb.serializers.DocumentSerializer;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoDatabase;
+import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.ObjectIdGenerator;
 
 import java.util.Set;
@@ -34,7 +37,17 @@ public class DB {
 
     DB(final Mongo mongo, final String dbName) {
         this.mongo = mongo;
-        database = mongo.getNew().getDatabase(dbName);
+        database = mongo.getNew().getDatabase(dbName, MongoDatabaseOptions.builder()
+                .primitiveSerializers(PrimitiveSerializers.createDefault())
+                .documentSerializer(new DocumentSerializer(PrimitiveSerializers.createDefault())).build());
+    }
+
+    public void setReadPreference(final ReadPreference readPreference) {
+        this.readPreference = readPreference;
+    }
+
+    public void setWriteConcern(final WriteConcern writeConcern) {
+        this.writeConcern = writeConcern;
     }
 
     public ReadPreference getReadPreference() {

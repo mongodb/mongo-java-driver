@@ -25,9 +25,6 @@ import org.bson.BSONObject;
  * @dochub dbrefs
  */
 public class DBRef extends DBRefBase {
-
-    static final boolean D = Boolean.getBoolean( "DEBUG.DBREF" );
-
     /**
      * Creates a DBRef
      * @param db the database

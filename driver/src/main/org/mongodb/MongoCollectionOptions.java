@@ -17,7 +17,9 @@
 
 package org.mongodb;
 
+import org.bson.types.Document;
 import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 
 public class MongoCollectionOptions extends MongoDatabaseOptions {
     public static Builder builder() {
@@ -29,12 +31,13 @@ public class MongoCollectionOptions extends MongoDatabaseOptions {
             builder.primitiveSerializers = primitiveSerializers != null ? primitiveSerializers : options.getPrimitiveSerializers();
             builder.writeConcern = writeConcern != null ? writeConcern : options.getWriteConcern();
             builder.readPreference = readPreference != null ? readPreference : options.getReadPreference();
+            builder.documentSerializer = documentSerializer != null ? documentSerializer : options.getDocumentSerializer();
             return builder.build();
     }
 
-    public static class Builder<T> extends MongoDatabaseOptions.Builder {
+    public static class Builder extends MongoDatabaseOptions.Builder {
         public MongoCollectionOptions build() {
-            return new MongoCollectionOptions(primitiveSerializers, writeConcern, readPreference);
+            return new MongoCollectionOptions(primitiveSerializers, writeConcern, readPreference, documentSerializer);
         }
 
         private Builder() {
@@ -42,7 +45,7 @@ public class MongoCollectionOptions extends MongoDatabaseOptions {
     }
 
     private MongoCollectionOptions(final PrimitiveSerializers primitiveSerializers, final WriteConcern writeConcern,
-                                   final ReadPreference readPreference) {
-        super(primitiveSerializers, writeConcern, readPreference);
+                                   final ReadPreference readPreference, final Serializer<Document> documentSerializer) {
+        super(primitiveSerializers, writeConcern, readPreference, documentSerializer);
     }
 }

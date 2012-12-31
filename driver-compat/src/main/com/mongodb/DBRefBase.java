@@ -18,11 +18,15 @@
 
 package com.mongodb;
 
+import org.mongodb.DBRef;
+
 /**
  * represents a database reference, which points to an object stored in the database
  */
-public class DBRefBase extends org.mongodb.DBRef {
+public class DBRefBase {
 
+    private final DB _db;
+    private final org.mongodb.DBRef proxied;
 
     /**
      * Creates a DBRefBase
@@ -32,14 +36,32 @@ public class DBRefBase extends org.mongodb.DBRef {
      * @param id the object id
      */
     public DBRefBase(DB db, String ns, Object id) {
-        super(id, ns);
+        proxied = new DBRef(id, ns);
         _db = db;
+    }
+
+    /**
+     * Gets the object's id
+     *
+     * @return the id of the referenced document
+     */
+    public Object getId() {
+        return proxied.getId();
+    }
+
+    /**
+     * Gets the document's collection name.
+     *
+     * @return the name of the collection that the reference document is in
+     */
+    public String getRef() {
+        return proxied.getRef();
     }
 
     /**
      * Gets the database
      *
-     * @return
+     * @return the database
      */
     public DB getDB() {
         return _db;
@@ -49,27 +71,14 @@ public class DBRefBase extends org.mongodb.DBRef {
     /**
      * fetches the object referenced from the database
      *
-     * @return
+     * @return the document that this references.
      * @throws MongoException
      */
     public DBObject fetch() throws MongoException {
-        if (_loadedPointedTo) {
-            return _pointedTo;
-        }
-
         if (_db == null) {
             throw new RuntimeException("no db");
         }
 
-        final DBCollection coll = _db.getCollectionFromString(getRef());
-
-        _pointedTo = coll.findOne(getId());
-        _loadedPointedTo = true;
-        return _pointedTo;
+        return _db.getCollectionFromString(proxied.getRef()).findOne(proxied.getId());
     }
-
-    final DB _db;
-
-    private boolean _loadedPointedTo = false;
-    private DBObject _pointedTo;
 }
