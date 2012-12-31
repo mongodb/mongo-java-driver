@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

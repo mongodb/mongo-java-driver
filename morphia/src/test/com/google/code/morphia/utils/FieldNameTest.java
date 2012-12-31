@@ -15,8 +15,8 @@ public class FieldNameTest {
 	@Test
 	public void testFieldNameOf() throws Exception {
 		String name = "foo";
-		junit.framework.Assert.assertEquals("foo", FieldName.of("foo"));
-		junit.framework.Assert.assertEquals("bar", FieldName.of("bar"));
+		org.junit.Assert.assertEquals("foo", FieldName.of("foo"));
+		org.junit.Assert.assertEquals("bar", FieldName.of("bar"));
 		new AssertedFailure(FieldName.FieldNameNotFoundException.class) {
 			
 			@Override
@@ -24,8 +24,8 @@ public class FieldNameTest {
 				FieldName.of("buh");
 			}
 		};
-		junit.framework.Assert.assertEquals("x", FieldName.of(E2.class, "x"));
-		junit.framework.Assert.assertEquals("y", FieldName.of(E2.class, "y"));
+		org.junit.Assert.assertEquals("x", FieldName.of(E2.class, "x"));
+		org.junit.Assert.assertEquals("y", FieldName.of(E2.class, "y"));
 	}
 }
 

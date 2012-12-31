@@ -7,7 +7,7 @@ import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.dao.BasicDAO;
 import com.mongodb.Mongo;
 import com.mongodb.MongoException;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;

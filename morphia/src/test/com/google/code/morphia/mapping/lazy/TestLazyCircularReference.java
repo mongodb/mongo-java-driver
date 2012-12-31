@@ -1,6 +1,6 @@
 package com.google.code.morphia.mapping.lazy;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

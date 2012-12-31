@@ -1,12 +1,5 @@
 package com.google.code.morphia.issue325;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import junit.framework.Assert;
-
-import org.junit.Test;
-
 import com.google.code.morphia.TestBase;
 import com.google.code.morphia.annotations.Embedded;
 import com.google.code.morphia.annotations.Entity;
@@ -15,6 +8,11 @@ import com.google.code.morphia.annotations.PreLoad;
 import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.mapping.Mapper;
 import com.mongodb.DBObject;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
