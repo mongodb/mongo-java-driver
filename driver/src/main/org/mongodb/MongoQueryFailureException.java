@@ -20,6 +20,7 @@ package org.mongodb;
 import org.bson.types.Document;
 
 public class MongoQueryFailureException extends MongoServerException {
+    private static final long serialVersionUID = -5113350133297015801L;
     private final Document errorDocument;
 
     public MongoQueryFailureException(final ServerAddress address, final Document errorDocument) {

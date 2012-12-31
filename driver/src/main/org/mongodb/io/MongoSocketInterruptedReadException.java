@@ -24,6 +24,8 @@ import java.io.InterruptedIOException;
  * This exception is thrown when there the thread reading a response from the socket is interrupted.
  */
 public class MongoSocketInterruptedReadException extends MongoSocketReadException {
+    private static final long serialVersionUID = -4224929756043496598L;
+
     public MongoSocketInterruptedReadException(final String message, final ServerAddress address,
                                                final InterruptedIOException e) {
         super(message, address, e);
