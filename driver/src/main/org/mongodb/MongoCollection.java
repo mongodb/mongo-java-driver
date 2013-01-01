@@ -17,18 +17,6 @@
 package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoFindAndRemove;
-import org.mongodb.operation.MongoFindAndReplace;
-import org.mongodb.operation.MongoFindAndUpdate;
-import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoRemove;
-import org.mongodb.operation.MongoReplace;
-import org.mongodb.operation.MongoSave;
-import org.mongodb.operation.MongoUpdate;
-import org.mongodb.result.InsertResult;
-import org.mongodb.result.RemoveResult;
-import org.mongodb.result.UpdateResult;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
