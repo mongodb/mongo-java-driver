@@ -17,7 +17,7 @@
 
 package com.mongodb;
 
-import org.bson.util.annotations.Immutable;
+import org.mongodb.annotations.Immutable;
 
 /**
  * A class that represents preferred replica set members to which a query or command can be sent.

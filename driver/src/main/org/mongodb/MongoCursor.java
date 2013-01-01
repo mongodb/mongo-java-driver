@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.bson.util.annotations.NotThreadSafe;
+import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoKillCursor;

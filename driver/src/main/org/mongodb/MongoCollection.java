@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.bson.util.annotations.ThreadSafe;
+import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
 import org.mongodb.operation.MongoFindAndReplace;

@@ -17,7 +17,7 @@
 
 package org.mongodb.rs;
 
-import org.bson.util.annotations.Immutable;
+import org.mongodb.annotations.Immutable;
 
 /**
  * NOT PART OF PUBLIC API YET

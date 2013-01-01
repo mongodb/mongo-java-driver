@@ -17,7 +17,7 @@
 
 package org.mongodb;
 
-import org.bson.util.annotations.Immutable;
+import org.mongodb.annotations.Immutable;
 import org.mongodb.serialization.PrimitiveSerializers;
 
 /**

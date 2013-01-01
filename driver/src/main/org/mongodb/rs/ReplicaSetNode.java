@@ -17,7 +17,7 @@
 
 package org.mongodb.rs;
 
-import org.bson.util.annotations.Immutable;
+import org.mongodb.annotations.Immutable;
 import org.bson.types.Document;
 import org.mongodb.ServerAddress;
 
