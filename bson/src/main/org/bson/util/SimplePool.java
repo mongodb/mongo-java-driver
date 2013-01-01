@@ -33,7 +33,7 @@ public abstract class SimplePool<T> {
     }
 
     public SimplePool() {
-        max = 1000;
+        this(1000);
     }
 
     protected abstract T createNew();
