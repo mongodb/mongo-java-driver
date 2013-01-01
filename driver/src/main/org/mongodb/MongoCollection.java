@@ -30,14 +30,6 @@ import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 
-// TODO: add these
-// update
-// group
-// distinct
-// mapReduce
-// aggregate
-
-
 /**
  * Additions to this interface will not be considered to break binary compatibility.
  *
@@ -48,11 +40,11 @@ public interface MongoCollection<T> extends MongoCollectionBase<T> {
 
     MongoCursor<T> find(MongoFind find);
 
-    T findOne(MongoFind find);  // TODO: MongoFind has too many options for findOne
+    T findOne(MongoFind find);
 
     long count();
 
-    long count(MongoFind find);  // TODO: MongoFind has too many options for count
+    long count(MongoFind find);
 
     T findAndUpdate(MongoFindAndUpdate findAndUpdate);
 
@@ -72,39 +64,3 @@ public interface MongoCollection<T> extends MongoCollectionBase<T> {
 
     UpdateResult save(MongoSave<T> save);
 }
-
-
-//    void save(T document);
-
-//    void save(T document, WriteConcern writeConcern);
-
-//    UpdateResult update(MongoQueryFilter filter, UpdateOperations ops);
-//
-//    /**
-//     * updates all entities found with the operations
-//     */
-//    UpdateResult update(MongoQueryFilter filter, UpdateOperations ops, WriteConcern writeConcern);
-//
-//    /**
-//     * updates the first entity found with the operations
-//     */
-//    UpdateResult updateFirst(MongoQueryFilter filter, UpdateOperations ops);
-//
-//    /**
-//     * updates the first entity found with the operations, if nothing is found insert the update as an entity if "upsert" is true
-//     */
-//    UpdateResult updateFirst(MongoQueryFilter filter, UpdateOperations ops, boolean upsert);
-//
-//    UpdateResult updateFirst(MongoQueryFilter filter, UpdateOperations ops, boolean upsert, WriteConcern writeConcern);
-//
-//    /**
-//     * updates the first entity found with the operations, if nothing is found insert the update as an entity if "upsert" is true
-//     */
-//    UpdateResult replace(MongoQueryFilter filter, T document, boolean upsert);
-//
-//    /**
-//     * updates the first entity found with the operations, if nothing is found insert the update as an entity if "upsert" is true
-//     */
-//    UpdateResult replace(MongoQueryFilter filter, T document, boolean upsert, WriteConcern writeConcern);
-
-
