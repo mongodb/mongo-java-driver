@@ -18,7 +18,7 @@ package com.mongodb;
 
 import com.mongodb.serializers.CollectibleDBObjectSerializer;
 import com.mongodb.serializers.DocumentSerializer;
-import org.bson.util.annotations.ThreadSafe;
+import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;

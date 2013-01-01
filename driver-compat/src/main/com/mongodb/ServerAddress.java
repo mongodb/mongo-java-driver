@@ -17,7 +17,7 @@
 
 package com.mongodb;
 
-import org.bson.util.annotations.Immutable;
+import org.mongodb.annotations.Immutable;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

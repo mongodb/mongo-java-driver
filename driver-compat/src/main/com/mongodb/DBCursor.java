@@ -17,10 +17,10 @@
 package com.mongodb;
 
 import org.mongodb.FieldSelectorDocument;
+import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryFilterDocument;
-import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.MongoFind;
 
 import java.io.Closeable;

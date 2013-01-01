@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.bson.types.Document;
-import org.bson.util.annotations.ThreadSafe;
+import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.CollectibleSerializer;

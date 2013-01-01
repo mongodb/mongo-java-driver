@@ -17,7 +17,7 @@
 
 package com.mongodb;
 
-import org.bson.util.annotations.ThreadSafe;
+import org.mongodb.annotations.ThreadSafe;
 
 import java.net.UnknownHostException;
 

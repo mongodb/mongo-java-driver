@@ -17,7 +17,7 @@
 package com.mongodb;
 
 import org.bson.types.Document;
-import org.bson.util.annotations.ThreadSafe;
+import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoStream;

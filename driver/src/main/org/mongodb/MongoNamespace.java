@@ -17,7 +17,7 @@
 
 package org.mongodb;
 
-import org.bson.util.annotations.Immutable;
+import org.mongodb.annotations.Immutable;
 
 @Immutable
 public final class MongoNamespace {

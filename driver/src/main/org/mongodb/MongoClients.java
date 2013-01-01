@@ -17,7 +17,7 @@
 
 package org.mongodb;
 
-import org.bson.util.annotations.ThreadSafe;
+import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.impl.SingleServerMongoClient;
 
 @ThreadSafe
