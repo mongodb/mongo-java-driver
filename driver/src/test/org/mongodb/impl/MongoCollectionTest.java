@@ -36,7 +36,6 @@ import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.result.InsertResult;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.CollectibleSerializer;
-import org.mongodb.serialization.PrimitiveSerializers;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -198,9 +197,7 @@ public class MongoCollectionTest {
 
     @Test
     public void testFindAndUpdateWithGenerics() {
-        final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
         final MongoCollection<Concrete> collection = mongoDatabase.getTypedCollection("findAndUpdateWithGenerics",
-                                                                                      primitiveSerializers,
                                                                                       new ConcreteSerializer());
 
         final Concrete doc = new Concrete(new ObjectId(), true);

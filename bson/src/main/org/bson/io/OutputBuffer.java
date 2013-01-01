@@ -21,7 +21,6 @@ package org.bson.io;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.channels.SocketChannel;
 
 public abstract class OutputBuffer extends OutputStream {
@@ -40,12 +39,6 @@ public abstract class OutputBuffer extends OutputStream {
 
     public abstract int getPosition();
 
-    public abstract void setPosition(int position);
-
-    public abstract void seekEnd();
-
-    public abstract void seekStart();
-
     /**
      * @return size of data so far
      */
@@ -54,8 +47,7 @@ public abstract class OutputBuffer extends OutputStream {
     /**
      * @return bytes written
      */
-    public abstract int pipe(OutputStream out)
-            throws IOException;
+    public abstract int pipe(OutputStream out) throws IOException;
 
     /**
      * Pipe into the socket channel
@@ -75,15 +67,6 @@ public abstract class OutputBuffer extends OutputStream {
         } catch (IOException ioe) {
             throw new RuntimeException("should be impossible", ioe);
         }
-    }
-
-    public String asString() {
-        return new String(toByteArray());
-    }
-
-    public String asString(final String encoding)
-            throws UnsupportedEncodingException {
-        return new String(toByteArray(), encoding);
     }
 
 
@@ -107,20 +90,13 @@ public abstract class OutputBuffer extends OutputStream {
      *
      * @param size the size of the document/string
      */
-    public void backpatchSize(final int size) {
-        writeInt(getPosition() - size, size);
-    }
+    public abstract void backpatchSize(final int size);
 
     protected void backpatchSize(final int size, final int additionalOffset) {
         writeInt(getPosition() - size - additionalOffset, size);
     }
 
-    public void writeInt(final int pos, final int x) {
-        final int save = getPosition();
-        setPosition(pos);
-        writeInt(x);
-        setPosition(save);
-    }
+    public abstract void writeInt(final int pos, final int x);
 
     public void writeLong(final long x) {
         write((byte) (0xFFL & (x >> 0)));
@@ -138,7 +114,6 @@ public abstract class OutputBuffer extends OutputStream {
     }
 
     public void writeString(final String str) {
-        final int lenPos = getPosition();
         writeInt(0); // making space for size
         final int strLen = writeCString(str);
         backpatchSize(strLen, 4);

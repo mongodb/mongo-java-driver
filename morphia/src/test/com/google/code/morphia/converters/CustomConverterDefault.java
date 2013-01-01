@@ -79,11 +79,11 @@ public class CustomConverterDefault extends TestBase {
 		e.foo = new Foo("test");
 		ds.save(e);
 		
-		junit.framework.Assert.assertTrue(fc.didConversion());
+		org.junit.Assert.assertTrue(fc.didConversion());
 		
 		e = ds.find(E.class).get();
-		junit.framework.Assert.assertNotNull(e.foo);
-		junit.framework.Assert.assertEquals(e.foo.string, "test");
+		org.junit.Assert.assertNotNull(e.foo);
+		org.junit.Assert.assertEquals(e.foo.string, "test");
 		
 	}
 	

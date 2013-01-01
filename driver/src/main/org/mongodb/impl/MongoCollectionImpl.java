@@ -21,6 +21,7 @@ import org.mongodb.Block;
 import org.mongodb.CollectionAdmin;
 import org.mongodb.Function;
 import org.mongodb.MongoCollection;
+import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoIterable;
 import org.mongodb.MongoReadableStream;
@@ -50,7 +51,6 @@ import org.mongodb.result.QueryResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.CollectibleSerializer;
-import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
@@ -61,11 +61,10 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     private CollectionAdmin admin;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final PrimitiveSerializers primitiveSerializers,
-                               final CollectibleSerializer<T> serializer, final WriteConcern writeConcern,
-                               final ReadPreference readPreference) {
-        super(serializer, name, database, writeConcern, readPreference, primitiveSerializers);
-        admin = new CollectionAdminImpl(database.getClient().getOperations(), primitiveSerializers, database.getName(),
+                               final CollectibleSerializer<T> serializer,
+                               final MongoCollectionOptions options) {
+        super(serializer, name, database, options);
+        admin = new CollectionAdminImpl(database.getClient().getOperations(), options.getPrimitiveSerializers(), database.getName(),
                                         name);
     }
 
@@ -210,7 +209,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     private Serializer<Document> getDocumentSerializer() {
-        return new DocumentSerializer(primitiveSerializers);
+        return options.getDocumentSerializer();
     }
 
     private class MongoCollectionStream implements MongoStream<T> {
@@ -222,13 +221,13 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
         private MongoCollectionStream() {
             findOp = new MongoFind();
-            findOp.readPreference(getReadPreference());
-            writeConcern = getWriteConcern();
+            findOp.readPreference(getOptions().getReadPreference());
+            writeConcern = getOptions().getWriteConcern();
         }
 
         private MongoCollectionStream(MongoCollectionStream from) {
             findOp = new MongoFind(from.findOp);
-            writeConcern = getWriteConcern();
+            writeConcern = getOptions().getWriteConcern();
             upsert = from.upsert;
             limitSet = from.limitSet;
             returnNew = from.returnNew;
@@ -302,7 +301,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         @Override
         public T findOne() {
             QueryResult<T> res = getClient().getOperations().query(getNamespace(), findOp.batchSize(-1),
-                                                                   new DocumentSerializer(getPrimitiveSerializers()),
+                                                                   getDocumentSerializer(),
                                                                    getSerializer());
             if (res.getResults().isEmpty()) {
                 return null;
@@ -420,7 +419,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             MongoFindAndUpdate findAndUpdate = new MongoFindAndUpdate().where(findOp.getFilter()).updateWith(
                     updateOperations).returnNew(returnNew).select(findOp.getFields()).upsert(upsert).sortBy(
                     findOp.getOrder());
-            return new FindAndUpdateCommand<T>(MongoCollectionImpl.this, findAndUpdate, getPrimitiveSerializers(),
+            return new FindAndUpdateCommand<T>(MongoCollectionImpl.this, findAndUpdate, getOptions().getPrimitiveSerializers(),
                                                getSerializer()).execute().getValue();
         }
 
@@ -429,7 +428,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             MongoFindAndReplace findAndReplace = new MongoFindAndReplace<T>(replacement).where(
                     findOp.getFilter()).returnNew(returnNew).select(findOp.getFields()).upsert(upsert).sortBy(
                     findOp.getOrder());
-            return new FindAndReplaceCommand<T>(MongoCollectionImpl.this, findAndReplace, getPrimitiveSerializers(),
+            return new FindAndReplaceCommand<T>(MongoCollectionImpl.this, findAndReplace, getOptions().getPrimitiveSerializers(),
                                                 getSerializer()).execute().getValue();
         }
 
@@ -438,7 +437,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             MongoFindAndRemove findAndRemove = new MongoFindAndRemove().where(findOp.getFilter()).select(
                     findOp.getFields()).sortBy(findOp.getOrder());
 
-            return new FindAndRemoveCommand<T>(MongoCollectionImpl.this, findAndRemove, getPrimitiveSerializers(),
+            return new FindAndRemoveCommand<T>(MongoCollectionImpl.this, findAndRemove, getOptions().getPrimitiveSerializers(),
                                                getSerializer()).execute().getValue();
         }
 

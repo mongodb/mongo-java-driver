@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb;
@@ -24,7 +23,6 @@ import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.CollectibleSerializer;
-import org.mongodb.serialization.PrimitiveSerializers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,12 +39,6 @@ public class MongoStreamTest extends MongoClientTestBase {
             System.out.println(cur);
         }
 
-<<<<<<< HEAD
-        try (MongoCursor<Document> cursor = collection.find()) {
-            while (cursor.hasNext()) {
-                System.out.println(cursor.next());
-            }
-=======
         MongoCursor<Document> cursor = collection.find();
         try {
             while (cursor.hasNext()) {
@@ -54,7 +46,6 @@ public class MongoStreamTest extends MongoClientTestBase {
             }
         } finally {
             cursor.close();
->>>>>>> 2581ac438f6a37fd91f641fef480bce7be5877d1
         }
 
         for (Document cur : collection.filter(new QueryFilterDocument("_id", 1))) {
@@ -82,9 +73,19 @@ public class MongoStreamTest extends MongoClientTestBase {
         doc = collection.filter(new QueryFilterDocument("_id", 1)).findOne();
         System.out.println(doc);
 
-        collection.forEach(e -> System.out.println(e));
+        collection.forEach(new Block<Document>() {
+            @Override
+            public void run(final Document e) {
+                System.out.println(e);
+            }
+        });
 
-        collection.forEach(System.out::println);
+        collection.forEach(new Block<Document>() {
+            @Override
+            public void run(final Document t) {
+                System.out.println(t);
+            }
+        });
 
         collection.forEach(new Block<Document>() {
             public void run(final Document document) {
@@ -92,13 +93,36 @@ public class MongoStreamTest extends MongoClientTestBase {
             }
         });
 
-        for (Integer id : collection.map(document -> (Integer) document.get("_id"))) {
+        for (Integer id : collection.map(new Function<Document, Integer>() {
+            @Override
+            public Integer apply(final Document document) {
+                return (Integer) document.get("_id");
+            }
+        })) {
             System.out.println(id);
         }
 
-        collection.map(document -> (Integer) document.get("_id")).forEach(System.out::println);
+        collection.map(new Function<Document, Integer>() {
+            @Override
+            public Integer apply(final Document document) {
+                return (Integer) document.get("_id");
+            }
+        });
 
-        List<Integer> idList = collection.map(document -> (Integer) document.get("_id")).into(new ArrayList<Integer>());
+
+        collection.forEach(new Block<Document>() {
+            @Override
+            public void run(final Document t) {
+                System.out.println(t);
+            }
+        });
+
+        List<Integer> idList = collection.map(new Function<Document, Integer>() {
+            @Override
+            public Integer apply(final Document document) {
+                return (Integer) document.get("_id");
+            }
+        }).into(new ArrayList<Integer>());
 
         System.out.println(idList);
     }
@@ -110,18 +134,13 @@ public class MongoStreamTest extends MongoClientTestBase {
 
         collection.update(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
-<<<<<<< HEAD
+        collection.filter(new QueryFilterDocument("_id", 1)).update(
+                new UpdateOperationsDocument("$set", new Document("x", 1)));
+
         collection.filter(new QueryFilterDocument("_id", 1)).update(
                 new UpdateOperationsDocument("$set", new Document("x", 1)));
 
         collection.filter(new QueryFilterDocument("_id", 2)).upsert().update(
-=======
-        collection.filter(
-                new QueryFilterDocument("_id", 1)).update(new UpdateOperationsDocument("$set", new Document("x", 1)));
-
-        collection.filter(
-                new QueryFilterDocument("_id", 2)).upsert().update(
->>>>>>> 2581ac438f6a37fd91f641fef480bce7be5877d1
                 new UpdateOperationsDocument("$set", new Document("x", 1)));
 
         Document doc = collection.filter(new QueryFilterDocument("_id", 1)).
@@ -132,19 +151,30 @@ public class MongoStreamTest extends MongoClientTestBase {
     @Test
     public void testTypeCollection() {
         MongoCollection<Concrete> concreteCollection = getDatabase().getTypedCollection(collection.getName(),
-                                                                                        PrimitiveSerializers.createDefault(),
                                                                                         new ConcreteSerializer());
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
 
-<<<<<<< HEAD
-        System.out.println(concreteCollection.filter(new QueryFilterDocument("i", 1)).map(concrete -> concrete.id).map(
-                ObjectId::toString).into(new ArrayList<String>()));
-=======
         System.out.println(
-                concreteCollection.filter(new QueryFilterDocument("i", 1))
-                        .map((final Concrete concrete) -> concrete.id).into(new ArrayList<ObjectId>()));
->>>>>>> 2581ac438f6a37fd91f641fef480bce7be5877d1
+                concreteCollection.filter(new QueryFilterDocument("i", 1)).map(new Function<Concrete, ObjectId>() {
+                    @Override
+                    public ObjectId apply(final Concrete concrete) {
+                        return concrete.id;
+                    }
+                }).map(new Function<ObjectId, String>() {
+                    @Override
+                    public String apply(final ObjectId o) {
+                        return o.toString();
+                    }
+                }).into(new ArrayList<String>()));
+
+        System.out.println(
+                concreteCollection.filter(new QueryFilterDocument("i", 1)).map(new Function<Concrete, ObjectId>() {
+                    @Override
+                    public ObjectId apply(final Concrete concrete) {
+                        return concrete.id;
+                    }
+                }).into(new ArrayList<ObjectId>()));
     }
 }
 

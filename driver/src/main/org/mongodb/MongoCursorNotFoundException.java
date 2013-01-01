@@ -25,6 +25,7 @@ import org.mongodb.result.ServerCursor;
  * Exception thrown when a getmore is executed but the cursorId is no longer available on the server
  */
 public class MongoCursorNotFoundException extends MongoException {
+    private static final long serialVersionUID = 7890793341600725191L;
     private final ServerCursor cursor;
 
     public MongoCursorNotFoundException(ServerCursor cursor) {

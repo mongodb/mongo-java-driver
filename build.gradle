@@ -103,6 +103,10 @@ subprojects {
     }
 }
 
+project(':common') {
+
+}
+
 project(':bson') {
     jar {
         manifest {
@@ -120,6 +124,10 @@ project(':bson') {
             )
         }
     }
+    dependencies {
+        compile project(':common')
+    }
+
 }
 
 project(':driver') {
@@ -177,6 +185,7 @@ project(':driver') {
     }
 
     dependencies {
+        compile project(':common')
         compile project(':bson')
         acceptanceCompile 'junit:junit:4.11'
         acceptanceCompile sourceSets.main.runtimeClasspath

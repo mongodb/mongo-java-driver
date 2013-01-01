@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="driver" />
     <orderEntry type="module" module-name="bson" />
     <orderEntry type="library" name="lib" level="project" />
+    <orderEntry type="module" module-name="common" />
   </component>
 </module>
 

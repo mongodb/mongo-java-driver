@@ -17,7 +17,7 @@
 package org.mongodb;
 
 
-import org.mongodb.serialization.PrimitiveSerializers;
+import org.bson.util.annotations.ThreadSafe;
 
 import java.io.Closeable;
 import java.util.concurrent.Callable;
@@ -26,12 +26,19 @@ import java.util.concurrent.ExecutionException;
 /**
  * Additions to this interface will not be considered to break binary compatibility.
  */
+@ThreadSafe
 public interface MongoClient extends Closeable {
     /**
      * @param databaseName the name of the database to retrieve
      * @return a MongoDatabase representing the specified database
      */
     MongoDatabase getDatabase(String databaseName);
+
+    /**
+     * @param databaseName the name of the database to retrieve
+     * @return a MongoDatabase representing the specified database
+     */
+    MongoDatabase getDatabase(String databaseName, MongoDatabaseOptions options);
 
     /**
      * @return operations over this client
@@ -53,21 +60,15 @@ public interface MongoClient extends Closeable {
     <T> T withConnection(final Callable<T> callable) throws ExecutionException;
 
     /**
-     *
+     * Close the client, releasing all resources.  Implementations of this method should be idempotent.
      */
     void close();
 
     /**
-     * @return
+     * Get the options for this client.
+     * @return the options
      */
-    WriteConcern getWriteConcern();
-
-    /**
-     * @return
-     */
-    ReadPreference getReadPreference();
-
-    PrimitiveSerializers getPrimitiveSerializers();
+    MongoClientOptions getOptions();
 
     /**
      * @return the ClientAdmin that provides admin methods that can be performed

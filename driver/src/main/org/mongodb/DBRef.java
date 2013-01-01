@@ -27,11 +27,6 @@ public class DBRef {
         ref = namespace;
     }
 
-    @Override
-    public String toString() {
-        return "{ \"$ref\" : \"" + ref + "\", \"$id\" : \"" + id + "\" }";
-    }
-
     /**
      * Gets the object's id
      *
@@ -59,12 +54,12 @@ public class DBRef {
             return false;
         }
 
-        final DBRef dbRefBase = (DBRef) o;
+        final DBRef dbRef = (DBRef) o;
 
-        if (id != null ? !id.equals(dbRefBase.id) : dbRefBase.id != null) {
+        if (!id.equals(dbRef.id)) {
             return false;
         }
-        if (ref != null ? !ref.equals(dbRefBase.ref) : dbRefBase.ref != null) {
+        if (!ref.equals(dbRef.ref)) {
             return false;
         }
 
@@ -73,8 +68,16 @@ public class DBRef {
 
     @Override
     public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (ref != null ? ref.hashCode() : 0);
+        int result = id.hashCode();
+        result = 31 * result + ref.hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "DBRef{" +
+                "id=" + id +
+                ", ref='" + ref + '\'' +
+                '}';
     }
 }

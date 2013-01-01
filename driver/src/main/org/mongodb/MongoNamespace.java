@@ -17,6 +17,9 @@
 
 package org.mongodb;
 
+import org.bson.util.annotations.Immutable;
+
+@Immutable
 public final class MongoNamespace {
     private final String databaseName;
     private final String collectionName;

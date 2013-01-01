@@ -5,7 +5,7 @@ package com.google.code.morphia.mapping.validation.classrules;
 
 import java.util.ArrayList;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Ignore;
 import org.junit.Test;

@@ -18,7 +18,6 @@
 package org.mongodb;
 
 import org.mongodb.serialization.CollectibleSerializer;
-import org.mongodb.serialization.PrimitiveSerializers;
 
 // TODO: Not such a good name, and may be unnecessary without MongoAsyncCollection
 public interface MongoCollectionBase<T> {
@@ -41,11 +40,7 @@ public interface MongoCollectionBase<T> {
 
     MongoClient getClient();
 
-    WriteConcern getWriteConcern();
-
-    ReadPreference getReadPreference();
-
-    PrimitiveSerializers getPrimitiveSerializers();
+    MongoCollectionOptions getOptions();
 
     CollectibleSerializer<T> getSerializer();
 }

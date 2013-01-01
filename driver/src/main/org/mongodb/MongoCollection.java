@@ -16,19 +16,20 @@
 
 package org.mongodb;
 
+import org.bson.util.annotations.ThreadSafe;
+
 // TODO: add these
 // update
 // group
 // distinct
 // mapReduce
 // aggregate
-
-
 /**
  * Additions to this interface will not be considered to break binary compatibility.
  *
  * @param <T> The type that this collection will serialize documents from and to
  */
+@ThreadSafe
 public interface MongoCollection<T> extends MongoCollectionBase<T>, MongoStream<T> {
     CollectionAdmin admin();
 }

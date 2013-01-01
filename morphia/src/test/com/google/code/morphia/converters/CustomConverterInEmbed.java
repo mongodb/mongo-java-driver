@@ -81,7 +81,7 @@ public class CustomConverterInEmbed extends TestBase {
 		E1 e = new E1();
 		e.foo.add(new Foo("bar"));
 		ds.save(e);
-		junit.framework.Assert.assertTrue(fc.didConversion());
+		org.junit.Assert.assertTrue(fc.didConversion());
 	}
 
 	@Test
@@ -92,13 +92,13 @@ public class CustomConverterInEmbed extends TestBase {
 		e.foo.put("bar",new Foo("bar"));
 		ds.save(e);
 		
-		junit.framework.Assert.assertTrue(fc.didConversion());
+		org.junit.Assert.assertTrue(fc.didConversion());
 		
 		e = ds.find(E2.class).get();
-		junit.framework.Assert.assertNotNull(e.foo);
-		junit.framework.Assert.assertFalse(e.foo.isEmpty());
-		junit.framework.Assert.assertTrue(e.foo.containsKey("bar"));
-		junit.framework.Assert.assertEquals(e.foo.get("bar").string, "bar");
+		org.junit.Assert.assertNotNull(e.foo);
+		org.junit.Assert.assertFalse(e.foo.isEmpty());
+		org.junit.Assert.assertTrue(e.foo.containsKey("bar"));
+		org.junit.Assert.assertEquals(e.foo.get("bar").string, "bar");
 	}
 
 }

@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+// TODO: deserialize into DBRef?
 public class DocumentSerializer implements Serializer<Document> {
     private final PrimitiveSerializers primitiveSerializers;
 
@@ -167,11 +168,12 @@ public class DocumentSerializer implements Serializer<Document> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private List readArray(final BSONReader reader, final BsonSerializationOptions options) {
         reader.readStartArray();
         final List list = new ArrayList();  // TODO: figure out a way to change concrete class
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            list.add(readValue(reader, options, null));   // TODO: why is this a warning?
+            list.add(readValue(reader, options, null));
         }
         reader.readEndArray();
         return list;

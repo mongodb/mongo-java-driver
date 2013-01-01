@@ -1,6 +1,6 @@
 package com.google.code.morphia.callbacks;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.bson.types.ObjectId;
 import org.junit.Test;

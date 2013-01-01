@@ -18,7 +18,6 @@ package org.bson;
 
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferInput;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
@@ -39,8 +38,6 @@ public class BSONBinaryWriterTest {
 
     BSONBinaryWriter writer;
     BasicOutputBuffer buffer;
-    BSONBinaryReader reader;
-
 
     @Before
     public void setup() {

@@ -2,7 +2,7 @@ package com.google.code.morphia.mapping;
 
 import java.util.List;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.bson.types.ObjectId;
 import org.junit.Test;

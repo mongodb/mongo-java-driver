@@ -3,14 +3,14 @@
  */
 package com.google.code.morphia.converters;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.code.morphia.mapping.MappedField;
 import com.google.code.morphia.mapping.MappingException;
 import com.google.code.morphia.utils.IterHelper;
 import com.google.code.morphia.utils.IterHelper.MapIterCallback;
 import com.google.code.morphia.utils.ReflectionUtils;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
@@ -37,7 +37,7 @@ public class MapOfValuesConverter extends TypeConverter {
 
 
 		final Map values = mapr.getOptions().objectFactory.createMap(mf);
-		new IterHelper<Object, Object>().loopMap((Object)fromDBObject, new MapIterCallback<Object, Object>() {
+		new IterHelper<Object, Object>().loopMap(fromDBObject, new MapIterCallback<Object, Object>() {
 			@Override
 			public void eval(Object key, Object val) {
 					Object objKey = converters.decode(mf.getMapKeyClass(), key);

@@ -3,7 +3,7 @@ package com.google.code.morphia.mapping.lazy;
 import java.util.HashMap;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.bson.types.ObjectId;
 import org.junit.Test;

@@ -17,13 +17,19 @@
 
 package org.mongodb;
 
+import org.bson.util.annotations.ThreadSafe;
 import org.mongodb.impl.SingleServerMongoClient;
 
+@ThreadSafe
 public class MongoClients {
     private MongoClients() {
     }
 
     public static MongoClient create(final ServerAddress serverAddress) {
         return new SingleServerMongoClient(serverAddress);
+    }
+
+    public static MongoClient create(final ServerAddress serverAddress, MongoClientOptions options) {
+        return new SingleServerMongoClient(serverAddress, options);
     }
 }

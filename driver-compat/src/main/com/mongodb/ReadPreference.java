@@ -17,11 +17,14 @@
 
 package com.mongodb;
 
+import org.bson.util.annotations.Immutable;
+
 /**
  * A class that represents preferred replica set members to which a query or command can be sent.
  *
  * @mongodb.driver.manual applications/replication/#replica-set-read-preference  Read Preference
  */
+@Immutable
 public class ReadPreference {
     /**
      * A primary read preference.  Equivalent to calling {@code ReadPreference.primary()}.

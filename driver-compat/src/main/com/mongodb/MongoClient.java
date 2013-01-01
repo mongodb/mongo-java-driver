@@ -17,8 +17,11 @@
 
 package com.mongodb;
 
+import org.bson.util.annotations.ThreadSafe;
+
 import java.net.UnknownHostException;
 
+@ThreadSafe
 public class MongoClient extends Mongo {
     /**
      * Creates an instance based on a (single) mongodb node (localhost, default port).

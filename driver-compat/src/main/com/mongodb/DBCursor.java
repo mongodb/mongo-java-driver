@@ -20,12 +20,14 @@ import org.mongodb.FieldSelectorDocument;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryFilterDocument;
+import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.MongoFind;
 
 import java.io.Closeable;
 import java.util.Iterator;
 import java.util.List;
 
+@NotThreadSafe
 public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeable {
     private final MongoCollection<DBObject> collection;
     private MongoCursor<DBObject> cursor;

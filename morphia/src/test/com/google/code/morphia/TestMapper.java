@@ -6,7 +6,7 @@ import com.google.code.morphia.annotations.PostLoad;
 import com.google.code.morphia.annotations.Property;
 import com.google.code.morphia.annotations.Reference;
 import com.google.code.morphia.mapping.lazy.LazyFeatureDependencies;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 

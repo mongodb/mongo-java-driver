@@ -3,7 +3,7 @@
  */
 package com.google.code.morphia.issue45;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import org.bson.types.Document;
+import org.bson.util.annotations.ThreadSafe;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.CollectibleSerializer;
@@ -25,6 +26,7 @@ import org.mongodb.serialization.PrimitiveSerializers;
 /**
  * Additions to this interface will not be considered to break binary compatibility.
  */
+@ThreadSafe
 public interface MongoDatabase {
     String getName();
 
@@ -32,16 +34,15 @@ public interface MongoDatabase {
 
     MongoClient getClient();
 
-    WriteConcern getWriteConcern();
-
-    ReadPreference getReadPreference();
-
-    PrimitiveSerializers getPrimitiveSerializers();
+    MongoDatabaseOptions getOptions();
 
     MongoCollection<Document> getCollection(String name);
 
-    <T> MongoCollection<T> getTypedCollection(String name, final PrimitiveSerializers basePrimitiveSerializers,
-                                              final CollectibleSerializer<T> serializer);
+    MongoCollection<Document> getCollection(String name, MongoCollectionOptions options);
+
+    <T> MongoCollection<T> getTypedCollection(String name, CollectibleSerializer<T> serializer);
+
+    <T> MongoCollection<T> getTypedCollection(String name, CollectibleSerializer<T> serializer, MongoCollectionOptions options);
 
     DatabaseAdmin admin();
 

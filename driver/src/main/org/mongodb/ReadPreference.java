@@ -18,6 +18,7 @@
 package org.mongodb;
 
 import org.bson.types.Document;
+import org.bson.util.annotations.Immutable;
 import org.mongodb.rs.ReplicaSet;
 import org.mongodb.rs.ReplicaSetNode;
 
@@ -26,6 +27,7 @@ import org.mongodb.rs.ReplicaSetNode;
  *
  * @mongodb.driver.manual applications/replication/#replica-set-read-preference  Read Preference
  */
+@Immutable
 public abstract class ReadPreference implements ConvertibleToDocument {
 
     ReadPreference() {
