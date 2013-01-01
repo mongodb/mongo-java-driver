@@ -7,7 +7,7 @@
         <entry key="check-nonjava-files" value="false" />
         <entry key="check-test-classes" value="false" />
         <entry key="location-0" value="CLASSPATH:/sun_checks.xml:The default CheckStyle rules" />
-        <entry key="location-1" value="FILE:$PROJECT_DIR$/config/checkstyle.xml:Checkstyle" />
+        <entry key="location-1" value="file:$PROJECT_DIR$/config/checkstyle.xml:Checkstyle" />
         <entry key="thirdparty-classpath" value="" />
       </map>
     </option>
