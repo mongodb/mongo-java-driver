@@ -16,6 +16,16 @@
 
 def configDir = new File(rootDir, 'config')
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "net.saliman:gradle-cobertura-plugin:1.1.0"
+    }
+}
+
+
 allprojects {
     apply plugin: 'idea'
     apply plugin: 'eclipse'
@@ -28,6 +38,7 @@ subprojects {
     apply plugin: 'findbugs'
     apply plugin: 'maven'
     apply plugin: 'osgi'
+    apply plugin: 'cobertura'
 
 
     group = 'org.mongodb'
@@ -46,6 +57,10 @@ subprojects {
 
     pmd {
         ignoreFailures = true
+    }
+
+    cobertura {
+        coverageFormats = [ 'xml','html' ]
     }
 
     repositories {
