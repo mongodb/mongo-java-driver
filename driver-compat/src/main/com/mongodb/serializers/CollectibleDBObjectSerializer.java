@@ -17,6 +17,7 @@
 
 package com.mongodb.serializers;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBObject;
 import org.bson.BSONWriter;
@@ -35,10 +36,13 @@ public class CollectibleDBObjectSerializer extends DBObjectSerializer implements
 
     public CollectibleDBObjectSerializer(final DB db, final PrimitiveSerializers primitiveSerializers,
                                          final IdGenerator idGenerator) {
-        super(db, primitiveSerializers);
-        if (idGenerator == null) {
-            throw new IllegalArgumentException("idGenerator is null");
-        }
+        this(db, primitiveSerializers, idGenerator, BasicDBObject.class);
+    }
+
+    public CollectibleDBObjectSerializer(final DB db, final PrimitiveSerializers primitiveSerializers,
+                                         final IdGenerator idGenerator,
+                                         final Class<? extends DBObject> clazz) {
+        super(db, primitiveSerializers, clazz);
         this.idGenerator = idGenerator;
     }
 

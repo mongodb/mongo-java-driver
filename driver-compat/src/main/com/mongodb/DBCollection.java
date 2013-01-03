@@ -16,11 +16,12 @@
 
 package com.mongodb;
 
+import com.mongodb.serializers.CollectibleDBObjectSerializer;
 import org.bson.types.Document;
-import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.OrderBy;
+import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.DropCollectionCommand;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.operation.MongoFind;
@@ -35,6 +36,8 @@ import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
+import org.mongodb.serialization.serializers.ObjectIdGenerator;
+import org.mongodb.util.FieldHelpers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,13 +45,16 @@ import java.util.List;
 
 @ThreadSafe
 public class DBCollection {
-    private final MongoCollection<DBObject> collection;
+    private volatile MongoCollection<DBObject> collection;
     private final DB database;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
-    DBCollection(final MongoCollection<DBObject> collection, final DB database) {
-        this.collection = collection;
+    DBCollection(final String name, final DB database) {
+        this.collection = database.toNew().
+                getTypedCollection(name, new CollectibleDBObjectSerializer(database,
+                                                                           database.getMongo().getNew().getOptions().getPrimitiveSerializers(),
+                                                                           new ObjectIdGenerator()));
         this.database = database;
     }
 
@@ -61,8 +67,8 @@ public class DBCollection {
         return insert(Arrays.asList(documents), getWriteConcern());
     }
 
-    public WriteResult insert(final WriteConcern writeConcernToUse, final DBObject... documents) {
-        return insert(documents, writeConcernToUse);
+    public WriteResult insert(final WriteConcern writeConcern, final DBObject... documents) {
+        return insert(documents, writeConcern);
     }
 
     public WriteResult insert(final DBObject[] documents, final WriteConcern writeConcern) {
@@ -134,7 +140,7 @@ public class DBCollection {
             }
             else {
                 MongoReplace<DBObject> replace = new MongoReplace<DBObject>(DBObjects.toQueryFilterDocument(q), o);
-                replace.isUpsert(upsert);
+                replace.isUpsert(upsert).writeConcern(concern.toNew());
                 result = collection.replace(replace);
             }
             return new WriteResult(result, concern);
@@ -470,9 +476,24 @@ public class DBCollection {
         return collection.count(find);
     }
 
+    /**
+     * Returns the name of this collection.
+     *
+     * @return the name of this collection
+     */
     public String getName() {
         return collection.getName();
     }
+
+    /**
+     * Returns the full name of this collection, with the database name as a prefix.
+     *
+     * @return the name of this collection
+     */
+    public String getFullName() {
+        return collection.getNamespace().getFullName();
+    }
+
 
     /**
      * Finds a collection that is prefixed with this collection's name. A typical use of this might be
@@ -504,7 +525,7 @@ public class DBCollection {
                 name = (String) opts.get("name");
             }
             if (opts.get("unique") != null) {
-                unique = (Boolean) opts.get("unique");
+                unique = FieldHelpers.asBoolean(opts.get("unique"));
             }
         }
         List<Index.Key> keys = new ArrayList<Index.Key>();
@@ -522,6 +543,47 @@ public class DBCollection {
 
         }
         collection.admin().ensureIndex(new Index(name, unique, keys.toArray(new Index.Key[keys.size()])));
+    }
+
+    /**
+     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject,
+     * boolean, com.mongodb.DBObject, boolean, boolean)} with fields=null, remove=false, returnNew=false, upsert=false
+     *
+     * @param query
+     * @param sort
+     * @param update
+     * @return the old document
+     * @throws MongoException
+     */
+    public DBObject findAndModify(DBObject query, DBObject sort, DBObject update) {
+        return findAndModify(query, null, sort, false, update, false, false);
+    }
+
+    /**
+     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject,
+     * boolean, com.mongodb.DBObject, boolean, boolean)} with fields=null, sort=null, remove=false, returnNew=false,
+     * upsert=false
+     *
+     * @param query
+     * @param update
+     * @return the old document
+     * @throws MongoException
+     */
+    public DBObject findAndModify(DBObject query, DBObject update) {
+        return findAndModify(query, null, null, false, update, false, false);
+    }
+
+    /**
+     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject,
+     * boolean, com.mongodb.DBObject, boolean, boolean)} with fields=null, sort=null, remove=true, returnNew=false,
+     * upsert=false
+     *
+     * @param query
+     * @return the removed document
+     * @throws MongoException
+     */
+    public DBObject findAndRemove(DBObject query) {
+        return findAndModify(query, null, null, true, null, false, false);
     }
 
     /**
@@ -573,10 +635,10 @@ public class DBCollection {
      * Set the write concern for this collection. Will be used for writes to this collection. Overrides any setting of
      * write concern at the DB level. See the documentation for {@link WriteConcern} for more information.
      *
-     * @param concern write concern to use
+     * @param writeConcern write concern to use
      */
-    public void setWriteConcern(WriteConcern concern) {
-        concern = concern;
+    public void setWriteConcern(WriteConcern writeConcern) {
+        this.writeConcern = writeConcern;
     }
 
     /**
@@ -662,5 +724,19 @@ public class DBCollection {
             res.add(DBObjects.toDBObject(curIndex));
         }
         return res;
+    }
+
+    /**
+     * Sets a default class for objects in this collection; null resets the class to nothing.
+     *
+     * @param clazz the class
+     * @throws IllegalArgumentException if <code>c</code> is not a DBObject
+     */
+    public void setObjectClass(final Class<? extends DBObject> clazz) {
+        this.collection = database.toNew().
+                getTypedCollection(getName(), new CollectibleDBObjectSerializer(database,
+                                                                           database.getMongo().getNew().getOptions().getPrimitiveSerializers(),
+                                                                           new ObjectIdGenerator(),
+                                                                           clazz));
     }
 }
