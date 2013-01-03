@@ -14,34 +14,29 @@
  * limitations under the License.
  */
 
+package com.google.code.morphia;
 
-package com.google.code.morphia.testutil;
+import org.junit.Assert;
+import org.junit.Test;
 
-import com.google.code.morphia.annotations.Id;
-import org.bson.types.ObjectId;
+import com.google.code.morphia.testmodel.Rectangle;
 
-import java.io.Serializable;
 
 /**
- * Example for a base class to all entities.
- * @author Olafur Gauti Gudmundsson
+ *
+ * @author Scott Hernandez
  */
+@SuppressWarnings({"unused"})
+public class KeyTypeTest extends TestBase {
+	@Test
+    public void testKeyComparisons() throws Exception {
+		Rectangle r = new Rectangle(2,1);
+		Key<Rectangle> k1 = new Key<Rectangle>(Rectangle.class, r.getId());
+		Key<Rectangle> k2 = this.ds.getKey(r);
+		
+		Assert.assertTrue(k1.equals(k2));
+		Assert.assertTrue(k2.equals(k1));
+		
+	}
 
-public abstract class TestEntity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    /** The id for this instance */
-	@Id protected String id = new ObjectId().toString();
-
-    public TestEntity() {
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
 }
