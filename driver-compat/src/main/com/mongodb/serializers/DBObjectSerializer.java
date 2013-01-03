@@ -22,6 +22,8 @@ import com.mongodb.DB;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
 import com.mongodb.DBRefBase;
+import com.mongodb.MongoInternalException;
+import com.mongodb.ReflectionDBObject;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;
@@ -39,21 +41,28 @@ import java.util.List;
 import java.util.Map;
 
 public class DBObjectSerializer implements Serializer<DBObject> {
+    private static final List<String> EMPTY_PATH = Collections.emptyList();
+
     private final PrimitiveSerializers primitiveSerializers;
     private final DB db;
-    private final Class<? extends DBObject> topLevelClass;
     private final Map<List<String>, Class<? extends DBObject>> pathToClassMap;
+    private final ReflectionDBObject.JavaWrapper wrapper;
 
     public DBObjectSerializer(final DB db, final PrimitiveSerializers primitiveSerializers,
                               final Class<? extends DBObject> topLevelClass,
                               final HashMap<String, Class<? extends DBObject>> stringPathToClassMap) {
         this.db = db;
-        this.topLevelClass = topLevelClass;
-        this.pathToClassMap = createPathToClassMap(topLevelClass, stringPathToClassMap);
         if (primitiveSerializers == null) {
             throw new IllegalArgumentException("primitiveSerializers is null");
         }
         this.primitiveSerializers = primitiveSerializers;
+        this.pathToClassMap = createPathToClassMap(topLevelClass, stringPathToClassMap);
+        if (ReflectionDBObject.class.isAssignableFrom(topLevelClass)) {
+            wrapper = ReflectionDBObject.getWrapper(topLevelClass);
+        }
+        else {
+            wrapper = null;
+        }
     }
 
     @Override
@@ -196,27 +205,30 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     }
 
     public Class<? extends DBObject> getTopLevelClass() {
-        return topLevelClass;
+        return pathToClassMap.get(EMPTY_PATH);
     }
 
     public Map<List<String>, Class<? extends DBObject>> getPathToClassMap() {
         return pathToClassMap;
     }
 
-    // TODO: don't throw RuntimeException...
     private DBObject getNewInstance(final List<String> path) {
+        Class<? extends DBObject> newInstanceClass = null;
         try {
-            Class<? extends DBObject> c = pathToClassMap.get(path);
-            if (c != null) {
-                return c.newInstance();
+            newInstanceClass = pathToClassMap.get(path);
+            if (newInstanceClass == null) {
+                if (wrapper != null) {
+                    newInstanceClass = wrapper.getInternalClass(path);
+                }
+                if (newInstanceClass == null) {
+                    newInstanceClass = BasicDBObject.class;
+                }
             }
-            else {
-                return new BasicDBObject();
-            }
+            return newInstanceClass.newInstance();
         } catch (InstantiationException e) {
-            throw new RuntimeException(e);
+            throw new MongoInternalException("can't create a new instance of class " + newInstanceClass, e);
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new MongoInternalException("can't create a new instance of class " + newInstanceClass, e);
         }
     }
 
@@ -275,8 +287,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
             final Class<? extends DBObject> topLevelClass,
             final HashMap<String, Class<? extends DBObject>> stringPathToClassMap) {
         Map<List<String>, Class<? extends DBObject>> pathToClassMap = new HashMap<List<String>, Class<? extends DBObject>>();
-        List<String> emptyPath = Collections.emptyList();
-        pathToClassMap.put(emptyPath, topLevelClass);
+        pathToClassMap.put(EMPTY_PATH, topLevelClass);
         for (Map.Entry<String, Class<? extends DBObject>> cur : stringPathToClassMap.entrySet()) {
             List<String> path = Arrays.asList(cur.getKey().split("\\."));
             pathToClassMap.put(path, cur.getValue());

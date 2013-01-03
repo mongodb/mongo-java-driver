@@ -23,6 +23,7 @@ import com.mongodb.MongoClientTestBase;
 import org.junit.Test;
 import org.mongodb.serialization.PrimitiveSerializers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +42,9 @@ public class DBObjectSerializerTest extends MongoClientTestBase {
         assertEquals(getDB(), serializer.getDb());
         assertEquals(BasicDBObject.class, serializer.getTopLevelClass());
         assertEquals(serializers, serializer.getPrimitiveSerializers());
-        assertEquals(new HashMap<List<String>, Class>(), serializer.getPathToClassMap());
+        final HashMap<List<String>, Class<? extends DBObject>> expected = new HashMap<List<String>, Class<? extends DBObject>>();
+        expected.put(new ArrayList<String>(), BasicDBObject.class);
+        assertEquals(expected, serializer.getPathToClassMap());
     }
 
     @Test
@@ -50,8 +53,9 @@ public class DBObjectSerializerTest extends MongoClientTestBase {
         stringPathToClassMap.put("a", NestedOneDBObject.class);
         stringPathToClassMap.put("a.b", NestedTwoDBObject.class);
         DBObjectSerializer serializer = new DBObjectSerializer(getDB(), PrimitiveSerializers.createDefault(),
-                                                               BasicDBObject.class, stringPathToClassMap);
+                                                               TopLevelDBObject.class, stringPathToClassMap);
         Map<List<String>, Class<? extends DBObject>> pathToClassMap = new HashMap<List<String>, Class<? extends DBObject>>();
+        pathToClassMap.put(new ArrayList<String>(), TopLevelDBObject.class);
         pathToClassMap.put(Arrays.asList("a"), NestedOneDBObject.class);
         pathToClassMap.put(Arrays.asList("a", "b"), NestedTwoDBObject.class);
         assertEquals(pathToClassMap, serializer.getPathToClassMap());
