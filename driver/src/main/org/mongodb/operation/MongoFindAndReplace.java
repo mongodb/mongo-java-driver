@@ -47,7 +47,7 @@ public class MongoFindAndReplace<T> extends MongoFindAndModify {
     }
 
     @Override
-    public MongoFindAndReplace where(final MongoQueryFilter filter) {
+    public MongoFindAndReplace<T> where(final MongoQueryFilter filter) {
         super.where(filter);
         return this;
     }

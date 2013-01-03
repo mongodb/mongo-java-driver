@@ -615,7 +615,7 @@ public class DBCollection {
             return collection.findAndUpdate(findAndUpdate);
         }
         else {
-            MongoFindAndReplace findAndReplace = new MongoFindAndReplace<DBObject>(update).where(
+            MongoFindAndReplace<DBObject> findAndReplace = new MongoFindAndReplace<DBObject>(update).where(
                     DBObjects.toQueryFilterDocument(query)).returnNew(returnNew).upsert(upsert).sortBy(
                     DBObjects.toSortCriteriaDocument(sort));
             return collection.findAndReplace(findAndReplace);

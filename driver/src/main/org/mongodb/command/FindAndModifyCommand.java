@@ -82,9 +82,9 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
             super(baseResult);
         }
 
+        @SuppressWarnings("unchecked")
         public T getValue() {
-            // TODO: any way to remove the warning?  This could be a design flaw
-            return (T) getResponse().get("value");
+            return (T) getResponse().get("value");  // TODO: any way to remove the warning?  This could be a design flaw
         }
     }
 

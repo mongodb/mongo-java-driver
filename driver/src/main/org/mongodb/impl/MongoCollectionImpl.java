@@ -113,6 +113,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public UpdateResult save(final MongoSave<T> save) {
         Object id = serializer.getId(save.getDocument());
         if (id == null) {

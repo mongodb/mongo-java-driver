@@ -101,6 +101,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     protected void validateField(String key) {
     }
 
+    @SuppressWarnings("unchecked")
     protected void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
         if (value instanceof DBRefBase) {
             serializeDBRef(bsonWriter, (DBRefBase) value, options);

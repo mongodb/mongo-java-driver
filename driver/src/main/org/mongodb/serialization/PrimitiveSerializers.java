@@ -53,6 +53,7 @@ public class PrimitiveSerializers implements Serializer<Object> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void serialize(final BSONWriter writer, final Object value,
                           final BsonSerializationOptions options) {
         final Serializer serializer;
