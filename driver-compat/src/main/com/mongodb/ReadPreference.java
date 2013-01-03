@@ -146,52 +146,21 @@ public class ReadPreference {
     }
 
     public static ReadPreference valueOf(String name) {
-        if (name == null) {
-            throw new IllegalArgumentException();
-        }
-
-        name = name.toLowerCase();
-
-        if (name.equals(_PRIMARY.getName().toLowerCase())) {
-            return _PRIMARY;
-        }
-        if (name.equals(_SECONDARY.getName().toLowerCase())) {
-            return _SECONDARY;
-        }
-        if (name.equals(_SECONDARY_PREFERRED.getName().toLowerCase())) {
-            return _SECONDARY_PREFERRED;
-        }
-        if (name.equals(_PRIMARY_PREFERRED.getName().toLowerCase())) {
-            return _PRIMARY_PREFERRED;
-        }
-        if (name.equals(_NEAREST.getName().toLowerCase())) {
-            return _NEAREST;
-        }
-
-        throw new IllegalArgumentException("No match for read preference of " + name);
+        return fromNew(org.mongodb.ReadPreference.valueOf(name));
     }
 
     public static TaggableReadPreference valueOf(String name, DBObject firstTagSet, final DBObject... remainingTagSets) {
-        if (name == null) {
-            throw new IllegalArgumentException();
-        }
+        return (TaggableReadPreference) fromNew(org.mongodb.ReadPreference.valueOf(name, DBObjects.toDocument(
+                firstTagSet), DBObjects.toDocumentArray(remainingTagSets)));
+    }
 
-        name = name.toLowerCase();
-
-        if (name.equals(_SECONDARY.getName().toLowerCase())) {
-            return secondary(firstTagSet, remainingTagSets);
+    public static ReadPreference fromNew(org.mongodb.ReadPreference readPreference) {
+        if (readPreference instanceof org.mongodb.TaggableReadPreference) {
+            return new TaggableReadPreference((org.mongodb.TaggableReadPreference) readPreference);
         }
-        if (name.equals(_SECONDARY_PREFERRED.getName().toLowerCase())) {
-            return secondaryPreferred(firstTagSet, remainingTagSets);
+        else {
+            return new ReadPreference(readPreference);
         }
-        if (name.equals(_PRIMARY_PREFERRED.getName().toLowerCase())) {
-            return primaryPreferred(firstTagSet, remainingTagSets);
-        }
-        if (name.equals(_NEAREST.getName().toLowerCase())) {
-            return nearest(firstTagSet, remainingTagSets);
-        }
-
-        throw new IllegalArgumentException("No match for read preference of " + name);
     }
 
     @Override
@@ -218,11 +187,11 @@ public class ReadPreference {
     }
 
     static {
-        _PRIMARY = new ReadPreference(org.mongodb.ReadPreference.primary());
-        _SECONDARY = new ReadPreference(org.mongodb.ReadPreference.secondary());
-        _SECONDARY_PREFERRED = new ReadPreference(org.mongodb.ReadPreference.secondaryPreferred());
-        _PRIMARY_PREFERRED = new ReadPreference(org.mongodb.ReadPreference.primaryPreferred());
-        _NEAREST = new ReadPreference(org.mongodb.ReadPreference.nearest());
+        _PRIMARY = fromNew(org.mongodb.ReadPreference.primary());
+        _SECONDARY = fromNew(org.mongodb.ReadPreference.secondary());
+        _SECONDARY_PREFERRED = fromNew(org.mongodb.ReadPreference.secondaryPreferred());
+        _PRIMARY_PREFERRED = fromNew(org.mongodb.ReadPreference.primaryPreferred());
+        _NEAREST = fromNew(org.mongodb.ReadPreference.nearest());
 
         PRIMARY = _PRIMARY;
         SECONDARY = _SECONDARY_PREFERRED;  // this is not a bug.  See SECONDARY Javadoc.
