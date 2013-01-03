@@ -116,10 +116,10 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     public UpdateResult save(final MongoSave<T> save) {
         Object id = serializer.getId(save.getDocument());
         if (id == null) {
-            return insert(new MongoInsert<T>(save.getDocument()));
+            return insert(new MongoInsert<T>(save.getDocument()).writeConcern(save.getWriteConcern()));
         }
         else {
-            return replace(new MongoReplace<T>(new QueryFilterDocument("_id", id), save.getDocument()).isUpsert(true));
+            return replace(new MongoReplace<T>(new QueryFilterDocument("_id", id), save.getDocument()).isUpsert(true).writeConcern(save.getWriteConcern()));
         }
     }
 
