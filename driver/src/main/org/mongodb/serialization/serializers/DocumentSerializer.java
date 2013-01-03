@@ -84,6 +84,7 @@ public class DocumentSerializer implements Serializer<Document> {
     protected void validateFieldName(final String key) {
     }
 
+    @SuppressWarnings("unchecked")
     protected void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
         // TODO: is this a good idea to allow DBRef to be treated all special?
         if (value instanceof DBRef) {

@@ -43,7 +43,6 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoQueryFilter;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
-import org.mongodb.operation.MongoSave;
 import org.mongodb.operation.MongoSortCriteria;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoUpdateOperations;
@@ -227,7 +226,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
         private MongoCollectionStream(MongoCollectionStream from) {
             findOp = new MongoFind(from.findOp);
-            writeConcern = getOptions().getWriteConcern();
+            writeConcern = from.writeConcern;
             upsert = from.upsert;
             limitSet = from.limitSet;
             returnNew = from.returnNew;

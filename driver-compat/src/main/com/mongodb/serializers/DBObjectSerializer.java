@@ -17,10 +17,13 @@
 package com.mongodb.serializers;
 
 import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
 import com.mongodb.DBRefBase;
+import com.mongodb.MongoInternalException;
+import com.mongodb.ReflectionDBObject;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;
@@ -30,22 +33,36 @@ import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class DBObjectSerializer implements Serializer<DBObject> {
+    private static final List<String> EMPTY_PATH = Collections.emptyList();
+
     private final PrimitiveSerializers primitiveSerializers;
     private final DB db;
-    private final Class<? extends DBObject> clazz;
+    private final Map<List<String>, Class<? extends DBObject>> pathToClassMap;
+    private final ReflectionDBObject.JavaWrapper wrapper;
 
     public DBObjectSerializer(final DB db, final PrimitiveSerializers primitiveSerializers,
-                              final Class<? extends DBObject> clazz) {
+                              final Class<? extends DBObject> topLevelClass,
+                              final HashMap<String, Class<? extends DBObject>> stringPathToClassMap) {
         this.db = db;
-        this.clazz = clazz;
         if (primitiveSerializers == null) {
             throw new IllegalArgumentException("primitiveSerializers is null");
         }
         this.primitiveSerializers = primitiveSerializers;
+        this.pathToClassMap = createPathToClassMap(topLevelClass, stringPathToClassMap);
+        if (ReflectionDBObject.class.isAssignableFrom(topLevelClass)) {
+            wrapper = ReflectionDBObject.getWrapper(topLevelClass);
+        }
+        else {
+            wrapper = null;
+        }
     }
 
     @Override
@@ -101,6 +118,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     protected void validateField(String key) {
     }
 
+    @SuppressWarnings("unchecked")
     protected void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
         if (value instanceof DBRefBase) {
             serializeDBRef(bsonWriter, (DBRefBase) value, options);
@@ -159,12 +177,13 @@ public class DBObjectSerializer implements Serializer<DBObject> {
 
     @Override
     public DBObject deserialize(final BSONReader reader, final BsonSerializationOptions options) {
-        final DBObject document = getNewInstance();
+        List<String> path = new ArrayList<String>(10);
+        final DBObject document = getNewInstance(path);
 
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
-            document.put(fieldName, readValue(reader, options, fieldName));
+            document.put(fieldName, readValue(reader, options, fieldName, path));
         }
 
         reader.readEndDocument();
@@ -172,24 +191,55 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         return document;
     }
 
-    // TODO: don't throw RuntimeException...
-    private DBObject getNewInstance() {
+    @Override
+    public Class<DBObject> getSerializationClass() {
+        return DBObject.class;
+    }
+
+    public PrimitiveSerializers getPrimitiveSerializers() {
+        return primitiveSerializers;
+    }
+
+    public DB getDb() {
+        return db;
+    }
+
+    public Class<? extends DBObject> getTopLevelClass() {
+        return pathToClassMap.get(EMPTY_PATH);
+    }
+
+    public Map<List<String>, Class<? extends DBObject>> getPathToClassMap() {
+        return pathToClassMap;
+    }
+
+    private DBObject getNewInstance(final List<String> path) {
+        Class<? extends DBObject> newInstanceClass = null;
         try {
-            return clazz.newInstance();
+            newInstanceClass = pathToClassMap.get(path);
+            if (newInstanceClass == null) {
+                if (wrapper != null) {
+                    newInstanceClass = wrapper.getInternalClass(path);
+                }
+                if (newInstanceClass == null) {
+                    newInstanceClass = BasicDBObject.class;
+                }
+            }
+            return newInstanceClass.newInstance();
         } catch (InstantiationException e) {
-            throw new RuntimeException(e);
+            throw new MongoInternalException("can't create a new instance of class " + newInstanceClass, e);
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new MongoInternalException("can't create a new instance of class " + newInstanceClass, e);
         }
     }
 
-    private Object deserializeDocument(final BSONReader reader, final BsonSerializationOptions options) {
-        final DBObject document = getNewInstance();
+    private Object deserializeDocument(final BSONReader reader, final BsonSerializationOptions options,
+                                       final List<String> path) {
+        final DBObject document = getNewInstance(path);
 
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
-            document.put(fieldName, readValue(reader, options, fieldName));
+            document.put(fieldName, readValue(reader, options, fieldName, path));
         }
 
         reader.readEndDocument();
@@ -202,32 +252,50 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         return document;
     }
 
-    private Object readValue(final BSONReader reader, final BsonSerializationOptions options, final String fieldName) {
+    private Object readValue(final BSONReader reader, final BsonSerializationOptions options, final String fieldName,
+                             final List<String> path) {
         final BsonType bsonType = reader.getCurrentBsonType();
         if (bsonType.equals(BsonType.DOCUMENT)) {
-            return deserializeDocument(reader, options);
+            path.add(fieldName);
+            Object retVal = deserializeDocument(reader, options, path);
+            path.remove(path.size() - 1);
+            return retVal;
         }
         else if (bsonType.equals(BsonType.ARRAY)) {
-            return readArray(reader, options);
+            path.add(fieldName);
+            Object retVal = readArray(reader, options, path);
+            path.remove(path.size() - 1);
+            return retVal;
         }
         else {
             return primitiveSerializers.deserialize(reader, options);
         }
+
     }
 
-    private List readArray(final BSONReader reader, final BsonSerializationOptions options) {
+    private List readArray(final BSONReader reader, final BsonSerializationOptions options, final List<String> path) {
         reader.readStartArray();
         final BasicDBList list = new BasicDBList();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            list.add(readValue(reader, options, null));   // TODO: why is this a warning?
+            list.add(readValue(reader, options, null, path));   // TODO: why is this a warning?
         }
         reader.readEndArray();
         return list;
     }
 
-    @Override
-    public Class<DBObject> getSerializationClass() {
-        return DBObject.class;
+    private Map<List<String>, Class<? extends DBObject>> createPathToClassMap(
+            final Class<? extends DBObject> topLevelClass,
+            final HashMap<String, Class<? extends DBObject>> stringPathToClassMap) {
+        Map<List<String>, Class<? extends DBObject>> pathToClassMap = new HashMap<List<String>, Class<? extends DBObject>>();
+        pathToClassMap.put(EMPTY_PATH, topLevelClass);
+        for (Map.Entry<String, Class<? extends DBObject>> cur : stringPathToClassMap.entrySet()) {
+            List<String> path = Arrays.asList(cur.getKey().split("\\."));
+            pathToClassMap.put(path, cur.getValue());
+        }
+
+        return Collections.unmodifiableMap(pathToClassMap);
     }
+
+
 }
 

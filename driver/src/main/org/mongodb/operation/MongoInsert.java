@@ -19,19 +19,14 @@ package org.mongodb.operation;
 
 import org.mongodb.WriteConcern;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Arrays;
 
 public class MongoInsert<T> extends MongoWrite {
     final Iterable<T> documents;
 
-    // TODO: why are calls to this generating compiler warnings?
-    public MongoInsert(final T document, final T... remainingDocuments) {
-        final List<T> documentList = new ArrayList<T>();
-        documentList.add(document);
-        Collections.addAll(documentList, remainingDocuments);
-        this.documents = documentList;
+    @SuppressWarnings("unchecked")
+    public MongoInsert(final T document) {
+        this(Arrays.asList(document));
     }
 
     public MongoInsert(final Iterable<T> documents) {

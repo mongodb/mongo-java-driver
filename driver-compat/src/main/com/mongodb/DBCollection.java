@@ -26,7 +26,6 @@ import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.DropCollectionCommand;
 import org.mongodb.command.MongoDuplicateKeyException;
-import org.mongodb.operation.MongoReplace;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
@@ -35,7 +34,9 @@ import org.mongodb.util.FieldHelpers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @ThreadSafe
 public class DBCollection {
@@ -43,15 +44,14 @@ public class DBCollection {
     private final DB database;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
+    private Class<? extends DBObject> objectClass = BasicDBObject.class;
+    private Map<String, Class<? extends DBObject>> pathToClassMap = new HashMap<String, Class<? extends DBObject>>();
+    //    private ReflectionDBObject.JavaWrapper _wrapper = null;
 
     DBCollection(final String name, final DB database) {
-        this.collection = database.toNew().
-                getTypedCollection(name, new CollectibleDBObjectSerializer(database,
-                                                                           database.getMongo().getNew().getOptions().getPrimitiveSerializers(),
-                                                                           new ObjectIdGenerator()));
         this.database = database;
+        getTypedCollection(name);
     }
-
 
     public WriteResult insert(final DBObject document, final WriteConcern writeConcern) {
         return insert(Arrays.asList(document), writeConcern);
@@ -731,11 +731,27 @@ public class DBCollection {
      * @param clazz the class
      * @throws IllegalArgumentException if <code>c</code> is not a DBObject
      */
-    public void setObjectClass(final Class<? extends DBObject> clazz) {
+    public synchronized void setObjectClass(final Class<? extends DBObject> clazz) {
+        objectClass = clazz;
+        getTypedCollection(getName());
+    }
+
+    /**
+     * Sets the internal class for the given path in the document hierarchy
+     *
+     * @param path  the path to map the given Class to
+     * @param clazz the Class to map the given path to
+     */
+    public synchronized void setInternalClass(String path, Class<? extends DBObject> clazz) {
+        pathToClassMap.put(path, clazz);
+        getTypedCollection(getName());
+    }
+
+    private void getTypedCollection(final String name) {
         this.collection = database.toNew().
-                getTypedCollection(getName(), new CollectibleDBObjectSerializer(database,
+                getTypedCollection(name, new CollectibleDBObjectSerializer(database,
                                                                            database.getMongo().getNew().getOptions().getPrimitiveSerializers(),
-                                                                           new ObjectIdGenerator(),
-                                                                           clazz));
+                                                                           new ObjectIdGenerator(), objectClass,
+                                                                           new HashMap<String, Class<? extends DBObject>>(pathToClassMap)));
     }
 }
