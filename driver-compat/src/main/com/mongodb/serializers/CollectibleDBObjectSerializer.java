@@ -17,7 +17,6 @@
 
 package com.mongodb.serializers;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBObject;
 import org.bson.BSONWriter;
@@ -25,6 +24,8 @@ import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.IdGenerator;
 import org.mongodb.serialization.PrimitiveSerializers;
+
+import java.util.HashMap;
 
 /**
  * Serializer for documents that go in collections, and therefore have an _id.  Ensures that the _id field is written
@@ -34,15 +35,11 @@ public class CollectibleDBObjectSerializer extends DBObjectSerializer implements
     public static final String ID_FIELD_NAME = "_id";
     private final IdGenerator idGenerator;
 
-    public CollectibleDBObjectSerializer(final DB db, final PrimitiveSerializers primitiveSerializers,
-                                         final IdGenerator idGenerator) {
-        this(db, primitiveSerializers, idGenerator, BasicDBObject.class);
-    }
-
-    public CollectibleDBObjectSerializer(final DB db, final PrimitiveSerializers primitiveSerializers,
+    public CollectibleDBObjectSerializer(final DB database, final PrimitiveSerializers primitiveSerializers,
                                          final IdGenerator idGenerator,
-                                         final Class<? extends DBObject> clazz) {
-        super(db, primitiveSerializers, clazz);
+                                         final Class<? extends DBObject> clazz,
+                                         final HashMap<String, Class<? extends DBObject>> pathToClassMap) {
+        super(database, primitiveSerializers, clazz, pathToClassMap);
         this.idGenerator = idGenerator;
     }
 

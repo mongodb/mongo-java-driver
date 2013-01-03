@@ -19,6 +19,9 @@ package com.mongodb;
 
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -73,6 +76,32 @@ public class DBCollectionTest extends MongoClientTestBase {
         collection.insert(new BasicDBObject("_id", 1));
         DBObject obj = collection.findOne();
         assertEquals(MyDBObject.class, obj.getClass());
+    }
+
+    @Test
+    public void testDotsInKeys() {
+        try {
+            collection.save(new BasicDBObject("x.y", 1));
+            fail("Should throw exception");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
+
+        try {
+            collection.save(new BasicDBObject("x", new BasicDBObject("a.b", 1)));
+            fail("Should throw exception");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
+
+        try {
+            Map<String, Integer> map = new HashMap<String, Integer>();
+            map.put("a.b", 1);
+            collection.save(new BasicDBObject("x", map));
+            fail("Should throw exception");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
     }
 
     public static class MyDBObject extends BasicDBObject {

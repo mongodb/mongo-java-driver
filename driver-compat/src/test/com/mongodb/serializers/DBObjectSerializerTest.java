@@ -18,38 +18,87 @@
 package com.mongodb.serializers;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClientTestBase;
 import org.junit.Test;
+import org.mongodb.serialization.PrimitiveSerializers;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertEquals;
 
 public class DBObjectSerializerTest extends MongoClientTestBase {
+
     @Test
-    public void testDotsInKeys() {
-        try {
-            collection.save(new BasicDBObject("x.y", 1));
-            fail("Should throw exception");
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
+    public void testGetters() {
+        PrimitiveSerializers serializers = PrimitiveSerializers.createDefault();
+        DBObjectSerializer serializer = new DBObjectSerializer(getDB(), serializers,
+                                                               BasicDBObject.class,
+                                                               new HashMap<String, Class<? extends DBObject>>());
+        assertEquals(getDB(), serializer.getDb());
+        assertEquals(BasicDBObject.class, serializer.getTopLevelClass());
+        assertEquals(serializers, serializer.getPrimitiveSerializers());
+        assertEquals(new HashMap<List<String>, Class>(), serializer.getPathToClassMap());
+    }
 
-        try {
-            collection.save(new BasicDBObject("x", new BasicDBObject("a.b", 1)));
-            fail("Should throw exception");
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
+    @Test
+    public void testPathToClassMap() {
+        final HashMap<String, Class<? extends DBObject>> stringPathToClassMap = new HashMap<String, Class<? extends DBObject>>();
+        stringPathToClassMap.put("a", NestedOneDBObject.class);
+        stringPathToClassMap.put("a.b", NestedTwoDBObject.class);
+        DBObjectSerializer serializer = new DBObjectSerializer(getDB(), PrimitiveSerializers.createDefault(),
+                                                               BasicDBObject.class, stringPathToClassMap);
+        Map<List<String>, Class<? extends DBObject>> pathToClassMap = new HashMap<List<String>, Class<? extends DBObject>>();
+        pathToClassMap.put(Arrays.asList("a"), NestedOneDBObject.class);
+        pathToClassMap.put(Arrays.asList("a", "b"), NestedTwoDBObject.class);
+        assertEquals(pathToClassMap, serializer.getPathToClassMap());
+    }
 
-        try {
-            Map<String, Integer> map = new HashMap<String, Integer>();
-            map.put("a.b", 1);
-            collection.save(new BasicDBObject("x", map));
-            fail("Should throw exception");
-        } catch (IllegalArgumentException e) {
-            // all good
+    @Test
+    public void testPathToClassMapDeserialization() {
+        collection.setObjectClass(TopLevelDBObject.class);
+        collection.setInternalClass("a", NestedOneDBObject.class);
+        collection.setInternalClass("a.b", NestedTwoDBObject.class);
+
+        DBObject doc = new TopLevelDBObject().append("a", new NestedOneDBObject().append("b", new NestedTwoDBObject()).append("c", new BasicDBObject()));
+        collection.save(doc);
+        assertEquals(doc, collection.findOne());
+    }
+
+    public static class TopLevelDBObject extends BasicDBObject {
+        private static final long serialVersionUID = 7029929727222305692L;
+
+        @Override
+        public boolean equals(final Object o) {
+            if (getClass() != o.getClass()) {
+                return false;
+            }
+            return super.equals(o);
+        }
+    }
+
+    public static class NestedOneDBObject extends BasicDBObject {
+        private static final long serialVersionUID = -5821458746671670383L;
+        @Override
+        public boolean equals(final Object o) {
+            if (getClass() != o.getClass()) {
+                return false;
+            }
+            return super.equals(o);
+        }
+    }
+
+    public static class NestedTwoDBObject extends BasicDBObject {
+        private static final long serialVersionUID = 5243874721805359328L;
+        @Override
+        public boolean equals(final Object o) {
+            if (getClass() != o.getClass()) {
+                return false;
+            }
+            return super.equals(o);
         }
     }
 }
