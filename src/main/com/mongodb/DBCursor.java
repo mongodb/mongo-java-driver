@@ -496,7 +496,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
 
     /**
      * Returns the element the cursor is at.
-     * @return the next element
+     * @return the current element
      */
     public DBObject curr(){
         _checkType( CursorType.ITERATOR );
