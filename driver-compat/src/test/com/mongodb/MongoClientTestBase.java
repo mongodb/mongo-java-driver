@@ -44,11 +44,11 @@ public abstract class MongoClientTestBase {
         collection.drop();
     }
 
-    MongoClient getClient() {
+    protected MongoClient getClient() {
         return mongoClient;
     }
 
-    DB getDB() {
+    protected DB getDB() {
         return database;
     }
 }

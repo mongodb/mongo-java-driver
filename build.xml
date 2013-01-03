@@ -24,6 +24,7 @@ limitations under the License.
 
     <property environment="env"/>
 
+    <property name="src.common" location="${basedir}/common/src"/>
     <property name="src.bson" location="${basedir}/bson/src"/>
     <property name="src.driver" location="${basedir}/driver/src"/>
     <property name="src.driver-compat" location="${basedir}/driver-compat/src"/>
@@ -136,6 +137,11 @@ limitations under the License.
 
     <target name="compile" depends="init">
         <compile
+                srcdir="${src.common}/main"
+                destdir="${build.classes}"
+                classpathref="build.classpath"
+                />
+        <compile
                 srcdir="${src.bson}/main"
                 destdir="${build.classes}"
                 classpathref="build.classpath"
@@ -186,6 +192,9 @@ limitations under the License.
         </path>
 
         <compile classpathref="test.classpath"
+                 srcdir="${src.common}/test"
+                 destdir="${test.classes}"/>
+        <compile classpathref="test.classpath"
                  srcdir="${src.bson}/test"
                  destdir="${test.classes}"/>
         <compile classpathref="test.classpath"
@@ -219,6 +228,7 @@ limitations under the License.
             <link href="http://download.oracle.com/javase/1.5.0/docs/api/"/>
             <taglet name="DochubTaglet" path="${build.util}"/>
             <taglet name="ManualTaglet" path="${build.util}"/>
+            <sourcepath path="${src.common}/main"/>
             <sourcepath path="${src.bson}/main"/>
             <sourcepath path="${src.driver}/main"/>
             <sourcepath path="${src.driver-compat}/main"/>
@@ -287,6 +297,9 @@ limitations under the License.
 
     <target name="sources-jar" description="Assemble MongoDB Sources JAR files">
         <jar jarfile="${build.dir}/${ant.project.name}-${build.conf.lib.version}-sources.jar">
+            <fileset dir="${src.common}/main">
+                <exclude name="META-INF/*"/>
+            </fileset>
             <fileset dir="${src.bson}/main">
                 <exclude name="META-INF/*"/>
             </fileset>
@@ -302,6 +315,9 @@ limitations under the License.
         </jar>
 
         <jar jarfile="${build.dir}/bson-${build.conf.lib.version}-sources.jar">
+            <fileset dir="${src.common}/main">
+                <exclude name="META-INF/*"/>
+            </fileset>
             <fileset dir="${src.bson}/main">
                 <exclude name="META-INF/*"/>
             </fileset>
@@ -400,6 +416,7 @@ limitations under the License.
     <target name="cobertura-report">
         <cobertura-report format="html" destdir="${cobertura.output}"
                           datafile="${cobertura.datafile}">
+            <fileset dir="${src.common}/main"/>
             <fileset dir="${src.bson}/main"/>
             <fileset dir="${src.driver}/main"/>
             <fileset dir="${src.driver-compat}/main"/>
@@ -407,6 +424,7 @@ limitations under the License.
         </cobertura-report>
         <cobertura-report format="xml" destdir="${cobertura.output}"
                           datafile="${cobertura.datafile}">
+            <fileset dir="${src.common}/main"/>
             <fileset dir="${src.bson}/main"/>
             <fileset dir="${src.driver}/main"/>
             <fileset dir="${src.driver-compat}/main"/>

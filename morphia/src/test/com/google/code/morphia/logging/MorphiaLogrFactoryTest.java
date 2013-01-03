@@ -41,8 +41,9 @@ public class MorphiaLogrFactoryTest extends TestBase {
 	static class TestLoggerFactory implements LogrFactory {
 		public Logr get(Class<?> c) {
 			return new Logr() {
-				
-				public void warning(String msg, Throwable t) {
+                private static final long serialVersionUID = 1L;
+
+                public void warning(String msg, Throwable t) {
 					
 				}
 				

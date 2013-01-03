@@ -80,6 +80,29 @@ public class ServerAddress {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final ServerAddress that = (ServerAddress) o;
+
+        if (!proxied.equals(that.proxied)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return proxied.hashCode();
+    }
+
+    @Override
     public String toString(){
         return proxied.toString();
     }

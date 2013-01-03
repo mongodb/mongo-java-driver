@@ -18,10 +18,11 @@
 package com.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.MongoClient;
 import org.mongodb.impl.SingleServerMongoClient;
 
 import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -30,24 +31,88 @@ public class Mongo {
     private final SingleServerMongoClient client;
     private final ConcurrentMap<String, DB> dbCache = new ConcurrentHashMap<String, DB>();
     private volatile ReadPreference readPreference = ReadPreference.primary();
-    private volatile WriteConcern writeConcern = WriteConcern.UNACKNOWLEDGED; // TODO: !!!!!
+    private volatile WriteConcern writeConcern = WriteConcern.UNACKNOWLEDGED;
 
     public Mongo() throws UnknownHostException {
         this(new ServerAddress());
     }
 
+    public Mongo(final String host) throws UnknownHostException {
+        this(new ServerAddress(host));
+    }
+
     public Mongo(final ServerAddress serverAddress) {
-        client = new SingleServerMongoClient(serverAddress.toNew());
+        this(serverAddress, new MongoOptions());
+    }
+
+    public Mongo(final ServerAddress serverAddress, final MongoOptions mongoOptions) {
+        client = new SingleServerMongoClient(serverAddress.toNew(),
+                                             MongoClientOptions.builder().fromMongoOptions(mongoOptions).build().toNew());
+        if (mongoOptions.getReadPreference() != null) {
+            readPreference = mongoOptions.getReadPreference();
+        }
+        if (mongoOptions.getWriteConcern() != null) {
+            writeConcern = mongoOptions.getWriteConcern();
+        }
+    }
+
+    public Mongo(final List<ServerAddress> hosts, final MongoOptions mongoOptions) {
+        this(hosts.get(0), mongoOptions);
+    }
+
+    public Mongo(final MongoURI mongoURI) throws UnknownHostException {
+        this(new ServerAddress(mongoURI.getHosts().get(0)), mongoURI.getOptions());
+    }
+
+    /**
+     * Gets the list of server addresses currently seen by the connector.
+     * This includes addresses auto-discovered from a replica set.
+     * @return list of server addresses
+     * @throws MongoException
+     */
+    public List<ServerAddress> getServerAddressList() {
+        return Arrays.asList(new ServerAddress(client.getServerAddress()));
     }
 
 
+    /**
+     * Sets the write concern for this database. Will be used as default for writes to any collection in any database.
+     * See the documentation for {@link WriteConcern} for more information.
+     *
+     * @param writeConcern write concern to use
+     */
+    public void setWriteConcern(final WriteConcern writeConcern) {
+        this.writeConcern = writeConcern;
+    }
+
+    /**
+     * Gets the default write concern
+     *
+     * @return the default write concern
+     */
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
+    }
+
+    /**
+     * Sets the read preference for this database. Will be used as default for reads from any collection in any
+     * database. See the documentation for {@link ReadPreference} for more information.
+     *
+     * @param readPreference Read Preference to use
+     */
+    public void setReadPreference(final ReadPreference readPreference) {
+        this.readPreference = readPreference;
+    }
+
+    /**
+     * Gets the default read preference
+     *
+     * @return the default read preference
+     */
     public ReadPreference getReadPreference() {
         return readPreference;
     }
 
-    public WriteConcern getWriteConcern() {
-        return writeConcern;
-    }
 
     public DB getDB(final String dbName) {
         DB db = dbCache.get(dbName);
@@ -63,7 +128,15 @@ public class Mongo {
         return db;
     }
 
-    MongoClient getNew() {
+    /**
+     * Closes all resources associated with this instance, in particular any open network connections. Once called,
+     * this instance and any databases obtained from it can no longer be used.
+     */
+    public void close() {
+        client.close();
+    }
+
+    org.mongodb.MongoClient getNew() {
         return client;
     }
 
@@ -73,9 +146,5 @@ public class Mongo {
 
     void requestDone() {
         client.unbindFromConnection();
-    }
-
-    public void close() {
-        client.close();
     }
 }

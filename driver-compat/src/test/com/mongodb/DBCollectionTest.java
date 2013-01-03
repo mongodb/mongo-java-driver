@@ -66,4 +66,16 @@ public class DBCollectionTest extends MongoClientTestBase {
         assertEquals(1L, collection.count());
         assertEquals(new BasicDBObject("_id", 1).append("x", 2), collection.findOne());
     }
+
+    @Test
+    public void testObjectClass() {
+        collection.setObjectClass(MyDBObject.class);
+        collection.insert(new BasicDBObject("_id", 1));
+        DBObject obj = collection.findOne();
+        assertEquals(MyDBObject.class, obj.getClass());
+    }
+
+    public static class MyDBObject extends BasicDBObject {
+        private static final long serialVersionUID = 3352369936048544621L;
+    }
 }

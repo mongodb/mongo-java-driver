@@ -20,14 +20,18 @@ package com.google.code.morphia.testutil;
 import com.google.code.morphia.annotations.Id;
 import org.bson.types.ObjectId;
 
+import java.io.Serializable;
+
 /**
  * Example for a base class to all entities.
  * @author Olafur Gauti Gudmundsson
  */
 
-public abstract class TestEntity {
+public abstract class TestEntity implements Serializable {
 
-	/** The id for this instance */
+    private static final long serialVersionUID = 1L;
+
+    /** The id for this instance */
 	@Id protected String id = new ObjectId().toString();
 
     public TestEntity() {

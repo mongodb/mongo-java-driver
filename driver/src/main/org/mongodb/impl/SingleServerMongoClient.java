@@ -147,6 +147,10 @@ public class SingleServerMongoClient implements MongoClient {
         return admin;
     }
 
+    public ServerAddress getServerAddress() {
+        return serverAddress;
+    }
+
     BufferPool<ByteBuffer> getBufferPool() {
         return bufferPool;
     }

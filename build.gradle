@@ -16,6 +16,16 @@
 
 def configDir = new File(rootDir, 'config')
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "net.saliman:gradle-cobertura-plugin:1.1.0"
+    }
+}
+
+
 allprojects {
     apply plugin: 'idea'
     apply plugin: 'eclipse'
@@ -27,6 +37,9 @@ subprojects {
     apply plugin: 'pmd'
     apply plugin: 'findbugs'
     apply plugin: 'maven'
+    apply plugin: 'osgi'
+    apply plugin: 'cobertura'
+
 
     group = 'org.mongodb'
     version = '3.0.0-SNAPSHOT'
@@ -44,6 +57,10 @@ subprojects {
 
     pmd {
         ignoreFailures = true
+    }
+
+    cobertura {
+        coverageFormats = [ 'xml','html' ]
     }
 
     repositories {
@@ -111,16 +128,8 @@ project(':bson') {
     jar {
         manifest {
             attributes(
-                    'Manifest-Version': 1.0,
                     'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
-                    'Bundle-ManifestVersion': 2,
-                    'Bundle-Name': 'BSON',
-                    'Bundle-SymbolicName': 'org.mongodb.bson',
-                    'Bundle-Version': version,
-                    'Export-Package': "org.bson;version=\"$version\","
-                            + "org.bson.util;version=\"$version\","
-                            + "org.bson.types;version=\"$version\","
-                            + "org.bson.io;version=\"$version\""
+                    'Bundle-Name': 'BSON'
             )
         }
     }
@@ -141,26 +150,13 @@ project(':driver') {
     }
 
     jar {
-        baseName = 'driver-dist'
         from project(':bson').sourceSets.main.output
         manifest {
             attributes(
-                    'Manifest-Version': 1.0,
                     'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
-                    'Bundle-ManifestVersion': 2,
                     'Bundle-Name': 'MongoDB Java Driver',
-                    'Bundle-SymbolicName': 'org.mongodb.mongo-java-driver',
-                    'Bundle-Version': version,
+                    'Bundle-SymbolicName': 'org.mongodb.driver',
                     'Import-Package': 'javax.management, javax.net, javax.net.ssl',
-                    'Export-Package': "com.mongodb;version=\"$version\","
-                            + "com.mongodb.io;version=\"$version\","
-                            + "com.mongodb.util;version=\"$version\","
-                            + "com.mongodb.gridfs;version=\"$version\","
-                            + "org.bson;version=\"$version\","
-                            + "org.bson.util;version=\"$version\","
-                            + "org.bson.util.annotations;version=\"$version\","
-                            + "org.bson.types;version=\"$version\","
-                            + "org.bson.io;version=\"$version\""
 
             )
         }
@@ -194,28 +190,14 @@ project(':driver') {
 
 project(':driver-compat') {
     jar {
-        baseName = 'driver-compat-dist'
         from project(':bson').sourceSets.main.output
         from project(':driver').sourceSets.main.output
         manifest {
             attributes(
-                    'Manifest-Version': 1.0,
                     'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
-                    'Bundle-ManifestVersion': 2,
                     'Bundle-Name': 'MongoDB Java Driver',
                     'Bundle-SymbolicName': 'org.mongodb.mongo-java-driver',
-                    'Bundle-Version': version,
-                    'Import-Package': 'javax.management, javax.net, javax.net.ssl',
-                    'Export-Package': "com.mongodb;version=\"$version\","
-                            + "com.mongodb.io;version=\"$version\","
-                            + "com.mongodb.util;version=\"$version\","
-                            + "com.mongodb.gridfs;version=\"$version\","
-                            + "org.bson;version=\"$version\","
-                            + "org.bson.util;version=\"$version\","
-                            + "org.bson.util.annotations;version=\"$version\","
-                            + "org.bson.types;version=\"$version\","
-                            + "org.bson.io;version=\"$version\""
-
+                    'Import-Package': 'javax.management, javax.net, javax.net.ssl'
             )
         }
     }

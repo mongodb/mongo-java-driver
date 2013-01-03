@@ -26,6 +26,7 @@ public class LazyInEmbeddedTest extends TestBase
     @Entity
 	public static class ContainerWithRefInField extends TestEntity
     {
+        private static final long serialVersionUID = 1L;
         @Embedded
         private EmbedWithRef embedWithRef;
     }
@@ -33,6 +34,7 @@ public class LazyInEmbeddedTest extends TestBase
     @Entity
 	public static class ContainerWithRefList extends TestEntity
     {
+        private static final long serialVersionUID = 1L;
         @Embedded
         private final List<EmbedWithRef> embedWithRef = new ArrayList<EmbedWithRef>();
     }
@@ -40,6 +42,7 @@ public class LazyInEmbeddedTest extends TestBase
     @Entity
 	public static class OtherEntity extends TestEntity
     {
+        private static final long serialVersionUID = 1L;
         @Property(value = "some")
         private SomeEnum someEnum;
 
@@ -57,6 +60,7 @@ public class LazyInEmbeddedTest extends TestBase
     @Entity
 	public static class OtherEntityChild extends OtherEntity
     {
+        private static final long serialVersionUID = 1L;
         public OtherEntityChild()
         {
             super(SomeEnum.A);

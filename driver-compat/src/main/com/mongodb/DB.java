@@ -16,15 +16,13 @@
 
 package com.mongodb;
 
-import com.mongodb.serializers.CollectibleDBObjectSerializer;
 import com.mongodb.serializers.DocumentSerializer;
-import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
+import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.serializers.ObjectIdGenerator;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,6 +42,14 @@ public class DB {
                 .documentSerializer(new DocumentSerializer(PrimitiveSerializers.createDefault())).build());
     }
 
+    /**
+     * Gets the Mongo instance
+     * @return the mongo instance that this database was created from.
+     */
+    public Mongo getMongo(){
+        return mongo;
+    }
+
     public void setReadPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
     }
@@ -61,7 +67,7 @@ public class DB {
     }
 
     /**
-     * starts a new "consistent request". Following this call and until requestDone() is called, all db operations
+     * Starts a new "consistent request". Following this call and until requestDone() is called, all db operations
      * should use the same underlying connection. This is useful to ensure that operations happen in a certain order
      * with predictable results.
      */
@@ -70,7 +76,7 @@ public class DB {
     }
 
     /**
-     * ends the current "consistent request"
+     * Ends the current "consistent request"
      */
     public void requestDone() {
         mongo.requestDone();
@@ -91,10 +97,7 @@ public class DB {
             return collection;
         }
 
-        collection = new DBCollection(database.
-                getTypedCollection(name, new CollectibleDBObjectSerializer(this,
-                                                                           mongo.getNew().getOptions().getPrimitiveSerializers(),
-                                                                           new ObjectIdGenerator())), this);
+        collection = new DBCollection(name, this);
         final DBCollection old = collectionCache.putIfAbsent(name, collection);
         return old != null ? old : collection;
     }
@@ -175,6 +178,26 @@ public class DB {
         return false;  // TODO: Implement authentication!!!!
     }
 
+    /**
+     * Executes a database command.
+     * This method constructs a simple DBObject using cmd as the field name and {@code true} as its valu,
+     * and calls {@link DB#command(com.mongodb.DBObject) }
+     * @param cmd command to execute
+     * @return result of command from the database
+     * @throws MongoException
+     * @dochub commands
+     */
+    public CommandResult command( String cmd ){
+        return command( new BasicDBObject( cmd , Boolean.TRUE ) );
+    }
+
+    /**
+     * Executes a database command.
+     * @param cmd document representing the command to execute
+     * @return result of command from the database
+     * @throws MongoException
+     * @dochub commands
+     */
     public CommandResult command(final DBObject cmd) {
         org.mongodb.result.CommandResult baseCommandResult = database.executeCommand(
                 new MongoCommandOperation(DBObjects.toCommandDocument(cmd)).readPreference(

@@ -17,7 +17,6 @@
 package com.mongodb.serializers;
 
 import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
@@ -37,9 +36,12 @@ import java.util.Map;
 public class DBObjectSerializer implements Serializer<DBObject> {
     private final PrimitiveSerializers primitiveSerializers;
     private final DB db;
+    private final Class<? extends DBObject> clazz;
 
-    public DBObjectSerializer(final DB db, final PrimitiveSerializers primitiveSerializers) {
+    public DBObjectSerializer(final DB db, final PrimitiveSerializers primitiveSerializers,
+                              final Class<? extends DBObject> clazz) {
         this.db = db;
+        this.clazz = clazz;
         if (primitiveSerializers == null) {
             throw new IllegalArgumentException("primitiveSerializers is null");
         }
@@ -157,7 +159,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
 
     @Override
     public DBObject deserialize(final BSONReader reader, final BsonSerializationOptions options) {
-        final DBObject document = new BasicDBObject();
+        final DBObject document = getNewInstance();
 
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
@@ -170,8 +172,19 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         return document;
     }
 
+    // TODO: don't throw RuntimeException...
+    private DBObject getNewInstance() {
+        try {
+            return clazz.newInstance();
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private Object deserializeDocument(final BSONReader reader, final BsonSerializationOptions options) {
-        final DBObject document = new BasicDBObject();
+        final DBObject document = getNewInstance();
 
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {

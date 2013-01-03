@@ -43,6 +43,7 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoQueryFilter;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
+import org.mongodb.operation.MongoSave;
 import org.mongodb.operation.MongoSortCriteria;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoUpdateOperations;
@@ -52,7 +53,6 @@ import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.serializers.DocumentSerializer;
 
 import java.util.Collection;
 

@@ -83,8 +83,13 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
 
-    public void addOption(final int option) {
-        throw new UnsupportedOperationException();
+    /**
+     * adds a query option - see Bytes.QUERYOPTION_* for list
+     * @param option
+     * @return
+     */
+    public DBCursor addOption(final int option) {
+        throw new UnsupportedOperationException();    // TODO
     }
 
     public DBCursor snapshot() {
@@ -100,11 +105,11 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @param hint
      */
     public DBCursor hint(final String hint) {
-        return this;
+        throw new UnsupportedOperationException();  // TODO
     }
 
     public void setReadPreference(final ReadPreference readPreference) {
-        throw new UnsupportedOperationException();      // TODO: Support this
+        throw new UnsupportedOperationException();      // TODO
     }
 
     public DBObject getQuery() {
@@ -145,4 +150,14 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Counts the number of objects matching the query
+     * This does not take limit/skip into consideration
+     * @see DBCursor#size
+     * @return the number of objects
+     * @throws MongoException
+     */
+    public int count() {
+        return (int) collection.filter(find.getFilter()).readPreference(find.getReadPreference()).count();  // TODO: dangerous cast.  Throw exception instead?
+    }
 }

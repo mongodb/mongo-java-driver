@@ -31,6 +31,7 @@ import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;
+import org.mongodb.util.FieldHelpers;
 
 import java.util.List;
 
@@ -88,7 +89,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
                 operations.executeCommand(databaseName, collStatsCommand, documentSerializer));
         handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
 
-        return booleanConverter(commandResult.getResponse().get("capped"));
+        return FieldHelpers.asBoolean(commandResult.getResponse().get("capped"));
     }
 
     @Override
@@ -103,22 +104,6 @@ public class CollectionAdminImpl implements CollectionAdmin {
     private final class CollStats extends MongoCommandOperation {
         private CollStats(final String collectionName) {
             super(new CommandDocument("collStats", collectionName));
-        }
-    }
-
-    // TODO: find a proper home for this
-    static boolean booleanConverter(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        else if (obj instanceof Boolean) {
-            return (Boolean) obj;
-        }
-        else if (obj instanceof Number) {
-            return ((Number) obj).intValue() != 0;
-        }
-        else {
-            throw new IllegalArgumentException("can not convert to boolean: " + obj);
         }
     }
 
