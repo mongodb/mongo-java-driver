@@ -18,11 +18,13 @@
 package org.mongodb;
 
 
+import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.result.ServerCursor;
 
 import java.io.Closeable;
 import java.util.Iterator;
 
+@NotThreadSafe
 public interface MongoCursor<T> extends Iterator<T>,Closeable {
     @Override
     void close();
