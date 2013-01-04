@@ -20,6 +20,8 @@ package com.mongodb.serializers;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClientTestBase;
+import org.bson.BSON;
+import org.bson.Transformer;
 import org.junit.Test;
 import org.mongodb.serialization.PrimitiveSerializers;
 
@@ -70,6 +72,34 @@ public class DBObjectSerializerTest extends MongoClientTestBase {
         DBObject doc = new TopLevelDBObject().append("a", new NestedOneDBObject().append("b", new NestedTwoDBObject()).append("c", new BasicDBObject()));
         collection.save(doc);
         assertEquals(doc, collection.findOne());
+    }
+
+    @Test
+    public void testTransformers() {
+        collection.save(new BasicDBObject("_id", 1).append("x", 1.1));
+        assertEquals(Double.class, collection.findOne().get("x").getClass());
+
+        BSON.addEncodingHook(Double.class, new Transformer() {
+            public Object transform(Object o) {
+                return o.toString();
+            }
+        });
+
+        collection.save(new BasicDBObject("_id", 1).append("x", 1.1));
+        assertEquals(String.class, collection.findOne().get("x").getClass());
+
+        BSON.clearAllHooks();
+        collection.save(new BasicDBObject("_id", 1).append("x", 1.1));
+        assertEquals(Double.class, collection.findOne().get("x").getClass());
+
+        BSON.addDecodingHook(Double.class, new Transformer() {
+            public Object transform(Object o) {
+                return o.toString();
+            }
+        });
+        assertEquals(String.class, collection.findOne().get("x").getClass());
+        BSON.clearAllHooks();
+        assertEquals(Double.class, collection.findOne().get("x").getClass());
     }
 
     public static class TopLevelDBObject extends BasicDBObject {

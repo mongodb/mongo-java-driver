@@ -24,6 +24,7 @@ import com.mongodb.DBRef;
 import com.mongodb.DBRefBase;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ReflectionDBObject;
+import org.bson.BSON;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;
@@ -119,7 +120,8 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     }
 
     @SuppressWarnings("unchecked")
-    protected void writeValue(final BSONWriter bsonWriter, final Object value, final BsonSerializationOptions options) {
+    protected void writeValue(final BSONWriter bsonWriter, final Object initialValue, final BsonSerializationOptions options) {
+        Object value = BSON.applyEncodingHooks(initialValue);
         if (value instanceof DBRefBase) {
             serializeDBRef(bsonWriter, (DBRefBase) value, options);
         }
@@ -255,22 +257,22 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     private Object readValue(final BSONReader reader, final BsonSerializationOptions options, final String fieldName,
                              final List<String> path) {
         final BsonType bsonType = reader.getCurrentBsonType();
+        Object initialRetVal;
         if (bsonType.equals(BsonType.DOCUMENT)) {
             path.add(fieldName);
-            Object retVal = deserializeDocument(reader, options, path);
+            initialRetVal = deserializeDocument(reader, options, path);
             path.remove(path.size() - 1);
-            return retVal;
         }
         else if (bsonType.equals(BsonType.ARRAY)) {
             path.add(fieldName);
-            Object retVal = readArray(reader, options, path);
+            initialRetVal = readArray(reader, options, path);
             path.remove(path.size() - 1);
-            return retVal;
         }
         else {
-            return primitiveSerializers.deserialize(reader, options);
+            initialRetVal = primitiveSerializers.deserialize(reader, options);
         }
 
+        return BSON.applyDecodingHooks(initialRetVal);
     }
 
     private List readArray(final BSONReader reader, final BsonSerializationOptions options, final List<String> path) {
