@@ -69,7 +69,6 @@ public class MongoFind extends MongoQuery {
         return this;
     }
 
-    // TODO: implement order
     public MongoFind order(MongoSortCriteria sortCriteria) {
         this.sortCriteria = sortCriteria;
         return this;
@@ -87,8 +86,8 @@ public class MongoFind extends MongoQuery {
         return this;
     }
 
-    public MongoFind hintIndex(final String idxName) {
-        throw new UnsupportedOperationException();
+    public MongoFind hintIndex(final String indexName) {
+        throw new UnsupportedOperationException();      // TODO
     }
 
     public MongoFind snapshot() {
