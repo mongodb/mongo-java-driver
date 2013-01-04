@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,85 +17,85 @@
 package org.bson;
 
 public enum BsonType {
-    /// <summary>
-    /// Not a real BSON type. Used to signal the end of a document.
-    /// </summary>
+    /**
+     * Not a real BSON type. Used to signal the end of a document.
+     */
     END_OF_DOCUMENT(0x00), // no values of this type exist it marks the end of a document
-    /// <summary>
-    /// A BSON double.
-    /// </summary>
+    /**
+     * A BSON double.
+     */
     DOUBLE(0x01),
-    /// <summary>
-    /// A BSON string.
-    /// </summary>
+    /**
+     * A BSON string.
+     */
     STRING(0x02),
-    /// <summary>
-    /// A BSON document.
-    /// </summary>
+    /**
+     * A BSON document.
+     */
     DOCUMENT(0x03),
-    /// <summary>
-    /// A BSON array.
-    /// </summary>
+    /**
+     * A BSON array.
+     */
     ARRAY(0x04),
-    /// <summary>
-    /// BSON binary data.
-    /// </summary>
+    /**
+     * BSON binary data.
+     */
     BINARY(0x05),
-    /// <summary>
-    /// A BSON undefined value.
-    /// </summary>
+    /**
+     * A BSON undefined value.
+     */
     UNDEFINED(0x06),
-    /// <summary>
-    /// A BSON ObjectId.
-    /// </summary>
+    /**
+     * A BSON ObjectId.
+     */
     OBJECT_ID(0x07),
-    /// <summary>
-    /// A BSON bool.
-    /// </summary>
+    /**
+     * A BSON bool.
+     */
     BOOLEAN(0x08),
-    /// <summary>
-    /// A BSON DateTime.
-    /// </summary>
+    /**
+     * A BSON DateTime.
+     */
     DATE_TIME(0x09),
-    /// <summary>
-    /// A BSON null value.
-    /// </summary>
+    /**
+     * A BSON null value.
+     */
     NULL(0x0a),
-    /// <summary>
-    /// A BSON regular expression.
-    /// </summary>
+    /**
+     * A BSON regular expression.
+     */
     REGULAR_EXPRESSION(0x0b),
-    /// <summary>
-    /// BSON JavaScript code.
-    /// </summary>
+    /**
+     * BSON JavaScript code.
+     */
     JAVASCRIPT(0x0d),
-    /// <summary>
-    /// A BSON symbol.
-    /// </summary>
+    /**
+     * A BSON symbol.
+     */
     SYMBOL(0x0e),
-    /// <summary>
-    /// BSON JavaScript code with a scope (a set of variables with values).
-    /// </summary>
+    /**
+     * BSON JavaScript code with a scope (a set of variables with values).
+     */
     JAVASCRIPT_WITH_SCOPE(0x0f),
-    /// <summary>
-    /// A BSON 32-bit integer.
-    /// </summary>
+    /**
+     * A BSON 32-bit integer.
+     */
     INT32(0x10),
-    /// <summary>
-    /// A BSON timestamp.
-    /// </summary>
+    /**
+     * A BSON timestamp.
+     */
     TIMESTAMP(0x11),
-    /// <summary>
-    /// A BSON 64-bit integer.
-    /// </summary>
+    /**
+     * A BSON 64-bit integer.
+     */
     INT64(0x12),
-    /// <summary>
-    /// A BSON MinKey value.
-    /// </summary>
+    /**
+     * A BSON MinKey value.
+     */
     MIN_KEY(0xff),
-    /// <summary>
-    /// A BSON MaxKey value.
-    /// </summary>
+    /**
+     * A BSON MaxKey value.
+     */
     MAX_KEY(0x7f);
 
     private static final BsonType[] LOOKUP_TABLE = new BsonType[MIN_KEY.getValue() + 1];

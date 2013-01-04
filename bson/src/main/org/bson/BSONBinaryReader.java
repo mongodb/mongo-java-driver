@@ -22,7 +22,6 @@ import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 
 import static java.lang.String.format;
-import static org.bson.BSON.B_BINARY;
 
 public class BSONBinaryReader extends BSONReader {
 
@@ -96,7 +95,7 @@ public class BSONBinaryReader extends BSONReader {
         int numBytes = buffer.readInt32();
         final byte type = buffer.readByte();
 
-        if (type == B_BINARY) {
+        if (type == BsonBinarySubType.OldBinary.getValue()) {
             buffer.readInt32();
             numBytes -= 4;
         }

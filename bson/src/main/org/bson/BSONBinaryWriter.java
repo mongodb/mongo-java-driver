@@ -21,8 +21,6 @@ import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 
-import static org.bson.BSON.B_BINARY;
-
 public class BSONBinaryWriter extends BSONWriter {
     private final BinaryWriterSettings binaryWriterSettings;
 
@@ -44,18 +42,18 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeBinaryData(final Binary binary) {
         checkPreconditions("writeBinaryData", State.VALUE);
 
-        buffer.write(BSON.BINARY);
+        buffer.write(BsonType.BINARY.getValue());
         writeCurrentName();
 
         int totalLen = binary.length();
 
-        if (binary.getType() == B_BINARY) {
+        if (binary.getType() == BsonBinarySubType.OldBinary.getValue()) {
             totalLen += 4;
         }
 
         buffer.writeInt(totalLen);
         buffer.write(binary.getType());
-        if (binary.getType() == B_BINARY) {
+        if (binary.getType() == BsonBinarySubType.OldBinary.getValue()) {
             buffer.writeInt(totalLen - 4);
         }
         buffer.write(binary.getData());
@@ -67,7 +65,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeBoolean(final boolean value) {
         checkPreconditions("writeBoolean", State.VALUE);
 
-        buffer.write(BSON.BOOLEAN);
+        buffer.write(BsonType.BOOLEAN.getValue());
         writeCurrentName();
         buffer.write(value ? 1 : 0);
 
@@ -78,7 +76,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeDateTime(final long value) {
         checkPreconditions("writeDateTime", State.VALUE);
 
-        buffer.write(BSON.DATE);
+        buffer.write(BsonType.DATE_TIME.getValue());
         writeCurrentName();
         buffer.writeLong(value);
 
@@ -89,7 +87,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeDouble(final double value) {
         checkPreconditions("writeDouble", State.VALUE);
 
-        buffer.write(BSON.NUMBER);
+        buffer.write(BsonType.DOUBLE.getValue());
         writeCurrentName();
         buffer.writeDouble(value);
 
@@ -100,7 +98,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeInt32(final int value) {
         checkPreconditions("writeInt32", State.VALUE);
 
-        buffer.write(BSON.NUMBER_INT);
+        buffer.write(BsonType.INT32.getValue());
         writeCurrentName();
         buffer.writeInt(value);
 
@@ -111,7 +109,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeInt64(final long value) {
         checkPreconditions("writeInt64", State.VALUE);
 
-        buffer.write(BSON.NUMBER_LONG);
+        buffer.write(BsonType.INT64.getValue());
         writeCurrentName();
         buffer.writeLong(value);
 
@@ -122,7 +120,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeJavaScript(final String code) {
         checkPreconditions("writeJavaScript", State.VALUE);
 
-        buffer.write(BSON.CODE);
+        buffer.write(BsonType.JAVASCRIPT.getValue());
         writeCurrentName();
         buffer.writeString(code);
 
@@ -133,7 +131,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeJavaScriptWithScope(final String code) {
         checkPreconditions("writeJavaScriptWithScope", State.VALUE);
 
-        buffer.write(BSON.CODE_W_SCOPE);
+        buffer.write(BsonType.JAVASCRIPT_WITH_SCOPE.getValue());
         writeCurrentName();
         context = new Context(context, ContextType.JAVASCRIPT_WITH_SCOPE, buffer.getPosition());
         buffer.writeInt(0);
@@ -146,7 +144,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeMaxKey() {
         checkPreconditions("writeMaxKey", State.VALUE);
 
-        buffer.write(BSON.MAXKEY);
+        buffer.write(BsonType.MAX_KEY.getValue());
         writeCurrentName();
 
         setState(getNextState());
@@ -156,7 +154,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeMinKey() {
         checkPreconditions("writeMinKey", State.VALUE);
 
-        buffer.write(BSON.MINKEY);
+        buffer.write(BsonType.MIN_KEY.getValue());
         writeCurrentName();
 
         setState(getNextState());
@@ -166,7 +164,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeNull() {
         checkPreconditions("writeNull", State.VALUE);
 
-        buffer.write(BSON.NULL);
+        buffer.write(BsonType.NULL.getValue());
         writeCurrentName();
 
         setState(getNextState());
@@ -176,7 +174,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeObjectId(final ObjectId objectId) {
         checkPreconditions("writeObjectId", State.VALUE);
 
-        buffer.write(BSON.OID);
+        buffer.write(BsonType.OBJECT_ID.getValue());
         writeCurrentName();
 
         // TODO: Should this be pushed down into the buffer?
@@ -191,7 +189,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeRegularExpression(final RegularExpression regularExpression) {
         checkPreconditions("writeRegularExpression", State.VALUE);
 
-        buffer.write(BSON.REGEX);
+        buffer.write(BsonType.REGULAR_EXPRESSION.getValue());
         writeCurrentName();
         buffer.writeCString(regularExpression.getPattern());
         buffer.writeCString(regularExpression.getOptions());
@@ -203,7 +201,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeString(final String value) {
         checkPreconditions("writeString", State.VALUE);
 
-        buffer.write(BSON.STRING);
+        buffer.write(BsonType.STRING.getValue());
         writeCurrentName();
         buffer.writeString(value);
 
@@ -214,7 +212,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeSymbol(final String value) {
         checkPreconditions("writeSymbol", State.VALUE);
 
-        buffer.write(BSON.SYMBOL);
+        buffer.write(BsonType.SYMBOL.getValue());
         writeCurrentName();
         buffer.writeString(value);
 
@@ -226,7 +224,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeTimestamp(final long value) {
         checkPreconditions("writeTimestamp", State.VALUE);
 
-        buffer.write(BSON.TIMESTAMP);
+        buffer.write(BsonType.TIMESTAMP.getValue());
         writeCurrentName();
         buffer.writeLong(value);
 
@@ -237,7 +235,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public void writeUndefined() {
         checkPreconditions("writeUndefined", State.VALUE);
 
-        buffer.write(BSON.UNDEFINED);
+        buffer.write(BsonType.UNDEFINED.getValue());
         writeCurrentName();
 
         setState(getNextState());
@@ -255,7 +253,7 @@ public class BSONBinaryWriter extends BSONWriter {
         checkPreconditions("writeStartArray", State.VALUE);
 
         super.writeStartArray();
-        buffer.write(BSON.ARRAY);
+        buffer.write(BsonType.ARRAY.getValue());
         writeCurrentName();
         context = new Context(context, ContextType.ARRAY, buffer.getPosition());
         buffer.writeInt(0); // reserve space for size
@@ -272,7 +270,7 @@ public class BSONBinaryWriter extends BSONWriter {
 
         super.writeStartDocument();
         if (getState() == State.VALUE) {
-            buffer.write(BSON.OBJECT);
+            buffer.write(BsonType.DOCUMENT.getValue());
             writeCurrentName();
         }
         final ContextType contextType = (getState() == State.SCOPE_DOCUMENT) ? ContextType.SCOPE_DOCUMENT : ContextType.DOCUMENT;
