@@ -21,7 +21,7 @@ import org.mongodb.Function;
 import org.mongodb.MongoCursor;
 import org.mongodb.result.ServerCursor;
 
-public class MongoMappingCursor<T, U> implements MongoCursor<U> {
+class MongoMappingCursor<T, U> implements MongoCursor<U> {
     private final MongoCursor<T> proxied;
     private final Function<T, U> mapper;
 
