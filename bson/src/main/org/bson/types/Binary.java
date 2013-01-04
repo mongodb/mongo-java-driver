@@ -18,7 +18,7 @@
 
 package org.bson.types;
 
-import org.bson.BSON;
+import org.bson.BsonBinarySubType;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -36,7 +36,17 @@ public class Binary implements Serializable {
      * @param data raw data
      */
     public Binary(final byte[] data) {
-        this(BSON.B_GENERAL, data);
+        this(BsonBinarySubType.Binary, data);
+    }
+
+    /**
+     * Creates a Binary with the specified type and data.
+     *
+     * @param type the binary type
+     * @param data the binary data
+     */
+    public Binary(final BsonBinarySubType type, final byte[] data) {
+        this(type.getValue(), data);
     }
 
     /**
@@ -49,6 +59,7 @@ public class Binary implements Serializable {
         _type = type;
         _data = data;
     }
+
 
     public byte getType() {
         return _type;

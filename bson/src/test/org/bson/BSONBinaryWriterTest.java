@@ -398,8 +398,8 @@ public class BSONBinaryWriterTest {
         writer.writeStartDocument();
         {
             writer.writeBinaryData("b1", new Binary(new byte[]{0, 0, 0, 0, 0, 0, 0, 0}));
-            writer.writeBinaryData("b2", new Binary(BSON.B_BINARY, new byte[]{1, 1, 1, 1, 1}));
-            writer.writeBinaryData("b3", new Binary(BSON.B_FUNC, new byte[]{}));
+            writer.writeBinaryData("b2", new Binary(BsonBinarySubType.OldBinary, new byte[]{1, 1, 1, 1, 1}));
+            writer.writeBinaryData("b3", new Binary(BsonBinarySubType.Function, new byte[]{}));
         }
         writer.writeEndDocument();
 
