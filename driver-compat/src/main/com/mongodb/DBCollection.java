@@ -50,7 +50,7 @@ public class DBCollection {
 
     DBCollection(final String name, final DB database) {
         this.database = database;
-        getTypedCollection(name);
+        setCollection(name);
     }
 
     public WriteResult insert(final DBObject document, final WriteConcern writeConcern) {
@@ -205,8 +205,7 @@ public class DBCollection {
     }
 
     public DBCursor find(final DBObject filter, final DBObject fields) {
-        return new DBCursor(collection, DBObjects.toQueryFilterDocument(filter),
-                            DBObjects.toFieldSelectorDocument(fields), getReadPreference());
+        return new DBCursor(this, filter, fields, getReadPreference());
     }
 
     /**
@@ -733,7 +732,7 @@ public class DBCollection {
      */
     public synchronized void setObjectClass(final Class<? extends DBObject> clazz) {
         objectClass = clazz;
-        getTypedCollection(getName());
+        resetCollection();
     }
 
     /**
@@ -744,10 +743,18 @@ public class DBCollection {
      */
     public synchronized void setInternalClass(String path, Class<? extends DBObject> clazz) {
         pathToClassMap.put(path, clazz);
-        getTypedCollection(getName());
+        resetCollection();
     }
 
-    private void getTypedCollection(final String name) {
+    MongoCollection<DBObject> toNew() {
+        return collection;
+    }
+
+    private void resetCollection() {
+        setCollection(getName());
+    }
+
+    private void setCollection(final String name) {
         this.collection = database.toNew().
                 getTypedCollection(name, new CollectibleDBObjectSerializer(database,
                                                                            database.getMongo().getNew().getOptions().getPrimitiveSerializers(),

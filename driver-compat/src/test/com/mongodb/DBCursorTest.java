@@ -16,18 +16,220 @@
 
 package com.mongodb;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class DBCursorTest extends MongoClientTestBase {
+    DBCursor cursor;
+
+    @Before
+    public void before() {
+        super.before();
+        for (int i = 0; i < 10; i++) {
+            collection.insert(new BasicDBObject("_id", i));
+        }
+
+        cursor = collection.find();
+    }
+
+    @After
+    public void after() {
+        cursor.close();
+    }
+
+    @Test
+    public void testNextHasNext() {
+        cursor.sort(new BasicDBObject("_id", 1));
+        int i = 0;
+        while (cursor.hasNext()) {
+            DBObject cur = cursor.next();
+            assertEquals(i, cur.get("_id"));
+            i++;
+        }
+
+        try {
+            cursor.next();
+            fail();
+        } catch (NoSuchElementException e) {
+            // all good
+        }
+    }
+
+    @Test
+    public void testCurr() {
+        assertNull(cursor.curr());
+        DBObject next = cursor.next();
+        assertEquals(next, cursor.curr());
+        next = cursor.next();
+        assertEquals(next, cursor.curr());
+    }
+
+    @Test
+    public void testMarkPartial() {
+        DBCursor markPartialCursor = collection.find(new BasicDBObject(), new BasicDBObject("_id", 1));
+        assertTrue(markPartialCursor.next().isPartialObject());
+    }
+
+    @Test
+    public void testIterator() {
+        cursor.sort(new BasicDBObject("_id", 1));
+        Iterator<DBObject> iter = cursor.iterator();
+        int i = 0;
+        while (iter.hasNext()) {
+            DBObject cur = iter.next();
+            assertEquals(i, cur.get("_id"));
+            i++;
+        }
+    }
+
+    @Test
+    public void testCopy() {
+        DBCursor cursorCopy = cursor.copy();
+        assertEquals(cursor.getCollection(), cursorCopy.getCollection());
+        assertEquals(cursor.getQuery(), cursorCopy.getQuery());
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testRemove() {
+        cursor.remove();
+    }
+
+    @Test
+    public void testSort() {
+        cursor.sort(new BasicDBObject("_id", -1));
+        assertEquals(9, cursor.next().get("_id"));
+    }
+
+    @Test
+    public void testLimit() {
+        DBCursor cursor = collection.find().limit(4);
+        try {
+            assertEquals(4, cursor.toArray().size());
+        } finally {
+            cursor.close();
+        }
+    }
+
+    @Test
+    public void testSkip() {
+        DBCursor cursor = collection.find().skip(2);
+        try {
+            assertEquals(8, cursor.toArray().size());
+        } finally {
+            cursor.close();
+        }
+    }
+
+    @Test
+    public void testGetCursorId() {
+        DBCursor cursor = collection.find().limit(2);
+        assertEquals(0, cursor.getCursorId());
+        cursor.hasNext();
+        assertNotEquals(0, cursor.getCursorId());
+    }
+
+    @Test
+    public void testGetServerAddress() {
+        DBCursor cursor = collection.find().limit(2);
+        assertEquals(null, cursor.getServerAddress());
+        cursor.hasNext();
+        assertEquals(getClient().getServerAddressList().get(0), cursor.getServerAddress());
+    }
+
+    @Test
+    public void getNumSeen() {
+        DBCursor cursor = collection.find();
+        assertEquals(0, cursor.numSeen());
+        cursor.hasNext();
+        assertEquals(0, cursor.numSeen());
+        cursor.next();
+        assertEquals(1, cursor.numSeen());
+        cursor.next();
+        assertEquals(2, cursor.numSeen());
+    }
+
+    @Test
+    public void testLength() {
+        assertEquals(10, cursor.length());
+    }
+
+    @Test
+    public void testToArray() {
+        assertEquals(10, cursor.toArray().size());
+        assertEquals(10, cursor.toArray().size());
+    }
+
+    @Test
+    public void testToArrayWithMax() {
+        assertEquals(9, cursor.toArray(9).size());
+        assertEquals(10, cursor.toArray().size());
+    }
+
+    @Test
+    public void testIterationCount() {
+        assertEquals(10, cursor.itcount());
+    }
+
     @Test
     public void testCount() {
-        assertEquals(0, collection.find().count());
-
-        collection.insert(new BasicDBObject("_id", 1));
-        collection.insert(new BasicDBObject("_id", 2));
-
+        assertEquals(10, cursor.count());
         assertEquals(1, collection.find(new BasicDBObject("_id", 1)).count());
     }
+
+    @Test
+    public void testGetKeysWanted() {
+        assertNull(cursor.getKeysWanted());
+        DBObject keys = new BasicDBObject("x", 1);
+        DBCursor cursorWithKeys = collection.find(new BasicDBObject(), keys);
+        assertEquals(keys, cursorWithKeys.getKeysWanted());
+    }
+
+    @Test
+    public void testGetQuery() {
+        assertEquals(new BasicDBObject(), cursor.getQuery());
+        DBObject query = new BasicDBObject("x", 1);
+        DBCursor cursorWithQuery = collection.find(query);
+        assertEquals(query, cursorWithQuery.getQuery());
+    }
+
+    @Test
+    public void testReadPreference() {
+        assertEquals(ReadPreference.primary(), cursor.getReadPreference());
+        cursor.setReadPreference(ReadPreference.secondary());
+        assertEquals(ReadPreference.secondary(), cursor.getReadPreference());
+    }
+
+    @Test
+    public void testConstructor() {
+        DBObject query = new BasicDBObject("x", 1);
+        DBObject keys = new BasicDBObject("x", 1).append("y", 1);
+        DBCursor local = new DBCursor(collection, query, keys, ReadPreference.secondary());
+        assertEquals(ReadPreference.secondary(), local.getReadPreference());
+        assertEquals(query, local.getQuery());
+        assertEquals(keys, local.getKeysWanted());
+    }
+
+
+    @Test
+    public void testClose() {
+        cursor.next();
+        cursor.close();
+        try {
+            cursor.next();
+            fail();
+        } catch (IllegalStateException e) {
+            // all good
+        }
+    }
+
 }
