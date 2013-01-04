@@ -17,52 +17,29 @@
 package org.mongodb;
 
 import org.bson.types.Document;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-import org.mongodb.command.DropDatabaseCommand;
-import org.mongodb.impl.SingleServerMongoClient;
 
-import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
-@RunWith(JUnit4.class)
-public class MongoCursorTest {
-    // TODO: this is untenable, and copied code as well
-    private static SingleServerMongoClient mongoClient;
-    private static final String DB_NAME = "MongoCollectionTest";
-    private static MongoDatabase mongoDatabase;
-
-    @BeforeClass
-    public static void setUpClass() throws UnknownHostException {
-        mongoClient = new SingleServerMongoClient(new ServerAddress());
-        mongoDatabase = mongoClient.getDatabase(DB_NAME);
-        new DropDatabaseCommand(mongoDatabase).execute();
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-        mongoClient.close();
-    }
-
+public class MongoCursorTest extends MongoClientTestBase {
     @Before
-    public void setUp() throws UnknownHostException {
-    }
-
-    @Test
-    public void testNormalLoopWithGetMore() {
-        MongoCollection<Document> collection = mongoDatabase.getCollection("normalLoopWithGetMore");
+    public void before() {
+        super.before();
         for (int i = 0; i < 10; i++) {
             collection.insert(new Document("_id", i));
         }
+    }
 
+
+    @Test
+    public void testNormalLoopWithGetMore() {
         MongoCursor<Document> cursor = collection.sort(new SortCriteriaDocument("_id", 1)).batchSize(2).find();
         try {
             int i = 0;
@@ -79,11 +56,6 @@ public class MongoCursorTest {
 
     @Test
     public void testNextWithoutHasNextWithGetMore() {
-        MongoCollection<Document> collection = mongoDatabase.getCollection("nextWithoutHasNextWithGetMore");
-        for (int i = 0; i < 10; i++) {
-            collection.insert(new Document("_id", i));
-        }
-
         MongoCursor<Document> cursor = collection.sort(new SortCriteriaDocument("_id", 1)).batchSize(2).find();
         try {
             for (int i = 0; i < 10; i++) {
@@ -102,5 +74,35 @@ public class MongoCursorTest {
         } finally {
             cursor.close();
         }
+    }
+
+    @Test
+    public void testLimit() {
+        List<Document> list = new ArrayList<Document>();
+        collection.limit(4).into(list);
+        assertEquals(4, list.size());
+    }
+
+    @Test
+    public void testClose() {
+        MongoCursor<Document> cursor = collection.find();
+
+        cursor.next();
+        cursor.close();
+        try {
+            cursor.next();
+            fail();
+        } catch (IllegalStateException e) {
+            // all good
+        }
+
+        try {
+            cursor.hasNext();
+            fail();
+        } catch (IllegalStateException e) {
+            // all good
+        }
+
+        cursor.close();
     }
 }
