@@ -191,7 +191,7 @@ public class DBTCPConnector implements DBConnector {
             _error( ioe, false );
 
             if ( concern.raiseNetworkErrors() )
-                throw new MongoException.Network( "can't say something" , ioe );
+                throw new MongoException.Network( "can't say something : " + port.host() + "/" + db , ioe );
 
             CommandResult res = new CommandResult(port.serverAddress());
             res.put( "ok" , false );
