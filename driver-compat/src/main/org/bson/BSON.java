@@ -18,8 +18,19 @@
 
 package org.bson;
 
+import com.mongodb.DBObject;
+import com.mongodb.MongoInternalException;
+import com.mongodb.serializers.DBObjectSerializer;
+import org.bson.io.BasicOutputBuffer;
+import org.bson.io.ByteBufferInput;
+import org.bson.io.InputBuffer;
+import org.bson.io.OutputBuffer;
 import org.bson.util.ClassMap;
+import org.mongodb.serialization.PrimitiveSerializers;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -313,14 +324,34 @@ public class BSON {
 
     // ----- static encode/decode -----
 
-    public static byte[] encode(BSONObject o) {
-        throw new UnsupportedOperationException();
+    /**
+     * Encodes a DBObject as a BSON byte array.
+     * @param doc the document to encode
+     * @return the document encoded as BSON
+     */
+    public static byte[] encode(DBObject doc) {
+        try {
+            OutputBuffer buffer = new BasicOutputBuffer();
+            new DBObjectSerializer(PrimitiveSerializers.createDefault()).serialize(new BSONBinaryWriter(buffer), doc, null);
+            BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
+            buffer.pipe(stream);
+            return stream.getInternalBytes();
+        } catch (IOException e) {
+            // impossible with a byte array output stream
+            throw new MongoInternalException("impossible", e);
+        }
     }
 
-    public static BSONObject decode(byte[] b) {
-        throw new UnsupportedOperationException();
+    /**
+     * Decodes a BSON byte array into a DBObject instance.
+     *
+     * @param bytes a document encoded as BSON
+     * @return the document as a DBObject
+     */
+    public static DBObject decode(byte[] bytes) {
+        InputBuffer buffer = new ByteBufferInput(ByteBuffer.wrap(bytes));
+        return new DBObjectSerializer(PrimitiveSerializers.createDefault()).deserialize(new BSONBinaryReader(buffer), null);
     }
-
 
     // --- coercing ---
 
@@ -338,5 +369,16 @@ public class BSON {
         }
 
         throw new IllegalArgumentException("can't convert: " + o.getClass().getName() + " to int");
+    }
+
+    // Just so we don't have to copy the buffer
+    static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
+        BufferExposingByteArrayOutputStream() {
+            super(512);
+        }
+
+        byte[] getInternalBytes() {
+            return buf;
+        }
     }
 }
