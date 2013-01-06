@@ -22,4 +22,8 @@ public class BinaryWriterSettings {
     public BinaryWriterSettings(final int maxDocumentSize) {
         this.maxDocumentSize = maxDocumentSize;
     }
+
+    public BinaryWriterSettings() {
+        this(16 * 1024 * 1024);
+    }
 }

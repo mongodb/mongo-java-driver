@@ -22,4 +22,8 @@ public class BsonWriterSettings {
     public BsonWriterSettings(final int maxSerializationDepth) {
         this.maxSerializationDepth = maxSerializationDepth;
     }
+
+    public BsonWriterSettings() {
+        this(1024);
+    }
 }

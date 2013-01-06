@@ -34,6 +34,10 @@ public class BSONBinaryReader extends BSONReader {
         context = new Context(null, ContextType.TOP_LEVEL, 0, 0);
     }
 
+    public BSONBinaryReader(final InputBuffer buffer) {
+        this(new BsonReaderSettings(), buffer);
+    }
+
     @Override
     public BsonType readBsonType() {
         if (isClosed()) {
