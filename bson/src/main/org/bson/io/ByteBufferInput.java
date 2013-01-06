@@ -75,9 +75,8 @@ public class ByteBufferInput implements InputBuffer {
     public String readString() {
         final int size = readInt32();
         final byte[] bytes = readBytes(size);
-        // TODO: this is 1.6 only...
         try {
-            return new String(bytes, 0, size - 1, UTF8_CHARSET);
+            return new String(bytes, 0, size - 1, UTF8_CHARSET); // TODO: there is a Java 6 alternative that takes a Charset
         } catch (UnsupportedEncodingException e) {
             throw new IllegalStateException(e);
         }
@@ -104,9 +103,8 @@ public class ByteBufferInput implements InputBuffer {
         final byte[] bytes = readBytes(size);
         readByte();  // read the trailing null bytes
 
-        // TODO: this is 1.6 only...
         try {
-            return new String(bytes, UTF8_CHARSET);
+            return new String(bytes, UTF8_CHARSET); // TODO: there is a Java 6 alternative that takes a Charset
         } catch (UnsupportedEncodingException e) {
             throw new IllegalStateException(e);
         }
@@ -121,11 +119,6 @@ public class ByteBufferInput implements InputBuffer {
     @Override
     public void skipCString() {
         readUntilNullByte();
-    }
-
-    @Override
-    public void setPosition(final int position) {
-        buffer.position(position);
     }
 
     private int readBigEndianInt() {

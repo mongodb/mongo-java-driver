@@ -27,6 +27,9 @@ public class BSONBinaryWriter extends BSONWriter {
     private final OutputBuffer buffer;
     private Context context;
 
+    public BSONBinaryWriter(OutputBuffer buffer) {
+        this(new BsonWriterSettings(), new BinaryWriterSettings(), buffer);
+    }
     public BSONBinaryWriter(final BsonWriterSettings settings, final BinaryWriterSettings binaryWriterSettings,
                             final OutputBuffer buffer) {
         super(settings);
