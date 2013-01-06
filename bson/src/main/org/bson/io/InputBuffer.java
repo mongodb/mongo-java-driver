@@ -1,10 +1,5 @@
-package org.bson.io;
-
-import org.bson.BsonType;
-import org.bson.types.ObjectId;
-
-/**
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+/*
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,6 +10,12 @@ import org.bson.types.ObjectId;
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
+
+package org.bson.io;
+
+import org.bson.BsonType;
+import org.bson.types.ObjectId;
+
 public interface InputBuffer {
     int getPosition();
 
@@ -39,6 +40,4 @@ public interface InputBuffer {
     String readCString();
 
     void skipCString();
-
-    void setPosition(int position);
 }
