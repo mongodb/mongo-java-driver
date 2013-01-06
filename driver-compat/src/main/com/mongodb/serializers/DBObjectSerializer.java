@@ -66,6 +66,10 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         }
     }
 
+    public DBObjectSerializer(final PrimitiveSerializers primitiveSerializers) {
+        this(null, primitiveSerializers, BasicDBObject.class, new HashMap<String, Class<? extends DBObject>>());
+    }
+
     @Override
     public void serialize(final BSONWriter bsonWriter, final DBObject document,
                           final BsonSerializationOptions options) {
