@@ -25,6 +25,9 @@ buildscript {
     }
 }
 
+//////////////////////////////////////////
+// Common behavior                      //
+//////////////////////////////////////////
 
 allprojects {
     apply plugin: 'idea'
@@ -36,7 +39,6 @@ subprojects {
     apply plugin: 'checkstyle'
     apply plugin: 'pmd'
     apply plugin: 'findbugs'
-    apply plugin: 'maven'
     apply plugin: 'osgi'
     apply plugin: 'cobertura'
 
@@ -45,6 +47,26 @@ subprojects {
     version = '3.0.0-SNAPSHOT'
     sourceCompatibility = '1.5'
     targetCompatibility = '1.5'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        testCompile 'junit:junit:4.11'
+    }
+
+    sourceSets {
+        main {
+            java {
+                srcDir 'src/main'
+            }
+        }
+        test {
+            java {
+                srcDir 'src/test'
+            }
+        }
+    }
 
     checkstyle {
         configFile = new File("$configDir/checkstyle.xml")
@@ -60,14 +82,7 @@ subprojects {
     }
 
     cobertura {
-        coverageFormats = [ 'xml','html' ]
-    }
-
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        testCompile 'junit:junit:4.11'
+        coverageFormats = ['xml', 'html']
     }
 
     tasks.withType(Compile) {
@@ -75,19 +90,6 @@ subprojects {
         options.fork = true
         options.debug = true
         options.compilerArgs = ['-Xlint:all']
-    }
-
-    sourceSets {
-        main {
-            java {
-                srcDir 'src/main'
-            }
-        }
-        test {
-            java {
-                srcDir 'src/test'
-            }
-        }
     }
 
     task sourcesJar(type: Jar) {
@@ -120,11 +122,80 @@ subprojects {
     }
 }
 
+configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat', 'morphia'] }) {
+    apply plugin: 'maven'
+    apply plugin: 'signing'
+
+    project.ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+
+    signing {
+        required { project.isReleaseVersion && gradle.taskGraph.hasTask("deploy") }
+        sign configurations.archives
+    }
+
+    install {
+        project.ext.installer = repositories.mavenInstaller
+    }
+
+    uploadArchives {
+        project.ext.deployer = repositories.mavenDeployer {
+            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots')
+            repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
+                authentication(
+                        userName: project.property('sonatypeUsername'),
+                        password: project.property('sonatypePassword')
+                )
+            }
+        }
+    }
+
+
+    [project.installer, project.deployer]*.pom {
+
+        project {
+            scm {
+                url 'https://github.com/mongodb/mongo-java-driver'
+                connection 'scm:git:git://github.com/mongodb/mongo-java-driver'
+            }
+
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+
+            developers {
+                developer {
+                    name 'Various'
+                    organization '10gen'
+                }
+            }
+        }
+
+        whenConfigured { pom ->
+            pom.dependencies.removeAll { dep -> dep.scope != 'compile' }
+            pom.dependencies*.scope = null
+        }
+    }
+
+}
+
+//////////////////////////////////////////
+// Project specific behavior            //
+//////////////////////////////////////////
+
 project(':common') {
 
 }
 
 project(':bson') {
+
+    dependencies {
+        compile project(':common')
+    }
+
     jar {
         manifest {
             attributes(
@@ -133,8 +204,17 @@ project(':bson') {
             )
         }
     }
-    dependencies {
-        compile project(':common')
+
+    [project.installer, project.deployer]*.pom {
+        project {
+            name 'BSON'
+            description 'The BSON libs'
+            url 'http://bsonspec.org/'
+        }
+
+        whenConfigured { pom ->
+            pom.dependencies.removeAll { true }
+        }
     }
 
 }
@@ -149,7 +229,15 @@ project(':driver') {
         }
     }
 
+    dependencies {
+        compile project(':common')
+        compile project(':bson')
+        acceptanceCompile 'junit:junit:4.11'
+        acceptanceCompile sourceSets.main.runtimeClasspath
+    }
+
     jar {
+        from project(':common').sourceSets.main.output
         from project(':bson').sourceSets.main.output
         manifest {
             attributes(
@@ -169,10 +257,12 @@ project(':driver') {
 
 
     sourcesJar {
+        from project(':common').sourceSets.main.allSource
         from project(':bson').sourceSets.main.allSource
     }
 
     javadoc {
+        source project(':common').sourceSets.main.allJava
         source project(':bson').sourceSets.main.allJava
     }
 
@@ -180,16 +270,28 @@ project(':driver') {
         from sourceSets.acceptance.output
     }
 
-    dependencies {
-        compile project(':common')
-        compile project(':bson')
-        acceptanceCompile 'junit:junit:4.11'
-        acceptanceCompile sourceSets.main.runtimeClasspath
+    [project.installer, project.deployer]*.pom {
+        project {
+            name 'MongoDB Java Driver'
+            description 'The MongoDB Java Driver'
+            url 'http://www.mongodb.org'
+        }
+
+        whenConfigured { pom ->
+            pom.dependencies.removeAll { true }
+        }
     }
+
 }
 
 project(':driver-compat') {
+
+    dependencies {
+        compile project(':driver')
+    }
+
     jar {
+        from project(':common').sourceSets.main.output
         from project(':bson').sourceSets.main.output
         from project(':driver').sourceSets.main.output
         manifest {
@@ -203,18 +305,29 @@ project(':driver-compat') {
     }
 
     sourcesJar {
+        from project(':common').sourceSets.main.allSource
         from project(':bson').sourceSets.main.allSource
         from project(':driver').sourceSets.main.allSource
     }
 
     javadoc {
+        source project(':common').sourceSets.main.allJava
         source project(':bson').sourceSets.main.allJava
         source project(':driver').sourceSets.main.allJava
     }
 
-    dependencies {
-        compile project(':driver')
+    [project.installer, project.deployer]*.pom {
+        project {
+            name 'MongoDB Java Driver'
+            description 'The MongoDB Java Driver'
+            url 'http://www.mongodb.org'
+        }
+
+        whenConfigured { pom ->
+            pom.dependencies.removeAll { true }
+        }
     }
+
 }
 
 project(':morphia') {
@@ -222,5 +335,24 @@ project(':morphia') {
         compile 'com.thoughtworks.proxytoys:proxytoys:1.0'
         compile project(':driver-compat')
     }
-}
 
+    [project.installer, project.deployer]*.pom {
+        project {
+            name 'morphia'
+            description 'A lightweight library for mapping Java objects to/from MongoDB (see mongodb.org).'
+            url 'http://code.google.com/p/morphia/'
+
+            scm {
+                url 'http://code.google.com/p/morphia/source/browse'
+                connection 'http://morphia.googlecode.com/svn/trunk/'
+            }
+
+            developers {
+                developer {
+                    id 'oli.gauti'
+                    name 'Olafur Gauti Gudmundsson'
+                }
+            }
+        }
+    }
+}
