@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-// BSON.java
 
 package org.bson;
 
@@ -31,18 +29,10 @@ import org.mongodb.serialization.PrimitiveSerializers;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 public class BSON {
-
-    static final Logger LOGGER = Logger.getLogger("org.bson.BSON");
-
-    // ---- basics ----
 
     public static final byte EOO = 0;
     public static final byte NUMBER = 1;
@@ -79,116 +69,10 @@ public class BSON {
     public static final byte B_BINARY = 2;
     public static final byte B_UUID = 3;
 
-    // ---- regular expression handling ----
-
-    /**
-     * Converts a string of regular expression flags from the database in Java regular expression flags.
-     *
-     * @param flags flags from database
-     * @return the Java flags
-     */
-    public static int regexFlags(String flags) {
-        int fint = 0;
-        if (flags == null || flags.length() == 0) {
-            return fint;
-        }
-
-        flags = flags.toLowerCase();
-
-        for (int i = 0; i < flags.length(); i++) {
-            RegexFlag flag = RegexFlag.getByCharacter(flags.charAt(i));
-            if (flag != null) {
-                fint |= flag.javaFlag;
-                if (flag.unsupported != null) {
-                    _warnUnsupportedRegex(flag.unsupported);
-                }
-            }
-            else {
-                throw new IllegalArgumentException(
-                        "unrecognized flag [" + flags.charAt(i) + "] " + (int) flags.charAt(i));
-            }
-        }
-        return fint;
-    }
-
-    public static int regexFlag(char c) {
-        RegexFlag flag = RegexFlag.getByCharacter(c);
-        if (flag == null) {
-            throw new IllegalArgumentException("unrecognized flag [" + c + "]");
-        }
-
-        if (flag.unsupported != null) {
-            _warnUnsupportedRegex(flag.unsupported);
-            return 0;
-        }
-
-        return flag.javaFlag;
-    }
-
-    /**
-     * Converts Java regular expression flags into a string of flags for the database
-     *
-     * @param flags Java flags
-     * @return the flags for the database
-     */
-    public static String regexFlags(int flags) {
-        StringBuilder buf = new StringBuilder();
-
-        for (RegexFlag flag : RegexFlag.values()) {
-            if ((flags & flag.javaFlag) > 0) {
-                buf.append(flag.flagChar);
-                flags -= flag.javaFlag;
-            }
-        }
-
-        if (flags > 0) {
-            throw new IllegalArgumentException("some flags could not be recognized.");
-        }
-
-        return buf.toString();
-    }
-
-    private static enum RegexFlag {
-        CANON_EQ(Pattern.CANON_EQ, 'c', "Pattern.CANON_EQ"),
-        UNIX_LINES(Pattern.UNIX_LINES, 'd', "Pattern.UNIX_LINES"),
-        GLOBAL(GLOBAL_FLAG, 'g', null),
-        CASE_INSENSITIVE(Pattern.CASE_INSENSITIVE, 'i', null),
-        MULTILINE(Pattern.MULTILINE, 'm', null),
-        DOTALL(Pattern.DOTALL, 's', "Pattern.DOTALL"),
-        LITERAL(Pattern.LITERAL, 't', "Pattern.LITERAL"),
-        UNICODE_CASE(Pattern.UNICODE_CASE, 'u', "Pattern.UNICODE_CASE"),
-        COMMENTS(Pattern.COMMENTS, 'x', null);
-
-        private static final Map<Character, RegexFlag> byCharacter = new HashMap<Character, RegexFlag>();
-
-        static {
-            for (RegexFlag flag : values()) {
-                byCharacter.put(flag.flagChar, flag);
-            }
-        }
-
-        public static RegexFlag getByCharacter(char ch) {
-            return byCharacter.get(ch);
-        }
-
-        public final int javaFlag;
-        public final char flagChar;
-        public final String unsupported;
-
-        RegexFlag(int f, char ch, String u) {
-            javaFlag = f;
-            flagChar = ch;
-            unsupported = u;
-        }
-    }
-
-    private static void _warnUnsupportedRegex(String flag) {
-        LOGGER.info("flag " + flag + " not supported by db.");
-    }
-
-    private static final int GLOBAL_FLAG = 256;
-
-    // --- (en|de)coding hooks -----
+    private static volatile boolean _encodeHooks = false;
+    private static volatile boolean _decodeHooks = false;
+    private static ClassMap<List<Transformer>> _encodingHooks = new ClassMap<List<Transformer>>();
+    private static ClassMap<List<Transformer>> _decodingHooks = new ClassMap<List<Transformer>>();
 
     public static boolean hasEncodeHooks() {
         return _encodeHooks;
@@ -309,19 +193,6 @@ public class BSON {
         clearDecodingHooks();
     }
 
-    /**
-     * Returns true if any encoding or decoding hooks are loaded.
-     */
-    private static boolean _anyHooks() {
-        return _encodeHooks || _decodeHooks;
-    }
-
-    private static volatile boolean _encodeHooks = false;
-    private static volatile boolean _decodeHooks = false;
-    static ClassMap<List<Transformer>> _encodingHooks = new ClassMap<List<Transformer>>();
-
-    static ClassMap<List<Transformer>> _decodingHooks = new ClassMap<List<Transformer>>();
-
     // ----- static encode/decode -----
 
     /**
@@ -351,24 +222,6 @@ public class BSON {
     public static DBObject decode(byte[] bytes) {
         InputBuffer buffer = new ByteBufferInput(ByteBuffer.wrap(bytes));
         return new DBObjectSerializer(PrimitiveSerializers.createDefault()).deserialize(new BSONBinaryReader(buffer), null);
-    }
-
-    // --- coercing ---
-
-    public static int toInt(Object o) {
-        if (o == null) {
-            throw new NullPointerException("can't be null");
-        }
-
-        if (o instanceof Number) {
-            return ((Number) o).intValue();
-        }
-
-        if (o instanceof Boolean) {
-            return ((Boolean) o) ? 1 : 0;
-        }
-
-        throw new IllegalArgumentException("can't convert: " + o.getClass().getName() + " to int");
     }
 
     // Just so we don't have to copy the buffer
