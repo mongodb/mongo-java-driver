@@ -19,6 +19,8 @@
 package com.mongodb;
 
 // Bson
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -59,17 +61,19 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
     @Override
     public void objectStart(boolean array, String name){
-        _lastName = name;
+        _nameStack.addLast(name);
         super.objectStart( array , name );
     }
 
     @Override
     public Object objectDone(){
         BSONObject o = (BSONObject)super.objectDone();
-        if ( ! ( o instanceof List ) &&
+        String name = null;
+        if ( _nameStack.size() > 0 ) name = _nameStack.removeLast();
+        if ( ! ( o instanceof List ) && name != null &&
              o.containsField( "$ref" ) &&
              o.containsField( "$id" ) ){
-            return cur().put( _lastName , new DBRef( _db, o ) );
+            return cur().put(name, new DBRef( _db, o ) );
         }
 
         return o;
@@ -140,11 +144,11 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
     @Override
     public void reset(){
-        _lastName = null;
+        _nameStack = new LinkedList<String>();
         super.reset();
     }
 
-    private String _lastName;
+    private Deque<String> _nameStack;
     final DBCollection _collection;
     final DB _db;
     static final Logger LOGGER = Logger.getLogger( "com.mongo.DECODING" );

@@ -158,6 +158,62 @@ public class DBRefTest extends TestCase {
         assertEquals( ref.getDB(), ((DBRef)loaded.get( "l" )).getDB());
     }
 
+    @Test
+    public void testGetEntityWithSingleDBRefWithCompoundId() {
+        DBCollection a = _db.getCollection("a");
+        a.drop();
+
+        BasicDBObject compoundId = new BasicDBObject("name", "someName").append("email", "test@example.com");
+        BasicDBObject entity = new BasicDBObject("_id", "testId").append("ref", new DBRef(_db, "fake", compoundId));
+        a.save(entity);
+
+        DBObject fetched = a.findOne(new BasicDBObject("_id", "testId"));
+
+        assertNotNull(fetched);
+        assertFalse(fetched.containsField("$id"));
+        assertEquals(fetched, entity);
+    }
+
+    @Test
+    public void testGetEntityWithArrayOfDBRefsWithCompoundIds() {
+        DBCollection a = _db.getCollection("a");
+        a.drop();
+
+        BasicDBObject compoundId1 = new BasicDBObject("name", "someName").append("email", "test@example.com");
+        BasicDBObject compoundId2 = new BasicDBObject("name", "someName2").append("email", "test2@example.com");
+        BasicDBList listOfRefs = new BasicDBList();
+        listOfRefs.add(new DBRef(_db, "fake", compoundId1));
+        listOfRefs.add(new DBRef(_db, "fake", compoundId2));
+        BasicDBObject entity = new BasicDBObject("_id", "testId").append("refs", listOfRefs);
+        a.save(entity);
+
+        DBObject fetched = a.findOne(new BasicDBObject("_id", "testId"));
+
+        assertNotNull(fetched);
+        assertEquals(fetched, entity);
+    }
+
+    @Test
+    public void testGetEntityWithMapOfDBRefsWithCompoundIds() {
+        DBCollection a = _db.getCollection("a");
+        a.drop();
+
+        BasicDBObject compoundId1 = new BasicDBObject("name", "someName").append("email", "test@example.com");
+        BasicDBObject compoundId2 = new BasicDBObject("name", "someName2").append("email", "test2@example.com");
+        BasicDBObject mapOfRefs = new BasicDBObject()
+                .append("someName", new DBRef(_db, "fake", compoundId1))
+                .append("someName2", new DBRef(_db, "fake", compoundId2));
+        BasicDBObject entity = new BasicDBObject("_id", "testId").append("refs", mapOfRefs);
+        a.save(entity);
+
+        DBObject fetched = a.findOne(new BasicDBObject("_id", "testId"));
+
+        assertNotNull(fetched);
+        DBObject fetchedRefs = (DBObject) fetched.get("refs");
+        assertFalse(fetchedRefs.keySet().contains("$id"));
+        assertEquals(fetched, entity);
+    }
+
     DB _db;
 
     public static void main( String args[] ) {
