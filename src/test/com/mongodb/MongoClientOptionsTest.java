@@ -41,6 +41,7 @@ public class MongoClientOptionsTest {
         Assert.assertEquals(false, options.isSocketKeepAlive());
         Assert.assertEquals(true, options.isCursorFinalizerEnabled());
         Assert.assertEquals(false, options.isAutoConnectRetry());
+        Assert.assertEquals(false, options.isAlwaysUseMBeans());
     }
 
     @Test
@@ -117,6 +118,7 @@ public class MongoClientOptionsTest {
         builder.threadsAllowedToBlockForConnectionMultiplier(1);
         builder.socketKeepAlive(true);
         builder.cursorFinalizerEnabled(true);
+        builder.alwaysUseMBeans(true);
 
         SocketFactory socketFactory = SSLSocketFactory.getDefault();
         builder.socketFactory(socketFactory);
@@ -147,6 +149,7 @@ public class MongoClientOptionsTest {
         Assert.assertEquals(1, options.getThreadsAllowedToBlockForConnectionMultiplier());
         Assert.assertEquals(true, options.isSocketKeepAlive());
         Assert.assertEquals(true, options.isCursorFinalizerEnabled());
+        Assert.assertEquals(true, options.isAlwaysUseMBeans());
 
         Assert.assertEquals(socketFactory, options.getSocketFactory());
         Assert.assertEquals(encoderFactory, options.getDbEncoderFactory());

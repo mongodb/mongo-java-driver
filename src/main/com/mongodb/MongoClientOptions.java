@@ -23,9 +23,10 @@ import javax.net.SocketFactory;
 
 /**
  * Various settings to control the behavior of a <code>MongoClient</code>.
- * <p>
+ * <p/>
  * Note: This class is a replacement for {@code MongoOptions}, to be used with {@code MongoClient}.  The main difference
  * in behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.
+ *
  * @see MongoClient
  * @since 2.10.0
  */
@@ -54,6 +55,7 @@ public class MongoClientOptions {
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private SocketFactory socketFactory = SocketFactory.getDefault();
         private boolean cursorFinalizerEnabled = true;
+        private boolean alwaysUseMBeans = false;
 
         /**
          * Sets the description.
@@ -86,7 +88,8 @@ public class MongoClientOptions {
         /**
          * Sets the multiplier for number of threads allowed to block waiting for a connection.
          *
-         * @param threadsAllowedToBlockForConnectionMultiplier the multiplier
+         * @param threadsAllowedToBlockForConnectionMultiplier
+         *         the multiplier
          * @return {@code this}
          * @throws IllegalArgumentException if <code>threadsAllowedToBlockForConnectionMultiplier < 1</code>
          * @see com.mongodb.MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
@@ -106,7 +109,6 @@ public class MongoClientOptions {
          * @return {@code this}
          * @throws IllegalArgumentException if <code>maxWaitTime < 0</code>
          * @see com.mongodb.MongoClientOptions#getMaxWaitTime()
-         *
          */
         public Builder maxWaitTime(final int maxWaitTime) {
             if (maxWaitTime < 0) {
@@ -133,6 +135,7 @@ public class MongoClientOptions {
 
         /**
          * Sets the socket timeout.
+         *
          * @param socketTimeout the socket timeout
          * @return {@code this}
          * @see com.mongodb.MongoClientOptions#getSocketTimeout()
@@ -163,7 +166,6 @@ public class MongoClientOptions {
          * @param autoConnectRetry auto connect retry
          * @return {@code this}
          * @see MongoClientOptions#isAutoConnectRetry()
-         *
          */
         public Builder autoConnectRetry(final boolean autoConnectRetry) {
             this.autoConnectRetry = autoConnectRetry;
@@ -264,12 +266,25 @@ public class MongoClientOptions {
          * Sets whether cursor finalizers are enabled.
          *
          * @param cursorFinalizerEnabled whether cursor finalizers are enabled.
-         *
          * @return {@code this}
          * @see MongoClientOptions#isCursorFinalizerEnabled()
          */
         public Builder cursorFinalizerEnabled(final boolean cursorFinalizerEnabled) {
             this.cursorFinalizerEnabled = cursorFinalizerEnabled;
+            return this;
+        }
+
+        /**
+         * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is
+         * Java 6 or greater. If false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if
+         * the VM is Java 5.
+         *
+         * @param alwaysUseMBeans true if driver should always use MBeans, regardless of VM version
+         * @return this
+         * @see MongoClientOptions#isAlwaysUseMBeans()
+         */
+        public Builder alwaysUseMBeans(final boolean alwaysUseMBeans) {
+            this.alwaysUseMBeans = alwaysUseMBeans;
             return this;
         }
 
@@ -297,8 +312,9 @@ public class MongoClientOptions {
 
     /**
      * Gets the description for this MongoClient, which is used in various places like logging and JMX.
-     * <p>
+     * <p/>
      * Default is null.
+     *
      * @return the description
      */
     public String getDescription() {
@@ -309,8 +325,9 @@ public class MongoClientOptions {
      * The maximum number of connections allowed per host for this MongoClient instance.
      * Those connections will be kept in a pool when idle.
      * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.
-     * <p>
+     * <p/>
      * Default is 100.
+     *
      * @return the maximum size of the connection pool per host
      * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
      */
@@ -323,8 +340,9 @@ public class MongoClientOptions {
      * may be waiting for a connection to become available from the pool. All further threads will get an exception right
      * away. For example if connectionsPerHost is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50
      * threads can wait for a connection.
-     * <p>
+     * <p/>
      * Default is 5.
+     *
      * @return the multiplier
      */
     public int getThreadsAllowedToBlockForConnectionMultiplier() {
@@ -333,8 +351,9 @@ public class MongoClientOptions {
 
     /**
      * The maximum wait time in milliseconds that a thread may wait for a connection to become available.
-     * <p>
+     * <p/>
      * Default is 120,000. A value of 0 means that it will not wait.  A negative value means to wait indefinitely.
+     *
      * @return the maximum wait time.
      */
     public int getMaxWaitTime() {
@@ -344,8 +363,9 @@ public class MongoClientOptions {
     /**
      * The connection timeout in milliseconds.  A value of 0 means no timeout.
      * It is used solely when establishing a new connection {@link java.net.Socket#connect(java.net.SocketAddress, int) }
-     * <p>
+     * <p/>
      * Default is 10,000.
+     *
      * @return the socket connect timeout
      */
     public int getConnectTimeout() {
@@ -355,8 +375,9 @@ public class MongoClientOptions {
     /**
      * The socket timeout in milliseconds.
      * It is used for I/O socket read and write operations {@link java.net.Socket#setSoTimeout(int)}
-     * <p>
+     * <p/>
      * Default is 0 and means no timeout.
+     *
      * @return the socket timeout
      */
     public int getSocketTimeout() {
@@ -365,7 +386,7 @@ public class MongoClientOptions {
 
     /**
      * This flag controls the socket keep alive feature that keeps a connection alive through firewalls {@link java.net.Socket#setKeepAlive(boolean)}
-     * <p>
+     * <p/>
      * * Default is false.
      *
      * @return whether keep-alive is enabled on each socket
@@ -382,7 +403,7 @@ public class MongoClientOptions {
      * Note that when using this flag:
      * - for a replica set, the driver will trying to connect to the old master for that time, instead of failing over to the new one right away
      * - this does not prevent exception from being thrown in read/write operations on the socket, which must be handled by application
-     *
+     * <p/>
      * Even if this flag is false, the driver already has mechanisms to automatically recreate broken connections and retry the read operations.
      * Default is false.
      *
@@ -404,8 +425,9 @@ public class MongoClientOptions {
 
     /**
      * The read preference to use for queries, map-reduce, aggregation, and count.
-     * <p>
+     * <p/>
      * Default is {@code ReadPreference.primary()}.
+     *
      * @return the read preference
      * @see com.mongodb.ReadPreference#primary()
      */
@@ -433,8 +455,9 @@ public class MongoClientOptions {
 
     /**
      * The write concern to use.
-     * <p>
+     * <p/>
      * Default is {@code WriteConcern.ACKNOWLEDGED}.
+     *
      * @return the write concern
      * @see WriteConcern#ACKNOWLEDGED
      */
@@ -444,7 +467,7 @@ public class MongoClientOptions {
 
     /**
      * The socket factory for creating sockets to the mongo server.
-     * <p>
+     * <p/>
      * Default is SocketFactory.getDefault()
      *
      * @return the socket factory
@@ -454,9 +477,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * Sets whether there is a a finalize method created that cleans up instances of DBCursor that the client
+     * Gets whether there is a a finalize method created that cleans up instances of DBCursor that the client
      * does not close.  If you are careful to always call the close method of DBCursor, then this can safely be set to false.
-     * <p>
+     * <p/>
      * Default is true.
      *
      * @return whether finalizers are enabled on cursors
@@ -465,6 +488,18 @@ public class MongoClientOptions {
      */
     public boolean isCursorFinalizerEnabled() {
         return cursorFinalizerEnabled;
+    }
+
+    /**
+     * Gets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is
+     * Java 6 or greater. If false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if
+     * the VM is Java 5.
+     * <p>
+     * Default is false.
+     * </p>
+     */
+    public boolean isAlwaysUseMBeans() {
+        return alwaysUseMBeans;
     }
 
     private MongoClientOptions(final Builder builder) {
@@ -483,6 +518,7 @@ public class MongoClientOptions {
         writeConcern = builder.writeConcern;
         socketFactory = builder.socketFactory;
         cursorFinalizerEnabled = builder.cursorFinalizerEnabled;
+        alwaysUseMBeans = builder.alwaysUseMBeans;
     }
 
 
@@ -501,4 +537,5 @@ public class MongoClientOptions {
     private final WriteConcern writeConcern;
     private final SocketFactory socketFactory;
     private final boolean cursorFinalizerEnabled;
+    private final boolean alwaysUseMBeans;
 }
