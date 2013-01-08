@@ -44,16 +44,16 @@ class ClirrPlugin implements Plugin<Project> {
             map('reportsDir') { reportingExtension.file("clirr") }
             map('baseline') { "$project.group:$project.name:(,$project.version)".toString() }
             map('formats') { ['plain'] }
-            map('failOnBinWarning') { true }
-            map('failOnBinError') { false }
-            map('failOnSrcWarning') { true }
-            map('failOnSrcError') { false }
+            map('failOnBinWarning') { false }
+            map('failOnBinError') { true }
+            map('failOnSrcWarning') { false }
+            map('failOnSrcError') { true }
         }
 
 
         def jarTask = project.tasks.getByName("jar");
 
-        project.task('clirr', dependsOn: jarTask) << {
+        def clirrTask = project.task('clirr', dependsOn: jarTask) << {
 
             Configuration configuration = project.configurations.add("baseline").setTransitive(false)
             configuration.dependencies.add(project.dependencies.create(extension.baseline))
@@ -80,6 +80,8 @@ class ClirrPlugin implements Plugin<Project> {
                 }
             }
         }
+
+        project.tasks.getByName("check").dependsOn(clirrTask)
 
     }
 
