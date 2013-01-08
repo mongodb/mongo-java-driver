@@ -16,6 +16,7 @@
 
 package org.mongodb.util;
 
+// TODO: Not sure about this class.  Is it generally applicable enough to be public?
 public class FieldHelpers {
 
     public static boolean asBoolean(Object fieldValue) {
