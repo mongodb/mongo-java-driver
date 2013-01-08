@@ -285,9 +285,15 @@ project(':driver') {
 }
 
 project(':driver-compat') {
+    apply plugin: 'clirr'
 
     dependencies {
         compile project(':driver')
+    }
+
+    clirr {
+        formats = ['plain']
+        baseline 'org.mongodb:mongo-java-driver:2.10.1'
     }
 
     jar {

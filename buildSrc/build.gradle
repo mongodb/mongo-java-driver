@@ -1,3 +1,9 @@
+/* Supressing output from buildSrc */
+gradle.useLogger(new TaskExecutionListener(){
+    public void beforeExecute(Task task) {}
+    public void afterExecute(Task task, TaskState state) {}
+})
+
 dependencies {
     compile files("${System.getProperty('java.home')}/../lib/tools.jar")
 }
