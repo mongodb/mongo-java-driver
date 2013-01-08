@@ -103,7 +103,7 @@ public class DBPortPool extends SimplePool<DBPort> {
         }
 
         private DBPortPool createPool(final ServerAddress addr) {
-            if (isJava5) {
+            if (isJava5 || _options.isAlwaysUseMBeans()) {
                 return new Java5MongoConnectionPool(addr, _options);
             } else {
                 return new MongoConnectionPool(addr, _options);

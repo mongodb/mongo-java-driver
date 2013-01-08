@@ -51,6 +51,7 @@ public class MongoOptionsTest extends TestCase {
         options.description = "cool";
         options.readPreference = ReadPreference.secondary();
         options.cursorFinalizerEnabled = true;
+        options.alwaysUseMBeans = true;
 
         final MongoOptions copy = options.copy();
         assertEquals(options.connectionsPerHost, copy.connectionsPerHost);
@@ -72,7 +73,7 @@ public class MongoOptionsTest extends TestCase {
         assertEquals(options.socketFactory, copy.socketFactory);
         assertEquals(options.description, copy.description);
         assertEquals(options.readPreference, copy.readPreference);
-        assertEquals(options.cursorFinalizerEnabled, copy.cursorFinalizerEnabled);
+        assertEquals(options.alwaysUseMBeans, copy.alwaysUseMBeans);
     }
 
     @Test
@@ -99,6 +100,7 @@ public class MongoOptionsTest extends TestCase {
         options.setDescription("very cool");
         options.setReadPreference(ReadPreference.secondary());
         options.setCursorFinalizerEnabled(true);
+        options.setAlwaysUseMBeans(true);
 
         assertEquals(options.getConnectionsPerHost(), 100);
         assertEquals(options.getThreadsAllowedToBlockForConnectionMultiplier(), 101);
@@ -119,6 +121,7 @@ public class MongoOptionsTest extends TestCase {
         assertEquals(options.getDescription(), "very cool");
         assertEquals(options.getReadPreference(), ReadPreference.secondary());
         assertEquals(options.isCursorFinalizerEnabled(), true);
+        assertEquals(options.isAlwaysUseMBeans(), true);
     }
 
     @Test
