@@ -49,6 +49,7 @@ TAGS
 src/test/ed/webtests/webtest-local.bash
 
 *.ipr
+*.iml
 *.iws
 *.iml
 .idea
