@@ -361,7 +361,7 @@ public class Mongo {
      * @param authority the authority
      * @param options the options
      */
-    public Mongo(MongoClientAuthority authority, MongoOptions options) {
+    public Mongo(MongoAuthority authority, MongoOptions options) {
         _options = options;
         _applyMongoOptions();
 
@@ -377,7 +377,7 @@ public class Mongo {
         }
 
         if (authority.getCredentials() != null) {
-            if (authority.getCredentials().getMechanism().equals(MongoClientCredentials.MONGODB_MECHANISM)) {
+            if (authority.getCredentials().getMechanism().equals(MongoCredentials.MONGODB_MECHANISM)) {
                 String databaseName;
                 if (authority.getCredentials().getDatabase() != null) {
                     databaseName = authority.getCredentials().getDatabase();
@@ -637,7 +637,7 @@ public class Mongo {
         return _netOptions.get();
     }
 
-    public MongoClientCredentials getCredentials() {
+    public MongoCredentials getCredentials() {
         return _credentials;
     }
 
@@ -692,7 +692,7 @@ public class Mongo {
     private ReadPreference _readPref = ReadPreference.primary();
     final Bytes.OptionHolder _netOptions = new Bytes.OptionHolder( null );
     final CursorCleanerThread _cleaner;
-    MongoClientCredentials _credentials;
+    MongoCredentials _credentials;
 
     org.bson.util.SimplePool<PoolOutputBuffer> _bufferPool =
         new org.bson.util.SimplePool<PoolOutputBuffer>( 1000 ){

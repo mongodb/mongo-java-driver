@@ -20,9 +20,9 @@ package com.mongodb;
 /**
  * Represents credentials to authenticate to a mongo server.
  * <p>
- * Note: This constructor is provisional and is subject to change before the final release
+ * Note: This class is provisional and is subject to change before the final release
  */
-public class MongoClientCredentials {
+public class MongoCredentials {
     public static final String MONGODB_MECHANISM = "mongodb";
     public static final String GSSAPI_MECHANISM = "GSSAPI";
     public static final String CRAM_MD5_MECHANISM = "CRAM-MD5";
@@ -32,15 +32,15 @@ public class MongoClientCredentials {
     private final char[] password;
     private final String database;
 
-    public MongoClientCredentials(final String userName, final char[] password, String mechanism) {
+    public MongoCredentials(final String userName, final char[] password, String mechanism) {
         this(userName, password, mechanism, null);
     }
 
-    public MongoClientCredentials(final String userName, final String mechanism) {
+    public MongoCredentials(final String userName, final String mechanism) {
         this(userName, null, mechanism);
     }
 
-    public MongoClientCredentials(final String userName, final char[] password, String mechanism, String database) {
+    public MongoCredentials(final String userName, final char[] password, String mechanism, String database) {
         this.userName = userName;
         this.password = password;
         this.database = database;

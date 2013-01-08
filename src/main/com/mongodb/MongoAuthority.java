@@ -27,26 +27,26 @@ import java.util.List;
  * <p>
  * Note: This constructor is provisional and is subject to change before the final release
  */
-public class MongoClientAuthority {
+public class MongoAuthority {
     private final ServerAddress serverAddress;
     private final List<ServerAddress> serverAddresses;
-    private final MongoClientCredentials credentials;
+    private final MongoCredentials credentials;
 
-    public MongoClientAuthority(final ServerAddress serverAddress) {
+    public MongoAuthority(final ServerAddress serverAddress) {
         this(serverAddress, null);
     }
 
-    public MongoClientAuthority(final ServerAddress serverAddress, MongoClientCredentials credentials) {
+    public MongoAuthority(final ServerAddress serverAddress, MongoCredentials credentials) {
         this.serverAddress = serverAddress;
         this.credentials = credentials;
         this.serverAddresses = null;
     }
 
-    public MongoClientAuthority(final List<ServerAddress> serverAddresses) {
+    public MongoAuthority(final List<ServerAddress> serverAddresses) {
         this(serverAddresses, null);
     }
 
-    public MongoClientAuthority(final List<ServerAddress> serverAddresses, MongoClientCredentials credentials) {
+    public MongoAuthority(final List<ServerAddress> serverAddresses, MongoCredentials credentials) {
         this.serverAddresses = serverAddresses;
         this.credentials = credentials;
         this.serverAddress = null;
@@ -64,7 +64,7 @@ public class MongoClientAuthority {
         return new ArrayList<ServerAddress>(serverAddresses);
     }
 
-    public MongoClientCredentials getCredentials() {
+    public MongoCredentials getCredentials() {
         return credentials;
     }
 }

@@ -26,11 +26,11 @@ public class DefaultSecurityCallbackHandler implements CallbackHandler {
         for (Callback callback : callbacks) {
             if (callback instanceof NameCallback) {
                 NameCallback nameCallback = (NameCallback) callback;
-                nameCallback.setName("dev1@10GEN.ME");
+                nameCallback.setName("<your name goes here>");  // or just return
             }
             if (callback instanceof PasswordCallback) {
                 PasswordCallback passwordCallback = (PasswordCallback) callback;
-                passwordCallback.setPassword("a".toCharArray());
+                passwordCallback.setPassword("<your password goes here>".toCharArray());  // or just return
             }
         }
     }

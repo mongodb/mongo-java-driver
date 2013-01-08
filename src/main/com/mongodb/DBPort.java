@@ -41,7 +41,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -317,15 +316,15 @@ public class DBPort {
     void checkAuth(DB db) throws IOException {
         if (db.getMongo().getCredentials() != null) {
             if (_saslAuthenticator == null) {
-                if (db.getMongo().getCredentials().getMechanism().equals(MongoClientCredentials.GSSAPI_MECHANISM)) {
+                if (db.getMongo().getCredentials().getMechanism().equals(MongoCredentials.GSSAPI_MECHANISM)) {
                    _saslAuthenticator = new GSSAPIAuthenticator(db.getMongo());
-                } else if (db.getMongo().getCredentials().getMechanism().equals(MongoClientCredentials.CRAM_MD5_MECHANISM)) {
+                } else if (db.getMongo().getCredentials().getMechanism().equals(MongoCredentials.CRAM_MD5_MECHANISM)) {
                     _saslAuthenticator = new CRAMMD5Authenticator(db.getMongo());
                 } else {
                     throw new MongoException("Unsupported authentication mechanism: " + db.getMongo().getCredentials().getMechanism());
                 }
+                _saslAuthenticator.authenticate();
             }
-            _saslAuthenticator.acquirePrivilegeForDatabase(db);
         }
         else {
             DB.AuthenticationCredentials credentials = db.getAuthenticationCredentials();
@@ -392,9 +391,9 @@ public class DBPort {
         public static final String CRAM_MD5_MECHANISM = "CRAM-MD5";
 
         CRAMMD5Authenticator(final Mongo mongo) {
-           super(mongo);
+            super(mongo);
 
-            if (!mongo.getCredentials().getMechanism().equals(MongoClientCredentials.CRAM_MD5_MECHANISM)) {
+            if (!mongo.getCredentials().getMechanism().equals(MongoCredentials.CRAM_MD5_MECHANISM)) {
                 throw new MongoException("Incorrect mechanism: " + mongo.getCredentials().getMechanism());
             }
         }
@@ -416,7 +415,12 @@ public class DBPort {
 
         @Override
         protected String getUserNameForMechanism() {
-            return mongo.getCredentials().getDatabase() + "$" + mongo.getCredentials().getUserName();
+            return mongo.getCredentials().getUserName();
+        }
+
+        @Override
+        protected DB getDatabase() {
+            return mongo.getDB(mongo.getCredentials().getDatabase());
         }
 
         class CredentialsHandlingCallbackHandler implements CallbackHandler {
@@ -436,7 +440,8 @@ public class DBPort {
                 }
             }
         }
-        // TODO: copoied from DB.AuthenticationCredentials
+
+        // TODO: copied from DB.AuthenticationCredentials
         byte[] createHash( String userName , char[] password ){
             ByteArrayOutputStream bout = new ByteArrayOutputStream( userName.length() + 20 + password.length );
             try {
@@ -453,7 +458,6 @@ public class DBPort {
             }
             return Util.hexMD5(bout.toByteArray()).getBytes();
         }
-
     }
 
     class GSSAPIAuthenticator extends SaslAuthenticator {
@@ -463,7 +467,7 @@ public class DBPort {
         GSSAPIAuthenticator(final Mongo mongo) {
             super(mongo);
 
-            if (!mongo.getCredentials().getMechanism().equals(MongoClientCredentials.GSSAPI_MECHANISM)) {
+            if (!mongo.getCredentials().getMechanism().equals(MongoCredentials.GSSAPI_MECHANISM)) {
                 throw new MongoException("Incorrect mechanism: " + mongo.getCredentials().getMechanism());
             }
         }
@@ -491,6 +495,11 @@ public class DBPort {
         @Override
         protected String getUserNameForMechanism() {
             return mongo.getCredentials().getUserName();
+        }
+
+        @Override
+        protected DB getDatabase() {
+            return mongo.getDB("$external");
         }
 
         private GSSCredential getGSSCredential(String userName) throws GSSException {
@@ -566,32 +575,21 @@ public class DBPort {
 
         protected abstract String getUserNameForMechanism();
 
+        protected abstract DB getDatabase();
+
         private CommandResult sendSaslStart(final byte[] outToken) throws IOException {
             DBObject cmd = new BasicDBObject("saslStart", 1).append("mechanism", getMechanism()).append("payload",
                     outToken != null ? outToken : new byte[0]);
-            return runCommand(mongo.getDB("admin"), cmd);
+            return runCommand(getDatabase(), cmd);
         }
 
         private CommandResult sendSaslContinue(final int conversationId, final byte[] outToken) throws IOException {
-            DB adminDB = mongo.getDB("admin");
+            DB adminDB = getDatabase();
             DBObject cmd = new BasicDBObject("saslContinue", 1).append("conversationId", conversationId).
                     append("payload", outToken);
             return runCommand(adminDB, cmd);
         }
 
-        public void acquirePrivilegeForDatabase(final DB db) throws IOException {
-            authenticate();
-
-            if (authorizeDatabases.get(db) == null) {
-                BasicDBObject acquirePrivilegeCmd = new BasicDBObject("acquirePrivilege", 1).
-                        append("principal", getUserNameForMechanism()).
-                        append("resource", db.getName()).
-                        append("actions", Arrays.asList("oldWrite"));
-                CommandResult res = runCommand(db.getSisterDB("admin"), acquirePrivilegeCmd);
-                res.throwOnError();
-                authorizeDatabases.put(db, true);
-            }
-        }
     }
 
     private static Logger _rootLogger = Logger.getLogger( "com.mongodb.port" );

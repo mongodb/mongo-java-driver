@@ -200,7 +200,7 @@ public class MongoClient extends Mongo {
      * @param authority the authority
      * @param options the options
      */
-    public MongoClient(MongoClientAuthority authority, MongoClientOptions options) {
+    public MongoClient(MongoAuthority authority, MongoClientOptions options) {
         super(authority, new MongoOptions(options));
     }
 }

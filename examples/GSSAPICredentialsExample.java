@@ -16,9 +16,9 @@
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
+import com.mongodb.MongoAuthority;
 import com.mongodb.MongoClient;
-import com.mongodb.MongoClientAuthority;
-import com.mongodb.MongoClientCredentials;
+import com.mongodb.MongoCredentials;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteResult;
@@ -32,7 +32,7 @@ import java.security.Security;
  * Usage:
  * </p>
  * <pre>
- *     java CramMd5CredentialsExample server userName databaseName
+ *     java GSSAPICredentialsExample server userName databaseName
  * </pre>
  */
 public class GSSAPICredentialsExample {
@@ -44,22 +44,38 @@ public class GSSAPICredentialsExample {
     // 3. Set system properties, e.g.:
     //    -Djava.security.krb5.realm=10GEN.ME -Djavax.security.auth.useSubjectCredsOnly=false -Djava.security.krb5.kdc=kdc.10gen.me
     // auth.login.defaultCallbackHandler=name of class that implements javax.security.auth.callback.CallbackHandler
-    // You may also need to define realms and domain_realm entries in your krb5.conf file (in /etc by default)
     public static void main(String[] args) throws UnknownHostException, InterruptedException {
-        // Set this property to avoid the default behavior where the program prompts on the command line
-        // for username/password
+        // Set this property to avoid the default behavior where the program prompts on the command line for username/password
         Security.setProperty("auth.login.defaultCallbackHandler", "DefaultSecurityCallbackHandler");
 
         String server = args[0];
         String user = args[1];
-        String dbName = args[2];
+        String databaseName = args[2];
+
+        System.out.println("javax.security.auth.useSubjectCredsOnly: " + System.getProperty("javax.security.auth.useSubjectCredsOnly"));
+        System.out.println("java.security.krb5.realm: " + System.getProperty("java.security.krb5.realm"));
+        System.out.println("java.security.krb5.kdc: " + System.getProperty("java.security.krb5.kdc"));
+        System.out.println("auth.login.defaultCallbackHandler: " + Security.getProperty("auth.login.defaultCallbackHandler"));
+        System.out.println("login.configuration.provider: " + Security.getProperty("login.configuration.provider"));
+        System.out.println("java.security.auth.login.config: " + Security.getProperty("java.security.auth.login.config"));
+        System.out.println("login.config.url.1: " + Security.getProperty("login.config.url.1"));
+        System.out.println("login.config.url.2: " + Security.getProperty("login.config.url.2"));
+        System.out.println("login.config.url.3: " + Security.getProperty("login.config.url.3"));
+
+        System.out.println("server: " + server);
+        System.out.println("user: " + user);
+        System.out.println("database: " + databaseName);
+
+        System.out.println();
+
+        Thread.sleep(5000);
 
         MongoClient mongo = new MongoClient(
-                new MongoClientAuthority(new ServerAddress(server),
-                        new MongoClientCredentials(user, MongoClientCredentials.GSSAPI_MECHANISM)),
+                new MongoAuthority(new ServerAddress(server),
+                        new MongoCredentials(user, MongoCredentials.GSSAPI_MECHANISM)),
                 new MongoClientOptions.Builder().socketKeepAlive(true).socketTimeout(30000).build());
-        DB testDB = mongo.getDB(dbName);
-        System.out.println("Find     one: " + testDB.getCollection("test").findOne());
+        DB testDB = mongo.getDB(databaseName);
+        System.out.println("Find one: " + testDB.getCollection("test").findOne());
         System.out.println("Count: " + testDB.getCollection("test").count());
         WriteResult writeResult = testDB.getCollection("test").insert(new BasicDBObject());
         System.out.println("Write result: " + writeResult);
