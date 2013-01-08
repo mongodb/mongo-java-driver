@@ -19,15 +19,14 @@
 package com.mongodb;
 
 // Bson
-import java.util.Deque;
+import org.bson.BSONObject;
+import org.bson.BasicBSONCallback;
+import org.bson.types.ObjectId;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.bson.BSONObject;
-import org.bson.BasicBSONCallback;
-import org.bson.types.ObjectId;
 
 /**
  * This class overrides BasicBSONCallback to implement some extra features specific to the Database.
@@ -69,7 +68,9 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
     public Object objectDone(){
         BSONObject o = (BSONObject)super.objectDone();
         String name = null;
-        if ( _nameStack.size() > 0 ) name = _nameStack.removeLast();
+        if ( _nameStack.size() > 0 ){
+            name = _nameStack.removeLast();
+        }
         if ( ! ( o instanceof List ) && name != null &&
              o.containsField( "$ref" ) &&
              o.containsField( "$id" ) ){
@@ -148,7 +149,7 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
         super.reset();
     }
 
-    private Deque<String> _nameStack;
+    private LinkedList<String> _nameStack;
     final DBCollection _collection;
     final DB _db;
     static final Logger LOGGER = Logger.getLogger( "com.mongo.DECODING" );
