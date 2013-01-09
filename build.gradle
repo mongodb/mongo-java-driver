@@ -141,10 +141,12 @@ configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat', '
         project.ext.deployer = repositories.mavenDeployer {
             snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots')
             repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
-                authentication(
-                        userName: project.property('sonatypeUsername'),
-                        password: project.property('sonatypePassword')
-                )
+                if (project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')) {
+                    authentication(
+                            userName: project.property('sonatypeUsername'),
+                            password: project.property('sonatypePassword')
+                    )
+                }
             }
         }
     }
