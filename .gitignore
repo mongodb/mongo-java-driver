@@ -8,7 +8,8 @@
 *.DS_Store
 
 build
-*.jar
+out
+mongo*.jar
 
 # Eclipse files
 .classpath
