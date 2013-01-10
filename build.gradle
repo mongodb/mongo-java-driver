@@ -46,8 +46,8 @@ subprojects {
 
     group = 'org.mongodb'
     version = '3.0.0-SNAPSHOT'
-    sourceCompatibility = '1.5'
-    targetCompatibility = '1.5'
+    sourceCompatibility = '1.6'
+    targetCompatibility = '1.6'
 
     repositories {
         mavenCentral()
