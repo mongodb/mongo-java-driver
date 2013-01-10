@@ -186,19 +186,7 @@ public class Mongo {
      * @throws MongoException
      */
     public Mongo( ServerAddress addr , MongoOptions options ) {
-        _addr = addr;
-        _addrs = null;
-        _options = options;
-        _applyMongoOptions();
-        _connector = new DBTCPConnector( this , _addr );
-        _connector.start();
-
-        if (options.cursorFinalizerEnabled) {
-           _cleaner = new CursorCleanerThread();
-           _cleaner.start();
-        } else {
-           _cleaner = null;
-        }
+        this(new MongoAuthority(addr), options);
     }
 
     /**
@@ -229,19 +217,7 @@ public class Mongo {
      */
     @Deprecated
     public Mongo( ServerAddress left , ServerAddress right , MongoOptions options ) {
-        _addr = null;
-        _addrs = Arrays.asList( left , right );
-        _options = options;
-        _applyMongoOptions();
-        _connector = new DBTCPConnector( this , _addrs );
-        _connector.start();
-
-        if (options.cursorFinalizerEnabled) {
-            _cleaner = new CursorCleanerThread();
-            _cleaner.start();
-        } else {
-            _cleaner = null;
-        }
+        this(new MongoAuthority(Arrays.asList(left, right)), options);
     }
 
     /**
@@ -280,19 +256,7 @@ public class Mongo {
      * @throws MongoException 
      */
     public Mongo( List<ServerAddress> seeds , MongoOptions options ) {
-        _addr = null;
-        _addrs = seeds;
-        _options = options;
-        _applyMongoOptions();
-        _connector = new DBTCPConnector( this , _addrs);
-        _connector.start();
-
-        if (options.cursorFinalizerEnabled) {
-            _cleaner = new CursorCleanerThread();
-            _cleaner.start();
-        } else {
-            _cleaner = null;
-        }
+        this(new MongoAuthority(seeds), options);
     }
 
     /**
@@ -311,48 +275,10 @@ public class Mongo {
      * @dochub connections
      */
 
-    public Mongo( MongoURI uri )
-        throws UnknownHostException {
-
-        _options = uri.getOptions();
-        _applyMongoOptions();
-
-        if ( uri.getHosts().size() == 1 ){
-            _addr = new ServerAddress( uri.getHosts().get(0) );
-            _addrs = null;
-            _connector = new DBTCPConnector( this , _addr );
-        }
-        else {
-            List<ServerAddress> replicaSetSeeds = new ArrayList<ServerAddress>( uri.getHosts().size() );
-            for ( String host : uri.getHosts() )
-                replicaSetSeeds.add( new ServerAddress( host ) );
-            _addr = null;
-            _addrs = replicaSetSeeds;
-            _connector = new DBTCPConnector( this , replicaSetSeeds );
-        }
-
-        if (uri.getUsername() != null) {
-            String databaseName;
-            if (uri.getDatabase() != null) {
-                databaseName = uri.getDatabase();
-            } else {
-                databaseName = ADMIN_DATABASE_NAME;
-            }
-
-            DB db = new DBApiLayer(this, databaseName, _connector, uri.getUsername(), uri.getPassword());
-            _dbs.put(db.getName(), db);
-        }
-
-        _connector.start();
-        if (_options.cursorFinalizerEnabled) {
-            _cleaner = new CursorCleanerThread();
-            _cleaner.start();
-        } else {
-            _cleaner = null;
-        }
+    public Mongo( MongoURI uri ) throws UnknownHostException {
+        this(getMongoAuthorityFromURI(uri), uri.getOptions());
     }
 
-    // TODO: reimplement above constructor in terms of this one
     /**
      * Creates a Mongo based on an authority and options.
      * <p>
@@ -361,7 +287,7 @@ public class Mongo {
      * @param authority the authority
      * @param options the options
      */
-    public Mongo(MongoAuthority authority, MongoOptions options) {
+    Mongo(MongoAuthority authority, MongoOptions options) {
         _options = options;
         _applyMongoOptions();
 
@@ -376,24 +302,7 @@ public class Mongo {
             _connector = new DBTCPConnector( this , _addrs );
         }
 
-        if (authority.getCredentials() != null) {
-            if (authority.getCredentials().getMechanism().equals(MongoCredentials.MONGODB_MECHANISM)) {
-                String databaseName;
-                if (authority.getCredentials().getDatabase() != null) {
-                    databaseName = authority.getCredentials().getDatabase();
-                } else {
-                    databaseName = ADMIN_DATABASE_NAME;
-                }
-
-                DB db = new DBApiLayer(this, databaseName, _connector, authority.getCredentials().getUserName(), authority.getCredentials().getPassword());
-                _dbs.put(db.getName(), db);
-            }
-            // Just store them and let someone else figure out what to do with them
-            else {
-                // TODO: Make sure MongoURI support user names with @
-                _credentials = authority.getCredentials();
-            }
-        }
+        _credentialsStore = authority.getCredentialsStore();
 
         _connector.start();
         if (_options.cursorFinalizerEnabled) {
@@ -637,8 +546,13 @@ public class Mongo {
         return _netOptions.get();
     }
 
-    public MongoCredentials getCredentials() {
-        return _credentials;
+    /**
+     * Gets the credentials store.
+     *
+     * @return the credentials store.
+     */
+    public MongoCredentialsStore getCredentialsStore() {
+        return _credentialsStore;
     }
 
     /**
@@ -683,6 +597,18 @@ public class Mongo {
         return _connector.isMongosConnection();
     }
 
+    private static MongoAuthority getMongoAuthorityFromURI(final MongoURI uri) throws UnknownHostException {
+        if ( uri.getHosts().size() == 1 ){
+            return new MongoAuthority(new ServerAddress(uri.getHosts().get(0)), uri.getCredentials());
+        }
+        else {
+            List<ServerAddress> replicaSetSeeds = new ArrayList<ServerAddress>(uri.getHosts().size());
+            for ( String host : uri.getHosts() )
+                replicaSetSeeds.add( new ServerAddress( host ) );
+            return new MongoAuthority(replicaSetSeeds, uri.getCredentials());
+        }
+    }
+
     final ServerAddress _addr;
     final List<ServerAddress> _addrs;
     final MongoOptions _options;
@@ -692,7 +618,8 @@ public class Mongo {
     private ReadPreference _readPref = ReadPreference.primary();
     final Bytes.OptionHolder _netOptions = new Bytes.OptionHolder( null );
     final CursorCleanerThread _cleaner;
-    MongoCredentials _credentials;
+    final MongoCredentialsStore _credentialsStore;
+
 
     org.bson.util.SimplePool<PoolOutputBuffer> _bufferPool =
         new org.bson.util.SimplePool<PoolOutputBuffer>( 1000 ){

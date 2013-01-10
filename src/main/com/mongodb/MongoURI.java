@@ -186,6 +186,15 @@ public class MongoURI {
     }
 
     /**
+     * Gets the credentials
+     *
+     * @since 2.11.0
+     */
+    public MongoCredentials getCredentials() {
+        return mongoClientURI.getCredentials();
+    }
+
+    /**
      * Gets the options.  This method will return the same instance of {@code MongoOptions} for every call, so it's
      * possible to mutate the returned instance to change the defaults.
      * @return the mongo options

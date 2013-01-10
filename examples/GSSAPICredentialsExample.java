@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.MongoAuthority;
 import com.mongodb.MongoClient;
-import com.mongodb.MongoCredentials;
 import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoCredentials;
 import com.mongodb.ServerAddress;
-import com.mongodb.WriteResult;
 
 import java.net.UnknownHostException;
 import java.security.Security;
@@ -68,19 +66,11 @@ public class GSSAPICredentialsExample {
 
         System.out.println();
 
-        Thread.sleep(5000);
-
-        MongoClient mongo = new MongoClient(
+        MongoClient mongoClient = new MongoClient(
                 new MongoAuthority(new ServerAddress(server),
-                        new MongoCredentials(user, MongoCredentials.GSSAPI_MECHANISM)),
+                        new MongoCredentials(user, MongoCredentials.Protocol.GSSAPI)),
                 new MongoClientOptions.Builder().socketKeepAlive(true).socketTimeout(30000).build());
-        DB testDB = mongo.getDB(databaseName);
-        System.out.println("Find one: " + testDB.getCollection("test").findOne());
-        System.out.println("Count: " + testDB.getCollection("test").count());
-        WriteResult writeResult = testDB.getCollection("test").insert(new BasicDBObject());
-        System.out.println("Write result: " + writeResult);
-
-        System.out.println();
+        DB testDB = mongoClient.getDB(databaseName);
 
         System.out.println("Count: " + testDB.getCollection("test").count());
     }

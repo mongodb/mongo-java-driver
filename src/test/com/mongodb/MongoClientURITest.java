@@ -21,6 +21,7 @@ import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
 
 import javax.net.SocketFactory;
+import java.net.UnknownHostException;
 
 public class MongoClientURITest extends TestCase {
 
@@ -79,6 +80,22 @@ public class MongoClientURITest extends TestCase {
         assertEquals("host", u.getHosts().get(0));
         assertEquals("user", u.getUsername());
         assertEquals("pass", new String(u.getPassword()));
+        assertEquals(new MongoCredentials("user", "pass".toCharArray(), MongoCredentials.Protocol.STRONGEST, "bar"), u.getCredentials());
+
+        u = new MongoClientURI("mongodb://user@host/?authProtocol=GSSAPI");
+        assertEquals(new MongoCredentials("user", MongoCredentials.Protocol.GSSAPI), u.getCredentials());
+
+        u = new MongoClientURI("mongodb://user:pass@host/?authSource=test");
+        assertEquals(new MongoCredentials("user", "pass".toCharArray(), "test"), u.getCredentials());
+
+        u = new MongoClientURI("mongodb://user:pass@host");
+        assertEquals(new MongoCredentials("user", "pass".toCharArray(), "admin"), u.getCredentials());
+    }
+
+    @Test
+    public void testURIEncoding() {
+        MongoClientURI u = new MongoClientURI("mongodb://use%24:he%21%21o@localhost");
+        assertEquals(new MongoCredentials("use$", "he!!o".toCharArray()), u.getCredentials());
     }
 
     @Test()
@@ -150,9 +167,9 @@ public class MongoClientURITest extends TestCase {
     }
 
     @Test()
-    public void testOptionDefaults() {
-        MongoClientURI MongoClientURI = new MongoClientURI("mongodb://localhost");
-        MongoClientOptions options = MongoClientURI.getOptions();
+    public void testURIDefaults() throws UnknownHostException {
+        MongoClientURI uri = new MongoClientURI("mongodb://localhost");
+        MongoClientOptions options = uri.getOptions();
 
         assertEquals(options.getConnectionsPerHost(), 100);
         assertEquals(options.getThreadsAllowedToBlockForConnectionMultiplier(), 5);
@@ -168,6 +185,7 @@ public class MongoClientURITest extends TestCase {
         assertEquals(options.getDescription(), null);
         assertEquals(options.getReadPreference(), ReadPreference.primary());
         assertTrue(options.isCursorFinalizerEnabled());
+        assertNull(uri.getCredentials());
     }
 
     @Test()

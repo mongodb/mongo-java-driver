@@ -124,6 +124,13 @@ public class MyAsserts {
         throw new MyAssert("These arrays are different, but they might be big so not printing them here");
     }
 
+    public static void assertArrayEquals(char[] expected, char[] result) {
+        if (Arrays.equals(expected, result))
+            return;
+
+        throw new MyAssert("These arrays are different, but they might be big so not printing them here");
+    }
+
     public static void assertNotEquals( Object a , Object b ){
         if ( a == null ){
             if ( b != null )

@@ -103,4 +103,14 @@ public interface DBConnector {
      * @return
      */
     public boolean isOpen();
+
+    /**
+     * Authenticate using the given credentials.
+     *
+     * @param credentials the credentials.
+     * @return the result of the authentication command, if successful
+     * @throws com.mongodb.CommandResult.CommandFailure if the authentication failed
+     * @since 2.11.0
+     */
+    public CommandResult authenticate(MongoCredentials credentials);
 }

@@ -17,54 +17,123 @@
 
 package com.mongodb;
 
+import org.bson.util.annotations.Immutable;
+
 import java.util.ArrayList;
 import java.util.List;
 
-//TODO: Add a constructor that takes a MongoURI or MongoClientURI
 /**
  * This class represents the authority to which this client is connecting.  It includes
- * both the server address(es) and optional authentication credentials.
- * <p>
- * Note: This constructor is provisional and is subject to change before the final release
+ * both the server address(es) and optional authentication credentials.  The class name is informed by the
+ * <a href="http://tools.ietf.org/html/rfc3986#section-3.2">URI RFC</a>, which refers to the username/host/port
+ * part of the URI as the "authority".
+ *
+ * @since 2.11.0
  */
+@Immutable
 public class MongoAuthority {
     private final ServerAddress serverAddress;
+    private final MongoCredentialsStore credentialsStore;
     private final List<ServerAddress> serverAddresses;
-    private final MongoCredentials credentials;
 
+    /**
+     * Constructs an instance with a single server address.  This will be a direct connection, even
+     * if it's part of a replica set.
+     *
+     * @param serverAddress the server address of a mongo server
+     */
     public MongoAuthority(final ServerAddress serverAddress) {
-        this(serverAddress, null);
+        this(serverAddress, (MongoCredentials) null);
     }
 
+    /**
+     * Constructs an instance with a list of server addresses.  This may either be a list of mongos servers
+     * or a list of members of a replica set
+     *
+     * @param serverAddresses the server addresses
+     */
+    public MongoAuthority(final List<ServerAddress> serverAddresses) {
+        this(serverAddresses, (MongoCredentials) null);
+    }
+
+    /**
+     * Constructs an instance with a single server address and authentication credentials.  This will be a direct connection,
+     * even if it's part of a replica set.
+     *
+     * @param serverAddress the server address of a mongo server
+     */
     public MongoAuthority(final ServerAddress serverAddress, MongoCredentials credentials) {
+        this(serverAddress, new MongoCredentialsStore(credentials));
+    }
+
+    /**
+     * Constructs an instance with a list of server addresses, which may either be a list of mongos servers
+     * or a list of members of a replica set, and authentication credentials.
+     *
+     * @param serverAddresses the server addresses
+     */
+    public MongoAuthority(final List<ServerAddress> serverAddresses, MongoCredentials credentials) {
+        this(serverAddresses, new MongoCredentialsStore(credentials));
+    }
+
+    /**
+     * Constructs an instance with a single server address and a store of authentication credentials.
+     * This will be a direct connection, even if it's part of a replica set.
+     *
+     * @param serverAddress the server address of a mongo server
+     */
+    public MongoAuthority(final ServerAddress serverAddress, MongoCredentialsStore credentialsStore) {
         this.serverAddress = serverAddress;
-        this.credentials = credentials;
+        this.credentialsStore = credentialsStore;
         this.serverAddresses = null;
     }
 
-    public MongoAuthority(final List<ServerAddress> serverAddresses) {
-        this(serverAddresses, null);
-    }
-
-    public MongoAuthority(final List<ServerAddress> serverAddresses, MongoCredentials credentials) {
-        this.serverAddresses = serverAddresses;
-        this.credentials = credentials;
+    /**
+     * Constructs an instance with a list of server addresses, which may either be a list of mongos servers
+     * or a list of members of a replica set, and a store of authentication credentials.
+     *
+     * @param serverAddresses the server addresses
+     * @param credentialsStore the credentials store
+     */
+    public MongoAuthority(final List<ServerAddress> serverAddresses, MongoCredentialsStore credentialsStore) {
+        this.serverAddresses = new ArrayList<ServerAddress>(serverAddresses);
+        this.credentialsStore = credentialsStore;
         this.serverAddress = null;
     }
 
+    /**
+     * Returns whether this is a direct connection to a single server.
+     *
+     * @return true if a direct connection
+     */
     public boolean isDirect() {
         return serverAddress != null;
     }
 
+    /**
+     * Returns the single server address of a direction connection, or null if it's not a direction connection.
+     * @return the server address
+     * @see com.mongodb.MongoAuthority#isDirect()
+     */
     public ServerAddress getServerAddress() {
         return serverAddress;
     }
 
+    /**
+     * Returns the list of server addresses if this is not a direction connection.  or null if it is.
+     * @return the server address list
+     * @see com.mongodb.MongoAuthority#isDirect()
+     */
     public List<ServerAddress> getServerAddresses() {
         return new ArrayList<ServerAddress>(serverAddresses);
     }
 
-    public MongoCredentials getCredentials() {
-        return credentials;
+    /**
+     * Gets the credentials store.  If this instance was constructed with a single credential, this store will
+     * contain it.
+     * @return the credentials store
+     */
+    public MongoCredentialsStore getCredentialsStore() {
+        return credentialsStore;
     }
 }

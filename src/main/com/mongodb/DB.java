@@ -25,14 +25,12 @@ import org.bson.BSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * an abstract class that represents a logical database on a server
@@ -62,17 +60,6 @@ public abstract class DB {
         _mongo = mongo;
     	_name = name;
         _options = new Bytes.OptionHolder( _mongo._netOptions );
-    }
-
-    /**
-     * @param mongo the mongo instance
-     * @param name the database name
-     */
-    DB( Mongo mongo , String name, String username, char[] password ) {
-        _mongo = mongo;
-        _name = name;
-        _options = new Bytes.OptionHolder( _mongo._netOptions );
-        authenticationCredentialsReference.set(new AuthenticationCredentials(username, password));
     }
 
     /**
@@ -578,7 +565,7 @@ public abstract class DB {
      * @dochub authenticate
      */
     public boolean isAuthenticated() {
-        return authenticationCredentialsReference.get() != null;
+        return getAuthenticationCredentials() != null;
     }
 
     /**
@@ -598,7 +585,7 @@ public abstract class DB {
      * @dochub authenticate
      */
     public boolean authenticate(String username, char[] password ){
-        return authenticateCommandHelper(username, password).ok();
+        return authenticateCommandHelper(username, password).failure == null;
     }
 
     /**
@@ -619,36 +606,48 @@ public abstract class DB {
      * @dochub authenticate
      */
     public synchronized CommandResult authenticateCommand(String username, char[] password ){
-        CommandResult res = authenticateCommandHelper(username, password);
-        res.throwOnError();
-        return res;
+        CommandResultPair commandResultPair = authenticateCommandHelper(username, password);
+        if (commandResultPair.failure != null) {
+            throw commandResultPair.failure;
+        }
+        return commandResultPair.result;
     }
 
-    private CommandResult authenticateCommandHelper(String username, char[] password) {
-        AuthenticationCredentials currentCredentials = authenticationCredentialsReference.get();
-        AuthenticationCredentials newCredentials = new AuthenticationCredentials(username, password);
+    private CommandResultPair authenticateCommandHelper(String username, char[] password) {
+        MongoCredentials credentials = new MongoCredentials(username, password, MongoCredentials.Protocol.STRONGEST, getName());
 
-        if (currentCredentials != null) {
-            if (currentCredentials.equals(newCredentials)) {
-                if (credentialsAlreadySuccessfullyTested) {
-                    return authenticationTestCommandResult;
+        if (getAuthenticationCredentials() != null) {
+            if (getAuthenticationCredentials().equals(credentials)) {
+                if (authenticationTestCommandResult != null) {
+                    return new CommandResultPair(authenticationTestCommandResult);
                 }
             } else {
                 throw new IllegalStateException("can't authenticate twice on the same database");
             }
         }
 
-        CommandResult res = newCredentials.authenticate();
-        if (res.ok()) {
-            boolean wasNull = authenticationCredentialsReference.compareAndSet(null, newCredentials);
-            if (!wasNull && credentialsAlreadySuccessfullyTested) {
-                throw new IllegalStateException("can't authenticate twice on the same database");
-            }
-            credentialsAlreadySuccessfullyTested = true;
-            authenticationTestCommandResult = res;
+        try {
+            authenticationTestCommandResult = doAuthenticate(credentials);
+            return new CommandResultPair(authenticationTestCommandResult);
+        } catch (CommandResult.CommandFailure commandFailure) {
+            return new CommandResultPair(commandFailure);
         }
-        return res;
     }
+
+    class CommandResultPair {
+        CommandResult result;
+        CommandResult.CommandFailure failure;
+
+        public CommandResultPair(final CommandResult result) {
+            this.result = result;
+        }
+
+        public CommandResultPair(final CommandResult.CommandFailure failure) {
+            this.failure = failure;
+        }
+    }
+
+    abstract CommandResult doAuthenticate(MongoCredentials credentials);
 
     /**
      * Adds a new user for this db
@@ -805,8 +804,8 @@ public abstract class DB {
 
     public abstract void cleanCursors( boolean force );
 
-    AuthenticationCredentials getAuthenticationCredentials() {
-        return authenticationCredentialsReference.get();
+    MongoCredentials getAuthenticationCredentials() {
+        return getMongo().getCredentialsStore().get(getName());
     }
 
     final Mongo _mongo;
@@ -817,97 +816,7 @@ public abstract class DB {
     private com.mongodb.ReadPreference _readPref;
     final Bytes.OptionHolder _options;
 
-    // the credentials, possibly set in the constructor, in which case they have not been tested yet.
-    private AtomicReference<AuthenticationCredentials> authenticationCredentialsReference =
-            new AtomicReference<AuthenticationCredentials>();
-    // this can be false with credentials set if the credentials were passed in to the constructor
-    private volatile boolean credentialsAlreadySuccessfullyTested = false;
     // cached authentication command result, to return in case of multiple calls to authenticateCommand with the
     // same credentials
     private volatile CommandResult authenticationTestCommandResult;
-
-    /**
-     * Encapsulate everything relating to authorization of a user on a database
-     */
-    class AuthenticationCredentials {
-        private final String userName;
-        private final byte[] authHash;
-
-        private AuthenticationCredentials(final String userName, final char[] password) {
-            if (userName == null) {
-                throw new IllegalArgumentException("userName can not be null");
-            }
-            if (password == null) {
-                throw new IllegalArgumentException("password can not be null");
-            }
-            this.userName = userName;
-            this.authHash = createHash(userName, password);
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            final AuthenticationCredentials that = (AuthenticationCredentials) o;
-
-            if (!Arrays.equals(authHash, that.authHash)) return false;
-            if (!userName.equals(that.userName)) return false;
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = userName.hashCode();
-            result = 31 * result + Arrays.hashCode(authHash);
-            return result;
-        }
-
-        CommandResult authenticate() {
-            requestStart();
-            try {
-               CommandResult res = command(getNonceCommand());
-               res.throwOnError();
-
-               return command(getAuthCommand(res.getString("nonce")));
-            } finally {
-                requestDone();
-            }
-        }
-
-        DBObject getAuthCommand( String nonce ){
-            String key = nonce + userName + new String( authHash );
-
-            BasicDBObject cmd = new BasicDBObject();
-
-            cmd.put("authenticate", 1);
-            cmd.put("user", userName);
-            cmd.put("nonce", nonce);
-            cmd.put("key", Util.hexMD5(key.getBytes()));
-
-            return cmd;
-        }
-
-        BasicDBObject getNonceCommand() {
-            return new BasicDBObject("getnonce", 1);
-        }
-
-        private byte[] createHash( String userName , char[] password ){
-            ByteArrayOutputStream bout = new ByteArrayOutputStream( userName.length() + 20 + password.length );
-            try {
-                bout.write(userName.getBytes());
-                bout.write( ":mongo:".getBytes() );
-                for (final char ch : password) {
-                    if (ch >= 128)
-                        throw new IllegalArgumentException("can't handle non-ascii passwords yet");
-                    bout.write((byte) ch);
-                }
-            }
-            catch ( IOException ioe ){
-                throw new RuntimeException( "impossible" , ioe );
-            }
-            return Util.hexMD5( bout.toByteArray() ).getBytes();
-        }
-    }
 }

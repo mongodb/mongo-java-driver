@@ -194,11 +194,10 @@ public class MongoClient extends Mongo {
 
     /**
      * Creates a Mongo based on an authority and options.
-     * <p>
-     * Note: This constructor is provisional and is subject to change before the final release
      *
      * @param authority the authority
      * @param options the options
+     * @since 2.11.0
      */
     public MongoClient(MongoAuthority authority, MongoClientOptions options) {
         super(authority, new MongoOptions(options));

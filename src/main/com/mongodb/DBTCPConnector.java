@@ -177,7 +177,7 @@ public class DBTCPConnector implements DBConnector {
         DBPort port = mp.get( true , ReadPreference.primary(), hostNeeded );
 
         try {
-            port.checkAuth( db );
+            port.checkAuth( db.getMongo() );
             port.say( m );
             if ( concern.callGetLastError() ){
                 return _checkWriteError( db , port , concern );
@@ -282,7 +282,7 @@ public class DBTCPConnector implements DBConnector {
         Response res = null;
         boolean retry = false;
         try {
-            port.checkAuth( db );
+            port.checkAuth( db.getMongo() );
             res = port.call( m , coll, decoder );
             if ( res._responseTo != m.getId() )
                 throw new MongoException( "ids don't match" );
@@ -629,6 +629,20 @@ public class DBTCPConnector implements DBConnector {
 
     public boolean isOpen(){
         return ! _closed.get();
+    }
+
+    @Override
+    public CommandResult authenticate(MongoCredentials credentials) {
+        final MyPort mp = _myPort.get();
+        final DBPort port = mp.get(false, ReadPreference.primaryPreferred(), null);
+
+        try {
+            CommandResult result = port.authenticate(_mongo, credentials);
+            _mongo.getCredentialsStore().add(credentials);
+            return result;
+       } finally {
+            mp.done(port);
+        }
     }
 
     /**

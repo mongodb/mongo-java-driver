@@ -109,7 +109,7 @@ public class CommandResult extends BasicDBObject {
      * returns the "code" field, as an int
      * @return -1 if there is no code
      */
-    private int getCode(){
+    int getCode(){
         int code = -1;
         if ( get( "code" ) instanceof Number )
             code = ((Number)get("code")).intValue();

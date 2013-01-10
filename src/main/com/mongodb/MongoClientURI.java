@@ -17,6 +17,8 @@
 
 package com.mongodb;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -117,16 +119,27 @@ import java.util.logging.Logger;
  * </ul>
  * </li>
  * </ul>
- *
+ * <p>Authentication configuration:</p>
+ * <ul>
+ *   <li>{@code authProtocol=STRONGEST|GSSAPI}: The authentication protocol to use.  The default is STRONGEST.
+ *   </li>
+ *   <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
+ *   the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
+ *   If the database is specified in neither place, the default value is "admin".  For GSSAPI, it's not necessary to specify
+ *   a source.
+ *   </li>
+ * <ul>
+ * <p>
  * Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference
  * in behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.
- *
+ * </p>
  * @see MongoClientOptions for the default values for all options
  * @since 2.10.0
  */
 public class MongoClientURI {
 
     private static final String PREFIX = "mongodb://";
+    public static final String UTF_8 = "UTF-8";
 
     /**
      * Creates a MongoURI from the given string.
@@ -139,81 +152,89 @@ public class MongoClientURI {
     }
 
     MongoClientURI(String uri, MongoClientOptions.Builder builder) {
-        _uri = uri;
-        if (!uri.startsWith(PREFIX))
-            throw new IllegalArgumentException("uri needs to start with " + PREFIX);
+        try {
+            this.uri = uri;
+            if (!uri.startsWith(PREFIX))
+                throw new IllegalArgumentException("uri needs to start with " + PREFIX);
 
-        uri = uri.substring(PREFIX.length());
+            uri = uri.substring(PREFIX.length());
 
-        String serverPart;
-        String nsPart;
-        String optionsPart;
+            String serverPart;
+            String nsPart;
+            String optionsPart;
+            String userName = null;
+            char[] password = null;
 
-        {
-            int idx = uri.lastIndexOf("/");
-            if (idx < 0) {
-                if (uri.contains("?")) {
-                    throw new IllegalArgumentException("URI contains options without trailing slash");
-                }
-                serverPart = uri;
-                nsPart = null;
-                optionsPart = "";
-            } else {
-                serverPart = uri.substring(0, idx);
-                nsPart = uri.substring(idx + 1);
-
-                idx = nsPart.indexOf("?");
-                if (idx >= 0) {
-                    optionsPart = nsPart.substring(idx + 1);
-                    nsPart = nsPart.substring(0, idx);
-                } else {
+            {
+                int idx = uri.lastIndexOf("/");
+                if (idx < 0) {
+                    if (uri.contains("?")) {
+                        throw new IllegalArgumentException("URI contains options without trailing slash");
+                    }
+                    serverPart = uri;
+                    nsPart = null;
                     optionsPart = "";
+                } else {
+                    serverPart = uri.substring(0, idx);
+                    nsPart = uri.substring(idx + 1);
+
+                    idx = nsPart.indexOf("?");
+                    if (idx >= 0) {
+                        optionsPart = nsPart.substring(idx + 1);
+                        nsPart = nsPart.substring(0, idx);
+                    } else {
+                        optionsPart = "";
+                    }
+
+                }
+            }
+
+            { // userName,password,hosts
+                List<String> all = new LinkedList<String>();
+
+                int idx = serverPart.indexOf("@");
+
+                if (idx > 0) {
+                    String authPart = serverPart.substring(0, idx);
+                    serverPart = serverPart.substring(idx + 1);
+
+                    idx = authPart.indexOf(":");
+                    if (idx == -1) {
+                        userName = URLDecoder.decode(authPart, UTF_8);
+                    } else {
+                        userName = URLDecoder.decode(authPart.substring(0, idx), UTF_8);
+                        password = URLDecoder.decode(authPart.substring(idx + 1), UTF_8).toCharArray();
+                    }
                 }
 
+                Collections.addAll(all, serverPart.split(","));
+
+                hosts = Collections.unmodifiableList(all);
             }
-        }
 
-        { // userName,password,_hosts
-            List<String> all = new LinkedList<String>();
-
-            int idx = serverPart.indexOf("@");
-
-            if (idx > 0) {
-                String authPart = serverPart.substring(0, idx);
-                serverPart = serverPart.substring(idx + 1);
-
-                idx = authPart.indexOf(":");
-                userName = authPart.substring(0, idx);
-                password = authPart.substring(idx + 1).toCharArray();
+            if (nsPart != null && !nsPart.isEmpty()) { // database,_collection
+                int idx = nsPart.indexOf(".");
+                if (idx < 0) {
+                    database = nsPart;
+                    collection = null;
+                } else {
+                    database = nsPart.substring(0, idx);
+                    collection = nsPart.substring(idx + 1);
+                }
             } else {
-                userName = null;
-                password = null;
-            }
-
-            Collections.addAll(all, serverPart.split(","));
-
-            _hosts = Collections.unmodifiableList(all);
-        }
-
-        if (nsPart != null) { // database,_collection
-            int idx = nsPart.indexOf(".");
-            if (idx < 0) {
-                database = nsPart;
+                database = null;
                 collection = null;
-            } else {
-                database = nsPart.substring(0, idx);
-                collection = nsPart.substring(idx + 1);
             }
-        } else {
-            database = null;
-            collection = null;
-        }
 
-        parseOptions(optionsPart, builder);
+            credentials = parseOptions(optionsPart, builder, userName, password, database);
+        } catch (UnsupportedEncodingException e) {
+            throw new MongoInternalException("This should not happen", e);
+        }
     }
 
 
-    private void parseOptions(String optionsPart, MongoClientOptions.Builder builder) {
+    private MongoCredentials parseOptions(String optionsPart, MongoClientOptions.Builder builder, final String userName,
+                                          final char[] password, String database) {
         String readPreferenceType = null;
         DBObject firstTagSet = null;
         List<DBObject> remainingTagSets = new ArrayList<DBObject>();
@@ -224,6 +245,9 @@ public class MongoClientURI {
         boolean fsync = false;
         boolean journal = false;
         Boolean slaveOk = null;
+        MongoCredentials.Protocol protocol = MongoCredentials.Protocol.STRONGEST;
+        String authSource = database;
+
         for (String _part : optionsPart.split("&|;")) {
             int idx = _part.indexOf("=");
             if (idx >= 0) {
@@ -263,7 +287,12 @@ public class MongoClientURI {
                     fsync = _parseBoolean(value);
                 } else if (key.equals("j")) {
                     journal = _parseBoolean(value);
-                } else {
+                } else if (key.equals("authprotocol")) {
+                    protocol = MongoCredentials.Protocol.valueOf(value);
+                } else if (key.equals("authsource")) {
+                   authSource = value;
+                }
+                else {
                     LOGGER.warning("Unknown or Unsupported Option '" + key + "'");
                 }
             }
@@ -274,6 +303,12 @@ public class MongoClientURI {
         buildReadPreference(builder, readPreferenceType, firstTagSet, remainingTagSets, slaveOk);
 
         _options = builder.build();
+
+        if (userName == null) {
+            return null;
+        } else {
+            return new MongoCredentials(userName, password, protocol, authSource);
+        }
     }
 
     private void buildReadPreference(final MongoClientOptions.Builder builder, final String readPreferenceType,
@@ -306,7 +341,7 @@ public class MongoClientURI {
             }
         } else if (safe != null) {
             if (safe) {
-               builder.writeConcern(WriteConcern.ACKNOWLEDGED);
+                builder.writeConcern(WriteConcern.ACKNOWLEDGED);
             } else {
                 builder.writeConcern(WriteConcern.UNACKNOWLEDGED);
             }
@@ -341,7 +376,7 @@ public class MongoClientURI {
      * @return the username
      */
     public String getUsername() {
-        return userName;
+        return credentials != null ? credentials.getUserName() : null;
     }
 
     /**
@@ -350,7 +385,7 @@ public class MongoClientURI {
      * @return the password
      */
     public char[] getPassword() {
-        return password;
+        return credentials != null ? credentials.getPassword() : null;
     }
 
     /**
@@ -359,7 +394,7 @@ public class MongoClientURI {
      * @return the host list
      */
     public List<String> getHosts() {
-        return _hosts;
+        return hosts;
     }
 
     /**
@@ -387,7 +422,17 @@ public class MongoClientURI {
      * @return the URI
      */
     public String getURI() {
-        return _uri;
+        return uri;
+    }
+
+
+    /**
+     * Gets the credentials.
+     *
+     * @return the credentials
+     */
+    public MongoCredentials getCredentials() {
+        return credentials;
     }
 
     /**
@@ -401,13 +446,11 @@ public class MongoClientURI {
 
     // ---------------------------------
 
-    final String userName;
-    final char[] password;
-    final List<String> _hosts;
+    private final MongoCredentials credentials;
+    final List<String> hosts;
     final String database;
     final String collection;
-
-    final String _uri;
+    final String uri;
 
     private MongoClientOptions _options;
 
@@ -415,6 +458,6 @@ public class MongoClientURI {
 
     @Override
     public String toString() {
-        return _uri;
+        return uri;
     }
 }

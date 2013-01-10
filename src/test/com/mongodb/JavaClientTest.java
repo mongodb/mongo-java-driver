@@ -648,13 +648,14 @@ public class JavaClientTest extends TestCase {
 
         Mongo m = new Mongo();
         DB db = m.getDB(cleanupDB);
-        DBCollection u = db.getCollection( "system.users" );
+        DBCollection usersCollection = db.getCollection( "system.users" );
 
         try {
-            assertEquals( 0 , u.find().count() );
+            usersCollection.remove(new BasicDBObject());
+            assertEquals(0, usersCollection.find().count());
 
             db.addUser("xx" , "e".toCharArray() );
-            assertEquals( 1 , u.find().count() );
+            assertEquals(1, usersCollection.find().count());
 
             assertEquals(false, db.authenticate( "xx" , "f".toCharArray() ) );
             assertEquals(true, db.authenticate( "xx" , "e".toCharArray() ) );
@@ -667,7 +668,7 @@ public class JavaClientTest extends TestCase {
             }
         }
         finally {
-            u.remove( new BasicDBObject() );
+            usersCollection.remove( new BasicDBObject() );
             m.close();
         }
     }
@@ -676,13 +677,14 @@ public class JavaClientTest extends TestCase {
     public void testAuthenticateCommand() throws UnknownHostException {
         Mongo m = new Mongo();
         DB db = m.getDB(cleanupDB);
-        DBCollection u = db.getCollection( "system.users" );
+        DBCollection usersCollections = db.getCollection( "system.users" );
 
         try {
-            assertEquals( 0 , u.find().count() );
+            usersCollections.remove(new BasicDBObject());
+            assertEquals(0, usersCollections.find().count());
 
             db.addUser("xx", "e".toCharArray());
-            assertEquals( 1 , u.find().count() );
+            assertEquals(1, usersCollections.find().count());
 
             try {
                 db.authenticateCommand( "xx" , "f".toCharArray());
@@ -700,7 +702,7 @@ public class JavaClientTest extends TestCase {
             }
         }
         finally {
-            u.remove(new BasicDBObject());
+            usersCollections.remove(new BasicDBObject());
             m.close();
         }
     }
