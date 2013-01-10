@@ -21,7 +21,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "net.saliman:gradle-cobertura-plugin:1.1.0"
+        classpath files('lib/gradle-cobertura-plugin-1.1.1.jar')
     }
 }
 
@@ -51,6 +51,7 @@ subprojects {
     repositories {
         mavenCentral()
     }
+
     dependencies {
         testCompile 'junit:junit:4.11'
     }
@@ -118,7 +119,6 @@ subprojects {
     artifacts {
         archives sourcesJar
         archives javadocJar
-        archives testsJar
     }
 }
 
@@ -150,7 +150,6 @@ configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat', '
             }
         }
     }
-
 
     [project.installer, project.deployer]*.pom {
 
@@ -256,7 +255,6 @@ project(':driver') {
         testClassesDir = sourceSets.acceptance.output.classesDir
         classpath = sourceSets.acceptance.runtimeClasspath
     }
-
 
     sourcesJar {
         from project(':common').sourceSets.main.allSource

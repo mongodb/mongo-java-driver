@@ -4,6 +4,9 @@ gradle.useLogger(new TaskExecutionListener(){
     public void afterExecute(Task task, TaskState state) {}
 })
 
+sourceCompatibility = '1.5'
+targetCompatibility = '1.5'
+
 dependencies {
     compile files("${System.getProperty('java.home')}/../lib/tools.jar")
 }
