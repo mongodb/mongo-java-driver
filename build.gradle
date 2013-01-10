@@ -22,6 +22,7 @@ buildscript {
     }
     dependencies {
         classpath files('lib/gradle-cobertura-plugin-1.1.1.jar')
+        classpath 'net.sourceforge.cobertura:cobertura:1.9.4.1'
     }
 }
 
