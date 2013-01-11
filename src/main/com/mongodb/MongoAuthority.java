@@ -136,4 +136,37 @@ public class MongoAuthority {
     public MongoCredentialsStore getCredentialsStore() {
         return credentialsStore;
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final MongoAuthority that = (MongoAuthority) o;
+
+        if (!credentialsStore.equals(that.credentialsStore)) return false;
+        if (serverAddress != null ? !serverAddress.equals(that.serverAddress) : that.serverAddress != null)
+            return false;
+        if (serverAddresses != null ? !serverAddresses.equals(that.serverAddresses) : that.serverAddresses != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = serverAddress != null ? serverAddress.hashCode() : 0;
+        result = 31 * result + credentialsStore.hashCode();
+        result = 31 * result + (serverAddresses != null ? serverAddresses.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "MongoAuthority{" +
+                "serverAddress=" + serverAddress +
+                ", credentialsStore=" + credentialsStore +
+                ", serverAddresses=" + serverAddresses +
+                '}';
+    }
 }

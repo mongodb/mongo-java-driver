@@ -127,4 +127,11 @@ public class MongoCredentialsStore {
     public synchronized int hashCode() {
         return credentialsMap.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "MongoCredentialsStore{" +
+                "credentialsMap=" + credentialsMap +
+                '}';
+    }
 }
