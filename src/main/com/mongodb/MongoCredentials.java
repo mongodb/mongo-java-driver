@@ -207,9 +207,9 @@ public class MongoCredentials {
     public String toString() {
         return "MongoCredentials{" +
                 "protocol=" + protocol +
-                ", userName='" + userName + '\'' +
-                ", password=" + password +
-                ", source='" + source + '\'' +
+                ", userName='" + userName +
+                ", password=" + "<hidden>" +
+                ", source='" + source +
                 '}';
     }
 
