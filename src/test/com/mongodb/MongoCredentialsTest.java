@@ -60,6 +60,20 @@ public class MongoCredentialsTest extends TestCase {
         assertArrayEquals("pwd".toCharArray(), credentials.getPassword());
         assertEquals(MongoCredentials.Protocol.STRONGEST, credentials.getProtocol());
         assertEquals("test", credentials.getSource());
+
+        try {
+            new MongoCredentials("user", null, MongoCredentials.Protocol.STRONGEST, "test");
+            fail("STRONGEST must have a password");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
+
+        try {
+            new MongoCredentials("user", "a".toCharArray(), MongoCredentials.Protocol.GSSAPI);
+            fail("GSSAPI must not have a password");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
     }
 
     @Test

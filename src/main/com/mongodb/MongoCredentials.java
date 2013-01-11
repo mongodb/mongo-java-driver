@@ -134,6 +134,14 @@ public class MongoCredentials {
             throw new IllegalArgumentException();
         }
 
+        if (protocol == Protocol.STRONGEST && password == null) {
+            throw new IllegalArgumentException("password can not be null for " + Protocol.STRONGEST);
+        }
+
+        if (protocol == Protocol.GSSAPI && password != null) {
+            throw new IllegalArgumentException("password must be null for " + Protocol.GSSAPI);
+        }
+
         this.userName = userName;
         this.password = password;
         this.source = source != null ? source : getDefaultDatabase(protocol);
