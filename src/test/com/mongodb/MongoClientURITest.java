@@ -26,6 +26,11 @@ import java.net.UnknownHostException;
 public class MongoClientURITest extends TestCase {
 
     @Test
+    public void testUnsupportedOption() {
+        new MongoClientURI("mongodb://localhost/?unknownOption=true");
+    }
+
+    @Test
     public void testOptionsWithoutTrailingSlash() {
         try {
             new MongoClientURI("mongodb://localhost?wTimeout=5");

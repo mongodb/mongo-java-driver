@@ -21,8 +21,12 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 
@@ -121,25 +125,26 @@ import java.util.logging.Logger;
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
- *   <li>{@code authProtocol=STRONGEST|GSSAPI}: The authentication protocol to use.  The default is STRONGEST.
- *   </li>
- *   <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
- *   the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
- *   If the database is specified in neither place, the default value is "admin".  For GSSAPI, it's not necessary to specify
- *   a source.
- *   </li>
+ * <li>{@code authProtocol=STRONGEST|GSSAPI}: The authentication protocol to use.  The default is STRONGEST.
+ * </li>
+ * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
+ * the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
+ * If the database is specified in neither place, the default value is "admin".  For GSSAPI, it's not necessary to specify
+ * a source.
+ * </li>
  * <ul>
  * <p>
  * Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference
  * in behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.
  * </p>
+ *
  * @see MongoClientOptions for the default values for all options
  * @since 2.10.0
  */
 public class MongoClientURI {
 
     private static final String PREFIX = "mongodb://";
-    public static final String UTF_8 = "UTF-8";
+    private static final String UTF_8 = "UTF-8";
 
     /**
      * Creates a MongoURI from the given string.
@@ -226,126 +231,241 @@ public class MongoClientURI {
                 collection = null;
             }
 
-            credentials = parseOptions(optionsPart, builder, userName, password, database);
+            Map<String, List<String>> optionsMap = parseOptions(optionsPart);
+            options = createOptions(optionsMap, builder);
+            credentials = createCredentials(optionsMap, userName, password, database);
+            warnOnUnsupportedOptions(optionsMap);
         } catch (UnsupportedEncodingException e) {
             throw new MongoInternalException("This should not happen", e);
         }
     }
 
+    static Set<String> generalOptionsKeys = new HashSet<String>();
+    static Set<String> authKeys = new HashSet<String>();
+    static Set<String> readPreferenceKeys = new HashSet<String>();
+    static Set<String> writeConcernKeys = new HashSet<String>();
+    static Set<String> allKeys = new HashSet<String>();
 
-    private MongoCredentials parseOptions(String optionsPart, MongoClientOptions.Builder builder, final String userName,
-                                          final char[] password, String database) {
-        String readPreferenceType = null;
-        DBObject firstTagSet = null;
-        List<DBObject> remainingTagSets = new ArrayList<DBObject>();
+    static {
+        generalOptionsKeys.add("maxpoolsize");
+        generalOptionsKeys.add("waitqueuemultiple");
+        generalOptionsKeys.add("waitqueuetimeoutms");
+        generalOptionsKeys.add("connecttimeoutms");
+        generalOptionsKeys.add("sockettimeoutms");
+        generalOptionsKeys.add("sockettimeoutms");
+        generalOptionsKeys.add("autoconnectretry");
 
+        readPreferenceKeys.add("slaveok");
+        readPreferenceKeys.add("readpreference");
+        readPreferenceKeys.add("readpreferencetags");
+
+        writeConcernKeys.add("safe");
+        writeConcernKeys.add("w");
+        writeConcernKeys.add("wtimeout");
+        writeConcernKeys.add("fsync");
+        writeConcernKeys.add("j");
+
+        authKeys.add("authprotocol");
+        authKeys.add("authsource");
+
+        allKeys.addAll(generalOptionsKeys);
+        allKeys.addAll(authKeys);
+        allKeys.addAll(readPreferenceKeys);
+        allKeys.addAll(writeConcernKeys);
+    }
+
+    private void warnOnUnsupportedOptions(Map<String, List<String>> optionsMap) {
+        for (String key : optionsMap.keySet()) {
+            if (!allKeys.contains(key)) {
+                LOGGER.warning("Unknown or Unsupported Option '" + key + "'");
+            }
+        }
+    }
+
+    private MongoClientOptions createOptions(Map<String, List<String>> optionsMap, MongoClientOptions.Builder builder) {
+        for (String key : generalOptionsKeys) {
+            String value = getLastValue(optionsMap, key);
+            if (value == null) {
+                continue;
+            }
+
+            if (key.equals("maxpoolsize")) {
+                builder.connectionsPerHost(Integer.parseInt(value));
+            } else if (key.equals("waitqueuemultiple")) {
+                builder.threadsAllowedToBlockForConnectionMultiplier(Integer.parseInt(value));
+            } else if (key.equals("waitqueuetimeoutms")) {
+                builder.maxWaitTime(Integer.parseInt(value));
+            } else if (key.equals("connecttimeoutms")) {
+                builder.connectTimeout(Integer.parseInt(value));
+            } else if (key.equals("sockettimeoutms")) {
+                builder.socketTimeout(Integer.parseInt(value));
+            } else if (key.equals("autoconnectretry")) {
+                builder.autoConnectRetry(_parseBoolean(value));
+            }
+        }
+
+        WriteConcern writeConcern = createWriteConcern(optionsMap);
+        ReadPreference readPreference = createReadPreference(optionsMap);
+
+        if (writeConcern != null) {
+            builder.writeConcern(writeConcern);
+        }
+        if (readPreference != null) {
+            builder.readPreference(readPreference);
+        }
+
+        return builder.build();
+    }
+
+    private WriteConcern createWriteConcern(final Map<String, List<String>> optionsMap) {
         Boolean safe = null;
         String w = null;
         int wTimeout = 0;
         boolean fsync = false;
         boolean journal = false;
+
+        for (String key : writeConcernKeys) {
+            String value = getLastValue(optionsMap, key);
+            if (value == null) {
+                continue;
+            }
+
+            if (key.equals("safe")) {
+                safe = _parseBoolean(value);
+            } else if (key.equals("w")) {
+                w = value;
+            } else if (key.equals("wtimeout")) {
+                wTimeout = Integer.parseInt(value);
+            } else if (key.equals("fsync")) {
+                fsync = _parseBoolean(value);
+            } else if (key.equals("j")) {
+                journal = _parseBoolean(value);
+            }
+        }
+        return buildWriteConcern(safe, w, wTimeout, fsync, journal);
+    }
+
+    private ReadPreference createReadPreference(final Map<String, List<String>> optionsMap) {
         Boolean slaveOk = null;
+        String readPreferenceType = null;
+        DBObject firstTagSet = null;
+        List<DBObject> remainingTagSets = new ArrayList<DBObject>();
+
+        for (String key : readPreferenceKeys) {
+            String value = getLastValue(optionsMap, key);
+            if (value == null) {
+                continue;
+            }
+
+            if (key.equals("slaveok")) {
+                slaveOk = _parseBoolean(value);
+            } else if (key.equals("readpreference")) {
+                readPreferenceType = value;
+            } else if (key.equals("readpreferencetags")) {
+                for (String cur : optionsMap.get(key)) {
+                    DBObject tagSet = getTagSet(cur.trim());
+                    if (firstTagSet == null) {
+                        firstTagSet = tagSet;
+                    } else {
+                        remainingTagSets.add(tagSet);
+                    }
+                }
+            }
+        }
+        return buildReadPreference(readPreferenceType, firstTagSet, remainingTagSets, slaveOk);
+    }
+
+    private MongoCredentials createCredentials(Map<String, List<String>> optionsMap, final String userName,
+                                               final char[] password, String database) {
+        if (userName == null) {
+            return null;
+        }
+
         MongoCredentials.Protocol protocol = MongoCredentials.Protocol.STRONGEST;
         String authSource = database;
+
+        for (String key : authKeys) {
+            String value = getLastValue(optionsMap, key);
+
+            if (value == null) {
+                continue;
+            }
+
+            if (key.equals("authprotocol")) {
+                protocol = MongoCredentials.Protocol.valueOf(value);
+            } else if (key.equals("authsource")) {
+                authSource = value;
+            }
+        }
+
+        return new MongoCredentials(userName, password, protocol, authSource);
+    }
+
+    private String getLastValue(final Map<String, List<String>> optionsMap, final String key) {
+        List<String> valueList = optionsMap.get(key);
+        if (valueList == null) {
+            return null;
+        }
+        return valueList.get(valueList.size() - 1);
+    }
+
+    private Map<String, List<String>> parseOptions(String optionsPart) {
+        Map<String, List<String>> optionsMap = new HashMap<String, List<String>>();
 
         for (String _part : optionsPart.split("&|;")) {
             int idx = _part.indexOf("=");
             if (idx >= 0) {
                 String key = _part.substring(0, idx).toLowerCase();
                 String value = _part.substring(idx + 1);
-
-                if (key.equals("maxpoolsize")) {
-                    builder.connectionsPerHost(Integer.parseInt(value));
-                } else if (key.equals("waitqueuemultiple")) {
-                    builder.threadsAllowedToBlockForConnectionMultiplier(Integer.parseInt(value));
-                } else if (key.equals("waitqueuetimeoutms")) {
-                    builder.maxWaitTime(Integer.parseInt(value));
-                } else if (key.equals("connecttimeoutms")) {
-                    builder.connectTimeout(Integer.parseInt(value));
-                } else if (key.equals("sockettimeoutms")) {
-                    builder.socketTimeout(Integer.parseInt(value));
-                } else if (key.equals("autoconnectretry")) {
-                    builder.autoConnectRetry(_parseBoolean(value));
-                } else if (key.equals("slaveok")) {
-                    slaveOk = _parseBoolean(value);
-                } else if (key.equals("readpreference")) {
-                    readPreferenceType = value;
-                } else if (key.equals("readpreferencetags")) {
-                    DBObject tagSet = getTagSet(value.trim());
-                    if (firstTagSet == null) {
-                        firstTagSet = tagSet;
-                    } else {
-                        remainingTagSets.add(tagSet);
-                    }
-                } else if (key.equals("safe")) {
-                    safe = _parseBoolean(value);
-                } else if (key.equals("w")) {
-                    w = value;
-                } else if (key.equals("wtimeout")) {
-                    wTimeout = Integer.parseInt(value);
-                } else if (key.equals("fsync")) {
-                    fsync = _parseBoolean(value);
-                } else if (key.equals("j")) {
-                    journal = _parseBoolean(value);
-                } else if (key.equals("authprotocol")) {
-                    protocol = MongoCredentials.Protocol.valueOf(value);
-                } else if (key.equals("authsource")) {
-                   authSource = value;
+                List<String> valueList = optionsMap.get(key);
+                if (valueList == null) {
+                    valueList = new ArrayList<String>(1);
                 }
-                else {
-                    LOGGER.warning("Unknown or Unsupported Option '" + key + "'");
-                }
+                valueList.add(value);
+                optionsMap.put(key, valueList);
             }
         }
 
-        buildWriteConcern(builder, safe, w, wTimeout, fsync, journal);
-
-        buildReadPreference(builder, readPreferenceType, firstTagSet, remainingTagSets, slaveOk);
-
-        _options = builder.build();
-
-        if (userName == null) {
-            return null;
-        } else {
-            return new MongoCredentials(userName, password, protocol, authSource);
-        }
+        return optionsMap;
     }
 
-    private void buildReadPreference(final MongoClientOptions.Builder builder, final String readPreferenceType,
-                                     final DBObject firstTagSet, final List<DBObject> remainingTagSets, final Boolean slaveOk) {
+    private ReadPreference buildReadPreference(final String readPreferenceType, final DBObject firstTagSet,
+                                               final List<DBObject> remainingTagSets, final Boolean slaveOk) {
         if (readPreferenceType != null) {
             if (firstTagSet == null) {
-                builder.readPreference(ReadPreference.valueOf(readPreferenceType));
+                return ReadPreference.valueOf(readPreferenceType);
             } else {
-                builder.readPreference(ReadPreference.valueOf(readPreferenceType, firstTagSet,
-                        remainingTagSets.toArray(new DBObject[remainingTagSets.size()])));
+                return ReadPreference.valueOf(readPreferenceType, firstTagSet,
+                        remainingTagSets.toArray(new DBObject[remainingTagSets.size()]));
             }
         } else if (slaveOk != null) {
             if (slaveOk.equals(Boolean.TRUE)) {
-                builder.readPreference(ReadPreference.secondaryPreferred());
+                return ReadPreference.secondaryPreferred();
             }
         }
+        return null;
     }
 
-    private void buildWriteConcern(final MongoClientOptions.Builder builder, final Boolean safe, final String w,
-                                   final int wTimeout, final boolean fsync, final boolean journal) {
+    private WriteConcern buildWriteConcern(final Boolean safe, final String w,
+                                           final int wTimeout, final boolean fsync, final boolean journal) {
         if (w != null || wTimeout != 0 || fsync || journal) {
             if (w == null) {
-                builder.writeConcern(new WriteConcern(1, wTimeout, fsync, journal));
+                return new WriteConcern(1, wTimeout, fsync, journal);
             } else {
                 try {
-                    builder.writeConcern(new WriteConcern(Integer.parseInt(w), wTimeout, fsync, journal));
+                    return new WriteConcern(Integer.parseInt(w), wTimeout, fsync, journal);
                 } catch (NumberFormatException e) {
-                    builder.writeConcern(new WriteConcern(w, wTimeout, fsync, journal));
+                    return new WriteConcern(w, wTimeout, fsync, journal);
                 }
             }
         } else if (safe != null) {
             if (safe) {
-                builder.writeConcern(WriteConcern.ACKNOWLEDGED);
+                return WriteConcern.ACKNOWLEDGED;
             } else {
-                builder.writeConcern(WriteConcern.UNACKNOWLEDGED);
+                return WriteConcern.UNACKNOWLEDGED;
             }
         }
+        return null;
     }
 
     private DBObject getTagSet(String tagSetString) {
@@ -441,18 +561,18 @@ public class MongoClientURI {
      * @return the MongoClientOptions based on this URI.
      */
     public MongoClientOptions getOptions() {
-        return _options;
+        return options;
     }
 
     // ---------------------------------
 
+    private final MongoClientOptions options;
     private final MongoCredentials credentials;
-    final List<String> hosts;
-    final String database;
-    final String collection;
-    final String uri;
+    private final List<String> hosts;
+    private final String database;
+    private final String collection;
+    private final String uri;
 
-    private MongoClientOptions _options;
 
     static final Logger LOGGER = Logger.getLogger("com.mongodb.MongoURI");
 
