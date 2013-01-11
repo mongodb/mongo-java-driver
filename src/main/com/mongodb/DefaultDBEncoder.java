@@ -12,12 +12,12 @@
  */
 package com.mongodb;
 
-import org.bson.*;
-import org.bson.io.*;
-import static org.bson.BSON.EOO;
-import static org.bson.BSON.OBJECT;
-import static org.bson.BSON.REF;
-import org.bson.types.*;
+import org.bson.BSONObject;
+import org.bson.BasicBSONEncoder;
+import org.bson.io.OutputBuffer;
+import org.bson.types.ObjectId;
+
+import static org.bson.BSON.*;
 
 
 public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
@@ -34,6 +34,12 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
         public DBEncoder create( ){
             return new DefaultDBEncoder( );
         }
+
+        @Override
+        public String toString() {
+            return "DefaultDBEncoder.DefaultFactory";
+        }
+
     }
 
     @SuppressWarnings("deprecation")
@@ -77,6 +83,11 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
     public static DBEncoderFactory FACTORY = new DefaultFactory();
 
     public DefaultDBEncoder( ){
+    }
+
+    @Override
+    public String toString() {
+        return "DefaultDBEncoder";
     }
 
 }

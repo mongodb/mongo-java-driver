@@ -164,9 +164,9 @@ public class MongoAuthority {
     @Override
     public String toString() {
         return "MongoAuthority{" +
-                "serverAddress=" + serverAddress +
+                (serverAddress != null ? ("serverAddress=" + serverAddress) : "") +
+                (serverAddresses != null ? ("serverAddresses=" + serverAddresses) : "") +
                 ", credentialsStore=" + credentialsStore +
-                ", serverAddresses=" + serverAddresses +
                 '}';
     }
 }

@@ -30,7 +30,6 @@ import java.util.logging.Logger;
 public class DBTCPConnector implements DBConnector {
 
     static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
-    static Logger _createLogger = Logger.getLogger( _logger.getName() + ".connect" );
 
     /**
      * @param m
@@ -41,8 +40,6 @@ public class DBTCPConnector implements DBConnector {
         _mongo = m;
         _portHolder = new DBPortPool.Holder( m._options );
         _checkAddress( addr );
-
-        _createLogger.info( addr.toString() );
 
         setMasterAddress(addr);
         _allHosts = null;
@@ -68,7 +65,6 @@ public class DBTCPConnector implements DBConnector {
         _checkAddress( all );
 
         _allHosts = new ArrayList<ServerAddress>( all ); // make a copy so it can't be modified
-        _createLogger.info( all  + " -> " + getAddress() );
 
         _connectionStatus = new DynamicConnectionStatus(m, _allHosts);
     }

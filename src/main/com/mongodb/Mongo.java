@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Logger;
 
 /**
  * A database connection with internal connection pooling. For most applications, you should have one Mongo instance
@@ -71,6 +72,9 @@ import java.util.concurrent.ConcurrentMap;
  * @see WriteConcern
  */
 public class Mongo {
+
+    static Logger logger = Logger.getLogger(Bytes.LOGGER.getName() + ".Mongo");
+
 
     // Make sure you don't change the format of these two static variables. A preprocessing regexp
     // is applied and updates the version based on configuration in build.properties.
@@ -288,21 +292,17 @@ public class Mongo {
      * @param options the options
      */
     Mongo(MongoAuthority authority, MongoOptions options) {
+        logger.info("Creating Mongo instance (driver version " + getVersion() + ") with authority " + authority + " and options " + options);
+        _authority = authority;
         _options = options;
         _applyMongoOptions();
 
         if ( authority.isDirect() ){
-            _addr = authority.getServerAddress();
-            _addrs = null;
-            _connector = new DBTCPConnector( this , _addr );
+            _connector = new DBTCPConnector( this , authority.getServerAddress() );
         }
         else {
-            _addr = null;
-            _addrs = authority.getServerAddresses();
-            _connector = new DBTCPConnector( this , _addrs );
+            _connector = new DBTCPConnector( this , authority.getServerAddresses() );
         }
-
-        _credentialsStore = authority.getCredentialsStore();
 
         _connector.start();
         if (_options.cursorFinalizerEnabled) {
@@ -552,7 +552,7 @@ public class Mongo {
      * @return the credentials store.
      */
     public MongoCredentialsStore getCredentialsStore() {
-        return _credentialsStore;
+        return _authority.getCredentialsStore();
     }
 
     /**
@@ -609,8 +609,6 @@ public class Mongo {
         }
     }
 
-    final ServerAddress _addr;
-    final List<ServerAddress> _addrs;
     final MongoOptions _options;
     final DBTCPConnector _connector;
     final ConcurrentMap<String,DB> _dbs = new ConcurrentHashMap<String,DB>();
@@ -618,7 +616,7 @@ public class Mongo {
     private ReadPreference _readPref = ReadPreference.primary();
     final Bytes.OptionHolder _netOptions = new Bytes.OptionHolder( null );
     final CursorCleanerThread _cleaner;
-    final MongoCredentialsStore _credentialsStore;
+    final MongoAuthority _authority;
 
 
     org.bson.util.SimplePool<PoolOutputBuffer> _bufferPool =
@@ -767,15 +765,9 @@ public class Mongo {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("Mongo: ");
-        List<ServerAddress> list = getServerAddressList();
-        if (list == null || list.size() == 0)
-            str.append("null");
-        else {
-            for ( ServerAddress addr : list )
-                str.append( addr.toString() ).append( ',' );
-            str.deleteCharAt( str.length() - 1 );
-        }
-        return str.toString();
+        return "Mongo{" +
+                "authority=" + _authority +
+                ", options=" + _options +
+                '}';
     }
 }

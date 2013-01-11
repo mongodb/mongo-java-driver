@@ -348,35 +348,6 @@ public class MongoOptions {
      */
     public boolean alwaysUseMBeans;
 
-    public String toString(){
-        StringBuilder buf = new StringBuilder();
-        buf.append( "description=" ).append( description ).append( ", " );
-        buf.append( "connectionsPerHost=" ).append( connectionsPerHost ).append( ", " );
-        buf.append( "threadsAllowedToBlockForConnectionMultiplier=" ).append( threadsAllowedToBlockForConnectionMultiplier ).append( ", " );
-        buf.append( "maxWaitTime=" ).append( maxWaitTime ).append( ", " );
-        buf.append( "connectTimeout=" ).append( connectTimeout ).append( ", " );
-        buf.append( "socketTimeout=" ).append( socketTimeout ).append( ", " );
-        buf.append( "socketKeepAlive=" ).append( socketKeepAlive ).append( ", " );
-        buf.append( "autoConnectRetry=" ).append( autoConnectRetry ).append( ", " );
-        buf.append( "maxAutoConnectRetryTime=" ).append( maxAutoConnectRetryTime ).append( ", " );
-        buf.append( "slaveOk=" ).append( slaveOk ).append( ", " );
-        if (readPreference != null) {
-            buf.append( "readPreference=" ).append( readPreference ).append( ", " );
-        }
-        if (writeConcern != null) {
-            buf.append( "writeConcern=" ).append( writeConcern ).append( ", " );
-        }
-        buf.append( "safe=" ).append( safe ).append( ", " );
-        buf.append( "w=" ).append( w ).append( ", " );
-        buf.append( "wtimeout=" ).append( wtimeout ).append( ", " );
-        buf.append( "fsync=" ).append( fsync ).append( ", " );
-        buf.append( "j=" ).append(j).append( ", " );
-        buf.append( "cursorFinalizerEnabled=").append(cursorFinalizerEnabled).append( ", " );
-        buf.append( "alwaysUseMBeans=").append(alwaysUseMBeans);
-
-        return buf.toString();
-    }
-
     /**
      * @return The description for <code>MongoClient</code> instances created with these options
      */
@@ -706,5 +677,33 @@ public class MongoOptions {
      */
     public void setAlwaysUseMBeans(final boolean alwaysUseMBeans) {
         this.alwaysUseMBeans = alwaysUseMBeans;
+    }
+
+    @Override
+    public String toString() {
+        return "MongoOptions{" +
+                "description='" + description + '\'' +
+                ", connectionsPerHost=" + connectionsPerHost +
+                ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier +
+                ", maxWaitTime=" + maxWaitTime +
+                ", connectTimeout=" + connectTimeout +
+                ", socketTimeout=" + socketTimeout +
+                ", socketKeepAlive=" + socketKeepAlive +
+                ", autoConnectRetry=" + autoConnectRetry +
+                ", maxAutoConnectRetryTime=" + maxAutoConnectRetryTime +
+                ", slaveOk=" + slaveOk +
+                ", readPreference=" + readPreference +
+                ", dbDecoderFactory=" + dbDecoderFactory +
+                ", dbEncoderFactory=" + dbEncoderFactory +
+                ", safe=" + safe +
+                ", w=" + w +
+                ", wtimeout=" + wtimeout +
+                ", fsync=" + fsync +
+                ", j=" + j +
+                ", socketFactory=" + socketFactory +
+                ", cursorFinalizerEnabled=" + cursorFinalizerEnabled +
+                ", writeConcern=" + writeConcern +
+                ", alwaysUseMBeans=" + alwaysUseMBeans +
+                '}';
     }
 }
