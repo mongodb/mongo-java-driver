@@ -18,13 +18,11 @@ package org.mongodb.impl;
 
 import org.bson.types.Document;
 import org.mongodb.CollectionAdmin;
-import org.mongodb.CommandDocument;
 import org.mongodb.Index;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.CommandResult;
@@ -64,10 +62,8 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
     @Override
     public void ensureIndex(final Index index) {
-        // TODO: check for index ??
-        //        final List<Document> indexes = getIndexes();
-
-        Document indexDetails = index.toDocument();
+        // TODO: encapsulate into commands
+        final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, collectionNamespace.getFullName());
 
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
@@ -99,12 +95,6 @@ public class CollectionAdminImpl implements CollectionAdmin {
         handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
 
         return commandResult.getResponse();
-    }
-
-    private final class CollStats extends MongoCommandOperation {
-        private CollStats(final String collectionName) {
-            super(new CommandDocument("collStats", collectionName));
-        }
     }
 
 }
