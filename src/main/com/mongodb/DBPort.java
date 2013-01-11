@@ -384,7 +384,7 @@ public class DBPort {
     private volatile boolean _processingResponse;
 
     // needs synchronization to ensure that modifications are published.
-    private final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());
+    final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());
 
     volatile int _lastThread;
     final AtomicLong _calls = new AtomicLong();

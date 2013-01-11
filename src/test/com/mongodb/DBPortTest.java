@@ -1,0 +1,70 @@
+/*
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package com.mongodb;
+
+import com.mongodb.util.TestCase;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
+public class DBPortTest extends TestCase {
+    @Test
+    public void testAuthentication() throws IOException {
+        Mongo m = new Mongo();
+        DB db1 = m.getDB("DBPortTest1");
+        DB db2 = m.getDB("DBPortTest2");
+        db1.dropDatabase();
+        db2.dropDatabase();
+
+        try {
+            db1.addUser("u1", "e".toCharArray());
+            db2.addUser("u2", "e".toCharArray());
+
+            DBPort port = new DBPort(m.getAddress(), new DBPortPool(m.getAddress(), new MongoOptions()), new MongoOptions());
+            port.checkAuth(m);
+
+            Set<String> expected = new HashSet<String>();
+
+            assertEquals(expected, port.authenticatedDatabases);
+
+            m.getCredentialsStore().add(new MongoCredentials("u1", "e".toCharArray(), "DBPortTest1"));
+            m.getCredentialsStore().add(new MongoCredentials("u2", "e".toCharArray(), "DBPortTest2"));
+
+            port.checkAuth(m);
+
+            expected.add("DBPortTest1");
+            expected.add("DBPortTest2");
+            assertEquals(expected, port.authenticatedDatabases);
+
+            m.getCredentialsStore().add(new MongoCredentials("u2", "e".toCharArray(), "DBPortTest3"));
+
+            try {
+                port.checkAuth(m);
+                fail("should throw");
+            } catch (CommandResult.CommandFailure e) {
+                // all good
+            }
+        }
+        finally {
+            m.close();
+        }
+    }
+
+}
