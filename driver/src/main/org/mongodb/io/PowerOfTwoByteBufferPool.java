@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package org.bson.util;
+package org.mongodb.io;
+
+import org.bson.util.BufferPool;
+import org.mongodb.pool.SimplePool;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -30,7 +33,7 @@ public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
         for (int i = 0; i <= highestPowerOfTwo; i++) {
             final int size = x;
             // TODO: Determine max size of each pool.
-            powerOfTwoToPoolMap.put(size, new SimplePool<ByteBuffer>() {
+            powerOfTwoToPoolMap.put(size, new SimplePool<ByteBuffer>("ByteBufferPool-2^" + i, Integer.MAX_VALUE) {
                 @Override
                 protected ByteBuffer createNew() {
                     return PowerOfTwoByteBufferPool.this.createNew(size);
@@ -43,7 +46,8 @@ public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
     @Override
     public ByteBuffer get(final int size) {
         final SimplePool<ByteBuffer> simplePool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
-        final ByteBuffer byteBuffer = simplePool.get();
+        final ByteBuffer byteBuffer;
+        byteBuffer = simplePool.get();
         byteBuffer.clear();
         byteBuffer.limit(size);
         return byteBuffer;

@@ -16,7 +16,7 @@
 
 package org.mongodb.impl;
 
-import org.bson.io.PooledByteBufferOutput;
+import org.mongodb.io.PooledByteBufferOutput;
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
 import org.mongodb.ClientAdmin;
@@ -24,7 +24,6 @@ import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
-import org.mongodb.MongoInterruptedException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.command.GetLastErrorCommand;
@@ -38,6 +37,7 @@ import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoWrite;
+import org.mongodb.pool.SimplePool;
 import org.mongodb.protocol.MongoDeleteMessage;
 import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.protocol.MongoInsertMessage;
@@ -54,7 +54,6 @@ import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
-import org.mongodb.util.pool.SimplePool;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
@@ -73,11 +72,7 @@ public class SingleChannelMongoClient implements MongoClient {
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.options = options;
-        try {
-            this.channel = channelPool.get();
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException(e);
-        }
+        this.channel = channelPool.get();
     }
 
     @Override
@@ -159,7 +154,6 @@ public class SingleChannelMongoClient implements MongoClient {
             final MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", commandOperation,
                                                                     new PooledByteBufferOutput(bufferPool),
                                                                     withDocumentSerializer(serializer));
-            // TODO: not sure about the serializer we're passing in here
             final MongoReplyMessage<Document> replyMessage = channel.sendQueryMessage(message, serializer);
 
             return new CommandResult(commandOperation.getCommand().toDocument(), channel.getAddress(),

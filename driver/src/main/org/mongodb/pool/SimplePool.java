@@ -14,12 +14,14 @@
  *   limitations under the License.
  */
 
-package org.mongodb.util.pool;
+package org.mongodb.pool;
+
+import org.mongodb.MongoInterruptedException;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -102,7 +104,7 @@ public abstract class SimplePool<T> {
      *
      * @return An object from the pool
      */
-    public T get() throws InterruptedException {
+    public T get() {
         return get(-1);
     }
 
@@ -112,7 +114,7 @@ public abstract class SimplePool<T> {
      * @param waitTime negative - forever 0        - return immediately no matter what positive ms to wait
      * @return An object from the pool, or null if can't get one in the given waitTime
      */
-    public T get(final long waitTime) throws InterruptedException {
+    public T get(final long waitTime) {
         if (_closed) {
             throw new IllegalStateException("The pool is closed");
         }
@@ -127,11 +129,14 @@ public abstract class SimplePool<T> {
             final T t;
             if (toTake >= 0) {
                 t = _avail.remove(toTake);
-            }
-            else {
+            } else {
                 t = createNewAndReleasePermitIfFailure();
             }
-            _out.add(t);
+            _out.put(t, true);
+
+            if (_out.size() > 1000) {
+                System.out.println("oops");
+            }
 
             return t;
         }
@@ -153,16 +158,18 @@ public abstract class SimplePool<T> {
         }
     }
 
-    private boolean permitAcquired(final long waitTime) throws InterruptedException {
-        if (waitTime > 0) {
-            return _sem.tryAcquire(waitTime, TimeUnit.MILLISECONDS);
-        }
-        else if (waitTime < 0) {
-            _sem.acquire();
-            return true;
-        }
-        else {
-            return _sem.tryAcquire();
+    private boolean permitAcquired(final long waitTime) {
+        try {
+            if (waitTime > 0) {
+                return _sem.tryAcquire(waitTime, TimeUnit.MILLISECONDS);
+            } else if (waitTime < 0) {
+                _sem.acquire();
+                return true;
+            } else {
+                return _sem.tryAcquire();
+            }
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException("Interrupted in pool " + getName(), e);
         }
     }
 
@@ -211,7 +218,7 @@ public abstract class SimplePool<T> {
     protected final int _size;
 
     protected final List<T> _avail = new ArrayList<T>();
-    protected final Set<T> _out = new HashSet<T>();
+    protected final Map<T, Boolean> _out = new IdentityHashMap<T, Boolean>();
     private final Semaphore _sem;
     private volatile boolean _closed;
 }

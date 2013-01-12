@@ -18,7 +18,7 @@ package org.mongodb.impl;
 
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
-import org.bson.util.PowerOfTwoByteBufferPool;
+import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
@@ -43,7 +43,7 @@ import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
-import org.mongodb.util.pool.SimplePool;
+import org.mongodb.pool.SimplePool;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;

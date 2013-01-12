@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.bson.io;
+package org.mongodb.io;
 
+import org.bson.io.OutputBuffer;
 import org.bson.util.BufferPool;
 
 import java.io.IOException;
