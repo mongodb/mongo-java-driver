@@ -118,5 +118,5 @@ public class BasicOutputBuffer extends OutputBuffer {
 
     private int _cur;
     private int _size;
-    private byte[] _buffer = new byte[512];
+    private byte[] _buffer = new byte[1024];
 }
