@@ -17,8 +17,15 @@
 package org.mongodb;
 
 public abstract class MongoServerException extends MongoException {
-    public MongoServerException(final String message, final ServerAddress address) {
-        super(message, address);
+    private final ServerAddress serverAddress;
+
+    public MongoServerException(final String message, final ServerAddress serverAddress) {
+        super(message);
+        this.serverAddress = serverAddress;
+    }
+
+    public ServerAddress getServerAddress() {
+        return serverAddress;
     }
 
     public abstract int getErrorCode();

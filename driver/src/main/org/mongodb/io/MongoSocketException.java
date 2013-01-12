@@ -28,12 +28,19 @@ import java.io.IOException;
  */
 public abstract class MongoSocketException extends MongoException {
     private static final long serialVersionUID = -82458642694036972L;
+    private final ServerAddress serverAddress;
 
-    public MongoSocketException(final String message, final ServerAddress address, final IOException e) {
-        super(message, address, e);
+    public MongoSocketException(final String message, final ServerAddress serverAddress, final IOException e) {
+        super(message, e);
+        this.serverAddress = serverAddress;
     }
 
-    public MongoSocketException(final String message, final ServerAddress address) {
-        super(message, address);
+    public MongoSocketException(final String message, final ServerAddress serverAddress) {
+        super(message);
+        this.serverAddress = serverAddress;
+    }
+
+    public ServerAddress getServerAddress() {
+        return serverAddress;
     }
 }
