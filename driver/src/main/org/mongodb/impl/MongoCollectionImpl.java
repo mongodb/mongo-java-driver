@@ -45,26 +45,26 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
 
 class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements MongoCollection<T> {
 
-    private CollectionAdmin admin;
+    private final CollectionAdmin admin;
+    private final DocumentSerializer documentSerializer;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final CollectibleSerializer<T> serializer,
-                               final MongoCollectionOptions options) {
+                               final CollectibleSerializer<T> serializer, final MongoCollectionOptions options) {
         super(serializer, name, database, options);
-        admin = new CollectionAdminImpl(database.getClient().getOperations(), options.getPrimitiveSerializers(), database.getName(),
-                                        name);
+        admin = new CollectionAdminImpl(database.getClient().getOperations(), options.getPrimitiveSerializers(),
+                                        database.getName(), name);
+        documentSerializer = new DocumentSerializer(options.getPrimitiveSerializers());
     }
 
     @Override
-    public MongoCursor<T> find(MongoFind find) {
+    public MongoCursor<T> find(final MongoFind find) {
         return new MongoCursor<T>(this, find.readPreferenceIfAbsent(options.getReadPreference()));
     }
 
     @Override
     public T findOne(final MongoFind find) {
         QueryResult<T> res = getClient().getOperations().query(getNamespace(), find.batchSize(-1),
-                                                               new DocumentSerializer(options.getPrimitiveSerializers()),
-                                                               getSerializer());
+                                                               documentSerializer, getSerializer());
         if (res.getResults().isEmpty()) {
             return null;
         }
@@ -102,13 +102,15 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public InsertResult insert(final MongoInsert<T> insert) {
-        return getClient().getOperations().insert(getNamespace(), insert.writeConcernIfAbsent(options.getWriteConcern()),
+        return getClient().getOperations().insert(getNamespace(),
+                                                  insert.writeConcernIfAbsent(options.getWriteConcern()),
                                                   getSerializer());
     }
 
     @Override
     public UpdateResult update(final MongoUpdate update) {
-        return getClient().getOperations().update(getNamespace(), update.writeConcernIfAbsent(options.getWriteConcern()),
+        return getClient().getOperations().update(getNamespace(),
+                                                  update.writeConcernIfAbsent(options.getWriteConcern()),
                                                   getDocumentSerializer());
     }
 
@@ -120,19 +122,22 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             return insert(new MongoInsert<T>(save.getDocument()).writeConcern(save.getWriteConcern()));
         }
         else {
-            return replace(new MongoReplace<T>(new QueryFilterDocument("_id", id), save.getDocument()).isUpsert(true).writeConcern(save.getWriteConcern()));
+            return replace(new MongoReplace<T>(new QueryFilterDocument("_id", id),
+                                               save.getDocument()).isUpsert(true).writeConcern(save.getWriteConcern()));
         }
     }
 
     @Override
     public UpdateResult replace(final MongoReplace<T> replace) {
-        return getClient().getOperations().replace(getNamespace(), replace.writeConcernIfAbsent(options.getWriteConcern()),
+        return getClient().getOperations().replace(getNamespace(),
+                                                   replace.writeConcernIfAbsent(options.getWriteConcern()),
                                                    getDocumentSerializer(), getSerializer());
     }
 
     @Override
     public RemoveResult remove(final MongoRemove remove) {
-        return getClient().getOperations().remove(getNamespace(), remove.writeConcernIfAbsent(options.getWriteConcern()),
+        return getClient().getOperations().remove(getNamespace(),
+                                                  remove.writeConcernIfAbsent(options.getWriteConcern()),
                                                   getDocumentSerializer());
     }
 

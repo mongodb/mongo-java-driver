@@ -81,8 +81,8 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
     @Override
     public boolean isCapped() {
-        CommandResult commandResult = new CommandResult(
-                operations.executeCommand(databaseName, collStatsCommand, documentSerializer));
+        CommandResult commandResult = new CommandResult(operations.executeCommand(databaseName, collStatsCommand,
+                                                                                  documentSerializer));
         handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
 
         return FieldHelpers.asBoolean(commandResult.getResponse().get("capped"));
@@ -90,8 +90,8 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
     @Override
     public Document getStatistics() {
-        CommandResult commandResult = new CommandResult(
-                operations.executeCommand(databaseName, collStatsCommand, documentSerializer));
+        CommandResult commandResult = new CommandResult(operations.executeCommand(databaseName, collStatsCommand,
+                                                                                  documentSerializer));
         handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
 
         return commandResult.getResponse();
