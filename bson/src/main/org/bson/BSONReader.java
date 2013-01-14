@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
@@ -465,14 +466,14 @@ public abstract class BSONReader implements Closeable {
     /// Reads a BSON timestamp from the reader.
     /// </summary>
     /// <returns>The combined timestamp/increment.</returns>
-    public abstract long readTimestamp();
+    public abstract BSONTimestamp readTimestamp();
 
     /// <summary>
     /// Reads a BSON timestamp element from the reader.
     /// </summary>
     /// <returns>The combined timestamp/increment.</returns>
     /// <param name="name">The name of the element.</param>
-    public long readTimestamp(final String name) {
+    public BSONTimestamp readTimestamp(final String name) {
         verifyName(name);
         return readTimestamp();
     }

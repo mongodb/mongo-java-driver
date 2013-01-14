@@ -287,6 +287,7 @@ public class DatastoreTest extends TestBase {
         assertNull(ds.exists(facebookUser));
     }
 
+    @Test
     public void testIdUpdatedOnSave() throws Exception {
         Rectangle rect = new Rectangle(10, 10);
         ds.save(rect);

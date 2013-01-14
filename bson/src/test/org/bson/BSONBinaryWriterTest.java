@@ -18,6 +18,7 @@ package org.bson;
 
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferInput;
+import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
@@ -426,11 +427,11 @@ public class BSONBinaryWriterTest {
 
         writer.writeStartDocument();
         {
-            writer.writeTimestamp("t1", 123999401);
+            writer.writeTimestamp("t1", new BSONTimestamp(123999401, 44332));
         }
         writer.writeEndDocument();
 
-        byte[] expecteds = {17, 0, 0, 0, 17, 116, 49, 0, -87, 20, 100, 7, 0, 0, 0, 0, 0};
+        byte[] expecteds = {17, 0, 0, 0, 17, 116, 49, 0, 44, -83, 0, 0, -87, 20, 100, 7, 0};
         assertArrayEquals(expecteds, buffer.toByteArray());
     }
 

@@ -42,7 +42,7 @@ public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
     }
 
     /**
-     * @return get time in seconds since epoch
+     * @return get time in seconds since epoch as an int
      */
     public int getTime() {
         if (_time == null) {

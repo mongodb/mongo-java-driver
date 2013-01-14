@@ -17,6 +17,7 @@
 package org.bson;
 
 import org.bson.io.InputBuffer;
+import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
@@ -211,10 +212,12 @@ public class BSONBinaryReader extends BSONReader {
     }
 
     @Override
-    public long readTimestamp() {
+    public BSONTimestamp readTimestamp() {
         checkPreconditions("readTimestamp", BsonType.TIMESTAMP);
         setState(getNextState());
-        return buffer.readInt64();
+        int increment = buffer.readInt32();
+        int time = buffer.readInt32();
+        return new BSONTimestamp(time, increment);
     }
 
     @Override

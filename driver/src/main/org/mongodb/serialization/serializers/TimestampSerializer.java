@@ -19,25 +19,26 @@ package org.mongodb.serialization.serializers;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
+import org.bson.types.BSONTimestamp;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
 /**
  * Knows how to serialize and deserialize BSON timestamps.
  */
-public class TimestampSerializer implements Serializer<Long> {
+public class TimestampSerializer implements Serializer<BSONTimestamp> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Long value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final BSONTimestamp value, final BsonSerializationOptions options) {
         bsonWriter.writeTimestamp(value);
     }
 
     @Override
-    public Long deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public BSONTimestamp deserialize(final BSONReader reader, final BsonSerializationOptions options) {
         return reader.readTimestamp();
     }
 
     @Override
-    public Class<Long> getSerializationClass() {
-        return Long.class;
+    public Class<BSONTimestamp> getSerializationClass() {
+        return BSONTimestamp.class;
     }
 }
