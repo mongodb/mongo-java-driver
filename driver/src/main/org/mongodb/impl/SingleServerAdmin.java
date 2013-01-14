@@ -17,9 +17,7 @@
 package org.mongodb.impl;
 
 import org.mongodb.ClientAdmin;
-import org.mongodb.CommandDocument;
 import org.mongodb.MongoOperations;
-import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;
@@ -49,9 +47,4 @@ public class SingleServerAdmin implements ClientAdmin {
         return (Double) pingResult.getResponse().get("ok");
     }
 
-    private static final class PingCommand extends MongoCommandOperation {
-        private PingCommand() {
-            super(new CommandDocument("ping", 1));
-        }
-    }
 }

@@ -17,13 +17,11 @@
 package org.mongodb.impl;
 
 import org.bson.types.Document;
-import org.mongodb.CommandDocument;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseAdmin;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.QueryFilterDocument;
-import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
@@ -91,15 +89,4 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
         handleErrors(commandResult, "Error creating collection '" + createCollectionOptions.getCollectionName() + "'");
     }
 
-    private static final class Create extends MongoCommandOperation {
-        public Create(final CreateCollectionOptions createCollectionOptions) {
-            super(createCollectionOptions.asCommandDocument());
-        }
-    }
-
-    private static final class DropDatabase extends MongoCommandOperation {
-        private DropDatabase() {
-            super(new CommandDocument("dropDatabase", 1));
-        }
-    }
 }

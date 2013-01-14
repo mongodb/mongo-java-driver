@@ -37,6 +37,9 @@ import static org.mongodb.OrderBy.DESC;
 import static org.mongodb.OrderBy.fromInt;
 import static org.mongodb.acceptancetest.Fixture.createMongoClient;
 
+/**
+ * Use cases for adding indexs to your MongoDB database via the Java driver.
+ */
 public class AddIndexAcceptanceTest {
     private static final String DB_NAME = "AddIndexAcceptanceTest";
     private MongoCollection<Document> collection;
@@ -52,7 +55,7 @@ public class AddIndexAcceptanceTest {
         collection = database.getCollection("collection");
 
         assertThat("Should be no indexes on the database at all at this stage", collection.admin().getIndexes().size(),
-                   is(0));
+                is(0));
     }
 
     @Test
@@ -60,7 +63,7 @@ public class AddIndexAcceptanceTest {
         collection.insert(new MongoInsert<Document>(new Document("new", "value")));
 
         assertThat("Should have the default index on _id when a document exists",
-                   collection.admin().getIndexes().size(), is(1));
+                collection.admin().getIndexes().size(), is(1));
         String nameOfIndex = (String) collection.admin().getIndexes().get(0).get("name");
         assertThat("Should be the default index on id", nameOfIndex, is("_id_"));
     }
@@ -70,7 +73,7 @@ public class AddIndexAcceptanceTest {
         collection.admin().ensureIndex(new Index("theField"));
 
         assertThat("Should be default index and new index on the database now", collection.admin().getIndexes().size(),
-                   is(2));
+                is(2));
     }
 
     @Test
@@ -147,7 +150,7 @@ public class AddIndexAcceptanceTest {
         assertThat("Index created should be ascending", orderBy, is(ASC));
 
         assertThat("Index name should contain both field names", (String) newIndexDetails.get("name"),
-                   is("theFirstField_1_theSecondField_1"));
+                is("theFirstField_1_theSecondField_1"));
     }
 
     @Test
@@ -155,9 +158,9 @@ public class AddIndexAcceptanceTest {
         final Index index = new Index(new OrderedKey("theFirstField", ASC), new OrderedKey("theSecondField", DESC));
         collection.admin().ensureIndex(index);
 
-        Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.admin().getIndexes().get(1);
 
-        Document keys = (Document) newIndexDetails.get("key");
+        final Document keys = (Document) newIndexDetails.get("key");
 
         OrderBy orderBy = fromInt((Integer) keys.get("theFirstField"));
         assertThat("First index should be ascending", orderBy, is(ASC));
@@ -166,28 +169,28 @@ public class AddIndexAcceptanceTest {
         assertThat("Second index should be descending", orderBy, is(DESC));
 
         assertThat("Index name should contain both field names", (String) newIndexDetails.get("name"),
-                   is("theFirstField_1_theSecondField_-1"));
+                is("theFirstField_1_theSecondField_-1"));
     }
 
     @Test
     public void shouldOnlyReturnIndexesForTheSelectedCollection() {
         collection.admin().ensureIndex(new Index("theField"));
 
-        MongoCollection<Document> anotherCollection = database.getCollection("anotherCollection");
+        final MongoCollection<Document> anotherCollection = database.getCollection("anotherCollection");
         anotherCollection.admin().ensureIndex(new Index("someOtherField"));
 
         assertThat("Should be default index and new index on the first database",
-                   collection.admin().getIndexes().size(), is(2));
+                collection.admin().getIndexes().size(), is(2));
 
         assertThat("Should be default index and new index on the second database",
-                   anotherCollection.admin().getIndexes().size(), is(2));
+                anotherCollection.admin().getIndexes().size(), is(2));
     }
 
     @Test
     public void shouldBeAbleToAddGeoIndexes() {
         collection.admin().ensureIndex(new Index(new GeoKey("theField")));
         assertThat("Should be default index and new index on the database now", collection.admin().getIndexes().size(),
-                   is(2));
+                is(2));
     }
 
     @Test
@@ -197,18 +200,18 @@ public class AddIndexAcceptanceTest {
         Document newIndexDetails = collection.admin().getIndexes().get(1);
 
         Document keys = (Document) newIndexDetails.get("key");
-        Object geoField = keys.get("locationField");
+        final Object geoField = keys.get("locationField");
         assertThat("Index should contain the first key", geoField, is(notNullValue()));
         String geoIndexValue = geoField.toString();
         assertThat("Index created should be a geo index", geoIndexValue, is("2d"));
 
-        Object orderedField = keys.get("someOtherField");
+        final Object orderedField = keys.get("someOtherField");
         assertThat("Index should contain the second key", orderedField, is(notNullValue()));
         OrderBy orderBy = fromInt((Integer) orderedField);
         assertThat("Index created should be ascending", orderBy, is(ASC));
 
         assertThat("Index name should contain both field names", (String) newIndexDetails.get("name"),
-                   is("locationField_2d_someOtherField_1"));
+                is("locationField_2d_someOtherField_1"));
     }
 
     //TODO: sparse

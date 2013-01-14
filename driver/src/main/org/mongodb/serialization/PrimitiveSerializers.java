@@ -34,6 +34,7 @@ import org.mongodb.serialization.serializers.ObjectIdSerializer;
 import org.mongodb.serialization.serializers.PatternSerializer;
 import org.mongodb.serialization.serializers.ShortSerializer;
 import org.mongodb.serialization.serializers.StringSerializer;
+import org.mongodb.serialization.serializers.TimestampSerializer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -102,6 +103,7 @@ public class PrimitiveSerializers implements Serializer<Object> {
                 .doubleSerializer(new DoubleSerializer())
                 .binarySerializer(new BinarySerializer())
                 .dateSerializer(new DateSerializer())
+                .timestampSerializer(new TimestampSerializer())
                 .booleanSerializer(new BooleanSerializer())
                 .patternSerializer(new PatternSerializer())
                 .nullSerializer(new NullSerializer())
@@ -158,6 +160,11 @@ public class PrimitiveSerializers implements Serializer<Object> {
 
         public Builder dateSerializer(final Serializer serializer) {
             registerSerializer(BsonType.DATE_TIME, serializer);
+            return this;
+        }
+
+        public Builder timestampSerializer(final Serializer serializer) {
+            registerSerializer(BsonType.TIMESTAMP, serializer);
             return this;
         }
 
