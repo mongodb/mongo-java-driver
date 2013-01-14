@@ -19,7 +19,7 @@ package org.bson.util;
 /**
  * Design by contract assertions.
  */
-public class Assertions {
+final class Assertions {
     public static <T> T notNull(final String name, final T notNull) {
         if (notNull == null) {
             throw new NullArgumentException(name);

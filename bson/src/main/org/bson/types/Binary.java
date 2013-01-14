@@ -30,6 +30,9 @@ public class Binary implements Serializable {
 
     private static final long serialVersionUID = 7902997490338209467L;
 
+    private final byte type;
+    private final byte[] data;
+
     /**
      * Creates a Binary object with the default binary type of 0
      *
@@ -49,6 +52,7 @@ public class Binary implements Serializable {
         this(type.getValue(), data);
     }
 
+
     /**
      * Creates a Binary object
      *
@@ -56,25 +60,21 @@ public class Binary implements Serializable {
      * @param data raw data
      */
     public Binary(final byte type, final byte[] data) {
-        _type = type;
-        _data = data;
+        this.type = type;
+        this.data = data;
     }
 
-
     public byte getType() {
-        return _type;
+        return type;
     }
 
     public byte[] getData() {
-        return _data;
+        return data;
     }
 
     public int length() {
-        return _data.length;
+        return data.length;
     }
-
-    final byte _type;
-    final byte[] _data;
 
     @Override
     public boolean equals(final Object o) {
@@ -87,10 +87,10 @@ public class Binary implements Serializable {
 
         final Binary binary = (Binary) o;
 
-        if (_type != binary._type) {
+        if (type != binary.type) {
             return false;
         }
-        if (!Arrays.equals(_data, binary._data)) {
+        if (!Arrays.equals(data, binary.data)) {
             return false;
         }
 
@@ -99,8 +99,8 @@ public class Binary implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = (int) _type;
-        result = 31 * result + Arrays.hashCode(_data);
+        int result = (int) type;
+        result = 31 * result + Arrays.hashCode(data);
         return result;
     }
 }

@@ -23,15 +23,17 @@ package org.bson.types;
  */
 public class CodeWScope extends Code {
 
+    private final Document scope;
+
     private static final long serialVersionUID = -6284832275113680002L;
 
     public CodeWScope(final String code, final Document scope) {
         super(code);
-        _scope = scope;
+        this.scope = scope;
     }
 
     public Document getScope() {
-        return _scope;
+        return scope;
     }
 
     public boolean equals(final Object o) {
@@ -40,13 +42,11 @@ public class CodeWScope extends Code {
         }
 
         final CodeWScope c = (CodeWScope) o;
-        return _code.equals(c._code) && _scope.equals(c._scope);
+        return code.equals(c.code) && scope.equals(c.scope);
     }
 
     public int hashCode() {
-        return _code.hashCode() ^ _scope.hashCode();
+        return code.hashCode() ^ scope.hashCode();
     }
-
-    final Document _scope;
 }
 

@@ -25,14 +25,16 @@ import java.io.Serializable;
  */
 public class Code implements Serializable {
 
+    protected final String code;
+
     private static final long serialVersionUID = 475535263314046697L;
 
     public Code(final String code) {
-        _code = code;
+        this.code = code;
     }
 
     public String getCode() {
-        return _code;
+        return code;
     }
 
     public boolean equals(final Object o) {
@@ -41,19 +43,17 @@ public class Code implements Serializable {
         }
 
         final Code c = (Code) o;
-        return _code.equals(c._code);
+        return code.equals(c.code);
     }
 
     public int hashCode() {
-        return _code.hashCode();
+        return code.hashCode();
     }
 
     @Override
     public String toString() {
         return getCode();
     }
-
-    final String _code;
 
 }
 

@@ -28,7 +28,7 @@ public class BSONBinaryWriter extends BSONWriter {
     private final OutputBuffer buffer;
     private Context context;
 
-    public BSONBinaryWriter(OutputBuffer buffer) {
+    public BSONBinaryWriter(final OutputBuffer buffer) {
         this(new BsonWriterSettings(), new BinaryWriterSettings(), buffer);
     }
     public BSONBinaryWriter(final BsonWriterSettings settings, final BinaryWriterSettings binaryWriterSettings,
@@ -278,7 +278,6 @@ public class BSONBinaryWriter extends BSONWriter {
             buffer.write(BsonType.DOCUMENT.getValue());
             writeCurrentName();
         }
-        final ContextType contextType = (getState() == State.SCOPE_DOCUMENT) ? ContextType.SCOPE_DOCUMENT : ContextType.DOCUMENT;
         context = new Context(context, ContextType.DOCUMENT, buffer.getPosition());
         buffer.writeInt(0); // reserve space for size
 

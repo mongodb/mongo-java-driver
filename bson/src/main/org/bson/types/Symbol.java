@@ -25,14 +25,16 @@ import java.io.Serializable;
  */
 public class Symbol implements Serializable {
 
+    private final String symbol;
+
     private static final long serialVersionUID = 1326269319883146072L;
 
     public Symbol(final String s) {
-        _symbol = s;
+        symbol = s;
     }
 
     public String getSymbol() {
-        return _symbol;
+        return symbol;
     }
 
     /**
@@ -52,7 +54,7 @@ public class Symbol implements Serializable {
 
         final String otherSymbol;
         if (o instanceof Symbol) {
-            otherSymbol = ((Symbol) o)._symbol;
+            otherSymbol = ((Symbol) o).symbol;
         }
         else if (o instanceof String) {
             otherSymbol = (String) o;
@@ -61,7 +63,7 @@ public class Symbol implements Serializable {
             return false;
         }
 
-        if (_symbol != null ? !_symbol.equals(otherSymbol) : otherSymbol != null) {
+        if (symbol != null ? !symbol.equals(otherSymbol) : otherSymbol != null) {
             return false;
         }
 
@@ -70,12 +72,10 @@ public class Symbol implements Serializable {
 
     @Override
     public int hashCode() {
-        return _symbol != null ? _symbol.hashCode() : 0;
+        return symbol != null ? symbol.hashCode() : 0;
     }
 
     public String toString() {
-        return _symbol;
+        return symbol;
     }
-
-    private final String _symbol;
 }

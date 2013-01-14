@@ -23,11 +23,17 @@ import org.mongodb.impl.SingleServerMongoClient;
 
 import java.net.UnknownHostException;
 
-public class Fixture {
-    static MongoClient mongoClient;
+/**
+ * Helper class for the acceptance tests.  Considering replacing with MongoClientTestBase.
+ */
+public final class Fixture {
+    private static MongoClient mongoClient;
 
     private static final String SERVER_NAME = "localhost";
     private static final int PORT = 27017;
+
+    private Fixture() {
+    }
 
     public static synchronized MongoClient createMongoClient() {
         if (mongoClient == null) {

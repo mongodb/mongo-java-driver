@@ -38,7 +38,7 @@ import static org.mongodb.OrderBy.fromInt;
 import static org.mongodb.acceptancetest.Fixture.createMongoClient;
 
 /**
- * Use cases for adding indexs to your MongoDB database via the Java driver.
+ * Use cases for adding indexes to your MongoDB database via the Java driver.
  */
 public class AddIndexAcceptanceTest {
     private static final String DB_NAME = "AddIndexAcceptanceTest";
@@ -197,9 +197,9 @@ public class AddIndexAcceptanceTest {
     public void shouldSupportCompoundIndexesOfOrderedFieldsAndGeoFields() {
         collection.admin().ensureIndex(new Index(new GeoKey("locationField"), new OrderedKey("someOtherField", ASC)));
 
-        Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.admin().getIndexes().get(1);
 
-        Document keys = (Document) newIndexDetails.get("key");
+        final Document keys = (Document) newIndexDetails.get("key");
         final Object geoField = keys.get("locationField");
         assertThat("Index should contain the first key", geoField, is(notNullValue()));
         String geoIndexValue = geoField.toString();
