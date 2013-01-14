@@ -41,7 +41,6 @@ import java.util.Arrays;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 // straight up unit test
 public class DocumentSerializerTest extends MongoClientTestBase {
@@ -73,7 +72,8 @@ public class DocumentSerializerTest extends MongoClientTestBase {
         serializer.serialize(writer, doc, null);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
+        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(),
+                                                                                     inputBuffer), null);
         assertEquals(doc, deserializedDoc);
     }
 
@@ -86,7 +86,8 @@ public class DocumentSerializerTest extends MongoClientTestBase {
         serializer.serialize(writer, doc, null);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
+        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(),
+                                                                                     inputBuffer), null);
         assertEquals(doc, deserializedDoc);
     }
 
@@ -98,27 +99,20 @@ public class DocumentSerializerTest extends MongoClientTestBase {
         serializer.serialize(writer, doc, null);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
+        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(),
+                                                                                     inputBuffer), null);
         assertEquals(doc, deserializedDoc);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testDotsInKeys() {
-        try {
-            collection.save(new MongoSave<Document>(new Document("x.y", 1)));
-            fail("Should throw exception");
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
-
-        try {
-            collection.save(new MongoSave<Document>(new Document("x", new Document("a.b", 1))));
-            fail("Should throw exception");
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
+        getCollection().save(new MongoSave<Document>(new Document("x.y", 1)));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testDotsInKeysInNestedDocuments() {
+        getCollection().save(new MongoSave<Document>(new Document("x", new Document("a.b", 1))));
+    }
 
     // TODO: factor into common base class;
     private InputBuffer createInputBuffer() throws IOException {

@@ -29,6 +29,7 @@ import static org.junit.Assert.fail;
 public class MongoGetMoreTest extends MongoClientTestBase {
     @Test
     public void shouldThrowCursorNotFoundException() {
+        MongoCollection<Document> collection = getCollection();
         collection.insert(new MongoInsert<Document>(new Document()));
         collection.insert(new MongoInsert<Document>(new Document()));
         collection.insert(new MongoInsert<Document>(new Document()));

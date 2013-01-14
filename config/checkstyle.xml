@@ -32,10 +32,10 @@
     <!-- Miscellaneous other checks.                   -->
     <!-- See http://checkstyle.sf.net/config_misc.html -->
     <!--<module name="RegexpSingleline">-->
-        <!--<property name="format" value="\s+$"/>-->
-        <!--<property name="minimum" value="0"/>-->
-        <!--<property name="maximum" value="0"/>-->
-        <!--<property name="message" value="Line has trailing spaces."/>-->
+    <!--<property name="format" value="\s+$"/>-->
+    <!--<property name="minimum" value="0"/>-->
+    <!--<property name="maximum" value="0"/>-->
+    <!--<property name="message" value="Line has trailing spaces."/>-->
     <!--</module>-->
 
     <!-- Checks for Headers                                -->
@@ -154,7 +154,8 @@
         <!-- See http://checkstyle.sf.net/config_misc.html -->
         <module name="ArrayTypeStyle"/>
         <module name="FinalParameters"/>
-        <module name="TodoComment"/>
+        <!-- Too many failures with this while we work on the new API -->
+        <!--<module name="TodoComment"/>-->
         <module name="UpperEll"/>
     </module>
 

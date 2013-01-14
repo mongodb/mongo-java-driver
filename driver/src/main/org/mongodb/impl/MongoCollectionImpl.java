@@ -51,7 +51,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
                                final CollectibleSerializer<T> serializer, final MongoCollectionOptions options) {
         super(serializer, name, database, options);
-        admin = new CollectionAdminImpl(database.getClient().getOperations(), options.getPrimitiveSerializers(),
+        admin = new CollectionAdminImpl(this, database.getClient().getOperations(), options.getPrimitiveSerializers(),
                                         database.getName(), name);
         documentSerializer = new DocumentSerializer(options.getPrimitiveSerializers());
     }

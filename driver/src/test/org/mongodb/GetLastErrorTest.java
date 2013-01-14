@@ -29,10 +29,10 @@ public class GetLastErrorTest extends MongoClientTestBase {
     @Test
     public void testDuplicateKeyException() {
         Document doc = new Document("_id", 1);
-        collection.insert(new MongoInsert<Document>(doc));
+        getCollection().insert(new MongoInsert<Document>(doc));
         try {
-            collection.insert(new MongoInsert<Document>(doc));
-            fail("should throw exception");
+            getCollection().insert(new MongoInsert<Document>(doc));
+            fail("Should throw MongoDuplicateKeyException");
         } catch (MongoDuplicateKeyException e) {
             assertThat(e.getCommandResult().getErrorCode(), is(11000));
         }

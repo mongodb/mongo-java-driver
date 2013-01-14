@@ -28,9 +28,11 @@ import static org.junit.Assert.fail;
 public class MongoFindTest extends MongoClientTestBase {
     @Test
     public void shouldThrowQueryFailureException() {
-        collection.insert(new MongoInsert<Document>(new Document("loc", new double[] {0, 0})));
+        MongoCollection<Document> collection = getCollection();
+        collection.insert(new MongoInsert<Document>(new Document("loc", new double[]{0, 0})));
         try {
-            collection.findOne(new MongoFind(new QueryFilterDocument("loc", new Document("$near", new double[] {0, 0}))));
+            collection.findOne(new MongoFind(new QueryFilterDocument("loc", new Document("$near", new double[]{0,
+                    0}))));
             fail("Should be a query failure since there is no 2d index");
         } catch (MongoQueryFailureException e) {
             assertEquals(13038, e.getErrorCode());

@@ -31,4 +31,6 @@ public interface CollectionAdmin {
      * @return statistics document
      */
     Document getStatistics();
+
+    void drop();
 }

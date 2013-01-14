@@ -19,10 +19,12 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.mongodb.CollectionAdmin;
 import org.mongodb.Index;
+import org.mongodb.MongoCollection;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.WriteConcern;
+import org.mongodb.command.DropCollectionCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.CommandResult;
@@ -35,6 +37,10 @@ import java.util.List;
 
 import static org.mongodb.impl.ErrorHandling.handleErrors;
 
+/**
+ * Encapsulates functionality that is not part of the day-to-day use of a Collection.  For example, via this admin
+ * class you can create indexes and drop the collection.
+ */
 public class CollectionAdminImpl implements CollectionAdmin {
     private static final String NAMESPACE_KEY_NAME = "ns";
 
@@ -46,10 +52,13 @@ public class CollectionAdminImpl implements CollectionAdmin {
     private final MongoNamespace collectionNamespace;
     private final CollStats collStatsCommand;
     private final MongoFind queryForCollectionNamespace;
+    private final MongoCollection collection;
 
     //TODO: pass in namespace
-    CollectionAdminImpl(final MongoOperations operations, final PrimitiveSerializers primitiveSerializers,
+    CollectionAdminImpl(final MongoCollection collection, final MongoOperations operations,
+                        final PrimitiveSerializers primitiveSerializers,
                         final String databaseName, final String collectionName) {
+        this.collection = collection;
         this.operations = operations;
         this.databaseName = databaseName;
         this.documentSerializer = new DocumentSerializer(primitiveSerializers);
@@ -97,4 +106,8 @@ public class CollectionAdminImpl implements CollectionAdmin {
         return commandResult.getResponse();
     }
 
+    @Override
+    public void drop() {
+        new DropCollectionCommand(collection).execute();
+    }
 }

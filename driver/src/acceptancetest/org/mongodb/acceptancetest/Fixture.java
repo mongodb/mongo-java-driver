@@ -18,8 +18,8 @@ package org.mongodb.acceptancetest;
 
 import org.junit.Assert;
 import org.mongodb.MongoClient;
+import org.mongodb.MongoClients;
 import org.mongodb.ServerAddress;
-import org.mongodb.impl.SingleServerMongoClient;
 
 import java.net.UnknownHostException;
 
@@ -37,7 +37,7 @@ public final class Fixture {
 
     public static synchronized MongoClient createMongoClient() {
         if (mongoClient == null) {
-            mongoClient = new SingleServerMongoClient(createServerAddress());
+            mongoClient = MongoClients.create(createServerAddress());
         }
         return mongoClient;
     }

@@ -30,6 +30,9 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.acceptancetest.Fixture.createMongoClient;
 
+/**
+ * Documents the basic functionality available for Databases via the Java driver.
+ */
 public class DatabaseAcceptanceTest {
     private static final String DB_NAME = "DatabaseAcceptanceTest";
     private MongoDatabase database;
@@ -44,20 +47,20 @@ public class DatabaseAcceptanceTest {
 
     @Test
     public void shouldCreateCollection() {
-        String collectionName = "newCollectionName";
+        final String collectionName = "newCollectionName";
         database.admin().createCollection(collectionName);
 
-        Set<String> collections = database.admin().getCollectionNames();
+        final Set<String> collections = database.admin().getCollectionNames();
         assertThat("The new collection should exist on the database", collections.size(), is(2));
         assertThat(collections.contains("newCollectionName"), is(true));
     }
 
     @Test
     public void shouldCreateCappedCollection() {
-        String collectionName = "newCollectionName";
+        final String collectionName = "newCollectionName";
         database.admin().createCollection(new CreateCollectionOptions(collectionName, true, 40 * 1024));
 
-        Set<String> collections = database.admin().getCollectionNames();
+        final Set<String> collections = database.admin().getCollectionNames();
         assertThat(collections.contains("newCollectionName"), is(true));
 
         MongoCollection<Document> collection = database.getCollection(collectionName);
@@ -68,10 +71,10 @@ public class DatabaseAcceptanceTest {
 
     @Test
     public void shouldCreateCappedCollectionWithoutAutoIndex() {
-        String collectionName = "newCollectionName";
+        final String collectionName = "newCollectionName";
         database.admin().createCollection(new CreateCollectionOptions(collectionName, true, 40 * 1024, false));
 
-        Set<String> collections = database.admin().getCollectionNames();
+        final Set<String> collections = database.admin().getCollectionNames();
         assertThat(collections.contains("newCollectionName"), is(true));
 
         MongoCollection<Document> collection = database.getCollection(collectionName);
@@ -83,14 +86,14 @@ public class DatabaseAcceptanceTest {
     @Test
     public void shouldSupportMaxNumberOfDocumentsInACappedCollection() {
         int maxDocuments = 5;
-        String collectionName = "newCollectionName";
+        final String collectionName = "newCollectionName";
         database.admin().createCollection(new CreateCollectionOptions(collectionName, true, 40 * 1024, false, maxDocuments));
 
-        Set<String> collections = database.admin().getCollectionNames();
+        final Set<String> collections = database.admin().getCollectionNames();
         assertThat(collections.contains("newCollectionName"), is(true));
 
-        MongoCollection<Document> collection = database.getCollection(collectionName);
-        Document collectionStatistics = collection.admin().getStatistics();
+        final MongoCollection<Document> collection = database.getCollection(collectionName);
+        final Document collectionStatistics = collection.admin().getStatistics();
 
         assertThat("max is set correctly in collection statistics", (Integer) collectionStatistics.get("max"), is(maxDocuments));
     }
