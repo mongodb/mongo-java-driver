@@ -23,6 +23,8 @@ import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.command.CountCommand;
+import org.mongodb.command.FindAndModifyCommandResult;
+import org.mongodb.command.FindAndModifyCommandResultSerializer;
 import org.mongodb.command.FindAndRemoveCommand;
 import org.mongodb.command.FindAndReplaceCommand;
 import org.mongodb.command.FindAndUpdateCommand;
@@ -47,6 +49,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     private final CollectionAdmin admin;
     private final DocumentSerializer documentSerializer;
+    private final FindAndModifyCommandResultSerializer<T> findAndModifyResultSerializer;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
                                final CollectibleSerializer<T> serializer, final MongoCollectionOptions options) {
@@ -54,6 +57,8 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         admin = new CollectionAdminImpl(database.getClient().getOperations(), options.getPrimitiveSerializers(),
                                         database.getName(), name);
         documentSerializer = new DocumentSerializer(options.getPrimitiveSerializers());
+        findAndModifyResultSerializer = new FindAndModifyCommandResultSerializer<T>(options.getPrimitiveSerializers(),
+                                                                                    getSerializer());
     }
 
     @Override
@@ -64,7 +69,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     @Override
     public T findOne(final MongoFind find) {
         final QueryResult<T> res = getClient().getOperations().query(getNamespace(), find.batchSize(-1),
-                                                               documentSerializer, getSerializer());
+                                                                     documentSerializer, getSerializer());
         if (res.getResults().isEmpty()) {
             return null;
         }
@@ -84,20 +89,26 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public T findAndUpdate(final MongoFindAndUpdate findAndUpdate) {
-        return new FindAndUpdateCommand<T>(this, findAndUpdate, options.getPrimitiveSerializers(),
-                                           getSerializer()).execute().getValue();
+        final FindAndUpdateCommand commandOperation = new FindAndUpdateCommand(this, findAndUpdate);
+        return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
+                                                                                            commandOperation,
+                                                                                            findAndModifyResultSerializer)).getValue();
     }
 
     @Override
     public T findAndReplace(final MongoFindAndReplace<T> findAndReplace) {
-        return new FindAndReplaceCommand<T>(this, findAndReplace, options.getPrimitiveSerializers(),
-                                            getSerializer()).execute().getValue();
+        final FindAndReplaceCommand commandOperation = new FindAndReplaceCommand(this, findAndReplace);
+        return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
+                                                                                            commandOperation,
+                                                                                            findAndModifyResultSerializer)).getValue();
     }
 
     @Override
     public T findAndRemove(final MongoFindAndRemove findAndRemove) {
-        return new FindAndRemoveCommand<T>(this, findAndRemove, options.getPrimitiveSerializers(),
-                                           getSerializer()).execute().getValue();
+        final FindAndRemoveCommand commandOperation = new FindAndRemoveCommand(this, findAndRemove);
+        return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
+                                                                                            commandOperation,
+                                                                                            findAndModifyResultSerializer)).getValue();
     }
 
     @Override

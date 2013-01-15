@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.command;
@@ -20,23 +19,18 @@ package org.mongodb.command;
 import org.mongodb.CommandDocument;
 import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommand;
+import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFindAndUpdate;
-import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.Serializer;
 
-public class FindAndUpdateCommand<T> extends FindAndModifyCommand<T> {
-    private final MongoFindAndUpdate findAndUpdate;
+public class FindAndUpdateCommand extends MongoCommandOperation {
 
-    public FindAndUpdateCommand(final MongoCollection<T> collection,
-                                final MongoFindAndUpdate findAndUpdate, final PrimitiveSerializers primitiveSerializers,
-                                final Serializer<T> serializer) {
-        super(collection, findAndUpdate, primitiveSerializers, serializer);
-        this.findAndUpdate = findAndUpdate;
+    public FindAndUpdateCommand(final MongoCollection collection,
+                                final MongoFindAndUpdate findAndUpdate) {
+        super(asMongoCommand(findAndUpdate, collection.getName()));
     }
 
-    @Override
-    public MongoCommand asMongoCommand() {
-        final CommandDocument cmd = getBaseCommandDocument();
+    private static MongoCommand asMongoCommand(final MongoFindAndUpdate findAndUpdate, final String collectionName) {
+        final CommandDocument cmd = FindAndModifyCommand.getBaseCommandDocument(findAndUpdate, collectionName);
         cmd.put("update", findAndUpdate.getUpdateOperations());
         return cmd;
     }

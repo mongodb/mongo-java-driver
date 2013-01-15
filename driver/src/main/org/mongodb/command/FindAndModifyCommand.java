@@ -12,46 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.MongoCollection;
-import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFindAndModify;
-import org.mongodb.result.CommandResult;
-import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.serializers.DocumentSerializer;
 
-public abstract class FindAndModifyCommand<T> extends AbstractCommand {
-    private final MongoCollection<T> collection;
-    private final MongoFindAndModify findAndModify;
-    private final PrimitiveSerializers primitiveSerializers;
-    private final Serializer<T> serializer;
+final class FindAndModifyCommand {
 
-    public FindAndModifyCommand(MongoCollection<T> collection,
-                                final MongoFindAndModify findAndModify, final PrimitiveSerializers primitiveSerializers,
-                                final Serializer<T> serializer) {
-        super(collection.getDatabase());
-        this.collection = collection;
-        this.findAndModify = findAndModify;
-        this.primitiveSerializers = primitiveSerializers;
-        this.serializer = serializer;
+    private FindAndModifyCommand() {
     }
 
-    @Override
-    public FindAndModifyCommandResult<T> execute() {
-        return new FindAndModifyCommandResult<T>(getMongoClient().getOperations().executeCommand(getDatabaseName(),
-                new MongoCommandOperation(asMongoCommand()),
-                new FindAndModifyCommandResultSerializer<T>(primitiveSerializers, serializer)));
-
-    }
-
-    protected CommandDocument getBaseCommandDocument() {
-        final CommandDocument cmd = new CommandDocument("findandmodify", collection.getName());
+    static CommandDocument getBaseCommandDocument(final MongoFindAndModify findAndModify,
+                                                          final String collectionName) {
+        final CommandDocument cmd = new CommandDocument("findandmodify", collectionName);
         if (findAndModify.getFilter() != null) {
             cmd.put("query", findAndModify.getFilter());
         }
@@ -74,35 +49,5 @@ public abstract class FindAndModifyCommand<T> extends AbstractCommand {
         }
 
         return cmd;
-    }
-
-    public static class FindAndModifyCommandResult<T> extends CommandResult {
-
-        public FindAndModifyCommandResult(final CommandResult baseResult) {
-            super(baseResult);
-        }
-
-        @SuppressWarnings("unchecked")
-        public T getValue() {
-            return (T) getResponse().get("value");  // TODO: any way to remove the warning?  This could be a design flaw
-        }
-    }
-
-    private class FindAndModifyCommandResultSerializer<T> extends DocumentSerializer {
-
-        private final Serializer<T> serializer;
-
-        public FindAndModifyCommandResultSerializer(final PrimitiveSerializers primitiveSerializers, final Serializer<T> serializer) {
-            super(primitiveSerializers);
-            this.serializer = serializer;
-        }
-
-        @Override
-        protected Serializer getDocumentDeserializerForField(final String fieldName) {
-            if (fieldName.equals("value")) {
-                return serializer;
-            }
-            return new DocumentSerializer(getPrimitiveSerializers());
-        }
     }
 }
