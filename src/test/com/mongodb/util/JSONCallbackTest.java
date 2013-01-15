@@ -50,7 +50,7 @@ public class JSONCallbackTest extends com.mongodb.util.TestCase {
 
     @org.testng.annotations.Test(groups = {"basic"})
     public void timestampParsing() {
-        BSONTimestamp timestamp = (BSONTimestamp) JSON.parse(("{ \"$timestamp\" : { \"$t\": 123, \"$i\": 456 } }"));
+        BSONTimestamp timestamp = (BSONTimestamp) JSON.parse(("{ \"$timestamp\" : { \"t\": 123, \"i\": 456 } }"));
         org.testng.Assert.assertEquals(timestamp.getInc(), 456);
         org.testng.Assert.assertEquals(timestamp.getTime(), 123);
     }
