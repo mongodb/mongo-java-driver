@@ -51,7 +51,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
                                final CollectibleSerializer<T> serializer, final MongoCollectionOptions options) {
         super(serializer, name, database, options);
-        admin = new CollectionAdminImpl(this, database.getClient().getOperations(), options.getPrimitiveSerializers(),
+        admin = new CollectionAdminImpl(database.getClient().getOperations(), options.getPrimitiveSerializers(),
                                         database.getName(), name);
         documentSerializer = new DocumentSerializer(options.getPrimitiveSerializers());
     }
@@ -63,7 +63,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public T findOne(final MongoFind find) {
-        QueryResult<T> res = getClient().getOperations().query(getNamespace(), find.batchSize(-1),
+        final QueryResult<T> res = getClient().getOperations().query(getNamespace(), find.batchSize(-1),
                                                                documentSerializer, getSerializer());
         if (res.getResults().isEmpty()) {
             return null;
@@ -117,7 +117,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     @Override
     @SuppressWarnings("unchecked")
     public UpdateResult save(final MongoSave<T> save) {
-        Object id = serializer.getId(save.getDocument());
+        final Object id = serializer.getId(save.getDocument());
         if (id == null) {
             return insert(new MongoInsert<T>(save.getDocument()).writeConcern(save.getWriteConcern()));
         }

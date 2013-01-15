@@ -22,7 +22,6 @@ import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.command.DropCollectionCommand;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
@@ -690,7 +689,7 @@ public class DBCollection implements IDBCollection {
      * @throws MongoException
      */
     public void drop() {
-        new DropCollectionCommand(collection).execute();
+        collection.admin().drop();
     }
 
     /**

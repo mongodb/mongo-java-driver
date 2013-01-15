@@ -30,18 +30,19 @@ import java.util.List;
 public class GetLastErrorCommand extends AbstractCommand {
     private final WriteConcern writeConcern;
 
-    static List<Integer> duplicateKeyErrorCodes = Arrays.asList(11000);   // TODO: there are more of these...
+    // TODO: there are more of these...
+    private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000);
 
-    public GetLastErrorCommand(final MongoDatabase database, WriteConcern writeConcern) {
+    public GetLastErrorCommand(final MongoDatabase database, final WriteConcern writeConcern) {
         super(database);
         this.writeConcern = writeConcern;
     }
 
     @Override
     public CommandResult execute() {
-        CommandResult res = super.execute();
-        Integer code = (Integer) res.getResponse().get("code");
-        if (duplicateKeyErrorCodes.contains(code)) {
+        final CommandResult res = super.execute();
+        final Integer code = (Integer) res.getResponse().get("code");
+        if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
             throw new MongoDuplicateKeyException(res);
         }
 

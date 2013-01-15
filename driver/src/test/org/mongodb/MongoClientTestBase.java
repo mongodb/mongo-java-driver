@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.bson.types.Document;
 import org.junit.Before;
-import org.mongodb.command.DropCollectionCommand;
 
 import java.net.UnknownHostException;
 
@@ -48,7 +47,7 @@ public abstract class MongoClientTestBase {
     @Before
     public void before() {
         collection = getDatabase().getCollection(getClass().getSimpleName());
-        new DropCollectionCommand(collection).execute();
+        collection.admin().drop();
     }
 
     MongoClient getClient() {

@@ -23,7 +23,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.impl.SingleServerMongoClient;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
@@ -46,7 +45,7 @@ public class MongoCursorTest {
     public static void setUpClass() throws UnknownHostException {
         mongoClient = new SingleServerMongoClient(new ServerAddress());
         mongoDatabase = mongoClient.getDatabase(DB_NAME);
-        new DropDatabaseCommand(mongoDatabase).execute();
+        mongoDatabase.admin().drop();
     }
 
     @AfterClass

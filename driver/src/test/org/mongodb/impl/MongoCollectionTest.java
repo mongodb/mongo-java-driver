@@ -32,7 +32,6 @@ import org.mongodb.MongoDatabase;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.ServerAddress;
 import org.mongodb.UpdateOperationsDocument;
-import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
@@ -62,7 +61,7 @@ public class MongoCollectionTest {
     public static void setUpClass() throws UnknownHostException {
         mongoClient = new SingleServerMongoClient(new ServerAddress());
         mongoDatabase = mongoClient.getDatabase(DB_NAME);
-        new DropDatabaseCommand(mongoDatabase).execute();
+        mongoDatabase.admin().drop();
     }
 
     @AfterClass
@@ -119,7 +118,8 @@ public class MongoCollectionTest {
 
         collection.insert(new MongoInsert<Document>(new Document("_id", 1).append("x", 1)));
 
-        // TODO: there is nothing to stop you from passing a QueryFilterDocument instance to a MongoReplace<Document> constructor
+        // TODO: there is nothing to stop you from passing a QueryFilterDocument instance to a MongoReplace<Document>
+        // constructor
         collection.replace(
                 new MongoReplace<Document>(new QueryFilterDocument("_id", 1), new Document("_id", 1).append("y", 2)));
 
@@ -155,7 +155,7 @@ public class MongoCollectionTest {
         final MongoCursor<Document> cursor = collection.find(new MongoFind(new QueryFilterDocument()));
         try {
             while (cursor.hasNext()) {
-                final Document cur = cursor.next();
+                cursor.next();
             }
         } finally {
             cursor.close();
