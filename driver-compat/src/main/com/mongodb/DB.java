@@ -28,10 +28,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ThreadSafe
-public class DB {
+public class DB implements IDB {
     private final Mongo mongo;
     private final MongoDatabase database;
-    private final ConcurrentHashMap<String, DBCollection> collectionCache = new ConcurrentHashMap<String, DBCollection>();
+    private final ConcurrentHashMap<String, DBCollection> collectionCache = new ConcurrentHashMap<String,
+            DBCollection>();
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
@@ -44,9 +45,10 @@ public class DB {
 
     /**
      * Gets the Mongo instance
+     *
      * @return the mongo instance that this database was created from.
      */
-    public Mongo getMongo(){
+    public Mongo getMongo() {
         return mongo;
     }
 
@@ -122,7 +124,7 @@ public class DB {
 
         int idx = s.indexOf(".");
         while (idx >= 0) {
-            String b = s.substring(0, idx);
+            final String b = s.substring(0, idx);
             s = s.substring(idx + 1);
             if (foo == null) {
                 foo = getCollection(b);
@@ -153,7 +155,7 @@ public class DB {
         return database.admin().getCollectionNames();
     }
 
-    public void createCollection(final String collName, final DBObject options) {
+    public DBCollection createCollection(final String collName, final DBObject options) {
         boolean capped = false;
         int sizeInBytes = 0;
         boolean autoIndex = true;
@@ -172,6 +174,8 @@ public class DB {
         }
         database.admin().createCollection(
                 new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex, maxDocuments));
+        // TODO the old code returned a DBCollection
+        return null;
     }
 
     public boolean authenticate(final String username, final char[] password) {
@@ -179,27 +183,28 @@ public class DB {
     }
 
     /**
-     * Executes a database command.
-     * This method constructs a simple DBObject using cmd as the field name and {@code true} as its valu,
-     * and calls {@link DB#command(com.mongodb.DBObject) }
+     * Executes a database command. This method constructs a simple DBObject using cmd as the field name and {@code
+     * true} as its valu, and calls {@link DB#command(com.mongodb.DBObject) }
+     *
      * @param cmd command to execute
      * @return result of command from the database
      * @throws MongoException
      * @dochub commands
      */
-    public CommandResult command( String cmd ){
-        return command( new BasicDBObject( cmd , Boolean.TRUE ) );
+    public CommandResult command(final String cmd) {
+        return command(new BasicDBObject(cmd, Boolean.TRUE));
     }
 
     /**
      * Executes a database command.
+     *
      * @param cmd document representing the command to execute
      * @return result of command from the database
      * @throws MongoException
      * @dochub commands
      */
     public CommandResult command(final DBObject cmd) {
-        org.mongodb.result.CommandResult baseCommandResult = database.executeCommand(
+        final org.mongodb.result.CommandResult baseCommandResult = database.executeCommand(
                 new MongoCommandOperation(DBObjects.toCommandDocument(cmd)).readPreference(
                         getReadPreference().toNew()));
         return DBObjects.toCommandResult(cmd, new ServerAddress(baseCommandResult.getAddress()),
@@ -217,7 +222,7 @@ public class DB {
      * @dochub commands
      * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
      */
-    public CommandResult command(DBObject cmd, int options, ReadPreference readPrefs) {
+    public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs) {
         //        readPrefs = getCommandReadPreference(cmd, readPrefs);
         //        cmd = wrapCommand(cmd, readPrefs);
         //
@@ -241,11 +246,147 @@ public class DB {
      * @param name name of the database
      * @return
      */
-    public DB getSisterDB(String name) {
+    public DB getSisterDB(final String name) {
         return mongo.getDB(name);
     }
 
     MongoDatabase toNew() {
         return database;
+    }
+
+    @Override
+    public CommandResult command(final DBObject cmd, final IDBCollection.DBEncoder encoder) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public CommandResult command(final DBObject cmd, final int options, final IDBCollection.DBEncoder encoder) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs, final
+    IDBCollection.DBEncoder encoder) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public CommandResult command(final DBObject cmd, final int options) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public CommandResult command(final String cmd, final int options) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public CommandResult doEval(final String code, final Object... args) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public Object eval(final String code, final Object... args) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public CommandResult getStats() {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public void setReadOnly(final Boolean b) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public boolean collectionExists(final String collectionName) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public CommandResult getLastError() {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public CommandResult getLastError(final WriteConcern concern) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public CommandResult getLastError(final int w, final int wtimeout, final boolean fsync) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public boolean isAuthenticated() {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public CommandResult authenticateCommand(final String username, final char[] password) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public WriteResult addUser(final String username, final char[] passwd) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public WriteResult addUser(final String username, final char[] passwd, final boolean readOnly) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public WriteResult removeUser(final String username) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public CommandResult getPreviousError() {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public void resetError() {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public void forceError() {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public void slaveOk() {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public void addOption(final int option) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public void setOptions(final int options) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public void resetOptions() {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public int getOptions() {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    @Override
+    public void cleanCursors(final boolean force) {
+        throw new IllegalStateException("Not implemented yet!");
     }
 }
