@@ -16,9 +16,8 @@
 
 package org.mongodb.command;
 
-import org.mongodb.MongoDatabase;
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.result.CommandResult;
 
 import java.util.Arrays;
@@ -27,30 +26,21 @@ import java.util.List;
 /**
  * The getlasterror command.
  */
-public class GetLastErrorCommand extends AbstractCommand {
-    private final WriteConcern writeConcern;
+public class GetLastErrorCommand extends MongoCommandOperation {
 
     // TODO: there are more of these...
     private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000);
 
-    public GetLastErrorCommand(final MongoDatabase database, final WriteConcern writeConcern) {
-        super(database);
-        this.writeConcern = writeConcern;
+    public GetLastErrorCommand(final WriteConcern writeConcern) {
+        super(writeConcern.getCommand());
     }
 
-    @Override
-    public CommandResult execute() {
-        final CommandResult res = super.execute();
-        final Integer code = (Integer) res.getResponse().get("code");
+    public CommandResult parseGetLastErrorResponse(final CommandResult commandResult) {
+        final Integer code = (Integer) commandResult.getResponse().get("code");
         if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
-            throw new MongoDuplicateKeyException(res);
+            throw new MongoDuplicateKeyException(commandResult);
         }
 
-        return res;
-    }
-
-    @Override
-    public MongoCommand asMongoCommand() {
-        return writeConcern.getCommand();
+        return commandResult;
     }
 }

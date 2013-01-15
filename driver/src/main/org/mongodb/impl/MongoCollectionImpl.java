@@ -22,7 +22,7 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryFilterDocument;
-import org.mongodb.command.CountCommand;
+import org.mongodb.command.CountCommandResult;
 import org.mongodb.command.FindAndModifyCommandResult;
 import org.mongodb.command.FindAndModifyCommandResultSerializer;
 import org.mongodb.command.FindAndRemoveCommand;
@@ -79,12 +79,12 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public long count() {
-        return new CountCommand(this, new MongoFind()).execute().getCount();
+        return new CountCommandResult(getDatabase().executeCommand(new Count(new MongoFind(), getName()))).getCount();
     }
 
     @Override
     public long count(final MongoFind find) {
-        return new CountCommand(this, find).execute().getCount();
+        return new CountCommandResult(getDatabase().executeCommand(new Count(find, getName()))).getCount();
     }
 
     @Override

@@ -68,7 +68,7 @@ public class SingleChannelMongoClient implements MongoClient {
     private final MongoClientOptions options;
 
     SingleChannelMongoClient(final SimplePool<MongoChannel> channelPool, final BufferPool<ByteBuffer> bufferPool,
-                             MongoClientOptions options) {
+                             final MongoClientOptions options) {
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.options = options;
@@ -139,11 +139,18 @@ public class SingleChannelMongoClient implements MongoClient {
                                            final MongoWrite write) {
         channel.sendOneWayMessage(writeMessage);
         if (write.getWriteConcern().callGetLastError()) {
-            return new GetLastErrorCommand(getDatabase(namespace.getDatabaseName()), write.getWriteConcern()).execute();
+            return getLastError(namespace, write);
         }
         else {
             return null;
         }
+    }
+
+    private CommandResult getLastError(final MongoNamespace namespace, final MongoWrite write) {
+        final GetLastErrorCommand getLastErrorCommand = new GetLastErrorCommand(write.getWriteConcern());
+
+        final CommandResult commandResult = getDatabase(namespace.getDatabaseName()).executeCommand(getLastErrorCommand);
+        return getLastErrorCommand.parseGetLastErrorResponse(commandResult);
     }
 
     private class SingleChannelMongoOperations implements MongoOperations {

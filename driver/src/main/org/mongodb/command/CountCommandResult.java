@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.command;
 
 import org.mongodb.result.CommandResult;
 
-public interface Command {
-    CommandResult execute();
+public class CountCommandResult extends CommandResult {
+
+    public CountCommandResult(final CommandResult baseResult) {
+        super(baseResult);
+    }
+
+    public long getCount() {
+        return ((Double) getResponse().get("n")).longValue();
+    }
 }

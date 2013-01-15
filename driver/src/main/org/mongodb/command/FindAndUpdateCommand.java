@@ -24,8 +24,7 @@ import org.mongodb.operation.MongoFindAndUpdate;
 
 public class FindAndUpdateCommand extends MongoCommandOperation {
 
-    public FindAndUpdateCommand(final MongoCollection collection,
-                                final MongoFindAndUpdate findAndUpdate) {
+    public FindAndUpdateCommand(final MongoCollection collection, final MongoFindAndUpdate findAndUpdate) {
         super(asMongoCommand(findAndUpdate, collection.getName()));
     }
 
