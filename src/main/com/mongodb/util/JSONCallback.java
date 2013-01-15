@@ -106,6 +106,10 @@ public class JSONCallback extends BasicBSONCallback {
             o = new MaxKey();
         } else if (b.containsField("$uuid")) {
             o = UUID.fromString((String) b.get("$uuid"));
+        } else if (b.containsField("$binary")) {
+            int type = (Integer) b.get("$type");
+            byte[] bytes = (new Base64Codec()).decode((String) b.get("$binary"));
+            o = new Binary((byte) type, bytes);
         }
 
         if (!isStackEmpty()) {
