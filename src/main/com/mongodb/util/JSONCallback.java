@@ -94,8 +94,8 @@ public class JSONCallback extends BasicBSONCallback {
             o = new BSONTimestamp(ts.intValue(), inc.intValue());
         } else if (b.containsField("$timestamp")) {
             BSONObject timestamp = (BSONObject) b.get("$timestamp");
-            Long ts = ((Number) timestamp.get("$t")).longValue();
-            Long inc = ((Number) timestamp.get("$i")).longValue();
+            Long ts = ((Number) timestamp.get("t")).longValue();
+            Long inc = ((Number) timestamp.get("i")).longValue();
             o = new BSONTimestamp(ts.intValue(), inc.intValue());
         } else if (b.containsField("$code")) {
             if (b.containsField("$scope")) {
