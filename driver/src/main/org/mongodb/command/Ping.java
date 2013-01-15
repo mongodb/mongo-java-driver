@@ -17,9 +17,9 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 
-public final class Ping extends MongoCommandOperation {
+public final class Ping extends MongoCommand {
     public Ping() {
         super(new CommandDocument("ping", 1));
     }

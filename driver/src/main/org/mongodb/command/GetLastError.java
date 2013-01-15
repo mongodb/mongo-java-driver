@@ -17,7 +17,7 @@
 package org.mongodb.command;
 
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;
 
 import java.util.Arrays;
@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * The getlasterror command.
  */
-public final class GetLastError extends MongoCommandOperation {
+public final class GetLastError extends MongoCommand {
 
     // TODO: there are more of these...
     private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000);

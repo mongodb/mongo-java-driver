@@ -21,7 +21,7 @@ import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.serialization.PrimitiveSerializers;
 
 import java.util.Set;
@@ -205,7 +205,7 @@ public class DB implements IDB {
      */
     public CommandResult command(final DBObject cmd) {
         final org.mongodb.result.CommandResult baseCommandResult = database.executeCommand(
-                new MongoCommandOperation(DBObjects.toCommandDocument(cmd)).readPreference(
+                new MongoCommand(DBObjects.toCommandDocument(cmd)).readPreference(
                         getReadPreference().toNew()));
         return DBObjects.toCommandResult(cmd, new ServerAddress(baseCommandResult.getAddress()),
                                          baseCommandResult.getResponse());

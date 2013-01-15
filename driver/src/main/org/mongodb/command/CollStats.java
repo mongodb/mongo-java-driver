@@ -17,9 +17,9 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 
-public final class CollStats extends MongoCommandOperation {
+public final class CollStats extends MongoCommand {
     public CollStats(final String collectionName) {
         super(new CommandDocument("collStats", collectionName));
     }

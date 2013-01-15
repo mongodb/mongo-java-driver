@@ -24,7 +24,6 @@ import org.mongodb.FieldSelectorDocument;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.SortCriteriaDocument;
 import org.mongodb.UpdateOperationsDocument;
-import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFieldSelector;
 
 import java.util.List;
@@ -36,13 +35,13 @@ public class DBObjects {
     }
 
     public static Document toDocument(final DBObject obj) {
-        Document res = new Document();
+        final Document res = new Document();
         fill(obj, res);
         return res;
     }
 
     public static Document[] toDocumentArray(final DBObject[] dbObjects) {
-        Document[] res = new Document[dbObjects.length];
+        final Document[] res = new Document[dbObjects.length];
         for (int i = 0; i < dbObjects.length; i++) {
             res[i] = toDocument(dbObjects[i]);
         }
@@ -50,7 +49,7 @@ public class DBObjects {
     }
 
     public static QueryFilterDocument toQueryFilterDocument(final DBObject obj) {
-        QueryFilterDocument doc = new QueryFilterDocument();
+        final QueryFilterDocument doc = new QueryFilterDocument();
         fill(obj, doc);
         return doc;
     }
@@ -59,7 +58,7 @@ public class DBObjects {
         if (fields == null) {
             return null;
         }
-        FieldSelectorDocument doc = new FieldSelectorDocument();
+        final FieldSelectorDocument doc = new FieldSelectorDocument();
         fill(fields, doc);
         return doc;
     }
@@ -69,7 +68,7 @@ public class DBObjects {
             return null;
         }
 
-        UpdateOperationsDocument doc = new UpdateOperationsDocument();
+        final UpdateOperationsDocument doc = new UpdateOperationsDocument();
         fill(o, doc);
         return doc;
     }
@@ -79,39 +78,39 @@ public class DBObjects {
             return null;
         }
 
-        SortCriteriaDocument doc = new SortCriteriaDocument();
+        final SortCriteriaDocument doc = new SortCriteriaDocument();
         fill(o, doc);
         return doc;
     }
 
-    public static MongoCommand toCommandDocument(final DBObject commandObject) {
-        CommandDocument doc = new CommandDocument();
+    public static CommandDocument toCommandDocument(final DBObject commandObject) {
+        final CommandDocument doc = new CommandDocument();
         fill(commandObject, doc);
         return doc;
     }
 
 
-    public static CommandResult toCommandResult(DBObject command, ServerAddress serverAddress, final Document document) {
-        CommandResult res = new CommandResult(command, serverAddress);
+    public static CommandResult toCommandResult(final DBObject command, final ServerAddress serverAddress, final Document document) {
+        final CommandResult res = new CommandResult(command, serverAddress);
         fill(document, res);
         return res;
     }
 
     public static BasicDBObject toDBObject(final Document document) {
-        BasicDBObject res = new BasicDBObject();
+        final BasicDBObject res = new BasicDBObject();
         fill(document, res);
         return res;
     }
 
     // TODO: This needs to be recursive, to translate nested DBObject and DBList and arrays...
     private static void fill(final DBObject obj, final Document document) {
-        for (String key : obj.keySet()) {
-            Object value = obj.get(key);
+        for (final String key : obj.keySet()) {
+            final Object value = obj.get(key);
             if (value instanceof List) {
                document.put(key, value);
             }
             else if (value instanceof BSONObject) {
-                Document nestedDocument = new Document();
+                final Document nestedDocument = new Document();
                 fill((DBObject) value, nestedDocument);
                 document.put(key, nestedDocument);
             }
@@ -122,12 +121,12 @@ public class DBObjects {
     }
 
     private static void fill(final Document document, final DBObject obj) {
-        for (Map.Entry<String, Object> cur : document.entrySet()) {
+        for (final Map.Entry<String, Object> cur : document.entrySet()) {
             if (cur.getValue() instanceof List) {
                 obj.put(cur.getKey(), cur.getValue());
             }
             else if (cur.getValue() instanceof Document) {
-                DBObject nestedObj = new BasicDBObject();
+                final DBObject nestedObj = new BasicDBObject();
                 fill((Document) cur.getValue(), nestedObj);
                 obj.put(cur.getKey(), nestedObj);
             }

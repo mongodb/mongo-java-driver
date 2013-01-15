@@ -17,7 +17,44 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.Document;
+import org.mongodb.CommandDocument;
 import org.mongodb.ConvertibleToDocument;
+import org.mongodb.ReadPreference;
 
-public interface MongoCommand extends ConvertibleToDocument {
+
+// TODO: Name is inconsistent with other operations.  Did this so as not to clash with MongoCommand
+public class MongoCommand extends MongoQuery implements ConvertibleToDocument {
+    private final CommandDocument command;
+
+    public MongoCommand(final CommandDocument commandDocument) {
+        this.command = commandDocument;
+        batchSize = -1;
+    }
+
+    public MongoCommand readPreference(final ReadPreference readPreference) {
+        super.readPreference(readPreference);
+        return this;
+    }
+
+    /**
+     * Commands always have a batch size of -1.
+     * @return -1
+     */
+    public int getBatchSize() {
+        return -1;
+    }
+
+    public int getSkip() {
+        return 0;
+    }
+
+    public int getLimit() {
+        return 0;
+    }
+
+    @Override
+    public Document toDocument() {
+        return command.toDocument();
+    }
 }

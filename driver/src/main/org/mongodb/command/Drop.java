@@ -17,12 +17,12 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 
 /**
  * Knows how to build the document that represents the Drop Collection command.
  */
-public final class Drop extends MongoCommandOperation {
+public final class Drop extends MongoCommand {
     public Drop(final String collectionName) {
         super(new CommandDocument("drop", collectionName));
     }

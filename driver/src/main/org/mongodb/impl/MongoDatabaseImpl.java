@@ -23,7 +23,7 @@ import org.mongodb.MongoClient;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.PrimitiveSerializers;
@@ -89,7 +89,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public CommandResult executeCommand(final MongoCommandOperation commandOperation) {
+    public CommandResult executeCommand(final MongoCommand commandOperation) {
         return new CommandResult(client.getOperations().executeCommand(getName(), commandOperation,
                                                                        new DocumentSerializer(
                                                                                options.getPrimitiveSerializers())));

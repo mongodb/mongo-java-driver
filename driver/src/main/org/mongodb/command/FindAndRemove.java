@@ -19,16 +19,16 @@ package org.mongodb.command;
 import org.mongodb.CommandDocument;
 import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommand;
-import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFindAndModify;
 
-public final class FindAndRemove extends MongoCommandOperation {
+public final class FindAndRemove extends MongoCommand {
 
     public FindAndRemove(final MongoCollection collection, final MongoFindAndModify findAndModify) {
-        super(asMongoCommand(findAndModify, collection.getName()));
+        super(asCommandDocument(findAndModify, collection.getName()));
     }
 
-    private static MongoCommand asMongoCommand(final MongoFindAndModify findAndModify, final String collectionName) {
+    private static CommandDocument asCommandDocument(final MongoFindAndModify findAndModify,
+                                                     final String collectionName) {
         final CommandDocument cmd = FindAndModify.getBaseCommandDocument(findAndModify, collectionName);
         cmd.put("remove", true);
         return cmd;

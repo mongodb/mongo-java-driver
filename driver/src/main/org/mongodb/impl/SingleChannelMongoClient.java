@@ -29,7 +29,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.io.MongoChannel;
 import org.mongodb.operation.GetMore;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
@@ -155,7 +155,7 @@ public class SingleChannelMongoClient implements MongoClient {
 
     private class SingleChannelMongoOperations implements MongoOperations {
         @Override
-        public CommandResult executeCommand(final String database, final MongoCommandOperation commandOperation,
+        public CommandResult executeCommand(final String database, final MongoCommand commandOperation,
                                             final Serializer<Document> serializer) {
             commandOperation.readPreferenceIfAbsent(options.getReadPreference());
             final MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", commandOperation,
@@ -163,7 +163,7 @@ public class SingleChannelMongoClient implements MongoClient {
                                                                     withDocumentSerializer(serializer));
             final MongoReplyMessage<Document> replyMessage = channel.sendQueryMessage(message, serializer);
 
-            return new CommandResult(commandOperation.getCommand().toDocument(), channel.getAddress(),
+            return new CommandResult(commandOperation.toDocument(), channel.getAddress(),
                                      replyMessage.getDocuments().get(0));
         }
 

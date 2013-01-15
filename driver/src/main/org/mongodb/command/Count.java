@@ -17,10 +17,10 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
 
-public final class Count extends MongoCommandOperation {
+public final class Count extends MongoCommand {
     public Count(final MongoFind find, final String collectionName) {
         super(asCommandDocument(find, collectionName));
     }

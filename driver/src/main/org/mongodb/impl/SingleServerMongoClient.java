@@ -28,7 +28,7 @@ import org.mongodb.MongoOperations;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.MongoChannel;
 import org.mongodb.operation.GetMore;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
@@ -181,7 +181,7 @@ public class SingleServerMongoClient implements MongoClient {
 
     private class SingleServerMongoOperations implements MongoOperations {
         @Override
-        public CommandResult executeCommand(final String database, final MongoCommandOperation commandOperation,
+        public CommandResult executeCommand(final String database, final MongoCommand commandOperation,
                                             final Serializer<Document> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
