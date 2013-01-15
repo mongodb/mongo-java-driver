@@ -16,6 +16,7 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.command.GetLastError;
 import org.mongodb.io.PooledByteBufferOutput;
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
@@ -26,7 +27,6 @@ import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
-import org.mongodb.command.GetLastErrorCommand;
 import org.mongodb.io.MongoChannel;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommandOperation;
@@ -147,10 +147,10 @@ public class SingleChannelMongoClient implements MongoClient {
     }
 
     private CommandResult getLastError(final MongoNamespace namespace, final MongoWrite write) {
-        final GetLastErrorCommand getLastErrorCommand = new GetLastErrorCommand(write.getWriteConcern());
+        final GetLastError getLastError = new GetLastError(write.getWriteConcern());
 
-        final CommandResult commandResult = getDatabase(namespace.getDatabaseName()).executeCommand(getLastErrorCommand);
-        return getLastErrorCommand.parseGetLastErrorResponse(commandResult);
+        final CommandResult commandResult = getDatabase(namespace.getDatabaseName()).executeCommand(getLastError);
+        return getLastError.parseGetLastErrorResponse(commandResult);
     }
 
     private class SingleChannelMongoOperations implements MongoOperations {

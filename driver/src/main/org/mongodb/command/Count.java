@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package org.mongodb.impl;
+package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
 import org.mongodb.operation.MongoCommandOperation;
 import org.mongodb.operation.MongoFind;
 
-public class Count extends MongoCommandOperation {
+public final class Count extends MongoCommandOperation {
     public Count(final MongoFind find, final String collectionName) {
         super(asCommandDocument(find, collectionName));
     }

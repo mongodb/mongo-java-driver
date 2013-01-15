@@ -22,12 +22,13 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryFilterDocument;
+import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
 import org.mongodb.command.FindAndModifyCommandResult;
 import org.mongodb.command.FindAndModifyCommandResultSerializer;
-import org.mongodb.command.FindAndRemoveCommand;
-import org.mongodb.command.FindAndReplaceCommand;
-import org.mongodb.command.FindAndUpdateCommand;
+import org.mongodb.command.FindAndRemove;
+import org.mongodb.command.FindAndReplace;
+import org.mongodb.command.FindAndUpdate;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
 import org.mongodb.operation.MongoFindAndReplace;
@@ -89,7 +90,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public T findAndUpdate(final MongoFindAndUpdate findAndUpdate) {
-        final FindAndUpdateCommand commandOperation = new FindAndUpdateCommand(this, findAndUpdate);
+        final FindAndUpdate commandOperation = new FindAndUpdate(this, findAndUpdate);
         return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
                                                                                             commandOperation,
                                                                                             findAndModifyResultSerializer)).getValue();
@@ -97,7 +98,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public T findAndReplace(final MongoFindAndReplace<T> findAndReplace) {
-        final FindAndReplaceCommand commandOperation = new FindAndReplaceCommand(this, findAndReplace);
+        final FindAndReplace commandOperation = new FindAndReplace(this, findAndReplace);
         return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
                                                                                             commandOperation,
                                                                                             findAndModifyResultSerializer)).getValue();
@@ -105,7 +106,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public T findAndRemove(final MongoFindAndRemove findAndRemove) {
-        final FindAndRemoveCommand commandOperation = new FindAndRemoveCommand(this, findAndRemove);
+        final FindAndRemove commandOperation = new FindAndRemove(this, findAndRemove);
         return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
                                                                                             commandOperation,
                                                                                             findAndModifyResultSerializer)).getValue();

@@ -20,17 +20,17 @@ import org.mongodb.CommandDocument;
 import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoCommandOperation;
-import org.mongodb.operation.MongoFindAndUpdate;
+import org.mongodb.operation.MongoFindAndModify;
 
-public class FindAndUpdateCommand extends MongoCommandOperation {
+public final class FindAndRemove extends MongoCommandOperation {
 
-    public FindAndUpdateCommand(final MongoCollection collection, final MongoFindAndUpdate findAndUpdate) {
-        super(asMongoCommand(findAndUpdate, collection.getName()));
+    public FindAndRemove(final MongoCollection collection, final MongoFindAndModify findAndModify) {
+        super(asMongoCommand(findAndModify, collection.getName()));
     }
 
-    private static MongoCommand asMongoCommand(final MongoFindAndUpdate findAndUpdate, final String collectionName) {
-        final CommandDocument cmd = FindAndModifyCommand.getBaseCommandDocument(findAndUpdate, collectionName);
-        cmd.put("update", findAndUpdate.getUpdateOperations());
+    private static MongoCommand asMongoCommand(final MongoFindAndModify findAndModify, final String collectionName) {
+        final CommandDocument cmd = FindAndModify.getBaseCommandDocument(findAndModify, collectionName);
+        cmd.put("remove", true);
         return cmd;
     }
 }

@@ -22,6 +22,8 @@ import org.mongodb.DatabaseAdmin;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.QueryFilterDocument;
+import org.mongodb.command.Create;
+import org.mongodb.command.DropDatabase;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
@@ -84,7 +86,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
 
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
-        CommandResult commandResult = new CommandResult(
+        final CommandResult commandResult = new CommandResult(
                 operations.executeCommand(databaseName, new Create(createCollectionOptions), documentSerializer));
         handleErrors(commandResult, "Error creating collection '" + createCollectionOptions.getCollectionName() + "'");
     }

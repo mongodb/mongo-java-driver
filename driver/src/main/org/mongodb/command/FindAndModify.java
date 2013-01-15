@@ -19,9 +19,9 @@ package org.mongodb.command;
 import org.mongodb.CommandDocument;
 import org.mongodb.operation.MongoFindAndModify;
 
-final class FindAndModifyCommand {
+final class FindAndModify {
 
-    private FindAndModifyCommand() {
+    private FindAndModify() {
     }
 
     static CommandDocument getBaseCommandDocument(final MongoFindAndModify findAndModify,

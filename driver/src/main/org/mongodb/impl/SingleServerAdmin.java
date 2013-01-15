@@ -18,6 +18,7 @@ package org.mongodb.impl;
 
 import org.mongodb.ClientAdmin;
 import org.mongodb.MongoOperations;
+import org.mongodb.command.Ping;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;
@@ -28,7 +29,7 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
  */
 public class SingleServerAdmin implements ClientAdmin {
     private static final String ADMIN_DATABASE = "admin";
-    private static final PingCommand PING_COMMAND = new PingCommand();
+    private static final Ping PING_COMMAND = new Ping();
 
     private final DocumentSerializer documentSerializer;
     private final MongoOperations operations;

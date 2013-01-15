@@ -20,19 +20,17 @@ import org.mongodb.CommandDocument;
 import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoCommandOperation;
-import org.mongodb.operation.MongoFindAndReplace;
+import org.mongodb.operation.MongoFindAndUpdate;
 
-public class FindAndReplaceCommand extends MongoCommandOperation {
+public final class FindAndUpdate extends MongoCommandOperation {
 
-    public FindAndReplaceCommand(final MongoCollection collection, final MongoFindAndReplace findAndReplace) {
-        super(asMongoCommand(findAndReplace, collection.getName()));
+    public FindAndUpdate(final MongoCollection collection, final MongoFindAndUpdate findAndUpdate) {
+        super(asMongoCommand(findAndUpdate, collection.getName()));
     }
 
-    private static MongoCommand asMongoCommand(final MongoFindAndReplace findAndReplace, final String collectionName) {
-        final CommandDocument cmd = FindAndModifyCommand.getBaseCommandDocument(findAndReplace, collectionName);
-        // TODO: I don't think this will work, as we don't have a Class<T> to make sure that serialization works
-        // properly
-        cmd.put("update", findAndReplace.getReplacement());
+    private static MongoCommand asMongoCommand(final MongoFindAndUpdate findAndUpdate, final String collectionName) {
+        final CommandDocument cmd = FindAndModify.getBaseCommandDocument(findAndUpdate, collectionName);
+        cmd.put("update", findAndUpdate.getUpdateOperations());
         return cmd;
     }
 }

@@ -26,12 +26,12 @@ import java.util.List;
 /**
  * The getlasterror command.
  */
-public class GetLastErrorCommand extends MongoCommandOperation {
+public final class GetLastError extends MongoCommandOperation {
 
     // TODO: there are more of these...
     private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000);
 
-    public GetLastErrorCommand(final WriteConcern writeConcern) {
+    public GetLastError(final WriteConcern writeConcern) {
         super(writeConcern.getCommand());
     }
 

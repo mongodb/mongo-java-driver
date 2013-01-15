@@ -16,16 +16,11 @@
 
 package org.mongodb.command;
 
-import org.mongodb.result.CommandResult;
+import org.mongodb.CommandDocument;
+import org.mongodb.operation.MongoCommandOperation;
 
-public final class FindAndModifyCommandResult<T> extends CommandResult {
-
-    public FindAndModifyCommandResult(final CommandResult baseResult) {
-        super(baseResult);
-    }
-
-    @SuppressWarnings("unchecked")
-    public T getValue() {
-        return (T) getResponse().get("value");  // TODO: any way to remove the warning?  This could be a design flaw
+public final class CollStats extends MongoCommandOperation {
+    public CollStats(final String collectionName) {
+        super(new CommandDocument("collStats", collectionName));
     }
 }

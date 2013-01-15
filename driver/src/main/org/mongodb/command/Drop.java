@@ -17,20 +17,13 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.MongoCollection;
-import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoCommandOperation;
-import org.mongodb.operation.MongoFindAndModify;
 
-public class FindAndRemoveCommand extends MongoCommandOperation {
-
-    public FindAndRemoveCommand(final MongoCollection collection, final MongoFindAndModify findAndModify) {
-        super(asMongoCommand(findAndModify, collection.getName()));
-    }
-
-    private static MongoCommand asMongoCommand(final MongoFindAndModify findAndModify, final String collectionName) {
-        final CommandDocument cmd = FindAndModifyCommand.getBaseCommandDocument(findAndModify, collectionName);
-        cmd.put("remove", true);
-        return cmd;
+/**
+ * Knows how to build the document that represents the Drop Collection command.
+ */
+public final class Drop extends MongoCommandOperation {
+    public Drop(final String collectionName) {
+        super(new CommandDocument("drop", collectionName));
     }
 }
