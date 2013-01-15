@@ -119,8 +119,7 @@ public class SingleChannelMongoClient implements MongoClient {
 
     @Override
     public ClientAdmin admin() {
-        //TODO - when will this be used via this class
-        throw new IllegalStateException("Not implemented yet!");
+        return new ClientAdminImpl(this.getOperations(), options.getPrimitiveSerializers());
     }
 
     private BufferPool<ByteBuffer> getBufferPool() {

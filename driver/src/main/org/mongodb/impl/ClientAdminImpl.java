@@ -27,14 +27,14 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
  * Contains the commands that can be run on MongoDB that do not require a database to be selected first.  These commands
  * can be accessed via MongoClient.
  */
-public class SingleServerAdmin implements ClientAdmin {
+class ClientAdminImpl implements ClientAdmin {
     private static final String ADMIN_DATABASE = "admin";
     private static final Ping PING_COMMAND = new Ping();
 
     private final DocumentSerializer documentSerializer;
     private final MongoOperations operations;
 
-    SingleServerAdmin(final MongoOperations operations, final PrimitiveSerializers primitiveSerializers) {
+    ClientAdminImpl(final MongoOperations operations, final PrimitiveSerializers primitiveSerializers) {
         this.operations = operations;
         documentSerializer = new DocumentSerializer(primitiveSerializers);
     }

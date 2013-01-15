@@ -73,7 +73,7 @@ public class SingleServerMongoClient implements MongoClient {
                                         new DocumentSerializer(options.getPrimitiveSerializers()));
             }
         };
-        admin = new SingleServerAdmin(getOperations(), options.getPrimitiveSerializers());
+        admin = new ClientAdminImpl(getOperations(), options.getPrimitiveSerializers());
     }
 
     @Override
