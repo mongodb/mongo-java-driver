@@ -41,7 +41,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         this.name = name;
         this.client = client;
         this.options = options;
-        this.admin = new DatabaseAdminImpl(name, client.getOperations(), client.getOptions().getPrimitiveSerializers());
+        this.admin = new DatabaseAdminImpl(name, client);
     }
 
     @Override

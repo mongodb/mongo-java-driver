@@ -19,15 +19,14 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseAdmin;
+import org.mongodb.MongoClient;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoOperations;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
-import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
 import java.util.HashSet;
@@ -44,28 +43,27 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     private static final DropDatabase DROP_DATABASE = new DropDatabase();
     private static final MongoFind FIND_ALL = new MongoFind(new QueryFilterDocument());
 
-    private final MongoOperations operations;
     private final String databaseName;
     private final DocumentSerializer documentSerializer;
+    private final MongoClient client;
 
-    public DatabaseAdminImpl(final String databaseName, final MongoOperations operations,
-                             final PrimitiveSerializers primitiveSerializers) {
-        this.operations = operations;
+    public DatabaseAdminImpl(final String databaseName, final MongoClient client) {
         this.databaseName = databaseName;
-        documentSerializer = new DocumentSerializer(primitiveSerializers);
+        this.client = client;
+        documentSerializer = new DocumentSerializer(client.getOptions().getPrimitiveSerializers());
     }
 
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        new CommandResult(operations.executeCommand(databaseName, DROP_DATABASE, documentSerializer));
+        new CommandResult(client.getDatabase(databaseName).executeCommand(DROP_DATABASE));
     }
 
     @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
-        final QueryResult<Document> query = operations.query(namespacesCollection, FIND_ALL, documentSerializer,
-                                                             documentSerializer);
+        final QueryResult<Document> query = client.getOperations().query(namespacesCollection, FIND_ALL,
+                                                                         documentSerializer, documentSerializer);
 
         final HashSet<String> collections = new HashSet<String>();
         final int lengthOfDatabaseName = databaseName.length();
@@ -87,7 +85,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         final CommandResult commandResult = new CommandResult(
-                operations.executeCommand(databaseName, new Create(createCollectionOptions), documentSerializer));
+                client.getDatabase(databaseName).executeCommand(new Create(createCollectionOptions)));
         handleErrors(commandResult, "Error creating collection '" + createCollectionOptions.getCollectionName() + "'");
     }
 

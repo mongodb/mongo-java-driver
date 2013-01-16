@@ -19,6 +19,7 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.mongodb.CollectionAdmin;
 import org.mongodb.Index;
+import org.mongodb.MongoDatabase;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.QueryFilterDocument;
@@ -45,31 +46,33 @@ public class CollectionAdminImpl implements CollectionAdmin {
     private static final String NAMESPACE_KEY_NAME = "ns";
 
     private final MongoOperations operations;
-    private final String databaseName;
+    private final MongoDatabase database;
     //TODO: need to do something about these default serialisers, they're created everywhere
     private final DocumentSerializer documentSerializer;
     private final MongoNamespace indexesNamespace;
     private final MongoNamespace collectionNamespace;
-    private final CollStats collStatsCommand;
     private final MongoFind queryForCollectionNamespace;
 
-    //TODO: pass in namespace
+    private final CollStats collStatsCommand;
+    private final Drop dropCollectionCommand;
+
     CollectionAdminImpl(final MongoOperations operations,
                         final PrimitiveSerializers primitiveSerializers,
-                        final String databaseName, final String collectionName) {
+                        final MongoNamespace collectionNamespace,
+                        final MongoDatabase database) {
         this.operations = operations;
-        this.databaseName = databaseName;
+        this.database = database;
         this.documentSerializer = new DocumentSerializer(primitiveSerializers);
-        indexesNamespace = new MongoNamespace(this.databaseName, "system.indexes");
-        collectionNamespace = new MongoNamespace(this.databaseName, collectionName);
+        indexesNamespace = new MongoNamespace(database.getName(), "system.indexes");
+        this.collectionNamespace = collectionNamespace;
         collStatsCommand = new CollStats(collectionNamespace.getCollectionName());
-        queryForCollectionNamespace = new MongoFind(
-                new QueryFilterDocument(NAMESPACE_KEY_NAME, collectionNamespace.getFullName()));
+        queryForCollectionNamespace = new MongoFind(new QueryFilterDocument(NAMESPACE_KEY_NAME,
+                                                                            this.collectionNamespace.getFullName()));
+        dropCollectionCommand = new Drop(this.collectionNamespace.getCollectionName());
     }
 
     @Override
     public void ensureIndex(final Index index) {
-        // TODO: encapsulate into commands
         final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, collectionNamespace.getFullName());
 
@@ -88,8 +91,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
     @Override
     public boolean isCapped() {
-        final CommandResult commandResult = new CommandResult(operations.executeCommand(databaseName, collStatsCommand,
-                                                                                  documentSerializer));
+        final CommandResult commandResult = database.executeCommand(collStatsCommand);
         handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
 
         return FieldHelpers.asBoolean(commandResult.getResponse().get("capped"));
@@ -97,8 +99,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
     @Override
     public Document getStatistics() {
-        final CommandResult commandResult = new CommandResult(operations.executeCommand(databaseName, collStatsCommand,
-                                                                                  documentSerializer));
+        final CommandResult commandResult = database.executeCommand(collStatsCommand);
         handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
 
         return commandResult.getResponse();
@@ -106,8 +107,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
     @Override
     public void drop() {
-        final Drop command = new Drop(collectionNamespace.getCollectionName());
-        operations.executeCommand(databaseName, command, documentSerializer);
+        database.executeCommand(dropCollectionCommand);
         //ignores errors
         //TODO: which errors should be handled on drop?
     }
