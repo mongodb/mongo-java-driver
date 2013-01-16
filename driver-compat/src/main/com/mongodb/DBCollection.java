@@ -804,7 +804,8 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public void createIndex(final DBObject keys) {
-        throw new IllegalStateException("Not implemented yet!");
+        //TODO: is this correct?  The old code had all sorts of checks for ensureIndex
+        ensureIndex(keys);
     }
 
     @Override

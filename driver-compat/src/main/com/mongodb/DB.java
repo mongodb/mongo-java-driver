@@ -21,6 +21,7 @@ import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.command.GetLastError;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.serialization.PrimitiveSerializers;
 
@@ -307,12 +308,17 @@ public class DB implements IDB {
 
     @Override
     public CommandResult getLastError() {
-        throw new IllegalStateException("Not implemented yet!");
+        return getLastError(WriteConcern.ACKNOWLEDGED);
     }
 
     @Override
     public CommandResult getLastError(final WriteConcern concern) {
-        throw new IllegalStateException("Not implemented yet!");
+        //TODO: this should be reflected somewhere in the new API?
+        final GetLastError getLastError = new GetLastError(concern.toNew());
+        org.mongodb.result.CommandResult commandResult = database.executeCommand(getLastError);
+        commandResult = getLastError.parseGetLastErrorResponse(commandResult);
+
+        return new CommandResult(commandResult);
     }
 
     @Override
