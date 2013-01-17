@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2010 Olafur Gauti Gudmundsson
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,15 +20,11 @@ import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Reference;
 import com.google.code.morphia.testutil.TestEntity;
 
-/**
- *
- * @author Olafur Gauti Gudmundsson
- */
 @Entity("stuff")
 public class RecursiveChild extends TestEntity {
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Reference
+    @Reference
     private RecursiveParent parent;
 
     public RecursiveChild() {
@@ -39,7 +35,7 @@ public class RecursiveChild extends TestEntity {
         return parent;
     }
 
-    public void setParent(RecursiveParent parent) {
+    public void setParent(final RecursiveParent parent) {
         this.parent = parent;
     }
 }

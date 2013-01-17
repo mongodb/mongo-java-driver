@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2010 Olafur Gauti Gudmundsson
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,23 +16,19 @@
 
 package com.google.code.morphia.testmodel;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Embedded;
+import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Reference;
 import com.google.code.morphia.testutil.TestEntity;
 
-/**
- *
- * @author Olafur Gauti Gudmundsson
- */
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity("shapeshifters")
 public class ShapeShifter extends TestEntity {
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Embedded
+    @Embedded
     private Shape mainShape;
 
     @Reference
@@ -50,7 +46,7 @@ public class ShapeShifter extends TestEntity {
         return availableShapes;
     }
 
-    public void setAvailableShapes(Set<Shape> availableShapes) {
+    public void setAvailableShapes(final Set<Shape> availableShapes) {
         this.availableShapes = availableShapes;
     }
 
@@ -58,7 +54,7 @@ public class ShapeShifter extends TestEntity {
         return mainShape;
     }
 
-    public void setMainShape(Shape mainShape) {
+    public void setMainShape(final Shape mainShape) {
         this.mainShape = mainShape;
     }
 
@@ -66,7 +62,7 @@ public class ShapeShifter extends TestEntity {
         return referencedShape;
     }
 
-    public void setReferencedShape(Shape referencedShape) {
+    public void setReferencedShape(final Shape referencedShape) {
         this.referencedShape = referencedShape;
     }
 }

@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2010 Olafur Gauti Gudmundsson
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,12 +19,8 @@ package com.google.code.morphia.testmodel;
 import com.google.code.morphia.annotations.Property;
 import com.google.code.morphia.testutil.TestEntity;
 
-/**
- *
- * @author Olafur Gauti Gudmundsson
- */
 public class Circle extends TestEntity implements Shape {
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2847359985370660943L;
 
     @Property
     private double radius;
@@ -33,7 +29,7 @@ public class Circle extends TestEntity implements Shape {
         super();
     }
 
-    public Circle(double radius) {
+    public Circle(final double radius) {
         super();
         this.radius = radius;
     }

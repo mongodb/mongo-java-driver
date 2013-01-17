@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2010 Olafur Gauti Gudmundsson
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,8 @@
 
 package com.google.code.morphia.testmodel;
 
-import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Embedded;
+import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.testutil.TestEntity;
 
@@ -27,19 +27,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
-/**
- *
- * @author Olafur Gauti Gudmundsson
- */
 @Entity("hotels")
-public class Hotel extends TestEntity {
-	private static final long serialVersionUID = 1L;
+public final class Hotel extends TestEntity {
+    private static final long serialVersionUID = 1L;
 
-	public static Hotel create() {
-		return new Hotel();
-	}
-	
-    public enum Type { BUSINESS, LEISURE }
+    public static Hotel create() {
+        return new Hotel();
+    }
+
+    public enum Type {
+        BUSINESS, LEISURE
+    }
 
     private String name;
     private Date startDate;
@@ -63,12 +61,12 @@ public class Hotel extends TestEntity {
         phoneNumbers = new Vector<PhoneNumber>();
     }
 
-    
+
     public Address getAddress() {
         return address;
     }
 
-    public void setAddress(Address address) {
+    public void setAddress(final Address address) {
         this.address = address;
     }
 
@@ -76,7 +74,7 @@ public class Hotel extends TestEntity {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
@@ -84,7 +82,7 @@ public class Hotel extends TestEntity {
         return stars;
     }
 
-    public void setStars(int stars) {
+    public void setStars(final int stars) {
         this.stars = stars;
     }
 
@@ -92,7 +90,7 @@ public class Hotel extends TestEntity {
         return startDate;
     }
 
-    public void setStartDate(Date startDate) {
+    public void setStartDate(final Date startDate) {
         this.startDate = startDate;
     }
 
@@ -100,7 +98,7 @@ public class Hotel extends TestEntity {
         return takesCreditCards;
     }
 
-    public void setTakesCreditCards(boolean takesCreditCards) {
+    public void setTakesCreditCards(final boolean takesCreditCards) {
         this.takesCreditCards = takesCreditCards;
     }
 
@@ -108,7 +106,7 @@ public class Hotel extends TestEntity {
         return type;
     }
 
-    public void setType(Type type) {
+    public void setType(final Type type) {
         this.type = type;
     }
 
@@ -116,7 +114,7 @@ public class Hotel extends TestEntity {
         return tags;
     }
 
-    public void setTags(Set<String> tags) {
+    public void setTags(final Set<String> tags) {
         this.tags = tags;
     }
 
@@ -124,7 +122,7 @@ public class Hotel extends TestEntity {
         return phoneNumbers;
     }
 
-    public void setPhoneNumbers(List<PhoneNumber> phoneNumbers) {
+    public void setPhoneNumbers(final List<PhoneNumber> phoneNumbers) {
         this.phoneNumbers = phoneNumbers;
     }
 
@@ -132,7 +130,7 @@ public class Hotel extends TestEntity {
         return temp;
     }
 
-    public void setTemp(String temp) {
+    public void setTemp(final String temp) {
         this.temp = temp;
     }
 }
