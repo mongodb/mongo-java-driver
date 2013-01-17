@@ -1,5 +1,21 @@
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
- * 
+ *
  */
 package com.google.code.morphia.mapping.validation.fieldrules;
 
@@ -18,52 +34,51 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
- *
  */
 public class PropertyAndEmbeddedTest extends TestBase {
-	public static class E extends TestEntity {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-		@Embedded("myFunkyR")
-		R r = new R();
-		
-		@PreSave
-		public void preSave(DBObject o) {
-			document = (String) ((DBObject) o.get("myFunkyR")).get("foo");
-		}
-		
-		@Transient
-		String document;
-	}
-	
-	public static class E2 extends TestEntity {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-		@Embedded
-		@Property("myFunkyR")
-		String s;
-	}
-	
-	public static class R {
-		String foo = "bar";
-	}
-	
-	@Test
-	public void testCheck() {
-		
-		E e = new E();
-		ds.save(e);
-		
-		assertEquals("bar", e.document);
-		
-		new AssertedFailure(ConstraintViolationException.class) {
-			public void thisMustFail() throws Throwable {
-				morphia.map(E2.class);
-			}
-		};
-	}
+    public static class E extends TestEntity {
+        /**
+         *
+         */
+        private static final long serialVersionUID = 1L;
+        @Embedded("myFunkyR")
+        R r = new R();
+
+        @PreSave
+        public void preSave(final DBObject o) {
+            document = (String) ((DBObject) o.get("myFunkyR")).get("foo");
+        }
+
+        @Transient
+        String document;
+    }
+
+    public static class E2 extends TestEntity {
+        /**
+         *
+         */
+        private static final long serialVersionUID = 1L;
+        @Embedded
+        @Property("myFunkyR")
+        String s;
+    }
+
+    public static class R {
+        String foo = "bar";
+    }
+
+    @Test
+    public void testCheck() {
+
+        final E e = new E();
+        ds.save(e);
+
+        assertEquals("bar", e.document);
+
+        new AssertedFailure(ConstraintViolationException.class) {
+            public void thisMustFail() throws Throwable {
+                morphia.map(E2.class);
+            }
+        };
+    }
 }

@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2010 Olafur Gauti Gudmundsson
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,27 +16,25 @@
 
 package com.google.code.morphia;
 
+import com.google.code.morphia.testmodel.Rectangle;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.code.morphia.testmodel.Rectangle;
-
 
 /**
- *
  * @author Scott Hernandez
  */
 @SuppressWarnings({"unused"})
 public class KeyTypeTest extends TestBase {
-	@Test
+    @Test
     public void testKeyComparisons() throws Exception {
-		Rectangle r = new Rectangle(2,1);
-		Key<Rectangle> k1 = new Key<Rectangle>(Rectangle.class, r.getId());
-		Key<Rectangle> k2 = this.ds.getKey(r);
-		
-		Assert.assertTrue(k1.equals(k2));
-		Assert.assertTrue(k2.equals(k1));
-		
-	}
+        final Rectangle r = new Rectangle(2, 1);
+        final Key<Rectangle> k1 = new Key<Rectangle>(Rectangle.class, r.getId());
+        final Key<Rectangle> k2 = this.ds.getKey(r);
+
+        Assert.assertTrue(k1.equals(k2));
+        Assert.assertTrue(k2.equals(k1));
+
+    }
 
 }

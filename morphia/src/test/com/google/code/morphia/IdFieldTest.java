@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2010 Olafur Gauti Gudmundsson
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,107 +16,115 @@
 
 package com.google.code.morphia;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.Reference;
 import com.google.code.morphia.mapping.Mapper;
 import com.google.code.morphia.testmodel.Rectangle;
 import com.mongodb.BasicDBObject;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 
 /**
- *
  * @author Scott Hernandez
  */
 @SuppressWarnings({"unused"})
 public class IdFieldTest extends TestBase {
 
-	@Entity
-	private static class ReferenceAsId {
-		@Id @Reference Rectangle id;
-		
-		protected ReferenceAsId() {}
-		public ReferenceAsId(Rectangle key) {
-			this.id = key;
-		}
-	}
+    @Entity
+    private static class ReferenceAsId {
+        @Id
+        @Reference
+        Rectangle id;
 
-	@Entity
-	private static class KeyAsId {
-		@Id Key<?> id;
-		
-		protected KeyAsId() {}
-		public KeyAsId(Key<?> key) {
-			this.id = key;
-		}
-	}
+        protected ReferenceAsId() {
+        }
 
-	@Entity
-	private static class MapAsId {
-		@Id Map<String, String> id = new HashMap<String, String>();
-	}
+        public ReferenceAsId(final Rectangle key) {
+            this.id = key;
+        }
+    }
 
-	@Test @Ignore("need to set the _db in the dbref for this to work... see issue 90, ")
+    @Entity
+    private static class KeyAsId {
+        @Id
+        Key<?> id;
+
+        protected KeyAsId() {
+        }
+
+        public KeyAsId(final Key<?> key) {
+            this.id = key;
+        }
+    }
+
+    @Entity
+    private static class MapAsId {
+        @Id
+        final
+        Map<String, String> id = new HashMap<String, String>();
+    }
+
+    @Test
+    @Ignore("need to set the _db in the dbref for this to work... see issue 90, ")
     public void testReferenceAsId() throws Exception {
         morphia.map(ReferenceAsId.class);
-        
-        Rectangle r = new Rectangle(1,1);
-        Key<Rectangle> rKey = ds.save(r);
 
-        ReferenceAsId rai = new ReferenceAsId(r);
-        Key<ReferenceAsId> raiKey = ds.save(rai);
-        ReferenceAsId raiLoaded = ds.get(ReferenceAsId.class, rKey);
+        final Rectangle r = new Rectangle(1, 1);
+        final Key<Rectangle> rKey = ds.save(r);
+
+        final ReferenceAsId rai = new ReferenceAsId(r);
+        final Key<ReferenceAsId> raiKey = ds.save(rai);
+        final ReferenceAsId raiLoaded = ds.get(ReferenceAsId.class, rKey);
         assertNotNull(raiLoaded);
         assertEquals(raiLoaded.id.getArea(), r.getArea(), 0);
-        
-        assertNotNull(raiKey);
-	}
 
-	@Test
+        assertNotNull(raiKey);
+    }
+
+    @Test
     public void testKeyAsId() throws Exception {
         morphia.map(KeyAsId.class);
-        
-        Rectangle r = new Rectangle(1,1);
+
+        final Rectangle r = new Rectangle(1, 1);
 //        Rectangle r2 = new Rectangle(11,11);
-        
-        Key<Rectangle> rKey = ds.save(r);
+
+        final Key<Rectangle> rKey = ds.save(r);
 //        Key<Rectangle> r2Key = ds.save(r2);
-        KeyAsId kai = new KeyAsId(rKey);
-        Key<KeyAsId> kaiKey = ds.save(kai);
-        KeyAsId kaiLoaded = ds.get(KeyAsId.class, rKey);
+        final KeyAsId kai = new KeyAsId(rKey);
+        final Key<KeyAsId> kaiKey = ds.save(kai);
+        final KeyAsId kaiLoaded = ds.get(KeyAsId.class, rKey);
         assertNotNull(kaiLoaded);
         assertNotNull(kaiKey);
-	}
+    }
 
-	@Test
+    @Test
     public void testMapAsId() throws Exception {
         morphia.map(MapAsId.class);
-        
-        MapAsId mai = new MapAsId();
+
+        final MapAsId mai = new MapAsId();
         mai.id.put("test", "string");
-        Key<MapAsId> maiKey = ds.save(mai);
-        MapAsId maiLoaded = ds.get(MapAsId.class, new BasicDBObject("test","string"));
+        final Key<MapAsId> maiKey = ds.save(mai);
+        final MapAsId maiLoaded = ds.get(MapAsId.class, new BasicDBObject("test", "string"));
         assertNotNull(maiLoaded);
         assertNotNull(maiKey);
-	}
+    }
 
-	@Test
+    @Test
     public void testIdFieldNameMapping() throws Exception {
-		Rectangle r = new Rectangle(1, 12);
-		BasicDBObject dbObj = (BasicDBObject) morphia.toDBObject(r);
+        final Rectangle r = new Rectangle(1, 12);
+        final BasicDBObject dbObj = (BasicDBObject) morphia.toDBObject(r);
         assertFalse(dbObj.containsField("id"));
         assertTrue(dbObj.containsField(Mapper.ID_KEY));
         assertEquals(4, dbObj.size()); //_id, h, w, className
-	}
+    }
 }

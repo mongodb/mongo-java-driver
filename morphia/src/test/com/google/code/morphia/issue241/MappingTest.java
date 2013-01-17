@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.code.morphia.issue241;
 
 import com.google.code.morphia.DatastoreImpl;
@@ -7,9 +23,9 @@ import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.dao.BasicDAO;
 import com.mongodb.Mongo;
 import com.mongodb.MongoException;
-import org.junit.Assert;
 import org.bson.types.ObjectId;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,38 +37,38 @@ import java.net.UnknownHostException;
  */
 public class MappingTest {
 
-    Morphia morphia = new Morphia();
-    
+    final Morphia morphia = new Morphia();
+
     Mongo mongo;
     DatastoreImpl datastore;
-    
-    
+
+
     @Before
     public void setUp() {
         try {
             mongo = new Mongo();
-            datastore = new DatastoreImpl(morphia,mongo,"MY_DB");
+            datastore = new DatastoreImpl(morphia, mongo, "MY_DB");
         } catch (UnknownHostException unknownHostException) {
         } catch (MongoException mongoException) {
         }
     }
-    
+
     @After
     public void tearDown() {
     }
-    
+
     @SuppressWarnings("rawtypes")
-	@Test
+    @Test
     public void testMapping() {
-       BasicDAO<Message,ObjectId> messageDAO = new BasicDAO<Message,ObjectId>(Message.class,datastore);
-       Assert.assertNotNull(messageDAO);
+        final BasicDAO<Message, ObjectId> messageDAO = new BasicDAO<Message, ObjectId>(Message.class, datastore);
+        Assert.assertNotNull(messageDAO);
     }
-    
+
     @SuppressWarnings("unused")
     @Entity
     private static class Message<U extends User> {
-        
-		@Id
+
+        @Id
         private ObjectId id;
         private U user;
 
@@ -60,7 +76,7 @@ public class MappingTest {
             return user;
         }
 
-        public void setUser(U user) {
+        public void setUser(final U user) {
             this.user = user;
         }
     }
@@ -71,7 +87,7 @@ public class MappingTest {
         private ObjectId id;
 
         @Override
-        public boolean equals(Object obj) {
+        public boolean equals(final Object obj) {
             if (obj == null) {
                 return false;
             }
