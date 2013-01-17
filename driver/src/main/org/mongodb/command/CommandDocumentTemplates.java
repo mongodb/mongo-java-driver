@@ -19,13 +19,13 @@ package org.mongodb.command;
 import org.mongodb.CommandDocument;
 import org.mongodb.operation.MongoFindAndModify;
 
-final class FindAndModify {
+final class CommandDocumentTemplates {
 
-    private FindAndModify() {
+    private CommandDocumentTemplates() {
     }
 
-    static CommandDocument getBaseCommandDocument(final MongoFindAndModify findAndModify,
-                                                          final String collectionName) {
+    static CommandDocument getFindAndModify(final MongoFindAndModify findAndModify,
+                                            final String collectionName) {
         final CommandDocument cmd = new CommandDocument("findandmodify", collectionName);
         if (findAndModify.getFilter() != null) {
             cmd.put("query", findAndModify.getFilter());
@@ -36,10 +36,7 @@ final class FindAndModify {
         if (findAndModify.getSortCriteria() != null) {
             cmd.put("sort", findAndModify.getSortCriteria());
         }
-        if (findAndModify.isRemove()) {
-            cmd.put("remove", true);
-        }
-        else {
+        if (!findAndModify.isRemove()) {
             if (findAndModify.isReturnNew()) {
                 cmd.put("new", true);
             }

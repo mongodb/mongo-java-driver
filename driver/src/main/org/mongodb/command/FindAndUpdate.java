@@ -21,6 +21,8 @@ import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFindAndUpdate;
 
+import static org.mongodb.command.CommandDocumentTemplates.getFindAndModify;
+
 public final class FindAndUpdate extends MongoCommand {
 
     public FindAndUpdate(final MongoCollection collection, final MongoFindAndUpdate findAndUpdate) {
@@ -29,7 +31,7 @@ public final class FindAndUpdate extends MongoCommand {
 
     private static CommandDocument asCommandDocument(final MongoFindAndUpdate findAndUpdate,
                                                      final String collectionName) {
-        final CommandDocument cmd = FindAndModify.getBaseCommandDocument(findAndUpdate, collectionName);
+        final CommandDocument cmd = getFindAndModify(findAndUpdate, collectionName);
         cmd.put("update", findAndUpdate.getUpdateOperations());
         return cmd;
     }
