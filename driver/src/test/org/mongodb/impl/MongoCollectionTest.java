@@ -20,57 +20,25 @@ import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.Document;
 import org.bson.types.ObjectId;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.mongodb.Get;
+import org.mongodb.MongoClientTestBase;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoDatabase;
 import org.mongodb.QueryFilterDocument;
-import org.mongodb.ServerAddress;
 import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.result.InsertResult;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.CollectibleSerializer;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
-@RunWith(JUnit4.class)
-public class MongoCollectionTest {
-    // TODO: this is untenable
-    private static SingleServerMongoClient mongoClient;
-    private static final String DB_NAME = "MongoCollectionTest";
-    private static MongoDatabase mongoDatabase;
-
-    @BeforeClass
-    public static void setUpClass() throws UnknownHostException {
-        mongoClient = new SingleServerMongoClient(new ServerAddress());
-        mongoDatabase = mongoClient.getDatabase(DB_NAME);
-        mongoDatabase.admin().drop();
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-        mongoClient.close();
-    }
-
-    @Before
-    public void setUp() throws UnknownHostException {
-    }
-
+public class MongoCollectionTest extends MongoClientTestBase {
     @Test
     public void testInsertMultiple() {
-        final MongoCollection<Document> collection = mongoDatabase.getCollection("insertMultiple");
+        final MongoCollection<Document> collection = getCollection();
 
         final List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
@@ -85,7 +53,7 @@ public class MongoCollectionTest {
 
     @Test
     public void testIdGeneration() {
-        final MongoCollection<Document> collection = mongoDatabase.getCollection("idGeneration");
+        final MongoCollection<Document> collection = getCollection();
 
         final Document doc = new Document();
         collection.insert(doc);
@@ -97,7 +65,7 @@ public class MongoCollectionTest {
 
     @Test
     public void testUpdate() {
-        final MongoCollection<Document> collection = mongoDatabase.getCollection("update");
+        final MongoCollection<Document> collection = getCollection();
 
         collection.insert(new Document("_id", 1));
 
@@ -109,11 +77,10 @@ public class MongoCollectionTest {
 
     @Test
     public void testReplace() {
-        final MongoCollection<Document> collection = mongoDatabase.getCollection("replace");
+        final MongoCollection<Document> collection = getCollection();
 
         collection.insert(new Document("_id", 1).append("x", 1));
 
-        // TODO: there is nothing to stop you from passing a QueryFilterDocument instance to a MongoReplace<Document> constructor
         collection.filter(new QueryFilterDocument("_id", 1)).replace(new Document("_id", 1).append("y", 2));
 
         assertEquals(0, collection.filter(new QueryFilterDocument("_id", 1).append("x", 1)).count());
@@ -122,7 +89,7 @@ public class MongoCollectionTest {
 
     @Test
     public void testRemove() {
-        final MongoCollection<Document> collection = mongoDatabase.getCollection("remove");
+        final MongoCollection<Document> collection = getCollection();
 
         final List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
@@ -137,7 +104,7 @@ public class MongoCollectionTest {
 
     @Test
     public void testFind() {
-        final MongoCollection<Document> collection = mongoDatabase.getCollection("find");
+        final MongoCollection<Document> collection = getCollection();
 
         for (int i = 0; i < 101; i++) {
             final Document doc = new Document("_id", i);
@@ -156,7 +123,7 @@ public class MongoCollectionTest {
 
     @Test
     public void testFindOne() {
-        final MongoCollection<Document> collection = mongoDatabase.getCollection("findOne");
+        final MongoCollection<Document> collection = getCollection();
 
         assertNull(collection.one());
 
@@ -168,7 +135,7 @@ public class MongoCollectionTest {
 
     @Test
     public void testCount() {
-        final MongoCollection<Document> collection = mongoDatabase.getCollection("count");
+        final MongoCollection<Document> collection = getCollection();
 
         for (int i = 0; i < 11; i++) {
             final Document doc = new Document("_id", i);
@@ -184,7 +151,7 @@ public class MongoCollectionTest {
 
     @Test
     public void testFindAndUpdate() {
-        final MongoCollection<Document> collection = mongoDatabase.getCollection("findAndUpdate");
+        final MongoCollection<Document> collection = getCollection();
 
         collection.insert(new Document("_id", 1).append("x", true));
 
@@ -197,8 +164,7 @@ public class MongoCollectionTest {
 
     @Test
     public void testFindAndUpdateWithGenerics() {
-        final MongoCollection<Concrete> collection = mongoDatabase.getTypedCollection("findAndUpdateWithGenerics",
-                                                                                      new ConcreteSerializer());
+        final MongoCollection<Concrete> collection = getCollection(new ConcreteSerializer());
 
         final Concrete doc = new Concrete(new ObjectId(), true);
         collection.insert(doc);
@@ -261,7 +227,7 @@ class Concrete {
 class ConcreteSerializer implements CollectibleSerializer<Concrete> {
 
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Concrete value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Concrete value) {
         bsonWriter.writeStartDocument();
         {
             bsonWriter.writeObjectId("_id", value.id);
@@ -271,7 +237,7 @@ class ConcreteSerializer implements CollectibleSerializer<Concrete> {
     }
 
     @Override
-    public Concrete deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public Concrete deserialize(final BSONReader reader) {
         final Concrete c = new Concrete();
         reader.readStartDocument();
         {

@@ -20,8 +20,6 @@ import org.bson.types.Document;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.mongodb.CommandDocument;
 import org.mongodb.MongoNamespace;
 import org.mongodb.QueryFilterDocument;
@@ -39,12 +37,8 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
 
 import java.net.UnknownHostException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
-@RunWith(JUnit4.class)
 public class SingleServerMongoClientTest {
     private static SingleServerMongoClient mongoClient;
     private static final String DB_NAME = "SingleChannelMongoClientTest";
