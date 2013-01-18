@@ -51,7 +51,7 @@ public class InsertMongoDocumentAcceptanceTest {
         assertThat(collection.count(), is(1L));
 
         final QueryFilterDocument queryFilter = new QueryFilterDocument("name", "Billy");
-        final MongoCursor<Document> insertTestDocumentMongoCursor = collection.filter(queryFilter).find();
+        final MongoCursor<Document> insertTestDocumentMongoCursor = collection.filter(queryFilter).all();
 
         assertThat((String) insertTestDocumentMongoCursor.next().get("name"), is("Billy"));
     }

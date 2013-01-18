@@ -27,6 +27,8 @@ import org.mongodb.serialization.CollectibleSerializer;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+
 public class MongoStreamTest extends MongoClientTestBase {
 
     @Test
@@ -39,7 +41,7 @@ public class MongoStreamTest extends MongoClientTestBase {
             System.out.println(cur);
         }
 
-        MongoCursor<Document> cursor = collection.find();
+        MongoCursor<Document> cursor = collection.all();
         try {
             while (cursor.hasNext()) {
                 System.out.println(cursor.next());
@@ -67,10 +69,10 @@ public class MongoStreamTest extends MongoClientTestBase {
         count = collection.filter(new QueryFilterDocument("_id", new Document("$gt", 2))).count();
         System.out.println(count);
 
-        Document doc = collection.findOne();
+        Document doc = collection.one();
         System.out.println(doc);
 
-        doc = collection.filter(new QueryFilterDocument("_id", 1)).findOne();
+        doc = collection.filter(new QueryFilterDocument("_id", 1)).one();
         System.out.println(doc);
 
         collection.forEach(new Block<Document>() {
@@ -132,20 +134,31 @@ public class MongoStreamTest extends MongoClientTestBase {
     public void testUpdate() {
         collection.insert(new Document("_id", 1));
 
-        collection.update(new UpdateOperationsDocument("$set", new Document("x", 1)));
+        collection.modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
-        collection.filter(new QueryFilterDocument("_id", 1)).update(
+        collection.filter(new QueryFilterDocument("_id", 1)).modify(
                 new UpdateOperationsDocument("$set", new Document("x", 1)));
 
-        collection.filter(new QueryFilterDocument("_id", 1)).update(
+        collection.filter(new QueryFilterDocument("_id", 1)).modify(
                 new UpdateOperationsDocument("$set", new Document("x", 1)));
 
-        collection.filter(new QueryFilterDocument("_id", 2)).upsert().update(
+        collection.filter(new QueryFilterDocument("_id", 2)).modifyOrInsert(
                 new UpdateOperationsDocument("$set", new Document("x", 1)));
 
         Document doc = collection.filter(new QueryFilterDocument("_id", 1)).
-                findAndUpdate(new UpdateOperationsDocument("$set", new Document("x", 1)));
+                modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", 1)), Get.BeforeChangeApplied);
         System.out.println(doc);
+    }
+
+    @Test
+    public void testInsertOrReplace() {
+        final Document replacement = new Document("_id", 3).append("x", 2);
+        collection.replaceOrInsert(replacement);
+        assertEquals(replacement, collection.filter(new QueryFilterDocument("_id", 3)).one());
+
+        replacement.append("y", 3);
+        collection.replaceOrInsert(replacement);
+        assertEquals(replacement, collection.filter(new QueryFilterDocument("_id", 3)).one());
     }
 
     @Test

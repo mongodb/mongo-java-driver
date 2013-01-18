@@ -551,7 +551,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         try {
             cursor = collection.toNew().filter(find.getFilter()).select(find.getFields()).sort(find.getOrder()).skip(
                     find.getSkip()).limit(find.getLimit()).batchSize(find.getBatchSize()).readPreference(
-                    find.getReadPreference()).find();
+                    find.getReadPreference()).all();
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }

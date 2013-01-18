@@ -26,6 +26,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mongodb.Get;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
@@ -92,7 +93,7 @@ public class MongoCollectionTest {
         assertNotNull(doc.get("_id"));
         assertEquals(ObjectId.class, doc.get("_id").getClass());
         assertEquals(1, collection.filter(new QueryFilterDocument("_id", doc.get("_id"))).count());
-        assertEquals(1, collection.filter(new QueryFilterDocument("_id", doc.get("_id"))).findOne().size());
+        assertEquals(1, collection.filter(new QueryFilterDocument("_id", doc.get("_id"))).one().size());
     }
 
     @Test
@@ -102,7 +103,7 @@ public class MongoCollectionTest {
         collection.insert(new Document("_id", 1));
 
         collection.filter(new QueryFilterDocument("_id", 1))
-                                          .update(new UpdateOperationsDocument("$set", new Document("x", 1)));
+                                          .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
         assertEquals(1, collection.filter(new QueryFilterDocument("_id", 1).append("x", 1)).count());
     }
@@ -144,7 +145,7 @@ public class MongoCollectionTest {
             collection.insert(doc);
         }
 
-        final MongoCursor<Document> cursor = collection.find();
+        final MongoCursor<Document> cursor = collection.all();
         try {
             while (cursor.hasNext()) {
                 final Document cur = cursor.next();
@@ -158,12 +159,12 @@ public class MongoCollectionTest {
     public void testFindOne() {
         final MongoCollection<Document> collection = mongoDatabase.getCollection("findOne");
 
-        assertNull(collection.findOne());
+        assertNull(collection.one());
 
         collection.insert(new Document("_id", 1));
         collection.insert(new Document("_id", 2));
 
-        assertNotNull(collection.findOne());
+        assertNotNull(collection.one());
     }
 
     @Test
@@ -189,7 +190,7 @@ public class MongoCollectionTest {
         collection.insert(new Document("_id", 1).append("x", true));
 
         final Document newDoc = collection.filter(new QueryFilterDocument("x", true)).
-                findAndUpdate(new UpdateOperationsDocument("$set", new Document("x", false)));
+                modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", false)), Get.AfterChangeApplied);
 
         assertNotNull(newDoc);
         assertEquals(new Document("_id", 1).append("x", true), newDoc);
@@ -204,7 +205,7 @@ public class MongoCollectionTest {
         collection.insert(doc);
 
         final Concrete newDoc = collection.filter(new QueryFilterDocument("x", true)).
-                findAndUpdate(new UpdateOperationsDocument("$set", new Document("x", false)));
+                modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", false)), Get.AfterChangeApplied);
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);

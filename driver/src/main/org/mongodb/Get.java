@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,11 @@
 
 package org.mongodb;
 
-public interface MongoReadableStream<T> extends MongoIterable<T> {
+public enum Get {
+    BeforeChangeApplied,
+    AfterChangeApplied
 
-    MongoReadableStream<T> batchSize(int batchSize);   // TODO: what to do about this
-
-    MongoReadableStream<T> readPreference(ReadPreference readPreference);
-
-    MongoCursor<T> all();
-
-    T one();
-
-    long count();
+    //GetDocument
+    // BeforeChangeApplied
+    // AfterChangeApplied
 }

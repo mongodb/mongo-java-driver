@@ -37,13 +37,13 @@ public class MongoSaveTest extends MongoClientTestBase{
 
         document.put("x", 1);
         collection.save(document);
-        assertThat("Did not replace the document", collection.findOne(), is(document));
+        assertThat("Did not replace the document", collection.one(), is(document));
     }
 
     @Test
     public void shouldUpsertIfAbsent() {
         Document document = new Document("_id", 1);
         collection.save(document);
-        assertThat("Did not upsert the document", collection.findOne(), is(document));
+        assertThat("Did not upsert the document", collection.one(), is(document));
     }
 }

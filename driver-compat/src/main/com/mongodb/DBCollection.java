@@ -18,11 +18,13 @@ package com.mongodb;
 
 import com.mongodb.serializers.CollectibleDBObjectSerializer;
 import org.bson.types.Document;
+import org.mongodb.Get;
 import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoStream;
 import org.mongodb.MongoWritableStream;
 import org.mongodb.OrderBy;
+import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.DropCollectionCommand;
 import org.mongodb.command.MongoDuplicateKeyException;
@@ -126,17 +128,16 @@ public class DBCollection {
             stream = stream.noLimit();
         }
         MongoWritableStream<DBObject> writableStream = stream.writeConcern(concern.toNew());
-        if (upsert) {
-            writableStream = writableStream.upsert();
-        }
-
         try {
             final UpdateResult result;
             if (!o.keySet().isEmpty() && o.keySet().iterator().next().startsWith("$")) {
-                result = writableStream.update(DBObjects.toUpdateOperationsDocument(o));
-            }
-            else {
-                result = writableStream.replace(o);
+                result = upsert ?
+                        writableStream.modifyOrInsert(DBObjects.toUpdateOperationsDocument(o)) :
+                        writableStream.modify(DBObjects.toUpdateOperationsDocument(o));
+            } else {
+                result = upsert ?
+                        writableStream.replaceOrInsert(o) :
+                        writableStream.replace(o);
             }
             return new WriteResult(result, concern);
         } catch (org.mongodb.MongoException e) {
@@ -294,7 +295,7 @@ public class DBCollection {
     public DBObject findOne(DBObject o, DBObject fields, DBObject orderBy, ReadPreference readPref) {
 
         DBObject obj = collection.filter(DBObjects.toQueryFilterDocument(o)).select(
-                DBObjects.toFieldSelectorDocument(fields)).readPreference(readPref.toNew()).findOne();
+                DBObjects.toFieldSelectorDocument(fields)).readPreference(readPref.toNew()).one();
 
         if (obj != null && (fields != null && fields.keySet().size() > 0)) {
             obj.markAsPartialObject();
@@ -524,11 +525,9 @@ public class DBCollection {
             Object keyType = fields.get(key);
             if (keyType instanceof Integer) {
                 keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
-            }
-            else if (keyType.equals("2d")) {
+            } else if (keyType.equals("2d")) {
                 keys.add(new Index.GeoKey(key));
-            }
-            else {
+            } else {
                 throw new UnsupportedOperationException("Unsupported index type: " + keyType);
             }
 
@@ -598,25 +597,26 @@ public class DBCollection {
                 .sort(DBObjects.toSortCriteriaDocument(sort))
                 .writeConcern(getWriteConcern().toNew());
         if (remove) {
-            return stream.findAndRemove();
-        }
-        else {
+            return stream.removeAndGet();
+        } else {
             if (update == null) {
                 throw new IllegalArgumentException("update document can not be null");
             }
-            if (returnNew) {
-                stream = stream.returnNew();
-            }
-            if (upsert) {
-                stream = stream.upsert();
-            }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-                return stream.findAndUpdate(DBObjects.toUpdateOperationsDocument(update));
-            }
-            else {
-                return stream.findAndReplace(update);
+                final UpdateOperationsDocument updateOperations = DBObjects.toUpdateOperationsDocument(update);
+                return upsert ?
+                        stream.modifyOrInsertAndGet(updateOperations, asGetOrder(returnNew)) :
+                        stream.modifyAndGet(updateOperations, asGetOrder(returnNew));
+            } else {
+                return upsert ?
+                        stream.replaceOrInsertAndGet(update, asGetOrder(returnNew)) :
+                        stream.replaceAndGet(update, asGetOrder(returnNew));
             }
         }
+    }
+
+    private Get asGetOrder(boolean returnNew) {
+        return returnNew ? Get.BeforeChangeApplied : Get.AfterChangeApplied;
     }
 
     /**
@@ -696,9 +696,8 @@ public class DBCollection {
         CommandResult res = null;
         if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
             res = database.command(cmd, getOptions(),
-                                   command.getReadPreference() != null ? command.getReadPreference() : getReadPreference());
-        }
-        else {
+                    command.getReadPreference() != null ? command.getReadPreference() : getReadPreference());
+        } else {
             res = database.command(cmd);
         }
         res.throwOnError();
@@ -757,8 +756,8 @@ public class DBCollection {
     private void setCollection(final String name) {
         this.collection = database.toNew().
                 getTypedCollection(name, new CollectibleDBObjectSerializer(database,
-                                                                           database.getMongo().getNew().getOptions().getPrimitiveSerializers(),
-                                                                           new ObjectIdGenerator(), objectClass,
-                                                                           new HashMap<String, Class<? extends DBObject>>(pathToClassMap)));
+                        database.getMongo().getNew().getOptions().getPrimitiveSerializers(),
+                        new ObjectIdGenerator(), objectClass,
+                        new HashMap<String, Class<? extends DBObject>>(pathToClassMap)));
     }
 }

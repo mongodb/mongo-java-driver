@@ -31,22 +31,23 @@ public interface MongoWritableStream<T> {
 
     UpdateResult save(T document);
 
-    MongoWritableStream<T> upsert();
-
     RemoveResult remove();
 
-    UpdateResult update(MongoUpdateOperations updateOperations);
+    UpdateResult modify(MongoUpdateOperations updateOperations);
+
+    UpdateResult modifyOrInsert(MongoUpdateOperations updateOperations);                // TODO: name
 
     UpdateResult replace(T replacement);
 
-    MongoWritableStream<T> returnNew();   // TODO: Only applies to findAndModify
+    UpdateResult replaceOrInsert(T replacement);                                        // TODO: name
 
-    T findAndUpdate(MongoUpdateOperations updateOperations);
+    T modifyAndGet(MongoUpdateOperations updateOperations, Get beforeOrAfter);
 
-    T findAndReplace(T replacement);
+    T modifyOrInsertAndGet(MongoUpdateOperations updateOperations, Get beforeOrAfter);  // TODO: name
 
-    T findAndRemove();
+    T replaceAndGet(T replacement, Get beforeOrAfter);
 
+    T replaceOrInsertAndGet(T replacement, Get beforeOrAfter);                          // TODO: name
 
-
+    T removeAndGet();
 }

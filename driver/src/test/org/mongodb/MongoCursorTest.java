@@ -40,7 +40,7 @@ public class MongoCursorTest extends MongoClientTestBase {
 
     @Test
     public void testNormalLoopWithGetMore() {
-        MongoCursor<Document> cursor = collection.sort(new SortCriteriaDocument("_id", 1)).batchSize(2).find();
+        MongoCursor<Document> cursor = collection.sort(new SortCriteriaDocument("_id", 1)).batchSize(2).all();
         try {
             int i = 0;
             while (cursor.hasNext()) {
@@ -56,7 +56,7 @@ public class MongoCursorTest extends MongoClientTestBase {
 
     @Test
     public void testNextWithoutHasNextWithGetMore() {
-        MongoCursor<Document> cursor = collection.sort(new SortCriteriaDocument("_id", 1)).batchSize(2).find();
+        MongoCursor<Document> cursor = collection.sort(new SortCriteriaDocument("_id", 1)).batchSize(2).all();
         try {
             for (int i = 0; i < 10; i++) {
                 Document cur = cursor.next();
@@ -85,7 +85,7 @@ public class MongoCursorTest extends MongoClientTestBase {
 
     @Test
     public void testClose() {
-        MongoCursor<Document> cursor = collection.find();
+        MongoCursor<Document> cursor = collection.all();
 
         cursor.next();
         cursor.close();
