@@ -40,7 +40,6 @@ import java.util.Arrays;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 // straight up unit test
 public class DocumentSerializerTest extends MongoClientTestBase {
@@ -106,19 +105,7 @@ public class DocumentSerializerTest extends MongoClientTestBase {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDotsInKeys() {
-        try {
-            getCollection().save(new Document("x.y", 1));
-            fail("Should throw exception");
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
-
-        try {
-            getCollection().save(new Document("x", new Document("a.b", 1)));
-            fail("Should throw exception");
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
+        getCollection().save(new Document("x.y", 1));
     }
 
     @Test(expected = IllegalArgumentException.class)
