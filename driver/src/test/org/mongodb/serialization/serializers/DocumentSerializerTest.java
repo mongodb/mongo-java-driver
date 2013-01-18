@@ -72,7 +72,8 @@ public class DocumentSerializerTest extends MongoClientTestBase {
         serializer.serialize(writer, doc, null);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
+        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(),
+                                                                                     inputBuffer), null);
         assertEquals(doc, deserializedDoc);
     }
 
@@ -85,7 +86,8 @@ public class DocumentSerializerTest extends MongoClientTestBase {
         serializer.serialize(writer, doc, null);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
+        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(),
+                                                                                     inputBuffer), null);
         assertEquals(doc, deserializedDoc);
     }
 
@@ -97,27 +99,32 @@ public class DocumentSerializerTest extends MongoClientTestBase {
         serializer.serialize(writer, doc, null);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(), inputBuffer), null);
+        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(),
+                                                                                     inputBuffer), null);
         assertEquals(doc, deserializedDoc);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testDotsInKeys() {
         try {
-            collection.save(new Document("x.y", 1));
+            getCollection().save(new Document("x.y", 1));
             fail("Should throw exception");
         } catch (IllegalArgumentException e) {
             // all good
         }
 
         try {
-            collection.save(new Document("x", new Document("a.b", 1)));
+            getCollection().save(new Document("x", new Document("a.b", 1)));
             fail("Should throw exception");
         } catch (IllegalArgumentException e) {
             // all good
         }
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testDotsInKeysInNestedDocuments() {
+        getCollection().save(new Document("x", new Document("a.b", 1)));
+    }
 
     // TODO: factor into common base class;
     private InputBuffer createInputBuffer() throws IOException {

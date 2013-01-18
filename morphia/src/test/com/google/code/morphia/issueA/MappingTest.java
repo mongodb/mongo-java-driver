@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.code.morphia.issueA;
 
 import com.google.code.morphia.TestBase;
@@ -12,45 +28,44 @@ import org.junit.Test;
  * Test from email to mongodb-users list.
  */
 public class MappingTest extends TestBase {
-    
-	@Test
+
+    @Test
     public void testMapping() {
-        morphia.map(Class_level_three.class);
-        Class_level_three sp = new Class_level_three();
+        morphia.map(ClassLevelThree.class);
+        final ClassLevelThree sp = new ClassLevelThree();
 
         //Old way
-        DBObject wrapObj = morphia.toDBObject(sp);  //the error points here from the user
+        final DBObject wrapObj = morphia.toDBObject(sp);  //the error points here from the user
         ds.getDB().getCollection("testColl").save(wrapObj);
-        
-        
+
         //better way
         ds.save(sp);
-        
     }
 
-    private static interface Interface_one<K> {
-    	K getK();
-    }
-    
-    private static class Class_level_one <K> implements Interface_one<K>, Cloneable {
-    	K k;
-    	public K getK() {
-    		return k;
-    	}
+    private interface InterfaceOne<K> {
+        K getK();
     }
 
-    private static class Class_level_two extends Class_level_one<String>{
+    private class ClassLevelOne<K> implements InterfaceOne<K>, Cloneable {
+        private K k;
+
+        public K getK() {
+            return k;
+        }
+    }
+
+    private class ClassLevelTwo extends ClassLevelOne<String> {
 
     }
 
-    private static class Class_level_three{
-            @Id
-            private ObjectId id;
+    private static class ClassLevelThree {
+        @Id
+        private ObjectId id;
 
-            private String name;
+        private String name;
 
-            @Embedded
-            private Class_level_two value;
+        @Embedded
+        private ClassLevelTwo value;
     }
 
 

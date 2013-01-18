@@ -77,7 +77,7 @@ public class DocumentSerializer implements Serializer<Document> {
                                 final BsonSerializationOptions options) {
     }
 
-    protected boolean skipField(String key) {
+    protected boolean skipField(final String key) {
         return false;
     }
 

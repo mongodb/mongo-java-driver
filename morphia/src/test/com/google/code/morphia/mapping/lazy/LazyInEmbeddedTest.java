@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.code.morphia.mapping.lazy;
 
 import com.google.code.morphia.TestBase;
@@ -17,52 +33,46 @@ import java.util.List;
  * @author josephpachod
  */
 @SuppressWarnings("unused")
-public class LazyInEmbeddedTest extends TestBase
-{
+public class LazyInEmbeddedTest extends TestBase {
     public enum SomeEnum {
-        B, A;
+        B, A
     }
 
     @Entity
-	public static class ContainerWithRefInField extends TestEntity
-    {
+    public static class ContainerWithRefInField extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Embedded
         private EmbedWithRef embedWithRef;
     }
 
     @Entity
-	public static class ContainerWithRefList extends TestEntity
-    {
+    public static class ContainerWithRefList extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Embedded
         private final List<EmbedWithRef> embedWithRef = new ArrayList<EmbedWithRef>();
     }
 
     @Entity
-	public static class OtherEntity extends TestEntity
-    {
+    public static class OtherEntity extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Property(value = "some")
         private SomeEnum someEnum;
 
         @SuppressWarnings("unused")
-		protected OtherEntity()
-        {
+        protected OtherEntity() {
         }
 
-        public OtherEntity(final SomeEnum someEnum)
-        {
+        public OtherEntity(final SomeEnum someEnum) {
             this.someEnum = someEnum;
 
         }
     }
+
     @Entity
-	public static class OtherEntityChild extends OtherEntity
-    {
+    public static class OtherEntityChild extends OtherEntity {
         private static final long serialVersionUID = 1L;
-        public OtherEntityChild()
-        {
+
+        public OtherEntityChild() {
             super(SomeEnum.A);
         }
 
@@ -70,19 +80,16 @@ public class LazyInEmbeddedTest extends TestBase
         private String name;
     }
 
-    public static class EmbedWithRef
-    {
+    public static class EmbedWithRef {
 
-		@Reference(lazy = true)
+        @Reference(lazy = true)
         private OtherEntity otherEntity;
     }
 
-	@Test
-    public void testLoadingOfRefInField() throws Exception
-    {
+    @Test
+    public void testLoadingOfRefInField() throws Exception {
         // TODO us: exclusion does not work properly with maven + junit4
-        if (!LazyFeatureDependencies.testDependencyFullFilled())
-        {
+        if (!LazyFeatureDependencies.testDependencyFullFilled()) {
             return;
         }
 
@@ -99,7 +106,7 @@ public class LazyInEmbeddedTest extends TestBase
         Assert.assertNotNull(otherEntity);
         Assert.assertNotNull(containerWithRefInField);
 
-        EmbedWithRef embedWithRef = new EmbedWithRef();
+        final EmbedWithRef embedWithRef = new EmbedWithRef();
         embedWithRef.otherEntity = otherEntity;
         containerWithRefInField.embedWithRef = embedWithRef;
 
@@ -111,11 +118,9 @@ public class LazyInEmbeddedTest extends TestBase
     }
 
     @Test
-    public void testLoadingOfRefThroughInheritanceInField() throws Exception
-    {
+    public void testLoadingOfRefThroughInheritanceInField() throws Exception {
         // TODO us: exclusion does not work properly with maven + junit4
-        if (!LazyFeatureDependencies.testDependencyFullFilled())
-        {
+        if (!LazyFeatureDependencies.testDependencyFullFilled()) {
             return;
         }
 
@@ -132,7 +137,7 @@ public class LazyInEmbeddedTest extends TestBase
         Assert.assertNotNull(otherEntity);
         Assert.assertNotNull(reload);
 
-        EmbedWithRef embedWithRef = new EmbedWithRef();
+        final EmbedWithRef embedWithRef = new EmbedWithRef();
         embedWithRef.otherEntity = otherEntity;
         reload.embedWithRef = embedWithRef;
 
@@ -144,11 +149,9 @@ public class LazyInEmbeddedTest extends TestBase
     }
 
     @Test
-    public void testLoadingOfRefInList() throws Exception
-    {
+    public void testLoadingOfRefInList() throws Exception {
         // TODO us: exclusion does not work properly with maven + junit4
-        if (!LazyFeatureDependencies.testDependencyFullFilled())
-        {
+        if (!LazyFeatureDependencies.testDependencyFullFilled()) {
             return;
         }
 
@@ -165,7 +168,7 @@ public class LazyInEmbeddedTest extends TestBase
         Assert.assertNotNull(otherEntity);
         Assert.assertNotNull(containerWithRefInList);
 
-        EmbedWithRef embedWithRef = new EmbedWithRef();
+        final EmbedWithRef embedWithRef = new EmbedWithRef();
         embedWithRef.otherEntity = otherEntity;
         containerWithRefInList.embedWithRef.add(embedWithRef);
 
@@ -174,18 +177,16 @@ public class LazyInEmbeddedTest extends TestBase
         containerWithRefInList = ds.get(containerWithRefInList);
         Assert.assertNotNull(containerWithRefInList);
 
-        Query<ContainerWithRefList> createQuery = ds.createQuery(ContainerWithRefList.class);
+        final Query<ContainerWithRefList> createQuery = ds.createQuery(ContainerWithRefList.class);
         containerWithRefInList = createQuery.get();
         Assert.assertNotNull(containerWithRefInList);
 
     }
 
     @Test
-    public void testLoadingOfRefThroughInheritanceInList() throws Exception
-    {
+    public void testLoadingOfRefThroughInheritanceInList() throws Exception {
         // TODO us: exclusion does not work properly with maven + junit4
-        if (!LazyFeatureDependencies.testDependencyFullFilled())
-        {
+        if (!LazyFeatureDependencies.testDependencyFullFilled()) {
             return;
         }
 
@@ -202,7 +203,7 @@ public class LazyInEmbeddedTest extends TestBase
         Assert.assertNotNull(otherEntity);
         Assert.assertNotNull(reload);
 
-        EmbedWithRef embedWithRef = new EmbedWithRef();
+        final EmbedWithRef embedWithRef = new EmbedWithRef();
         embedWithRef.otherEntity = otherEntity;
         reload.embedWithRef.add(embedWithRef);
 
@@ -212,7 +213,7 @@ public class LazyInEmbeddedTest extends TestBase
 
         containerWithRefInList = ds.get(reload);
         Assert.assertNotNull(containerWithRefInList);
-        Query<ContainerWithRefList> createQuery = ds.createQuery(ContainerWithRefList.class);
+        final Query<ContainerWithRefList> createQuery = ds.createQuery(ContainerWithRefList.class);
         containerWithRefInList = createQuery.get();
         Assert.assertNotNull(containerWithRefInList);
 

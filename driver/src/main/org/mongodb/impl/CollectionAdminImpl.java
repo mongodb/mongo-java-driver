@@ -18,13 +18,14 @@ package org.mongodb.impl;
 
 import org.bson.types.Document;
 import org.mongodb.CollectionAdmin;
-import org.mongodb.CommandDocument;
 import org.mongodb.Index;
+import org.mongodb.MongoDatabase;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.command.CollStats;
+import org.mongodb.command.Drop;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.CommandResult;
@@ -37,37 +38,42 @@ import java.util.List;
 
 import static org.mongodb.impl.ErrorHandling.handleErrors;
 
+/**
+ * Encapsulates functionality that is not part of the day-to-day use of a Collection.  For example, via this admin class
+ * you can create indexes and drop the collection.
+ */
 public class CollectionAdminImpl implements CollectionAdmin {
     private static final String NAMESPACE_KEY_NAME = "ns";
 
     private final MongoOperations operations;
-    private final String databaseName;
+    private final MongoDatabase database;
     //TODO: need to do something about these default serialisers, they're created everywhere
     private final DocumentSerializer documentSerializer;
     private final MongoNamespace indexesNamespace;
     private final MongoNamespace collectionNamespace;
-    private final CollStats collStatsCommand;
     private final MongoFind queryForCollectionNamespace;
 
-    //TODO: pass in namespace
-    CollectionAdminImpl(final MongoOperations operations, final PrimitiveSerializers primitiveSerializers,
-                        final String databaseName, final String collectionName) {
+    private final CollStats collStatsCommand;
+    private final Drop dropCollectionCommand;
+
+    CollectionAdminImpl(final MongoOperations operations,
+                        final PrimitiveSerializers primitiveSerializers,
+                        final MongoNamespace collectionNamespace,
+                        final MongoDatabase database) {
         this.operations = operations;
-        this.databaseName = databaseName;
+        this.database = database;
         this.documentSerializer = new DocumentSerializer(primitiveSerializers);
-        indexesNamespace = new MongoNamespace(this.databaseName, "system.indexes");
-        collectionNamespace = new MongoNamespace(this.databaseName, collectionName);
+        indexesNamespace = new MongoNamespace(database.getName(), "system.indexes");
+        this.collectionNamespace = collectionNamespace;
         collStatsCommand = new CollStats(collectionNamespace.getCollectionName());
-        queryForCollectionNamespace = new MongoFind(
-                new QueryFilterDocument(NAMESPACE_KEY_NAME, collectionNamespace.getFullName()));
+        queryForCollectionNamespace = new MongoFind(new QueryFilterDocument(NAMESPACE_KEY_NAME,
+                                                                            this.collectionNamespace.getFullName()));
+        dropCollectionCommand = new Drop(this.collectionNamespace.getCollectionName());
     }
 
     @Override
     public void ensureIndex(final Index index) {
-        // TODO: check for index ??
-        //        final List<Document> indexes = getIndexes();
-
-        Document indexDetails = index.toDocument();
+        final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, collectionNamespace.getFullName());
 
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
@@ -85,8 +91,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
     @Override
     public boolean isCapped() {
-        CommandResult commandResult = new CommandResult(
-                operations.executeCommand(databaseName, collStatsCommand, documentSerializer));
+        final CommandResult commandResult = database.executeCommand(collStatsCommand);
         handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
 
         return FieldHelpers.asBoolean(commandResult.getResponse().get("capped"));
@@ -94,17 +99,16 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
     @Override
     public Document getStatistics() {
-        CommandResult commandResult = new CommandResult(
-                operations.executeCommand(databaseName, collStatsCommand, documentSerializer));
+        final CommandResult commandResult = database.executeCommand(collStatsCommand);
         handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
 
         return commandResult.getResponse();
     }
 
-    private final class CollStats extends MongoCommandOperation {
-        private CollStats(final String collectionName) {
-            super(new CommandDocument("collStats", collectionName));
-        }
+    @Override
+    public void drop() {
+        database.executeCommand(dropCollectionCommand);
+        //ignores errors
+        //TODO: which errors should be handled on drop?
     }
-
 }

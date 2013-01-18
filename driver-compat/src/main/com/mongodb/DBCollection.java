@@ -26,7 +26,6 @@ import org.mongodb.MongoWritableStream;
 import org.mongodb.OrderBy;
 import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.command.DropCollectionCommand;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
@@ -41,13 +40,14 @@ import java.util.List;
 import java.util.Map;
 
 @ThreadSafe
-public class DBCollection {
+public class DBCollection implements IDBCollection {
     private volatile MongoCollection<DBObject> collection;
     private final DB database;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
     private Class<? extends DBObject> objectClass = BasicDBObject.class;
-    private Map<String, Class<? extends DBObject>> pathToClassMap = new HashMap<String, Class<? extends DBObject>>();
+    private final Map<String, Class<? extends DBObject>> pathToClassMap = new HashMap<String,
+            Class<? extends DBObject>>();
     //    private ReflectionDBObject.JavaWrapper _wrapper = null;
 
     DBCollection(final String name, final DB database) {
@@ -71,6 +71,11 @@ public class DBCollection {
         return insert(Arrays.asList(documents), writeConcern);
     }
 
+    @Override
+    public WriteResult insert(final DBObject[] arr, final WriteConcern concern, final DBEncoder encoder) {
+        throw new UnsupportedOperationException();
+    }
+
     public WriteResult insert(final List<DBObject> documents) {
         return insert(documents, getWriteConcern());
     }
@@ -82,6 +87,11 @@ public class DBCollection {
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
         }
+    }
+
+    @Override
+    public WriteResult insert(final List<DBObject> list, final WriteConcern concern, final DBEncoder encoder) {
+        throw new UnsupportedOperationException();
     }
 
 
@@ -100,6 +110,16 @@ public class DBCollection {
         }
     }
 
+    @Override
+    public void dropIndexes() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void dropIndexes(final String name) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Performs an update operation.
      *
@@ -108,13 +128,15 @@ public class DBCollection {
      * @param upsert  if the database should create the element if it does not exist
      * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object
      *                will not be inserted if it does not exist in the collection and upsert=true and multi=true. See <a
-     *                href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
+     *                href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb
+     *                .org/display/DOCS/Atomic+Operations</a>
      * @param concern the write concern
      * @return
      * @throws MongoException
      * @dochub update
      */
-    public WriteResult update(DBObject q, DBObject o, boolean upsert, boolean multi, WriteConcern concern) {
+    public WriteResult update(final DBObject q, final DBObject o, final boolean upsert, final boolean multi,
+                              final WriteConcern concern) {
         if (o == null) {
             throw new IllegalArgumentException("update can not be null");
         }
@@ -145,6 +167,11 @@ public class DBCollection {
         }
     }
 
+    @Override
+    public WriteResult update(final DBObject q, final DBObject o, final boolean upsert, final boolean multi, final WriteConcern concern, final DBEncoder encoder) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean,
      * com.mongodb.WriteConcern)} with default WriteConcern.
@@ -158,7 +185,7 @@ public class DBCollection {
      * @throws MongoException
      * @dochub update
      */
-    public WriteResult update(DBObject q, DBObject o, boolean upsert, boolean multi) {
+    public WriteResult update(final DBObject q, final DBObject o, final boolean upsert, final boolean multi) {
         return update(q, o, upsert, multi, getWriteConcern());
     }
 
@@ -172,7 +199,7 @@ public class DBCollection {
      * @throws MongoException
      * @dochub update
      */
-    public WriteResult update(DBObject q, DBObject o) {
+    public WriteResult update(final DBObject q, final DBObject o) {
         return update(q, o, false, false);
     }
 
@@ -186,7 +213,7 @@ public class DBCollection {
      * @throws MongoException
      * @dochub update
      */
-    public WriteResult updateMulti(DBObject q, DBObject o) {
+    public WriteResult updateMulti(final DBObject q, final DBObject o) {
         return update(q, o, false, true);
     }
 
@@ -194,11 +221,26 @@ public class DBCollection {
         return remove(filter, getWriteConcern());
     }
 
+    @Override
+    public DBCursor find(final DBObject query, final DBObject fields, final int numToSkip, final int batchSize, final int options) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DBCursor find(final DBObject query, final DBObject fields, final int numToSkip, final int batchSize) {
+        throw new UnsupportedOperationException();
+    }
+
 
     public WriteResult remove(final DBObject filter, final WriteConcern writeConcernToUse) {
         final RemoveResult result = collection.filter(DBObjects.toQueryFilterDocument(filter)).writeConcern(
                 writeConcernToUse.toNew()).remove();
         return new WriteResult(result, writeConcernToUse);
+    }
+
+    @Override
+    public WriteResult remove(final DBObject o, final WriteConcern concern, final DBEncoder encoder) {
+        throw new UnsupportedOperationException();
     }
 
     public DBCursor find(final DBObject filter) {
@@ -237,7 +279,7 @@ public class DBCollection {
      * @return the object found, or <code>null</code> if no such object exists
      * @throws MongoException
      */
-    public DBObject findOne(DBObject o) {
+    public DBObject findOne(final DBObject o) {
         return findOne(o, null, null, getReadPreference());
     }
 
@@ -250,7 +292,7 @@ public class DBCollection {
      * @throws MongoException
      * @dochub find
      */
-    public DBObject findOne(DBObject o, DBObject fields) {
+    public DBObject findOne(final DBObject o, final DBObject fields) {
         return findOne(o, fields, null, getReadPreference());
     }
 
@@ -264,7 +306,7 @@ public class DBCollection {
      * @throws MongoException
      * @dochub find
      */
-    public DBObject findOne(DBObject o, DBObject fields, DBObject orderBy) {
+    public DBObject findOne(final DBObject o, final DBObject fields, final DBObject orderBy) {
         return findOne(o, fields, orderBy, getReadPreference());
     }
 
@@ -278,7 +320,7 @@ public class DBCollection {
      * @throws MongoException
      * @dochub find
      */
-    public DBObject findOne(DBObject o, DBObject fields, ReadPreference readPref) {
+    public DBObject findOne(final DBObject o, final DBObject fields, final ReadPreference readPref) {
         return findOne(o, fields, null, readPref);
     }
 
@@ -292,7 +334,8 @@ public class DBCollection {
      * @throws MongoException
      * @dochub find
      */
-    public DBObject findOne(DBObject o, DBObject fields, DBObject orderBy, ReadPreference readPref) {
+    public DBObject findOne(final DBObject o, final DBObject fields, final DBObject orderBy,
+                            final ReadPreference readPref) {
 
         DBObject obj = collection.filter(DBObjects.toQueryFilterDocument(o)).select(
                 DBObjects.toFieldSelectorDocument(fields)).readPreference(readPref.toNew()).one();
@@ -303,6 +346,16 @@ public class DBCollection {
         return obj;
     }
 
+    @Override
+    public Object apply(final DBObject o) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Object apply(final DBObject jo, final boolean ensureID) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Finds an object by its id. This compares the passed in value to the _id field of the document
      *
@@ -310,7 +363,7 @@ public class DBCollection {
      * @return the object, if found, otherwise <code>null</code>
      * @throws MongoException
      */
-    public DBObject findOne(Object obj) {
+    public DBObject findOne(final Object obj) {
         return findOne(obj, null);
     }
 
@@ -324,7 +377,7 @@ public class DBCollection {
      * @throws MongoException
      * @dochub find
      */
-    public DBObject findOne(Object obj, DBObject fields) {
+    public DBObject findOne(final Object obj, final DBObject fields) {
         return findOne(new BasicDBObject("_id", obj), fields);
     }
 
@@ -346,7 +399,7 @@ public class DBCollection {
      * @return
      * @throws MongoException
      */
-    public long count(DBObject query) {
+    public long count(final DBObject query) {
         return getCount(query, null);
     }
 
@@ -358,7 +411,7 @@ public class DBCollection {
      * @return
      * @throws MongoException
      */
-    public long count(DBObject query, ReadPreference readPrefs) {
+    public long count(final DBObject query, final ReadPreference readPrefs) {
         return getCount(query, null, readPrefs);
     }
 
@@ -382,7 +435,7 @@ public class DBCollection {
      * @return number of documents that match query
      * @throws MongoException
      */
-    public long getCount(ReadPreference readPrefs) {
+    public long getCount(final ReadPreference readPrefs) {
         return getCount(new BasicDBObject(), null, readPrefs);
     }
 
@@ -393,7 +446,7 @@ public class DBCollection {
      * @return
      * @throws MongoException
      */
-    public long getCount(DBObject query) {
+    public long getCount(final DBObject query) {
         return getCount(query, null);
     }
 
@@ -407,7 +460,7 @@ public class DBCollection {
      * @return
      * @throws MongoException
      */
-    public long getCount(DBObject query, DBObject fields) {
+    public long getCount(final DBObject query, final DBObject fields) {
         return getCount(query, fields, 0, 0);
     }
 
@@ -421,7 +474,7 @@ public class DBCollection {
      * @return
      * @throws MongoException
      */
-    public long getCount(DBObject query, DBObject fields, ReadPreference readPreference) {
+    public long getCount(final DBObject query, final DBObject fields, final ReadPreference readPreference) {
         return getCount(query, fields, 0, 0, readPreference);
     }
 
@@ -436,7 +489,7 @@ public class DBCollection {
      * @return
      * @throws MongoException
      */
-    public long getCount(DBObject query, DBObject fields, long limit, long skip) {
+    public long getCount(final DBObject query, final DBObject fields, final long limit, final long skip) {
         return getCount(query, fields, limit, skip, getReadPreference());
     }
 
@@ -452,7 +505,8 @@ public class DBCollection {
      * @throws MongoException
      */
 
-    public long getCount(DBObject query, DBObject fields, long limit, long skip, ReadPreference readPreference) {
+    public long getCount(final DBObject query, final DBObject fields, final long limit, final long skip,
+                         final ReadPreference readPreference) {
         if (limit > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("limit is too large: " + limit);
         }
@@ -466,6 +520,81 @@ public class DBCollection {
         }
         // TODO: investigate case of int to long for skip
         return stream.limit((int) limit).skip((int) skip).readPreference(readPreference.toNew()).count();
+    }
+
+    @Override
+    public DBCollection rename(final String newName) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DBCollection rename(final String newName, final boolean dropTarget) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce, final String finalize) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce, final String finalize, final ReadPreference readPrefs) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DBObject group(final GroupCommand cmd) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DBObject group(final GroupCommand cmd, final ReadPreference readPrefs) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DBObject group(final DBObject args) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List distinct(final String key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List distinct(final String key, final ReadPreference readPrefs) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List distinct(final String key, final DBObject query) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List distinct(final String key, final DBObject query, final ReadPreference readPrefs) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget, final DBObject query) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget, final MapReduceCommand.OutputType outputType, final DBObject query) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget, final MapReduceCommand.OutputType outputType, final DBObject query, final ReadPreference readPrefs) {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -500,16 +629,26 @@ public class DBCollection {
      * @param n the name of the collection to find
      * @return the matching collection
      */
-    public DBCollection getCollection(String n) {
+    public DBCollection getCollection(final String n) {
         return database.getCollection(getName() + "." + n);
     }
 
-    public void ensureIndex(final BasicDBObject fields) {
-        ensureIndex(fields, null);
+    public void ensureIndex(final DBObject fields) {
+        ensureIndex(fields, (DBObject) null);
+    }
+
+    @Override
+    public void ensureIndex(final DBObject keys, final String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void ensureIndex(final DBObject keys, final String name, final boolean unique) {
+        throw new UnsupportedOperationException();
     }
 
     // TODO: check if these are all the supported options
-    public void ensureIndex(final BasicDBObject fields, final BasicDBObject opts) {
+    public void ensureIndex(final DBObject fields, final DBObject opts) {
         String name = null;
         boolean unique = false;
         if (opts != null) {
@@ -520,9 +659,9 @@ public class DBCollection {
                 unique = FieldHelpers.asBoolean(opts.get("unique"));
             }
         }
-        List<Index.Key> keys = new ArrayList<Index.Key>();
-        for (String key : fields.keySet()) {
-            Object keyType = fields.get(key);
+        final List<Index.Key> keys = new ArrayList<Index.Key>();
+        for (final String key : fields.keySet()) {
+            final Object keyType = fields.get(key);
             if (keyType instanceof Integer) {
                 keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
             } else if (keyType.equals("2d")) {
@@ -535,6 +674,16 @@ public class DBCollection {
         collection.admin().ensureIndex(new Index(name, unique, keys.toArray(new Index.Key[keys.size()])));
     }
 
+    @Override
+    public void resetIndexCache() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setHintFields(final List<DBObject> lst) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject,
      * boolean, com.mongodb.DBObject, boolean, boolean)} with fields=null, remove=false, returnNew=false, upsert=false
@@ -545,7 +694,7 @@ public class DBCollection {
      * @return the old document
      * @throws MongoException
      */
-    public DBObject findAndModify(DBObject query, DBObject sort, DBObject update) {
+    public DBObject findAndModify(final DBObject query, final DBObject sort, final DBObject update) {
         return findAndModify(query, null, sort, false, update, false, false);
     }
 
@@ -559,7 +708,7 @@ public class DBCollection {
      * @return the old document
      * @throws MongoException
      */
-    public DBObject findAndModify(DBObject query, DBObject update) {
+    public DBObject findAndModify(final DBObject query, final DBObject update) {
         return findAndModify(query, null, null, false, update, false, false);
     }
 
@@ -572,8 +721,28 @@ public class DBCollection {
      * @return the removed document
      * @throws MongoException
      */
-    public DBObject findAndRemove(DBObject query) {
+    public DBObject findAndRemove(final DBObject query) {
         return findAndModify(query, null, null, true, null, false, false);
+    }
+
+    @Override
+    public void createIndex(final DBObject keys) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void createIndex(final DBObject keys, final DBObject options) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void createIndex(final DBObject keys, final DBObject options, final DBEncoder encoder) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void ensureIndex(final String name) {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -629,13 +798,18 @@ public class DBCollection {
         return database;
     }
 
+    @Override
+    public Class getObjectClass() {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Set the write concern for this collection. Will be used for writes to this collection. Overrides any setting of
      * write concern at the DB level. See the documentation for {@link WriteConcern} for more information.
      *
      * @param writeConcern write concern to use
      */
-    public void setWriteConcern(WriteConcern writeConcern) {
+    public void setWriteConcern(final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
     }
 
@@ -657,7 +831,7 @@ public class DBCollection {
      *
      * @param preference Read Preference to use
      */
-    public void setReadPreference(ReadPreference preference) {
+    public void setReadPreference(final ReadPreference preference) {
         this.readPreference = preference;
     }
 
@@ -673,6 +847,26 @@ public class DBCollection {
         return database.getReadPreference();
     }
 
+    @Override
+    public void slaveOk() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addOption(final int option) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setOptions(final int options) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void resetOptions() {
+        throw new UnsupportedOperationException();
+    }
+
 
     /**
      * Drops (deletes) this collection. Use with care.
@@ -680,7 +874,7 @@ public class DBCollection {
      * @throws MongoException
      */
     public void drop() {
-        new DropCollectionCommand(collection).execute();
+        collection.admin().drop();
     }
 
     /**
@@ -690,8 +884,8 @@ public class DBCollection {
      * @return
      * @throws MongoException
      */
-    public MapReduceOutput mapReduce(MapReduceCommand command) {
-        DBObject cmd = command.toDBObject();
+    public MapReduceOutput mapReduce(final MapReduceCommand command) {
+        final DBObject cmd = command.toDBObject();
         // if type in inline, then query options like slaveOk is fine
         CommandResult res = null;
         if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
@@ -704,8 +898,38 @@ public class DBCollection {
         return new MapReduceOutput(this, cmd, res);
     }
 
+    @Override
+    public MapReduceOutput mapReduce(final DBObject command) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public AggregationOutput aggregate(final DBObject firstOp, final DBObject... additionalOps) {
+        throw new UnsupportedOperationException();
+    }
+
     public int getOptions() {
         return 0;   // TODO: Support options
+    }
+
+    @Override
+    public void setDBDecoderFactory(final DBDecoderFactory fact) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DBDecoderFactory getDBDecoderFactory() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setDBEncoderFactory(final DBEncoderFactory fact) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DBEncoderFactory getDBEncoderFactory() {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -715,12 +939,32 @@ public class DBCollection {
      * @throws MongoException
      */
     public List<DBObject> getIndexInfo() {
-        ArrayList<DBObject> res = new ArrayList<DBObject>();
-        List<Document> indexes = collection.admin().getIndexes();
-        for (Document curIndex : indexes) {
+        final ArrayList<DBObject> res = new ArrayList<DBObject>();
+        final List<Document> indexes = collection.admin().getIndexes();
+        for (final Document curIndex : indexes) {
             res.add(DBObjects.toDBObject(curIndex));
         }
         return res;
+    }
+
+    @Override
+    public void dropIndex(final DBObject keys) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void dropIndex(final String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public CommandResult getStats() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isCapped() {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -740,7 +984,7 @@ public class DBCollection {
      * @param path  the path to map the given Class to
      * @param clazz the Class to map the given path to
      */
-    public synchronized void setInternalClass(String path, Class<? extends DBObject> clazz) {
+    public synchronized void setInternalClass(final String path, final Class<? extends DBObject> clazz) {
         pathToClassMap.put(path, clazz);
         resetCollection();
     }

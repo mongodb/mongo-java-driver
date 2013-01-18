@@ -34,6 +34,10 @@ public class CommandResult extends BasicDBObject {
         put("serverUsed", srv.toString());
     }
 
+    CommandResult(final org.mongodb.result.CommandResult commandResult) {
+        this(new BasicDBObject(commandResult.getResponse()), new ServerAddress(commandResult.getAddress()));
+    }
+
     /**
      * gets the "ok" field which is the result of the command
      *

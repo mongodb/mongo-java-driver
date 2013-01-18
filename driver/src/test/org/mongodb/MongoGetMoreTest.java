@@ -29,9 +29,9 @@ import static org.junit.Assert.fail;
 public class MongoGetMoreTest extends MongoClientTestBase {
     @Test
     public void shouldThrowCursorNotFoundException() {
-        collection.insert(Arrays.asList(new Document(), new Document(), new Document()));
+        getCollection().insert(Arrays.asList(new Document(), new Document(), new Document()));
 
-        MongoCursor<Document> cursor = collection.batchSize(2).all();
+        MongoCursor<Document> cursor = getCollection().batchSize(2).all();
         getClient().getOperations().killCursors(new MongoKillCursor(cursor.getServerCursor()));
         cursor.next();
         cursor.next();

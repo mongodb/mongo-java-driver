@@ -21,8 +21,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath files('lib/gradle-cobertura-plugin-1.1.1.jar')
-        classpath 'net.sourceforge.cobertura:cobertura:1.9.4.1'
+        classpath 'net.saliman:gradle-cobertura-plugin:1.1.0'
     }
 }
 
@@ -46,8 +45,8 @@ subprojects {
 
     group = 'org.mongodb'
     version = '3.0.0-SNAPSHOT'
-    sourceCompatibility = '1.5'
-    targetCompatibility = '1.5'
+    sourceCompatibility = '1.6'
+    targetCompatibility = '1.6'
 
     repositories {
         mavenCentral()

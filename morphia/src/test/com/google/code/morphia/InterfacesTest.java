@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2010 Olafur Gauti Gudmundsson
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,42 +32,44 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- *
  * @author Olafur Gauti Gudmundsson
  */
 public class InterfacesTest extends TestBase {
 
     @Test
     public void testDynamicInstantiation() throws Exception {
-        DBCollection shapes = db.getCollection("shapes");
-        DBCollection shapeshifters = db.getCollection("shapeshifters");
+        final DBCollection shapes = db.getCollection("shapes");
+        final DBCollection shapeshifters = db.getCollection("shapeshifters");
 
         morphia.map(Circle.class)
                 .map(Rectangle.class)
                 .map(ShapeShifter.class);
 
-        Shape rectangle = new Rectangle(2,5);
-        
-        DBObject rectangleDbObj = morphia.toDBObject(rectangle);
+        final Shape rectangle = new Rectangle(2, 5);
+
+        final DBObject rectangleDbObj = morphia.toDBObject(rectangle);
         shapes.save(rectangleDbObj);
 
-        BasicDBObject rectangleDbObjLoaded = (BasicDBObject) shapes.findOne(new BasicDBObject(Mapper.ID_KEY, rectangleDbObj.get(Mapper.ID_KEY)));
-		Shape rectangleLoaded = morphia.fromDBObject(Shape.class, rectangleDbObjLoaded, new DefaultEntityCache());
+        final BasicDBObject rectangleDbObjLoaded = (BasicDBObject) shapes.findOne(
+                new BasicDBObject(Mapper.ID_KEY, rectangleDbObj.get(Mapper.ID_KEY)));
+        final Shape rectangleLoaded = morphia.fromDBObject(Shape.class, rectangleDbObjLoaded, new DefaultEntityCache());
 
         assertTrue(rectangle.getArea() == rectangleLoaded.getArea());
         assertTrue(rectangleLoaded instanceof Rectangle);
 
-        ShapeShifter shifter = new ShapeShifter();
+        final ShapeShifter shifter = new ShapeShifter();
         shifter.setReferencedShape(rectangleLoaded);
         shifter.setMainShape(new Circle(2.2));
-        shifter.getAvailableShapes().add(new Rectangle(3,3));
+        shifter.getAvailableShapes().add(new Rectangle(3, 3));
         shifter.getAvailableShapes().add(new Circle(4.4));
 
-        DBObject shifterDbObj = morphia.toDBObject(shifter);
+        final DBObject shifterDbObj = morphia.toDBObject(shifter);
         shapeshifters.save(shifterDbObj);
 
-        BasicDBObject shifterDbObjLoaded = (BasicDBObject) shapeshifters.findOne(new BasicDBObject(Mapper.ID_KEY, shifterDbObj.get(Mapper.ID_KEY)));
-		ShapeShifter shifterLoaded = morphia.fromDBObject(ShapeShifter.class, shifterDbObjLoaded, new DefaultEntityCache());
+        final BasicDBObject shifterDbObjLoaded = (BasicDBObject) shapeshifters.findOne(
+                new BasicDBObject(Mapper.ID_KEY, shifterDbObj.get(Mapper.ID_KEY)));
+        final ShapeShifter shifterLoaded = morphia.fromDBObject(ShapeShifter.class, shifterDbObjLoaded,
+                                                                new DefaultEntityCache());
 
         assertNotNull(shifterLoaded);
         assertNotNull(shifterLoaded.getReferencedShape());

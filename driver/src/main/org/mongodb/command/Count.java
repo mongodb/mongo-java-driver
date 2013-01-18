@@ -12,45 +12,29 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
-import org.mongodb.result.CommandResult;
 
-// TODO: deal with !ok responses where the reason is because the collection does not exist.
-public class CountCommand extends AbstractCommand {
-    private final MongoCollection collection;
-    private final MongoFind find;
-
-    public CountCommand(final MongoCollection collection, final MongoFind find) {
-        super(collection.getDatabase());
-        this.collection = collection;
-        this.find = find;
+public final class Count extends MongoCommand {
+    public Count(final MongoFind find, final String collectionName) {
+        super(asCommandDocument(find, collectionName));
     }
 
-    @Override
-    public CountCommandResult execute() {
-        return new CountCommandResult(super.execute());
-    }
+    private static CommandDocument asCommandDocument(final MongoFind find, final String collectionName) {
 
-    @Override
-    public MongoCommand asMongoCommand() {
-        final CommandDocument document = new CommandDocument("count", collection.getName());
+        final CommandDocument document = new CommandDocument("count", collectionName);
 
         if (find.getFilter() != null) {
             document.put("query", find.getFilter().toDocument());
         }
-
         if (find.getLimit() > 0) {
             document.put("limit", find.getLimit());
         }
-
         if (find.getSkip() > 0) {
             document.put("skip", find.getSkip());
         }
@@ -58,14 +42,4 @@ public class CountCommand extends AbstractCommand {
         return document;
     }
 
-    public static class CountCommandResult extends CommandResult {
-
-        public CountCommandResult(final CommandResult baseResult) {
-            super(baseResult);
-        }
-
-        public long getCount() {
-            return ((Double) getResponse().get("n")).longValue();
-        }
-    }
 }

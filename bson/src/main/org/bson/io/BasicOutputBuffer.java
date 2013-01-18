@@ -26,6 +26,10 @@ import java.nio.channels.SocketChannel;
 
 public class BasicOutputBuffer extends OutputBuffer {
 
+    private int cur;
+    private int size;
+    private byte[] buffer = new byte[1024];
+
     @Override
     public void write(final byte[] b) {
         write(b, 0, b.length);
@@ -33,17 +37,17 @@ public class BasicOutputBuffer extends OutputBuffer {
 
     @Override
     public void write(final byte[] b, final int off, final int len) {
-        _ensure(len);
-        System.arraycopy(b, off, _buffer, _cur, len);
-        _cur += len;
-        _size = Math.max(_cur, _size);
+        ensure(len);
+        System.arraycopy(b, off, buffer, cur, len);
+        cur += len;
+        size = Math.max(cur, size);
     }
 
     @Override
     public void write(final int b) {
-        _ensure(1);
-        _buffer[_cur++] = (byte) (0xFF & b);
-        _size = Math.max(_cur, _size);
+        ensure(1);
+        buffer[cur++] = (byte) (0xFF & b);
+        size = Math.max(cur, size);
     }
 
     @Override
@@ -61,7 +65,7 @@ public class BasicOutputBuffer extends OutputBuffer {
 
     @Override
     public int getPosition() {
-        return _cur;
+        return cur;
     }
 
     /**
@@ -69,7 +73,7 @@ public class BasicOutputBuffer extends OutputBuffer {
      */
     @Override
     public int size() {
-        return _size;
+        return size;
     }
 
     /**
@@ -78,45 +82,41 @@ public class BasicOutputBuffer extends OutputBuffer {
     @Override
     public int pipe(final OutputStream out)
             throws IOException {
-        out.write(_buffer, 0, _size);
-        return _size;
+        out.write(buffer, 0, size);
+        return size;
     }
 
     @Override
     public void pipe(final SocketChannel socketChannel) throws IOException {
-        socketChannel.write(ByteBuffer.wrap(_buffer, 0, _size));
+        socketChannel.write(ByteBuffer.wrap(buffer, 0, size));
     }
+
 
     /**
      * @return bytes written
      */
     public int pipe(final DataOutput out) throws IOException {
-        out.write(_buffer, 0, _size);
-        return _size;
+        out.write(buffer, 0, size);
+        return size;
     }
 
-
-    void _ensure(final int more) {
-        final int need = _cur + more;
-        if (need < _buffer.length) {
+    private void ensure(final int more) {
+        final int need = cur + more;
+        if (need < buffer.length) {
             return;
         }
 
-        int newSize = _buffer.length * 2;
+        int newSize = buffer.length * 2;
         if (newSize <= need) {
             newSize = need + 128;
         }
 
         final byte[] n = new byte[newSize];
-        System.arraycopy(_buffer, 0, n, 0, _size);
-        _buffer = n;
+        System.arraycopy(buffer, 0, n, 0, size);
+        buffer = n;
     }
 
     private void setPosition(final int position) {
-        _cur = position;
+        cur = position;
     }
-
-    private int _cur;
-    private int _size;
-    private byte[] _buffer = new byte[512];
 }

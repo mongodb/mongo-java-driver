@@ -31,10 +31,13 @@ import org.mongodb.MongoWritableStream;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
-import org.mongodb.command.CountCommand;
-import org.mongodb.command.FindAndRemoveCommand;
-import org.mongodb.command.FindAndReplaceCommand;
-import org.mongodb.command.FindAndUpdateCommand;
+import org.mongodb.command.Count;
+import org.mongodb.command.CountCommandResult;
+import org.mongodb.command.FindAndModifyCommandResult;
+import org.mongodb.command.FindAndModifyCommandResultSerializer;
+import org.mongodb.command.FindAndRemove;
+import org.mongodb.command.FindAndReplace;
+import org.mongodb.command.FindAndUpdate;
 import org.mongodb.operation.MongoFieldSelector;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
@@ -58,14 +61,13 @@ import java.util.Collection;
 
 class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements MongoCollection<T> {
 
-    private CollectionAdmin admin;
+    private final CollectionAdmin admin;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final CollectibleSerializer<T> serializer,
-                               final MongoCollectionOptions options) {
+                               final CollectibleSerializer<T> serializer, final MongoCollectionOptions options) {
         super(serializer, name, database, options);
-        admin = new CollectionAdminImpl(database.getClient().getOperations(), options.getPrimitiveSerializers(), database.getName(),
-                                        name);
+        admin = new CollectionAdminImpl(database.getClient().getOperations(), options.getPrimitiveSerializers(),
+                                        getNamespace(), getDatabase());
     }
 
     @Override
@@ -318,7 +320,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
         @Override
         public long count() {
-            return new CountCommand(MongoCollectionImpl.this, findOp).execute().getCount();
+            return new CountCommandResult(getDatabase().executeCommand(new Count(findOp, getName()))).getCount();
         }
 
         @Override
@@ -424,8 +426,9 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             MongoFindAndUpdate findAndUpdate = new MongoFindAndUpdate().where(findOp.getFilter()).updateWith(
                     updateOperations).returnNew(asBoolean(beforeOrAfter)).select(findOp.getFields()).sortBy(
                     findOp.getOrder());
-            return new FindAndUpdateCommand<T>(MongoCollectionImpl.this, findAndUpdate, getOptions().getPrimitiveSerializers(),
-                                               getSerializer()).execute().getValue();
+            return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
+                    new FindAndUpdate(MongoCollectionImpl.this, findAndUpdate),
+                    new FindAndModifyCommandResultSerializer<T>(options.getPrimitiveSerializers(), getSerializer()))).getValue();
         }
 
         @Override
@@ -433,8 +436,9 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             MongoFindAndUpdate findAndUpdate = new MongoFindAndUpdate().where(findOp.getFilter()).updateWith(
                     updateOperations).upsert(true).returnNew(asBoolean(beforeOrAfter)).select(findOp.getFields()).sortBy(
                     findOp.getOrder());
-            return new FindAndUpdateCommand<T>(MongoCollectionImpl.this, findAndUpdate, getOptions().getPrimitiveSerializers(),
-                    getSerializer()).execute().getValue();
+            return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
+                    new FindAndUpdate(MongoCollectionImpl.this, findAndUpdate),
+                    new FindAndModifyCommandResultSerializer<T>(options.getPrimitiveSerializers(), getSerializer()))).getValue();
         }
 
         @Override
@@ -442,8 +446,9 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             MongoFindAndReplace<T> findAndReplace = new MongoFindAndReplace<T>(replacement).where(
                     findOp.getFilter()).returnNew(asBoolean(beforeOrAfter)).select(findOp.getFields()).sortBy(
                     findOp.getOrder());
-            return new FindAndReplaceCommand<T>(MongoCollectionImpl.this, findAndReplace, getOptions().getPrimitiveSerializers(),
-                                                getSerializer()).execute().getValue();
+            return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
+                    new FindAndReplace(MongoCollectionImpl.this, findAndReplace),
+                    new FindAndModifyCommandResultSerializer<T>(options.getPrimitiveSerializers(), getSerializer()))).getValue();
         }
 
         @Override
@@ -451,8 +456,9 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             MongoFindAndReplace<T> findAndReplace = new MongoFindAndReplace<T>(replacement).where(
                     findOp.getFilter()).returnNew(asBoolean(beforeOrAfter)).upsert(true).select(findOp.getFields()).sortBy(
                     findOp.getOrder());
-            return new FindAndReplaceCommand<T>(MongoCollectionImpl.this, findAndReplace, getOptions().getPrimitiveSerializers(),
-                    getSerializer()).execute().getValue();
+            return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
+                    new FindAndReplace(MongoCollectionImpl.this, findAndReplace),
+                    new FindAndModifyCommandResultSerializer<T>(options.getPrimitiveSerializers(), getSerializer()))).getValue();
         }
 
         @Override
@@ -460,8 +466,9 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             MongoFindAndRemove findAndRemove = new MongoFindAndRemove().where(findOp.getFilter()).select(
                     findOp.getFields()).sortBy(findOp.getOrder());
 
-            return new FindAndRemoveCommand<T>(MongoCollectionImpl.this, findAndRemove, getOptions().getPrimitiveSerializers(),
-                                               getSerializer()).execute().getValue();
+            return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
+                    new FindAndRemove(MongoCollectionImpl.this, findAndRemove),
+                    new FindAndModifyCommandResultSerializer<T>(options.getPrimitiveSerializers(), getSerializer()))).getValue();
         }
 
         private boolean getMultiFromLimit() {

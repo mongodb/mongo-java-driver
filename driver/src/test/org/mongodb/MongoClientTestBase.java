@@ -18,21 +18,25 @@ package org.mongodb;
 
 import org.bson.types.Document;
 import org.junit.Before;
-import org.mongodb.command.DropCollectionCommand;
 
 import java.net.UnknownHostException;
 
+/**
+ * Base class for integration-style "unit" tests - i.e. those that need a running Mongo instance.
+ */
 public abstract class MongoClientTestBase {
-    static private MongoClient mongoClient;
-    static private MongoDatabase database;
+    protected static final String DEFAULT_DB_NAME = "driver-test";
 
-    protected MongoCollection<Document> collection;
+    private static MongoClient mongoClient;
+    private static MongoDatabase database;
+
+    private MongoCollection<Document> collection;
 
     protected MongoClientTestBase() {
         if (mongoClient == null) {
             try {
                 mongoClient = MongoClients.create(new ServerAddress());
-                database = mongoClient.getDatabase("driver-test");
+                database = mongoClient.getDatabase(DEFAULT_DB_NAME);
                 database.admin().drop();
             } catch (UnknownHostException e) {
                 throw new IllegalArgumentException(e);
@@ -43,14 +47,18 @@ public abstract class MongoClientTestBase {
     @Before
     public void before() {
         collection = getDatabase().getCollection(getClass().getSimpleName());
-        new DropCollectionCommand(collection).execute();
+        collection.admin().drop();
     }
 
-    MongoClient getClient() {
+    protected MongoClient getClient() {
         return mongoClient;
     }
 
-    MongoDatabase getDatabase() {
+    protected MongoDatabase getDatabase() {
         return database;
+    }
+
+    protected MongoCollection<Document> getCollection() {
+        return collection;
     }
 }

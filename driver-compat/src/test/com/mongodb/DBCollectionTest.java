@@ -63,8 +63,9 @@ public class DBCollectionTest extends MongoClientTestBase {
 
     @Test
     public void testUpdate() {
-        WriteResult res = collection.update(new BasicDBObject("_id", 1), new BasicDBObject("$set", new BasicDBObject("x", 2)),
-                                   true, false);
+        WriteResult res = collection.update(new BasicDBObject("_id", 1),
+                                            new BasicDBObject("$set", new BasicDBObject("x", 2)),
+                                            true, false);
         assertNotNull(res);
         assertEquals(1L, collection.count());
         assertEquals(new BasicDBObject("_id", 1).append("x", 2), collection.findOne());

@@ -4,6 +4,6 @@ import com.google.code.morphia.testutil.TestEntity;
 
 class ContainerEntity extends TestEntity {
     private static final long serialVersionUID = 1L;
-    
-    Bar foo = EnumBehindAnInterface.A;
+
+    final Bar foo = EnumBehindAnInterface.A;
 }

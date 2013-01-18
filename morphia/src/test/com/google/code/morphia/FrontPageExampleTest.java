@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2010 Olafur Gauti Gudmundsson
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,62 +35,78 @@ import java.util.List;
 /**
  * @author Scott Hernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes", "unused"})
 public class FrontPageExampleTest extends TestBase {
 
-	@Entity("employees")
-	private static class Employee {
-		
-		private Employee() {};
-		public Employee(String f, String l, Key<Employee> boss, long sal) {
-			firstName = f;
-			lastName = l;
-			manager = boss;
-			salary = sal;
-		}
-		
-		@Id ObjectId id; // auto-generated, if not set (see ObjectId)
-		String firstName, lastName; // value types are automatically persisted
-		Long salary = null; // only non-null values are stored 
+    @Entity("employees")
+    private static final class Employee {
 
-//		Address address; // by default fields are @Embedded
-		
-		Key<Employee> manager; // references can be saved without automatic
-								// loading
-		@Reference List<Employee> underlings = new ArrayList<Employee>(); // refs are stored*, and loaded automatically
-		
-		@Property("started") Date startDate; // fields can be renamed
-		@Property("left") Date endDate;
-		
-		@Indexed boolean active = false; // fields can be indexed for better performance
-		@NotSaved String readButNotStored; // fields can loaded, but not saved
-		@Transient int notStored; // fields can be ignored (no load/save)
-		transient boolean stored = true; // not @Transient, will be ignored by Serialization/GWT for example.
-	}
-	
-	@Test
+        private Employee() {
+        }
+
+        private Employee(final String f, final String l, final Key<Employee> boss, final long sal) {
+            firstName = f;
+            lastName = l;
+            manager = boss;
+            salary = sal;
+        }
+
+        @Id
+        private ObjectId id; // auto-generated, if not set (see ObjectId)
+        private String firstName, lastName; // value types are automatically persisted
+        private Long salary = null; // only non-null values are stored
+
+//        Address address; // by default fields are @Embedded
+
+        private Key<Employee> manager; // references can be saved without automatic
+        // loading
+        @Reference
+        private final List<Employee> underlings = new ArrayList<Employee>(); // refs are stored*,
+        // and loaded automatically
+
+        @Property("started")
+        private Date startDate; // fields can be renamed
+        @Property("left")
+        private Date endDate;
+
+        @Indexed
+        private final boolean active = false; // fields can be indexed for better performance
+        @NotSaved
+        private String readButNotStored; // fields can loaded, but not saved
+        @Transient
+        private int notStored; // fields can be ignored (no load/save)
+        private final transient boolean stored = true; // not @Transient, will be ignored by Serialization/GWT for
+        // example.
+    }
+
+    @Test
     public void testIt() throws Exception {
-		morphia.map(Employee.class);
-		
-		ds.save(new Employee("Mister", "GOD", null, 0));
-		
-		Employee boss = ds.find(Employee.class).field("manager").equal(null).get(); // get an employee without a manager
-		Assert.assertNotNull(boss);
-		Key<Employee> scottsKey = ds.save(new Employee("Scott", "Hernandez", ds.getKey(boss), 150*1000));
-		Assert.assertNotNull(scottsKey);
+        morphia.map(Employee.class);
 
-		UpdateResults<Employee> res = ds.update(boss, ds.createUpdateOperations(Employee.class).add("underlings", scottsKey)); //add Scott as an employee of his manager
-		Assert.assertNotNull(res);
-		Assert.assertTrue(res.getUpdatedExisting());
-		Assert.assertEquals(1, res.getUpdatedCount());
-		
-		Employee scottsBoss = ds.find(Employee.class).filter("underlings", scottsKey).get(); // get Scott's boss
-		Assert.assertNotNull(scottsBoss);
-		Assert.assertEquals(boss.id, scottsBoss.id);
+        ds.save(new Employee("Mister", "GOD", null, 0));
 
-		for (Employee e : ds.find(Employee.class, "manager", boss))
-		   print(e);
-	}
-	
-	private void print(Employee e) {};
+        final Employee boss = ds.find(Employee.class).field("manager").equal(null).get(); // get an employee without
+        // a manager
+        Assert.assertNotNull(boss);
+        final Key<Employee> scottsKey = ds.save(new Employee("Scott", "Hernandez", ds.getKey(boss), 150 * 1000));
+        Assert.assertNotNull(scottsKey);
+
+        //add Scott as an employee of his manager
+        final UpdateResults<Employee> res = ds.update(boss,
+                                                      ds.createUpdateOperations(Employee.class)
+                                                              .add("underlings", scottsKey));
+        Assert.assertNotNull(res);
+        Assert.assertTrue(res.getUpdatedExisting());
+        Assert.assertEquals(1, res.getUpdatedCount());
+
+        final Employee scottsBoss = ds.find(Employee.class).filter("underlings", scottsKey).get(); // get Scott's boss
+        Assert.assertNotNull(scottsBoss);
+        Assert.assertEquals(boss.id, scottsBoss.id);
+
+        for (final Employee e : ds.find(Employee.class, "manager", boss)) {
+            print(e);
+        }
+    }
+
+    private void print(final Employee e) {
+    }
 }

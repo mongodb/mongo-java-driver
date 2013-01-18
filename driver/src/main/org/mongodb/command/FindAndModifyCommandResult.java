@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,28 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.command;
 
-import org.mongodb.CommandDocument;
-import org.mongodb.MongoCollection;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.result.CommandResult;
 
-/**
- *
- */
-public class DropCollectionCommand extends AbstractCommand {
-    private final MongoCollection collection;
+public final class FindAndModifyCommandResult<T> extends CommandResult {
 
-    public DropCollectionCommand(MongoCollection collection) {
-        super(collection.getDatabase());
-        this.collection = collection;
+    public FindAndModifyCommandResult(final CommandResult baseResult) {
+        super(baseResult);
     }
 
-    @Override
-    public MongoCommand asMongoCommand() {
-        return new CommandDocument("drop", collection.getName());
+    @SuppressWarnings("unchecked")
+    public T getValue() {
+        return (T) getResponse().get("value");  // TODO: any way to remove the warning?  This could be a design flaw
     }
 }

@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2010 Olafur Gauti Gudmundsson
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,13 +21,9 @@ import com.google.code.morphia.dao.BasicDAO;
 import com.google.code.morphia.testmodel.Hotel;
 import com.mongodb.Mongo;
 
-/**
- *
- * @author Olafur Gauti Gudmundsson
- */
-public class HotelDAO extends BasicDAO<Hotel,String> {
+public class HotelDAO extends BasicDAO<Hotel, String> {
 
-    public HotelDAO( Morphia morphia, Mongo mongo ) {
+    public HotelDAO(final Morphia morphia, final Mongo mongo) {
         super(mongo, morphia, "morphia_test");
     }
 }

@@ -24,7 +24,6 @@ import org.mongodb.FieldSelectorDocument;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.SortCriteriaDocument;
 import org.mongodb.UpdateOperationsDocument;
-import org.mongodb.operation.MongoCommand;
 
 import java.util.List;
 import java.util.Map;
@@ -83,7 +82,7 @@ public class DBObjects {
         return doc;
     }
 
-    public static MongoCommand toCommandDocument(final DBObject commandObject) {
+    public static CommandDocument toCommandDocument(final DBObject commandObject) {
         CommandDocument doc = new CommandDocument();
         fill(commandObject, doc);
         return doc;

@@ -18,7 +18,7 @@ package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
 import org.bson.types.Document;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoQuery;
 import org.mongodb.serialization.Serializer;
@@ -37,12 +37,12 @@ public class MongoQueryMessage extends MongoRequestMessage {
         backpatchMessageLength();
     }
 
-    public MongoQueryMessage(final String collectionName, final MongoCommandOperation commandOperation,
+    public MongoQueryMessage(final String collectionName, final MongoCommand commandOperation,
                              final OutputBuffer buffer, final Serializer<Document> serializer) {
         super(collectionName, 0, commandOperation.getReadPreference(), buffer);
 
         init(commandOperation);
-        addDocument(commandOperation.getCommand().toDocument(), serializer);
+        addDocument(commandOperation.toDocument(), serializer);
         backpatchMessageLength();
     }
 
@@ -64,9 +64,9 @@ public class MongoQueryMessage extends MongoRequestMessage {
     }
 
     // TODO: test this, extensively
-    private int chooseBatchSize(int batchSize, int limit, int fetched) {
-        int bs = Math.abs(batchSize);
-        int remaining = limit > 0 ? limit - fetched : 0;
+    private int chooseBatchSize(final int batchSize, final int limit, final int fetched) {
+        final int bs = Math.abs(batchSize);
+        final int remaining = limit > 0 ? limit - fetched : 0;
         int res;
         if (bs == 0 && remaining > 0) {
             res = remaining;
@@ -87,7 +87,7 @@ public class MongoQueryMessage extends MongoRequestMessage {
     }
 
     private Document getQueryDocument(final MongoFind find) {
-        Document document = new Document();
+        final Document document = new Document();
         document.put("query", find.getFilter().toDocument());
         if (find.getOrder() != null && !find.getOrder().toDocument().isEmpty()) {
             document.put("orderby", find.getOrder().toDocument());

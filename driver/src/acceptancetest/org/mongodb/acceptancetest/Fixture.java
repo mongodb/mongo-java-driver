@@ -18,20 +18,26 @@ package org.mongodb.acceptancetest;
 
 import org.junit.Assert;
 import org.mongodb.MongoClient;
+import org.mongodb.MongoClients;
 import org.mongodb.ServerAddress;
-import org.mongodb.impl.SingleServerMongoClient;
 
 import java.net.UnknownHostException;
 
-public class Fixture {
-    static MongoClient mongoClient;
+/**
+ * Helper class for the acceptance tests.  Considering replacing with MongoClientTestBase.
+ */
+public final class Fixture {
+    private static MongoClient mongoClient;
 
     private static final String SERVER_NAME = "localhost";
     private static final int PORT = 27017;
 
+    private Fixture() {
+    }
+
     public static synchronized MongoClient createMongoClient() {
         if (mongoClient == null) {
-            mongoClient = new SingleServerMongoClient(createServerAddress());
+            mongoClient = MongoClients.create(createServerAddress());
         }
         return mongoClient;
     }

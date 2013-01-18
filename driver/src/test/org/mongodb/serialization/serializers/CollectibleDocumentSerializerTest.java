@@ -36,9 +36,9 @@ import static org.junit.Assert.assertTrue;
 // TODO: Write tests
 public class CollectibleDocumentSerializerTest {
 
-    CollectibleDocumentSerializer serializer;
-    BasicOutputBuffer outputBuffer;
-    BSONWriter writer;
+    private CollectibleDocumentSerializer serializer;
+    private BasicOutputBuffer outputBuffer;
+    private BSONWriter writer;
 
     @Before
     public void setUp() {

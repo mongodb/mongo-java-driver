@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.google.code.morphia.callbacks;
 
@@ -20,67 +20,59 @@ import org.junit.Test;
 import java.util.LinkedList;
 import java.util.List;
 
-public class CallbackEscalationTest extends TestBase
-{
+public class CallbackEscalationTest extends TestBase {
     @Entity
-    static class A extends Callbacks
-    {
-        @Id ObjectId id;
+    static class A extends Callbacks {
+        @Id
+        private ObjectId id;
 
         @Embedded
-        B b;
+        private B b;
 
         @Embedded
-        List<B> bs = new LinkedList<B>();
+        private final List<B> bs = new LinkedList<B>();
     }
 
     @Embedded
-    static class B extends Callbacks
-    {
+    static class B extends Callbacks {
         // minor issue: i realized, that if B does not bring anything to map,
         // morphia behaves significantly different, is this wanted ?
         // see TestEmptyEntityMapping
-        String someProperty = "someThing";
+        private final String someProperty = "someThing";
     }
 
-    static class Callbacks
-    {
+    static class Callbacks {
         @Transient
         boolean prePersist, postPersist, preLoad, postLoad, preSave;
 
         @PrePersist
-        void prePersist()
-        {
+        void prePersist() {
             this.prePersist = true;
         }
 
         @PostPersist
-        void postPersist()
-        {
+        void postPersist() {
             this.postPersist = true;
         }
 
         @PreLoad
-        void preLoad()
-        {
+        void preLoad() {
             this.preLoad = true;
         }
 
         @PostLoad
-        void postLoad()
-        {
+        void postLoad() {
             this.postLoad = true;
         }
+
         @PreSave
-        void preSave()
-        {
+        void preSave() {
             this.preSave = true;
         }
     }
 
     @Test
-    public void testPrePersistEscalation() throws Exception
-    {
+    public void testPrePersistEscalation() throws Exception {
         final A a = new A();
         a.b = new B();
         a.bs.add(new B());
@@ -97,8 +89,7 @@ public class CallbackEscalationTest extends TestBase
     }
 
     @Test
-    public void testPostPersistEscalation() throws Exception
-    {
+    public void testPostPersistEscalation() throws Exception {
         final A a = new A();
         a.b = new B();
         a.bs.add(new B());
@@ -118,8 +109,7 @@ public class CallbackEscalationTest extends TestBase
     }
 
     @Test
-    public void testPreLoadEscalation() throws Exception
-    {
+    public void testPreLoadEscalation() throws Exception {
         A a = new A();
         a.b = new B();
         a.bs.add(new B());
@@ -143,8 +133,7 @@ public class CallbackEscalationTest extends TestBase
     }
 
     @Test
-    public void testPostLoadEscalation() throws Exception
-    {
+    public void testPostLoadEscalation() throws Exception {
         A a = new A();
         a.b = new B();
         a.bs.add(new B());

@@ -22,41 +22,42 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * this is used for internal increment values. for normal dates you should use java.util.Date
- * <b>time</b> is seconds since epoch <b>inc<b> is an ordinal
+ * this is used for internal increment values. for normal dates you should use java.util.Date <b>time</b> is seconds
+ * since epoch <b>inc<b> is an ordinal
  */
 public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
 
     private static final long serialVersionUID = -3268482672267936464L;
 
-    static final boolean D = Boolean.getBoolean("DEBUG.DBTIMESTAMP");
+    private final int inc;
+    private final Date time;
 
     public BSONTimestamp() {
-        _inc = 0;
-        _time = null;
+        inc = 0;
+        time = null;
     }
 
     public BSONTimestamp(final int time, final int inc) {
-        _time = new Date(time * 1000L);
-        _inc = inc;
+        this.time = new Date(time * 1000L);
+        this.inc = inc;
     }
 
     /**
-     * @return get time in seconds since epoch
+     * @return get time in seconds since epoch as an int
      */
     public int getTime() {
-        if (_time == null) {
+        if (time == null) {
             return 0;
         }
-        return (int) (_time.getTime() / 1000);
+        return (int) (time.getTime() / 1000);
     }
 
     public int getInc() {
-        return _inc;
+        return inc;
     }
 
     public String toString() {
-        return "TS time:" + _time + " inc:" + _inc;
+        return "TS time:" + time + " inc:" + inc;
     }
 
     @Override
@@ -73,7 +74,7 @@ public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + _inc;
+        result = prime * result + inc;
         result = prime * result + getTime();
         return result;
     }
@@ -89,8 +90,5 @@ public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
         }
         return false;
     }
-
-    final int _inc;
-    final Date _time;
 
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,25 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.impl;
 
+import org.bson.types.Document;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mongodb.CommandDocument;
-import org.bson.types.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
-import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.operation.GetMore;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.CommandResult;
@@ -41,7 +39,10 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
 
 import java.net.UnknownHostException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(JUnit4.class)
 public class SingleServerMongoClientTest {
@@ -51,7 +52,8 @@ public class SingleServerMongoClientTest {
     @BeforeClass
     public static void setUpClass() throws UnknownHostException {
         mongoClient = new SingleServerMongoClient(new ServerAddress());
-        new DropDatabaseCommand(mongoClient.getDatabase(DB_NAME)).execute();
+        MongoDatabaseImpl database = mongoClient.getDatabase(DB_NAME);
+        database.admin().drop();
     }
 
     @AfterClass
@@ -61,7 +63,7 @@ public class SingleServerMongoClientTest {
 
     @Test
     public void testCommandExecution() {
-        final MongoCommandOperation cmd = new MongoCommandOperation(new CommandDocument("count", "test")).readPreference(ReadPreference.primary());
+        final MongoCommand cmd = new MongoCommand(new CommandDocument("count", "test")).readPreference(ReadPreference.primary());
         final CommandResult res = mongoClient.getOperations().executeCommand(DB_NAME, cmd, new DocumentSerializer(PrimitiveSerializers.createDefault()));
         assertNotNull(res);
         assertTrue(res.getResponse().get("n") instanceof Double);
@@ -74,7 +76,7 @@ public class SingleServerMongoClientTest {
         final MongoInsert<Document> insert = new MongoInsert<Document>(new Document());
         mongoClient.getOperations().insert(new MongoNamespace(DB_NAME, colName), insert, new DocumentSerializer(primitiveSerializers));
         final CommandResult res = mongoClient.getOperations().executeCommand(DB_NAME,
-                new MongoCommandOperation(new CommandDocument("count", colName)).readPreference(ReadPreference.primary()),
+                new MongoCommand(new CommandDocument("count", colName)).readPreference(ReadPreference.primary()),
                 new DocumentSerializer(primitiveSerializers));
         assertEquals(1.0, res.getResponse().get("n"));
     }

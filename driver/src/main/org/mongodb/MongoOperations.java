@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.bson.types.Document;
 import org.mongodb.operation.GetMore;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
@@ -36,7 +36,7 @@ import org.mongodb.serialization.Serializer;
 public interface MongoOperations {
 
     // TODO: should this really be a separate call from query?
-    CommandResult executeCommand(String database, MongoCommandOperation commandOperation,
+    CommandResult executeCommand(String database, MongoCommand commandOperation,
                                  Serializer<Document> serializer);
 
     <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Serializer<Document> baseSerializer,

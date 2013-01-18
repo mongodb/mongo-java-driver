@@ -36,6 +36,10 @@ import static org.mongodb.OrderBy.DESC;
 import static org.mongodb.OrderBy.fromInt;
 import static org.mongodb.acceptancetest.Fixture.createMongoClient;
 
+/**
+ * Use cases for adding indexes to your MongoDB database via the Java driver.  Documents the index options that are
+ * currently supported by the updated driver.
+ */
 public class AddIndexAcceptanceTest {
     private static final String DB_NAME = "AddIndexAcceptanceTest";
     private MongoCollection<Document> collection;
@@ -154,9 +158,9 @@ public class AddIndexAcceptanceTest {
         final Index index = new Index(new OrderedKey("theFirstField", ASC), new OrderedKey("theSecondField", DESC));
         collection.admin().ensureIndex(index);
 
-        Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.admin().getIndexes().get(1);
 
-        Document keys = (Document) newIndexDetails.get("key");
+        final Document keys = (Document) newIndexDetails.get("key");
 
         OrderBy orderBy = fromInt((Integer) keys.get("theFirstField"));
         assertThat("First index should be ascending", orderBy, is(ASC));
@@ -172,7 +176,7 @@ public class AddIndexAcceptanceTest {
     public void shouldOnlyReturnIndexesForTheSelectedCollection() {
         collection.admin().ensureIndex(new Index("theField"));
 
-        MongoCollection<Document> anotherCollection = database.getCollection("anotherCollection");
+        final MongoCollection<Document> anotherCollection = database.getCollection("anotherCollection");
         anotherCollection.admin().ensureIndex(new Index("someOtherField"));
 
         assertThat("Should be default index and new index on the first database",
@@ -193,15 +197,15 @@ public class AddIndexAcceptanceTest {
     public void shouldSupportCompoundIndexesOfOrderedFieldsAndGeoFields() {
         collection.admin().ensureIndex(new Index(new GeoKey("locationField"), new OrderedKey("someOtherField", ASC)));
 
-        Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.admin().getIndexes().get(1);
 
-        Document keys = (Document) newIndexDetails.get("key");
-        Object geoField = keys.get("locationField");
+        final Document keys = (Document) newIndexDetails.get("key");
+        final Object geoField = keys.get("locationField");
         assertThat("Index should contain the first key", geoField, is(notNullValue()));
         String geoIndexValue = geoField.toString();
         assertThat("Index created should be a geo index", geoIndexValue, is("2d"));
 
-        Object orderedField = keys.get("someOtherField");
+        final Object orderedField = keys.get("someOtherField");
         assertThat("Index should contain the second key", orderedField, is(notNullValue()));
         OrderBy orderBy = fromInt((Integer) orderedField);
         assertThat("Index created should be ascending", orderBy, is(ASC));

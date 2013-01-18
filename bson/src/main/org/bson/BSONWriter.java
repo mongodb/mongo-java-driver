@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
@@ -472,14 +473,14 @@ public abstract class BSONWriter implements Closeable {
     /// Writes a BSON timestamp to the writer.
     /// </summary>
     /// <param name="value">The combined timestamp/increment value.</param>
-    public abstract void writeTimestamp(long value);
+    public abstract void writeTimestamp(BSONTimestamp value);
 
     /// <summary>
     /// Writes a BSON timestamp element to the writer.
     /// </summary>
     /// <param name="name">The name of the element.</param>
     /// <param name="value">The combined timestamp/increment value.</param>
-    public void writeTimestamp(final String name, final long value) {
+    public void writeTimestamp(final String name, final BSONTimestamp value) {
         writeName(name);
         writeTimestamp(value);
     }

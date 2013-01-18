@@ -1,37 +1,32 @@
 /**
- * 
+ *
  */
 package com.google.code.morphia.issue45;
-
-import org.junit.Assert;
-
-import org.junit.Test;
 
 import com.google.code.morphia.TestBase;
 import com.google.code.morphia.annotations.Embedded;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.testutil.TestEntity;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class EmptyEntityMappingTest extends TestBase
-{
+public class EmptyEntityMappingTest extends TestBase {
     @Entity
-    static class A extends TestEntity{
-    	private static final long serialVersionUID = 1L;
-		@Embedded
-		B b;
+    static class A extends TestEntity {
+        private static final long serialVersionUID = 1L;
+        @Embedded
+        private B b;
     }
 
     @Embedded
-    static class B
-    {
+    static class B {
         @Transient
-        String foo;
+        private String foo;
     }
 
     @Test
-    public void testEmptyEmbeddedNotNullAfterReload() throws Exception
-    {
+    public void testEmptyEmbeddedNotNullAfterReload() throws Exception {
         A a = new A();
         a.b = new B();
 

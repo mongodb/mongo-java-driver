@@ -12,22 +12,25 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.acceptancetest.Fixture.createMongoClient;
 
+/**
+ * Documents the basic functionality of MongoDB Collections available via the Java driver.
+ */
 public class CollectionAcceptanceTest {
     private static final String DB_NAME = "CollectionAcceptanceTest";
-    private MongoCollection<Document> collection;
+    private MongoDatabase database;
 
     @Before
     public void setUp() {
         final MongoClient mongoClient = createMongoClient();
 
-        final MongoDatabase database = mongoClient.getDatabase(DB_NAME);
+        database = mongoClient.getDatabase(DB_NAME);
         database.admin().drop();
 
-        collection = database.getCollection("collection");
     }
 
     @Test
     public void shouldCountNumberOfDocumentsInCollection() {
+        final MongoCollection<Document> collection = database.getCollection("collection");
         assertThat(collection.count(), is(0L));
 
         collection.insert(new Document("myField", "myValue"));
@@ -37,10 +40,26 @@ public class CollectionAcceptanceTest {
 
     @Test
     public void shouldGetStatistics() {
-        collection.getDatabase().admin().createCollection(collection.getName());
+        final String newCollectionName = "shouldGetStatistics";
+        database.admin().createCollection(newCollectionName);
+        final MongoCollection<Document> collection = database.getCollection(newCollectionName);
+
         Document collectionStatistics = collection.admin().getStatistics();
         assertThat(collectionStatistics, is(notNullValue()));
-        assertThat((String) collectionStatistics.get("ns"), is(DB_NAME + ".collection"));
+        assertThat((String) collectionStatistics.get("ns"), is(DB_NAME + "." + newCollectionName));
+    }
+
+    @Test
+    public void shouldDropExistingCollection() {
+        final String collectionName = "shouldDropExistingCollection";
+        database.admin().createCollection(collectionName);
+        final MongoCollection<Document> newCollection = database.getCollection(collectionName);
+
+        assertThat(database.admin().getCollectionNames().contains(collectionName), is(true));
+
+        newCollection.admin().drop();
+
+        assertThat(database.admin().getCollectionNames().contains(collectionName), is(false));
     }
 
 }

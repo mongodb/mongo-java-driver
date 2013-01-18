@@ -52,7 +52,7 @@ public class CollectibleDocumentSerializer extends DocumentSerializer implements
     }
 
     @Override
-    protected boolean skipField(String key) {
+    protected boolean skipField(final String key) {
         return key.equals(ID_FIELD_NAME);
     }
 

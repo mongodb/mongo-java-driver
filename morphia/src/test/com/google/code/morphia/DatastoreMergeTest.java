@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2010 Olafur Gauti Gudmundsson
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,37 +23,37 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 /**
- *
  * @author Scott Hernandez
  */
 public class DatastoreMergeTest extends TestBase {
 
-	private static class TestEntity {
-		@Id ObjectId id;
-		String name;
-		String foo;
-		int position = 0;
-	}
-	
-	@Test
-    public void testMerge() throws Exception {
-		TestEntity te = new TestEntity();
-		te.name = "test1";
-		te.foo  = "bar";
-		te.position = 1;
-		ds.save(te);
-		
-		assertEquals(1, ds.getCount(te));
-		
-		//only update the position field with merge, normally save would override the whole object.
-		TestEntity te2 = new TestEntity();
-		te2.id = te.id;
-		te2.position = 5;
-		ds.merge(te2);
+    private static class TestEntity {
+        @Id
+        private ObjectId id;
+        private String name;
+        private String foo;
+        private int position = 0;
+    }
 
-		TestEntity teLoaded = ds.get(te);
-		assertEquals(teLoaded.name, te.name);
-		assertEquals(teLoaded.foo, te.foo);
-		assertEquals(teLoaded.position, te2.position);
-	}
+    @Test
+    public void testMerge() throws Exception {
+        final TestEntity te = new TestEntity();
+        te.name = "test1";
+        te.foo = "bar";
+        te.position = 1;
+        ds.save(te);
+
+        assertEquals(1, ds.getCount(te));
+
+        //only update the position field with merge, normally save would override the whole object.
+        final TestEntity te2 = new TestEntity();
+        te2.id = te.id;
+        te2.position = 5;
+        ds.merge(te2);
+
+        final TestEntity teLoaded = ds.get(te);
+        assertEquals(teLoaded.name, te.name);
+        assertEquals(teLoaded.foo, te.foo);
+        assertEquals(teLoaded.position, te2.position);
+    }
 }

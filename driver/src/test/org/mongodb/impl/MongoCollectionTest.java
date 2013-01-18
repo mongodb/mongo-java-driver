@@ -33,7 +33,6 @@ import org.mongodb.MongoDatabase;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.ServerAddress;
 import org.mongodb.UpdateOperationsDocument;
-import org.mongodb.command.DropDatabaseCommand;
 import org.mongodb.result.InsertResult;
 import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.CollectibleSerializer;
@@ -57,7 +56,7 @@ public class MongoCollectionTest {
     public static void setUpClass() throws UnknownHostException {
         mongoClient = new SingleServerMongoClient(new ServerAddress());
         mongoDatabase = mongoClient.getDatabase(DB_NAME);
-        new DropDatabaseCommand(mongoDatabase).execute();
+        mongoDatabase.admin().drop();
     }
 
     @AfterClass
@@ -148,7 +147,7 @@ public class MongoCollectionTest {
         final MongoCursor<Document> cursor = collection.all();
         try {
             while (cursor.hasNext()) {
-                final Document cur = cursor.next();
+                cursor.next();
             }
         } finally {
             cursor.close();

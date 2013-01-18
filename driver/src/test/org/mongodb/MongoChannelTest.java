@@ -18,16 +18,16 @@ package org.mongodb;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.io.PooledByteBufferOutput;
 import org.bson.types.Binary;
 import org.bson.types.Document;
 import org.bson.types.ObjectId;
 import org.bson.util.BufferPool;
-import org.bson.util.PowerOfTwoByteBufferPool;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.io.MongoChannel;
+import org.mongodb.io.PooledByteBufferOutput;
+import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
@@ -50,6 +50,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class MongoChannelTest {
     private MongoChannel channel;
@@ -158,6 +159,7 @@ public class MongoChannelTest {
                 new PooledByteBufferOutput(bufferPool), new DocumentSerializer(primitiveSerializers));
 
         final MongoReplyMessage<Concrete> replyMessage =  channel.sendQueryMessage(queryMessage, new ConcreteSerializer());
+        assertNotNull(replyMessage);
     }
 
     @Test

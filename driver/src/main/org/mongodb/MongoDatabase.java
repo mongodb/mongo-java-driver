@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.bson.types.Document;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.operation.MongoCommandOperation;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.PrimitiveSerializers;
@@ -30,7 +30,7 @@ import org.mongodb.serialization.PrimitiveSerializers;
 public interface MongoDatabase {
     String getName();
 
-    CommandResult executeCommand(MongoCommandOperation commandOperation);
+    CommandResult executeCommand(MongoCommand commandOperation);
 
     MongoClient getClient();
 

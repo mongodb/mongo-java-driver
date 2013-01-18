@@ -19,12 +19,12 @@ package org.bson.io;
 import org.bson.BsonType;
 import org.bson.types.ObjectId;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.Charset;
 
 public class ByteBufferInput implements InputBuffer {
-    private static final String UTF8_CHARSET = "UTF-8";
+    private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
     private final ByteBuffer buffer;
 
@@ -75,11 +75,7 @@ public class ByteBufferInput implements InputBuffer {
     public String readString() {
         final int size = readInt32();
         final byte[] bytes = readBytes(size);
-        try {
-            return new String(bytes, 0, size - 1, UTF8_CHARSET); // TODO: there is a Java 6 alternative that takes a Charset
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalStateException(e);
-        }
+        return new String(bytes, 0, size - 1, UTF8_CHARSET);
     }
 
     @Override
@@ -103,11 +99,7 @@ public class ByteBufferInput implements InputBuffer {
         final byte[] bytes = readBytes(size);
         readByte();  // read the trailing null bytes
 
-        try {
-            return new String(bytes, UTF8_CHARSET); // TODO: there is a Java 6 alternative that takes a Charset
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalStateException(e);
-        }
+        return new String(bytes, UTF8_CHARSET);
     }
 
     private void readUntilNullByte() {
