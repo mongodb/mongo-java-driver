@@ -38,12 +38,12 @@ import java.util.List;
 public class FrontPageExampleTest extends TestBase {
 
     @Entity("employees")
-    private static class Employee {
+    private static final class Employee {
 
         private Employee() {
         }
 
-        public Employee(final String f, final String l, final Key<Employee> boss, final long sal) {
+        private Employee(final String f, final String l, final Key<Employee> boss, final long sal) {
             firstName = f;
             lastName = l;
             manager = boss;
@@ -55,12 +55,13 @@ public class FrontPageExampleTest extends TestBase {
         private String firstName, lastName; // value types are automatically persisted
         private Long salary = null; // only non-null values are stored
 
-//		Address address; // by default fields are @Embedded
+//        Address address; // by default fields are @Embedded
 
         private Key<Employee> manager; // references can be saved without automatic
         // loading
         @Reference
-        private final List<Employee> underlings = new ArrayList<Employee>(); // refs are stored*, and loaded automatically
+        private final List<Employee> underlings = new ArrayList<Employee>(); // refs are stored*,
+        // and loaded automatically
 
         @Property("started")
         private Date startDate; // fields can be renamed
@@ -73,7 +74,8 @@ public class FrontPageExampleTest extends TestBase {
         private String readButNotStored; // fields can loaded, but not saved
         @Transient
         private int notStored; // fields can be ignored (no load/save)
-        private final transient boolean stored = true; // not @Transient, will be ignored by Serialization/GWT for example.
+        private final transient boolean stored = true; // not @Transient, will be ignored by Serialization/GWT for
+        // example.
     }
 
     @Test
@@ -88,8 +90,10 @@ public class FrontPageExampleTest extends TestBase {
         final Key<Employee> scottsKey = ds.save(new Employee("Scott", "Hernandez", ds.getKey(boss), 150 * 1000));
         Assert.assertNotNull(scottsKey);
 
-        final UpdateResults<Employee> res = ds.update(boss, ds.createUpdateOperations(Employee.class).add
-                ("underlings", scottsKey)); //add Scott as an employee of his manager
+        //add Scott as an employee of his manager
+        final UpdateResults<Employee> res = ds.update(boss,
+                                                      ds.createUpdateOperations(Employee.class)
+                                                              .add("underlings", scottsKey));
         Assert.assertNotNull(res);
         Assert.assertTrue(res.getUpdatedExisting());
         Assert.assertEquals(1, res.getUpdatedCount());

@@ -35,9 +35,9 @@ import java.io.Serializable;
  */
 public class MapperTest extends TestBase {
     public static class A {
-        static int loadCount = 0;
+        private static int loadCount = 0;
         @Id
-        ObjectId id;
+        private ObjectId id;
 
         String getId() {
             return id.toString();
@@ -54,28 +54,28 @@ public class MapperTest extends TestBase {
     }
 
     @Entity("holders")
-    public static class HoldsMultipleA {
+    static class HoldsMultipleA {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Reference
-        A a1;
+        private A a1;
         @Reference
-        A a2;
+        private A a2;
     }
 
     @Entity("holders")
-    public static class HoldsMultipleALazily {
+    static class HoldsMultipleALazily {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Reference(lazy = true)
-        A a1;
+        private A a1;
         @Reference
-        A a2;
+        private A a2;
         @Reference(lazy = true)
-        A a3;
+        private A a3;
     }
 
-    public static class CustomId implements Serializable {
+    static class CustomId implements Serializable {
 
         private static final long serialVersionUID = 1L;
 
@@ -152,14 +152,14 @@ public class MapperTest extends TestBase {
         }
     }
 
-    public static class UsesCustomIdObject {
+    static class UsesCustomIdObject {
         @Id
         CustomId id;
         String text;
     }
 
     @Test
-    public void SingleLookup() throws Exception {
+    public void singleLookup() throws Exception {
         A.loadCount = 0;
         final A a = new A();
         HoldsMultipleA holder = new HoldsMultipleA();
@@ -172,7 +172,7 @@ public class MapperTest extends TestBase {
     }
 
     @Test
-    public void SingleProxy() throws Exception {
+    public void singleProxy() throws Exception {
         // TODO us: exclusion does not work properly with maven + junit4
         if (!LazyFeatureDependencies.testDependencyFullFilled()) {
             return;
@@ -199,7 +199,7 @@ public class MapperTest extends TestBase {
     }
 
     @Test
-    public void SerializableId() throws Exception {
+    public void serializableId() throws Exception {
         final CustomId cId = new CustomId();
         cId.id = new ObjectId();
         cId.type = "banker";

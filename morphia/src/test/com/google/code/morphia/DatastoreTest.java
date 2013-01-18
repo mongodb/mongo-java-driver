@@ -64,16 +64,16 @@ public class DatastoreTest extends TestBase {
     }
 
     public static class LifecycleListener {
-        static boolean prePersist = false;
-        static boolean prePersistWithEntity = false;
+        private static boolean prePersist = false;
+        private static boolean prePersistWithEntity = false;
 
         @PrePersist
-        void PrePersist() {
+        void prePersist() {
             prePersist = true;
         }
 
         @PrePersist
-        void PrePersist(final LifecycleTestObj obj) {
+        void prePersist(final LifecycleTestObj obj) {
             if (obj == null) {
                 throw new RuntimeException();
             }
@@ -85,16 +85,16 @@ public class DatastoreTest extends TestBase {
     @EntityListeners(LifecycleListener.class)
     public static class LifecycleTestObj {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Transient
-        boolean prePersist, postPersist, preLoad, postLoad, postLoadWithParam;
-        boolean prePersistWithParamAndReturn, prePersistWithParam;
-        boolean postPersistWithParam;
-        boolean preLoadWithParamAndReturn, preLoadWithParam;
+        private boolean prePersist, postPersist, preLoad, postLoad, postLoadWithParam;
+        private boolean prePersistWithParamAndReturn, prePersistWithParam;
+        private boolean postPersistWithParam;
+        private boolean preLoadWithParamAndReturn, preLoadWithParam;
 
         @PrePersist
-        void PrePersist() {
-            if (prePersist == true) {
+        void prePersist() {
+            if (prePersist) {
                 throw new RuntimeException("already called");
             }
 
@@ -102,29 +102,29 @@ public class DatastoreTest extends TestBase {
         }
 
         @PrePersist
-        protected void PrePersistWithParam(final DBObject dbObj) {
-            if (prePersistWithParam == true) {
+        protected void prePersistWithParam(final DBObject dbObj) {
+            if (prePersistWithParam) {
                 throw new RuntimeException("already called");
             }
             prePersistWithParam = true;
         }
 
         @PrePersist
-        public DBObject PrePersistWithParamAndReturn(final DBObject dbObj) {
-            if (prePersistWithParamAndReturn == true) {
+        public DBObject prePersistWithParamAndReturn(final DBObject dbObj) {
+            if (prePersistWithParamAndReturn) {
                 throw new RuntimeException("already called");
             }
             prePersistWithParamAndReturn = true;
             return null;
-            //			DBObject retObj = new BasicDBObject((Map)dbObj);
-            //			retObj.put("prePersistWithParamAndReturn", true);
-            //			return retObj;
+//            DBObject retObj = new BasicDBObject((Map) dbObj);
+//            retObj.put("prePersistWithParamAndReturn", true);
+//            return retObj;
         }
 
         @SuppressWarnings("unused")
         @PostPersist
-        private void PostPersistPersist() {
-            if (postPersist == true) {
+        private void postPersistPersist() {
+            if (postPersist) {
                 throw new RuntimeException("already called");
             }
             postPersist = true;
@@ -132,8 +132,8 @@ public class DatastoreTest extends TestBase {
         }
 
         @PostPersist
-        void PostPersistWithParam(final DBObject dbObj) {
-            //			dbObj.put("postPersistWithParam", true);
+        void postPersistWithParam(final DBObject dbObj) {
+//            dbObj.put("postPersistWithParam", true);
             postPersistWithParam = true;
             if (!dbObj.containsField(Mapper.ID_KEY)) {
                 throw new RuntimeException("missing " + Mapper.ID_KEY);
@@ -141,8 +141,8 @@ public class DatastoreTest extends TestBase {
         }
 
         @PreLoad
-        void PreLoad() {
-            if (preLoad == true) {
+        void preLoad() {
+            if (preLoad) {
                 throw new RuntimeException("already called");
             }
 
@@ -150,13 +150,13 @@ public class DatastoreTest extends TestBase {
         }
 
         @PreLoad
-        void PreLoadWithParam(final DBObject dbObj) {
+        void preLoadWithParam(final DBObject dbObj) {
             dbObj.put("preLoadWithParam", true);
         }
 
         @SuppressWarnings("rawtypes")
         @PreLoad
-        DBObject PreLoadWithParamAndReturn(final DBObject dbObj) {
+        DBObject preLoadWithParamAndReturn(final DBObject dbObj) {
             final BasicDBObject retObj = new BasicDBObject();
             retObj.putAll(dbObj);
             retObj.put("preLoadWithParamAndReturn", true);
@@ -164,8 +164,8 @@ public class DatastoreTest extends TestBase {
         }
 
         @PostLoad
-        void PostLoad() {
-            if (postLoad == true) {
+        void postLoad() {
+            if (postLoad) {
                 throw new RuntimeException("already called");
             }
 
@@ -173,12 +173,12 @@ public class DatastoreTest extends TestBase {
         }
 
         @PreLoad
-        void PostLoadWithParam(final DBObject dbObj) {
-            if (postLoadWithParam == true) {
+        void postLoadWithParam(final DBObject dbObj) {
+            if (postLoadWithParam) {
                 throw new RuntimeException("already called");
             }
             postLoadWithParam = true;
-            //			dbObj.put("postLoadWithParam", true);
+//            dbObj.put("postLoadWithParam", true);
         }
     }
 
@@ -200,7 +200,7 @@ public class DatastoreTest extends TestBase {
     @SuppressWarnings("unused")
     @Test
     public void testMorphiaDS() throws Exception {
-        //		Datastore ds = new Morphia().createDatastore(mongo);
+//        Datastore ds = new Morphia().createDatastore(mongo);
         final Datastore ds = new Morphia().createDatastore(mongo, "test");
     }
 

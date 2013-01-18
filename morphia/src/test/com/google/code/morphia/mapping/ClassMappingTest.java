@@ -3,35 +3,33 @@
  */
 package com.google.code.morphia.mapping;
 
-import java.util.Collection;
-import java.util.LinkedList;
-
-import org.junit.Assert;
-
-import org.bson.types.ObjectId;
-import org.junit.Test;
-
 import com.google.code.morphia.TestBase;
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.Property;
+import org.bson.types.ObjectId;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
-public class ClassMappingTest extends TestBase
-{
+public class ClassMappingTest extends TestBase {
 
     @SuppressWarnings("unchecked")
     public static class E {
-		@Id ObjectId id;
+        @Id
+        private ObjectId id;
 
-        @Property Class<? extends Collection> testClass;
-        Class<? extends Collection> testClass2;
+        @Property
+        private Class<? extends Collection> testClass;
+        private Class<? extends Collection> testClass2;
     }
 
     @Test
-    public void testMapping() throws Exception
-    {
+    public void testMapping() throws Exception {
         E e = new E();
 
         e.testClass = LinkedList.class;
@@ -42,8 +40,7 @@ public class ClassMappingTest extends TestBase
     }
 
     @Test
-    public void testMappingWithoutAnnotation() throws Exception
-    {
+    public void testMappingWithoutAnnotation() throws Exception {
         E e = new E();
 
         e.testClass2 = LinkedList.class;

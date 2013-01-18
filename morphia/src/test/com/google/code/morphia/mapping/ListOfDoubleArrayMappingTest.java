@@ -35,10 +35,9 @@ import java.util.List;
 public class ListOfDoubleArrayMappingTest extends TestBase {
     private static class ContainsListDoubleArray {
         @Id
-        ObjectId id;
-        final List<Double[]> points = new ArrayList<Double[]>();
+        private ObjectId id;
+        private final List<Double[]> points = new ArrayList<Double[]>();
     }
-
 
     // TODO: Fails with Java 7
     @Test
@@ -50,9 +49,8 @@ public class ListOfDoubleArrayMappingTest extends TestBase {
         ds.save(ent);
         final ContainsListDoubleArray loaded = ds.get(ent);
         Assert.assertNotNull(loaded.id);
-//		Assert.assertEquals(1.1D, loaded.points.get(0)[0], 0);
-//		Assert.assertEquals(2.2D, loaded.points.get(0)[1], 0);
-
+//        Assert.assertEquals(1.1D, loaded.points.get(0)[0], 0);
+//        Assert.assertEquals(2.2D, loaded.points.get(0)[1], 0);
     }
 
 

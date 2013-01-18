@@ -47,10 +47,10 @@ public class SimpleValidationViaInterceptorTest extends TestBase {
 
     static class E {
         @Id
-        private final ObjectId _id = new ObjectId();
+        private final ObjectId id = new ObjectId();
 
         @NonNull
-        Date lastModified;
+        private Date lastModified;
 
         @PrePersist
         void entityCallback() {
@@ -60,15 +60,15 @@ public class SimpleValidationViaInterceptorTest extends TestBase {
 
     static class E2 {
         @Id
-        private final ObjectId _id = new ObjectId();
+        private final ObjectId id = new ObjectId();
 
         @NonNull
-        String mustFailValidation;
+        private String mustFailValidation;
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    @Target({ElementType.FIELD})
-    public static @interface NonNull {
+    @Target(ElementType.FIELD)
+    static @interface NonNull {
     }
 
     public static class NonNullValidation extends AbstractEntityInterceptor {

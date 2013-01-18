@@ -31,43 +31,41 @@ public class MappingTest extends TestBase {
 
     @Test
     public void testMapping() {
-        morphia.map(Class_level_three.class);
-        final Class_level_three sp = new Class_level_three();
+        morphia.map(ClassLevelThree.class);
+        final ClassLevelThree sp = new ClassLevelThree();
 
         //Old way
         final DBObject wrapObj = morphia.toDBObject(sp);  //the error points here from the user
         ds.getDB().getCollection("testColl").save(wrapObj);
 
-
         //better way
         ds.save(sp);
-
     }
 
-    private static interface Interface_one<K> {
+    private interface InterfaceOne<K> {
         K getK();
     }
 
-    private static class Class_level_one<K> implements Interface_one<K>, Cloneable {
-        K k;
+    private class ClassLevelOne<K> implements InterfaceOne<K>, Cloneable {
+        private K k;
 
         public K getK() {
             return k;
         }
     }
 
-    private static class Class_level_two extends Class_level_one<String> {
+    private class ClassLevelTwo extends ClassLevelOne<String> {
 
     }
 
-    private static class Class_level_three {
+    private static class ClassLevelThree {
         @Id
         private ObjectId id;
 
         private String name;
 
         @Embedded
-        private Class_level_two value;
+        private ClassLevelTwo value;
     }
 
 

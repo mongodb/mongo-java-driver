@@ -42,21 +42,21 @@ public class IgnoreFieldsAnnotationTest extends TestBase {
         super();
     }
 
-    Transient transAnn;
+    private Transient transAnn;
 
     @Retention(RetentionPolicy.RUNTIME)
-    @Target({ElementType.TYPE})
+    @Target(ElementType.TYPE)
     static @interface IgnoreFields {
         String value();
     }
 
     @Entity
     @IgnoreFields("ignored")
-    static class User {
+    private static class User {
         @Id
-        ObjectId id;
-        String email;
-        String ignored = "never, never";
+        private ObjectId id;
+        private String email;
+        private String ignored = "never, never";
     }
 
     @Before

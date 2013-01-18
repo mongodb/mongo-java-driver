@@ -35,18 +35,18 @@ import java.util.List;
 /**
  * @author Scott Hernandez
  */
-public class NewAnnoationTest extends TestBase {
+public class NewAnnotationTest extends TestBase {
 
     @Retention(RetentionPolicy.RUNTIME)
-    @Target({ElementType.FIELD})
+    @Target(ElementType.FIELD)
     static @interface Lowercase {
     }
 
     private static class User {
         @Id
-        String id;
+        private String id;
         @Lowercase
-        String email;
+        private String email;
     }
 
     private static class ToLowercaseHelper implements EntityInterceptor {
@@ -86,7 +86,8 @@ public class NewAnnoationTest extends TestBase {
 
         ds.save(u);
 
-        final User uScott = ds.find(User.class).disableValidation().filter("email_lowercase", u.email.toLowerCase()).get();
+        final User uScott = ds.find(User.class).disableValidation().filter("email_lowercase",
+                                                                           u.email.toLowerCase()).get();
         Assert.assertNotNull(uScott);
 
     }

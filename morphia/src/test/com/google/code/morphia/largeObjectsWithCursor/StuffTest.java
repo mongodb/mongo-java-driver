@@ -35,8 +35,8 @@ public class StuffTest extends TestBase {
     @Entity
     static class E extends BaseEntity {
         private static final long serialVersionUID = 1L;
-        protected final Integer index;
-        protected final byte[] largeContent;
+        private final Integer index;
+        private final byte[] largeContent;
 
         public E() {
             index = null;
@@ -62,11 +62,11 @@ public class StuffTest extends TestBase {
     @Override
     @Before
     public void setUp() {
-//		try {
-//			this.mongo = new Mongo("stump");
-//		} catch (Exception e) {
-//			throw new RuntimeException(e);
-//		}
+//        try {
+//            this.mongo = new Mongo("stump");
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
 
         super.setUp();
         morphia.map(E.class);

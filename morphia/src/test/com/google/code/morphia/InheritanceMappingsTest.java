@@ -44,7 +44,7 @@ public class InheritanceMappingsTest extends TestBase {
         Bicycle, Moped, MiniCar, Car, Truck
     }
 
-    private static interface Vehicle {
+    private interface Vehicle {
         String getId();
 
         int getWheelCount();
@@ -55,7 +55,7 @@ public class InheritanceMappingsTest extends TestBase {
     @Entity("vehicles")
     private abstract static class AbstractVehicle implements Vehicle {
         @Id
-        ObjectId id;
+        private ObjectId id;
 
         public String getId() {
             return id.toString();
@@ -89,7 +89,7 @@ public class InheritanceMappingsTest extends TestBase {
     }
 
     private static class ParameterizedEntity extends GenericIdPlus<String, Long> {
-        String b;
+        private String b;
     }
 
     private static class GenericId<T> {
@@ -106,13 +106,13 @@ public class InheritanceMappingsTest extends TestBase {
     private static class ParameterizedIdEntity extends GenericId<String> {
     }
 
-    private static interface MapPlusIterableStringString extends Iterable<Entry<String, String>>, Map<String, String> {
+    private interface MapPlusIterableStringString extends Iterable<Entry<String, String>>, Map<String, String> {
     }
 
     @Entity(noClassnameStored = true)
     public static class MapLike implements MapPlusIterableStringString {
         @Id
-        ObjectId id;
+        private ObjectId id;
         private final HashMap<String, String> realMap = new HashMap<String, String>();
 
         public Iterator<java.util.Map.Entry<String, String>> iterator() {

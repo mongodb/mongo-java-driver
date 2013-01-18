@@ -55,7 +55,7 @@ public class NameValuePairTest extends TestBase {
     private static class NameValuePairContainer {
         @Id
         private ObjectId id;
-        NameValuePair<Name, Double> pair;
+        private NameValuePair<Name, Double> pair;
     }
 
     @SuppressWarnings("rawtypes")
@@ -79,17 +79,17 @@ public class NameValuePairTest extends TestBase {
 
         }
 
-//		public NameValuePair(final Entry<T1, T2> e) {
-//			this(e.getKey(), e.getValue());
-//		}
-//		
-//		public T2 getValue() {
-//			return value;
-//		}
-//		
-//		public T1 getName() {
-//			return (T1) name;
-//		}
+//        public NameValuePair(final Entry<T1, T2> e) {
+//            this(e.getKey(), e.getValue());
+//        }
+//
+//        public T2 getValue() {
+//            return value;
+//        }
+//
+//        public T1 getName() {
+//            return (T1) name;
+//        }
 
         @Override
         public int hashCode() {

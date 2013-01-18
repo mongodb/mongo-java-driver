@@ -31,26 +31,25 @@ import static org.junit.Assert.assertNotNull;
 /**
  * @author Scott Hernandez
  */
-public class IndexInheritenceTest extends TestBase {
+public class IndexInheritanceTest extends TestBase {
 
     @Indexes(@Index("description"))
     private abstract static class Shape {
         @Id
-        ObjectId id;
+        private ObjectId id;
         String description;
         @Indexed
-        String foo;
+        private String foo;
     }
 
     @Indexes(@Index("radius"))
     private static class Circle extends Shape {
-        double radius = 1;
+        private final double radius = 1;
 
         public Circle() {
             this.description = "Circles are round and can be rolled along the ground.";
         }
     }
-
 
     @Test
     public void testClassIndexInherit() throws Exception {

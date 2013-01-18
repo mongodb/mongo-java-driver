@@ -37,32 +37,32 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Scott Hernandez
  */
-@SuppressWarnings({"unused"})
+@SuppressWarnings({ "unused" })
 public class IdFieldTest extends TestBase {
 
     @Entity
-    private static class ReferenceAsId {
+    private static final class ReferenceAsId {
         @Id
         @Reference
-        Rectangle id;
+        private Rectangle id;
 
-        protected ReferenceAsId() {
+        private ReferenceAsId() {
         }
 
-        public ReferenceAsId(final Rectangle key) {
+        private ReferenceAsId(final Rectangle key) {
             this.id = key;
         }
     }
 
     @Entity
-    private static class KeyAsId {
+    private static final class KeyAsId {
         @Id
-        Key<?> id;
+        private Key<?> id;
 
-        protected KeyAsId() {
+        private KeyAsId() {
         }
 
-        public KeyAsId(final Key<?> key) {
+        private KeyAsId(final Key<?> key) {
             this.id = key;
         }
     }
@@ -70,8 +70,7 @@ public class IdFieldTest extends TestBase {
     @Entity
     private static class MapAsId {
         @Id
-        final
-        Map<String, String> id = new HashMap<String, String>();
+        private final Map<String, String> id = new HashMap<String, String>();
     }
 
     @Test

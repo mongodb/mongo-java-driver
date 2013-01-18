@@ -35,35 +35,23 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 public class SerializedMapTest extends TestBase {
 
-    public static class Map1 extends TestEntity {
-        /**
-         *
-         */
+    static class Map1 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Serialized(disableCompression = false)
-        final
-        Map<Integer, Foo> shouldBeOk = new HashMap();
+        private final Map<Integer, Foo> shouldBeOk = new HashMap();
 
     }
 
-    public static class Map2 extends TestEntity {
-        /**
-         *
-         */
+    static class Map2 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Serialized(disableCompression = true)
-        final
-        Map<Integer, Foo> shouldBeOk = new HashMap();
+        private final Map<Integer, Foo> shouldBeOk = new HashMap();
 
     }
 
-    public static class Foo implements Serializable {
-
-        /**
-         *
-         */
+    static class Foo implements Serializable {
         private static final long serialVersionUID = 1L;
-        final String id;
+        private final String id;
 
         public Foo(final String id) {
             this.id = id;

@@ -33,9 +33,9 @@ import java.io.IOException;
  */
 public class TestSerializerTest extends TestBase {
 
-    private static final String TEST_TEXT = "In 1970, the British Empire lay in ruins, " +
-            "and foreign nationalists frequented the streets - many of them Hungarians (not the streets - the foreign" +
-            " nationals). Anyway, many of these Hungarians went into tobacconist's shops to buy cigarettes.... ";
+    private static final String TEST_TEXT = "In 1970, the British Empire lay in ruins, "
+            + "and foreign nationalists frequented the streets - many of them Hungarians (not the streets - the foreign"
+            + " nationals). Anyway, many of these Hungarians went into tobacconist's shops to buy cigarettes.... ";
 
     @Test
     public final void testSerialize() throws IOException, ClassNotFoundException {
@@ -74,16 +74,14 @@ public class TestSerializerTest extends TestBase {
 
         Assert.assertTrue(e.payload2.length == 2048);
         Assert.assertTrue(new String(e.payload2).startsWith(TEST_TEXT));
-
     }
 
     private static class E {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Serialized
-        byte[] payload1;
+        private byte[] payload1;
         @Serialized()
-        byte[] payload2;
-
+        private byte[] payload2;
     }
 }

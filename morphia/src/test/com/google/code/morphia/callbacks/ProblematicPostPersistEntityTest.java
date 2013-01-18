@@ -20,9 +20,7 @@ import com.google.code.morphia.TestBase;
 import org.junit.Assert;
 import org.junit.Test;
 
-
 public class ProblematicPostPersistEntityTest extends TestBase {
-
     @Test
     public void testCallback() throws Exception {
         final ProblematicPostPersistEntity p = new ProblematicPostPersistEntity();

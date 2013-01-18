@@ -42,25 +42,23 @@ public class MapImplTest extends TestBase {
 
     private static class ContainsMapOfEmbeddedInterfaces {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Embedded
-        final
-        Map<String, Serializable> values = new HashMap<String, Serializable>();
+        private final Map<String, Serializable> values = new HashMap<String, Serializable>();
     }
 
     private static class ContainsMapOfEmbeddedGoos {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Embedded
-        final
-        Map<String, Goo> values = new HashMap<String, Goo>();
+        private final Map<String, Goo> values = new HashMap<String, Goo>();
     }
 
     private static class Goo implements Serializable {
         static final long serialVersionUID = 1L;
         @Id
-        ObjectId id;
-        String name;
+        private ObjectId id;
+        private String name;
 
         Goo() {
         }
@@ -72,11 +70,10 @@ public class MapImplTest extends TestBase {
 
     private static class E {
         @Id
-        ObjectId id;
+        private ObjectId id;
 
         @Embedded
-        final
-        MyMap mymap = new MyMap();
+        private final MyMap mymap = new MyMap();
     }
 
     private static class MyMap extends HashMap<String, String> {
@@ -120,9 +117,8 @@ public class MapImplTest extends TestBase {
         cmoei.values.put("first", g1);
         ds.save(cmoei);
         //check className in the map values.
-        final BasicDBObject goo = (BasicDBObject) ((BasicDBObject) ds.getCollection(ContainsMapOfEmbeddedInterfaces
-                                                                                            .class).findOne().get
-                ("values")).get("first");
+        final BasicDBObject goo = (BasicDBObject) ((BasicDBObject) ds.getCollection(
+                ContainsMapOfEmbeddedInterfaces.class).findOne().get("values")).get("first");
         final boolean hasF = goo.containsField(Mapper.CLASS_NAME_FIELDNAME);
         assertTrue(hasF);
     }
@@ -138,9 +134,8 @@ public class MapImplTest extends TestBase {
         ds.save(cmoei);
         ds.update(cmoei, ds.createUpdateOperations(ContainsMapOfEmbeddedInterfaces.class).set("values.second", g2));
         //check className in the map values.
-        final BasicDBObject goo = (BasicDBObject) ((BasicDBObject) ds.getCollection(ContainsMapOfEmbeddedInterfaces
-                                                                                            .class).findOne().get
-                ("values")).get("second");
+        final BasicDBObject goo = (BasicDBObject) ((BasicDBObject) ds.getCollection(
+                ContainsMapOfEmbeddedInterfaces.class).findOne().get("values")).get("second");
         final boolean hasF = goo.containsField(Mapper.CLASS_NAME_FIELDNAME);
         assertTrue("className should be here.", hasF);
     }
@@ -157,7 +152,8 @@ public class MapImplTest extends TestBase {
         ds.update(cmoeg, ds.createUpdateOperations(ContainsMapOfEmbeddedGoos.class).set("values.second", g2));
         //check className in the map values.
 
-        final BasicDBObject goo = (BasicDBObject) ((BasicDBObject) ds.getCollection(ContainsMapOfEmbeddedGoos.class).findOne().get("values")).get("second");
+        final BasicDBObject goo = (BasicDBObject) ((BasicDBObject) ds.getCollection(
+                ContainsMapOfEmbeddedGoos.class).findOne().get("values")).get("second");
         final boolean hasF = goo.containsField(Mapper.CLASS_NAME_FIELDNAME);
         assertTrue("className should not be here.", !hasF);
     }

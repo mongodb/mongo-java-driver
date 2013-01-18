@@ -26,15 +26,12 @@ import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 
-/**
- *
- */
 public class IterableConverterNullPointerExceptionTest extends TestBase {
     @Entity
     static class TestEntity {
         @Id
-        String id;
-        String[] array;
+        private String id;
+        private String[] array;
     }
 
     @Before

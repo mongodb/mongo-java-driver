@@ -39,23 +39,21 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Scott Hernandez
  */
-//@Ignore
-@SuppressWarnings({"rawtypes", "unchecked"})
 public class PerfTest extends TestBase {
-    static final double WriteFailFactor = 1.10;
-    static double ReadFailFactor = 1.75;
-    static final DecimalFormat DF = new DecimalFormat("#.##");
+    private static final double WRITE_FAIL_FACTOR = 1.10;
+    private static final double READ_FAIL_FACTOR = 1.75;
+    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.##");
 
     @Entity
-    public static class Address {
+     static class Address {
         @Id
-        ObjectId id;
-        String name = "Scott";
-        String street = "3400 Maple";
-        String city = "Manhattan Beach";
-        String state = "CA";
-        int zip = 90266;
-        Date added = new Date();
+        private ObjectId id;
+        private String name = "Scott";
+        private String street = "3400 Maple";
+        private String city = "Manhattan Beach";
+        private String state = "CA";
+        private int zip = 90266;
+        private Date added = new Date();
 
         public Address() {
         }
@@ -98,8 +96,8 @@ public class PerfTest extends TestBase {
         final long insertTime = endTicks - startTicks;
 
         final String msg = String.format("Insert (%s) performance is too slow: %sX slower (%s/%s)", count,
-                                         DF.format((double) insertTime / rawInsertTime), insertTime, rawInsertTime);
-        assertTrue(msg, insertTime < (rawInsertTime * WriteFailFactor));
+                                         DECIMAL_FORMAT.format((double) insertTime / rawInsertTime), insertTime, rawInsertTime);
+        assertTrue(msg, insertTime < (rawInsertTime * WRITE_FAIL_FACTOR));
     }
 
 
@@ -129,11 +127,11 @@ public class PerfTest extends TestBase {
     }
 
     @Entity(value = "imageMeta", noClassnameStored = true)
-    public static class TestObj {
+     static class TestObj {
         @Id
-        public ObjectId id = new ObjectId();
-        public long var1;
-        public long var2;
+        private ObjectId id = new ObjectId();
+        private long var1;
+        private long var2;
     }
 
     @Test
@@ -146,8 +144,8 @@ public class PerfTest extends TestBase {
         for (int i = 0; i < 1000; i++) {
             final TestObj obj = new TestObj();
             obj.id = new ObjectId();
-            obj.var1 = 3345345l + i;
-            obj.var2 = 6785678l + i;
+            obj.var1 = 3345345L + i;
+            obj.var2 = 6785678L + i;
             objList.add(obj);
         }
 
@@ -163,8 +161,8 @@ public class PerfTest extends TestBase {
         for (int i = 0; i < 1000; i++) {
             final DBObject doc = new BasicDBObject();
             doc.put("_id", new ObjectId());
-            doc.put("var1", 3345345l + i);
-            doc.put("var2", 6785678l + i);
+            doc.put("var1", 3345345L + i);
+            doc.put("var2", 6785678L + i);
             batchPush.add(doc);
         }
         final DBCollection c = mongoDB.getCollection("imageMeta2");
@@ -179,8 +177,8 @@ public class PerfTest extends TestBase {
         for (int i = 0; i < 1000; i++) {
             final TestObj obj = new TestObj();
             obj.id = new ObjectId();
-            obj.var1 = 3345345l + i;
-            obj.var2 = 6785678l + i;
+            obj.var1 = 3345345L + i;
+            obj.var2 = 6785678L + i;
             objList.add(obj);
         }
 
@@ -193,8 +191,8 @@ public class PerfTest extends TestBase {
         for (int i = 0; i < 1000; i++) {
             final DBObject doc = new BasicDBObject();
             doc.put("_id", new ObjectId());
-            doc.put("var1", 3345345l + i);
-            doc.put("var2", 6785678l + i);
+            doc.put("var1", 3345345L + i);
+            doc.put("var2", 6785678L + i);
             batchPush.add(doc);
         }
 

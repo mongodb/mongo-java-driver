@@ -27,20 +27,18 @@ import java.util.ConcurrentModificationException;
 /**
  * @author Scott Hernandez
  */
-
 public class VersionAnnotationTest extends TestBase {
 
     private static class B {
         @Id
-        ObjectId id = new ObjectId();
+        private ObjectId id = new ObjectId();
         @Version
-        long version;
+        private long version;
     }
 
     @Ignore
     @Test(expected = ConcurrentModificationException.class)
     public void testVersion() throws Exception {
-
         final B b1 = new B();
         try {
             ds.save(b1);

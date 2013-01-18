@@ -38,21 +38,21 @@ public class MapReduceTest extends TestBase {
 
     private static class ResultBase<T, V> {
         @Id
-        T type;
+        private T type;
         @Embedded
         V value;
     }
 
     private static class HasCount {
-        double count;
+        private double count;
     }
 
     @SuppressWarnings("unused")
     @Entity("mr-results")
     private static class ResultEntity2 {
         @Id
-        String type;
-        double count;
+        private String type;
+        private double count;
 
         @PreLoad
         void preLoad(final BasicDBObject dbObj) {
@@ -72,11 +72,12 @@ public class MapReduceTest extends TestBase {
             ads.insert("shapes", new Circle(rnd.nextDouble()));
             ads.insert("shapes", new Rectangle(rnd.nextDouble(), rnd.nextDouble()));
         }
-        final String map = "function () { if(this['radius']) { emit('circle', {count:1}); return; } emit('rect', " +
-                "{count:1}); }";
-        final String reduce = "function (key, values) { var total = 0; for ( var i=0; i<values.length; i++ ) {total " +
-                "+= values[i].count;} return { count : total }; }";
-        final MapreduceResults<ResultEntity> mrRes = ds.mapReduce(MapreduceType.REPLACE, ads.createQuery(Shape.class), map, reduce, null, null, ResultEntity.class);
+        final String map = "function () { if(this['radius']) { emit('circle', {count:1}); return; } emit('rect', "
+                + "{count:1}); }";
+        final String reduce = "function (key, values) { var total = 0; for ( var i=0; i<values.length; i++ ) {total "
+                + "+= values[i].count;} return { count : total }; }";
+        final MapreduceResults<ResultEntity> mrRes = ds.mapReduce(MapreduceType.REPLACE, ads.createQuery(Shape.class),
+                                                                  map, reduce, null, null, ResultEntity.class);
         Assert.assertEquals(2, mrRes.createQuery().countAll());
         Assert.assertEquals(100, mrRes.createQuery().get().value.count, 0);
     }

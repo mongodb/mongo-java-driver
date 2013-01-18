@@ -35,14 +35,11 @@ import java.util.ArrayList;
 @SuppressWarnings("unchecked")
 public class RegisterAfterUseTest extends TestBase {
 
-    public static class Broken extends TestEntity {
-        /**
-         *
-         */
+    static class Broken extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Property("foo")
         @Embedded("bar")
-        ArrayList l;
+        private ArrayList l;
     }
 
     @Test

@@ -46,6 +46,7 @@ public class NotSavedTest extends TestBase {
     static class NormalWithNotSaved {
         @Id
         private final ObjectId id = new ObjectId();
+        @SuppressWarnings("FieldMayBeFinal")
         @NotSaved
         private String name = "never";
     }

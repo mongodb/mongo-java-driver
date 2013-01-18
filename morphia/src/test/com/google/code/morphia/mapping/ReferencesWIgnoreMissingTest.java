@@ -33,7 +33,7 @@ public class ReferencesWIgnoreMissingTest extends TestBase {
     @Entity
     static class Container {
         @Id
-        public ObjectId id;
+        private ObjectId id;
         @Reference(ignoreMissing = true)
         private StringHolder[] refs = null;
     }
@@ -41,11 +41,11 @@ public class ReferencesWIgnoreMissingTest extends TestBase {
     @Entity
     static class StringHolder {
         @Id
-        ObjectId id = new ObjectId();
+        private final ObjectId id = new ObjectId();
     }
 
     @Test
-    public void TestMissingReference() throws Exception {
+    public void testMissingReference() throws Exception {
         final Container c = new Container();
         c.refs = new StringHolder[]{new StringHolder(), new StringHolder()};
         ds.save(c);

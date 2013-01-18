@@ -43,7 +43,7 @@ public class IdTwiceTest extends TestBase {
     @Converters(CalendarConverter.class)
     private static class A extends TestEntity {
         private static final long serialVersionUID = 1L;
-        Calendar c;
+        private Calendar c;
     }
 
 }

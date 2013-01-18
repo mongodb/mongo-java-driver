@@ -30,54 +30,53 @@ import java.util.Set;
 public class SingleToMultipleConversionTest extends TestBase {
     @Embedded
     private static class HasString {
-        String s = "foo";
+        private final String s = "foo";
     }
 
     @Entity(value = "B", noClassnameStored = true)
     private static class HasEmbeddedStringy {
         @Id
-        ObjectId id;
-        HasString hs = new HasString();
+        private ObjectId id;
+        private final HasString hs = new HasString();
     }
 
     @Entity(value = "B", noClassnameStored = true)
     private static class HasEmbeddedStringyArray {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @AlsoLoad("hs")
-        HasString[] hss;
+        private HasString[] hss;
     }
 
     @Entity(value = "B", noClassnameStored = true)
     private static class HasEmbeddedStringySet {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @AlsoLoad("hs")
-        Set<HasString> hss;
+        private Set<HasString> hss;
     }
-
 
     @Entity(value = "A", noClassnameStored = true)
     private static class HasSingleString {
         @Id
-        ObjectId id;
-        String s = "foo";
+        private ObjectId id;
+        private final String s = "foo";
     }
 
     @Entity(value = "A", noClassnameStored = true)
     private static class HasManyStringsArray {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @AlsoLoad("s")
-        String[] strings;
+        private String[] strings;
     }
 
     @Entity(value = "A", noClassnameStored = true)
     private static class HasManyStringsList {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @AlsoLoad("s")
-        List<String> strings;
+        private List<String> strings;
     }
 
     @Test

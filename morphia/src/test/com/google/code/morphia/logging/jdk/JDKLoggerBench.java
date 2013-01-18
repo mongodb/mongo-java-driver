@@ -27,12 +27,9 @@ import java.io.PrintStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * @author doc
- */
 public class JDKLoggerBench implements I {
     private static Logr logger;
-    private static final JDKLoggerBench r = new JDKLoggerBench();
+    private static final JDKLoggerBench LOGGER_BENCH = new JDKLoggerBench();
 
     public static void main(final String[] args) throws Exception {
 
@@ -82,14 +79,14 @@ public class JDKLoggerBench implements I {
         System.err.println("\nUsing " + logger.getClass());
         System.err.println("Warmup");
         for (int j = 0; j < 10000; j++) {
-            r.foo();
+            LOGGER_BENCH.foo();
         }
         calm();
 
         System.err.println("Start");
         start = System.currentTimeMillis();
         for (int j = 0; j < 1000000; j++) {
-            r.foo();
+            LOGGER_BENCH.foo();
         }
         end = System.currentTimeMillis();
         System.err.println("RT " + ((end - start)) + "ms");

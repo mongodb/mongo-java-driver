@@ -28,10 +28,10 @@ import org.junit.Test;
 public class MultipleCallbacksPerMethodTest extends TestBase {
     abstract static class CallbackAbstractEntity {
         @Id
-        private final String _id = new ObjectId().toStringMongod();
+        private final String id = new ObjectId().toStringMongod();
 
         public String getId() {
-            return _id;
+            return id;
         }
 
         @Transient
@@ -43,7 +43,7 @@ public class MultipleCallbacksPerMethodTest extends TestBase {
 
         @PostPersist
         @PostLoad
-        void markPersitent() {
+        void markPersistent() {
             persistentMarker = true;
         }
     }

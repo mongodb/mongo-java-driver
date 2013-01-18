@@ -50,9 +50,9 @@ public class GenericInheritanceMappingsTest extends TestBase {
     @Entity
     static class ContainsThings {
         @Id
-        String id;
-        HoldsAString stringThing;
-        HoldsAnInteger integerThing;
+        private String id;
+        private HoldsAString stringThing;
+        private HoldsAnInteger integerThing;
     }
 
 

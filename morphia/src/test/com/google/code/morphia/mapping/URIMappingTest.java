@@ -37,16 +37,15 @@ public class URIMappingTest extends TestBase {
 
     private static class ContainsURI {
         @Id
-        ObjectId id;
-        URI uri;
+        private ObjectId id;
+        private URI uri;
     }
 
     private static class ContainsURIKeyedMap {
         @Id
-        ObjectId id;
-        final Map<URI, String> uris = new HashMap<URI, String>();
+        private ObjectId id;
+        private final Map<URI, String> uris = new HashMap<URI, String>();
     }
-
 
     @Test
     public void testURIField() throws Exception {
@@ -58,7 +57,6 @@ public class URIMappingTest extends TestBase {
         final ContainsURI loaded = ds.find(ContainsURI.class).get();
         Assert.assertNotNull(loaded.uri);
         Assert.assertEquals(testURI, loaded.uri);
-
     }
 
     @Test

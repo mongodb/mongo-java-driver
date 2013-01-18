@@ -24,7 +24,6 @@ import org.junit.Test;
 /**
  * @author Scott Hernandez
  */
-@SuppressWarnings({"unused"})
 public class KeyTypeTest extends TestBase {
     @Test
     public void testKeyComparisons() throws Exception {

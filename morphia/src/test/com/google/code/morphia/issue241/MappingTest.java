@@ -22,7 +22,6 @@ import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.dao.BasicDAO;
 import com.mongodb.Mongo;
-import com.mongodb.MongoException;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Assert;
@@ -37,20 +36,14 @@ import java.net.UnknownHostException;
  */
 public class MappingTest {
 
-    final Morphia morphia = new Morphia();
+    private final Morphia morphia = new Morphia();
 
-    Mongo mongo;
-    DatastoreImpl datastore;
-
+    private DatastoreImpl datastore;
 
     @Before
-    public void setUp() {
-        try {
-            mongo = new Mongo();
-            datastore = new DatastoreImpl(morphia, mongo, "MY_DB");
-        } catch (UnknownHostException unknownHostException) {
-        } catch (MongoException mongoException) {
-        }
+    public void setUp() throws UnknownHostException {
+        final Mongo mongo = new Mongo();
+        datastore = new DatastoreImpl(morphia, mongo, "MY_DB");
     }
 
     @After

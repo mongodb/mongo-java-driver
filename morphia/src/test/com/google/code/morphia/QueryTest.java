@@ -54,19 +54,18 @@ import static org.junit.Assert.assertTrue;
 public class QueryTest extends TestBase {
 
     @Entity
-    public static class Photo {
+    static class Photo {
         @Id
-        ObjectId id;
-        List<String> keywords = Collections.singletonList("amazing");
+        private ObjectId id;
+        private final List<String> keywords = Collections.singletonList("amazing");
     }
 
-
-    public static class PhotoWithKeywords {
+    static class PhotoWithKeywords {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Embedded
-        List<Keyword> keywords = Arrays.asList(new Keyword("california"), new Keyword("neveda"),
-                                               new Keyword("arizona"));
+        private List<Keyword> keywords = Arrays.asList(new Keyword("california"), new Keyword("neveda"),
+                                                       new Keyword("arizona"));
 
         public PhotoWithKeywords() {
         }
@@ -80,9 +79,9 @@ public class QueryTest extends TestBase {
     }
 
     @Embedded
-    public static class Keyword {
-        String keyword;
-        int score = 12;
+    static class Keyword {
+        private String keyword;
+        private final int score = 12;
 
         protected Keyword() {
         }
@@ -92,40 +91,40 @@ public class QueryTest extends TestBase {
         }
     }
 
-    public static class ContainsPhotoKey {
+    static class ContainsPhotoKey {
         @Id
-        ObjectId id;
-        Key<Photo> photo;
+        private ObjectId id;
+        private Key<Photo> photo;
     }
 
     @Entity
-    public static class HasIntId {
+    static class HasIntId {
+        @Id
+        private int id;
+
         protected HasIntId() {
         }
 
         HasIntId(final int id) {
             this.id = id;
         }
-
-        @Id
-        public int id;
     }
 
     @Entity
-    public static class ContainsPic {
+    static class ContainsPic {
         @Id
-        ObjectId id;
+        private ObjectId id;
         String name = "test";
         @Reference
         Pic pic;
         @Reference(lazy = true)
-        Pic lazyPic;
+        private Pic lazyPic;
     }
 
     @Entity
-    public static class Pic {
+    static class Pic {
         @Id
-        ObjectId id;
+        private ObjectId id;
         String name;
 
         String getName() {
@@ -137,13 +136,13 @@ public class QueryTest extends TestBase {
         }
     }
 
-    public static class ContainsRenamedFields {
+    static class ContainsRenamedFields {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Property("first_name")
-        String firstName = "Scott";
+        private final String firstName = "Scott";
         @Property("last_name")
-        String lastName = "Hernandez";
+        private final String lastName = "Hernandez";
     }
 
     @Test
@@ -244,14 +243,14 @@ public class QueryTest extends TestBase {
 //    public void testWhereWithInvalidStringQuery() throws Exception {
 //        ds.save(new PhotoWithKeywords());
 //        CodeWScope hasKeyword = new CodeWScope("keywords != null", new BasicDBObject());
-//		try {
-//			// must fail
-//	        assertNotNull(ds.find(PhotoWithKeywords.class).where(hasKeyword.getCode()).get());
-//			Assert.fail("Invalid javascript magically isn't invalid anymore?");
-//		} catch (MongoInternalException e) {
-//		} catch (MongoException e) {
-//			// fine
-//		}
+//        try {
+//            // must fail
+//            assertNotNull(ds.find(PhotoWithKeywords.class).where(hasKeyword.getCode()).get());
+//            Assert.fail("Invalid javascript magically isn't invalid anymore?");
+//        } catch (MongoInternalException e) {
+//        } catch (MongoException e) {
+//            // fine
+//        }
 //
 //    }
 
@@ -481,11 +480,11 @@ public class QueryTest extends TestBase {
         this.ds.save(ucio);
         UsesCustomIdObject ucioLoaded = null;
 
-//		Add back if/when query by example for embedded fields is supported (require dot'n each field).			
-//    	CustomId exId = new CustomId();
-//    	exId.type = cId.type;
-//    	ucioLoaded = ds.find(UsesCustomIdObject.class, "_id", exId).get();
-//      assertNotNull(ucioLoaded);
+        //TODO: Add back if/when query by example for embedded fields is supported (require dot 'n each field).
+//        CustomId exId = new CustomId();
+//        exId.type = cId.type;
+//        ucioLoaded = ds.find(UsesCustomIdObject.class, "_id", exId).get();
+//        assertNotNull(ucioLoaded);
 
         final UsesCustomIdObject ex = new UsesCustomIdObject();
         ex.text = ucio.text;
@@ -504,111 +503,23 @@ public class QueryTest extends TestBase {
         assertNull(p);
     }
 
-
     @Test
     public void testElemMatchQuery() throws Exception {
         final PhotoWithKeywords pwk1 = new PhotoWithKeywords();
         final PhotoWithKeywords pwk2 = new PhotoWithKeywords("Scott", "Joe", "Sarah");
 
         ds.save(pwk1, pwk2);
-        final PhotoWithKeywords pwkScott = ds.find(PhotoWithKeywords.class).field("keywords").hasThisElement(new
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                                                                     Keyword("Scott")).get();
+        final PhotoWithKeywords pwkScott = ds.find(PhotoWithKeywords.class).
+                field("keywords").hasThisElement(new Keyword("Scott")).get();
         assertNotNull(pwkScott);
         //TODO add back when $and is done (> 1.5)
-        //		PhotoWithKeywords pwkScottSarah= ds.find(PhotoWithKeywords.class).field("keywords").hasThisElement(new Keyword[] {new Keyword("Scott"), new Keyword("Joe")}).get();
-        //		assertNotNull(pwkScottSarah);
-        final PhotoWithKeywords pwkBad = ds.find(PhotoWithKeywords.class).field("keywords").hasThisElement(new Keyword("Randy")).get();
-        assertNull(pwkBad);
+//        PhotoWithKeywords pwkScottSarah = ds.find(PhotoWithKeywords.class).field("keywords").
+//                hasThisElement(new Keyword[]{new Keyword("Scott"), new Keyword("Joe")}).get();
+//        assertNotNull(pwkScottSarah);
 
+        final PhotoWithKeywords pwkBad = ds.find(PhotoWithKeywords.class).field("keywords").
+                hasThisElement(new Keyword("Randy")).get();
+        assertNull(pwkBad);
     }
 
     @Test
@@ -716,7 +627,7 @@ public class QueryTest extends TestBase {
     }
 
     @Test
-    public void testNonexistantFindGet() throws Exception {
+    public void testNonexistentFindGet() throws Exception {
         assertNull(ds.find(Hotel.class, "_id", -1).get());
     }
 
@@ -868,7 +779,9 @@ public class QueryTest extends TestBase {
         }
 
         assertEquals(2, ds.getCount(ds.createQuery(Rectangle.class).filter("height >", 3).filter("height <", 8)));
-        assertEquals(1, ds.getCount(ds.createQuery(Rectangle.class).filter("height >", 3).filter("height <", 8).filter("width", 10)));
+        assertEquals(1, ds.getCount(ds.createQuery(Rectangle.class).filter("height >", 3).filter("height <",
+                                                                                                 8).filter("width",
+                                                                                                           10)));
     }
 
     @Test

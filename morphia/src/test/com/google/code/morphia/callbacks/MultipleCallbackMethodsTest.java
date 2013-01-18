@@ -26,10 +26,10 @@ import org.junit.Test;
 public class MultipleCallbackMethodsTest extends TestBase {
     abstract static class CallbackAbstractEntity {
         @Id
-        private final String _id = new ObjectId().toStringMongod();
+        private final String id = new ObjectId().toStringMongod();
 
         public String getId() {
-            return _id;
+            return id;
         }
 
         int foo = 0;

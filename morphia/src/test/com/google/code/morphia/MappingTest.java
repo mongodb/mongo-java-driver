@@ -77,7 +77,7 @@ public class MappingTest extends TestBase {
 
         // generally a bad thing but left over...
         @Id
-        ObjectId id;
+        private ObjectId id;
 
         public String getId() {
             return id.toString();
@@ -91,59 +91,59 @@ public class MappingTest extends TestBase {
 
     @Entity
     private static class MissingId {
-        String id;
+        private String id;
     }
 
     private static class MissingIdStill {
-        String id;
+        private String id;
     }
 
     @Entity("no-id")
     private static class MissingIdRenamed {
-        String id;
+        private String id;
     }
 
     @Embedded
     private static class IdOnEmbedded {
         @Id
-        ObjectId id;
+        private ObjectId id;
     }
 
     @Embedded("no-id")
     private static class RenamedEmbedded {
-        String name;
+        private String name;
     }
 
-    private static class StranglyNamedIdField {
+    private static class StrangelyNamedIdField {
         @Id
-        ObjectId id_ = new ObjectId();
+        private final ObjectId id_ = new ObjectId();
     }
 
     private static class ContainsEmbeddedArray {
         @Id
-        ObjectId id = new ObjectId();
-        RenamedEmbedded[] res;
+        private final ObjectId id = new ObjectId();
+        private RenamedEmbedded[] res;
     }
 
     private static class NotEmbeddable {
-        String noImNot = "no, I'm not";
+        private final String noImNot = "no, I'm not";
     }
 
     private static class SerializableClass implements Serializable {
         private static final long serialVersionUID = 1L;
-        final String someString = "hi, from the ether.";
+        private final String someString = "hi, from the ether.";
     }
 
     private static class ContainsRef {
         @Id
-        public ObjectId id;
-        public DBRef rect;
+        private ObjectId id;
+        private DBRef rect;
     }
 
     private static class HasFinalFieldId {
         @Id
-        public final long id;
-        public String name = "some string";
+        private final long id;
+        private final String name = "some string";
 
         //only called when loaded by the persistence framework.
         protected HasFinalFieldId() {
@@ -157,8 +157,8 @@ public class MappingTest extends TestBase {
 
     private static class ContainsFinalField {
         @Id
-        public ObjectId id;
-        public final String name;
+        private ObjectId id;
+        private final String name;
 
         protected ContainsFinalField() {
             name = "foo";
@@ -171,41 +171,41 @@ public class MappingTest extends TestBase {
 
     private static class ContainsTimestamp {
         @Id
-        ObjectId id;
-        final Timestamp ts = new Timestamp(System.currentTimeMillis());
+        private ObjectId id;
+        private final Timestamp ts = new Timestamp(System.currentTimeMillis());
     }
 
     private static class ContainsDBObject {
         @Id
-        ObjectId id;
-        DBObject dbObj = BasicDBObjectBuilder.start("field", "val").get();
+        private ObjectId id;
+        private final DBObject dbObj = BasicDBObjectBuilder.start("field", "val").get();
     }
 
     private static class ContainsbyteArray {
         @Id
-        ObjectId id;
-        final byte[] bytes = "Scott".getBytes();
+        private ObjectId id;
+        private final byte[] bytes = "Scott".getBytes();
     }
 
     private static class ContainsSerializedData {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Serialized
-        final
+        private final
         SerializableClass data = new SerializableClass();
     }
 
     private static class ContainsLongAndStringArray {
         @Id
-        ObjectId id;
+        private ObjectId id;
         private Long[] longs = {0L, 1L, 2L};
-        String[] strings = {"Scott", "Rocks"};
+        private String[] strings = {"Scott", "Rocks"};
     }
 
     private static class ContainsCollection {
         @Id
-        ObjectId id;
-        final Collection<String> coll = new ArrayList<String>();
+        private ObjectId id;
+        private final Collection<String> coll = new ArrayList<String>();
 
         private ContainsCollection() {
             coll.add("hi");
@@ -215,13 +215,13 @@ public class MappingTest extends TestBase {
 
     private static class ContainsPrimitiveMap {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Embedded
-        public final Map<String, Long> embeddedValues = new HashMap();
-        public final Map<String, Long> values = new HashMap();
+        private final Map<String, Long> embeddedValues = new HashMap();
+        private final Map<String, Long> values = new HashMap();
     }
 
-    private static interface Foo {
+    private interface Foo {
     }
 
     private static class Foo1 implements Foo {
@@ -234,112 +234,108 @@ public class MappingTest extends TestBase {
 
     private static class ContainsMapWithEmbeddedInterface {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Embedded
-        public final Map<String, Foo> embeddedValues = new HashMap();
+        private final Map<String, Foo> embeddedValues = new HashMap();
     }
 
     private static class ContainsEmbeddedEntity {
         @Id
-        final
-        ObjectId id = new ObjectId();
+        private final ObjectId id = new ObjectId();
         @Embedded
-        ContainsIntegerList cil = new ContainsIntegerList();
+        private ContainsIntegerList cil = new ContainsIntegerList();
     }
 
-    public enum Enum1 {A, B}
+    enum Enum1 {A, B}
 
     @Entity(value = "cil", noClassnameStored = true)
     private static class ContainsIntegerList {
         @Id
-        ObjectId id;
-        List<Integer> intList = new ArrayList<Integer>();
+        private ObjectId id;
+        private List<Integer> intList = new ArrayList<Integer>();
     }
 
     private static class ContainsIntegerListNewAndOld {
         @Id
-        ObjectId id;
-        List<Integer> intList = new ArrayList<Integer>();
-        List<Integer> ints = new ArrayList<Integer>();
+        private ObjectId id;
+        private final List<Integer> intList = new ArrayList<Integer>();
+        private final List<Integer> ints = new ArrayList<Integer>();
     }
 
     @Entity(value = "cil", noClassnameStored = true)
     private static class ContainsIntegerListNew {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @AlsoLoad("intList")
-        final
-        List<Integer> ints = new ArrayList<Integer>();
+        private final List<Integer> ints = new ArrayList<Integer>();
     }
 
     @Entity(noClassnameStored = true)
     private static class ContainsUUID {
         @Id
-        ObjectId id;
-        final UUID uuid = UUID.randomUUID();
+        private ObjectId id;
+        private final UUID uuid = UUID.randomUUID();
     }
 
     @Entity(noClassnameStored = true)
     private static class ContainsUuidId {
         @Id
-        final
-        UUID id = UUID.randomUUID();
+        private final UUID id = UUID.randomUUID();
     }
 
     private static class ContainsEnum1KeyMap {
         @Id
-        ObjectId id;
-        public final Map<Enum1, String> values = new HashMap<Enum1, String>();
+        private ObjectId id;
+        private final Map<Enum1, String> values = new HashMap<Enum1, String>();
         @Embedded
-        public final Map<Enum1, String> embeddedValues = new HashMap<Enum1, String>();
+        private final Map<Enum1, String> embeddedValues = new HashMap<Enum1, String>();
     }
 
     private static class ContainsIntKeyMap {
         @Id
-        ObjectId id;
-        public final Map<Integer, String> values = new HashMap<Integer, String>();
+        private ObjectId id;
+        private final Map<Integer, String> values = new HashMap<Integer, String>();
     }
 
     private static class ContainsIntKeySetStringMap {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Embedded
-        public final Map<Integer, Set<String>> values = new HashMap<Integer, Set<String>>();
+        private final Map<Integer, Set<String>> values = new HashMap<Integer, Set<String>>();
     }
 
     private static class ContainsObjectIdKeyMap {
         @Id
-        ObjectId id;
-        public final Map<ObjectId, String> values = new HashMap<ObjectId, String>();
+        private ObjectId id;
+        private final Map<ObjectId, String> values = new HashMap<ObjectId, String>();
     }
 
     private static class ContainsXKeyMap<T> {
         @Id
-        ObjectId id;
-        public final Map<T, String> values = new HashMap<T, String>();
+        private ObjectId id;
+        private final Map<T, String> values = new HashMap<T, String>();
     }
 
     private static class ContainsMapLike {
         @Id
-        ObjectId id;
-        final MapLike m = new MapLike();
+        private ObjectId id;
+        private final MapLike m = new MapLike();
     }
 
     @Entity
     private static class UsesBaseEntity extends BaseEntity {
         private static final long serialVersionUID = 1L;
-
     }
 
     private static class MapSubclass extends LinkedHashMap<String, Object> {
         private static final long serialVersionUID = 1L;
         @Id
-        ObjectId id;
+        private ObjectId id;
     }
 
     private class NonStaticInnerClass {
         @Id
-        long id = 1;
+        private final long id = 1;
     }
 
     @Test
@@ -627,7 +623,7 @@ public class MappingTest extends TestBase {
 
     @Test
     public void testIdFieldWithUnderscore() throws Exception {
-        morphia.map(StranglyNamedIdField.class);
+        morphia.map(StrangelyNamedIdField.class);
     }
 
     @Test
@@ -807,6 +803,40 @@ public class MappingTest extends TestBase {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                                                                                                                   .get("_id")).get());
         final ContainsRef cRefLoaded = morphia.fromDBObject(ContainsRef.class, cRefDbObjectLoaded, new DefaultEntityCache());
         assertNotNull(cRefLoaded);
@@ -922,8 +952,9 @@ public class MappingTest extends TestBase {
         final BasicDBObject agencyDbObj = (BasicDBObject) morphia.toDBObject(agency);
         agencies.save(agencyDbObj);
 
+        final BasicDBObject toFind = new BasicDBObject(Mapper.ID_KEY, agencyDbObj.get(Mapper.ID_KEY));
         final TravelAgency agencyLoaded = morphia.fromDBObject(TravelAgency.class,
-                                                               (BasicDBObject) agencies.findOne(new BasicDBObject(Mapper.ID_KEY, agencyDbObj.get(Mapper.ID_KEY))),
+                                                               agencies.findOne(toFind),
                                                                new DefaultEntityCache());
 
         assertEquals(agency.getName(), agencyLoaded.getName());
@@ -955,9 +986,10 @@ public class MappingTest extends TestBase {
         final BasicDBObject relatedDbObj = (BasicDBObject) morphia.toDBObject(related);
         articles.save(relatedDbObj);
 
-        final Article relatedLoaded = morphia
-                .fromDBObject(Article.class, (BasicDBObject) articles.findOne(new BasicDBObject(Mapper.ID_KEY,
-                                                                                                relatedDbObj.get(Mapper.ID_KEY))), new DefaultEntityCache());
+        final BasicDBObject toFind = new BasicDBObject(Mapper.ID_KEY,
+                                                 relatedDbObj.get(Mapper.ID_KEY));
+        final Article relatedLoaded = morphia.fromDBObject(Article.class, articles.findOne(toFind),
+                                                           new DefaultEntityCache());
 
         final Article article = new Article();
         article.setTranslation("en", new Translation("Hello World", "Just a test"));
@@ -973,8 +1005,8 @@ public class MappingTest extends TestBase {
         articles.save(articleDbObj);
 
         final Article articleLoaded = morphia
-                .fromDBObject(Article.class, (BasicDBObject) articles.findOne(new BasicDBObject(Mapper.ID_KEY,
-                                                                                                articleDbObj.get(Mapper.ID_KEY))), new DefaultEntityCache());
+                .fromDBObject(Article.class, articles.findOne(
+                        new BasicDBObject(Mapper.ID_KEY, articleDbObj.get(Mapper.ID_KEY))), new DefaultEntityCache());
 
         assertEquals(article.getTranslations().size(), articleLoaded.getTranslations().size());
         assertEquals(article.getTranslation("en").getTitle(), articleLoaded.getTranslation("en").getTitle());
@@ -1016,11 +1048,13 @@ public class MappingTest extends TestBase {
         final BasicDBObject childDbObj = (BasicDBObject) morphia.toDBObject(child);
         stuff.save(childDbObj);
 
+        final BasicDBObject firstToFind = new BasicDBObject(Mapper.ID_KEY, parentDbObj.get(Mapper.ID_KEY));
         final RecursiveParent parentLoaded = morphia.fromDBObject(RecursiveParent.class,
-                                                                  (BasicDBObject) stuff.findOne(new BasicDBObject(Mapper.ID_KEY, parentDbObj.get(Mapper.ID_KEY))),
+                                                                  stuff.findOne(firstToFind),
                                                                   new DefaultEntityCache());
+        final BasicDBObject secondToFind = new BasicDBObject(Mapper.ID_KEY, childDbObj.get(Mapper.ID_KEY));
         final RecursiveChild childLoaded = morphia.fromDBObject(RecursiveChild.class,
-                                                                (BasicDBObject) stuff.findOne(new BasicDBObject(Mapper.ID_KEY, childDbObj.get(Mapper.ID_KEY))),
+                                                                stuff.findOne(secondToFind),
                                                                 new DefaultEntityCache());
 
         parentLoaded.setChild(childLoaded);
@@ -1030,10 +1064,10 @@ public class MappingTest extends TestBase {
         stuff.save(morphia.toDBObject(childLoaded));
 
         final RecursiveParent finalParentLoaded = morphia.fromDBObject(RecursiveParent.class,
-                                                                       (BasicDBObject) stuff.findOne(new BasicDBObject(Mapper.ID_KEY, parentDbObj.get(Mapper.ID_KEY))),
+                                                                       stuff.findOne(firstToFind),
                                                                        new DefaultEntityCache());
         final RecursiveChild finalChildLoaded = morphia.fromDBObject(RecursiveChild.class,
-                                                                     (BasicDBObject) stuff.findOne(new BasicDBObject(Mapper.ID_KEY, childDbObj.get(Mapper.ID_KEY))),
+                                                                     stuff.findOne(secondToFind),
                                                                      new DefaultEntityCache());
 
         assertNotNull(finalParentLoaded.getChild());

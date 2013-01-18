@@ -47,8 +47,9 @@ public abstract class AssertedFailure {
                 final Throwable ex = getWrappedException(e, expected);
                 if (ex == null) {
                     throw new AssertedFailureDidNotHappenException("unexpected exception class. got '"
-                                                                           + e.getClass().getName() + "' instead of " +
-                                                                           "expected '" + expected.getName() + "'", e);
+                                                                           + e.getClass().getName() + "' instead of "
+                                                                           + "expected '" + expected.getName() + "'",
+                                                                   e);
                 }
 
             }

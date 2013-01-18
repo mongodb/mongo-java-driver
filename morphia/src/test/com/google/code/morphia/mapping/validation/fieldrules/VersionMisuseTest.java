@@ -31,37 +31,28 @@ import org.junit.Test;
  */
 public class VersionMisuseTest extends TestBase {
 
-    public static class Fail1 extends TestEntity {
+    static class Fail1 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Version
-        long hubba = 1;
+        private final long hubba = 1;
     }
 
-    public static class Fail2 extends TestEntity {
-        /**
-         *
-         */
+    static class Fail2 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Version
-        Long hubba = 1L;
+        private final Long hubba = 1L;
     }
 
-    public static class OK1 extends TestEntity {
-        /**
-         *
-         */
+    static class OK1 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Version
-        long hubba;
+        private long hubba;
     }
 
-    public static class OK2 extends TestEntity {
-        /**
-         *
-         */
+    static class OK2 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Version
-        long hubba;
+        private long hubba;
     }
 
     @Test

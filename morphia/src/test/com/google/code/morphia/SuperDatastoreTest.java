@@ -30,7 +30,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class SuperDatastoreTest extends TestBase {
 
-    AdvancedDatastore ads;
+    private AdvancedDatastore ads;
 
     @Before
     @Override

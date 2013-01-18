@@ -32,24 +32,24 @@ public class ReferencesInEmbeddedTest extends TestBase {
     @Entity
     private static class Container extends TestEntity {
         private static final long serialVersionUID = 1L;
-        String name;
+        private String name;
         @Embedded
         private EmbedContainingReference embed;
     }
 
     private static class EmbedContainingReference {
-        String name;
+        private String name;
         @Reference
-        protected ReferencedEntity ref;
+        private ReferencedEntity ref;
 
         @Reference(lazy = true)
-        protected ReferencedEntity lazyRef;
+        private ReferencedEntity lazyRef;
     }
 
     @Entity
-    public static class ReferencedEntity extends TestEntity {
+    static class ReferencedEntity extends TestEntity {
         private static final long serialVersionUID = 1L;
-        String foo;
+        private String foo;
     }
 
     @Test
@@ -59,7 +59,7 @@ public class ReferencesInEmbeddedTest extends TestBase {
     }
 
     @Test
-    public void testNonLazyReferencesInEmbebbed() throws Exception {
+    public void testNonLazyReferencesInEmbedded() throws Exception {
         final Container container = new Container();
         container.name = "nonLazy";
         ds.save(container);
@@ -75,7 +75,7 @@ public class ReferencesInEmbeddedTest extends TestBase {
     }
 
     @Test
-    public void testLazyReferencesInEmbebbed() throws Exception {
+    public void testLazyReferencesInEmbedded() throws Exception {
         final Container container = new Container();
         container.name = "lazy";
         ds.save(container);

@@ -34,12 +34,9 @@ import static org.junit.Assert.assertEquals;
  */
 public class SerializedNameTest extends TestBase {
     public static class E extends TestEntity {
-        /**
-         *
-         */
         private static final long serialVersionUID = 1L;
         @Serialized("changedName")
-        byte[] b = "foo".getBytes();
+        private final byte[] b = "foo".getBytes();
 
         @PreSave
         public void preSave(final DBObject o) {
@@ -47,16 +44,14 @@ public class SerializedNameTest extends TestBase {
         }
 
         @Transient
-        String document;
+        private String document;
     }
 
     @Test
     public void testCheck() {
-
         final E e = new E();
         ds.save(e);
 
         assertEquals("foo", e.document);
-
     }
 }

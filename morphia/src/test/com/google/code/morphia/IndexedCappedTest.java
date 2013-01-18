@@ -44,93 +44,93 @@ import static org.junit.Assert.assertTrue;
 @SuppressWarnings("unused")
 public class IndexedCappedTest extends TestBase {
     @Entity(cap = @CappedAt(count = 1))
-    private static class CurrentStatus {
+    private static final class CurrentStatus {
         @Id
-        ObjectId id;
-        String message;
+        private ObjectId id;
+        private String message;
 
         private CurrentStatus() {
         }
 
-        public CurrentStatus(final String msg) {
+        private CurrentStatus(final String msg) {
             message = msg;
         }
     }
 
     private static class IndexedClass {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Indexed
-        long l = 4;
+        private final long l = 4;
     }
 
     @Entity
     private static class NamedIndexClass {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Indexed(name = "l_ascending")
-        long l = 4;
+        private final long l = 4;
     }
 
     @Entity
-    private static class UniqueIndexClass {
+    private static final class UniqueIndexClass {
         @Id
-        ObjectId id;
+        private ObjectId id;
         @Indexed(name = "l_ascending", unique = true)
-        long l = 4;
-        String name;
+        private final long l = 4;
+        private String name;
 
-        UniqueIndexClass() {
+        private UniqueIndexClass() {
         }
 
-        UniqueIndexClass(final String name) {
+        private UniqueIndexClass(final String name) {
             this.name = name;
         }
     }
 
     private static class Ad {
         @Id
-        public long id;
+        private long id;
 
         @Property("lastMod")
         @Indexed
-        public long lastModified;
+        private  long lastModified;
 
         @Indexed
-        public boolean active;
+        private  boolean active;
     }
 
     @Indexes(@Index("active,-lastModified"))
     private static class Ad2 {
         @Id
-        public long id;
+        private  long id;
 
         @Property("lastMod")
         @Indexed
-        public long lastModified;
+        private  long lastModified;
 
         @Indexed
-        public boolean active;
+        private  boolean active;
     }
 
     @Embedded
     private static class IndexedEmbed {
         @Indexed(IndexDirection.DESC)
-        String name;
+        private String name;
     }
 
     private static class ContainsIndexedEmbed {
         @Id
-        ObjectId id;
-        IndexedEmbed e;
+        private ObjectId id;
+        private IndexedEmbed e;
     }
 
     private static class CircularEmbeddedEntity {
         @Id
-        ObjectId id = new ObjectId();
-        String name;
+        private final ObjectId id = new ObjectId();
+        private String name;
         @Indexed
-        CircularEmbeddedEntity a;
+        private CircularEmbeddedEntity a;
     }
 
     @Before

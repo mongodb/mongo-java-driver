@@ -90,7 +90,7 @@ public class IndexTest extends TestBase {
     }
 
     @Test(expected = MongoException.DuplicateKey.class)
-    public void TestDuplicate1() {
+    public void testDuplicate1() {
         final String name = "J. Doe";
 
         final E1 ent11 = new E1();
@@ -104,7 +104,7 @@ public class IndexTest extends TestBase {
     }
 
     @Test(expected = MongoException.DuplicateKey.class)
-    public void TestDuplicate2() {
+    public void testDuplicate2() {
         final String name = "J. Doe";
 
         final E2 ent21 = new E2();

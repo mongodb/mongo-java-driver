@@ -36,40 +36,33 @@ import static org.junit.Assert.assertEquals;
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
 public class PropertyAndEmbeddedTest extends TestBase {
-    public static class E extends TestEntity {
-        /**
-         *
-         */
+    static class E extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Embedded("myFunkyR")
-        R r = new R();
+        private final R r = new R();
+
+        @Transient
+        private String document;
 
         @PreSave
         public void preSave(final DBObject o) {
             document = (String) ((DBObject) o.get("myFunkyR")).get("foo");
         }
-
-        @Transient
-        String document;
     }
 
-    public static class E2 extends TestEntity {
-        /**
-         *
-         */
+    static class E2 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Embedded
         @Property("myFunkyR")
-        String s;
+        private String s;
     }
 
-    public static class R {
-        String foo = "bar";
+    static class R {
+        private final String foo = "bar";
     }
 
     @Test
     public void testCheck() {
-
         final E e = new E();
         ds.save(e);
 

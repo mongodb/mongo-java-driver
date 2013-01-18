@@ -34,10 +34,9 @@ import java.util.ArrayList;
 public class ListOfStringArrayMappingTest extends TestBase {
     private static class ContainsListStringArray {
         @Id
-        ObjectId id;
-        final ArrayList<String[]> listOfStrings = new ArrayList<String[]>();
+        private ObjectId id;
+        private final ArrayList<String[]> listOfStrings = new ArrayList<String[]>();
     }
-
 
     @Test
     @Ignore

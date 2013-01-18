@@ -86,8 +86,8 @@ public class UpdateOpsTest extends TestBase {
         assertEquals(3, ds.getCount(q1));
         assertEquals(0, ds.getCount(q2));
 
-        final UpdateResults<Rectangle> results = ds.update(q1, ds.createUpdateOperations(Rectangle.class).inc
-                ("height"));
+        final UpdateResults<Rectangle> results = ds.update(q1,
+                                                           ds.createUpdateOperations(Rectangle.class).inc("height"));
         assertUpdated(results, 3);
 
         assertEquals(0, ds.getCount(q1));
@@ -97,14 +97,12 @@ public class UpdateOpsTest extends TestBase {
         assertEquals(3, ds.getCount(q1));
         assertEquals(0, ds.getCount(q2));
 
-        ds.update(ds.find(Rectangle.class, "width", 1D), ds.createUpdateOperations(Rectangle.class).set("height",
-                                                                                                        1D).set
-                ("width", 1D), true);
+        ds.update(ds.find(Rectangle.class, "width", 1D),
+                  ds.createUpdateOperations(Rectangle.class).set("height", 1D).set("width", 1D), true);
         assertNotNull(ds.find(Rectangle.class, "width", 1D).get());
         assertNull(ds.find(Rectangle.class, "width", 2D).get());
-        ds.update(ds.find(Rectangle.class, "width", 1D), ds.createUpdateOperations(Rectangle.class).set("height",
-                                                                                                        2D).set
-                ("width", 2D), true);
+        ds.update(ds.find(Rectangle.class, "width", 1D),
+                  ds.createUpdateOperations(Rectangle.class).set("height", 2D).set("width", 2D), true);
         assertNull(ds.find(Rectangle.class, "width", 1D).get());
         assertNotNull(ds.find(Rectangle.class, "width", 2D).get());
     }
@@ -235,26 +233,24 @@ public class UpdateOpsTest extends TestBase {
 
         //add 4 to array
         UpdateResults<ContainsIntArray> res = ds.updateFirst(ds.createQuery(ContainsIntArray.class),
-                                                             ds.createUpdateOperations(ContainsIntArray.class).add
-                                                                     ("vals", 4, false));
+                                                             ds.createUpdateOperations(ContainsIntArray.class).
+                                                                     add("vals", 4, false));
         assertUpdated(res, 1);
 
         cIALoaded = ds.get(cIntArray);
         assertArrayEquals(new Integer[]{1, 2, 3, 4}, cIALoaded.vals);
 
         //add unique (4) -- noop
-        res = ds.updateFirst(ds.createQuery(ContainsIntArray.class), ds.createUpdateOperations(ContainsIntArray
-                                                                                                       .class).add
-                ("vals", 4, false));
+        res = ds.updateFirst(ds.createQuery(ContainsIntArray.class),
+                             ds.createUpdateOperations(ContainsIntArray.class).add("vals", 4, false));
         assertUpdated(res, 1);
 
         cIALoaded = ds.get(cIntArray);
         assertArrayEquals(new Integer[]{1, 2, 3, 4}, cIALoaded.vals);
 
         //add dup 4
-        res = ds.updateFirst(ds.createQuery(ContainsIntArray.class), ds.createUpdateOperations(ContainsIntArray
-                                                                                                       .class).add
-                ("vals", 4, true));
+        res = ds.updateFirst(ds.createQuery(ContainsIntArray.class),
+                             ds.createUpdateOperations(ContainsIntArray.class).add("vals", 4, true));
         assertUpdated(res, 1);
 
         cIALoaded = ds.get(cIntArray);
@@ -268,18 +264,16 @@ public class UpdateOpsTest extends TestBase {
         final List<Integer> newVals = new ArrayList<Integer>();
         newVals.add(4);
         newVals.add(5);
-        res = ds.updateFirst(ds.createQuery(ContainsIntArray.class), ds.createUpdateOperations(ContainsIntArray
-                                                                                                       .class).addAll
-                ("vals", newVals, false));
+        res = ds.updateFirst(ds.createQuery(ContainsIntArray.class),
+                             ds.createUpdateOperations(ContainsIntArray.class).addAll("vals", newVals, false));
         assertUpdated(res, 1);
 
         cIALoaded = ds.get(cIntArray);
         assertArrayEquals(new Integer[]{1, 2, 3, 4, 5}, cIALoaded.vals);
 
         //add them again... noop
-        res = ds.updateFirst(ds.createQuery(ContainsIntArray.class), ds.createUpdateOperations(ContainsIntArray
-                                                                                                       .class).addAll
-                ("vals", newVals, false));
+        res = ds.updateFirst(ds.createQuery(ContainsIntArray.class),
+                             ds.createUpdateOperations(ContainsIntArray.class).addAll("vals", newVals, false));
         assertUpdated(res, 1);
 
         cIALoaded = ds.get(cIntArray);
@@ -401,8 +395,7 @@ public class UpdateOpsTest extends TestBase {
         final Pic pic = new Pic();
         pic.name = "fist again";
         final Key<Pic> picKey = ds.save(pic);
-//		picKey = ds.getKey(pic);
-
+//        picKey = ds.getKey(pic);
 
         //test with Key<Pic>
         UpdateResults<ContainsPicKey> res = ds.updateFirst(
@@ -428,7 +421,6 @@ public class UpdateOpsTest extends TestBase {
         assertEquals(cpk3.name, cpk.name);
         assertNotNull(cpk3.pic);
         assertEquals(cpk3.pic, picKey);
-
     }
 
 }

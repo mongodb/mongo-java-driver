@@ -47,7 +47,7 @@ public class ExternalMapperExtTest extends TestBase {
     @Entity("special")
     private static class Skeleton {
         @Id
-        String id;
+        private String id;
     }
 
     /**
@@ -56,13 +56,13 @@ public class ExternalMapperExtTest extends TestBase {
      * @author skot
      */
     private static class EntityWithNoAnnotations {
-        String id;
+        private String id;
     }
 
-    private static class CloneMapper {
-        final Mapper mapr;
+    private static final class CloneMapper {
+        private final Mapper mapr;
 
-        public CloneMapper(final Mapper mapr) {
+        private CloneMapper(final Mapper mapr) {
             this.mapr = mapr;
         }
 

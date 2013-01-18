@@ -38,8 +38,8 @@ public class MapWithDotInKeyTest extends TestBase {
     private static class Goo implements Serializable {
         static final long serialVersionUID = 1L;
         @Id
-        ObjectId id = new ObjectId();
-        String name;
+        private final ObjectId id = new ObjectId();
+        private String name;
 
         Goo() {
         }
@@ -52,11 +52,10 @@ public class MapWithDotInKeyTest extends TestBase {
     private static class E {
         @SuppressWarnings("unused")
         @Id
-        ObjectId id;
+        private ObjectId id;
 
         @Embedded
-        final
-        MyMap mymap = new MyMap();
+        private final MyMap mymap = new MyMap();
     }
 
     private static class MyMap extends BasicDBObject {

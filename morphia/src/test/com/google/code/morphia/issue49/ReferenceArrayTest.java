@@ -37,23 +37,15 @@ public class ReferenceArrayTest extends TestBase {
         a = ds.get(a);
     }
 
-
-    public static class A extends TestEntity {
-        /**
-         *
-         */
+    static class A extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Reference
-        final
-        B[] bs = new B[2];
+        private final B[] bs = new B[2];
     }
 
-    public static class B extends TestEntity {
-        /**
-         *
-         */
+    static class B extends TestEntity {
         private static final long serialVersionUID = 1L;
-        String foo;
+        private String foo;
     }
 
 }

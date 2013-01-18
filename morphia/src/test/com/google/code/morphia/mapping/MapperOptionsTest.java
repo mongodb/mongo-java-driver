@@ -39,8 +39,8 @@ public class MapperOptionsTest extends TestBase {
     private static class HasList implements Serializable {
         static final long serialVersionUID = 1L;
         @Id
-        ObjectId id = new ObjectId();
-        List<String> names = new ArrayList<String>();
+        private final ObjectId id = new ObjectId();
+        private List<String> names = new ArrayList<String>();
 
 
         HasList() {
@@ -55,7 +55,6 @@ public class MapperOptionsTest extends TestBase {
             }
         }
     }
-
 
     @Test
     public void emptyListStoredWithOptions() throws Exception {

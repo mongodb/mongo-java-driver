@@ -45,9 +45,9 @@ public class GetByKeysTest extends TestBase {
         Assert.assertFalse(i.hasNext());
     }
 
-    public static class A extends TestEntity {
+    private static class A extends TestEntity {
         private static final long serialVersionUID = 1L;
-        String foo = "bar";
+        private final String foo = "bar";
     }
 
 }

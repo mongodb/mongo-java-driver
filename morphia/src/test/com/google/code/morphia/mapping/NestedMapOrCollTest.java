@@ -35,36 +35,28 @@ import java.util.Map;
  * @author scotthernandez
  */
 public class NestedMapOrCollTest extends TestBase {
-
-
-    @SuppressWarnings({"rawtypes", "unchecked", "unused"})
     private static class HasMapOfMap {
         @Id
-        ObjectId id;
+        private ObjectId id;
 
         @Embedded
-        final
-        Map<String, Map<String, String>> mom = new HashMap();
+        private final Map<String, Map<String, String>> mom = new HashMap<String, Map<String, String>>();
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked", "unused"})
     private static class HasMapOfList {
         @Id
-        ObjectId id;
+        private ObjectId id;
 
         @Embedded
-        final
-        Map<String, List<String>> mol = new HashMap();
+        private final Map<String, List<String>> mol = new HashMap<String, List<String>>();
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked", "unused"})
     private static class HasMapOfListOfMapMap {
         @Id
-        ObjectId id;
+        private ObjectId id;
 
         @Embedded
-        final
-        Map<String, List<NestedMapOrCollTest.HasMapOfMap>> mol = new HashMap();
+        private final Map<String, List<NestedMapOrCollTest.HasMapOfMap>> mol = new HashMap<String, List<HasMapOfMap>>();
     }
 
     @Test

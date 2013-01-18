@@ -197,11 +197,11 @@ public class ExampleServiceTest {
         }
     }
 
-    private static class MongoConnectionManager {
+    private static final class MongoConnectionManager {
         private final Datastore db;
         public static final String DB_NAME = "cal_dev";
 
-        public MongoConnectionManager() {
+        private MongoConnectionManager() {
             try {
                 final Mongo m = new Mongo();
                 db = new Morphia().map(BookingDetail.class).createDatastore(m, DB_NAME);
@@ -284,9 +284,9 @@ public class ExampleServiceTest {
         }
 
         public BookingDetail load(final Key<BookingDetail> key) {
-            final BasicDAO<BookingDetail, ObjectId> dao = new BasicDAO<BookingDetail, ObjectId>(BookingDetail.class, mongoConnectionManager.getDb());
+            final BasicDAO<BookingDetail, ObjectId> dao =
+                    new BasicDAO<BookingDetail, ObjectId>(BookingDetail.class, mongoConnectionManager.getDb());
             return dao.getDatastore().getByKey(BookingDetail.class, key);
-
         }
 
         public Key<BookingDetail> update(final BookingDetail bd) {
@@ -324,8 +324,8 @@ public class ExampleServiceTest {
 
                     // TODO Logic to choose consultant.
                     availableSlots.get(0).setCustomer(customer);
-                    LOGGER.log(Level.FINE, "Book for customer: " + customer.getName() + " version: " +
-                            loadedBookingDetail.getVersion() + " ...");
+                    LOGGER.log(Level.FINE, "Book for customer: " + customer.getName() + " version: "
+                            + loadedBookingDetail.getVersion() + " ...");
                     update(loadedBookingDetail);
                     LOGGER.log(Level.FINE, "Booked.");
 
