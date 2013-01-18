@@ -112,7 +112,6 @@ public class Key<T> implements Serializable, Comparable<Key<?>> {
      * <li>id or name</li>
      * </ol>
      */
-    @SuppressWarnings("unchecked")
     public int compareTo(final Key<?> other) {
         checkState(this);
         checkState(other);
@@ -186,8 +185,6 @@ public class Key<T> implements Serializable, Comparable<Key<?>> {
         return bld.toString();
     }
 
-    /** */
-    @SuppressWarnings("unchecked")
     private static int compareNullable(final Comparable o1, final Comparable o2) {
         if (o1 == null && o2 == null) {
             return 0;

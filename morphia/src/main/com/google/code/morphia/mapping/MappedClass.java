@@ -105,6 +105,7 @@ public class MappedClass {
     /**
      * Annotations interesting for life-cycle events
      */
+    @SuppressWarnings("rawtypes")
     private static final Class<? extends Annotation>[] lifecycleAnnotations = new Class[]{
             PrePersist.class,
             PreSave.class,
@@ -225,11 +226,11 @@ public class MappedClass {
                 persistenceFields.add(mf);
                 update();
             }
-            else if (field.isAnnotationPresent(Property.class) ||
-                    field.isAnnotationPresent(Reference.class) ||
-                    field.isAnnotationPresent(Embedded.class) ||
-                    field.isAnnotationPresent(Serialized.class) ||
-                    isSupportedType(field.getType()) ||
+            else if (field.isAnnotationPresent(Property.class)
+                    || field.isAnnotationPresent(Reference.class)
+                    || field.isAnnotationPresent(Embedded.class)
+                    || field.isAnnotationPresent(Serialized.class)
+                    || isSupportedType(field.getType()) ||
                     ReflectionUtils.implementsInterface(field.getType(), Serializable.class)) {
                 persistenceFields.add(new MappedField(field, clazz));
             }
@@ -238,8 +239,8 @@ public class MappedClass {
                     persistenceFields.add(new MappedField(field, clazz));
                 }
                 else if (LOG.isWarningEnabled()) {
-                    LOG.warning("Ignoring (will not persist) field: " + clazz.getName() + "." + field.getName() + " " +
-                                        "[type:" + field.getType().getName() + "]");
+                    LOG.warning("Ignoring (will not persist) field: " + clazz.getName() + "." + field.getName() + " "
+                                        + "[type:" + field.getType().getName() + "]");
                 }
             }
         }
@@ -289,8 +290,8 @@ public class MappedClass {
 
     @Override
     public String toString() {
-        return "MappedClass - kind:" + this.getCollectionName() + " for " + this.getClazz().getName() + " fields:" +
-                persistenceFields;
+        return "MappedClass - kind:" + this.getCollectionName() + " for " + this.getClazz().getName() + " fields:"
+                + persistenceFields;
     }
 
     /**
@@ -378,7 +379,9 @@ public class MappedClass {
         if (obj instanceof Class<?>) {
             return equals((Class<?>) obj);
         }
-        else return obj instanceof MappedClass && equals((MappedClass) obj);
+        else {
+            return obj instanceof MappedClass && equals((MappedClass) obj);
+        }
     }
 
     public boolean equals(final MappedClass clazz) {
@@ -419,8 +422,8 @@ public class MappedClass {
                     method.setAccessible(true);
 
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Calling lifecycle method(@" + event.getSimpleName() + " " + method + ") on " +
-                                          inst + "");
+                        LOG.debug("Calling lifecycle method(@" + event.getSimpleName() + " " + method + ") on "
+                                          + inst + "");
                     }
 
                     if (inst == null) {
@@ -554,8 +557,8 @@ public class MappedClass {
      * @return the collName
      */
     public String getCollectionName() {
-        return (entityAn == null || entityAn.value().equals(Mapper.IGNORED_FIELDNAME)) ? clazz.getSimpleName() :
-                entityAn.value();
+        return (entityAn == null || entityAn.value().equals(Mapper.IGNORED_FIELDNAME)) ? clazz.getSimpleName()
+                : entityAn.value();
     }
 
     /**

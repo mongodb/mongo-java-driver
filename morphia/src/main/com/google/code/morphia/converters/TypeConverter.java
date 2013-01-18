@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- *
- */
 package com.google.code.morphia.converters;
 
 import com.google.code.morphia.mapping.MappedField;
@@ -26,7 +22,6 @@ import com.google.code.morphia.mapping.MappingException;
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
-@SuppressWarnings("rawtypes")
 public abstract class TypeConverter {
     protected Mapper mapr;
     protected Class[] supportTypes = null;
@@ -67,22 +62,22 @@ public abstract class TypeConverter {
     }
 
     /**
-     * decode the {@link DBObject} and provide the corresponding java (type-safe) object<br><b>NOTE: optionalExtraInfo
-     * might be null</b>*
+     * decode the {@link com.mongodb.DBObject} and provide the corresponding java (type-safe) object<br><b>NOTE:
+     * optionalExtraInfo might be null</b>*
      */
     public abstract Object decode(Class targetClass, Object fromDBObject, MappedField optionalExtraInfo)
             throws MappingException;
 
     /**
-     * decode the {@link DBObject} and provide the corresponding java (type-safe) object *
+     * decode the {@link com.mongodb.DBObject} and provide the corresponding java (type-safe) object *
      */
     public final Object decode(final Class targetClass, final Object fromDBObject) throws MappingException {
         return decode(targetClass, fromDBObject, null);
     }
 
     /**
-     * encode the type safe java object into the corresponding {@link DBObject}<br><b>NOTE: optionalExtraInfo might be
-     * null</b>*
+     * encode the type safe java object into the corresponding {@link com.mongodb.DBObject}<br><b>NOTE:
+     * optionalExtraInfo might be null</b>*
      */
     public final Object encode(final Object value) throws MappingException {
         return encode(value, null);
@@ -108,7 +103,7 @@ public abstract class TypeConverter {
     }
 
     /**
-     * encode the (type-safe) java object into the corresponding {@link DBObject}*
+     * encode the (type-safe) java object into the corresponding {@link com.mongodb.DBObject}*
      */
     public Object encode(final Object value, final MappedField optionalExtraInfo) {
         return value; // as a default impl
