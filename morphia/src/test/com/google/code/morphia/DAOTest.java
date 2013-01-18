@@ -19,6 +19,7 @@ package com.google.code.morphia;
 import com.google.code.morphia.dao.BasicDAO;
 import com.google.code.morphia.dao.DAO;
 import com.google.code.morphia.query.Query;
+import com.google.code.morphia.query.QueryResults;
 import com.google.code.morphia.query.UpdateOperations;
 import com.google.code.morphia.testdaos.HotelDAO;
 import com.google.code.morphia.testmodel.Address;
@@ -36,6 +37,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Olafur Gauti Gudmundsson
  */
+@SuppressWarnings("unchecked")
 public class DAOTest extends TestBase {
 
     @Test
@@ -55,7 +57,8 @@ public class DAOTest extends TestBase {
         borgAddr.setPostCode("101");
         borg.setAddress(borgAddr);
 
-        hotelDAO.deleteByQuery((Query) hotelDAO.find());
+        final QueryResults<Hotel> hotels = hotelDAO.find();
+        hotelDAO.deleteByQuery((Query) hotels);
         hotelDAO.save(borg);
         assertEquals(1, hotelDAO.count());
         assertNotNull(borg.getId());

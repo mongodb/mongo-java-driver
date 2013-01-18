@@ -33,6 +33,7 @@ public class StuffTest extends TestBase {
     private int documentsNb;
 
     @Entity
+    @SuppressWarnings("UnusedDeclaration")
     static class E extends BaseEntity {
         private static final long serialVersionUID = 1L;
         private final Integer index;

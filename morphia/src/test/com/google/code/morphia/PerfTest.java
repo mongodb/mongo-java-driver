@@ -41,11 +41,12 @@ import static org.junit.Assert.assertTrue;
  */
 public class PerfTest extends TestBase {
     private static final double WRITE_FAIL_FACTOR = 1.10;
-    private static final double READ_FAIL_FACTOR = 1.75;
+//    private static final double READ_FAIL_FACTOR = 1.75;
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.##");
 
+    @SuppressWarnings("UnusedDeclaration")
     @Entity
-     static class Address {
+    static class Address {
         @Id
         private ObjectId id;
         private String name = "Scott";
@@ -96,7 +97,8 @@ public class PerfTest extends TestBase {
         final long insertTime = endTicks - startTicks;
 
         final String msg = String.format("Insert (%s) performance is too slow: %sX slower (%s/%s)", count,
-                                         DECIMAL_FORMAT.format((double) insertTime / rawInsertTime), insertTime, rawInsertTime);
+                                         DECIMAL_FORMAT.format((double) insertTime / rawInsertTime), insertTime,
+                                         rawInsertTime);
         assertTrue(msg, insertTime < (rawInsertTime * WRITE_FAIL_FACTOR));
     }
 
@@ -127,7 +129,8 @@ public class PerfTest extends TestBase {
     }
 
     @Entity(value = "imageMeta", noClassnameStored = true)
-     static class TestObj {
+    @SuppressWarnings("UnusedDeclaration")
+    static class TestObj {
         @Id
         private ObjectId id = new ObjectId();
         private long var1;
@@ -138,7 +141,7 @@ public class PerfTest extends TestBase {
     public void testDifference() throws UnknownHostException {
         final Morphia morphia = new Morphia();
         morphia.map(TestObj.class);
-        final AdvancedDatastore ds = (AdvancedDatastore) morphia.createDatastore("my_database");
+        final AdvancedDatastore ds = (AdvancedDatastore) morphia.createDatastore(mongo, "my_database");
         //create the list
         List<TestObj> objList = new ArrayList<TestObj>();
         for (int i = 0; i < 1000; i++) {

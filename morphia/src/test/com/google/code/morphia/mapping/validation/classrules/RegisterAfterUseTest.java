@@ -32,14 +32,14 @@ import java.util.ArrayList;
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
-@SuppressWarnings("unchecked")
 public class RegisterAfterUseTest extends TestBase {
 
+    @SuppressWarnings("unused")
     static class Broken extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Property("foo")
         @Embedded("bar")
-        private ArrayList l;
+        private ArrayList<Object> l;
     }
 
     @Test

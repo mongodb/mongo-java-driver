@@ -37,25 +37,27 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 public class MapKeyDifferentFromStringTest extends TestBase {
 
+    @SuppressWarnings("UnusedDeclaration")
     static class MapWithWrongKeyType1 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Serialized
-        private final Map<Integer, Integer> shouldBeOk = new HashMap();
+        private final Map<Integer, Integer> shouldBeOk = new HashMap<Integer, Integer>();
 
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     static class MapWithWrongKeyType2 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Reference
-        private final Map<Integer, Integer> shouldBeOk = new HashMap();
+        private final Map<Integer, Integer> shouldBeOk = new HashMap<Integer, Integer>();
 
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     static class MapWithWrongKeyType3 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Embedded
-        private final Map<BigDecimal, Integer> shouldBeOk = new HashMap();
-
+        private final Map<BigDecimal, Integer> shouldBeOk = new HashMap<BigDecimal, Integer>();
     }
 
     @Test

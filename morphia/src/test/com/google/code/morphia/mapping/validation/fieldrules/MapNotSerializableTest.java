@@ -33,35 +33,36 @@ import java.util.Map;
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
-@SuppressWarnings("unchecked")
 public class MapNotSerializableTest extends TestBase {
+    @SuppressWarnings("UnusedDeclaration")
     static class Map1 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Serialized
-        private final Map<Integer, String> shouldBeOk = new HashMap();
+        private final Map<Integer, String> shouldBeOk = new HashMap<Integer, String>();
 
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     static class Map2 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Reference
-        private final Map<Integer, E1> shouldBeOk = new HashMap();
+        private final Map<Integer, E1> shouldBeOk = new HashMap<Integer, E1>();
 
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     static class Map3 extends TestEntity {
+        @SuppressWarnings("UnusedDeclaration")
         private static final long serialVersionUID = 1L;
         @Embedded
-        private final Map<E2, Integer> shouldBeOk = new HashMap();
+        private final Map<E2, Integer> shouldBeOk = new HashMap<E2, Integer>();
 
     }
 
-    public static class E1 {
-
+    static class E1 {
     }
 
-    public static class E2 {
-
+    static class E2 {
     }
 
     @Test

@@ -59,6 +59,7 @@ public class ExternalMapperExtTest extends TestBase {
         private String id;
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static final class CloneMapper {
         private final Mapper mapr;
 

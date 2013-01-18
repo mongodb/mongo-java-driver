@@ -50,9 +50,9 @@ public class SuperDatastoreTest extends TestBase {
         //test delete(entity, id)
         ads.save(ns, rect);
         assertEquals(1, ads.getCount(ns));
-        ads.delete(ns, 1);
+        ads.delete(ns, Rectangle.class, 1);
         assertEquals(1, ads.getCount(ns));
-        ads.delete(ns, "1");
+        ads.delete(ns, Rectangle.class, "1");
         assertEquals(0, ads.getCount(ns));
     }
 
@@ -106,7 +106,6 @@ public class SuperDatastoreTest extends TestBase {
         assertEquals(rect.getId(), rectLoaded.getId());
         assertEquals(rect.getArea(), rectLoaded.getArea(), 0);
 
-        rectLoaded = ads.find(ns, Rectangle.class, "_id !=", "-1", 1, 1).get();
-
+        ads.find(ns, Rectangle.class, "_id !=", "-1", 1, 1).get();
     }
 }

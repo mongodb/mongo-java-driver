@@ -29,18 +29,15 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author doc
- */
+@SuppressWarnings("rawtypes")
 public class QueryImplCloneTest extends TestBase {
     private static final List<String> ALLOWED_CHANGING_FIELDS = Arrays.asList("cache", "query");
 
-    private boolean sameState(final Query q1, final Query q2) throws IllegalAccessException {
+    private <T> boolean sameState(final Query<T> q1, final Query<T> q2) throws IllegalAccessException {
         return sameState(q1.getClass(), q1, q2);
     }
 
-    private boolean sameState(final Class c, final Query q1, final Query q2) throws IllegalAccessException {
-
+    private <T> boolean sameState(final Class c, final Query<T> q1, final Query<T> q2) throws IllegalAccessException {
         final Field[] fields = c.getDeclaredFields();
         for (final Field f : fields) {
             f.setAccessible(true);
@@ -56,10 +53,7 @@ public class QueryImplCloneTest extends TestBase {
                 continue;
             }
 
-            if (ALLOWED_CHANGING_FIELDS.contains(f.getName())) {
-                continue;
-            }
-            else {
+            if (!ALLOWED_CHANGING_FIELDS.contains(f.getName())) {
                 throw new RuntimeException(f.getName() + " v1=" + v1 + " v2=" + v2);
             }
         }
@@ -68,6 +62,7 @@ public class QueryImplCloneTest extends TestBase {
         return (superclass == null || sameState(superclass, q1, q2));
     }
 
+    @SuppressWarnings("unused")
     static class E1 {
         @Id
         private ObjectId id;
@@ -75,18 +70,19 @@ public class QueryImplCloneTest extends TestBase {
         private String a;
         private String b;
         private int i;
-        private E2 e2 = new E2();
+        private final E2 e2 = new E2();
     }
 
+    @SuppressWarnings("unused")
     static class E2 {
         private String foo;
     }
 
     @Test
     public void testQueryClone() throws Exception {
-        final Query q = ds.createQuery(E1.class).field("i").equal(5).limit(5).filter("a", "value_a").filter("b",
-                                                                                                            "value_b")
-                .skip(5).batchSize(10).disableCursorTimeout().hintIndex("a")
+        final Query<E1> q = ds.createQuery(E1.class).field("i").equal(5).limit(5).
+                filter("a", "value_a").filter("b", "value_b")
+                .offset(5).batchSize(10).disableCursorTimeout().hintIndex("a")
                 .order("a");
         q.disableValidation().filter("foo", "bar");
         Assert.assertTrue(sameState(q, q.clone()));

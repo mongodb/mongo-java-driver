@@ -32,20 +32,19 @@ import java.util.Map;
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
-@SuppressWarnings("unchecked")
 public class SerializedMapTest extends TestBase {
 
     static class Map1 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Serialized(disableCompression = false)
-        private final Map<Integer, Foo> shouldBeOk = new HashMap();
+        private final Map<Integer, Foo> shouldBeOk = new HashMap<Integer, Foo>();
 
     }
 
     static class Map2 extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Serialized(disableCompression = true)
-        private final Map<Integer, Foo> shouldBeOk = new HashMap();
+        private final Map<Integer, Foo> shouldBeOk = new HashMap<Integer, Foo>();
 
     }
 

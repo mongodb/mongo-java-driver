@@ -28,7 +28,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-@SuppressWarnings("unchecked")
 public class ReferenceCollectionTest extends ProxyTestBase {
     @Test
     public final void testCreateProxy() {
@@ -112,30 +111,24 @@ public class ReferenceCollectionTest extends ProxyTestBase {
 
     }
 
-    public static class A extends TestEntity implements Serializable {
-        /**
-         *
-         */
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    static class A extends TestEntity implements Serializable {
         private static final long serialVersionUID = 1L;
 
         @Reference(lazy = false)
-        private final Collection<B> bs = new LinkedList();
+        private final Collection<B> bs = new LinkedList<B>();
 
         @Reference(lazy = true)
-        private final Collection<B> lazyBs = new LinkedList();
+        private final Collection<B> lazyBs = new LinkedList<B>();
 
     }
 
-    public static class B extends TestEntity implements Serializable {
+    static class B extends TestEntity implements Serializable {
         private static final long serialVersionUID = 1L;
         private String foo;
 
         public void setFoo(final String string) {
             this.foo = string;
-        }
-
-        public String getFoo() {
-            return this.foo;
         }
 
         @Override

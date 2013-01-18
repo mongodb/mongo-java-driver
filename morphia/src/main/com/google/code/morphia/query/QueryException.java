@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2010 Olafur Gauti Gudmundsson
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,17 +16,20 @@
 
 package com.google.code.morphia.query;
 
-/** Error during query. 
- *  @author ScottHernandez */
+/**
+ * Error during query.
+ *
+ * @author ScottHernandez
+ */
 public class QueryException extends RuntimeException {
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public QueryException( String message ) {
-            super(message);
+    public QueryException(final String message) {
+        super(message);
     }
 
-    public QueryException( String message, Throwable cause ) {
-            super(message, cause);
+    public QueryException(final String message, final Throwable cause) {
+        super(message, cause);
     }
 
 }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.google.code.morphia.utils;
 
 import com.google.code.morphia.Key;
@@ -223,7 +224,7 @@ public final class ReflectionUtils {
      * @param index the index of the parameterizing class
      * @return the class that parameterizes the field, or null if field is not parameterized
      */
-    public static Class getParameterizedClass(final Field field, final int index) {
+    public static Class<?> getParameterizedClass(final Field field, final int index) {
         if (field.getGenericType() instanceof ParameterizedType) {
             final ParameterizedType ptype = (ParameterizedType) field.getGenericType();
             if ((ptype.getActualTypeArguments() != null) && (ptype.getActualTypeArguments().length <= index)) {

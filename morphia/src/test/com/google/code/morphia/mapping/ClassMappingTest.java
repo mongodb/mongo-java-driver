@@ -34,8 +34,8 @@ import java.util.LinkedList;
  */
 public class ClassMappingTest extends TestBase {
 
-    @SuppressWarnings("unchecked")
-    public static class E {
+    @SuppressWarnings({ "UnusedDeclaration", "rawtypes" })
+    static class E {
         @Id
         private ObjectId id;
 

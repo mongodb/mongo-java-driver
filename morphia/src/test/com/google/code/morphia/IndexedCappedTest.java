@@ -41,9 +41,10 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Scott Hernandez
  */
-@SuppressWarnings("unused")
+@SuppressWarnings("deprecation")
 public class IndexedCappedTest extends TestBase {
     @Entity(cap = @CappedAt(count = 1))
+    @SuppressWarnings("UnusedDeclaration")
     private static final class CurrentStatus {
         @Id
         private ObjectId id;
@@ -57,6 +58,7 @@ public class IndexedCappedTest extends TestBase {
         }
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     private static class IndexedClass {
         @Id
         private ObjectId id;
@@ -65,6 +67,7 @@ public class IndexedCappedTest extends TestBase {
     }
 
     @Entity
+    @SuppressWarnings("UnusedDeclaration")
     private static class NamedIndexClass {
         @Id
         private ObjectId id;
@@ -73,6 +76,7 @@ public class IndexedCappedTest extends TestBase {
     }
 
     @Entity
+    @SuppressWarnings("UnusedDeclaration")
     private static final class UniqueIndexClass {
         @Id
         private ObjectId id;
@@ -88,6 +92,7 @@ public class IndexedCappedTest extends TestBase {
         }
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     private static class Ad {
         @Id
         private long id;
@@ -101,6 +106,7 @@ public class IndexedCappedTest extends TestBase {
     }
 
     @Indexes(@Index("active,-lastModified"))
+    @SuppressWarnings("UnusedDeclaration")
     private static class Ad2 {
         @Id
         private  long id;
@@ -114,17 +120,20 @@ public class IndexedCappedTest extends TestBase {
     }
 
     @Embedded
+    @SuppressWarnings("UnusedDeclaration")
     private static class IndexedEmbed {
         @Indexed(IndexDirection.DESC)
         private String name;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     private static class ContainsIndexedEmbed {
         @Id
         private ObjectId id;
         private IndexedEmbed e;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     private static class CircularEmbeddedEntity {
         @Id
         private final ObjectId id = new ObjectId();
@@ -176,6 +185,7 @@ public class IndexedCappedTest extends TestBase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testMultipleIndexedFields() {
         final MappedClass mc = morphia.getMapper().getMappedClass(Ad.class);
         this.morphia.map(Ad.class);

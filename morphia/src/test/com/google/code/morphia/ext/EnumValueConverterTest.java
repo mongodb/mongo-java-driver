@@ -33,6 +33,7 @@ import org.junit.Test;
  *
  * @author scotthernandez
  */
+@SuppressWarnings("rawtypes")
 public class EnumValueConverterTest extends TestBase {
 
     private static class AEnumConverter extends TypeConverter implements SimpleValueConverter {
@@ -70,9 +71,8 @@ public class EnumValueConverterTest extends TestBase {
     @Converters(AEnumConverter.class)
     private static class EnumEntity {
         @Id
-        ObjectId id = new ObjectId();
-        AEnum val = AEnum.Two;
-
+        private final ObjectId id = new ObjectId();
+        private final AEnum val = AEnum.Two;
     }
 
     @Test
