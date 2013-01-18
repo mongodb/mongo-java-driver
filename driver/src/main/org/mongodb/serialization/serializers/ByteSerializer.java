@@ -19,17 +19,16 @@ package org.mongodb.serialization.serializers;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
 public class ByteSerializer implements Serializer<Byte> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Byte value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Byte value) {
         bsonWriter.writeInt32(value);
     }
 
     @Override
-    public Byte deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public Byte deserialize(final BSONReader reader) {
         throw new UnsupportedOperationException();
     }
 

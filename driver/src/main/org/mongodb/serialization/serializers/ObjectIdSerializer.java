@@ -20,17 +20,16 @@ package org.mongodb.serialization.serializers;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
 public class ObjectIdSerializer implements Serializer<ObjectId> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final ObjectId value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final ObjectId value) {
         bsonWriter.writeObjectId(value);
     }
 
     @Override
-    public ObjectId deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public ObjectId deserialize(final BSONReader reader) {
         return reader.readObjectId();
     }
 

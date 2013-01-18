@@ -38,7 +38,7 @@ public class MongoReplyMessage<T> {
 
         while (documents.size() < replyHeader.getNumberReturned()) {
             final BSONReader reader = new BSONBinaryReader(new BsonReaderSettings(), bodyInputBuffer);
-            documents.add(serializer.deserialize(reader, null));
+            documents.add(serializer.deserialize(reader));
             reader.close();
         }
     }

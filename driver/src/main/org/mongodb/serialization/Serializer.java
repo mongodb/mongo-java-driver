@@ -21,9 +21,9 @@ import org.bson.BSONReader;
 import org.bson.BSONWriter;
 
 public interface Serializer<T> {
-    void serialize(BSONWriter bsonWriter, T value, BsonSerializationOptions options);
+    void serialize(BSONWriter bsonWriter, T value);
 
-    T deserialize(BSONReader reader, BsonSerializationOptions options);
+    T deserialize(BSONReader reader);
 
     // necessary because Java doesn't reify generics
     Class<T> getSerializationClass();

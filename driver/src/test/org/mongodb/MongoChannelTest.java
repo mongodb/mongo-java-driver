@@ -36,7 +36,6 @@ import org.mongodb.protocol.MongoInsertMessage;
 import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.result.ServerCursor;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
@@ -107,7 +106,7 @@ public class MongoChannelTest {
     static class ConcreteSerializer implements Serializer<Concrete> {
 
         @Override
-        public void serialize(final BSONWriter bsonWriter, final Concrete c, final BsonSerializationOptions options) {
+        public void serialize(final BSONWriter bsonWriter, final Concrete c) {
             bsonWriter.writeStartDocument();
             {
                 bsonWriter.writeObjectId("_id", c.id);
@@ -121,7 +120,7 @@ public class MongoChannelTest {
         }
 
         @Override
-        public Concrete deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+        public Concrete deserialize(final BSONReader reader) {
             final Concrete c = new Concrete();
             reader.readStartDocument();
             {

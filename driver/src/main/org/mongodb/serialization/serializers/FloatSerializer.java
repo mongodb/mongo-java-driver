@@ -19,7 +19,6 @@ package org.mongodb.serialization.serializers;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
 /**
@@ -27,12 +26,12 @@ import org.mongodb.serialization.Serializer;
  */
 public class FloatSerializer implements Serializer<Float> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Float value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Float value) {
         bsonWriter.writeDouble(value);
     }
 
     @Override
-    public Float deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public Float deserialize(final BSONReader reader) {
         throw new UnsupportedOperationException();
     }
 

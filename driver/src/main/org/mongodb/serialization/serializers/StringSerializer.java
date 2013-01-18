@@ -19,17 +19,16 @@ package org.mongodb.serialization.serializers;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
 public class StringSerializer implements Serializer<String> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final String value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final String value) {
         bsonWriter.writeString(value);
     }
 
     @Override
-    public String deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public String deserialize(final BSONReader reader) {
         return reader.readString();
     }
 

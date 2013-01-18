@@ -106,7 +106,7 @@ public class MongoRequestMessage {
 
         try {
             // TODO: deal with serialization options
-            serializer.serialize(writer, obj, null);
+            serializer.serialize(writer, obj);
         } finally {
             writer.close();
         }

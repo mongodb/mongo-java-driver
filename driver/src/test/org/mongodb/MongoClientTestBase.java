@@ -18,6 +18,7 @@ package org.mongodb;
 
 import org.bson.types.Document;
 import org.junit.Before;
+import org.mongodb.serialization.CollectibleSerializer;
 
 import java.net.UnknownHostException;
 
@@ -60,5 +61,9 @@ public abstract class MongoClientTestBase {
 
     protected MongoCollection<Document> getCollection() {
         return collection;
+    }
+
+    protected <T> MongoCollection<T> getCollection(final CollectibleSerializer<T> serializer) {
+        return database.getTypedCollection(collection.getName(), serializer);
     }
 }

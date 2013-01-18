@@ -21,7 +21,6 @@ import org.bson.BSONWriter;
 import org.bson.types.Document;
 import org.bson.types.ObjectId;
 import org.junit.Test;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.CollectibleSerializer;
 
 import java.util.ArrayList;
@@ -227,7 +226,7 @@ class Concrete {
 class ConcreteSerializer implements CollectibleSerializer<Concrete> {
 
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Concrete c, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Concrete c) {
         bsonWriter.writeStartDocument();
         {
             if (c.id == null) {
@@ -244,7 +243,7 @@ class ConcreteSerializer implements CollectibleSerializer<Concrete> {
     }
 
     @Override
-    public Concrete deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public Concrete deserialize(final BSONReader reader) {
         final Concrete c = new Concrete();
         reader.readStartDocument();
         {

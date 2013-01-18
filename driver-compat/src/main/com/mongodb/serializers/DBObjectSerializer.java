@@ -71,8 +71,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     }
 
     @Override
-    public void serialize(final BSONWriter bsonWriter, final DBObject document,
-                          final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final DBObject document) {
         bsonWriter.writeStartDocument();
 
         beforeFields(bsonWriter, document, options);
@@ -139,13 +138,13 @@ public class DBObjectSerializer implements Serializer<DBObject> {
             serializeIterable(bsonWriter, (Iterable) value, options);
         }
         else if (value instanceof byte[]) {
-            primitiveSerializers.serialize(bsonWriter, new Binary((byte[]) value), options);
+            primitiveSerializers.serialize(bsonWriter, new Binary((byte[]) value));
         }
         else if (value != null && value.getClass().isArray()) {
             serializeArray(bsonWriter, value, options);
         }
         else {
-            primitiveSerializers.serialize(bsonWriter, value, options);
+            primitiveSerializers.serialize(bsonWriter, value);
         }
     }
 
@@ -182,7 +181,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     }
 
     @Override
-    public DBObject deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public DBObject deserialize(final BSONReader reader) {
         List<String> path = new ArrayList<String>(10);
         final DBObject document = getNewInstance(path);
 
@@ -273,7 +272,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
             path.remove(path.size() - 1);
         }
         else {
-            initialRetVal = primitiveSerializers.deserialize(reader, options);
+            initialRetVal = primitiveSerializers.deserialize(reader);
         }
 
         return BSON.applyDecodingHooks(initialRetVal);

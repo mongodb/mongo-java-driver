@@ -203,7 +203,7 @@ public class BSON {
     public static byte[] encode(DBObject doc) {
         try {
             OutputBuffer buffer = new BasicOutputBuffer();
-            new DBObjectSerializer(PrimitiveSerializers.createDefault()).serialize(new BSONBinaryWriter(buffer), doc, null);
+            new DBObjectSerializer(PrimitiveSerializers.createDefault()).serialize(new BSONBinaryWriter(buffer), doc);
             BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
             buffer.pipe(stream);
             return stream.getInternalBytes();
@@ -221,7 +221,7 @@ public class BSON {
      */
     public static DBObject decode(byte[] bytes) {
         InputBuffer buffer = new ByteBufferInput(ByteBuffer.wrap(bytes));
-        return new DBObjectSerializer(PrimitiveSerializers.createDefault()).deserialize(new BSONBinaryReader(buffer), null);
+        return new DBObjectSerializer(PrimitiveSerializers.createDefault()).deserialize(new BSONBinaryReader(buffer));
     }
 
     // Just so we don't have to copy the buffer

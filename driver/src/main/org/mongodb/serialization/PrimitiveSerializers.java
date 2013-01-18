@@ -55,8 +55,7 @@ public class PrimitiveSerializers implements Serializer<Object> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public void serialize(final BSONWriter writer, final Object value,
-                          final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter writer, final Object value) {
         final Serializer serializer;
         if (value == null) {
             serializer = classSerializerMap.get(null);
@@ -67,17 +66,17 @@ public class PrimitiveSerializers implements Serializer<Object> {
         if (serializer == null) {
             throw new MongoException("No serializer for class " + value.getClass().getName());
         }
-        serializer.serialize(writer, value, options);  // TODO: unchecked call
+        serializer.serialize(writer, value);  // TODO: unchecked call
     }
 
     @Override
-    public Object deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public Object deserialize(final BSONReader reader) {
         final BsonType bsonType = reader.getCurrentBsonType();
         final Serializer serializer = bsonTypeSerializerMap.get(bsonType);
         if (serializer == null) {
             throw new MongoException("Unable to find deserializer for BSON type " + bsonType);
         }
-        return serializer.deserialize(reader, options);
+        return serializer.deserialize(reader);
     }
 
     @Override

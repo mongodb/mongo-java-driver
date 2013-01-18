@@ -19,19 +19,18 @@ package org.mongodb.serialization.serializers;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
 import java.util.Date;
 
 public class DateSerializer implements Serializer<Date> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Date value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Date value) {
         bsonWriter.writeDateTime(value.getTime());
     }
 
     @Override
-    public Date deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public Date deserialize(final BSONReader reader) {
         return new Date(reader.readDateTime());
     }
 

@@ -20,7 +20,6 @@ package org.mongodb.serialization.serializers;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.BSONTimestamp;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
 /**
@@ -28,12 +27,12 @@ import org.mongodb.serialization.Serializer;
  */
 public class TimestampSerializer implements Serializer<BSONTimestamp> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final BSONTimestamp value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final BSONTimestamp value) {
         bsonWriter.writeTimestamp(value);
     }
 
     @Override
-    public BSONTimestamp deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public BSONTimestamp deserialize(final BSONReader reader) {
         return reader.readTimestamp();
     }
 

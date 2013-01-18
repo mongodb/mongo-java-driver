@@ -43,8 +43,7 @@ public class DocumentSerializer implements Serializer<Document> {
     }
 
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Document document,
-                          final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Document document) {
         bsonWriter.writeStartDocument();
 
         beforeFields(bsonWriter, document, options);
@@ -98,13 +97,13 @@ public class DocumentSerializer implements Serializer<Document> {
         }
         // TODO: Is this a good idea to allow byte[] to be treated all special?
         else if (value instanceof byte[]) {
-            primitiveSerializers.serialize(bsonWriter, new Binary((byte[]) value), options);
+            primitiveSerializers.serialize(bsonWriter, new Binary((byte[]) value));
         }
         else if (value != null && value.getClass().isArray()) {
             serializeArray(bsonWriter, value, options);
         }
         else {
-            primitiveSerializers.serialize(bsonWriter, value, options);
+            primitiveSerializers.serialize(bsonWriter, value);
         }
     }
 
@@ -142,7 +141,7 @@ public class DocumentSerializer implements Serializer<Document> {
 
 
     @Override
-    public Document deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public Document deserialize(final BSONReader reader) {
         final Document document = new Document();
 
         reader.readStartDocument();
@@ -159,13 +158,13 @@ public class DocumentSerializer implements Serializer<Document> {
     private Object readValue(final BSONReader reader, final BsonSerializationOptions options, final String fieldName) {
         final BsonType bsonType = reader.getCurrentBsonType();
         if (bsonType.equals(BsonType.DOCUMENT)) {
-            return getDocumentDeserializerForField(fieldName).deserialize(reader, options);
+            return getDocumentDeserializerForField(fieldName).deserialize(reader);
         }
         else if (bsonType.equals(BsonType.ARRAY)) {
             return readArray(reader, options);
         }
         else {
-            return primitiveSerializers.deserialize(reader, options);
+            return primitiveSerializers.deserialize(reader);
         }
     }
 

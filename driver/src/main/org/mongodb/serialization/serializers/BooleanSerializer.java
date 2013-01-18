@@ -19,17 +19,16 @@ package org.mongodb.serialization.serializers;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
 public class BooleanSerializer implements Serializer<Boolean> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Boolean value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Boolean value) {
         bsonWriter.writeBoolean(value);
     }
 
     @Override
-    public Boolean deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public Boolean deserialize(final BSONReader reader) {
         return reader.readBoolean();
     }
 

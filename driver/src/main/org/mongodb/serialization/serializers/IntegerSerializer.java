@@ -19,17 +19,16 @@ package org.mongodb.serialization.serializers;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
 public class IntegerSerializer implements Serializer<Integer> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Integer value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Integer value) {
         bsonWriter.writeInt32(value);
     }
 
     @Override
-    public Integer deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public Integer deserialize(final BSONReader reader) {
         return reader.readInt32();
     }
 

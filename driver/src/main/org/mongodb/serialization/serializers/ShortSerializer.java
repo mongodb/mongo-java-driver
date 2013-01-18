@@ -19,17 +19,16 @@ package org.mongodb.serialization.serializers;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
 public class ShortSerializer implements Serializer<Short> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Short value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final Short value) {
         bsonWriter.writeInt32(value);
     }
 
     @Override
-    public Short deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public Short deserialize(final BSONReader reader) {
         throw new UnsupportedOperationException();
     }
 

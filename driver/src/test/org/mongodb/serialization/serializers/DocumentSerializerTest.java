@@ -68,11 +68,11 @@ public class DocumentSerializerTest extends MongoClientTestBase {
 //        doc.put("pattern", Pattern.compile("^hello"));  // TODO: Pattern doesn't override equals method!
         doc.put("null", null);
 
-        serializer.serialize(writer, doc, null);
+        serializer.serialize(writer, doc);
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(),
-                                                                                     inputBuffer), null);
+                                                                                     inputBuffer));
         assertEquals(doc, deserializedDoc);
     }
 
@@ -82,11 +82,11 @@ public class DocumentSerializerTest extends MongoClientTestBase {
         final Document doc = new Document();
         doc.put("array", Arrays.asList(1, 2, 3, 4, 5));
 
-        serializer.serialize(writer, doc, null);
+        serializer.serialize(writer, doc);
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(),
-                                                                                     inputBuffer), null);
+                                                                                     inputBuffer));
         assertEquals(doc, deserializedDoc);
     }
 
@@ -95,11 +95,11 @@ public class DocumentSerializerTest extends MongoClientTestBase {
         final Document doc = new Document();
         doc.put("nested", new Document("x", 1));
 
-        serializer.serialize(writer, doc, null);
+        serializer.serialize(writer, doc);
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(),
-                                                                                     inputBuffer), null);
+                                                                                     inputBuffer));
         assertEquals(doc, deserializedDoc);
     }
 

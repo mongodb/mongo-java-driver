@@ -20,17 +20,16 @@ package org.mongodb.serialization.serializers;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.Binary;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.Serializer;
 
 public class ByteArraySerializer implements Serializer<byte[]> {
     @Override
-    public void serialize(final BSONWriter bsonWriter, final byte[] value, final BsonSerializationOptions options) {
+    public void serialize(final BSONWriter bsonWriter, final byte[] value) {
         bsonWriter.writeBinaryData(new Binary(value));
     }
 
     @Override
-    public byte[] deserialize(final BSONReader reader, final BsonSerializationOptions options) {
+    public byte[] deserialize(final BSONReader reader) {
         return reader.readBinaryData().getData();
     }
 
