@@ -19,7 +19,6 @@ package org.mongodb.serialization.serializers;
 
 import org.bson.BSONWriter;
 import org.bson.types.Document;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.IdGenerator;
 import org.mongodb.serialization.PrimitiveSerializers;
@@ -42,13 +41,12 @@ public class CollectibleDocumentSerializer extends DocumentSerializer implements
     }
 
     @Override
-    protected void beforeFields(final BSONWriter bsonWriter, final Document document,
-                                final BsonSerializationOptions options) {
+    protected void beforeFields(final BSONWriter bsonWriter, final Document document) {
         if (document.get(ID_FIELD_NAME) == null) {
             document.put(ID_FIELD_NAME, idGenerator.generate());
         }
         bsonWriter.writeName(ID_FIELD_NAME);
-        writeValue(bsonWriter, document.get(ID_FIELD_NAME), options);
+        writeValue(bsonWriter, document.get(ID_FIELD_NAME));
     }
 
     @Override

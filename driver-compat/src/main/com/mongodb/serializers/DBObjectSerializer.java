@@ -29,7 +29,6 @@ import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;
 import org.bson.types.Binary;
-import org.mongodb.serialization.BsonSerializationOptions;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 
@@ -74,7 +73,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     public void serialize(final BSONWriter bsonWriter, final DBObject document) {
         bsonWriter.writeStartDocument();
 
-        beforeFields(bsonWriter, document, options);
+        beforeFields(bsonWriter, document);
 
         for (String key : document.keySet()) {
             validateField(key);
@@ -82,37 +81,34 @@ public class DBObjectSerializer implements Serializer<DBObject> {
                 continue;
             }
             bsonWriter.writeName(key);
-            writeValue(bsonWriter, document.get(key), options);
+            writeValue(bsonWriter, document.get(key));
         }
         bsonWriter.writeEndDocument();
     }
 
-    public void serializeEmbeddedDBObject(final BSONWriter bsonWriter, final DBObject document,
-                                          final BsonSerializationOptions options) {
+    public void serializeEmbeddedDBObject(final BSONWriter bsonWriter, final DBObject document) {
         bsonWriter.writeStartDocument();
 
         for (String key : document.keySet()) {
             validateField(key);
             bsonWriter.writeName(key);
-            writeValue(bsonWriter, document.get(key), options);
+            writeValue(bsonWriter, document.get(key));
         }
         bsonWriter.writeEndDocument();
     }
 
-    public void serializeEmbeddedMap(final BSONWriter bsonWriter, final Map<String, Object> document,
-                                     final BsonSerializationOptions options) {
+    public void serializeEmbeddedMap(final BSONWriter bsonWriter, final Map<String, Object> document) {
         bsonWriter.writeStartDocument();
 
         for (String key : document.keySet()) {
             validateField(key);
             bsonWriter.writeName(key);
-            writeValue(bsonWriter, document.get(key), options);
+            writeValue(bsonWriter, document.get(key));
         }
         bsonWriter.writeEndDocument();
     }
 
-    protected void beforeFields(final BSONWriter bsonWriter, final DBObject document,
-                                final BsonSerializationOptions options) {
+    protected void beforeFields(final BSONWriter bsonWriter, final DBObject document) {
     }
 
     protected boolean skipField(String key) {
@@ -123,59 +119,56 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     }
 
     @SuppressWarnings("unchecked")
-    protected void writeValue(final BSONWriter bsonWriter, final Object initialValue, final BsonSerializationOptions options) {
+    protected void writeValue(final BSONWriter bsonWriter, final Object initialValue) {
         Object value = BSON.applyEncodingHooks(initialValue);
         if (value instanceof DBRefBase) {
-            serializeDBRef(bsonWriter, (DBRefBase) value, options);
+            serializeDBRef(bsonWriter, (DBRefBase) value);
         }
         else if (value instanceof DBObject) {
-            serializeEmbeddedDBObject(bsonWriter, (DBObject) value, options);
+            serializeEmbeddedDBObject(bsonWriter, (DBObject) value);
         }
         else if (value instanceof Map) {
-            serializeEmbeddedMap(bsonWriter, (Map<String, Object>) value, options);
+            serializeEmbeddedMap(bsonWriter, (Map<String, Object>) value);
         }
         else if (value instanceof Iterable) {
-            serializeIterable(bsonWriter, (Iterable) value, options);
+            serializeIterable(bsonWriter, (Iterable) value);
         }
         else if (value instanceof byte[]) {
             primitiveSerializers.serialize(bsonWriter, new Binary((byte[]) value));
         }
         else if (value != null && value.getClass().isArray()) {
-            serializeArray(bsonWriter, value, options);
+            serializeArray(bsonWriter, value);
         }
         else {
             primitiveSerializers.serialize(bsonWriter, value);
         }
     }
 
-    private void serializeArray(final BSONWriter bsonWriter, final Object value,
-                                final BsonSerializationOptions options) {
+    private void serializeArray(final BSONWriter bsonWriter, final Object value) {
         bsonWriter.writeStartArray();
 
         int size = Array.getLength(value);
         for (int i = 0; i < size; i++) {
-            writeValue(bsonWriter, Array.get(value, i), options);
+            writeValue(bsonWriter, Array.get(value, i));
         }
 
         bsonWriter.writeEndArray();
     }
 
-    private void serializeDBRef(final BSONWriter bsonWriter, final DBRefBase dbRef,
-                                final BsonSerializationOptions options) {
+    private void serializeDBRef(final BSONWriter bsonWriter, final DBRefBase dbRef) {
         bsonWriter.writeStartDocument();
 
         bsonWriter.writeString("$ref", dbRef.getRef());
         bsonWriter.writeName("$id");
-        writeValue(bsonWriter, dbRef.getId(), options);
+        writeValue(bsonWriter, dbRef.getId());
 
         bsonWriter.writeEndDocument();
     }
 
-    private void serializeIterable(final BSONWriter bsonWriter, final Iterable iterable,
-                                   final BsonSerializationOptions options) {
+    private void serializeIterable(final BSONWriter bsonWriter, final Iterable iterable) {
         bsonWriter.writeStartArray();
         for (final Object cur : iterable) {
-            writeValue(bsonWriter, cur, options);
+            writeValue(bsonWriter, cur);
         }
         bsonWriter.writeEndArray();
     }
@@ -188,7 +181,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
-            document.put(fieldName, readValue(reader, options, fieldName, path));
+            document.put(fieldName, readValue(reader, fieldName, path));
         }
 
         reader.readEndDocument();
@@ -237,14 +230,13 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         }
     }
 
-    private Object deserializeDocument(final BSONReader reader, final BsonSerializationOptions options,
-                                       final List<String> path) {
+    private Object deserializeDocument(final BSONReader reader, final List<String> path) {
         final DBObject document = getNewInstance(path);
 
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
-            document.put(fieldName, readValue(reader, options, fieldName, path));
+            document.put(fieldName, readValue(reader, fieldName, path));
         }
 
         reader.readEndDocument();
@@ -257,18 +249,18 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         return document;
     }
 
-    private Object readValue(final BSONReader reader, final BsonSerializationOptions options, final String fieldName,
+    private Object readValue(final BSONReader reader, final String fieldName,
                              final List<String> path) {
         final BsonType bsonType = reader.getCurrentBsonType();
         Object initialRetVal;
         if (bsonType.equals(BsonType.DOCUMENT)) {
             path.add(fieldName);
-            initialRetVal = deserializeDocument(reader, options, path);
+            initialRetVal = deserializeDocument(reader, path);
             path.remove(path.size() - 1);
         }
         else if (bsonType.equals(BsonType.ARRAY)) {
             path.add(fieldName);
-            initialRetVal = readArray(reader, options, path);
+            initialRetVal = readArray(reader, path);
             path.remove(path.size() - 1);
         }
         else {
@@ -278,11 +270,11 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         return BSON.applyDecodingHooks(initialRetVal);
     }
 
-    private List readArray(final BSONReader reader, final BsonSerializationOptions options, final List<String> path) {
+    private List readArray(final BSONReader reader, final List<String> path) {
         reader.readStartArray();
         final BasicDBList list = new BasicDBList();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            list.add(readValue(reader, options, null, path));   // TODO: why is this a warning?
+            list.add(readValue(reader, null, path));   // TODO: why is this a warning?
         }
         reader.readEndArray();
         return list;

@@ -93,7 +93,7 @@ public class CollectibleDocumentSerializerTest {
     @Test
     public void testBeforeFieldsWithGeneratedId() {
         Document document = new Document();
-        serializer.beforeFields(writer, document, null);
+        serializer.beforeFields(writer, document);
         assertEquals(1, document.get("_id"));
         assertEquals(13, outputBuffer.size());    // TODO: Not such an accurate test
     }
@@ -101,7 +101,7 @@ public class CollectibleDocumentSerializerTest {
     @Test
     public void testBeforeFieldsWithExistingId() {
         Document document = new Document("_id", "Hi mom");
-        serializer.beforeFields(writer, document, null);
+        serializer.beforeFields(writer, document);
         assertEquals("Hi mom", document.get("_id"));
         assertEquals(20, outputBuffer.size());    // TODO: Not such an accurate test
     }

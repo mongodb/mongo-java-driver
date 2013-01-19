@@ -17,9 +17,8 @@
 
 package com.mongodb.serializers;
 
-import org.bson.BSONWriter;
 import com.mongodb.DBRef;
-import org.mongodb.serialization.BsonSerializationOptions;
+import org.bson.BSONWriter;
 import org.mongodb.serialization.PrimitiveSerializers;
 
 public class DocumentSerializer extends org.mongodb.serialization.serializers.DocumentSerializer {
@@ -27,11 +26,11 @@ public class DocumentSerializer extends org.mongodb.serialization.serializers.Do
         super(primitiveSerializers);
     }
 
-    protected void writeValue(final BSONWriter bsonWriter, Object value, final BsonSerializationOptions options) {
+    protected void writeValue(final BSONWriter bsonWriter, Object value) {
         if (value instanceof DBRef) {
             DBRef dbRef = (DBRef) value;
             value = new org.mongodb.DBRef(dbRef.getId(), dbRef.getRef());
         }
-        super.writeValue(bsonWriter, value, options);
+        super.writeValue(bsonWriter, value);
     }
 }
