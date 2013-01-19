@@ -38,6 +38,15 @@ public class BSONBinaryWriter extends BSONWriter {
         this.buffer = buffer;
     }
 
+    /**
+     * Gets the output buffer that is backing this instance.
+     *
+     * @return the buffer
+     */
+    public OutputBuffer getBuffer() {
+       return buffer;
+    }
+
     @Override
     public void flush() {
     }

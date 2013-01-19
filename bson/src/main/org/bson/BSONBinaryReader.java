@@ -39,6 +39,15 @@ public class BSONBinaryReader extends BSONReader {
         this(new BsonReaderSettings(), buffer);
     }
 
+    /**
+     * Gets the input buffer backing this instance.
+     *
+     * @return the input buffer
+     */
+    public InputBuffer getBuffer() {
+        return buffer;
+    }
+
     @Override
     public BsonType readBsonType() {
         if (isClosed()) {
