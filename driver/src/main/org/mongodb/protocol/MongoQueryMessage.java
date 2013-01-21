@@ -56,11 +56,11 @@ public class MongoQueryMessage extends MongoRequestMessage {
     }
 
     private void writeQueryPrologue(final int queryOptions, final MongoQuery query) {
-        buffer.writeInt(queryOptions);
-        buffer.writeCString(collectionName);
+        getBuffer().writeInt(queryOptions);
+        getBuffer().writeCString(getCollectionName());
 
-        buffer.writeInt(query.getSkip());
-        buffer.writeInt(chooseBatchSize(query.getBatchSize(), query.getLimit(), 0));
+        getBuffer().writeInt(query.getSkip());
+        getBuffer().writeInt(chooseBatchSize(query.getBatchSize(), query.getLimit(), 0));
     }
 
     // TODO: test this, extensively

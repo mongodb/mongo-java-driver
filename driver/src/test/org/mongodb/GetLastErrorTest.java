@@ -27,7 +27,7 @@ import static org.junit.Assert.fail;
 public class GetLastErrorTest extends MongoClientTestBase {
     @Test
     public void testDuplicateKeyException() {
-        Document doc = new Document("_id", 1);
+        final Document doc = new Document("_id", 1);
         getCollection().insert(doc);
         try {
             getCollection().insert(doc);

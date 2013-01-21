@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.rs;
 
-import org.mongodb.annotations.Immutable;
 import org.bson.types.Document;
 import org.mongodb.ServerAddress;
+import org.mongodb.annotations.Immutable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,15 +35,21 @@ import java.util.Set;
  */
 @Immutable
 public class ReplicaSetNode extends Node {
+    private final Set<String> names;
+    private final Set<Tag> tags;
+    private final boolean isMaster;
+    private final boolean isSecondary;
+    private final String setName;
+
     public ReplicaSetNode(final ServerAddress addr, final Set<String> names, final String setName, final float pingTime,
                    final boolean ok, final boolean isMaster, final boolean isSecondary,
                    final LinkedHashMap<String, String> tags, final int maxBsonObjectSize) {
         super(pingTime, addr, maxBsonObjectSize, ok);
-        this._names = Collections.unmodifiableSet(new HashSet<String>(names));
-        this._setName = setName;
-        this._isMaster = isMaster;
-        this._isSecondary = isSecondary;
-        this._tags = Collections.unmodifiableSet(getTagsFromMap(tags));
+        this.names = Collections.unmodifiableSet(new HashSet<String>(names));
+        this.setName = setName;
+        this.isMaster = isMaster;
+        this.isSecondary = isSecondary;
+        this.tags = Collections.unmodifiableSet(getTagsFromMap(tags));
     }
 
     private static Set<Tag> getTagsFromMap(final LinkedHashMap<String, String> tagMap) {
@@ -56,41 +61,37 @@ public class ReplicaSetNode extends Node {
     }
 
     public boolean master() {
-        return _ok && _isMaster;
+        return isOk() && isMaster;
     }
 
     public boolean secondary() {
-        return _ok && _isSecondary;
+        return isOk() && isSecondary;
     }
 
     public Set<String> getNames() {
-        return _names;
+        return names;
     }
 
     public String getSetName() {
-        return _setName;
+        return setName;
     }
 
     public Set<Tag> getTags() {
-        return _tags;
-    }
-
-    public float getPingTime() {
-        return _pingTime;
+        return tags;
     }
 
     public String toJSON() {
         final StringBuilder buf = new StringBuilder();
-        buf.append("{ address:'").append(_addr).append("', ");
-        buf.append("ok:").append(_ok).append(", ");
-        buf.append("ping:").append(_pingTime).append(", ");
-        buf.append("isMaster:").append(_isMaster).append(", ");
-        buf.append("isSecondary:").append(_isSecondary).append(", ");
-        buf.append("setName:").append(_setName).append(", ");
-        buf.append("maxBsonObjectSize:").append(_maxBsonObjectSize).append(", ");
-        if (_tags != null && _tags.size() > 0) {
+        buf.append("{ address:'").append(getAddress()).append("', ");
+        buf.append("ok:").append(isOk()).append(", ");
+        buf.append("ping:").append(super.getPingTime()).append(", ");
+        buf.append("isMaster:").append(isMaster).append(", ");
+        buf.append("isSecondary:").append(isSecondary).append(", ");
+        buf.append("setName:").append(setName).append(", ");
+        buf.append("maxBsonObjectSize:").append(getMaxBsonObjectSize()).append(", ");
+        if (tags != null && tags.size() > 0) {
             final List<Document> tagObjects = new ArrayList<Document>();
-            for (final Tag tag : _tags) {
+            for (final Tag tag : tags) {
                 tagObjects.add(tag.toDBObject());
             }
 
@@ -113,31 +114,31 @@ public class ReplicaSetNode extends Node {
 
         final ReplicaSetNode node = (ReplicaSetNode) o;
 
-        if (_isMaster != node._isMaster) {
+        if (isMaster != node.isMaster) {
             return false;
         }
-        if (_maxBsonObjectSize != node._maxBsonObjectSize) {
+        if (getMaxBsonObjectSize() != node.getMaxBsonObjectSize()) {
             return false;
         }
-        if (_isSecondary != node._isSecondary) {
+        if (isSecondary != node.isSecondary) {
             return false;
         }
-        if (_ok != node._ok) {
+        if (isOk() != node.isOk()) {
             return false;
         }
-        if (Float.compare(node._pingTime, _pingTime) != 0) {
+        if (Float.compare(super.getPingTime(), super.getPingTime()) != 0) {
             return false;
         }
-        if (!_addr.equals(node._addr)) {
+        if (!getAddress().equals(node.getAddress())) {
             return false;
         }
-        if (!_names.equals(node._names)) {
+        if (!names.equals(node.names)) {
             return false;
         }
-        if (!_tags.equals(node._tags)) {
+        if (!tags.equals(node.tags)) {
             return false;
         }
-        if (!_setName.equals(node._setName)) {
+        if (!setName.equals(node.setName)) {
             return false;
         }
 
@@ -146,21 +147,15 @@ public class ReplicaSetNode extends Node {
 
     @Override
     public int hashCode() {
-        int result = _addr.hashCode();
-        result = 31 * result + (_pingTime != +0.0f ? Float.floatToIntBits(_pingTime) : 0);
-        result = 31 * result + _names.hashCode();
-        result = 31 * result + _tags.hashCode();
-        result = 31 * result + (_ok ? 1 : 0);
-        result = 31 * result + (_isMaster ? 1 : 0);
-        result = 31 * result + (_isSecondary ? 1 : 0);
-        result = 31 * result + _setName.hashCode();
-        result = 31 * result + _maxBsonObjectSize;
+        int result = getAddress().hashCode();
+        result = 31 * result + (super.getPingTime() != +0.0f ? Float.floatToIntBits(super.getPingTime()) : 0);
+        result = 31 * result + names.hashCode();
+        result = 31 * result + tags.hashCode();
+        result = 31 * result + (isOk() ? 1 : 0);
+        result = 31 * result + (isMaster ? 1 : 0);
+        result = 31 * result + (isSecondary ? 1 : 0);
+        result = 31 * result + setName.hashCode();
+        result = 31 * result + getMaxBsonObjectSize();
         return result;
     }
-
-    private final Set<String> _names;
-    private final Set<Tag> _tags;
-    private final boolean _isMaster;
-    private final boolean _isSecondary;
-    private final String _setName;
 }

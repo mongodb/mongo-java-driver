@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
         this.collection = collection;
         this.find = find;
         currentResult = collection.getClient().getOperations().query(collection.getNamespace(), find,
-                                                                     collection.getOptions().getDocumentSerializer(),
-                                                                     collection.getSerializer());
+                                                                    collection.getOptions().getDocumentSerializer(),
+                                                                    collection.getSerializer());
         currentIterator = currentResult.getResults().iterator();
     }
 
@@ -66,8 +66,9 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
             return true;
         }
 
-        if ( find.getLimit() > 0 && nextCount >= find.getLimit() )
+        if (find.getLimit() > 0 && nextCount >= find.getLimit()) {
             return false;
+        }
 
         if (currentResult.getCursor() == null) {
             return false;
@@ -90,6 +91,7 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
 
     /**
      * Gets the cursor id.
+     *
      * @return the cursor id
      */
     @Override
@@ -103,9 +105,10 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
 
     private void getMore() {
         currentResult = collection.getClient().
-                getOperations().getMore(collection.getNamespace(),
-                                        new GetMore(currentResult.getCursor(), find.getBatchSize()),
-                                        collection.getSerializer());
+                                              getOperations().getMore(collection.getNamespace(),
+                                                                     new GetMore(currentResult.getCursor(),
+                                                                                find.getBatchSize()),
+                                                                     collection.getSerializer());
         currentIterator = currentResult.getResults().iterator();
     }
 
@@ -116,10 +119,7 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
 
     @Override
     public String toString() {
-        return "MongoCollectionCursor{" +
-                "collection=" + collection +
-                ", find=" + find +
-                ", cursor=" + currentResult.getCursor() +
-                '}';
+        return "MongoCollectionCursor{collection=" + collection + ", find=" + find + ", cursor="
+               + currentResult.getCursor() + '}';
     }
 }

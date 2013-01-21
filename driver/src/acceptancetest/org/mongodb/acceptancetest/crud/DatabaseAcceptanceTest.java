@@ -63,7 +63,7 @@ public class DatabaseAcceptanceTest {
         final Set<String> collections = database.admin().getCollectionNames();
         assertThat(collections.contains("newCollectionName"), is(true));
 
-        MongoCollection<Document> collection = database.getCollection(collectionName);
+        final MongoCollection<Document> collection = database.getCollection(collectionName);
         assertThat(collection.admin().isCapped(), is(true));
 
         assertThat("Should have the default index on _id", collection.admin().getIndexes().size(), is(1));
@@ -77,7 +77,7 @@ public class DatabaseAcceptanceTest {
         final Set<String> collections = database.admin().getCollectionNames();
         assertThat(collections.contains("newCollectionName"), is(true));
 
-        MongoCollection<Document> collection = database.getCollection(collectionName);
+        final MongoCollection<Document> collection = database.getCollection(collectionName);
         assertThat(collection.admin().isCapped(), is(true));
 
         assertThat("Should NOT have the default index on _id", collection.admin().getIndexes().size(), is(0));
@@ -85,9 +85,10 @@ public class DatabaseAcceptanceTest {
 
     @Test
     public void shouldSupportMaxNumberOfDocumentsInACappedCollection() {
-        int maxDocuments = 5;
+        final int maxDocuments = 5;
         final String collectionName = "newCollectionName";
-        database.admin().createCollection(new CreateCollectionOptions(collectionName, true, 40 * 1024, false, maxDocuments));
+        database.admin()
+                .createCollection(new CreateCollectionOptions(collectionName, true, 40 * 1024, false, maxDocuments));
 
         final Set<String> collections = database.admin().getCollectionNames();
         assertThat(collections.contains("newCollectionName"), is(true));
@@ -95,7 +96,8 @@ public class DatabaseAcceptanceTest {
         final MongoCollection<Document> collection = database.getCollection(collectionName);
         final Document collectionStatistics = collection.admin().getStatistics();
 
-        assertThat("max is set correctly in collection statistics", (Integer) collectionStatistics.get("max"), is(maxDocuments));
+        assertThat("max is set correctly in collection statistics", (Integer) collectionStatistics.get("max"),
+                  is(maxDocuments));
     }
 
     @Test
@@ -113,6 +115,5 @@ public class DatabaseAcceptanceTest {
         assertThat(collections.contains("FirstCollection"), is(true));
         assertThat(collections.contains("SecondCollection"), is(true));
     }
-
 
 }

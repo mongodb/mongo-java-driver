@@ -28,9 +28,9 @@ public class MongoCommandException extends MongoServerException {
     private final CommandResult commandResult;
 
     public MongoCommandException(final CommandResult commandResult) {
-        super("Command failed with error code " + commandResult.getErrorCode() + " and error message '" +
-                      commandResult.getErrorMessage() + "' on server " + commandResult.getAddress(),
-              commandResult.getAddress());
+        super("Command failed with error code " + commandResult.getErrorCode() + " and error message '"
+              + commandResult.getErrorMessage() + "' on server " + commandResult.getAddress(),
+             commandResult.getAddress());
         this.commandResult = commandResult;
     }
 

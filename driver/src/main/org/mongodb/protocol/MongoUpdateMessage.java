@@ -41,8 +41,8 @@ public class MongoUpdateMessage extends MongoRequestMessage {
     }
 
     void writeBaseUpdate(final MongoUpdateBase update, final Serializer<Document> serializer) {
-        buffer.writeInt(0); // reserved
-        buffer.writeCString(collectionName);
+        getBuffer().writeInt(0); // reserved
+        getBuffer().writeCString(getCollectionName());
 
         int flags = 0;
         if (update.isUpsert()) {
@@ -51,7 +51,7 @@ public class MongoUpdateMessage extends MongoRequestMessage {
         if (update.isMulti()) {
             flags |= 2;
         }
-        buffer.writeInt(flags);
+        getBuffer().writeInt(flags);
 
         addDocument(update.getFilter().toDocument(), serializer);
     }

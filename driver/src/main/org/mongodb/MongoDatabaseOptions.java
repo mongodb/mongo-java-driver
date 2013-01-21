@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb;
@@ -25,10 +24,10 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
 
 @Immutable
 public class MongoDatabaseOptions {
-    final PrimitiveSerializers primitiveSerializers;
-    final WriteConcern writeConcern;
-    final ReadPreference readPreference;
-    final Serializer<Document> documentSerializer;
+    private final PrimitiveSerializers primitiveSerializers;
+    private final WriteConcern writeConcern;
+    private final ReadPreference readPreference;
+    private final Serializer<Document> documentSerializer;
 
     public static Builder builder() {
         return new Builder();
@@ -51,38 +50,43 @@ public class MongoDatabaseOptions {
     }
 
     public MongoDatabaseOptions withDefaults(final MongoClientOptions options) {
-        Builder builder = new Builder();
-        builder.primitiveSerializers = primitiveSerializers != null ? primitiveSerializers : options.getPrimitiveSerializers();
-        builder.writeConcern = writeConcern != null ? writeConcern : options.getWriteConcern();
-        builder.readPreference = readPreference != null ? readPreference : options.getReadPreference();
-        builder.documentSerializer = documentSerializer != null ?
-                documentSerializer : new DocumentSerializer(builder.primitiveSerializers);
+        final Builder builder = new Builder();
+        builder.primitiveSerializers = getPrimitiveSerializers() != null ? getPrimitiveSerializers()
+                                                                    : options.getPrimitiveSerializers();
+        builder.writeConcern = getWriteConcern() != null ? getWriteConcern() : options.getWriteConcern();
+        builder.readPreference = getReadPreference() != null ? getReadPreference() : options.getReadPreference();
+        builder.documentSerializer = getDocumentSerializer() != null ? getDocumentSerializer()
+                                                                : new DocumentSerializer(builder
+                                                                                         .primitiveSerializers);
         return builder.build();
     }
 
     public static class Builder {
+        //TODO: there is definitely a better way to share this state
+        //CHECKSTYLE:OFF
         PrimitiveSerializers primitiveSerializers;
         WriteConcern writeConcern;
         ReadPreference readPreference;
         Serializer<Document> documentSerializer;
+        //CHECKSTYLE:ON
 
-        public Builder primitiveSerializers(PrimitiveSerializers primitiveSerializers) {
-            this.primitiveSerializers = primitiveSerializers;
+        public Builder primitiveSerializers(final PrimitiveSerializers aPrimitiveSerializers) {
+            this.primitiveSerializers = aPrimitiveSerializers;
             return this;
         }
 
-        public Builder writeConcern(WriteConcern writeConcern) {
-            this.writeConcern = writeConcern;
+        public Builder writeConcern(final WriteConcern aWriteConcern) {
+            this.writeConcern = aWriteConcern;
             return this;
         }
 
-        public Builder readPreference(ReadPreference readPreference) {
-            this.readPreference = readPreference;
+        public Builder readPreference(final ReadPreference aReadPreference) {
+            this.readPreference = aReadPreference;
             return this;
         }
 
-        public Builder documentSerializer(Serializer<Document> documentSerializer) {
-            this.documentSerializer = documentSerializer;
+        public Builder documentSerializer(final Serializer<Document> aDocumentSerializer) {
+            this.documentSerializer = aDocumentSerializer;
             return this;
         }
 
@@ -101,6 +105,5 @@ public class MongoDatabaseOptions {
         this.readPreference = readPreference;
         this.documentSerializer = documentSerializer;
     }
-
 
 }

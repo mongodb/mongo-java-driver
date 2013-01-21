@@ -42,7 +42,7 @@ public class WriteConcern implements Serializable {
     private static final long serialVersionUID = 1884671104750417011L;
 
     // map of the constants from above for use by valueOf
-    private static final Map<String, WriteConcern> _namedConcerns;
+    private static final Map<String, WriteConcern> NAMED_CONCERNS;
 
     private final Object w;
 
@@ -93,10 +93,10 @@ public class WriteConcern implements Serializable {
      * Gets the WriteConcern constants by name (matching is done case insensitively).
      *
      * @param name
-     * @return
+     * @return the WriteConcern
      */
     public static WriteConcern valueOf(final String name) {
-        return _namedConcerns.get(name.toLowerCase());
+        return NAMED_CONCERNS.get(name.toLowerCase());
     }
 
     /**
@@ -184,13 +184,14 @@ public class WriteConcern implements Serializable {
      * well as network socket errors raised</li> <li>{@code w>1} Checks servers (w) for errors as well as network socket
      * errors raised</li> </ul> </p>
      *
-     * @param w                     number of writes
-     * @param wtimeout              timeout for write operation
-     * @param fsync                 whether or not to fsync
-     * @param j                     whether writes should wait for a journaling group commit
+     * @param w                        number of writes
+     * @param wtimeout                 timeout for write operation
+     * @param fsync                    whether or not to fsync
+     * @param j                        whether writes should wait for a journaling group commit
      * @param continueOnErrorForInsert if batch inserts should continue after the first error
      */
-    public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnErrorForInsert) {
+    public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j,
+                        final boolean continueOnErrorForInsert) {
         this.w = w;
         this.wtimeout = wtimeout;
         this.fsync = fsync;
@@ -221,13 +222,14 @@ public class WriteConcern implements Serializable {
      * well as network socket errors raised</li> <li>{@code w>1} Checks servers (w) for errors as well as network socket
      * errors raised</li> </ul> </p>
      *
-     * @param w                     number of writes
-     * @param wtimeout              timeout for write operation
-     * @param fsync                 whether or not to fsync
-     * @param j                     whether writes should wait for a journaling group commit
+     * @param w                        number of writes
+     * @param wtimeout                 timeout for write operation
+     * @param fsync                    whether or not to fsync
+     * @param j                        whether writes should wait for a journaling group commit
      * @param continueOnErrorForInsert if batch inserts should continue after the first error
      */
-    public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnErrorForInsert) {
+    public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j,
+                        final boolean continueOnErrorForInsert) {
         if (w == null) {
             throw new IllegalArgumentException("w can not be null");
         }
@@ -269,7 +271,7 @@ public class WriteConcern implements Serializable {
     /**
      * Gets the w value (the write strategy)
      *
-     * @return
+     * @return the WriteConcern as an object
      */
     public Object getWObject() {
         return w;
@@ -278,7 +280,7 @@ public class WriteConcern implements Serializable {
     /**
      * Gets the w parameter (the write strategy)
      *
-     * @return
+     * @return w
      */
     public int getW() {
         return (Integer) w;
@@ -296,7 +298,7 @@ public class WriteConcern implements Serializable {
     /**
      * Gets the write timeout (in milliseconds)
      *
-     * @return
+     * @return the the write timeout
      */
     public int getWtimeout() {
         return wtimeout;
@@ -305,7 +307,7 @@ public class WriteConcern implements Serializable {
     /**
      * Gets the fsync flag (fsync to disk on the server)
      *
-     * @return
+     * @return true if fsync set
      */
     public boolean getFsync() {
         return fsync;
@@ -314,7 +316,7 @@ public class WriteConcern implements Serializable {
     /**
      * Gets the j parameter (journal syncing)
      *
-     * @return
+     * @return true if j is set
      */
     public boolean getJ() {
         return j;
@@ -323,36 +325,35 @@ public class WriteConcern implements Serializable {
     /**
      * Gets the "continue inserts on error" mode
      *
-     * @return
+     * @return true if set to continue on error
      */
     public boolean getContinueOnErrorForInsert() {
         return continueOnErrorForInsert;
     }
 
+    //CHECKSTYLE:OFF
+
     /**
-     *
      * @param w
-     * @return
+     * @return the WriteConcern
      */
-    public WriteConcern withW(int w) {
+    public WriteConcern withW(final int w) {
         return new WriteConcern(w, getWtimeout(), getFsync(), getJ(), getContinueOnErrorForInsert());
     }
 
     /**
-     *
      * @param w
-     * @return
+     * @return the WriteConcern
      */
-    public WriteConcern withW(String w) {
+    public WriteConcern withW(final String w) {
         return new WriteConcern(w, getWtimeout(), getFsync(), getJ(), getContinueOnErrorForInsert());
     }
 
     /**
-     *
      * @param fsync
-     * @return
+     * @return the WriteConcern
      */
-    public WriteConcern withFsync(boolean fsync) {
+    public WriteConcern withFsync(final boolean fsync) {
         if (getWObject() instanceof Integer) {
             return new WriteConcern(getW(), getWtimeout(), fsync, getJ(), getContinueOnErrorForInsert());
         }
@@ -362,11 +363,10 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     *
      * @param j
-     * @return
+     * @return the WriteConcern
      */
-    public WriteConcern withJ(boolean j) {
+    public WriteConcern withJ(final boolean j) {
         if (getWObject() instanceof Integer) {
             return new WriteConcern(getW(), getWtimeout(), getFsync(), j, getContinueOnErrorForInsert());
         }
@@ -376,11 +376,10 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     *
      * @param continueOnErrorForInsert
-     * @return
+     * @return the WriteConcern
      */
-    public WriteConcern withContinueOnErrorForInsert(boolean continueOnErrorForInsert) {
+    public WriteConcern withContinueOnErrorForInsert(final boolean continueOnErrorForInsert) {
         if (getWObject() instanceof Integer) {
             return new WriteConcern(getW(), getWtimeout(), getFsync(), getJ(), continueOnErrorForInsert);
         }
@@ -388,11 +387,12 @@ public class WriteConcern implements Serializable {
             return new WriteConcern(getWString(), getWtimeout(), getFsync(), getJ(), continueOnErrorForInsert);
         }
     }
+    //CHECKSTYLE:ON
 
     /**
      * Returns whether network error may be raised (w >= 0)
      *
-     * @return
+     * @return true if set to raise network errors
      */
     public boolean raiseNetworkErrors() {
         if (w instanceof Integer) {
@@ -404,7 +404,7 @@ public class WriteConcern implements Serializable {
     /**
      * Returns whether "getlasterror" should be called (w > 0)
      *
-     * @return
+     * @return true if set to call last error
      */
     public boolean callGetLastError() {
         if (w instanceof Integer) {
@@ -416,13 +416,8 @@ public class WriteConcern implements Serializable {
 
     @Override
     public String toString() {
-        return "WriteConcern{" +
-                "w=" + w +
-                ", wtimeout=" + wtimeout +
-                ", fsync=" + fsync +
-                ", j=" + j +
-                ", continueOnErrorForInsert=" + continueOnErrorForInsert +
-                '}';
+        return "WriteConcern{w=" + w + ", wtimeout=" + wtimeout + ", fsync=" + fsync + ", j=" + j
+               + ", continueOnErrorForInsert=" + continueOnErrorForInsert + '}';
     }
 
     @Override
@@ -448,11 +443,7 @@ public class WriteConcern implements Serializable {
         if (wtimeout != that.wtimeout) {
             return false;
         }
-        if (!w.equals(that.w)) {
-            return false;
-        }
-
-        return true;
+        return w.equals(that.w);
     }
 
     @Override
@@ -466,12 +457,12 @@ public class WriteConcern implements Serializable {
     }
 
     static {
-        _namedConcerns = new HashMap<String, WriteConcern>();
-        for (Field f : WriteConcern.class.getFields()) {
+        NAMED_CONCERNS = new HashMap<String, WriteConcern>();
+        for (final Field f : WriteConcern.class.getFields()) {
             if (Modifier.isStatic(f.getModifiers()) && f.getType().equals(WriteConcern.class)) {
-                String key = f.getName().toLowerCase();
+                final String key = f.getName().toLowerCase();
                 try {
-                    _namedConcerns.put(key, (WriteConcern) f.get(null));
+                    NAMED_CONCERNS.put(key, (WriteConcern) f.get(null));
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }

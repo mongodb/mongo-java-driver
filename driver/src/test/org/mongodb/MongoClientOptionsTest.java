@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
- * <p/>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,8 @@ public class MongoClientOptionsTest {
 
     @Test
     public void testBuilderDefaults() {
-        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
-        MongoClientOptions options = builder.build();
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        final MongoClientOptions options = builder.build();
         assertEquals(null, options.getDescription());
         assertEquals(WriteConcern.ACKNOWLEDGED, options.getWriteConcern());
         assertEquals(100, options.getConnectionsPerHost());
@@ -40,58 +40,52 @@ public class MongoClientOptionsTest {
         assertEquals(false, options.isAutoConnectRetry());
     }
 
-    @Test
-    public void testIllegalArguments() {
-        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
-        try {
-            builder.primitiveSerializers(null);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
-        try {
-            builder.writeConcern(null);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
-        try {
-            builder.readPreference(null);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
-        try {
-            builder.connectionsPerHost(0);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
-        try {
-            builder.connectTimeout(-1);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
-        try {
-            builder.maxAutoConnectRetryTime(-1);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
-        try {
-            builder.threadsAllowedToBlockForConnectionMultiplier(0);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
-
+    @Test(expected = IllegalArgumentException.class)
+    public void testPrimitiveSerialisersIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.primitiveSerializers(null);
+        fail();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testWriteConcernIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.writeConcern(null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testReaPreferenceIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.readPreference(null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testConnectionsPerHostIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.connectionsPerHost(0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testConnectionTimeoutIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.connectTimeout(-1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMaxAutoconnectRetryIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.maxAutoConnectRetryTime(-1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testThreadsAllowsToBlockIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.threadsAllowedToBlockForConnectionMultiplier(0);
+    }
 
     @Test
     public void testBuilderBuild() {
-        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.description("test");
         builder.readPreference(ReadPreference.secondary());
         builder.writeConcern(WriteConcern.JOURNALED);
@@ -104,7 +98,7 @@ public class MongoClientOptionsTest {
         final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
         builder.primitiveSerializers(primitiveSerializers);
 
-        MongoClientOptions options = builder.build();
+        final MongoClientOptions options = builder.build();
 
         assertEquals("test", options.getDescription());
         assertEquals(ReadPreference.secondary(), options.getReadPreference());

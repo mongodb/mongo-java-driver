@@ -118,9 +118,9 @@ public class PooledByteBufferOutput extends OutputBuffer {
             cur.flip();
         }
 
-        for (long bytesRead = 0; bytesRead < size(); ) {
+        for (long bytesRead = 0; bytesRead < size();/*bytesRead incremented elsewhere*/) {
             bytesRead += socketChannel.write(bufferList.toArray(new ByteBuffer[bufferList.size()]), 0,
-                                             bufferList.size());
+                                            bufferList.size());
         }
     }
 
@@ -151,8 +151,8 @@ public class PooledByteBufferOutput extends OutputBuffer {
     }
 
     class BufferPositionPair {
-        int bufferIndex;
-        int position;
+        private int bufferIndex;
+        private int position;
 
         BufferPositionPair(final int bufferIndex, final int position) {
             this.bufferIndex = bufferIndex;
@@ -160,14 +160,14 @@ public class PooledByteBufferOutput extends OutputBuffer {
         }
 
         public void putInt(final int val) {
-            put((byte) (val >> 0));
+            put((byte) (val));
             put((byte) (val >> 8));
             put((byte) (val >> 16));
             put((byte) (val >> 24));
         }
 
-        void put(byte b) {
-            ByteBuffer byteBuffer = getByteBufferAtIndex(bufferIndex);
+        void put(final byte b) {
+            final ByteBuffer byteBuffer = getByteBufferAtIndex(bufferIndex);
             byteBuffer.put(position++, b);
 
             if (position >= byteBuffer.capacity()) {

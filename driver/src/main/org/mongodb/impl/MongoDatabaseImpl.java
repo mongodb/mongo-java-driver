@@ -54,20 +54,26 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoCollectionImpl<Document> getCollection(final String collectionName,
-                                                       final MongoCollectionOptions options) {
-        return getTypedCollection(collectionName, new CollectibleDocumentSerializer(
-                options.withDefaults(this.options).getPrimitiveSerializers(), new ObjectIdGenerator()), options);
+                                                       final MongoCollectionOptions operationOptions) {
+        return getTypedCollection(collectionName,
+                                 new CollectibleDocumentSerializer(operationOptions
+                                                                   .withDefaults(options)
+                                                                   .getPrimitiveSerializers(),
+                                                                  new ObjectIdGenerator()),
+                                 operationOptions);
     }
 
     @Override
-    public <T> MongoCollectionImpl<T> getTypedCollection(final String name, final CollectibleSerializer<T> serializer) {
-        return getTypedCollection(name, serializer, MongoCollectionOptions.builder().build());
+    public <T> MongoCollectionImpl<T> getTypedCollection(final String collectionName,
+                                                         final CollectibleSerializer<T> serializer) {
+        return getTypedCollection(collectionName, serializer, MongoCollectionOptions.builder().build());
     }
 
     @Override
-    public <T> MongoCollectionImpl<T> getTypedCollection(final String name, final CollectibleSerializer<T> serializer,
-                                                         final MongoCollectionOptions options) {
-        return new MongoCollectionImpl<T>(name, this, serializer, options.withDefaults(this.options));
+    public <T> MongoCollectionImpl<T> getTypedCollection(final String collectionName,
+                                                         final CollectibleSerializer<T> serializer,
+                                                         final MongoCollectionOptions operationOptions) {
+        return new MongoCollectionImpl<T>(collectionName, this, serializer, operationOptions.withDefaults(options));
     }
 
     @Override
@@ -77,9 +83,10 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public CommandResult executeCommand(final MongoCommand commandOperation) {
-        return new CommandResult(client.getOperations().executeCommand(getName(), commandOperation,
-                                                                       new DocumentSerializer(
-                                                                               options.getPrimitiveSerializers())));
+        final PrimitiveSerializers primitiveSerializers = options.getPrimitiveSerializers();
+        return new CommandResult(client.getOperations().executeCommand(getName(),
+                                                                      commandOperation,
+                                                                      new DocumentSerializer(primitiveSerializers)));
     }
 
     @Override

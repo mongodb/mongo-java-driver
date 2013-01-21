@@ -55,7 +55,7 @@ public class AddIndexAcceptanceTest {
         collection = database.getCollection("collection");
 
         assertThat("Should be no indexes on the database at all at this stage", collection.admin().getIndexes().size(),
-                   is(0));
+                  is(0));
     }
 
     @Test
@@ -63,8 +63,8 @@ public class AddIndexAcceptanceTest {
         collection.insert(new Document("new", "value"));
 
         assertThat("Should have the default index on _id when a document exists",
-                   collection.admin().getIndexes().size(), is(1));
-        String nameOfIndex = (String) collection.admin().getIndexes().get(0).get("name");
+                  collection.admin().getIndexes().size(), is(1));
+        final String nameOfIndex = (String) collection.admin().getIndexes().get(0).get("name");
         assertThat("Should be the default index on id", nameOfIndex, is("_id_"));
     }
 
@@ -73,14 +73,14 @@ public class AddIndexAcceptanceTest {
         collection.admin().ensureIndex(new Index("theField"));
 
         assertThat("Should be default index and new index on the database now", collection.admin().getIndexes().size(),
-                   is(2));
+                  is(2));
     }
 
     @Test
     public void shouldCreateIndexWithNameOfFieldPlusOrder() {
         collection.admin().ensureIndex(new Index("theField", ASC));
 
-        String nameOfCreatedIndex = (String) collection.admin().getIndexes().get(1).get("name");
+        final String nameOfCreatedIndex = (String) collection.admin().getIndexes().get(1).get("name");
         assertThat("Should be an index with name of field, ascending", nameOfCreatedIndex, is("theField_1"));
     }
 
@@ -89,8 +89,8 @@ public class AddIndexAcceptanceTest {
         final Index index = new Index("theFieldToIndex");
         collection.admin().ensureIndex(index);
 
-        Document newIndexDetails = collection.admin().getIndexes().get(1);
-        OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("theFieldToIndex"));
+        final Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("theFieldToIndex"));
         assertThat("Index created should be ascending", order, is(ASC));
     }
 
@@ -99,8 +99,8 @@ public class AddIndexAcceptanceTest {
         final Index index = new Index("field", ASC);
         collection.admin().ensureIndex(index);
 
-        Document newIndexDetails = collection.admin().getIndexes().get(1);
-        OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
+        final Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
         assertThat("Index created should be ascending", order, is(ASC));
     }
 
@@ -109,8 +109,8 @@ public class AddIndexAcceptanceTest {
         final Index index = new Index("field", DESC);
         collection.admin().ensureIndex(index);
 
-        Document newIndexDetails = collection.admin().getIndexes().get(1);
-        OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
+        final Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
         assertThat("Index created should be descending", order, is(DESC));
     }
 
@@ -119,7 +119,7 @@ public class AddIndexAcceptanceTest {
         final Index index = new Index("field", DESC);
         collection.admin().ensureIndex(index);
 
-        Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.admin().getIndexes().get(1);
         assertThat("Index created should not be unique", newIndexDetails.get("unique"), is(nullValue()));
     }
 
@@ -127,8 +127,8 @@ public class AddIndexAcceptanceTest {
     public void shouldCreateIndexOfUniqueValues() {
         collection.admin().ensureIndex(new Index("field", DESC, true));
 
-        Document newIndexDetails = collection.admin().getIndexes().get(1);
-        Boolean unique = (Boolean) newIndexDetails.get("unique");
+        final Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Boolean unique = (Boolean) newIndexDetails.get("unique");
         assertThat("Index created should be unique", unique, is(true));
     }
 
@@ -136,21 +136,21 @@ public class AddIndexAcceptanceTest {
     public void shouldSupportCompoundIndexes() {
         collection.admin().ensureIndex(new Index("theFirstField", "theSecondField"));
 
-        Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.admin().getIndexes().get(1);
 
-        Document keys = (Document) newIndexDetails.get("key");
-        Object theFirstField = keys.get("theFirstField");
+        final Document keys = (Document) newIndexDetails.get("key");
+        final Object theFirstField = keys.get("theFirstField");
         assertThat("Index should contain the first key", theFirstField, is(notNullValue()));
         OrderBy orderBy = fromInt((Integer) theFirstField);
         assertThat("Index created should be ascending", orderBy, is(ASC));
 
-        Object theSecondField = keys.get("theSecondField");
+        final Object theSecondField = keys.get("theSecondField");
         assertThat("Index should contain the second key", theSecondField, is(notNullValue()));
         orderBy = fromInt((Integer) theSecondField);
         assertThat("Index created should be ascending", orderBy, is(ASC));
 
         assertThat("Index name should contain both field names", (String) newIndexDetails.get("name"),
-                   is("theFirstField_1_theSecondField_1"));
+                  is("theFirstField_1_theSecondField_1"));
     }
 
     @Test
@@ -169,7 +169,7 @@ public class AddIndexAcceptanceTest {
         assertThat("Second index should be descending", orderBy, is(DESC));
 
         assertThat("Index name should contain both field names", (String) newIndexDetails.get("name"),
-                   is("theFirstField_1_theSecondField_-1"));
+                  is("theFirstField_1_theSecondField_-1"));
     }
 
     @Test
@@ -180,17 +180,17 @@ public class AddIndexAcceptanceTest {
         anotherCollection.admin().ensureIndex(new Index("someOtherField"));
 
         assertThat("Should be default index and new index on the first database",
-                   collection.admin().getIndexes().size(), is(2));
+                  collection.admin().getIndexes().size(), is(2));
 
         assertThat("Should be default index and new index on the second database",
-                   anotherCollection.admin().getIndexes().size(), is(2));
+                  anotherCollection.admin().getIndexes().size(), is(2));
     }
 
     @Test
     public void shouldBeAbleToAddGeoIndexes() {
         collection.admin().ensureIndex(new Index(new GeoKey("theField")));
         assertThat("Should be default index and new index on the database now", collection.admin().getIndexes().size(),
-                   is(2));
+                  is(2));
     }
 
     @Test
@@ -202,16 +202,16 @@ public class AddIndexAcceptanceTest {
         final Document keys = (Document) newIndexDetails.get("key");
         final Object geoField = keys.get("locationField");
         assertThat("Index should contain the first key", geoField, is(notNullValue()));
-        String geoIndexValue = geoField.toString();
+        final String geoIndexValue = geoField.toString();
         assertThat("Index created should be a geo index", geoIndexValue, is("2d"));
 
         final Object orderedField = keys.get("someOtherField");
         assertThat("Index should contain the second key", orderedField, is(notNullValue()));
-        OrderBy orderBy = fromInt((Integer) orderedField);
+        final OrderBy orderBy = fromInt((Integer) orderedField);
         assertThat("Index created should be ascending", orderBy, is(ASC));
 
         assertThat("Index name should contain both field names", (String) newIndexDetails.get("name"),
-                   is("locationField_2d_someOtherField_1"));
+                  is("locationField_2d_someOtherField_1"));
     }
 
     //TODO: sparse

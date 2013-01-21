@@ -92,14 +92,8 @@ public class MongoChannelTest {
 
         @Override
         public String toString() {
-            return "Concrete{" +
-                    "id=" + id +
-                    ", str='" + str + '\'' +
-                    ", i=" + i +
-                    ", l=" + l +
-                    ", d=" + d +
-                    ", date=" + date +
-                    '}';
+            return "Concrete{id=" + id + ", str='" + str + '\'' + ", i=" + i + ", l=" + l + ", d=" + d + ", date="
+                   + date + '}';
         }
     }
 
@@ -108,14 +102,14 @@ public class MongoChannelTest {
         @Override
         public void serialize(final BSONWriter bsonWriter, final Concrete c) {
             bsonWriter.writeStartDocument();
-            {
+
                 bsonWriter.writeObjectId("_id", c.id);
                 bsonWriter.writeString("str", c.str);
                 bsonWriter.writeInt32("i", c.i);
                 bsonWriter.writeInt64("l", c.l);
                 bsonWriter.writeDouble("d", c.d);
                 bsonWriter.writeDateTime("date", c.date);
-            }
+
             bsonWriter.writeEndDocument();
         }
 
@@ -123,7 +117,7 @@ public class MongoChannelTest {
         public Concrete deserialize(final BSONReader reader) {
             final Concrete c = new Concrete();
             reader.readStartDocument();
-            {
+
                 c.id = reader.readObjectId("_id");
                 c.str = reader.readString("str");
                 c.i = reader.readInt32("i");
@@ -131,7 +125,6 @@ public class MongoChannelTest {
                 c.d = reader.readDouble("d");
                 c.date = reader.readDateTime("date");
 
-            }
             reader.readEndDocument();
             return c;
         }
@@ -154,8 +147,12 @@ public class MongoChannelTest {
 
         final QueryFilterDocument filter = new QueryFilterDocument("i", 42);
 
-        final MongoQueryMessage queryMessage = new MongoQueryMessage("test.concrete", new MongoFind(filter).readPreference(ReadPreference.primary()),
-                new PooledByteBufferOutput(bufferPool), new DocumentSerializer(primitiveSerializers));
+        final MongoQueryMessage queryMessage = new MongoQueryMessage("test.concrete",
+                                                                    new MongoFind(filter)
+                                                                                      .readPreference(ReadPreference
+                                                                                                      .primary()),
+                                                                    new PooledByteBufferOutput(bufferPool),
+                                                                    new DocumentSerializer(primitiveSerializers));
 
         final MongoReplyMessage<Concrete> replyMessage =  channel.sendQueryMessage(queryMessage, new ConcreteSerializer());
         assertNotNull(replyMessage);
@@ -168,6 +165,8 @@ public class MongoChannelTest {
         long startTime = System.nanoTime();
         final int iterations = 10000;
         final byte[] bytes = new byte[8192];
+        final DocumentSerializer documentSerializer = new DocumentSerializer(
+                                                              primitiveSerializers);
         for (int i = 0; i < iterations; i++) {
             final Document doc1 = new Document();
             doc1.put("_id", new ObjectId());
@@ -180,7 +179,7 @@ public class MongoChannelTest {
 
             final MongoInsertMessage<Document> message = new MongoInsertMessage<Document>("MongoConnectionTest.sendMessageTest",
                     new MongoInsert<Document>(doc1).writeConcern(WriteConcern.ACKNOWLEDGED),
-                    new PooledByteBufferOutput(bufferPool), new DocumentSerializer(primitiveSerializers));
+                    new PooledByteBufferOutput(bufferPool), documentSerializer);
 
             channel.sendOneWayMessage(message);
         }
@@ -195,16 +194,19 @@ public class MongoChannelTest {
 
         final MongoQueryMessage queryMessage = new MongoQueryMessage("MongoConnectionTest.sendMessageTest",
                 new MongoFind(filter).batchSize(4000000).readPreference(ReadPreference.primary()),
-                new PooledByteBufferOutput(bufferPool), new DocumentSerializer(primitiveSerializers));
+                new PooledByteBufferOutput(bufferPool), documentSerializer);
 
-        MongoReplyMessage<Document> replyMessage = channel.sendQueryMessage(queryMessage, new DocumentSerializer(primitiveSerializers));
+        MongoReplyMessage<Document> replyMessage = channel.sendQueryMessage(queryMessage, documentSerializer);
         replyMessage.getReplyHeader().getNumberReturned();
 
         while (replyMessage.getReplyHeader().getCursorId() != 0) {
+            final GetMore getMore = new GetMore(new ServerCursor(replyMessage.getReplyHeader().getCursorId(),
+                                                          new ServerAddress()), 0);
             final MongoGetMoreMessage getMoreMessage = new MongoGetMoreMessage("MongoConnectionTest.sendMessageTest",
-                    new GetMore(new ServerCursor(replyMessage.getReplyHeader().getCursorId(), new ServerAddress()), 0), new PooledByteBufferOutput(bufferPool));
+                                                                              getMore,
+                                                                              new PooledByteBufferOutput(bufferPool));
 
-            replyMessage = channel.sendGetMoreMessage(getMoreMessage, new DocumentSerializer(primitiveSerializers));
+            replyMessage = channel.sendGetMoreMessage(getMoreMessage, documentSerializer);
             replyMessage.getReplyHeader().getNumberReturned();
         }
 

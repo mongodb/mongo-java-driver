@@ -37,7 +37,7 @@ public class MongoInsertMessage<T> extends MongoRequestMessage {
         if (concern.getContinueOnErrorForInsert()) {
             flags |= 1;
         }
-        buffer.writeInt(flags);
-        buffer.writeCString(collectionName);
+        getBuffer().writeInt(flags);
+        getBuffer().writeCString(getCollectionName());
     }
 }

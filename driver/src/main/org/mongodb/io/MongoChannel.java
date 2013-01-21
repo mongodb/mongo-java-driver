@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.io;
@@ -43,9 +42,6 @@ import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 // TODO: migrate all the DBPort configuration
 // TODO: authentication
 
-/**
- *
- */
 public class MongoChannel {
     private final ServerAddress address;
     private final BufferPool<ByteBuffer> pool;
@@ -53,7 +49,7 @@ public class MongoChannel {
     private volatile SocketChannel socketChannel;
 
     public MongoChannel(final ServerAddress address, final BufferPool<ByteBuffer> pool,
-                        Serializer<Document> errorSerializer) {
+                        final Serializer<Document> errorSerializer) {
         this.address = address;
         this.pool = pool;
         this.errorSerializer = errorSerializer;
@@ -78,12 +74,13 @@ public class MongoChannel {
         }
     }
 
-    public <T> MongoReplyMessage<T> sendQueryMessage(final MongoQueryMessage message, Serializer<T> serializer) {
+    public <T> MongoReplyMessage<T> sendQueryMessage(final MongoQueryMessage message, final Serializer<T> serializer) {
         sendOneWayMessage(message);
         return receiveMessage(message, serializer);
     }
 
-    public <T> MongoReplyMessage<T> sendGetMoreMessage(final MongoGetMoreMessage message, Serializer<T> serializer) {
+    public <T> MongoReplyMessage<T> sendGetMoreMessage(final MongoGetMoreMessage message,
+                                                       final Serializer<T> serializer) {
         sendOneWayMessage(message);
         return receiveMessage(message, serializer);
     }
@@ -96,7 +93,7 @@ public class MongoChannel {
             fillAndFlipBuffer(headerByteBuffer);
             final InputBuffer headerInputBuffer = new ByteBufferInput(headerByteBuffer);
 
-            MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
+            final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
 
             InputBuffer bodyInputBuffer = null;
 
@@ -108,11 +105,12 @@ public class MongoChannel {
             }
 
             if (replyHeader.isCursorNotFound()) {
-                throw new MongoCursorNotFoundException(new ServerCursor(((MongoGetMoreMessage) message).getCursorId(), address));
+                throw new MongoCursorNotFoundException(new ServerCursor(((MongoGetMoreMessage) message).getCursorId(),
+                                                                       address));
             }
             else if (replyHeader.isQueryFailure()) {
-                Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,
-                                                                         errorSerializer).getDocuments().get(0);
+                final Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,
+                                                                              errorSerializer).getDocuments().get(0);
                 throw new MongoQueryFailureException(address, errorDocument);
             }
             return new MongoReplyMessage<T>(replyHeader, bodyInputBuffer, serializer);
@@ -121,7 +119,7 @@ public class MongoChannel {
         } catch (InterruptedIOException e) {
             throw new MongoSocketInterruptedReadException("Exception receiving message", address, e);
         } catch (IOException e) {
-          throw new MongoSocketReadException("Exception receiving message", address, e);
+            throw new MongoSocketReadException("Exception receiving message", address, e);
         } finally {
             if (headerByteBuffer != null) {
                 pool.done(headerByteBuffer);
@@ -135,7 +133,7 @@ public class MongoChannel {
     private void fillAndFlipBuffer(final ByteBuffer buffer) throws IOException {
         int totalBytesRead = 0;
         while (totalBytesRead < buffer.limit()) {
-            int bytesRead = socketChannel.read(buffer);
+            final int bytesRead = socketChannel.read(buffer);
             if (bytesRead == -1) {
                 throw new MongoSocketReadException("Prematurely reached end of stream", address);
             }
@@ -152,6 +150,7 @@ public class MongoChannel {
         }
     }
 
+    //CHECKSTYLE:OFF
     public void close() {
         try {
             if (socketChannel != null) {
@@ -161,4 +160,5 @@ public class MongoChannel {
             // ignore
         }
     }
+    //CHECKSTYLE:ON
 }

@@ -125,7 +125,7 @@ public class DocumentSerializer implements Serializer<Document> {
     private void serializeArray(final BSONWriter bsonWriter, final Object value) {
         bsonWriter.writeStartArray();
 
-        int size = Array.getLength(value);
+        final int size = Array.getLength(value);
         for (int i = 0; i < size; i++) {
             writeValue(bsonWriter, Array.get(value, i));
         }

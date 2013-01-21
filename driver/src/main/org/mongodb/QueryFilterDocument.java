@@ -35,7 +35,7 @@ public class QueryFilterDocument extends Document implements MongoQueryFilter {
     }
 
     @Override
-    public QueryFilterDocument append(final String key, Object value) {
+    public QueryFilterDocument append(final String key, final Object value) {
         put(key, value);
         return this;
     }

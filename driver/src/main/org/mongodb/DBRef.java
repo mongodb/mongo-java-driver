@@ -30,7 +30,7 @@ public class DBRef {
     /**
      * Gets the object's id
      *
-     * @return
+     * @return the ID
      */
     public Object getId() {
         return id;
@@ -39,7 +39,7 @@ public class DBRef {
     /**
      * Gets the object's namespace (collection name)
      *
-     * @return
+     * @return the namespace
      */
     public String getRef() {
         return ref;
@@ -59,11 +59,8 @@ public class DBRef {
         if (!id.equals(dbRef.id)) {
             return false;
         }
-        if (!ref.equals(dbRef.ref)) {
-            return false;
-        }
+        return ref.equals(dbRef.ref);
 
-        return true;
     }
 
     @Override
@@ -75,9 +72,6 @@ public class DBRef {
 
     @Override
     public String toString() {
-        return "DBRef{" +
-                "id=" + id +
-                ", ref='" + ref + '\'' +
-                '}';
+        return "DBRef{id=" + id + ", ref='" + ref + '\'' + '}';
     }
 }

@@ -21,7 +21,6 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.CollectibleSerializer;
-import org.mongodb.serialization.PrimitiveSerializers;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.

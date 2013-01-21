@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.rs;
 
-import org.mongodb.annotations.Immutable;
 import org.mongodb.MongoException;
+import org.mongodb.annotations.Immutable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,13 +34,13 @@ import java.util.Random;
  */
 @Immutable
 public class ReplicaSet {
-    final List<ReplicaSetNode> all;
-    final Random random;
-    final List<ReplicaSetNode> goodSecondaries;
-    final List<ReplicaSetNode> goodMembers;
-    final ReplicaSetNode master;
-    final String setName;
-    final ReplicaSetErrorStatus errorStatus;
+    private final List<ReplicaSetNode> all;
+    private final Random random;
+    private final List<ReplicaSetNode> goodSecondaries;
+    private final List<ReplicaSetNode> goodMembers;
+    private final ReplicaSetNode master;
+    private final String setName;
+    private final ReplicaSetErrorStatus errorStatus;
 
     private final int acceptableLatencyMS;
 
@@ -55,9 +54,9 @@ public class ReplicaSet {
         setName = determineSetName();
 
         this.goodSecondaries =
-                Collections.unmodifiableList(calculateGoodSecondaries(all, calculateBestPingTime(all), acceptableLatencyMS));
+        Collections.unmodifiableList(calculateGoodSecondaries(all, calculateBestPingTime(all), acceptableLatencyMS));
         this.goodMembers =
-                Collections.unmodifiableList(calculateGoodMembers(all, calculateBestPingTime(all), acceptableLatencyMS));
+        Collections.unmodifiableList(calculateGoodMembers(all, calculateBestPingTime(all), acceptableLatencyMS));
         master = findMaster();
     }
 
@@ -77,13 +76,13 @@ public class ReplicaSet {
         return master;
     }
 
-//    public int getMaxBsonObjectSize() {
-//        if (hasMaster()) {
-//            return getMaster().getMaxBsonObjectSize();
-//        } else {
-//            return Bytes.MAX_OBJECT_SIZE;
-//        }
-//    }
+    //    public int getMaxBsonObjectSize() {
+    //        if (hasMaster()) {
+    //            return getMaster().getMaxBsonObjectSize();
+    //        } else {
+    //            return Bytes.MAX_OBJECT_SIZE;
+    //        }
+    //    }
 
     public ReplicaSetNode getASecondary() {
         checkStatus();
@@ -140,7 +139,7 @@ public class ReplicaSet {
 
         final List<ReplicaSetNode> taggedSecondaries = getMembersByTags(all, tags);
         return calculateGoodSecondaries(taggedSecondaries,
-                calculateBestPingTime(taggedSecondaries), acceptableLatencyMS);
+                                       calculateBestPingTime(taggedSecondaries), acceptableLatencyMS);
     }
 
     public List<ReplicaSetNode> getGoodMembersByTags(final List<Tag> tags) {
@@ -148,7 +147,7 @@ public class ReplicaSet {
 
         final List<ReplicaSetNode> taggedMembers = getMembersByTags(all, tags);
         return calculateGoodMembers(taggedMembers,
-                calculateBestPingTime(taggedMembers), acceptableLatencyMS);
+                                   calculateBestPingTime(taggedMembers), acceptableLatencyMS);
     }
 
     public List<ReplicaSetNode> getGoodMembers() {
@@ -232,8 +231,8 @@ public class ReplicaSet {
             if (!cur.secondary()) {
                 continue;
             }
-            if (cur._pingTime < bestPingTime) {
-                bestPingTime = cur._pingTime;
+            if (cur.getPingTime() < bestPingTime) {
+                bestPingTime = cur.getPingTime();
             }
         }
         return bestPingTime;
@@ -246,7 +245,7 @@ public class ReplicaSet {
             if (!cur.isOk()) {
                 continue;
             }
-            if (cur._pingTime - acceptableLatencyMS <= bestPingTime) {
+            if (cur.getPingTime() - acceptableLatencyMS <= bestPingTime) {
                 goodSecondaries.add(cur);
             }
         }
@@ -260,7 +259,7 @@ public class ReplicaSet {
             if (!cur.secondary()) {
                 continue;
             }
-            if (cur._pingTime - acceptableLatencyMS <= bestPingTime) {
+            if (cur.getPingTime() - acceptableLatencyMS <= bestPingTime) {
                 goodSecondaries.add(cur);
             }
         }

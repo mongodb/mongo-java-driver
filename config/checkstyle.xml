@@ -56,7 +56,7 @@
 
         <!-- TODO: This has to be enabled at some point before we release -->
         <!--<module name="JavadocType">-->
-            <!--<property name="scope" value="public"/>-->
+        <!--<property name="scope" value="public"/>-->
         <!--</module>-->
 
 
@@ -89,7 +89,9 @@
         </module>
 
         <module name="MethodLength"/>
-        <module name="ParameterNumber"/>
+        <module name="ParameterNumber">
+            <property name="max" value="10"/>
+        </module>
 
 
         <!-- Checks for whitespace                               -->

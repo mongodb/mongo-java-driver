@@ -18,7 +18,6 @@ package org.mongodb.impl;
 
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
-import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
@@ -27,6 +26,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.MongoChannel;
+import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
@@ -35,6 +35,7 @@ import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
+import org.mongodb.pool.SimplePool;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.InsertResult;
@@ -43,7 +44,6 @@ import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
-import org.mongodb.pool.SimplePool;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
@@ -82,8 +82,8 @@ public class SingleServerMongoClient implements MongoClient {
     }
 
     @Override
-    public MongoDatabaseImpl getDatabase(final String databaseName, final MongoDatabaseOptions options) {
-        return new MongoDatabaseImpl(databaseName, this, options.withDefaults(this.getOptions()));
+    public MongoDatabaseImpl getDatabase(final String databaseName, final MongoDatabaseOptions optionsForOperation) {
+        return new MongoDatabaseImpl(databaseName, this, optionsForOperation.withDefaults(this.getOptions()));
     }
 
     @Override

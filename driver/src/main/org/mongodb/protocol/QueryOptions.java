@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.protocol;
 
 // TODO: This needs re-thinking
-public class QueryOptions {
+public final class QueryOptions {
+    private QueryOptions() {
+    }
+
     /**
      * Tailable means cursor is not closed when the last data is retrieved. Rather, the cursor marks the final object's
      * position. You can resume using the cursor later, from where it was located, if more data were received. Like any

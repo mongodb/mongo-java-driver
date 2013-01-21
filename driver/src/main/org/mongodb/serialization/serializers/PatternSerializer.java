@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.serialization.serializers;
@@ -76,10 +75,12 @@ public class PatternSerializer implements Serializer<Pattern> {
             final RegexFlag flag = RegexFlag.getByCharacter(optionsString.charAt(i));
             if (flag != null) {
                 optionsInt |= flag.javaFlag;
+                //CHECKSTYLE:OFF
                 if (flag.unsupported != null) {
                     // TODO: deal with logging
                     // warnUnsupportedRegex( flag.unsupported );
                 }
+                //CHECKSTYLE:ON
             }
             else {
                 // TODO: throw a better exception here
@@ -103,21 +104,21 @@ public class PatternSerializer implements Serializer<Pattern> {
         UNICODE_CASE(Pattern.UNICODE_CASE, 'u', "Pattern.UNICODE_CASE"),
         COMMENTS(Pattern.COMMENTS, 'x', null);
 
-        private static final Map<Character, RegexFlag> byCharacter = new HashMap<Character, RegexFlag>();
+        private static final Map<Character, RegexFlag> BY_CHARACTER = new HashMap<Character, RegexFlag>();
+
+        private final int javaFlag;
+        private final char flagChar;
+        private final String unsupported;
 
         static {
             for (final RegexFlag flag : values()) {
-                byCharacter.put(flag.flagChar, flag);
+                BY_CHARACTER.put(flag.flagChar, flag);
             }
         }
 
         public static RegexFlag getByCharacter(final char ch) {
-            return byCharacter.get(ch);
+            return BY_CHARACTER.get(ch);
         }
-
-        public final int javaFlag;
-        public final char flagChar;
-        public final String unsupported;
 
         RegexFlag(final int f, final char ch, final String u) {
             javaFlag = f;

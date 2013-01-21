@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb;
@@ -31,7 +30,7 @@ public class MongoGetMoreTest extends MongoClientTestBase {
     public void shouldThrowCursorNotFoundException() {
         getCollection().insert(Arrays.asList(new Document(), new Document(), new Document()));
 
-        MongoCursor<Document> cursor = getCollection().batchSize(2).all();
+        final MongoCursor<Document> cursor = getCollection().batchSize(2).all();
         getClient().getOperations().killCursors(new MongoKillCursor(cursor.getServerCursor()));
         cursor.next();
         cursor.next();

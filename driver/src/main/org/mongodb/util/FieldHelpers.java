@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package org.mongodb.util;
 
 // TODO: Not sure about this class.  Is it generally applicable enough to be public?
-public class FieldHelpers {
+public final class FieldHelpers {
 
-    public static boolean asBoolean(Object fieldValue) {
+    public static boolean asBoolean(final Object fieldValue) {
         if (fieldValue == null) {
             return false;
         }
@@ -30,7 +30,8 @@ public class FieldHelpers {
             return ((Number) fieldValue).doubleValue() != 0;
         }
         else {
-            throw new IllegalArgumentException("value is of type " + fieldValue.getClass() + " and can not be converted to a boolean.");
+            throw new IllegalArgumentException("value is of type " + fieldValue.getClass()
+                                               + " and can not be converted to a boolean.");
         }
     }
 

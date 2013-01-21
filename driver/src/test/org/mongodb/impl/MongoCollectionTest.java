@@ -33,7 +33,9 @@ import org.mongodb.serialization.CollectibleSerializer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class MongoCollectionTest extends MongoClientTestBase {
     @Test
@@ -70,7 +72,7 @@ public class MongoCollectionTest extends MongoClientTestBase {
         collection.insert(new Document("_id", 1));
 
         collection.filter(new QueryFilterDocument("_id", 1))
-                                          .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
+                  .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
         assertEquals(1, collection.filter(new QueryFilterDocument("_id", 1).append("x", 1)).count());
     }
@@ -155,8 +157,9 @@ public class MongoCollectionTest extends MongoClientTestBase {
 
         collection.insert(new Document("_id", 1).append("x", true));
 
-        final Document newDoc = collection.filter(new QueryFilterDocument("x", true)).
-                modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", false)), Get.AfterChangeApplied);
+        final Document newDoc = collection.filter(new QueryFilterDocument("x", true))
+                                          .modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", false)),
+                                                       Get.AfterChangeApplied);
 
         assertNotNull(newDoc);
         assertEquals(new Document("_id", 1).append("x", true), newDoc);
@@ -169,8 +172,9 @@ public class MongoCollectionTest extends MongoClientTestBase {
         final Concrete doc = new Concrete(new ObjectId(), true);
         collection.insert(doc);
 
-        final Concrete newDoc = collection.filter(new QueryFilterDocument("x", true)).
-                modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", false)), Get.AfterChangeApplied);
+        final Concrete newDoc = collection.filter(new QueryFilterDocument("x", true))
+                                          .modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", false)),
+                                                       Get.AfterChangeApplied);
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);
@@ -179,15 +183,12 @@ public class MongoCollectionTest extends MongoClientTestBase {
 }
 
 class Concrete {
-    ObjectId id;
-    boolean x;
+    private final ObjectId id;
+    private final boolean x;
 
     public Concrete(final ObjectId id, final boolean x) {
         this.id = id;
         this.x = x;
-    }
-
-    public Concrete() {
     }
 
     @Override
@@ -206,21 +207,26 @@ class Concrete {
 
         final Concrete concrete = (Concrete) o;
 
-        if (x != concrete.x) {
+        if (isX() != concrete.isX()) {
             return false;
         }
-        if (!id.equals(concrete.id)) {
-            return false;
-        }
+        return getId().equals(concrete.getId());
 
-        return true;
     }
 
     @Override
     public int hashCode() {
-        int result = id.hashCode();
-        result = 31 * result + (x ? 1 : 0);
+        int result = getId().hashCode();
+        result = 31 * result + (isX() ? 1 : 0);
         return result;
+    }
+
+    ObjectId getId() {
+        return id;
+    }
+
+    boolean isX() {
+        return x;
     }
 }
 
@@ -229,21 +235,22 @@ class ConcreteSerializer implements CollectibleSerializer<Concrete> {
     @Override
     public void serialize(final BSONWriter bsonWriter, final Concrete value) {
         bsonWriter.writeStartDocument();
-        {
-            bsonWriter.writeObjectId("_id", value.id);
-            bsonWriter.writeBoolean("x", value.x);
-        }
+
+        bsonWriter.writeObjectId("_id", value.getId());
+        bsonWriter.writeBoolean("x", value.isX());
+
         bsonWriter.writeEndDocument();
     }
 
     @Override
     public Concrete deserialize(final BSONReader reader) {
-        final Concrete c = new Concrete();
+        final Concrete c;
         reader.readStartDocument();
-        {
-            c.id = reader.readObjectId("_id");
-            c.x = reader.readBoolean("x");
-        }
+
+        final ObjectId id = reader.readObjectId("_id");
+        final boolean x = reader.readBoolean("x");
+        c = new Concrete(id, x);
+
         reader.readEndDocument();
         return c;
     }
@@ -255,7 +262,7 @@ class ConcreteSerializer implements CollectibleSerializer<Concrete> {
 
     @Override
     public Object getId(final Concrete document) {
-        return document.id;
+        return document.getId();
     }
 }
 

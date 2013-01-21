@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.operation;
@@ -27,7 +26,7 @@ public class MongoFind extends MongoQuery {
     private boolean snapshotMode;
 
     public MongoFind() {
-    	this.filter = new QueryFilterDocument();
+        this.filter = new QueryFilterDocument();
     }
 
     public MongoFind(final MongoQueryFilter filter) {
@@ -42,11 +41,6 @@ public class MongoFind extends MongoQuery {
         snapshotMode = from.snapshotMode;
     }
 
-    public MongoFind filter(final MongoQueryFilter filter) {
-        this.filter = filter;
-        return this;
-    }
-
     public MongoQueryFilter getFilter() {
         return filter;
     }
@@ -59,7 +53,14 @@ public class MongoFind extends MongoQuery {
         return snapshotMode;
     }
 
+    //CHECKSTYLE:OFF
+    //I think we're going to have to turn off "hides a field" unless we can work out how to ignore it for builders
     public MongoFind where(final MongoQueryFilter filter) {
+        this.filter = filter;
+        return this;
+    }
+
+    public MongoFind filter(final MongoQueryFilter filter) {
         this.filter = filter;
         return this;
     }
@@ -69,10 +70,11 @@ public class MongoFind extends MongoQuery {
         return this;
     }
 
-    public MongoFind order(MongoSortCriteria sortCriteria) {
+    public MongoFind order(final MongoSortCriteria sortCriteria) {
         this.sortCriteria = sortCriteria;
         return this;
     }
+    //CHECKSTYLE:ON
 
     @Override
     public MongoFind limit(final int limit) {

@@ -72,9 +72,6 @@ public class ServerCursor {
 
     @Override
     public String toString() {
-        return "ServerCursor{" +
-                "getId=" + getId +
-                ", address=" + address +
-                '}';
+        return "ServerCursor{getId=" + getId + ", address=" + address + '}';
     }
 }

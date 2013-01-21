@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb;
@@ -33,18 +32,19 @@ import java.util.List;
 @Immutable
 public abstract class TaggableReadPreference extends ReadPreference {
     private static final List<Document> EMPTY = new ArrayList<Document>();
+    private final List<Document> tags;
 
     TaggableReadPreference() {
-        _tags = EMPTY;
+        tags = EMPTY;
     }
 
     TaggableReadPreference(final Document firstTagSet, final Document... remainingTagSets) {
         if (firstTagSet == null) {
             throw new IllegalArgumentException("Must have at least one tag set");
         }
-        _tags = new ArrayList<Document>();
-        _tags.add(firstTagSet);
-        Collections.addAll(_tags, remainingTagSets);
+        tags = new ArrayList<Document>();
+        tags.add(firstTagSet);
+        Collections.addAll(tags, remainingTagSets);
     }
 
     @Override
@@ -56,21 +56,22 @@ public abstract class TaggableReadPreference extends ReadPreference {
     public Document toDocument() {
         final Document readPrefObject = new Document("mode", getName());
 
-        if (!_tags.isEmpty()) {
-            readPrefObject.put("tags", _tags);
+        if (!tags.isEmpty()) {
+            readPrefObject.put("tags", tags);
         }
 
         return readPrefObject;
     }
 
-
+    //CHECKSTYLE:OFF
     public List<Document> getTagSets() {
         final List<Document> tags = new ArrayList<Document>();
-        for (final Document tagSet : _tags) {
+        for (final Document tagSet : this.tags) {
             tags.add(tagSet);
         }
         return tags;
     }
+    //CHECKSTYLE:ON
 
     @Override
     public String toString() {
@@ -88,18 +89,18 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         final TaggableReadPreference that = (TaggableReadPreference) o;
 
-        return _tags.equals(that._tags);
+        return tags.equals(that.tags);
     }
 
     @Override
     public int hashCode() {
-        int result = _tags.hashCode();
+        int result = tags.hashCode();
         result = 31 * result + getName().hashCode();
         return result;
     }
 
     String printTags() {
-        return (_tags.isEmpty() ? "" : " : " + new Document("tags", _tags));
+        return (tags.isEmpty() ? "" : " : " + new Document("tags", tags));
     }
 
     private static List<Tag> getTagListFromMongoDocument(final Document curTagSet) {
@@ -110,7 +111,9 @@ public abstract class TaggableReadPreference extends ReadPreference {
         return tagList;
     }
 
-    final List<Document> _tags;
+    List<Document> getTags() {
+        return tags;
+    }
 
     /**
      * Read from secondary
@@ -133,11 +136,11 @@ public abstract class TaggableReadPreference extends ReadPreference {
         @Override
         ReplicaSetNode getNode(final ReplicaSet set) {
 
-            if (_tags.isEmpty()) {
+            if (getTags().isEmpty()) {
                 return set.getASecondary();
             }
 
-            for (final Document curTagSet : _tags) {
+            for (final Document curTagSet : getTags()) {
                 final List<Tag> tagList = getTagListFromMongoDocument(curTagSet);
                 final ReplicaSetNode node = set.getASecondary(tagList);
                 if (node != null) {
@@ -197,11 +200,11 @@ public abstract class TaggableReadPreference extends ReadPreference {
         @Override
         ReplicaSetNode getNode(final ReplicaSet set) {
 
-            if (_tags.isEmpty()) {
+            if (getTags().isEmpty()) {
                 return set.getAMember();
             }
 
-            for (final Document curTagSet : _tags) {
+            for (final Document curTagSet : getTags()) {
                 final List<Tag> tagList = getTagListFromMongoDocument(curTagSet);
                 final ReplicaSetNode node = set.getAMember(tagList);
                 if (node != null) {

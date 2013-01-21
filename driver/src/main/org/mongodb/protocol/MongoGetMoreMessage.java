@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.protocol;
@@ -21,7 +20,8 @@ import org.bson.io.OutputBuffer;
 import org.mongodb.operation.GetMore;
 
 public class MongoGetMoreMessage extends MongoRequestMessage {
-    final long cursorId;
+    private final long cursorId;
+
     public MongoGetMoreMessage(final String collectionName, final GetMore getMore, final OutputBuffer buffer) {
         super(collectionName, OpCode.OP_GETMORE, buffer);
         cursorId = getMore.getServerCursor().getId();
@@ -30,10 +30,10 @@ public class MongoGetMoreMessage extends MongoRequestMessage {
     }
 
     private void writeGetMore(final GetMore getMore) {
-        buffer.writeInt(0);
-        buffer.writeCString(collectionName);
-        buffer.writeInt(getMore.getBatchSize());
-        buffer.writeLong(getMore.getServerCursor().getId());
+        getBuffer().writeInt(0);
+        getBuffer().writeCString(getCollectionName());
+        getBuffer().writeInt(getMore.getBatchSize());
+        getBuffer().writeLong(getMore.getServerCursor().getId());
     }
 
     public long getCursorId() {

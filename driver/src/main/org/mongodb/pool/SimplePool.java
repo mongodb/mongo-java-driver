@@ -1,17 +1,17 @@
-/**
- *      Copyright (C) 2008-2012 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.mongodb.pool;
@@ -30,6 +30,14 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class SimplePool<T> {
 
+    private final String name;
+    private final int size;
+
+    private final List<T> available = new ArrayList<T>();
+    private final Map<T, Boolean> out = new IdentityHashMap<T, Boolean>();
+    private final Semaphore semaphore;
+    private volatile boolean closed;
+
     /**
      * Initializes a new pool of objects.
      *
@@ -37,9 +45,9 @@ public abstract class SimplePool<T> {
      * @param size max to hold to at any given time. if < 0 then no limit
      */
     public SimplePool(final String name, final int size) {
-        _name = name;
-        _size = size;
-        _sem = new Semaphore(size);
+        this.name = name;
+        this.size = size;
+        semaphore = new Semaphore(size);
     }
 
     /**
@@ -56,7 +64,7 @@ public abstract class SimplePool<T> {
     }
 
     /**
-     * Pick a member of {@code _avail}.  This method is called with a lock held on {@code _avail}, so it may be used
+     * Pick a member of {@code available}.  This method is called with a lock held on {@code available}, so it may be used
      * safely.
      *
      * @param recommended the recommended member to choose.
@@ -74,21 +82,21 @@ public abstract class SimplePool<T> {
      */
     public void done(final T t) {
         synchronized (this) {
-            if (_closed) {
+            if (closed) {
                 cleanup(t);
                 return;
             }
 
             assertConditions();
 
-            if (!_out.remove(t)) {
+            if (!out.remove(t)) {
                 throw new RuntimeException("trying to put something back in the pool wasn't checked out");
             }
 
-            _avail.add(t);
+            available.add(t);
 
         }
-        _sem.release();
+        semaphore.release();
     }
 
     private void assertConditions() {
@@ -115,7 +123,7 @@ public abstract class SimplePool<T> {
      * @return An object from the pool, or null if can't get one in the given waitTime
      */
     public T get(final long waitTime) {
-        if (_closed) {
+        if (closed) {
             throw new IllegalStateException("The pool is closed");
         }
         if (!permitAcquired(waitTime)) {
@@ -125,16 +133,16 @@ public abstract class SimplePool<T> {
         synchronized (this) {
             assertConditions();
 
-            final int toTake = pick(_avail.size() - 1, getTotal() < getMaxSize());
+            final int toTake = pick(available.size() - 1, getTotal() < getMaxSize());
             final T t;
             if (toTake >= 0) {
-                t = _avail.remove(toTake);
+                t = available.remove(toTake);
             } else {
                 t = createNewAndReleasePermitIfFailure();
             }
-            _out.put(t, true);
+            out.put(t, true);
 
-            if (_out.size() > 1000) {
+            if (out.size() > 1000) {
                 System.out.println("oops");
             }
 
@@ -150,10 +158,10 @@ public abstract class SimplePool<T> {
             }
             return newMember;
         } catch (RuntimeException e) {
-            _sem.release();
+            semaphore.release();
             throw e;
         } catch (Error e) {
-            _sem.release();
+            semaphore.release();
             throw e;
         }
     }
@@ -161,12 +169,12 @@ public abstract class SimplePool<T> {
     private boolean permitAcquired(final long waitTime) {
         try {
             if (waitTime > 0) {
-                return _sem.tryAcquire(waitTime, TimeUnit.MILLISECONDS);
+                return semaphore.tryAcquire(waitTime, TimeUnit.MILLISECONDS);
             } else if (waitTime < 0) {
-                _sem.acquire();
+                semaphore.acquire();
                 return true;
             } else {
-                return _sem.tryAcquire();
+                return semaphore.tryAcquire();
             }
         } catch (InterruptedException e) {
             throw new MongoInterruptedException("Interrupted in pool " + getName(), e);
@@ -177,48 +185,44 @@ public abstract class SimplePool<T> {
      * Clears the pool of all objects.
      */
     public synchronized void close() {
-        _closed = true;
-        for (final T t : _avail) {
+        closed = true;
+        for (final T t : available) {
             cleanup(t);
         }
-        _avail.clear();
-        _out.clear();
+        available.clear();
+        out.clear();
     }
 
     public String getName() {
-        return _name;
+        return name;
     }
 
     public synchronized int getTotal() {
-        return _avail.size() + _out.size();
+        return available.size() + out.size();
     }
 
     public synchronized int getInUse() {
-        return _out.size();
+        return out.size();
     }
 
-    public synchronized int getAvailable() {
-        return _avail.size();
+    public synchronized int getNumberAvailable() {
+        return available.size();
     }
 
     public int getMaxSize() {
-        return _size;
+        return size;
     }
 
     public synchronized String toString() {
         final StringBuilder buf = new StringBuilder();
-        buf.append("pool: ").append(_name)
-                .append(" maxToKeep: ").append(_size)
-                .append(" avail ").append(_avail.size())
-                .append(" out ").append(_out.size());
+        buf.append("pool: ").append(name)
+                .append(" maxToKeep: ").append(size)
+                .append(" avail ").append(available.size())
+                .append(" out ").append(out.size());
         return buf.toString();
     }
 
-    protected final String _name;
-    protected final int _size;
-
-    protected final List<T> _avail = new ArrayList<T>();
-    protected final Map<T, Boolean> _out = new IdentityHashMap<T, Boolean>();
-    private final Semaphore _sem;
-    private volatile boolean _closed;
+    protected int getSize() {
+        return size;
+    }
 }

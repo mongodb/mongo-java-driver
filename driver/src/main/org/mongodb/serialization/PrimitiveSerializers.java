@@ -44,7 +44,7 @@ import java.util.Map;
 /**
  * Holder for all the serializer mappings.
  */
-public class PrimitiveSerializers implements Serializer<Object> {
+public final class PrimitiveSerializers implements Serializer<Object> {
     private Map<Class, Serializer> classSerializerMap = new HashMap<Class, Serializer>();
     private Map<BsonType, Serializer> bsonTypeSerializerMap = new HashMap<BsonType, Serializer>();
 

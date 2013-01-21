@@ -287,6 +287,10 @@ project(':driver') {
         }
     }
 
+    checkstyle {
+        configFile = new File("$configDir/checkstyle.xml")
+        ignoreFailures = false
+    }
 }
 
 project(':driver-compat') {

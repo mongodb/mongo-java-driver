@@ -26,7 +26,7 @@ import java.util.Map;
 
 public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
 
-    final Map<Integer, SimplePool<ByteBuffer>> powerOfTwoToPoolMap = new HashMap<Integer, SimplePool<ByteBuffer>>();
+    private final Map<Integer, SimplePool<ByteBuffer>> powerOfTwoToPoolMap = new HashMap<Integer, SimplePool<ByteBuffer>>();
 
     public PowerOfTwoByteBufferPool(final int highestPowerOfTwo) {
         int x = 1;

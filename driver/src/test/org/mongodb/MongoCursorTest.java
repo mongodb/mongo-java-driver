@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import org.bson.types.Document;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,9 +27,11 @@ import java.util.NoSuchElementException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
 
 public class MongoCursorTest extends MongoClientTestBase {
+
+    private MongoCursor<Document> cursor;
+
     @Before
     public void before() {
         super.before();
@@ -37,14 +40,13 @@ public class MongoCursorTest extends MongoClientTestBase {
         }
     }
 
-
     @Test
     public void testNormalLoopWithGetMore() {
-        MongoCursor<Document> cursor = getCollection().sort(new SortCriteriaDocument("_id", 1)).batchSize(2).all();
+        cursor = getCollection().sort(new SortCriteriaDocument("_id", 1)).batchSize(2).all();
         try {
             int i = 0;
             while (cursor.hasNext()) {
-                Document cur = cursor.next();
+                final Document cur = cursor.next();
                 assertEquals(i++, cur.get("_id"));
             }
             assertEquals(10, i);
@@ -54,55 +56,47 @@ public class MongoCursorTest extends MongoClientTestBase {
         }
     }
 
-    @Test
+    @Test(expected = NoSuchElementException.class)
     public void testNextWithoutHasNextWithGetMore() {
-        MongoCursor<Document> cursor = getCollection().sort(new SortCriteriaDocument("_id", 1)).batchSize(2).all();
-        try {
-            for (int i = 0; i < 10; i++) {
-                Document cur = cursor.next();
-                assertEquals(i, cur.get("_id"));
-            }
-            assertFalse(cursor.hasNext());
-            assertFalse(cursor.hasNext());
-            try {
-                cursor.next();
-                fail();
-            } catch (NoSuchElementException e) {
-                // this is what we want
-            }
-
-        } finally {
-            cursor.close();
+        cursor = getCollection().sort(new SortCriteriaDocument("_id", 1)).batchSize(2).all();
+        for (int i = 0; i < 10; i++) {
+            final Document cur = cursor.next();
+            assertEquals(i, cur.get("_id"));
         }
+        assertFalse(cursor.hasNext());
+        assertFalse(cursor.hasNext());
+        cursor.next();
     }
 
     @Test
     public void testLimit() {
-        List<Document> list = new ArrayList<Document>();
+        final List<Document> list = new ArrayList<Document>();
         getCollection().limit(4).into(list);
         assertEquals(4, list.size());
     }
 
-    @Test
-    public void testClose() {
-        MongoCursor<Document> cursor = getCollection().all();
+    @Test(expected = IllegalStateException.class)
+    public void shouldNotBeAbleToCallNextAfterCursorIsClosed() {
+        cursor = getCollection().all();
 
         cursor.next();
         cursor.close();
-        try {
-            cursor.next();
-            fail();
-        } catch (IllegalStateException e) {
-            // all good
-        }
+        cursor.next();
+    }
 
-        try {
-            cursor.hasNext();
-            fail();
-        } catch (IllegalStateException e) {
-            // all good
-        }
+    @Test(expected = IllegalStateException.class)
+    public void shouldNotBeAbleToCallHasNextAfterClose() {
+        cursor = getCollection().all();
 
+        cursor.next();
         cursor.close();
+            cursor.hasNext();
+    }
+
+    @After
+    public void tearDown() {
+        if (cursor != null) {
+            cursor.close();
+        }
     }
 }

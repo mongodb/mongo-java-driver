@@ -37,7 +37,10 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
 
 import java.net.UnknownHostException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class SingleServerMongoClientTest {
     private static SingleServerMongoClient mongoClient;
@@ -46,7 +49,7 @@ public class SingleServerMongoClientTest {
     @BeforeClass
     public static void setUpClass() throws UnknownHostException {
         mongoClient = new SingleServerMongoClient(new ServerAddress());
-        MongoDatabaseImpl database = mongoClient.getDatabase(DB_NAME);
+        final MongoDatabaseImpl database = mongoClient.getDatabase(DB_NAME);
         database.admin().drop();
     }
 
@@ -57,8 +60,30 @@ public class SingleServerMongoClientTest {
 
     @Test
     public void testCommandExecution() {
-        final MongoCommand cmd = new MongoCommand(new CommandDocument("count", "test")).readPreference(ReadPreference.primary());
-        final CommandResult res = mongoClient.getOperations().executeCommand(DB_NAME, cmd, new DocumentSerializer(PrimitiveSerializers.createDefault()));
+        final MongoCommand cmd = new MongoCommand(new CommandDocument("count", "test"))
+                                 .readPreference(ReadPreference.primary());
+        final CommandResult res = mongoClient.getOperations().executeCommand(DB_NAME, cmd, new DocumentSerializer(
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                 PrimitiveSerializers
+                                                                                                                 .createDefault()));
         assertNotNull(res);
         assertTrue(res.getResponse().get("n") instanceof Double);
     }
@@ -68,10 +93,15 @@ public class SingleServerMongoClientTest {
         final String colName = "insertion";
         final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
         final MongoInsert<Document> insert = new MongoInsert<Document>(new Document());
-        mongoClient.getOperations().insert(new MongoNamespace(DB_NAME, colName), insert, new DocumentSerializer(primitiveSerializers));
+        mongoClient.getOperations()
+                   .insert(new MongoNamespace(DB_NAME, colName), insert, new DocumentSerializer(primitiveSerializers));
         final CommandResult res = mongoClient.getOperations().executeCommand(DB_NAME,
-                new MongoCommand(new CommandDocument("count", colName)).readPreference(ReadPreference.primary()),
-                new DocumentSerializer(primitiveSerializers));
+                                                                            new MongoCommand(
+                                                                                            new CommandDocument("count",
+                                                                                                               colName))
+                                                                            .readPreference(ReadPreference.primary()),
+                                                                            new DocumentSerializer(
+                                                                                                  primitiveSerializers));
         assertEquals(1.0, res.getResponse().get("n"));
     }
 
@@ -87,13 +117,16 @@ public class SingleServerMongoClientTest {
 
         final MongoFind find = new MongoFind(new QueryFilterDocument()).readPreference(ReadPreference.primary());
         final QueryResult<Document> queryResult = mongoClient.getOperations().query(
-                new MongoNamespace(DB_NAME, colName), find, serializer, serializer);
+                                                                                   new MongoNamespace(DB_NAME, colName),
+                                                                                   find, serializer, serializer);
         assertNotNull(queryResult);
         assertEquals(101, queryResult.getResults().size());
         assertNotEquals(0L, queryResult.getCursor());
 
-        final GetMoreResult<Document> getMoreResult = mongoClient.getOperations().getMore(new MongoNamespace(DB_NAME, colName),
-                new GetMore(queryResult.getCursor(), 0), new DocumentSerializer(primitiveSerializers));
+        final GetMoreResult<Document> getMoreResult = mongoClient.getOperations()
+                                                                 .getMore(new MongoNamespace(DB_NAME, colName),
+                                                                         new GetMore(queryResult.getCursor(), 0),
+                                                                         new DocumentSerializer(primitiveSerializers));
         assertNotNull(getMoreResult);
         assertEquals(299, getMoreResult.getResults().size());
         assertEquals(null, getMoreResult.getCursor());

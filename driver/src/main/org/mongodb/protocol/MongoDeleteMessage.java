@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.protocol;
@@ -32,19 +31,19 @@ public class MongoDeleteMessage extends MongoRequestMessage {
         backpatchMessageLength();
     }
 
-    private void writeDelete(MongoRemove remove, final Serializer<Document> serializer) {
-        buffer.writeInt(0); // reserved
-        buffer.writeCString(collectionName);
+    private void writeDelete(final MongoRemove remove, final Serializer<Document> serializer) {
+        getBuffer().writeInt(0); // reserved
+        getBuffer().writeCString(getCollectionName());
 
-        Document queryFilterDocument = remove.getFilter().toDocument();
+        final Document queryFilterDocument = remove.getFilter().toDocument();
 
         final Collection<String> keys = queryFilterDocument.keySet();
 
         if (remove.isMulti()) {
-            buffer.writeInt(0);
+            getBuffer().writeInt(0);
         }
         else {
-            buffer.writeInt(0);
+            getBuffer().writeInt(0);
         }
 
         addDocument(queryFilterDocument, serializer);

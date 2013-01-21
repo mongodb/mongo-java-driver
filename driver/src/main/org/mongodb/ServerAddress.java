@@ -28,9 +28,9 @@ import java.net.UnknownHostException;
  */
 @Immutable
 public class ServerAddress {
-    private final String _host;
-    private final int _port;
-    private volatile InetSocketAddress _address;
+    private final String host;
+    private final int port;
+    private volatile InetSocketAddress address;
     /**
      * Creates a ServerAddress with default host and port
      *
@@ -59,27 +59,29 @@ public class ServerAddress {
      * @param port mongod port
      * @throws UnknownHostException
      */
-    public ServerAddress(String host, int port)
+    public ServerAddress(final String host, final int port)
             throws UnknownHostException {
-        if (host == null) {
-            host = defaultHost();
+        String hostToUse = host;
+        if (hostToUse == null) {
+            hostToUse = defaultHost();
         }
-        host = host.trim();
-        if (host.length() == 0) {
-            host = defaultHost();
+        hostToUse = hostToUse.trim();
+        if (hostToUse.length() == 0) {
+            hostToUse = defaultHost();
         }
 
-        final int idx = host.indexOf(":");
+        int portToUse = port;
+        final int idx = hostToUse.indexOf(":");
         if (idx > 0) {
             if (port != defaultPort()) {
                 throw new IllegalArgumentException("can't specify port in construct and via host");
             }
-            port = Integer.parseInt(host.substring(idx + 1));
-            host = host.substring(0, idx).trim();
+            portToUse = Integer.parseInt(hostToUse.substring(idx + 1));
+            hostToUse = hostToUse.substring(0, idx).trim();
         }
 
-        _host = host;
-        _port = port;
+        this.host = hostToUse;
+        this.port = portToUse;
         updateInetAddress();
     }
 
@@ -108,9 +110,9 @@ public class ServerAddress {
      * @param addr inet socket address containing hostname and port
      */
     public ServerAddress(final InetSocketAddress addr) {
-        _address = addr;
-        _host = _address.getHostName();
-        _port = _address.getPort();
+        address = addr;
+        host = address.getHostName();
+        port = address.getPort();
     }
 
     // --------
@@ -121,32 +123,33 @@ public class ServerAddress {
     /**
      * Determines whether this address is the same as a given host.
      *
-     * @param host the address to compare
+     * @param hostName the address to compare
      * @return if they are the same
      */
-    public boolean sameHost(String host) {
-        final int idx = host.indexOf(":");
-        int port = defaultPort();
+    public boolean sameHost(final String hostName) {
+        String hostToUse = hostName;
+        final int idx = hostToUse.indexOf(":");
+        int portToUse = defaultPort();
         if (idx > 0) {
-            port = Integer.parseInt(host.substring(idx + 1));
-            host = host.substring(0, idx);
+            portToUse = Integer.parseInt(hostToUse.substring(idx + 1));
+            hostToUse = hostToUse.substring(0, idx);
         }
 
-        return _port == port && _host.equalsIgnoreCase(host);
+        return this.port == portToUse && host.equalsIgnoreCase(hostToUse);
     }
 
     @Override
     public boolean equals(final Object other) {
         if (other instanceof ServerAddress) {
             final ServerAddress a = (ServerAddress) other;
-            return a._port == _port && a._host.equals(_host);
+            return a.port == port && a.host.equals(host);
         }
-        return other instanceof InetSocketAddress && _address.equals(other);
+        return other instanceof InetSocketAddress && address.equals(other);
     }
 
     @Override
     public int hashCode() {
-        return _host.hashCode() + _port;
+        return host.hashCode() + port;
     }
 
     /**
@@ -155,7 +158,7 @@ public class ServerAddress {
      * @return hostname
      */
     public String getHost() {
-        return _host;
+        return host;
     }
 
     /**
@@ -164,7 +167,7 @@ public class ServerAddress {
      * @return port
      */
     public int getPort() {
-        return _port;
+        return port;
     }
 
     /**
@@ -173,12 +176,12 @@ public class ServerAddress {
      * @return socket address
      */
     public InetSocketAddress getSocketAddress() {
-        return _address;
+        return address;
     }
 
     @Override
     public String toString() {
-        return _address.toString();
+        return address.toString();
     }
 
     // --------
@@ -210,8 +213,8 @@ public class ServerAddress {
      * @throws UnknownHostException
      */
     boolean updateInetAddress() throws UnknownHostException {
-        final InetSocketAddress oldAddress = _address;
-        _address = new InetSocketAddress(InetAddress.getByName(_host), _port);
-        return !_address.equals(oldAddress);
+        final InetSocketAddress oldAddress = address;
+        address = new InetSocketAddress(InetAddress.getByName(host), port);
+        return !address.equals(oldAddress);
     }
 }

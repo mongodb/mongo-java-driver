@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.result;
@@ -21,7 +20,7 @@ import org.mongodb.ServerAddress;
 import org.mongodb.protocol.MongoReplyMessage;
 
 public class GetMoreResult<T> extends QueryResult<T> {
-    public GetMoreResult(final MongoReplyMessage<T> replyMessage, ServerAddress address) {
+    public GetMoreResult(final MongoReplyMessage<T> replyMessage, final ServerAddress address) {
         super(replyMessage, address);
     }
 }

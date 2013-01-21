@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb;
@@ -56,7 +55,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
     /**
      * Preference to read from primary only. Cannot be combined with tags.
      */
-    private static class PrimaryReadPreference extends ReadPreference {
+    private static final class PrimaryReadPreference extends ReadPreference {
         private PrimaryReadPreference() {
         }
 
@@ -101,14 +100,14 @@ public abstract class ReadPreference implements ConvertibleToDocument {
      * @return ReadPreference which reads from primary only
      */
     public static ReadPreference primary() {
-        return _PRIMARY;
+        return PRIMARY;
     }
 
     /**
      * @return ReadPreference which reads primary if available.
      */
     public static ReadPreference primaryPreferred() {
-        return _PRIMARY_PREFERRED;
+        return PRIMARY_PREFERRED;
     }
 
     /**
@@ -122,7 +121,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
      * @return ReadPreference which reads secondary.
      */
     public static ReadPreference secondary() {
-        return _SECONDARY;
+        return SECONDARY;
     }
 
     /**
@@ -136,7 +135,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
      * @return ReadPreference which reads secondary if available, otherwise from primary.
      */
     public static ReadPreference secondaryPreferred() {
-        return _SECONDARY_PREFERRED;
+        return SECONDARY_PREFERRED;
     }
 
     /**
@@ -151,53 +150,53 @@ public abstract class ReadPreference implements ConvertibleToDocument {
      * @return ReadPreference which reads nearest node.
      */
     public static ReadPreference nearest() {
-        return _NEAREST;
+        return NEAREST;
     }
 
-    public static ReadPreference valueOf(String name) {
+    public static ReadPreference valueOf(final String name) {
         if (name == null) {
             throw new IllegalArgumentException();
         }
 
-        name = name.toLowerCase();
+        final String nameToCheck = name.toLowerCase();
 
-        if (name.equals(_PRIMARY.getName().toLowerCase())) {
-            return _PRIMARY;
+        if (nameToCheck.equals(PRIMARY.getName().toLowerCase())) {
+            return PRIMARY;
         }
-        if (name.equals(_SECONDARY.getName().toLowerCase())) {
-            return _SECONDARY;
+        if (nameToCheck.equals(SECONDARY.getName().toLowerCase())) {
+            return SECONDARY;
         }
-        if (name.equals(_SECONDARY_PREFERRED.getName().toLowerCase())) {
-            return _SECONDARY_PREFERRED;
+        if (nameToCheck.equals(SECONDARY_PREFERRED.getName().toLowerCase())) {
+            return SECONDARY_PREFERRED;
         }
-        if (name.equals(_PRIMARY_PREFERRED.getName().toLowerCase())) {
-            return _PRIMARY_PREFERRED;
+        if (nameToCheck.equals(PRIMARY_PREFERRED.getName().toLowerCase())) {
+            return PRIMARY_PREFERRED;
         }
-        if (name.equals(_NEAREST.getName().toLowerCase())) {
-            return _NEAREST;
+        if (nameToCheck.equals(NEAREST.getName().toLowerCase())) {
+            return NEAREST;
         }
 
         throw new IllegalArgumentException("No match for read preference of " + name);
     }
 
-    public static TaggableReadPreference valueOf(String name, final Document firstTagSet,
+    public static TaggableReadPreference valueOf(final String name, final Document firstTagSet,
                                                  final Document... remainingTagSets) {
         if (name == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Name cannot be null");
         }
 
-        name = name.toLowerCase();
+        final String nameToCheck = name.toLowerCase();
 
-        if (name.equals(_SECONDARY.getName().toLowerCase())) {
+        if (nameToCheck.equals(SECONDARY.getName().toLowerCase())) {
             return new TaggableReadPreference.SecondaryReadPreference(firstTagSet, remainingTagSets);
         }
-        if (name.equals(_SECONDARY_PREFERRED.getName().toLowerCase())) {
+        if (nameToCheck.equals(SECONDARY_PREFERRED.getName().toLowerCase())) {
             return new TaggableReadPreference.SecondaryPreferredReadPreference(firstTagSet, remainingTagSets);
         }
-        if (name.equals(_PRIMARY_PREFERRED.getName().toLowerCase())) {
+        if (nameToCheck.equals(PRIMARY_PREFERRED.getName().toLowerCase())) {
             return new TaggableReadPreference.PrimaryPreferredReadPreference(firstTagSet, remainingTagSets);
         }
-        if (name.equals(_NEAREST.getName().toLowerCase())) {
+        if (nameToCheck.equals(NEAREST.getName().toLowerCase())) {
             return new TaggableReadPreference.NearestReadPreference(firstTagSet, remainingTagSets);
         }
 
@@ -212,18 +211,18 @@ public abstract class ReadPreference implements ConvertibleToDocument {
         return new TaggableReadPreference.NearestReadPreference(firstTagSet, remainingTagSets);
     }
 
-    private static final ReadPreference _PRIMARY;
-    private static final ReadPreference _SECONDARY;
-    private static final ReadPreference _SECONDARY_PREFERRED;
-    private static final ReadPreference _PRIMARY_PREFERRED;
-    private static final ReadPreference _NEAREST;
+    private static final ReadPreference PRIMARY;
+    private static final ReadPreference SECONDARY;
+    private static final ReadPreference SECONDARY_PREFERRED;
+    private static final ReadPreference PRIMARY_PREFERRED;
+    private static final ReadPreference NEAREST;
 
     static {
-        _PRIMARY = new PrimaryReadPreference();
-        _SECONDARY = new TaggableReadPreference.SecondaryReadPreference();
-        _SECONDARY_PREFERRED = new TaggableReadPreference.SecondaryPreferredReadPreference();
-        _PRIMARY_PREFERRED = new TaggableReadPreference.PrimaryPreferredReadPreference();
-        _NEAREST = new TaggableReadPreference.NearestReadPreference();
+        PRIMARY = new PrimaryReadPreference();
+        SECONDARY = new TaggableReadPreference.SecondaryReadPreference();
+        SECONDARY_PREFERRED = new TaggableReadPreference.SecondaryPreferredReadPreference();
+        PRIMARY_PREFERRED = new TaggableReadPreference.PrimaryPreferredReadPreference();
+        NEAREST = new TaggableReadPreference.NearestReadPreference();
     }
 }
 

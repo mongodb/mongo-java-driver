@@ -20,9 +20,12 @@ import org.mongodb.MongoException;
 import org.mongodb.result.CommandResult;
 
 // TODO: should also check for ok?
-public class ErrorHandling {
+public final class ErrorHandling {
+    private ErrorHandling() {
+    }
+
     static void handleErrors(final CommandResult commandResult, final String message) {
-        Object serverErrorMessage = commandResult.getResponse().get("errmsg");
+        final Object serverErrorMessage = commandResult.getResponse().get("errmsg");
         if (serverErrorMessage != null) {
             throw new MongoException(message + ": " + serverErrorMessage);
         }

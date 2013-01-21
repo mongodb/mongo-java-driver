@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.protocol;
@@ -35,8 +34,8 @@ public class MongoRequestMessage {
     // TODO: is rollover a problem
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
-    protected final String collectionName;
-    protected volatile OutputBuffer buffer;
+    private final String collectionName;
+    private volatile OutputBuffer buffer;
     private final int id;
     private final OpCode opCode;
     private volatile int numDocuments; // only one thread will modify this field, so volatile is sufficient synchronization
@@ -68,19 +67,21 @@ public class MongoRequestMessage {
         writeMessagePrologue(opCode);
     }
 
+    //CHECKSTYLE:OFF
     private void writeMessagePrologue(final OpCode opCode) {
-        buffer.writeInt(0); // length: will set this later
-        buffer.writeInt(id);
-        buffer.writeInt(0); // response to
-        buffer.writeInt(opCode.getValue());
+        getBuffer().writeInt(0); // length: will set this later
+        getBuffer().writeInt(id);
+        getBuffer().writeInt(0); // response to
+        getBuffer().writeInt(opCode.getValue());
     }
+    //CHECKSTYLE:ON
 
     public void pipe(final SocketChannel out) throws IOException {
-        buffer.pipe(out);
+        getBuffer().pipe(out);
     }
 
     public int size() {
-        return buffer.size();
+        return getBuffer().size();
     }
 
     public int getId() {
@@ -92,7 +93,7 @@ public class MongoRequestMessage {
     }
 
     public String getNamespace() {
-        return collectionName != null ? collectionName : null;
+        return getCollectionName() != null ? getCollectionName() : null;
     }
 
     public int getNumDocuments() {
@@ -102,7 +103,7 @@ public class MongoRequestMessage {
     protected  <T> void addDocument(final T obj, final Serializer<T> serializer) {
         // TODO fix this constructor call to remove hard coding
         final BSONBinaryWriter writer = new BSONBinaryWriter(new BsonWriterSettings(100),
-                new BinaryWriterSettings(1024 * 1024 * 16), buffer);
+                new BinaryWriterSettings(1024 * 1024 * 16), getBuffer());
 
         try {
             // TODO: deal with serialization options
@@ -117,16 +118,24 @@ public class MongoRequestMessage {
     }
 
     protected void backpatchMessageLength() {
-        final int messageLength = buffer.getPosition() - messageStartPosition;
-        buffer.backpatchSize(messageLength);
+        final int messageLength = getBuffer().getPosition() - messageStartPosition;
+        getBuffer().backpatchSize(messageLength);
     }
 
     public void close() {
-        if (buffer == null) {
+        if (getBuffer() == null) {
             throw new IllegalStateException("Buffer is already closed");
         }
-        buffer.close();
+        getBuffer().close();
         buffer = null;
+    }
+
+    protected OutputBuffer getBuffer() {
+        return buffer;
+    }
+
+    protected String getCollectionName() {
+        return collectionName;
     }
 
     enum OpCode {

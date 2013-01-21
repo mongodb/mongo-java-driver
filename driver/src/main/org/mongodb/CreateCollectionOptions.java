@@ -34,7 +34,7 @@ public class CreateCollectionOptions {
     }
 
     public CreateCollectionOptions(final String collectionName, final boolean capped, final int sizeInBytes,
-                                   final boolean autoIndex, int maxDocuments) {
+                                   final boolean autoIndex, final int maxDocuments) {
         this.collectionName = collectionName;
         createDocument = new CommandDocument("create", collectionName);
         createDocument.put("capped", capped);

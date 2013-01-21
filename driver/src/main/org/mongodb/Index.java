@@ -36,7 +36,7 @@ public class Index implements ConvertibleToDocument {
         name = generateIndexName();
     }
 
-    public Index(String name, boolean unique, final Key... keys) {
+    public Index(final String name, final boolean unique, final Key... keys) {
         for (final Key key : keys) {
             addKey(key);
         }
@@ -45,7 +45,7 @@ public class Index implements ConvertibleToDocument {
     }
 
     public Index(final String... fields) {
-        for (String field : fields) {
+        for (final String field : fields) {
             addKey(field, ASC);
         }
         unique = false;
@@ -91,7 +91,7 @@ public class Index implements ConvertibleToDocument {
      */
     private String generateIndexName() {
         final StringBuilder indexName = new StringBuilder();
-        for (String keyNames : this.keys.keySet()) {
+        for (final String keyNames : this.keys.keySet()) {
             if (indexName.length() != 0) {
                 indexName.append('_');
             }

@@ -25,10 +25,10 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.serialization.CollectibleSerializer;
 
 public class MongoCollectionBaseImpl<T> implements MongoCollectionBase<T> {
-    protected final String name;
-    protected final MongoDatabase database;
-    protected final MongoCollectionOptions options;
-    protected final CollectibleSerializer<T> serializer;
+    private final String name;
+    private final MongoDatabase database;
+    private final MongoCollectionOptions options;
+    private final CollectibleSerializer<T> serializer;
 
     public MongoCollectionBaseImpl(final MongoCollection<T> from) {
         this.serializer = from.getSerializer();
