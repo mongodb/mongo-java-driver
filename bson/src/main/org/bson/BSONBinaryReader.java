@@ -224,8 +224,8 @@ public class BSONBinaryReader extends BSONReader {
     public BSONTimestamp readTimestamp() {
         checkPreconditions("readTimestamp", BsonType.TIMESTAMP);
         setState(getNextState());
-        int increment = buffer.readInt32();
-        int time = buffer.readInt32();
+        final int increment = buffer.readInt32();
+        final int time = buffer.readInt32();
         return new BSONTimestamp(time, increment);
     }
 

@@ -22,7 +22,7 @@ import java.util.Iterator;
 public final class StringUtils {
     public static String join(final String delimiter, final Collection<?> s) {
         final StringBuilder builder = new StringBuilder();
-        final Iterator iter = s.iterator();
+        final Iterator<?> iter = s.iterator();
         while (iter.hasNext()) {
             builder.append(iter.next());
             if (!iter.hasNext()) {

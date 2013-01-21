@@ -25,7 +25,7 @@ import java.io.Serializable;
  */
 public class Code implements Serializable {
 
-    protected final String code;
+    private final String code;
 
     private static final long serialVersionUID = 475535263314046697L;
 

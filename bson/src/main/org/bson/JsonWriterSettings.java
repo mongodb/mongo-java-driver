@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.bson;
@@ -27,18 +26,23 @@ import org.mongodb.annotations.Immutable;
  */
 @Immutable
 public class JsonWriterSettings extends BsonWriterSettings {
-    final boolean indent;
-    final String newLineCharacters;
-    final String indentCharacters;
-    final JsonOutputMode outputMode;
+    private final boolean indent;
+    private final String newLineCharacters;
+    private final String indentCharacters;
+    private final JsonOutputMode outputMode;
 
-    public class Builder {
-        boolean indent;
-        String newLineCharacters;
-        String indentCharacters;
-        JsonOutputMode outputMode;
+    /**
+     * Builder to create an immutable instance of JsonWriterSettings
+     * @since 3.0.0
+     */
+    public final class Builder {
+        private boolean indent;
+        private String newLineCharacters;
+        private String indentCharacters;
+        private JsonOutputMode outputMode;
 
-        private Builder() {}
+        private Builder() {
+        }
 
         public Builder indented() {
             indent = true;
@@ -71,22 +75,23 @@ public class JsonWriterSettings extends BsonWriterSettings {
     public JsonWriterSettings(final boolean indent) {
         this(JsonOutputMode.Strict, true, "  ", null);
     }
+
     /**
-     * Creates a new instance with the given output mode, indent mode enabled, and the default value for all
-     * other properties.
+     * Creates a new instance with the given output mode, indent mode enabled, and the default value for all other
+     * properties.
      *
      * @param outputMode the output mode
-     * @param indent whether indent mode is enabled
+     * @param indent     whether indent mode is enabled
      */
     public JsonWriterSettings(final JsonOutputMode outputMode, final boolean indent) {
         this(outputMode, true, "  ", null);
     }
 
     /**
-     * Creates a new instance with the given values for all properties, indent mode enabled and the default value
-     * of {@code newLineCharacters}.
+     * Creates a new instance with the given values for all properties, indent mode enabled and the default value of
+     * {@code newLineCharacters}.
      *
-     * @param outputMode the output mode
+     * @param outputMode       the output mode
      * @param indentCharacters the indent characters
      */
     public JsonWriterSettings(final JsonOutputMode outputMode, final String indentCharacters) {
@@ -96,20 +101,23 @@ public class JsonWriterSettings extends BsonWriterSettings {
     /**
      * Creates a new instance with the given values for all properties and indent mode enabled.
      *
-     * @param outputMode the output mode
-     * @param indentCharacters the indent characters
+     * @param outputMode        the output mode
+     * @param indentCharacters  the indent characters
      * @param newLineCharacters the new line character(s) to use
      */
-    public JsonWriterSettings(final JsonOutputMode outputMode, final String indentCharacters, final String newLineCharacters) {
+    public JsonWriterSettings(final JsonOutputMode outputMode, final String indentCharacters,
+                              final String newLineCharacters) {
         this(outputMode, true, indentCharacters, newLineCharacters);
     }
 
-    private JsonWriterSettings(final JsonOutputMode outputMode, final boolean indent, final String indentCharacters, final String newLineCharacters) {
+    private JsonWriterSettings(final JsonOutputMode outputMode, final boolean indent, final String indentCharacters,
+                               final String newLineCharacters) {
         if (indent) {
             if (indentCharacters == null) {
                 throw new IllegalArgumentException("indent characters can not be null if indent is enabled");
             }
-        } else {
+        }
+        else {
             if (newLineCharacters != null) {
                 throw new IllegalArgumentException("new line characters can not be null if indent is disabled.");
             }
@@ -128,8 +136,8 @@ public class JsonWriterSettings extends BsonWriterSettings {
     }
 
     /**
-     * The indentation mode.  If true, output will be indented.  Otherwise, it will all be on the same line. The
-     * default value is {@code false}.
+     * The indentation mode.  If true, output will be indented.  Otherwise, it will all be on the same line. The default
+     * value is {@code false}.
      * <p/>
      * * @return whether output should be indented.
      */
@@ -138,7 +146,8 @@ public class JsonWriterSettings extends BsonWriterSettings {
     }
 
     /**
-     * The new line character(s) to use if indent mode is enabled.  The default value is {@code System.getProperty("line.separator")}.
+     * The new line character(s) to use if indent mode is enabled.  The default value is {@code
+     * System.getProperty("line.separator")}.
      *
      * @return the new line character(s) to use.
      */

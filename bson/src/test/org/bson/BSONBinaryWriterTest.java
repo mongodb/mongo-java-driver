@@ -234,11 +234,12 @@ public class BSONBinaryWriterTest {
 
         writer.writeEndDocument();
 
-        byte[] expectedValues = {82, 0, 0, 0, 2, 115, 49, 0, 1, 0, 0, 0, 0, 2, 115, 50,
-                0, 6, 0, 0, 0, 100, 97, 110, 107, 101, 0, 2, 115, 51, 0, 23,
-                0, 0, 0, 44, 43, 92, 34, 60, 62, 59, 91, 93, 123, 125, 64, 35,
-                36, 37, 94, 38, 42, 40, 41, 43, 95, 0, 2, 115, 53, 0, 15, 0,
-                0, 0, 97, -61, -87, -29, -127, -126, -48, -80, -48, -78, -48, -79, -48, -76, 0, 0};
+        final byte[] expectedValues = {82, 0, 0, 0, 2, 115, 49, 0, 1, 0, 0, 0, 0, 2, 115, 50,
+                                       0, 6, 0, 0, 0, 100, 97, 110, 107, 101, 0, 2, 115, 51, 0, 23,
+                                       0, 0, 0, 44, 43, 92, 34, 60, 62, 59, 91, 93, 123, 125, 64, 35,
+                                       36, 37, 94, 38, 42, 40, 41, 43, 95, 0, 2, 115, 53, 0, 15, 0,
+                                       0, 0, 97, -61, -87, -29, -127, -126, -48, -80, -48, -78, -48, -79, -48, -76, 0,
+                                       0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
 
     }
@@ -255,8 +256,10 @@ public class BSONBinaryWriterTest {
 
         writer.writeEndDocument();
 
-        byte[] expectedValues = {45, 0, 0, 0, 16, 105, 49, 0, -12, -1, -1, -1, 16, 105, 50, 0, 0, 0, 0, -128, 18, 105,
-                51, 0, -1, -1, -1, -1, -1, -1, -1, 127, 18, 105, 52, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        final byte[] expectedValues = {45, 0, 0, 0, 16, 105, 49, 0, -12, -1, -1, -1, 16, 105, 50, 0, 0, 0, 0, -128, 18,
+                                       105,
+                                       51, 0, -1, -1, -1, -1, -1, -1, -1, 127, 18, 105, 52, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                       0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -276,8 +279,9 @@ public class BSONBinaryWriterTest {
 
         writer.writeEndDocument();
 
-        byte[] expectedValues = {31, 0, 0, 0, 4, 97, 49, 0, 5, 0, 0, 0, 0, 4, 97, 50, 0, 13, 0, 0, 0, 4, 48, 0, 5, 0,
-                0, 0, 0, 0, 0};
+        final byte[] expectedValues = {31, 0, 0, 0, 4, 97, 49, 0, 5, 0, 0, 0, 0, 4, 97, 50, 0, 13, 0, 0, 0, 4, 48, 0, 5,
+                                       0,
+                                       0, 0, 0, 0, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -292,7 +296,7 @@ public class BSONBinaryWriterTest {
 
         writer.writeEndDocument();
 
-        byte[] expectedValues = {13, 0, 0, 0, 10, 110, 49, 0, 10, 110, 50, 0, 0};
+        final byte[] expectedValues = {13, 0, 0, 0, 10, 110, 49, 0, 10, 110, 50, 0, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -307,14 +311,14 @@ public class BSONBinaryWriterTest {
 
         writer.writeEndDocument();
 
-        byte[] expectedValues = {13, 0, 0, 0, 6, 117, 49, 0, 6, 117, 50, 0, 0};
+        final byte[] expectedValues = {13, 0, 0, 0, 6, 117, 49, 0, 6, 117, 50, 0, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
     @Test
     public void testWriteObjectId() {
 
-        ObjectId id = ObjectId.massageToObjectId("50d3332018c6a1d8d1662b61");
+        final ObjectId id = ObjectId.massageToObjectId("50d3332018c6a1d8d1662b61");
 
         writer.writeStartDocument();
 
@@ -322,8 +326,9 @@ public class BSONBinaryWriterTest {
 
         writer.writeEndDocument();
 
-        byte[] expectedValues = {22, 0, 0, 0, 7, 95, 105, 100, 0, 80, -45, 51, 32, 24, -58, -95, -40, -47, 102, 43,
-                97, 0};
+        final byte[] expectedValues = {22, 0, 0, 0, 7, 95, 105, 100, 0, 80, -45, 51, 32, 24, -58, -95, -40, -47, 102,
+                                       43,
+                                       97, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -341,9 +346,11 @@ public class BSONBinaryWriterTest {
 
         writer.writeEndDocument();
 
-        byte[] expectedValues = {53, 0, 0, 0, 13, 106, 115, 49, 0, 10, 0, 0, 0, 118, 97, 114, 32, 105, 32, 61, 32, 48,
-                0, 15, 106, 115, 50, 0, 24, 0, 0, 0, 4, 0, 0, 0, 105, 43, 43, 0, 12, 0, 0, 0, 16, 120, 0, 1, 0, 0, 0,
-                0, 0};
+        final byte[] expectedValues = {53, 0, 0, 0, 13, 106, 115, 49, 0, 10, 0, 0, 0, 118, 97, 114, 32, 105, 32, 61, 32,
+                                       48,
+                                       0, 15, 106, 115, 50, 0, 24, 0, 0, 0, 4, 0, 0, 0, 105, 43, 43, 0, 12, 0, 0, 0, 16,
+                                       120, 0, 1, 0, 0, 0,
+                                       0, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -359,11 +366,11 @@ public class BSONBinaryWriterTest {
 
         writer.writeEndDocument();
 
-        for (byte b : buffer.toByteArray()) {
+        for (final byte b : buffer.toByteArray()) {
             System.out.print(b + ", ");
         }
 
-        byte[] expectedValues = {17, 0, 0, 0, 127, 107, 49, 0, -1, 107, 50, 0, 127, 107, 51, 0, 0};
+        final byte[] expectedValues = {17, 0, 0, 0, 127, 107, 49, 0, -1, 107, 50, 0, 127, 107, 51, 0, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -378,8 +385,9 @@ public class BSONBinaryWriterTest {
 
         writer.writeEndDocument();
 
-        byte[] expectedValues = {49, 0, 0, 0, 5, 98, 49, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 98, 50, 0, 9, 0,
-                0, 0, 2, 5, 0, 0, 0, 1, 1, 1, 1, 1, 5, 98, 51, 0, 0, 0, 0, 0, 1, 0};
+        final byte[] expectedValues = {49, 0, 0, 0, 5, 98, 49, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 98, 50, 0,
+                                       9, 0,
+                                       0, 0, 2, 5, 0, 0, 0, 1, 1, 1, 1, 1, 5, 98, 51, 0, 0, 0, 0, 0, 1, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -393,8 +401,9 @@ public class BSONBinaryWriterTest {
 
         writer.writeEndDocument();
 
-        byte[] expectedValues = {43, 0, 0, 0, 11, 114, 49, 0, 40, 91, 48, 49, 93, 63, 91, 48, 45, 57, 93, 91, 48, 45,
-                57, 93, 63, 41, 0, 0, 11, 114, 50, 0, 91, 32, 92, 116, 93, 43, 36, 0, 105, 0, 0};
+        final byte[] expectedValues = {43, 0, 0, 0, 11, 114, 49, 0, 40, 91, 48, 49, 93, 63, 91, 48, 45, 57, 93, 91, 48,
+                                       45,
+                                       57, 93, 63, 41, 0, 0, 11, 114, 50, 0, 91, 32, 92, 116, 93, 43, 36, 0, 105, 0, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -406,12 +415,12 @@ public class BSONBinaryWriterTest {
 
         writer.writeEndDocument();
 
-        byte[] expectedValues = {17, 0, 0, 0, 17, 116, 49, 0, 44, -83, 0, 0, -87, 20, 100, 7, 0};
+        final byte[] expectedValues = {17, 0, 0, 0, 17, 116, 49, 0, 44, -83, 0, 0, -87, 20, 100, 7, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
-
     @Test
+    //CHECKSTYLE:OFF
     public void testWriteRead() throws IOException {
         final ObjectId oid1 = new ObjectId();
 
@@ -514,4 +523,5 @@ public class BSONBinaryWriterTest {
 
         }
     }
+    //CHECKSTYLE:ON
 }

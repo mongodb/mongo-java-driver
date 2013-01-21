@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2011, 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +23,8 @@ public class BSONException extends RuntimeException {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
+    private Integer errorCode = null;
+
     /**
      * @param msg The error message.
      */
@@ -36,7 +38,7 @@ public class BSONException extends RuntimeException {
      */
     public BSONException(final int errorCode, final String msg) {
         super(msg);
-        _errorCode = errorCode;
+        this.errorCode = errorCode;
     }
 
     /**
@@ -54,7 +56,7 @@ public class BSONException extends RuntimeException {
      */
     public BSONException(final int errorCode, final String msg, final Throwable t) {
         super(msg, t);
-        _errorCode = errorCode;
+        this.errorCode = errorCode;
     }
 
     /**
@@ -63,16 +65,14 @@ public class BSONException extends RuntimeException {
      * @return The error code.
      */
     public Integer getErrorCode() {
-        return _errorCode;
+        return errorCode;
     }
 
     /**
      * Returns true if the error code is set (i.e., not null).
      */
     public boolean hasErrorCode() {
-        return (_errorCode != null);
+        return (errorCode != null);
     }
-
-    private Integer _errorCode = null;
 }
 

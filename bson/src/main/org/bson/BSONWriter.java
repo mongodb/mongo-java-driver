@@ -25,10 +25,12 @@ import org.bson.util.StringUtils;
 import java.io.Closeable;
 import java.util.Arrays;
 
+import static java.lang.String.format;
+
 public abstract class BSONWriter implements Closeable {
     private final BsonWriterSettings settings;
     private State state;
-    private String name;
+    private String currentName;
     private boolean checkElementNames;
     private boolean checkUpdateDocument;
     private int serializationDepth;
@@ -45,7 +47,7 @@ public abstract class BSONWriter implements Closeable {
     }
 
     protected String getName() {
-        return name;
+        return currentName;
     }
 
     protected boolean isClosed() {
@@ -60,101 +62,101 @@ public abstract class BSONWriter implements Closeable {
         return state;
     }
 
-//    // public static methods
+    //    // public static methods
 
-//    /// <summary>
-//    /// Creates a BsonWriter to a BsonBuffer.
-//    /// </summary>
-//    /// <param name="settings">Optional BsonBinaryWriterSettings.</param>
-//    /// <returns>A BsonWriter.</returns>
-//    public static BsonWriter Create(BsonBinaryWriterSettings settings)
-//    {
-//        return new BsonBinaryWriter(null, null, settings);
-//    }
-//
-//    /// <summary>
-//    /// Creates a BsonWriter to a BsonBuffer.
-//    /// </summary>
-//    /// <param name="buffer">A BsonBuffer.</param>
-//    /// <returns>A BsonWriter.</returns>
-//    public static BsonWriter Create(BsonBuffer buffer)
-//    {
-//        return new BsonBinaryWriter(null, buffer, BsonBinaryWriterSettings.Defaults);
-//    }
-//
-//    /// <summary>
-//    /// Creates a BsonWriter to a BsonBuffer.
-//    /// </summary>
-//    /// <param name="buffer">A BsonBuffer.</param>
-//    /// <param name="settings">Optional BsonBinaryWriterSettings.</param>
-//    /// <returns>A BsonWriter.</returns>
-//    public static BsonWriter Create(BsonBuffer buffer, BsonBinaryWriterSettings settings)
-//    {
-//        return new BsonBinaryWriter(null, buffer, settings);
-//    }
-//
-//    /// <summary>
-//    /// Creates a BsonWriter to a BsonDocument.
-//    /// </summary>
-//    /// <param name="document">A BsonDocument.</param>
-//    /// <returns>A BsonWriter.</returns>
-//    public static BsonWriter Create(BsonDocument document)
-//    {
-//        return Create(document, BsonDocumentWriterSettings.Defaults);
-//    }
-//
-//    /// <summary>
-//    /// Creates a BsonWriter to a BsonDocument.
-//    /// </summary>
-//    /// <param name="document">A BsonDocument.</param>
-//    /// <param name="settings">The settings.</param>
-//    /// <returns>A BsonWriter.</returns>
-//    public static BsonWriter Create(BsonDocument document, BsonDocumentWriterSettings settings)
-//    {
-//        return new BsonDocumentWriter(document, settings);
-//    }
-//
-//    /// <summary>
-//    /// Creates a BsonWriter to a BSON Stream.
-//    /// </summary>
-//    /// <param name="stream">A Stream.</param>
-//    /// <returns>A BsonWriter.</returns>
-//    public static BsonWriter Create(Stream stream)
-//    {
-//        return Create(stream, BsonBinaryWriterSettings.Defaults);
-//    }
-//
-//    /// <summary>
-//    /// Creates a BsonWriter to a BSON Stream.
-//    /// </summary>
-//    /// <param name="stream">A Stream.</param>
-//    /// <param name="settings">Optional BsonBinaryWriterSettings.</param>
-//    /// <returns>A BsonWriter.</returns>
-//    public static BsonWriter Create(Stream stream, BsonBinaryWriterSettings settings)
-//    {
-//        return new BsonBinaryWriter(stream, null, BsonBinaryWriterSettings.Defaults);
-//    }
-//
-//    /// <summary>
-//    /// Creates a BsonWriter to a JSON TextWriter.
-//    /// </summary>
-//    /// <param name="writer">A TextWriter.</param>
-//    /// <returns>A BsonWriter.</returns>
-//    public static BsonWriter Create(TextWriter writer)
-//    {
-//        return new JsonWriter(writer, JsonWriterSettings.Defaults);
-//    }
-//
-//    /// <summary>
-//    /// Creates a BsonWriter to a JSON TextWriter.
-//    /// </summary>
-//    /// <param name="writer">A TextWriter.</param>
-//    /// <param name="settings">Optional JsonWriterSettings.</param>
-//    /// <returns>A BsonWriter.</returns>
-//    public static BsonWriter Create(TextWriter writer, JsonWriterSettings settings)
-//    {
-//        return new JsonWriter(writer, settings);
-//    }
+    //    /// <summary>
+    //    /// Creates a BsonWriter to a BsonBuffer.
+    //    /// </summary>
+    //    /// <param name="settings">Optional BsonBinaryWriterSettings.</param>
+    //    /// <returns>A BsonWriter.</returns>
+    //    public static BsonWriter Create(BsonBinaryWriterSettings settings)
+    //    {
+    //        return new BsonBinaryWriter(null, null, settings);
+    //    }
+    //
+    //    /// <summary>
+    //    /// Creates a BsonWriter to a BsonBuffer.
+    //    /// </summary>
+    //    /// <param name="buffer">A BsonBuffer.</param>
+    //    /// <returns>A BsonWriter.</returns>
+    //    public static BsonWriter Create(BsonBuffer buffer)
+    //    {
+    //        return new BsonBinaryWriter(null, buffer, BsonBinaryWriterSettings.Defaults);
+    //    }
+    //
+    //    /// <summary>
+    //    /// Creates a BsonWriter to a BsonBuffer.
+    //    /// </summary>
+    //    /// <param name="buffer">A BsonBuffer.</param>
+    //    /// <param name="settings">Optional BsonBinaryWriterSettings.</param>
+    //    /// <returns>A BsonWriter.</returns>
+    //    public static BsonWriter Create(BsonBuffer buffer, BsonBinaryWriterSettings settings)
+    //    {
+    //        return new BsonBinaryWriter(null, buffer, settings);
+    //    }
+    //
+    //    /// <summary>
+    //    /// Creates a BsonWriter to a BsonDocument.
+    //    /// </summary>
+    //    /// <param name="document">A BsonDocument.</param>
+    //    /// <returns>A BsonWriter.</returns>
+    //    public static BsonWriter Create(BsonDocument document)
+    //    {
+    //        return Create(document, BsonDocumentWriterSettings.Defaults);
+    //    }
+    //
+    //    /// <summary>
+    //    /// Creates a BsonWriter to a BsonDocument.
+    //    /// </summary>
+    //    /// <param name="document">A BsonDocument.</param>
+    //    /// <param name="settings">The settings.</param>
+    //    /// <returns>A BsonWriter.</returns>
+    //    public static BsonWriter Create(BsonDocument document, BsonDocumentWriterSettings settings)
+    //    {
+    //        return new BsonDocumentWriter(document, settings);
+    //    }
+    //
+    //    /// <summary>
+    //    /// Creates a BsonWriter to a BSON Stream.
+    //    /// </summary>
+    //    /// <param name="stream">A Stream.</param>
+    //    /// <returns>A BsonWriter.</returns>
+    //    public static BsonWriter Create(Stream stream)
+    //    {
+    //        return Create(stream, BsonBinaryWriterSettings.Defaults);
+    //    }
+    //
+    //    /// <summary>
+    //    /// Creates a BsonWriter to a BSON Stream.
+    //    /// </summary>
+    //    /// <param name="stream">A Stream.</param>
+    //    /// <param name="settings">Optional BsonBinaryWriterSettings.</param>
+    //    /// <returns>A BsonWriter.</returns>
+    //    public static BsonWriter Create(Stream stream, BsonBinaryWriterSettings settings)
+    //    {
+    //        return new BsonBinaryWriter(stream, null, BsonBinaryWriterSettings.Defaults);
+    //    }
+    //
+    //    /// <summary>
+    //    /// Creates a BsonWriter to a JSON TextWriter.
+    //    /// </summary>
+    //    /// <param name="writer">A TextWriter.</param>
+    //    /// <returns>A BsonWriter.</returns>
+    //    public static BsonWriter Create(TextWriter writer)
+    //    {
+    //        return new JsonWriter(writer, JsonWriterSettings.Defaults);
+    //    }
+    //
+    //    /// <summary>
+    //    /// Creates a BsonWriter to a JSON TextWriter.
+    //    /// </summary>
+    //    /// <param name="writer">A TextWriter.</param>
+    //    /// <param name="settings">Optional JsonWriterSettings.</param>
+    //    /// <returns>A BsonWriter.</returns>
+    //    public static BsonWriter Create(TextWriter writer, JsonWriterSettings settings)
+    //    {
+    //        return new JsonWriter(writer, settings);
+    //    }
 
     /// <summary>
     /// Flushes any pending data to the output destination.
@@ -343,7 +345,7 @@ public abstract class BSONWriter implements Closeable {
         }
         checkElementName(name);
 
-        this.name = name;
+        this.currentName = name;
         state = State.VALUE;
     }
 
@@ -402,9 +404,9 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     public void writeStartArray() {
         serializationDepth++;
-        if (serializationDepth > settings.maxSerializationDepth) {
-            throw new BsonSerializationException("Maximum serialization depth exceeded " +
-                    "(does the object being serialized have a circular reference?).");
+        if (serializationDepth > settings.getMaxSerializationDepth()) {
+            throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
+                                                         + "serialized have a circular reference?).");
         }
     }
 
@@ -422,9 +424,9 @@ public abstract class BSONWriter implements Closeable {
     /// </summary>
     public void writeStartDocument() {
         serializationDepth++;
-        if (serializationDepth > settings.maxSerializationDepth) {
-            throw new BsonSerializationException("Maximum serialization depth exceeded " +
-                    "(does the object being serialized have a circular reference?).");
+        if (serializationDepth > settings.getMaxSerializationDepth()) {
+            throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
+                                                         + "serialized have a circular reference?).");
         }
     }
 
@@ -514,13 +516,15 @@ public abstract class BSONWriter implements Closeable {
         if (checkElementNames) {
             if (name.charAt(0) == '$') {
                 // a few element names starting with $ have to be allowed for historical reasons
-                if (!(name.equals("$code") || name.equals("$db") || name.equals("$ref") || name.equals("$scope") || name.equals("$id"))) {
-                    final String message = String.format("Element name '%s' is not valid because it starts with a '$'.", name);
+                if (!(name.equals("$code") || name.equals("$db") || name.equals("$ref") || name.equals("$scope")
+                              || name.equals("$id"))) {
+                    final String message = format(
+                            "Element name '%s' is not valid because it starts with a '$'" + ".", name);
                     throw new BsonSerializationException(message);
                 }
             }
             if (name.indexOf('.') != -1) {
-                final String message = String.format("Element name '%s' is not valid because it contains a '.'.", name);
+                final String message = format("Element name '%s' is not valid because it contains a '.'.", name);
                 throw new BsonSerializationException(message);
             }
         }
@@ -535,9 +539,9 @@ public abstract class BSONWriter implements Closeable {
     protected void throwInvalidContextType(final String methodName, final ContextType actualContextType,
                                            final ContextType... validContextTypes) {
         final String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
-        final String message = String.format(
-                "%s can only be called when ContextType is %s, not when ContextType is %s.",
-                methodName, validContextTypesString, actualContextType);
+        final String message = format("%s can only be called when ContextType is %s, "
+                                              + "not when ContextType is %s.", methodName, validContextTypesString,
+                                      actualContextType);
         throw new InvalidOperationException(message);
     }
 
@@ -558,17 +562,15 @@ public abstract class BSONWriter implements Closeable {
                 if (Arrays.asList('A', 'E', 'I', 'O', 'U').contains(typeName.charAt(0))) {
                     article = "An";
                 }
-                message = String.format(
-                        "%s %s value cannot be written to the root level of a BSON document.",
-                        article, typeName);
+                message = format("%s %s value cannot be written to the root level of a BSON document.", article,
+                                 typeName);
                 throw new InvalidOperationException(message);
             }
         }
 
         final String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
-        message = String.format(
-                "%s can only be called when State is %s, not when State is %s",
-                methodName, validStatesString, state);
+        message = format("%s can only be called when State is %s, not when State is %s", methodName,
+                         validStatesString, state);
         throw new InvalidOperationException(message);
     }
 

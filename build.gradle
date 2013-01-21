@@ -218,6 +218,11 @@ project(':bson') {
         }
     }
 
+    checkstyle {
+        configFile = new File("$configDir/checkstyle.xml")
+        ignoreFailures = false
+    }
+
 }
 
 project(':driver') {

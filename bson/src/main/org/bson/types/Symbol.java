@@ -40,8 +40,8 @@ public class Symbol implements Serializable {
     /**
      * Will compare equal to a String that is equal to the String that this holds
      *
-     * @param o
-     * @return
+     * @param o the Symbol to compare this to
+     * @return true if parameter o is the same as this Symbol
      */
     @Override
     public boolean equals(final Object o) {

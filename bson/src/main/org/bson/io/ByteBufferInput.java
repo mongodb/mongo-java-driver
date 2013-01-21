@@ -102,10 +102,13 @@ public class ByteBufferInput implements InputBuffer {
         return new String(bytes, UTF8_CHARSET);
     }
 
+
     private void readUntilNullByte() {
+        //CHECKSTYLE:OFF
         while (buffer.get() != 0) {
-            ;
+            //do nothing - checkstyle hates this, not surprisingly
         }
+        //CHECKSTYLE:ON
     }
 
     @Override

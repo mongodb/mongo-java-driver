@@ -42,11 +42,11 @@ public class CodeWScope extends Code {
         }
 
         final CodeWScope c = (CodeWScope) o;
-        return code.equals(c.code) && scope.equals(c.scope);
+        return getCode().equals(c.getCode()) && scope.equals(c.scope);
     }
 
     public int hashCode() {
-        return code.hashCode() ^ scope.hashCode();
+        return getCode().hashCode() ^ scope.hashCode();
     }
 }
 

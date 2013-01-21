@@ -1,17 +1,17 @@
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.bson.types;
@@ -114,18 +114,18 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
     }
 
     public ObjectId(final Date time) {
-        this(time, _genmachine, NEXT_INC.getAndIncrement());
+        this(time, GENMACHINE, NEXT_INC.getAndIncrement());
     }
 
     public ObjectId(final Date time, final int inc) {
-        this(time, _genmachine, inc);
+        this(time, GENMACHINE, inc);
     }
 
     public ObjectId(final Date time, final int machine, final int inc) {
-        _time = (int) (time.getTime() / 1000);
-        _machine = machine;
-        _inc = inc;
-        _new = false;
+        this.time = (int) (time.getTime() / 1000);
+        this.machine = machine;
+        this.inc = inc;
+        isNew = false;
     }
 
     /**
@@ -138,25 +138,26 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
         this(s, false);
     }
 
-    public ObjectId(String s, final boolean babble) {
+    public ObjectId(final String s, final boolean babble) {
+        String str = s;
 
         if (!isValid(s)) {
             throw new IllegalArgumentException("invalid ObjectId [" + s + "]");
         }
 
         if (babble) {
-            s = babbleToMongod(s);
+            str = babbleToMongod(s);
         }
 
         final byte[] b = new byte[12];
         for (int i = 0; i < b.length; i++) {
-            b[i] = (byte) Integer.parseInt(s.substring(i * 2, i * 2 + 2), 16);
+            b[i] = (byte) Integer.parseInt(str.substring(i * 2, i * 2 + 2), 16);
         }
         final ByteBuffer bb = ByteBuffer.wrap(b);
-        _time = bb.getInt();
-        _machine = bb.getInt();
-        _inc = bb.getInt();
-        _new = false;
+        time = bb.getInt();
+        machine = bb.getInt();
+        inc = bb.getInt();
+        isNew = false;
     }
 
     public ObjectId(final byte[] b) {
@@ -164,10 +165,10 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
             throw new IllegalArgumentException("need 12 bytes");
         }
         final ByteBuffer bb = ByteBuffer.wrap(b);
-        _time = bb.getInt();
-        _machine = bb.getInt();
-        _inc = bb.getInt();
-        _new = false;
+        time = bb.getInt();
+        machine = bb.getInt();
+        inc = bb.getInt();
+        isNew = false;
     }
 
     /**
@@ -178,26 +179,26 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
      * @param inc     incremental value
      */
     public ObjectId(final int time, final int machine, final int inc) {
-        _time = time;
-        _machine = machine;
-        _inc = inc;
-        _new = false;
+        this.time = time;
+        this.machine = machine;
+        this.inc = inc;
+        isNew = false;
     }
 
     /**
      * Create a new object id.
      */
     public ObjectId() {
-        _time = (int) (System.currentTimeMillis() / 1000);
-        _machine = _genmachine;
-        _inc = NEXT_INC.getAndIncrement();
-        _new = true;
+        time = (int) (System.currentTimeMillis() / 1000);
+        machine = GENMACHINE;
+        inc = NEXT_INC.getAndIncrement();
+        isNew = true;
     }
 
     public int hashCode() {
-        int x = _time;
-        x += (_machine * 111);
-        x += (_inc * 17);
+        int x = time;
+        x += (machine * 111);
+        x += (inc * 17);
         return x;
     }
 
@@ -212,7 +213,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
             return false;
         }
 
-        return _time == other._time && _machine == other._machine && _inc == other._inc;
+        return time == other.time && machine == other.machine && inc == other.inc;
     }
 
     public String toStringBabble() {
@@ -240,13 +241,13 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
         final byte[] b = new byte[12];
         final ByteBuffer bb = ByteBuffer.wrap(b);
         // by default BB is big endian like we need
-        bb.putInt(_time);
-        bb.putInt(_machine);
-        bb.putInt(_inc);
+        bb.putInt(time);
+        bb.putInt(machine);
+        bb.putInt(inc);
         return b;
     }
 
-    static String _pos(final String s, final int p) {
+    static String pos(final String s, final int p) {
         return s.substring(p * 2, (p * 2) + 2);
     }
 
@@ -257,10 +258,10 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
 
         final StringBuilder buf = new StringBuilder(24);
         for (int i = 7; i >= 0; i--) {
-            buf.append(_pos(b, i));
+            buf.append(pos(b, i));
         }
         for (int i = 11; i >= 8; i--) {
-            buf.append(_pos(b, i));
+            buf.append(pos(b, i));
         }
 
         return buf.toString();
@@ -270,7 +271,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
         return toStringMongod();
     }
 
-    int _compareUnsigned(final int i, final int j) {
+    int compareUnsigned(final int i, final int j) {
         long li = 0xFFFFFFFFL;
         li = i & li;
         long lj = 0xFFFFFFFFL;
@@ -290,66 +291,66 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
             return -1;
         }
 
-        int x = _compareUnsigned(_time, id._time);
+        int x = compareUnsigned(time, id.time);
         if (x != 0) {
             return x;
         }
 
-        x = _compareUnsigned(_machine, id._machine);
+        x = compareUnsigned(machine, id.machine);
         if (x != 0) {
             return x;
         }
 
-        return _compareUnsigned(_inc, id._inc);
+        return compareUnsigned(inc, id.inc);
     }
 
     public int getMachine() {
-        return _machine;
+        return machine;
     }
 
     /**
      * Gets the time of this ID, in milliseconds
      */
     public long getTime() {
-        return _time * 1000L;
+        return time * 1000L;
     }
 
     /**
      * Gets the time of this ID, in seconds
      */
     public int getTimeSecond() {
-        return _time;
+        return time;
     }
 
     public int getInc() {
-        return _inc;
+        return inc;
     }
 
-    public int _time() {
-        return _time;
+    public int time() {
+        return time;
     }
 
-    public int _machine() {
-        return _machine;
+    public int machine() {
+        return machine;
     }
 
-    public int _inc() {
-        return _inc;
+    public int inc() {
+        return inc;
     }
 
     public boolean isNew() {
-        return _new;
+        return isNew;
     }
 
     public void notNew() {
-        _new = false;
+        isNew = false;
     }
 
     /**
      * Gets the generated machine ID, identifying the machine / process / class loader
      */
     public static int getGenMachineId() {
-        return _genmachine;
+        return GENMACHINE;
     }
 
     /**
@@ -359,13 +360,13 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
         return NEXT_INC.get();
     }
 
-    final int _time;
-    final int _machine;
-    final int _inc;
+    private final int time;
+    private final int machine;
+    private final int inc;
 
-    boolean _new;
+    private boolean isNew;
 
-    public static int _flip(final int x) {
+    public static int flip(final int x) {
         int z = 0;
         z |= ((x << 24) & 0xFF000000);
         z |= ((x << 8) & 0x00FF0000);
@@ -376,14 +377,12 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
 
     private static final AtomicInteger NEXT_INC = new AtomicInteger((new java.util.Random()).nextInt());
 
-    private static final int _genmachine;
+    private static final int GENMACHINE;
 
     static {
-
         try {
             // build a 2-byte machine piece based on NICs info
             int machinePiece;
-            {
                 try {
                     final StringBuilder sb = new StringBuilder();
                     final Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
@@ -398,30 +397,30 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
                     machinePiece = (new Random().nextInt()) << 16;
                 }
                 LOGGER.fine("machine piece post: " + Integer.toHexString(machinePiece));
-            }
+            LOGGER.fine("machine piece post: " + Integer.toHexString(machinePiece));
 
             // add a 2 byte process piece. It must represent not only the JVM but the class loader.
             // Since static var belong to class loader there could be collisions otherwise
             final int processPiece;
-            {
-                int processId = new java.util.Random().nextInt();
-                try {
-                    processId = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
-                } catch (Throwable t) {
-                }
-
-                final ClassLoader loader = ObjectId.class.getClassLoader();
-                final int loaderId = loader != null ? System.identityHashCode(loader) : 0;
-
-                final StringBuilder sb = new StringBuilder();
-                sb.append(Integer.toHexString(processId));
-                sb.append(Integer.toHexString(loaderId));
-                processPiece = sb.toString().hashCode() & 0xFFFF;
-                LOGGER.fine("process piece: " + Integer.toHexString(processPiece));
+            int processId = new java.util.Random().nextInt();
+            try {
+                processId = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
+            } catch (Throwable t) {
+                //silently fail??
+                LOGGER.log(Level.WARNING, t.getMessage(), t);
             }
 
-            _genmachine = machinePiece | processPiece;
-            LOGGER.fine("machine : " + Integer.toHexString(_genmachine));
+            final ClassLoader loader = ObjectId.class.getClassLoader();
+            final int loaderId = loader != null ? System.identityHashCode(loader) : 0;
+
+            final StringBuilder sb = new StringBuilder();
+            sb.append(Integer.toHexString(processId));
+            sb.append(Integer.toHexString(loaderId));
+            processPiece = sb.toString().hashCode() & 0xFFFF;
+            LOGGER.fine("process piece: " + Integer.toHexString(processPiece));
+
+            GENMACHINE = machinePiece | processPiece;
+            LOGGER.fine("machine : " + Integer.toHexString(GENMACHINE));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

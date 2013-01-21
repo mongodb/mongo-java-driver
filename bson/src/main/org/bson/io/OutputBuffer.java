@@ -124,7 +124,7 @@ public abstract class OutputBuffer extends OutputStream {
         final int len = str.length();
         int total = 0;
 
-        for (int i = 0; i < len; ) {
+        for (int i = 0; i < len;/*i gets incremented*/) {
             final int c = Character.codePointAt(str, i);
 
             if (c < 0x80) {

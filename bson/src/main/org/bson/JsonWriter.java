@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.bson;
@@ -37,7 +36,7 @@ import java.util.TimeZone;
 public class JsonWriter extends BSONWriter {
     private final Writer writer;
     private Context context;
-    private JsonWriterSettings settings;
+    private final JsonWriterSettings settings;
 
     public JsonWriter(final Writer writer) {
         this(writer, new JsonWriterSettings());
@@ -68,8 +67,9 @@ public class JsonWriter extends BSONWriter {
             }
             writer.write("{");
 
-            ContextType contextType = (getState() == State.SCOPE_DOCUMENT) ? ContextType.SCOPE_DOCUMENT : ContextType.DOCUMENT;
-            context = new Context(context, contextType, settings.indentCharacters);
+            final ContextType contextType = (getState()
+                    == State.SCOPE_DOCUMENT) ? ContextType.SCOPE_DOCUMENT : ContextType.DOCUMENT;
+            context = new Context(context, contextType, settings.getIndentCharacters());
             setState(State.NAME);
         } catch (IOException e) {
             throwBSONException(e);
@@ -80,26 +80,29 @@ public class JsonWriter extends BSONWriter {
     public void writeEndDocument() {
         try {
             super.writeEndDocument();
-            if (settings.indent && context.HasElements) {
-                writer.write(settings.newLineCharacters);
-                if (context.ParentContext != null) {
-                    writer.write(context.ParentContext.Indentation);
+            if (settings.isIndent() && context.hasElements) {
+                writer.write(settings.getNewLineCharacters());
+                if (context.parentContext != null) {
+                    writer.write(context.parentContext.indentation);
                 }
                 writer.write("}");
-            } else {
+            }
+            else {
                 writer.write(" }");
             }
 
-            if (context.ContextType == ContextType.SCOPE_DOCUMENT) {
-                context = context.ParentContext;
+            if (context.contextType == ContextType.SCOPE_DOCUMENT) {
+                context = context.parentContext;
                 writeEndDocument();
-            } else {
-                context = context.ParentContext;
+            }
+            else {
+                context = context.parentContext;
             }
 
             if (context == null) {
                 setState(State.DONE);
-            } else {
+            }
+            else {
                 setState(getNextState());
             }
         } catch (IOException e) {
@@ -115,7 +118,7 @@ public class JsonWriter extends BSONWriter {
             writeNameHelper(getName());
             writer.write("[");
 
-            context = new Context(context, ContextType.ARRAY, settings.indentCharacters);
+            context = new Context(context, ContextType.ARRAY, settings.getIndentCharacters());
             setState(State.VALUE);
         } catch (IOException e) {
             throwBSONException(e);
@@ -128,7 +131,7 @@ public class JsonWriter extends BSONWriter {
             super.writeEndArray();
             writer.write("]");
 
-            context = context.ParentContext;
+            context = context.parentContext;
             setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
@@ -138,11 +141,11 @@ public class JsonWriter extends BSONWriter {
     @Override
     public void writeBinaryData(final Binary binary) {
         try {
-            switch (settings.outputMode) {
+            switch (settings.getOutputMode()) {
                 case Shell:
                     writeNameHelper(getName());
-                    writer.write(String.format("new BinData(%s, \"%s\")",
-                            Integer.toHexString(binary.getType()), new Base64Codec().encode(binary.getData())));
+                    writer.write(String.format("new BinData(%s, \"%s\")", Integer.toHexString(binary.getType()),
+                                               new Base64Codec().encode(binary.getData())));
                     break;
                 default:
                     writeStartDocument();
@@ -170,7 +173,7 @@ public class JsonWriter extends BSONWriter {
     @Override
     public void writeDateTime(final long value) {
         try {
-            switch (settings.outputMode) {
+            switch (settings.getOutputMode()) {
                 case Strict:
                     writeStartDocument();
                     writeInt64("$date", value);
@@ -188,7 +191,8 @@ public class JsonWriter extends BSONWriter {
                     dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
                     if (value >= -59014396800000L && value <= 253399536000000L) {
                         writer.write(String.format("ISODate(\"%s\")", dateFormat.format(new Date(value))));
-                    } else {
+                    }
+                    else {
                         writer.write(String.format("new Date(%d)", value));
                     }
                     break;
@@ -228,7 +232,7 @@ public class JsonWriter extends BSONWriter {
     public void writeInt64(final long value) {
         try {
             writeNameHelper(getName());
-            switch (settings.outputMode) {
+            switch (settings.getOutputMode()) {
                 case Strict:
                 case JavaScript:
                     writer.write(Long.toString(value));
@@ -237,7 +241,8 @@ public class JsonWriter extends BSONWriter {
                 case Shell:
                     if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
                         writer.write(String.format("NumberLong(%d)", value));
-                    } else {
+                    }
+                    else {
                         writer.write(String.format("NumberLong(\"%d\")", value));
                     }
                     break;
@@ -302,7 +307,7 @@ public class JsonWriter extends BSONWriter {
     @Override
     public void writeObjectId(final ObjectId objectId) {
         try {
-            switch (settings.outputMode) {
+            switch (settings.getOutputMode()) {
                 case Strict:
                 case JavaScript:
                     writeStartDocument();
@@ -314,6 +319,8 @@ public class JsonWriter extends BSONWriter {
                     writeNameHelper(getName());
                     writer.write(String.format("ObjectId(\"%s\")", objectId.toString()));
                     break;
+                default:
+                    throw new BSONException("Unknown output mode" + settings.getOutputMode());
             }
 
             setState(getNextState());
@@ -325,7 +332,7 @@ public class JsonWriter extends BSONWriter {
     @Override
     public void writeRegularExpression(final RegularExpression regularExpression) {
         try {
-            switch (settings.outputMode) {
+            switch (settings.getOutputMode()) {
                 case Strict:
                     writeStartDocument();
                     writeString("$regex", regularExpression.getPattern());
@@ -337,11 +344,14 @@ public class JsonWriter extends BSONWriter {
                 case Shell:
                     writeNameHelper(getName());
                     writer.write("/");
-                    String escaped = (regularExpression.getPattern().equals("")) ? "(?:)" : regularExpression.getPattern().replace("/", "\\/");
+                    final String escaped = (regularExpression.getPattern().equals("")) ? "(?:)" : regularExpression
+                            .getPattern().replace("/", "\\/");
                     writer.write(escaped);
                     writer.write("/");
                     writer.write(regularExpression.getOptions());
                     break;
+                default:
+                    throw new BSONException("Unknown output mode" + settings.getOutputMode());
             }
 
             setState(getNextState());
@@ -373,7 +383,7 @@ public class JsonWriter extends BSONWriter {
     @Override
     public void writeTimestamp(final BSONTimestamp value) {
         try {
-            switch (settings.outputMode) {
+            switch (settings.getOutputMode()) {
                 case Strict:
                 case JavaScript:
                     writeStartDocument();
@@ -388,6 +398,8 @@ public class JsonWriter extends BSONWriter {
                     writeNameHelper(getName());
                     writer.write(String.format("Timestamp(%d, %d)", value.getTime(), value.getInc()));
                     break;
+                default:
+                    throw new BSONException("Unknown output mode" + settings.getOutputMode());
             }
 
             setState(getNextState());
@@ -411,30 +423,32 @@ public class JsonWriter extends BSONWriter {
     }
 
     private State getNextState() {
-        if (context.ContextType == ContextType.ARRAY) {
+        if (context.contextType == ContextType.ARRAY) {
             return State.VALUE;
-        } else {
+        }
+        else {
             return State.NAME;
         }
     }
 
-    private void writeNameHelper(String name) throws IOException {
-        switch (context.ContextType) {
+    private void writeNameHelper(final String name) throws IOException {
+        switch (context.contextType) {
             case ARRAY:
                 // don't write Array element names in Json
-                if (context.HasElements) {
+                if (context.hasElements) {
                     writer.write(", ");
                 }
                 break;
             case DOCUMENT:
             case SCOPE_DOCUMENT:
-                if (context.HasElements) {
+                if (context.hasElements) {
                     writer.write(",");
                 }
-                if (settings.indent) {
-                    writer.write(settings.newLineCharacters);
-                    writer.write(context.Indentation);
-                } else {
+                if (settings.isIndent()) {
+                    writer.write(settings.getNewLineCharacters());
+                    writer.write(context.indentation);
+                }
+                else {
                     writer.write(" ");
                 }
                 writeStringHelper(name);
@@ -443,15 +457,15 @@ public class JsonWriter extends BSONWriter {
             case TOP_LEVEL:
                 break;
             default:
-                throw new BSONException("Invalid ContextType.");
+                throw new BSONException("Invalid contextType.");
         }
 
-        context.HasElements = true;
+        context.hasElements = true;
     }
 
     private void writeStringHelper(final String str) throws IOException {
         writer.write('"');
-        for (char c : str.toCharArray()) {
+        for (final char c : str.toCharArray()) {
             switch (c) {
                 case '"':
                     writer.write("\\\"");
@@ -516,15 +530,15 @@ public class JsonWriter extends BSONWriter {
     }
 
     class Context {
-        private Context ParentContext;
-        private ContextType ContextType;
-        private String Indentation;
-        private boolean HasElements;
+        private final Context parentContext;
+        private final ContextType contextType;
+        private final String indentation;
+        private boolean hasElements;
 
         public Context(final Context parentContext, final ContextType contextType, final String indentChars) {
-            this.ParentContext = parentContext;
-            this.ContextType = contextType;
-            this.Indentation = (parentContext == null) ? indentChars : parentContext.Indentation + indentChars;
+            this.parentContext = parentContext;
+            this.contextType = contextType;
+            this.indentation = (parentContext == null) ? indentChars : parentContext.indentation + indentChars;
         }
     }
 }

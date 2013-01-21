@@ -53,9 +53,11 @@
         <!--<module name="JavadocType"/>-->
         <!--<module name="JavadocVariable"/>-->
         <!--<module name="JavadocStyle"/>-->
-        <module name="JavadocType">
-            <property name="scope" value="public"/>
-        </module>
+
+        <!-- TODO: This has to be enabled at some point before we release -->
+        <!--<module name="JavadocType">-->
+            <!--<property name="scope" value="public"/>-->
+        <!--</module>-->
 
 
         <!-- Checks for Naming Conventions.                  -->
@@ -157,6 +159,10 @@
         <!-- Too many failures with this while we work on the new API -->
         <!--<module name="TodoComment"/>-->
         <module name="UpperEll"/>
+
+        <module name="FileContentsHolder"/>
     </module>
+
+    <module name="SuppressionCommentFilter"/>
 
 </module>

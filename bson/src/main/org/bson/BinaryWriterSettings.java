@@ -17,7 +17,7 @@
 package org.bson;
 
 public class BinaryWriterSettings {
-    public final int maxDocumentSize;
+    private final int maxDocumentSize;
 
     public BinaryWriterSettings(final int maxDocumentSize) {
         this.maxDocumentSize = maxDocumentSize;
@@ -25,5 +25,9 @@ public class BinaryWriterSettings {
 
     public BinaryWriterSettings() {
         this(16 * 1024 * 1024);
+    }
+
+    public int getMaxDocumentSize() {
+        return maxDocumentSize;
     }
 }

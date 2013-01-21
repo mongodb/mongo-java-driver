@@ -191,9 +191,9 @@ public class BSONBinaryWriter extends BSONWriter {
         writeCurrentName();
 
         // TODO: Should this be pushed down into the buffer?
-        buffer.writeIntBE(objectId._time());
-        buffer.writeIntBE(objectId._machine());
-        buffer.writeIntBE(objectId._inc());
+        buffer.writeIntBE(objectId.time());
+        buffer.writeIntBE(objectId.machine());
+        buffer.writeIntBE(objectId.inc());
 
         setState(getNextState());
     }
@@ -379,8 +379,9 @@ public class BSONBinaryWriter extends BSONWriter {
 
     private void backpatchSize() {
         final int size = buffer.getPosition() - context.startPosition;
-        if (size > binaryWriterSettings.maxDocumentSize) {
-            final String message = String.format("Size %d is larger than MaxDocumentSize %d.", size, binaryWriterSettings.maxDocumentSize);
+        if (size > binaryWriterSettings.getMaxDocumentSize()) {
+            final String message = String.format("Size %d is larger than MaxDocumentSize %d.", size,
+                                                 binaryWriterSettings.getMaxDocumentSize());
             throw new BsonSerializationException(message);
         }
         buffer.backpatchSize(size);
