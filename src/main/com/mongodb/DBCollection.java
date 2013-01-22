@@ -20,6 +20,8 @@ package com.mongodb;
 
 // Mongo
 
+import org.bson.LazyBSONObject;
+import org.bson.LazyDBList;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -1406,6 +1408,9 @@ public abstract class DBCollection {
      * Checks key strings for invalid characters.
      */
     private void _checkKeys( DBObject o ) {
+        if ( o instanceof LazyDBObject || o instanceof LazyDBList )
+            return;
+
         for ( String s : o.keySet() ){
             validateKey ( s );
             Object inner = o.get( s );

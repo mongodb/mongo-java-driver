@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
+
 import org.bson.types.ObjectId;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -344,6 +345,29 @@ public class DBCollectionTest extends TestCase {
 
         DBObject obj = BasicDBObjectBuilder.start().add("x",1).add("y",2).add("foo.bar","baz").get();
         c.insert(obj);
+    }
+    
+    @Test
+    public void testLazyDocKeysPass() {
+        DBCollection c = _db.getCollection("testLazyDotKeysPass");
+        c.drop();
+        
+        DBObject obj = BasicDBObjectBuilder.start().add("_id", "lazydottest1").add("x",1).add("y",2).add("foo.bar","baz").get();
+        
+        //convert to a lazydbobject
+        DefaultDBEncoder encoder = new DefaultDBEncoder();
+        byte[] encodedBytes = encoder.encode(obj);
+
+        LazyDBDecoder lazyDecoder = new LazyDBDecoder();
+        DBObject lazyObj = lazyDecoder.decode(encodedBytes, c);
+        
+        c.insert(lazyObj);
+        
+        DBObject insertedObj = c.findOne();
+        assertEquals("lazydottest1", insertedObj.get("_id"));
+        assertEquals(1, insertedObj.get("x"));
+        assertEquals(2, insertedObj.get("y"));
+        assertEquals("baz", insertedObj.get("foo.bar"));
     }
 
     final DB _db;
