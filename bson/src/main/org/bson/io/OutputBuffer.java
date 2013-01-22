@@ -92,11 +92,7 @@ public abstract class OutputBuffer extends OutputStream {
      */
     public abstract void backpatchSize(final int size);
 
-    protected void backpatchSize(final int size, final int additionalOffset) {
-        writeInt(getPosition() - size - additionalOffset, size);
-    }
-
-    public abstract void writeInt(final int pos, final int x);
+    protected abstract void backpatchSize(final int size, final int additionalOffset);
 
     public void writeLong(final long x) {
         write((byte) (0xFFL & (x >> 0)));

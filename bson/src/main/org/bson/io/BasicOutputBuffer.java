@@ -51,16 +51,13 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     @Override
-    public void writeInt(final int pos, final int x) {
-        final int save = getPosition();
-        setPosition(pos);
-        writeInt(x);
-        setPosition(save);
+    public void backpatchSize(final int messageSize) {
+        writeInt(getPosition() - messageSize, messageSize);
     }
 
     @Override
-    public void backpatchSize(final int messageSize) {
-        writeInt(getPosition() - messageSize, messageSize);
+    protected void backpatchSize(final int size, final int additionalOffset) {
+        writeInt(getPosition() - size - additionalOffset, size);
     }
 
     @Override
@@ -116,5 +113,12 @@ public class BasicOutputBuffer extends OutputBuffer {
 
     private void setPosition(final int position) {
         cur = position;
+    }
+
+    private void writeInt(final int pos, final int x) {
+        final int save = getPosition();
+        setPosition(pos);
+        writeInt(x);
+        setPosition(save);
     }
 }

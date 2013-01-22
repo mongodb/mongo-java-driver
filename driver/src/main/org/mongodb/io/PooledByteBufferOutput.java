@@ -80,12 +80,6 @@ public class PooledByteBufferOutput extends OutputBuffer {
         return position;
     }
 
-    @Override
-    public void writeInt(final int pos, final int x) {
-        // TODO: ditch this method
-        throw new UnsupportedOperationException();
-    }
-
     /**
      * Backpatches the size of a document or message by writing the size into the four bytes starting at getPosition() -
      * size.
