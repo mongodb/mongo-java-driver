@@ -35,34 +35,13 @@ public class ConcurrentJunitRunner extends BlockJUnit4ClassRunner {
     public ConcurrentJunitRunner(final Class<?> klass) throws InitializationError {
         super(klass);
         setScheduler(new RunnerScheduler() {
-            private final ExecutorService executorService = Executors.newFixedThreadPool(
-                                                                                        klass.isAnnotationPresent(
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                                                                 Concurrent.class)
-                                                                                        ? klass.getAnnotation(
-                                                                                                             Concurrent.class)
-                                                                                               .threads()
-                                                                                        : (int) (Runtime.getRuntime()
-                                                                                                        .availableProcessors()
-                                                                                                 * 1.5),
-                                                                                        new NamedThreadFactory(klass
-                                                                                                               .getSimpleName()));
-            private final CompletionService<Void> completionService = new ExecutorCompletionService<Void>(
-                                                                                                         executorService);
+            private final ExecutorService executorService
+            = Executors.newFixedThreadPool(klass.isAnnotationPresent(Concurrent.class)
+                                           ? klass.getAnnotation(Concurrent.class).threads()
+                                           : (int) (Runtime.getRuntime().availableProcessors() * 1.5),
+                                          new NamedThreadFactory(klass.getSimpleName()));
+            private final CompletionService<Void> completionService
+                = new ExecutorCompletionService<Void>(executorService);
             private final Queue<Future<Void>> tasks = new LinkedList<Future<Void>>();
 
             public void schedule(final Runnable childStatement) {

@@ -93,284 +93,8 @@ public class Mapper {
      * Set of classes that registered by this mapper
      */
     private final Map<String, MappedClass> mappedClasses = new ConcurrentHashMap<String, MappedClass>();
-    private final ConcurrentHashMap<String, Set<MappedClass>> mappedClassesByCollection = new
-                                                                                          ConcurrentHashMap<String,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                                                           Set<MappedClass>>();
+    private final ConcurrentHashMap<String, Set<MappedClass>> mappedClassesByCollection
+        = new ConcurrentHashMap<String, Set<MappedClass>>();
 
     //EntityInterceptors; these are called before EntityListeners and lifecycle methods on an Entity, for all Entities
     private final List<EntityInterceptor> interceptors = new LinkedList<EntityInterceptor>();
@@ -928,8 +652,7 @@ public class Mapper {
         if (ref == null) {
             return null;
         }
-        final Key<T> key = new Key<T>(ref.getRef(), ref.getId());
-        return key;
+        return new Key<T>(ref.getRef(), ref.getId());
     }
 
     public DBRef keyToRef(final Key key) {
@@ -1036,15 +759,10 @@ public class Mapper {
             }
 
             if (validateTypes) {
-                if ((mf.isSingleValue() && !isCompatibleForOperator(mf.getType(), op, val)) ||
-                    ((mf.isMultipleValues() && !(isCompatibleForOperator(mf.getSubClass(), op,
-                                                                        val) || isCompatibleForOperator(mf
-
-
-                                                                                                        .getType(), op,
-                                                                                                       val))))) {
-
-
+                if ((mf.isSingleValue() && !isCompatibleForOperator(mf.getType(), op, val))
+                    || ((mf.isMultipleValues()
+                         && !(isCompatibleForOperator(mf.getSubClass(), op, val)
+                              || isCompatibleForOperator(mf.getType(), op, val))))) {
                     if (log.isWarningEnabled()) {
                         final Throwable t = new Throwable();
                         final StackTraceElement ste = getFirstClientLine(t);
@@ -1098,20 +816,19 @@ public class Mapper {
         else if (op.equals(FilterOperator.EXISTS) && (value instanceof Boolean)) {
             return true;
         }
-        else if (op.equals(FilterOperator.IN) && (value.getClass().isArray() || Iterable.class.isAssignableFrom(value
-
-                                                                                                                .getClass())
-                                                  || Map.class.isAssignableFrom(value.getClass()))) {
+        else if (op.equals(FilterOperator.IN)
+                 && (value.getClass().isArray() || Iterable.class.isAssignableFrom(value.getClass())
+                     || Map.class.isAssignableFrom(value.getClass()))) {
             return true;
         }
-        else if (op.equals(FilterOperator.NOT_IN) && (value.getClass().isArray() || Iterable.class
-                                                                                    .isAssignableFrom(value.getClass())
-                                                      || Map.class.isAssignableFrom(value.getClass()))) {
+        else if (op.equals(FilterOperator.NOT_IN)
+                 && (value.getClass().isArray() || Iterable.class.isAssignableFrom(value.getClass())
+                     || Map.class.isAssignableFrom(value.getClass()))) {
             return true;
         }
-        else if (op.equals(FilterOperator.ALL) && (value.getClass().isArray() || Iterable.class
-                                                                                 .isAssignableFrom(value.getClass())
-                                                   || Map.class.isAssignableFrom(value.getClass()))) {
+        else if (op.equals(FilterOperator.ALL)
+                 && (value.getClass().isArray() || Iterable.class.isAssignableFrom(value.getClass())
+                     || Map.class.isAssignableFrom(value.getClass()))) {
             return true;
         }
         else if (value instanceof Integer
