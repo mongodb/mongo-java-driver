@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import org.bson.io.InputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
@@ -31,6 +32,7 @@ public class BSONBinaryWriter extends BSONWriter {
     public BSONBinaryWriter(final OutputBuffer buffer) {
         this(new BsonWriterSettings(), new BinaryWriterSettings(), buffer);
     }
+
     public BSONBinaryWriter(final BsonWriterSettings settings, final BinaryWriterSettings binaryWriterSettings,
                             final OutputBuffer buffer) {
         super(settings);
@@ -44,7 +46,7 @@ public class BSONBinaryWriter extends BSONWriter {
      * @return the buffer
      */
     public OutputBuffer getBuffer() {
-       return buffer;
+        return buffer;
     }
 
     @Override
@@ -330,8 +332,7 @@ public class BSONBinaryWriter extends BSONWriter {
         context = context.parentContext;
         if (context == null) {
             setState(State.DONE);
-        }
-        else {
+        } else {
             if (context.contextType == ContextType.JAVASCRIPT_WITH_SCOPE) {
                 backpatchSize(); // size of the JavaScript with scope value
                 context = context.parentContext;
@@ -340,11 +341,22 @@ public class BSONBinaryWriter extends BSONWriter {
         }
     }
 
+    @Override
+    public void pipe(final BSONReader reader) {
+        if (reader instanceof BSONBinaryReader) {
+            InputBuffer inputBuffer = ((BSONBinaryReader) reader).getBuffer();
+            int size = inputBuffer.readInt32();
+            buffer.writeInt(size);
+            buffer.write(inputBuffer.readBytes(size - 4));
+        } else {
+            super.pipe(reader);
+        }
+    }
+
     private void writeCurrentName() {
         if (context.contextType == ContextType.ARRAY) {
             buffer.writeCString(Integer.toString(context.index++));
-        }
-        else {
+        } else {
             buffer.writeCString(getName());
         }
     }
@@ -352,8 +364,7 @@ public class BSONBinaryWriter extends BSONWriter {
     private State getNextState() {
         if (context.contextType == ContextType.ARRAY) {
             return State.VALUE;
-        }
-        else {
+        } else {
             return State.NAME;
         }
     }

@@ -524,4 +524,17 @@ public class BSONBinaryWriterTest {
         }
     }
     //CHECKSTYLE:ON
+
+    @Test
+    public void testPipe() {
+        writer.writeStartDocument();
+        writer.writeBoolean("a", true);
+        writer.writeEndDocument();
+
+        byte[] bytes = writer.getBuffer().toByteArray();
+
+        BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer());
+        newWriter.pipe(new BSONBinaryReader(new ByteBufferInput(ByteBuffer.wrap(bytes))));
+        assertArrayEquals(bytes, newWriter.getBuffer().toByteArray());
+    }
 }
