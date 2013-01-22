@@ -578,6 +578,91 @@ public abstract class BSONWriter implements Closeable {
         closed = true;
     }
 
+    public void pipe(BSONReader reader) {
+        pipeDocument(reader);
+    }
+
+    private void pipeDocument(final BSONReader reader) {
+        reader.readStartDocument();
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+            writeName(reader.readName());
+            pipeValue(reader);
+        }
+
+        reader.readEndDocument();
+    }
+
+    private void pipeArray(final BSONReader reader) {
+        writeStartArray();
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+            pipeValue(reader);
+        }
+        writeEndArray();
+    }
+
+    private void pipeValue(final BSONReader reader) {
+        switch (reader.getCurrentBsonType()) {
+            case DOCUMENT:
+                pipe(reader);
+                break;
+            case ARRAY:
+                pipeArray(reader);
+                break;
+            case DOUBLE:
+                writeDouble(reader.readDouble());
+                break;
+            case STRING:
+                writeString(reader.readString());
+                break;
+            case BINARY:
+                writeBinaryData(reader.readBinaryData());
+                break;
+            case UNDEFINED:
+                writeUndefined();
+                break;
+            case OBJECT_ID:
+                writeObjectId(reader.readObjectId());
+                break;
+            case BOOLEAN:
+                writeBoolean(reader.readBoolean());
+                break;
+            case DATE_TIME:
+                writeDateTime(reader.readDateTime());
+                break;
+            case NULL:
+                writeNull();
+                break;
+            case REGULAR_EXPRESSION:
+                writeRegularExpression(reader.readRegularExpression());
+                break;
+            case JAVASCRIPT:
+                writeJavaScript(reader.readJavaScript());
+                break;
+            case SYMBOL:
+                writeSymbol(reader.readSymbol());
+                break;
+            case JAVASCRIPT_WITH_SCOPE:
+                writeJavaScriptWithScope(reader.readJavaScriptWithScope());
+                break;
+            case INT32:
+                writeInt32(reader.readInt32());
+                break;
+            case TIMESTAMP:
+                writeTimestamp(reader.readTimestamp());
+                break;
+            case INT64:
+                writeInt64(reader.readInt64());
+                break;
+            case MIN_KEY:
+                writeMaxKey();
+                break;
+            case MAX_KEY:
+                writeMinKey();
+            default:
+                throw new IllegalArgumentException("unhandled BSON type: " + reader.getCurrentBsonType());
+        }
+    }
+
     protected enum State {
         // The initial state.
         INITIAL,
