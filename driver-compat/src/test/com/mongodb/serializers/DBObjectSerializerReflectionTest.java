@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.mongodb.serializers;
 
 import com.mongodb.DBObject;
 import com.mongodb.MongoClientTestBase;
-import com.mongodb.MongoException;
 import com.mongodb.ReflectionDBObject;
 import org.junit.Test;
 
@@ -27,19 +26,19 @@ import static org.junit.Assert.assertEquals;
 public class DBObjectSerializerReflectionTest extends MongoClientTestBase {
 
     @Test
-    public void test2() throws MongoException {
+    public void test2() {
         collection.setObjectClass(Outer.class);
 
         Outer outer = new Outer();
         outer.setName("eliot");
 
-        Inner inner = new Inner();
+        final Inner inner = new Inner();
         inner.setNumber(17);
         outer.setInner(inner);
 
         collection.insert(outer);
 
-        DBObject obj = collection.findOne();
+        final DBObject obj = collection.findOne();
         assertEquals("eliot", obj.get("Name"));
         assertEquals(Outer.class, obj.getClass());
         outer = (Outer) obj;

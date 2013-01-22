@@ -1,20 +1,20 @@
-// WriteConcern.java
-
-/**
- *      Copyright (C) 2008-2011 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// WriteConcern.java
 
 package com.mongodb;
 
@@ -51,7 +51,7 @@ public class WriteConcern implements Serializable {
     /**
      * No exceptions are raised, even for network issues.
      */
-    public final static WriteConcern ERRORS_IGNORED = new WriteConcern(org.mongodb.WriteConcern.ERRORS_IGNORED);
+    public static final WriteConcern ERRORS_IGNORED = new WriteConcern(org.mongodb.WriteConcern.ERRORS_IGNORED);
 
     /**
      * Write operations that use this write concern will wait for acknowledgement from the primary server before
@@ -59,33 +59,34 @@ public class WriteConcern implements Serializable {
      *
      * @since 2.10.0
      */
-    public final static WriteConcern ACKNOWLEDGED = new WriteConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
+    public static final WriteConcern ACKNOWLEDGED = new WriteConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
     /**
      * Write operations that use this write concern will return as soon as the message is written to the socket.
      * Exceptions are raised for network issues, but not server errors.
      *
      * @since 2.10.0
      */
-    public final static WriteConcern UNACKNOWLEDGED = new WriteConcern(org.mongodb.WriteConcern.UNACKNOWLEDGED);
+    public static final WriteConcern UNACKNOWLEDGED = new WriteConcern(org.mongodb.WriteConcern.UNACKNOWLEDGED);
 
     /**
      * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush
      * the data to disk.
      */
-    public final static WriteConcern FSYNCED = new WriteConcern(org.mongodb.WriteConcern.FSYNCED);
+    public static final WriteConcern FSYNCED = new WriteConcern(org.mongodb.WriteConcern.FSYNCED);
 
     /**
      * Exceptions are raised for network issues, and server errors; the write operation waits for the server to group
      * commit to the journal file on disk.
      */
-    public final static WriteConcern JOURNALED = new WriteConcern(org.mongodb.WriteConcern.JOURNALED);
+    public static final WriteConcern JOURNALED = new WriteConcern(org.mongodb.WriteConcern.JOURNALED);
 
     /**
      * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write
      * operation.
      */
-    public final static WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(
-            org.mongodb.WriteConcern.REPLICA_ACKNOWLEDGED);
+    public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(
+                                                                            org.mongodb.WriteConcern
+                                                                            .REPLICA_ACKNOWLEDGED);
 
     /**
      * No exceptions are raised, even for network issues.
@@ -95,7 +96,7 @@ public class WriteConcern implements Serializable {
      *
      * @see WriteConcern#ERRORS_IGNORED
      */
-    public final static WriteConcern NONE = ERRORS_IGNORED;
+    public static final WriteConcern NONE = ERRORS_IGNORED;
 
     /**
      * Write operations that use this write concern will return as soon as the message is written to the socket.
@@ -106,7 +107,7 @@ public class WriteConcern implements Serializable {
      *
      * @see WriteConcern#UNACKNOWLEDGED
      */
-    public final static WriteConcern NORMAL = UNACKNOWLEDGED;
+    public static final WriteConcern NORMAL = UNACKNOWLEDGED;
 
     /**
      * Write operations that use this write concern will wait for acknowledgement from the primary server before
@@ -116,13 +117,13 @@ public class WriteConcern implements Serializable {
      *
      * @see WriteConcern#ACKNOWLEDGED
      */
-    public final static WriteConcern SAFE = ACKNOWLEDGED;
+    public static final WriteConcern SAFE = ACKNOWLEDGED;
 
     /**
      * Exceptions are raised for network issues, and server errors; waits on a majority of servers for the write
      * operation.
      */
-    public final static WriteConcern MAJORITY = new WriteConcern("majority");
+    public static final WriteConcern MAJORITY = new WriteConcern("majority");
 
     /**
      * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush
@@ -132,7 +133,7 @@ public class WriteConcern implements Serializable {
      *
      * @see WriteConcern#FSYNCED
      */
-    public final static WriteConcern FSYNC_SAFE = FSYNCED;
+    public static final WriteConcern FSYNC_SAFE = FSYNCED;
 
     /**
      * Exceptions are raised for network issues, and server errors; the write operation waits for the server to group
@@ -142,7 +143,7 @@ public class WriteConcern implements Serializable {
      *
      * @see WriteConcern#JOURNALED
      */
-    public final static WriteConcern JOURNAL_SAFE = JOURNALED;
+    public static final WriteConcern JOURNAL_SAFE = JOURNALED;
 
     /**
      * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write
@@ -153,7 +154,7 @@ public class WriteConcern implements Serializable {
      *
      * @see WriteConcern#REPLICA_ACKNOWLEDGED
      */
-    public final static WriteConcern REPLICAS_SAFE = REPLICA_ACKNOWLEDGED;
+    public static final WriteConcern REPLICAS_SAFE = REPLICA_ACKNOWLEDGED;
 
     /**
      * Default constructor keeping all options as default.  Be careful using this constructor, as it's equivalent to
@@ -170,7 +171,7 @@ public class WriteConcern implements Serializable {
      *
      * @param w number of writes
      */
-    public WriteConcern(int w) {
+    public WriteConcern(final int w) {
         this(w, 0, false);
     }
 
@@ -179,7 +180,7 @@ public class WriteConcern implements Serializable {
      *
      * @param w Write Concern tag
      */
-    public WriteConcern(String w) {
+    public WriteConcern(final String w) {
         this(w, 0, false, false);
     }
 
@@ -189,7 +190,7 @@ public class WriteConcern implements Serializable {
      * @param w        number of writes
      * @param wtimeout timeout for write operation
      */
-    public WriteConcern(int w, int wtimeout) {
+    public WriteConcern(final int w, final int wtimeout) {
         this(w, wtimeout, false);
     }
 
@@ -198,7 +199,7 @@ public class WriteConcern implements Serializable {
      *
      * @param fsync whether or not to fsync
      */
-    public WriteConcern(boolean fsync) {
+    public WriteConcern(final boolean fsync) {
         this(1, 0, fsync);
     }
 
@@ -213,7 +214,7 @@ public class WriteConcern implements Serializable {
      * @param wtimeout timeout for write operation
      * @param fsync    whether or not to fsync
      */
-    public WriteConcern(int w, int wtimeout, boolean fsync) {
+    public WriteConcern(final int w, final int wtimeout, final boolean fsync) {
         this(w, wtimeout, fsync, false);
     }
 
@@ -229,7 +230,7 @@ public class WriteConcern implements Serializable {
      * @param fsync    whether or not to fsync
      * @param j        whether writes should wait for a journaling group commit
      */
-    public WriteConcern(int w, int wtimeout, boolean fsync, boolean j) {
+    public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j) {
         this(w, wtimeout, fsync, j, false);
     }
 
@@ -246,7 +247,7 @@ public class WriteConcern implements Serializable {
      * @param j                     whether writes should wait for a journaling group commit
      * @param continueOnInsertError if batch inserts should continue after the first error
      */
-    public WriteConcern(int w, int wtimeout, boolean fsync, boolean j, boolean continueOnInsertError) {
+    public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnInsertError) {
         proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j, continueOnInsertError);
     }
 
@@ -262,7 +263,7 @@ public class WriteConcern implements Serializable {
      * @param fsync    whether or not to fsync
      * @param j        whether writes should wait for a journaling group commit
      */
-    public WriteConcern(String w, int wtimeout, boolean fsync, boolean j) {
+    public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j) {
         this(w, wtimeout, fsync, j, false);
     }
 
@@ -279,7 +280,7 @@ public class WriteConcern implements Serializable {
      * @param j                     whether writes should wait for a journaling group commit
      * @param continueOnInsertError if batch inserts should continue after the first error
      */
-    public WriteConcern(String w, int wtimeout, boolean fsync, boolean j, boolean continueOnInsertError) {
+    public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnInsertError) {
         proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j, continueOnInsertError);
     }
 
@@ -381,7 +382,7 @@ public class WriteConcern implements Serializable {
      * @param name
      * @return
      */
-    public static WriteConcern valueOf(String name) {
+    public static WriteConcern valueOf(final String name) {
         return _namedConcerns.get(name.toLowerCase());
     }
 
@@ -442,7 +443,7 @@ public class WriteConcern implements Serializable {
      *
      * @param continueOnErrorForInsert
      */
-    public WriteConcern continueOnErrorForInsert(boolean continueOnErrorForInsert) {
+    public WriteConcern continueOnErrorForInsert(final boolean continueOnErrorForInsert) {
         return new WriteConcern(proxied.withContinueOnErrorForInsert(continueOnErrorForInsert));
     }
 
@@ -453,7 +454,7 @@ public class WriteConcern implements Serializable {
      * @param fsync    whether or not to fsync
      * @param j        whether writes should wait for a journal group commit
      */
-    public static Majority majorityWriteConcern(int wtimeout, boolean fsync, boolean j) {
+    public static Majority majorityWriteConcern(final int wtimeout, final boolean fsync, final boolean j) {
         return new Majority(wtimeout, fsync, j);
     }
 
@@ -465,16 +466,16 @@ public class WriteConcern implements Serializable {
             this(0, false, false);
         }
 
-        public Majority(int wtimeout, boolean fsync, boolean j) {
+        public Majority(final int wtimeout, final boolean fsync, final boolean j) {
             super("majority", wtimeout, fsync, j);
         }
     }
 
     static {
         _namedConcerns = new HashMap<String, WriteConcern>();
-        for (Field f : WriteConcern.class.getFields()) {
+        for (final Field f : WriteConcern.class.getFields()) {
             if (Modifier.isStatic(f.getModifiers()) && f.getType().equals(WriteConcern.class)) {
-                String key = f.getName().toLowerCase();
+                final String key = f.getName().toLowerCase();
                 try {
                     _namedConcerns.put(key, (WriteConcern) f.get(null));
                 } catch (IllegalAccessException e) {

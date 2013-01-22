@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,59 +29,59 @@ public class MongoTest {
 
     @Test
     public void shouldDefaultToLocalhost() throws UnknownHostException {
-        Mongo mongo = new Mongo();
+        final Mongo mongo = new Mongo();
         assertEquals(Arrays.asList(new ServerAddress()), mongo.getServerAddressList());
     }
 
     @Test
     public void shouldUseGivenHost() throws UnknownHostException {
-        Mongo mongo = new Mongo("www.google.com");
+        final Mongo mongo = new Mongo("www.google.com");
         assertEquals(Arrays.asList(new ServerAddress("www.google.com")), mongo.getServerAddressList());
     }
 
     @Test
     public void shouldUseGivenServerAddress() throws UnknownHostException {
-        Mongo mongo = new Mongo(new ServerAddress("www.google.com"));
+        final Mongo mongo = new Mongo(new ServerAddress("www.google.com"));
         assertEquals(Arrays.asList(new ServerAddress("www.google.com")), mongo.getServerAddressList());
     }
 
     @Test
     public void shouldDefaultToPrimaryReadPreference() throws UnknownHostException {
-        Mongo mongo = new Mongo();
+        final Mongo mongo = new Mongo();
         assertEquals(ReadPreference.primary(), mongo.getReadPreference());
     }
 
     @Test
     public void shouldDefaultToUnacknowledgedWriteConcern() throws UnknownHostException {
-        Mongo mongo = new Mongo();
+        final Mongo mongo = new Mongo();
         assertEquals(WriteConcern.UNACKNOWLEDGED, mongo.getWriteConcern());
     }
 
     @Test
     public void shouldSaveDefaultReadPreference() throws UnknownHostException {
-        Mongo mongo = new Mongo();
+        final Mongo mongo = new Mongo();
         mongo.setReadPreference(ReadPreference.nearest());
         assertEquals(ReadPreference.nearest(), mongo.getReadPreference());
     }
 
     @Test
     public void shouldSaveDefaultWriteConcern() throws UnknownHostException {
-        Mongo mongo = new Mongo();
+        final Mongo mongo = new Mongo();
         mongo.setWriteConcern(WriteConcern.ACKNOWLEDGED);
         assertEquals(WriteConcern.ACKNOWLEDGED, mongo.getWriteConcern());
     }
 
     @Test
     public void shouldGetDB() throws UnknownHostException {
-        Mongo mongo = new Mongo();
-        DB db = mongo.getDB("test");
+        final Mongo mongo = new Mongo();
+        final DB db = mongo.getDB("test");
         assertNotNull(db);
         assertEquals("test", db.getName());
     }
 
     @Test
     public void shouldGetSameDB() throws UnknownHostException {
-        Mongo mongo = new Mongo();
+        final Mongo mongo = new Mongo();
         assertSame(mongo.getDB("test"), mongo.getDB("test"));
     }
 }

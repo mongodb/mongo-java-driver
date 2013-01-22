@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class Util {
-    public static String toHex( byte bytes[] ){
-        StringBuilder sb = new StringBuilder();
+    public static String toHex(final byte[] bytes) {
+        final StringBuilder sb = new StringBuilder();
 
         for (final byte b : bytes) {
-            String s = Integer.toHexString(0xff & b);
+            final String s = Integer.toHexString(0xff & b);
 
             if (s.length() < 2) {
                 sb.append("0");
@@ -38,31 +38,32 @@ public class Util {
     }
 
     /**
-     *  Produce hex representation of the MD5 digest of a byte array
+     * Produce hex representation of the MD5 digest of a byte array
      *
      * @param data bytes to digest
      * @return hex string of the MD5 digest
      */
-    public static String hexMD5(byte[] data) {
+    public static String hexMD5(final byte[] data) {
 
         try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            final MessageDigest md5 = MessageDigest.getInstance("MD5");
 
             md5.reset();
             md5.update(data);
-            byte digest[] = md5.digest();
+            final byte[] digest = md5.digest();
 
-            return toHex( digest );
+            return toHex(digest);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Error - this implementation of Java doesn't support MD5.");
         }
     }
 
-    public static String hexMD5( ByteBuffer buf , int offset , int len ){
-        byte b[] = new byte[len];
-        for ( int i=0; i<len; i++ )
-            b[i] = buf.get( offset + i );
+    public static String hexMD5(final ByteBuffer buf, final int offset, final int len) {
+        final byte[] b = new byte[len];
+        for (int i = 0; i < len; i++) {
+            b[i] = buf.get(offset + i);
+        }
 
-        return hexMD5( b );
+        return hexMD5(b);
     }
 }

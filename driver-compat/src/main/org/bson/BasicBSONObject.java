@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bson;
 
 import org.bson.types.ObjectId;
@@ -31,6 +32,7 @@ import java.util.regex.Pattern;
  * obj.put( "foo", "bar" );
  * </pre></blockquote>
  */
+@SuppressWarnings({ "rawtypes" })
 public class BasicBSONObject extends LinkedHashMap<String, Object> implements BSONObject {
 
     private static final long serialVersionUID = -4415279469780082174L;
@@ -41,7 +43,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     public BasicBSONObject() {
     }
 
-    public BasicBSONObject(int size) {
+    public BasicBSONObject(final int size) {
         super(size);
     }
 
@@ -51,7 +53,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param key   key under which to store
      * @param value value to stor
      */
-    public BasicBSONObject(String key, Object value) {
+    public BasicBSONObject(final String key, final Object value) {
         put(key, value);
     }
 
@@ -61,7 +63,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param m map to convert
      */
     @SuppressWarnings("unchecked")
-    public BasicBSONObject(Map m) {
+    public BasicBSONObject(final Map m) {
         super(m);
     }
 
@@ -80,7 +82,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param key the field name to remove
      * @return the object removed
      */
-    public Object removeField(String key) {
+    public Object removeField(final String key) {
         return remove(key);
     }
 
@@ -90,7 +92,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param field field name
      * @return if the field exists
      */
-    public boolean containsField(String field) {
+    public boolean containsField(final String field) {
         return super.containsKey(field);
     }
 
@@ -98,7 +100,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @deprecated
      */
     @Deprecated
-    public boolean containsKey(String key) {
+    public boolean containsKey(final String key) {
         return containsField(key);
     }
 
@@ -108,7 +110,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param key field name
      * @return the value
      */
-    public Object get(String key) {
+    public Object get(final String key) {
         return super.get(key);
     }
 
@@ -118,8 +120,8 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param key the field to look for
      * @return the field value (or default)
      */
-    public int getInt(String key) {
-        Object o = get(key);
+    public int getInt(final String key) {
+        final Object o = get(key);
         if (o == null) {
             throw new NullPointerException("no value for: " + key);
         }
@@ -134,8 +136,8 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param def the default to return
      * @return the field value (or default)
      */
-    public int getInt(String key, int def) {
-        Object foo = get(key);
+    public int getInt(final String key, final int def) {
+        final Object foo = get(key);
         if (foo == null) {
             return def;
         }
@@ -149,8 +151,8 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param key the field to return
      * @return the field value
      */
-    public long getLong(String key) {
-        Object foo = get(key);
+    public long getLong(final String key) {
+        final Object foo = get(key);
         return ((Number) foo).longValue();
     }
 
@@ -161,8 +163,8 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param def the default to return
      * @return the field value (or default)
      */
-    public long getLong(String key, long def) {
-        Object foo = get(key);
+    public long getLong(final String key, final long def) {
+        final Object foo = get(key);
         if (foo == null) {
             return def;
         }
@@ -176,8 +178,8 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param key the field to return
      * @return the field value
      */
-    public double getDouble(String key) {
-        Object foo = get(key);
+    public double getDouble(final String key) {
+        final Object foo = get(key);
         return ((Number) foo).doubleValue();
     }
 
@@ -188,8 +190,8 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param def the default to return
      * @return the field value (or default)
      */
-    public double getDouble(String key, double def) {
-        Object foo = get(key);
+    public double getDouble(final String key, final double def) {
+        final Object foo = get(key);
         if (foo == null) {
             return def;
         }
@@ -203,8 +205,8 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param key the field to look up
      * @return the value of the field, converted to a string
      */
-    public String getString(String key) {
-        Object foo = get(key);
+    public String getString(final String key) {
+        final Object foo = get(key);
         if (foo == null) {
             return null;
         }
@@ -218,8 +220,8 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param def the default to return
      * @return the value of the field, converted to a string
      */
-    public String getString(String key, final String def) {
-        Object foo = get(key);
+    public String getString(final String key, final String def) {
+        final Object foo = get(key);
         if (foo == null) {
             return def;
         }
@@ -233,7 +235,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param key the field to look up
      * @return the value of the field, or false if field does not exist
      */
-    public boolean getBoolean(String key) {
+    public boolean getBoolean(final String key) {
         return getBoolean(key, false);
     }
 
@@ -244,8 +246,8 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param def the default value in case the field is not found
      * @return the value of the field, converted to a string
      */
-    public boolean getBoolean(String key, boolean def) {
-        Object foo = get(key);
+    public boolean getBoolean(final String key, final boolean def) {
+        final Object foo = get(key);
         if (foo == null) {
             return def;
         }
@@ -309,19 +311,19 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param val the field value
      * @return the <code>val</code> parameter
      */
-    public Object put(String key, Object val) {
+    public Object put(final String key, final Object val) {
         return super.put(key, val);
     }
 
     @SuppressWarnings("unchecked")
-    public void putAll(Map m) {
-        for (Map.Entry entry : (Set<Map.Entry>) m.entrySet()) {
+    public void putAll(final Map m) {
+        for (final Map.Entry entry : (Set<Map.Entry>) m.entrySet()) {
             put(entry.getKey().toString(), entry.getValue());
         }
     }
 
-    public void putAll(BSONObject o) {
-        for (String k : o.keySet()) {
+    public void putAll(final BSONObject o) {
+        for (final String k : o.keySet()) {
             put(k, o.get(k));
         }
     }
@@ -333,25 +335,26 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @param val the field value
      * @return <code>this</code>
      */
-    public BasicBSONObject append(String key, Object val) {
+    public BasicBSONObject append(final String key, final Object val) {
         put(key, val);
 
         return this;
     }
 
-    public boolean equals(Object o) {
+    //CHECKSTYLE:OFF
+    public boolean equals(final Object o) {
         if (!(o instanceof BSONObject)) {
             return false;
         }
 
-        BSONObject other = (BSONObject) o;
+        final BSONObject other = (BSONObject) o;
         if (!keySet().equals(other.keySet())) {
             return false;
         }
 
-        for (String key : keySet()) {
-            Object a = get(key);
-            Object b = other.get(key);
+        for (final String key : keySet()) {
+            final Object a = get(key);
+            final Object b = other.get(key);
 
             if (a == null) {
                 if (b != null) {
@@ -369,8 +372,8 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
                 }
             }
             else if (a instanceof Pattern && b instanceof Pattern) {
-                Pattern p1 = (Pattern) a;
-                Pattern p2 = (Pattern) b;
+                final Pattern p1 = (Pattern) a;
+                final Pattern p2 = (Pattern) b;
                 if (!p1.pattern().equals(p2.pattern()) || p1.flags() != p2.flags()) {
                     return false;
                 }
@@ -383,8 +386,9 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
         }
         return true;
     }
+    //CHECKSTYLE:ON
 
-    private int toInt(Object o) {
+    private int toInt(final Object o) {
         if (o instanceof Number) {
             return ((Number) o).intValue();
         }

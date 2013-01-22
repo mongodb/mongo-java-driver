@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 @ThreadSafe
+@SuppressWarnings({ "rawtypes", "deprecation" })
 public class DBCollection implements IDBCollection {
     private volatile MongoCollection<DBObject> collection;
     private final DB database;
@@ -47,7 +48,7 @@ public class DBCollection implements IDBCollection {
     private volatile WriteConcern writeConcern;
     private Class<? extends DBObject> objectClass = BasicDBObject.class;
     private final Map<String, Class<? extends DBObject>> pathToClassMap = new HashMap<String,
-            Class<? extends DBObject>>();
+                                                                                     Class<? extends DBObject>>();
     //    private ReflectionDBObject.JavaWrapper _wrapper = null;
 
     DBCollection(final String name, final DB database) {
@@ -101,7 +102,7 @@ public class DBCollection implements IDBCollection {
 
     public WriteResult save(final DBObject obj, final WriteConcern wc) {
         try {
-            UpdateResult result = collection.writeConcern(wc.toNew()).save(obj);
+            final UpdateResult result = collection.writeConcern(wc.toNew()).save(obj);
             return new WriteResult(result, wc);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
@@ -149,17 +150,18 @@ public class DBCollection implements IDBCollection {
         if (multi) {
             stream = stream.noLimit();
         }
-        MongoWritableStream<DBObject> writableStream = stream.writeConcern(concern.toNew());
+        final MongoWritableStream<DBObject> writableStream = stream.writeConcern(concern.toNew());
         try {
             final UpdateResult result;
             if (!o.keySet().isEmpty() && o.keySet().iterator().next().startsWith("$")) {
                 result = upsert ?
-                        writableStream.modifyOrInsert(DBObjects.toUpdateOperationsDocument(o)) :
-                        writableStream.modify(DBObjects.toUpdateOperationsDocument(o));
-            } else {
+                         writableStream.modifyOrInsert(DBObjects.toUpdateOperationsDocument(o)) :
+                         writableStream.modify(DBObjects.toUpdateOperationsDocument(o));
+            }
+            else {
                 result = upsert ?
-                        writableStream.replaceOrInsert(o) :
-                        writableStream.replace(o);
+                         writableStream.replaceOrInsert(o) :
+                         writableStream.replace(o);
             }
             return new WriteResult(result, concern);
         } catch (org.mongodb.MongoException e) {
@@ -168,7 +170,8 @@ public class DBCollection implements IDBCollection {
     }
 
     @Override
-    public WriteResult update(final DBObject q, final DBObject o, final boolean upsert, final boolean multi, final WriteConcern concern, final DBEncoder encoder) {
+    public WriteResult update(final DBObject q, final DBObject o, final boolean upsert, final boolean multi,
+                              final WriteConcern concern, final DBEncoder encoder) {
         throw new UnsupportedOperationException();
     }
 
@@ -222,7 +225,8 @@ public class DBCollection implements IDBCollection {
     }
 
     @Override
-    public DBCursor find(final DBObject query, final DBObject fields, final int numToSkip, final int batchSize, final int options) {
+    public DBCursor find(final DBObject query, final DBObject fields, final int numToSkip, final int batchSize,
+                         final int options) {
         throw new UnsupportedOperationException();
     }
 
@@ -233,8 +237,8 @@ public class DBCollection implements IDBCollection {
 
 
     public WriteResult remove(final DBObject filter, final WriteConcern writeConcernToUse) {
-        final RemoveResult result = collection.filter(DBObjects.toQueryFilterDocument(filter)).writeConcern(
-                writeConcernToUse.toNew()).remove();
+        final RemoveResult result = collection.filter(DBObjects.toQueryFilterDocument(filter))
+                                              .writeConcern(writeConcernToUse.toNew()).remove();
         return new WriteResult(result, writeConcernToUse);
     }
 
@@ -337,8 +341,10 @@ public class DBCollection implements IDBCollection {
     public DBObject findOne(final DBObject o, final DBObject fields, final DBObject orderBy,
                             final ReadPreference readPref) {
 
-        DBObject obj = collection.filter(DBObjects.toQueryFilterDocument(o)).select(
-                DBObjects.toFieldSelectorDocument(fields)).readPreference(readPref.toNew()).one();
+        final DBObject obj = collection.filter(DBObjects.toQueryFilterDocument(o)).select(
+                                                                                   DBObjects
+                                                                                   .toFieldSelectorDocument(fields))
+                                 .readPreference(readPref.toNew()).one();
 
         if (obj != null && (fields != null && fields.keySet().size() > 0)) {
             obj.markAsPartialObject();
@@ -538,12 +544,14 @@ public class DBCollection implements IDBCollection {
     }
 
     @Override
-    public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce, final String finalize) {
+    public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
+                          final String finalize) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce, final String finalize, final ReadPreference readPrefs) {
+    public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
+                          final String finalize, final ReadPreference readPrefs) {
         throw new UnsupportedOperationException();
     }
 
@@ -583,17 +591,21 @@ public class DBCollection implements IDBCollection {
     }
 
     @Override
-    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget, final DBObject query) {
+    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
+                                     final DBObject query) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget, final MapReduceCommand.OutputType outputType, final DBObject query) {
+    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
+                                     final MapReduceCommand.OutputType outputType, final DBObject query) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget, final MapReduceCommand.OutputType outputType, final DBObject query, final ReadPreference readPrefs) {
+    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
+                                     final MapReduceCommand.OutputType outputType, final DBObject query,
+                                     final ReadPreference readPrefs) {
         throw new UnsupportedOperationException();
     }
 
@@ -664,9 +676,11 @@ public class DBCollection implements IDBCollection {
             final Object keyType = fields.get(key);
             if (keyType instanceof Integer) {
                 keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
-            } else if (keyType.equals("2d")) {
+            }
+            else if (keyType.equals("2d")) {
                 keys.add(new Index.GeoKey(key));
-            } else {
+            }
+            else {
                 throw new UnsupportedOperationException("Unsupported index type: " + keyType);
             }
 
@@ -759,32 +773,34 @@ public class DBCollection implements IDBCollection {
      * @return the document
      * @throws MongoException
      */
-    public DBObject findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update,
-                                  boolean returnNew, boolean upsert) {
-        MongoWritableStream<DBObject> stream = collection.filter(DBObjects.toQueryFilterDocument(query))
-                .select(DBObjects.toFieldSelectorDocument(fields))
-                .sort(DBObjects.toSortCriteriaDocument(sort))
-                .writeConcern(getWriteConcern().toNew());
+    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort, final boolean remove, final DBObject update,
+                                  final boolean returnNew, final boolean upsert) {
+        final MongoWritableStream<DBObject> stream = collection.filter(DBObjects.toQueryFilterDocument(query))
+                                                         .select(DBObjects.toFieldSelectorDocument(fields))
+                                                         .sort(DBObjects.toSortCriteriaDocument(sort))
+                                                         .writeConcern(getWriteConcern().toNew());
         if (remove) {
             return stream.removeAndGet();
-        } else {
+        }
+        else {
             if (update == null) {
                 throw new IllegalArgumentException("update document can not be null");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
                 final UpdateOperationsDocument updateOperations = DBObjects.toUpdateOperationsDocument(update);
                 return upsert ?
-                        stream.modifyOrInsertAndGet(updateOperations, asGetOrder(returnNew)) :
-                        stream.modifyAndGet(updateOperations, asGetOrder(returnNew));
-            } else {
+                       stream.modifyOrInsertAndGet(updateOperations, asGetOrder(returnNew)) :
+                       stream.modifyAndGet(updateOperations, asGetOrder(returnNew));
+            }
+            else {
                 return upsert ?
-                        stream.replaceOrInsertAndGet(update, asGetOrder(returnNew)) :
-                        stream.replaceAndGet(update, asGetOrder(returnNew));
+                       stream.replaceOrInsertAndGet(update, asGetOrder(returnNew)) :
+                       stream.replaceAndGet(update, asGetOrder(returnNew));
             }
         }
     }
 
-    private Get asGetOrder(boolean returnNew) {
+    private Get asGetOrder(final boolean returnNew) {
         return returnNew ? Get.BeforeChangeApplied : Get.AfterChangeApplied;
     }
 
@@ -890,8 +906,10 @@ public class DBCollection implements IDBCollection {
         CommandResult res = null;
         if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
             res = database.command(cmd, getOptions(),
-                    command.getReadPreference() != null ? command.getReadPreference() : getReadPreference());
-        } else {
+                                  command.getReadPreference() != null ? command.getReadPreference()
+                                                                      : getReadPreference());
+        }
+        else {
             res = database.command(cmd);
         }
         res.throwOnError();
@@ -999,9 +1017,14 @@ public class DBCollection implements IDBCollection {
 
     private void setCollection(final String name) {
         this.collection = database.toNew().
-                getTypedCollection(name, new CollectibleDBObjectSerializer(database,
-                        database.getMongo().getNew().getOptions().getPrimitiveSerializers(),
-                        new ObjectIdGenerator(), objectClass,
-                        new HashMap<String, Class<? extends DBObject>>(pathToClassMap)));
+                                          getTypedCollection(name, new CollectibleDBObjectSerializer(database,
+                                                                                                    database.getMongo()
+                                                                                                            .getNew()
+                                                                                                            .getOptions()
+                                                                                                            .getPrimitiveSerializers(),
+                                                                                                    new ObjectIdGenerator(),
+                                                                                                    objectClass,
+                                                                                                    new HashMap<String, Class<? extends DBObject>>(
+                                                                                                                                                  pathToClassMap)));
     }
 }

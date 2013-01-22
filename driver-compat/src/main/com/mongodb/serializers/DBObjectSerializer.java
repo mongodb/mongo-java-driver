@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("rawtypes")
 public class DBObjectSerializer implements Serializer<DBObject> {
     private static final List<String> EMPTY_PATH = Collections.emptyList();
 
@@ -75,7 +76,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
 
         beforeFields(bsonWriter, document);
 
-        for (String key : document.keySet()) {
+        for (final String key : document.keySet()) {
             validateField(key);
             if (skipField(key)) {
                 continue;
@@ -89,7 +90,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     public void serializeEmbeddedDBObject(final BSONWriter bsonWriter, final DBObject document) {
         bsonWriter.writeStartDocument();
 
-        for (String key : document.keySet()) {
+        for (final String key : document.keySet()) {
             validateField(key);
             bsonWriter.writeName(key);
             writeValue(bsonWriter, document.get(key));
@@ -100,7 +101,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     public void serializeEmbeddedMap(final BSONWriter bsonWriter, final Map<String, Object> document) {
         bsonWriter.writeStartDocument();
 
-        for (String key : document.keySet()) {
+        for (final String key : document.keySet()) {
             validateField(key);
             bsonWriter.writeName(key);
             writeValue(bsonWriter, document.get(key));
@@ -111,16 +112,16 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     protected void beforeFields(final BSONWriter bsonWriter, final DBObject document) {
     }
 
-    protected boolean skipField(String key) {
+    protected boolean skipField(final String key) {
         return false;
     }
 
-    protected void validateField(String key) {
+    protected void validateField(final String key) {
     }
 
     @SuppressWarnings("unchecked")
     protected void writeValue(final BSONWriter bsonWriter, final Object initialValue) {
-        Object value = BSON.applyEncodingHooks(initialValue);
+        final Object value = BSON.applyEncodingHooks(initialValue);
         if (value instanceof DBRefBase) {
             serializeDBRef(bsonWriter, (DBRefBase) value);
         }
@@ -147,7 +148,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     private void serializeArray(final BSONWriter bsonWriter, final Object value) {
         bsonWriter.writeStartArray();
 
-        int size = Array.getLength(value);
+        final int size = Array.getLength(value);
         for (int i = 0; i < size; i++) {
             writeValue(bsonWriter, Array.get(value, i));
         }
@@ -175,7 +176,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
 
     @Override
     public DBObject deserialize(final BSONReader reader) {
-        List<String> path = new ArrayList<String>(10);
+        final List<String> path = new ArrayList<String>(10);
         final DBObject document = getNewInstance(path);
 
         reader.readStartDocument();
@@ -252,7 +253,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     private Object readValue(final BSONReader reader, final String fieldName,
                              final List<String> path) {
         final BsonType bsonType = reader.getCurrentBsonType();
-        Object initialRetVal;
+        final Object initialRetVal;
         if (bsonType.equals(BsonType.DOCUMENT)) {
             path.add(fieldName);
             initialRetVal = deserializeDocument(reader, path);
@@ -281,18 +282,21 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     }
 
     private Map<List<String>, Class<? extends DBObject>> createPathToClassMap(
-            final Class<? extends DBObject> topLevelClass,
-            final HashMap<String, Class<? extends DBObject>> stringPathToClassMap) {
-        Map<List<String>, Class<? extends DBObject>> pathToClassMap = new HashMap<List<String>, Class<? extends DBObject>>();
+                                                                             final Class<? extends DBObject>
+                                                                             topLevelClass,
+                                                                             final HashMap<String,
+                                                                                          Class<? extends DBObject>>
+                                                                             stringPathToClassMap) {
+        final Map<List<String>, Class<? extends DBObject>> pathToClassMap
+        = new HashMap<List<String>, Class<? extends DBObject>>();
         pathToClassMap.put(EMPTY_PATH, topLevelClass);
-        for (Map.Entry<String, Class<? extends DBObject>> cur : stringPathToClassMap.entrySet()) {
-            List<String> path = Arrays.asList(cur.getKey().split("\\."));
+        for (final Map.Entry<String, Class<? extends DBObject>> cur : stringPathToClassMap.entrySet()) {
+            final List<String> path = Arrays.asList(cur.getKey().split("\\."));
             pathToClassMap.put(path, cur.getValue());
         }
 
         return Collections.unmodifiableMap(pathToClassMap);
     }
-
 
 }
 

@@ -41,7 +41,6 @@ import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -57,7 +56,7 @@ public class MongoChannelTest {
     private BufferPool<ByteBuffer> bufferPool;
 
     @Before
-    public void setUp() throws UnknownHostException, SocketException {
+    public void setUp() throws UnknownHostException {
         bufferPool = new PowerOfTwoByteBufferPool(24);
         primitiveSerializers = PrimitiveSerializers.createDefault();
         channel = new MongoChannel(new ServerAddress("localhost", 27017), bufferPool,
@@ -136,7 +135,7 @@ public class MongoChannelTest {
     }
 
     @Test
-    public void concreteClassTest() throws IOException {
+    public void concreteClassTest() {
         final Concrete c = new Concrete(new ObjectId(), "hi mom", 42, 42L, 42.0, new Date().getTime());
 
         final MongoInsertMessage<Concrete> insertMessage = new MongoInsertMessage<Concrete>("test.concrete",
@@ -159,7 +158,7 @@ public class MongoChannelTest {
     }
 
     @Test
-    public void sendMessageTest() throws IOException, InterruptedException {
+    public void sendMessageTest() throws IOException {
         dropCollection("sendMessageTest");
 
         long startTime = System.nanoTime();
@@ -235,7 +234,7 @@ public class MongoChannelTest {
         assertEquals(1, replyMessage.getDocuments().size());
     }
 
-    private void dropCollection(final String collectionName) throws IOException {
+    private void dropCollection(final String collectionName) {
         final CommandDocument filter = new CommandDocument("drop", collectionName);
 
         final MongoQueryMessage message = new MongoQueryMessage("MongoConnectionTest.$cmd",
@@ -246,7 +245,7 @@ public class MongoChannelTest {
         assertEquals(1, replyMessage.getDocuments().size());
     }
 
-    private List<Document> insertDocuments() throws IOException {
+    private List<Document> insertDocuments() {
         final List<Document> documents = new ArrayList<Document>();
 
         final Document doc1 = new Document();

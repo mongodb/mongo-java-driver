@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@SuppressWarnings({ "rawtypes" })
 public class BSON {
 
     public static final byte EOO = 0;
@@ -71,8 +72,8 @@ public class BSON {
 
     private static volatile boolean _encodeHooks = false;
     private static volatile boolean _decodeHooks = false;
-    private static ClassMap<List<Transformer>> _encodingHooks = new ClassMap<List<Transformer>>();
-    private static ClassMap<List<Transformer>> _decodingHooks = new ClassMap<List<Transformer>>();
+    private static final ClassMap<List<Transformer>> _encodingHooks = new ClassMap<List<Transformer>>();
+    private static final ClassMap<List<Transformer>> _decodingHooks = new ClassMap<List<Transformer>>();
 
     public static boolean hasEncodeHooks() {
         return _encodeHooks;
@@ -82,7 +83,7 @@ public class BSON {
         return _decodeHooks;
     }
 
-    public static void addEncodingHook(Class c, Transformer t) {
+    public static void addEncodingHook(final Class c, final Transformer t) {
         _encodeHooks = true;
         List<Transformer> l = _encodingHooks.get(c);
         if (l == null) {
@@ -92,7 +93,7 @@ public class BSON {
         l.add(t);
     }
 
-    public static void addDecodingHook(Class c, Transformer t) {
+    public static void addDecodingHook(final Class c, final Transformer t) {
         _decodeHooks = true;
         List<Transformer> l = _decodingHooks.get(c);
         if (l == null) {
@@ -106,9 +107,9 @@ public class BSON {
         if (!hasEncodeHooks() || o == null || _encodingHooks.size() == 0) {
             return o;
         }
-        List<Transformer> l = _encodingHooks.get(o.getClass());
+        final List<Transformer> l = _encodingHooks.get(o.getClass());
         if (l != null) {
-            for (Transformer t : l) {
+            for (final Transformer t : l) {
                 o = t.transform(o);
             }
         }
@@ -120,9 +121,9 @@ public class BSON {
             return o;
         }
 
-        List<Transformer> l = _decodingHooks.get(o.getClass());
+        final List<Transformer> l = _decodingHooks.get(o.getClass());
         if (l != null) {
-            for (Transformer t : l) {
+            for (final Transformer t : l) {
                 o = t.transform(o);
             }
         }
@@ -132,7 +133,7 @@ public class BSON {
     /**
      * Returns the encoding hook(s) associated with the specified class
      */
-    public static List<Transformer> getEncodingHooks(Class c) {
+    public static List<Transformer> getEncodingHooks(final Class c) {
         return _encodingHooks.get(c);
     }
 
@@ -147,21 +148,21 @@ public class BSON {
     /**
      * Remove all encoding hooks for a specific class.
      */
-    public static void removeEncodingHooks(Class c) {
+    public static void removeEncodingHooks(final Class c) {
         _encodingHooks.remove(c);
     }
 
     /**
      * Remove a specific encoding hook for a specific class.
      */
-    public static void removeEncodingHook(Class c, Transformer t) {
+    public static void removeEncodingHook(final Class c, final Transformer t) {
         getEncodingHooks(c).remove(t);
     }
 
     /**
      * Returns the decoding hook(s) associated with the specific class
      */
-    public static List<Transformer> getDecodingHooks(Class c) {
+    public static List<Transformer> getDecodingHooks(final Class c) {
         return _decodingHooks.get(c);
     }
 
@@ -176,14 +177,14 @@ public class BSON {
     /**
      * Remove all decoding hooks for a specific class.
      */
-    public static void removeDecodingHooks(Class c) {
+    public static void removeDecodingHooks(final Class c) {
         _decodingHooks.remove(c);
     }
 
     /**
      * Remove a specific encoding hook for a specific class.
      */
-    public static void removeDecodingHook(Class c, Transformer t) {
+    public static void removeDecodingHook(final Class c, final Transformer t) {
         getDecodingHooks(c).remove(t);
     }
 
@@ -197,14 +198,15 @@ public class BSON {
 
     /**
      * Encodes a DBObject as a BSON byte array.
+     *
      * @param doc the document to encode
      * @return the document encoded as BSON
      */
-    public static byte[] encode(DBObject doc) {
+    public static byte[] encode(final DBObject doc) {
         try {
-            OutputBuffer buffer = new BasicOutputBuffer();
+            final OutputBuffer buffer = new BasicOutputBuffer();
             new DBObjectSerializer(PrimitiveSerializers.createDefault()).serialize(new BSONBinaryWriter(buffer), doc);
-            BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
+            final BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
             buffer.pipe(stream);
             return stream.getInternalBytes();
         } catch (IOException e) {
@@ -219,8 +221,8 @@ public class BSON {
      * @param bytes a document encoded as BSON
      * @return the document as a DBObject
      */
-    public static DBObject decode(byte[] bytes) {
-        InputBuffer buffer = new ByteBufferInput(ByteBuffer.wrap(bytes));
+    public static DBObject decode(final byte[] bytes) {
+        final InputBuffer buffer = new ByteBufferInput(ByteBuffer.wrap(bytes));
         return new DBObjectSerializer(PrimitiveSerializers.createDefault()).deserialize(new BSONBinaryReader(buffer));
     }
 

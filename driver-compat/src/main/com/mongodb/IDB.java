@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb;
 
 import java.util.Set;
@@ -5,11 +21,12 @@ import java.util.Set;
 /**
  * Interface extracted from old DB class to ensure driver-compat provides the same API as the old driver code.
  */
+@SuppressWarnings({ "deprecation" })
 public interface IDB {
     /**
-     * starts a new "consistent request".
-     * Following this call and until requestDone() is called, all db operations should use the same underlying connection.
-     * This is useful to ensure that operations happen in a certain order with predictable results.
+     * starts a new "consistent request". Following this call and until requestDone() is called, all db operations
+     * should use the same underlying connection. This is useful to ensure that operations happen in a certain order
+     * with predictable results.
      */
     void requestStart();
 
@@ -19,7 +36,8 @@ public interface IDB {
     void requestDone();
 
     /**
-     * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)
+     * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a
+     * replica set)
      */
     void requestEnsureConnection();
 

@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.mongodb;
@@ -57,25 +56,28 @@ public class ServerAddress {
 
     /**
      * Gets the hostname
+     *
      * @return hostname
      */
-    public String getHost(){
+    public String getHost() {
         return proxied.getHost();
     }
 
     /**
      * Gets the port number
+     *
      * @return port
      */
-    public int getPort(){
+    public int getPort() {
         return proxied.getPort();
     }
 
     /**
      * Gets the underlying socket address
+     *
      * @return socket address
      */
-    public InetSocketAddress getSocketAddress(){
+    public InetSocketAddress getSocketAddress() {
         return proxied.getSocketAddress();
     }
 
@@ -103,7 +105,7 @@ public class ServerAddress {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return proxied.toString();
     }
 

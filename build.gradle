@@ -334,6 +334,7 @@ project(':driver-compat') {
     }
 
     checkstyle {
+        configFile = new File("$configDir/checkstyle-lite.xml")
         ignoreFailures = true
     }
 }

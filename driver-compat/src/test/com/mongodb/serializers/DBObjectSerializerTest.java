@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.mongodb.serializers;
@@ -37,26 +36,29 @@ public class DBObjectSerializerTest extends MongoClientTestBase {
 
     @Test
     public void testGetters() {
-        PrimitiveSerializers serializers = PrimitiveSerializers.createDefault();
-        DBObjectSerializer serializer = new DBObjectSerializer(getDB(), serializers,
-                                                               BasicDBObject.class,
-                                                               new HashMap<String, Class<? extends DBObject>>());
+        final PrimitiveSerializers serializers = PrimitiveSerializers.createDefault();
+        final DBObjectSerializer serializer = new DBObjectSerializer(getDB(), serializers,
+                                                              BasicDBObject.class,
+                                                              new HashMap<String, Class<? extends DBObject>>());
         assertEquals(getDB(), serializer.getDb());
         assertEquals(BasicDBObject.class, serializer.getTopLevelClass());
         assertEquals(serializers, serializer.getPrimitiveSerializers());
-        final HashMap<List<String>, Class<? extends DBObject>> expected = new HashMap<List<String>, Class<? extends DBObject>>();
+        final HashMap<List<String>, Class<? extends DBObject>> expected
+        = new HashMap<List<String>, Class<? extends DBObject>>();
         expected.put(new ArrayList<String>(), BasicDBObject.class);
         assertEquals(expected, serializer.getPathToClassMap());
     }
 
     @Test
     public void testPathToClassMap() {
-        final HashMap<String, Class<? extends DBObject>> stringPathToClassMap = new HashMap<String, Class<? extends DBObject>>();
+        final HashMap<String, Class<? extends DBObject>> stringPathToClassMap
+        = new HashMap<String, Class<? extends DBObject>>();
         stringPathToClassMap.put("a", NestedOneDBObject.class);
         stringPathToClassMap.put("a.b", NestedTwoDBObject.class);
-        DBObjectSerializer serializer = new DBObjectSerializer(getDB(), PrimitiveSerializers.createDefault(),
-                                                               TopLevelDBObject.class, stringPathToClassMap);
-        Map<List<String>, Class<? extends DBObject>> pathToClassMap = new HashMap<List<String>, Class<? extends DBObject>>();
+        final DBObjectSerializer serializer = new DBObjectSerializer(getDB(), PrimitiveSerializers.createDefault(),
+                                                              TopLevelDBObject.class, stringPathToClassMap);
+        final Map<List<String>, Class<? extends DBObject>> pathToClassMap
+        = new HashMap<List<String>, Class<? extends DBObject>>();
         pathToClassMap.put(new ArrayList<String>(), TopLevelDBObject.class);
         pathToClassMap.put(Arrays.asList("a"), NestedOneDBObject.class);
         pathToClassMap.put(Arrays.asList("a", "b"), NestedTwoDBObject.class);
@@ -69,7 +71,8 @@ public class DBObjectSerializerTest extends MongoClientTestBase {
         collection.setInternalClass("a", NestedOneDBObject.class);
         collection.setInternalClass("a.b", NestedTwoDBObject.class);
 
-        DBObject doc = new TopLevelDBObject().append("a", new NestedOneDBObject().append("b", new NestedTwoDBObject()).append("c", new BasicDBObject()));
+        final DBObject doc = new TopLevelDBObject().append("a", new NestedOneDBObject().append("b", new NestedTwoDBObject())
+                                                                                 .append("c", new BasicDBObject()));
         collection.save(doc);
         assertEquals(doc, collection.findOne());
     }
@@ -80,7 +83,7 @@ public class DBObjectSerializerTest extends MongoClientTestBase {
         assertEquals(Double.class, collection.findOne().get("x").getClass());
 
         BSON.addEncodingHook(Double.class, new Transformer() {
-            public Object transform(Object o) {
+            public Object transform(final Object o) {
                 return o.toString();
             }
         });
@@ -93,7 +96,7 @@ public class DBObjectSerializerTest extends MongoClientTestBase {
         assertEquals(Double.class, collection.findOne().get("x").getClass());
 
         BSON.addDecodingHook(Double.class, new Transformer() {
-            public Object transform(Object o) {
+            public Object transform(final Object o) {
                 return o.toString();
             }
         });
@@ -102,37 +105,32 @@ public class DBObjectSerializerTest extends MongoClientTestBase {
         assertEquals(Double.class, collection.findOne().get("x").getClass());
     }
 
+    //CHECKSTYLE:OFF
     public static class TopLevelDBObject extends BasicDBObject {
         private static final long serialVersionUID = 7029929727222305692L;
 
         @Override
         public boolean equals(final Object o) {
-            if (getClass() != o.getClass()) {
-                return false;
-            }
-            return super.equals(o);
+            return getClass() == o.getClass() && super.equals(o);
         }
     }
 
     public static class NestedOneDBObject extends BasicDBObject {
         private static final long serialVersionUID = -5821458746671670383L;
+
         @Override
         public boolean equals(final Object o) {
-            if (getClass() != o.getClass()) {
-                return false;
-            }
-            return super.equals(o);
+            return getClass() == o.getClass() && super.equals(o);
         }
     }
 
     public static class NestedTwoDBObject extends BasicDBObject {
         private static final long serialVersionUID = 5243874721805359328L;
+
         @Override
         public boolean equals(final Object o) {
-            if (getClass() != o.getClass()) {
-                return false;
-            }
-            return super.equals(o);
+            return getClass() == o.getClass() && super.equals(o);
         }
     }
+    //CHECKSTYLE:ON
 }

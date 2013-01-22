@@ -1,11 +1,28 @@
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb;
 
 import java.util.List;
 
 /**
- * Interface extracted from the old DBCollection.  The aim of this interface is simply to keep track of what
- * needs to be implemented for backwards compatibility.
+ * Interface extracted from the old DBCollection.  The aim of this interface is simply to keep track of what needs to be
+ * implemented for backwards compatibility.
  */
+@SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
 public interface IDBCollection {
     WriteResult insert(DBObject[] arr, WriteConcern concern);
 
@@ -22,11 +39,10 @@ public interface IDBCollection {
     WriteResult insert(List<DBObject> list, WriteConcern concern);
 
     /**
-     * Saves document(s) to the database.
-     * if doc doesn't have an _id, one will be added
-     * you can get the _id that was added from doc after the insert
+     * Saves document(s) to the database. if doc doesn't have an _id, one will be added you can get the _id that was
+     * added from doc after the insert
      *
-     * @param list list of documents to save
+     * @param list    list of documents to save
      * @param concern the write concern
      * @return
      * @throws com.mongodb.MongoException
@@ -38,12 +54,14 @@ public interface IDBCollection {
 
     /**
      * Performs an update operation.
-     * @param q search query for old object to update
-     * @param o object with which to update <tt>q</tt>
-     * @param upsert if the database should create the element if it does not exist
-     * @param multi if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
-     * not be inserted if it does not exist in the collection and upsert=true and multi=true.
-     * See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
+     *
+     * @param q       search query for old object to update
+     * @param o       object with which to update <tt>q</tt>
+     * @param upsert  if the database should create the element if it does not exist
+     * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object
+     *                will not be inserted if it does not exist in the collection and upsert=true and multi=true. See <a
+     *                href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb
+     *                .org/display/DOCS/Atomic+Operations</a>
      * @param concern the write concern
      * @param encoder the DBEncoder to use
      * @return
@@ -62,7 +80,8 @@ public interface IDBCollection {
 
     /**
      * Removes objects from the database collection.
-     * @param o the object that documents to be removed must match
+     *
+     * @param o       the object that documents to be removed must match
      * @param concern WriteConcern for this operation
      * @param encoder the DBEncoder to use
      * @return
@@ -98,6 +117,7 @@ public interface IDBCollection {
 
     /**
      * Forces creation of an index on a set of fields, if one does not already exist.
+     *
      * @param keys
      * @param options
      * @param encoder the DBEncoder to use

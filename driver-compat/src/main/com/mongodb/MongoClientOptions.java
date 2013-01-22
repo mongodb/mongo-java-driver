@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.mongodb;
@@ -91,7 +90,8 @@ public class MongoClientOptions {
          * @see com.mongodb.MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
          */
         public Builder threadsAllowedToBlockForConnectionMultiplier(
-                final int threadsAllowedToBlockForConnectionMultiplier) {
+                                                                   final int
+                                                                   threadsAllowedToBlockForConnectionMultiplier) {
             proxied.threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier);
             return this;
         }
@@ -218,7 +218,8 @@ public class MongoClientOptions {
             proxied.description(options.getDescription());
             proxied.connectionsPerHost(options.getConnectionsPerHost());
             proxied.threadsAllowedToBlockForConnectionMultiplier(
-                    options.getThreadsAllowedToBlockForConnectionMultiplier());
+                                                                options
+                                                                .getThreadsAllowedToBlockForConnectionMultiplier());
             proxied.maxWaitTime(options.getMaxWaitTime());
             proxied.connectTimeout(options.getConnectTimeout());
             proxied.socketTimeout(options.getSocketTimeout());

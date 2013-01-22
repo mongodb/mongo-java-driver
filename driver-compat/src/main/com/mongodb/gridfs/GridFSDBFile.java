@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class GridFSDBFile extends GridFSFile {
      * @throws IOException
      * @throws MongoException
      */
-    public long writeTo(String filename) throws IOException {
+    public long writeTo(final String filename) throws IOException {
         return writeTo(new File(filename));
     }
 
@@ -66,7 +66,7 @@ public class GridFSDBFile extends GridFSFile {
      * @throws IOException
      * @throws MongoException
      */
-    public long writeTo(File f) throws IOException {
+    public long writeTo(final File f) throws IOException {
 
         FileOutputStream out = null;
         try {
@@ -87,7 +87,7 @@ public class GridFSDBFile extends GridFSFile {
      * @throws IOException
      * @throws MongoException
      */
-    public long writeTo(OutputStream out) throws IOException {
+    public long writeTo(final OutputStream out) throws IOException {
         final int nc = numChunks();
         for (int i = 0; i < nc; i++) {
             out.write(getChunk(i));
@@ -95,12 +95,12 @@ public class GridFSDBFile extends GridFSFile {
         return _length;
     }
 
-    byte[] getChunk(int i) {
+    byte[] getChunk(final int i) {
         if (_fs == null) {
             throw new RuntimeException("no gridfs!");
         }
 
-        DBObject chunk = _fs._chunkCollection.findOne(BasicDBObjectBuilder.start("files_id", _id).add("n", i).get());
+        final DBObject chunk = _fs._chunkCollection.findOne(BasicDBObjectBuilder.start("files_id", _id).add("n", i).get());
         if (chunk == null) {
             throw new MongoException("can't find a chunk!  file id: " + _id + " chunk: " + i);
         }
@@ -124,7 +124,7 @@ public class GridFSDBFile extends GridFSFile {
         public void close() {
         }
 
-        public void mark(int readlimit) {
+        public void mark(final int readlimit) {
             throw new RuntimeException("mark not supported");
         }
 
@@ -137,19 +137,19 @@ public class GridFSDBFile extends GridFSFile {
         }
 
         public int read() {
-            byte b[] = new byte[1];
-            int res = read(b);
+            final byte[] b = new byte[1];
+            final int res = read(b);
             if (res < 0) {
                 return -1;
             }
             return b[0] & 0xFF;
         }
 
-        public int read(byte[] b) {
+        public int read(final byte[] b) {
             return read(b, 0, b.length);
         }
 
-        public int read(byte[] b, int off, int len) {
+        public int read(final byte[] b, final int off, final int len) {
 
             if (_data == null || _offset >= _data.length) {
                 if (_currentChunkIdx + 1 >= _numChunks) {
@@ -160,7 +160,7 @@ public class GridFSDBFile extends GridFSFile {
                 _offset = 0;
             }
 
-            int r = Math.min(len, _data.length - _offset);
+            final int r = Math.min(len, _data.length - _offset);
             System.arraycopy(_data, _offset, b, off, r);
             _offset += r;
             return r;
@@ -169,15 +169,14 @@ public class GridFSDBFile extends GridFSFile {
         /**
          * Will smartly skips over chunks without fetching them if possible.
          */
-        public long skip(long numBytesToSkip) throws IOException {
+        public long skip(final long numBytesToSkip) throws IOException {
             if (numBytesToSkip <= 0) {
                 return 0;
             }
 
-            if (_currentChunkIdx == _numChunks)
+            if (_currentChunkIdx == _numChunks) {
             //We're actually skipping over the back end of the file, short-circuit here
             //Don't count those extra bytes to skip in with the return value
-            {
                 return 0;
             }
 
@@ -192,7 +191,7 @@ public class GridFSDBFile extends GridFSFile {
                 return _length - offsetInFile;
             }
 
-            int temp = _currentChunkIdx;
+            final int temp = _currentChunkIdx;
             _currentChunkIdx = (int) ((numBytesToSkip + offsetInFile) / _chunkSize);
             if (temp != _currentChunkIdx) {
                 _data = getChunk(_currentChunkIdx);

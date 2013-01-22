@@ -32,41 +32,43 @@ public class QuickTour {
     public static void main(final String[] args) throws Exception {
 
         // connect to the local database server
-        MongoClient mongoClient = new MongoClient();
+        final MongoClient mongoClient = new MongoClient();
 
         // get handle to "mydb"
-        DB db = mongoClient.getDB("mydb");
+        final DB db = mongoClient.getDB("mydb");
 
         // Authenticate - optional
         // boolean auth = db.authenticate("foo", "bar");
 
         // get a list of the collections in this database and print them out
-        Set<String> collectionNames = db.getCollectionNames();
-        for (String s : collectionNames) {
+        final Set<String> collectionNames = db.getCollectionNames();
+        for (final String s : collectionNames) {
             System.out.println(s);
         }
 
         // get a collection object to work with
-        DBCollection testCollection = db.getCollection("testCollection");
+        final DBCollection testCollection = db.getCollection("testCollection");
 
         // drop all the data in it
         testCollection.drop();
 
         // make a document and insert it
-        BasicDBObject doc = new BasicDBObject("name", "MongoDB").append("type", "database").append("count", 1)
-                .append("info", new BasicDBObject("x", 203).append("y", 102));
+        final BasicDBObject doc = new BasicDBObject("name", "MongoDB").append("type", "database").append("count", 1)
+                                                                .append("info",
+                                                                       new BasicDBObject("x", 203).append("y", 102));
 
         testCollection.insert(doc);
 
         // get it (since it's the only one in there since we dropped the rest earlier on)
-        DBObject myDoc = testCollection.findOne();
+        final DBObject myDoc = testCollection.findOne();
         System.out.println(myDoc);
 
         // now, lets add lots of little documents to the collection so we can explore queries and cursors
         for (int i = 0; i < 100; i++) {
             testCollection.insert(new BasicDBObject().append("i", i));
         }
-        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + testCollection.getCount());
+        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + testCollection
+                                                                                                    .getCount());
 
         //  lets get all the documents in the collection and print them out
         DBCursor cursor = testCollection.find();
@@ -119,8 +121,8 @@ public class QuickTour {
 
 
         //  list the indexes on the collection
-        List<DBObject> list = testCollection.getIndexInfo();
-        for (DBObject o : list) {
+        final List<DBObject> list = testCollection.getIndexInfo();
+        for (final DBObject o : list) {
             System.out.println(o);
         }
 

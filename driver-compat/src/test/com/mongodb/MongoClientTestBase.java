@@ -21,8 +21,8 @@ import org.junit.Before;
 import java.net.UnknownHostException;
 
 public abstract class MongoClientTestBase {
-    static private MongoClient mongoClient;
-    static private DB database;
+    private static MongoClient mongoClient;
+    private static DB database;
 
     protected DBCollection collection;
 

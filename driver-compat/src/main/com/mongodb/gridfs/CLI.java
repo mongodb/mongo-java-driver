@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class CLI {
         return _gridfs;
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(final String[] args) throws Exception {
 
         if (args.length < 1) {
             printUsage();
@@ -71,7 +71,7 @@ public class CLI {
         }
 
         for (int i = 0; i < args.length; i++) {
-            String s = args[i];
+            final String s = args[i];
 
             if (s.equals("--db")) {
                 db = args[i + 1];
@@ -91,20 +91,20 @@ public class CLI {
             }
 
             if (s.equals("list")) {
-                GridFS fs = getGridFS();
+                final GridFS fs = getGridFS();
 
                 System.out.printf("%-60s %-10s\n", "Filename", "Length");
 
-                for (DBObject o : fs.getFileList()) {
+                for (final DBObject o : fs.getFileList()) {
                     System.out.printf("%-60s %-10d\n", o.get("filename"), ((Number) o.get("length")).longValue());
                 }
                 return;
             }
 
             if (s.equals("get")) {
-                GridFS fs = getGridFS();
-                String fn = args[i + 1];
-                GridFSDBFile f = fs.findOne(fn);
+                final GridFS fs = getGridFS();
+                final String fn = args[i + 1];
+                final GridFSDBFile f = fs.findOne(fn);
                 if (f == null) {
                     System.err.println("can't find file: " + fn);
                     return;
@@ -115,9 +115,9 @@ public class CLI {
             }
 
             if (s.equals("put")) {
-                GridFS fs = getGridFS();
-                String fn = args[i + 1];
-                GridFSInputFile f = fs.createFile(new File(fn));
+                final GridFS fs = getGridFS();
+                final String fn = args[i + 1];
+                final GridFSInputFile f = fs.createFile(new File(fn));
                 f.save();
                 f.validate();
                 return;
@@ -125,27 +125,27 @@ public class CLI {
 
 
             if (s.equals("md5")) {
-                GridFS fs = getGridFS();
-                String fn = args[i + 1];
-                GridFSDBFile f = fs.findOne(fn);
+                final GridFS fs = getGridFS();
+                final String fn = args[i + 1];
+                final GridFSDBFile f = fs.findOne(fn);
                 if (f == null) {
                     System.err.println("can't find file: " + fn);
                     return;
                 }
 
-                MessageDigest md5 = MessageDigest.getInstance("MD5");
+                final MessageDigest md5 = MessageDigest.getInstance("MD5");
                 md5.reset();
-                DigestInputStream is = new DigestInputStream(f.getInputStream(), md5);
+                final DigestInputStream is = new DigestInputStream(f.getInputStream(), md5);
                 int read = 0;
                 while (is.read() >= 0) {
                     read++;
-                    int r = is.read(new byte[17]);
+                    final int r = is.read(new byte[17]);
                     if (r < 0) {
                         break;
                     }
                     read += r;
                 }
-                byte[] digest = md5.digest();
+                final byte[] digest = md5.digest();
                 System.out.println("length: " + read + " md5: " + Util.toHex(digest));
                 return;
             }

@@ -1,20 +1,20 @@
-// MongoException.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// MongoException.java
 
 package com.mongodb;
 
@@ -36,7 +36,7 @@ public class MongoException extends RuntimeException {
         if (e instanceof MongoServerException) {
             code = ((MongoServerException) e).getErrorCode();
         }
-        else{
+        else {
             code = -1;
         }
     }
@@ -44,7 +44,7 @@ public class MongoException extends RuntimeException {
     /**
      * @param msg the message
      */
-    public MongoException(String msg) {
+    public MongoException(final String msg) {
         super(msg);
         code = -3;
     }
@@ -53,7 +53,7 @@ public class MongoException extends RuntimeException {
      * @param code the error code
      * @param msg  the message
      */
-    public MongoException(int code, String msg) {
+    public MongoException(final int code, final String msg) {
         super(msg);
         this.code = code;
     }
@@ -62,7 +62,7 @@ public class MongoException extends RuntimeException {
      * @param msg the message
      * @param t   the throwable cause
      */
-    public MongoException(String msg, Throwable t) {
+    public MongoException(final String msg, final Throwable t) {
         super(msg, _massage(t));
         code = -4;
     }
@@ -72,7 +72,7 @@ public class MongoException extends RuntimeException {
      * @param msg  the message
      * @param t    the throwable cause
      */
-    public MongoException(int code, String msg, Throwable t) {
+    public MongoException(final int code, final String msg, final Throwable t) {
         super(msg, _massage(t));
         this.code = code;
     }
@@ -82,12 +82,12 @@ public class MongoException extends RuntimeException {
      *
      * @param o
      */
-    public MongoException(BSONObject o) {
+    public MongoException(final BSONObject o) {
         this(ServerError.getCode(o), ServerError.getMsg(o, "UNKNOWN"));
     }
 
-    static MongoException parse(BSONObject o) {
-        String s = ServerError.getMsg(o, null);
+    static MongoException parse(final BSONObject o) {
+        final String s = ServerError.getMsg(o, null);
         if (s == null) {
             return null;
         }
@@ -95,7 +95,7 @@ public class MongoException extends RuntimeException {
     }
 
 
-    static Throwable _massage(Throwable t) {
+    static Throwable _massage(final Throwable t) {
         if (t instanceof Network) {
             return ((Network) t)._ioe;
         }
@@ -113,7 +113,7 @@ public class MongoException extends RuntimeException {
          * @param msg the message
          * @param ioe the cause
          */
-        public Network(String msg, java.io.IOException ioe) {
+        public Network(final String msg, final java.io.IOException ioe) {
             super(-2, msg, ioe);
             _ioe = ioe;
         }
@@ -121,7 +121,7 @@ public class MongoException extends RuntimeException {
         /**
          * @param ioe the cause
          */
-        public Network(java.io.IOException ioe) {
+        public Network(final java.io.IOException ioe) {
             super(ioe.toString(), ioe);
             _ioe = ioe;
         }
@@ -141,7 +141,7 @@ public class MongoException extends RuntimeException {
          *
          * @param e
          */
-        public DuplicateKey(MongoDuplicateKeyException e) {
+        public DuplicateKey(final MongoDuplicateKeyException e) {
             super(e.getCommandResult().getErrorCode(), e.getMessage(), e);
         }
 
@@ -149,7 +149,7 @@ public class MongoException extends RuntimeException {
          * @param code the error code
          * @param msg  the message
          */
-        public DuplicateKey(int code, String msg) {
+        public DuplicateKey(final int code, final String msg) {
             super(code, msg);
         }
     }
@@ -168,7 +168,7 @@ public class MongoException extends RuntimeException {
          * @param cursorId      cursor
          * @param serverAddress server address
          */
-        public CursorNotFound(long cursorId, ServerAddress serverAddress) {
+        public CursorNotFound(final long cursorId, final ServerAddress serverAddress) {
             super(-5, "cursor " + cursorId + " not found on server " + serverAddress);
             this.cursorId = cursorId;
             this.serverAddress = serverAddress;

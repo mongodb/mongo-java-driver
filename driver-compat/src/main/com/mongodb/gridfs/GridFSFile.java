@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import java.util.Set;
  *
  * @author antoine
  */
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public abstract class GridFSFile implements DBObject {
 
 
@@ -68,11 +69,11 @@ public abstract class GridFSFile implements DBObject {
             throw new MongoException("no _md5 stored");
         }
 
-        DBObject cmd = new BasicDBObject("filemd5", _id);
+        final DBObject cmd = new BasicDBObject("filemd5", _id);
         cmd.put("root", _fs._bucketName);
-        DBObject res = _fs._db.command(cmd);
+        final DBObject res = _fs._db.command(cmd);
         if (res != null && res.containsField("md5")) {
-            String m = res.get("md5").toString();
+            final String m = res.get("md5").toString();
             if (m.equals(_md5)) {
                 return;
             }
@@ -178,7 +179,7 @@ public abstract class GridFSFile implements DBObject {
      *
      * @return
      */
-    public void setMetaData(DBObject metadata) {
+    public void setMetaData(final DBObject metadata) {
         _extradata.put("metadata", metadata);
     }
 
@@ -195,7 +196,7 @@ public abstract class GridFSFile implements DBObject {
     // --------- DBOBject methods ---
     // ------------------------------
 
-    public Object put(String key, Object v) {
+    public Object put(final String key, final Object v) {
         if (key == null) {
             throw new RuntimeException("key should never be null");
         }
@@ -226,7 +227,7 @@ public abstract class GridFSFile implements DBObject {
         return v;
     }
 
-    public Object get(String key) {
+    public Object get(final String key) {
         if (key == null) {
             throw new RuntimeException("key should never be null");
         }
@@ -254,11 +255,11 @@ public abstract class GridFSFile implements DBObject {
         return _extradata.get(key);
     }
 
-    public void putAll(BSONObject o) {
+    public void putAll(final BSONObject o) {
         throw new UnsupportedOperationException();
     }
 
-    public void putAll(Map m) {
+    public void putAll(final Map m) {
         throw new UnsupportedOperationException();
     }
 
@@ -266,7 +267,7 @@ public abstract class GridFSFile implements DBObject {
         throw new UnsupportedOperationException();
     }
 
-    public Object removeField(String key) {
+    public Object removeField(final String key) {
         throw new UnsupportedOperationException();
     }
 
@@ -274,17 +275,17 @@ public abstract class GridFSFile implements DBObject {
      * @deprecated
      */
     @Deprecated
-    public boolean containsKey(String s) {
+    public boolean containsKey(final String s) {
         return containsField(s);
     }
 
-    public boolean containsField(String s) {
+    public boolean containsField(final String s) {
         return keySet().contains(s);
     }
 
     @SuppressWarnings("unchecked")
     public Set<String> keySet() {
-        Set<String> keys = new HashSet();
+        final Set<String> keys = new HashSet();
         keys.addAll(VALID_FIELDS);
         keys.addAll(_extradata.keySet());
         return keys;
@@ -312,7 +313,7 @@ public abstract class GridFSFile implements DBObject {
      *
      * @param fs
      */
-    protected void setGridFS(GridFS fs) {
+    protected void setGridFS(final GridFS fs) {
         _fs = fs;
     }
 
@@ -324,10 +325,17 @@ public abstract class GridFSFile implements DBObject {
     long _length;
     long _chunkSize;
     Date _uploadDate;
-    DBObject _extradata = new BasicDBObject();
+    final DBObject _extradata = new BasicDBObject();
     String _md5;
 
     @SuppressWarnings("unchecked")
-    final static Set<String> VALID_FIELDS = Collections.unmodifiableSet(new HashSet(Arrays.asList(
-            new String[]{"_id", "filename", "contentType", "length", "chunkSize", "uploadDate", "aliases", "md5"})));
+    static final Set<String> VALID_FIELDS = Collections.unmodifiableSet(new HashSet(Arrays.asList(
+                                                                                                 new String[]{"_id",
+                                                                                                              "filename",
+                                                                                                              "contentType",
+                                                                                                              "length",
+                                                                                                              "chunkSize",
+                                                                                                              "uploadDate",
+                                                                                                              "aliases",
+                                                                                                              "md5"})));
 }

@@ -55,24 +55,25 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     private CursorType cursorType;
     private DBObject current;
     private int numSeen;
-    private List<DBObject> all = new ArrayList<DBObject>();
+    private final List<DBObject> all = new ArrayList<DBObject>();
 
     /**
      * Initializes a new database cursor
-     * @param collection collection to use
-     * @param query query to perform
-     * @param fields keys to return from the query
+     *
+     * @param collection     collection to use
+     * @param query          query to perform
+     * @param fields         keys to return from the query
      * @param readPreference the read preference for this query
      */
-    public DBCursor( DBCollection collection , DBObject query , DBObject fields, ReadPreference readPreference ){
+    public DBCursor(final DBCollection collection, final DBObject query, final DBObject fields, final ReadPreference readPreference) {
         if (collection == null) {
             throw new IllegalArgumentException("collection is null");
         }
         this.collection = collection;
         find = new MongoFind();
         find.where(DBObjects.toQueryFilterDocument(query))
-                .select(DBObjects.toFieldSelectorDocument(fields))
-                .readPreference(readPreference.toNew());
+            .select(DBObjects.toFieldSelectorDocument(fields))
+            .readPreference(readPreference.toNew());
     }
 
     /**
@@ -126,7 +127,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      *
      * @param options
      */
-    public DBCursor setOptions(int options) {
+    public DBCursor setOptions(final int options) {
         throw new UnsupportedOperationException();   // TODO
     }
 
@@ -155,7 +156,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return this
      * @dochub specialOperators
      */
-    public DBCursor addSpecial(String name, Object o) {
+    public DBCursor addSpecial(final String name, final Object o) {
         throw new UnsupportedOperationException();  // TODO
     }
 
@@ -165,7 +166,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @param indexKeys a <code>DBObject</code> with fields and direction
      * @return same DBCursor for chaining operations
      */
-    public DBCursor hint(DBObject indexKeys) {
+    public DBCursor hint(final DBObject indexKeys) {
         throw new UnsupportedOperationException();  // TODO
     }
 
@@ -175,7 +176,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @param indexName the name of an index
      * @return same DBCursort for chaining operations
      */
-    public DBCursor hint(String indexName) {
+    public DBCursor hint(final String indexName) {
         throw new UnsupportedOperationException();  // TODO
     }
 
@@ -360,7 +361,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return an array of objects
      * @throws MongoException
      */
-    public List<DBObject> toArray(int max) {
+    public List<DBObject> toArray(final int max) {
         checkCursorType(CursorType.ARRAY);
         fillArray(max - 1);
         return all;
@@ -375,7 +376,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      */
     public int count() {
         return (int) collection.toNew().filter(find.getFilter()).readPreference(
-                find.getReadPreference()).count();  // TODO: dangerous cast.  Throw exception instead?
+                                                                               find.getReadPreference())
+                               .count();  // TODO: dangerous cast.  Throw exception instead?
     }
 
     /**
@@ -469,7 +471,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      *
      * @param readPreference read preference to use
      */
-    public DBCursor setReadPreference(ReadPreference readPreference) {
+    public DBCursor setReadPreference(final ReadPreference readPreference) {
         find.readPreference(readPreference.toNew());
         return this;
     }
@@ -486,13 +488,13 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     @Override
     public String toString() {
         return "DBCursor{" +
-                "collection=" + collection +
-                ", find=" + find +
-                (cursor != null ? (", cursor=" + cursor.getServerCursor()) : "") +
-                '}';
+               "collection=" + collection +
+               ", find=" + find +
+               (cursor != null ? (", cursor=" + cursor.getServerCursor()) : "") +
+               '}';
     }
 
-    private DBCursor(DBCollection collection, final MongoFind find) {
+    private DBCursor(final DBCollection collection, final MongoFind find) {
         this.collection = collection;
         this.find = new MongoFind(find);
     }
@@ -501,7 +503,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * Types of cursors: iterator or array.
      */
     static enum CursorType {
-        ITERATOR, ARRAY
+        ITERATOR,
+        ARRAY
     }
 
     private DBObject nextInternal() {
@@ -527,7 +530,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         return current;
     }
 
-    void checkCursorType(CursorType type) {
+    void checkCursorType(final CursorType type) {
         if (cursorType == null) {
             cursorType = type;
             return;
@@ -540,7 +543,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         throw new IllegalArgumentException("can't switch cursor access methods");
     }
 
-    void fillArray(int n) {
+    void fillArray(final int n) {
         checkCursorType(CursorType.ARRAY);
         while (n >= all.size() && hasNext()) {
             nextInternal();
@@ -550,8 +553,12 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     private void getCursor() {
         try {
             cursor = collection.toNew().filter(find.getFilter()).select(find.getFields()).sort(find.getOrder()).skip(
-                    find.getSkip()).limit(find.getLimit()).batchSize(find.getBatchSize()).readPreference(
-                    find.getReadPreference()).all();
+                                                                                                                    find
+                                                                                                                    .getSkip())
+                               .limit(find.getLimit()).batchSize(find.getBatchSize()).readPreference(
+                                                                                                    find
+                                                                                                    .getReadPreference())
+                               .all();
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }

@@ -1,19 +1,21 @@
-// CommandResult.java
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// CommandResult.java
+
 
 
 package com.mongodb;
@@ -24,7 +26,7 @@ package com.mongodb;
  */
 public class CommandResult extends BasicDBObject {
 
-    CommandResult(DBObject cmd, ServerAddress srv) {
+    CommandResult(final DBObject cmd, final ServerAddress srv) {
         if (srv == null) {
             throw new IllegalArgumentException("server address is null");
         }
@@ -44,7 +46,7 @@ public class CommandResult extends BasicDBObject {
      * @return True if ok
      */
     public boolean ok() {
-        Object o = get("ok");
+        final Object o = get("ok");
         if (o == null) {
             throw new IllegalArgumentException("'ok' should never be null...");
         }
@@ -66,7 +68,7 @@ public class CommandResult extends BasicDBObject {
      * @return The error message or null
      */
     public String getErrorMessage() {
-        Object foo = get("errmsg");
+        final Object foo = get("errmsg");
         if (foo == null) {
             return null;
         }
@@ -80,9 +82,9 @@ public class CommandResult extends BasicDBObject {
      */
     public MongoException getException() {
         if (!ok()) {
-            StringBuilder buf = new StringBuilder();
+            final StringBuilder buf = new StringBuilder();
 
-            String cmdName;
+            final String cmdName;
             if (_cmd != null) {
                 cmdName = _cmd.keySet().iterator().next();
                 buf.append("command failed [").append(cmdName).append("]: ");
@@ -98,9 +100,9 @@ public class CommandResult extends BasicDBObject {
         else {
             // GLE check
             if (hasErr()) {
-                Object errObj = get("err");
+                final Object errObj = get("err");
 
-                int code = getCode();
+                final int code = getCode();
 
                 return new MongoException(code, errObj.toString());
             }
@@ -129,7 +131,7 @@ public class CommandResult extends BasicDBObject {
      * @return if it has it, and isn't null
      */
     boolean hasErr() {
-        Object o = get("err");
+        final Object o = get("err");
         return (o != null && ((String) o).length() > 0);
     }
 
@@ -159,7 +161,7 @@ public class CommandResult extends BasicDBObject {
          * @param res the result
          * @param msg the message
          */
-        public CommandFailure(CommandResult res, String msg) {
+        public CommandFailure(final CommandResult res, final String msg) {
             super(-1, msg);  // TODO: Pull out error code here.
         }
     }

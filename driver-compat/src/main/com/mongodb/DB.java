@@ -29,11 +29,12 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ThreadSafe
+@SuppressWarnings({ "deprecation" })
 public class DB implements IDB {
     private final Mongo mongo;
     private final MongoDatabase database;
     private final ConcurrentHashMap<String, DBCollection> collectionCache = new ConcurrentHashMap<String,
-            DBCollection>();
+                                                                                                 DBCollection>();
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
@@ -174,7 +175,8 @@ public class DB implements IDB {
             maxDocuments = ((Number) options.get("max")).intValue();
         }
         database.admin().createCollection(
-                new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex, maxDocuments));
+                                         new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex,
+                                                                    maxDocuments));
         // TODO the old code returned a DBCollection
         return null;
     }
@@ -205,11 +207,11 @@ public class DB implements IDB {
      * @dochub commands
      */
     public CommandResult command(final DBObject cmd) {
-        final org.mongodb.result.CommandResult baseCommandResult = database.executeCommand(
-                new MongoCommand(DBObjects.toCommandDocument(cmd)).readPreference(
-                        getReadPreference().toNew()));
-        return DBObjects.toCommandResult(cmd, new ServerAddress(baseCommandResult.getAddress()),
-                                         baseCommandResult.getResponse());
+        final org.mongodb.result.CommandResult baseCommandResult
+            = database.executeCommand(new MongoCommand(DBObjects.toCommandDocument(cmd))
+                                      .readPreference(getReadPreference().toNew()));
+        return DBObjects.toCommandResult(cmd, new ServerAddress(baseCommandResult.getAddress()), baseCommandResult
+                                                                                                 .getResponse());
     }
 
     /**

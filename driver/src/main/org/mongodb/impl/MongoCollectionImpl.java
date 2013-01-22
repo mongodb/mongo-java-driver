@@ -520,8 +520,8 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                                                                                    .select(findOp.getFields())
                                                                                    .sortBy(findOp.getOrder());
 
-            MongoOperations operations = getClient().getOperations();
-            FindAndModifyCommandResultSerializer<T> serializer
+            final MongoOperations operations = getClient().getOperations();
+            final FindAndModifyCommandResultSerializer<T> serializer
                 = new FindAndModifyCommandResultSerializer<T>(getOptions().getPrimitiveSerializers(),
                                                              getSerializer());
             return new FindAndModifyCommandResult<T>(operations.executeCommand(getDatabase().getName(),

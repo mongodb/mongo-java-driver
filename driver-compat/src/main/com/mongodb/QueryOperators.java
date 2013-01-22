@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class QueryOperators {
     public static final String RETURN_KEY = "$returnKey";
     public static final String MAX_SCAN = "$maxScan";
     public static final String ORDER_BY = "$orderby";
-    public static final String EXPLAIN =  "$explain";
+    public static final String EXPLAIN = "$explain";
     public static final String SNAPSHOT = "$snapshot";
     public static final String MIN = "$min";
     public static final String MAX = "$max";
@@ -68,5 +68,6 @@ public class QueryOperators {
     public static final String HINT = "$hint";
     public static final String COMMENT = "$comment";
 
-    private QueryOperators() {}
+    private QueryOperators() {
+    }
 }

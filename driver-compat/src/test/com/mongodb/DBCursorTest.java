@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class DBCursorTest extends MongoClientTestBase {
         cursor.sort(new BasicDBObject("_id", 1));
         int i = 0;
         while (cursor.hasNext()) {
-            DBObject cur = cursor.next();
+            final DBObject cur = cursor.next();
             assertEquals(i, cur.get("_id"));
             i++;
         }
@@ -76,17 +76,17 @@ public class DBCursorTest extends MongoClientTestBase {
 
     @Test
     public void testMarkPartial() {
-        DBCursor markPartialCursor = collection.find(new BasicDBObject(), new BasicDBObject("_id", 1));
+        final DBCursor markPartialCursor = collection.find(new BasicDBObject(), new BasicDBObject("_id", 1));
         assertTrue(markPartialCursor.next().isPartialObject());
     }
 
     @Test
     public void testIterator() {
         cursor.sort(new BasicDBObject("_id", 1));
-        Iterator<DBObject> iter = cursor.iterator();
+        final Iterator<DBObject> iter = cursor.iterator();
         int i = 0;
         while (iter.hasNext()) {
-            DBObject cur = iter.next();
+            final DBObject cur = iter.next();
             assertEquals(i, cur.get("_id"));
             i++;
         }
@@ -94,7 +94,7 @@ public class DBCursorTest extends MongoClientTestBase {
 
     @Test
     public void testCopy() {
-        DBCursor cursorCopy = cursor.copy();
+        final DBCursor cursorCopy = cursor.copy();
         assertEquals(cursor.getCollection(), cursorCopy.getCollection());
         assertEquals(cursor.getQuery(), cursorCopy.getQuery());
     }
@@ -112,7 +112,7 @@ public class DBCursorTest extends MongoClientTestBase {
 
     @Test
     public void testLimit() {
-        DBCursor cursor = collection.find().limit(4);
+        final DBCursor cursor = collection.find().limit(4);
         try {
             assertEquals(4, cursor.toArray().size());
         } finally {
@@ -122,7 +122,7 @@ public class DBCursorTest extends MongoClientTestBase {
 
     @Test
     public void testSkip() {
-        DBCursor cursor = collection.find().skip(2);
+        final DBCursor cursor = collection.find().skip(2);
         try {
             assertEquals(8, cursor.toArray().size());
         } finally {
@@ -132,7 +132,7 @@ public class DBCursorTest extends MongoClientTestBase {
 
     @Test
     public void testGetCursorId() {
-        DBCursor cursor = collection.find().limit(2);
+        final DBCursor cursor = collection.find().limit(2);
         assertEquals(0, cursor.getCursorId());
         cursor.hasNext();
         assertNotEquals(0, cursor.getCursorId());
@@ -140,7 +140,7 @@ public class DBCursorTest extends MongoClientTestBase {
 
     @Test
     public void testGetServerAddress() {
-        DBCursor cursor = collection.find().limit(2);
+        final DBCursor cursor = collection.find().limit(2);
         assertEquals(null, cursor.getServerAddress());
         cursor.hasNext();
         assertEquals(getClient().getServerAddressList().get(0), cursor.getServerAddress());
@@ -148,7 +148,7 @@ public class DBCursorTest extends MongoClientTestBase {
 
     @Test
     public void getNumSeen() {
-        DBCursor cursor = collection.find();
+        final DBCursor cursor = collection.find();
         assertEquals(0, cursor.numSeen());
         cursor.hasNext();
         assertEquals(0, cursor.numSeen());
@@ -189,16 +189,16 @@ public class DBCursorTest extends MongoClientTestBase {
     @Test
     public void testGetKeysWanted() {
         assertNull(cursor.getKeysWanted());
-        DBObject keys = new BasicDBObject("x", 1);
-        DBCursor cursorWithKeys = collection.find(new BasicDBObject(), keys);
+        final DBObject keys = new BasicDBObject("x", 1);
+        final DBCursor cursorWithKeys = collection.find(new BasicDBObject(), keys);
         assertEquals(keys, cursorWithKeys.getKeysWanted());
     }
 
     @Test
     public void testGetQuery() {
         assertEquals(new BasicDBObject(), cursor.getQuery());
-        DBObject query = new BasicDBObject("x", 1);
-        DBCursor cursorWithQuery = collection.find(query);
+        final DBObject query = new BasicDBObject("x", 1);
+        final DBCursor cursorWithQuery = collection.find(query);
         assertEquals(query, cursorWithQuery.getQuery());
     }
 
@@ -211,9 +211,9 @@ public class DBCursorTest extends MongoClientTestBase {
 
     @Test
     public void testConstructor() {
-        DBObject query = new BasicDBObject("x", 1);
-        DBObject keys = new BasicDBObject("x", 1).append("y", 1);
-        DBCursor local = new DBCursor(collection, query, keys, ReadPreference.secondary());
+        final DBObject query = new BasicDBObject("x", 1);
+        final DBObject keys = new BasicDBObject("x", 1).append("y", 1);
+        final DBCursor local = new DBCursor(collection, query, keys, ReadPreference.secondary());
         assertEquals(ReadPreference.secondary(), local.getReadPreference());
         assertEquals(query, local.getQuery());
         assertEquals(keys, local.getKeysWanted());

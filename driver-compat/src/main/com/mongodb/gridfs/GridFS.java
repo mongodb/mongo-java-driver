@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import java.util.List;
  *
  * @dochub gridfs
  */
+@SuppressWarnings("rawtypes")
 public class GridFS {
 
     /**
@@ -67,7 +68,7 @@ public class GridFS {
      * @throws com.mongodb.MongoException
      * @see com.mongodb.WriteConcern
      */
-    public GridFS(DB db) {
+    public GridFS(final DB db) {
         this(db, DEFAULT_BUCKET);
     }
 
@@ -80,7 +81,7 @@ public class GridFS {
      * @throws com.mongodb.MongoException
      * @see com.mongodb.WriteConcern
      */
-    public GridFS(DB db, String bucket) {
+    public GridFS(final DB db, final String bucket) {
         _db = db;
         _bucketName = bucket;
 
@@ -93,7 +94,7 @@ public class GridFS {
         }
         if (_chunkCollection.count() < 1000) {
             _chunkCollection.ensureIndex(new BasicDBObject("files_id", 1).append("n", 1),
-                                         new BasicDBObject("unique", 1));
+                                        new BasicDBObject("unique", 1));
         }
 
         _filesCollection.setObjectClass(GridFSDBFile.class);
@@ -120,7 +121,7 @@ public class GridFS {
      * @param query filter to apply
      * @return cursor of file objects
      */
-    public DBCursor getFileList(DBObject query) {
+    public DBCursor getFileList(final DBObject query) {
         return _filesCollection.find(query).sort(new BasicDBObject("filename", 1));
     }
 
@@ -136,7 +137,7 @@ public class GridFS {
      * @return
      * @throws com.mongodb.MongoException
      */
-    public GridFSDBFile find(ObjectId id) {
+    public GridFSDBFile find(final ObjectId id) {
         return findOne(id);
     }
 
@@ -147,7 +148,7 @@ public class GridFS {
      * @return
      * @throws com.mongodb.MongoException
      */
-    public GridFSDBFile findOne(ObjectId id) {
+    public GridFSDBFile findOne(final ObjectId id) {
         return findOne(new BasicDBObject("_id", id));
     }
 
@@ -158,7 +159,7 @@ public class GridFS {
      * @return
      * @throws com.mongodb.MongoException
      */
-    public GridFSDBFile findOne(String filename) {
+    public GridFSDBFile findOne(final String filename) {
         return findOne(new BasicDBObject("filename", filename));
     }
 
@@ -169,7 +170,7 @@ public class GridFS {
      * @return
      * @throws com.mongodb.MongoException
      */
-    public GridFSDBFile findOne(DBObject query) {
+    public GridFSDBFile findOne(final DBObject query) {
         return _fix(_filesCollection.findOne(query));
     }
 
@@ -180,7 +181,7 @@ public class GridFS {
      * @return
      * @throws com.mongodb.MongoException
      */
-    public List<GridFSDBFile> find(String filename) {
+    public List<GridFSDBFile> find(final String filename) {
         return find(new BasicDBObject("filename", filename));
     }
 
@@ -191,17 +192,17 @@ public class GridFS {
      * @return
      * @throws com.mongodb.MongoException
      */
-    public List<GridFSDBFile> find(DBObject query) {
-        List<GridFSDBFile> files = new ArrayList<GridFSDBFile>();
+    public List<GridFSDBFile> find(final DBObject query) {
+        final List<GridFSDBFile> files = new ArrayList<GridFSDBFile>();
 
-        DBCursor c = _filesCollection.find(query);
+        final DBCursor c = _filesCollection.find(query);
         while (c.hasNext()) {
             files.add(_fix(c.next()));
         }
         return files;
     }
 
-    private GridFSDBFile _fix(Object o) {
+    private GridFSDBFile _fix(final Object o) {
         if (o == null) {
             return null;
         }
@@ -210,7 +211,7 @@ public class GridFS {
             throw new RuntimeException("somehow didn't get a GridFSDBFile");
         }
 
-        GridFSDBFile f = (GridFSDBFile) o;
+        final GridFSDBFile f = (GridFSDBFile) o;
         f._fs = this;
         return f;
     }
@@ -226,7 +227,7 @@ public class GridFS {
      * @param id
      * @throws com.mongodb.MongoException
      */
-    public void remove(ObjectId id) {
+    public void remove(final ObjectId id) {
         _filesCollection.remove(new BasicDBObject("_id", id));
         _chunkCollection.remove(new BasicDBObject("files_id", id));
     }
@@ -237,7 +238,7 @@ public class GridFS {
      * @param filename
      * @throws com.mongodb.MongoException
      */
-    public void remove(String filename) {
+    public void remove(final String filename) {
         remove(new BasicDBObject("filename", filename));
     }
 
@@ -247,8 +248,8 @@ public class GridFS {
      * @param query
      * @throws com.mongodb.MongoException
      */
-    public void remove(DBObject query) {
-        for (GridFSDBFile f : find(query)) {
+    public void remove(final DBObject query) {
+        for (final GridFSDBFile f : find(query)) {
             f.remove();
         }
     }
@@ -264,7 +265,7 @@ public class GridFS {
      * @param data the file's data
      * @return
      */
-    public GridFSInputFile createFile(byte[] data) {
+    public GridFSInputFile createFile(final byte[] data) {
         return createFile(new ByteArrayInputStream(data), true);
     }
 
@@ -276,7 +277,7 @@ public class GridFS {
      * @return
      * @throws IOException
      */
-    public GridFSInputFile createFile(File f) throws IOException {
+    public GridFSInputFile createFile(final File f) throws IOException {
         return createFile(new FileInputStream(f), f.getName(), true);
     }
 
@@ -286,7 +287,7 @@ public class GridFS {
      * @param in an inputstream containing the file's data
      * @return
      */
-    public GridFSInputFile createFile(InputStream in) {
+    public GridFSInputFile createFile(final InputStream in) {
         return createFile(in, null);
     }
 
@@ -297,7 +298,7 @@ public class GridFS {
      * @param closeStreamOnPersist indicate the passed in input stream should be closed once the data chunk persisted
      * @return
      */
-    public GridFSInputFile createFile(InputStream in, boolean closeStreamOnPersist) {
+    public GridFSInputFile createFile(final InputStream in, final boolean closeStreamOnPersist) {
         return createFile(in, null, closeStreamOnPersist);
     }
 
@@ -308,7 +309,7 @@ public class GridFS {
      * @param filename the file name as stored in the db
      * @return
      */
-    public GridFSInputFile createFile(InputStream in, String filename) {
+    public GridFSInputFile createFile(final InputStream in, final String filename) {
         return new GridFSInputFile(this, in, filename);
     }
 
@@ -320,7 +321,7 @@ public class GridFS {
      * @param closeStreamOnPersist indicate the passed in input stream should be closed once the data chunk persisted
      * @return
      */
-    public GridFSInputFile createFile(InputStream in, String filename, boolean closeStreamOnPersist) {
+    public GridFSInputFile createFile(final InputStream in, final String filename, final boolean closeStreamOnPersist) {
         return new GridFSInputFile(this, in, filename, closeStreamOnPersist);
     }
 
@@ -329,7 +330,7 @@ public class GridFS {
      * @return
      * @see {@link GridFS#createFile()} on how to use this method
      */
-    public GridFSInputFile createFile(String filename) {
+    public GridFSInputFile createFile(final String filename) {
         return new GridFSInputFile(this, filename);
     }
 

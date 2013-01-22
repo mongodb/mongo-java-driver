@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.mongodb;
@@ -105,7 +104,8 @@ public class WriteConcernTest {
         assertEquals(new WriteConcern(org.mongodb.WriteConcern.ACKNOWLEDGED), WriteConcern.ACKNOWLEDGED);
         assertEquals(new WriteConcern(org.mongodb.WriteConcern.FSYNCED), WriteConcern.FSYNCED);
         assertEquals(new WriteConcern(org.mongodb.WriteConcern.JOURNALED), WriteConcern.JOURNALED);
-        assertEquals(new WriteConcern(org.mongodb.WriteConcern.REPLICA_ACKNOWLEDGED), WriteConcern.REPLICA_ACKNOWLEDGED);
+        assertEquals(new WriteConcern(org.mongodb.WriteConcern.REPLICA_ACKNOWLEDGED),
+                    WriteConcern.REPLICA_ACKNOWLEDGED);
         assertEquals(new WriteConcern("majority"), WriteConcern.MAJORITY);
 
         assertEquals(WriteConcern.ERRORS_IGNORED, WriteConcern.NONE);
@@ -124,7 +124,8 @@ public class WriteConcernTest {
         assertEquals(true, wc.raiseNetworkErrors());
         assertEquals("dc1", wc.getWObject());
         assertEquals(new BasicDBObject("getlasterror", 1).append("w", "dc1").
-                append("wtimeout", 10).append("fsync", true).append("j", true), wc.getCommand());
+                                                                            append("wtimeout", 10).append("fsync", true)
+                                                         .append("j", true), wc.getCommand());
 
         wc = new WriteConcern(-1, 10, false, true, true);
         assertEquals(false, wc.fsync());
@@ -168,7 +169,8 @@ public class WriteConcernTest {
     public void testContinueOnErrorForInsert() {
         assertTrue(WriteConcern.ACKNOWLEDGED.continueOnErrorForInsert(true).getContinueOnErrorForInsert());
         assertFalse(new WriteConcern(1, 0, false, false, true).continueOnErrorForInsert(
-                false).getContinueOnErrorForInsert());
+                                                                                       false)
+                                                              .getContinueOnErrorForInsert());
     }
 
     @Test
