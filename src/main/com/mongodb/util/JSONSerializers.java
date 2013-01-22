@@ -1,12 +1,12 @@
 /**
  *      Copyright (C) 2012 10gen Inc.
- *  
+ *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
  *   You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *   Unless required by applicable law or agreed to in writing, software
  *   distributed under the License is distributed on an "AS IS" BASIS,
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -403,8 +403,8 @@ public class JSONSerializers {
         public void serialize(Object obj, StringBuilder buf) {
             BSONTimestamp t = (BSONTimestamp) obj;
             BasicDBObject temp = new BasicDBObject();
-            temp.put("$t", Integer.valueOf(t.getTime()));
-            temp.put("$i", Integer.valueOf(t.getInc()));
+            temp.put("t", Integer.valueOf(t.getTime()));
+            temp.put("i", Integer.valueOf(t.getInc()));
             BasicDBObject timestampObj = new BasicDBObject();
             timestampObj.put("$timestamp", temp);
             serializer.serialize(timestampObj, buf);
@@ -419,7 +419,7 @@ public class JSONSerializers {
         }
 
         @Override
-        public void serialize(Object obj,  StringBuilder buf) {
+        public void serialize(Object obj, StringBuilder buf) {
             Date d = (Date) obj;
             serializer.serialize(
                     new BasicDBObject("$date", d.getTime()), buf);
@@ -461,7 +461,7 @@ public class JSONSerializers {
 
         @Override
         public void serialize(Object obj, StringBuilder buf) {
-            serialize((byte[]) obj, (byte) 0,  buf);
+            serialize((byte[]) obj, (byte) 0, buf);
         }
 
     }
