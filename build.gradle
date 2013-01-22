@@ -71,7 +71,6 @@ subprojects {
 
     checkstyle {
         configFile = new File("$configDir/checkstyle.xml")
-        ignoreFailures = true
     }
 
     findbugs {
@@ -217,12 +216,6 @@ project(':bson') {
             pom.dependencies.removeAll { true }
         }
     }
-
-    checkstyle {
-        configFile = new File("$configDir/checkstyle.xml")
-        ignoreFailures = false
-    }
-
 }
 
 project(':driver') {
@@ -286,11 +279,6 @@ project(':driver') {
             pom.dependencies.removeAll { true }
         }
     }
-
-    checkstyle {
-        configFile = new File("$configDir/checkstyle.xml")
-        ignoreFailures = false
-    }
 }
 
 project(':driver-compat') {
@@ -345,6 +333,9 @@ project(':driver-compat') {
         }
     }
 
+    checkstyle {
+        ignoreFailures = true
+    }
 }
 
 project(':morphia') {
@@ -371,5 +362,9 @@ project(':morphia') {
                 }
             }
         }
+    }
+
+    checkstyle {
+        ignoreFailures = true
     }
 }
