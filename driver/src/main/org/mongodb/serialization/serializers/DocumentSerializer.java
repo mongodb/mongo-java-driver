@@ -89,7 +89,7 @@ public class DocumentSerializer implements Serializer<Document> {
         else if (value instanceof Map) {
             serializeMap(bsonWriter, (Map<String, Object>) value);
         }
-        else if (value instanceof Iterable) {
+        else if (value instanceof Iterable<?>) {
             serializeIterable(bsonWriter, (Iterable) value);
         }
         // TODO: Is this a good idea to allow byte[] to be treated all special?
@@ -114,7 +114,7 @@ public class DocumentSerializer implements Serializer<Document> {
         bsonWriter.writeEndDocument();
     }
 
-    private void serializeIterable(final BSONWriter bsonWriter, final Iterable iterable) {
+    private void serializeIterable(final BSONWriter bsonWriter, final Iterable<?> iterable) {
         bsonWriter.writeStartArray();
         for (final Object cur : iterable) {
             writeValue(bsonWriter, cur);
@@ -163,9 +163,9 @@ public class DocumentSerializer implements Serializer<Document> {
     }
 
     @SuppressWarnings("unchecked")
-    private List readArray(final BSONReader reader) {
+    private List<Object> readArray(final BSONReader reader) {
         reader.readStartArray();
-        final List list = new ArrayList();  // TODO: figure out a way to change concrete class
+        final List<Object> list = new ArrayList<Object>();  // TODO: figure out a way to change concrete class
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             list.add(readValue(reader, null));
         }
@@ -182,7 +182,7 @@ public class DocumentSerializer implements Serializer<Document> {
         return primitiveSerializers;
     }
 
-    protected Serializer getDocumentDeserializerForField(final String fieldName) {
+    protected Serializer<Document> getDocumentDeserializerForField(final String fieldName) {
         return this;
     }
 }

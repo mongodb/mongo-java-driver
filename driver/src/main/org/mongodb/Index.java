@@ -28,16 +28,16 @@ public class Index implements ConvertibleToDocument {
     private final String name;
     private final Document keys = new Document();
 
-    public Index(final Key... keys) {
-        for (final Key key : keys) {
+    public Index(final Key<?>... keys) {
+        for (final Key<?> key : keys) {
             addKey(key);
         }
         unique = false;
         name = generateIndexName();
     }
 
-    public Index(final String name, final boolean unique, final Key... keys) {
-        for (final Key key : keys) {
+    public Index(final String name, final boolean unique, final Key<?>... keys) {
+        for (final Key<?> key : keys) {
             addKey(key);
         }
         this.unique = unique;
@@ -76,7 +76,7 @@ public class Index implements ConvertibleToDocument {
         return indexDetails;
     }
 
-    private void addKey(final Key key) {
+    private void addKey(final Key<?> key) {
         keys.append(key.getFieldName(), key.getValue());
     }
 

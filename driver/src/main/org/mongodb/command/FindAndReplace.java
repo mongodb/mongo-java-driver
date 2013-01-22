@@ -23,14 +23,14 @@ import org.mongodb.operation.MongoFindAndReplace;
 
 import static org.mongodb.command.CommandDocumentTemplates.getFindAndModify;
 
-public final class FindAndReplace extends MongoCommand {
+public final class FindAndReplace<T> extends MongoCommand {
 
-    public FindAndReplace(final MongoCollection collection, final MongoFindAndReplace findAndReplace) {
+    public FindAndReplace(final MongoCollection<T> collection, final MongoFindAndReplace<T> findAndReplace) {
         super(asCommandDocument(findAndReplace, collection.getName()));
     }
 
-    private static CommandDocument asCommandDocument(final MongoFindAndReplace findAndReplace,
-                                                     final String collectionName) {
+    private static <T> CommandDocument asCommandDocument(final MongoFindAndReplace<T> findAndReplace,
+                                                         final String collectionName) {
         final CommandDocument cmd = getFindAndModify(findAndReplace, collectionName);
         // TODO: I don't think this will work, as we don't have a Class<T> to make sure that serialization works
         // properly

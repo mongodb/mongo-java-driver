@@ -23,14 +23,14 @@ import org.mongodb.operation.MongoFindAndUpdate;
 
 import static org.mongodb.command.CommandDocumentTemplates.getFindAndModify;
 
-public final class FindAndUpdate extends MongoCommand {
+public final class FindAndUpdate<T> extends MongoCommand {
 
-    public FindAndUpdate(final MongoCollection collection, final MongoFindAndUpdate findAndUpdate) {
+    public FindAndUpdate(final MongoCollection<T> collection, final MongoFindAndUpdate<T> findAndUpdate) {
         super(asCommandDocument(findAndUpdate, collection.getName()));
     }
 
-    private static CommandDocument asCommandDocument(final MongoFindAndUpdate findAndUpdate,
-                                                     final String collectionName) {
+    private static <T> CommandDocument asCommandDocument(final MongoFindAndUpdate<T> findAndUpdate,
+                                                         final String collectionName) {
         final CommandDocument cmd = getFindAndModify(findAndUpdate, collectionName);
         cmd.put("update", findAndUpdate.getUpdateOperations());
         return cmd;

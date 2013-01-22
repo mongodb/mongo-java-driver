@@ -16,11 +16,11 @@
 
 package org.mongodb.operation;
 
-public class MongoFindAndUpdate extends MongoFindAndModify {
+public class MongoFindAndUpdate<T> extends MongoFindAndModify {
     private MongoUpdateOperations updateOperations;
 
     //CHECKSTYLE:OFF
-    public MongoFindAndUpdate updateWith(final MongoUpdateOperations updateOperations) {
+    public MongoFindAndUpdate<T> updateWith(final MongoUpdateOperations updateOperations) {
         this.updateOperations = updateOperations;
         return this;
     }
@@ -31,31 +31,31 @@ public class MongoFindAndUpdate extends MongoFindAndModify {
     }
 
     @Override
-    public MongoFindAndUpdate where(final MongoQueryFilter filter) {
+    public MongoFindAndUpdate<T> where(final MongoQueryFilter filter) {
         super.where(filter);
         return this;
     }
 
     @Override
-    public MongoFindAndUpdate select(final MongoFieldSelector selector) {
+    public MongoFindAndUpdate<T> select(final MongoFieldSelector selector) {
         super.select(selector);
         return this;
     }
 
     @Override
-    public MongoFindAndUpdate sortBy(final MongoSortCriteria sortCriteria) {
+    public MongoFindAndUpdate<T> sortBy(final MongoSortCriteria sortCriteria) {
         super.sortBy(sortCriteria);
         return this;
     }
 
     @Override
-    public MongoFindAndUpdate returnNew(final boolean returnNew) {
+    public MongoFindAndUpdate<T> returnNew(final boolean returnNew) {
         super.returnNew(returnNew);
         return this;
     }
 
     @Override
-    public MongoFindAndUpdate upsert(final boolean upsert) {
+    public MongoFindAndUpdate<T> upsert(final boolean upsert) {
         super.upsert(upsert);
         return this;
     }

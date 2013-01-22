@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.serialization.serializers;
@@ -21,7 +20,7 @@ import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.mongodb.serialization.Serializer;
 
-public class NullSerializer implements Serializer {
+public class NullSerializer implements Serializer<Object> {
     @Override
     public void serialize(final BSONWriter bsonWriter, final Object value) {
         bsonWriter.writeNull();
@@ -34,7 +33,7 @@ public class NullSerializer implements Serializer {
     }
 
     @Override
-    public Class getSerializationClass() {
+    public Class<Object> getSerializationClass() {
         return null;
     }
 }

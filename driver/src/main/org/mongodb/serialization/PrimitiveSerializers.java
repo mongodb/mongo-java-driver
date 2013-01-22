@@ -44,11 +44,15 @@ import java.util.Map;
 /**
  * Holder for all the serializer mappings.
  */
+// Suspect that the rawtypes warnings are telling us something that we haven't done cleanly
+// we should address these
+@SuppressWarnings("rawtypes")
 public final class PrimitiveSerializers implements Serializer<Object> {
-    private Map<Class, Serializer> classSerializerMap = new HashMap<Class, Serializer>();
-    private Map<BsonType, Serializer> bsonTypeSerializerMap = new HashMap<BsonType, Serializer>();
+    private Map<Class, Serializer<?>> classSerializerMap = new HashMap<Class, Serializer<?>>();
+    private Map<BsonType, Serializer<?>> bsonTypeSerializerMap = new HashMap<BsonType, Serializer<?>>();
 
-    private PrimitiveSerializers(final Map<Class, Serializer> classSerializerMap, final Map<BsonType, Serializer> bsonTypeSerializerMap) {
+    private PrimitiveSerializers(final Map<Class, Serializer<?>> classSerializerMap,
+                                 final Map<BsonType, Serializer<?>> bsonTypeSerializerMap) {
         this.classSerializerMap = classSerializerMap;
         this.bsonTypeSerializerMap = bsonTypeSerializerMap;
     }
@@ -64,7 +68,7 @@ public final class PrimitiveSerializers implements Serializer<Object> {
             serializer = classSerializerMap.get(value.getClass());
         }
         if (serializer == null) {
-            throw new MongoException("No serializer for class " + value.getClass().getName());
+            throw new MongoException("No serializer for class " + (value != null ? value.getClass().getName() : "with null value"));
         }
         serializer.serialize(writer, value);  // TODO: unchecked call
     }
@@ -95,28 +99,28 @@ public final class PrimitiveSerializers implements Serializer<Object> {
     // TODO: find a proper way to do this...
     public static PrimitiveSerializers createDefault() {
         return builder()
-                .objectIdSerializer(new ObjectIdSerializer())
-                .integerSerializer(new IntegerSerializer())
-                .longSerializer(new LongSerializer())
-                .stringSerializer(new StringSerializer())
-                .doubleSerializer(new DoubleSerializer())
-                .binarySerializer(new BinarySerializer())
-                .dateSerializer(new DateSerializer())
-                .timestampSerializer(new TimestampSerializer())
-                .booleanSerializer(new BooleanSerializer())
-                .patternSerializer(new PatternSerializer())
-                .nullSerializer(new NullSerializer())
-                .otherSerializer(new FloatSerializer())
-                .otherSerializer(new ShortSerializer())
-                .otherSerializer(new ByteSerializer())
-                .otherSerializer(new ByteArraySerializer())
-                .build();
+               .objectIdSerializer(new ObjectIdSerializer())
+               .integerSerializer(new IntegerSerializer())
+               .longSerializer(new LongSerializer())
+               .stringSerializer(new StringSerializer())
+               .doubleSerializer(new DoubleSerializer())
+               .binarySerializer(new BinarySerializer())
+               .dateSerializer(new DateSerializer())
+               .timestampSerializer(new TimestampSerializer())
+               .booleanSerializer(new BooleanSerializer())
+               .patternSerializer(new PatternSerializer())
+               .nullSerializer(new NullSerializer())
+               .otherSerializer(new FloatSerializer())
+               .otherSerializer(new ShortSerializer())
+               .otherSerializer(new ByteSerializer())
+               .otherSerializer(new ByteArraySerializer())
+               .build();
     }
 
 
     public static class Builder {
-        private final Map<Class, Serializer> classSerializerMap = new HashMap<Class, Serializer>();
-        private final Map<BsonType, Serializer> bsonTypeSerializerMap = new HashMap<BsonType, Serializer>();
+        private final Map<Class, Serializer<?>> classSerializerMap = new HashMap<Class, Serializer<?>>();
+        private final Map<BsonType, Serializer<?>> bsonTypeSerializerMap = new HashMap<BsonType, Serializer<?>>();
 
         public Builder() {
         }
@@ -184,6 +188,7 @@ public final class PrimitiveSerializers implements Serializer<Object> {
 
         /**
          * Used to register one-way serializers.  Ignored for deserialization.
+         *
          * @param serializer
          * @return this
          */
@@ -197,7 +202,7 @@ public final class PrimitiveSerializers implements Serializer<Object> {
         }
 
 
-        private void registerSerializer(final BsonType bsonType, final Serializer serializer) {
+        private void registerSerializer(final BsonType bsonType, final Serializer<?> serializer) {
             bsonTypeSerializerMap.put(bsonType, serializer);
             classSerializerMap.put(serializer.getSerializationClass(), serializer);
         }

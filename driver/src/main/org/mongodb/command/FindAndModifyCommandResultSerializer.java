@@ -20,6 +20,8 @@ import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
+//TODO: think these warnings mean we've got our types all wrong
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class FindAndModifyCommandResultSerializer<T> extends DocumentSerializer {
 
     private final Serializer<T> serializer;

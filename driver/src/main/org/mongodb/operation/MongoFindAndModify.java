@@ -16,9 +16,6 @@
 
 package org.mongodb.operation;
 
-/**
- *
- */
 public abstract class MongoFindAndModify extends MongoQuery {
     private MongoQueryFilter filter;
     private MongoFieldSelector selector;
