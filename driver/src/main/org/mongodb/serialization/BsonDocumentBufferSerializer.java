@@ -47,8 +47,8 @@ public class BsonDocumentBufferSerializer implements CollectibleSerializer<BsonD
     private final BufferPool<ByteBuffer> bufferPool;
     private final PrimitiveSerializers primitiveSerializers;
 
-    public BsonDocumentBufferSerializer(BufferPool<ByteBuffer> bufferPool,
-                                        PrimitiveSerializers primitiveSerializers) {
+    public BsonDocumentBufferSerializer(final BufferPool<ByteBuffer> bufferPool,
+                                        final PrimitiveSerializers primitiveSerializers) {
         this.bufferPool = bufferPool;
         this.primitiveSerializers = primitiveSerializers;
     }
@@ -63,7 +63,8 @@ public class BsonDocumentBufferSerializer implements CollectibleSerializer<BsonD
         try {
             BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutput(bufferPool));
             binaryWriter.pipe(reader);
-            final BufferExposingByteArrayOutputStream byteArrayOutputStream = new BufferExposingByteArrayOutputStream(binaryWriter.getBuffer().size());
+            final BufferExposingByteArrayOutputStream byteArrayOutputStream =
+                    new BufferExposingByteArrayOutputStream(binaryWriter.getBuffer().size());
             binaryWriter.getBuffer().pipe(byteArrayOutputStream);
             return new BsonDocumentBuffer(byteArrayOutputStream.getInternalBytes());
         } catch (IOException e) {
@@ -95,8 +96,8 @@ public class BsonDocumentBufferSerializer implements CollectibleSerializer<BsonD
     }
 
     // Just so we don't have to copy the buffer
-    static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
-        BufferExposingByteArrayOutputStream(int size) {
+    private     static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
+        BufferExposingByteArrayOutputStream(final int size) {
             super(size);
         }
 

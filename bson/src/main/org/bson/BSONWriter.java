@@ -578,7 +578,7 @@ public abstract class BSONWriter implements Closeable {
         closed = true;
     }
 
-    public void pipe(BSONReader reader) {
+    public void pipe(final BSONReader reader) {
         pipeDocument(reader);
     }
 

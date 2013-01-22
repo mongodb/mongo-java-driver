@@ -334,8 +334,7 @@ public class BSONBinaryReader extends BSONReader {
         }
 
         int skip;
-        switch (getCurrentBsonType())
-        {
+        switch (getCurrentBsonType()) {
             case ARRAY:
                 skip = readSize() - 4;
                 break;

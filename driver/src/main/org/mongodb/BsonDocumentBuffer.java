@@ -20,16 +20,31 @@ package org.mongodb;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+/**
+ * A simple wrapper around a byte array that is the representation of a single BSON document.
+ */
 public class BsonDocumentBuffer {
-    private byte[] bytes;
+    private final byte[] bytes;
 
-    public BsonDocumentBuffer(byte[] bytes) {
+    /**
+     * Constructs a new instance with the given byte array.  Note that it does not make a copy
+     * of the array, so do not modify it after passing it to this constructor.
+     *
+     * @param bytes the bytes representing a BSON document.
+     */
+    public BsonDocumentBuffer(final byte[] bytes) {
         if (bytes == null) {
             throw new IllegalArgumentException("bytes can not be null");
         }
         this.bytes = bytes;
     }
 
+    /**
+     * Returns a ByteBuffer that wraps the byte array, withe the proper byte order.  Any changes
+     * made to this ByteBuffer will be reflected in the underlying byte array owned by this instance.
+     *
+     * @return a byte buffer that wraps the byte array owned by this instance.
+     */
     public ByteBuffer getBuffer() {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.order(ByteOrder.LITTLE_ENDIAN);

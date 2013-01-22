@@ -56,8 +56,8 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     @Override
-    protected void backpatchSize(final int size, final int additionalOffset) {
-        writeInt(getPosition() - size - additionalOffset, size);
+    protected void backpatchSize(final int messageSize, final int additionalOffset) {
+        writeInt(getPosition() - messageSize - additionalOffset, messageSize);
     }
 
     @Override
