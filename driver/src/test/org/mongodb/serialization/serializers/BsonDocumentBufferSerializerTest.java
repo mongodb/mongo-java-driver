@@ -37,7 +37,7 @@ import static org.junit.Assert.assertNull;
 
 public class BsonDocumentBufferSerializerTest extends MongoClientTestBase {
 
-    BsonDocumentBufferSerializer serializer =
+    private BsonDocumentBufferSerializer serializer =
             new BsonDocumentBufferSerializer(new PowerOfTwoByteBufferPool(24), PrimitiveSerializers.createDefault());
 
     @Test
