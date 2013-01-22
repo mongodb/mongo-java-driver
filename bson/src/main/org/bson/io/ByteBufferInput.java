@@ -116,6 +116,11 @@ public class ByteBufferInput implements InputBuffer {
         readUntilNullByte();
     }
 
+    @Override
+    public void skip(final int numBytes) {
+        buffer.position(buffer.position() + numBytes);
+    }
+
     private int readBigEndianInt() {
         int x = 0;
         x |= (0xFF & buffer.get()) << 24;

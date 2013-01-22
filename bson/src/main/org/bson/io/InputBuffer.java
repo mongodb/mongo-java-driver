@@ -40,4 +40,6 @@ public interface InputBuffer {
     String readCString();
 
     void skipCString();
+
+    void skip(int numBytes);
 }
