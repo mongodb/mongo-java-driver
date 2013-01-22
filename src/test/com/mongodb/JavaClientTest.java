@@ -717,12 +717,13 @@ public class JavaClientTest extends TestCase {
         // First add the user
         Mongo m = new Mongo(new MongoURI("mongodb://localhost"));
         DB db = m.getDB("admin");
-        DBCollection u = db.getCollection( "system.users" );
+        DBCollection usersCollection = db.getCollection( "system.users" );
         try {
-            assertEquals( 0 , u.find().count() );
+            usersCollection.remove(new BasicDBObject());
+            assertEquals(0, usersCollection.find().count());
 
-            db.addUser( "xx" , "e".toCharArray() );
-            assertEquals( 1 , u.find().count() );
+            db.addUser("xx", "e".toCharArray());
+            assertEquals(1, usersCollection.find().count());
         }
         finally {
             m.close();
@@ -746,12 +747,13 @@ public class JavaClientTest extends TestCase {
         // First add the user
         Mongo m = new Mongo(new MongoURI("mongodb://localhost"));
         DB db = m.getDB(cleanupDB);
-        DBCollection u = db.getCollection( "system.users" );
+        DBCollection usersCollection = db.getCollection( "system.users" );
         try {
-            assertEquals( 0 , u.find().count() );
+            usersCollection.remove(new BasicDBObject());
+            assertEquals(0, usersCollection.find().count());
 
-            db.addUser( "xx" , "e".toCharArray() );
-            assertEquals( 1 , u.find().count() );
+            db.addUser("xx", "e".toCharArray());
+            assertEquals(1, usersCollection.find().count());
         }
         finally {
             m.close();
@@ -775,12 +777,13 @@ public class JavaClientTest extends TestCase {
         // First add the user
         Mongo m = new Mongo(new MongoURI("mongodb://localhost"));
         DB db = m.getDB(cleanupDB);
-        DBCollection u = db.getCollection( "system.users" );
+        DBCollection usersCollection = db.getCollection( "system.users" );
         try {
-            assertEquals( 0 , u.find().count() );
+            usersCollection.remove(new BasicDBObject());
+            assertEquals(0, usersCollection.find().count());
 
-            db.addUser( "xx" , "e".toCharArray() );
-            assertEquals( 1 , u.find().count() );
+            db.addUser("xx", "e".toCharArray());
+            assertEquals(1, usersCollection.find().count());
         }
         finally {
             m.close();

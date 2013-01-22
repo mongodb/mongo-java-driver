@@ -42,7 +42,7 @@ public class StrongestAuthenticationProtocolExample {
 
         MongoCredentials credentials = new MongoCredentials(user, pwd.toCharArray(), MongoCredentials.Protocol.STRONGEST, db);
 
-        MongoClient mongoClient = new MongoClient(new MongoAuthority(new ServerAddress(server), credentials), new MongoClientOptions.Builder().build());
+        MongoClient mongoClient = new MongoClient(MongoAuthority.direct(new ServerAddress(server), credentials), new MongoClientOptions.Builder().build());
 
         DB testDB = mongoClient.getDB(db);
         testDB.getCollection("test").insert(new BasicDBObject());

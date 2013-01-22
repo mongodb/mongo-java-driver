@@ -190,7 +190,7 @@ public class Mongo {
      * @throws MongoException
      */
     public Mongo( ServerAddress addr , MongoOptions options ) {
-        this(new MongoAuthority(addr), options);
+        this(MongoAuthority.direct(addr), options);
     }
 
     /**
@@ -221,7 +221,7 @@ public class Mongo {
      */
     @Deprecated
     public Mongo( ServerAddress left , ServerAddress right , MongoOptions options ) {
-        this(new MongoAuthority(Arrays.asList(left, right)), options);
+        this(MongoAuthority.dynamicSet(Arrays.asList(left, right)), options);
     }
 
     /**
@@ -260,7 +260,7 @@ public class Mongo {
      * @throws MongoException 
      */
     public Mongo( List<ServerAddress> seeds , MongoOptions options ) {
-        this(new MongoAuthority(seeds), options);
+        this(MongoAuthority.dynamicSet(seeds), options);
     }
 
     /**
@@ -298,10 +298,10 @@ public class Mongo {
         _applyMongoOptions();
 
         if ( authority.isDirect() ){
-            _connector = new DBTCPConnector( this , authority.getServerAddress() );
+            _connector = new DBTCPConnector( this );
         }
         else {
-            _connector = new DBTCPConnector( this , authority.getServerAddresses() );
+            _connector = new DBTCPConnector( this  );
         }
 
         _connector.start();
@@ -599,13 +599,13 @@ public class Mongo {
 
     private static MongoAuthority getMongoAuthorityFromURI(final MongoURI uri) throws UnknownHostException {
         if ( uri.getHosts().size() == 1 ){
-            return new MongoAuthority(new ServerAddress(uri.getHosts().get(0)), uri.getCredentials());
+            return MongoAuthority.direct(new ServerAddress(uri.getHosts().get(0)), uri.getCredentials());
         }
         else {
             List<ServerAddress> replicaSetSeeds = new ArrayList<ServerAddress>(uri.getHosts().size());
             for ( String host : uri.getHosts() )
                 replicaSetSeeds.add( new ServerAddress( host ) );
-            return new MongoAuthority(replicaSetSeeds, uri.getCredentials());
+            return MongoAuthority.dynamicSet(replicaSetSeeds, uri.getCredentials());
         }
     }
 
@@ -769,5 +769,14 @@ public class Mongo {
                 "authority=" + _authority +
                 ", options=" + _options +
                 '}';
+    }
+
+    /**
+     * Gets the authority, which includes the connection type, the server address(es), and the credentials.
+
+     * @return the authority
+     */
+    public MongoAuthority getAuthority() {
+        return _authority;
     }
 }

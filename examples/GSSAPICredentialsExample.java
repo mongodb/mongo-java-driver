@@ -67,7 +67,7 @@ public class GSSAPICredentialsExample {
         System.out.println();
 
         MongoClient mongoClient = new MongoClient(
-                new MongoAuthority(new ServerAddress(server),
+                MongoAuthority.direct(new ServerAddress(server),
                         new MongoCredentials(user, MongoCredentials.Protocol.GSSAPI)),
                 new MongoClientOptions.Builder().socketKeepAlive(true).socketTimeout(30000).build());
         DB testDB = mongoClient.getDB(databaseName);

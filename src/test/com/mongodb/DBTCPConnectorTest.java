@@ -41,7 +41,7 @@ public class DBTCPConnectorTest extends TestCase {
 
     @BeforeMethod
     public void beforeMethod() throws UnknownHostException {
-        _connector = new DBTCPConnector(cleanupMongo, Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1:27018")));
+        _connector = new DBTCPConnector(cleanupMongo);
         _connector.start();
     }
 

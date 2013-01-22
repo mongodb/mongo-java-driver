@@ -21,7 +21,6 @@ package com.mongodb;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -33,60 +32,29 @@ public class DBTCPConnector implements DBConnector {
 
     /**
      * @param m
-     * @param addr
      * @throws MongoException
      */
-    public DBTCPConnector( Mongo m , ServerAddress addr ){
+    public DBTCPConnector( Mongo m  ) {
         _mongo = m;
         _portHolder = new DBPortPool.Holder( m._options );
-        _checkAddress( addr );
-
-        setMasterAddress(addr);
-        _allHosts = null;
-    }
-
-    /**
-     * @param m
-     * @param all
-     * @throws MongoException
-     */
-    public DBTCPConnector( Mongo m , ServerAddress ... all ){
-        this(m, Arrays.asList(all));
-    }
-
-    /**
-     * @param m
-     * @param all
-     * @throws MongoException
-     */
-    public DBTCPConnector( Mongo m , List<ServerAddress> all ) {
-        _mongo = m;
-        _portHolder = new DBPortPool.Holder( m._options );
-        _checkAddress( all );
-
-        _allHosts = new ArrayList<ServerAddress>( all ); // make a copy so it can't be modified
-
-        _connectionStatus = new DynamicConnectionStatus(m, _allHosts);
+        MongoAuthority.Type type = m.getAuthority().getType();
+        if (type == MongoAuthority.Type.DIRECT) {
+            setMasterAddress(m.getAuthority().getServerAddress());
+        } else if (type == MongoAuthority.Type.REPLICA_SET) {
+            _connectionStatus = new ReplicaSetStatus(m, m.getAuthority().getServerAddresses());
+        } else if (type == MongoAuthority.Type.MONGOS_SET) {
+            _connectionStatus = new MongosStatus(m, m.getAuthority().getServerAddresses());
+        } else if (type == MongoAuthority.Type.DYNAMIC_SET) {
+            _connectionStatus = new DynamicConnectionStatus(m, m.getAuthority().getServerAddresses());
+        } else {
+            throw new IllegalArgumentException("Unsupported authority type: " + type);
+        }
     }
 
     public void start() {
         if (_connectionStatus != null) {
             _connectionStatus.start();
         }
-    }
-
-    private static ServerAddress _checkAddress( ServerAddress addr ){
-        if ( addr == null )
-            throw new NullPointerException( "address can't be null" );
-        return addr;
-    }
-
-    private static ServerAddress _checkAddress( List<ServerAddress> addrs ){
-        if ( addrs == null )
-            throw new NullPointerException( "addresses can't be null" );
-        if ( addrs.size() == 0 )
-            throw new IllegalArgumentException( "need to specify at least 1 address" );
-        return addrs.get(0);
     }
 
     /**
@@ -325,7 +293,7 @@ public class DBTCPConnector implements DBConnector {
      * @return
      */
     public List<ServerAddress> getAllAddress() {
-        return _allHosts;
+        return _mongo._authority.getServerAddresses();
     }
 
     /**
@@ -350,18 +318,23 @@ public class DBTCPConnector implements DBConnector {
     }
 
     public ReplicaSetStatus getReplicaSetStatus() {
-        if (_connectionStatus == null) {
+        if (_connectionStatus instanceof ReplicaSetStatus) {
+            return (ReplicaSetStatus) _connectionStatus;
+        } else if (_connectionStatus instanceof DynamicConnectionStatus) {
+            return ((DynamicConnectionStatus) _connectionStatus).asReplicaSetStatus();
+        } else {
             return null;
         }
-        return _connectionStatus.asReplicaSetStatus();
     }
 
     // This call can block if it's not yet known.
     // Be careful when modifying this method, as this method is using the fact that _isMongosDirectConnection
     // is of type Boolean and is null when uninitialized.
     boolean isMongosConnection() {
-        if (_connectionStatus != null) {
-            return _connectionStatus.asMongosStatus() != null;
+        if (_connectionStatus instanceof MongosStatus) {
+            return true;
+        } else if (_connectionStatus instanceof DynamicConnectionStatus) {
+            return ((DynamicConnectionStatus) _connectionStatus).asMongosStatus() != null;
         }
 
         if (_isMongosDirectConnection == null) {
@@ -574,7 +547,7 @@ public class DBTCPConnector implements DBConnector {
     public String debugString(){
         StringBuilder buf = new StringBuilder( "DBTCPConnector: " );
         if ( _connectionStatus != null ) {
-            buf.append( "set : " ).append( _allHosts );
+            buf.append( "set : " ).append( _mongo._authority.getServerAddresses() );
         } else {
             ServerAddress master = getAddress();
             buf.append( master ).append( " " ).append( master != null ? master.getSocketAddress() : null );
@@ -658,8 +631,7 @@ public class DBTCPConnector implements DBConnector {
     private volatile DBPortPool _masterPortPool;
     private final Mongo _mongo;
     private DBPortPool.Holder _portHolder;
-    private final List<ServerAddress> _allHosts;
-    private DynamicConnectionStatus _connectionStatus;
+    private ConnectionStatus _connectionStatus;
 
     private final AtomicBoolean _closed = new AtomicBoolean(false);
 
