@@ -658,6 +658,7 @@ public abstract class BSONWriter implements Closeable {
                 break;
             case MAX_KEY:
                 writeMinKey();
+                break;
             default:
                 throw new IllegalArgumentException("unhandled BSON type: " + reader.getCurrentBsonType());
         }
