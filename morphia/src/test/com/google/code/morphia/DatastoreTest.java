@@ -116,9 +116,9 @@ public class DatastoreTest extends TestBase {
             }
             prePersistWithParamAndReturn = true;
             return null;
-//            DBObject retObj = new BasicDBObject((Map) dbObj);
-//            retObj.put("prePersistWithParamAndReturn", true);
-//            return retObj;
+            //            DBObject retObj = new BasicDBObject((Map) dbObj);
+            //            retObj.put("prePersistWithParamAndReturn", true);
+            //            return retObj;
         }
 
         @SuppressWarnings("unused")
@@ -133,7 +133,7 @@ public class DatastoreTest extends TestBase {
 
         @PostPersist
         void postPersistWithParam(final DBObject dbObj) {
-//            dbObj.put("postPersistWithParam", true);
+            //            dbObj.put("postPersistWithParam", true);
             postPersistWithParam = true;
             if (!dbObj.containsField(Mapper.ID_KEY)) {
                 throw new RuntimeException("missing " + Mapper.ID_KEY);
@@ -178,7 +178,7 @@ public class DatastoreTest extends TestBase {
                 throw new RuntimeException("already called");
             }
             postLoadWithParam = true;
-//            dbObj.put("postLoadWithParam", true);
+            //            dbObj.put("postLoadWithParam", true);
         }
     }
 
@@ -200,7 +200,7 @@ public class DatastoreTest extends TestBase {
     @SuppressWarnings("unused")
     @Test
     public void testMorphiaDS() throws Exception {
-//        Datastore ds = new Morphia().createDatastore(mongo);
+        //        Datastore ds = new Morphia().createDatastore(mongo);
         final Datastore ds = new Morphia().createDatastore(mongo, "test");
     }
 
@@ -395,6 +395,6 @@ public class DatastoreTest extends TestBase {
     @Test(expected = AuthenticationException.class)
     public void testAuthentication() throws Exception {
         morphia.createDatastore(mongo, db.getName(), "SomeWeirdUserName" + System.nanoTime(),
-                                ("SomeWeirdPassword" + System.nanoTime()).toCharArray());
+                               ("SomeWeirdPassword" + System.nanoTime()).toCharArray());
     }
 }

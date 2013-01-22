@@ -68,17 +68,17 @@ public class DuplicatePropertyNameTest extends TestBase {
     @Test
     public void testDuplicatedPropertyName() throws Exception {
         new AssertedFailure(ConstraintViolationException.class) {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 morphia.map(DuplicatedPropertyName.class);
             }
         };
         new AssertedFailure(ConstraintViolationException.class) {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 morphia.map(DuplicatedPropertyName2.class);
             }
         };
         new AssertedFailure(ConstraintViolationException.class) {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 morphia.map(Extends.class);
             }
         };

@@ -81,9 +81,10 @@ public class QueryImplCloneTest extends TestBase {
     @Test
     public void testQueryClone() throws Exception {
         final Query<E1> q = ds.createQuery(E1.class).field("i").equal(5).limit(5).
-                filter("a", "value_a").filter("b", "value_b")
-                .offset(5).batchSize(10).disableCursorTimeout().hintIndex("a")
-                .order("a");
+                                                                                 filter("a", "value_a")
+                              .filter("b", "value_b")
+                              .offset(5).batchSize(10).disableCursorTimeout().hintIndex("a")
+                              .order("a");
         q.disableValidation().filter("foo", "bar");
         Assert.assertTrue(sameState(q, q.clone()));
     }

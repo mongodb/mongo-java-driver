@@ -50,5 +50,4 @@ public class VersionAnnotationTest extends TestBase {
         ds.save(b2);
     }
 
-
 }

@@ -33,7 +33,7 @@ public class CGLibLazyProxyFactoryTest extends ProxyTestBase {
         e.setFoo("bar");
         final Key<E> key = ds.save(e);
         E eProxy = new CGLibLazyProxyFactory().createProxy(E.class, key,
-                                                           new DefaultDatastoreProvider());
+                                                          new DefaultDatastoreProvider());
 
         assertNotFetched(eProxy);
         Assert.assertEquals("bar", eProxy.getFoo());

@@ -65,13 +65,13 @@ public class MapKeyDifferentFromStringTest extends TestBase {
         morphia.map(MapWithWrongKeyType1.class);
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 morphia.map(MapWithWrongKeyType2.class);
             }
         };
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 morphia.map(MapWithWrongKeyType3.class);
             }
         };

@@ -69,7 +69,7 @@ public class VersionTest extends TestBase {
     @Test
     public void testInvalidVersionUse() throws Exception {
         new AssertedFailure(ConstraintViolationException.class) {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 morphia.map(InvalidVersionUse.class);
             }
         };
@@ -105,7 +105,7 @@ public class VersionTest extends TestBase {
 
 
         new AssertedFailure(ConcurrentModificationException.class) {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 ds.save(a1);
             }
         };
@@ -122,7 +122,7 @@ public class VersionTest extends TestBase {
         ds.save(a2);
 
         new AssertedFailure(ConcurrentModificationException.class) {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 ds.save(a1);
             }
         };
@@ -140,7 +140,7 @@ public class VersionTest extends TestBase {
         ds.save(a2);
 
         new AssertedFailure(ConcurrentModificationException.class) {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 ds.merge(a1);
             }
         };
@@ -149,7 +149,7 @@ public class VersionTest extends TestBase {
     @Test
     public void testVersionFieldNameContribution() throws Exception {
         final MappedField mappedFieldByJavaField = morphia.getMapper().getMappedClass(ALong.class)
-                .getMappedFieldByJavaField("v");
+                                                          .getMappedFieldByJavaField("v");
         Assert.assertEquals("versionNameContributedByAnnotation", mappedFieldByJavaField.getNameToStore());
     }
 

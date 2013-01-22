@@ -19,7 +19,6 @@ package com.google.code.morphia.issue173;
 import com.google.code.morphia.converters.SimpleValueConverter;
 import com.google.code.morphia.converters.TypeConverter;
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -53,7 +52,7 @@ public class CalendarConverter extends TypeConverter implements SimpleValueConve
     }
 
     @Override
-    public Object decode(final Class type, final Object o, final MappedField mf) throws MappingException {
+    public Object decode(final Class type, final Object o, final MappedField mf) {
         if (o == null) {
             return null;
         }

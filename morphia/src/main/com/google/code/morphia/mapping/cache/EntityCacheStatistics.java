@@ -24,8 +24,8 @@ public class EntityCacheStatistics {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + ": " + entities + " entities, " + hits + " hits, " +
-                "" + misses + " misses.";
+        return this.getClass().getSimpleName() + ": " + entities + " entities, " + hits + " hits, " + misses
+               + " misses.";
     }
 
     public void reset() {

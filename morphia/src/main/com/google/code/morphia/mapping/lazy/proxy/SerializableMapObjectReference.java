@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class SerializableMapObjectReference extends AbstractReference implements ProxiedEntityReferenceMap {
 
     /**
@@ -69,10 +69,7 @@ public class SerializableMapObjectReference extends AbstractReference implements
 
     @Override
     protected void beforeWriteObject() {
-        if (!__isFetched()) {
-            return;
-        }
-        else {
+        if (__isFetched()) {
             syncKeys();
             ((Map) object).clear();
         }

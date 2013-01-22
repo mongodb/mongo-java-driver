@@ -31,7 +31,7 @@ public class JDKLoggerBench implements I {
     private static Logr logger;
     private static final JDKLoggerBench LOGGER_BENCH = new JDKLoggerBench();
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
 
         System.err.println("When Log-Level is beyond interest\n---------------------------------------------");
         Logger.getLogger(JDKLoggerBench.class.getName()).setLevel(Level.WARNING);

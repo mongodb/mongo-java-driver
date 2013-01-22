@@ -23,7 +23,8 @@ import com.google.code.morphia.annotations.Property;
 public class PhoneNumber {
 
     public enum Type {
-        PHONE, FAX
+        PHONE,
+        FAX
     }
 
     @Property

@@ -30,7 +30,7 @@ import java.io.IOException;
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class SerializedObjectConverter extends TypeConverter {
     @Override
     protected boolean isSupported(final Class c, final MappedField optionalExtraInfo) {
@@ -43,15 +43,14 @@ public class SerializedObjectConverter extends TypeConverter {
     }
 
     @Override
-    public Object decode(final Class targetClass, final Object fromDBObject,
-                         final MappedField f) throws MappingException {
+    public Object decode(final Class targetClass, final Object fromDBObject, final MappedField f) {
         if (fromDBObject == null) {
             return null;
         }
 
         if (!((fromDBObject instanceof Binary) || (fromDBObject instanceof byte[]))) {
             throw new MappingException("The stored data is not a DBBinary or byte[] instance for " + f.getFullName()
-                                               + " ; it is a " + fromDBObject.getClass().getName());
+                                       + " ; it is a " + fromDBObject.getClass().getName());
         }
 
         try {

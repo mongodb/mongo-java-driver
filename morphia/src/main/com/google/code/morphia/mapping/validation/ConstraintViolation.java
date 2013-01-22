@@ -24,7 +24,11 @@ import com.google.code.morphia.mapping.MappedField;
  */
 public class ConstraintViolation {
     public enum Level {
-        MINOR, INFO, WARNING, SEVERE, FATAL
+        MINOR,
+        INFO,
+        WARNING,
+        SEVERE,
+        FATAL
     }
 
     private final MappedClass clazz;
@@ -40,7 +44,7 @@ public class ConstraintViolation {
     }
 
     public ConstraintViolation(final Level level, final MappedClass clazz, final Class<? extends ClassConstraint>
-            validator, final String message) {
+                                                                           validator, final String message) {
         this.level = level;
         this.clazz = clazz;
         this.message = message;
@@ -49,9 +53,9 @@ public class ConstraintViolation {
 
     public String render() {
         return String.format("%s complained about %s : %s",
-                             validator.getSimpleName(),
-                             getPrefix(),
-                             message);
+                            validator.getSimpleName(),
+                            getPrefix(),
+                            message);
     }
 
     public Level getLevel() {

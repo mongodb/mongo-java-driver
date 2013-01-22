@@ -250,7 +250,7 @@ public class ExampleServiceTest {
                 LOGGER.warning("Could not loadOrCreate at this time, please try again later");
                 // TODO change to service exception.
                 throw new RuntimeException(
-                        "Could not loadOrCreate at this time, please try again later");
+                                          "Could not loadOrCreate at this time, please try again later");
             }
             return bookingDetail;
         }
@@ -262,22 +262,8 @@ public class ExampleServiceTest {
             final BasicDAO<BookingDetail, ObjectId> dao = new BasicDAO<BookingDetail, ObjectId>(BookingDetail.class,
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                                                mongoConnectionManager.getDb());
+                                                                                               mongoConnectionManager
+                                                                                               .getDb());
             final Key<BookingDetail> result = ((AdvancedDatastore) dao.getDatastore()).insert(bookingDetail);
             dao.ensureIndexes();
             return result;
@@ -285,14 +271,16 @@ public class ExampleServiceTest {
 
         public BookingDetail load(final Key<BookingDetail> key) {
             final BasicDAO<BookingDetail, ObjectId> dao =
-                    new BasicDAO<BookingDetail, ObjectId>(BookingDetail.class, mongoConnectionManager.getDb());
+            new BasicDAO<BookingDetail, ObjectId>(BookingDetail.class, mongoConnectionManager.getDb());
             return dao.getDatastore().getByKey(BookingDetail.class, key);
         }
 
         public Key<BookingDetail> update(final BookingDetail bd) {
 
             final BasicDAO<BookingDetail, ObjectId> dao = new BasicDAO<BookingDetail, ObjectId>(
-                    BookingDetail.class, mongoConnectionManager.getDb());
+                                                                                               BookingDetail.class,
+                                                                                               mongoConnectionManager
+                                                                                               .getDb());
 
             return dao.getDatastore().save(bd);
         }
@@ -311,7 +299,7 @@ public class ExampleServiceTest {
                     for (final BookingSlot slot : loadedBookingDetail.getBookingSlot()) {
 
                         if (slot.getStartTime().equals(startTime)
-                                && slot.getCustomer() == null) {
+                            && slot.getCustomer() == null) {
                             availableSlots.add(slot);
                         }
                     }
@@ -325,7 +313,7 @@ public class ExampleServiceTest {
                     // TODO Logic to choose consultant.
                     availableSlots.get(0).setCustomer(customer);
                     LOGGER.log(Level.FINE, "Book for customer: " + customer.getName() + " version: "
-                            + loadedBookingDetail.getVersion() + " ...");
+                                           + loadedBookingDetail.getVersion() + " ...");
                     update(loadedBookingDetail);
                     LOGGER.log(Level.FINE, "Booked.");
 
@@ -343,7 +331,7 @@ public class ExampleServiceTest {
                 LOGGER.severe("Could not make a booking at this time, please try again later.");
 
                 throw new RuntimeException(
-                        "Could not make booking at this time, please try again later");
+                                          "Could not make booking at this time, please try again later");
             }
         }
 

@@ -48,7 +48,7 @@ public class MultipleVersionsTest extends TestBase {
     @Test
     public void testCheck() {
         new AssertedFailure(ConstraintViolationException.class) {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 morphia.map(Fail1.class);
             }
         };

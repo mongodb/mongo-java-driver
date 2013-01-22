@@ -103,14 +103,14 @@ public class DAOTest extends TestBase {
         assertEquals(1, hotelDAO.count(hotelDAO.createQuery().field("phoneNumbers").sizeEq(1)));
         assertEquals(2, hotelDAO.count(hotelDAO.createQuery().filter("stars", 4).order("address.address_street")));
         assertEquals(borg.getName(), hotelDAO.find(hotelDAO.createQuery().filter("stars",
-                                                                                 4).order("address.address_street"))
-                .iterator().next().getName());
+                                                                                4).order("address.address_street"))
+                                             .iterator().next().getName());
         assertEquals(hilton.getName(),
-                     hotelDAO.find(hotelDAO.createQuery().filter("stars", 4).order("-address.address_street"))
-                             .iterator().next().getName());
+                    hotelDAO.find(hotelDAO.createQuery().filter("stars", 4).order("-address.address_street"))
+                            .iterator().next().getName());
         assertEquals(hilton.getName(),
-                     hotelDAO.find(hotelDAO.createQuery().filter("stars", 4).order("stars, -address.address_street"))
-                             .iterator().next().getName());
+                    hotelDAO.find(hotelDAO.createQuery().filter("stars", 4).order("stars, -address.address_street"))
+                            .iterator().next().getName());
 
         hotelDAO.deleteById(borg.getId());
         assertEquals(1, hotelDAO.count());

@@ -51,5 +51,4 @@ public class Translation implements Serializable {
         this.title = title;
     }
 
-
 }

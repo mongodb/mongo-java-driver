@@ -53,23 +53,164 @@ import java.util.Set;
  *
  * @author Scott Hernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class MappedField {
     private static final Logr log = MorphiaLoggerFactory.get(MappedField.class);
     // The Annotations to look for when reflecting on the field (stored in the mappingAnnotations)
     @SuppressWarnings("CanBeFinal")
     public static List<Class<? extends Annotation>> interestingAnnotations = new ArrayList<Class<? extends
-            Annotation>>(Arrays.asList(
-            Serialized.class,
-            Indexed.class,
-            Property.class,
-            Reference.class,
-            Embedded.class,
-            Id.class,
-            Version.class,
-            ConstructorArgs.class,
-            AlsoLoad.class,
-            NotSaved.class));
+                                                                                                 Annotation>>(Arrays
+                                                                                                              .asList(
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                     Serialized.class,
+                                                                                                                     Indexed.class,
+                                                                                                                     Property.class,
+                                                                                                                     Reference.class,
+                                                                                                                     Embedded.class,
+                                                                                                                     Id.class,
+                                                                                                                     Version.class,
+                                                                                                                     ConstructorArgs.class,
+                                                                                                                     AlsoLoad.class,
+                                                                                                                     NotSaved.class));
 
     protected Class persistedClass;
     protected Field field; // the field :)
@@ -78,7 +219,7 @@ public class MappedField {
     // Annotations that have been found relevant to mapping
     @SuppressWarnings("CanBeFinal")
     protected Map<Class<? extends Annotation>, Annotation> foundAnnotations = new HashMap<Class<? extends
-            Annotation>, Annotation>();
+                                                                                                Annotation>, Annotation>();
     protected Type subType = null; // the type (T) for the Collection<T>/T[]/Map<?,T>
     protected Type mapKeyType = null; // the type (T) for the Map<T,?>
     protected boolean isSingleValue = true; // indicates the field is a single value
@@ -130,9 +271,9 @@ public class MappedField {
         if (!isMongoType && !isSingleValue && (subType == null || subType.equals(Object.class))) {
             if (log.isWarningEnabled()) {
                 log.warning("The multi-valued field '"
-                                    + getFullName()
-                                    + "' is a possible heterogenous collection. It cannot be verified. Please declare" +
-                                    " a valid type to get rid of this warning. " + subType);
+                            + getFullName()
+                            + "' is a possible heterogenous collection. It cannot be verified. Please declare" +
+                            " a valid type to get rid of this warning. " + subType);
             }
             isMongoType = true;
         }
@@ -140,8 +281,8 @@ public class MappedField {
 
     private void discoverMultivalued() {
         if (realType.isArray() ||
-                Collection.class.isAssignableFrom(realType) ||
-                Map.class.isAssignableFrom(realType)) {
+            Collection.class.isAssignableFrom(realType) ||
+            Map.class.isAssignableFrom(realType)) {
 
             isSingleValue = false;
 
@@ -157,8 +298,8 @@ public class MappedField {
             }
 
             // get the subtype T, T[]/List<T>/Map<?,T>; subtype of Long[], List<Long> is Long
-            subType = (realType.isArray()) ? realType.getComponentType() : ReflectionUtils.getParameterizedType
-                    (field, (isMap) ? 1 : 0);
+            subType = (realType.isArray()) ? realType.getComponentType()
+                                           : ReflectionUtils.getParameterizedType(field, (isMap) ? 1 : 0);
 
             if (isMap) {
                 mapKeyType = ReflectionUtils.getParameterizedType(field, 0);
@@ -179,7 +320,7 @@ public class MappedField {
         }
 
         if (tv != null) {
-//			type = ReflectionUtils.getTypeArgument(persistedClass, tv);
+            //			type = ReflectionUtils.getTypeArgument(persistedClass, tv);
             final Class typeArgument = ReflectionUtils.getTypeArgument(persistedClass, tv);
             if (typeArgument != null) {
                 type = typeArgument;
@@ -194,7 +335,7 @@ public class MappedField {
         if (Object.class.equals(realType) && (tv != null || pt != null)) {
             if (log.isWarningEnabled()) {
                 log.warning("Parameterized types are treated as untyped Objects. See field '" + field.getName() + "' " +
-                                    "on " + field.getDeclaringClass());
+                            "on " + field.getDeclaringClass());
             }
         }
 
@@ -296,7 +437,7 @@ public class MappedField {
                 }
                 else {
                     throw new MappingException(String.format("Found more than one field from @AlsoLoad %s",
-                                                             getLoadNames()));
+                                                            getLoadNames()));
                 }
             }
         }
@@ -329,9 +470,8 @@ public class MappedField {
     }
 
     /**
-     * Indicates whether the annotation is present in the mapping (does not check the java field annotations,
-     * just the ones
-     * discovered)
+     * Indicates whether the annotation is present in the mapping (does not check the java field annotations, just the
+     * ones discovered)
      */
     public boolean hasAnnotation(final Class ann) {
         return foundAnnotations.containsKey(ann);
@@ -533,7 +673,7 @@ public class MappedField {
     /**
      * Returns the value stored in the java field
      */
-    public Object getFieldValue(final Object classInst) throws IllegalArgumentException {
+    public Object getFieldValue(final Object classInst) {
         try {
             field.setAccessible(true);
             return field.get(classInst);
@@ -545,7 +685,7 @@ public class MappedField {
     /**
      * Sets the value for the java field
      */
-    public void setFieldValue(final Object classInst, final Object value) throws IllegalArgumentException {
+    public void setFieldValue(final Object classInst, final Object value) {
         try {
             field.setAccessible(true);
             field.set(classInst, value);

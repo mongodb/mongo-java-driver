@@ -72,7 +72,7 @@ public class LazyWithMissingReferentTest extends TestBase {
 
         new AssertedFailure(MappingException.class) {
             @Override
-            protected void thisMustFail() throws Throwable {
+            protected void thisMustFail() {
                 ds.createQuery(E.class).asList();
             }
         };
@@ -88,7 +88,7 @@ public class LazyWithMissingReferentTest extends TestBase {
 
         new AssertedFailure(MappingException.class) {
             @Override
-            protected void thisMustFail() throws Throwable {
+            protected void thisMustFail() {
                 ds.createQuery(ELazy.class).asList();
             }
         };
@@ -106,7 +106,7 @@ public class LazyWithMissingReferentTest extends TestBase {
 
         new AssertedFailure() {
             @Override
-            protected void thisMustFail() throws Throwable {
+            protected void thisMustFail() {
                 // reference must be resolved for this
                 x.e2.foo();
             }

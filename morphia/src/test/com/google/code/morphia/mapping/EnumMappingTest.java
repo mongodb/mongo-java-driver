@@ -55,8 +55,7 @@ public class EnumMappingTest extends TestBase {
         Assert.assertEquals(1, ds.createQuery(ContainsEnum.class).field("foo").equal(Foo.BAR).countAll());
         Assert.assertEquals(1, ds.createQuery(ContainsEnum.class).filter("foo", Foo.BAR).countAll());
         Assert.assertEquals(1, ds.createQuery(ContainsEnum.class).disableValidation().filter("foo",
-                                                                                             Foo.BAR).countAll());
+                                                                                            Foo.BAR).countAll());
     }
-
 
 }

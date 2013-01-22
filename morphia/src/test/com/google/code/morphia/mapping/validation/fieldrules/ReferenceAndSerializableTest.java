@@ -45,7 +45,7 @@ public class ReferenceAndSerializableTest extends TestBase {
     @Test
     public void testCheck() {
         new AssertedFailure(ConstraintViolationException.class) {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 morphia.map(E.class);
             }
 

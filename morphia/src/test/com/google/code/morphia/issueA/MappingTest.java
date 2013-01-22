@@ -68,5 +68,4 @@ public class MappingTest extends TestBase {
         private ClassLevelTwo value;
     }
 
-
 }

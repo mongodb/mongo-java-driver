@@ -103,7 +103,7 @@ public class MapImplTest extends TestBase {
         //check className in the map values.
 
         final BasicDBObject goo = (BasicDBObject) ((BasicDBObject) ds.getCollection(ContainsMapOfEmbeddedGoos.class)
-                .findOne().get("values")).get("first");
+                                                                     .findOne().get("values")).get("first");
         final boolean hasF = goo.containsField(Mapper.CLASS_NAME_FIELDNAME);
         assertTrue(!hasF);
     }
@@ -118,7 +118,9 @@ public class MapImplTest extends TestBase {
         ds.save(cmoei);
         //check className in the map values.
         final BasicDBObject goo = (BasicDBObject) ((BasicDBObject) ds.getCollection(
-                ContainsMapOfEmbeddedInterfaces.class).findOne().get("values")).get("first");
+                                                                                   ContainsMapOfEmbeddedInterfaces
+                                                                                   .class)
+                                                                     .findOne().get("values")).get("first");
         final boolean hasF = goo.containsField(Mapper.CLASS_NAME_FIELDNAME);
         assertTrue(hasF);
     }
@@ -135,7 +137,9 @@ public class MapImplTest extends TestBase {
         ds.update(cmoei, ds.createUpdateOperations(ContainsMapOfEmbeddedInterfaces.class).set("values.second", g2));
         //check className in the map values.
         final BasicDBObject goo = (BasicDBObject) ((BasicDBObject) ds.getCollection(
-                ContainsMapOfEmbeddedInterfaces.class).findOne().get("values")).get("second");
+                                                                                   ContainsMapOfEmbeddedInterfaces
+                                                                                   .class)
+                                                                     .findOne().get("values")).get("second");
         final boolean hasF = goo.containsField(Mapper.CLASS_NAME_FIELDNAME);
         assertTrue("className should be here.", hasF);
     }
@@ -153,7 +157,8 @@ public class MapImplTest extends TestBase {
         //check className in the map values.
 
         final BasicDBObject goo = (BasicDBObject) ((BasicDBObject) ds.getCollection(
-                ContainsMapOfEmbeddedGoos.class).findOne().get("values")).get("second");
+                                                                                   ContainsMapOfEmbeddedGoos.class)
+                                                                     .findOne().get("values")).get("second");
         final boolean hasF = goo.containsField(Mapper.CLASS_NAME_FIELDNAME);
         assertTrue("className should not be here.", !hasF);
     }

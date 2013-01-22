@@ -65,7 +65,7 @@ public class QueryTest extends TestBase {
         private ObjectId id;
         @Embedded
         private List<Keyword> keywords = Arrays.asList(new Keyword("california"), new Keyword("neveda"),
-                                                       new Keyword("arizona"));
+                                                      new Keyword("arizona"));
 
         public PhotoWithKeywords() {
         }
@@ -224,14 +224,14 @@ public class QueryTest extends TestBase {
     }
 
 
-//    @Test
-//    public void testWhereCodeWScopeQuery() throws Exception {
-//        ds.save(new PhotoWithKeywords());
-//        CodeWScope hasKeyword = new CodeWScope("for (kw in this.keywords) { if(kw.keyword == kwd) return true; }
-// return false;", new BasicDBObject("kwd","california"));
-//        CodeWScope hasKeyword = new CodeWScope("this.keywords != null", new BasicDBObject());
-//        assertNotNull(ds.find(PhotoWithKeywords.class).where(hasKeyword).get());
-//    }
+    //    @Test
+    //    public void testWhereCodeWScopeQuery() throws Exception {
+    //        ds.save(new PhotoWithKeywords());
+    //        CodeWScope hasKeyword = new CodeWScope("for (kw in this.keywords) { if(kw.keyword == kwd) return true; }
+    // return false;", new BasicDBObject("kwd","california"));
+    //        CodeWScope hasKeyword = new CodeWScope("this.keywords != null", new BasicDBObject());
+    //        assertNotNull(ds.find(PhotoWithKeywords.class).where(hasKeyword).get());
+    //    }
 
     @Test
     public void testWhereStringQuery() throws Exception {
@@ -239,26 +239,26 @@ public class QueryTest extends TestBase {
         assertNotNull(ds.find(PhotoWithKeywords.class).where("this.keywords != null").get());
     }
 
-//    @Test
-//    public void testWhereWithInvalidStringQuery() throws Exception {
-//        ds.save(new PhotoWithKeywords());
-//        CodeWScope hasKeyword = new CodeWScope("keywords != null", new BasicDBObject());
-//        try {
-//            // must fail
-//            assertNotNull(ds.find(PhotoWithKeywords.class).where(hasKeyword.getCode()).get());
-//            Assert.fail("Invalid javascript magically isn't invalid anymore?");
-//        } catch (MongoInternalException e) {
-//        } catch (MongoException e) {
-//            // fine
-//        }
-//
-//    }
+    //    @Test
+    //    public void testWhereWithInvalidStringQuery() throws Exception {
+    //        ds.save(new PhotoWithKeywords());
+    //        CodeWScope hasKeyword = new CodeWScope("keywords != null", new BasicDBObject());
+    //        try {
+    //            // must fail
+    //            assertNotNull(ds.find(PhotoWithKeywords.class).where(hasKeyword.getCode()).get());
+    //            Assert.fail("Invalid javascript magically isn't invalid anymore?");
+    //        } catch (MongoInternalException e) {
+    //        } catch (MongoException e) {
+    //            // fine
+    //        }
+    //
+    //    }
 
     @Test
     public void testRegexQuery() throws Exception {
         ds.save(new PhotoWithKeywords());
         assertNotNull(ds.find(PhotoWithKeywords.class).disableValidation().filter("keywords.keyword",
-                                                                                  Pattern.compile("california")).get());
+                                                                                 Pattern.compile("california")).get());
         assertNull(ds.find(PhotoWithKeywords.class, "keywords.keyword", Pattern.compile("blah")).get());
     }
 
@@ -288,9 +288,9 @@ public class QueryTest extends TestBase {
     public void testSnapshottedQuery() throws Exception {
         ds.delete(ds.find(PhotoWithKeywords.class));
         ds.save(new PhotoWithKeywords("scott", "hernandez"), new PhotoWithKeywords("scott", "hernandez"),
-                new PhotoWithKeywords("scott", "hernandez"));
+               new PhotoWithKeywords("scott", "hernandez"));
         final Iterator<PhotoWithKeywords> it = ds.find(PhotoWithKeywords.class, "keywords.keyword",
-                                                       "scott").enableSnapshotMode().batchSize(2).iterator();
+                                                      "scott").enableSnapshotMode().batchSize(2).iterator();
         ds.save(new PhotoWithKeywords("1", "2"), new PhotoWithKeywords("3", "4"), new PhotoWithKeywords("5", "6"));
 
         PhotoWithKeywords pwkLoaded = null;
@@ -309,9 +309,9 @@ public class QueryTest extends TestBase {
     public void testNonSnapshottedQuery() throws Exception {
         ds.delete(ds.find(PhotoWithKeywords.class));
         ds.save(new PhotoWithKeywords("scott", "hernandez"), new PhotoWithKeywords("scott", "hernandez"),
-                new PhotoWithKeywords("scott", "hernandez"));
+               new PhotoWithKeywords("scott", "hernandez"));
         final Iterator<PhotoWithKeywords> it = ds.find(PhotoWithKeywords.class).enableSnapshotMode().batchSize(2)
-                .iterator();
+                                                 .iterator();
         ds.save(new PhotoWithKeywords("1", "2"), new PhotoWithKeywords("3", "4"), new PhotoWithKeywords("5", "6"));
 
         PhotoWithKeywords pwkLoaded = null;
@@ -335,13 +335,13 @@ public class QueryTest extends TestBase {
         ds.save(pwk);
 
         PhotoWithKeywords pwkLoaded = ds.find(PhotoWithKeywords.class, "keywords.keyword",
-                                              "scott").retrievedFields(true, "_id").get();
+                                             "scott").retrievedFields(true, "_id").get();
         assertNotNull(pwkLoaded);
         Assert.assertFalse(pwkLoaded.keywords.contains("scott"));
         Assert.assertEquals(3, pwkLoaded.keywords.size());
 
         pwkLoaded = ds.find(PhotoWithKeywords.class, "keywords.keyword", "scott").retrievedFields(false,
-                                                                                                  "keywords").get();
+                                                                                                 "keywords").get();
         assertNotNull(pwkLoaded);
         Assert.assertFalse(pwkLoaded.keywords.contains("scott"));
         Assert.assertEquals(3, pwkLoaded.keywords.size());
@@ -373,8 +373,8 @@ public class QueryTest extends TestBase {
         final AdvancedDatastore ads = (AdvancedDatastore) ds;
         final Query<PhotoWithKeywords> q = ads.createQuery(PhotoWithKeywords.class);
         q.or(
-                q.criteria("keywords.keyword").equal("scott"),
-                q.criteria("keywords.keyword").equal("ralph"));
+            q.criteria("keywords.keyword").equal("scott"),
+            q.criteria("keywords.keyword").equal("ralph"));
 
         Assert.assertEquals(1, q.countAll());
     }
@@ -387,8 +387,8 @@ public class QueryTest extends TestBase {
         final AdvancedDatastore ads = (AdvancedDatastore) ds;
         final Query<PhotoWithKeywords> q = ads.createQuery(PhotoWithKeywords.class);
         q.and(
-                q.or(q.criteria("keywords.keyword").equal("scott")),
-                q.or(q.criteria("keywords.keyword").equal("hernandez")));
+             q.or(q.criteria("keywords.keyword").equal("scott")),
+             q.or(q.criteria("keywords.keyword").equal("hernandez")));
 
         Assert.assertEquals(1, q.countAll());
         final QueryImpl<PhotoWithKeywords> qi = (QueryImpl<PhotoWithKeywords>) q;
@@ -405,8 +405,8 @@ public class QueryTest extends TestBase {
         final AdvancedDatastore ads = (AdvancedDatastore) ds;
         final Query<PhotoWithKeywords> q = ads.createQuery(PhotoWithKeywords.class);
         q.and(
-                q.criteria("keywords.keyword").hasThisOne("scott"),
-                q.criteria("keywords.keyword").hasAnyOf(Arrays.asList("scott", "hernandez")));
+             q.criteria("keywords.keyword").hasThisOne("scott"),
+             q.criteria("keywords.keyword").hasAnyOf(Arrays.asList("scott", "hernandez")));
 
         Assert.assertEquals(1, q.countAll());
         final QueryImpl<PhotoWithKeywords> qi = (QueryImpl<PhotoWithKeywords>) q;
@@ -481,10 +481,10 @@ public class QueryTest extends TestBase {
         UsesCustomIdObject ucioLoaded = null;
 
         //TODO: Add back if/when query by example for embedded fields is supported (require dot 'n each field).
-//        CustomId exId = new CustomId();
-//        exId.type = cId.type;
-//        ucioLoaded = ds.find(UsesCustomIdObject.class, "_id", exId).get();
-//        assertNotNull(ucioLoaded);
+        //        CustomId exId = new CustomId();
+        //        exId.type = cId.type;
+        //        ucioLoaded = ds.find(UsesCustomIdObject.class, "_id", exId).get();
+        //        assertNotNull(ucioLoaded);
 
         final UsesCustomIdObject ex = new UsesCustomIdObject();
         ex.text = ucio.text;
@@ -510,15 +510,106 @@ public class QueryTest extends TestBase {
 
         ds.save(pwk1, pwk2);
         final PhotoWithKeywords pwkScott = ds.find(PhotoWithKeywords.class).
-                field("keywords").hasThisElement(new Keyword("Scott")).get();
+                                                                           field("keywords")
+                                             .hasThisElement(new Keyword("Scott")).get();
         assertNotNull(pwkScott);
         //TODO add back when $and is done (> 1.5)
-//        PhotoWithKeywords pwkScottSarah = ds.find(PhotoWithKeywords.class).field("keywords").
-//                hasThisElement(new Keyword[]{new Keyword("Scott"), new Keyword("Joe")}).get();
-//        assertNotNull(pwkScottSarah);
+        //        PhotoWithKeywords pwkScottSarah = ds.find(PhotoWithKeywords.class).field("keywords").
+        //                hasThisElement(new Keyword[]{new Keyword("Scott"), new Keyword("Joe")}).get();
+        //        assertNotNull(pwkScottSarah);
 
         final PhotoWithKeywords pwkBad = ds.find(PhotoWithKeywords.class).field("keywords").
-                hasThisElement(new Keyword("Randy")).get();
+                                                                                           hasThisElement(new Keyword(
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                     "Randy"))
+                                           .get();
         assertNull(pwkBad);
     }
 
@@ -634,11 +725,11 @@ public class QueryTest extends TestBase {
     @Test
     public void testSimpleSort() throws Exception {
         final Rectangle[] rects = {
-                new Rectangle(1, 10),
-                new Rectangle(3, 8),
-                new Rectangle(6, 10),
-                new Rectangle(10, 10),
-                new Rectangle(10, 1),
+                                  new Rectangle(1, 10),
+                                  new Rectangle(3, 8),
+                                  new Rectangle(6, 10),
+                                  new Rectangle(10, 10),
+                                  new Rectangle(10, 1),
         };
         for (final Rectangle rect : rects) {
             ds.save(rect);
@@ -656,11 +747,11 @@ public class QueryTest extends TestBase {
     @Test
     public void testAliasedFieldSort() throws Exception {
         final Rectangle[] rects = {
-                new Rectangle(1, 10),
-                new Rectangle(3, 8),
-                new Rectangle(6, 10),
-                new Rectangle(10, 10),
-                new Rectangle(10, 1),
+                                  new Rectangle(1, 10),
+                                  new Rectangle(3, 8),
+                                  new Rectangle(6, 10),
+                                  new Rectangle(10, 10),
+                                  new Rectangle(10, 1),
         };
         for (final Rectangle rect : rects) {
             ds.save(rect);
@@ -678,11 +769,11 @@ public class QueryTest extends TestBase {
     @Test
     public void testCompoudSort() throws Exception {
         final Rectangle[] rects = {
-                new Rectangle(1, 10),
-                new Rectangle(3, 8),
-                new Rectangle(6, 10),
-                new Rectangle(10, 10),
-                new Rectangle(10, 1),
+                                  new Rectangle(1, 10),
+                                  new Rectangle(3, 8),
+                                  new Rectangle(6, 10),
+                                  new Rectangle(10, 10),
+                                  new Rectangle(10, 1),
         };
         for (final Rectangle rect : rects) {
             ds.save(rect);
@@ -702,10 +793,10 @@ public class QueryTest extends TestBase {
     @Test
     public void testQueryCount() throws Exception {
         final Rectangle[] rects = {new Rectangle(1, 10),
-                new Rectangle(1, 10),
-                new Rectangle(1, 10),
-                new Rectangle(10, 10),
-                new Rectangle(10, 10),
+                                   new Rectangle(1, 10),
+                                   new Rectangle(1, 10),
+                                   new Rectangle(10, 10),
+                                   new Rectangle(10, 10),
         };
         for (final Rectangle rect : rects) {
             ds.save(rect);
@@ -724,10 +815,10 @@ public class QueryTest extends TestBase {
     @Test
     public void testDeleteQuery() throws Exception {
         final Rectangle[] rects = {new Rectangle(1, 10),
-                new Rectangle(1, 10),
-                new Rectangle(1, 10),
-                new Rectangle(10, 10),
-                new Rectangle(10, 10),
+                                   new Rectangle(1, 10),
+                                   new Rectangle(1, 10),
+                                   new Rectangle(10, 10),
+                                   new Rectangle(10, 10),
         };
         for (final Rectangle rect : rects) {
             ds.save(rect);
@@ -749,11 +840,11 @@ public class QueryTest extends TestBase {
     @Test
     public void testRangeQuery() throws Exception {
         final Rectangle[] rects = {
-                new Rectangle(1, 10),
-                new Rectangle(4, 2),
-                new Rectangle(6, 10),
-                new Rectangle(8, 5),
-                new Rectangle(10, 4),
+                                  new Rectangle(1, 10),
+                                  new Rectangle(4, 2),
+                                  new Rectangle(6, 10),
+                                  new Rectangle(8, 5),
+                                  new Rectangle(10, 4),
         };
         for (final Rectangle rect : rects) {
             ds.save(rect);
@@ -768,11 +859,11 @@ public class QueryTest extends TestBase {
     @Test
     public void testComplexRangeQuery() throws Exception {
         final Rectangle[] rects = {
-                new Rectangle(1, 10),
-                new Rectangle(4, 2),
-                new Rectangle(6, 10),
-                new Rectangle(8, 5),
-                new Rectangle(10, 4),
+                                  new Rectangle(1, 10),
+                                  new Rectangle(4, 2),
+                                  new Rectangle(6, 10),
+                                  new Rectangle(8, 5),
+                                  new Rectangle(10, 4),
         };
         for (final Rectangle rect : rects) {
             ds.save(rect);
@@ -780,18 +871,18 @@ public class QueryTest extends TestBase {
 
         assertEquals(2, ds.getCount(ds.createQuery(Rectangle.class).filter("height >", 3).filter("height <", 8)));
         assertEquals(1, ds.getCount(ds.createQuery(Rectangle.class).filter("height >", 3).filter("height <",
-                                                                                                 8).filter("width",
-                                                                                                           10)));
+                                                                                                8).filter("width",
+                                                                                                         10)));
     }
 
     @Test
     public void testCombinationQuery() throws Exception {
         final Rectangle[] rects = {
-                new Rectangle(1, 10),
-                new Rectangle(4, 2),
-                new Rectangle(6, 10),
-                new Rectangle(8, 5),
-                new Rectangle(10, 4),
+                                  new Rectangle(1, 10),
+                                  new Rectangle(4, 2),
+                                  new Rectangle(6, 10),
+                                  new Rectangle(8, 5),
+                                  new Rectangle(10, 4),
         };
         for (final Rectangle rect : rects) {
             ds.save(rect);
@@ -801,28 +892,28 @@ public class QueryTest extends TestBase {
 
         q = ds.createQuery(Rectangle.class);
         q.and(
-                q.criteria("width").equal(10),
-                q.criteria("height").equal(1)
-        );
+             q.criteria("width").equal(10),
+             q.criteria("height").equal(1)
+             );
 
         assertEquals(1, ds.getCount(q));
 
         q = ds.createQuery(Rectangle.class);
         q.or(
-                q.criteria("width").equal(10),
-                q.criteria("height").equal(10)
-        );
+            q.criteria("width").equal(10),
+            q.criteria("height").equal(10)
+            );
 
         assertEquals(3, ds.getCount(q));
 
         q = ds.createQuery(Rectangle.class);
         q.or(
-                q.criteria("width").equal(10),
-                q.and(
-                        q.criteria("width").equal(5),
-                        q.criteria("height").equal(8)
-                )
-        );
+            q.criteria("width").equal(10),
+            q.and(
+                 q.criteria("width").equal(5),
+                 q.criteria("height").equal(8)
+                 )
+            );
 
         assertEquals(3, ds.getCount(q));
     }

@@ -57,7 +57,7 @@ public class MapperOptionsTest extends TestBase {
     }
 
     @Test
-    public void emptyListStoredWithOptions() throws Exception {
+    public void emptyListStoredWithOptions() {
         final HasList hl = new HasList();
 
         //Test default behavior

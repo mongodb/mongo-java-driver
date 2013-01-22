@@ -22,7 +22,7 @@ package com.google.code.morphia.mapping.lazy.proxy;
 import com.google.code.morphia.Key;
 import com.google.code.morphia.mapping.lazy.DatastoreProvider;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class SerializableEntityObjectReference extends AbstractReference implements ProxiedEntityReference {
     private static final long serialVersionUID = 1L;
     private final Key key;
@@ -44,8 +44,8 @@ public class SerializableEntityObjectReference extends AbstractReference impleme
         final Object entity = p.get().getByKey(referenceObjClass, key);
         if (entity == null) {
             throw new LazyReferenceFetchingException(
-                    "During the lifetime of the proxy, the Entity identified by '"
-                            + key + "' disappeared from the Datastore.");
+                                                    "During the lifetime of the proxy, the Entity identified by '"
+                                                    + key + "' disappeared from the Datastore.");
         }
         return entity;
     }

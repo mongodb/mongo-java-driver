@@ -23,6 +23,7 @@ import com.thoughtworks.proxy.toys.hotswap.HotSwappingInvoker;
 
 import java.lang.reflect.Method;
 
+@SuppressWarnings({ "rawtypes", "unchecked" })
 class NonFinalizingHotSwappingInvoker extends HotSwappingInvoker {
 
     public NonFinalizingHotSwappingInvoker(final Class[] types, final ProxyFactory proxyFactory,

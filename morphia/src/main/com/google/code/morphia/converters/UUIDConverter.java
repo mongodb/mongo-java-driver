@@ -20,7 +20,6 @@
 package com.google.code.morphia.converters;
 
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 
 import java.util.UUID;
 
@@ -30,9 +29,9 @@ import java.util.UUID;
  * @author stummb
  * @author scotthernandez
  */
-@SuppressWarnings({"rawtypes"})
+@SuppressWarnings("rawtypes")
 public class UUIDConverter extends TypeConverter implements
-        SimpleValueConverter {
+SimpleValueConverter {
 
     public UUIDConverter() {
         super(UUID.class);
@@ -44,7 +43,7 @@ public class UUIDConverter extends TypeConverter implements
     }
 
     public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo)
-            throws MappingException {
+    {
         final String uuidString = (String) fromDBObject;
         return uuidString == null ? null : UUID.fromString(uuidString);
     }

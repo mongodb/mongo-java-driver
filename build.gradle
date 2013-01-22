@@ -365,6 +365,7 @@ project(':morphia') {
     }
 
     checkstyle {
+        configFile = new File("$configDir/checkstyle-lite.xml")
         ignoreFailures = true
     }
 }

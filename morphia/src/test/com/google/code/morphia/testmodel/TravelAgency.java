@@ -54,5 +54,4 @@ public class TravelAgency extends TestEntity {
         this.name = name;
     }
 
-
 }

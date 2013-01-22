@@ -42,11 +42,11 @@ public class IdDoesNotMix extends FieldConstraint {
             if (mf.hasAnnotation(Reference.class) || mf.hasAnnotation(Embedded.class) || mf.hasAnnotation(Property
 
 
-
-
-                                                                                                                  .class)) {
-                ve.add(new ConstraintViolation(Level.FATAL, mc, mf, this.getClass(), mf.getFullName() + " is annotated as @"
-                        + Id.class.getSimpleName() + " and cannot be mixed with other annotations (like @Reference)"));
+                                                                                                          .class)) {
+                ve.add(new ConstraintViolation(Level.FATAL, mc, mf, this.getClass(),
+                                              mf.getFullName() + " is annotated as @"
+                                              + Id.class.getSimpleName()
+                                              + " and cannot be mixed with other annotations (like @Reference)"));
             }
         }
     }

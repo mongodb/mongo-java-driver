@@ -20,21 +20,19 @@
 package com.google.code.morphia.converters;
 
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  * @author scotthernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class CharArrayConverter extends TypeConverter implements SimpleValueConverter {
     public CharArrayConverter() {
         super(char[].class);
     }
 
     @Override
-    public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo)
-            throws MappingException {
+    public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo) {
         if (fromDBObject == null) {
             return null;
         }

@@ -40,21 +40,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Uwe Schaefer, (us@thomas-daily.de)
  * @author scotthernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class DefaultConverters {
-    private static final Logr log = MorphiaLoggerFactory.get(DefaultConverters.class);
+    private static final Logr LOG = MorphiaLoggerFactory.get(DefaultConverters.class);
 
     private final List<TypeConverter> untypedTypeEncoders = new LinkedList<TypeConverter>();
     private final Map<Class, List<TypeConverter>> tcMap = new ConcurrentHashMap<Class, List<TypeConverter>>();
-    private final List<Class<? extends TypeConverter>> registeredConverterClasses = new LinkedList<Class<? extends
-            TypeConverter>>();
+    private final List<Class<? extends TypeConverter>> registeredConverterClasses
+        = new LinkedList<Class<? extends TypeConverter>>();
 
     private Mapper mapr;
 
     public DefaultConverters() {
         // some converters are commented out since the pass-through converter is enabled, at the end of the list.
         // Re-enable them if that changes.
-//		addConverter(new PassthroughConverter(DBRef.class));
+        // addConverter(new PassthroughConverter(DBRef.class));
 
         //Pass-through DBObject or else the MapOfValuesConverter will process it.
         addConverter(new PassthroughConverter(DBObject.class, BasicDBObject.class));
@@ -139,7 +139,7 @@ public class DefaultConverters {
     private void addTypedConverter(final Class type, final TypeConverter tc) {
         if (tcMap.containsKey(type)) {
             tcMap.get(type).add(0, tc);
-            log.warning("Added duplicate converter for " + type + " ; " + tcMap.get(type));
+            LOG.warning("Added duplicate converter for " + type + " ; " + tcMap.get(type));
         }
         else {
             final ArrayList<TypeConverter> vals = new ArrayList<TypeConverter>();
@@ -159,9 +159,8 @@ public class DefaultConverters {
             try {
                 mf.setFieldValue(targetEntity, decodedValue);
             } catch (IllegalArgumentException e) {
-                throw new MappingException("Error setting value from converter (" +
-                                                   enc.getClass().getSimpleName() + ") for " + mf.getFullName() + " " +
-                                                   "to " + decodedValue);
+                throw new MappingException("Error setting value from converter (" + enc.getClass().getSimpleName()
+                                           + ") for " + mf.getFullName() + " to " + decodedValue);
             }
         }
     }
@@ -188,7 +187,7 @@ public class DefaultConverters {
 
         if (tcs != null) {
             if (tcs.size() > 1) {
-                log.warning("Duplicate converter for " + mf.getType() + ", returning first one from " + tcs);
+                LOG.warning("Duplicate converter for " + mf.getType() + ", returning first one from " + tcs);
             }
             return tcs.get(0);
         }
@@ -200,14 +199,14 @@ public class DefaultConverters {
         }
 
         throw new ConverterNotFoundException("Cannot find encoder for " + mf.getType() + " as need for "
-                                                     + mf.getFullName());
+                                             + mf.getFullName());
     }
 
     private TypeConverter getEncoder(final Class c) {
         final List<TypeConverter> tcs = tcMap.get(c);
         if (tcs != null) {
             if (tcs.size() > 1) {
-                log.warning("Duplicate converter for " + c + ", returning first one from " + tcs);
+                LOG.warning("Duplicate converter for " + c + ", returning first one from " + tcs);
             }
             return tcs.get(0);
         }

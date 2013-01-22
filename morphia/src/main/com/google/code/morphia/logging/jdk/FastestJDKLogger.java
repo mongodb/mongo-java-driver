@@ -127,5 +127,4 @@ public class FastestJDKLogger implements Logr {
         }
     }
 
-
 }

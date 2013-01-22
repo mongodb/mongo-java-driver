@@ -22,7 +22,6 @@ import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.converters.SimpleValueConverter;
 import com.google.code.morphia.converters.TypeConverter;
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 import com.mongodb.DBObject;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
@@ -44,7 +43,7 @@ public class EnumValueConverterTest extends TestBase {
 
         @Override
         public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo)
-                throws MappingException {
+        {
             if (fromDBObject == null) {
                 return null;
             }

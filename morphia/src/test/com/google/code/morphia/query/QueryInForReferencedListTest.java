@@ -82,7 +82,7 @@ public class QueryInForReferencedListTest extends TestBase {
         ds.save(hr);
 
         final List<HasRefs> res = ds.createQuery(HasRefs.class).field("refs")
-                .in(hr.refs.subList(1, 3)).asList();
+                                    .in(hr.refs.subList(1, 3)).asList();
         Assert.assertEquals(1, res.size());
     }
 

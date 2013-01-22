@@ -70,13 +70,13 @@ public class MapNotSerializableTest extends TestBase {
         morphia.map(Map1.class);
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 morphia.map(Map2.class);
             }
         };
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 morphia.map(Map3.class);
             }
         };

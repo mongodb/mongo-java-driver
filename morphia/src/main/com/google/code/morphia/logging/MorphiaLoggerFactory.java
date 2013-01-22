@@ -22,13 +22,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class MorphiaLoggerFactory {
     private static LogrFactory loggerFactory = null;
 
     private static final List<String> FACTORIES = new ArrayList(Arrays.asList(JDKLoggerFactory.class.getName(),
-                                                                              "com.google.code.morphia.logging.slf4j"
-                                                                                      + ".SLF4JLogrImplFactory"));
+                                                                             "com.google.code.morphia.logging.slf4j"
+                                                                             + ".SLF4JLogrImplFactory"));
 
     private static synchronized void init() {
         if (MorphiaLoggerFactory.loggerFactory == null) {
@@ -40,8 +40,8 @@ public class MorphiaLoggerFactory {
         for (final String f : MorphiaLoggerFactory.FACTORIES) {
             MorphiaLoggerFactory.loggerFactory = newInstance(f);
             if (MorphiaLoggerFactory.loggerFactory != null) {
-                loggerFactory.get(MorphiaLoggerFactory.class).info(
-                        "LoggerImplFactory set to " + loggerFactory.getClass().getName());
+                loggerFactory.get(MorphiaLoggerFactory.class)
+                             .info("LoggerImplFactory set to " + loggerFactory.getClass().getName());
                 return;
             }
         }

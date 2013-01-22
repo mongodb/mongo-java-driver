@@ -20,7 +20,6 @@
 package com.google.code.morphia.converters;
 
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 import com.google.code.morphia.utils.IterHelper;
 import com.google.code.morphia.utils.IterHelper.MapIterCallback;
 import com.google.code.morphia.utils.ReflectionUtils;
@@ -31,7 +30,7 @@ import java.util.Map;
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class MapOfValuesConverter extends TypeConverter {
     private final DefaultConverters converters;
 
@@ -51,7 +50,7 @@ public class MapOfValuesConverter extends TypeConverter {
 
     @Override
     public Object decode(final Class targetClass, final Object fromDBObject,
-                         final MappedField mf) throws MappingException {
+                         final MappedField mf) {
         if (fromDBObject == null) {
             return null;
         }

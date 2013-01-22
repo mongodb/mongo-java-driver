@@ -25,7 +25,6 @@ import com.google.code.morphia.converters.IntegerConverter;
 import com.google.code.morphia.converters.SimpleValueConverter;
 import com.google.code.morphia.converters.TypeConverter;
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
@@ -49,14 +48,13 @@ public class CustomConvertersTest extends TestBase {
         }
 
         @Override
-        public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo)
-                throws MappingException {
+        public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo) {
             if (fromDBObject == null) {
                 return null;
             }
             final IntegerConverter intConv = new IntegerConverter();
             final Integer i = (Integer) intConv.decode(targetClass, fromDBObject, optionalExtraInfo);
-            return new Character((char) i.intValue());
+            return (char) i.intValue();
         }
 
         @Override
@@ -88,9 +86,8 @@ public class CustomConvertersTest extends TestBase {
 
     /**
      * This test shows an issue with an <code>@Embedded</code> class A inheriting from an <code>@Embedded</code> class B
-     * that both have a Converter assigned (A has AConverter, B has BConverter). <p> When an object (here MyEntity)
-     * has a
-     * property/field of type A and is deserialized, the deserialization fails with a
+     * that both have a Converter assigned (A has AConverter, B has BConverter). <p> When an object (here MyEntity) has
+     * a property/field of type A and is deserialized, the deserialization fails with a
      * "com.google.code.morphia.mapping.MappingException: No usable constructor for A" . </p>
      */
 
@@ -157,7 +154,7 @@ public class CustomConvertersTest extends TestBase {
     private static class B {
 
         static class BConverter extends TypeConverter implements
-                SimpleValueConverter {
+        SimpleValueConverter {
 
             public BConverter() {
                 this(B.class);
@@ -167,11 +164,10 @@ public class CustomConvertersTest extends TestBase {
                 super(clazz);
             }
 
-            @SuppressWarnings({"rawtypes"})
+            @SuppressWarnings({ "rawtypes" })
             @Override
             public B decode(final Class targetClass, final Object fromDBObject,
-                            final MappedField optionalExtraInfo)
-                    throws MappingException {
+                            final MappedField optionalExtraInfo) {
                 if (fromDBObject == null) {
                     return null;
                 }
@@ -274,7 +270,7 @@ public class CustomConvertersTest extends TestBase {
         final MyEntity entity = new MyEntity(1l, new A(2));
         final DBObject dbObject = morphia.toDBObject(entity);
         assertEquals(BasicDBObjectBuilder.start("_id", 1l).add("a", 2l).get(),
-                     dbObject);
+                    dbObject);
         // fails with a
         // com.google.code.morphia.mapping.MappingException: No usable
         // constructor

@@ -46,7 +46,7 @@ public class LazyReferenceOnArrayTest extends TestBase {
         new AssertedFailure(ConstraintViolationException.class) {
 
             @Override
-            protected void thisMustFail() throws Throwable {
+            protected void thisMustFail() {
                 morphia.map(LazyOnArray.class);
             }
         };

@@ -68,7 +68,7 @@ import static org.junit.Assert.assertTrue;
  * @author Olafur Gauti Gudmundsson
  * @author Scott Hernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes", "unused"})
+@SuppressWarnings({ "unchecked", "rawtypes", "unused" })
 public class MappingTest extends TestBase {
 
     public abstract static class BaseEntity {
@@ -246,7 +246,10 @@ public class MappingTest extends TestBase {
         private ContainsIntegerList cil = new ContainsIntegerList();
     }
 
-    enum Enum1 {A, B}
+    enum Enum1 {
+        A,
+        B
+    }
 
     @Entity(value = "cil", noClassnameStored = true)
     private static class ContainsIntegerList {
@@ -384,7 +387,6 @@ public class MappingTest extends TestBase {
         assertNotNull(ceeLoaded.cil);
         assertNull(ceeLoaded.cil.id);
 
-
     }
 
     @Test
@@ -494,7 +496,7 @@ public class MappingTest extends TestBase {
 
         assertNotNull(ds.find(ContainsIntKeyMap.class).field("values.111111111111111111111111").exists());
         assertEquals(0, ds.find(ContainsIntKeyMap.class).field("values.111111111111111111111111").doesNotExist()
-                .countAll());
+                          .countAll());
         assertNotNull(ds.find(ContainsIntKeyMap.class).field("values.4").doesNotExist());
         assertEquals(0, ds.find(ContainsIntKeyMap.class).field("values.4").exists().countAll());
     }
@@ -728,8 +730,8 @@ public class MappingTest extends TestBase {
         final DBCollection rectangles = db.getCollection("rectangles");
 
         assertTrue("'ne' field should not be persisted!", !morphia.getMapper().getMCMap().get(ContainsRef.class
-                                                                                                      .getName())
-                .containsJavaFieldName("ne"));
+                                                                                              .getName())
+                                                                  .containsJavaFieldName("ne"));
 
         final Rectangle r = new Rectangle(1, 1);
         final DBObject rDbObject = morphia.toDBObject(r);
@@ -741,104 +743,13 @@ public class MappingTest extends TestBase {
         final DBObject cRefDbOject = morphia.toDBObject(cRef);
         stuff.save(cRefDbOject);
         final BasicDBObject cRefDbObjectLoaded = (BasicDBObject) stuff.findOne(BasicDBObjectBuilder.start("_id",
-                                                                                                          cRefDbOject
+                                                                                                         cRefDbOject
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                                                                  .get("_id")).get());
-        final ContainsRef cRefLoaded = morphia.fromDBObject(ContainsRef.class, cRefDbObjectLoaded, new DefaultEntityCache());
+                                                                                                         .get("_id"))
+                                                                                                   .get());
+        final ContainsRef cRefLoaded = morphia
+                                       .fromDBObject(ContainsRef.class, cRefDbObjectLoaded, new DefaultEntityCache());
         assertNotNull(cRefLoaded);
         assertNotNull(cRefLoaded.rect);
         assertNotNull(cRefLoaded.rect.getId());
@@ -925,7 +836,8 @@ public class MappingTest extends TestBase {
         borg.setAddress(borgAddr);
 
         BasicDBObject hotelDbObj = (BasicDBObject) morphia.toDBObject(borg);
-        assertTrue(!(((DBObject) ((List) hotelDbObj.get("phoneNumbers")).get(0)).containsField(Mapper.CLASS_NAME_FIELDNAME)));
+        assertTrue(!(((DBObject) ((List) hotelDbObj.get("phoneNumbers")).get(0))
+                     .containsField(Mapper.CLASS_NAME_FIELDNAME)));
 
 
         hotels.save(hotelDbObj);
@@ -954,8 +866,8 @@ public class MappingTest extends TestBase {
 
         final BasicDBObject toFind = new BasicDBObject(Mapper.ID_KEY, agencyDbObj.get(Mapper.ID_KEY));
         final TravelAgency agencyLoaded = morphia.fromDBObject(TravelAgency.class,
-                                                               agencies.findOne(toFind),
-                                                               new DefaultEntityCache());
+                                                              agencies.findOne(toFind),
+                                                              new DefaultEntityCache());
 
         assertEquals(agency.getName(), agencyLoaded.getName());
         assertEquals(agency.getHotels().size(), 1);
@@ -987,9 +899,9 @@ public class MappingTest extends TestBase {
         articles.save(relatedDbObj);
 
         final BasicDBObject toFind = new BasicDBObject(Mapper.ID_KEY,
-                                                 relatedDbObj.get(Mapper.ID_KEY));
+                                                      relatedDbObj.get(Mapper.ID_KEY));
         final Article relatedLoaded = morphia.fromDBObject(Article.class, articles.findOne(toFind),
-                                                           new DefaultEntityCache());
+                                                          new DefaultEntityCache());
 
         final Article article = new Article();
         article.setTranslation("en", new Translation("Hello World", "Just a test"));
@@ -1005,8 +917,39 @@ public class MappingTest extends TestBase {
         articles.save(articleDbObj);
 
         final Article articleLoaded = morphia
-                .fromDBObject(Article.class, articles.findOne(
-                        new BasicDBObject(Mapper.ID_KEY, articleDbObj.get(Mapper.ID_KEY))), new DefaultEntityCache());
+                                      .fromDBObject(Article.class, articles.findOne(
+                                                                                   new BasicDBObject(Mapper.ID_KEY,
+                                                                                                    articleDbObj.get(
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                    Mapper.ID_KEY))),
+                                                   new DefaultEntityCache());
 
         assertEquals(article.getTranslations().size(), articleLoaded.getTranslations().size());
         assertEquals(article.getTranslation("en").getTitle(), articleLoaded.getTranslation("en").getTitle());
@@ -1023,7 +966,7 @@ public class MappingTest extends TestBase {
     @Test
     public void testReferenceWithoutIdValue() throws Exception {
         new AssertedFailure(MappingException.class) {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 final RecursiveParent parent = new RecursiveParent();
                 final RecursiveChild child = new RecursiveChild();
                 child.setId(null);
@@ -1050,12 +993,12 @@ public class MappingTest extends TestBase {
 
         final BasicDBObject firstToFind = new BasicDBObject(Mapper.ID_KEY, parentDbObj.get(Mapper.ID_KEY));
         final RecursiveParent parentLoaded = morphia.fromDBObject(RecursiveParent.class,
-                                                                  stuff.findOne(firstToFind),
-                                                                  new DefaultEntityCache());
+                                                                 stuff.findOne(firstToFind),
+                                                                 new DefaultEntityCache());
         final BasicDBObject secondToFind = new BasicDBObject(Mapper.ID_KEY, childDbObj.get(Mapper.ID_KEY));
         final RecursiveChild childLoaded = morphia.fromDBObject(RecursiveChild.class,
-                                                                stuff.findOne(secondToFind),
-                                                                new DefaultEntityCache());
+                                                               stuff.findOne(secondToFind),
+                                                               new DefaultEntityCache());
 
         parentLoaded.setChild(childLoaded);
         childLoaded.setParent(parentLoaded);
@@ -1064,11 +1007,11 @@ public class MappingTest extends TestBase {
         stuff.save(morphia.toDBObject(childLoaded));
 
         final RecursiveParent finalParentLoaded = morphia.fromDBObject(RecursiveParent.class,
-                                                                       stuff.findOne(firstToFind),
-                                                                       new DefaultEntityCache());
+                                                                      stuff.findOne(firstToFind),
+                                                                      new DefaultEntityCache());
         final RecursiveChild finalChildLoaded = morphia.fromDBObject(RecursiveChild.class,
-                                                                     stuff.findOne(secondToFind),
-                                                                     new DefaultEntityCache());
+                                                                    stuff.findOne(secondToFind),
+                                                                    new DefaultEntityCache());
 
         assertNotNull(finalParentLoaded.getChild());
         assertNotNull(finalChildLoaded.getParent());

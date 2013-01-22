@@ -50,7 +50,7 @@ public class NonStaticInnerClassTest extends TestBase {
     public void testInValidInnerClass() throws Exception {
         new AssertedFailure(MappingException.class) {
             @Override
-            protected void thisMustFail() throws Throwable {
+            protected void thisMustFail() {
                 morphia.map(InValid.class);
             }
         };

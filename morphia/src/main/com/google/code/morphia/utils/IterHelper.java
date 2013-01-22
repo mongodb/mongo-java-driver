@@ -32,7 +32,7 @@ import java.util.Map.Entry;
  * @author Scott Hernandez
  */
 public class IterHelper<T, V> {
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void loopMap(final Object x, final MapIterCallback<T, V> iter) {
         if (x == null) {
             return;
@@ -69,7 +69,7 @@ public class IterHelper<T, V> {
 
     }
 
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings("unchecked")
     public void loop(final Object x, final IterCallback<V> iter) {
         if (x == null) {
             return;
@@ -93,7 +93,7 @@ public class IterHelper<T, V> {
      * @param x
      * @param iter
      */
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings("unchecked")
     public void loopOrSingle(final Object x, final IterCallback<V> iter) {
         if (x == null) {
             return;

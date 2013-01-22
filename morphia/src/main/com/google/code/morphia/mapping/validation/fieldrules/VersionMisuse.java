@@ -46,21 +46,22 @@ public class VersionMisuse extends FieldConstraint {
                 if (Long.class.equals(type)) {
                     if (mf.getFieldValue(testInstance) != null) {
                         ve.add(new ConstraintViolation(Level.FATAL, mc, mf, this.getClass(),
-                                                       "When using @" + Version.class.getSimpleName()
-                                                               + " on a Long field, it must be initialized to null."));
+                                                      "When using @" + Version.class.getSimpleName()
+                                                      + " on a Long field, it must be initialized to null."));
                     }
                 }
                 else if (long.class.equals(type)) {
                     if ((Long) mf.getFieldValue(testInstance) != 0L) {
                         ve.add(new ConstraintViolation(Level.FATAL, mc, mf, this.getClass(),
-                                                       "When using @" + Version.class.getSimpleName()
-                                                               + " on a long field, it must be initialized to 0."));
+                                                      "When using @" + Version.class.getSimpleName()
+                                                      + " on a long field, it must be initialized to 0."));
                     }
                 }
             }
             else {
                 ve.add(new ConstraintViolation(Level.FATAL, mc, mf, this.getClass(),
-                                               "@" + Version.class.getSimpleName() + " can only be used on a Long/long field."));
+                                              "@" + Version.class.getSimpleName()
+                                              + " can only be used on a Long/long field."));
             }
         }
     }

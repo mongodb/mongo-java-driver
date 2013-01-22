@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class SerializableCollectionObjectReference<T> extends AbstractReference implements ProxiedEntityReferenceList {
 
     /**
@@ -65,10 +65,10 @@ public class SerializableCollectionObjectReference<T> extends AbstractReference 
 
         if (!ignoreMissing && (numberOfEntitiesExpected != retrievedEntities.size())) {
             throw new LazyReferenceFetchingException("During the lifetime of a proxy of type '"
-                                                             + c.getClass().getSimpleName() + "', " +
-                                                             "some referenced Entities of type '"
-                                                             + referenceObjClass.getSimpleName() + "' have " +
-                                                             "disappeared from the Datastore.");
+                                                     + c.getClass().getSimpleName() + "', " +
+                                                     "some referenced Entities of type '"
+                                                     + referenceObjClass.getSimpleName() + "' have " +
+                                                     "disappeared from the Datastore.");
         }
 
         c.addAll(retrievedEntities);
@@ -89,10 +89,7 @@ public class SerializableCollectionObjectReference<T> extends AbstractReference 
 
     @Override
     protected void beforeWriteObject() {
-        if (!__isFetched()) {
-            return;
-        }
-        else {
+        if (__isFetched()) {
             syncKeys();
             ((Collection<T>) object).clear();
         }

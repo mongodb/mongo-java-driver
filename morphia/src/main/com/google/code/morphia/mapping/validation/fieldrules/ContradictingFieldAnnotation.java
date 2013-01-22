@@ -43,9 +43,10 @@ public class ContradictingFieldAnnotation extends FieldConstraint {
     @Override
     protected final void check(final MappedClass mc, final MappedField mf, final Set<ConstraintViolation> ve) {
         if (mf.hasAnnotation(a1) && mf.hasAnnotation(a2)) {
-            ve.add(new ConstraintViolation(Level.FATAL, mc, mf, this.getClass(), "A field can be either annotated " +
-                    "with @"
-                    + a1.getSimpleName() + " OR @" + a2.getSimpleName() + ", but not both."));
+            ve.add(new ConstraintViolation(Level.FATAL, mc, mf, this.getClass(),
+                                          "A field can be either annotated with @" + a1.getSimpleName()
+                                          + " OR @" + a2.getSimpleName()
+                                          + ", but not both."));
         }
     }
 }

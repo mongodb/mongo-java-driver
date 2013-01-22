@@ -20,7 +20,6 @@
 package com.google.code.morphia.converters;
 
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 
 import java.util.Locale;
 import java.util.StringTokenizer;
@@ -29,7 +28,7 @@ import java.util.StringTokenizer;
  * @author Uwe Schaefer, (us@thomas-daily.de)
  * @author scotthernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class LocaleConverter extends TypeConverter implements SimpleValueConverter {
 
     public LocaleConverter() {
@@ -38,7 +37,7 @@ public class LocaleConverter extends TypeConverter implements SimpleValueConvert
 
     @Override
     public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo)
-            throws MappingException {
+    {
         return parseLocale(fromDBObject.toString());
     }
 

@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public final class Assert {
     private Assert() {
         // hide
@@ -119,7 +120,7 @@ public final class Assert {
         }
     }
 
-    public static void isNotEmpty(final Collection<? extends Object> collection) {
+    public static void isNotEmpty(final Collection<?> collection) {
         if (collection == null) {
             Assert.raiseError("'collection' is null");
         }
@@ -128,7 +129,7 @@ public final class Assert {
         }
     }
 
-    public static void isEmpty(final Collection<? extends Object> collection) {
+    public static void isEmpty(final Collection<?> collection) {
         if (collection == null) {
             Assert.raiseError("'collection' is null");
         }
@@ -149,8 +150,8 @@ public final class Assert {
             msgPrefix = "Parameter ";
         }
 
-        for (int i = 0; i < objects.length; i++) {
-            if (objects[i] == null) {
+        for (final Object object : objects) {
+            if (object == null) {
                 Assert.raiseError(msgPrefix + "'" + nameOfParameters + "' " + msgSuffix);
             }
         }
@@ -170,7 +171,8 @@ public final class Assert {
 
     public static void parameterInRange(final int value, final int min, final int max, final String string) {
         Assert.isTrue((min <= value) && (value <= max), "Parameter '" + string + "' must be in range of " + min
-                + " <= " + string + " <= " + max + ". Current value was " + value);
+                                                        + " <= " + string + " <= " + max + ". Current value was "
+                                                        + value);
 
     }
 
@@ -180,7 +182,7 @@ public final class Assert {
 
     public static void parameterInRange(final long value, final long min, final long max, final String name) {
         Assert.isTrue((min <= value) && (value <= max), "Parameter '" + name + "' must be in range of " + min + " <= "
-                + name + " <= " + max + ". Current value was " + value);
+                                                        + name + " <= " + max + ". Current value was " + value);
     }
 
     public static void implementsSerializable(final Object toTest) {
@@ -192,26 +194,26 @@ public final class Assert {
     public static void parameterInstanceOf(final Object obj, final Class<?> class1, final String paramName) {
         if (!class1.isAssignableFrom(obj.getClass())) {
             Assert.raiseError("Parameter '" + paramName + "' from type '" + obj.getClass().getName()
-                                      + "' was expected to implement '" + class1 + "'");
+                              + "' was expected to implement '" + class1 + "'");
         }
     }
 
     public static <T extends Enum<T>> void enumContains(final EnumSet<T> enumSetToLookIn, final T enumToLookFor) {
         Assert.isTrue(enumSetToLookIn.contains(enumToLookFor), "Mode " + enumToLookFor
-                + " is not part of the enum given : " + enumSetToLookIn);
+                                                               + " is not part of the enum given : " + enumSetToLookIn);
     }
 
     public static void parameterNotEmpty(final Collection obj, final String paramName) {
         if (obj.isEmpty()) {
             Assert.raiseError("Parameter '" + paramName + "' from type '" + obj.getClass().getName()
-                                      + "' is expected to NOT be empty.");
+                              + "' is expected to NOT be empty.");
         }
     }
 
     public static void parameterNotEmpty(final Iterable obj, final String paramName) {
         if (!obj.iterator().hasNext()) {
             Assert.raiseError("Parameter '" + paramName + "' from type '" + obj.getClass().getName()
-                                      + "' is expected to NOT be empty");
+                              + "' is expected to NOT be empty");
         }
     }
 
@@ -258,16 +260,17 @@ public final class Assert {
     }
 
     public static void parameterArraysOfSameLength(final String argNames, final Object[]... objects) {
-        Assert.parametersNotNull("objects", objects);
+        for (final Object[] object : objects) {
+            Assert.parametersNotNull("objects", object);
+        }
 
-        final Object[][] theParameter = objects;
-        final int length = theParameter.length;
+        final int length = objects.length;
 
         parameterLegal(length >= 2, "Parameter objects was expected to contains at least two arrays.");
 
         int size = -99;
         for (int i = 0; i < length; i++) {
-            final Object[] o = theParameter[i];
+            final Object[] o = objects[i];
 
             int sizeOfO = -1;
             if (o != null) {

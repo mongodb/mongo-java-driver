@@ -52,5 +52,4 @@ public class ByteArrayMappingTest extends TestBase {
         Assert.assertNotNull(loaded.id);
     }
 
-
 }

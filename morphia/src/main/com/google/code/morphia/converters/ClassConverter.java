@@ -26,7 +26,7 @@ import com.google.code.morphia.mapping.MappingException;
  * @author Uwe Schaefer, (us@thomas-daily.de)
  * @author scotthernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class ClassConverter extends TypeConverter implements SimpleValueConverter {
 
     public ClassConverter() {
@@ -34,8 +34,7 @@ public class ClassConverter extends TypeConverter implements SimpleValueConverte
     }
 
     @Override
-    public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo)
-            throws MappingException {
+    public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo) {
         if (fromDBObject == null) {
             return null;
         }

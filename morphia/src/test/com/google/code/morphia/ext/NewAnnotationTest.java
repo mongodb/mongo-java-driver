@@ -87,7 +87,7 @@ public class NewAnnotationTest extends TestBase {
         ds.save(u);
 
         final User uScott = ds.find(User.class).disableValidation().filter("email_lowercase",
-                                                                           u.email.toLowerCase()).get();
+                                                                          u.email.toLowerCase()).get();
         Assert.assertNotNull(uScott);
 
     }

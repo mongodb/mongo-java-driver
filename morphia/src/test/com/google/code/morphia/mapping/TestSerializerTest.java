@@ -34,8 +34,10 @@ import java.io.IOException;
 public class TestSerializerTest extends TestBase {
 
     private static final String TEST_TEXT = "In 1970, the British Empire lay in ruins, "
-            + "and foreign nationalists frequented the streets - many of them Hungarians (not the streets - the foreign"
-            + " nationals). Anyway, many of these Hungarians went into tobacconist's shops to buy cigarettes.... ";
+                                            + "and foreign nationalists frequented the streets - many of them " +
+                                            "Hungarians (not the streets - the foreign"
+                                            + " nationals). Anyway, many of these Hungarians went into tobacconist's " +
+                                            "shops to buy cigarettes.... ";
 
     @Test
     public final void testSerialize() throws IOException, ClassNotFoundException {

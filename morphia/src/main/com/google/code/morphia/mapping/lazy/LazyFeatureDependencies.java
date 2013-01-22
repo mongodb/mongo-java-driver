@@ -25,7 +25,7 @@ import com.google.code.morphia.logging.MorphiaLoggerFactory;
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
-public class LazyFeatureDependencies {
+public final class LazyFeatureDependencies {
 
     private static final Logr logger = MorphiaLoggerFactory.get(LazyFeatureDependencies.class);
     private static Boolean fullFilled;
@@ -47,7 +47,7 @@ public class LazyFeatureDependencies {
         }
         try {
             fullFilled = Class.forName("net.sf.cglib.proxy.Enhancer") != null
-                    && Class.forName("com.thoughtworks.proxy.toys.hotswap.HotSwapping") != null;
+                         && Class.forName("com.thoughtworks.proxy.toys.hotswap.HotSwapping") != null;
         } catch (ClassNotFoundException e) {
             fullFilled = false;
         }

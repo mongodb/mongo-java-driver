@@ -20,7 +20,6 @@
 package com.google.code.morphia.converters;
 
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -28,7 +27,7 @@ import java.util.Date;
 /**
  * @author scotthernandez
  */
-@SuppressWarnings({"rawtypes"})
+@SuppressWarnings("rawtypes")
 public class TimestampConverter extends DateConverter implements SimpleValueConverter {
 
     public TimestampConverter() {
@@ -36,8 +35,7 @@ public class TimestampConverter extends DateConverter implements SimpleValueConv
     }
 
     @Override
-    public Object decode(final Class targetClass, final Object val, final MappedField optionalExtraInfo) throws
-            MappingException {
+    public Object decode(final Class targetClass, final Object val, final MappedField optionalExtraInfo) {
         final Date d = (Date) super.decode(targetClass, val, optionalExtraInfo);
         return new Timestamp(d.getTime());
     }

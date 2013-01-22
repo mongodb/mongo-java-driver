@@ -37,7 +37,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Scott Hernandez
  */
-@SuppressWarnings({ "unused" })
+@SuppressWarnings("unused")
 public class IdFieldTest extends TestBase {
 
     @Entity
@@ -95,10 +95,10 @@ public class IdFieldTest extends TestBase {
         morphia.map(KeyAsId.class);
 
         final Rectangle r = new Rectangle(1, 1);
-//        Rectangle r2 = new Rectangle(11,11);
+        //        Rectangle r2 = new Rectangle(11,11);
 
         final Key<Rectangle> rKey = ds.save(r);
-//        Key<Rectangle> r2Key = ds.save(r2);
+        //        Key<Rectangle> r2Key = ds.save(r2);
         final KeyAsId kai = new KeyAsId(rKey);
         final Key<KeyAsId> kaiKey = ds.save(kai);
         final KeyAsId kaiLoaded = ds.get(KeyAsId.class, rKey);

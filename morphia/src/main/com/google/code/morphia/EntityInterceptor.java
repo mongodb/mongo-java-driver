@@ -16,10 +16,6 @@
 
 package com.google.code.morphia;
 
-import com.google.code.morphia.annotations.PostPersist;
-import com.google.code.morphia.annotations.PreLoad;
-import com.google.code.morphia.annotations.PrePersist;
-import com.google.code.morphia.annotations.PreSave;
 import com.google.code.morphia.mapping.Mapper;
 import com.mongodb.DBObject;
 
@@ -28,27 +24,27 @@ import com.mongodb.DBObject;
  */
 public interface EntityInterceptor {
     /**
-     * see {@link PrePersist}
+     * see {@link com.google.code.morphia.annotations.PrePersist}
      */
     void prePersist(Object ent, DBObject dbObj, Mapper mapr);
 
     /**
-     * see {@link PreSave}
+     * see {@link com.google.code.morphia.annotations.PreSave}
      */
     void preSave(Object ent, DBObject dbObj, Mapper mapr);
 
     /**
-     * see {@link PostPersist}
+     * see {@link com.google.code.morphia.annotations.PostPersist}
      */
     void postPersist(Object ent, DBObject dbObj, Mapper mapr);
 
     /**
-     * see {@link PreLoad}
+     * see {@link com.google.code.morphia.annotations.PreLoad}
      */
     void preLoad(Object ent, DBObject dbObj, Mapper mapr);
 
     /**
-     * see {@link postLoad}
+     * see {@link com.google.code.morphia.annotations.PostLoad}
      */
     void postLoad(Object ent, DBObject dbObj, Mapper mapr);
 }

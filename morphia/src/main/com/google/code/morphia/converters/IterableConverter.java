@@ -21,7 +21,6 @@ package com.google.code.morphia.converters;
 
 import com.google.code.morphia.ObjectFactory;
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 import com.google.code.morphia.utils.ReflectionUtils;
 
 import java.lang.reflect.Array;
@@ -35,7 +34,7 @@ import java.util.List;
  * @author scotthernandez
  */
 
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class IterableConverter extends TypeConverter {
     private final DefaultConverters chain;
 
@@ -55,7 +54,7 @@ public class IterableConverter extends TypeConverter {
 
     @Override
     public Object decode(final Class targetClass, final Object fromDBObject,
-                         final MappedField mf) throws MappingException {
+                         final MappedField mf) {
         if (mf == null || fromDBObject == null) {
             return fromDBObject;
         }

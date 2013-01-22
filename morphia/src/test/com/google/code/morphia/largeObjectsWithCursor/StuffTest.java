@@ -63,11 +63,11 @@ public class StuffTest extends TestBase {
     @Override
     @Before
     public void setUp() {
-//        try {
-//            this.mongo = new Mongo("stump");
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
+        //        try {
+        //            this.mongo = new Mongo("stump");
+        //        } catch (Exception e) {
+        //            throw new RuntimeException(e);
+        //        }
 
         super.setUp();
         morphia.map(E.class);

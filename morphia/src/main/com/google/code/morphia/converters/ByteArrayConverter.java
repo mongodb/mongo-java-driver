@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,15 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.code.morphia.converters;
 
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 import org.bson.types.Binary;
 
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class ByteArrayConverter extends TypeConverter implements SimpleValueConverter {
     public ByteArrayConverter() {
         super(byte[].class);
@@ -28,9 +27,9 @@ public class ByteArrayConverter extends TypeConverter implements SimpleValueConv
 
     @Override
     public Object decode(final Class targetClass, final Object fromDBObject,
-                         final MappedField optionalExtraInfo) throws MappingException {
+                         final MappedField optionalExtraInfo) {
         if (fromDBObject instanceof Binary) {
-           return ((Binary) fromDBObject).getData();
+            return ((Binary) fromDBObject).getData();
         }
         else {
             return fromDBObject;

@@ -84,7 +84,7 @@ public class UpdateOpsImpl<T> implements UpdateOperations<T> {
             throw new QueryException("Value cannot be null.");
         }
 
-//		Object dbObj = mapr.toMongoObject(value, true);
+        //		Object dbObj = mapr.toMongoObject(value, true);
         add((addDups) ? UpdateOperator.PUSH : UpdateOperator.ADD_TO_SET, fieldExpr, value, true);
         return this;
     }
@@ -94,7 +94,7 @@ public class UpdateOpsImpl<T> implements UpdateOperations<T> {
             throw new QueryException("Values cannot be null or empty.");
         }
 
-//		List<?> convertedValues = (List<?>)mapr.toMongoObject(values, true);
+        //		List<?> convertedValues = (List<?>)mapr.toMongoObject(values, true);
         if (addDups) {
             add(UpdateOperator.PUSH_ALL, fieldExpr, values, true);
         }
@@ -133,7 +133,7 @@ public class UpdateOpsImpl<T> implements UpdateOperations<T> {
         if (value == null) {
             throw new QueryException("Value cannot be null.");
         }
-//		Object dbObj = mapr.toMongoObject(value);
+        //		Object dbObj = mapr.toMongoObject(value);
         add(UpdateOperator.PULL, fieldExpr, value, true);
         return this;
     }
@@ -144,7 +144,7 @@ public class UpdateOpsImpl<T> implements UpdateOperations<T> {
             throw new QueryException("Value cannot be null or empty.");
         }
 
-//		List<Object> vals = toDBObjList(values);
+        //		List<Object> vals = toDBObjList(values);
         add(UpdateOperator.PULL_ALL, fieldExpr, values, true);
         return this;
     }
@@ -164,7 +164,7 @@ public class UpdateOpsImpl<T> implements UpdateOperations<T> {
             throw new QueryException("Value cannot be null.");
         }
 
-//		Object dbObj = mapr.toMongoObject(value, true);
+        //		Object dbObj = mapr.toMongoObject(value, true);
         add(UpdateOperator.SET, fieldExpr, value, true);
         return this;
     }

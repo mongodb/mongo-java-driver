@@ -59,7 +59,7 @@ import java.util.regex.Pattern;
  *
  * @author Olafur Gauti Gudmundsson
  */
-@SuppressWarnings({ "unchecked", "rawtypes" })
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public final class ReflectionUtils {
     private ReflectionUtils() {
     }
@@ -118,24 +118,24 @@ public final class ReflectionUtils {
         // we ignore static and final fields
         for (final Field field : fields) {
             if (!Modifier.isStatic(field.getModifiers())
-                    && (returnFinalFields || !Modifier.isFinal(field.getModifiers()))) {
+                && (returnFinalFields || !Modifier.isFinal(field.getModifiers()))) {
                 validFields.add(field);
             }
         }
         return validFields;
     }
 
-//    public static boolean implementsAnyInterface(final Class type, final Class... interfaceClasses)
-//    {
-//        for (Class iF : interfaceClasses)
-//        {
-//            if (implementsInterface(type, iF))
-//            {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
+    //    public static boolean implementsAnyInterface(final Class type, final Class... interfaceClasses)
+    //    {
+    //        for (Class iF : interfaceClasses)
+    //        {
+    //            if (implementsInterface(type, iF))
+    //            {
+    //                return true;
+    //            }
+    //        }
+    //        return false;
+    //    }
 
     /**
      * Check if a class implements a specific interface.
@@ -157,10 +157,10 @@ public final class ReflectionUtils {
      *            the super class we want to check against
      * @return true if type implements superClass, else false
      */
-//    public static boolean extendsClass(final Class type, final Class superClass)
-//    {
-//        return superClass.isAssignableFrom(type);
-//    }
+    //    public static boolean extendsClass(final Class type, final Class superClass)
+    //    {
+    //        return superClass.isAssignableFrom(type);
+    //    }
 
     /**
      * Check if the class supplied represents a valid property type.
@@ -181,14 +181,14 @@ public final class ReflectionUtils {
 
     public static boolean isPropertyType(final Class type) {
         return type != null
-                && (isPrimitiveLike(type)
-                || (type == DBRef.class)
-                || (type == Pattern.class)
-                || (type == CodeWScope.class)
-                || (type == ObjectId.class)
-                || (type == Key.class)
-                || (type == DBObject.class)
-                || (type == BasicDBObject.class));
+               && (isPrimitiveLike(type)
+                   || (type == DBRef.class)
+                   || (type == Pattern.class)
+                   || (type == CodeWScope.class)
+                   || (type == ObjectId.class)
+                   || (type == Key.class)
+                   || (type == DBObject.class)
+                   || (type == BasicDBObject.class));
 
     }
 
@@ -198,12 +198,12 @@ public final class ReflectionUtils {
         }
 
         return (
-                type == String.class) || (type == char.class) || (type == Character.class) || (type == short.class)
-                || (type == Short.class) || (type == Integer.class) || (type == int.class) || (type == Long.class)
-                || (type == long.class) || (type == Double.class) || (type == double.class) || (type == float.class)
-                || (type == Float.class) || (type == Boolean.class) || (type == boolean.class) || (type == Byte.class)
-                || (type == byte.class) || (type == Date.class) || (type == Locale.class) || (type == Class.class)
-                || (type == UUID.class) || (type == URI.class) || type.isEnum();
+               type == String.class) || (type == char.class) || (type == Character.class) || (type == short.class)
+               || (type == Short.class) || (type == Integer.class) || (type == int.class) || (type == Long.class)
+               || (type == long.class) || (type == Double.class) || (type == double.class) || (type == float.class)
+               || (type == Float.class) || (type == Boolean.class) || (type == boolean.class) || (type == Byte.class)
+               || (type == byte.class) || (type == Date.class) || (type == Locale.class) || (type == Class.class)
+               || (type == UUID.class) || (type == URI.class) || type.isEnum();
     }
 
     /**
@@ -246,15 +246,16 @@ public final class ReflectionUtils {
                         // the parent class and try to get the variable type
                         // from the T/V/X
                         throw new MappingException("Generic Typed Class not supported:  <" + ((TypeVariable)
-                                paramType).getName() + "> = "
-                                                           + ((TypeVariable) paramType).getBounds()[0]);
+                                                                                              paramType).getName()
+                                                   + "> = "
+                                                   + ((TypeVariable) paramType).getBounds()[0]);
                     }
                     else if (paramType instanceof Class) {
                         return (Class) paramType;
                     }
                     else {
                         throw new MappingException("Unknown type... pretty bad... call for help, "
-                                                           + "wave your hands... yeah!");
+                                                   + "wave your hands... yeah!");
                     }
                 }
             }
@@ -288,7 +289,7 @@ public final class ReflectionUtils {
                     }
                     else {
                         throw new MappingException("Unknown type... pretty bad... call for help, "
-                                                           + "wave your hands... yeah!");
+                                                   + "wave your hands... yeah!");
                     }
                 }
             }
@@ -397,8 +398,8 @@ public final class ReflectionUtils {
         if (c.isAnnotationPresent(annClass)) {
             found.add((T) c.getAnnotation(annClass));
         }
-//        else
-//        {
+        //        else
+        //        {
         // need to check all superclasses
 
         Class parent = c.getSuperclass();
@@ -423,7 +424,7 @@ public final class ReflectionUtils {
                 found.add((T) interfaceClass.getAnnotation(annClass));
             }
         }
-//        }
+        //        }
         // no annotation found, use the defaults
         return found;
     }
@@ -446,7 +447,7 @@ public final class ReflectionUtils {
     }
 
     public static Set<Class<?>> getFromDirectory(final File directory, final String packageName)
-            throws ClassNotFoundException {
+    throws ClassNotFoundException {
         final Set<Class<?>> classes = new HashSet<Class<?>>();
         if (directory.exists()) {
             for (final String file : directory.list()) {
@@ -461,7 +462,112 @@ public final class ReflectionUtils {
     }
 
     public static Set<Class<?>> getFromJARFile(final String jar, final String packageName) throws IOException,
-            ClassNotFoundException {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                  ClassNotFoundException {
         final Set<Class<?>> classes = new HashSet<Class<?>>();
         final JarInputStream jarFile = new JarInputStream(new FileInputStream(jar));
         JarEntry jarEntry;
@@ -487,7 +593,7 @@ public final class ReflectionUtils {
     }
 
     public static Set<Class<?>> getClasses(final ClassLoader loader, final String packageName) throws IOException,
-            ClassNotFoundException {
+                                                                                                      ClassNotFoundException {
         final Set<Class<?>> classes = new HashSet<Class<?>>();
         final String path = packageName.replace('.', '/');
         final Enumeration<URL> resources = loader.getResources(path);
@@ -506,7 +612,8 @@ public final class ReflectionUtils {
                 if (filePath != null) {
                     if ((filePath.indexOf("!") > 0) & (filePath.indexOf(".jar") > 0)) {
                         String jarPath = filePath.substring(0, filePath.indexOf("!")).substring(
-                                filePath.indexOf(":") + 1);
+                                                                                               filePath.indexOf(":")
+                                                                                               + 1);
                         // WINDOWS HACK
                         if (jarPath.indexOf(":") >= 0) {
                             jarPath = jarPath.substring(1);
@@ -526,65 +633,65 @@ public final class ReflectionUtils {
      * create a new instance of the entity, first using the dbObject field, then
      * by calling createInstence based on the type
      */
-//	public static Object createInstance(final MappedField mf, final DBObject dbObject) {
-//		// see if there is a className value
-//		return createInstance(mf.getConcreteType(), dbObject);
-//	}
+    //	public static Object createInstance(final MappedField mf, final DBObject dbObject) {
+    //		// see if there is a className value
+    //		return createInstance(mf.getConcreteType(), dbObject);
+    //	}
 
-//    public static Object createInstance(final Class type)
-//    {
-//        try
-//        {
-//            return getNoArgsConstructor(type).newInstance();
-//        }
-//        catch (Exception e)
-//        {
-//            throw new RuntimeException(e);
-//        }
-//    }
+    //    public static Object createInstance(final Class type)
+    //    {
+    //        try
+    //        {
+    //            return getNoArgsConstructor(type).newInstance();
+    //        }
+    //        catch (Exception e)
+    //        {
+    //            throw new RuntimeException(e);
+    //        }
+    //    }
 
     /**
      * gets the Class for some classname, or if the className is not found,
      * return the defaultClass instance
      */
-//	public static Class getClassForName(final String className, final Class defaultClass) {
-//		try {
-//			Class c = Class.forName(className, true, Thread.currentThread().getContextClassLoader());
-//			return c;
-//		} catch (ClassNotFoundException ex) {
-//			return defaultClass;
-//		}
-//	}
+    //	public static Class getClassForName(final String className, final Class defaultClass) {
+    //		try {
+    //			Class c = Class.forName(className, true, Thread.currentThread().getContextClassLoader());
+    //			return c;
+    //		} catch (ClassNotFoundException ex) {
+    //			return defaultClass;
+    //		}
+    //	}
 
     /**
      * create a new instance of the entity, first using the dbObject field, then by calling createInstence based on the
      * type
      */
-//	public static Object createInstance(final Class entityClass, final DBObject dbObject) {
-//		// see if there is a className value
-//		String className = (String) dbObject.get(Mapper.CLASS_NAME_FIELDNAME);
-//		Class c = entityClass;
-//		if (className != null) {
-//			// try to Class.forName(className) as defined in the dbObject first,
-//			// otherwise return the entityClass
-//			c = getClassForName(className, entityClass);
-//		}
-//		return createInstance(c);
-//	}
+    //	public static Object createInstance(final Class entityClass, final DBObject dbObject) {
+    //		// see if there is a className value
+    //		String className = (String) dbObject.get(Mapper.CLASS_NAME_FIELDNAME);
+    //		Class c = entityClass;
+    //		if (className != null) {
+    //			// try to Class.forName(className) as defined in the dbObject first,
+    //			// otherwise return the entityClass
+    //			c = getClassForName(className, entityClass);
+    //		}
+    //		return createInstance(c);
+    //	}
 
-//	public static Object newInstance(final Class<?> c, final Class<?> fallbackType) {
-//		return newInstance(getNoArgsConstructor(c), fallbackType);
-//	}
+    //	public static Object newInstance(final Class<?> c, final Class<?> fallbackType) {
+    //		return newInstance(getNoArgsConstructor(c), fallbackType);
+    //	}
 
-//	private static Constructor getNoArgsConstructor(final Class ctorType) {
-//		try {
-//			Constructor ctor = ctorType.getDeclaredConstructor();
-//			ctor.setAccessible(true);
-//			return ctor;
-//		} catch (NoSuchMethodException e) {
-//			throw new MappingException("No usable constructor for " + ctorType.getName(), e);
-//		}
-//	}
+    //	private static Constructor getNoArgsConstructor(final Class ctorType) {
+    //		try {
+    //			Constructor ctor = ctorType.getDeclaredConstructor();
+    //			ctor.setAccessible(true);
+    //			return ctor;
+    //		} catch (NoSuchMethodException e) {
+    //			throw new MappingException("No usable constructor for " + ctorType.getName(), e);
+    //		}
+    //	}
     public static ArrayList iterToList(final Iterable it) {
         if (it instanceof ArrayList) {
             return (ArrayList) it;
@@ -699,7 +806,7 @@ public final class ReflectionUtils {
 
     public static <T> Class<?> getTypeArgument(final Class<? extends T> clazz,
                                                final TypeVariable<? extends GenericDeclaration>
-                                                       tv) {
+                                               tv) {
         final Map<Type, Type> resolvedTypes = new HashMap<Type, Type>();
         Type type = clazz;
         // start walking up the inheritance hierarchy until we hit the end

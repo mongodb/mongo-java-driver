@@ -20,7 +20,6 @@
 package com.google.code.morphia.converters;
 
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -30,7 +29,7 @@ import java.util.List;
  * @author Uwe Schaefer, (us@thomas-daily.de)
  * @author scotthernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class EnumSetConverter extends TypeConverter implements SimpleValueConverter {
 
     private final EnumConverter ec = new EnumConverter();
@@ -40,8 +39,7 @@ public class EnumSetConverter extends TypeConverter implements SimpleValueConver
     }
 
     @Override
-    public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo)
-            throws MappingException {
+    public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo) {
         if (fromDBObject == null) {
             return null;
         }

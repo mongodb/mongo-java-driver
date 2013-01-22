@@ -94,36 +94,176 @@ public class MappedClass {
      * Annotations we are interested in looking for.
      */
     public static final List<Class<? extends Annotation>> interestingAnnotations = new ArrayList<Class<? extends
-            Annotation>>(Arrays.asList(
-            Embedded.class,
-            Entity.class,
-            Polymorphic.class,
-            EntityListeners.class,
-            Version.class,
-            Converters.class,
-            Indexes.class));
+                                                                                                       Annotation>>(
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                                                                          Arrays
+                                                                                                                   .asList(
+                                                                                                                          Embedded.class,
+                                                                                                                          Entity.class,
+                                                                                                                          Polymorphic.class,
+                                                                                                                          EntityListeners.class,
+                                                                                                                          Version.class,
+                                                                                                                          Converters.class,
+                                                                                                                          Indexes.class));
     /**
      * Annotations interesting for life-cycle events
      */
     @SuppressWarnings("rawtypes")
     private static final Class<? extends Annotation>[] lifecycleAnnotations = new Class[]{
-            PrePersist.class,
-            PreSave.class,
-            PostPersist.class,
-            PreLoad.class,
-            PostLoad.class};
+                                                                                         PrePersist.class,
+                                                                                         PreSave.class,
+                                                                                         PostPersist.class,
+                                                                                         PreLoad.class,
+                                                                                         PostLoad.class};
 
     /**
      * Annotations we were interested in, and found.
      */
     private final Map<Class<? extends Annotation>, ArrayList<Annotation>> foundAnnotations = new HashMap<Class<? extends
-            Annotation>, ArrayList<Annotation>>();
+                                                                                                               Annotation>, ArrayList<Annotation>>();
 
     /**
      * Methods which are life-cycle events
      */
     private final Map<Class<? extends Annotation>, List<ClassMethodPair>> lifecycleMethods = new HashMap<Class<? extends
-            Annotation>, List<ClassMethodPair>>();
+                                                                                                               Annotation>, List<ClassMethodPair>>();
 
     /**
      * a list of the fields to map
@@ -174,7 +314,6 @@ public class MappedClass {
         if (fields != null && fields.size() > 0) {
             idField = fields.get(0).field;
         }
-
 
     }
 
@@ -227,11 +366,11 @@ public class MappedClass {
                 update();
             }
             else if (field.isAnnotationPresent(Property.class)
-                    || field.isAnnotationPresent(Reference.class)
-                    || field.isAnnotationPresent(Embedded.class)
-                    || field.isAnnotationPresent(Serialized.class)
-                    || isSupportedType(field.getType()) ||
-                    ReflectionUtils.implementsInterface(field.getType(), Serializable.class)) {
+                     || field.isAnnotationPresent(Reference.class)
+                     || field.isAnnotationPresent(Embedded.class)
+                     || field.isAnnotationPresent(Serialized.class)
+                     || isSupportedType(field.getType()) ||
+                     ReflectionUtils.implementsInterface(field.getType(), Serializable.class)) {
                 persistenceFields.add(new MappedField(field, clazz));
             }
             else {
@@ -240,7 +379,7 @@ public class MappedClass {
                 }
                 else if (LOG.isWarningEnabled()) {
                     LOG.warning("Ignoring (will not persist) field: " + clazz.getName() + "." + field.getName() + " "
-                                        + "[type:" + field.getType().getName() + "]");
+                                + "[type:" + field.getType().getName() + "]");
                 }
             }
         }
@@ -291,7 +430,7 @@ public class MappedClass {
     @Override
     public String toString() {
         return "MappedClass - kind:" + this.getCollectionName() + " for " + this.getClazz().getName() + " fields:"
-                + persistenceFields;
+               + persistenceFields;
     }
 
     /**
@@ -384,6 +523,7 @@ public class MappedClass {
         }
     }
 
+    //CHECKSTYLE:OFF
     public boolean equals(final MappedClass clazz) {
         return this.getClazz().equals(clazz.getClazz());
     }
@@ -391,6 +531,7 @@ public class MappedClass {
     public boolean equals(final Class<?> clazz) {
         return this.getClazz().equals(clazz);
     }
+    //CHECKSTYLE:ON
 
     /**
      * Call the lifcycle methods
@@ -404,7 +545,7 @@ public class MappedClass {
             Object tempObj = null;
             if (methodPairs != null) {
                 final HashMap<Class<?>, Object> toCall =
-                        new HashMap<Class<?>, Object>((int) (methodPairs.size() * 1.3));
+                new HashMap<Class<?>, Object>((int) (methodPairs.size() * 1.3));
                 for (final ClassMethodPair cm : methodPairs) {
                     toCall.put(cm.clazz, null);
                 }
@@ -423,7 +564,7 @@ public class MappedClass {
 
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Calling lifecycle method(@" + event.getSimpleName() + " " + method + ") on "
-                                          + inst + "");
+                                  + inst + "");
                     }
 
                     if (inst == null) {
@@ -558,7 +699,7 @@ public class MappedClass {
      */
     public String getCollectionName() {
         return (entityAn == null || entityAn.value().equals(Mapper.IGNORED_FIELDNAME)) ? clazz.getSimpleName()
-                : entityAn.value();
+                                                                                       : entityAn.value();
     }
 
     /**

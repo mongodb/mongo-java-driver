@@ -35,7 +35,8 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class LazyInEmbeddedTest extends TestBase {
     public enum SomeEnum {
-        B, A
+        B,
+        A
     }
 
     @Entity

@@ -22,18 +22,11 @@ import com.google.code.morphia.mapping.validation.ConstraintViolationException;
 import com.google.code.morphia.testutil.TestEntity;
 import org.junit.Test;
 
-import static org.junit.Assert.fail;
-
 public class IdTwiceTest extends TestBase {
 
-    @Test
+    @Test(expected = ConstraintViolationException.class)
     public final void testRedundantId() {
-        try {
-            morphia.map(A.class);
-            fail();
-        } catch (ConstraintViolationException expected) {
-            // fine
-        }
+        morphia.map(A.class);
     }
 
     static class A extends TestEntity {

@@ -28,7 +28,9 @@ import java.util.Map;
  */
 class ValueMapper implements CustomMapper {
     public void toDBObject(final Object entity, final MappedField mf, final DBObject dbObject, final Map<Object,
-            DBObject> involvedObjects, final Mapper mapr) {
+                                                                                                        DBObject>
+                                                                                               involvedObjects,
+                           final Mapper mapr) {
         try {
             mapr.converters.toDBObject(entity, mf, dbObject, mapr.getOptions());
         } catch (Exception e) {

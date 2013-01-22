@@ -29,11 +29,9 @@ import java.io.Serializable;
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public abstract class AbstractReference implements Serializable, ObjectReference, ProxiedReference {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
     protected final DatastoreProvider p;
     protected final boolean ignoreMissing;
@@ -74,7 +72,7 @@ public abstract class AbstractReference implements Serializable, ObjectReference
 
 
     private void writeObject(final java.io.ObjectOutputStream out)
-            throws IOException {
+    throws IOException {
         // excessive hoop-jumping in order not to have to recreate the
         // instance.
         // as soon as weÂ´d have an ObjectFactory, that would be unnecessary

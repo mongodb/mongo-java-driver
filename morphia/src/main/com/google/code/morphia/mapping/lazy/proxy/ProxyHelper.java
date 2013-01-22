@@ -22,7 +22,7 @@ package com.google.code.morphia.mapping.lazy.proxy;
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class ProxyHelper {
 
     public static <T> T unwrap(final T entity) {
@@ -54,13 +54,7 @@ public class ProxyHelper {
     }
 
     public static boolean isFetched(final Object entity) {
-        if (entity == null) {
-            return true;
-        }
-        if (!isProxy(entity)) {
-            return true;
-        }
-        return asProxy(entity).__isFetched();
+        return entity == null || !isProxy(entity) || asProxy(entity).__isFetched();
     }
 
     public static boolean isUnFetched(final Object entity) {

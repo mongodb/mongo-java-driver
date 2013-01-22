@@ -69,7 +69,7 @@ public class PropertyAndEmbeddedTest extends TestBase {
         assertEquals("bar", e.document);
 
         new AssertedFailure(ConstraintViolationException.class) {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 morphia.map(E2.class);
             }
         };

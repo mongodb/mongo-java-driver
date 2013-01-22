@@ -34,7 +34,7 @@ import static org.junit.Assert.assertNotNull;
  * @author Scott Hernandez
  */
 public class EmbeddedArrayIndexesTest extends TestBase {
-    @Indexes({ @Index("b.bar, b.car") })
+    @Indexes(@Index("b.bar, b.car"))
     private static class A {
         @Id
         private final ObjectId id = new ObjectId();

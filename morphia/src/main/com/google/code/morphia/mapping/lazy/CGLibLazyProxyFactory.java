@@ -39,7 +39,7 @@ import java.util.Map;
  *
  * @author uwe schaefer
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class CGLibLazyProxyFactory implements LazyProxyFactory {
     private final CglibProxyFactory factory = new CglibProxyFactory();
 
@@ -50,28 +50,20 @@ public class CGLibLazyProxyFactory implements LazyProxyFactory {
                              final DatastoreProvider p) {
 
         final SerializableEntityObjectReference objectReference = new SerializableEntityObjectReference(
-                targetClass, p, key);
+                                                                                                       targetClass, p,
+                                                                                                       key);
 
         final T backend = (T) new NonFinalizingHotSwappingInvoker(new Class[]{targetClass,
-                Serializable.class}, factory,
-                                                                  objectReference, DelegationMode.SIGNATURE).proxy();
+                                                                              Serializable.class}, factory,
+                                                                 objectReference, DelegationMode.SIGNATURE).proxy();
 
 
         final T proxy = Dispatching.proxy(targetClass,
-                                          new Class[]{ProxiedEntityReference.class, targetClass,
-                                                  Serializable.class}).with(objectReference,
+                                         new Class[]{ProxiedEntityReference.class, targetClass,
+                                                     Serializable.class}).with(objectReference,
 
 
-
-
-
-
-
-
-
-
-
-                                                                                                                           backend).build(factory);
+                                                                              backend).build(factory);
 
         return proxy;
 
@@ -82,13 +74,31 @@ public class CGLibLazyProxyFactory implements LazyProxyFactory {
                                                     final DatastoreProvider p) {
         final Class<? extends Collection> targetClass = listToProxy.getClass();
         final SerializableCollectionObjectReference objectReference = new SerializableCollectionObjectReference(
-                listToProxy, referenceObjClass, ignoreMissing, p);
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                               listToProxy,
+                                                                                                               referenceObjClass,
+                                                                                                               ignoreMissing,
+                                                                                                               p);
 
         final T backend = (T) new NonFinalizingHotSwappingInvoker(new Class[]{targetClass, Serializable.class}, factory,
-                                                                  objectReference, DelegationMode.SIGNATURE).proxy();
+                                                                 objectReference, DelegationMode.SIGNATURE).proxy();
         final T proxy = (T) Dispatching.proxy(targetClass,
-                                              new Class[]{ProxiedEntityReferenceList.class, targetClass, Serializable.class}).with(
-                objectReference, backend).build(factory);
+                                             new Class[]{ProxiedEntityReferenceList.class, targetClass,
+                                                         Serializable.class}).with(
+                                                                                  objectReference, backend)
+                                       .build(factory);
 
         return proxy;
 
@@ -99,13 +109,16 @@ public class CGLibLazyProxyFactory implements LazyProxyFactory {
                                             final DatastoreProvider p) {
         final Class<? extends Map> targetClass = mapToProxy.getClass();
         final SerializableMapObjectReference objectReference = new SerializableMapObjectReference(
-                mapToProxy, referenceObjClass, ignoreMissing, p);
+                                                                                                 mapToProxy,
+                                                                                                 referenceObjClass,
+                                                                                                 ignoreMissing, p);
 
         final T backend = (T) new NonFinalizingHotSwappingInvoker(new Class[]{targetClass, Serializable.class}, factory,
-                                                                  objectReference, DelegationMode.SIGNATURE).proxy();
+                                                                 objectReference, DelegationMode.SIGNATURE).proxy();
         final T proxy = (T) Dispatching.proxy(targetClass,
-                                              new Class[]{ProxiedEntityReferenceMap.class, targetClass, Serializable.class}).with(objectReference,
-                                                                                                                                  backend).build(factory);
+                                             new Class[]{ProxiedEntityReferenceMap.class, targetClass,
+                                                         Serializable.class}).with(objectReference,
+                                                                                  backend).build(factory);
 
         return proxy;
 

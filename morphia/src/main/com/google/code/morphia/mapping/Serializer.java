@@ -56,7 +56,7 @@ public class Serializer {
      * deserializes DBBinary/byte[] to object
      */
     public static Object deserialize(final Object data, final boolean zipped) throws IOException,
-            ClassNotFoundException {
+                                                                                     ClassNotFoundException {
         final ByteArrayInputStream bais;
         if (data instanceof Binary) {
             bais = new ByteArrayInputStream(((Binary) data).getData());

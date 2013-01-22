@@ -59,7 +59,7 @@ public class ExternalMapperExtTest extends TestBase {
         private String id;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private static final class CloneMapper {
         private final Mapper mapr;
 
@@ -72,7 +72,7 @@ public class ExternalMapperExtTest extends TestBase {
             final MappedClass sourceMC = mapr.getMappedClass(sourceClass);
             //copy the class level annotations
             for (final Entry<Class<? extends Annotation>, ArrayList<Annotation>> e : sourceMC.getReleventAnnotations()
-                    .entrySet()) {
+                                                                                             .entrySet()) {
                 if (e.getValue() != null && e.getValue().size() > 0) {
                     for (final Annotation ann : e.getValue()) {
                         destMC.addAnnotation(e.getKey(), ann);

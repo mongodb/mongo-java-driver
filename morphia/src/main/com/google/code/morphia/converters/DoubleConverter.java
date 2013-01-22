@@ -20,7 +20,6 @@
 package com.google.code.morphia.converters;
 
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 import com.google.code.morphia.utils.ReflectionUtils;
 
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ import java.util.List;
  * @author Uwe Schaefer, (us@thomas-daily.de)
  * @author scotthernandez
  */
-@SuppressWarnings({"rawtypes"})
+@SuppressWarnings("rawtypes")
 public class DoubleConverter extends TypeConverter implements SimpleValueConverter {
 
     public DoubleConverter() {
@@ -38,8 +37,7 @@ public class DoubleConverter extends TypeConverter implements SimpleValueConvert
     }
 
     @Override
-    public Object decode(final Class targetClass, final Object val, final MappedField optionalExtraInfo) throws
-            MappingException {
+    public Object decode(final Class targetClass, final Object val, final MappedField optionalExtraInfo) {
         if (val == null) {
             return null;
         }
@@ -53,7 +51,7 @@ public class DoubleConverter extends TypeConverter implements SimpleValueConvert
         }
 
         //FixMe: super-hacky
-        if ( // val instanceof LazyBSONList ||  // TODO: May have to replace this with something else
+        if (// val instanceof LazyBSONList ||  // TODO: May have to replace this with something else
                 val instanceof ArrayList) {
             return ReflectionUtils.convertToArray(double.class, (List<?>) val);
         }

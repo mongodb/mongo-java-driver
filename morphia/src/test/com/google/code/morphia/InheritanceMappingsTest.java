@@ -41,7 +41,11 @@ public class InheritanceMappingsTest extends TestBase {
 
 
     private static enum VehicleClass {
-        Bicycle, Moped, MiniCar, Car, Truck
+        Bicycle,
+        Moped,
+        MiniCar,
+        Car,
+        Truck
     }
 
     private interface Vehicle {

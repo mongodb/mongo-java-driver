@@ -48,7 +48,7 @@ public class FieldCriteria extends AbstractCriteria implements Criteria {
         final StringBuffer sb = new StringBuffer(field); //validate might modify prop string to translate java field
         // name to db field name
         final MappedField mf = Mapper.validate(query.getEntityClass(), query.getDatastore().getMapper(), sb, op,
-                                               value, validateNames, validateTypes);
+                                              value, validateNames, validateTypes);
         field = sb.toString();
 
         final Mapper mapr = query.getDatastore().getMapper();
@@ -56,7 +56,10 @@ public class FieldCriteria extends AbstractCriteria implements Criteria {
         MappedClass mc = null;
         try {
             if (value != null && !ReflectionUtils.isPropertyType(value.getClass()) && !ReflectionUtils
-                    .implementsInterface(value.getClass(), Iterable.class)) {
+                                                                                       .implementsInterface(value
+                                                                                                            .getClass(),
+                                                                                                           Iterable
+                                                                                                           .class)) {
                 if (mf != null && !mf.isTypeMongoCompatible()) {
                     mc = mapr.getMappedClass((mf.isSingleValue()) ? mf.getType() : mf.getSubClass());
                 }
@@ -76,7 +79,18 @@ public class FieldCriteria extends AbstractCriteria implements Criteria {
 
         //convert single values into lists for $in/$nin
         if (type != null && (op == FilterOperator.IN || op == FilterOperator.NOT_IN) && !type.isArray() && !Iterable
-                .class.isAssignableFrom(type)) {
+                                                                                                            .class
+
+
+
+
+
+
+
+
+                                                                                                            .isAssignableFrom(
+
+                                                                                                                             type)) {
             mappedValue = Collections.singletonList(mappedValue);
         }
 

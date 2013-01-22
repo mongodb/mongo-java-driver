@@ -24,7 +24,7 @@ import com.google.code.morphia.TestBase;
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.PrePersist;
 import com.google.code.morphia.callbacks.SimpleValidationViaInterceptorTest.NonNullValidation
-        .NonNullValidationException;
+       .NonNullValidationException;
 import com.google.code.morphia.mapping.MappedClass;
 import com.google.code.morphia.mapping.MappedField;
 import com.google.code.morphia.mapping.Mapper;

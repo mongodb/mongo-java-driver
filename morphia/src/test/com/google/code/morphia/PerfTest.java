@@ -41,7 +41,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class PerfTest extends TestBase {
     private static final double WRITE_FAIL_FACTOR = 1.10;
-//    private static final double READ_FAIL_FACTOR = 1.75;
+    //    private static final double READ_FAIL_FACTOR = 1.75;
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.##");
 
     @SuppressWarnings("UnusedDeclaration")
@@ -97,8 +97,8 @@ public class PerfTest extends TestBase {
         final long insertTime = endTicks - startTicks;
 
         final String msg = String.format("Insert (%s) performance is too slow: %sX slower (%s/%s)", count,
-                                         DECIMAL_FORMAT.format((double) insertTime / rawInsertTime), insertTime,
-                                         rawInsertTime);
+                                        DECIMAL_FORMAT.format((double) insertTime / rawInsertTime), insertTime,
+                                        rawInsertTime);
         assertTrue(msg, insertTime < (rawInsertTime * WRITE_FAIL_FACTOR));
     }
 

@@ -43,12 +43,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 class ReferenceMapper implements CustomMapper {
     public static final Logr log = MorphiaLoggerFactory.get(ReferenceMapper.class);
 
     public void toDBObject(final Object entity, final MappedField mf, final DBObject dbObject, final Map<Object,
-            DBObject> involvedObjects, final Mapper mapr) {
+                                                                                                        DBObject>
+                                                                                               involvedObjects,
+                           final Mapper mapr) {
         final String name = mf.getNameToStore();
 
         final Object fieldValue = mf.getFieldValue(entity);
@@ -210,7 +212,7 @@ class ReferenceMapper implements CustomMapper {
                 else {
                     if (!refAnn.ignoreMissing()) {
                         throw new MappingException("The reference(" + dbRef.toString() + ") could not be fetched for "
-                                                           + mf.getFullName());
+                                                   + mf.getFullName());
                     }
                 }
             }
@@ -231,13 +233,14 @@ class ReferenceMapper implements CustomMapper {
         // multiple references in a List
         final Class referenceObjClass = mf.getSubClass();
         Collection references = mf.isSet() ? mapr.getOptions().objectFactory.createSet(mf) : mapr.getOptions()
-                .objectFactory.createList(mf);
+                                                                                             .objectFactory
+                                                                                             .createList(mf);
 
         if (refAnn.lazy() && LazyFeatureDependencies.assertDependencyFullFilled()) {
             final Object dbVal = mf.getDbObjectValue(dbObject);
             if (dbVal != null) {
                 references = mapr.proxyFactory.createListProxy(references, referenceObjClass, refAnn.ignoreMissing(),
-                                                               mapr.datastoreProvider);
+                                                              mapr.datastoreProvider);
                 final ProxiedEntityReferenceList referencesAsProxy = (ProxiedEntityReferenceList) references;
 
                 if (dbVal instanceof List) {
@@ -247,7 +250,7 @@ class ReferenceMapper implements CustomMapper {
 
                     if (keys.size() != refList.size()) {
                         final String msg = "Some of the references could not be fetched for " + mf.getFullName() + ". "
-                                + refList + " != " + keys;
+                                           + refList + " != " + keys;
                         if (!refAnn.ignoreMissing()) {
                             throw new MappingException(msg);
                         }
@@ -262,7 +265,7 @@ class ReferenceMapper implements CustomMapper {
                     final DBRef dbRef = (DBRef) dbVal;
                     if (!exists(mf.getSubClass(), dbRef, cache, mapr)) {
                         final String msg = "The reference(" + dbRef.toString() + ") could not be fetched for "
-                                + mf.getFullName();
+                                           + mf.getFullName();
                         if (!refAnn.ignoreMissing()) {
                             throw new MappingException(msg);
                         }
@@ -296,7 +299,7 @@ class ReferenceMapper implements CustomMapper {
 
         if (mf.getType().isArray()) {
             mf.setFieldValue(entity, ReflectionUtils.convertToArray(mf.getSubClass(),
-                                                                    ReflectionUtils.iterToList(references)));
+                                                                   ReflectionUtils.iterToList(references)));
         }
         else {
             mf.setFieldValue(entity, references);
@@ -315,12 +318,12 @@ class ReferenceMapper implements CustomMapper {
         final DBCollection dbColl = dsi.getCollection(c);
         if (!dbColl.getName().equals(dbRef.getRef())) {
             log.warning("Class " + c.getName() + " is stored in the '" + dbColl.getName()
-                                + "' collection but a reference was found for this type to another collection, " +
-                                "'" + dbRef.getRef()
-                                + "'. The reference will be loaded using the class anyway. " + dbRef);
+                        + "' collection but a reference was found for this type to another collection, " +
+                        "'" + dbRef.getRef()
+                        + "'. The reference will be loaded using the class anyway. " + dbRef);
         }
         final boolean exists = (dsi.find(dbRef.getRef(), c).disableValidation().filter("_id", dbRef.getId()).asKeyList()
-                .size() == 1);
+                                   .size() == 1);
         cache.notifyExists(key, exists);
         return exists;
     }
@@ -347,10 +350,11 @@ class ReferenceMapper implements CustomMapper {
             return refObj;
         }
 
-        final boolean ignoreMissing = mf.getAnnotation(Reference.class) != null && mf.getAnnotation(Reference.class).ignoreMissing();
+        final boolean ignoreMissing = mf.getAnnotation(Reference.class) != null && mf.getAnnotation(Reference.class)
+                                                                                     .ignoreMissing();
         if (!ignoreMissing) {
             throw new MappingException("The reference(" + dbRef.toString() + ") could not be fetched for "
-                                               + mf.getFullName());
+                                       + mf.getFullName());
         }
         else {
             return null;
@@ -367,7 +371,7 @@ class ReferenceMapper implements CustomMapper {
             if (refAnn.lazy() && LazyFeatureDependencies.assertDependencyFullFilled()) {
                 // replace map by proxy to it.
                 m = mapr.proxyFactory.createMapProxy(m, referenceObjClass, refAnn.ignoreMissing(),
-                                                     mapr.datastoreProvider);
+                                                    mapr.datastoreProvider);
             }
 
             final Map map = m;
@@ -390,7 +394,8 @@ class ReferenceMapper implements CustomMapper {
         mf.setFieldValue(entity, m);
     }
 
-    private Object createOrReuseProxy(final Class referenceObjClass, final DBRef dbRef, final EntityCache cache, final Mapper mapr) {
+    private Object createOrReuseProxy(final Class referenceObjClass, final DBRef dbRef, final EntityCache cache,
+                                      final Mapper mapr) {
         final Key key = mapr.refToKey(dbRef);
         final Object proxyAlreadyCreated = cache.getProxy(key);
         if (proxyAlreadyCreated != null) {

@@ -99,24 +99,24 @@ public class IndexedCappedTest extends TestBase {
 
         @Property("lastMod")
         @Indexed
-        private  long lastModified;
+        private long lastModified;
 
         @Indexed
-        private  boolean active;
+        private boolean active;
     }
 
     @Indexes(@Index("active,-lastModified"))
     @SuppressWarnings("UnusedDeclaration")
     private static class Ad2 {
         @Id
-        private  long id;
+        private long id;
 
         @Property("lastMod")
         @Indexed
-        private  long lastModified;
+        private long lastModified;
 
         @Indexed
-        private  boolean active;
+        private boolean active;
     }
 
     @Embedded

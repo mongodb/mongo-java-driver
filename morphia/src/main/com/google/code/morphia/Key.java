@@ -26,39 +26,49 @@ import java.io.Serializable;
  * @author Jeff Schnitzer <jeff@infohazard.org> (from Objectify codebase)
  * @author Scott Hernandez (adapted to morphia/mongodb)
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class Key<T> implements Serializable, Comparable<Key<?>> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The name of the class which represents the kind. As much as we'd like to
-     * use the normal String kind value here, translating back to a Class for
-     * getKind() would then require a link to the OFactory, making this object
+     * The name of the class which represents the kind. As much as we'd like to use the normal String kind value here,
+     * translating back to a Class for getKind() would then require a link to the OFactory, making this object
      * non-serializable.
      */
     protected String kind;
     protected Class<? extends T> kindClass;
 
-    /** Id value */
+    /**
+     * Id value
+     */
     protected Object id;
     protected byte[] idBytes;
 
-    /** For GWT serialization */
+    /**
+     * For GWT serialization
+     */
     protected Key() {
     }
 
-    /** Create a key with an id */
+    /**
+     * Create a key with an id
+     */
     public Key(final Class<? extends T> kind, final Object id) {
         this.kindClass = kind;
         this.id = id;
     }
 
-    /** Create a key with an id */
+    /**
+     * Create a key with an id
+     */
     public Key(final Class<? extends T> kind, final byte[] idBytes) {
         this.kindClass = kind;
         this.idBytes = idBytes;
     }
 
-    /** Create a key with an id */
+    /**
+     * Create a key with an id
+     */
     public Key(final String kind, final Object id) {
         this.kind = kind.intern();
         this.id = id;
@@ -103,14 +113,8 @@ public class Key<T> implements Serializable, Comparable<Key<?>> {
     }
 
     /**
-     * <p>
-     * Compares based on the following traits, in order:
-     * </p>
-     * <ol>
-     * <li>kind/kindClass</li>
-     * <li>parent</li>
-     * <li>id or name</li>
-     * </ol>
+     * <p> Compares based on the following traits, in order: </p> <ol> <li>kind/kindClass</li> <li>parent</li> <li>id or
+     * name</li> </ol>
      */
     public int compareTo(final Key<?> other) {
         checkState(this);
@@ -165,7 +169,9 @@ public class Key<T> implements Serializable, Comparable<Key<?>> {
         return this.id.hashCode();
     }
 
-    /** Creates a human-readable version of this key */
+    /**
+     * Creates a human-readable version of this key
+     */
     @Override
     public String toString() {
         final StringBuilder bld = new StringBuilder("Key{");

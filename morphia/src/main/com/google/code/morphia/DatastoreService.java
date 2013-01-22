@@ -19,13 +19,17 @@ package com.google.code.morphia;
 /**
  * @author Scott Hernnadez
  */
+@SuppressWarnings({ "deprecation", "rawtypes" })
 public class DatastoreService {
-    private static final Morphia mor;
+    private static final Morphia MORPHIA;
     private static Datastore ds;
 
     static {
-        mor = new Morphia();
-        ds = mor.createDatastore("test");
+        MORPHIA = new Morphia();
+        ds = MORPHIA.createDatastore("test");
+    }
+
+    private DatastoreService() {
     }
 
     /**
@@ -36,14 +40,14 @@ public class DatastoreService {
     }
 
     public static void setDatabase(final String dbName) {
-        if (!((DatastoreImpl) ds).getDB().getName().equals(dbName)) {
-            ds = mor.createDatastore(dbName);
+        if (!ds.getDB().getName().equals(dbName)) {
+            ds = MORPHIA.createDatastore(dbName);
         }
     }
 
     @SuppressWarnings("unchecked")
     public static void mapClass(final Class c) {
-        mor.map(c);
+        MORPHIA.map(c);
     }
 
     @SuppressWarnings("unchecked")
@@ -54,6 +58,6 @@ public class DatastoreService {
     }
 
     public static void mapPackage(final String pkg) {
-        mor.mapPackage(pkg, true);
+        MORPHIA.mapPackage(pkg, true);
     }
 }

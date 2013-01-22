@@ -35,7 +35,14 @@ public class ShortFormatter extends Formatter {
         final StringBuffer sb = new StringBuffer();
         String source = record.getSourceClassName() == null ? record.getLoggerName() : record.getSourceClassName();
         source = source.substring(source.length() - 15) + "." + (record.getSourceMethodName() == null ? "" : record
-                .getSourceMethodName());
+
+
+
+
+
+
+
+                                                                                                             .getSourceMethodName());
 
         final Object[] arguments = new Object[6];
         arguments[0] = source;

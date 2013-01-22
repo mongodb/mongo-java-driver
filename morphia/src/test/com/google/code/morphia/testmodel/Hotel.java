@@ -36,7 +36,8 @@ public final class Hotel extends TestEntity {
     }
 
     public enum Type {
-        BUSINESS, LEISURE
+        BUSINESS,
+        LEISURE
     }
 
     private String name;

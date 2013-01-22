@@ -20,7 +20,6 @@
 package com.google.code.morphia.converters;
 
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 
 import java.util.Date;
 
@@ -28,7 +27,7 @@ import java.util.Date;
  * @author Uwe Schaefer, (us@thomas-daily.de)
  * @author scotthernandez
  */
-@SuppressWarnings({"rawtypes"})
+@SuppressWarnings("rawtypes")
 public class DateConverter extends TypeConverter implements SimpleValueConverter {
 
     public DateConverter() {
@@ -41,8 +40,7 @@ public class DateConverter extends TypeConverter implements SimpleValueConverter
 
     @SuppressWarnings("deprecation")
     @Override
-    public Object decode(final Class targetClass, final Object val, final MappedField optionalExtraInfo) throws
-            MappingException {
+    public Object decode(final Class targetClass, final Object val, final MappedField optionalExtraInfo) {
         if (val == null) {
             return null;
         }

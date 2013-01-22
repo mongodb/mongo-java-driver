@@ -37,7 +37,7 @@ import java.util.List;
  * @author Olafur Gauti Gudmundsson
  * @author Scott Hernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class BasicDAO<T, K> implements DAO<T, K> {
 
     protected Class<T> entityClazz;

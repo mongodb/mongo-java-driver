@@ -20,7 +20,6 @@
 package com.google.code.morphia.converters;
 
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 import org.bson.types.ObjectId;
 
 /**
@@ -28,7 +27,7 @@ import org.bson.types.ObjectId;
  *
  * @author scotthernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class ObjectIdConverter extends TypeConverter implements SimpleValueConverter {
 
     public ObjectIdConverter() {
@@ -36,8 +35,7 @@ public class ObjectIdConverter extends TypeConverter implements SimpleValueConve
     }
 
     @Override
-    public Object decode(final Class targetClass, final Object val, final MappedField optionalExtraInfo) throws
-            MappingException {
+    public Object decode(final Class targetClass, final Object val, final MappedField optionalExtraInfo) {
         if (val == null) {
             return null;
         }

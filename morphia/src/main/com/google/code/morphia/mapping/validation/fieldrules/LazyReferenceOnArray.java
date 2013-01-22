@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class LazyReferenceOnArray extends FieldConstraint {
 
     @Override
@@ -40,8 +40,8 @@ public class LazyReferenceOnArray extends FieldConstraint {
             final Class type = mf.getType();
             if (type.isArray()) {
                 ve.add(new ConstraintViolation(Level.FATAL, mc, mf, this.getClass(),
-                                               "The lazy attribute cannot be used for an Array. If you need a lazy " +
-                                                       "array please use ArrayList instead."));
+                                              "The lazy attribute cannot be used for an Array. If you need a lazy " +
+                                              "array please use ArrayList instead."));
             }
         }
     }

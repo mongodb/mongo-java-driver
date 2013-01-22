@@ -27,7 +27,8 @@ public enum UpdateOperator {
     PUSH("$push"),
     PUSH_ALL("$pushAll"),
     ADD_TO_SET("$addToSet"),
-    ADD_TO_SET_EACH("$addToSet"), // fake to indicate that the value should be wrapped in an $each
+    ADD_TO_SET_EACH("$addToSet"),
+    // fake to indicate that the value should be wrapped in an $each
     EACH("$each"),
     POP("$pop"),
     INC("$inc"),

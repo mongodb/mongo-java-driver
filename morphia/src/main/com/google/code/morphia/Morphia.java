@@ -33,7 +33,7 @@ import java.util.Set;
  * @author Olafur Gauti Gudmundsson
  * @author Scott Hernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class Morphia {
     private final Mapper mapper;
 

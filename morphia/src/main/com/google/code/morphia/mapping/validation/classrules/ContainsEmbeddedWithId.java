@@ -66,7 +66,7 @@ public class ContainsEmbeddedWithId implements ClassConstraint {
             }
             if (hasTypeFieldAnnotation(clazz, Id.class)) {
                 ve.add(new ConstraintViolation(Level.FATAL, mc, this.getClass(),
-                                               "You cannot use @Id on any field of an Embedded/Property object"));
+                                              "You cannot use @Id on any field of an Embedded/Property object"));
             }
             alreadyInspectedClasses.add(clazz);
             final Set<Class<?>> extraClassesToInspect = new HashSet<Class<?>>();

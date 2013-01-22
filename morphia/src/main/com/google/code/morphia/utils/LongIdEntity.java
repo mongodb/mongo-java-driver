@@ -65,10 +65,10 @@ public abstract class LongIdEntity {
 
         public StoredId(final String name) {
             className = name;
-		}
+        }
 
-		protected StoredId(){
-			className = "";
+        protected StoredId() {
+            className = "";
         }
 
         public Long getValue() {

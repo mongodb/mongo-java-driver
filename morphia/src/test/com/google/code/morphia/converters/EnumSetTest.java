@@ -43,7 +43,8 @@ public class EnumSetTest extends TestBase {
                 return "Never use toString for other purposes than debugging ";
             }
         },
-        C, D
+        C,
+        D
     }
 
     public static class NastyEnumEntity extends TestEntity {

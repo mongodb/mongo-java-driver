@@ -49,6 +49,7 @@ import java.util.Map;
  * @param <T> The type we will be querying for, and returning.
  * @author Scott Hernandez
  */
+@SuppressWarnings("deprecation")
 public class QueryImpl<T> extends CriteriaContainerImpl implements Query<T>, Criteria {
     private static final Logr log = MorphiaLoggerFactory.get(QueryImpl.class);
 
@@ -86,7 +87,7 @@ public class QueryImpl<T> extends CriteriaContainerImpl implements Query<T>, Cri
         final Entity entAn = mc == null ? null : mc.getEntityAnnotation();
         if (entAn != null) {
             this.readPref = this.ds.getMapper().getMappedClass(clazz).getEntityAnnotation().queryNonPrimary() ?
-                    ReadPreference.secondaryPreferred() : null;
+                            ReadPreference.secondaryPreferred() : null;
         }
     }
 
@@ -209,7 +210,7 @@ public class QueryImpl<T> extends CriteriaContainerImpl implements Query<T>, Cri
 
         if (log.isTraceEnabled()) {
             log.trace("Running query(" + dbColl.getName() + ") : " + query + ", fields:" + fields + "," +
-                              "off:" + offset + ",limit:" + limit);
+                      "off:" + offset + ",limit:" + limit);
         }
 
         final DBCursor cursor = dbColl.find(query, fields);
@@ -299,13 +300,13 @@ public class QueryImpl<T> extends CriteriaContainerImpl implements Query<T>, Cri
 
         if (log.isTraceEnabled()) {
             log.trace(String.format("\nasList: %s \t %d entities, iterator time: driver %n ms, " +
-                                            "mapper %n ms \n cache: %s \n for $s \n ",
-                                    dbColl.getName(),
-                                    results.size(),
-                                    iter.getDriverTime(),
-                                    iter.getMapperTime(),
-                                    cache.stats().toString(),
-                                    getQueryObject()));
+                                    "mapper %n ms \n cache: %s \n for $s \n ",
+                                   dbColl.getName(),
+                                   results.size(),
+                                   iter.getDriverTime(),
+                                   iter.getMapperTime(),
+                                   cache.stats().toString(),
+                                   getQueryObject()));
         }
 
         return results;
@@ -585,8 +586,7 @@ public class QueryImpl<T> extends CriteriaContainerImpl implements Query<T>, Cri
 
     /**
      * Enabled snapshotted mode where duplicate results (which may be updated during the lifetime of the cursor) will
-     * not
-     * be returned. Not compatible with order/sort and hint.
+     * not be returned. Not compatible with order/sort and hint.
      */
     public Query<T> enableSnapshotMode() {
         snapshotted = true;
@@ -637,6 +637,5 @@ public class QueryImpl<T> extends CriteriaContainerImpl implements Query<T>, Cri
     public String getFieldName() {
         return null;
     }
-
 
 }

@@ -38,8 +38,8 @@ public class UpdateResults<T> {
      * @return true if updated, false if inserted or none effected
      */
     public boolean getUpdatedExisting() {
-        return wr.getLastError().containsField("updatedExisting") ? (Boolean) wr.getLastError().get
-                ("updatedExisting") : false;
+        return wr.getLastError().containsField("updatedExisting")
+               ? (Boolean) wr.getLastError().get("updatedExisting") : false;
     }
 
     /**
@@ -67,9 +67,8 @@ public class UpdateResults<T> {
      * @return the new _id field if an insert/upsert was performed
      */
     public Object getNewId() {
-        return getInsertedCount() == 1 && wr.getLastError().containsField("upserted") ? wr.getLastError().get
-                ("upserted") :
-                null;
+        return getInsertedCount() == 1 && wr.getLastError().containsField("upserted")
+               ? wr.getLastError().get("upserted") : null;
     }
 
     /**

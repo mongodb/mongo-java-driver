@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@SuppressWarnings({"rawtypes"})
+@SuppressWarnings("rawtypes")
 public class MapOrCollectionMF extends MappedField {
     private ParameterizedType pType;
     private Object value;
@@ -140,7 +140,7 @@ public class MapOrCollectionMF extends MappedField {
      * @see com.google.code.morphia.mapping.MappedField#getFieldValue(java.lang.Object)
      */
     @Override
-    public Object getFieldValue(final Object classInst) throws IllegalArgumentException {
+    public Object getFieldValue(final Object classInst) {
         return value;
     }
 
@@ -148,9 +148,8 @@ public class MapOrCollectionMF extends MappedField {
      * @see com.google.code.morphia.mapping.MappedField#setFieldValue(java.lang.Object, java.lang.Object)
      */
     @Override
-    public void setFieldValue(final Object classInst, final Object val) throws IllegalArgumentException {
+    public void setFieldValue(final Object classInst, final Object val) {
         value = val;
     }
-
 
 }

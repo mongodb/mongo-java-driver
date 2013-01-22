@@ -35,7 +35,7 @@ public class FieldNameTest {
         new AssertedFailure(FieldName.FieldNameNotFoundException.class) {
 
             @Override
-            protected void thisMustFail() throws Throwable {
+            protected void thisMustFail() {
                 FieldName.of("buh");
             }
         };

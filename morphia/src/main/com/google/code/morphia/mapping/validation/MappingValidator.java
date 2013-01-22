@@ -110,7 +110,7 @@ public class MappingValidator {
         constraints.add(new EmbeddedAndValue());
         constraints.add(new EntityCannotBeMapOrIterable());
         constraints.add(new DuplicatedAttributeNames());
-//		constraints.add(new ContainsEmbeddedWithId());
+        //		constraints.add(new ContainsEmbeddedWithId());
         // field-level
         constraints.add(new MisplacedProperty());
         constraints.add(new ReferenceToUnidentifiable());
@@ -156,7 +156,7 @@ public class MappingValidator {
 
                 default:
                     throw new IllegalStateException("Cannot log " + ConstraintViolation.class.getSimpleName()
-                                                            + " of Level " + v.getLevel());
+                                                    + " of Level " + v.getLevel());
             }
         }
 

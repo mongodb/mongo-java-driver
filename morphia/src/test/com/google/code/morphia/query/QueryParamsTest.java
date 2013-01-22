@@ -42,61 +42,61 @@ public class QueryParamsTest extends TestBase {
 
         // have to fail:
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 e.greaterThan(null);
             }
         };
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 e.greaterThanOrEq(null);
             }
         };
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 e.hasAllOf(null);
             }
         };
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 e.hasAnyOf(null);
             }
         };
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 e.hasNoneOf(null);
             }
         };
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 e.hasThisElement(null);
             }
         };
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 e.lessThan(null);
             }
         };
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 e.lessThanOrEq(null);
             }
         };
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 e.startsWith(null);
             }
         };
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 e.startsWithIgnoreCase(null);
             }
         };
@@ -108,21 +108,21 @@ public class QueryParamsTest extends TestBase {
         final FieldEnd<?> e = q.field("_id");
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 e.hasAllOf(Collections.EMPTY_LIST);
             }
         };
 
         new AssertedFailure() {
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 e.hasNoneOf(Collections.EMPTY_LIST);
             }
         };
 
-//        new AssertedFailure() {
-//            public void thisMustFail() throws Throwable {
-//                e.hasAnyOf(Collections.EMPTY_LIST);
-//            }
-//        };
+        //        new AssertedFailure() {
+        //            public void thisMustFail() throws Throwable {
+        //                e.hasAnyOf(Collections.EMPTY_LIST);
+        //            }
+        //        };
     }
 }

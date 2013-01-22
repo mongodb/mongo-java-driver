@@ -37,9 +37,10 @@ public class EmbeddedAndValue implements ClassConstraint {
 
         if (mc.getEmbeddedAnnotation() != null && !mc.getEmbeddedAnnotation().value().equals(Mapper
 
-                                                                                                     .IGNORED_FIELDNAME)) {
+                                                                                             .IGNORED_FIELDNAME)) {
             ve.add(new ConstraintViolation(Level.FATAL, mc, this.getClass(), "@" + Embedded.class.getSimpleName()
-                    + " classes cannot specify a fieldName value(); this is on applicable on fields"));
+                                                                             + " classes cannot specify a fieldName " +
+                                                                             "value(); this is on applicable on fields"));
         }
     }
 

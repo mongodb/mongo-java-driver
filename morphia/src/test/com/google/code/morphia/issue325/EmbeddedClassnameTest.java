@@ -31,12 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-/**
- */
 @SuppressWarnings("unused")
 public class EmbeddedClassnameTest extends TestBase {
 
-    //	@SuppressWarnings("unused")
     @Entity(noClassnameStored = true)
     private static class Root {
         @Id

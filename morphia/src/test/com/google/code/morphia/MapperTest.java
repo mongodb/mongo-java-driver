@@ -159,7 +159,7 @@ public class MapperTest extends TestBase {
     }
 
     @Test
-    public void singleLookup() throws Exception {
+    public void singleLookup() {
         A.loadCount = 0;
         final A a = new A();
         HoldsMultipleA holder = new HoldsMultipleA();
@@ -172,7 +172,7 @@ public class MapperTest extends TestBase {
     }
 
     @Test
-    public void singleProxy() throws Exception {
+    public void singleProxy() {
         // TODO us: exclusion does not work properly with maven + junit4
         if (!LazyFeatureDependencies.testDependencyFullFilled()) {
             return;
@@ -199,7 +199,7 @@ public class MapperTest extends TestBase {
     }
 
     @Test
-    public void serializableId() throws Exception {
+    public void serializableId() {
         final CustomId cId = new CustomId();
         cId.id = new ObjectId();
         cId.type = "banker";

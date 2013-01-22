@@ -44,7 +44,7 @@ public final class FieldName {
             return name;
         }
         throw new FieldNameNotFoundException("Field called '" + name + "' on class '" + clazz
-                                                     + "' was not found.");
+                                             + "' was not found.");
     }
 
     private static boolean hasField(final Class<?> clazz, final String name) {

@@ -133,7 +133,7 @@ public class FieldEndImpl<T extends CriteriaContainerImpl> implements FieldEnd<T
 
     public T hasAnyOf(final Iterable<?> vals) {
         Assert.parametersNotNull("vals", vals);
-//		Assert.parameterNotEmpty(vals,"vals"); //it is valid but will never return any results.
+        //		Assert.parameterNotEmpty(vals,"vals"); //it is valid but will never return any results.
         if (log.isWarningEnabled()) {
             if (!vals.iterator().hasNext()) {
                 log.warning("Specified an empty list/collection with the '" + field + "' criteria");
@@ -189,7 +189,7 @@ public class FieldEndImpl<T extends CriteriaContainerImpl> implements FieldEnd<T
 
     public T near(final double x, final double y, final double radius, final boolean spherical) {
         return addGeoCrit(spherical ? FilterOperator.NEAR_SPHERE : FilterOperator.NEAR, new double[]{x, y},
-                          opts("$maxDistance", radius));
+                         opts("$maxDistance", radius));
     }
 
     public T near(final double x, final double y, final boolean spherical) {
@@ -202,7 +202,7 @@ public class FieldEndImpl<T extends CriteriaContainerImpl> implements FieldEnd<T
 
     public T within(final double x, final double y, final double radius, final boolean spherical) {
         return addGeoCrit(spherical ? FilterOperator.WITHIN_CIRCLE_SPHERE : FilterOperator.WITHIN_CIRCLE,
-                          new Object[]{new double[]{x, y}, radius}, null);
+                         new Object[]{new double[]{x, y}, radius}, null);
     }
 
     public T within(final double x1, final double y1, final double x2, final double y2) {

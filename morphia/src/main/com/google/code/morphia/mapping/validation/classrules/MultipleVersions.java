@@ -38,7 +38,8 @@ public class MultipleVersions implements ClassConstraint {
         final List<MappedField> versionFields = mc.getFieldsAnnotatedWith(Version.class);
         if (versionFields.size() > 1) {
             ve.add(new ConstraintViolation(Level.FATAL, mc, this.getClass(), "Multiple @" + Version.class
-                    + " annotations are not allowed. (" + new FieldEnumString(versionFields)));
+                                                                             + " annotations are not allowed. ("
+                                                                             + new FieldEnumString(versionFields)));
         }
     }
 }

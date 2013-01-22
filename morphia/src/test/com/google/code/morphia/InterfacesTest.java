@@ -42,8 +42,8 @@ public class InterfacesTest extends TestBase {
         final DBCollection shapeshifters = db.getCollection("shapeshifters");
 
         morphia.map(Circle.class)
-                .map(Rectangle.class)
-                .map(ShapeShifter.class);
+               .map(Rectangle.class)
+               .map(ShapeShifter.class);
 
         final Shape rectangle = new Rectangle(2, 5);
 
@@ -51,7 +51,9 @@ public class InterfacesTest extends TestBase {
         shapes.save(rectangleDbObj);
 
         final BasicDBObject rectangleDbObjLoaded = (BasicDBObject) shapes.findOne(
-                new BasicDBObject(Mapper.ID_KEY, rectangleDbObj.get(Mapper.ID_KEY)));
+                                                                                 new BasicDBObject(Mapper.ID_KEY,
+                                                                                                  rectangleDbObj
+                                                                                                  .get(Mapper.ID_KEY)));
         final Shape rectangleLoaded = morphia.fromDBObject(Shape.class, rectangleDbObjLoaded, new DefaultEntityCache());
 
         assertTrue(rectangle.getArea() == rectangleLoaded.getArea());
@@ -67,9 +69,14 @@ public class InterfacesTest extends TestBase {
         shapeshifters.save(shifterDbObj);
 
         final BasicDBObject shifterDbObjLoaded = (BasicDBObject) shapeshifters.findOne(
-                new BasicDBObject(Mapper.ID_KEY, shifterDbObj.get(Mapper.ID_KEY)));
+                                                                                      new BasicDBObject(Mapper.ID_KEY,
+                                                                                                       shifterDbObj.get(
+
+
+
+                                                                                                                       Mapper.ID_KEY)));
         final ShapeShifter shifterLoaded = morphia.fromDBObject(ShapeShifter.class, shifterDbObjLoaded,
-                                                                new DefaultEntityCache());
+                                                               new DefaultEntityCache());
 
         assertNotNull(shifterLoaded);
         assertNotNull(shifterLoaded.getReferencedShape());

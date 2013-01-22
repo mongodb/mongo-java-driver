@@ -21,7 +21,6 @@ package com.google.code.morphia.converters;
 
 import com.google.code.morphia.TestBase;
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 import com.google.code.morphia.testutil.TestEntity;
 import org.junit.Test;
 
@@ -72,8 +71,7 @@ public class CustomConverterInEmbedTest extends TestBase {
         }
 
         @Override
-        public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo)
-                throws MappingException {
+        public Object decode(final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo) {
             return new Foo((String) fromDBObject);
         }
 

@@ -55,7 +55,7 @@ public class FrontPageExampleTest extends TestBase {
         private String firstName, lastName; // value types are automatically persisted
         private Long salary = null; // only non-null values are stored
 
-//        Address address; // by default fields are @Embedded
+        //        Address address; // by default fields are @Embedded
 
         private Key<Employee> manager; // references can be saved without automatic
         // loading
@@ -92,8 +92,8 @@ public class FrontPageExampleTest extends TestBase {
 
         //add Scott as an employee of his manager
         final UpdateResults<Employee> res = ds.update(boss,
-                                                      ds.createUpdateOperations(Employee.class)
-                                                              .add("underlings", scottsKey));
+                                                     ds.createUpdateOperations(Employee.class)
+                                                       .add("underlings", scottsKey));
         Assert.assertNotNull(res);
         Assert.assertTrue(res.getUpdatedExisting());
         Assert.assertEquals(1, res.getUpdatedCount());

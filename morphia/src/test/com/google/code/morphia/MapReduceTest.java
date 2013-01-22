@@ -73,11 +73,11 @@ public class MapReduceTest extends TestBase {
             ads.insert("shapes", new Rectangle(rnd.nextDouble(), rnd.nextDouble()));
         }
         final String map = "function () { if(this['radius']) { emit('circle', {count:1}); return; } emit('rect', "
-                + "{count:1}); }";
+                           + "{count:1}); }";
         final String reduce = "function (key, values) { var total = 0; for ( var i=0; i<values.length; i++ ) {total "
-                + "+= values[i].count;} return { count : total }; }";
+                              + "+= values[i].count;} return { count : total }; }";
         final MapreduceResults<ResultEntity> mrRes = ds.mapReduce(MapreduceType.REPLACE, ads.createQuery(Shape.class),
-                                                                  map, reduce, null, null, ResultEntity.class);
+                                                                 map, reduce, null, null, ResultEntity.class);
         Assert.assertEquals(2, mrRes.createQuery().countAll());
         Assert.assertEquals(100, mrRes.createQuery().get().value.count, 0);
     }

@@ -65,11 +65,10 @@ public class ProxyTestBase extends TestBase {
             final byte[] ba = baos.toByteArray();
 
             return (T) new ObjectInputStream(new ByteArrayInputStream(ba))
-                    .readObject();
+                       .readObject();
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }
-
 
 }

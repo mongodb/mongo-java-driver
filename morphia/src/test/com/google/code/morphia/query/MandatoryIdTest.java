@@ -39,7 +39,7 @@ public class MandatoryIdTest extends TestBase {
         new AssertedFailure() {
 
             @Override
-            protected void thisMustFail() throws Throwable {
+            protected void thisMustFail() {
                 morphia.map(E.class);
             }
         };
@@ -51,7 +51,7 @@ public class MandatoryIdTest extends TestBase {
 
         new AssertedFailure() {
             @Override
-            protected void thisMustFail() throws Throwable {
+            protected void thisMustFail() {
                 final E byKey = ds.getByKey(E.class, save);
             }
         };

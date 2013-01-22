@@ -46,5 +46,4 @@ public class IndexFieldDef {
         return field + ":" + dir;
     }
 
-
 }

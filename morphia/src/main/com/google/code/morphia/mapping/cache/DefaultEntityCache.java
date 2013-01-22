@@ -26,12 +26,14 @@ import relocated.morphia.org.apache.commons.collections.ReferenceMap;
 import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class DefaultEntityCache implements EntityCache {
 
-    private static final Logr log = MorphiaLoggerFactory.get(DefaultEntityCache.class);
+    private static final Logr LOG = MorphiaLoggerFactory.get(DefaultEntityCache.class);
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private final Map<Key, Object> entityMap = new ReferenceMap(ReferenceMap.HARD, ReferenceMap.WEAK);
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private final Map<Key, Object> proxyMap = new ReferenceMap(ReferenceMap.WEAK, ReferenceMap.WEAK);
     private final Map<Key, Boolean> existenceMap = new HashMap<Key, Boolean>();
     private final EntityCacheStatistics stats = new EntityCacheStatistics();

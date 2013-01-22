@@ -38,7 +38,7 @@ public class NameValuePairTest extends TestBase {
 
         new AssertedFailure() {
             @Override
-            public void thisMustFail() throws Throwable {
+            public void thisMustFail() {
                 // FIXME : shouldn't fail
                 ds.get(container);
 
@@ -48,7 +48,8 @@ public class NameValuePairTest extends TestBase {
     }
 
     static enum Name {
-        FOO, BAR
+        FOO,
+        BAR
     }
 
     @Entity
@@ -79,17 +80,17 @@ public class NameValuePairTest extends TestBase {
 
         }
 
-//        public NameValuePair(final Entry<T1, T2> e) {
-//            this(e.getKey(), e.getValue());
-//        }
-//
-//        public T2 getValue() {
-//            return value;
-//        }
-//
-//        public T1 getName() {
-//            return (T1) name;
-//        }
+        //        public NameValuePair(final Entry<T1, T2> e) {
+        //            this(e.getKey(), e.getValue());
+        //        }
+        //
+        //        public T2 getValue() {
+        //            return value;
+        //        }
+        //
+        //        public T1 getName() {
+        //            return (T1) name;
+        //        }
 
         @Override
         public int hashCode() {

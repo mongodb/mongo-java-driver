@@ -21,14 +21,13 @@ package com.google.code.morphia.converters;
 
 import com.google.code.morphia.Key;
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 import com.mongodb.DBRef;
 
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  * @author scotthernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class KeyConverter extends TypeConverter {
 
     public KeyConverter() {
@@ -36,14 +35,13 @@ public class KeyConverter extends TypeConverter {
     }
 
     @Override
-    public Object decode(final Class targetClass, final Object o, final MappedField optionalExtraInfo) throws
-            MappingException {
+    public Object decode(final Class targetClass, final Object o, final MappedField optionalExtraInfo) {
         if (o == null) {
             return null;
         }
         if (!(o instanceof DBRef)) {
             throw new ConverterException(String.format("cannot convert %s to Key because it isn't a DBRef",
-                                                       o.toString()));
+                                                      o.toString()));
         }
 
         return mapr.refToKey((DBRef) o);

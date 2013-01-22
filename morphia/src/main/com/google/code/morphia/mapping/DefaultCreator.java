@@ -36,9 +36,9 @@ import java.util.Set;
 /**
  * @author ScottHernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class DefaultCreator implements ObjectFactory {
-    private static final Logr log = MorphiaLoggerFactory.get(DefaultCreator.class);
+    private static final Logr LOG = MorphiaLoggerFactory.get(DefaultCreator.class);
 
     /* (non-Javadoc)
      * @see com.google.code.morphia.ObjectFactory#createInstance(java.lang.Class)
@@ -104,8 +104,8 @@ public class DefaultCreator implements ObjectFactory {
             try {
                 c = Class.forName(className, true, getClassLoaderForClass(className, dbObj));
             } catch (ClassNotFoundException e) {
-                if (log.isWarningEnabled()) {
-                    log.warning("Class not found defined in dbObj: ", e);
+                if (LOG.isWarningEnabled()) {
+                    LOG.warning("Class not found defined in dbObj: ", e);
                 }
             }
         }

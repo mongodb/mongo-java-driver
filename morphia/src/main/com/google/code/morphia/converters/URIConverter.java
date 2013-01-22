@@ -20,14 +20,13 @@
 package com.google.code.morphia.converters;
 
 import com.google.code.morphia.mapping.MappedField;
-import com.google.code.morphia.mapping.MappingException;
 
 import java.net.URI;
 
 /**
  * @author scotthernandez
  */
-@SuppressWarnings({"rawtypes"})
+@SuppressWarnings("rawtypes")
 public class URIConverter extends TypeConverter implements SimpleValueConverter {
 
     public URIConverter() {
@@ -48,8 +47,7 @@ public class URIConverter extends TypeConverter implements SimpleValueConverter 
     }
 
     @Override
-    public Object decode(final Class targetClass, final Object val, final MappedField optionalExtraInfo) throws
-            MappingException {
+    public Object decode(final Class targetClass, final Object val, final MappedField optionalExtraInfo) {
         if (val == null) {
             return null;
         }

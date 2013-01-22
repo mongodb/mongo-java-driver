@@ -27,6 +27,7 @@ import java.util.Map;
  * @since 1.0
  */
 
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class DefaultMapEntry implements Map.Entry {
 
     private Object key;
@@ -64,10 +65,8 @@ public class DefaultMapEntry implements Map.Entry {
             return false;
         }
         final Map.Entry e2 = (Map.Entry) o;
-        return ((getKey() == null ?
-                e2.getKey() == null : getKey().equals(e2.getKey())) &&
-                (getValue() == null ?
-                        e2.getValue() == null : getValue().equals(e2.getValue())));
+        return ((getKey() == null ? e2.getKey() == null : getKey().equals(e2.getKey()))
+                && (getValue() == null ? e2.getValue() == null : getValue().equals(e2.getValue())));
     }
 
 

@@ -35,13 +35,14 @@ public class DuplicatedAttributeNames implements ClassConstraint {
         final Set<String> duplicates = new HashSet<String>();
         for (final MappedField mappedField : mc.getPersistenceFields()) {
             for (final String name : mappedField.getLoadNames()) {
-//				if (duplicates.contains(name)) {
-//					continue;
-//				}
+                // if (duplicates.contains(name)) {
+                // continue;
+                // }
                 if (!foundNames.add(name)) {
                     ve.add(new ConstraintViolation(Level.FATAL, mc, mappedField, this.getClass(),
-                                                   "Mapping to MongoDB field name '" + name
-                            + "' is duplicated; you cannot map different java fields to the same MongoDB field."));
+                                                  "Mapping to MongoDB field name '" + name
+                                                  + "' is duplicated; you cannot map different " +
+                                                  "Java fields to the same MongoDB field."));
                     duplicates.add(name);
                 }
             }
