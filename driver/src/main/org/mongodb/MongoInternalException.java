@@ -21,6 +21,9 @@ package org.mongodb;
  * An exception that indicates a logical error in the driver.
  */
 public class MongoInternalException extends MongoException {
+
+    private static final long serialVersionUID = -4415279469780082174L;
+
     /**
      * Construct a new instance with the given message and chained exception
      * @param msg the message
