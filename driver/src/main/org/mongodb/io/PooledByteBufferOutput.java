@@ -107,9 +107,14 @@ public class PooledByteBufferOutput extends OutputBuffer {
         return position;
     }
 
-    @Override // TODO: Implement this
-    public int pipe(final OutputStream out) throws IOException {
-        throw new UnsupportedOperationException();
+    @Override
+    public void pipe(final OutputStream out) throws IOException {
+        for (final ByteBuffer cur : bufferList) {
+            cur.flip();
+            byte[] bytes = new byte[cur.limit()];
+            cur.get(bytes);
+            out.write(bytes);
+        }
     }
 
     @Override

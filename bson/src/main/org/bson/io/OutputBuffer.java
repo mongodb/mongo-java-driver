@@ -45,9 +45,9 @@ public abstract class OutputBuffer extends OutputStream {
     public abstract int size();
 
     /**
-     * @return bytes written
+     * Pipe the contents of this output bufer into the given output stream
      */
-    public abstract int pipe(OutputStream out) throws IOException;
+    public abstract void pipe(OutputStream out) throws IOException;
 
     /**
      * Pipe into the socket channel
