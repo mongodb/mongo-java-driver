@@ -314,14 +314,89 @@ public class BSONBinaryReader extends BSONReader {
 
     @Override
     public void skipName() {
-        // TODO: implement
-        throw new UnsupportedOperationException();
+        if (isClosed()) {
+            throw new IllegalStateException("BsonBinaryWriter");
+        }
+        if (getState() != State.NAME) {
+            throwInvalidState("skipName", State.NAME);
+        }
+
+        setState(State.VALUE);
     }
 
     @Override
     public void skipValue() {
-        // TODO: implement
-        throw new UnsupportedOperationException();
+        if (isClosed()) {
+            throw new IllegalStateException("BsonBinaryWriter");
+        }
+        if (getState() != State.VALUE) {
+            throwInvalidState("skipValue", State.VALUE);
+        }
+
+        int skip;
+        switch (getCurrentBsonType())
+        {
+            case ARRAY:
+                skip = readSize() - 4;
+                break;
+            case BINARY:
+                skip = readSize() + 1;
+                break;
+            case BOOLEAN:
+                skip = 1;
+                break;
+            case DATE_TIME:
+                skip = 8;
+                break;
+            case DOCUMENT:
+                skip = readSize() - 4;
+                break;
+            case DOUBLE:
+                skip = 8;
+                break;
+            case INT32:
+                skip = 4;
+                break;
+            case INT64:
+                skip = 8;
+                break;
+            case JAVASCRIPT:
+                skip = readSize();
+                break;
+            case JAVASCRIPT_WITH_SCOPE:
+                skip = readSize() - 4;
+                break;
+            case MAX_KEY:
+                skip = 0;
+                break;
+            case MIN_KEY:
+                skip = 0;
+                break;
+            case NULL:
+                skip = 0;
+                break;
+            case OBJECT_ID:
+                skip = 12;
+                break;
+            case REGULAR_EXPRESSION:
+                buffer.skipCString();
+                buffer.skipCString();
+                skip = 0;
+                break;
+            case STRING:
+                skip = readSize();
+                break;
+            case SYMBOL:
+                skip = readSize(); break;
+            case TIMESTAMP: skip = 8;
+                break;
+            case UNDEFINED: skip = 0;
+                break;
+            default: throw new BSONException("Unexpected BSON type: " + getCurrentBsonType());
+        }
+        buffer.skip(skip);
+
+        setState(State.TYPE);
     }
 
     private void checkPreconditions(final String methodName, final BsonType type) {
