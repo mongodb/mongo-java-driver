@@ -17,7 +17,7 @@
 package com.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.impl.SingleServerMongoClient;
+import org.mongodb.impl.MongoClientAdapter;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
 public class Mongo {
-    private final SingleServerMongoClient client;
+    private final MongoClientAdapter clientAdapter;
     private final ConcurrentMap<String, DB> dbCache = new ConcurrentHashMap<String, DB>();
     private volatile ReadPreference readPreference = ReadPreference.primary();
     private volatile WriteConcern writeConcern = WriteConcern.UNACKNOWLEDGED;
@@ -45,9 +45,9 @@ public class Mongo {
     }
 
     public Mongo(final ServerAddress serverAddress, final MongoOptions mongoOptions) {
-        client = new SingleServerMongoClient(serverAddress.toNew(),
-                                            MongoClientOptions.builder().fromMongoOptions(mongoOptions).build()
-                                                              .toNew());
+        clientAdapter = new MongoClientAdapter(serverAddress.toNew(),
+                MongoClientOptions.builder().fromMongoOptions(mongoOptions).build().toNew());
+
         if (mongoOptions.getReadPreference() != null) {
             readPreference = mongoOptions.getReadPreference();
         }
@@ -72,7 +72,7 @@ public class Mongo {
      * @throws MongoException
      */
     public List<ServerAddress> getServerAddressList() {
-        return Arrays.asList(new ServerAddress(client.getServerAddress()));
+        return Arrays.asList(new ServerAddress(clientAdapter.getServerAddress()));
     }
 
 
@@ -134,18 +134,18 @@ public class Mongo {
      * instance and any databases obtained from it can no longer be used.
      */
     public void close() {
-        client.close();
+        clientAdapter.getClient().close();
     }
 
     org.mongodb.MongoClient getNew() {
-        return client;
+        return clientAdapter.getClient();
     }
 
     void requestStart() {
-        client.bindToConnection();
+        clientAdapter.bindToConnection();
     }
 
     void requestDone() {
-        client.unbindFromConnection();
+        clientAdapter.unbindFromConnection();
     }
 }

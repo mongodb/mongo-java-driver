@@ -1,10 +1,10 @@
-/**
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+/*
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -17,21 +17,20 @@
 
 package org.mongodb.impl;
 
-
+import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
+import org.mongodb.annotations.ThreadSafe;
 
-/**
- * THIS IS NOT PART OF THE PUBLIC API.
- */
-public class MongoServerAdapter {
-
-    private final SingleServerMongoClient impl;
-
-    public MongoServerAdapter(final ServerAddress serverAddress) {
-        impl = new SingleServerMongoClient(serverAddress);
+@ThreadSafe
+public final class MongoClientsImpl {
+    private MongoClientsImpl() {
     }
 
-    public DBAdapter getDB(final String name) {
-        return new DBAdapter(impl.getDatabase(name));
+    public static SingleServerMongoClient create(final ServerAddress serverAddress) {
+        return new SingleServerMongoClient(serverAddress);
+    }
+
+    public static SingleServerMongoClient create(final ServerAddress serverAddress, final MongoClientOptions options) {
+        return new SingleServerMongoClient(serverAddress, options);
     }
 }

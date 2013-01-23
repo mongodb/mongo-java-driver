@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.impl.SingleServerMongoClient;
+import org.mongodb.impl.MongoClientsImpl;
 
 @ThreadSafe
 public final class MongoClients {
@@ -25,10 +25,10 @@ public final class MongoClients {
     }
 
     public static MongoClient create(final ServerAddress serverAddress) {
-        return new SingleServerMongoClient(serverAddress);
+        return MongoClientsImpl.create(serverAddress);
     }
 
     public static MongoClient create(final ServerAddress serverAddress, final MongoClientOptions options) {
-        return new SingleServerMongoClient(serverAddress, options);
+        return MongoClientsImpl.create(serverAddress, options);
     }
 }

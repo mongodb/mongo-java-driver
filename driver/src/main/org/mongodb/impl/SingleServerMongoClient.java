@@ -49,8 +49,10 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-// TODO: should this be a public class?
-public class SingleServerMongoClient implements MongoClient {
+/**
+ * An implementation of {@code MongoClient} that represents a connection to a single server.
+ */
+class SingleServerMongoClient implements MongoClient {
 
     private final ServerAddress serverAddress;
     private final MongoClientOptions options;
