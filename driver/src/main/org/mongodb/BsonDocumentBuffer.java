@@ -17,12 +17,20 @@
 
 package org.mongodb;
 
+import org.bson.BSONBinaryReader;
+import org.bson.BSONBinaryWriter;
+import org.bson.io.BasicOutputBuffer;
+import org.bson.io.ByteBufferInput;
+import org.mongodb.serialization.Serializer;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
  * A simple wrapper around a byte array that is the representation of a single BSON document.
  */
+// TODO: Add an easy way to iterate over the fields?
+// TODO: Should this be in the bson module?
 public class BsonDocumentBuffer {
     private final byte[] bytes;
 
@@ -40,14 +48,36 @@ public class BsonDocumentBuffer {
     }
 
     /**
+     * Construct a new instance from the given document and serializer for the document type.
+     *
+     * @param document the document to transform
+     * @param serializer the serializer to facilitate the transformation
+     */
+    public <T> BsonDocumentBuffer(final T document, final Serializer<T> serializer) {
+        BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer());
+        serializer.serialize(writer, document);
+        this.bytes = writer.getBuffer().toByteArray();
+    }
+
+    /**
      * Returns a ByteBuffer that wraps the byte array, withe the proper byte order.  Any changes
      * made to this ByteBuffer will be reflected in the underlying byte array owned by this instance.
      *
      * @return a byte buffer that wraps the byte array owned by this instance.
      */
-    public ByteBuffer getBuffer() {
+    public ByteBuffer getByteBuffer() {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         return buffer;
+    }
+
+    /**
+     * Deserialize this into a document.
+     *
+     * @param serializer the serializer to facilitate the transformation
+     * @return the deserialized document
+     */
+    public <T> T deserialize(final Serializer<T> serializer) {
+        return serializer.deserialize(new BSONBinaryReader(new ByteBufferInput(getByteBuffer())));
     }
 }

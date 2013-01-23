@@ -33,15 +33,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * A simple ByteBuffer serializer which assumes that the ByteBuffer contains valid BSON.  It works by casting
- * the BSONWriter to a BSONBinaryWriter and directly copies the bytes into the underlying output buffer.
+ * A simple BsonDocumentBuffer serializer.  It does not attempt to validate the contents of the underlying ByteBuffer.
+ * It assumes that it contains a single, serialized BSON document.
  * <p>
- * For deserialization, it does the reverse: Casts the BSONReader to a BSONBinaryReader and copies a single
- * document into a ByteBuffer.
- * </p>
- * <p>
- * This should even be usable as a nested document by adding an instance of it to a PrimitiveSerializers instance.
- * </p>
+ * This should even be usable as a nested document serializer by adding an instance of it to a PrimitiveSerializers instance.
  */
 public class BsonDocumentBufferSerializer implements CollectibleSerializer<BsonDocumentBuffer> {
     private final BufferPool<ByteBuffer> bufferPool;
@@ -55,7 +50,7 @@ public class BsonDocumentBufferSerializer implements CollectibleSerializer<BsonD
 
     @Override
     public void serialize(final BSONWriter bsonWriter, final BsonDocumentBuffer value) {
-        bsonWriter.pipe(new BSONBinaryReader(new ByteBufferInput(value.getBuffer())));
+        bsonWriter.pipe(new BSONBinaryReader(new ByteBufferInput(value.getByteBuffer())));
     }
 
     @Override
@@ -81,7 +76,7 @@ public class BsonDocumentBufferSerializer implements CollectibleSerializer<BsonD
 
     @Override
     public Object getId(final BsonDocumentBuffer document) {
-        BSONReader reader = new BSONBinaryReader(new ByteBufferInput(document.getBuffer()));
+        BSONReader reader = new BSONBinaryReader(new ByteBufferInput(document.getByteBuffer()));
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String name = reader.readName();
