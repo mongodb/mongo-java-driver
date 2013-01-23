@@ -17,6 +17,7 @@
 package com.mongodb.gridfs;
 
 import java.io.*;
+import java.util.List;
 
 import org.testng.annotations.*;
 
@@ -287,6 +288,76 @@ public class GridFSTest extends TestCase {
 
         for (int idx = 0; idx < fileSize; ++idx)
             assertEquals((byte)(idx % 251), (byte)inputStream.read());
+    }
+
+    @Test(groups = {"basic"})
+    public void testGetFileListWithSorting() throws Exception  {
+        _fs.remove(new BasicDBObject());
+
+        int chunkSize = 10;
+        int fileSize = (int)(3.25 * chunkSize);
+
+        byte[] fileBytes = new byte[fileSize];
+        for (int idx = 0; idx < fileSize; ++idx)
+            fileBytes[idx] = (byte)(idx % 251);
+
+        GridFSInputFile inputFile;
+        for (int i = 1; i < 5; i++){
+            inputFile = _fs.createFile(fileBytes);
+            inputFile.setId(i);
+            inputFile.setFilename("custom_file_id" + i + ".bin");
+            inputFile.put("orderTest", i + "");
+            inputFile.save(chunkSize);
+        }
+
+        DBCursor cursor =  _fs.getFileList(null,new BasicDBObject("orderTest", 1));
+        assertEquals(cursor.size(),4);
+        assertEquals(cursor.next().get("_id"),1);
+        assertEquals(cursor.next().get("_id"),2);
+        assertEquals(cursor.next().get("_id"),3);
+        assertEquals(cursor.next().get("_id"),4);
+
+         cursor =  _fs.getFileList(null,new BasicDBObject("filename", -1));
+        assertEquals(cursor.size(),4);
+        assertEquals(cursor.next().get("_id"),4);
+        assertEquals(cursor.next().get("_id"),3);
+        assertEquals(cursor.next().get("_id"),2);
+        assertEquals(cursor.next().get("_id"),1);
+    }
+
+    @Test(groups = {"basic"})
+    public void testFindWithSorting() throws Exception  {
+        _fs.remove(new BasicDBObject());
+
+        int chunkSize = 10;
+        int fileSize = (int)(3.25 * chunkSize);
+
+        byte[] fileBytes = new byte[fileSize];
+        for (int idx = 0; idx < fileSize; ++idx)
+            fileBytes[idx] = (byte)(idx % 251);
+
+        GridFSInputFile inputFile;
+        for (int i = 1; i < 5; i++){
+            inputFile = _fs.createFile(fileBytes);
+            inputFile.setId(i);
+            inputFile.setFilename("custom_file_id"+i+".bin");
+            inputFile.put("orderTest", i+"");
+            inputFile.save(chunkSize);
+        }
+
+        List<GridFSDBFile> result = _fs.find(new BasicDBObject(), new BasicDBObject("orderTest", 1));
+        assertEquals(result.size(),4);
+        assertEquals(result.get(0).getId(),1);
+        assertEquals(result.get(1).getId(),2);
+        assertEquals(result.get(2).getId(),3);
+        assertEquals(result.get(3).getId(),4);
+
+        result =  _fs.find(new BasicDBObject(), new BasicDBObject("filename", -1));
+        assertEquals(result.size(),4);
+        assertEquals(result.get(0).getId(),4);
+        assertEquals(result.get(1).getId(),3);
+        assertEquals(result.get(2).getId(),2);
+        assertEquals(result.get(3).getId(),1);
     }
 
     final DB _db;
