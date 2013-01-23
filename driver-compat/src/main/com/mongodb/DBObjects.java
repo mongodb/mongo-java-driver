@@ -103,18 +103,20 @@ public class DBObjects {
 
     // TODO: This needs to be recursive, to translate nested DBObject and DBList and arrays...
     private static void fill(final DBObject obj, final Document document) {
-        for (final String key : obj.keySet()) {
-            final Object value = obj.get(key);
-            if (value instanceof List) {
-                document.put(key, value);
-            }
-            else if (value instanceof BSONObject) {
-                final Document nestedDocument = new Document();
-                fill((DBObject) value, nestedDocument);
-                document.put(key, nestedDocument);
-            }
-            else {
-                document.put(key, obj.get(key));
+        if (obj != null) {
+            for (final String key : obj.keySet()) {
+                final Object value = obj.get(key);
+                if (value instanceof List) {
+                    document.put(key, value);
+                }
+                else if (value instanceof BSONObject) {
+                    final Document nestedDocument = new Document();
+                    fill((DBObject) value, nestedDocument);
+                    document.put(key, nestedDocument);
+                }
+                else {
+                    document.put(key, obj.get(key));
+                }
             }
         }
     }

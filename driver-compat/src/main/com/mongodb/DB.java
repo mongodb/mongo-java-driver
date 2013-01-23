@@ -174,11 +174,9 @@ public class DB implements IDB {
         if (options.get("max") != null) {
             maxDocuments = ((Number) options.get("max")).intValue();
         }
-        database.admin().createCollection(
-                                         new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex,
+        database.admin().createCollection(new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex,
                                                                     maxDocuments));
-        // TODO the old code returned a DBCollection
-        return null;
+        return getCollection(collName);
     }
 
     public boolean authenticate(final String username, final char[] password) {

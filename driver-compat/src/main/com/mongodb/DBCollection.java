@@ -341,10 +341,10 @@ public class DBCollection implements IDBCollection {
     public DBObject findOne(final DBObject o, final DBObject fields, final DBObject orderBy,
                             final ReadPreference readPref) {
 
-        final DBObject obj = collection.filter(DBObjects.toQueryFilterDocument(o)).select(
-                                                                                   DBObjects
-                                                                                   .toFieldSelectorDocument(fields))
-                                 .readPreference(readPref.toNew()).one();
+        final DBObject obj = collection.filter(DBObjects.toQueryFilterDocument(o))
+                                       .sort(DBObjects.toSortCriteriaDocument(orderBy))
+                                       .select(DBObjects.toFieldSelectorDocument(fields))
+                                       .readPreference(readPref.toNew()).one();
 
         if (obj != null && (fields != null && fields.keySet().size() > 0)) {
             obj.markAsPartialObject();
@@ -1018,13 +1018,13 @@ public class DBCollection implements IDBCollection {
     private void setCollection(final String name) {
         this.collection = database.toNew().
                 getCollection(name, new CollectibleDBObjectSerializer(database,
-                        database.getMongo()
-                                .getNew()
-                                .getOptions()
-                                .getPrimitiveSerializers(),
-                        new ObjectIdGenerator(),
-                        objectClass,
-                        new HashMap<String, Class<? extends DBObject>>(
-                                pathToClassMap)));
+                                                                     database.getMongo()
+                                                                             .getNew()
+                                                                             .getOptions()
+                                                                             .getPrimitiveSerializers(),
+                                                                     new ObjectIdGenerator(),
+                                                                     objectClass,
+                                                                     new HashMap<String, Class<? extends DBObject>>(
+                                                                                                                   pathToClassMap)));
     }
 }
