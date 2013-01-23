@@ -87,10 +87,15 @@ public class JSONCallback extends BasicBSONCallback {
         } else if (b.containsField("$regex")) {
             o = Pattern.compile((String) b.get("$regex"),
                     BSON.regexFlags((String) b.get("$options")));
-        } else if (b.containsField("$ts")) {
-            Long ts = ((Number) b.get("$ts")).longValue();
-            Long inc = ((Number) b.get("$inc")).longValue();
-            o = new BSONTimestamp(ts.intValue(), inc.intValue());
+        } else if (b.containsField("$ts")) { //Legacy timestamp format
+            Integer ts = ((Number) b.get("$ts")).intValue();
+            Integer inc = ((Number) b.get("$inc")).intValue();
+            o = new BSONTimestamp(ts, inc);
+        } else if (b.containsField("$timestamp")) {
+            BSONObject tsObject = (BSONObject) b.get("$timestamp");
+            Integer ts = ((Number) tsObject.get("t")).intValue();
+            Integer inc = ((Number) tsObject.get("i")).intValue();
+            o = new BSONTimestamp(ts, inc);
         } else if (b.containsField("$code")) {
             if (b.containsField("$scope")) {
                 o = new CodeWScope((String) b.get("$code"), (DBObject) b.get("$scope"));

@@ -167,8 +167,8 @@ public class JSONSerializersTest extends com.mongodb.util.TestCase {
         
         // test  BSON_TIMESTAMP
         buf = new StringBuilder();
-        serializer.serialize(new BSONTimestamp(), buf);
-        assertEquals(buf.toString(), "{ \"$timestamp\" : { \"$t\" : 0 , \"$i\" : 0}}");
+        serializer.serialize(new BSONTimestamp(123, 456), buf);
+        assertEquals(buf.toString(), "{ \"$timestamp\" : { \"t\" : 123 , \"i\" : 456}}");
         
         // test  BYTE_ARRAY
         buf = new StringBuilder();
