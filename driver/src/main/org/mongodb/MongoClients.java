@@ -19,16 +19,26 @@ package org.mongodb;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.impl.MongoClientsImpl;
 
+import java.util.List;
+
 @ThreadSafe
 public final class MongoClients {
     private MongoClients() {
     }
 
     public static MongoClient create(final ServerAddress serverAddress) {
-        return MongoClientsImpl.create(serverAddress);
+        return MongoClientsImpl.create(serverAddress, null);
     }
 
     public static MongoClient create(final ServerAddress serverAddress, final MongoClientOptions options) {
         return MongoClientsImpl.create(serverAddress, options);
+    }
+
+    public static MongoClient create(final List<ServerAddress> serverAddresses) {
+        return MongoClientsImpl.create(serverAddresses, null);
+    }
+
+    public static MongoClient create(final List<ServerAddress> serverAddresses, final MongoClientOptions options) {
+        return MongoClientsImpl.create(serverAddresses, options);
     }
 }

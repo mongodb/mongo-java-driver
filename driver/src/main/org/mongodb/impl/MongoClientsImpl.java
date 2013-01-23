@@ -21,16 +21,18 @@ import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
 
+import java.util.List;
+
 @ThreadSafe
 public final class MongoClientsImpl {
     private MongoClientsImpl() {
     }
 
-    public static SingleServerMongoClient create(final ServerAddress serverAddress) {
-        return new SingleServerMongoClient(serverAddress);
-    }
-
     public static SingleServerMongoClient create(final ServerAddress serverAddress, final MongoClientOptions options) {
         return new SingleServerMongoClient(serverAddress, options);
+    }
+
+    public static ReplicaSetMongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        return new ReplicaSetMongoClient(seedList, options);
     }
 }

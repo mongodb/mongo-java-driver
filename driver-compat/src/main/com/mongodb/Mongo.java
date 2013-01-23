@@ -20,7 +20,7 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.impl.MongoClientAdapter;
 
 import java.net.UnknownHostException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -72,7 +72,11 @@ public class Mongo {
      * @throws MongoException
      */
     public List<ServerAddress> getServerAddressList() {
-        return Arrays.asList(new ServerAddress(clientAdapter.getServerAddress()));
+        List<ServerAddress> retVal = new ArrayList<ServerAddress>();
+        for (org.mongodb.ServerAddress serverAddress : clientAdapter.getServerAddressList()) {
+            retVal.add(new ServerAddress(serverAddress));
+        }
+        return retVal;
     }
 
 

@@ -48,7 +48,7 @@ public class SingleServerMongoClientTest {
 
     @BeforeClass
     public static void setUpClass() throws UnknownHostException {
-        mongoClient = new SingleServerMongoClient(new ServerAddress());
+        mongoClient = new SingleServerMongoClient(new ServerAddress(), null);
         final MongoDatabaseImpl database = mongoClient.getDatabase(DB_NAME);
         database.admin().drop();
     }
@@ -62,28 +62,8 @@ public class SingleServerMongoClientTest {
     public void testCommandExecution() {
         final MongoCommand cmd = new MongoCommand(new CommandDocument("count", "test"))
                                  .readPreference(ReadPreference.primary());
-        final CommandResult res = mongoClient.getOperations().executeCommand(DB_NAME, cmd, new DocumentSerializer(
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                                                                 PrimitiveSerializers
-                                                                                                                 .createDefault()));
+        final CommandResult res = mongoClient.getOperations().executeCommand(DB_NAME, cmd,
+                new DocumentSerializer(PrimitiveSerializers.createDefault()));
         assertNotNull(res);
         assertTrue(res.getResponse().get("n") instanceof Double);
     }

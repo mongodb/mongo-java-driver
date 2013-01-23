@@ -22,6 +22,7 @@ import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
+import org.mongodb.ServerAddress;
 import org.mongodb.command.GetLastError;
 import org.mongodb.io.MongoChannel;
 import org.mongodb.io.PooledByteBufferOutput;
@@ -53,6 +54,8 @@ import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -98,6 +101,19 @@ class SingleChannelMongoClient extends AbstractMongoClient {
     @Override
     public ClientAdmin admin() {
         return new ClientAdminImpl(this.getOperations(), getOptions().getPrimitiveSerializers());
+    }
+
+    @Override
+    void bindToConnection() {
+    }
+
+    @Override
+    void unbindFromConnection() {
+    }
+
+    @Override
+    List<ServerAddress> getServerAddressList() {
+        return Arrays.asList(channel.getAddress());
     }
 
     private Serializer<Document> withDocumentSerializer(final Serializer<Document> serializer) {

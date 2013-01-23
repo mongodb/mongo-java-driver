@@ -57,7 +57,18 @@ class ReplicaSetMongoClient extends AbstractMongoClient {
         primary.close();
     }
 
-    public List<ServerAddress> getSeedList() {
+    @Override
+    void bindToConnection() {
+        primary.bindToConnection();
+    }
+
+    @Override
+    void unbindFromConnection() {
+        primary.bindToConnection();
+    }
+
+    @Override
+    List<ServerAddress> getServerAddressList() {
         return seedList;
     }
 }

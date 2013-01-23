@@ -22,23 +22,29 @@ import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoDatabaseOptions;
+import org.mongodb.ServerAddress;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
-public abstract class AbstractMongoClient implements MongoClient {
+abstract class AbstractMongoClient implements MongoClient {
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
     private final ClientAdmin admin;
 
-    public AbstractMongoClient(final MongoClientOptions options) {
+    AbstractMongoClient(final MongoClientOptions options) {
         this(options, new PowerOfTwoByteBufferPool(24));
     }
 
-    public AbstractMongoClient(final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        this.options = options;
+    AbstractMongoClient(final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
+        if (options == null) {
+            this.options = MongoClientOptions.builder().build();
+        } else {
+            this.options = options;
+        }
         this.bufferPool = bufferPool;
-        admin = new ClientAdminImpl(getOperations(), options.getPrimitiveSerializers());
+        admin = new ClientAdminImpl(getOperations(), this.options.getPrimitiveSerializers());
     }
 
     @Override
@@ -61,7 +67,12 @@ public abstract class AbstractMongoClient implements MongoClient {
         return admin;
     }
 
+    abstract void bindToConnection();
+    abstract void unbindFromConnection();
+    abstract List<ServerAddress> getServerAddressList();
+
     BufferPool<ByteBuffer> getBufferPool() {
         return bufferPool;
     }
+
 }

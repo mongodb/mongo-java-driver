@@ -40,6 +40,8 @@ import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -52,18 +54,14 @@ class SingleServerMongoClient extends AbstractMongoClient {
     private final SimplePool<MongoChannel> channelPool;
     private final ThreadLocal<SingleChannelMongoClient> boundClient = new ThreadLocal<SingleChannelMongoClient>();
 
-    public SingleServerMongoClient(final ServerAddress serverAddress) {
-        this(serverAddress, MongoClientOptions.builder().build());
-    }
-
     public SingleServerMongoClient(final ServerAddress serverAddress, final MongoClientOptions options) {
         super(options);
         this.serverAddress = serverAddress;
-        channelPool = new SimplePool<MongoChannel>(serverAddress.toString(), options.getConnectionsPerHost()) {
+        channelPool = new SimplePool<MongoChannel>(serverAddress.toString(), getOptions().getConnectionsPerHost()) {
             @Override
             protected MongoChannel createNew() {
                 return new MongoChannel(SingleServerMongoClient.this.serverAddress, getBufferPool(),
-                                        new DocumentSerializer(options.getPrimitiveSerializers()));
+                                        new DocumentSerializer(getOptions().getPrimitiveSerializers()));
             }
         };
     }
@@ -109,6 +107,11 @@ class SingleServerMongoClient extends AbstractMongoClient {
      */
     public void unbindFromConnection() {
         releaseChannelClient(boundClient.get());
+    }
+
+    @Override
+    List<ServerAddress> getServerAddressList() {
+        return Arrays.asList(serverAddress);
     }
 
     @Override

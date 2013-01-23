@@ -22,19 +22,21 @@ import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
 
+import java.util.List;
+
 /**
  * THIS IS NOT PART OF THE PUBLIC API. It may change at any time without notice.
  */
 public class MongoClientAdapter {
 
-    private final SingleServerMongoClient adapted;
-
-    public MongoClientAdapter(final ServerAddress serverAddress) {
-        adapted = MongoClientsImpl.create(serverAddress);
-    }
+    private final AbstractMongoClient adapted;
 
     public MongoClientAdapter(final ServerAddress serverAddress, final MongoClientOptions options) {
         adapted = MongoClientsImpl.create(serverAddress, options);
+    }
+
+    public MongoClientAdapter(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        adapted = MongoClientsImpl.create(seedList, options);
     }
 
     public DBAdapter getDB(final String name) {
@@ -45,8 +47,8 @@ public class MongoClientAdapter {
         return adapted;
     }
 
-    public ServerAddress getServerAddress() {
-        return adapted.getServerAddress();
+    public List<ServerAddress> getServerAddressList() {
+        return adapted.getServerAddressList();
     }
 
     public void bindToConnection() {
