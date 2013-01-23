@@ -403,8 +403,8 @@ public class JSONSerializers {
         public void serialize(Object obj, StringBuilder buf) {
             BSONTimestamp t = (BSONTimestamp) obj;
             BasicDBObject temp = new BasicDBObject();
-            temp.put("$t", Integer.valueOf(t.getTime()));
-            temp.put("$i", Integer.valueOf(t.getInc()));
+            temp.put("t", Integer.valueOf(t.getTime()));
+            temp.put("i", Integer.valueOf(t.getInc()));
             BasicDBObject timestampObj = new BasicDBObject();
             timestampObj.put("$timestamp", temp);
             serializer.serialize(timestampObj, buf);
