@@ -34,7 +34,7 @@ import static org.mongodb.Index.OrderedKey;
 import static org.mongodb.OrderBy.ASC;
 import static org.mongodb.OrderBy.DESC;
 import static org.mongodb.OrderBy.fromInt;
-import static org.mongodb.acceptancetest.Fixture.createMongoClient;
+import static org.mongodb.acceptancetest.Fixture.getMongoClient;
 
 /**
  * Use cases for adding indexes to your MongoDB database via the Java driver.  Documents the index options that are
@@ -47,7 +47,7 @@ public class AddIndexAcceptanceTest {
 
     @Before
     public void setUp() {
-        final MongoClient mongoClient = createMongoClient();
+        final MongoClient mongoClient = getMongoClient();
 
         database = mongoClient.getDatabase(DB_NAME);
         database.admin().drop();

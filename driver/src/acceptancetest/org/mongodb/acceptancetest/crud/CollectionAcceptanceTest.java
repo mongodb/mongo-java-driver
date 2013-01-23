@@ -17,36 +17,77 @@
 package org.mongodb.acceptancetest.crud;
 
 import org.bson.types.Document;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
+import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.acceptancetest.Fixture.createMongoClient;
+import static org.mongodb.acceptancetest.Fixture.getCleanDatabaseForTest;
 
 /**
  * Documents the basic functionality of MongoDB Collections available via the Java driver.
  */
 public class CollectionAcceptanceTest {
-    private static final String DB_NAME = "CollectionAcceptanceTest";
-    private MongoDatabase database;
+    private MongoCollection<Document> collection;
+    private static MongoDatabase database;
+
+    @BeforeClass
+    public static void setupTestSuite() {
+        //TODO: Trish - am still contemplating benefits of inheritance over a helper here
+        //Also: setting up the DB first at the start of the test class is a boat-load faster than on @Before
+        database = getCleanDatabaseForTest(CollectionAcceptanceTest.class);
+    }
+
+    @AfterClass
+    public static void teardownTestSuite() {
+        database.admin().drop();
+    }
 
     @Before
     public void setUp() {
-        final MongoClient mongoClient = createMongoClient();
+        //create a brand new collection for each test
+        collection = database.getCollection("Collection" + System.currentTimeMillis());
+    }
 
-        database = mongoClient.getDatabase(DB_NAME);
-        database.admin().drop();
+    @Test
+    public void shouldBeAbleToIterateOverACollection() {
+        final int numberOfDocuments = 10;
+        initialiseCollectionWithDocuments(numberOfDocuments);
 
+        int countOfDocumentsInIterator = 0;
+        for (final Document document : collection) {
+            assertThat(document, is(notNullValue()));
+            countOfDocumentsInIterator++;
+        }
+        assertThat(countOfDocumentsInIterator, is(numberOfDocuments));
+    }
+
+    @Test
+    public void shouldBeAbleToIterateOverACursor() {
+        final int numberOfDocuments = 10;
+        initialiseCollectionWithDocuments(numberOfDocuments);
+
+        final MongoCursor<Document> cursor = collection.all();
+        int countOfDocumentsInIterator = 0;
+        try {
+            while (cursor.hasNext()) {
+                assertThat(cursor.next(), is(notNullValue()));
+                countOfDocumentsInIterator++;
+            }
+        } finally {
+            cursor.close();
+        }
+        assertThat(countOfDocumentsInIterator, is(numberOfDocuments));
     }
 
     @Test
     public void shouldCountNumberOfDocumentsInCollection() {
-        final MongoCollection<Document> collection = database.getCollection("collection");
         assertThat(collection.count(), is(0L));
 
         collection.insert(new Document("myField", "myValue"));
@@ -58,11 +99,13 @@ public class CollectionAcceptanceTest {
     public void shouldGetStatistics() {
         final String newCollectionName = "shouldGetStatistics";
         database.admin().createCollection(newCollectionName);
-        final MongoCollection<Document> collection = database.getCollection(newCollectionName);
+        final MongoCollection<Document> newCollection = database.getCollection(newCollectionName);
 
-        final Document collectionStatistics = collection.admin().getStatistics();
+        final Document collectionStatistics = newCollection.admin().getStatistics();
         assertThat(collectionStatistics, is(notNullValue()));
-        assertThat((String) collectionStatistics.get("ns"), is(DB_NAME + "." + newCollectionName));
+
+        final String databaseName = this.getClass().getSimpleName();
+        assertThat((String) collectionStatistics.get("ns"), is(databaseName + "." + newCollectionName));
     }
 
     @Test
@@ -76,6 +119,12 @@ public class CollectionAcceptanceTest {
         newCollection.admin().drop();
 
         assertThat(database.admin().getCollectionNames().contains(collectionName), is(false));
+    }
+
+    private void initialiseCollectionWithDocuments(final int numberOfDocuments) {
+        for (int i = 0; i < numberOfDocuments; i++) {
+            collection.insert(new Document("_id", i));
+        }
     }
 
 }

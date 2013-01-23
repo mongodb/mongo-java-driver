@@ -28,7 +28,7 @@ import java.util.Set;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.acceptancetest.Fixture.createMongoClient;
+import static org.mongodb.acceptancetest.Fixture.getMongoClient;
 
 /**
  * Documents the basic functionality available for Databases via the Java driver.
@@ -39,7 +39,7 @@ public class DatabaseAcceptanceTest {
 
     @Before
     public void setUp() {
-        final MongoClient mongoClient = createMongoClient();
+        final MongoClient mongoClient = getMongoClient();
 
         database = mongoClient.getDatabase(DB_NAME);
         database.admin().drop();

@@ -73,9 +73,6 @@ public class BasicOutputBuffer extends OutputBuffer {
         return size;
     }
 
-    /**
-     * @return bytes written
-     */
     @Override
     public void pipe(final OutputStream out) throws IOException {
         out.write(buffer, 0, size);

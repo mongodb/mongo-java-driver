@@ -19,6 +19,7 @@ package org.mongodb.acceptancetest;
 import org.junit.Assert;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClients;
+import org.mongodb.MongoDatabase;
 import org.mongodb.ServerAddress;
 
 import java.net.UnknownHostException;
@@ -35,7 +36,7 @@ public final class Fixture {
     private Fixture() {
     }
 
-    public static synchronized MongoClient createMongoClient() {
+    public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
             mongoClient = MongoClients.create(createServerAddress());
         }
@@ -49,5 +50,15 @@ public final class Fixture {
             Assert.fail("Creating connection to Mongo server failed: " + e.getMessage());
         }
         return null;
+    }
+
+    // Note this is not safe for concurrent access - if you run multiple tests in parallel from the same class,
+    // you'll drop the DB
+    public static MongoDatabase getCleanDatabaseForTest(final Class<?> testClass) {
+        final MongoDatabase database = getMongoClient().getDatabase(testClass.getSimpleName());
+
+        //oooh, just realised this is nasty, looks like we're dropping the admin database
+        database.admin().drop();
+        return database;
     }
 }
