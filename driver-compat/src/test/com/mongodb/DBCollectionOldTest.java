@@ -30,33 +30,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-public class DBCollectionOldTest {
-    private static DB database;
-
-//    public DBCollectionTest()
-//    throws IOException{
-//        super();
-//        cleanupMongo = new Mongo("127.0.0.1");
-//        cleanupDB = "com_mongodb_unittest_DBCollectionTest";
-//        _db = cleanupMongo.getDB(cleanupDB);
-//    }
-
-    @BeforeClass
-    public static void setupTestSuite() throws UnknownHostException {
-        final MongoClient mongoClient = new MongoClient("127.0.0.1");
-        database = mongoClient.getDB(DBCollectionOldTest.class.getSimpleName());
-    }
-
-    @AfterClass
-    public static void teardownTestSuite() {
-        database.dropDatabase();
-    }
-
+public class DBCollectionOldTest extends MongoClientTestBase {
     @Test
     @Ignore("Duplicate Key Exception now thrown")
     public void testMultiInsert() {
-        final DBCollection c = database.getCollection("testmultiinsert");
-        c.drop();
+        final DBCollection c = getCollection();
 
         final DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -75,20 +53,19 @@ public class DBCollectionOldTest {
         final String collectionName = "testCapped";
         final int collectionSize = 1000;
 
-        DBCollection c = database.getCollection(collectionName);
+        DBCollection c = getCollection();
         c.drop();
 
         final DBObject options = new BasicDBObject("capped", true);
         options.put("size", collectionSize);
-        c = database.createCollection(collectionName, options);
+        c = getDB().createCollection(collectionName, options);
 
         assertEquals(c.isCapped(), true);
     }
 
     @Test
     public void testDuplicateKeyException() {
-        final DBCollection c = database.getCollection("testDuplicateKey");
-        c.drop();
+        final DBCollection c = getCollection();
 
         final DBObject obj = new BasicDBObject();
         c.insert(obj, WriteConcern.SAFE);
@@ -102,8 +79,7 @@ public class DBCollectionOldTest {
 
     @Test
     public void testFindOne() {
-        final DBCollection c = database.getCollection("test");
-        c.drop();
+        final DBCollection c = getCollection();
 
         DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -145,8 +121,7 @@ public class DBCollectionOldTest {
 
     @Test
     public void testFindOneSort() {
-        final DBCollection c = database.getCollection("testFindOneSort");
-        c.drop();
+        final DBCollection c = getCollection();
 
         DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -194,8 +169,7 @@ public class DBCollectionOldTest {
     @Test
     @Ignore("Not supported yet, old API not ported")
     public void testDropIndex() {
-        final DBCollection c = database.getCollection("dropindex1");
-        c.drop();
+        final DBCollection c = getCollection();
 
         c.save(new BasicDBObject("x", 1));
         assertEquals(1, c.getIndexInfo().size());
@@ -220,8 +194,7 @@ public class DBCollectionOldTest {
     @Test
     @Ignore("Not supported yet, old API not ported")
     public void testDistinct() {
-        final DBCollection c = database.getCollection("distinct1");
-        c.drop();
+        final DBCollection c = getCollection();
 
         for (int i = 0; i < 100; i++) {
             final BasicDBObject o = new BasicDBObject();
@@ -240,8 +213,7 @@ public class DBCollectionOldTest {
 
     @Test
     public void testEnsureIndex() {
-        final DBCollection c = database.getCollection("ensureIndex1");
-        c.drop();
+        final DBCollection c = getCollection();
 
         c.save(new BasicDBObject("x", 1));
         assertEquals(1, c.getIndexInfo().size());
@@ -254,8 +226,7 @@ public class DBCollectionOldTest {
     @Test
     @Ignore("Not supported yet, old API not ported")
     public void testEnsureNestedIndex() {
-        final DBCollection c = database.getCollection("ensureNestedIndex1");
-        c.drop();
+        final DBCollection c = getCollection();
 
         final BasicDBObject newDoc = new BasicDBObject("x", new BasicDBObject("y", 1));
         c.save(newDoc);
@@ -269,8 +240,7 @@ public class DBCollectionOldTest {
     @Test
     @Ignore("Not supported yet, old API not ported")
     public void testIndexExceptions() {
-        final DBCollection c = database.getCollection("indexExceptions");
-        c.drop();
+        final DBCollection c = getCollection();
 
         c.insert(new BasicDBObject("x", 1));
         c.insert(new BasicDBObject("x", 1));
@@ -292,9 +262,8 @@ public class DBCollectionOldTest {
 
     @Test
     public void testMultiInsertNoContinue() {
-        final DBCollection c = database.getCollection("testmultiinsertNoContinue");
+        final DBCollection c = getCollection();
         c.setWriteConcern(WriteConcern.NORMAL);
-        c.drop();
 
         final DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -313,8 +282,7 @@ public class DBCollectionOldTest {
     @Test
     public void testMultiInsertWithContinue() {
 
-        final DBCollection c = database.getCollection("testmultiinsertWithContinue");
-        c.drop();
+        final DBCollection c = getCollection();
 
         final DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -335,22 +303,20 @@ public class DBCollectionOldTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDotKeysFail() {
-        final DBCollection c = database.getCollection("testdotkeysFail");
-        c.drop();
+        final DBCollection c = getCollection();
 
         final DBObject obj = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).add("foo.bar", "baz").get();
         c.insert(obj);
     }
 
-    @Test
-    public void testLazyDocKeysPass() {
-        final DBCollection c = database.getCollection("testLazyDotKeysPass");
-        c.drop();
-
-        final DBObject obj = BasicDBObjectBuilder.start().add("_id", "lazydottest1").add("x", 1).add("y", 2)
-                                           .add("foo.bar", "baz").get();
-
-        //convert to a lazydbobject
+//    @Test
+//    public void testLazyDocKeysPass() {
+//        final DBCollection c = getCollection();
+//
+//        final DBObject obj = BasicDBObjectBuilder.start().add("_id", "lazydottest1").add("x", 1).add("y", 2)
+//                                           .add("foo.bar", "baz").get();
+//
+//        //convert to a lazydbobject
 //        DefaultDBEncoder encoder = new DefaultDBEncoder();
 //        byte[] encodedBytes = encoder.encode(obj);
 //
@@ -364,6 +330,6 @@ public class DBCollectionOldTest {
 //        assertEquals(1, insertedObj.get("x"));
 //        assertEquals(2, insertedObj.get("y"));
 //        assertEquals("baz", insertedObj.get("foo.bar"));
-    }
+//    }
 
 }

@@ -42,6 +42,8 @@ public abstract class MongoClientTestBase {
     public void before() {
         collection = getDB().getCollection(getClass().getSimpleName());
         collection.drop();
+        collection.setReadPreference(ReadPreference.primary());
+        collection.setWriteConcern(WriteConcern.ACKNOWLEDGED);
     }
 
     protected MongoClient getClient() {
@@ -50,5 +52,9 @@ public abstract class MongoClientTestBase {
 
     protected DB getDB() {
         return database;
+    }
+
+    protected DBCollection getCollection() {
+        return collection;
     }
 }
