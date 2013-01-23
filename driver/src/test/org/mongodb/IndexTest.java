@@ -25,25 +25,25 @@ public class IndexTest {
     @Test
     public void shouldGenerateIndexNameForSimpleKey() {
         final Index index = new Index("x");
-        assertEquals("x_1", index.toDocument().get("name"));
+        assertEquals("x_1", index.getName());
     }
 
     @Test
     public void shouldGenerateIndexNameForKeyOrderedAscending() {
         final Index index = new Index("x", OrderBy.ASC);
-        assertEquals("x_1", index.toDocument().get("name"));
+        assertEquals("x_1", index.getName());
     }
 
     @Test
     public void shouldGenerateIndexNameForKeyOrderedDescending() {
         final Index index = new Index("x", OrderBy.DESC);
-        assertEquals("x_-1", index.toDocument().get("name"));
+        assertEquals("x_-1", index.getName());
     }
 
     @Test
     public void shouldGenerateGeoIndexName() {
         final Index index = new Index(new Index.GeoKey("x"));
-        assertEquals("x_2d", index.toDocument().get("name"));
+        assertEquals("x_2d", index.getName());
     }
 
     @Test
@@ -51,7 +51,7 @@ public class IndexTest {
         final Index index = new Index(new Index.OrderedKey("x", OrderBy.ASC),
                                new Index.OrderedKey("y", OrderBy.ASC),
                                new Index.OrderedKey("a", OrderBy.ASC));
-        assertEquals("x_1_y_1_a_1", index.toDocument().get("name"));
+        assertEquals("x_1_y_1_a_1", index.getName());
 
     }
 
@@ -59,7 +59,7 @@ public class IndexTest {
     public void shouldGenerateGeoAndSortedCompoundIndexName() {
         final Index index = new Index(new Index.GeoKey("x"),
                                new Index.OrderedKey("y", OrderBy.DESC));
-        assertEquals("x_2d_y_-1", index.toDocument().get("name"));
+        assertEquals("x_2d_y_-1", index.getName());
 
     }
 

@@ -113,7 +113,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public void dropIndexes() {
-        throw new UnsupportedOperationException();
+        collection.admin().dropIndexes();
     }
 
     @Override

@@ -66,6 +66,10 @@ public class Index implements ConvertibleToDocument {
         this.name = generateIndexName();
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public Document toDocument() {
         final Document indexDetails = new Document();

@@ -159,7 +159,6 @@ public class DBCollectionOldTest extends MongoClientTestBase {
     }
 
     @Test
-    @Ignore("Not supported yet, old API not ported")
     public void testDropIndex() {
         final DBCollection c = getCollection();
 
@@ -171,6 +170,16 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
         c.dropIndexes();
         assertEquals(1, c.getIndexInfo().size());
+    }
+
+    @Test
+    @Ignore("Not supported yet, old API not ported")
+    public void testDropIndexByName() {
+        final DBCollection c = database.getCollection("dropindex2");
+        c.drop();
+
+        c.save(new BasicDBObject("x", 1));
+        assertEquals(1, c.getIndexInfo().size());
 
         c.ensureIndex(new BasicDBObject("x", 1));
         assertEquals(2, c.getIndexInfo().size());
@@ -181,6 +190,8 @@ public class DBCollectionOldTest extends MongoClientTestBase {
         c.dropIndex(new BasicDBObject("x", 1));
         assertEquals(2, c.getIndexInfo().size());
 
+        c.dropIndex("y_1");
+        assertEquals(1, c.getIndexInfo().size());
     }
 
     @Test

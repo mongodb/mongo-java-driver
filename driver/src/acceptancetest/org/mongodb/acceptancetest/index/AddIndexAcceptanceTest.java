@@ -17,13 +17,15 @@
 package org.mongodb.acceptancetest.index;
 
 import org.bson.types.Document;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mongodb.Index;
-import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
 import org.mongodb.OrderBy;
+import org.mongodb.acceptancetest.crud.CollectionAcceptanceTest;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -34,26 +36,30 @@ import static org.mongodb.Index.OrderedKey;
 import static org.mongodb.OrderBy.ASC;
 import static org.mongodb.OrderBy.DESC;
 import static org.mongodb.OrderBy.fromInt;
-import static org.mongodb.acceptancetest.Fixture.getMongoClient;
+import static org.mongodb.acceptancetest.Fixture.getCleanDatabaseForTest;
 
 /**
  * Use cases for adding indexes to your MongoDB database via the Java driver.  Documents the index options that are
  * currently supported by the updated driver.
  */
 public class AddIndexAcceptanceTest {
-    private static final String DB_NAME = "AddIndexAcceptanceTest";
     private MongoCollection<Document> collection;
-    private MongoDatabase database;
+    private static MongoDatabase database;
+
+    @BeforeClass
+    public static void setupTestSuite() {
+        database = getCleanDatabaseForTest(CollectionAcceptanceTest.class);
+    }
+
+    @AfterClass
+    public static void teardownTestSuite() {
+        database.admin().drop();
+    }
 
     @Before
     public void setUp() {
-        final MongoClient mongoClient = getMongoClient();
-
-        database = mongoClient.getDatabase(DB_NAME);
-        database.admin().drop();
-
-        collection = database.getCollection("collection");
-
+        //create a brand new collection for each test
+        collection = database.getCollection("Collection" + System.currentTimeMillis());
         assertThat("Should be no indexes on the database at all at this stage", collection.admin().getIndexes().size(),
                   is(0));
     }

@@ -26,6 +26,7 @@ import org.mongodb.QueryFilterDocument;
 import org.mongodb.WriteConcern;
 import org.mongodb.command.CollStats;
 import org.mongodb.command.Drop;
+import org.mongodb.command.DropIndex;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.CommandResult;
@@ -110,5 +111,23 @@ public class CollectionAdminImpl implements CollectionAdmin {
         database.executeCommand(dropCollectionCommand);
         //ignores errors
         //TODO: which errors should be handled on drop?
+    }
+
+    @Override
+    public void dropIndex(final Index index) {
+        final DropIndex dropIndex = new DropIndex(collectionNamespace.getCollectionName(), index.getName());
+        final CommandResult commandResult = database.executeCommand(dropIndex);
+
+        handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
+        //TODO: currently doesn't deal with errors
+    }
+
+    @Override
+    public void dropIndexes() {
+        final DropIndex dropIndex = new DropIndex(collectionNamespace.getCollectionName(), "*");
+        final CommandResult commandResult = database.executeCommand(dropIndex);
+
+        handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
+        //TODO: currently doesn't deal with errors
     }
 }
