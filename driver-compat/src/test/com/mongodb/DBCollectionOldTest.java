@@ -60,18 +60,13 @@ public class DBCollectionOldTest extends MongoClientTestBase {
         assertEquals(c.isCapped(), true);
     }
 
-    @Test
+    @Test(expected = MongoException.DuplicateKey.class)
     public void testDuplicateKeyException() {
         final DBCollection c = getCollection();
 
         final DBObject obj = new BasicDBObject();
         c.insert(obj, WriteConcern.SAFE);
-        try {
-            c.insert(obj, WriteConcern.SAFE);
-            fail();
-        } catch (MongoException.DuplicateKey e) {
-            // Proves that a DuplicateKey exception is thrown, as test will fail if any other exception is thrown
-        }
+        c.insert(obj, WriteConcern.SAFE);
     }
 
     @Test
@@ -221,7 +216,6 @@ public class DBCollectionOldTest extends MongoClientTestBase {
     }
 
     @Test
-    @Ignore("Not supported yet, old API not ported")
     public void testEnsureNestedIndex() {
         final DBCollection c = getCollection();
 

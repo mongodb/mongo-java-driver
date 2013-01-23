@@ -656,7 +656,9 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public void ensureIndex(final DBObject keys, final String name, final boolean unique) {
-        throw new UnsupportedOperationException();
+        final BasicDBObject options = new BasicDBObject("name", name);
+        options.append("unique", unique);
+        ensureIndex(keys, options);
     }
 
     // TODO: check if these are all the supported options
