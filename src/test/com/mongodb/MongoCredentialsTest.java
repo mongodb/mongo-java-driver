@@ -111,6 +111,7 @@ public class MongoCredentialsTest extends TestCase {
         assertEquals(credentials1, store.get("db1"));
         assertEquals(credentials2, store.get("db2"));
         assertNull(store.get("db3"));
+        assertEquals(credentialsList, store.asList());
 
         credentialsList = Arrays.asList(credentials1, new MongoCredentials("user2", password, "db1"));
         try {

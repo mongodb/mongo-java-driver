@@ -805,7 +805,7 @@ public abstract class DB {
     public abstract void cleanCursors( boolean force );
 
     MongoCredentials getAuthenticationCredentials() {
-        return getMongo().getCredentialsStore().get(getName());
+        return getMongo().getAuthority().getCredentialsStore().get(getName());
     }
 
     final Mongo _mongo;

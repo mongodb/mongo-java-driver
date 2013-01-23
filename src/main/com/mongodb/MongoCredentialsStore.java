@@ -19,9 +19,11 @@ package com.mongodb;
 
 import org.bson.util.annotations.ThreadSafe;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,7 +37,7 @@ import java.util.Set;
  * @since 2.11.0
  */
 @ThreadSafe
-public class MongoCredentialsStore {
+class MongoCredentialsStore {
     private final Map<String, MongoCredentials> credentialsMap = new HashMap<String, MongoCredentials>();
     private volatile Set<String> allDatabasesWithCredentials = new HashSet<String>();
 
@@ -111,6 +113,14 @@ public class MongoCredentialsStore {
         return credentialsMap.get(database);
     }
 
+    /**
+     * Gets the MongoCredentials in this map as a List
+     * @return the list of credentials
+     */
+    public synchronized List<MongoCredentials> asList() {
+       return new ArrayList<MongoCredentials>(credentialsMap.values());
+    }
+
     @Override
     public synchronized boolean equals(final Object o) {
         if (this == o) return true;
@@ -130,8 +140,8 @@ public class MongoCredentialsStore {
 
     @Override
     public String toString() {
-        return "MongoCredentialsStore{" +
-                "credentialsMap=" + credentialsMap +
+        return "{" +
+                "credentials=" + credentialsMap +
                 '}';
     }
 }

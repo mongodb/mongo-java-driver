@@ -20,6 +20,7 @@ package com.mongodb;
 import org.bson.util.annotations.Immutable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,35 +33,17 @@ import java.util.List;
  * @since 2.11.0
  */
 @Immutable
-public class MongoAuthority {
-    private final ServerAddress serverAddress;
-    private final MongoCredentialsStore credentialsStore;
-    private final List<ServerAddress> serverAddresses;
+class MongoAuthority {
     private final Type type;
+    private final List<ServerAddress> serverAddresses;
+    private final MongoCredentialsStore credentialsStore;
 
     /**
      * Enumeration of the connection types.
      */
-    public enum Type {
-        /**
-         *
-         */
-        DIRECT,
-
-        /**
-         *
-         */
-        REPLICA_SET,
-
-        /**
-         *
-         */
-        MONGOS_SET,
-
-        /**
-         *
-         */
-        DYNAMIC_SET
+    enum Type {
+        Direct,
+        Set
     }
 
     /**
@@ -97,64 +80,6 @@ public class MongoAuthority {
      * @param serverAddresses
      * @return
      */
-    public static MongoAuthority replicaSet(List<ServerAddress> serverAddresses) {
-        return replicaSet(serverAddresses, (MongoCredentials) null);
-    }
-
-    /**
-     *
-     * @param serverAddresses
-     * @param credentials
-     * @return
-     */
-    public static MongoAuthority replicaSet(List<ServerAddress> serverAddresses, MongoCredentials credentials) {
-        return replicaSet(serverAddresses, new MongoCredentialsStore(credentials));
-    }
-
-    /**
-     *
-     * @param serverAddresses
-     * @param credentialsStore
-     * @return
-     */
-    public static MongoAuthority replicaSet(List<ServerAddress> serverAddresses, MongoCredentialsStore credentialsStore) {
-        return new MongoAuthority(serverAddresses, Type.REPLICA_SET, credentialsStore);
-    }
-
-    /**
-     *
-     * @param serverAddresses
-     * @return
-     */
-    public static MongoAuthority mongosSet(List<ServerAddress> serverAddresses) {
-        return mongosSet(serverAddresses, (MongoCredentials) null);
-    }
-
-    /**
-     *
-     * @param serverAddresses
-     * @param credentials
-     * @return
-     */
-    public static MongoAuthority mongosSet(List<ServerAddress> serverAddresses, MongoCredentials credentials) {
-        return mongosSet(serverAddresses, new MongoCredentialsStore(credentials));
-    }
-
-    /**
-     *
-     * @param serverAddresses
-     * @param credentials
-     * @return
-     */
-    public static MongoAuthority mongosSet(List<ServerAddress> serverAddresses, MongoCredentialsStore credentials) {
-        return new MongoAuthority(serverAddresses, Type.MONGOS_SET, credentials);
-    }
-
-    /**
-     *
-     * @param serverAddresses
-     * @return
-     */
     public static MongoAuthority dynamicSet(List<ServerAddress> serverAddresses) {
         return dynamicSet(serverAddresses, (MongoCredentials) null);
     }
@@ -176,7 +101,7 @@ public class MongoAuthority {
      * @return
      */
     public static MongoAuthority dynamicSet(List<ServerAddress> serverAddresses, MongoCredentialsStore credentialsStore) {
-        return new MongoAuthority(serverAddresses, Type.DYNAMIC_SET, credentialsStore);
+        return new MongoAuthority(serverAddresses, Type.Set, credentialsStore);
     }
 
     /**
@@ -194,10 +119,9 @@ public class MongoAuthority {
             throw new IllegalArgumentException("credentialsStore can not be null");
         }
 
-        this.serverAddress = serverAddress;
+        this.serverAddresses = Arrays.asList(serverAddress);
         this.credentialsStore = credentialsStore;
-        this.serverAddresses = null;
-        this.type = Type.DIRECT;
+        this.type = Type.Direct;
     }
 
     /**
@@ -220,40 +144,19 @@ public class MongoAuthority {
             throw new IllegalArgumentException("type can not be null");
         }
 
-        if (type == Type.DIRECT) {
-            throw new IllegalArgumentException("type can not be DIRECT with a list of server addresses");
+        if (type == Type.Direct) {
+            throw new IllegalArgumentException("type can not be Direct with a list of server addresses");
         }
 
         this.type = type;
         this.serverAddresses = new ArrayList<ServerAddress>(serverAddresses);
         this.credentialsStore = credentialsStore;
-        this.serverAddress = null;
     }
 
     /**
-     * Returns whether this is a direct connection to a single server.
-     *
-     * @return true if a direct connection
-     */
-    public boolean isDirect() {
-        return serverAddress != null;
-    }
-
-    /**
-     * Returns the single server address of a direction connection, or null if it's not a direction connection.
-     *
-     * @return the server address
-     * @see com.mongodb.MongoAuthority#isDirect()
-     */
-    public ServerAddress getServerAddress() {
-        return serverAddress;
-    }
-
-    /**
-     * Returns the list of server addresses if this is not a direction connection.  or null if it is.
+     * Returns the list of server addresses.
      *
      * @return the server address list
-     * @see com.mongodb.MongoAuthority#isDirect()
      */
     public List<ServerAddress> getServerAddresses() {
         return serverAddresses == null ? null : Collections.unmodifiableList(serverAddresses);
@@ -286,10 +189,7 @@ public class MongoAuthority {
         final MongoAuthority that = (MongoAuthority) o;
 
         if (!credentialsStore.equals(that.credentialsStore)) return false;
-        if (serverAddress != null ? !serverAddress.equals(that.serverAddress) : that.serverAddress != null)
-            return false;
-        if (serverAddresses != null ? !serverAddresses.equals(that.serverAddresses) : that.serverAddresses != null)
-            return false;
+        if (!serverAddresses.equals(that.serverAddresses)) return false;
         if (type != that.type) return false;
 
         return true;
@@ -297,9 +197,8 @@ public class MongoAuthority {
 
     @Override
     public int hashCode() {
-        int result = serverAddress != null ? serverAddress.hashCode() : 0;
-        result = 31 * result + credentialsStore.hashCode();
-        result = 31 * result + (serverAddresses != null ? serverAddresses.hashCode() : 0);
+        int result = credentialsStore.hashCode();
+        result = 31 * result + serverAddresses.hashCode();
         result = 31 * result + type.hashCode();
         return result;
     }
@@ -307,10 +206,9 @@ public class MongoAuthority {
     @Override
     public String toString() {
         return "MongoAuthority{" +
-                "serverAddress=" + serverAddress +
-                ", credentialsStore=" + credentialsStore +
+                "type=" + type +
                 ", serverAddresses=" + serverAddresses +
-                ", type=" + type +
+                ", credentials=" + credentialsStore +
                 '}';
     }
 }

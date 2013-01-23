@@ -327,11 +327,11 @@ public class DBPort {
 
     void checkAuth(Mongo mongo) throws IOException {
         // get the difference between the set of credentialed databases and the set of authenticated databases on this connection
-        Set<String> unauthenticatedDatabases = new HashSet<String>(mongo.getCredentialsStore().getDatabases());
+        Set<String> unauthenticatedDatabases = new HashSet<String>(mongo.getAuthority().getCredentialsStore().getDatabases());
         unauthenticatedDatabases.removeAll(authenticatedDatabases);
 
         for (String databaseName : unauthenticatedDatabases) {
-            authenticate(mongo, mongo.getCredentialsStore().get(databaseName));
+            authenticate(mongo, mongo.getAuthority().getCredentialsStore().get(databaseName));
         }
     }
 

@@ -297,12 +297,7 @@ public class Mongo {
         _options = options;
         _applyMongoOptions();
 
-        if ( authority.isDirect() ){
-            _connector = new DBTCPConnector( this );
-        }
-        else {
-            _connector = new DBTCPConnector( this  );
-        }
+        _connector = new DBTCPConnector( this  );
 
         _connector.start();
         if (_options.cursorFinalizerEnabled) {
@@ -547,15 +542,6 @@ public class Mongo {
     }
 
     /**
-     * Gets the credentials store.
-     *
-     * @return the credentials store.
-     */
-    public MongoCredentialsStore getCredentialsStore() {
-        return _authority.getCredentialsStore();
-    }
-
-    /**
      * Helper method for setting up MongoOptions at instantiation
      * so that any options which affect this connection can be set.
      */
@@ -776,7 +762,7 @@ public class Mongo {
 
      * @return the authority
      */
-    public MongoAuthority getAuthority() {
+    MongoAuthority getAuthority() {
         return _authority;
     }
 }

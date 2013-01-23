@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.List;
 
 public class MongoClientTest {
     @Test
@@ -29,51 +30,86 @@ public class MongoClientTest {
         MongoClientOptions customClientOptions = new MongoClientOptions.Builder().connectionsPerHost(500).build();
         MongoOptions customOptions = new MongoOptions(customClientOptions);
         MongoOptions defaultOptions = new MongoOptions(new MongoClientOptions.Builder().build());
+        List<MongoCredentials> emptyCredentials = Arrays.asList();
         MongoClient mc;
 
         mc = new MongoClient();
         Assert.assertEquals(new ServerAddress(), mc.getAddress());
         Assert.assertEquals(defaultOptions, mc.getMongoOptions());
+        Assert.assertEquals(emptyCredentials, mc.getCredentialsList());
         mc.close();
 
         mc = new MongoClient("127.0.0.1");
         Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
         Assert.assertEquals(defaultOptions, mc.getMongoOptions());
+        Assert.assertEquals(emptyCredentials, mc.getCredentialsList());
         mc.close();
 
         mc = new MongoClient("127.0.0.1", customClientOptions);
         Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
         Assert.assertEquals(customOptions, mc.getMongoOptions());
+        Assert.assertEquals(emptyCredentials, mc.getCredentialsList());
         mc.close();
 
         mc = new MongoClient("127.0.0.1", 27018);
         Assert.assertEquals(new ServerAddress("127.0.0.1", 27018), mc.getAddress());
         Assert.assertEquals(defaultOptions, mc.getMongoOptions());
+        Assert.assertEquals(emptyCredentials, mc.getCredentialsList());
         mc.close();
 
         mc = new MongoClient(new ServerAddress("127.0.0.1"));
         Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
         Assert.assertEquals(defaultOptions, mc.getMongoOptions());
+        Assert.assertEquals(emptyCredentials, mc.getCredentialsList());
+        mc.close();
+
+        final List<MongoCredentials> credentialsList = Arrays.asList(new MongoCredentials("user1", "pwd".toCharArray(), "test"));
+        mc = new MongoClient(new ServerAddress("127.0.0.1"), credentialsList);
+        Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
+        Assert.assertEquals(defaultOptions, mc.getMongoOptions());
+        Assert.assertEquals(credentialsList, mc.getCredentialsList());
         mc.close();
 
         mc = new MongoClient(new ServerAddress("127.0.0.1"), customClientOptions);
         Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
         Assert.assertEquals(customOptions, mc.getMongoOptions());
+        Assert.assertEquals(emptyCredentials, mc.getCredentialsList());
+        mc.close();
+
+        mc = new MongoClient(new ServerAddress("127.0.0.1"), credentialsList, customClientOptions);
+        Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
+        Assert.assertEquals(customOptions, mc.getMongoOptions());
+        Assert.assertEquals(credentialsList, mc.getCredentialsList());
         mc.close();
 
         mc = new MongoClient(Arrays.asList(new ServerAddress("localhost", 27017), new ServerAddress("127.0.0.1", 27018)));
         Assert.assertEquals(Arrays.asList(new ServerAddress("localhost", 27017), new ServerAddress("127.0.0.1", 27018)), mc.getAllAddress());
         Assert.assertEquals(defaultOptions, mc.getMongoOptions());
+        Assert.assertEquals(emptyCredentials, mc.getCredentialsList());
         mc.close();
 
         mc = new MongoClient(Arrays.asList(new ServerAddress("localhost", 27017), new ServerAddress("127.0.0.1", 27018)), customClientOptions);
         Assert.assertEquals(Arrays.asList(new ServerAddress("localhost", 27017), new ServerAddress("127.0.0.1", 27018)), mc.getAllAddress());
         Assert.assertEquals(customOptions, mc.getMongoOptions());
+        Assert.assertEquals(emptyCredentials, mc.getCredentialsList());
+        mc.close();
+
+        mc = new MongoClient(Arrays.asList(new ServerAddress("localhost", 27017), new ServerAddress("127.0.0.1", 27018)), credentialsList, customClientOptions);
+        Assert.assertEquals(Arrays.asList(new ServerAddress("localhost", 27017), new ServerAddress("127.0.0.1", 27018)), mc.getAllAddress());
+        Assert.assertEquals(customOptions, mc.getMongoOptions());
+        Assert.assertEquals(credentialsList, mc.getCredentialsList());
         mc.close();
 
         mc = new MongoClient(new MongoClientURI("mongodb://127.0.0.1"));
         Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
         Assert.assertEquals(defaultOptions, mc.getMongoOptions());
+        Assert.assertEquals(emptyCredentials, mc.getCredentialsList());
+        mc.close();
+
+        mc = new MongoClient(new MongoClientURI("mongodb://user1:pwd@127.0.0.1/test"));
+        Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
+        Assert.assertEquals(defaultOptions, mc.getMongoOptions());
+        Assert.assertEquals(credentialsList, mc.getCredentialsList());
         mc.close();
     }
 }

@@ -31,21 +31,17 @@ public class DBTCPConnector implements DBConnector {
     static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
 
     /**
-     * @param m
+     * @param mongo the Mongo instance
      * @throws MongoException
      */
-    public DBTCPConnector( Mongo m  ) {
-        _mongo = m;
-        _portHolder = new DBPortPool.Holder( m._options );
-        MongoAuthority.Type type = m.getAuthority().getType();
-        if (type == MongoAuthority.Type.DIRECT) {
-            setMasterAddress(m.getAuthority().getServerAddress());
-        } else if (type == MongoAuthority.Type.REPLICA_SET) {
-            _connectionStatus = new ReplicaSetStatus(m, m.getAuthority().getServerAddresses());
-        } else if (type == MongoAuthority.Type.MONGOS_SET) {
-            _connectionStatus = new MongosStatus(m, m.getAuthority().getServerAddresses());
-        } else if (type == MongoAuthority.Type.DYNAMIC_SET) {
-            _connectionStatus = new DynamicConnectionStatus(m, m.getAuthority().getServerAddresses());
+    public DBTCPConnector( Mongo mongo  ) {
+        _mongo = mongo;
+        _portHolder = new DBPortPool.Holder( mongo._options );
+        MongoAuthority.Type type = mongo.getAuthority().getType();
+        if (type == MongoAuthority.Type.Direct) {
+            setMasterAddress(mongo.getAuthority().getServerAddresses().get(0));
+        } else if (type == MongoAuthority.Type.Set) {
+            _connectionStatus = new DynamicConnectionStatus(mongo, mongo.getAuthority().getServerAddresses());
         } else {
             throw new IllegalArgumentException("Unsupported authority type: " + type);
         }
@@ -607,7 +603,7 @@ public class DBTCPConnector implements DBConnector {
 
         try {
             CommandResult result = port.authenticate(_mongo, credentials);
-            _mongo.getCredentialsStore().add(credentials);
+            _mongo.getAuthority().getCredentialsStore().add(credentials);
             return result;
        } finally {
             mp.done(port);

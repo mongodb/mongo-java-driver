@@ -659,10 +659,10 @@ public class JavaClientTest extends TestCase {
 
             assertEquals(false, db.authenticate( "xx" , "f".toCharArray() ) );
             assertNull(db.getAuthenticationCredentials());
-            assertNull(_mongo.getCredentialsStore().get(db.getName()));
+            assertNull(_mongo.getAuthority().getCredentialsStore().get(db.getName()));
             assertEquals(true, db.authenticate("xx", "e".toCharArray()));
             assertEquals(new MongoCredentials("xx", "e".toCharArray(), db.getName()), db.getAuthenticationCredentials());
-            assertEquals(db.getAuthenticationCredentials(), m.getCredentialsStore().get(db.getName()));
+            assertEquals(db.getAuthenticationCredentials(), m.getAuthority().getCredentialsStore().get(db.getName()));
 
             assertEquals(true, db.authenticate( "xx" , "e".toCharArray() ) );
             try {
