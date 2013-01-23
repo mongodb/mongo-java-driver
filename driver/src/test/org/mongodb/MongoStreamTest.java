@@ -165,8 +165,8 @@ public class MongoStreamTest extends MongoClientTestBase {
 
     @Test
     public void testTypeCollection() {
-        final MongoCollection<Concrete> concreteCollection = getDatabase().getTypedCollection(getCollection().getName(),
-                                                                                             new ConcreteSerializer());
+        final MongoCollection<Concrete> concreteCollection = getDatabase().getCollection(getCollection().getName(),
+                new ConcreteSerializer());
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
 

@@ -1017,14 +1017,14 @@ public class DBCollection implements IDBCollection {
 
     private void setCollection(final String name) {
         this.collection = database.toNew().
-                                          getTypedCollection(name, new CollectibleDBObjectSerializer(database,
-                                                                                                    database.getMongo()
-                                                                                                            .getNew()
-                                                                                                            .getOptions()
-                                                                                                            .getPrimitiveSerializers(),
-                                                                                                    new ObjectIdGenerator(),
-                                                                                                    objectClass,
-                                                                                                    new HashMap<String, Class<? extends DBObject>>(
-                                                                                                                                                  pathToClassMap)));
+                getCollection(name, new CollectibleDBObjectSerializer(database,
+                        database.getMongo()
+                                .getNew()
+                                .getOptions()
+                                .getPrimitiveSerializers(),
+                        new ObjectIdGenerator(),
+                        objectClass,
+                        new HashMap<String, Class<? extends DBObject>>(
+                                pathToClassMap)));
     }
 }

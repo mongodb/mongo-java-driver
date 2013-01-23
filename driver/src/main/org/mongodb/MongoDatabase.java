@@ -39,9 +39,9 @@ public interface MongoDatabase {
 
     MongoCollection<Document> getCollection(String name, MongoCollectionOptions options);
 
-    <T> MongoCollection<T> getTypedCollection(String name, CollectibleSerializer<T> serializer);
+    <T> MongoCollection<T> getCollection(String name, CollectibleSerializer<T> serializer);
 
-    <T> MongoCollection<T> getTypedCollection(String name, CollectibleSerializer<T> serializer, MongoCollectionOptions options);
+    <T> MongoCollection<T> getCollection(String name, CollectibleSerializer<T> serializer, MongoCollectionOptions options);
 
     DatabaseAdmin admin();
 

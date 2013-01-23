@@ -64,6 +64,6 @@ public abstract class MongoClientTestBase {
     }
 
     protected <T> MongoCollection<T> getCollection(final CollectibleSerializer<T> serializer) {
-        return database.getTypedCollection(getClass().getSimpleName(), serializer);
+        return database.getCollection(getClass().getSimpleName(), serializer);
     }
 }
