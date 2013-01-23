@@ -20,8 +20,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.MongoClient;
+import org.mongodb.MongoClients;
 import org.mongodb.ServerAddress;
-import org.mongodb.impl.SingleServerMongoClient;
 
 import java.net.UnknownHostException;
 
@@ -42,7 +42,7 @@ public class MongoClientConnectedAcceptanceTest {
 
     @Test
     public void shouldBeConnectedToMongoAsSoonAsNewSingleServerMongoClientIsCreated() {
-        final MongoClient mongoClient = new SingleServerMongoClient(serverAddress);
+        final MongoClient mongoClient = MongoClients.create(serverAddress);
 
         final double pingValue = mongoClient.admin().ping();
 
@@ -52,7 +52,7 @@ public class MongoClientConnectedAcceptanceTest {
     @Test
     @Ignore("Not working at the moment because SingleServerMongoClient hasn't implemented close")
     public void shouldDisconnectFromServerWhenRequested() {
-        final MongoClient mongoClient = new SingleServerMongoClient(serverAddress);
+        final MongoClient mongoClient = MongoClients.create(serverAddress);
 
         mongoClient.close();
 
