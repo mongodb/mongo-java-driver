@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 @ThreadSafe
-@SuppressWarnings({"rawtypes", "deprecation"})
+@SuppressWarnings({ "rawtypes", "deprecation" })
 public class DBCollection implements IDBCollection {
     private volatile MongoCollection<DBObject> collection;
     private final DB database;
@@ -562,7 +562,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public List distinct(final String key) {
-        throw new UnsupportedOperationException();
+        return collection.distinct(key);
     }
 
     @Override
@@ -572,7 +572,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public List distinct(final String key, final DBObject query) {
-        throw new UnsupportedOperationException();
+        return collection.filter(DBObjects.toQueryFilterDocument(query)).distinct(key);
     }
 
     @Override

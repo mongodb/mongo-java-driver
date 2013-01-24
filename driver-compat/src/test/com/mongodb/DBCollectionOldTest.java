@@ -27,6 +27,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+@SuppressWarnings({ "rawtypes" })
 public class DBCollectionOldTest extends MongoClientTestBase {
     @Test
     @Ignore("Duplicate Key Exception now thrown")
@@ -283,7 +284,6 @@ public class DBCollectionOldTest extends MongoClientTestBase {
     }
 
     @Test
-    @Ignore("Not supported yet, old API not ported")
     public void testDistinct() {
         final DBCollection c = getCollection();
 
@@ -293,6 +293,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
             o.put("x", i % 10);
             c.save(o);
         }
+        assertEquals(100, c.count());
 
         List l = c.distinct("x");
         assertEquals(10, l.size());
