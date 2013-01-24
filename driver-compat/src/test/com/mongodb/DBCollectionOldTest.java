@@ -175,7 +175,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
     @Test
     @Ignore("Not supported yet, old API not ported")
     public void testDropIndexByName() {
-        final DBCollection c = database.getCollection("dropindex2");
+        final DBCollection c = getDB().getCollection("dropindex2");
         c.drop();
 
         c.save(new BasicDBObject("x", 1));
