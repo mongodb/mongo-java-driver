@@ -34,6 +34,8 @@ import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
+import org.mongodb.command.Distinct;
+import org.mongodb.command.DistinctCommandResult;
 import org.mongodb.command.FindAndModifyCommandResult;
 import org.mongodb.command.FindAndModifyCommandResultSerializer;
 import org.mongodb.command.FindAndRemove;
@@ -59,6 +61,7 @@ import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.Serializer;
 
 import java.util.Collection;
+import java.util.List;
 
 class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements MongoCollection<T> {
 
@@ -99,6 +102,11 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     @Override
     public long count() {
         return new MongoCollectionStream().count();
+    }
+
+    @Override
+    public List<String> distinct(final String field) {
+        return new MongoCollectionStream().distinct(field);
     }
 
     @Override
@@ -325,6 +333,12 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         }
 
         @Override
+        public List<String> distinct(final String field) {
+            final Distinct distinctOperation = new Distinct(getName(), field, findOp);
+            return new DistinctCommandResult(getDatabase().executeCommand(distinctOperation)).getValue();
+        }
+
+        @Override
         public void forEach(final Block<? super T> block) {
             final MongoCursor<T> cursor = all();
             try {
@@ -450,7 +464,8 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         @Override
         public T modifyOrInsertAndGet(final MongoUpdateOperations updateOperations, final Get beforeOrAfter) {
             final MongoFindAndUpdate<T> findAndUpdate = new MongoFindAndUpdate<T>().where(findOp.getFilter()).updateWith(
-                                                                                                                  updateOperations)
+
+                                                                                                                        updateOperations)
                                                                              .upsert(true)
                                                                              .returnNew(asBoolean(beforeOrAfter))
                                                                              .select(findOp.getFields()).sortBy(

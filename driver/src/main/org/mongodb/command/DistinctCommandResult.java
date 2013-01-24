@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.command;
+
+import org.mongodb.result.CommandResult;
 
 import java.util.List;
 
-public interface MongoReadableStream<T> extends MongoIterable<T> {
+public final class DistinctCommandResult {
 
-    MongoReadableStream<T> batchSize(int batchSize);   // TODO: what to do about this
+    private final CommandResult commandResult;
 
-    MongoReadableStream<T> readPreference(ReadPreference readPreference);
+    public DistinctCommandResult(final CommandResult commandResult) {
+        this.commandResult = commandResult;
+    }
 
-    MongoCursor<T> all();
-
-    T one();
-
-    long count();
-
-    //TODO: not always going to be a string
-    List<String> distinct(String field);
+    @SuppressWarnings("unchecked")
+    public List<String> getValue() {
+        // TODO: any way to remove the warning?  This could be a design flaw
+        return (List<String>) commandResult.getResponse().get("values");
+    }
 }
