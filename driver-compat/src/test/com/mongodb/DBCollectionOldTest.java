@@ -46,7 +46,6 @@ public class DBCollectionOldTest extends MongoClientTestBase {
     }
 
     @Test
-    @Ignore("Not supported yet, old API not ported")
     public void testCappedCollection() {
         final String collectionName = "testCapped";
         final int collectionSize = 1000;

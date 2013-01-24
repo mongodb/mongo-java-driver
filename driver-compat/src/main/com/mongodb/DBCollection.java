@@ -978,7 +978,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public boolean isCapped() {
-        throw new UnsupportedOperationException();
+        return collection.admin().isCapped();
     }
 
     /**
