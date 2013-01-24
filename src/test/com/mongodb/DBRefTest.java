@@ -195,18 +195,18 @@ public class DBRefTest extends TestCase {
 
     @Test
     public void testGetEntityWithMapOfDBRefsWithCompoundIds() {
-        DBCollection a = _db.getCollection("a");
-        a.drop();
+        DBCollection base = _db.getCollection("basecollection");
+        base.drop();
 
         BasicDBObject compoundId1 = new BasicDBObject("name", "someName").append("email", "test@example.com");
         BasicDBObject compoundId2 = new BasicDBObject("name", "someName2").append("email", "test2@example.com");
         BasicDBObject mapOfRefs = new BasicDBObject()
-                .append("someName", new DBRef(_db, "fake", compoundId1))
-                .append("someName2", new DBRef(_db, "fake", compoundId2));
+                .append("someName", new DBRef(_db, "compoundkeys", compoundId1))
+                .append("someName2", new DBRef(_db, "compoundkeys", compoundId2));
         BasicDBObject entity = new BasicDBObject("_id", "testId").append("refs", mapOfRefs);
-        a.save(entity);
+        base.save(entity);
 
-        DBObject fetched = a.findOne(new BasicDBObject("_id", "testId"));
+        DBObject fetched = base.findOne(new BasicDBObject("_id", "testId"));
 
         assertNotNull(fetched);
         DBObject fetchedRefs = (DBObject) fetched.get("refs");

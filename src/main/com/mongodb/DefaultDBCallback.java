@@ -67,14 +67,14 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
     @Override
     public Object objectDone(){
         BSONObject o = (BSONObject)super.objectDone();
-        String name = null;
+        String lastName = null;
         if ( _nameStack.size() > 0 ){
-            name = _nameStack.removeLast();
+            lastName = _nameStack.removeLast();
         }
-        if ( ! ( o instanceof List ) && name != null &&
+        if ( ! ( o instanceof List ) && lastName != null &&
              o.containsField( "$ref" ) &&
              o.containsField( "$id" ) ){
-            return cur().put(name, new DBRef( _db, o ) );
+            return cur().put(lastName, new DBRef( _db, o ) );
         }
 
         return o;
