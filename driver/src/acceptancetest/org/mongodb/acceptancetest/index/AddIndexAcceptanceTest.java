@@ -223,4 +223,6 @@ public class AddIndexAcceptanceTest {
     //TODO: sparse
     //TODO: other ordering options
     //TODO: can you disable the index on ID for non-capped collections?
+    //TODO: can you define your own name for the index? The spec doesn't forbid it (or encourage it) and the old
+    //driver supports it
 }

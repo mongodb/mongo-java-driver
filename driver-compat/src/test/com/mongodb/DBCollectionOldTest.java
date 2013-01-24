@@ -200,14 +200,85 @@ public class DBCollectionOldTest extends MongoClientTestBase {
     }
 
     @Test
-    @Ignore("Not supported yet, old API not ported")
-    public void shouldDropCompoundIndexes() {
+    public void shouldDropCompoundIndexes1() {
+        final DBCollection c = getDB().getCollection("dropindex3");
+        c.drop();
 
+        final BasicDBObject newDoc = new BasicDBObject("x", "some value").append("y", "another value");
+
+        c.save(newDoc);
+        assertEquals(1, c.getIndexInfo().size());
+
+        final BasicDBObject indexFields = new BasicDBObject("x", 1).append("y", 1);
+        c.ensureIndex(indexFields);
+        assertEquals(2, c.getIndexInfo().size());
+
+        c.dropIndex(indexFields);
+        assertEquals(1, c.getIndexInfo().size());
     }
 
     @Test
-    @Ignore("Not supported yet, old API not ported")
+    public void shouldDropCompoundIndexes2() {
+        final DBCollection c = getDB().getCollection("dropindex4");
+        c.drop();
+
+        final BasicDBObject newDoc = new BasicDBObject("x", "some value").append("y", "another value");
+
+        c.save(newDoc);
+        assertEquals(1, c.getIndexInfo().size());
+
+        final BasicDBObject indexFields = new BasicDBObject("x", 1).append("y", 1);
+        c.ensureIndex(indexFields);
+        assertEquals(2, c.getIndexInfo().size());
+
+        c.dropIndex("x_1_y_1");
+        assertEquals(1, c.getIndexInfo().size());
+    }
+
+    @Test
+    public void shouldDropCompoundGeoIndexes() {
+        final DBCollection c = getDB().getCollection("dropindex5");
+        c.drop();
+
+        final BasicDBObject newDoc = new BasicDBObject("x", "some value").append("y", "another value");
+
+        c.save(newDoc);
+        assertEquals(1, c.getIndexInfo().size());
+
+        final BasicDBObject indexFields = new BasicDBObject("x", "2d").append("y", 1);
+        c.ensureIndex(indexFields);
+        assertEquals(2, c.getIndexInfo().size());
+
+        c.dropIndex("x_2d_y_1");
+        assertEquals(1, c.getIndexInfo().size());
+    }
+
+    @Test
     public void shouldDropGeoIndexes() {
+        final DBCollection c = getDB().getCollection("dropindex6");
+        c.drop();
+
+        c.save(new BasicDBObject("x", 1));
+        assertEquals(1, c.getIndexInfo().size());
+
+        final BasicDBObject indexFields = new BasicDBObject("x", "2d");
+        c.ensureIndex(indexFields);
+        assertEquals(2, c.getIndexInfo().size());
+
+        c.ensureIndex(new BasicDBObject("y", "2d"));
+        assertEquals(3, c.getIndexInfo().size());
+
+        c.ensureIndex(new BasicDBObject("z", "2d"));
+        assertEquals(4, c.getIndexInfo().size());
+
+        c.dropIndex("y_2d");
+        assertEquals(3, c.getIndexInfo().size());
+
+        c.dropIndex(indexFields);
+        assertEquals(2, c.getIndexInfo().size());
+
+        c.dropIndexes("z_2d");
+        assertEquals(1, c.getIndexInfo().size());
 
     }
 

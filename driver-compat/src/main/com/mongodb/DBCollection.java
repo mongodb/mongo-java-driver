@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 @ThreadSafe
-@SuppressWarnings({ "rawtypes", "deprecation" })
+@SuppressWarnings({"rawtypes", "deprecation"})
 public class DBCollection implements IDBCollection {
     private volatile MongoCollection<DBObject> collection;
     private final DB database;
@@ -1008,16 +1008,23 @@ public class DBCollection implements IDBCollection {
     }
 
     private static Index getIndexFromName(final String name) {
-        Index.Key key;
-        final String keyField = name.substring(0, name.indexOf("_"));
-        final String keyType = name.substring(name.indexOf("_") + 1);
-        if (keyType.equals("2d")) {
-            key = new Index.GeoKey(keyField);
+        //Yuk, string manipulation, my favourite...
+        //Should be a better way to do this, now we're turning string into object back into string
+        String[] keysAndTypes = name.split("_");
+        Index.Key[] keys = new Index.Key[keysAndTypes.length / 2];
+        for (int i = 0; i < keysAndTypes.length; i = i + 2) {
+            String keyField = keysAndTypes[i];
+            String keyType = keysAndTypes[i + 1];
+            Index.Key key;
+            if (keyType.equals("2d")) {
+                key = new Index.GeoKey(keyField);
+            }
+            else {
+                key = new Index.OrderedKey(keyField, OrderBy.fromInt(Integer.valueOf(keyType)));
+            }
+            keys[i / 2] = key;
         }
-        else {
-            key = new Index.OrderedKey(keyField, OrderBy.fromInt(Integer.valueOf(keyType)));
-        }
-        return new Index(key);
+        return new Index(keys);
     }
 
     private List<Index.Key> getKeysFromDBObject(final DBObject fields) {
