@@ -23,6 +23,7 @@ import org.mongodb.operation.MongoFind;
 public final class Count extends MongoCommand {
     public Count(final MongoFind find, final String collectionName) {
         super(asCommandDocument(find, collectionName));
+        readPreference(find.getReadPreference());
     }
 
     private static CommandDocument asCommandDocument(final MongoFind find, final String collectionName) {
