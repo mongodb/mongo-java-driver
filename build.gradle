@@ -179,6 +179,33 @@ configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat', '
             pom.dependencies*.scope = null
         }
     }
+}
+
+configure(subprojects.findAll { it.name in ['driver-compat', 'morphia'] }) {
+    checkstyle {
+        configFile = new File("$configDir/checkstyle-lite.xml")
+        ignoreFailures = true
+    }
+
+    idea.module.iml {
+        withXml { provider ->
+
+            def node = provider.node.component.find { it.@name == 'CheckStyle-IDEA-Module' }
+            if (node == null) {
+                node = provider.node.appendNode('component')
+            }
+            node.replaceNode {
+                component(name:'CheckStyle-IDEA-Module') {
+                    option(name:'configuration'){
+                        map {
+                            entry(key: 'active-configuration', value: 'FILE:$PROJECT_DIR$/config/checkstyle-lite.xml:Lite')
+                        }
+                    }
+                }
+            }
+
+        }
+    }
 
 }
 
@@ -233,6 +260,10 @@ project(':driver') {
         compile project(':bson')
         acceptanceCompile 'junit:junit:4.11'
         acceptanceCompile sourceSets.main.runtimeClasspath
+    }
+
+    idea.module {
+        testSourceDirs += project.sourceSets.acceptance.allSource.getSrcDirs()
     }
 
     jar {
@@ -332,11 +363,6 @@ project(':driver-compat') {
             pom.dependencies.removeAll { true }
         }
     }
-
-    checkstyle {
-        configFile = new File("$configDir/checkstyle-lite.xml")
-        ignoreFailures = true
-    }
 }
 
 project(':morphia') {
@@ -364,9 +390,42 @@ project(':morphia') {
             }
         }
     }
+}
 
-    checkstyle {
-        configFile = new File("$configDir/checkstyle-lite.xml")
-        ignoreFailures = true
+//////////////////////////////////////////
+// Root project configuration           //
+//////////////////////////////////////////
+
+idea {
+    project {
+        languageLevel = '1.6'
+        ipr {
+            withXml { provider ->
+                def mapping = provider.node.component.find { it.@name == 'VcsDirectoryMappings' }.mapping
+                mapping.@vcs = 'Git'
+                mapping.@directory = '$PROJECT_DIR$'
+
+                def node = provider.node.component.find { it.@name == 'CheckStyle-IDEA-Module' }
+                if (node == null) {
+                    node = provider.node.appendNode('component')
+                }
+                node.replaceNode {
+                    component(name:'CheckStyle-IDEA') {
+                        option(name:'configuration'){
+                            map {
+                                entry(key: 'active-configuration', value: 'FILE:$PROJECT_DIR$/config/checkstyle.xml:Default')
+                                entry(key: 'check-test-classes', value: false)
+                                entry(key: 'check-nonjava-files', value: false)
+                                entry(key: 'location-0', value: 'FILE:$PROJECT_DIR$/config/checkstyle.xml:Default')
+                                entry(key: 'location-1', value: 'FILE:$PROJECT_DIR$/config/checkstyle-lite.xml:Lite')
+                            }
+                        }
+                    }
+                }
+            }
+            beforeMerged { project ->
+                project.modulePaths.clear()
+            }
+        }
     }
 }
