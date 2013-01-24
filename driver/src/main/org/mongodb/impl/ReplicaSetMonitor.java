@@ -113,10 +113,8 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
     private void updateAll() {
         HashSet<ReplicaSetMemberMonitor> seenNodes = new HashSet<ReplicaSetMemberMonitor>();
 
-        List<ReplicaSetMemberMonitor> currentAll = new ArrayList<ReplicaSetMemberMonitor>(all);
-
-        for (ReplicaSetMemberMonitor cur : currentAll) {
-            cur.update(seenNodes);
+        for (int i = 0; i < all.size(); i++) {
+            all.get(i).update(seenNodes);
         }
 
         if (seenNodes.size() > 0) {
