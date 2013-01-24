@@ -22,6 +22,7 @@ import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
 
+import java.net.UnknownHostException;
 import java.util.List;
 
 /**
@@ -37,6 +38,10 @@ public class MongoClientAdapter {
 
     public MongoClientAdapter(final List<ServerAddress> seedList, final MongoClientOptions options) {
         adapted = MongoClientsImpl.create(seedList, options);
+    }
+
+    public MongoClientAdapter(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
+        adapted = MongoClientsImpl.create(mongoURI);
     }
 
     public DBAdapter getDB(final String name) {
