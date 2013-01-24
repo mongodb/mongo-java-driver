@@ -15,7 +15,7 @@
  *
  */
 
-package org.mongodb.acceptancetest;
+package org.mongodb.impl;
 
 import org.bson.types.Document;
 import org.junit.After;
