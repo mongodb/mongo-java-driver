@@ -21,20 +21,24 @@ import org.junit.Before;
 import java.net.UnknownHostException;
 
 public abstract class MongoClientTestBase {
+    public static final String DEFAULT_DB_NAME = "driver-compat-test";
+    public static final String DEFAULT_URI = "mongodb://localhost:27017";
+
     private static MongoClient mongoClient;
     private static DB database;
 
     protected DBCollection collection;
 
     protected MongoClientTestBase() {
-        if (mongoClient == null) {
-            try {
-                mongoClient = new MongoClient();
-                database = mongoClient.getDB("driver-compat-test");
+        final String mongoURIString = System.getProperty("org.mongodb.test.uri", DEFAULT_URI);
+        try {
+            if (mongoClient == null) {
+                mongoClient = new MongoClient(new MongoClientURI(mongoURIString));
+                database = mongoClient.getDB(DEFAULT_DB_NAME);
                 database.dropDatabase();
-            } catch (UnknownHostException e) {
-                throw new IllegalArgumentException(e);
             }
+        } catch (UnknownHostException e) {
+            throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURIString, e);
         }
     }
 

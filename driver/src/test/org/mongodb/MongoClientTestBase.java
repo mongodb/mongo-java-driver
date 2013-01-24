@@ -27,21 +27,22 @@ import java.net.UnknownHostException;
  */
 public abstract class MongoClientTestBase {
     public static final String DEFAULT_DB_NAME = "driver-test";
-
+    public static final String DEFAULT_URI = "mongodb://localhost:27017";
     private static MongoClient mongoClient;
     private static MongoDatabase database;
 
     private MongoCollection<Document> collection;
 
     protected MongoClientTestBase() {
-        if (mongoClient == null) {
-            try {
-                mongoClient = MongoClients.create(new ServerAddress());
+        final String mongoURIString = System.getProperty("org.mongodb.test.uri", DEFAULT_URI);
+        try {
+            if (mongoClient == null) {
+                mongoClient = MongoClients.create(new MongoClientURI(mongoURIString));
                 database = mongoClient.getDatabase(DEFAULT_DB_NAME);
                 database.admin().drop();
-            } catch (UnknownHostException e) {
-                throw new IllegalArgumentException(e);
             }
+        } catch (UnknownHostException e) {
+            throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURIString, e);
         }
     }
 

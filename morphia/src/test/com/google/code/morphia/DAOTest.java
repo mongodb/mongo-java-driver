@@ -44,7 +44,7 @@ public class DAOTest extends TestBase {
     public void testNewDAO() throws Exception {
         morphia.map(Hotel.class);
 
-        final DAO<Hotel, String> hotelDAO = new BasicDAO<Hotel, String>(Hotel.class, mongo, morphia, "morphia_test");
+        final DAO<Hotel, String> hotelDAO = new BasicDAO<Hotel, String>(Hotel.class, mongo, morphia, DEFAULT_DB_NAME);
 
         final Hotel borg = Hotel.create();
         borg.setName("Hotel Borg");

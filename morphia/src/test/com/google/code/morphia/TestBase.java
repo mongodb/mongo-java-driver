@@ -22,10 +22,15 @@ package com.google.code.morphia;
 import com.google.code.morphia.mapping.MappedClass;
 import com.mongodb.DB;
 import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import org.junit.After;
 import org.junit.Before;
 
 public abstract class TestBase {
+    public static final String DEFAULT_DB_NAME = "morphia-test";
+    public static final String DEFAULT_URI = "mongodb://localhost:27017";
+
     protected static Mongo mongo;
     protected static DB db;
     protected Datastore ds;
@@ -33,14 +38,15 @@ public abstract class TestBase {
     protected Morphia morphia;
 
     protected TestBase() {
+        final String mongoURIString = System.getProperty("org.mongodb.test.uri", DEFAULT_URI);
         try {
             if (mongo == null) {
-                mongo = new Mongo();
-                db = mongo.getDB("morphia_test");
+                mongo = new MongoClient(new MongoClientURI(mongoURIString));
+                db = mongo.getDB(DEFAULT_DB_NAME);
                 db.dropDatabase();
             }
         } catch (Exception e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURIString, e);
         }
     }
 
