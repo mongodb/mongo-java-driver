@@ -21,12 +21,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.rs.ReplicaSet;
 import org.mongodb.rs.ReplicaSetMember;
+import org.mongodb.rs.Tag;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -49,20 +49,20 @@ public class ReadPreferenceTest {
         final Set<String> names = new HashSet<String>();
         names.add("primary");
 
-        final LinkedHashMap<String, String> tagSet1 = new LinkedHashMap<String, String>();
-        tagSet1.put("foo", "1");
-        tagSet1.put("bar", "2");
-        tagSet1.put("baz", "1");
+        final Set<Tag> tagSet1 = new HashSet<Tag>();
+        tagSet1.add(new Tag("foo", "1"));
+        tagSet1.add(new Tag("bar", "2"));
+        tagSet1.add(new Tag("baz", "1"));
 
-        final LinkedHashMap<String, String> tagSet2 = new LinkedHashMap<String, String>();
-        tagSet2.put("foo", "1");
-        tagSet2.put("bar", "2");
-        tagSet2.put("baz", "2");
+        final Set<Tag> tagSet2 = new HashSet<Tag>();
+        tagSet2.add(new Tag("foo", "1"));
+        tagSet2.add(new Tag("bar", "2"));
+        tagSet2.add(new Tag("baz", "2"));
 
-        final LinkedHashMap<String, String> tagSet3 = new LinkedHashMap<String, String>();
-        tagSet3.put("foo", "1");
-        tagSet3.put("bar", "2");
-        tagSet3.put("baz", "3");
+        final Set<Tag> tagSet3 = new HashSet<Tag>();
+        tagSet3.add(new Tag("foo", "1"));
+        tagSet3.add(new Tag("bar", "2"));
+        tagSet3.add(new Tag("baz", "3"));
 
         final float acceptableLatencyMS = 15;
         final float bestPingTime = 50f;
@@ -114,7 +114,7 @@ public class ReadPreferenceTest {
         assertTrue(ReadPreference.secondary().toString().startsWith("secondary"));
 
         ReplicaSetMember candidate = ReadPreference.secondary().chooseReplicaSetMember(set);
-        assertTrue(!candidate.master());
+        assertTrue(!candidate.primary());
 
         candidate = ReadPreference.secondary().chooseReplicaSetMember(setNoSecondary);
         assertNull(candidate);

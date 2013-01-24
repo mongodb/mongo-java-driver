@@ -22,22 +22,21 @@ import org.mongodb.rs.ReplicaSet;
 /**
  * An exception indicating a failure to find a replica set member that satisfies the requested read preference.
  */
-public class MongoReadPreferenceException extends MongoClientException {
-    private static final long serialVersionUID = 1L;
+public class MongoReadPreferenceException extends MongoReplicaSetException {
+
+    private static final long serialVersionUID = 1400085417913679244L;
 
     private final ReadPreference readPreference;
-    private final ReplicaSet replicaSet;
 
     /**
-     * Construct a new instance with the given read preference and replica set.
+     * Construct a new instance with the given read preference and replica set state.
      * @param readPreference the read preference
-     * @param replicaSet the replica set
+     * @param replicaSetState the replica set
      */
-    public MongoReadPreferenceException(final ReadPreference readPreference, final ReplicaSet replicaSet) {
+    public MongoReadPreferenceException(final ReadPreference readPreference, final ReplicaSet replicaSetState) {
         super(String.format("Unable to find a replica set member in %s that satisfies a read preference of %s",
-                replicaSet, readPreference));
+                replicaSetState, readPreference), replicaSetState);
         this.readPreference = readPreference;
-        this.replicaSet = replicaSet;
     }
 
     /**
@@ -47,14 +46,5 @@ public class MongoReadPreferenceException extends MongoClientException {
      */
     public ReadPreference getReadPreference() {
         return readPreference;
-    }
-
-    /**
-     * Gets the replica set state at the time the operation was performed.
-     *
-     * @return the replica set state
-     */
-    public ReplicaSet getReplicaSet() {
-        return replicaSet;
     }
 }

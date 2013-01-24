@@ -81,7 +81,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
 
         @Override
         public ReplicaSetMember chooseReplicaSetMember(final ReplicaSet set) {
-            return set.getMaster();
+            return set.getPrimary();
         }
 
         @Override

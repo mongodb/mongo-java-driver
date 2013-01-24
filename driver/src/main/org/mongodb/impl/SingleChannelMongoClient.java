@@ -64,6 +64,12 @@ class SingleChannelMongoClient extends AbstractMongoClient {
     private final SimplePool<MongoChannel> channelPool;
     private MongoChannel channel;
 
+    SingleChannelMongoClient(final ServerAddress serverAddress, final BufferPool<ByteBuffer> bufferPool, final MongoClientOptions options) {
+        super(options, bufferPool);
+        this.channelPool = null;
+        this.channel = new MongoChannel(serverAddress, bufferPool, new DocumentSerializer(options.getPrimitiveSerializers()));
+    }
+
     SingleChannelMongoClient(final SimplePool<MongoChannel> channelPool, final BufferPool<ByteBuffer> bufferPool,
                              final MongoClientOptions options) {
         super(options, bufferPool);
@@ -93,7 +99,12 @@ class SingleChannelMongoClient extends AbstractMongoClient {
     @Override
     public void close() {
         if (channel != null) {
-            channelPool.done(channel);
+            if (channelPool != null) {
+               channelPool.done(channel);
+            }
+            else {
+                channel.close();
+            }
             channel = null;
         }
     }

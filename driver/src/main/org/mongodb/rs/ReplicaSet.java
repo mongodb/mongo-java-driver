@@ -38,7 +38,7 @@ public class ReplicaSet {
     private final Random random;
     private final List<ReplicaSetMember> goodSecondaries;
     private final List<ReplicaSetMember> goodMembers;
-    private final ReplicaSetMember master;
+    private final ReplicaSetMember primary;
     private final String setName;
     private final ReplicaSetErrorStatus errorStatus;
 
@@ -57,7 +57,7 @@ public class ReplicaSet {
         Collections.unmodifiableList(calculateGoodSecondaries(all, calculateBestPingTime(all), acceptableLatencyMS));
         this.goodMembers =
         Collections.unmodifiableList(calculateGoodMembers(all, calculateBestPingTime(all), acceptableLatencyMS));
-        master = findMaster();
+        primary = findPrimary();
     }
 
     public List<ReplicaSetMember> getAll() {
@@ -66,14 +66,14 @@ public class ReplicaSet {
         return all;
     }
 
-    public boolean hasMaster() {
-        return getMaster() != null;
+    public boolean hasPrimary() {
+        return getPrimary() != null;
     }
 
-    public ReplicaSetMember getMaster() {
+    public ReplicaSetMember getPrimary() {
         checkStatus();
 
-        return master;
+        return primary;
     }
 
     //    public int getMaxBsonObjectSize() {
@@ -184,9 +184,9 @@ public class ReplicaSet {
         }
     }
 
-    private ReplicaSetMember findMaster() {
+    private ReplicaSetMember findPrimary() {
         for (final ReplicaSetMember node : all) {
-            if (node.master()) {
+            if (node.primary()) {
                 return node;
             }
         }

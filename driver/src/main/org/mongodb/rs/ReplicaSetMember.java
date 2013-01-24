@@ -37,19 +37,19 @@ import java.util.Set;
 public class ReplicaSetMember extends Node {
     private final Set<String> names;
     private final Set<Tag> tags;
-    private final boolean isMaster;
+    private final boolean isPrimary;
     private final boolean isSecondary;
     private final String setName;
 
     public ReplicaSetMember(final ServerAddress addr, final Set<String> names, final String setName, final float pingTime,
-                            final boolean ok, final boolean isMaster, final boolean isSecondary,
-                            final LinkedHashMap<String, String> tags, final int maxBsonObjectSize) {
+                            final boolean ok, final boolean isPrimary, final boolean isSecondary,
+                            final Set<Tag> tags, final int maxBsonObjectSize) {
         super(pingTime, addr, maxBsonObjectSize, ok);
         this.names = Collections.unmodifiableSet(new HashSet<String>(names));
         this.setName = setName;
-        this.isMaster = isMaster;
+        this.isPrimary = isPrimary;
         this.isSecondary = isSecondary;
-        this.tags = Collections.unmodifiableSet(getTagsFromMap(tags));
+        this.tags = Collections.unmodifiableSet(new HashSet<Tag>(tags));
     }
 
     private static Set<Tag> getTagsFromMap(final LinkedHashMap<String, String> tagMap) {
@@ -60,8 +60,8 @@ public class ReplicaSetMember extends Node {
         return tagSet;
     }
 
-    public boolean master() {
-        return isOk() && isMaster;
+    public boolean primary() {
+        return isOk() && isPrimary;
     }
 
     public boolean secondary() {
@@ -85,7 +85,7 @@ public class ReplicaSetMember extends Node {
         buf.append("{ address:'").append(getAddress()).append("', ");
         buf.append("ok:").append(isOk()).append(", ");
         buf.append("ping:").append(super.getPingTime()).append(", ");
-        buf.append("isMaster:").append(isMaster).append(", ");
+        buf.append("isPrimary:").append(isPrimary).append(", ");
         buf.append("isSecondary:").append(isSecondary).append(", ");
         buf.append("setName:").append(setName).append(", ");
         buf.append("maxBsonObjectSize:").append(getMaxBsonObjectSize()).append(", ");
@@ -114,7 +114,7 @@ public class ReplicaSetMember extends Node {
 
         final ReplicaSetMember node = (ReplicaSetMember) o;
 
-        if (isMaster != node.isMaster) {
+        if (isPrimary != node.isPrimary) {
             return false;
         }
         if (getMaxBsonObjectSize() != node.getMaxBsonObjectSize()) {
@@ -152,7 +152,7 @@ public class ReplicaSetMember extends Node {
         result = 31 * result + names.hashCode();
         result = 31 * result + tags.hashCode();
         result = 31 * result + (isOk() ? 1 : 0);
-        result = 31 * result + (isMaster ? 1 : 0);
+        result = 31 * result + (isPrimary ? 1 : 0);
         result = 31 * result + (isSecondary ? 1 : 0);
         result = 31 * result + setName.hashCode();
         result = 31 * result + getMaxBsonObjectSize();

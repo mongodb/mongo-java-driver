@@ -172,7 +172,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         @Override
         public ReplicaSetMember chooseReplicaSetMember(final ReplicaSet set) {
             final ReplicaSetMember node = super.chooseReplicaSetMember(set);
-            return (node != null) ? node : set.getMaster();
+            return (node != null) ? node : set.getPrimary();
         }
     }
 
@@ -232,7 +232,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         @Override
         public ReplicaSetMember chooseReplicaSetMember(final ReplicaSet set) {
-            final ReplicaSetMember node = set.getMaster();
+            final ReplicaSetMember node = set.getPrimary();
             return (node != null) ? node : super.chooseReplicaSetMember(set);
         }
     }
