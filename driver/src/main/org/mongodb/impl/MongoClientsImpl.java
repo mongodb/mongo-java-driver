@@ -17,10 +17,14 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoClientURI;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
 
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 
 @ThreadSafe
@@ -34,5 +38,22 @@ public final class MongoClientsImpl {
 
     public static ReplicaSetMongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
         return new ReplicaSetMongoClient(seedList, options);
+    }
+
+    public static AbstractMongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
+        return create(mongoURI, mongoURI.getOptions());
+    }
+
+    public static AbstractMongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
+        if (mongoURI.getHosts().size() == 1) {
+            return new SingleServerMongoClient(new ServerAddress(mongoURI.getHosts().get(0)), options);
+        }
+        else {
+            List<ServerAddress> seedList = new ArrayList<ServerAddress>();
+            for (String cur : mongoURI.getHosts()) {
+                seedList.add(new ServerAddress(cur));
+            }
+            return new ReplicaSetMongoClient(seedList, options);
+        }
     }
 }

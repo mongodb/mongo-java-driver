@@ -19,6 +19,7 @@ package org.mongodb;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.impl.MongoClientsImpl;
 
+import java.net.UnknownHostException;
 import java.util.List;
 
 @ThreadSafe
@@ -40,5 +41,9 @@ public final class MongoClients {
 
     public static MongoClient create(final List<ServerAddress> serverAddresses, final MongoClientOptions options) {
         return MongoClientsImpl.create(serverAddresses, options);
+    }
+
+    public static MongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
+        return MongoClientsImpl.create(mongoURI);
     }
 }
