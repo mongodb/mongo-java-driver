@@ -28,13 +28,15 @@ import java.net.UnknownHostException;
 public abstract class MongoClientTestBase {
     public static final String DEFAULT_DB_NAME = "driver-test";
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
+    public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
+
     private static MongoClient mongoClient;
     private static MongoDatabase database;
 
     private MongoCollection<Document> collection;
 
     protected MongoClientTestBase() {
-        final String mongoURIString = System.getProperty("org.mongodb.test.uri", DEFAULT_URI);
+        final String mongoURIString = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME, DEFAULT_URI);
         try {
             if (mongoClient == null) {
                 mongoClient = MongoClients.create(new MongoClientURI(mongoURIString));

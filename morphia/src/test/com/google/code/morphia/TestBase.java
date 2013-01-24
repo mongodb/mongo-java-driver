@@ -30,6 +30,7 @@ import org.junit.Before;
 public abstract class TestBase {
     public static final String DEFAULT_DB_NAME = "morphia-test";
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
+    public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
 
     protected static Mongo mongo;
     protected static DB db;
@@ -38,7 +39,7 @@ public abstract class TestBase {
     protected Morphia morphia;
 
     protected TestBase() {
-        final String mongoURIString = System.getProperty("org.mongodb.test.uri", DEFAULT_URI);
+        final String mongoURIString = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME, DEFAULT_URI);
         try {
             if (mongo == null) {
                 mongo = new MongoClient(new MongoClientURI(mongoURIString));
