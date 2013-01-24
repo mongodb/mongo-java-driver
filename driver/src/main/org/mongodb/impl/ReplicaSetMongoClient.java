@@ -116,8 +116,10 @@ class ReplicaSetMongoClient extends AbstractMongoClient {
     }
 
     SingleServerMongoClient getClient(final ReadPreference readPreference) {
+        // TODO: this is hiding potential bugs.  ReadPrefence should not be null
+        ReadPreference appliedReadPreference = readPreference == null ? ReadPreference.primary() : readPreference;
         final ReplicaSet replicaSet = replicaSetMonitor.getCurrentState();
-        final ReplicaSetMember replicaSetMember = readPreference.chooseReplicaSetMember(replicaSet);
+        final ReplicaSetMember replicaSetMember = appliedReadPreference.chooseReplicaSetMember(replicaSet);
         if (replicaSetMember == null) {
             throw new MongoReadPreferenceException(readPreference, replicaSet);
         }
