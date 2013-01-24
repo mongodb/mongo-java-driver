@@ -26,7 +26,7 @@ import java.net.UnknownHostException;
  * Base class for integration-style "unit" tests - i.e. those that need a running Mongo instance.
  */
 public abstract class MongoClientTestBase {
-    protected static final String DEFAULT_DB_NAME = "driver-test";
+    public static final String DEFAULT_DB_NAME = "driver-test";
 
     private static MongoClient mongoClient;
     private static MongoDatabase database;
