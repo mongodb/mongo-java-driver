@@ -19,7 +19,7 @@ package org.mongodb;
 import org.bson.types.Document;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.rs.ReplicaSet;
-import org.mongodb.rs.ReplicaSetNode;
+import org.mongodb.rs.ReplicaSetMember;
 import org.mongodb.rs.Tag;
 
 import java.util.ArrayList;
@@ -118,7 +118,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
     /**
      * Read from secondary
      *
-     * @author breinero
      */
     static class SecondaryReadPreference extends TaggableReadPreference {
         SecondaryReadPreference() {
@@ -134,7 +133,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        ReplicaSetNode getNode(final ReplicaSet set) {
+        public ReplicaSetMember chooseReplicaSetMember(final ReplicaSet set) {
 
             if (getTags().isEmpty()) {
                 return set.getASecondary();
@@ -142,7 +141,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
             for (final Document curTagSet : getTags()) {
                 final List<Tag> tagList = getTagListFromMongoDocument(curTagSet);
-                final ReplicaSetNode node = set.getASecondary(tagList);
+                final ReplicaSetMember node = set.getASecondary(tagList);
                 if (node != null) {
                     return node;
                 }
@@ -171,8 +170,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        ReplicaSetNode getNode(final ReplicaSet set) {
-            final ReplicaSetNode node = super.getNode(set);
+        public ReplicaSetMember chooseReplicaSetMember(final ReplicaSet set) {
+            final ReplicaSetMember node = super.chooseReplicaSetMember(set);
             return (node != null) ? node : set.getMaster();
         }
     }
@@ -180,7 +179,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
     /**
      * Read from nearest node respective of tags.
      *
-     * @author breinero
      */
     static class NearestReadPreference extends TaggableReadPreference {
         NearestReadPreference() {
@@ -198,7 +196,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
 
         @Override
-        ReplicaSetNode getNode(final ReplicaSet set) {
+        public ReplicaSetMember chooseReplicaSetMember(final ReplicaSet set) {
 
             if (getTags().isEmpty()) {
                 return set.getAMember();
@@ -206,7 +204,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
             for (final Document curTagSet : getTags()) {
                 final List<Tag> tagList = getTagListFromMongoDocument(curTagSet);
-                final ReplicaSetNode node = set.getAMember(tagList);
+                final ReplicaSetMember node = set.getAMember(tagList);
                 if (node != null) {
                     return node;
                 }
@@ -218,7 +216,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
     /**
      * Read from primary if available, otherwise a secondary.
      *
-     * @author breinero
      */
     static class PrimaryPreferredReadPreference extends SecondaryReadPreference {
         PrimaryPreferredReadPreference() {
@@ -234,9 +231,9 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        ReplicaSetNode getNode(final ReplicaSet set) {
-            final ReplicaSetNode node = set.getMaster();
-            return (node != null) ? node : super.getNode(set);
+        public ReplicaSetMember chooseReplicaSetMember(final ReplicaSet set) {
+            final ReplicaSetMember node = set.getMaster();
+            return (node != null) ? node : super.chooseReplicaSetMember(set);
         }
     }
 }

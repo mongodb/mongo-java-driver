@@ -34,16 +34,16 @@ import java.util.Set;
  * NOT PART OF PUBLIC API YET
  */
 @Immutable
-public class ReplicaSetNode extends Node {
+public class ReplicaSetMember extends Node {
     private final Set<String> names;
     private final Set<Tag> tags;
     private final boolean isMaster;
     private final boolean isSecondary;
     private final String setName;
 
-    public ReplicaSetNode(final ServerAddress addr, final Set<String> names, final String setName, final float pingTime,
-                   final boolean ok, final boolean isMaster, final boolean isSecondary,
-                   final LinkedHashMap<String, String> tags, final int maxBsonObjectSize) {
+    public ReplicaSetMember(final ServerAddress addr, final Set<String> names, final String setName, final float pingTime,
+                            final boolean ok, final boolean isMaster, final boolean isSecondary,
+                            final LinkedHashMap<String, String> tags, final int maxBsonObjectSize) {
         super(pingTime, addr, maxBsonObjectSize, ok);
         this.names = Collections.unmodifiableSet(new HashSet<String>(names));
         this.setName = setName;
@@ -112,7 +112,7 @@ public class ReplicaSetNode extends Node {
             return false;
         }
 
-        final ReplicaSetNode node = (ReplicaSetNode) o;
+        final ReplicaSetMember node = (ReplicaSetMember) o;
 
         if (isMaster != node.isMaster) {
             return false;

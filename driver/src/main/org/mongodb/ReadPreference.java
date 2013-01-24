@@ -19,7 +19,7 @@ package org.mongodb;
 import org.bson.types.Document;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.rs.ReplicaSet;
-import org.mongodb.rs.ReplicaSetNode;
+import org.mongodb.rs.ReplicaSetMember;
 
 /**
  * An abstract class that represents preferred replica set members to which a query or command can be sent.
@@ -50,7 +50,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
      */
     public abstract String getName();
 
-    abstract ReplicaSetNode getNode(ReplicaSet set);
+    public abstract ReplicaSetMember chooseReplicaSetMember(ReplicaSet set);
 
     /**
      * Preference to read from primary only. Cannot be combined with tags.
@@ -80,7 +80,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
         }
 
         @Override
-        public ReplicaSetNode getNode(final ReplicaSet set) {
+        public ReplicaSetMember chooseReplicaSetMember(final ReplicaSet set) {
             return set.getMaster();
         }
 
