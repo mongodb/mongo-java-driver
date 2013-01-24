@@ -17,7 +17,6 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
 import org.mongodb.ServerAddress;
