@@ -19,13 +19,14 @@
 package com.mongodb;
 
 // Bson
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.bson.BSONObject;
 import org.bson.BasicBSONCallback;
 import org.bson.types.ObjectId;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class overrides BasicBSONCallback to implement some extra features specific to the Database.
@@ -59,17 +60,21 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
     @Override
     public void objectStart(boolean array, String name){
-        _lastName = name;
+        _nameStack.addLast(name);
         super.objectStart( array , name );
     }
 
     @Override
     public Object objectDone(){
         BSONObject o = (BSONObject)super.objectDone();
-        if ( ! ( o instanceof List ) &&
+        String lastName = null;
+        if ( _nameStack.size() > 0 ){
+            lastName = _nameStack.removeLast();
+        }
+        if ( ! ( o instanceof List ) && lastName != null &&
              o.containsField( "$ref" ) &&
              o.containsField( "$id" ) ){
-            return cur().put( _lastName , new DBRef( _db, o ) );
+            return cur().put(lastName, new DBRef( _db, o ) );
         }
 
         return o;
@@ -140,11 +145,11 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
     @Override
     public void reset(){
-        _lastName = null;
+        _nameStack = new LinkedList<String>();
         super.reset();
     }
 
-    private String _lastName;
+    private LinkedList<String> _nameStack;
     final DBCollection _collection;
     final DB _db;
     static final Logger LOGGER = Logger.getLogger( "com.mongo.DECODING" );
