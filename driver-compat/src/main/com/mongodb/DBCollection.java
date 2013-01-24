@@ -111,16 +111,6 @@ public class DBCollection implements IDBCollection {
         }
     }
 
-    @Override
-    public void dropIndexes() {
-        collection.admin().dropIndexes();
-    }
-
-    @Override
-    public void dropIndexes(final String name) {
-        throw new UnsupportedOperationException();
-    }
-
     /**
      * Performs an update operation.
      *
@@ -673,21 +663,12 @@ public class DBCollection implements IDBCollection {
                 unique = FieldHelpers.asBoolean(opts.get("unique"));
             }
         }
-        final List<Index.Key> keys = new ArrayList<Index.Key>();
-        for (final String key : fields.keySet()) {
-            final Object keyType = fields.get(key);
-            if (keyType instanceof Integer) {
-                keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
-            }
-            else if (keyType.equals("2d")) {
-                keys.add(new Index.GeoKey(key));
-            }
-            else {
-                throw new UnsupportedOperationException("Unsupported index type: " + keyType);
-            }
-
+        final List<Index.Key> keys = getKeysFromDBObject(fields);
+        try {
+            collection.admin().ensureIndex(new Index(name, unique, keys.toArray(new Index.Key[keys.size()])));
+        } catch (MongoDuplicateKeyException exception) {
+            throw new MongoException.DuplicateKey(exception);
         }
-        collection.admin().ensureIndex(new Index(name, unique, keys.toArray(new Index.Key[keys.size()])));
     }
 
     @Override
@@ -775,12 +756,13 @@ public class DBCollection implements IDBCollection {
      * @return the document
      * @throws MongoException
      */
-    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort, final boolean remove, final DBObject update,
+    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
+                                  final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert) {
         final MongoWritableStream<DBObject> stream = collection.filter(DBObjects.toQueryFilterDocument(query))
-                                                         .select(DBObjects.toFieldSelectorDocument(fields))
-                                                         .sort(DBObjects.toSortCriteriaDocument(sort))
-                                                         .writeConcern(getWriteConcern().toNew());
+                                                               .select(DBObjects.toFieldSelectorDocument(fields))
+                                                               .sort(DBObjects.toSortCriteriaDocument(sort))
+                                                               .writeConcern(getWriteConcern().toNew());
         if (remove) {
             return stream.removeAndGet();
         }
@@ -905,7 +887,7 @@ public class DBCollection implements IDBCollection {
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
         final DBObject cmd = command.toDBObject();
         // if type in inline, then query options like slaveOk is fine
-        CommandResult res = null;
+        CommandResult res;
         if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
             res = database.command(cmd, getOptions(),
                                   command.getReadPreference() != null ? command.getReadPreference()
@@ -969,12 +951,24 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public void dropIndex(final DBObject keys) {
-        throw new UnsupportedOperationException();
+        final List<Index.Key> keysFromDBObject = getKeysFromDBObject(keys);
+        Index indexToDrop = new Index(keysFromDBObject.toArray(new Index.Key[keysFromDBObject.size()]));
+        collection.admin().dropIndex(indexToDrop);
     }
 
     @Override
     public void dropIndex(final String name) {
-        throw new UnsupportedOperationException();
+        collection.admin().dropIndex(getIndexFromName(name));
+    }
+
+    @Override
+    public void dropIndexes() {
+        collection.admin().dropIndexes();
+    }
+
+    @Override
+    public void dropIndexes(final String name) {
+        dropIndex(name);
     }
 
     @Override
@@ -1013,20 +1007,53 @@ public class DBCollection implements IDBCollection {
         return collection;
     }
 
+    private static Index getIndexFromName(final String name) {
+        Index.Key key;
+        final String keyField = name.substring(0, name.indexOf("_"));
+        final String keyType = name.substring(name.indexOf("_") + 1);
+        if (keyType.equals("2d")) {
+            key = new Index.GeoKey(keyField);
+        }
+        else {
+            key = new Index.OrderedKey(keyField, OrderBy.fromInt(Integer.valueOf(keyType)));
+        }
+        return new Index(key);
+    }
+
+    private List<Index.Key> getKeysFromDBObject(final DBObject fields) {
+        final List<Index.Key> keys = new ArrayList<Index.Key>();
+        for (final String key : fields.keySet()) {
+            final Object keyType = fields.get(key);
+            if (keyType instanceof Integer) {
+                keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
+            }
+            else if (keyType.equals("2d")) {
+                keys.add(new Index.GeoKey(key));
+            }
+            else {
+                throw new UnsupportedOperationException("Unsupported index type: " + keyType);
+            }
+
+        }
+        return keys;
+    }
+
     private void resetCollection() {
         setCollection(getName());
     }
 
     private void setCollection(final String name) {
-        this.collection = database.toNew().
-                getCollection(name, new CollectibleDBObjectSerializer(database,
-                                                                     database.getMongo()
-                                                                             .getNew()
-                                                                             .getOptions()
-                                                                             .getPrimitiveSerializers(),
-                                                                     new ObjectIdGenerator(),
-                                                                     objectClass,
-                                                                     new HashMap<String, Class<? extends DBObject>>(
-                                                                                                                   pathToClassMap)));
+        final HashMap<String, Class<? extends DBObject>> map
+        = new HashMap<String, Class<? extends DBObject>>(pathToClassMap);
+        this.collection = database.toNew()
+                                  .getCollection(name,
+                                                new CollectibleDBObjectSerializer(database,
+                                                                                 database.getMongo()
+                                                                                         .getNew()
+                                                                                         .getOptions()
+                                                                                         .getPrimitiveSerializers(),
+                                                                                 new ObjectIdGenerator(),
+                                                                                 objectClass,
+                                                                                 map));
     }
 }

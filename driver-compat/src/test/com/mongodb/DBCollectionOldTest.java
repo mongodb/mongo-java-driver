@@ -159,7 +159,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
     }
 
     @Test
-    public void testDropIndex() {
+    public void testDropIndexAllIndexes() {
         final DBCollection c = getCollection();
 
         c.save(new BasicDBObject("x", 1));
@@ -173,8 +173,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
     }
 
     @Test
-    @Ignore("Not supported yet, old API not ported")
-    public void testDropIndexByName() {
+    public void testDropIndividualIndexes() {
         final DBCollection c = getDB().getCollection("dropindex2");
         c.drop();
 
@@ -187,11 +186,29 @@ public class DBCollectionOldTest extends MongoClientTestBase {
         c.ensureIndex(new BasicDBObject("y", 1));
         assertEquals(3, c.getIndexInfo().size());
 
+        c.ensureIndex(new BasicDBObject("z", 1));
+        assertEquals(4, c.getIndexInfo().size());
+
+        c.dropIndex("y_1");
+        assertEquals(3, c.getIndexInfo().size());
+
         c.dropIndex(new BasicDBObject("x", 1));
         assertEquals(2, c.getIndexInfo().size());
 
-        c.dropIndex("y_1");
+        c.dropIndexes("z_1");
         assertEquals(1, c.getIndexInfo().size());
+    }
+
+    @Test
+    @Ignore("Not supported yet, old API not ported")
+    public void shouldDropCompoundIndexes() {
+
+    }
+
+    @Test
+    @Ignore("Not supported yet, old API not ported")
+    public void shouldDropGeoIndexes() {
+
     }
 
     @Test
@@ -219,11 +236,25 @@ public class DBCollectionOldTest extends MongoClientTestBase {
         final DBCollection c = getCollection();
 
         c.save(new BasicDBObject("x", 1));
+        //Not sure why this is one, a single index is the default one.  This shows the index on x was not added
         assertEquals(1, c.getIndexInfo().size());
 
         c.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
         assertEquals(2, c.getIndexInfo().size());
         assertEquals(Boolean.TRUE, c.getIndexInfo().get(1).get("unique"));
+    }
+
+    @Test
+    public void shouldDropUniqueIndex() {
+        final DBCollection c = getCollection();
+
+        final BasicDBObject index = new BasicDBObject("x", 1);
+        c.ensureIndex(index, new BasicDBObject("unique", true));
+        assertEquals(2, c.getIndexInfo().size());
+        assertEquals(Boolean.TRUE, c.getIndexInfo().get(1).get("unique"));
+
+        c.dropIndex(index);
+        assertEquals(1, c.getIndexInfo().size());
     }
 
     @Test
@@ -238,9 +269,30 @@ public class DBCollectionOldTest extends MongoClientTestBase {
         assertEquals(2, c.getIndexInfo().size());
     }
 
+    @Test
+    public void shouldDropNestedIndexes() {
+        final DBCollection c = getCollection();
+
+        final BasicDBObject newDoc = new BasicDBObject("x", new BasicDBObject("y", 1));
+        c.save(newDoc);
+
+        final BasicDBObject index = new BasicDBObject("x.y", 1);
+
+        assertEquals(1, c.getIndexInfo().size());
+        c.ensureIndex(index);
+        assertEquals(2, c.getIndexInfo().size());
+
+        c.dropIndex(index);
+        assertEquals(1, c.getIndexInfo().size());
+    }
 
     @Test
-    @Ignore("Not supported yet, old API not ported")
+    @Ignore("Not supported yet, not implemented")
+    public void shouldSupportIndexAliases() {
+
+    }
+
+    @Test
     public void testIndexExceptions() {
         final DBCollection c = getCollection();
 
@@ -248,9 +300,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
         c.insert(new BasicDBObject("x", 1));
 
         c.ensureIndex(new BasicDBObject("y", 1));
-        c.resetIndexCache();
         c.ensureIndex(new BasicDBObject("y", 1)); // make sure this doesn't throw
-        c.resetIndexCache();
 
         Exception failed = null;
         try {
@@ -259,7 +309,6 @@ public class DBCollectionOldTest extends MongoClientTestBase {
             failed = e;
         }
         assertNotNull(failed);
-
     }
 
     @Test
