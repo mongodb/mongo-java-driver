@@ -152,6 +152,15 @@ public class MongoClientURI {
         return new MongoClientOptions(proxied.getOptions());
     }
 
+    /**
+     * Convert to new representation
+     *
+     * @return the new stuff
+     */
+    public org.mongodb.MongoClientURI toNew() {
+        return proxied;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

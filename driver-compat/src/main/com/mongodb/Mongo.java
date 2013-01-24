@@ -44,24 +44,28 @@ public class Mongo {
         this(serverAddress, new MongoOptions());
     }
 
-    public Mongo(final ServerAddress serverAddress, final MongoOptions mongoOptions) {
-        clientAdapter = new MongoClientAdapter(serverAddress.toNew(),
-                MongoClientOptions.builder().fromMongoOptions(mongoOptions).build().toNew());
-
-        if (mongoOptions.getReadPreference() != null) {
-            readPreference = mongoOptions.getReadPreference();
-        }
-        if (mongoOptions.getWriteConcern() != null) {
-            writeConcern = mongoOptions.getWriteConcern();
-        }
-    }
-
     public Mongo(final List<ServerAddress> hosts, final MongoOptions mongoOptions) {
         this(hosts.get(0), mongoOptions);
     }
 
     public Mongo(final MongoURI mongoURI) throws UnknownHostException {
-        this(new ServerAddress(mongoURI.getHosts().get(0)), mongoURI.getOptions());
+        this(new MongoClientAdapter(mongoURI.toNew()));
+    }
+
+    public Mongo(final ServerAddress serverAddress, final MongoOptions mongoOptions) {
+        this(new MongoClientAdapter(serverAddress.toNew(),
+                MongoClientOptions.builder().fromMongoOptions(mongoOptions).build().toNew()));
+    }
+
+    Mongo(final MongoClientAdapter clientAdapter) {
+        this.clientAdapter = clientAdapter;
+
+        if (clientAdapter.getClient().getOptions().getReadPreference() != null) {
+            readPreference = ReadPreference.fromNew(clientAdapter.getClient().getOptions().getReadPreference());
+        }
+        if (clientAdapter.getClient().getOptions().getWriteConcern() != null) {
+            writeConcern = WriteConcern.fromNew(clientAdapter.getClient().getOptions().getWriteConcern());
+        }
     }
 
     /**

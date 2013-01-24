@@ -206,6 +206,15 @@ public class MongoURI {
         return connectDB(mongo).getCollection(getCollection());
     }
 
+    /**
+     * Convert to new representation.
+     *
+     * @return the new stuff
+     */
+    public org.mongodb.MongoClientURI toNew() {
+        return mongoClientURI.toNew();
+    }
+
     // ---------------------------------
 
     @Override

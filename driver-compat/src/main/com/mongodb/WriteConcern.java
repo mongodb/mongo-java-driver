@@ -157,6 +157,16 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern REPLICAS_SAFE = REPLICA_ACKNOWLEDGED;
 
     /**
+     * Factory method to convert an {@code org.mongodb.WriteConcern} into an instance of this class.
+     *
+     * @param writeConcern the write concern to convert
+     * @return the converted write concern
+     */
+    public static WriteConcern fromNew(org.mongodb.WriteConcern writeConcern) {
+        return new WriteConcern(writeConcern);
+    }
+
+    /**
      * Default constructor keeping all options as default.  Be careful using this constructor, as it's equivalent to
      * {@code WriteConcern.UNACKNOWLEDGED}, so writes may be lost without any errors being reported.
      *
