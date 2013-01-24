@@ -92,6 +92,10 @@ subprojects {
         options.compilerArgs = ['-Xlint:all']
     }
 
+    tasks.withType(Test) {
+        systemProperty 'org.mongodb.test.uri', System.getProperty('org.mongodb.test.uri')
+    }
+
     task sourcesJar(type: Jar) {
         classifier = 'sources'
         from sourceSets.main.allSource
