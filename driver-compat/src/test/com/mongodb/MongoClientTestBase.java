@@ -31,15 +31,20 @@ public abstract class MongoClientTestBase {
     protected DBCollection collection;
 
     protected MongoClientTestBase() {
-        final String mongoURIString = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME, DEFAULT_URI);
-        try {
+        synchronized (MongoClientTestBase.class) {
             if (mongoClient == null) {
-                mongoClient = new MongoClient(new MongoClientURI(mongoURIString));
-                database = mongoClient.getDB(DEFAULT_DB_NAME);
-                database.dropDatabase();
+                String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+                final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty() ?
+                        DEFAULT_URI : mongoURIProperty;
+                System.out.println("URI: " + mongoURIString);
+                try {
+                    mongoClient = new MongoClient(new MongoClientURI(mongoURIString));
+                    database = mongoClient.getDB(DEFAULT_DB_NAME);
+                    database.dropDatabase();
+                } catch (UnknownHostException e) {
+                    throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURIString, e);
+                }
             }
-        } catch (UnknownHostException e) {
-            throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURIString, e);
         }
     }
 

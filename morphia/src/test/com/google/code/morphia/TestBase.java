@@ -34,20 +34,26 @@ public abstract class TestBase {
 
     protected static Mongo mongo;
     protected static DB db;
+
     protected Datastore ds;
     protected AdvancedDatastore ads;
     protected Morphia morphia;
 
     protected TestBase() {
-        final String mongoURIString = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME, DEFAULT_URI);
-        try {
+        synchronized (TestBase.class) {
             if (mongo == null) {
-                mongo = new MongoClient(new MongoClientURI(mongoURIString));
-                db = mongo.getDB(DEFAULT_DB_NAME);
-                db.dropDatabase();
+                String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+                final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty() ?
+                        DEFAULT_URI : mongoURIProperty;
+                System.out.println("URI: " + mongoURIString);
+                try {
+                    mongo = new MongoClient(new MongoClientURI(mongoURIString));
+                    db = mongo.getDB(DEFAULT_DB_NAME);
+                    db.dropDatabase();
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURIString, e);
+                }
             }
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURIString, e);
         }
     }
 

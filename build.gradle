@@ -93,7 +93,7 @@ subprojects {
     }
 
     tasks.withType(Test) {
-        systemProperty 'org.mongodb.test.uri', System.getProperty('org.mongodb.test.uri')
+        systemProperty 'org.mongodb.test.uri', System.getProperty('org.mongodb.test.uri', null)
     }
 
     task sourcesJar(type: Jar) {
@@ -122,6 +122,12 @@ subprojects {
     artifacts {
         archives sourcesJar
         archives javadocJar
+    }
+}
+
+configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat'] }) {
+    tasks.withType(Test) {
+        maxParallelForks = 4
     }
 }
 
