@@ -20,18 +20,19 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoReadPreferenceException;
-import org.mongodb.MongoClientTestBase;
 import org.mongodb.MongoClients;
 import org.mongodb.MongoCollection;
+import org.mongodb.MongoReadPreferenceException;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
+@Ignore
 public class ReplicaSetMongoClientTest {
     private MongoClient client;
     private MongoCollection<Document> collection;
@@ -39,7 +40,8 @@ public class ReplicaSetMongoClientTest {
     @Before
     public void before() throws UnknownHostException {
         client = MongoClients.create(Arrays.asList(new ServerAddress()));
-        collection = client.getDatabase(MongoClientTestBase.DEFAULT_DB_NAME).getCollection("ReplicaSetMongoClientTest");
+        collection = client.getDatabase("ReplicaSetMongoClientTest")
+                           .getCollection("Collection" + System.currentTimeMillis());
         collection.admin().drop();
     }
 
