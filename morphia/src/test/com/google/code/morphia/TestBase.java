@@ -43,8 +43,8 @@ public abstract class TestBase {
         synchronized (TestBase.class) {
             if (mongo == null) {
                 String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-                final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty() ?
-                        DEFAULT_URI : mongoURIProperty;
+                final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
+                        ? DEFAULT_URI : mongoURIProperty;
                 System.out.println("URI: " + mongoURIString);
                 try {
                     mongo = new MongoClient(new MongoClientURI(mongoURIString));
