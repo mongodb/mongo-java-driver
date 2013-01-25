@@ -126,11 +126,11 @@ subprojects {
 }
 
 //TODO: figure out why this doesn't work
-configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat'] }) {
-    tasks.withType(Test) {
-        maxParallelForks = 16
-    }
-}
+//configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat'] }) {
+//    tasks.withType(Test) {
+//        maxParallelForks = 16
+//    }
+//}
 
 configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat', 'morphia'] }) {
     apply plugin: 'maven'

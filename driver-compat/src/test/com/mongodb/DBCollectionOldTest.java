@@ -28,11 +28,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 @SuppressWarnings({ "rawtypes" })
-public class DBCollectionOldTest extends MongoClientTestBase {
+public class DBCollectionOldTest extends DatabaseTestCase {
     @Test
     @Ignore("Duplicate Key Exception now thrown")
     public void testMultiInsert() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         final DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -50,19 +50,19 @@ public class DBCollectionOldTest extends MongoClientTestBase {
         final String collectionName = "testCapped";
         final int collectionSize = 1000;
 
-        DBCollection c = getCollection();
+        DBCollection c = collection;
         c.drop();
 
         final DBObject options = new BasicDBObject("capped", true);
         options.put("size", collectionSize);
-        c = getDB().createCollection(collectionName, options);
+        c = database.createCollection(collectionName, options);
 
         assertEquals(c.isCapped(), true);
     }
 
     @Test(expected = MongoException.DuplicateKey.class)
     public void testDuplicateKeyException() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         final DBObject obj = new BasicDBObject();
         c.insert(obj, WriteConcern.SAFE);
@@ -71,7 +71,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void testFindOne() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -113,7 +113,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void testFindOneSort() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -160,7 +160,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void testDropIndexAllIndexes() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         c.save(new BasicDBObject("x", 1));
         assertEquals(1, c.getIndexInfo().size());
@@ -174,7 +174,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void testDropIndividualIndexes() {
-        final DBCollection c = getDB().getCollection("dropindex2");
+        final DBCollection c = database.getCollection("dropindex2");
         c.drop();
 
         c.save(new BasicDBObject("x", 1));
@@ -201,7 +201,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void shouldDropCompoundIndexes1() {
-        final DBCollection c = getDB().getCollection("dropindex3");
+        final DBCollection c = database.getCollection("dropindex3");
         c.drop();
 
         final BasicDBObject newDoc = new BasicDBObject("x", "some value").append("y", "another value");
@@ -219,7 +219,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void shouldDropCompoundIndexes2() {
-        final DBCollection c = getDB().getCollection("dropindex4");
+        final DBCollection c = database.getCollection("dropindex4");
         c.drop();
 
         final BasicDBObject newDoc = new BasicDBObject("x", "some value").append("y", "another value");
@@ -237,7 +237,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void shouldDropCompoundGeoIndexes() {
-        final DBCollection c = getDB().getCollection("dropindex5");
+        final DBCollection c = database.getCollection("dropindex5");
         c.drop();
 
         final BasicDBObject newDoc = new BasicDBObject("x", "some value").append("y", "another value");
@@ -255,7 +255,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void shouldDropGeoIndexes() {
-        final DBCollection c = getDB().getCollection("dropindex6");
+        final DBCollection c = database.getCollection("dropindex6");
         c.drop();
 
         c.save(new BasicDBObject("x", 1));
@@ -284,7 +284,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void testDistinct() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         for (int i = 0; i < 100; i++) {
             final BasicDBObject o = new BasicDBObject();
@@ -304,7 +304,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void testEnsureIndex() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         c.save(new BasicDBObject("x", 1));
         //Not sure why this is one, a single index is the default one.  This shows the index on x was not added
@@ -317,7 +317,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void shouldDropUniqueIndex() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         final BasicDBObject index = new BasicDBObject("x", 1);
         c.ensureIndex(index, new BasicDBObject("unique", true));
@@ -330,7 +330,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void testEnsureNestedIndex() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         final BasicDBObject newDoc = new BasicDBObject("x", new BasicDBObject("y", 1));
         c.save(newDoc);
@@ -342,7 +342,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void shouldDropNestedIndexes() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         final BasicDBObject newDoc = new BasicDBObject("x", new BasicDBObject("y", 1));
         c.save(newDoc);
@@ -365,7 +365,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void testIndexExceptions() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         c.insert(new BasicDBObject("x", 1));
         c.insert(new BasicDBObject("x", 1));
@@ -384,7 +384,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test
     public void testMultiInsertNoContinue() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
         c.setWriteConcern(WriteConcern.NORMAL);
 
         final DBObject obj = c.findOne();
@@ -404,7 +404,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
     @Test
     public void testMultiInsertWithContinue() {
 
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         final DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -425,7 +425,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDotKeysFail() {
-        final DBCollection c = getCollection();
+        final DBCollection c = collection;
 
         final DBObject obj = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).add("foo.bar", "baz").get();
         c.insert(obj);
@@ -433,7 +433,7 @@ public class DBCollectionOldTest extends MongoClientTestBase {
 
 //    @Test
 //    public void testLazyDocKeysPass() {
-//        final DBCollection c = getCollection();
+//        final DBCollection c = collection;
 //
 //        final DBObject obj = BasicDBObjectBuilder.start().add("_id", "lazydottest1").add("x", 1).add("y", 2)
 //                                           .add("foo.bar", "baz").get();

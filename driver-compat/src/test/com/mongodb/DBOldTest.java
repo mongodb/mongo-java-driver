@@ -15,8 +15,6 @@
  */
 package com.mongodb;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -26,20 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class DBOldTest {
-    private static DB database;
-
-    @BeforeClass
-    public static void setupTestSuite() throws UnknownHostException {
-        final MongoClient mongoClient = new MongoClient("127.0.0.1");
-        database = mongoClient.getDB(DBCollectionOldTest.class.getSimpleName());
-    }
-
-    @AfterClass
-    public static void teardownTestSuite() {
-        database.dropDatabase();
-    }
-
+public class DBOldTest extends DatabaseTestCase {
     @Test
     public void testCreateCollection() {
         database.getCollection("foo1").drop();
