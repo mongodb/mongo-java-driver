@@ -23,9 +23,7 @@ import org.mongodb.annotations.Immutable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -35,29 +33,23 @@ import java.util.Set;
  */
 @Immutable
 public class ReplicaSetMember extends Node {
-    private final Set<String> names;
     private final Set<Tag> tags;
     private final boolean isPrimary;
     private final boolean isSecondary;
     private final String setName;
 
-    public ReplicaSetMember(final ServerAddress addr, final Set<String> names, final String setName, final float pingTime,
+    public ReplicaSetMember(final ServerAddress serverAddress, final String setName, final float pingTime,
                             final boolean ok, final boolean isPrimary, final boolean isSecondary,
                             final Set<Tag> tags, final int maxBsonObjectSize) {
-        super(pingTime, addr, maxBsonObjectSize, ok);
-        this.names = Collections.unmodifiableSet(new HashSet<String>(names));
+        super(pingTime, serverAddress, maxBsonObjectSize, ok);
         this.setName = setName;
         this.isPrimary = isPrimary;
         this.isSecondary = isSecondary;
         this.tags = Collections.unmodifiableSet(new HashSet<Tag>(tags));
     }
 
-    private static Set<Tag> getTagsFromMap(final LinkedHashMap<String, String> tagMap) {
-        final Set<Tag> tagSet = new HashSet<Tag>();
-        for (final Map.Entry<String, String> curEntry : tagMap.entrySet()) {
-            tagSet.add(new Tag(curEntry.getKey(), curEntry.getValue()));
-        }
-        return tagSet;
+    public ReplicaSetMember(final ServerAddress serverAddress, final float pingTime) {
+        this(serverAddress, null, pingTime, false, false, false, new HashSet<Tag>(), 0);
     }
 
     public boolean primary() {
@@ -66,10 +58,6 @@ public class ReplicaSetMember extends Node {
 
     public boolean secondary() {
         return isOk() && isSecondary;
-    }
-
-    public Set<String> getNames() {
-        return names;
     }
 
     public String getSetName() {
@@ -132,9 +120,6 @@ public class ReplicaSetMember extends Node {
         if (!getAddress().equals(node.getAddress())) {
             return false;
         }
-        if (!names.equals(node.names)) {
-            return false;
-        }
         if (!tags.equals(node.tags)) {
             return false;
         }
@@ -149,7 +134,6 @@ public class ReplicaSetMember extends Node {
     public int hashCode() {
         int result = getAddress().hashCode();
         result = 31 * result + (super.getPingTime() != +0.0f ? Float.floatToIntBits(super.getPingTime()) : 0);
-        result = 31 * result + names.hashCode();
         result = 31 * result + tags.hashCode();
         result = 31 * result + (isOk() ? 1 : 0);
         result = 31 * result + (isPrimary ? 1 : 0);

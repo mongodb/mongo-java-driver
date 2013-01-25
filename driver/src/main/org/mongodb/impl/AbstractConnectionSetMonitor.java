@@ -19,12 +19,8 @@ package org.mongodb.impl;
 
 import org.mongodb.CommandDocument;
 import org.mongodb.MongoClientOptions;
-import org.mongodb.ServerAddress;
+import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.operation.MongoCommand;
-import org.mongodb.result.CommandResult;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Base class for classes that manage connections to mongo instances as background tasks.
@@ -98,101 +94,34 @@ abstract class AbstractConnectionSetMonitor extends Thread {
     }
 
     abstract static class ConnectionSetMemberMonitor {
-        private final ServerAddress serverAddress;
-        private final MongoClientOptions options;
-        private final AbstractMongoClient client;
 
-        private SingleChannelMongoClient singleChannelMongoClient;
-
-        private boolean successfullyContacted = false;
-        private boolean ok = false;
+        private SingleChannelMongoClient client;
         private float pingTimeMS = 0;
-        private int maxBsonObjectSize;
 
-
-        ConnectionSetMemberMonitor(final ServerAddress addr, final AbstractMongoClient mongoClient,
-                                   final MongoClientOptions clientOptions) {
-            this.serverAddress = addr;
-            this.client = mongoClient;
-            this.options = clientOptions;
-            this.singleChannelMongoClient = new SingleChannelMongoClient(addr, mongoClient.getBufferPool(), clientOptions);
+        ConnectionSetMemberMonitor(final SingleChannelMongoClient client) {
+            this.client = client;
         }
 
-        public CommandResult update() {
-            CommandResult res = null;
-            try {
-                long start = System.nanoTime();
-                res = singleChannelMongoClient.getDatabase("admin").executeCommand(new MongoCommand(new CommandDocument("ismaster", 1)));
-                long end = System.nanoTime();
-                float newPingMS = (end - start) / 1000000F;
-                if (!successfullyContacted) {
-                    pingTimeMS = newPingMS;
-                }
-                else {
-                    pingTimeMS = pingTimeMS + ((newPingMS - pingTimeMS) / LATENCY_SMOOTH_FACTOR);
-                }
-                getLogger().log(Level.FINE, "Latency to " + serverAddress + " actual=" + newPingMS + " smoothed=" + pingTimeMS);
+        public IsMasterCommandResult update() {
+            IsMasterCommandResult res = null;
+            long start = System.nanoTime();
+            res = new IsMasterCommandResult(client.getDatabase("admin").executeCommand(
+                    new MongoCommand(new CommandDocument("ismaster", 1))));
+            float newPingMS = (System.nanoTime() - start) / 1000000F;
 
-                successfullyContacted = true;
-
-                if (!ok) {
-                    getLogger().log(Level.INFO, "Server seen up: " + serverAddress);
-                }
-                ok = true;
-
-                // max size was added in 1.8
-                if (res.getResponse().containsKey("maxBsonObjectSize")) {
-                    maxBsonObjectSize = (Integer) res.getResponse().get("maxBsonObjectSize");
-                } else {
-                    maxBsonObjectSize = 16 * 1024 * 1024;  // TODO: magic number
-                }
-            } catch (Exception e) {
-                if (!(ok || (Math.random() > 0.1))) {  // TODO: check this
-                    return res;
-                }
-
-                final StringBuilder logError = (new StringBuilder("Server seen down: ")).append(serverAddress);
-
-                getLogger().log(Level.WARNING, logError.toString(), e);
-                ok = false;
-            }
+            // TODO: smoothing doesn't have any effect if a new instance is created every time
+            pingTimeMS = newPingMS;
+            // pingTimeMS + ((newPingMS - pingTimeMS) / LATENCY_SMOOTH_FACTOR);
 
             return res;
-        }
-
-        protected abstract Logger getLogger();
-
-        protected ServerAddress getServerAddress() {
-            return serverAddress;
-        }
-
-        protected MongoClientOptions getOptions() {
-            return options;
-        }
-
-        protected AbstractMongoClient getClient() {
-            return client;
-        }
-
-        protected SingleChannelMongoClient getSingleChannelMongoClient() {
-            return singleChannelMongoClient;
-        }
-
-        protected void setSingleChannelMongoClient(final SingleChannelMongoClient singleChannelMongoClient) {
-            this.singleChannelMongoClient = singleChannelMongoClient;
-        }
-
-        protected boolean isOk() {
-            return ok;
         }
 
         protected float getPingTimeMS() {
             return pingTimeMS;
         }
 
-        protected int getMaxBsonObjectSize() {
-            return maxBsonObjectSize;
+        public SingleChannelMongoClient getClient() {
+            return client;
         }
     }
-
 }
