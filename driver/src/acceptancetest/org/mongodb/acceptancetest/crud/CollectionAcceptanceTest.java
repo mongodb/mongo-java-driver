@@ -28,7 +28,7 @@ import org.mongodb.MongoDatabase;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.acceptancetest.Fixture.getCleanDatabaseForTest;
+import static org.mongodb.Fixture.getCleanDatabaseForTest;
 
 /**
  * Documents the basic functionality of MongoDB Collections available via the Java driver.

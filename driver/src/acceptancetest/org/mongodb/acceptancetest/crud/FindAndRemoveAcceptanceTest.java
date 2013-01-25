@@ -32,7 +32,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.acceptancetest.Fixture.getCleanDatabaseForTest;
+import static org.mongodb.Fixture.getCleanDatabaseForTest;
 
 /**
  * Documents and tests the functionality provided for find-and-remove atomic operations.

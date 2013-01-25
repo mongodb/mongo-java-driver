@@ -22,27 +22,27 @@ import org.junit.Test;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class MongoSaveTest extends MongoClientTestBase {
+public class MongoSaveTest extends DatabaseTestCase {
     @Test
     public void shouldInsertIfAbsent() {
-        getCollection().save(new Document());
-        assertThat("Did not insert the document", getCollection().count(), is(1L));
+        collection.save(new Document());
+        assertThat("Did not insert the document", collection.count(), is(1L));
     }
 
     @Test
     public void shouldReplaceIfPresent() {
         final Document document = new Document();
-        getCollection().save(document);
+        collection.save(document);
 
         document.put("x", 1);
-        getCollection().save(document);
-        assertThat("Did not replace the document", getCollection().one(), is(document));
+        collection.save(document);
+        assertThat("Did not replace the document", collection.one(), is(document));
     }
 
     @Test
     public void shouldUpsertIfAbsent() {
         final Document document = new Document("_id", 1);
-        getCollection().save(document);
-        assertThat("Did not upsert the document", getCollection().one(), is(document));
+        collection.save(document);
+        assertThat("Did not upsert the document", collection.one(), is(document));
     }
 }

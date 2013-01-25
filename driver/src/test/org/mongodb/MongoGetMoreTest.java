@@ -25,13 +25,13 @@ import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class MongoGetMoreTest extends MongoClientTestBase {
+public class MongoGetMoreTest extends DatabaseTestCase {
     @Test
     public void shouldThrowCursorNotFoundException() {
-        getCollection().insert(Arrays.asList(new Document(), new Document(), new Document()));
+        collection.insert(Arrays.asList(new Document(), new Document(), new Document()));
 
-        final MongoCursor<Document> cursor = getCollection().batchSize(2).all();
-        getClient().getOperations().killCursors(new MongoKillCursor(cursor.getServerCursor()));
+        final MongoCursor<Document> cursor = collection.batchSize(2).all();
+        database.getClient().getOperations().killCursors(new MongoKillCursor(cursor.getServerCursor()));
         cursor.next();
         cursor.next();
         try {

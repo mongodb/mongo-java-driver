@@ -125,12 +125,12 @@ subprojects {
     }
 }
 
-// TODO: figure out why this doesn't work
-//configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat'] }) {
-//    tasks.withType(Test) {
-//        maxParallelForks = 16
-//    }
-//}
+//TODO: figure out why this doesn't work
+configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat'] }) {
+    tasks.withType(Test) {
+        maxParallelForks = 16
+    }
+}
 
 configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat', 'morphia'] }) {
     apply plugin: 'maven'
@@ -258,7 +258,7 @@ project(':bson') {
 
 project(':driver') {
 
-    sourceSets {
+    sourceSets {Mongo
         acceptance {
             java {
                 srcDir 'src/acceptancetest'
@@ -271,6 +271,7 @@ project(':driver') {
         compile project(':bson')
         acceptanceCompile 'junit:junit:4.11'
         acceptanceCompile sourceSets.main.runtimeClasspath
+        acceptanceCompile sourceSets.test.runtimeClasspath
     }
 
     idea.module {

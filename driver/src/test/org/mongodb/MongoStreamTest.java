@@ -28,19 +28,19 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class MongoStreamTest extends MongoClientTestBase {
+public class MongoStreamTest extends DatabaseTestCase {
 
     @Test
     public void testFind() {
         for (int i = 0; i < 10; i++) {
-            getCollection().insert(new Document("_id", i));
+            collection.insert(new Document("_id", i));
         }
 
-        for (final Document cur : getCollection()) {
+        for (final Document cur : collection) {
             System.out.println(cur);
         }
 
-        final MongoCursor<Document> cursor = getCollection().all();
+        final MongoCursor<Document> cursor = collection.all();
         try {
             while (cursor.hasNext()) {
                 System.out.println(cursor.next());
@@ -49,52 +49,52 @@ public class MongoStreamTest extends MongoClientTestBase {
             cursor.close();
         }
 
-        for (final Document cur : getCollection().filter(new QueryFilterDocument("_id", 1))) {
+        for (final Document cur : collection.filter(new QueryFilterDocument("_id", 1))) {
             System.out.println(cur);
         }
 
-        for (final Document cur : getCollection().filter(new QueryFilterDocument("_id", 1))
+        for (final Document cur : collection.filter(new QueryFilterDocument("_id", 1))
                             .sort(new SortCriteriaDocument("_id", 1))) {
             System.out.println(cur);
         }
 
-        for (final Document cur : getCollection().skip(3).limit(2).sort(new SortCriteriaDocument("_id", -1))) {
+        for (final Document cur : collection.skip(3).limit(2).sort(new SortCriteriaDocument("_id", -1))) {
             System.out.println(cur);
         }
 
-        long count = getCollection().count();
+        long count = collection.count();
         System.out.println(count);
 
-        count = getCollection().filter(new QueryFilterDocument("_id", new Document("$gt", 2))).count();
+        count = collection.filter(new QueryFilterDocument("_id", new Document("$gt", 2))).count();
         System.out.println(count);
 
-        Document doc = getCollection().one();
+        Document doc = collection.one();
         System.out.println(doc);
 
-        doc = getCollection().filter(new QueryFilterDocument("_id", 1)).one();
+        doc = collection.filter(new QueryFilterDocument("_id", 1)).one();
         System.out.println(doc);
 
-        getCollection().forEach(new Block<Document>() {
+        collection.forEach(new Block<Document>() {
             @Override
             public void run(final Document e) {
                 System.out.println(e);
             }
         });
 
-        getCollection().forEach(new Block<Document>() {
+        collection.forEach(new Block<Document>() {
             @Override
             public void run(final Document t) {
                 System.out.println(t);
             }
         });
 
-        getCollection().forEach(new Block<Document>() {
+        collection.forEach(new Block<Document>() {
             public void run(final Document document) {
                 System.out.println(document);
             }
         });
 
-        for (final Integer id : getCollection().map(new Function<Document, Integer>() {
+        for (final Integer id : collection.map(new Function<Document, Integer>() {
             @Override
             public Integer apply(final Document document) {
                 return (Integer) document.get("_id");
@@ -103,7 +103,7 @@ public class MongoStreamTest extends MongoClientTestBase {
             System.out.println(id);
         }
 
-        getCollection().map(new Function<Document, Integer>() {
+        collection.map(new Function<Document, Integer>() {
             @Override
             public Integer apply(final Document document) {
                 return (Integer) document.get("_id");
@@ -111,14 +111,14 @@ public class MongoStreamTest extends MongoClientTestBase {
         });
 
 
-        getCollection().forEach(new Block<Document>() {
+        collection.forEach(new Block<Document>() {
             @Override
             public void run(final Document t) {
                 System.out.println(t);
             }
         });
 
-        final List<Integer> idList = getCollection().map(new Function<Document, Integer>() {
+        final List<Integer> idList = collection.map(new Function<Document, Integer>() {
             @Override
             public Integer apply(final Document document) {
                 return (Integer) document.get("_id");
@@ -131,8 +131,6 @@ public class MongoStreamTest extends MongoClientTestBase {
 
     @Test
     public void testUpdate() {
-        final MongoCollection<Document> collection = getCollection();
-
         collection.insert(new Document("_id", 1));
 
         collection.modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
@@ -155,18 +153,18 @@ public class MongoStreamTest extends MongoClientTestBase {
     @Test
     public void testInsertOrReplace() {
         final Document replacement = new Document("_id", 3).append("x", 2);
-        getCollection().replaceOrInsert(replacement);
-        assertEquals(replacement, getCollection().filter(new QueryFilterDocument("_id", 3)).one());
+        collection.replaceOrInsert(replacement);
+        assertEquals(replacement, collection.filter(new QueryFilterDocument("_id", 3)).one());
 
         replacement.append("y", 3);
-        getCollection().replaceOrInsert(replacement);
-        assertEquals(replacement, getCollection().filter(new QueryFilterDocument("_id", 3)).one());
+        collection.replaceOrInsert(replacement);
+        assertEquals(replacement, collection.filter(new QueryFilterDocument("_id", 3)).one());
     }
 
     @Test
     public void testTypeCollection() {
-        final MongoCollection<Concrete> concreteCollection = getDatabase().getCollection(getCollection().getName(),
-                new ConcreteSerializer());
+        final MongoCollection<Concrete> concreteCollection = database.getCollection(collectionName,
+                                                                                   new ConcreteSerializer());
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
 

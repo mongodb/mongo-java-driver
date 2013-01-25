@@ -30,7 +30,7 @@ import org.bson.types.Document;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.MongoClientTestBase;
+import org.mongodb.DatabaseTestCase;
 import org.mongodb.serialization.PrimitiveSerializers;
 
 import java.io.ByteArrayOutputStream;
@@ -42,13 +42,14 @@ import java.util.Date;
 import static org.junit.Assert.assertEquals;
 
 // straight up unit test
-public class DocumentSerializerTest extends MongoClientTestBase {
+public class DocumentSerializerTest extends DatabaseTestCase {
     private BasicOutputBuffer buffer;
     private DocumentSerializer serializer;
     private BSONWriter writer;
 
     @Before
     public void setUp() {
+        super.setUp();
         buffer = new BasicOutputBuffer();
         writer = new BSONBinaryWriter(new BsonWriterSettings(100), new BinaryWriterSettings(1024 * 1024), buffer);
         serializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
@@ -105,12 +106,12 @@ public class DocumentSerializerTest extends MongoClientTestBase {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDotsInKeys() {
-        getCollection().save(new Document("x.y", 1));
+        collection.save(new Document("x.y", 1));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testDotsInKeysInNestedDocuments() {
-        getCollection().save(new Document("x", new Document("a.b", 1)));
+        collection.save(new Document("x", new Document("a.b", 1)));
     }
 
     // TODO: factor into common base class;

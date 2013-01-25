@@ -43,6 +43,7 @@ public interface MongoDatabase {
 
     <T> MongoCollection<T> getCollection(String name, CollectibleSerializer<T> serializer, MongoCollectionOptions options);
 
+    //TODO: still need to come up with a sensible name for this
     DatabaseAdmin admin();
 
     //    MongoDatabase withClient(MongoClient client);

@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.acceptancetest;
-
-import org.junit.Assert;
-import org.mongodb.MongoClient;
-import org.mongodb.MongoClients;
-import org.mongodb.MongoDatabase;
-import org.mongodb.ServerAddress;
+package org.mongodb;
 
 import java.net.UnknownHostException;
 
@@ -28,34 +22,32 @@ import java.net.UnknownHostException;
  * Helper class for the acceptance tests.  Considering replacing with MongoClientTestBase.
  */
 public final class Fixture {
-    private static MongoClient mongoClient;
+    public static final String DEFAULT_URI = "mongodb://localhost:27017";
+    public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
 
-    private static final String SERVER_NAME = "localhost";
-    private static final int PORT = 27017;
+    private static MongoClient mongoClient;
 
     private Fixture() {
     }
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            mongoClient = MongoClients.create(createServerAddress());
+            String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+            final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
+                                          ? DEFAULT_URI : mongoURIProperty;
+            try {
+                mongoClient = MongoClients.create(new MongoClientURI(mongoURIString));
+            } catch (UnknownHostException e) {
+                throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURIString, e);
+            }
         }
         return mongoClient;
-    }
-
-    private static ServerAddress createServerAddress() {
-        try {
-            return new ServerAddress(SERVER_NAME, PORT);
-        } catch (UnknownHostException e) {
-            Assert.fail("Creating connection to Mongo server failed: " + e.getMessage());
-        }
-        return null;
     }
 
     // Note this is not safe for concurrent access - if you run multiple tests in parallel from the same class,
     // you'll drop the DB
     public static MongoDatabase getCleanDatabaseForTest(final Class<?> testClass) {
-        final MongoDatabase database = getMongoClient().getDatabase(testClass.getSimpleName());
+        final MongoDatabase database = mongoClient.getDatabase(testClass.getSimpleName());
 
         //oooh, just realised this is nasty, looks like we're dropping the admin database
         database.admin().drop();

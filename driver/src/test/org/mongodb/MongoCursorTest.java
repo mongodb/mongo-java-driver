@@ -28,21 +28,21 @@ import java.util.NoSuchElementException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-public class MongoCursorTest extends MongoClientTestBase {
+public class MongoCursorTest extends DatabaseTestCase {
 
     private MongoCursor<Document> cursor;
 
     @Before
-    public void before() {
-        super.before();
+    public void setUp() {
+        super.setUp();
         for (int i = 0; i < 10; i++) {
-            getCollection().insert(new Document("_id", i));
+            collection.insert(new Document("_id", i));
         }
     }
 
     @Test
     public void testNormalLoopWithGetMore() {
-        cursor = getCollection().sort(new SortCriteriaDocument("_id", 1)).batchSize(2).all();
+        cursor = collection.sort(new SortCriteriaDocument("_id", 1)).batchSize(2).all();
         try {
             int i = 0;
             while (cursor.hasNext()) {
@@ -58,7 +58,7 @@ public class MongoCursorTest extends MongoClientTestBase {
 
     @Test(expected = NoSuchElementException.class)
     public void testNextWithoutHasNextWithGetMore() {
-        cursor = getCollection().sort(new SortCriteriaDocument("_id", 1)).batchSize(2).all();
+        cursor = collection.sort(new SortCriteriaDocument("_id", 1)).batchSize(2).all();
         for (int i = 0; i < 10; i++) {
             final Document cur = cursor.next();
             assertEquals(i, cur.get("_id"));
@@ -71,13 +71,13 @@ public class MongoCursorTest extends MongoClientTestBase {
     @Test
     public void testLimit() {
         final List<Document> list = new ArrayList<Document>();
-        getCollection().limit(4).into(list);
+        collection.limit(4).into(list);
         assertEquals(4, list.size());
     }
 
     @Test(expected = IllegalStateException.class)
     public void shouldNotBeAbleToCallNextAfterCursorIsClosed() {
-        cursor = getCollection().all();
+        cursor = collection.all();
 
         cursor.next();
         cursor.close();
@@ -86,7 +86,7 @@ public class MongoCursorTest extends MongoClientTestBase {
 
     @Test(expected = IllegalStateException.class)
     public void shouldNotBeAbleToCallHasNextAfterClose() {
-        cursor = getCollection().all();
+        cursor = collection.all();
 
         cursor.next();
         cursor.close();

@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.serialization.serializers;
@@ -22,7 +21,7 @@ import org.bson.io.BasicOutputBuffer;
 import org.bson.types.Document;
 import org.junit.Test;
 import org.mongodb.BsonDocumentBuffer;
-import org.mongodb.MongoClientTestBase;
+import org.mongodb.DatabaseTestCase;
 import org.mongodb.MongoCollection;
 import org.mongodb.SortCriteriaDocument;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
@@ -35,7 +34,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class BsonDocumentBufferSerializerTest extends MongoClientTestBase {
+public class BsonDocumentBufferSerializerTest extends DatabaseTestCase {
 
     private BsonDocumentBufferSerializer serializer =
             new BsonDocumentBufferSerializer(new PowerOfTwoByteBufferPool(24), PrimitiveSerializers.createDefault());
@@ -47,14 +46,14 @@ public class BsonDocumentBufferSerializerTest extends MongoClientTestBase {
             originalDocuments.add(new Document("_id", i).append("b", 2));
         }
 
-        getCollection().insert(originalDocuments);
+        collection.insert(originalDocuments);
 
-        MongoCollection<BsonDocumentBuffer> lazyCollection = getCollection(serializer);
+        MongoCollection<BsonDocumentBuffer> lazyCollection = database.getCollection(collectionName, serializer);
         List<BsonDocumentBuffer> docs = lazyCollection.into(new ArrayList<BsonDocumentBuffer>());
         lazyCollection.admin().drop();
         lazyCollection.insert(docs);
 
-        assertEquals(originalDocuments, getCollection().sort(new SortCriteriaDocument("_id", 1)).into(new ArrayList<Document>()));
+        assertEquals(originalDocuments, collection.sort(new SortCriteriaDocument("_id", 1)).into(new ArrayList<Document>()));
     }
 
     @Test

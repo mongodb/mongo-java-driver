@@ -28,7 +28,7 @@ import java.util.Set;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.acceptancetest.Fixture.getMongoClient;
+import static org.mongodb.Fixture.getMongoClient;
 
 /**
  * Documents the basic functionality available for Databases via the Java driver.

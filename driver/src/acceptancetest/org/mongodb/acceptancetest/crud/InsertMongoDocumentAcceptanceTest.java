@@ -27,7 +27,7 @@ import org.mongodb.QueryFilterDocument;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.acceptancetest.Fixture.getMongoClient;
+import static org.mongodb.Fixture.getMongoClient;
 
 public class InsertMongoDocumentAcceptanceTest {
     private static final String DB_NAME = "InsertMongoDocumentAcceptanceTest";

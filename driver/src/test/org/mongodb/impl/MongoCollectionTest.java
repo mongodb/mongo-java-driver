@@ -21,8 +21,8 @@ import org.bson.BSONWriter;
 import org.bson.types.Document;
 import org.bson.types.ObjectId;
 import org.junit.Test;
+import org.mongodb.DatabaseTestCase;
 import org.mongodb.Get;
-import org.mongodb.MongoClientTestBase;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryFilterDocument;
@@ -37,10 +37,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-public class MongoCollectionTest extends MongoClientTestBase {
+public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void testInsertMultiple() {
-        final MongoCollection<Document> collection = getCollection();
 
         final List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
@@ -55,7 +54,6 @@ public class MongoCollectionTest extends MongoClientTestBase {
 
     @Test
     public void testIdGeneration() {
-        final MongoCollection<Document> collection = getCollection();
 
         final Document doc = new Document();
         collection.insert(doc);
@@ -67,7 +65,6 @@ public class MongoCollectionTest extends MongoClientTestBase {
 
     @Test
     public void testUpdate() {
-        final MongoCollection<Document> collection = getCollection();
 
         collection.insert(new Document("_id", 1));
 
@@ -79,7 +76,6 @@ public class MongoCollectionTest extends MongoClientTestBase {
 
     @Test
     public void testReplace() {
-        final MongoCollection<Document> collection = getCollection();
 
         collection.insert(new Document("_id", 1).append("x", 1));
 
@@ -91,7 +87,6 @@ public class MongoCollectionTest extends MongoClientTestBase {
 
     @Test
     public void testRemove() {
-        final MongoCollection<Document> collection = getCollection();
 
         final List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
@@ -106,7 +101,6 @@ public class MongoCollectionTest extends MongoClientTestBase {
 
     @Test
     public void testFind() {
-        final MongoCollection<Document> collection = getCollection();
 
         for (int i = 0; i < 101; i++) {
             final Document doc = new Document("_id", i);
@@ -125,7 +119,6 @@ public class MongoCollectionTest extends MongoClientTestBase {
 
     @Test
     public void testFindOne() {
-        final MongoCollection<Document> collection = getCollection();
 
         assertNull(collection.one());
 
@@ -137,7 +130,6 @@ public class MongoCollectionTest extends MongoClientTestBase {
 
     @Test
     public void testCount() {
-        final MongoCollection<Document> collection = getCollection();
 
         for (int i = 0; i < 11; i++) {
             final Document doc = new Document("_id", i);
@@ -153,7 +145,6 @@ public class MongoCollectionTest extends MongoClientTestBase {
 
     @Test
     public void testFindAndUpdate() {
-        final MongoCollection<Document> collection = getCollection();
 
         collection.insert(new Document("_id", 1).append("x", true));
 
@@ -167,7 +158,7 @@ public class MongoCollectionTest extends MongoClientTestBase {
 
     @Test
     public void testFindAndUpdateWithGenerics() {
-        final MongoCollection<Concrete> collection = getCollection(new ConcreteSerializer());
+        final MongoCollection<Concrete> collection = database.getCollection(collectionName, new ConcreteSerializer());
 
         final Concrete doc = new Concrete(new ObjectId(), true);
         collection.insert(doc);

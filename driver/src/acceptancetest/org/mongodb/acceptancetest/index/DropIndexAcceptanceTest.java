@@ -28,7 +28,7 @@ import org.mongodb.acceptancetest.crud.CollectionAcceptanceTest;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.acceptancetest.Fixture.getCleanDatabaseForTest;
+import static org.mongodb.Fixture.getCleanDatabaseForTest;
 
 public class DropIndexAcceptanceTest {
 

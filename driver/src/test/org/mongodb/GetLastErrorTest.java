@@ -24,13 +24,13 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-public class GetLastErrorTest extends MongoClientTestBase {
+public class GetLastErrorTest extends DatabaseTestCase {
     @Test
     public void testDuplicateKeyException() {
         final Document doc = new Document("_id", 1);
-        getCollection().insert(doc);
+        collection.insert(doc);
         try {
-            getCollection().insert(doc);
+            collection.insert(doc);
             fail("Should throw MongoDuplicateKeyException");
         } catch (MongoDuplicateKeyException e) {
             assertThat(e.getCommandResult().getErrorCode(), is(11000));
