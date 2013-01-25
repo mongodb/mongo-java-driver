@@ -139,17 +139,20 @@ public class ServerAddress {
     }
 
     @Override
-    public boolean equals(final Object other) {
-        if (other instanceof ServerAddress) {
-            final ServerAddress a = (ServerAddress) other;
-            return a.port == port && a.host.equals(host);
-        }
-        return other instanceof InetSocketAddress && address.equals(other);
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final ServerAddress that = (ServerAddress) o;
+
+        if (!address.equals(that.address)) return false;
+
+        return true;
     }
 
     @Override
     public int hashCode() {
-        return host.hashCode() + port;
+        return address.hashCode();
     }
 
     /**
