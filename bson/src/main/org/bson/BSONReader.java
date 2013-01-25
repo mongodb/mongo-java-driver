@@ -187,7 +187,8 @@ public abstract class BSONReader implements Closeable {
     /// <param name="bytes">The binary data.</param>
     /// <param name="subType">The binary data subtype.</param>
     public Binary readBinaryData(final String name) {
-        return readBinaryData(name);
+        verifyName(name);
+        return readBinaryData();
     }
 
     /// <summary>
