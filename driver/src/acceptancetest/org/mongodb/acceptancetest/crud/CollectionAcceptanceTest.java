@@ -24,6 +24,8 @@ import org.junit.Test;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
+import org.mongodb.WriteConcern;
+import org.mongodb.acceptancetest.AcceptanceTestCase;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
@@ -33,28 +35,7 @@ import static org.mongodb.Fixture.getCleanDatabaseForTest;
 /**
  * Documents the basic functionality of MongoDB Collections available via the Java driver.
  */
-public class CollectionAcceptanceTest {
-    private MongoCollection<Document> collection;
-    private static MongoDatabase database;
-
-    @BeforeClass
-    public static void setupTestSuite() {
-        //TODO: Trish - am still contemplating benefits of inheritance over a helper here
-        //Also: setting up the DB first at the start of the test class is a boat-load faster than on @Before
-        database = getCleanDatabaseForTest(CollectionAcceptanceTest.class);
-    }
-
-    @AfterClass
-    public static void teardownTestSuite() {
-        database.admin().drop();
-    }
-
-    @Before
-    public void setUp() {
-        //create a brand new collection for each test
-        collection = database.getCollection("Collection" + System.currentTimeMillis());
-    }
-
+public class CollectionAcceptanceTest extends AcceptanceTestCase {
     @Test
     public void shouldBeAbleToIterateOverACollection() {
         final int numberOfDocuments = 10;
@@ -104,8 +85,7 @@ public class CollectionAcceptanceTest {
         final Document collectionStatistics = newCollection.admin().getStatistics();
         assertThat(collectionStatistics, is(notNullValue()));
 
-        final String databaseName = this.getClass().getSimpleName();
-        assertThat((String) collectionStatistics.get("ns"), is(databaseName + "." + newCollectionName));
+        assertThat((String) collectionStatistics.get("ns"), is(database.getName() + "." + newCollectionName));
     }
 
     @Test
@@ -123,7 +103,7 @@ public class CollectionAcceptanceTest {
 
     private void initialiseCollectionWithDocuments(final int numberOfDocuments) {
         for (int i = 0; i < numberOfDocuments; i++) {
-            collection.insert(new Document("_id", i));
+            collection.writeConcern(WriteConcern.ACKNOWLEDGED).insert(new Document("_id", i));
         }
     }
 
