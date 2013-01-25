@@ -17,11 +17,13 @@
 package com.mongodb;
 
 import org.bson.types.ObjectId;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
 
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -30,7 +32,6 @@ import static org.junit.Assert.fail;
 @SuppressWarnings({ "rawtypes" })
 public class DBCollectionOldTest extends DatabaseTestCase {
     @Test
-    @Ignore("Duplicate Key Exception now thrown")
     public void testMultiInsert() {
         final DBCollection c = collection;
 
@@ -40,9 +41,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         final DBObject inserted1 = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).get();
         final DBObject inserted2 = BasicDBObjectBuilder.start().add("x", 3).add("y", 3).get();
         c.insert(inserted1, inserted2);
-        //In the old world order, this used to not fail, but getLastError would show an error
-        //In the new world order, we get a com.mongodb.MongoException$DuplicateKey
-        c.insert(inserted1, inserted2);
+        Assert.assertThat(collection.count(), is(2L));
     }
 
     @Test

@@ -17,50 +17,26 @@
 package org.mongodb.acceptancetest.crud;
 
 import org.bson.types.Document;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mongodb.MongoCollection;
-import org.mongodb.MongoDatabase;
 import org.mongodb.MongoStream;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.SortCriteriaDocument;
+import org.mongodb.acceptancetest.AcceptanceTestCase;
 import org.mongodb.operation.MongoQueryFilter;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Fixture.getCleanDatabaseForTest;
 
 /**
  * Documents and tests the functionality provided for find-and-remove atomic operations.
  * <p/>
  * http://docs.mongodb.org/manual/reference/command/findAndModify/
  */
-public class FindAndRemoveAcceptanceTest {
+public class FindAndRemoveAcceptanceTest extends AcceptanceTestCase {
     private static final String KEY = "searchKey";
     private static final String VALUE_TO_CARE_ABOUT = "Value to match";
-
-    private MongoCollection<Document> collection;
-    private static MongoDatabase database;
-
-    @BeforeClass
-    public static void setupTestSuite() {
-        database = getCleanDatabaseForTest(FindAndRemoveAcceptanceTest.class);
-    }
-
-    @AfterClass
-    public static void teardownTestSuite() {
-        database.admin().drop();
-    }
-
-    @Before
-    public void setUp() {
-        //create a brand new collection for each test
-        collection = database.getCollection("Collection" + System.currentTimeMillis());
-    }
 
     @Test
     public void shouldRemoveSingleDocument() {
