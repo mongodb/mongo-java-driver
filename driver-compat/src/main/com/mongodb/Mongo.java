@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,5 +155,19 @@ public class Mongo {
 
     void requestDone() {
         clientAdapter.unbindFromConnection();
+    }
+
+    //******* Missing functionality from the old driver *******/
+
+    public Mongo(final List<ServerAddress> serverAddresses) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    public void addOption(final int option) {
+        throw new IllegalStateException("Not implemented yet!");
+    }
+
+    public int getOptions() {
+        throw new IllegalStateException("Not implemented yet!");
     }
 }

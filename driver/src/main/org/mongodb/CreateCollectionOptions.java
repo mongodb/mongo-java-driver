@@ -38,7 +38,8 @@ public class CreateCollectionOptions {
         this.collectionName = collectionName;
         createDocument = new CommandDocument("create", collectionName);
         createDocument.put("capped", capped);
-        if (sizeInBytes > 0) {
+        //I want this to be >0 (seems correct) but for backwards compatibility with some of the tests had to change this
+        if (sizeInBytes != 0) {
             createDocument.put("size", sizeInBytes);
         }
         if (capped) {

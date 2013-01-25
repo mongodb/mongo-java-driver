@@ -163,7 +163,7 @@ public class DB implements IDB {
         boolean autoIndex = true;
         int maxDocuments = 0;
         if (options.get("capped") != null) {
-            capped = (Boolean) options.get("capped");
+            capped = Boolean.valueOf(options.get("capped").toString());
         }
         if (options.get("size") != null) {
             sizeInBytes = ((Number) options.get("size")).intValue();
@@ -174,9 +174,13 @@ public class DB implements IDB {
         if (options.get("max") != null) {
             maxDocuments = ((Number) options.get("max")).intValue();
         }
-        database.admin().createCollection(new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex,
-                                                                    maxDocuments));
-        return getCollection(collName);
+        try {
+            database.admin().createCollection(new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex,
+                                                                         maxDocuments));
+            return getCollection(collName);
+        } catch (org.mongodb.MongoException newStyleException) {
+            throw new MongoException(newStyleException);
+        }
     }
 
     public boolean authenticate(final String username, final char[] password) {
@@ -206,8 +210,8 @@ public class DB implements IDB {
      */
     public CommandResult command(final DBObject cmd) {
         final org.mongodb.result.CommandResult baseCommandResult
-            = database.executeCommand(new MongoCommand(DBObjects.toCommandDocument(cmd))
-                                      .readPreference(getReadPreference().toNew()));
+        = database.executeCommand(new MongoCommand(DBObjects.toCommandDocument(cmd))
+                                  .readPreference(getReadPreference().toNew()));
         return DBObjects.toCommandResult(cmd, new ServerAddress(baseCommandResult.getAddress()), baseCommandResult
                                                                                                  .getResponse());
     }
@@ -303,7 +307,7 @@ public class DB implements IDB {
 
     @Override
     public boolean collectionExists(final String collectionName) {
-        throw new IllegalStateException("Not implemented yet!");
+        return database.admin().getCollectionNames().contains(collectionName);
     }
 
     @Override
