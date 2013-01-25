@@ -17,20 +17,15 @@
 package org.mongodb.acceptancetest.crud;
 
 import org.bson.types.Document;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoDatabase;
 import org.mongodb.WriteConcern;
 import org.mongodb.acceptancetest.AcceptanceTestCase;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Fixture.getCleanDatabaseForTest;
 
 /**
  * Documents the basic functionality of MongoDB Collections available via the Java driver.
