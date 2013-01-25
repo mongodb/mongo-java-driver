@@ -18,9 +18,9 @@ package org.bson.types;
 
 import java.net.NetworkInterface;
 import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -394,7 +394,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
                 } catch (Throwable e) {
                     // exception sometimes happens with IBM JVM, use random
                     LOGGER.log(Level.WARNING, e.getMessage(), e);
-                    machinePiece = (new Random().nextInt()) << 16;
+                    machinePiece = (new SecureRandom().nextInt()) << 16;
                 }
                 LOGGER.fine("machine piece post: " + Integer.toHexString(machinePiece));
             LOGGER.fine("machine piece post: " + Integer.toHexString(machinePiece));
