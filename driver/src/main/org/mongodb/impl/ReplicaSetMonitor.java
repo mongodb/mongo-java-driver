@@ -207,7 +207,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
         }
 
         // TODO: need to cache this lookup
-        private void addHosts(final Set<ServerAddress> serverAddresses, final List hosts) {
+        private void addHosts(final Set<ServerAddress> serverAddresses, final List<String> hosts) {
             if (hosts == null) {
                 return;
             }
