@@ -47,7 +47,7 @@ public final class Fixture {
     // Note this is not safe for concurrent access - if you run multiple tests in parallel from the same class,
     // you'll drop the DB
     public static MongoDatabase getCleanDatabaseForTest(final Class<?> testClass) {
-        final MongoDatabase database = mongoClient.getDatabase(testClass.getSimpleName());
+        final MongoDatabase database = getMongoClient().getDatabase(testClass.getSimpleName());
 
         //oooh, just realised this is nasty, looks like we're dropping the admin database
         database.admin().drop();
