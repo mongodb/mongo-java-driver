@@ -96,6 +96,10 @@ class SingleChannelMongoClient extends AbstractMongoClient {
         }
     }
 
+    public ServerAddress getServerAddress() {
+        return channel.getAddress();
+    }
+
     @Override
     public void close() {
         if (channel != null) {
