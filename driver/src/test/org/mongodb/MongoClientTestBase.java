@@ -41,7 +41,6 @@ public abstract class MongoClientTestBase {
                 String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
                 final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
                         ? DEFAULT_URI : mongoURIProperty;
-                System.out.println("URI: " + mongoURIString);
                 try {
                     mongoClient = MongoClients.create(new MongoClientURI(mongoURIString));
                     database = mongoClient.getDatabase(DEFAULT_DB_NAME);
