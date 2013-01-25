@@ -37,33 +37,18 @@ public class Symbol implements Serializable {
         return symbol;
     }
 
-    /**
-     * Will compare equal to a String that is equal to the String that this holds
-     *
-     * @param o the Symbol to compare this to
-     * @return true if parameter o is the same as this Symbol
-     */
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
-        if (o == null) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
 
-        final String otherSymbol;
-        if (o instanceof Symbol) {
-            otherSymbol = ((Symbol) o).symbol;
-        }
-        else if (o instanceof String) {
-            otherSymbol = (String) o;
-        }
-        else {
-            return false;
-        }
+        final Symbol symbol1 = (Symbol) o;
 
-        if (symbol != null ? !symbol.equals(otherSymbol) : otherSymbol != null) {
+        if (!symbol.equals(symbol1.symbol)) {
             return false;
         }
 
@@ -72,8 +57,17 @@ public class Symbol implements Serializable {
 
     @Override
     public int hashCode() {
-        return symbol != null ? symbol.hashCode() : 0;
+        return symbol.hashCode();
     }
+
+    /**
+     * Will compare equal to a String that is equal to the String that this holds
+     *
+     * @param o the Symbol to compare this to
+     * @return true if parameter o is the same as this Symbol
+     */
+    @Override
+
 
     public String toString() {
         return symbol;
