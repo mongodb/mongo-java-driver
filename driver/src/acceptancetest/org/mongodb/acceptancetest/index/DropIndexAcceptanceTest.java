@@ -24,7 +24,6 @@ import org.junit.Test;
 import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
-import org.mongodb.acceptancetest.crud.CollectionAcceptanceTest;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -37,7 +36,7 @@ public class DropIndexAcceptanceTest {
 
     @BeforeClass
     public static void setupTestSuite() {
-        database = getCleanDatabaseForTest(CollectionAcceptanceTest.class);
+        database = getCleanDatabaseForTest(DropIndexAcceptanceTest.class);
     }
 
     @AfterClass
