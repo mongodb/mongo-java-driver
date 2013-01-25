@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class DBCursorTest extends MongoClientTestBase {
-    DBCursor cursor;
+public class DBCursorTest extends DatabaseTestCase {
+    private DBCursor cursor;
 
     @Before
-    public void before() {
-        super.before();
+    public void setUp() {
+        super.setUp();
         for (int i = 0; i < 10; i++) {
             collection.insert(new BasicDBObject("_id", i));
         }

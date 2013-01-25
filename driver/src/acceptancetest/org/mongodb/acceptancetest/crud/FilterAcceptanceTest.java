@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,43 +17,19 @@
 package org.mongodb.acceptancetest.crud;
 
 import org.bson.types.Document;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoDatabase;
 import org.mongodb.MongoStream;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.SortCriteriaDocument;
+import org.mongodb.acceptancetest.AcceptanceTestCase;
 
 import java.util.List;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Fixture.getCleanDatabaseForTest;
 
-public class FilterAcceptanceTest {
-
-    private MongoCollection<Document> collection;
-    private static MongoDatabase database;
-
-    @BeforeClass
-    public static void setupTestSuite() {
-        database = getCleanDatabaseForTest(FindAndRemoveAcceptanceTest.class);
-    }
-
-    @AfterClass
-    public static void teardownTestSuite() {
-        database.admin().drop();
-    }
-
-    @Before
-    public void setUp() {
-        //create a brand new collection for each test
-        collection = database.getCollection("Collection" + System.currentTimeMillis());
-    }
+public class FilterAcceptanceTest extends AcceptanceTestCase {
 
     @Test
     public void shouldFindASingleDocumentById() {

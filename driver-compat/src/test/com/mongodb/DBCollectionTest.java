@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-public class DBCollectionTest extends MongoClientTestBase {
+public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void testInsert() {
         final WriteResult res = collection.insert(new BasicDBObject("_id", 1).append("x", 2));

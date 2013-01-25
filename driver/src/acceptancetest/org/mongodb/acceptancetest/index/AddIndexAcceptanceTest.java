@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ package org.mongodb.acceptancetest.index;
 import org.bson.types.Document;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.DatabaseTestCase;
 import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.OrderBy;
+import org.mongodb.acceptancetest.AcceptanceTestCase;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -38,7 +38,7 @@ import static org.mongodb.OrderBy.fromInt;
  * Use cases for adding indexes to your MongoDB database via the Java driver.  Documents the index options that are
  * currently supported by the updated driver.
  */
-public class AddIndexAcceptanceTest extends DatabaseTestCase {
+public class AddIndexAcceptanceTest extends AcceptanceTestCase {
     @Before
     public void setUp() {
         super.setUp();

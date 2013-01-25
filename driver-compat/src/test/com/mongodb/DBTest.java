@@ -20,9 +20,9 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class DBTest extends MongoClientTestBase {
+public class DBTest extends DatabaseTestCase {
     @Test
     public void shouldGetDefaultWriteConcern() {
-        assertEquals(WriteConcern.ACKNOWLEDGED, getDB().getWriteConcern());
+        assertEquals(WriteConcern.ACKNOWLEDGED, database.getWriteConcern());
     }
 }

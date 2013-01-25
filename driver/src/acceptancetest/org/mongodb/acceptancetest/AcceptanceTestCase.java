@@ -14,31 +14,35 @@
  * limitations under the License.
  */
 
-package com.mongodb;
+package org.mongodb.acceptancetest;
 
+import org.bson.types.Document;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.mongodb.Fixture;
+import org.mongodb.MongoCollection;
+import org.mongodb.MongoDatabase;
 
-import static com.mongodb.Fixture.getMongoClient;
-
-public class DatabaseTestCase {
+public class AcceptanceTestCase {
     //For ease of use and readability, in this specific case we'll allow protected variables
     //CHECKSTYLE:OFF
-    protected static DB database;
-    protected DBCollection collection;
+    protected static MongoDatabase database;
+    protected MongoCollection<Document> collection;
     protected String collectionName;
     //CHECKSTYLE:ON
 
     @BeforeClass
     public static void setupTestSuite() {
-        database = getMongoClient().getDB("DriverCompatibilityTest" + System.currentTimeMillis());
-        database.dropDatabase();
+        database = Fixture.getMongoClient().getDatabase("DriverTest" + System.currentTimeMillis());
+
+        //oooh, just realised this is nasty, looks like we're dropping the admin database
+        database.admin().drop();
     }
 
     @AfterClass
     public static void teardownTestSuite() {
-        database.dropDatabase();
+        database.admin().drop();
     }
 
     @Before
@@ -46,13 +50,5 @@ public class DatabaseTestCase {
         //create a brand new collection for each test
         collectionName = getClass().getSimpleName() + System.currentTimeMillis();
         collection = database.getCollection(collectionName);
-
-        collection.drop();
-        collection.setReadPreference(ReadPreference.primary());
-        collection.setWriteConcern(WriteConcern.ACKNOWLEDGED);
-    }
-
-    public MongoClient getClient() {
-        return getMongoClient();
     }
 }

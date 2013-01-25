@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.mongodb.gridfs;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.MongoClientTestBase;
+import com.mongodb.DatabaseTestCase;
 import com.mongodb.MongoException;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,13 +32,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class GridFSTest extends MongoClientTestBase {
+public class GridFSTest extends DatabaseTestCase {
     private GridFS gridFS;
 
     @Before
-    public void before() {
-        super.before();
-        gridFS = new GridFS(getDB());
+    public void setUp() {
+        super.setUp();
+        gridFS = new GridFS(database);
     }
 
     @Test

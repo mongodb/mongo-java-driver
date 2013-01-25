@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.mongodb.serializers;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClientTestBase;
+import com.mongodb.DatabaseTestCase;
 import org.bson.BSON;
 import org.bson.Transformer;
 import org.junit.Test;
@@ -32,15 +32,15 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
-public class DBObjectSerializerTest extends MongoClientTestBase {
+public class DBObjectSerializerTest extends DatabaseTestCase {
 
     @Test
     public void testGetters() {
         final PrimitiveSerializers serializers = PrimitiveSerializers.createDefault();
-        final DBObjectSerializer serializer = new DBObjectSerializer(getDB(), serializers,
+        final DBObjectSerializer serializer = new DBObjectSerializer(database, serializers,
                                                               BasicDBObject.class,
                                                               new HashMap<String, Class<? extends DBObject>>());
-        assertEquals(getDB(), serializer.getDb());
+        assertEquals(database, serializer.getDb());
         assertEquals(BasicDBObject.class, serializer.getTopLevelClass());
         assertEquals(serializers, serializer.getPrimitiveSerializers());
         final HashMap<List<String>, Class<? extends DBObject>> expected
@@ -55,7 +55,7 @@ public class DBObjectSerializerTest extends MongoClientTestBase {
         = new HashMap<String, Class<? extends DBObject>>();
         stringPathToClassMap.put("a", NestedOneDBObject.class);
         stringPathToClassMap.put("a.b", NestedTwoDBObject.class);
-        final DBObjectSerializer serializer = new DBObjectSerializer(getDB(), PrimitiveSerializers.createDefault(),
+        final DBObjectSerializer serializer = new DBObjectSerializer(database, PrimitiveSerializers.createDefault(),
                                                               TopLevelDBObject.class, stringPathToClassMap);
         final Map<List<String>, Class<? extends DBObject>> pathToClassMap
         = new HashMap<List<String>, Class<? extends DBObject>>();

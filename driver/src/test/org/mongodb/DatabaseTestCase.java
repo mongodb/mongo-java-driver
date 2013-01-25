@@ -31,7 +31,7 @@ public class DatabaseTestCase {
 
     @BeforeClass
     public static void setupTestSuite() {
-        database = Fixture.getMongoClient().getDatabase("AcceptanceTest" + System.currentTimeMillis());
+        database = Fixture.getMongoClient().getDatabase("DriverTest" + System.currentTimeMillis());
 
         //oooh, just realised this is nasty, looks like we're dropping the admin database
         database.admin().drop();
