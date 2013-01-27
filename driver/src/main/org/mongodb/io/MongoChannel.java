@@ -53,7 +53,6 @@ public class MongoChannel {
         this.address = address;
         this.pool = pool;
         this.errorSerializer = errorSerializer;
-        open();
     }
 
     public ServerAddress getAddress() {
@@ -61,11 +60,8 @@ public class MongoChannel {
     }
 
     public void sendOneWayMessage(final MongoRequestMessage message) {
-
         try {
-            if (socketChannel == null) {
-                open();
-            }
+            ensureOpen();
 
             message.pipe(socketChannel);
         } catch (IOException e) {
@@ -76,6 +72,7 @@ public class MongoChannel {
     }
 
     public <T> MongoReplyMessage<T> sendQueryMessage(final MongoQueryMessage message, final Serializer<T> serializer) {
+        ensureOpen();
         long start = System.nanoTime();
         sendOneWayMessage(message);
         return receiveMessage(message, serializer, start);
@@ -83,6 +80,7 @@ public class MongoChannel {
 
     public <T> MongoReplyMessage<T> sendGetMoreMessage(final MongoGetMoreMessage message,
                                                        final Serializer<T> serializer) {
+        ensureOpen();
         long start = System.nanoTime();
         sendOneWayMessage(message);
         return receiveMessage(message, serializer, start);
@@ -109,11 +107,10 @@ public class MongoChannel {
 
             if (replyHeader.isCursorNotFound()) {
                 throw new MongoCursorNotFoundException(new ServerCursor(((MongoGetMoreMessage) message).getCursorId(),
-                                                                       address));
-            }
-            else if (replyHeader.isQueryFailure()) {
+                        address));
+            } else if (replyHeader.isQueryFailure()) {
                 final Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,
-                                                                              errorSerializer, System.nanoTime() - start).getDocuments().get(0);
+                        errorSerializer, System.nanoTime() - start).getDocuments().get(0);
                 throw new MongoQueryFailureException(address, errorDocument);
             }
             return new MongoReplyMessage<T>(replyHeader, bodyInputBuffer, serializer, System.nanoTime() - start);
@@ -145,9 +142,11 @@ public class MongoChannel {
         buffer.flip();
     }
 
-    private void open() {
+    private void ensureOpen() {
         try {
-            socketChannel = SocketChannel.open(address.getSocketAddress());
+            if (socketChannel == null) {
+                socketChannel = SocketChannel.open(address.getSocketAddress());
+            }
         } catch (IOException e) {
             throw new MongoSocketOpenException("Exception opening socket", address, e);
         }
