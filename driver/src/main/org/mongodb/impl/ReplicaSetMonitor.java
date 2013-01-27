@@ -22,6 +22,7 @@ import org.mongodb.MongoInterruptedException;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.IsMasterCommandResult;
+import org.mongodb.command.MongoCommandException;
 import org.mongodb.rs.ReplicaSet;
 import org.mongodb.rs.ReplicaSetMember;
 import org.mongodb.rs.Tag;
@@ -53,10 +54,9 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
     // will get changed to use replica set name once it's found
     private volatile Logger logger = LOGGER;
 
-    private final List<SingleChannelMongoClient> memberClients;
+    private final ReplicaSetStateGenerator replicaSetStateGenerator;
 
     private volatile long nextResolveTime;
-    private final Random random = new Random();
 
     static {
         SLAVE_ACCEPTABLE_LATENCY_MS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
@@ -65,11 +65,8 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
 
     ReplicaSetMonitor(final List<ServerAddress> seedList, final AbstractMongoClient client) {
         super(client, "ReplicaSetMonitor");
-        memberClients = new ArrayList<SingleChannelMongoClient>();
-        for (ServerAddress addr : seedList) {
-            memberClients.add(new SingleChannelMongoClient(addr, getMongoClient().getBufferPool(), getClientOptions()));
-
-        }
+        replicaSetStateGenerator = new ReplicaSetStateGenerator(seedList,
+                new MongoClientIsMasterExecutorFactory(getMongoClient().getBufferPool(), getClientOptions()), getLatencySmoothFactor());
         nextResolveTime = System.currentTimeMillis() + INET_ADDR_CACHE_MS;
     }
 
@@ -88,12 +85,12 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
                 try {
                     updateInetAddresses();
 
-                    ReplicaSet replicaSet = updateAll();
-                    replicaSetHolder.set(replicaSet);
+                    ReplicaSet replicaSet = replicaSetStateGenerator.getReplicaSetState();
 
                     if (replicaSet.getErrorStatus().isOk() && replicaSet.hasPrimary()) {
                         curUpdateIntervalMS = getUpdaterIntervalMS();
                     }
+                    replicaSetHolder.set(replicaSet);
                 } catch (Exception e) {
                     // TODO: can any exceptions get through to here?
                     logger.log(Level.WARNING, "Exception in replica set monitor update pass", e);
@@ -106,46 +103,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
         }
 
         replicaSetHolder.close();
-        closeAllNodes();
-    }
-
-    private ReplicaSet updateAll() {
-        Set<ServerAddress> seenAddresses = new HashSet<ServerAddress>();
-
-        List<ReplicaSetMember> replicaSetMembers = new ArrayList<ReplicaSetMember>();
-        for (int i = 0; i < memberClients.size(); i++) {
-            replicaSetMembers.add(new ReplicaSetMemberMonitor(memberClients.get(i)).getCurrentState(seenAddresses));
-            addMissingMemberClients(seenAddresses);
-        }
-
-        if (seenAddresses.size() > 0) {
-            // not empty, means that at least one server gave node list, so remove unused hosts
-            Iterator<SingleChannelMongoClient> it = memberClients.iterator();
-            while (it.hasNext()) {
-                final SingleChannelMongoClient next = it.next();
-                if (!seenAddresses.contains(next.getServerAddress())) {
-                    it.remove();
-                    next.close();
-                }
-            }
-        }
-
-        return new ReplicaSet(replicaSetMembers, random, SLAVE_ACCEPTABLE_LATENCY_MS);
-    }
-
-    private void addMissingMemberClients(final Set<ServerAddress> seenAddresses) {
-        for (ServerAddress seenAddress : seenAddresses) {
-            boolean alreadySeen = false;
-            for (SingleChannelMongoClient client : memberClients) {
-                if (client.getServerAddress().equals(seenAddress)) {
-                    alreadySeen = true;
-                    break;
-                }
-            }
-            if (!alreadySeen) {
-                memberClients.add(new SingleChannelMongoClient(seenAddress, getMongoClient().getBufferPool(), getClientOptions()));
-            }
-        }
+        replicaSetStateGenerator.close();
     }
 
     @Override
@@ -162,36 +120,142 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
         return sb.toString();
     }
 
-    // Represents the state of a member in the replica set.  Instances of this class are mutable.
-    class ReplicaSetMemberMonitor extends ConnectionSetMemberMonitor {
+    static class ReplicaSetStateGenerator {
 
-        ReplicaSetMemberMonitor(final SingleChannelMongoClient client) {
-            super(client);
+        static class ChannelState {
+            private final IsMasterExecutor executor;
+            private ReplicaSetMember mostRecentState;
+
+            ChannelState(final IsMasterExecutor executor) {
+                this.executor = executor;
+            }
+
+            @Override
+            public boolean equals(final Object o) {
+                if (this == o) {
+                    return true;
+                }
+
+                if (!getClass().equals(o.getClass())) {
+                    return false;
+                }
+
+                final ChannelState that = (ChannelState) o;
+
+                if (!executor.getServerAddress().equals(that.executor.getServerAddress())) {
+                    return false;
+                }
+
+                return true;
+            }
+
+            @Override
+            public int hashCode() {
+                return executor.getServerAddress().hashCode();
+            }
         }
 
-        ReplicaSetMember getCurrentState(final Set<ServerAddress> seenAddresses) {
-            try {
-                IsMasterCommandResult res = update();
-                if (res.isOk()) {
-                    addHosts(seenAddresses, res.getHosts());
-                    addHosts(seenAddresses, res.getPassives());
+        private Logger logger = Logger.getLogger("org.mongodb.ReplicaSetMonitor");
+        private final Random random = new Random();
+        private final float latencySmoothFactor;
+        private final IsMasterExecutorFactory isMasterExecutorFactory;
+        private Set<ChannelState> channelStates = new HashSet<ChannelState>();
 
-                    // Tags were added in 2.0 but may not be present
-                    Set<Tag> tags = getTagsFromMap(res.getTags());
+        ReplicaSetStateGenerator(final List<ServerAddress> seedList, final IsMasterExecutorFactory isMasterExecutorFactory,
+                                 final float latencySmoothFactor) {
+            this.isMasterExecutorFactory = isMasterExecutorFactory;
+            this.latencySmoothFactor = latencySmoothFactor;
+            for (ServerAddress cur : seedList) {
+                channelStates.add(new ChannelState(isMasterExecutorFactory.create(cur)));
+            }
+        }
 
-                    // old versions of mongod don't report setName
-                    if (res.getSetName() != null) {
-                        logger = Logger.getLogger(LOGGER.getName() + "." + res.getSetName());
-                    }
-                    return new ReplicaSetMember(getClient().getServerAddress(), res.getSetName(), getPingTimeMS(), res.isOk(),
-                            res.isMaster(), res.isSecondary(), tags, res.getMaxBsonObjectSize());
-                }
-            } catch (Exception e) {
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.log(Level.FINE, "Server seen down: " + getClient().getServerAddress(), e);
+        void close() {
+            for (ChannelState channelState : channelStates) {
+                try {
+                    channelState.executor.close();
+                } catch (final Throwable t) {
+                    // ignore
                 }
             }
-            return new ReplicaSetMember(getClient().getServerAddress(), getPingTimeMS());
+        }
+
+        Set<ChannelState> getChannelStates() {
+            return channelStates;
+        }
+
+        ReplicaSet getReplicaSetState() {
+            Set<ServerAddress> seenAddresses = new HashSet<ServerAddress>();
+
+            updateAll(seenAddresses);
+            removeUnused(seenAddresses);
+            addMissingMemberClients(seenAddresses);
+
+            return new ReplicaSet(createReplicaSetMemberList(), random, SLAVE_ACCEPTABLE_LATENCY_MS);
+        }
+
+        private void updateAll(final Set<ServerAddress> seenAddresses) {
+            for (ChannelState channelState : channelStates) {
+                seenAddresses.addAll(updateChannelState(channelState));
+            }
+        }
+
+        private void removeUnused(final Set<ServerAddress> seenAddresses) {
+            if (!seenAddresses.isEmpty()) {
+                for (Iterator<ChannelState> iter = channelStates.iterator(); iter.hasNext();) {
+                    ChannelState channelState = iter.next();
+                    if (!seenAddresses.contains(channelState.executor.getServerAddress())) {
+                        iter.remove();
+                        channelState.executor.close();
+                    }
+                }
+            }
+        }
+
+        private List<ReplicaSetMember> createReplicaSetMemberList() {
+            List<ReplicaSetMember> replicaSetMembers = new ArrayList<ReplicaSetMember>();
+            for (ChannelState channelState : channelStates) {
+                replicaSetMembers.add(channelState.mostRecentState);
+            }
+            return replicaSetMembers;
+        }
+
+        Set<ServerAddress> updateChannelState(final ChannelState channelState) {
+            final Set<ServerAddress> seenAddresses = new HashSet<ServerAddress>();
+            try {
+                IsMasterCommandResult res = channelState.executor.execute();
+                if (!res.isOk()) {
+                    throw new MongoCommandException(res);  // TODO: should the command throw this if not ok?
+                }
+
+                addHosts(seenAddresses, res.getHosts());
+                addHosts(seenAddresses, res.getPassives());
+
+                Set<Tag> tags = getTagsFromMap(res.getTags());
+
+                if (res.getSetName() != null) {
+                    logger = Logger.getLogger(LOGGER.getName() + "." + res.getSetName());
+                }
+
+                float elapsedMilliseconds = res.getElapsedNanoseconds() / 1000000F;
+                float normalizedPingTimeMilliseconds =
+                        channelState.mostRecentState == null || !channelState.mostRecentState.isOk()
+                                ? elapsedMilliseconds
+                                : channelState.mostRecentState.getPingTime()
+                                + ((elapsedMilliseconds - channelState.mostRecentState.getPingTime()) / latencySmoothFactor);
+
+
+                channelState.mostRecentState = new ReplicaSetMember(
+                        channelState.executor.getServerAddress(), res.getSetName(),
+                        normalizedPingTimeMilliseconds, res.isOk(), res.isMaster(),
+                        res.isSecondary(), tags, res.getMaxBsonObjectSize());
+            } catch (Exception e) {
+                channelState.mostRecentState = new ReplicaSetMember(channelState.executor.getServerAddress());
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.log(Level.FINE, "Exception reaching replica set member at: " + channelState.executor.getServerAddress(), e);
+                }
+            }
+            return seenAddresses;
         }
 
         private Set<Tag> getTagsFromMap(final Document tagsDocuments) {
@@ -234,6 +298,23 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
 //            } catch (UnknownHostException ex) {
 //                logger.get().log(Level.WARNING, null, ex);
 //            }
+        }
+
+        private void addMissingMemberClients(final Set<ServerAddress> seenAddresses) {
+            for (ServerAddress seenAddress : seenAddresses) {
+                boolean alreadySeen = false;
+                for (ChannelState channelState : channelStates) {
+                    if (channelState.executor.getServerAddress().equals(seenAddress)) {
+                        alreadySeen = true;
+                        break;
+                    }
+                }
+                if (!alreadySeen) {
+                    final ChannelState newChannelState = new ChannelState(isMasterExecutorFactory.create(seenAddress));
+                    channelStates.add(newChannelState);
+                    updateChannelState(newChannelState);
+                }
+            }
         }
     }
 
@@ -301,16 +382,6 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
 //                node.updateAddr();
 //            }
 //        }
-    }
-
-    private void closeAllNodes() {
-        for (SingleChannelMongoClient client : memberClients) {
-            try {
-                client.close();
-            } catch (final Throwable t) {
-                // ignore
-            }
-        }
     }
 }
 

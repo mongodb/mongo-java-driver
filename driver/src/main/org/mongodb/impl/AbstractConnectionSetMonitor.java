@@ -17,10 +17,14 @@
 
 package org.mongodb.impl;
 
+import org.bson.util.BufferPool;
 import org.mongodb.CommandDocument;
 import org.mongodb.MongoClientOptions;
+import org.mongodb.ServerAddress;
 import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.operation.MongoCommand;
+
+import java.nio.ByteBuffer;
 
 /**
  * Base class for classes that manage connections to mongo instances as background tasks.
@@ -93,35 +97,56 @@ abstract class AbstractConnectionSetMonitor extends Thread {
         return clientOptions;
     }
 
-    abstract static class ConnectionSetMemberMonitor {
+    interface IsMasterExecutor {
+        IsMasterCommandResult execute();
 
-        private SingleChannelMongoClient client;
-        private float pingTimeMS = 0;
+        ServerAddress getServerAddress();
 
-        ConnectionSetMemberMonitor(final SingleChannelMongoClient client) {
+        void close();
+    }
+
+    class MongoClientIsMasterExecutor implements IsMasterExecutor {
+        private final SingleChannelMongoClient client;
+
+        MongoClientIsMasterExecutor(final SingleChannelMongoClient client) {
             this.client = client;
         }
 
-        public IsMasterCommandResult update() {
-            IsMasterCommandResult res = null;
-            long start = System.nanoTime();
-            res = new IsMasterCommandResult(client.getDatabase("admin").executeCommand(
+        @Override
+        public IsMasterCommandResult execute() {
+            return new IsMasterCommandResult(client.getDatabase("admin").executeCommand(
                     new MongoCommand(new CommandDocument("ismaster", 1))));
-            float newPingMS = (System.nanoTime() - start) / 1000000F;
-
-            // TODO: smoothing doesn't have any effect if a new instance is created every time
-            pingTimeMS = newPingMS;
-            // pingTimeMS + ((newPingMS - pingTimeMS) / LATENCY_SMOOTH_FACTOR);
-
-            return res;
         }
 
-        protected float getPingTimeMS() {
-            return pingTimeMS;
+        @Override
+        public ServerAddress getServerAddress() {
+            return client.getServerAddress();
         }
 
-        public SingleChannelMongoClient getClient() {
-            return client;
+        @Override
+        public void close() {
+            client.close();
         }
     }
+
+    interface IsMasterExecutorFactory {
+        IsMasterExecutor create(ServerAddress serverAddress);
+    }
+
+    class MongoClientIsMasterExecutorFactory implements IsMasterExecutorFactory {
+
+        private BufferPool<ByteBuffer> bufferPool;
+        private MongoClientOptions options;
+
+        MongoClientIsMasterExecutorFactory(final BufferPool<ByteBuffer> bufferPool, final MongoClientOptions options) {
+            this.bufferPool = bufferPool;
+            this.options = options;
+        }
+
+        @Override
+        public IsMasterExecutor create(final ServerAddress serverAddress) {
+            return new MongoClientIsMasterExecutor(new SingleChannelMongoClient(serverAddress, bufferPool, options));
+        }
+    }
+
 }
