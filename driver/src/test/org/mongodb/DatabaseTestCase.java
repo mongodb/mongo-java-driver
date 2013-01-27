@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.bson.types.Document;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
@@ -31,21 +31,33 @@ public class DatabaseTestCase {
 
     @BeforeClass
     public static void setupTestSuite() {
-        database = Fixture.getMongoClient().getDatabase("DriverTest" + System.currentTimeMillis());
-
-        //oooh, just realised this is nasty, looks like we're dropping the admin database
-        database.admin().drop();
-    }
-
-    @AfterClass
-    public static void teardownTestSuite() {
-        database.admin().drop();
+        if (database == null) {
+            database = Fixture.getMongoClient().getDatabase("DriverTest-" + System.nanoTime());
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+        }
     }
 
     @Before
     public void setUp() {
         //create a brand new collection for each test
-        collectionName = getClass().getSimpleName() + System.currentTimeMillis();
+        collectionName = getClass().getSimpleName(); // + "-" + System.currentTimeMillis();
         collection = database.getCollection(collectionName);
+        collection.admin().drop();
     }
+
+    @After
+    public void tearDown() {
+        collection.admin().drop();
+    }
+
+    static class ShutdownHook extends Thread {
+        @Override
+        public void run() {
+            if (database != null) {
+                database.admin().drop();
+                Fixture.getMongoClient().close();
+            }
+        }
+    }
+
 }

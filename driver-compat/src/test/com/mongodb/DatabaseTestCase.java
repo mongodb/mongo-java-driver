@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
@@ -31,20 +31,17 @@ public class DatabaseTestCase {
     //CHECKSTYLE:ON
 
     @BeforeClass
-    public static void setupTestSuite() {
-        database = getMongoClient().getDB("DriverCompatibilityTest" + System.currentTimeMillis());
-        database.dropDatabase();
-    }
-
-    @AfterClass
-    public static void teardownTestSuite() {
-        database.dropDatabase();
+    public static synchronized void setupTestSuite() {
+        if (database == null) {
+            database = getMongoClient().getDB("DriverCompatibilityTest-" + System.nanoTime());
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+        }
     }
 
     @Before
     public void setUp() {
         //create a brand new collection for each test
-        collectionName = getClass().getSimpleName() + System.currentTimeMillis();
+        collectionName = getClass().getSimpleName() + "-" + System.currentTimeMillis();
         collection = database.getCollection(collectionName);
 
         collection.drop();
@@ -52,7 +49,22 @@ public class DatabaseTestCase {
         collection.setWriteConcern(WriteConcern.ACKNOWLEDGED);
     }
 
+    @After
+    public void tearDown() {
+        collection.drop();
+    }
+
     public MongoClient getClient() {
         return getMongoClient();
+    }
+
+    static class ShutdownHook extends Thread {
+        @Override
+        public void run() {
+            if (database != null) {
+                database.dropDatabase();
+                getMongoClient().close();
+            }
+        }
     }
 }
