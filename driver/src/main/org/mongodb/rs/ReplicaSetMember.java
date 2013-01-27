@@ -48,8 +48,8 @@ public class ReplicaSetMember extends Node {
         this.tags = Collections.unmodifiableSet(new HashSet<Tag>(tags));
     }
 
-    public ReplicaSetMember(final ServerAddress serverAddress, final float pingTime) {
-        this(serverAddress, null, pingTime, false, false, false, new HashSet<Tag>(), 0);
+    public ReplicaSetMember(final ServerAddress serverAddress) {
+        this(serverAddress, null, 0, false, false, false, new HashSet<Tag>(), 0);
     }
 
     public boolean primary() {
@@ -99,31 +99,22 @@ public class ReplicaSetMember extends Node {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
+        if (!super.equals(o)) {
+            return false;
+        }
 
-        final ReplicaSetMember node = (ReplicaSetMember) o;
+        final ReplicaSetMember that = (ReplicaSetMember) o;
 
-        if (isPrimary != node.isPrimary) {
+        if (isPrimary != that.isPrimary) {
             return false;
         }
-        if (getMaxBsonObjectSize() != node.getMaxBsonObjectSize()) {
+        if (isSecondary != that.isSecondary) {
             return false;
         }
-        if (isSecondary != node.isSecondary) {
+        if (setName != null ? !setName.equals(that.setName) : that.setName != null) {
             return false;
         }
-        if (isOk() != node.isOk()) {
-            return false;
-        }
-        if (Float.compare(super.getPingTime(), super.getPingTime()) != 0) {
-            return false;
-        }
-        if (!getAddress().equals(node.getAddress())) {
-            return false;
-        }
-        if (!tags.equals(node.tags)) {
-            return false;
-        }
-        if (!setName.equals(node.setName)) {
+        if (!tags.equals(that.tags)) {
             return false;
         }
 
@@ -132,14 +123,21 @@ public class ReplicaSetMember extends Node {
 
     @Override
     public int hashCode() {
-        int result = getAddress().hashCode();
-        result = 31 * result + (super.getPingTime() != +0.0f ? Float.floatToIntBits(super.getPingTime()) : 0);
+        int result = super.hashCode();
         result = 31 * result + tags.hashCode();
-        result = 31 * result + (isOk() ? 1 : 0);
         result = 31 * result + (isPrimary ? 1 : 0);
         result = 31 * result + (isSecondary ? 1 : 0);
-        result = 31 * result + setName.hashCode();
-        result = 31 * result + getMaxBsonObjectSize();
+        result = 31 * result + (setName != null ? setName.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ReplicaSetMember{" +
+                "tags=" + tags +
+                ", isPrimary=" + isPrimary +
+                ", isSecondary=" + isSecondary +
+                ", setName='" + setName + '\'' +
+                "} " + super.toString();
     }
 }

@@ -46,6 +46,14 @@ public class Node {
         return getAddress();
     }
 
+    public ServerAddress getAddress() {
+        return address;
+    }
+
+    public float getPingTime() {
+        return pingTime;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -94,11 +102,13 @@ public class Node {
         return buf.toString();
     }
 
-    protected ServerAddress getAddress() {
-        return address;
-    }
-
-    protected float getPingTime() {
-        return pingTime;
+    @Override
+    public String toString() {
+        return "Node{" +
+                "address=" + address +
+                ", pingTime=" + pingTime +
+                ", ok=" + ok +
+                ", maxBsonObjectSize=" + maxBsonObjectSize +
+                '}';
     }
 }

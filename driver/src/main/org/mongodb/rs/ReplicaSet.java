@@ -17,6 +17,7 @@
 package org.mongodb.rs;
 
 import org.mongodb.MongoException;
+import org.mongodb.ServerAddress;
 import org.mongodb.annotations.Immutable;
 
 import java.util.ArrayList;
@@ -64,6 +65,16 @@ public class ReplicaSet {
         checkStatus();
 
         return all;
+    }
+
+    public ReplicaSetMember getMember(final ServerAddress serverAddress) {
+        checkStatus();
+        for (ReplicaSetMember cur : all) {
+            if (cur.getServerAddress().equals(serverAddress)) {
+                return cur;
+            }
+        }
+        return null;
     }
 
     public boolean hasPrimary() {
