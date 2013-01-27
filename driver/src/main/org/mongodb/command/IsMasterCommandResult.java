@@ -32,7 +32,8 @@ public class IsMasterCommandResult extends CommandResult {
     }
 
     public boolean isSecondary() {
-        return (Boolean) getResponse().get("secondary");
+        Boolean isSecondary = (Boolean) getResponse().get("secondary");
+        return isSecondary == null ? false : isSecondary;
     }
 
     @SuppressWarnings("unchecked")
