@@ -28,11 +28,13 @@ import java.util.List;
 public class MongoReplyMessage<T> {
 
     private final MongoReplyHeader replyHeader;
+    private final long elapsedNanoseconds;
     private final List<T> documents;
 
     public MongoReplyMessage(final MongoReplyHeader replyHeader, final InputBuffer bodyInputBuffer,
-                             final Serializer<T> serializer) {
+                             final Serializer<T> serializer, final long elapsedNanoseconds) {
         this.replyHeader = replyHeader;
+        this.elapsedNanoseconds = elapsedNanoseconds;
 
         documents = new ArrayList<T>(replyHeader.getNumberReturned());
 
@@ -49,5 +51,14 @@ public class MongoReplyMessage<T> {
 
     public List<T> getDocuments() {
         return documents;
+    }
+
+    /**
+     * The number of nanoseconds elapses since the message that this is a reply to was sent.
+     *
+     * @return elapsed nanoseconds
+     */
+    public long getElapsedNanoseconds() {
+        return elapsedNanoseconds;
     }
 }

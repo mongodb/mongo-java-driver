@@ -53,6 +53,7 @@ public class MongoChannel {
         this.address = address;
         this.pool = pool;
         this.errorSerializer = errorSerializer;
+        open();
     }
 
     public ServerAddress getAddress() {
@@ -75,17 +76,19 @@ public class MongoChannel {
     }
 
     public <T> MongoReplyMessage<T> sendQueryMessage(final MongoQueryMessage message, final Serializer<T> serializer) {
+        long start = System.nanoTime();
         sendOneWayMessage(message);
-        return receiveMessage(message, serializer);
+        return receiveMessage(message, serializer, start);
     }
 
     public <T> MongoReplyMessage<T> sendGetMoreMessage(final MongoGetMoreMessage message,
                                                        final Serializer<T> serializer) {
+        long start = System.nanoTime();
         sendOneWayMessage(message);
-        return receiveMessage(message, serializer);
+        return receiveMessage(message, serializer, start);
     }
 
-    public <T> MongoReplyMessage<T> receiveMessage(final MongoRequestMessage message, final Serializer<T> serializer) {
+    private <T> MongoReplyMessage<T> receiveMessage(final MongoRequestMessage message, final Serializer<T> serializer, final long start) {
         ByteBuffer headerByteBuffer = null;
         ByteBuffer bodyByteBuffer = null;
         try {
@@ -110,10 +113,10 @@ public class MongoChannel {
             }
             else if (replyHeader.isQueryFailure()) {
                 final Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,
-                                                                              errorSerializer).getDocuments().get(0);
+                                                                              errorSerializer, System.nanoTime() - start).getDocuments().get(0);
                 throw new MongoQueryFailureException(address, errorDocument);
             }
-            return new MongoReplyMessage<T>(replyHeader, bodyInputBuffer, serializer);
+            return new MongoReplyMessage<T>(replyHeader, bodyInputBuffer, serializer, System.nanoTime() - start);
         } catch (SocketTimeoutException e) {
             throw new MongoSocketReadTimeoutException("Exception receiving message", address, e);
         } catch (InterruptedIOException e) {
@@ -155,6 +158,7 @@ public class MongoChannel {
         try {
             if (socketChannel != null) {
                 socketChannel.close();
+                socketChannel = null;
             }
         } catch (IOException e) {
             // ignore
