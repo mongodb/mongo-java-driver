@@ -24,17 +24,20 @@ public class CommandResult {
     private final Document command;
     private final ServerAddress address;
     private final Document response;
+    private final long elapsedNanoseconds;
 
-    public CommandResult(final Document command, final ServerAddress address, final Document response) {
+    public CommandResult(final Document command, final ServerAddress address, final Document response, final long elapsedNanoseconds) {
         this.command = command;
         this.address = address;
         this.response = response;
+        this.elapsedNanoseconds = elapsedNanoseconds;
     }
 
     public CommandResult(final CommandResult baseResult) {
         this.command = baseResult.command;
         this.address = baseResult.address;
         this.response = baseResult.response;
+        this.elapsedNanoseconds = baseResult.elapsedNanoseconds;
     }
 
     public Document getCommand() {
@@ -60,4 +63,7 @@ public class CommandResult {
         return (String) getResponse().get("err");
     }
 
+    public long getElapsedNanoseconds() {
+        return elapsedNanoseconds;
+    }
 }

@@ -167,7 +167,7 @@ class SingleChannelMongoClient extends AbstractMongoClient {
             final MongoReplyMessage<Document> replyMessage = channel.sendQueryMessage(message, serializer);
 
             return new CommandResult(commandOperation.toDocument(), channel.getAddress(),
-                                     replyMessage.getDocuments().get(0));
+                                     replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds());
         }
 
         @Override
