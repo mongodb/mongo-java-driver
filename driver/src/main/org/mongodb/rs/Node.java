@@ -104,11 +104,12 @@ public class Node {
 
     @Override
     public String toString() {
-        return "Node{" +
-                "address=" + address +
-                ", pingTime=" + pingTime +
-                ", ok=" + ok +
-                ", maxBsonObjectSize=" + maxBsonObjectSize +
-                '}';
+        return "Node{"
+                + "address=" + address
+                + ", pingTime=" + pingTime
+                + ", ok=" + ok
+                + ", maxBsonObjectSize="
+                + maxBsonObjectSize
+                + '}';
     }
 }

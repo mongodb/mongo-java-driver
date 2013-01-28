@@ -133,11 +133,15 @@ public class ReplicaSetMember extends Node {
 
     @Override
     public String toString() {
-        return "ReplicaSetMember{" +
-                "tags=" + tags +
-                ", isPrimary=" + isPrimary +
-                ", isSecondary=" + isSecondary +
-                ", setName='" + setName + '\'' +
-                "} " + super.toString();
+        return "ReplicaSetMember{"
+                + "tags=" + tags
+                + ", isPrimary=" + isPrimary
+                + ", isSecondary=" + isSecondary
+                + ", setName='" + setName + '\''
+                + "address=" + getServerAddress()
+                + ", pingTime=" + getPingTime()
+                + ", ok=" + isOk()
+                + ", maxBsonObjectSize=" + getMaxBsonObjectSize()
+                + "} ";
     }
 }
