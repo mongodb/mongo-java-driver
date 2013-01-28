@@ -140,7 +140,7 @@ class SingleChannelMongoClient extends AbstractMongoClient {
 
     private CommandResult sendWriteMessage(final MongoNamespace namespace, final MongoRequestMessage writeMessage,
                                            final MongoWrite write) {
-        channel.sendOneWayMessage(writeMessage);
+        channel.sendMessage(writeMessage);
         if (write.getWriteConcern().callGetLastError()) {
             return getLastError(namespace, write);
         }
@@ -233,7 +233,7 @@ class SingleChannelMongoClient extends AbstractMongoClient {
         public void killCursors(final MongoKillCursor killCursor) {
             final MongoKillCursorsMessage message = new MongoKillCursorsMessage(new PooledByteBufferOutput(getBufferPool()),
                                                                                 killCursor);
-            channel.sendOneWayMessage(message);
+            channel.sendMessage(message);
         }
     }
 }

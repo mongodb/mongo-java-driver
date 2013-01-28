@@ -59,16 +59,9 @@ public class MongoChannel {
         return address;
     }
 
-    public void sendOneWayMessage(final MongoRequestMessage message) {
-        try {
-            ensureOpen();
-
-            message.pipe(socketChannel);
-        } catch (IOException e) {
-            throw new MongoSocketWriteException("Exception sending message", address, e);
-        } finally {
-            message.close();
-        }
+    public void sendMessage(final MongoRequestMessage message) {
+        ensureOpen();
+        sendOneWayMessage(message);
     }
 
     public <T> MongoReplyMessage<T> sendQueryMessage(final MongoQueryMessage message, final Serializer<T> serializer) {
@@ -84,6 +77,16 @@ public class MongoChannel {
         long start = System.nanoTime();
         sendOneWayMessage(message);
         return receiveMessage(message, serializer, start);
+    }
+
+    private void sendOneWayMessage(final MongoRequestMessage message) {
+        try {
+            message.pipe(socketChannel);
+        } catch (IOException e) {
+            throw new MongoSocketWriteException("Exception sending message", address, e);
+        } finally {
+            message.close();
+        }
     }
 
     private <T> MongoReplyMessage<T> receiveMessage(final MongoRequestMessage message, final Serializer<T> serializer, final long start) {
