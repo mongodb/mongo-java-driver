@@ -258,7 +258,7 @@ project(':bson') {
 
 project(':driver') {
 
-    sourceSets {Mongo
+    sourceSets {
         acceptance {
             java {
                 srcDir 'src/acceptancetest'
