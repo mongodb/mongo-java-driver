@@ -26,6 +26,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 public abstract class TestBase {
     public static final String DEFAULT_DB_NAME = "morphia-test";
@@ -39,19 +40,19 @@ public abstract class TestBase {
     protected AdvancedDatastore ads;
     protected Morphia morphia;
 
-    protected TestBase() {
-        synchronized (TestBase.class) {
-            if (mongo == null) {
-                String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-                final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
-                        ? DEFAULT_URI : mongoURIProperty;
-                try {
-                    mongo = new MongoClient(new MongoClientURI(mongoURIString));
-                    db = mongo.getDB(DEFAULT_DB_NAME);
-                    db.dropDatabase();
-                } catch (Exception e) {
-                    throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURIString, e);
-                }
+    @BeforeClass
+    public static void setupTestSuite() {
+        if (mongo == null) {
+            String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+            final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
+                    ? DEFAULT_URI : mongoURIProperty;
+            try {
+                mongo = new MongoClient(new MongoClientURI(mongoURIString));
+                db = mongo.getDB(DEFAULT_DB_NAME);
+                db.dropDatabase();
+                Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURIString, e);
             }
         }
     }
@@ -63,14 +64,20 @@ public abstract class TestBase {
         ads = (AdvancedDatastore) ds;
     }
 
-    protected void cleanup() {
+    @After
+    public void tearDown() {
         for (final MappedClass mc : morphia.getMapper().getMappedClasses()) {
             db.getCollection(mc.getCollectionName()).drop();
         }
     }
 
-    @After
-    public void tearDown() {
-        cleanup();
+    static class ShutdownHook extends Thread {
+        @Override
+        public void run() {
+            if (db != null) {
+                db.dropDatabase();
+                mongo.close();
+            }
+        }
     }
 }

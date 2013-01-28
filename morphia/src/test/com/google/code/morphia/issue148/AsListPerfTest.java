@@ -53,11 +53,6 @@ public class AsListPerfTest extends TestBase {
     private final int threadPool = 10;
 
     @Override
-    public void cleanup() {
-        //do nothing...
-    }
-
-    @Override
     public void setUp() {
         super.setUp();
         morphia.map(Address.class);

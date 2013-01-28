@@ -19,20 +19,14 @@ package com.google.code.morphia;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
 import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.Mongo;
-import com.mongodb.WriteConcern;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.net.UnknownHostException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
@@ -137,6 +131,7 @@ public class PerfTest extends TestBase {
         private long var2;
     }
 
+/*
     @Test
     public void testDifference() throws UnknownHostException {
         final Morphia morphia = new Morphia();
@@ -203,4 +198,5 @@ public class PerfTest extends TestBase {
         c.insert(batchPush);
         System.out.println("Time taken batch regular: " + (System.currentTimeMillis() - start) + "ms");
     }
+*/
 }

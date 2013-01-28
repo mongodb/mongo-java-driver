@@ -17,32 +17,15 @@
 package org.mongodb.acceptancetest.crud;
 
 import org.bson.types.Document;
-import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.MongoClient;
-import org.mongodb.MongoCollection;
+import org.mongodb.DatabaseTestCase;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoDatabase;
 import org.mongodb.QueryFilterDocument;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Fixture.getMongoClient;
 
-public class InsertMongoDocumentAcceptanceTest {
-    private static final String DB_NAME = "InsertMongoDocumentAcceptanceTest";
-    private MongoCollection<Document> collection;
-
-    @Before
-    public void setUp() {
-        final MongoClient mongoClient = getMongoClient();
-
-        final MongoDatabase database = mongoClient.getDatabase(DB_NAME);
-        database.admin().drop();
-
-        collection = database.getCollection("collection");
-    }
-
+public class InsertMongoDocumentAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldInsertSimpleUntypedDocument() {
         final Document simpleDocument = new Document("name", "Billy");
@@ -55,5 +38,4 @@ public class InsertMongoDocumentAcceptanceTest {
 
         assertThat((String) insertTestDocumentMongoCursor.next().get("name"), is("Billy"));
     }
-
 }
