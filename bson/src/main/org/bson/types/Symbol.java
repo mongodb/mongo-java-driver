@@ -37,6 +37,12 @@ public class Symbol implements Serializable {
         return symbol;
     }
 
+    /**
+     * Will compare equal to a String that is equal to the String that this holds
+     *
+     * @param o the Symbol to compare this to
+     * @return true if parameter o is the same as this Symbol
+     */
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -60,15 +66,7 @@ public class Symbol implements Serializable {
         return symbol.hashCode();
     }
 
-    /**
-     * Will compare equal to a String that is equal to the String that this holds
-     *
-     * @param o the Symbol to compare this to
-     * @return true if parameter o is the same as this Symbol
-     */
     @Override
-
-
     public String toString() {
         return symbol;
     }
