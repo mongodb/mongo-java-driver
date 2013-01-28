@@ -17,8 +17,6 @@
 package org.mongodb.protocol;
 
 import org.bson.BSONBinaryWriter;
-import org.bson.BinaryWriterSettings;
-import org.bson.BsonWriterSettings;
 import org.bson.io.OutputBuffer;
 import org.mongodb.ReadPreference;
 import org.mongodb.serialization.Serializer;
@@ -101,12 +99,9 @@ public class MongoRequestMessage {
     }
 
     protected  <T> void addDocument(final T obj, final Serializer<T> serializer) {
-        // TODO fix this constructor call to remove hard coding
-        final BSONBinaryWriter writer = new BSONBinaryWriter(new BsonWriterSettings(100),
-                new BinaryWriterSettings(1024 * 1024 * 16), getBuffer());
+        final BSONBinaryWriter writer = new BSONBinaryWriter(getBuffer());
 
         try {
-            // TODO: deal with serialization options
             serializer.serialize(writer, obj);
         } finally {
             writer.close();
