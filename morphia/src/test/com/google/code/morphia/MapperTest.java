@@ -21,8 +21,11 @@ import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.PostLoad;
 import com.google.code.morphia.annotations.Property;
 import com.google.code.morphia.annotations.Reference;
+import com.google.code.morphia.mapping.Mapper;
 import com.google.code.morphia.mapping.lazy.LazyFeatureDependencies;
+import com.google.code.morphia.query.FilterOperator;
 import org.bson.types.ObjectId;
+import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -210,4 +213,14 @@ public class MapperTest extends TestBase {
         ds.save(ucio);
     }
 
+    @Test
+    public void shouldTestCrazyComplexMethodThatAlmostAlwaysReturnsTrueRegardless() {
+        Assert.assertThat(Mapper.isCompatibleForOperator(int.class, FilterOperator.ALL, 4545), Is.is(true));
+        Assert.assertThat(Mapper.isCompatibleForOperator(Integer.class, FilterOperator.ALL, 4545), Is.is(true));
+        Assert.assertThat(Mapper.isCompatibleForOperator(long.class, FilterOperator.ALL, 4545), Is.is(true));
+        Assert.assertThat(Mapper.isCompatibleForOperator(Long.class, FilterOperator.ALL, 4545), Is.is(true));
+
+        Assert.assertThat(Mapper.isCompatibleForOperator(double.class, FilterOperator.ALL, 4545), Is.is(true));
+        Assert.assertThat(Mapper.isCompatibleForOperator(Double.class, FilterOperator.ALL, 4545), Is.is(true));
+    }
 }

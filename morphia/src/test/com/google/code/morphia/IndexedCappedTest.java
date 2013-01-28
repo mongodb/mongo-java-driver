@@ -26,7 +26,6 @@ import com.google.code.morphia.annotations.Indexes;
 import com.google.code.morphia.annotations.Property;
 import com.google.code.morphia.mapping.MappedClass;
 import com.google.code.morphia.utils.IndexDirection;
-import com.google.code.morphia.utils.IndexFieldDef;
 import com.mongodb.DBObject;
 import org.bson.types.ObjectId;
 import org.junit.Before;
@@ -41,7 +40,6 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Scott Hernandez
  */
-@SuppressWarnings("deprecation")
 public class IndexedCappedTest extends TestBase {
     @Entity(cap = @CappedAt(count = 1))
     @SuppressWarnings("UnusedDeclaration")
@@ -185,14 +183,13 @@ public class IndexedCappedTest extends TestBase {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testMultipleIndexedFields() {
         final MappedClass mc = morphia.getMapper().getMappedClass(Ad.class);
         this.morphia.map(Ad.class);
 
-        final IndexFieldDef[] defs = {new IndexFieldDef("lastMod"), new IndexFieldDef("active", IndexDirection.DESC)};
         assertFalse(hasNamedIndex("lastMod_1_active_-1", db.getCollection(mc.getCollectionName()).getIndexInfo()));
-        ds.ensureIndex(Ad.class, defs);
+
+        ds.ensureIndex(Ad.class, "lastMod, -active");
         assertTrue(hasNamedIndex("lastMod_1_active_-1", db.getCollection(mc.getCollectionName()).getIndexInfo()));
     }
 

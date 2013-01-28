@@ -79,8 +79,8 @@ public class BasicDAO<T, K> implements DAO<T, K> {
     /**
      * Converts from a List<Key> to their id values
      *
-     * @param keys
-     * @return
+     * @param keys a list of Key objects
+     * @return a list of IDs
      */
     protected List<?> keysToIds(final List<Key<T>> keys) {
         final ArrayList ids = new ArrayList(keys.size() * 2);

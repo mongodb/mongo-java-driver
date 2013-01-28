@@ -27,7 +27,7 @@ import com.google.code.morphia.logging.MorphiaLoggerFactory;
  */
 public final class LazyFeatureDependencies {
 
-    private static final Logr logger = MorphiaLoggerFactory.get(LazyFeatureDependencies.class);
+    private static final Logr LOGGER = MorphiaLoggerFactory.get(LazyFeatureDependencies.class);
     private static Boolean fullFilled;
 
     private LazyFeatureDependencies() {
@@ -36,7 +36,7 @@ public final class LazyFeatureDependencies {
     public static boolean assertDependencyFullFilled() {
         final boolean fullfilled = testDependencyFullFilled();
         if (!fullfilled) {
-            logger.warning("Lazy loading impossible due to missing dependencies.");
+            LOGGER.warning("Lazy loading impossible due to missing dependencies.");
         }
         return fullfilled;
     }
@@ -54,16 +54,13 @@ public final class LazyFeatureDependencies {
         return fullFilled;
     }
 
-    /**
-     * @return
-     */
     public static LazyProxyFactory createDefaultProxyFactory() {
         if (testDependencyFullFilled()) {
             final String factoryClassName = "com.google.code.morphia.mapping.lazy.CGLibLazyProxyFactory";
             try {
                 return (LazyProxyFactory) Class.forName(factoryClassName).newInstance();
             } catch (Exception e) {
-                logger.error("While instanciating " + factoryClassName, e);
+                LOGGER.error("While instanciating " + factoryClassName, e);
             }
         }
         return null;

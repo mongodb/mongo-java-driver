@@ -74,7 +74,7 @@ public interface QueryResults<T> extends Iterable<T> {
      * Calls <code>tail(true);</code>
      *
      * @return an Iterator.
-     * @see tail(boolean)
+     * @see #tail(boolean)
      */
     Iterator<T> tail();
 

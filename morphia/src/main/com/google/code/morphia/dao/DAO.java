@@ -56,7 +56,7 @@ public interface DAO<T, K> {
     /**
      * Deletes the entity
      *
-     * @return
+     * @return a WriteResult representing the success or failure of this operation
      */
     WriteResult delete(T entity, WriteConcern wc);
 

@@ -66,7 +66,7 @@ public interface Datastore {
     /**
      * Deletes the given entities based on the query, with the WriteConcern
      *
-     * @return
+     * @return a WriteResult representing the success or failure of this operation
      */
     <T> WriteResult delete(Query<T> q, WriteConcern wc);
 

@@ -21,7 +21,6 @@ import com.google.code.morphia.Key;
 import com.google.code.morphia.annotations.Converters;
 import com.google.code.morphia.annotations.Embedded;
 import com.google.code.morphia.annotations.Entity;
-import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.NotSaved;
 import com.google.code.morphia.annotations.PostLoad;
 import com.google.code.morphia.annotations.PreLoad;
@@ -71,12 +70,12 @@ import java.util.regex.Pattern;
  * @author Olafur Gauti Gudmundsson
  * @author Scott Hernandez
  */
-@SuppressWarnings({"unchecked", "rawtypes", "CanBeFinal"})
+@SuppressWarnings({ "unchecked", "rawtypes", "CanBeFinal" })
 public class Mapper {
     private static final Logr log = MorphiaLoggerFactory.get(Mapper.class);
 
     /**
-     * The @{@link Id} field name that is stored with mongodb.
+     * The @{@link com.google.code.morphia.annotations.Id} field name that is stored with mongodb.
      */
     public static final String ID_KEY = "_id";
     /**
@@ -240,7 +239,7 @@ public class Mapper {
     }
 
     /**
-     * <p> Updates the @{@link Id} fields. </p>
+     * <p> Updates the @{@link com.google.code.morphia.annotations.Id} fields. </p>
      *
      * @param entity The object to update
      * @param dbObj  Value to update with; null means skip
@@ -260,7 +259,7 @@ public class Mapper {
                     // hasn't changed. That would be unexpected, and could
                     // indicate a bad state.
                     if (!dbIdValue.equals(oldIdValue)) {
-                        mf.setFieldValue(entity, oldIdValue);//put the value back...
+                        mf.setFieldValue(entity, oldIdValue); //put the value back...
 
                         throw new RuntimeException("@Id mismatch: " + oldIdValue + " != " + dbIdValue + " for "
                                                    + entity.getClass().getName());
@@ -300,7 +299,7 @@ public class Mapper {
 
     /**
      * <p> Converts a java object to a mongo-compatible object (possibly a DBObject for complex mappings). Very similar
-     * to {@link Mapper.toDBObject} </p> <p> Used (mainly) by query/update operations </p>
+     * to {@link #toDBObject(Object)} </p> <p> Used (mainly) by query/update operations </p>
      */
     Object toMongoObject(final Object javaObj, final boolean includeClassName) {
         if (javaObj == null) {
@@ -390,7 +389,7 @@ public class Mapper {
 
     /**
      * <p> Converts a java object to a mongo-compatible object (possibly a DBObject for complex mappings). Very similar
-     * to {@link Mapper.toDBObject} </p> <p> Used (mainly) by query/update operations </p>
+     * to {@link #toDBObject(Object)} </p> <p> Used (mainly) by query/update operations </p>
      */
     public Object toMongoObject(final MappedField mf, final MappedClass mc, final Object value) {
         Object mappedValue = value;
@@ -433,7 +432,7 @@ public class Mapper {
                 log.error("Error converting value(" + value + ") to reference.", e);
                 mappedValue = toMongoObject(value, false);
             }
-        }//serialized
+        } //serialized
         else if (mf != null && mf.hasAnnotation(Serialized.class)) {
             try {
                 mappedValue = Serializer.serialize(value, !mf.getAnnotation(Serialized.class).disableCompression());
@@ -494,7 +493,7 @@ public class Mapper {
 
     /**
      * <p> Converts an entity (POJO) to a DBObject; A special field will be added to keep track of the class: {@link
-     * Mapper.CLASS_NAME_FIELDNAME} </p>
+     * #CLASS_NAME_FIELDNAME} </p>
      *
      * @param entity The POJO
      */
@@ -504,7 +503,7 @@ public class Mapper {
 
     /**
      * <p> Converts an entity (POJO) to a DBObject (for use with low-level driver); A special field will be added to
-     * keep track of the class: {@link Mapper.CLASS_NAME_FIELDNAME} </p>
+     * keep track of the class: {@link #CLASS_NAME_FIELDNAME} </p>
      *
      * @param entity          The POJO
      * @param involvedObjects A Map of (already converted) POJOs
@@ -645,7 +644,7 @@ public class Mapper {
     }
 
     public EntityCache createEntityCache() {
-        return new DefaultEntityCache();// TODO choose impl
+        return new DefaultEntityCache(); // TODO choose impl
     }
 
     public <T> Key<T> refToKey(final DBRef ref) {
@@ -712,7 +711,7 @@ public class Mapper {
             }
 
             MappedClass mc = mapr.getMappedClass(clazz);
-            for (int i = 0; ; ) {
+            for (int i = 0;;) {
                 final String part = parts[i];
                 mf = mc.getMappedField(part);
 
@@ -832,11 +831,11 @@ public class Mapper {
             return true;
         }
         else if (value instanceof Integer
-                 && (int.class.equals(type) || long.class.equals(type) || Long.class.equals(type))) {
+                 && ("int".equals(type.getName()) || "long".equals(type.getName()) || Long.class.equals(type))) {
             return true;
         }
         else if ((value instanceof Integer || value instanceof Long)
-                 && (double.class.equals(type) || Double.class.equals(type))) {
+                 && ("double".equals(type.getName()) || Double.class.equals(type))) {
             return true;
         }
         else if (value instanceof Pattern && String.class.equals(type)) {
