@@ -260,6 +260,29 @@ public class DB implements IDB {
     }
 
     @Override
+    public boolean collectionExists(final String collectionName) {
+        final Set<String> collectionNames = database.admin().getCollectionNames();
+        for (String name : collectionNames) {
+            if (name.equalsIgnoreCase(collectionName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public CommandResult getLastError(final WriteConcern concern) {
+        //TODO: this should be reflected somewhere in the new API?
+        final GetLastError getLastError = new GetLastError(concern.toNew());
+        org.mongodb.result.CommandResult commandResult = database.executeCommand(getLastError);
+        commandResult = getLastError.parseGetLastErrorResponse(commandResult);
+
+        return new CommandResult(commandResult);
+    }
+
+    // ********* Missing functionality.  Sadly, also missing tests....
+
+    @Override
     public CommandResult command(final DBObject cmd, final IDBCollection.DBEncoder encoder) {
         throw new IllegalStateException("Not implemented yet!");
     }
@@ -270,8 +293,8 @@ public class DB implements IDB {
     }
 
     @Override
-    public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs, final
-    IDBCollection.DBEncoder encoder) {
+    public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs,
+                                 final IDBCollection.DBEncoder encoder) {
         throw new IllegalStateException("Not implemented yet!");
     }
 
@@ -306,23 +329,8 @@ public class DB implements IDB {
     }
 
     @Override
-    public boolean collectionExists(final String collectionName) {
-        return database.admin().getCollectionNames().contains(collectionName);
-    }
-
-    @Override
     public CommandResult getLastError() {
         return getLastError(WriteConcern.ACKNOWLEDGED);
-    }
-
-    @Override
-    public CommandResult getLastError(final WriteConcern concern) {
-        //TODO: this should be reflected somewhere in the new API?
-        final GetLastError getLastError = new GetLastError(concern.toNew());
-        org.mongodb.result.CommandResult commandResult = database.executeCommand(getLastError);
-        commandResult = getLastError.parseGetLastErrorResponse(commandResult);
-
-        return new CommandResult(commandResult);
     }
 
     @Override
