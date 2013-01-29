@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import com.mongodb.util.JSON;
 import org.bson.types.ObjectId;
 
 import java.util.Date;
@@ -60,11 +61,11 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     /**
      * Creates a DBObject from a map.
      *
-     * @param m map to convert
+     * @param map map to convert
      */
     @SuppressWarnings("unchecked")
-    public BasicBSONObject(final Map m) {
-        super(m);
+    public BasicBSONObject(final Map map) {
+        super(map);
     }
 
     /**
@@ -339,6 +340,16 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
         put(key, val);
 
         return this;
+    }
+
+    /**
+     * Returns a JSON serialization of this object
+     *
+     * @return JSON serialization
+     */
+    @Override
+    public String toString() {
+        return JSON.serialize(this);
     }
 
     //CHECKSTYLE:OFF

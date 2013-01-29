@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +14,30 @@
  * limitations under the License.
  */
 
-// BasicDBObject.java
-
 package com.mongodb;
 
-import com.mongodb.util.JSON;
 import org.bson.BasicBSONObject;
 
 import java.util.Map;
 
 /**
- * a basic implementation of bson object that is mongo specific. A <code>DBObject</code> can be created as follows,
+ * A basic implementation of BSON object that is mongo specific. A <code>DBObject</code> can be created as follows,
  * using this class:
  * <blockquote><pre>
  * DBObject obj = new BasicDBObject();
  * obj.put( "foo", "bar" );
  * </pre></blockquote>
  */
-@SuppressWarnings({ "rawtypes" })
 public class BasicDBObject extends BasicBSONObject implements DBObject {
-
     private static final long serialVersionUID = -4415279469780082174L;
+
+    private boolean isPartialObject;
 
     /**
      * Creates an empty object.
      */
     public BasicDBObject() {
+        super();
     }
 
     /**
@@ -55,7 +53,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
      * creates an object with the given key/value
      *
      * @param key   key under which to store
-     * @param value value to stor
+     * @param value value to store
      */
     public BasicDBObject(final String key, final Object value) {
         super(key, value);
@@ -64,51 +62,61 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
     /**
      * Creates an object from a map.
      *
-     * @param m map to convert
+     * @param map map to convert
      */
-    public BasicDBObject(final Map m) {
-        super(m);
-    }
-
-    public boolean isPartialObject() {
-        return _isPartialObject;
-    }
-
-    public void markAsPartialObject() {
-        _isPartialObject = true;
+    public BasicDBObject(final Map map) {
+        super(map);
     }
 
     /**
-     * Returns a JSON serialization of this object
+     * Add a key/value pair to this object
      *
-     * @return JSON serialization
+     * @param key the field name
+     * @param val the field value
+     * @return this BasicDBObject with the new values added
      */
-    @Override
-    public String toString() {
-        return JSON.serialize(this);
-    }
-
     @Override
     public BasicDBObject append(final String key, final Object val) {
         put(key, val);
         return this;
     }
 
+    /**
+     * Whether {@link #markAsPartialObject} was ever called only matters if you are going to upsert and do not want
+     * to risk losing fields.
+     * @return true if this has been marked as a partial object
+     */
+    @Override
+    public boolean isPartialObject() {
+        return isPartialObject;
+    }
+
+    /**
+     * If this object was retrieved with only some fields (using a field filter) this method will be called to mark
+     * it as such.
+     */
+    @Override
+    public void markAsPartialObject() {
+        isPartialObject = true;
+    }
+
+    /**
+     * @return a BasicDBObject with exactly the same values as this instance.
+     */
     public Object copy() {
         // copy field values into new object
-        final BasicDBObject newobj = new BasicDBObject(this.toMap());
+        final BasicDBObject newCopy = new BasicDBObject(this.toMap());
         // need to clone the sub obj
         for (final String field : keySet()) {
             final Object val = get(field);
             if (val instanceof BasicDBObject) {
-                newobj.put(field, ((BasicDBObject) val).copy());
+                newCopy.put(field, ((BasicDBObject) val).copy());
             }
             else if (val instanceof BasicDBList) {
-                newobj.put(field, ((BasicDBList) val).copy());
+                newCopy.put(field, ((BasicDBList) val).copy());
             }
         }
-        return newobj;
+        return newCopy;
     }
 
-    private boolean _isPartialObject;
 }
