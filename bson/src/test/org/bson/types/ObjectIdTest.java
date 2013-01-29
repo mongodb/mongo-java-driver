@@ -126,5 +126,20 @@ public class ObjectIdTest {
                 new ObjectId(Integer.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE).toHexString());
     }
 
+    @SuppressWarnings("deprecation")
+    @Test
+    public void testDeprecatedMethods() {
+        assertEquals(ObjectId.getGeneratedMachineIdentifier(), ObjectId.getGenMachineId());
+        assertEquals(ObjectId.getCurrentCounter(), ObjectId.getCurrentInc());
+
+        ObjectId id = new ObjectId();
+        assertEquals(id.getTimestamp(), id.getTimeSecond());
+        assertEquals(id.getCounter(), id.getInc());
+        assertEquals(id.getCounter(), id.inc());
+        assertEquals(id.getMachineIdentifier(), id.getMachine());
+        assertEquals(id.getMachineIdentifier(), id.machine());
+        assertEquals(id.toHexString(), id.toStringMongod());
+
+    }
 }
 
