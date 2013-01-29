@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import org.bson.types.Document;
+import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import static org.hamcrest.core.Is.is;
@@ -44,5 +45,16 @@ public class MongoSaveTest extends DatabaseTestCase {
         final Document document = new Document("_id", 1);
         collection.save(document);
         assertThat("Did not upsert the document", collection.one(), is(document));
+    }
+
+    @Test
+    public void shouldUpsertWithNewObjectId() {
+        final Document document = new Document("_id", new ObjectId()).append("x", 1);
+        collection.save(document);
+        assertThat("Did not replace the document", collection.one(), is(document));
+
+        document.put("y", 2);
+        collection.save(document);
+        assertThat("Did not replace the document", collection.one(), is(document));
     }
 }

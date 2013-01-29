@@ -40,6 +40,14 @@ public class MongoCursorTest extends DatabaseTestCase {
         }
     }
 
+    @After
+    public void tearDown() {
+        super.tearDown();
+        if (cursor != null) {
+            cursor.close();
+        }
+    }
+
     @Test
     public void testNormalLoopWithGetMore() {
         cursor = collection.sort(new SortCriteriaDocument("_id", 1)).batchSize(2).all();
@@ -91,12 +99,5 @@ public class MongoCursorTest extends DatabaseTestCase {
         cursor.next();
         cursor.close();
             cursor.hasNext();
-    }
-
-    @After
-    public void tearDown() {
-        if (cursor != null) {
-            cursor.close();
-        }
     }
 }

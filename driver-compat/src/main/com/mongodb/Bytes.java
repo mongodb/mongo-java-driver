@@ -233,16 +233,15 @@ public class Bytes extends BSON {
             return OBJECT;
         }
 
-        if (o instanceof Code) {
-            return CODE;
-        }
-
         if (o instanceof CodeWScope) {
             return CODE_W_SCOPE;
+        }
+
+        if (o instanceof Code) {
+            return CODE;
         }
 
         return -1;
     }
 
-    static final ObjectId COLLECTION_REF_ID = new ObjectId(-1, -1, -1);
 }
