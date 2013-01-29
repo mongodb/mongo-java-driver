@@ -16,33 +16,33 @@
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
-import com.mongodb.MongoAuthority;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredentials;
 import com.mongodb.ServerAddress;
 
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
 /**
- * Example usage of STRONGEST authentication protocol.
+ * Example usage of NEGOTIATE authentication protocol.
  * <p>
  * Usage:
  * </p>
  * <pre>
- *     java StrongestAuthenticationProtocolExample server userName password databaseName
+ *     java NegotiatedAuthenticationProtocolExample server userName password databaseName
  * </pre>
  */
-public class StrongestAuthenticationProtocolExample {
+public class NegotiatedAuthenticationProtocolExample {
     public static void main(String[] args) throws UnknownHostException, InterruptedException {
         String server = args[0];
         String user = args[1];
         String pwd = args[2];
         String db = args[3];
 
-        MongoCredentials credentials = new MongoCredentials(user, pwd.toCharArray(), MongoCredentials.Protocol.STRONGEST, db);
+        MongoCredentials credentials = new MongoCredentials(user, pwd.toCharArray(), MongoCredentials.Protocol.NEGOTIATE, db);
 
-        MongoClient mongoClient = new MongoClient(MongoAuthority.direct(new ServerAddress(server), credentials), new MongoClientOptions.Builder().build());
+        MongoClient mongoClient = new MongoClient(new ServerAddress(server), Arrays.asList(credentials), new MongoClientOptions.Builder().build());
 
         DB testDB = mongoClient.getDB(db);
         testDB.getCollection("test").insert(new BasicDBObject());

@@ -125,7 +125,7 @@ import java.util.logging.Logger;
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
- * <li>{@code authProtocol=STRONGEST|GSSAPI}: The authentication protocol to use.  The default is STRONGEST.
+ * <li>{@code authProtocol=NEGOTIATE|GSSAPI}: The authentication protocol to use.  The default is NEGOTIATE.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
  * the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
@@ -381,7 +381,7 @@ public class MongoClientURI {
             return null;
         }
 
-        MongoCredentials.Protocol protocol = MongoCredentials.Protocol.STRONGEST;
+        MongoCredentials.Protocol protocol = MongoCredentials.Protocol.NEGOTIATE;
         String authSource = database;
 
         for (String key : authKeys) {

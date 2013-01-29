@@ -15,7 +15,6 @@
  */
 
 import com.mongodb.DB;
-import com.mongodb.MongoAuthority;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredentials;
@@ -23,6 +22,7 @@ import com.mongodb.ServerAddress;
 
 import java.net.UnknownHostException;
 import java.security.Security;
+import java.util.Arrays;
 
 /**
  * Example usage of Kerberos (GSSAPI) credentials.
@@ -66,9 +66,8 @@ public class GSSAPICredentialsExample {
 
         System.out.println();
 
-        MongoClient mongoClient = new MongoClient(
-                MongoAuthority.direct(new ServerAddress(server),
-                        new MongoCredentials(user, MongoCredentials.Protocol.GSSAPI)),
+        MongoClient mongoClient = new MongoClient(new ServerAddress(server),
+                        Arrays.asList(new MongoCredentials(user, MongoCredentials.Protocol.GSSAPI)),
                 new MongoClientOptions.Builder().socketKeepAlive(true).socketTimeout(30000).build());
         DB testDB = mongoClient.getDB(databaseName);
 

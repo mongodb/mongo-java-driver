@@ -53,9 +53,9 @@ public class MongoCredentials {
             }
         },
         /**
-         * Uses the strongest available protocol available.  This is the default protocol.
+         * Negotiate the strongest available protocol available.  This is the default protocol.
          */
-        STRONGEST {
+        NEGOTIATE {
             /**
              * The default source is the "admin" database.
              * @return
@@ -81,7 +81,7 @@ public class MongoCredentials {
      * @param password the password
      */
     public MongoCredentials(final String userName, final char[] password) {
-        this(userName, password, Protocol.STRONGEST);
+        this(userName, password, Protocol.NEGOTIATE);
     }
 
     /**
@@ -92,7 +92,7 @@ public class MongoCredentials {
      * @param source   the source of the credentials
      */
     public MongoCredentials(final String userName, final char[] password, String source) {
-        this(userName, password, Protocol.STRONGEST, source);
+        this(userName, password, Protocol.NEGOTIATE, source);
     }
 
     /**
@@ -134,8 +134,8 @@ public class MongoCredentials {
             throw new IllegalArgumentException();
         }
 
-        if (protocol == Protocol.STRONGEST && password == null) {
-            throw new IllegalArgumentException("password can not be null for " + Protocol.STRONGEST);
+        if (protocol == Protocol.NEGOTIATE && password == null) {
+            throw new IllegalArgumentException("password can not be null for " + Protocol.NEGOTIATE);
         }
 
         if (protocol == Protocol.GSSAPI && password != null) {

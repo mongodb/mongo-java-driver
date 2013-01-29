@@ -85,7 +85,7 @@ public class MongoClientURITest extends TestCase {
         assertEquals("host", u.getHosts().get(0));
         assertEquals("user", u.getUsername());
         assertEquals("pass", new String(u.getPassword()));
-        assertEquals(new MongoCredentials("user", "pass".toCharArray(), MongoCredentials.Protocol.STRONGEST, "bar"), u.getCredentials());
+        assertEquals(new MongoCredentials("user", "pass".toCharArray(), MongoCredentials.Protocol.NEGOTIATE, "bar"), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user@host/?authProtocol=GSSAPI");
         assertEquals(new MongoCredentials("user", MongoCredentials.Protocol.GSSAPI), u.getCredentials());

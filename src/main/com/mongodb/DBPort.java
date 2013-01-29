@@ -313,7 +313,7 @@ public class DBPort {
 
     CommandResult authenticate(Mongo mongo, final MongoCredentials credentials) {
         Authenticator authenticator;
-        if (credentials.getProtocol() == MongoCredentials.Protocol.STRONGEST) {
+        if (credentials.getProtocol() == MongoCredentials.Protocol.NEGOTIATE) {
             authenticator = getStrongestAuthenticator(mongo, credentials);
         } else if (credentials.getProtocol().equals(MongoCredentials.Protocol.GSSAPI)) {
             authenticator = new GSSAPIAuthenticator(mongo, credentials);
@@ -523,9 +523,6 @@ public class DBPort {
 
                     res = sendSaslContinue(conversationId, response);
                     res.throwOnError();
-                    if (res.getCode() > 0) {  // SEE https://jira.mongodb.org/browse/SERVER-8100
-                       throw new MongoException(res.getCode(), res.getErrorMessage());
-                    }
                 }
                 return res;
             } catch (IOException e) {
