@@ -318,7 +318,7 @@ public class BSONBinaryWriterTest {
     @Test
     public void testWriteObjectId() {
 
-        final ObjectId id = ObjectId.massageToObjectId("50d3332018c6a1d8d1662b61");
+        final ObjectId id = new ObjectId("50d3332018c6a1d8d1662b61");
 
         writer.writeStartDocument();
 
