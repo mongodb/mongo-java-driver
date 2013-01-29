@@ -292,6 +292,9 @@ class JSONParser {
                 if((current = get()) == ',') {
                     read(',');
                 }
+                else if ((current = get()) == '/') {
+                    parseComment();
+                }
                 else {
                     break;
                 }
@@ -630,8 +633,11 @@ class JSONParser {
                 catch(IllegalStateException e) {
                     throw new JSONParseException(s, pos);
                 }
-                read('*'); read('/');
             }
+            read('*'); read('/');
+        }
+        else {
+            throw new JSONParseException(s, pos);
         }
     }
 
