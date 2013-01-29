@@ -27,7 +27,6 @@ import org.mongodb.WriteConcern;
 import org.mongodb.command.CollStats;
 import org.mongodb.command.Drop;
 import org.mongodb.command.DropIndex;
-import org.mongodb.command.RenameCollection;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.CommandResult;
@@ -87,7 +86,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
     @Override
     public List<Document> getIndexes() {
         final QueryResult<Document> systemCollection = operations.query(indexesNamespace, queryForCollectionNamespace,
-                                                                        documentSerializer, documentSerializer);
+                                                                       documentSerializer, documentSerializer);
         return systemCollection.getResults();
     }
 
@@ -130,15 +129,5 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
         handleErrors(commandResult);
         //TODO: currently doesn't deal with errors
-    }
-
-    @Override
-    public void rename(final String newCollectionName) {
-        final RenameCollection rename = new RenameCollection(collectionNamespace,
-                                                             new MongoNamespace(collectionNamespace.getDatabaseName(),
-                                                                                newCollectionName));
-        final CommandResult commandResult = operations.executeCommand("admin", rename, documentSerializer);
-        handleErrors(commandResult
-                    );
     }
 }

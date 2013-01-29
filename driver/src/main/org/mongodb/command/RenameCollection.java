@@ -16,13 +16,12 @@
 
 package org.mongodb.command;
 
-import org.mongodb.CommandDocument;
-import org.mongodb.MongoNamespace;
+import org.mongodb.MongoDatabase;
 import org.mongodb.operation.MongoCommand;
 
 public class RenameCollection extends MongoCommand {
-    public RenameCollection(final MongoNamespace collectionNamespace, final MongoNamespace newCollectionNamespace) {
-        super(new CommandDocument("renameCollection", collectionNamespace.getFullName())
-              .append("to", newCollectionNamespace.getFullName()));
+
+    public RenameCollection(final RenameCollectionOptions renameCollectionOptions, final MongoDatabase database) {
+        super(renameCollectionOptions.toCommandDocument(database));
     }
 }

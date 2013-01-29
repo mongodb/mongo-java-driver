@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,11 +56,11 @@ class MongoDatabaseImpl implements MongoDatabase {
     public MongoCollectionImpl<Document> getCollection(final String collectionName,
                                                        final MongoCollectionOptions operationOptions) {
         return getCollection(collectionName,
-                new CollectibleDocumentSerializer(operationOptions
-                        .withDefaults(options)
-                        .getPrimitiveSerializers(),
-                        new ObjectIdGenerator()),
-                operationOptions);
+                            new CollectibleDocumentSerializer(operationOptions
+                                                              .withDefaults(options)
+                                                              .getPrimitiveSerializers(),
+                                                             new ObjectIdGenerator()),
+                            operationOptions);
     }
 
     @Override

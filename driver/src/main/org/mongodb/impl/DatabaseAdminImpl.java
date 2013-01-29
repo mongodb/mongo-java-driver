@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
+import org.mongodb.command.RenameCollection;
+import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
@@ -89,4 +91,15 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
         handleErrors(commandResult);
     }
 
+    @Override
+    public void renameCollection(final String oldCollectionName, final String newCollectionName) {
+        renameCollection(new RenameCollectionOptions(oldCollectionName, newCollectionName));
+    }
+
+    @Override
+    public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
+        final RenameCollection rename = new RenameCollection(renameCollectionOptions, client.getDatabase(databaseName));
+        final CommandResult commandResult = client.getOperations().executeCommand("admin", rename, documentSerializer);
+        handleErrors(commandResult);
+    }
 }

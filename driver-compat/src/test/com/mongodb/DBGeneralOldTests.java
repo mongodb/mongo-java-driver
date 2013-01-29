@@ -63,25 +63,25 @@ public class DBGeneralOldTests {
     public void testRename() {
         final String namea = "testRenameA";
         final String nameb = "testRenameB";
-        final DBCollection a = database.getCollection(namea);
-        final DBCollection b = database.getCollection(nameb);
+        final DBCollection firstCollection = database.getCollection(namea);
+        final DBCollection secondCollection = database.getCollection(nameb);
 
-        a.drop();
-        b.drop();
+        firstCollection.drop();
+        secondCollection.drop();
 
-        assertEquals(0, a.find().count());
-        assertEquals(0, b.find().count());
+        assertEquals(0, firstCollection.find().count());
+        assertEquals(0, secondCollection.find().count());
 
-        a.save(new BasicDBObject("x", 1));
-        assertEquals(1, a.find().count());
-        assertEquals(0, b.find().count());
+        firstCollection.save(new BasicDBObject("x", 1));
+        assertEquals(1, firstCollection.find().count());
+        assertEquals(0, secondCollection.find().count());
 
-        final DBCollection b2 = a.rename(nameb);
-        assertEquals(0, a.find().count());
-        assertEquals(1, b.find().count());
-        assertEquals(1, b2.find().count());
+        final DBCollection renamedFirstCollection = firstCollection.rename(nameb);
+        assertEquals(0, firstCollection.find().count());
+        assertEquals(1, secondCollection.find().count());
+        assertEquals(1, renamedFirstCollection.find().count());
 
-        assertEquals(b.getName(), b2.getName());
+        assertEquals(secondCollection.getName(), renamedFirstCollection.getName());
     }
 
     @Test
@@ -112,7 +112,6 @@ public class DBGeneralOldTests {
     }
 
     @Test
-    @Ignore("Not supported yet, API not ported yet")
     public void testRenameAndDrop() {
         final String firstCollectionName = "anotherCollection";
         final String secondCollectionName = "yetOneMoreCollection";
@@ -127,15 +126,15 @@ public class DBGeneralOldTests {
         assertEquals(1, firstCollection.find().count());
         assertEquals(1, secondCollection.find().count());
 
-        final DBCollection thirdCollection = firstCollection.rename(secondCollectionName, true);
+        final DBCollection renamedFirstCollection = firstCollection.rename(secondCollectionName, true);
         assertEquals(0, firstCollection.find().count());
         assertEquals(1, secondCollection.find().count());
-        assertEquals(1, thirdCollection.find().count());
+        assertEquals(1, renamedFirstCollection.find().count());
 
-        assertEquals(2, secondCollection.findOne().get("_id"));
-        assertEquals(2, thirdCollection.findOne().get("_id"));
+        assertEquals(1, secondCollection.findOne().get("_id"));
+        assertEquals(1, renamedFirstCollection.findOne().get("_id"));
 
-        assertEquals(secondCollection.getName(), thirdCollection.getName());
+        assertEquals(secondCollection.getName(), renamedFirstCollection.getName());
     }
 
     @Test

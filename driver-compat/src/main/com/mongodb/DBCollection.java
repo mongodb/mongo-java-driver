@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.mongodb.OrderBy;
 import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.MongoDuplicateKeyException;
+import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.result.InsertResult;
 import org.mongodb.result.RemoveResult;
 import org.mongodb.result.UpdateResult;
@@ -526,7 +527,8 @@ public class DBCollection implements IDBCollection {
     @Override
     public DBCollection rename(final String newName, final boolean dropTarget) {
         try {
-            collection.admin().rename(newName);
+            collection.getDatabase().admin().renameCollection(new RenameCollectionOptions(getName(), newName,
+                                                             dropTarget));
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
@@ -892,7 +894,7 @@ public class DBCollection implements IDBCollection {
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
         final DBObject cmd = command.toDBObject();
         // if type in inline, then query options like slaveOk is fine
-        CommandResult res;
+        final CommandResult res;
         if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
             res = database.command(cmd, getOptions(),
                                   command.getReadPreference() != null ? command.getReadPreference()
@@ -957,7 +959,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public void dropIndex(final DBObject keys) {
         final List<Index.Key> keysFromDBObject = getKeysFromDBObject(keys);
-        Index indexToDrop = new Index(keysFromDBObject.toArray(new Index.Key[keysFromDBObject.size()]));
+        final Index indexToDrop = new Index(keysFromDBObject.toArray(new Index.Key[keysFromDBObject.size()]));
         collection.admin().dropIndex(indexToDrop);
     }
 
@@ -1015,12 +1017,12 @@ public class DBCollection implements IDBCollection {
     private static Index getIndexFromName(final String name) {
         //Yuk, string manipulation, my favourite...
         //Should be a better way to do this, now we're turning string into object back into string
-        String[] keysAndTypes = name.split("_");
-        Index.Key[] keys = new Index.Key[keysAndTypes.length / 2];
+        final String[] keysAndTypes = name.split("_");
+        final Index.Key[] keys = new Index.Key[keysAndTypes.length / 2];
         for (int i = 0; i < keysAndTypes.length; i = i + 2) {
-            String keyField = keysAndTypes[i];
-            String keyType = keysAndTypes[i + 1];
-            Index.Key key;
+            final String keyField = keysAndTypes[i];
+            final String keyType = keysAndTypes[i + 1];
+            final Index.Key key;
             if (keyType.equals("2d")) {
                 key = new Index.GeoKey(keyField);
             }

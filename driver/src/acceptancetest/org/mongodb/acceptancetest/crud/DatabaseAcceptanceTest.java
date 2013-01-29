@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,17 @@
 package org.mongodb.acceptancetest.crud;
 
 import org.bson.types.Document;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.MongoCollection;
+import org.mongodb.MongoServerException;
+import org.mongodb.command.RenameCollectionOptions;
 
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -36,7 +40,6 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         database.admin().createCollection(collectionName);
 
         final Set<String> collections = database.admin().getCollectionNames();
-        assertThat("The new collection should exist on the database", collections.size(), is(2));
         assertThat(collections.contains(collectionName), is(true));
     }
 
@@ -86,11 +89,88 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldGetCollectionNamesFromDatabase() {
         database.admin().createCollection(collectionName);
 
-        Set<String> collections = database.admin().getCollectionNames();
+        final Set<String> collections = database.admin().getCollectionNames();
 
-        assertThat("Should be two collections plus the indexes namespace", collections.size(), is(2));
         assertThat(collections.contains("system.indexes"), is(true));
         assertThat(collections.contains(collectionName), is(true));
     }
 
+    @Test
+    public void shouldChangeACollectionNameWhenRenameIsCalled() {
+        //given
+        final String originalCollectionName = "originalCollection";
+        final MongoCollection<Document> originalCollection = database.getCollection(originalCollectionName);
+        originalCollection.insert(new Document("someKey", "someValue"));
+
+        assertThat(database.admin().getCollectionNames().contains(originalCollectionName), is(true));
+
+        //when
+        final String newCollectionName = "TheNewCollectionName";
+        database.admin().renameCollection(originalCollectionName, newCollectionName);
+
+        //then
+        assertThat(database.admin().getCollectionNames().contains(originalCollectionName), is(false));
+        assertThat(database.admin().getCollectionNames().contains(newCollectionName), is(true));
+
+        final MongoCollection<Document> renamedCollection = database.getCollection(newCollectionName);
+        assertThat("Renamed collection should have the same number of documents as original",
+                  renamedCollection.count(), is(1L));
+    }
+
+    @Test(expected = MongoServerException.class)
+    public void shouldNotBeAbleToRenameACollectionToAnExistingCollectionName() {
+        // TODO - maybe this needs to be an exception that maps directly onto error code 10027?
+        // Otherwise we can have false positives
+
+        //given
+        final String originalCollectionName = "originalCollectionToRename";
+        database.admin().createCollection(originalCollectionName);
+
+        final String anotherCollectionName = "anExistingCollection";
+        database.admin().createCollection(anotherCollectionName);
+
+        assertThat(database.admin().getCollectionNames().contains(anotherCollectionName), is(true));
+        assertThat(database.admin().getCollectionNames().contains(originalCollectionName), is(true));
+
+        //when
+        database.admin().renameCollection(collectionName, anotherCollectionName);
+    }
+
+    @Test
+    public void shouldBeAbleToRenameCollectionToAnExistingCollectionNameAndReplaceItWhenDropIsTrue() {
+        //given
+        final String existingCollectionName = "anExistingCollection";
+        final String originalCollectionName = "someOriginalCollection";
+
+        final MongoCollection<Document> originalCollection = database.getCollection(originalCollectionName);
+        final String keyInOriginalCollection = "someKey";
+        final String valueInOriginalCollection = "someValue";
+        originalCollection.insert(new Document(keyInOriginalCollection, valueInOriginalCollection));
+
+        final MongoCollection<Document> existingCollection = database.getCollection(existingCollectionName);
+        final String keyInExistingCollection = "aDifferentDocument";
+        final String valueInExistingCollection = "withADifferentValue";
+        existingCollection.insert(new Document(keyInExistingCollection, valueInExistingCollection));
+
+        assertThat(database.admin().getCollectionNames().contains(originalCollectionName), is(true));
+        assertThat(database.admin().getCollectionNames().contains(existingCollectionName), is(true));
+
+        //when
+        database.admin().renameCollection(new RenameCollectionOptions(originalCollectionName,
+                                                                     existingCollectionName, true));
+
+        //then
+        assertThat(database.admin().getCollectionNames().contains(originalCollectionName), is(false));
+        assertThat(database.admin().getCollectionNames().contains(existingCollectionName), is(true));
+
+        final MongoCollection<Document> replacedCollection = database.getCollection(existingCollectionName);
+        assertThat(replacedCollection.one().get(keyInExistingCollection), is(nullValue()));
+        assertThat(replacedCollection.one().get(keyInOriginalCollection).toString(), is(valueInOriginalCollection));
+    }
+
+    @Test
+    @Ignore("not implemented")
+    public void shouldFailRenameIfSharded() {
+
+    }
 }

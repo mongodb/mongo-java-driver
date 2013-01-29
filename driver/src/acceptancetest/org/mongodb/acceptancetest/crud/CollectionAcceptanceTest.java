@@ -17,7 +17,6 @@
 package org.mongodb.acceptancetest.crud;
 
 import org.bson.types.Document;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
@@ -96,40 +95,6 @@ public class CollectionAcceptanceTest extends AcceptanceTestCase {
 
         assertThat(database.admin().getCollectionNames().contains(collectionName), is(false));
     }
-
-    //TODO: given the fact this takes out write locks etc, should we be supporting this?
-    @Test
-    public void shouldChangeACollectionNameWhenRenameIsCalled() {
-        //given
-        collection.insert(new Document("someKey", "someValue"));
-
-        final String originalCollectionName = collectionName;
-        assertThat(database.admin().getCollectionNames().contains(originalCollectionName), is(true));
-
-        //when
-        final String newCollectionName = "TheNewCollectionName";
-        collection.admin().rename(newCollectionName);
-
-        //then
-        assertThat(database.admin().getCollectionNames().contains(originalCollectionName), is(false));
-        assertThat(database.admin().getCollectionNames().contains(newCollectionName), is(true));
-
-        final MongoCollection<Document> renamedCollection = database.getCollection(newCollectionName);
-        assertThat("Renamed collection should have the same number of documents as original",
-                  renamedCollection.count(), is(1L));
-    }
-
-    @Test
-    @Ignore("not implemented")
-    public void shouldRenameWithDrop() {
-    }
-
-    @Test
-    @Ignore("not implemented")
-    public void shouldFailRenameIfSharded() {
-
-    }
-
 
     private void initialiseCollectionWithDocuments(final int numberOfDocuments) {
         for (int i = 0; i < numberOfDocuments; i++) {

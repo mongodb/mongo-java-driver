@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+/*
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb;
@@ -21,6 +20,8 @@ import org.mongodb.annotations.Immutable;
 
 @Immutable
 public final class MongoNamespace {
+    private static final String NAMESPACE_TEMPLATE = "%s.%s";
+
     private final String databaseName;
     private final String collectionName;
 
@@ -69,5 +70,9 @@ public final class MongoNamespace {
         int result = databaseName != null ? databaseName.hashCode() : 0;
         result = 31 * result + (collectionName != null ? collectionName.hashCode() : 0);
         return result;
+    }
+
+    public static String asNamespaceString(final String databaseName, final String collectionName) {
+        return String.format(NAMESPACE_TEMPLATE, databaseName, collectionName);
     }
 }

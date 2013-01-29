@@ -55,5 +55,4 @@ public interface CollectionAdmin {
 
     void dropIndexes();
 
-    void rename(String newCollectionName);
 }
