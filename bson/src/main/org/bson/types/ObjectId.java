@@ -480,7 +480,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
 
     /**
      * @return a string representation of the ObjectId in hexadecimal format
-     * @see ObjectId@toHexString
+     * @see ObjectId#toHexString()
      * @deprecated
      */
     @Deprecated

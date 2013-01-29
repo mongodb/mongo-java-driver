@@ -84,7 +84,7 @@ public class ReferenceMapTest extends ProxyTestBase {
 
     public static class B {
         @Id
-        private final String id = new ObjectId().toStringMongod();
+        private final String id = new ObjectId().toHexString();
 
         @Override
         public int hashCode() {

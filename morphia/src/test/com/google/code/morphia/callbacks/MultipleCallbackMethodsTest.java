@@ -26,7 +26,7 @@ import org.junit.Test;
 public class MultipleCallbackMethodsTest extends TestBase {
     abstract static class CallbackAbstractEntity {
         @Id
-        private final String id = new ObjectId().toStringMongod();
+        private final String id = new ObjectId().toHexString();
 
         public String getId() {
             return id;
