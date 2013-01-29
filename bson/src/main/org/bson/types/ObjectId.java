@@ -16,7 +16,10 @@
 
 package org.bson.types;
 
+import org.mongodb.annotations.Immutable;
+
 import java.net.NetworkInterface;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Date;
@@ -27,22 +30,36 @@ import java.util.logging.Logger;
 
 /**
  * A globally unique identifier for objects. <p>Consists of 12 bytes, divided as follows:
- * <blockquote><pre>
  * <table border="1">
- * <tr><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td>
- *     <td>7</td><td>8</td><td>9</td><td>10</td><td>11</td></tr>
- * <tr><td colspan="4">time</td><td colspan="3">machine</td>
- *     <td colspan="2">pid</td><td colspan="3">inc</td></tr>
+ * <tr>
+ * <td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td>
+ * <td>7</td><td>8</td><td>9</td><td>10</td><td>11</td>
+ * </tr>
+ * <tr>
+ * <td colspan="4">time</td><td colspan="3">machine</td>
+ * <td colspan="2">pid</td><td colspan="3">inc</td>
+ * </tr>
  * </table>
- * </pre></blockquote>
  *
- * @dochub objectids
+ * @mongodb.driver.manual core/object-id
  */
+@Immutable
 public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
 
-    private static final long serialVersionUID = -4415279469780082174L;
+    private static final long serialVersionUID = 3670079982654483072L;
 
     static final Logger LOGGER = Logger.getLogger("org.bson.ObjectId");
+
+    private static final int LOW_ORDER_THREE_BYTES = 0x00ffffff;
+
+    private static final int MACHINE_IDENTIFIER;
+    private static final short PROCESS_IDENTIFIER;
+    private static final AtomicInteger NEXT_COUNTER = new AtomicInteger(new SecureRandom().nextInt());
+
+    private final int timestamp;
+    private final int machineIdentifier;
+    private final short processIdentifier;
+    private final int counter;
 
     /**
      * Gets a new object id.
@@ -57,19 +74,20 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
      * Checks if a string could be an <code>ObjectId</code>.
      *
      * @return whether the string could be an object id
+     * @throws IllegalArgumentException if hexString is null
      */
-    public static boolean isValid(final String s) {
-        if (s == null) {
-            return false;
+    public static boolean isValid(final String hexString) {
+        if (hexString == null) {
+            throw new IllegalArgumentException();
         }
 
-        final int len = s.length();
+        final int len = hexString.length();
         if (len != 24) {
             return false;
         }
 
         for (int i = 0; i < len; i++) {
-            final char c = s.charAt(i);
+            final char c = hexString.charAt(i);
             if (c >= '0' && c <= '9') {
                 continue;
             }
@@ -87,344 +105,498 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
     }
 
     /**
-     * Turn an object into an <code>ObjectId</code>, if possible. Strings will be converted into <code>ObjectId</code>s,
-     * if possible, and <code>ObjectId</code>s will be cast and returned.  Passing in <code>null</code> returns
-     * <code>null</code>.
-     *
-     * @param o the object to convert
-     * @return an <code>ObjectId</code> if it can be massaged, null otherwise
+     * Gets the generated machine identifier.
      */
-    public static ObjectId massageToObjectId(final Object o) {
-        if (o == null) {
-            return null;
-        }
-
-        if (o instanceof ObjectId) {
-            return (ObjectId) o;
-        }
-
-        if (o instanceof String) {
-            final String s = o.toString();
-            if (isValid(s)) {
-                return new ObjectId(s);
-            }
-        }
-
-        return null;
-    }
-
-    public ObjectId(final Date time) {
-        this(time, GENMACHINE, NEXT_INC.getAndIncrement());
-    }
-
-    public ObjectId(final Date time, final int inc) {
-        this(time, GENMACHINE, inc);
-    }
-
-    public ObjectId(final Date time, final int machine, final int inc) {
-        this.time = (int) (time.getTime() / 1000);
-        this.machine = machine;
-        this.inc = inc;
-        isNew = false;
+    public static int getGeneratedMachineIdentifier() {
+        return MACHINE_IDENTIFIER;
     }
 
     /**
-     * Creates a new instance from a string.
+     * Gets the generated process identifier.
      *
-     * @param s the string to convert
-     * @throws IllegalArgumentException if the string is not a valid id
+     * @return the process id
      */
-    public ObjectId(final String s) {
-        this(s, false);
-    }
-
-    public ObjectId(final String s, final boolean babble) {
-        String str = s;
-
-        if (!isValid(s)) {
-            throw new IllegalArgumentException("invalid ObjectId [" + s + "]");
-        }
-
-        if (babble) {
-            str = babbleToMongod(s);
-        }
-
-        final byte[] b = new byte[12];
-        for (int i = 0; i < b.length; i++) {
-            b[i] = (byte) Integer.parseInt(str.substring(i * 2, i * 2 + 2), 16);
-        }
-        final ByteBuffer bb = ByteBuffer.wrap(b);
-        time = bb.getInt();
-        machine = bb.getInt();
-        inc = bb.getInt();
-        isNew = false;
-    }
-
-    public ObjectId(final byte[] b) {
-        if (b.length != 12) {
-            throw new IllegalArgumentException("need 12 bytes");
-        }
-        final ByteBuffer bb = ByteBuffer.wrap(b);
-        time = bb.getInt();
-        machine = bb.getInt();
-        inc = bb.getInt();
-        isNew = false;
+    public static int getGeneratedProcessIdentifier() {
+        return PROCESS_IDENTIFIER;
     }
 
     /**
-     * Creates an ObjectId
-     *
-     * @param time    time in seconds
-     * @param machine machine ID
-     * @param inc     incremental value
+     * Gets the current value of the auto-incrementing counter.
      */
-    public ObjectId(final int time, final int machine, final int inc) {
-        this.time = time;
-        this.machine = machine;
-        this.inc = inc;
-        isNew = false;
+    public static int getCurrentCounter() {
+        return NEXT_COUNTER.get();
     }
 
     /**
      * Create a new object id.
      */
     public ObjectId() {
-        time = (int) (System.currentTimeMillis() / 1000);
-        machine = GENMACHINE;
-        inc = NEXT_INC.getAndIncrement();
-        isNew = true;
+        this(new Date());
     }
 
-    public int hashCode() {
-        int x = time;
-        x += (machine * 111);
-        x += (inc * 17);
-        return x;
+    /**
+     * Constructs a new instance using the given date.
+     *
+     * @param date the date
+     */
+    public ObjectId(final Date date) {
+        this(dateToTimestampSeconds(date), MACHINE_IDENTIFIER, PROCESS_IDENTIFIER, NEXT_COUNTER.getAndIncrement(), false);
     }
 
+    /**
+     * Constructs a new instances using the given date and counter.
+     *
+     * @param date    the date
+     * @param counter the counter
+     * @throws IllegalArgumentException if the high order byte of counter is not zero
+     */
+    public ObjectId(final Date date, final int counter) {
+        this(date, MACHINE_IDENTIFIER, PROCESS_IDENTIFIER, counter);
+    }
+
+    /**
+     * Constructs a new instances using the given date, machine identifier, process identifier, and counter.
+     *
+     * @param date              the date
+     * @param machineIdentifier the machine identifier
+     * @param processIdentifier the process identifier
+     * @param counter           the counter
+     * @throws IllegalArgumentException if the high order byte of machineIdentifier or counter is not zero
+     */
+    public ObjectId(final Date date, final int machineIdentifier, final short processIdentifier, final int counter) {
+        this(dateToTimestampSeconds(date), machineIdentifier, processIdentifier, counter);
+    }
+
+    /**
+     * Creates an ObjectId using the given time, machine identifier, process identifier, and counter.
+     *
+     * @param timestamp         the time in seconds
+     * @param machineIdentifier the machine identifier
+     * @param processIdentifier the process identifier
+     * @param counter           the counter
+     * @throws IllegalArgumentException if the high order byte of machineIdentifier or counter is not zero
+     */
+    public ObjectId(final int timestamp, final int machineIdentifier, final short processIdentifier, final int counter) {
+        this(timestamp, machineIdentifier, processIdentifier, counter, true);
+    }
+
+    private ObjectId(final int timestamp, final int machineIdentifier, final short processIdentifier, final int counter,
+                     final boolean checkCounter) {
+        if ((machineIdentifier & 0xff000000) != 0) {
+            throw new IllegalArgumentException("The high-order byte of the machine identifier must be 0");
+        }
+        if (checkCounter && ((counter & 0xff000000) != 0)) {
+            throw new IllegalArgumentException("The high-order byte of the counter must be 0");
+        }
+        this.timestamp = timestamp;
+        this.machineIdentifier = machineIdentifier;
+        this.processIdentifier = processIdentifier;
+        this.counter = counter & LOW_ORDER_THREE_BYTES;
+    }
+
+    /**
+     * Constructs a new instance from a 24-byte hexadecimal string representation.
+     *
+     * @param hexString the string to convert
+     * @throws IllegalArgumentException if the string is not a valid hex string representation of an ObjectId
+     */
+    public ObjectId(final String hexString) {
+        this(parseHexString(hexString));
+    }
+
+    /**
+     * Constructs a new instance from the given byte array
+     *
+     * @param bytes the byte array
+     * @throws IllegalArgumentException if array is null or not of length 12
+     */
+    public ObjectId(final byte[] bytes) {
+        if (bytes == null) {
+            throw new IllegalArgumentException();
+        }
+        if (bytes.length != 12) {
+            throw new IllegalArgumentException("need 12 bytes");
+        }
+
+        timestamp = makeInt(bytes[0], bytes[1], bytes[2], bytes[3]);
+        machineIdentifier = makeInt((byte) 0, bytes[4], bytes[5], bytes[6]);
+        processIdentifier = (short) makeInt((byte) 0, (byte) 0, bytes[7], bytes[8]);
+        counter = makeInt((byte) 0, bytes[9], bytes[10], bytes[11]);
+    }
+
+    /**
+     * Convert to a byte array.  Note that the numbers are stored in big-endian order.
+     *
+     * @return the byte array
+     */
+    public byte[] toByteArray() {
+        final byte[] bytes = new byte[12];
+        bytes[0] = int3(timestamp);
+        bytes[1] = int2(timestamp);
+        bytes[2] = int1(timestamp);
+        bytes[3] = int0(timestamp);
+        bytes[4] = int2(machineIdentifier);
+        bytes[5] = int1(machineIdentifier);
+        bytes[6] = int0(machineIdentifier);
+        bytes[7] = short1(processIdentifier);
+        bytes[8] = short0(processIdentifier);
+        bytes[9] = int2(counter);
+        bytes[10] = int1(counter);
+        bytes[11] = int0(counter);
+        return bytes;
+    }
+
+    /**
+     * Gets the timestamp (number of seconds since the Unix epoch).
+     *
+     * @return the timestamp
+     */
+    public int getTimestamp() {
+        return timestamp;
+    }
+
+    /**
+     * Gets the machine identifier.
+     *
+     * @return the machine identifier
+     */
+    public int getMachineIdentifier() {
+        return machineIdentifier;
+    }
+
+    /**
+     * Gets the process identifier.
+     *
+     * @return the process identifier
+     */
+    public short getProcessIdentifier() {
+        return processIdentifier;
+    }
+
+    /**
+     * Gets the counter.
+     *
+     * @return the counter
+     */
+    public int getCounter() {
+        return counter;
+    }
+
+    /**
+     * Gets the timestamp as a {@code Date} instance.
+     *
+     * @return the Date
+     */
+    public Date getDate() {
+        return new Date(timestamp * 1000L);
+    }
+
+    /**
+     * Converts this instance into a 24-byte hexadecimal string representation.
+     *
+     * @return a string representation of the ObjectId in hexadecimal format
+     */
+    public String toHexString() {
+        final StringBuilder buf = new StringBuilder(24);
+
+        for (final byte b : toByteArray()) {
+            buf.append(String.format("%02x", b & 0xff));
+        }
+
+        return buf.toString();
+    }
+
+    @Override
     public boolean equals(final Object o) {
-
         if (this == o) {
             return true;
         }
-
-        final ObjectId other = massageToObjectId(o);
-        if (other == null) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
 
-        return time == other.time && machine == other.machine && inc == other.inc;
-    }
+        final ObjectId objectId = (ObjectId) o;
 
-    public String toStringBabble() {
-        return babbleToMongod(toStringMongod());
-    }
-
-    public String toStringMongod() {
-        final byte[] b = toByteArray();
-
-        final StringBuilder buf = new StringBuilder(24);
-
-        for (int i = 0; i < b.length; i++) {
-            final int x = b[i] & 0xFF;
-            final String s = Integer.toHexString(x);
-            if (s.length() == 1) {
-                buf.append("0");
-            }
-            buf.append(s);
+        if (counter != objectId.counter) {
+            return false;
+        }
+        if (machineIdentifier != objectId.machineIdentifier) {
+            return false;
+        }
+        if (processIdentifier != objectId.processIdentifier) {
+            return false;
+        }
+        if (timestamp != objectId.timestamp) {
+            return false;
         }
 
-        return buf.toString();
+        return true;
     }
 
-    public byte[] toByteArray() {
-        final byte[] b = new byte[12];
-        final ByteBuffer bb = ByteBuffer.wrap(b);
-        // by default BB is big endian like we need
-        bb.putInt(time);
-        bb.putInt(machine);
-        bb.putInt(inc);
-        return b;
+    @Override
+    public int hashCode() {
+        int result = timestamp;
+        result = 31 * result + machineIdentifier;
+        result = 31 * result + (int) processIdentifier;
+        result = 31 * result + counter;
+        return result;
     }
 
-    static String pos(final String s, final int p) {
-        return s.substring(p * 2, (p * 2) + 2);
-    }
-
-    public static String babbleToMongod(final String b) {
-        if (!isValid(b)) {
-            throw new IllegalArgumentException("invalid object id: " + b);
+    @Override
+    public int compareTo(final ObjectId other) {
+        if (other == null) {
+            throw new NullPointerException();
         }
 
-        final StringBuilder buf = new StringBuilder(24);
-        for (int i = 7; i >= 0; i--) {
-            buf.append(pos(b, i));
-        }
-        for (int i = 11; i >= 8; i--) {
-            buf.append(pos(b, i));
+        int x = timestamp - other.timestamp;
+        if (x != 0) {
+            return x;
         }
 
-        return buf.toString();
+        x = machineIdentifier - other.machineIdentifier;
+        if (x != 0) {
+            return x;
+        }
+
+        x = processIdentifier - other.processIdentifier;
+        if (x != 0) {
+            return x;
+        }
+
+        return counter - other.counter;
     }
 
+    @Override
     public String toString() {
-        return toStringMongod();
+        return toHexString();
     }
 
-    int compareUnsigned(final int i, final int j) {
-        long li = 0xFFFFFFFFL;
-        li = i & li;
-        long lj = 0xFFFFFFFFL;
-        lj = j & lj;
-        final long diff = li - lj;
-        if (diff < Integer.MIN_VALUE) {
-            return Integer.MIN_VALUE;
-        }
-        if (diff > Integer.MAX_VALUE) {
-            return Integer.MAX_VALUE;
-        }
-        return (int) diff;
-    }
-
-    public int compareTo(final ObjectId id) {
-        if (id == null) {
-            return -1;
-        }
-
-        int x = compareUnsigned(time, id.time);
-        if (x != 0) {
-            return x;
-        }
-
-        x = compareUnsigned(machine, id.machine);
-        if (x != 0) {
-            return x;
-        }
-
-        return compareUnsigned(inc, id.inc);
-    }
-
-    public int getMachine() {
-        return machine;
-    }
+    // Deprecated methods
 
     /**
-     * Gets the time of this ID, in milliseconds
+     * Gets the machine identifier.
+     *
+     * @return the machine identifier
+     * @see org.bson.types.ObjectId#getMachineIdentifier()
+     * @deprecated
      */
-    public long getTime() {
-        return time * 1000L;
-    }
-
-    /**
-     * Gets the time of this ID, in seconds
-     */
-    public int getTimeSecond() {
-        return time;
-    }
-
-    public int getInc() {
-        return inc;
-    }
-
-    public int time() {
-        return time;
-    }
-
-    public int machine() {
-        return machine;
-    }
-
-    public int inc() {
-        return inc;
-    }
-
-    public boolean isNew() {
-        return isNew;
-    }
-
-    public void notNew() {
-        isNew = false;
-    }
-
-    /**
-     * Gets the generated machine ID, identifying the machine / process / class loader
-     */
+    @Deprecated
     public static int getGenMachineId() {
-        return GENMACHINE;
+        return MACHINE_IDENTIFIER;
     }
 
     /**
-     * Gets the current value of the auto increment
+     * Gets the current value of the auto-incrementing counter.
+     *
+     * @see org.bson.types.ObjectId#getCurrentCounter()
+     * @deprecated
      */
+    @Deprecated
     public static int getCurrentInc() {
-        return NEXT_INC.get();
+        return NEXT_COUNTER.get();
     }
 
-    private final int time;
-    private final int machine;
-    private final int inc;
-
-    private boolean isNew;
-
-    public static int flip(final int x) {
-        int z = 0;
-        z |= ((x << 24) & 0xFF000000);
-        z |= ((x << 8) & 0x00FF0000);
-        z |= ((x >> 8) & 0x0000FF00);
-        z |= ((x >> 24) & 0x000000FF);
-        return z;
+    /**
+     * Gets the time of this ID, in seconds.
+     *
+     * @see org.bson.types.ObjectId#getTimestamp()
+     * @deprecated
+     */
+    @Deprecated
+    public int getTimeSecond() {
+        return timestamp;
     }
 
-    private static final AtomicInteger NEXT_INC = new AtomicInteger((new java.util.Random()).nextInt());
+    /**
+     * Gets the time of this instance, in milliseconds.
+     *
+     * @see org.bson.types.ObjectId#getDate()
+     * @deprecated
+     */
+    @Deprecated
+    public long getTime() {
+        return timestamp * 1000L;
+    }
 
-    private static final int GENMACHINE;
+    /**
+     * Gets the counter.
+     *
+     * @return the counter
+     * @see org.bson.types.ObjectId#getCounter()
+     * @deprecated
+     */
+    @Deprecated
+    public int getInc() {
+        return counter;
+    }
+
+    /**
+     * Gets the timestamp.
+     *
+     * @return the timestamp
+     * @see org.bson.types.ObjectId#getTimestamp()
+     * @deprecated
+     */
+    @Deprecated
+    public int time() {
+        return timestamp;
+    }
+
+    /**
+     * Gets the machine identifier.
+     *
+     * @return the machine identifier
+     * @see org.bson.types.ObjectId#getMachineIdentifier()
+     * @deprecated
+     */
+    @Deprecated
+    public int getMachine() {
+        return machineIdentifier;
+    }
+
+    /**
+     * Gets the machine identifier.
+     *
+     * @return the machine identifier
+     * @see org.bson.types.ObjectId#getMachineIdentifier()
+     * @deprecated
+     */
+    @Deprecated
+    public int machine() {
+        return machineIdentifier;
+    }
+
+    /**
+     * Gets the counter.
+     *
+     * @return the counter
+     * @see org.bson.types.ObjectId#getCounter()
+     * @deprecated
+     */
+    @Deprecated
+    public int inc() {
+        return counter;
+    }
+
+    /**
+     * @return a string representation of the ObjectId in hexadecimal format
+     * @see ObjectId@toHexString
+     * @deprecated
+     */
+    @Deprecated
+    public String toStringMongod() {
+        return toHexString();
+    }
 
     static {
         try {
-            // build a 2-byte machine piece based on NICs info
-            int machinePiece;
-                try {
-                    final StringBuilder sb = new StringBuilder();
-                    final Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
-                    while (e.hasMoreElements()) {
-                        final NetworkInterface ni = e.nextElement();
-                        sb.append(ni.toString());
-                    }
-                    machinePiece = sb.toString().hashCode() << 16;
-                } catch (Throwable e) {
-                    // exception sometimes happens with IBM JVM, use random
-                    LOGGER.log(Level.WARNING, e.getMessage(), e);
-                    machinePiece = (new SecureRandom().nextInt()) << 16;
-                }
-                LOGGER.fine("machine piece post: " + Integer.toHexString(machinePiece));
-            LOGGER.fine("machine piece post: " + Integer.toHexString(machinePiece));
-
-            // add a 2 byte process piece. It must represent not only the JVM but the class loader.
-            // Since static var belong to class loader there could be collisions otherwise
-            final int processPiece;
-            int processId = new java.util.Random().nextInt();
-            try {
-                processId = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
-            } catch (Throwable t) {
-                //silently fail??
-                LOGGER.log(Level.WARNING, t.getMessage(), t);
-            }
-
-            final ClassLoader loader = ObjectId.class.getClassLoader();
-            final int loaderId = loader != null ? System.identityHashCode(loader) : 0;
-
-            final StringBuilder sb = new StringBuilder();
-            sb.append(Integer.toHexString(processId));
-            sb.append(Integer.toHexString(loaderId));
-            processPiece = sb.toString().hashCode() & 0xFFFF;
-            LOGGER.fine("process piece: " + Integer.toHexString(processPiece));
-
-            GENMACHINE = machinePiece | processPiece;
-            LOGGER.fine("machine : " + Integer.toHexString(GENMACHINE));
+            MACHINE_IDENTIFIER = createMachineIdentifier();
+            PROCESS_IDENTIFIER = createProcessIdentifier();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
 
+    private static int createMachineIdentifier() {
+        // build a 2-byte machine piece based on NICs info
+        int machinePiece;
+        try {
+            final StringBuilder sb = new StringBuilder();
+            final Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
+            while (e.hasMoreElements()) {
+                final NetworkInterface ni = e.nextElement();
+                sb.append(ni.toString());
+                byte[] mac = ni.getHardwareAddress();
+                if (mac != null) {
+                    ByteBuffer bb = ByteBuffer.wrap(mac);
+                    try {
+                        sb.append(bb.getChar());
+                        sb.append(bb.getChar());
+                        sb.append(bb.getChar());
+                    } catch (BufferUnderflowException shortHardwareAddressException) {
+                        // mac with less than 6 bytes. continue
+                    }
+                }
+            }
+            machinePiece = sb.toString().hashCode();
+        } catch (Throwable t) {
+            // exception sometimes happens with IBM JVM, use random
+            machinePiece = (new SecureRandom().nextInt());
+            LOGGER.log(Level.WARNING, "Failed to get machine identifier from network interface, using random number instead", t);
+        }
+        machinePiece = machinePiece & LOW_ORDER_THREE_BYTES;
+        return machinePiece;
+    }
+
+    // Creates the process identifier.  This does not have to be unique per class loader because
+    // NEXT_COUNTER will provide the uniqueness.
+    private static short createProcessIdentifier() {
+        short processId;
+        try {
+            String processName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
+            if (processName.contains("@")) {
+                processId = (short) Integer.parseInt(processName.substring(0, processName.indexOf('@')));
+            } else {
+                processId = (short) java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
+            }
+
+        } catch (Throwable t) {
+            processId = (short) new SecureRandom().nextInt();
+            LOGGER.log(Level.WARNING, "Failed to get process identifier from JMX, using random number instead", t);
+        }
+
+        return processId;
+    }
+
+    private static byte[] parseHexString(final String s) {
+        if (!isValid(s)) {
+            throw new IllegalArgumentException("invalid hexadecimal representation of an ObjectId: [" + s + "]");
+        }
+
+        final byte[] b = new byte[12];
+        for (int i = 0; i < b.length; i++) {
+            b[i] = (byte) Integer.parseInt(s.substring(i * 2, i * 2 + 2), 16);
+        }
+        return b;
+    }
+
+    private static int dateToTimestampSeconds(final Date time) {
+        return (int) (time.getTime() / 1000);
+    }
+
+    // Big-Endian helpers, in this class because all other BSON numbers are little-endian
+
+    private static int makeInt(final byte b3, final byte b2, final byte b1, final byte b0) {
+        // CHECKSTYLE:OFF
+        return (((b3) << 24) |
+                ((b2 & 0xff) << 16) |
+                ((b1 & 0xff) << 8) |
+                ((b0 & 0xff)));
+        // CHECKSTYLE:ON
+    }
+
+    private static byte int3(final int x) {
+        return (byte) (x >> 24);
+    }
+
+    private static byte int2(final int x) {
+        return (byte) (x >> 16);
+    }
+
+    private static byte int1(final int x) {
+        return (byte) (x >> 8);
+    }
+
+    private static byte int0(final int x) {
+        return (byte) (x);
+    }
+
+    private static byte short1(final short x) {
+        return (byte) (x >> 8);
+    }
+
+    private static byte short0(final short x) {
+        return (byte) (x);
     }
 }
 
