@@ -63,12 +63,6 @@ public class JSONCallback extends BasicBSONCallback {
         // override the object if it's a special type
         if (b.containsField("$oid")) {
             o = new ObjectId((String) b.get("$oid"));
-            if (!isStackEmpty()) {
-                gotObjectId(name, (ObjectId) o);
-            } else {
-                setRoot(o);
-            }
-            return o;
         } else if (b.containsField("$date")) {
             if (b.get("$date") instanceof Number) {
                 o = new Date(((Number) b.get("$date")).longValue());
@@ -117,8 +111,9 @@ public class JSONCallback extends BasicBSONCallback {
         }
 
         if (!isStackEmpty()) {
-            cur().put(name, o);
+            _put(name, o);
         } else {
+            o = !BSON.hasDecodeHooks() ? o : BSON.applyDecodingHooks( o );
             setRoot(o);
         }
         return o;

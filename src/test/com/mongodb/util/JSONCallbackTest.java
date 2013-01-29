@@ -1,6 +1,9 @@
 package com.mongodb.util;
 
+import com.mongodb.DBObject;
 import com.mongodb.DBRef;
+import org.bson.BSON;
+import org.bson.Transformer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
@@ -39,6 +42,28 @@ public class JSONCallbackTest extends com.mongodb.util.TestCase {
         assertEquals(
                 parsedDate.compareTo(format.parse(format.format(rightNow), new ParsePosition(0))), 0);
 
+    }
+
+    @org.testng.annotations.Test(groups = {"basic"})
+    public void encodingHooks() {
+        BSON.addDecodingHook(Date.class, new Transformer() {
+            @Override
+            public Object transform(final Object o) {
+                return ((Date) o).getTime();
+            }
+        });
+
+        try {
+            Date now = new Date();
+
+            Object parsedDate = JSON.parse("{ \"$date\" : " + now.getTime() + "}");
+            assertEquals(Long.class, parsedDate.getClass());
+
+            DBObject doc = (DBObject) JSON.parse("{ date : { \"$date\" : " + now.getTime() + "} }");
+            assertEquals(Long.class, doc.get("date").getClass());
+        } finally {
+            BSON.removeDecodingHooks(Date.class);
+        }
     }
 
     @org.testng.annotations.Test(groups = {"basic"})
