@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.mongodb.WriteConcern;
 import org.mongodb.command.CollStats;
 import org.mongodb.command.Drop;
 import org.mongodb.command.DropIndex;
+import org.mongodb.command.RenameCollection;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.CommandResult;
@@ -93,7 +94,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
     @Override
     public boolean isCapped() {
         final CommandResult commandResult = database.executeCommand(collStatsCommand);
-        handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
+        handleErrors(commandResult);
 
         return FieldHelpers.asBoolean(commandResult.getResponse().get("capped"));
     }
@@ -101,7 +102,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
     @Override
     public Document getStatistics() {
         final CommandResult commandResult = database.executeCommand(collStatsCommand);
-        handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
+        handleErrors(commandResult);
 
         return commandResult.getResponse();
     }
@@ -118,7 +119,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
         final DropIndex dropIndex = new DropIndex(collectionNamespace.getCollectionName(), index.getName());
         final CommandResult commandResult = database.executeCommand(dropIndex);
 
-        handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
+        handleErrors(commandResult);
         //TODO: currently doesn't deal with errors
     }
 
@@ -127,7 +128,17 @@ public class CollectionAdminImpl implements CollectionAdmin {
         final DropIndex dropIndex = new DropIndex(collectionNamespace.getCollectionName(), "*");
         final CommandResult commandResult = database.executeCommand(dropIndex);
 
-        handleErrors(commandResult, "Error getting collstats for '" + collectionNamespace.getFullName() + "'");
+        handleErrors(commandResult);
         //TODO: currently doesn't deal with errors
+    }
+
+    @Override
+    public void rename(final String newCollectionName) {
+        final RenameCollection rename = new RenameCollection(collectionNamespace,
+                                                             new MongoNamespace(collectionNamespace.getDatabaseName(),
+                                                                                newCollectionName));
+        final CommandResult commandResult = operations.executeCommand("admin", rename, documentSerializer);
+        handleErrors(commandResult
+                    );
     }
 }

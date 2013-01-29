@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package org.mongodb.impl;
+package org.mongodb.command;
 
-import org.mongodb.command.MongoCommandException;
-import org.mongodb.result.CommandResult;
+import org.mongodb.CommandDocument;
+import org.mongodb.MongoNamespace;
+import org.mongodb.operation.MongoCommand;
 
-// TODO: should also check for ok?
-public final class ErrorHandling {
-    private ErrorHandling() {
-    }
-
-    static void handleErrors(final CommandResult commandResult) {
-        final Object serverErrorMessage = commandResult.getResponse().get("errmsg");
-        if (serverErrorMessage != null) {
-            throw new MongoCommandException(commandResult);
-        }
+public class RenameCollection extends MongoCommand {
+    public RenameCollection(final MongoNamespace collectionNamespace, final MongoNamespace newCollectionNamespace) {
+        super(new CommandDocument("renameCollection", collectionNamespace.getFullName())
+              .append("to", newCollectionNamespace.getFullName()));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,12 @@ public class CommandDocument extends QueryFilterDocument implements ConvertibleT
 
     public CommandDocument(final String key, final Object value) {
         super(key, value);
+    }
+
+    @Override
+    public CommandDocument append(final String key, final Object value) {
+        super.append(key, value);
+        return this;
     }
 
     @Override

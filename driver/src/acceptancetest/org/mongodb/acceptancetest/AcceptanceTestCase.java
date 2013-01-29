@@ -49,6 +49,7 @@ public class AcceptanceTestCase {
     public void setUp() {
         //create a brand new collection for each test
         collectionName = getClass().getSimpleName() + System.currentTimeMillis();
+        database.admin().createCollection(collectionName);
         collection = database.getCollection(collectionName);
     }
 }

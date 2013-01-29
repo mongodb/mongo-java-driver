@@ -50,8 +50,8 @@ public class DBGeneralOldTests {
 
     @Test
     public void testGetCollectionNames() {
-        String name = "testGetCollectionNames";
-        DBCollection c = database.getCollection(name);
+        final String name = "testGetCollectionNames";
+        final DBCollection c = database.getCollection(name);
         c.drop();
         assertFalse(database.getCollectionNames().contains(name));
         c.save(new BasicDBObject("x", 1));
@@ -59,14 +59,12 @@ public class DBGeneralOldTests {
 
     }
 
-
     @Test
-    @Ignore("Not supported yet, API not ported yet")
     public void testRename() {
-        String namea = "testRenameA";
-        String nameb = "testRenameB";
-        DBCollection a = database.getCollection(namea);
-        DBCollection b = database.getCollection(nameb);
+        final String namea = "testRenameA";
+        final String nameb = "testRenameB";
+        final DBCollection a = database.getCollection(namea);
+        final DBCollection b = database.getCollection(nameb);
 
         a.drop();
         b.drop();
@@ -78,48 +76,66 @@ public class DBGeneralOldTests {
         assertEquals(1, a.find().count());
         assertEquals(0, b.find().count());
 
-        DBCollection b2 = a.rename(nameb);
+        final DBCollection b2 = a.rename(nameb);
         assertEquals(0, a.find().count());
         assertEquals(1, b.find().count());
         assertEquals(1, b2.find().count());
 
         assertEquals(b.getName(), b2.getName());
+    }
 
+    @Test
+    public void shouldFailToRenameCollectionToAnExistingCollectionName() {
+        final String firstCollectionName = "firstCollection";
+        final String secondCollectionName = "secondCollection";
+        final DBCollection firstCollection = database.getCollection(firstCollectionName);
+        final DBCollection secondCollection = database.getCollection(secondCollectionName);
+
+        firstCollection.drop();
+        secondCollection.drop();
+
+        assertEquals(0, firstCollection.find().count());
+        assertEquals(0, secondCollection.find().count());
+
+        firstCollection.save(new BasicDBObject("x", 1));
+        secondCollection.save(new BasicDBObject("x", 1));
+        assertEquals(1, firstCollection.find().count());
+        assertEquals(1, secondCollection.find().count());
+
+        // sadly we need the try/catch instead of expected exception because we want to check the code
+        try {
+            firstCollection.rename(secondCollectionName);
+            fail("Rename to existing collection must fail");
+        } catch (MongoException e) {
+            assertEquals(e.getCode(), 10027);
+        }
     }
 
     @Test
     @Ignore("Not supported yet, API not ported yet")
     public void testRenameAndDrop() {
-        String namea = "testRenameA";
-        String nameb = "testRenameB";
-        DBCollection a = database.getCollection(namea);
-        DBCollection b = database.getCollection(nameb);
+        final String firstCollectionName = "anotherCollection";
+        final String secondCollectionName = "yetOneMoreCollection";
+        final DBCollection firstCollection = database.getCollection(firstCollectionName);
+        final DBCollection secondCollection = database.getCollection(secondCollectionName);
 
-        a.drop();
-        b.drop();
+        firstCollection.drop();
+        secondCollection.drop();
 
-        assertEquals(0, a.find().count());
-        assertEquals(0, b.find().count());
+        firstCollection.save(new BasicDBObject("_id", 1).append("x", 43432));
+        secondCollection.save(new BasicDBObject("_id", 2).append("x", 3938));
+        assertEquals(1, firstCollection.find().count());
+        assertEquals(1, secondCollection.find().count());
 
-        a.save(new BasicDBObject("x", 1));
-        b.save(new BasicDBObject("x", 1));
-        assertEquals(1, a.find().count());
-        assertEquals(1, b.find().count());
+        final DBCollection thirdCollection = firstCollection.rename(secondCollectionName, true);
+        assertEquals(0, firstCollection.find().count());
+        assertEquals(1, secondCollection.find().count());
+        assertEquals(1, thirdCollection.find().count());
 
-        try {
-            a.rename(nameb);
-            fail("Rename to existing collection must fail");
-        } catch (MongoException e) {
-            assertEquals(e.getCode(), 10027);
-        }
+        assertEquals(2, secondCollection.findOne().get("_id"));
+        assertEquals(2, thirdCollection.findOne().get("_id"));
 
-        DBCollection b2 = a.rename(nameb, true);
-        assertEquals(0, a.find().count());
-        assertEquals(1, b.find().count());
-        assertEquals(1, b2.find().count());
-
-        assertEquals(b.getName(), b2.getName());
-
+        assertEquals(secondCollection.getName(), thirdCollection.getName());
     }
 
     @Test
@@ -133,10 +149,10 @@ public class DBGeneralOldTests {
                 return;
             }
 
-            String secondary = getASecondaryAsString(mongo);
+            final String secondary = getASecondaryAsString(mongo);
             mongo.close();
             mongo = new Mongo(secondary);
-            DB db = mongo.getDB("secondaryTest");
+            final DB db = mongo.getDB("secondaryTest");
             db.setReadPreference(ReadPreference.secondary());
             db.getCollectionNames();
         } finally {
@@ -168,7 +184,7 @@ public class DBGeneralOldTests {
     //        }
     //    }
 
-    protected boolean isStandalone(Mongo mongo) {
+    protected boolean isStandalone(final Mongo mongo) {
         return runReplicaSetStatusCommand(mongo) == null;
     }
 
@@ -186,13 +202,13 @@ public class DBGeneralOldTests {
         return result;
     }
 
-    protected String getASecondaryAsString(Mongo mongo) {
+    protected String getASecondaryAsString(final Mongo mongo) {
         return getMemberNameByState(mongo, "secondary");
     }
 
     @SuppressWarnings({ "unchecked" })
-    protected String getMemberNameByState(Mongo mongo, String stateStrToMatch) {
-        CommandResult replicaSetStatus = runReplicaSetStatusCommand(mongo);
+    protected String getMemberNameByState(final Mongo mongo, final String stateStrToMatch) {
+        final CommandResult replicaSetStatus = runReplicaSetStatusCommand(mongo);
 
         for (final BasicDBObject member : (List<BasicDBObject>) replicaSetStatus.get("members")) {
             String hostnameAndPort = member.getString("name");

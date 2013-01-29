@@ -86,7 +86,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         final CommandResult commandResult = new CommandResult(
                 client.getDatabase(databaseName).executeCommand(new Create(createCollectionOptions)));
-        handleErrors(commandResult, "Error creating collection '" + createCollectionOptions.getCollectionName() + "'");
+        handleErrors(commandResult);
     }
 
 }

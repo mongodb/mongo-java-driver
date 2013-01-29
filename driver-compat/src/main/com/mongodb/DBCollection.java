@@ -520,12 +520,17 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public DBCollection rename(final String newName) {
-        throw new UnsupportedOperationException();
+        return rename(newName, false);
     }
 
     @Override
     public DBCollection rename(final String newName, final boolean dropTarget) {
-        throw new UnsupportedOperationException();
+        try {
+            collection.admin().rename(newName);
+            return getDB().getCollection(newName);
+        } catch (org.mongodb.MongoException e) {
+            throw new MongoException(e);
+        }
     }
 
     @Override
