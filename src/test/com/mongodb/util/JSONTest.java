@@ -31,10 +31,7 @@ import org.bson.types.ObjectId;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.SimpleTimeZone;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class JSONTest extends com.mongodb.util.TestCase {
@@ -114,6 +111,16 @@ public class JSONTest extends com.mongodb.util.TestCase {
     }
 
     @org.testng.annotations.Test(groups = {"basic"})
+    public void testComments() {
+        EnumSet<JSON.Feature> featureSet = EnumSet.of(JSON.Feature.ALLOW_COMMENTS);
+        assertEquals(JSON.parse("/*xyz*/", featureSet), null);
+        assertEquals(JSON.parse("/* xyz */", featureSet), null);
+        assertEquals(JSON.parse("/*xyz abc 123*/", featureSet), null);
+        assertEquals(JSON.serialize(JSON.parse("/*xyz*/ {'csdf' : {}}", featureSet)), "{ \"csdf\" : { }}");
+        assertEquals(JSON.serialize(JSON.parse("{'csdf' : { /*xyz*/ \"foo\":\"bar\" /*xyz*/ }} /*xyz*/ ", featureSet)), "{ \"csdf\" : { \"foo\" : \"bar\"}}");
+    }
+
+    @org.testng.annotations.Test(groups = {"basic"})
     public void testMulti() {
         assertEquals(JSON.serialize(JSON.parse("{\'\' : \"\", \"34\" : -52.5}")), "{ \"\" : \"\" , \"34\" : -52.5}") ;
     }    
@@ -135,6 +142,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
 
     @org.testng.annotations.Test(groups = {"basic"})
     public void testErrors(){
+        EnumSet<JSON.Feature> featureSet = EnumSet.of(JSON.Feature.ALLOW_COMMENTS);
         boolean threw = false;
         try {
             JSON.parse("{\"x\" : \"");
@@ -170,6 +178,30 @@ public class JSONTest extends com.mongodb.util.TestCase {
         threw = false;
         try {
             JSON.parse("{\"x\" : 5,");
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+        try {
+            JSON.parse("{/* abc */ */ \"x\" : 5, }", featureSet);
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+        try {
+            JSON.parse("{/* abc \"x\" : 5, }", featureSet);
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+        try {
+            JSON.parse("{/* abc */ \"x\" : 5, }");
         }
         catch(JSONParseException e) {
             threw = true;
