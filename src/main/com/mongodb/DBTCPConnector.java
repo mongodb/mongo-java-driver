@@ -597,7 +597,7 @@ public class DBTCPConnector implements DBConnector {
     }
 
     @Override
-    public CommandResult authenticate(MongoCredentials credentials) {
+    public CommandResult authenticate(MongoCredential credentials) {
         final MyPort mp = _myPort.get();
         final DBPort port = mp.get(false, ReadPreference.primaryPreferred(), null);
 

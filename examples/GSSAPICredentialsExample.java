@@ -15,9 +15,10 @@
  */
 
 import com.mongodb.DB;
+import com.mongodb.MongoAuthenticationProtocol;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoCredentials;
+import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 
 import java.net.UnknownHostException;
@@ -67,7 +68,7 @@ public class GSSAPICredentialsExample {
         System.out.println();
 
         MongoClient mongoClient = new MongoClient(new ServerAddress(server),
-                        Arrays.asList(new MongoCredentials(user, MongoCredentials.Protocol.GSSAPI)),
+                        Arrays.asList(new MongoCredential(user, MongoAuthenticationProtocol.GSSAPI)),
                 new MongoClientOptions.Builder().socketKeepAlive(true).socketTimeout(30000).build());
         DB testDB = mongoClient.getDB(databaseName);
 

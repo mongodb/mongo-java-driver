@@ -28,51 +28,12 @@ import java.util.Arrays;
  * @since 2.11.0
  */
 @Immutable
-public class MongoCredentials {
+public class MongoCredential {
 
-    private final Protocol protocol;
+    private final MongoAuthenticationProtocol protocol;
     private final String userName;
     private final char[] password;
     private final String source;
-
-    /**
-     * An enumeration of the supported authentication protocols.
-     */
-    public enum Protocol {
-        /**
-         * The GSSAPI protocol, to support Kerberos v5 via a SASL-based authentication protocol
-         */
-        GSSAPI {
-            /**
-             * The default source for GSSAPI is a reserved name that doesn't correspond to any database.
-             * @return the default source.
-             */
-            @Override
-            public String getDefaultSource() {
-                return "$external";
-            }
-        },
-        /**
-         * Negotiate the strongest available protocol available.  This is the default protocol.
-         */
-        NEGOTIATE {
-            /**
-             * The default source is the "admin" database.
-             * @return
-             */
-            @Override
-            public String getDefaultSource() {
-                return "admin";
-            }
-        };
-
-        /**
-         * Gets the default source for this mechanism, usually a database name.
-         *
-         * @return the default database for this protocol
-         */
-        public abstract String getDefaultSource();
-    }
 
     /**
      * Constructs a new instance using the given user name and password and the default protocol and source.
@@ -80,8 +41,8 @@ public class MongoCredentials {
      * @param userName the user name
      * @param password the password
      */
-    public MongoCredentials(final String userName, final char[] password) {
-        this(userName, password, Protocol.NEGOTIATE);
+    public MongoCredential(final String userName, final char[] password) {
+        this(userName, password, MongoAuthenticationProtocol.NEGOTIATE);
     }
 
     /**
@@ -91,8 +52,8 @@ public class MongoCredentials {
      * @param password the password
      * @param source   the source of the credentials
      */
-    public MongoCredentials(final String userName, final char[] password, String source) {
-        this(userName, password, Protocol.NEGOTIATE, source);
+    public MongoCredential(final String userName, final char[] password, String source) {
+        this(userName, password, MongoAuthenticationProtocol.NEGOTIATE, source);
     }
 
     /**
@@ -102,7 +63,7 @@ public class MongoCredentials {
      * @param password the password
      * @param protocol the protocol to use for authentication
      */
-    public MongoCredentials(final String userName, final char[] password, Protocol protocol) {
+    public MongoCredential(final String userName, final char[] password, MongoAuthenticationProtocol protocol) {
         this(userName, password, protocol, null);
     }
 
@@ -113,7 +74,7 @@ public class MongoCredentials {
      * @param userName the user name
      * @param protocol the protocol to use for authentication
      */
-    public MongoCredentials(final String userName, final Protocol protocol) {
+    public MongoCredential(final String userName, final MongoAuthenticationProtocol protocol) {
         this(userName, null, protocol);
     }
 
@@ -126,7 +87,7 @@ public class MongoCredentials {
      * @param protocol the protocol
      * @param source   the source of the credentials
      */
-    public MongoCredentials(final String userName, final char[] password, Protocol protocol, String source) {
+    public MongoCredential(final String userName, final char[] password, MongoAuthenticationProtocol protocol, String source) {
         if (userName == null) {
             throw new IllegalArgumentException();
         }
@@ -134,12 +95,12 @@ public class MongoCredentials {
             throw new IllegalArgumentException();
         }
 
-        if (protocol == Protocol.NEGOTIATE && password == null) {
-            throw new IllegalArgumentException("password can not be null for " + Protocol.NEGOTIATE);
+        if (protocol == MongoAuthenticationProtocol.NEGOTIATE && password == null) {
+            throw new IllegalArgumentException("password can not be null for " + MongoAuthenticationProtocol.NEGOTIATE);
         }
 
-        if (protocol == Protocol.GSSAPI && password != null) {
-            throw new IllegalArgumentException("password must be null for " + Protocol.GSSAPI);
+        if (protocol == MongoAuthenticationProtocol.GSSAPI && password != null) {
+            throw new IllegalArgumentException("password must be null for " + MongoAuthenticationProtocol.GSSAPI);
         }
 
         this.userName = userName;
@@ -153,7 +114,7 @@ public class MongoCredentials {
      *
      * @return the mechanism.  Can be null if the mechanism should be negotiated.
      */
-    public Protocol getProtocol() {
+    public MongoAuthenticationProtocol getProtocol() {
         return protocol;
     }
 
@@ -192,7 +153,7 @@ public class MongoCredentials {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final MongoCredentials that = (MongoCredentials) o;
+        final MongoCredential that = (MongoCredential) o;
 
         if (!Arrays.equals(password, that.password)) return false;
         if (protocol != that.protocol) return false;
@@ -221,7 +182,7 @@ public class MongoCredentials {
                 '}';
     }
 
-    private String getDefaultDatabase(final Protocol protocol) {
+    private String getDefaultDatabase(final MongoAuthenticationProtocol protocol) {
         if (protocol == null) {
             return "admin";
         } else {

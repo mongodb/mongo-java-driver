@@ -375,13 +375,13 @@ public class MongoClientURI {
         return buildReadPreference(readPreferenceType, firstTagSet, remainingTagSets, slaveOk);
     }
 
-    private MongoCredentials createCredentials(Map<String, List<String>> optionsMap, final String userName,
+    private MongoCredential createCredentials(Map<String, List<String>> optionsMap, final String userName,
                                                final char[] password, String database) {
         if (userName == null) {
             return null;
         }
 
-        MongoCredentials.Protocol protocol = MongoCredentials.Protocol.NEGOTIATE;
+        MongoAuthenticationProtocol protocol = MongoAuthenticationProtocol.NEGOTIATE;
         String authSource = database;
 
         for (String key : authKeys) {
@@ -392,13 +392,13 @@ public class MongoClientURI {
             }
 
             if (key.equals("authprotocol")) {
-                protocol = MongoCredentials.Protocol.valueOf(value);
+                protocol = MongoAuthenticationProtocol.valueOf(value);
             } else if (key.equals("authsource")) {
                 authSource = value;
             }
         }
 
-        return new MongoCredentials(userName, password, protocol, authSource);
+        return new MongoCredential(userName, password, protocol, authSource);
     }
 
     private String getLastValue(final Map<String, List<String>> optionsMap, final String key) {
@@ -551,7 +551,7 @@ public class MongoClientURI {
      *
      * @return the credentials
      */
-    public MongoCredentials getCredentials() {
+    public MongoCredential getCredentials() {
         return credentials;
     }
 
@@ -567,7 +567,7 @@ public class MongoClientURI {
     // ---------------------------------
 
     private final MongoClientOptions options;
-    private final MongoCredentials credentials;
+    private final MongoCredential credentials;
     private final List<String> hosts;
     private final String database;
     private final String collection;

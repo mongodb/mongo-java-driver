@@ -16,9 +16,10 @@
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
+import com.mongodb.MongoAuthenticationProtocol;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoCredentials;
+import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 
 import java.net.UnknownHostException;
@@ -40,7 +41,7 @@ public class NegotiatedAuthenticationProtocolExample {
         String pwd = args[2];
         String db = args[3];
 
-        MongoCredentials credentials = new MongoCredentials(user, pwd.toCharArray(), MongoCredentials.Protocol.NEGOTIATE, db);
+        MongoCredential credentials = new MongoCredential(user, pwd.toCharArray(), MongoAuthenticationProtocol.NEGOTIATE, db);
 
         MongoClient mongoClient = new MongoClient(new ServerAddress(server), Arrays.asList(credentials), new MongoClientOptions.Builder().build());
 

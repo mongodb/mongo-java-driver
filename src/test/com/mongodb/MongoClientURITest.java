@@ -85,22 +85,22 @@ public class MongoClientURITest extends TestCase {
         assertEquals("host", u.getHosts().get(0));
         assertEquals("user", u.getUsername());
         assertEquals("pass", new String(u.getPassword()));
-        assertEquals(new MongoCredentials("user", "pass".toCharArray(), MongoCredentials.Protocol.NEGOTIATE, "bar"), u.getCredentials());
+        assertEquals(new MongoCredential("user", "pass".toCharArray(), MongoAuthenticationProtocol.NEGOTIATE, "bar"), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user@host/?authProtocol=GSSAPI");
-        assertEquals(new MongoCredentials("user", MongoCredentials.Protocol.GSSAPI), u.getCredentials());
+        assertEquals(new MongoCredential("user", MongoAuthenticationProtocol.GSSAPI), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user:pass@host/?authSource=test");
-        assertEquals(new MongoCredentials("user", "pass".toCharArray(), "test"), u.getCredentials());
+        assertEquals(new MongoCredential("user", "pass".toCharArray(), "test"), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user:pass@host");
-        assertEquals(new MongoCredentials("user", "pass".toCharArray(), "admin"), u.getCredentials());
+        assertEquals(new MongoCredential("user", "pass".toCharArray(), "admin"), u.getCredentials());
     }
 
     @Test
     public void testURIEncoding() {
         MongoClientURI u = new MongoClientURI("mongodb://use%24:he%21%21o@localhost");
-        assertEquals(new MongoCredentials("use$", "he!!o".toCharArray()), u.getCredentials());
+        assertEquals(new MongoCredential("use$", "he!!o".toCharArray()), u.getCredentials());
     }
 
     @Test()

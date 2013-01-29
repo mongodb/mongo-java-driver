@@ -112,5 +112,5 @@ public interface DBConnector {
      * @throws com.mongodb.CommandResult.CommandFailure if the authentication failed
      * @since 2.11.0
      */
-    public CommandResult authenticate(MongoCredentials credentials);
+    public CommandResult authenticate(MongoCredential credentials);
 }

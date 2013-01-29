@@ -135,7 +135,7 @@ public class MongoClient extends Mongo {
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
-    public MongoClient(ServerAddress addr, List<MongoCredentials> credentialsList) {
+    public MongoClient(ServerAddress addr, List<MongoCredential> credentialsList) {
         this(addr, credentialsList, new MongoClientOptions.Builder().build());
     }
 
@@ -161,7 +161,7 @@ public class MongoClient extends Mongo {
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
-    public MongoClient(ServerAddress addr, List<MongoCredentials> credentialsList, MongoClientOptions options) {
+    public MongoClient(ServerAddress addr, List<MongoCredential> credentialsList, MongoClientOptions options) {
         super(MongoAuthority.direct(addr, new MongoCredentialsStore(credentialsList)), new MongoOptions(options));
     }
 
@@ -201,7 +201,7 @@ public class MongoClient extends Mongo {
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
-    public MongoClient(List<ServerAddress> seeds, List<MongoCredentials> credentialsList) {
+    public MongoClient(List<ServerAddress> seeds, List<MongoCredential> credentialsList) {
         this(seeds, credentialsList, new MongoClientOptions.Builder().build());
     }
 
@@ -244,7 +244,7 @@ public class MongoClient extends Mongo {
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
-    public MongoClient(List<ServerAddress> seeds, List<MongoCredentials> credentialsList, MongoClientOptions options) {
+    public MongoClient(List<ServerAddress> seeds, List<MongoCredential> credentialsList, MongoClientOptions options) {
         super(MongoAuthority.dynamicSet(seeds, new MongoCredentialsStore(credentialsList)), new MongoOptions(options));
     }
 
@@ -268,7 +268,7 @@ public class MongoClient extends Mongo {
      * @return the list of credentials
      * @since 2.11.0
      */
-    public List<MongoCredentials> getCredentialsList() {
+    public List<MongoCredential> getCredentialsList() {
         return getAuthority().getCredentialsStore().asList();
     }
 }

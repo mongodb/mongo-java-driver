@@ -190,7 +190,7 @@ public class MongoURI {
      *
      * @since 2.11.0
      */
-    public MongoCredentials getCredentials() {
+    public MongoCredential getCredentials() {
         return mongoClientURI.getCredentials();
     }
 

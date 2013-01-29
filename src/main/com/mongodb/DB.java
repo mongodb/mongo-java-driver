@@ -614,7 +614,7 @@ public abstract class DB {
     }
 
     private CommandResultPair authenticateCommandHelper(String username, char[] password) {
-        MongoCredentials credentials = new MongoCredentials(username, password, MongoCredentials.Protocol.NEGOTIATE, getName());
+        MongoCredential credentials = new MongoCredential(username, password, MongoAuthenticationProtocol.NEGOTIATE, getName());
 
         if (getAuthenticationCredentials() != null) {
             if (getAuthenticationCredentials().equals(credentials)) {
@@ -647,7 +647,7 @@ public abstract class DB {
         }
     }
 
-    abstract CommandResult doAuthenticate(MongoCredentials credentials);
+    abstract CommandResult doAuthenticate(MongoCredential credentials);
 
     /**
      * Adds a new user for this db
@@ -804,7 +804,7 @@ public abstract class DB {
 
     public abstract void cleanCursors( boolean force );
 
-    MongoCredentials getAuthenticationCredentials() {
+    MongoCredential getAuthenticationCredentials() {
         return getMongo().getAuthority().getCredentialsStore().get(getName());
     }
 

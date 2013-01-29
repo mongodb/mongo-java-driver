@@ -176,7 +176,7 @@ public class DBApiLayer extends DB {
     }
 
     @Override
-    CommandResult doAuthenticate(MongoCredentials credentials) {
+    CommandResult doAuthenticate(MongoCredential credentials) {
         return _connector.authenticate(credentials);
     }
 

@@ -38,7 +38,7 @@ import java.util.Set;
  */
 @ThreadSafe
 class MongoCredentialsStore {
-    private final Map<String, MongoCredentials> credentialsMap = new HashMap<String, MongoCredentials>();
+    private final Map<String, MongoCredential> credentialsMap = new HashMap<String, MongoCredential>();
     private volatile Set<String> allDatabasesWithCredentials = new HashSet<String>();
 
     /**
@@ -52,7 +52,7 @@ class MongoCredentialsStore {
      *
      * @param credentials A single credentials, which may be null.
      */
-    public MongoCredentialsStore(MongoCredentials credentials) {
+    public MongoCredentialsStore(MongoCredential credentials) {
         if (credentials == null) {
             return;
         }
@@ -64,11 +64,11 @@ class MongoCredentialsStore {
      *
      * @param credentialsList The list of credentials
      */
-    public MongoCredentialsStore(Iterable<MongoCredentials> credentialsList) {
+    public MongoCredentialsStore(Iterable<MongoCredential> credentialsList) {
         if (credentialsList == null) {
             return;
         }
-        for (MongoCredentials cur : credentialsList) {
+        for (MongoCredential cur : credentialsList) {
            add(cur);
         }
     }
@@ -79,8 +79,8 @@ class MongoCredentialsStore {
      * @param credentials the new credentials
      * @throws IllegalArgumentException if there already exist different credentials for the same database
      */
-    synchronized void add(MongoCredentials credentials) {
-        MongoCredentials existingCredentials = credentialsMap.get(credentials.getSource());
+    synchronized void add(MongoCredential credentials) {
+        MongoCredential existingCredentials = credentialsMap.get(credentials.getSource());
 
         if (existingCredentials != null) {
             if (existingCredentials.equals(credentials)) {
@@ -109,7 +109,7 @@ class MongoCredentialsStore {
      * @param database the database.  This can be null, to get the credentials with the null database.
      * @return the credentials for the given database.  Can be null if not are stored.
      */
-    public synchronized MongoCredentials get(String database) {
+    public synchronized MongoCredential get(String database) {
         return credentialsMap.get(database);
     }
 
@@ -117,8 +117,8 @@ class MongoCredentialsStore {
      * Gets the MongoCredentials in this map as a List
      * @return the list of credentials
      */
-    public synchronized List<MongoCredentials> asList() {
-       return new ArrayList<MongoCredentials>(credentialsMap.values());
+    public synchronized List<MongoCredential> asList() {
+       return new ArrayList<MongoCredential>(credentialsMap.values());
     }
 
     @Override

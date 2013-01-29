@@ -25,51 +25,51 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class MongoCredentialsTest extends TestCase {
+public class MongoCredentialTest extends TestCase {
 
     @Test
     public void testCredentials() {
-        MongoCredentials credentials;
+        MongoCredential credentials;
 
-        credentials = new MongoCredentials("user", "pwd".toCharArray());
+        credentials = new MongoCredential("user", "pwd".toCharArray());
         assertEquals("user", credentials.getUserName());
         assertArrayEquals("pwd".toCharArray(), credentials.getPassword());
-        assertEquals(MongoCredentials.Protocol.NEGOTIATE, credentials.getProtocol());
+        assertEquals(MongoAuthenticationProtocol.NEGOTIATE, credentials.getProtocol());
         assertEquals("admin", credentials.getSource());
 
-        credentials = new MongoCredentials("user", "pwd".toCharArray(), "test");
+        credentials = new MongoCredential("user", "pwd".toCharArray(), "test");
         assertEquals("user", credentials.getUserName());
         assertArrayEquals("pwd".toCharArray(), credentials.getPassword());
-        assertEquals(MongoCredentials.Protocol.NEGOTIATE, credentials.getProtocol());
+        assertEquals(MongoAuthenticationProtocol.NEGOTIATE, credentials.getProtocol());
         assertEquals("test", credentials.getSource());
 
-        credentials = new MongoCredentials("user", "pwd".toCharArray(), MongoCredentials.Protocol.NEGOTIATE);
+        credentials = new MongoCredential("user", "pwd".toCharArray(), MongoAuthenticationProtocol.NEGOTIATE);
         assertEquals("user", credentials.getUserName());
         assertArrayEquals("pwd".toCharArray(), credentials.getPassword());
-        assertEquals(MongoCredentials.Protocol.NEGOTIATE, credentials.getProtocol());
+        assertEquals(MongoAuthenticationProtocol.NEGOTIATE, credentials.getProtocol());
         assertEquals("admin", credentials.getSource());
 
-        credentials = new MongoCredentials("user", MongoCredentials.Protocol.GSSAPI);
+        credentials = new MongoCredential("user", MongoAuthenticationProtocol.GSSAPI);
         assertEquals("user", credentials.getUserName());
         assertNull(credentials.getPassword());
-        assertEquals(MongoCredentials.Protocol.GSSAPI, credentials.getProtocol());
+        assertEquals(MongoAuthenticationProtocol.GSSAPI, credentials.getProtocol());
         assertEquals("$external", credentials.getSource());
 
-        credentials = new MongoCredentials("user", "pwd".toCharArray(), MongoCredentials.Protocol.NEGOTIATE, "test");
+        credentials = new MongoCredential("user", "pwd".toCharArray(), MongoAuthenticationProtocol.NEGOTIATE, "test");
         assertEquals("user", credentials.getUserName());
         assertArrayEquals("pwd".toCharArray(), credentials.getPassword());
-        assertEquals(MongoCredentials.Protocol.NEGOTIATE, credentials.getProtocol());
+        assertEquals(MongoAuthenticationProtocol.NEGOTIATE, credentials.getProtocol());
         assertEquals("test", credentials.getSource());
 
         try {
-            new MongoCredentials("user", null, MongoCredentials.Protocol.NEGOTIATE, "test");
+            new MongoCredential("user", null, MongoAuthenticationProtocol.NEGOTIATE, "test");
             fail("STRONGEST must have a password");
         } catch (IllegalArgumentException e) {
             // all good
         }
 
         try {
-            new MongoCredentials("user", "a".toCharArray(), MongoCredentials.Protocol.GSSAPI);
+            new MongoCredential("user", "a".toCharArray(), MongoAuthenticationProtocol.GSSAPI);
             fail("GSSAPI must not have a password");
         } catch (IllegalArgumentException e) {
             // all good
@@ -85,11 +85,11 @@ public class MongoCredentialsTest extends TestCase {
         assertTrue(store.getDatabases().isEmpty());
         assertNull(store.get("test"));
 
-        store = new MongoCredentialsStore((MongoCredentials) null);
+        store = new MongoCredentialsStore((MongoCredential) null);
         assertTrue(store.getDatabases().isEmpty());
         assertNull(store.get("test"));
 
-        MongoCredentials credentials = new MongoCredentials("user", password);
+        MongoCredential credentials = new MongoCredential("user", password);
         store = new MongoCredentialsStore(credentials);
         Set<String> expected;
         expected = new HashSet<String>();
@@ -98,10 +98,10 @@ public class MongoCredentialsTest extends TestCase {
         assertEquals(credentials, store.get("admin"));
         assertNull(store.get("test"));
 
-        List<MongoCredentials> credentialsList;
+        List<MongoCredential> credentialsList;
 
-        final MongoCredentials credentials1 = new MongoCredentials("user", password, "db1");
-        final MongoCredentials credentials2 = new MongoCredentials("user", "pwd".toCharArray(), "db2");
+        final MongoCredential credentials1 = new MongoCredential("user", password, "db1");
+        final MongoCredential credentials2 = new MongoCredential("user", "pwd".toCharArray(), "db2");
         credentialsList = Arrays.asList(credentials1, credentials2);
         store = new MongoCredentialsStore(credentialsList);
         expected = new HashSet<String>();
@@ -113,7 +113,7 @@ public class MongoCredentialsTest extends TestCase {
         assertNull(store.get("db3"));
         assertEquals(credentialsList, store.asList());
 
-        credentialsList = Arrays.asList(credentials1, new MongoCredentials("user2", password, "db1"));
+        credentialsList = Arrays.asList(credentials1, new MongoCredential("user2", password, "db1"));
         try {
             new MongoCredentialsStore(credentialsList);
             fail("should throw");

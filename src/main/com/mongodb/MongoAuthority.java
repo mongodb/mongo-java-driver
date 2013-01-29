@@ -52,7 +52,7 @@ class MongoAuthority {
      * @return
      */
     public static MongoAuthority direct(ServerAddress serverAddress) {
-        return direct(serverAddress, (MongoCredentials) null);
+        return direct(serverAddress, (MongoCredential) null);
     }
 
     /**
@@ -61,7 +61,7 @@ class MongoAuthority {
      * @param credentials
      * @return
      */
-    public static MongoAuthority direct(ServerAddress serverAddress, MongoCredentials credentials) {
+    public static MongoAuthority direct(ServerAddress serverAddress, MongoCredential credentials) {
         return direct(serverAddress, new MongoCredentialsStore(credentials));
     }
 
@@ -81,7 +81,7 @@ class MongoAuthority {
      * @return
      */
     public static MongoAuthority dynamicSet(List<ServerAddress> serverAddresses) {
-        return dynamicSet(serverAddresses, (MongoCredentials) null);
+        return dynamicSet(serverAddresses, (MongoCredential) null);
     }
 
     /**
@@ -90,7 +90,7 @@ class MongoAuthority {
      * @param credentials
      * @return
      */
-    public static MongoAuthority dynamicSet(List<ServerAddress> serverAddresses, MongoCredentials credentials) {
+    public static MongoAuthority dynamicSet(List<ServerAddress> serverAddresses, MongoCredential credentials) {
         return dynamicSet(serverAddresses, new MongoCredentialsStore(credentials));
     }
 

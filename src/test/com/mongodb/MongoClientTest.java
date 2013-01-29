@@ -30,7 +30,7 @@ public class MongoClientTest {
         MongoClientOptions customClientOptions = new MongoClientOptions.Builder().connectionsPerHost(500).build();
         MongoOptions customOptions = new MongoOptions(customClientOptions);
         MongoOptions defaultOptions = new MongoOptions(new MongoClientOptions.Builder().build());
-        List<MongoCredentials> emptyCredentials = Arrays.asList();
+        List<MongoCredential> emptyCredentials = Arrays.asList();
         MongoClient mc;
 
         mc = new MongoClient();
@@ -63,7 +63,7 @@ public class MongoClientTest {
         Assert.assertEquals(emptyCredentials, mc.getCredentialsList());
         mc.close();
 
-        final List<MongoCredentials> credentialsList = Arrays.asList(new MongoCredentials("user1", "pwd".toCharArray(), "test"));
+        final List<MongoCredential> credentialsList = Arrays.asList(new MongoCredential("user1", "pwd".toCharArray(), "test"));
         mc = new MongoClient(new ServerAddress("127.0.0.1"), credentialsList);
         Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
         Assert.assertEquals(defaultOptions, mc.getMongoOptions());

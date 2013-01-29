@@ -311,11 +311,11 @@ public class DBPort {
         _socket = null;
     }
 
-    CommandResult authenticate(Mongo mongo, final MongoCredentials credentials) {
+    CommandResult authenticate(Mongo mongo, final MongoCredential credentials) {
         Authenticator authenticator;
-        if (credentials.getProtocol() == MongoCredentials.Protocol.NEGOTIATE) {
+        if (credentials.getProtocol() == MongoAuthenticationProtocol.NEGOTIATE) {
             authenticator = getStrongestAuthenticator(mongo, credentials);
-        } else if (credentials.getProtocol().equals(MongoCredentials.Protocol.GSSAPI)) {
+        } else if (credentials.getProtocol().equals(MongoAuthenticationProtocol.GSSAPI)) {
             authenticator = new GSSAPIAuthenticator(mongo, credentials);
         } else {
             throw new IllegalArgumentException("Unsupported authentication protocol: " + credentials.getProtocol());
@@ -335,7 +335,7 @@ public class DBPort {
         }
     }
 
-    private Authenticator getStrongestAuthenticator(final Mongo mongo, MongoCredentials credentials) {
+    private Authenticator getStrongestAuthenticator(final Mongo mongo, MongoCredential credentials) {
         if (useCRAMAuthenticationProtocol == null) {
             cacheStrongestAuthenticationProtocol(mongo);
         }
@@ -407,7 +407,7 @@ public class DBPort {
 
         private final String mechanism;
 
-        GenericSaslAuthenticator(final Mongo mongo, MongoCredentials credentials, String mechanism) {
+        GenericSaslAuthenticator(final Mongo mongo, MongoCredential credentials, String mechanism) {
             super(mongo, credentials);
             this.mechanism = mechanism;
         }
@@ -456,10 +456,10 @@ public class DBPort {
         public static final String GSSAPI_OID = "1.2.840.113554.1.2.2";
         public static final String GSSAPI_MECHANISM = "GSSAPI";
 
-        GSSAPIAuthenticator(final Mongo mongo, final MongoCredentials credentials) {
+        GSSAPIAuthenticator(final Mongo mongo, final MongoCredential credentials) {
             super(mongo, credentials);
 
-            if (!this.credentials.getProtocol().equals(MongoCredentials.Protocol.GSSAPI)) {
+            if (!this.credentials.getProtocol().equals(MongoAuthenticationProtocol.GSSAPI)) {
                 throw new MongoException("Incorrect mechanism: " + this.credentials.getProtocol());
             }
         }
@@ -501,7 +501,7 @@ public class DBPort {
     abstract class SaslAuthenticator extends Authenticator {
         public static final String MONGODB_PROTOCOL = "mongodb";
 
-        SaslAuthenticator(final Mongo mongo, MongoCredentials credentials) {
+        SaslAuthenticator(final Mongo mongo, MongoCredential credentials) {
             super(mongo, credentials);
         }
 
@@ -558,7 +558,7 @@ public class DBPort {
     }
 
     class NativeAuthenticator extends Authenticator {
-        NativeAuthenticator(Mongo mongo, MongoCredentials credentials) {
+        NativeAuthenticator(Mongo mongo, MongoCredential credentials) {
             super(mongo, credentials);
         }
 
@@ -581,9 +581,9 @@ public class DBPort {
 
     abstract class Authenticator {
         protected final Mongo mongo;
-        protected final MongoCredentials credentials;
+        protected final MongoCredential credentials;
 
-        Authenticator(Mongo mongo, MongoCredentials credentials) {
+        Authenticator(Mongo mongo, MongoCredential credentials) {
             this.mongo = mongo;
             this.credentials = credentials;
         }
