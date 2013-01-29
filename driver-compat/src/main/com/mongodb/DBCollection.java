@@ -648,7 +648,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public void ensureIndex(final DBObject keys, final String name) {
-        throw new UnsupportedOperationException();
+        ensureIndex(keys, name, false);
     }
 
     @Override

@@ -42,7 +42,6 @@ public class AddIndexAcceptanceTest extends AcceptanceTestCase {
     @Before
     public void setUp() {
         super.setUp();
-        System.out.println(collection.admin().getIndexes());
         assertThat("Should only be the default index on _id at this stage",
                   collection.admin().getIndexes().size(), is(1));
     }
@@ -202,6 +201,16 @@ public class AddIndexAcceptanceTest extends AcceptanceTestCase {
         assertThat("Index name should contain both field names", (String) newIndexDetails.get("name"),
                   is("locationField_2d_someOtherField_1"));
     }
+
+    @Test
+    public void shouldAllowAliasForIndex() {
+        final String indexAlias = "indexAlias";
+        collection.admin().ensureIndex(new Index(indexAlias, new OrderedKey("theField", ASC)));
+
+        final String nameOfCreatedIndex = (String) collection.admin().getIndexes().get(1).get("name");
+        assertThat("Should be an index named after the alias", nameOfCreatedIndex, is(indexAlias));
+    }
+
 
     //TODO: sparse
     //TODO: other ordering options

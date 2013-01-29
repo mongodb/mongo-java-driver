@@ -36,6 +36,10 @@ public class Index implements ConvertibleToDocument {
         name = generateIndexName();
     }
 
+    public Index(final String name, final Key<?>... keys) {
+        this(name, false, keys);
+    }
+
     public Index(final String name, final boolean unique, final Key<?>... keys) {
         for (final Key<?> key : keys) {
             addKey(key);

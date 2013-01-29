@@ -18,7 +18,6 @@ package com.mongodb;
 
 import org.bson.types.ObjectId;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -303,15 +302,12 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void testEnsureIndex() {
-        final DBCollection c = collection;
+        collection.save(new BasicDBObject("x", 1));
+        assertEquals(1, collection.getIndexInfo().size());
 
-        c.save(new BasicDBObject("x", 1));
-        //Not sure why this is one, a single index is the default one.  This shows the index on x was not added
-        assertEquals(1, c.getIndexInfo().size());
-
-        c.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
-        assertEquals(2, c.getIndexInfo().size());
-        assertEquals(Boolean.TRUE, c.getIndexInfo().get(1).get("unique"));
+        collection.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
+        assertEquals(2, collection.getIndexInfo().size());
+        assertEquals(Boolean.TRUE, collection.getIndexInfo().get(1).get("unique"));
     }
 
     @Test
@@ -357,9 +353,18 @@ public class DBCollectionOldTest extends DatabaseTestCase {
     }
 
     @Test
-    @Ignore("Not supported yet, not implemented")
     public void shouldSupportIndexAliases() {
+        // given
+        collection.save(new BasicDBObject("x", 1));
+        assertEquals(1, collection.getIndexInfo().size());
 
+        // when
+        final String indexAlias = "indexAlias";
+        collection.ensureIndex(new BasicDBObject("x", 1), indexAlias);
+
+        // then
+        assertEquals(2, collection.getIndexInfo().size());
+        assertEquals(indexAlias, collection.getIndexInfo().get(1).get("name"));
     }
 
     @Test

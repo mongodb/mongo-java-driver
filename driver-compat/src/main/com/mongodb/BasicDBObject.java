@@ -28,6 +28,7 @@ import java.util.Map;
  * obj.put( "foo", "bar" );
  * </pre></blockquote>
  */
+@SuppressWarnings({ "rawtypes" })
 public class BasicDBObject extends BasicBSONObject implements DBObject {
     private static final long serialVersionUID = -4415279469780082174L;
 
