@@ -77,13 +77,6 @@ public abstract class OutputBuffer extends OutputStream {
         write(x >> 24);
     }
 
-    public void writeIntBE(final int x) {
-        write(x >> 24);
-        write(x >> 16);
-        write(x >> 8);
-        write(x);
-    }
-
     /**
      * Backpatches the size of a document or string by writing the size into the four bytes starting at getPosition() -
      * size.

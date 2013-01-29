@@ -80,7 +80,7 @@ public class ByteBufferInput implements InputBuffer {
 
     @Override
     public ObjectId readObjectId() {
-        return new ObjectId(readBigEndianInt(), readBigEndianInt(), readBigEndianInt());
+        return new ObjectId(readBytes(12));
     }
 
     @Override
@@ -97,11 +97,10 @@ public class ByteBufferInput implements InputBuffer {
         buffer.position(mark);
 
         final byte[] bytes = readBytes(size);
-        readByte();  // read the trailing null bytes
+        readByte();  // read the trailing null byte
 
         return new String(bytes, UTF8_CHARSET);
     }
-
 
     private void readUntilNullByte() {
         //CHECKSTYLE:OFF
@@ -119,14 +118,5 @@ public class ByteBufferInput implements InputBuffer {
     @Override
     public void skip(final int numBytes) {
         buffer.position(buffer.position() + numBytes);
-    }
-
-    private int readBigEndianInt() {
-        int x = 0;
-        x |= (0xFF & buffer.get()) << 24;
-        x |= (0xFF & buffer.get()) << 16;
-        x |= (0xFF & buffer.get()) << 8;
-        x |= (0xFF & buffer.get());
-        return x;
     }
 }

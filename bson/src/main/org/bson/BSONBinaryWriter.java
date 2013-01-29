@@ -192,11 +192,7 @@ public class BSONBinaryWriter extends BSONWriter {
         buffer.write(BsonType.OBJECT_ID.getValue());
         writeCurrentName();
 
-        // TODO: Should this be pushed down into the buffer?
-        buffer.writeIntBE(objectId.time());
-        buffer.writeIntBE(objectId.machine());
-        buffer.writeIntBE(objectId.inc());
-
+        buffer.write(objectId.toByteArray());
         setState(getNextState());
     }
 
