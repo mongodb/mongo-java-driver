@@ -44,6 +44,10 @@ public class Mongo {
         this(serverAddress, new MongoOptions());
     }
 
+    public Mongo(final List<ServerAddress> hosts) {
+        this(hosts, new MongoOptions());
+    }
+
     public Mongo(final List<ServerAddress> hosts, final MongoOptions mongoOptions) {
         this(hosts.get(0), mongoOptions);
     }
@@ -158,10 +162,6 @@ public class Mongo {
     }
 
     //******* Missing functionality from the old driver *******/
-
-    public Mongo(final List<ServerAddress> serverAddresses) {
-        throw new IllegalStateException("Not implemented yet!");
-    }
 
     public void addOption(final int option) {
         throw new IllegalStateException("Not implemented yet!");

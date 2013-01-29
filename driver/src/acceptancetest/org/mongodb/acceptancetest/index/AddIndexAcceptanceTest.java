@@ -42,8 +42,9 @@ public class AddIndexAcceptanceTest extends AcceptanceTestCase {
     @Before
     public void setUp() {
         super.setUp();
-        assertThat("Should be no indexes on the database at all at this stage",
-                  collection.admin().getIndexes().size(), is(0));
+        System.out.println(collection.admin().getIndexes());
+        assertThat("Should only be the default index on _id at this stage",
+                  collection.admin().getIndexes().size(), is(1));
     }
 
     @Test

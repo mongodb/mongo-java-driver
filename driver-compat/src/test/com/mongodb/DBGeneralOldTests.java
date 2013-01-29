@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.bson.types.Document;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -138,7 +139,7 @@ public class DBGeneralOldTests {
     }
 
     @Test
-    @Ignore("Not supported yet, API not ported yet")
+    @Ignore("Not sure exactly what behaviour this test is asserting.  Needs re-writing")
     public void testGetCollectionNamesToSecondary() throws UnknownHostException {
         Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"),
                                              new ServerAddress("127.0.0.1", 27018)));
@@ -148,7 +149,7 @@ public class DBGeneralOldTests {
                 return;
             }
 
-            final String secondary = getASecondaryAsString(mongo);
+            final String secondary = getMemberNameByState(mongo, "secondary");
             mongo.close();
             mongo = new Mongo(secondary);
             final DB db = mongo.getDB("secondaryTest");
@@ -201,21 +202,17 @@ public class DBGeneralOldTests {
         return result;
     }
 
-    protected String getASecondaryAsString(final Mongo mongo) {
-        return getMemberNameByState(mongo, "secondary");
-    }
-
     @SuppressWarnings({ "unchecked" })
     protected String getMemberNameByState(final Mongo mongo, final String stateStrToMatch) {
         final CommandResult replicaSetStatus = runReplicaSetStatusCommand(mongo);
 
-        for (final BasicDBObject member : (List<BasicDBObject>) replicaSetStatus.get("members")) {
-            String hostnameAndPort = member.getString("name");
+        for (final Document member : (List<Document>) replicaSetStatus.get("members")) {
+            String hostnameAndPort = (String) member.get("name");
             if (!hostnameAndPort.contains(":")) {
                 hostnameAndPort = hostnameAndPort + ":27017";
             }
 
-            final String stateStr = member.getString("stateStr");
+            final String stateStr = (String) member.get("stateStr");
 
             if (stateStr.equalsIgnoreCase(stateStrToMatch)) {
                 return hostnameAndPort;
