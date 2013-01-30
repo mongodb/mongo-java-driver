@@ -22,9 +22,7 @@ import org.bson.BSONCallback;
 
 import com.mongodb.DBObject;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 
 /**
  *   Helper methods for JSON serialization and de-serialization
@@ -308,24 +306,6 @@ class JSONParser {
                         break;
                 }
             }
-//            else {
-//                String key = parseString(false);
-//                if (check('/')) {
-//                    parseComment();
-//                }
-//                read(':');
-//                Object value = parse(key);
-//                doCallback(key, value);
-//                if (check('/')) {
-//                    parseComment();
-//                }
-//                if((current = get()) == ',') {
-//                    read(',');
-//                }
-//                else if (current == '}') {
-//                    break;
-//                }
-//            }
         }
         read('}');
 
