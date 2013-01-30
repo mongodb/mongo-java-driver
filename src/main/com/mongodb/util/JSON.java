@@ -22,7 +22,9 @@ import org.bson.BSONCallback;
 
 import com.mongodb.DBObject;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  *   Helper methods for JSON serialization and de-serialization
@@ -270,35 +272,60 @@ class JSONParser {
      * @throws JSONParseException if invalid JSON is found
      */
     protected Object parseObject(String name){
-	if (name != null) {
-	    _callback.objectStart(name);
-	} else {
-	    _callback.objectStart();
-	}
-
+        if (name != null) {
+            _callback.objectStart(name);
+        } else {
+            _callback.objectStart();
+        }
         read('{');
-        char current = get();
+
+        ObjectToken expected = ObjectToken.KEY;
+        String key="";
+
         while(get() != '}') {
             // comment
             if (check('/')) {
                 parseComment();
             }
             else {
-                String key = parseString(false);
-                read(':');
-                Object value = parse(key);
-            doCallback(key, value);
-
-                if((current = get()) == ',') {
-                    read(',');
-                }
-                else if ((current = get()) == '/') {
-                    parseComment();
-                }
-                else {
-                    break;
+                switch(expected) {
+                    case KEY:
+                        key = parseString(false);
+                        expected = ObjectToken.COLON;
+                        break;
+                    case COLON:
+                        read(':');
+                        expected = ObjectToken.VALUE;
+                        break;
+                    case VALUE:
+                        Object value = parse(key);
+                        doCallback(key, value);
+                        expected = ObjectToken.COMMA;
+                        break;
+                    case COMMA:
+                        read(',');
+                        expected = ObjectToken.KEY;
+                        break;
                 }
             }
+//            else {
+//                String key = parseString(false);
+//                if (check('/')) {
+//                    parseComment();
+//                }
+//                read(':');
+//                Object value = parse(key);
+//                doCallback(key, value);
+//                if (check('/')) {
+//                    parseComment();
+//                }
+//                if((current = get()) == ',') {
+//                    read(',');
+//                }
+//                else if (current == '}') {
+//                    break;
+//                }
+//            }
         }
         read('}');
 
@@ -591,24 +618,31 @@ class JSONParser {
 	} else {
 	    _callback.arrayStart();
 	}
-
         read('[');
 
-	int i = 0;
-        char current = get();
-        while( current != ']' ) {
-	    String elemName = String.valueOf(i++);
-            Object elem = parse(elemName);
-	    doCallback(elemName, elem);
-
-            if((current = get()) == ',') {
-                read(',');
-            }
-            else if(current == ']') {
-                break;
+        int i = 0;
+        ArrayToken expected = ArrayToken.OBJECT;
+        while(get() != ']') {
+            // comment
+            if (check('/')) {
+                parseComment();
             }
             else {
-                throw new JSONParseException(s, pos);
+                switch(expected) {
+                    case OBJECT:
+                        String elemName = String.valueOf(i++);
+                        Object elem = parse(elemName);
+                        doCallback(elemName, elem);
+                        expected = ArrayToken.COMMA;
+                        break;
+                    case COMMA:
+                        read(',');
+                        expected = ArrayToken.OBJECT;
+                        if (check(']')) {
+                            throw new JSONParseException(s, pos);
+                        }
+                        break;
+                }
             }
         }
 
@@ -626,19 +660,44 @@ class JSONParser {
         if (_featureSet.contains(JSON.Feature.ALLOW_COMMENTS)) {
             read('/'); read('*');
 
-            while(get() != '*') {
-                try{
-                    read();
+            while(true) {
+                try {
+                    // potential end of comment
+                    if (check('*')) {
+                        read();
+                        // definite end of comment
+                        if (check('/')) {
+                            read();
+                            break;
+                        }
+                    }
+                    else if (check((char)-1)) {
+                        throw new JSONParseException(s, pos);
+                    }
+                    else {
+                        read();
+                    }
                 }
                 catch(IllegalStateException e) {
                     throw new JSONParseException(s, pos);
                 }
             }
-            read('*'); read('/');
+
         }
         else {
             throw new JSONParseException(s, pos);
         }
+    }
+
+    enum ObjectToken {
+        KEY,
+        COLON,
+        VALUE,
+        COMMA
+    }
+    enum ArrayToken {
+        OBJECT,
+        COMMA
     }
 
 }

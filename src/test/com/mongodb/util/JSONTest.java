@@ -115,9 +115,14 @@ public class JSONTest extends com.mongodb.util.TestCase {
         EnumSet<JSON.Feature> featureSet = EnumSet.of(JSON.Feature.ALLOW_COMMENTS);
         assertEquals(JSON.parse("/*xyz*/", featureSet), null);
         assertEquals(JSON.parse("/* xyz */", featureSet), null);
-        assertEquals(JSON.parse("/*xyz abc 123*/", featureSet), null);
+        assertEquals(JSON.parse("/*xyz abc *x/* 123*/", featureSet), null);
+        assertEquals(JSON.serialize(JSON.parse("[/* comment *//*comment*/]", featureSet)), "[ ]");
+        assertEquals(JSON.serialize(JSON.parse("[/* comment */3/*comment*/]", featureSet)), "[ 3]");
+        assertEquals(JSON.serialize(JSON.parse("/*comment*/ [ /*]comment*/ 3 /*comment*/ , /*comment*/ 4, 5/* comment */] /* comment */", featureSet)), "[ 3 , 4 , 5]");
         assertEquals(JSON.serialize(JSON.parse("/*xyz*/ {'csdf' : {}}", featureSet)), "{ \"csdf\" : { }}");
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : { /*xyz*/ \"foo\":\"bar\" /*xyz*/ }} /*xyz*/ ", featureSet)), "{ \"csdf\" : { \"foo\" : \"bar\"}}");
+        assertEquals(JSON.serialize(JSON.parse("{/*}comment{*/\"key\" /*comment*/ : /*comment*/ /*comment*/ \"value\" /*comment*/ , /*comment*/ \"key2\" : \"value2\" /*comment*/,}", featureSet)),
+                "{ \"key\" : \"value\" , \"key2\" : \"value2\"}");
     }
 
     @org.testng.annotations.Test(groups = {"basic"})
@@ -184,6 +189,16 @@ public class JSONTest extends com.mongodb.util.TestCase {
         }
         assertEquals(threw, true);
         threw = false;
+        // assert missing comma in object throws error
+        try {
+            JSON.parse("{\"x\" : 4 \"y\" : 3}");
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+        // assert extra */ in comments throws error
         try {
             JSON.parse("{/* abc */ */ \"x\" : 5, }", featureSet);
         }
@@ -192,6 +207,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
         }
         assertEquals(threw, true);
         threw = false;
+        // assert missing */ in comments throws error
         try {
             JSON.parse("{/* abc \"x\" : 5, }", featureSet);
         }
@@ -200,8 +216,36 @@ public class JSONTest extends com.mongodb.util.TestCase {
         }
         assertEquals(threw, true);
         threw = false;
+        // assert commenting without ALLOW_COMMENTS passed in throws error
         try {
             JSON.parse("{/* abc */ \"x\" : 5, }");
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+        // assert unclosed array throws error
+        try {
+            JSON.parse("[4,5", featureSet);
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+        // assert unclosed array with comments throws error
+        try {
+            JSON.parse("/*comment*/[4,5/*comment*/", featureSet);
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+        // assert array ending in comma throws error
+        try {
+            JSON.parse("[4,5,]");
         }
         catch(JSONParseException e) {
             threw = true;
