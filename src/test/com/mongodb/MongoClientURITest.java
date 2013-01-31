@@ -21,8 +21,8 @@ import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
 
 import javax.net.SocketFactory;
-import java.net.UnknownHostException;
 import javax.net.ssl.SSLSocketFactory;
+import java.net.UnknownHostException;
 
 public class MongoClientURITest extends TestCase {
 
@@ -86,10 +86,13 @@ public class MongoClientURITest extends TestCase {
         assertEquals("host", u.getHosts().get(0));
         assertEquals("user", u.getUsername());
         assertEquals("pass", new String(u.getPassword()));
-        assertEquals(new MongoCredential("user", "pass".toCharArray(), MongoAuthenticationProtocol.NEGOTIATE, "bar"), u.getCredentials());
+        assertEquals(new MongoCredential("user", "pass".toCharArray(), MongoAuthenticationMechanism.MONGO_CR, "bar"), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user@host/?authProtocol=GSSAPI");
-        assertEquals(new MongoCredential("user", MongoAuthenticationProtocol.GSSAPI), u.getCredentials());
+        assertEquals(new MongoCredential("user", MongoAuthenticationMechanism.GSSAPI), u.getCredentials());
+
+        u = new MongoClientURI("mongodb://user:pass@host/?authProtocol=MONGO-CR");
+        assertEquals(new MongoCredential("user", "pass".toCharArray(), MongoAuthenticationMechanism.MONGO_CR), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user:pass@host/?authSource=test");
         assertEquals(new MongoCredential("user", "pass".toCharArray(), "test"), u.getCredentials());

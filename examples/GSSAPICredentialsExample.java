@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
-import com.mongodb.MongoAuthenticationProtocol;
+import com.mongodb.MongoAuthenticationMechanism;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
@@ -45,7 +46,7 @@ public class GSSAPICredentialsExample {
     // auth.login.defaultCallbackHandler=name of class that implements javax.security.auth.callback.CallbackHandler
     public static void main(String[] args) throws UnknownHostException, InterruptedException {
         // Set this property to avoid the default behavior where the program prompts on the command line for username/password
-        Security.setProperty("auth.login.defaultCallbackHandler", "DefaultSecurityCallbackHandler");
+//        Security.setProperty("auth.login.defaultCallbackHandler", "DefaultSecurityCallbackHandler");
 
         String server = args[0];
         String user = args[1];
@@ -68,10 +69,11 @@ public class GSSAPICredentialsExample {
         System.out.println();
 
         MongoClient mongoClient = new MongoClient(new ServerAddress(server),
-                        Arrays.asList(new MongoCredential(user, MongoAuthenticationProtocol.GSSAPI)),
+                        Arrays.asList(new MongoCredential(user, MongoAuthenticationMechanism.GSSAPI)),
                 new MongoClientOptions.Builder().socketKeepAlive(true).socketTimeout(30000).build());
         DB testDB = mongoClient.getDB(databaseName);
 
+        System.out.println("Insert result: " + testDB.getCollection("test").insert(new BasicDBObject()));
         System.out.println("Count: " + testDB.getCollection("test").count());
     }
 }

@@ -18,9 +18,9 @@
 package com.mongodb;
 
 /**
- * An enumeration of the supported authentication protocols.
+ * An enumeration of the supported authentication mechanisms.
  */
-public enum MongoAuthenticationProtocol {
+public enum MongoAuthenticationMechanism {
     /**
      * The GSSAPI protocol, to support Kerberos v5 via a SASL-based authentication protocol
      */
@@ -33,18 +33,28 @@ public enum MongoAuthenticationProtocol {
         public String getDefaultSource() {
             return "$external";
         }
+
+        @Override
+        public String getMechanismName() {
+            return "GSSAPI";
+        }
     },
     /**
-     * Negotiate the strongest available protocol available.  This is the default protocol.
+     * The native MongoDB authentication mechanism.  This is an abbreviation for MongoDB Challenge Response.
      */
-    NEGOTIATE {
+    MONGO_CR {
         /**
          * The default source is the "admin" database.
-         * @return
+         * @return the "admin" database
          */
         @Override
         public String getDefaultSource() {
             return "admin";
+        }
+
+        @Override
+        public String getMechanismName() {
+            return "MONGO-CR";
         }
     };
 
@@ -54,4 +64,20 @@ public enum MongoAuthenticationProtocol {
      * @return the default database for this protocol
      */
     public abstract String getDefaultSource();
+
+    /**
+     * Gets the mechanism name.
+     * @return the name
+     */
+    public abstract String getMechanismName();
+
+    public static MongoAuthenticationMechanism byMechanismName(String name) {
+        if (name.equals(GSSAPI.getMechanismName())) {
+            return GSSAPI;
+        }
+        if (name.equals(MONGO_CR.getMechanismName())) {
+            return MONGO_CR;
+        }
+        throw new IllegalArgumentException("Invalid authentication mechanism name: " + name);
+    }
 }

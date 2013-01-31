@@ -614,7 +614,7 @@ public abstract class DB {
     }
 
     private CommandResultPair authenticateCommandHelper(String username, char[] password) {
-        MongoCredential credentials = new MongoCredential(username, password, MongoAuthenticationProtocol.NEGOTIATE, getName());
+        MongoCredential credentials = new MongoCredential(username, password, MongoAuthenticationMechanism.MONGO_CR, getName());
 
         if (getAuthenticationCredentials() != null) {
             if (getAuthenticationCredentials().equals(credentials)) {

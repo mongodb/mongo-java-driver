@@ -23,99 +23,99 @@ import java.util.Arrays;
 
 /**
  * Represents credentials to authenticate to a mongo server, as well as the source of the credentials and
- * the authentication protocol to use.
+ * the authentication mechanism to use.
  *
  * @since 2.11.0
  */
 @Immutable
 public class MongoCredential {
 
-    private final MongoAuthenticationProtocol protocol;
+    private final MongoAuthenticationMechanism mechanism;
     private final String userName;
     private final char[] password;
     private final String source;
 
     /**
-     * Constructs a new instance using the given user name and password and the default protocol and source.
+     * Constructs a new instance using the given user name and password and the default mechanism and source.
      *
      * @param userName the user name
      * @param password the password
      */
     public MongoCredential(final String userName, final char[] password) {
-        this(userName, password, MongoAuthenticationProtocol.NEGOTIATE);
+        this(userName, password, MongoAuthenticationMechanism.MONGO_CR);
     }
 
     /**
-     * Constructs a new instance using the given user name, password and source and the default protocol.
+     * Constructs a new instance using the given user name, password and source and the default mechanism.
      *
      * @param userName the user name
      * @param password the password
      * @param source   the source of the credentials
      */
     public MongoCredential(final String userName, final char[] password, String source) {
-        this(userName, password, MongoAuthenticationProtocol.NEGOTIATE, source);
+        this(userName, password, MongoAuthenticationMechanism.MONGO_CR, source);
     }
 
     /**
-     * Constructs a new instance using the given user name, password and protocol and the default source for that protocol.
+     * Constructs a new instance using the given user name, password and mechanism and the default source for that mechanism.
      *
      * @param userName the user name
      * @param password the password
-     * @param protocol the protocol to use for authentication
+     * @param mechanism the mechanism to use for authentication
      */
-    public MongoCredential(final String userName, final char[] password, MongoAuthenticationProtocol protocol) {
-        this(userName, password, protocol, null);
+    public MongoCredential(final String userName, final char[] password, MongoAuthenticationMechanism mechanism) {
+        this(userName, password, mechanism, null);
     }
 
     /**
-     * Constructs a new instance using the given user name and protocol.  This really only applies to the GSSAPI
-     * protocol, since it's the only one that doesn't require a password.
+     * Constructs a new instance using the given user name and mechanism.  This really only applies to the GSSAPI
+     * mechanism, since it's the only one that doesn't require a password.
      *
      * @param userName the user name
-     * @param protocol the protocol to use for authentication
+     * @param mechanism the mechanism to use for authentication
      */
-    public MongoCredential(final String userName, final MongoAuthenticationProtocol protocol) {
-        this(userName, null, protocol);
+    public MongoCredential(final String userName, final MongoAuthenticationMechanism mechanism) {
+        this(userName, null, mechanism);
     }
 
     /**
      /**
-     * Constructs a new instance using the given user name, password, protocol, and source.
+     * Constructs a new instance using the given user name, password, mechanism, and source.
      *
      * @param userName the user name
      * @param password the password
-     * @param protocol the protocol
+     * @param mechanism the mechanism
      * @param source   the source of the credentials
      */
-    public MongoCredential(final String userName, final char[] password, MongoAuthenticationProtocol protocol, String source) {
+    public MongoCredential(final String userName, final char[] password, MongoAuthenticationMechanism mechanism, String source) {
         if (userName == null) {
             throw new IllegalArgumentException();
         }
-        if (protocol == null) {
+        if (mechanism == null) {
             throw new IllegalArgumentException();
         }
 
-        if (protocol == MongoAuthenticationProtocol.NEGOTIATE && password == null) {
-            throw new IllegalArgumentException("password can not be null for " + MongoAuthenticationProtocol.NEGOTIATE);
+        if (mechanism == MongoAuthenticationMechanism.MONGO_CR && password == null) {
+            throw new IllegalArgumentException("password can not be null for " + MongoAuthenticationMechanism.MONGO_CR);
         }
 
-        if (protocol == MongoAuthenticationProtocol.GSSAPI && password != null) {
-            throw new IllegalArgumentException("password must be null for " + MongoAuthenticationProtocol.GSSAPI);
+        if (mechanism == MongoAuthenticationMechanism.GSSAPI && password != null) {
+            throw new IllegalArgumentException("password must be null for " + MongoAuthenticationMechanism.GSSAPI);
         }
 
         this.userName = userName;
         this.password = password;
-        this.source = source != null ? source : getDefaultDatabase(protocol);
-        this.protocol = protocol;
+        this.source = source != null ? source : getDefaultDatabase(mechanism);
+        this.mechanism = mechanism;
     }
 
     /**
      * Gets the mechanism
      *
-     * @return the mechanism.  Can be null if the mechanism should be negotiated.
+     * @return the mechanism.
      */
-    public MongoAuthenticationProtocol getProtocol() {
-        return protocol;
+    public MongoAuthenticationMechanism getMechanism() {
+        return mechanism;
     }
 
     /**
@@ -140,7 +140,7 @@ public class MongoCredential {
     }
 
     /**
-     * Gets the source, which is usually the name of the database that the credentials are stored in..
+     * Gets the source, which is usually the name of the database that the credentials are stored in.
      *
      * @return the source.
      */
@@ -156,7 +156,7 @@ public class MongoCredential {
         final MongoCredential that = (MongoCredential) o;
 
         if (!Arrays.equals(password, that.password)) return false;
-        if (protocol != that.protocol) return false;
+        if (mechanism != that.mechanism) return false;
         if (!source.equals(that.source)) return false;
         if (!userName.equals(that.userName)) return false;
 
@@ -165,7 +165,7 @@ public class MongoCredential {
 
     @Override
     public int hashCode() {
-        int result = protocol.hashCode();
+        int result = mechanism.hashCode();
         result = 31 * result + userName.hashCode();
         result = 31 * result + (password != null ? Arrays.hashCode(password) : 0);
         result = 31 * result + source.hashCode();
@@ -175,18 +175,18 @@ public class MongoCredential {
     @Override
     public String toString() {
         return "MongoCredentials{" +
-                "protocol=" + protocol +
+                "mechanism=" + mechanism +
                 ", userName='" + userName +
                 ", password=" + "<hidden>" +
                 ", source='" + source +
                 '}';
     }
 
-    private String getDefaultDatabase(final MongoAuthenticationProtocol protocol) {
-        if (protocol == null) {
+    private String getDefaultDatabase(final MongoAuthenticationMechanism mechanism) {
+        if (mechanism == null) {
             return "admin";
         } else {
-            return protocol.getDefaultSource();
+            return mechanism.getDefaultSource();
         }
     }
 }

@@ -127,7 +127,8 @@ import java.util.logging.Logger;
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
- * <li>{@code authProtocol=NEGOTIATE|GSSAPI}: The authentication protocol to use.  The default is NEGOTIATE.
+ * <li>{@code authProtocol=MONGO-CR|GSSAPI}: The authentication protocol to use if a credential was supplied.
+ * The default is MONGO-CR, which is the native MongoDB Challenge Response mechanism.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
  * the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
@@ -388,7 +389,7 @@ public class MongoClientURI {
             return null;
         }
 
-        MongoAuthenticationProtocol protocol = MongoAuthenticationProtocol.NEGOTIATE;
+        MongoAuthenticationMechanism protocol = MongoAuthenticationMechanism.MONGO_CR;
         String authSource = database;
 
         for (String key : authKeys) {
@@ -399,7 +400,7 @@ public class MongoClientURI {
             }
 
             if (key.equals("authprotocol")) {
-                protocol = MongoAuthenticationProtocol.valueOf(value);
+                protocol = MongoAuthenticationMechanism.byMechanismName(value);
             } else if (key.equals("authsource")) {
                 authSource = value;
             }

@@ -313,12 +313,12 @@ public class DBPort {
 
     CommandResult authenticate(Mongo mongo, final MongoCredential credentials) {
         Authenticator authenticator;
-        if (credentials.getProtocol() == MongoAuthenticationProtocol.NEGOTIATE) {
-            authenticator = getStrongestAuthenticator(mongo, credentials);
-        } else if (credentials.getProtocol().equals(MongoAuthenticationProtocol.GSSAPI)) {
+        if (credentials.getMechanism() == MongoAuthenticationMechanism.MONGO_CR) {
+            authenticator = new NativeAuthenticator(mongo, credentials);
+        } else if (credentials.getMechanism().equals(MongoAuthenticationMechanism.GSSAPI)) {
             authenticator = new GSSAPIAuthenticator(mongo, credentials);
         } else {
-            throw new IllegalArgumentException("Unsupported authentication protocol: " + credentials.getProtocol());
+            throw new IllegalArgumentException("Unsupported authentication protocol: " + credentials.getMechanism());
         }
         CommandResult res = authenticator.authenticate();
         authenticatedDatabases.add(credentials.getSource());
@@ -459,8 +459,8 @@ public class DBPort {
         GSSAPIAuthenticator(final Mongo mongo, final MongoCredential credentials) {
             super(mongo, credentials);
 
-            if (!this.credentials.getProtocol().equals(MongoAuthenticationProtocol.GSSAPI)) {
-                throw new MongoException("Incorrect mechanism: " + this.credentials.getProtocol());
+            if (!this.credentials.getMechanism().equals(MongoAuthenticationMechanism.GSSAPI)) {
+                throw new MongoException("Incorrect mechanism: " + this.credentials.getMechanism());
             }
         }
 

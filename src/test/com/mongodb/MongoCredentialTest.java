@@ -34,42 +34,42 @@ public class MongoCredentialTest extends TestCase {
         credentials = new MongoCredential("user", "pwd".toCharArray());
         assertEquals("user", credentials.getUserName());
         assertArrayEquals("pwd".toCharArray(), credentials.getPassword());
-        assertEquals(MongoAuthenticationProtocol.NEGOTIATE, credentials.getProtocol());
+        assertEquals(MongoAuthenticationMechanism.MONGO_CR, credentials.getMechanism());
         assertEquals("admin", credentials.getSource());
 
         credentials = new MongoCredential("user", "pwd".toCharArray(), "test");
         assertEquals("user", credentials.getUserName());
         assertArrayEquals("pwd".toCharArray(), credentials.getPassword());
-        assertEquals(MongoAuthenticationProtocol.NEGOTIATE, credentials.getProtocol());
+        assertEquals(MongoAuthenticationMechanism.MONGO_CR, credentials.getMechanism());
         assertEquals("test", credentials.getSource());
 
-        credentials = new MongoCredential("user", "pwd".toCharArray(), MongoAuthenticationProtocol.NEGOTIATE);
+        credentials = new MongoCredential("user", "pwd".toCharArray(), MongoAuthenticationMechanism.MONGO_CR);
         assertEquals("user", credentials.getUserName());
         assertArrayEquals("pwd".toCharArray(), credentials.getPassword());
-        assertEquals(MongoAuthenticationProtocol.NEGOTIATE, credentials.getProtocol());
+        assertEquals(MongoAuthenticationMechanism.MONGO_CR, credentials.getMechanism());
         assertEquals("admin", credentials.getSource());
 
-        credentials = new MongoCredential("user", MongoAuthenticationProtocol.GSSAPI);
+        credentials = new MongoCredential("user", MongoAuthenticationMechanism.GSSAPI);
         assertEquals("user", credentials.getUserName());
         assertNull(credentials.getPassword());
-        assertEquals(MongoAuthenticationProtocol.GSSAPI, credentials.getProtocol());
+        assertEquals(MongoAuthenticationMechanism.GSSAPI, credentials.getMechanism());
         assertEquals("$external", credentials.getSource());
 
-        credentials = new MongoCredential("user", "pwd".toCharArray(), MongoAuthenticationProtocol.NEGOTIATE, "test");
+        credentials = new MongoCredential("user", "pwd".toCharArray(), MongoAuthenticationMechanism.MONGO_CR, "test");
         assertEquals("user", credentials.getUserName());
         assertArrayEquals("pwd".toCharArray(), credentials.getPassword());
-        assertEquals(MongoAuthenticationProtocol.NEGOTIATE, credentials.getProtocol());
+        assertEquals(MongoAuthenticationMechanism.MONGO_CR, credentials.getMechanism());
         assertEquals("test", credentials.getSource());
 
         try {
-            new MongoCredential("user", null, MongoAuthenticationProtocol.NEGOTIATE, "test");
-            fail("STRONGEST must have a password");
+            new MongoCredential("user", null, MongoAuthenticationMechanism.MONGO_CR, "test");
+            fail("MONGO-CR must have a password");
         } catch (IllegalArgumentException e) {
             // all good
         }
 
         try {
-            new MongoCredential("user", "a".toCharArray(), MongoAuthenticationProtocol.GSSAPI);
+            new MongoCredential("user", "a".toCharArray(), MongoAuthenticationMechanism.GSSAPI);
             fail("GSSAPI must not have a password");
         } catch (IllegalArgumentException e) {
             // all good
