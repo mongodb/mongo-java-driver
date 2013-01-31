@@ -17,7 +17,6 @@
 package org.mongodb.acceptancetest;
 
 import org.bson.types.Document;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.mongodb.Fixture;
@@ -33,23 +32,29 @@ public class AcceptanceTestCase {
     //CHECKSTYLE:ON
 
     @BeforeClass
-    public static void setupTestSuite() {
-        database = Fixture.getMongoClient().getDatabase("DriverTest" + System.currentTimeMillis());
-
-        //oooh, just realised this is nasty, looks like we're dropping the admin database
-        database.tools().drop();
-    }
-
-    @AfterClass
-    public static void teardownTestSuite() {
-        database.tools().drop();
+    public static synchronized void setupTestSuite() {
+        if (database == null) {
+            database = Fixture.getMongoClient().getDatabase("DriverTest-" + System.nanoTime());
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+        }
     }
 
     @Before
     public void setUp() {
-        //create a brand new collection for each test
-        collectionName = getClass().getSimpleName() + System.currentTimeMillis();
-        database.tools().createCollection(collectionName);
+        collectionName = getClass().getName();
         collection = database.getCollection(collectionName);
+        collection.tools().drop();
+        database.tools().createCollection(collectionName);
     }
+
+    static class ShutdownHook extends Thread {
+        @Override
+        public void run() {
+            if (database != null) {
+                database.tools().drop();
+                Fixture.getMongoClient().close();
+            }
+        }
+    }
+
 }
