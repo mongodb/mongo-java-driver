@@ -77,7 +77,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public DatabaseAdmin admin() {
+    public DatabaseAdmin tools() {
         return admin;
     }
 

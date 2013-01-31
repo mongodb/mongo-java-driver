@@ -36,21 +36,21 @@ import static org.junit.Assert.assertNull;
 
 public class BsonDocumentBufferSerializerTest extends DatabaseTestCase {
 
-    private BsonDocumentBufferSerializer serializer =
+    private final BsonDocumentBufferSerializer serializer =
             new BsonDocumentBufferSerializer(new PowerOfTwoByteBufferPool(24), PrimitiveSerializers.createDefault());
 
     @Test
     public void shouldBeAbleToQueryThenInsert() {
-        List<Document> originalDocuments = new ArrayList<Document>();
+        final List<Document> originalDocuments = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
             originalDocuments.add(new Document("_id", i).append("b", 2));
         }
 
         collection.insert(originalDocuments);
 
-        MongoCollection<BsonDocumentBuffer> lazyCollection = database.getCollection(collectionName, serializer);
-        List<BsonDocumentBuffer> docs = lazyCollection.into(new ArrayList<BsonDocumentBuffer>());
-        lazyCollection.admin().drop();
+        final MongoCollection<BsonDocumentBuffer> lazyCollection = database.getCollection(collectionName, serializer);
+        final List<BsonDocumentBuffer> docs = lazyCollection.into(new ArrayList<BsonDocumentBuffer>());
+        lazyCollection.tools().drop();
         lazyCollection.insert(docs);
 
         assertEquals(originalDocuments, collection.sort(new SortCriteriaDocument("_id", 1)).into(new ArrayList<Document>()));
@@ -58,21 +58,21 @@ public class BsonDocumentBufferSerializerTest extends DatabaseTestCase {
 
     @Test
     public void getIdShouldReturnNullForDocumentWithNoId() {
-        Document doc = new Document("a", 1).append("b", new Document("c", 1));
-        BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer());
+        final Document doc = new Document("a", 1).append("b", new Document("c", 1));
+        final BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer());
         new DocumentSerializer(PrimitiveSerializers.createDefault()).serialize(writer, doc);
-        BsonDocumentBuffer documentBuffer = new BsonDocumentBuffer(writer.getBuffer().toByteArray());
+        final BsonDocumentBuffer documentBuffer = new BsonDocumentBuffer(writer.getBuffer().toByteArray());
 
         assertNull(serializer.getId(documentBuffer));
     }
 
     @Test
     public void getIdShouldReturnId() {
-        Integer id = 42;
-        Document doc = new Document("a", 1).append("b", new Document("c", 1)).append("_id", id);
-        BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer());
+        final Integer id = 42;
+        final Document doc = new Document("a", 1).append("b", new Document("c", 1)).append("_id", id);
+        final BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer());
         new DocumentSerializer(PrimitiveSerializers.createDefault()).serialize(writer, doc);
-        BsonDocumentBuffer documentBuffer = new BsonDocumentBuffer(writer.getBuffer().toByteArray());
+        final BsonDocumentBuffer documentBuffer = new BsonDocumentBuffer(writer.getBuffer().toByteArray());
 
         assertEquals(id, serializer.getId(documentBuffer));
     }

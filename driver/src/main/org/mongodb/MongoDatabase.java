@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public interface MongoDatabase {
     <T> MongoCollection<T> getCollection(String name, CollectibleSerializer<T> serializer, MongoCollectionOptions options);
 
     //TODO: still need to come up with a sensible name for this
-    DatabaseAdmin admin();
+    DatabaseAdmin tools();
 
     //    MongoDatabase withClient(MongoClient client);
     //

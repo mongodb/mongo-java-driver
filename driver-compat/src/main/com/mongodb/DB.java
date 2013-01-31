@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class DB implements IDB {
      * @throws MongoException
      */
     public void dropDatabase() {
-        database.admin().drop();
+        database.tools().drop();
     }
 
     /**
@@ -154,7 +154,7 @@ public class DB implements IDB {
      * @throws MongoException
      */
     public Set<String> getCollectionNames() {
-        return database.admin().getCollectionNames();
+        return database.tools().getCollectionNames();
     }
 
     public DBCollection createCollection(final String collName, final DBObject options) {
@@ -175,7 +175,7 @@ public class DB implements IDB {
             maxDocuments = ((Number) options.get("max")).intValue();
         }
         try {
-            database.admin().createCollection(new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex,
+            database.tools().createCollection(new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex,
                                                                          maxDocuments));
             return getCollection(collName);
         } catch (org.mongodb.MongoException newStyleException) {
@@ -261,8 +261,8 @@ public class DB implements IDB {
 
     @Override
     public boolean collectionExists(final String collectionName) {
-        final Set<String> collectionNames = database.admin().getCollectionNames();
-        for (String name : collectionNames) {
+        final Set<String> collectionNames = database.tools().getCollectionNames();
+        for (final String name : collectionNames) {
             if (name.equalsIgnoreCase(collectionName)) {
                 return true;
             }

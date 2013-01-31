@@ -37,19 +37,19 @@ public class AcceptanceTestCase {
         database = Fixture.getMongoClient().getDatabase("DriverTest" + System.currentTimeMillis());
 
         //oooh, just realised this is nasty, looks like we're dropping the admin database
-        database.admin().drop();
+        database.tools().drop();
     }
 
     @AfterClass
     public static void teardownTestSuite() {
-        database.admin().drop();
+        database.tools().drop();
     }
 
     @Before
     public void setUp() {
         //create a brand new collection for each test
         collectionName = getClass().getSimpleName() + System.currentTimeMillis();
-        database.admin().createCollection(collectionName);
+        database.tools().createCollection(collectionName);
         collection = database.getCollection(collectionName);
     }
 }

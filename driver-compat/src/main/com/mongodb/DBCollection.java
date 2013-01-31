@@ -527,7 +527,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public DBCollection rename(final String newName, final boolean dropTarget) {
         try {
-            collection.getDatabase().admin().renameCollection(new RenameCollectionOptions(getName(), newName,
+            collection.getDatabase().tools().renameCollection(new RenameCollectionOptions(getName(), newName,
                                                              dropTarget));
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
@@ -672,7 +672,7 @@ public class DBCollection implements IDBCollection {
         }
         final List<Index.Key> keys = getKeysFromDBObject(fields);
         try {
-            collection.admin().ensureIndex(new Index(name, unique, keys.toArray(new Index.Key[keys.size()])));
+            collection.tools().ensureIndex(new Index(name, unique, keys.toArray(new Index.Key[keys.size()])));
         } catch (MongoDuplicateKeyException exception) {
             throw new MongoException.DuplicateKey(exception);
         }
@@ -881,7 +881,7 @@ public class DBCollection implements IDBCollection {
      * @throws MongoException
      */
     public void drop() {
-        collection.admin().drop();
+        collection.tools().drop();
     }
 
     /**
@@ -949,7 +949,7 @@ public class DBCollection implements IDBCollection {
      */
     public List<DBObject> getIndexInfo() {
         final ArrayList<DBObject> res = new ArrayList<DBObject>();
-        final List<Document> indexes = collection.admin().getIndexes();
+        final List<Document> indexes = collection.tools().getIndexes();
         for (final Document curIndex : indexes) {
             res.add(DBObjects.toDBObject(curIndex));
         }
@@ -960,17 +960,17 @@ public class DBCollection implements IDBCollection {
     public void dropIndex(final DBObject keys) {
         final List<Index.Key> keysFromDBObject = getKeysFromDBObject(keys);
         final Index indexToDrop = new Index(keysFromDBObject.toArray(new Index.Key[keysFromDBObject.size()]));
-        collection.admin().dropIndex(indexToDrop);
+        collection.tools().dropIndex(indexToDrop);
     }
 
     @Override
     public void dropIndex(final String name) {
-        collection.admin().dropIndex(getIndexFromName(name));
+        collection.tools().dropIndex(getIndexFromName(name));
     }
 
     @Override
     public void dropIndexes() {
-        collection.admin().dropIndexes();
+        collection.tools().dropIndexes();
     }
 
     @Override
@@ -985,7 +985,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public boolean isCapped() {
-        return collection.admin().isCapped();
+        return collection.tools().isCapped();
     }
 
     /**

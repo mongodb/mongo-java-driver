@@ -43,7 +43,7 @@ public class AddIndexAcceptanceTest extends AcceptanceTestCase {
     public void setUp() {
         super.setUp();
         assertThat("Should only be the default index on _id at this stage",
-                  collection.admin().getIndexes().size(), is(1));
+                  collection.tools().getIndexes().size(), is(1));
     }
 
     @Test
@@ -51,33 +51,33 @@ public class AddIndexAcceptanceTest extends AcceptanceTestCase {
         collection.insert(new Document("new", "value"));
 
         assertThat("Should have the default index on _id when a document exists",
-                  collection.admin().getIndexes().size(), is(1));
-        final String nameOfIndex = (String) collection.admin().getIndexes().get(0).get("name");
+                  collection.tools().getIndexes().size(), is(1));
+        final String nameOfIndex = (String) collection.tools().getIndexes().get(0).get("name");
         assertThat("Should be the default index on id", nameOfIndex, is("_id_"));
     }
 
     @Test
     public void shouldCreateIndexOnCollectionWithoutIndex() {
-        collection.admin().ensureIndex(new Index("theField"));
+        collection.tools().ensureIndex(new Index("theField"));
 
-        assertThat("Should be default index and new index on the database now", collection.admin().getIndexes().size(),
+        assertThat("Should be default index and new index on the database now", collection.tools().getIndexes().size(),
                   is(2));
     }
 
     @Test
     public void shouldCreateIndexWithNameOfFieldPlusOrder() {
-        collection.admin().ensureIndex(new Index("theField", ASC));
+        collection.tools().ensureIndex(new Index("theField", ASC));
 
-        final String nameOfCreatedIndex = (String) collection.admin().getIndexes().get(1).get("name");
+        final String nameOfCreatedIndex = (String) collection.tools().getIndexes().get(1).get("name");
         assertThat("Should be an index with name of field, ascending", nameOfCreatedIndex, is("theField_1"));
     }
 
     @Test
     public void shouldCreateAscendingIndexByDefault() {
         final Index index = new Index("theFieldToIndex");
-        collection.admin().ensureIndex(index);
+        collection.tools().ensureIndex(index);
 
-        final Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.tools().getIndexes().get(1);
         final OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("theFieldToIndex"));
         assertThat("Index created should be ascending", order, is(ASC));
     }
@@ -85,9 +85,9 @@ public class AddIndexAcceptanceTest extends AcceptanceTestCase {
     @Test
     public void shouldCreateAnAscendingIndex() {
         final Index index = new Index("field", ASC);
-        collection.admin().ensureIndex(index);
+        collection.tools().ensureIndex(index);
 
-        final Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.tools().getIndexes().get(1);
         final OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
         assertThat("Index created should be ascending", order, is(ASC));
     }
@@ -95,9 +95,9 @@ public class AddIndexAcceptanceTest extends AcceptanceTestCase {
     @Test
     public void shouldCreateADescendingIndex() {
         final Index index = new Index("field", DESC);
-        collection.admin().ensureIndex(index);
+        collection.tools().ensureIndex(index);
 
-        final Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.tools().getIndexes().get(1);
         final OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
         assertThat("Index created should be descending", order, is(DESC));
     }
@@ -105,26 +105,26 @@ public class AddIndexAcceptanceTest extends AcceptanceTestCase {
     @Test
     public void shouldCreateNonUniqueIndexByDefault() {
         final Index index = new Index("field", DESC);
-        collection.admin().ensureIndex(index);
+        collection.tools().ensureIndex(index);
 
-        final Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.tools().getIndexes().get(1);
         assertThat("Index created should not be unique", newIndexDetails.get("unique"), is(nullValue()));
     }
 
     @Test
     public void shouldCreateIndexOfUniqueValues() {
-        collection.admin().ensureIndex(new Index("field", DESC, true));
+        collection.tools().ensureIndex(new Index("field", DESC, true));
 
-        final Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.tools().getIndexes().get(1);
         final Boolean unique = (Boolean) newIndexDetails.get("unique");
         assertThat("Index created should be unique", unique, is(true));
     }
 
     @Test
     public void shouldSupportCompoundIndexes() {
-        collection.admin().ensureIndex(new Index("theFirstField", "theSecondField"));
+        collection.tools().ensureIndex(new Index("theFirstField", "theSecondField"));
 
-        final Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.tools().getIndexes().get(1);
 
         final Document keys = (Document) newIndexDetails.get("key");
         final Object theFirstField = keys.get("theFirstField");
@@ -144,9 +144,9 @@ public class AddIndexAcceptanceTest extends AcceptanceTestCase {
     @Test
     public void shouldSupportCompoundIndexesWithDifferentOrders() {
         final Index index = new Index(new OrderedKey("theFirstField", ASC), new OrderedKey("theSecondField", DESC));
-        collection.admin().ensureIndex(index);
+        collection.tools().ensureIndex(index);
 
-        final Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.tools().getIndexes().get(1);
 
         final Document keys = (Document) newIndexDetails.get("key");
 
@@ -162,30 +162,30 @@ public class AddIndexAcceptanceTest extends AcceptanceTestCase {
 
     @Test
     public void shouldOnlyReturnIndexesForTheSelectedCollection() {
-        collection.admin().ensureIndex(new Index("theField"));
+        collection.tools().ensureIndex(new Index("theField"));
 
         final MongoCollection<Document> anotherCollection = database.getCollection("anotherCollection");
-        anotherCollection.admin().ensureIndex(new Index("someOtherField"));
+        anotherCollection.tools().ensureIndex(new Index("someOtherField"));
 
         assertThat("Should be default index and new index on the first database",
-                  collection.admin().getIndexes().size(), is(2));
+                  collection.tools().getIndexes().size(), is(2));
 
         assertThat("Should be default index and new index on the second database",
-                  anotherCollection.admin().getIndexes().size(), is(2));
+                  anotherCollection.tools().getIndexes().size(), is(2));
     }
 
     @Test
     public void shouldBeAbleToAddGeoIndexes() {
-        collection.admin().ensureIndex(new Index(new GeoKey("theField")));
-        assertThat("Should be default index and new index on the database now", collection.admin().getIndexes().size(),
+        collection.tools().ensureIndex(new Index(new GeoKey("theField")));
+        assertThat("Should be default index and new index on the database now", collection.tools().getIndexes().size(),
                   is(2));
     }
 
     @Test
     public void shouldSupportCompoundIndexesOfOrderedFieldsAndGeoFields() {
-        collection.admin().ensureIndex(new Index(new GeoKey("locationField"), new OrderedKey("someOtherField", ASC)));
+        collection.tools().ensureIndex(new Index(new GeoKey("locationField"), new OrderedKey("someOtherField", ASC)));
 
-        final Document newIndexDetails = collection.admin().getIndexes().get(1);
+        final Document newIndexDetails = collection.tools().getIndexes().get(1);
 
         final Document keys = (Document) newIndexDetails.get("key");
         final Object geoField = keys.get("locationField");
@@ -205,9 +205,9 @@ public class AddIndexAcceptanceTest extends AcceptanceTestCase {
     @Test
     public void shouldAllowAliasForIndex() {
         final String indexAlias = "indexAlias";
-        collection.admin().ensureIndex(new Index(indexAlias, new OrderedKey("theField", ASC)));
+        collection.tools().ensureIndex(new Index(indexAlias, new OrderedKey("theField", ASC)));
 
-        final String nameOfCreatedIndex = (String) collection.admin().getIndexes().get(1).get("name");
+        final String nameOfCreatedIndex = (String) collection.tools().getIndexes().get(1).get("name");
         assertThat("Should be an index named after the alias", nameOfCreatedIndex, is(indexAlias));
     }
 
@@ -215,6 +215,4 @@ public class AddIndexAcceptanceTest extends AcceptanceTestCase {
     //TODO: sparse
     //TODO: other ordering options
     //TODO: can you disable the index on ID for non-capped collections?
-    //TODO: can you define your own name for the index? The spec doesn't forbid it (or encourage it) and the old
-    //driver supports it
 }

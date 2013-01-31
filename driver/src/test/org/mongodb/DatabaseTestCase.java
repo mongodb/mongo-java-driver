@@ -42,19 +42,19 @@ public class DatabaseTestCase {
         //create a brand new collection for each test
         collectionName = getClass().getSimpleName(); // + "-" + System.currentTimeMillis();
         collection = database.getCollection(collectionName);
-        collection.admin().drop();
+        collection.tools().drop();
     }
 
     @After
     public void tearDown() {
-        collection.admin().drop();
+        collection.tools().drop();
     }
 
     static class ShutdownHook extends Thread {
         @Override
         public void run() {
             if (database != null) {
-                database.admin().drop();
+                database.tools().drop();
                 Fixture.getMongoClient().close();
             }
         }

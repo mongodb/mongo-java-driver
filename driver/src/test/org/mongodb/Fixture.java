@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+            final String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
             final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
                                           ? DEFAULT_URI : mongoURIProperty;
             try {
@@ -50,7 +50,7 @@ public final class Fixture {
         final MongoDatabase database = getMongoClient().getDatabase(testClass.getSimpleName());
 
         //oooh, just realised this is nasty, looks like we're dropping the admin database
-        database.admin().drop();
+        database.tools().drop();
         return database;
     }
 }

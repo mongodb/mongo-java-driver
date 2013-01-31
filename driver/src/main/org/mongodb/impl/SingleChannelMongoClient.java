@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ class SingleChannelMongoClient extends AbstractMongoClient {
     }
 
     @Override
-    public ClientAdmin admin() {
+    public ClientAdmin tools() {
         return new ClientAdminImpl(this.getOperations(), getOptions().getPrimitiveSerializers());
     }
 

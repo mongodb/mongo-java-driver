@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,46 +41,46 @@ public class DropIndexAcceptanceTest {
 
     @AfterClass
     public static void teardownTestSuite() {
-        database.admin().drop();
+        database.tools().drop();
     }
 
     @Before
     public void setUp() {
         //create a brand new collection for each test
         collection = database.getCollection("Collection" + System.currentTimeMillis());
-        assertThat("Should be no indexes on the database at all at this stage", collection.admin().getIndexes().size(),
+        assertThat("Should be no indexes on the database at all at this stage", collection.tools().getIndexes().size(),
                   is(0));
     }
 
     @Test
     public void shouldDropSingleNamedIndex() {
         // Given
-        collection.admin().ensureIndex(new Index("theField"));
+        collection.tools().ensureIndex(new Index("theField"));
 
-        assertThat("Should be default index and new index on the database now", collection.admin().getIndexes().size(),
+        assertThat("Should be default index and new index on the database now", collection.tools().getIndexes().size(),
                   is(2));
 
         // When
-        collection.admin().dropIndex(new Index("theField"));
+        collection.tools().dropIndex(new Index("theField"));
 
         // Then
-        assertThat("Should be one less index", collection.admin().getIndexes().size(), is(1));
+        assertThat("Should be one less index", collection.tools().getIndexes().size(), is(1));
     }
 
     @Test
     public void shouldDropAllIndexesForCollection() {
         // Given
-        collection.admin().ensureIndex(new Index("theField"));
-        collection.admin().ensureIndex(new Index("aSecondIndex"));
+        collection.tools().ensureIndex(new Index("theField"));
+        collection.tools().ensureIndex(new Index("aSecondIndex"));
 
-        assertThat("Should be three indexes on the collection now", collection.admin().getIndexes().size(),
+        assertThat("Should be three indexes on the collection now", collection.tools().getIndexes().size(),
                   is(3));
 
         // When
-        collection.admin().dropIndexes();
+        collection.tools().dropIndexes();
 
         // Then
-        assertThat("Should only be the default index on the collection", collection.admin().getIndexes().size(), is(1));
+        assertThat("Should only be the default index on the collection", collection.tools().getIndexes().size(), is(1));
     }
 
 }

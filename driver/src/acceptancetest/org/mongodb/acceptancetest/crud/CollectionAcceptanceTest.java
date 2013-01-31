@@ -74,10 +74,10 @@ public class CollectionAcceptanceTest extends AcceptanceTestCase {
     @Test
     public void shouldGetStatistics() {
         final String newCollectionName = "shouldGetStatistics";
-        database.admin().createCollection(newCollectionName);
+        database.tools().createCollection(newCollectionName);
         final MongoCollection<Document> newCollection = database.getCollection(newCollectionName);
 
-        final Document collectionStatistics = newCollection.admin().getStatistics();
+        final Document collectionStatistics = newCollection.tools().getStatistics();
         assertThat(collectionStatistics, is(notNullValue()));
 
         assertThat((String) collectionStatistics.get("ns"), is(database.getName() + "." + newCollectionName));
@@ -86,14 +86,14 @@ public class CollectionAcceptanceTest extends AcceptanceTestCase {
     @Test
     public void shouldDropExistingCollection() {
         final String collectionName = "shouldDropExistingCollection";
-        database.admin().createCollection(collectionName);
+        database.tools().createCollection(collectionName);
         final MongoCollection<Document> newCollection = database.getCollection(collectionName);
 
-        assertThat(database.admin().getCollectionNames().contains(collectionName), is(true));
+        assertThat(database.tools().getCollectionNames().contains(collectionName), is(true));
 
-        newCollection.admin().drop();
+        newCollection.tools().drop();
 
-        assertThat(database.admin().getCollectionNames().contains(collectionName), is(false));
+        assertThat(database.tools().getCollectionNames().contains(collectionName), is(false));
     }
 
     private void initialiseCollectionWithDocuments(final int numberOfDocuments) {
