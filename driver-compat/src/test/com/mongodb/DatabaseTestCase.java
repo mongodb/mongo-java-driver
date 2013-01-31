@@ -33,7 +33,7 @@ public class DatabaseTestCase {
     @BeforeClass
     public static synchronized void setupTestSuite() {
         if (database == null) {
-            database = getMongoClient().getDB("DriverCompatibilityTest-" + System.nanoTime());
+            database = getMongoClient().getDB("DriverTest-" + System.nanoTime());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
     }
@@ -41,7 +41,7 @@ public class DatabaseTestCase {
     @Before
     public void setUp() {
         //create a brand new collection for each test
-        collectionName = getClass().getSimpleName() + "-" + System.currentTimeMillis();
+        collectionName = getClass().getName();
         collection = database.getCollection(collectionName);
 
         collection.drop();

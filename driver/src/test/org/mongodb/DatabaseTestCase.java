@@ -39,8 +39,7 @@ public class DatabaseTestCase {
 
     @Before
     public void setUp() {
-        //create a brand new collection for each test
-        collectionName = getClass().getSimpleName(); // + "-" + System.currentTimeMillis();
+        collectionName = getClass().getName();
         collection = database.getCollection(collectionName);
         collection.tools().drop();
     }
