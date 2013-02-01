@@ -53,10 +53,8 @@ import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoSortCriteria;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoUpdateOperations;
-import org.mongodb.result.InsertResult;
 import org.mongodb.result.QueryResult;
-import org.mongodb.result.RemoveResult;
-import org.mongodb.result.UpdateResult;
+import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.Serializer;
 
@@ -125,17 +123,17 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
-    public InsertResult insert(final T document) {
+    public WriteResult insert(final T document) {
         return new MongoCollectionStream().insert(document);
     }
 
     @Override
-    public InsertResult insert(final Iterable<T> documents) {
+    public WriteResult insert(final Iterable<T> documents) {
         return new MongoCollectionStream().insert(documents);
     }
 
     @Override
-    public UpdateResult save(final T document) {
+    public WriteResult save(final T document) {
         return new MongoCollectionStream().save(document);
     }
 
@@ -175,27 +173,27 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
-    public RemoveResult remove() {
+    public WriteResult remove() {
         return new MongoCollectionStream().remove();
     }
 
     @Override
-    public UpdateResult modify(final MongoUpdateOperations updateOperations) {
+    public WriteResult modify(final MongoUpdateOperations updateOperations) {
         return new MongoCollectionStream().modify(updateOperations);
     }
 
     @Override
-    public UpdateResult modifyOrInsert(final MongoUpdateOperations updateOperations) {
+    public WriteResult modifyOrInsert(final MongoUpdateOperations updateOperations) {
         return new MongoCollectionStream().modifyOrInsert(updateOperations);
     }
 
     @Override
-    public UpdateResult replace(final T replacement) {
+    public WriteResult replace(final T replacement) {
         return new MongoCollectionStream().replace(replacement);
     }
 
     @Override
-    public UpdateResult replaceOrInsert(final T replacement) {
+    public WriteResult replaceOrInsert(final T replacement) {
         return new MongoCollectionStream().replaceOrInsert(replacement);
     }
 
@@ -374,21 +372,21 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         }
 
         @Override
-        public InsertResult insert(final T document) {
+        public WriteResult insert(final T document) {
             return getClient().getOperations().insert(getNamespace(),
                                                      new MongoInsert<T>(document).writeConcern(writeConcern),
-                                                     getSerializer());
+                                                     getSerializer(), getDocumentSerializer());
         }
 
         @Override
-        public InsertResult insert(final Iterable<T> documents) {
+        public WriteResult insert(final Iterable<T> documents) {
             return getClient().getOperations().insert(getNamespace(),
                                                      new MongoInsert<T>(documents).writeConcern(writeConcern),
-                                                     getSerializer());
+                                                     getSerializer(), getDocumentSerializer());
         }
 
         @Override
-        public UpdateResult save(final T document) {
+        public WriteResult save(final T document) {
             final Object id = getSerializer().getId(document);
             if (id == null) {
                 return insert(document);
@@ -399,21 +397,21 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         }
 
         @Override
-        public RemoveResult remove() {
+        public WriteResult remove() {
             final MongoRemove remove = new MongoRemove(findOp.getFilter()).multi(getMultiFromLimit())
                                                                           .writeConcern(writeConcern);
             return getClient().getOperations().remove(getNamespace(), remove, getDocumentSerializer());
         }
 
         @Override
-        public UpdateResult modify(final MongoUpdateOperations updateOperations) {
+        public WriteResult modify(final MongoUpdateOperations updateOperations) {
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).multi(getMultiFromLimit())
                                                                                             .writeConcern(writeConcern);
             return getClient().getOperations().update(getNamespace(), update, getDocumentSerializer());
         }
 
         @Override
-        public UpdateResult modifyOrInsert(final MongoUpdateOperations updateOperations) {
+        public WriteResult modifyOrInsert(final MongoUpdateOperations updateOperations) {
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).upsert(true)
                                                                                             .multi(getMultiFromLimit())
                                                                                             .writeConcern(writeConcern);
@@ -421,7 +419,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         }
 
         @Override
-        public UpdateResult replace(final T replacement) {
+        public WriteResult replace(final T replacement) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement)
                                             .writeConcern(writeConcern);
             return getClient().getOperations().replace(getNamespace(), replace, getDocumentSerializer(),
@@ -429,7 +427,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         }
 
         @Override
-        public UpdateResult replaceOrInsert(final T replacement) {
+        public WriteResult replaceOrInsert(final T replacement) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement)
                                             .upsert(true)
                                             .writeConcern(writeConcern);

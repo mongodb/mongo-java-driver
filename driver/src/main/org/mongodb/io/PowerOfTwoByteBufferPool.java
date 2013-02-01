@@ -28,6 +28,10 @@ public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
 
     private final Map<Integer, SimplePool<ByteBuffer>> powerOfTwoToPoolMap = new HashMap<Integer, SimplePool<ByteBuffer>>();
 
+    public PowerOfTwoByteBufferPool() {
+        this(24);
+    }
+
     public PowerOfTwoByteBufferPool(final int highestPowerOfTwo) {
         int x = 1;
         for (int i = 0; i <= highestPowerOfTwo; i++) {

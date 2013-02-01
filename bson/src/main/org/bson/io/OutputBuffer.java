@@ -18,6 +18,9 @@
 
 package org.bson.io;
 
+import org.bson.io.async.AsyncCompletionHandler;
+import org.bson.io.async.AsyncWritableByteChannel;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -55,6 +58,14 @@ public abstract class OutputBuffer extends OutputStream {
      * @param socketChannel channel
      */
     public abstract void pipe(SocketChannel socketChannel) throws IOException;
+
+    /**
+     * Pipe into the asynchronous channel.
+     *
+     * @param channel the channel
+     * @param handler the handler to invoke on complete or failure
+     */
+    public abstract void pipe(final AsyncWritableByteChannel channel, AsyncCompletionHandler handler);
 
     /**
      * mostly for testing
@@ -119,19 +130,16 @@ public abstract class OutputBuffer extends OutputStream {
             if (c < 0x80) {
                 write((byte) c);
                 total += 1;
-            }
-            else if (c < 0x800) {
+            } else if (c < 0x800) {
                 write((byte) (0xc0 + (c >> 6)));
                 write((byte) (0x80 + (c & 0x3f)));
                 total += 2;
-            }
-            else if (c < 0x10000) {
+            } else if (c < 0x10000) {
                 write((byte) (0xe0 + (c >> 12)));
                 write((byte) (0x80 + ((c >> 6) & 0x3f)));
                 write((byte) (0x80 + (c & 0x3f)));
                 total += 3;
-            }
-            else {
+            } else {
                 write((byte) (0xf0 + (c >> 18)));
                 write((byte) (0x80 + ((c >> 12) & 0x3f)));
                 write((byte) (0x80 + ((c >> 6) & 0x3f)));

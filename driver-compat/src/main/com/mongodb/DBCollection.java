@@ -28,9 +28,6 @@ import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollectionOptions;
-import org.mongodb.result.InsertResult;
-import org.mongodb.result.RemoveResult;
-import org.mongodb.result.UpdateResult;
 import org.mongodb.serialization.serializers.ObjectIdGenerator;
 import org.mongodb.util.FieldHelpers;
 
@@ -84,7 +81,7 @@ public class DBCollection implements IDBCollection {
 
     public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern) {
         try {
-            final InsertResult result = collection.writeConcern(writeConcern.toNew()).insert(documents);
+            final org.mongodb.result.WriteResult result = collection.writeConcern(writeConcern.toNew()).insert(documents);
             return new WriteResult(result, writeConcern);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
@@ -103,7 +100,7 @@ public class DBCollection implements IDBCollection {
 
     public WriteResult save(final DBObject obj, final WriteConcern wc) {
         try {
-            final UpdateResult result = collection.writeConcern(wc.toNew()).save(obj);
+            final org.mongodb.result.WriteResult result = collection.writeConcern(wc.toNew()).save(obj);
             return new WriteResult(result, wc);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
@@ -143,7 +140,7 @@ public class DBCollection implements IDBCollection {
         }
         final MongoWritableStream<DBObject> writableStream = stream.writeConcern(concern.toNew());
         try {
-            final UpdateResult result;
+            final org.mongodb.result.WriteResult result;
             if (!o.keySet().isEmpty() && o.keySet().iterator().next().startsWith("$")) {
                 result = upsert ?
                          writableStream.modifyOrInsert(DBObjects.toUpdateOperationsDocument(o)) :
@@ -228,7 +225,7 @@ public class DBCollection implements IDBCollection {
 
 
     public WriteResult remove(final DBObject filter, final WriteConcern writeConcernToUse) {
-        final RemoveResult result = collection.filter(DBObjects.toQueryFilterDocument(filter))
+        final org.mongodb.result.WriteResult result = collection.filter(DBObjects.toQueryFilterDocument(filter))
                                               .writeConcern(writeConcernToUse.toNew()).remove();
         return new WriteResult(result, writeConcernToUse);
     }

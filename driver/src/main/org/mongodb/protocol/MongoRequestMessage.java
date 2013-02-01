@@ -18,11 +18,14 @@ package org.mongodb.protocol;
 
 import org.bson.BSONBinaryWriter;
 import org.bson.io.OutputBuffer;
+import org.bson.io.async.AsyncCompletionHandler;
+import org.bson.io.async.AsyncWritableByteChannel;
 import org.mongodb.ReadPreference;
 import org.mongodb.serialization.Serializer;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -76,6 +79,11 @@ public class MongoRequestMessage {
 
     public void pipe(final SocketChannel out) throws IOException {
         getBuffer().pipe(out);
+    }
+
+    public void pipe(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler)
+            throws ExecutionException, InterruptedException {
+        getBuffer().pipe(channel, handler);
     }
 
     public int size() {

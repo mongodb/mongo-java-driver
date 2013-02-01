@@ -144,7 +144,7 @@ abstract class AbstractConnectionSetMonitor extends Thread {
 
         @Override
         public IsMasterExecutor create(final ServerAddress serverAddress) {
-            return new MongoClientIsMasterExecutor(new SingleChannelMongoClient(serverAddress, bufferPool, options));
+            return new MongoClientIsMasterExecutor(new SingleChannelSyncMongoClient(serverAddress, bufferPool, options));
         }
     }
 

@@ -17,6 +17,8 @@
 package org.mongodb.io;
 
 import org.bson.io.OutputBuffer;
+import org.bson.io.async.AsyncCompletionHandler;
+import org.bson.io.async.AsyncWritableByteChannel;
 import org.bson.util.BufferPool;
 
 import java.io.IOException;
@@ -35,6 +37,9 @@ public class PooledByteBufferOutput extends OutputBuffer {
     private int position = 0;
 
     public PooledByteBufferOutput(final BufferPool<ByteBuffer> pool) {
+        if (pool == null) {
+            throw new IllegalArgumentException("pool can not be null");
+        }
         this.pool = pool;
     }
 
@@ -120,6 +125,21 @@ public class PooledByteBufferOutput extends OutputBuffer {
         for (long bytesRead = 0; bytesRead < size();/*bytesRead incremented elsewhere*/) {
             bytesRead += socketChannel.write(bufferList.toArray(new ByteBuffer[bufferList.size()]), 0,
                                             bufferList.size());
+        }
+    }
+
+    @Override
+    public void pipe(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler)  {
+        try {
+            for (final ByteBuffer cur : bufferList) {
+                cur.flip();
+                for (long bytesRead = 0; bytesRead < cur.limit();/* bytesRead incremented elsewhere */) {
+                    bytesRead += channel.write(cur).get();
+                }
+            }
+            handler.completed(size());
+        } catch (Throwable t) {
+            handler.failed(t);
         }
     }
 

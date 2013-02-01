@@ -16,22 +16,45 @@
 
 package org.mongodb.impl;
 
+import org.bson.util.BufferPool;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.async.AsyncDetector;
 
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Factory for MongoClient instances.
+ *
+ * @since 3.0
+ */
 @ThreadSafe
 public final class MongoClientsImpl {
     private MongoClientsImpl() {
     }
 
     public static SingleServerMongoClient create(final ServerAddress serverAddress, final MongoClientOptions options) {
-        return new SingleServerMongoClient(serverAddress, options);
+        if (AsyncDetector.javaVersionSupportsAsync()) {
+            return new SingleServerAsyncMongoClient(serverAddress, options);
+        }
+        else {
+            return new SingleServerSyncMongoClient(serverAddress, options);
+        }
+    }
+
+    public static SingleServerMongoClient create(final ServerAddress serverAddress, final MongoClientOptions options,
+                                                 final BufferPool<ByteBuffer> bufferPool) {
+        if (AsyncDetector.javaVersionSupportsAsync()) {
+            return new SingleServerAsyncMongoClient(serverAddress, options, bufferPool);
+        }
+        else {
+            return new SingleServerSyncMongoClient(serverAddress, options, bufferPool);
+        }
     }
 
     public static ReplicaSetMongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
@@ -44,14 +67,14 @@ public final class MongoClientsImpl {
 
     public static AbstractMongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return new SingleServerMongoClient(new ServerAddress(mongoURI.getHosts().get(0)), options);
+            return create(new ServerAddress(mongoURI.getHosts().get(0)), options);
         }
         else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(cur));
             }
-            return new ReplicaSetMongoClient(seedList, options);
+            return create(seedList, options);
         }
     }
 }

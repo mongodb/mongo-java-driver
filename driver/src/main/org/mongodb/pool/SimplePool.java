@@ -81,6 +81,9 @@ public abstract class SimplePool<T> {
      * @param t Object to add
      */
     public void done(final T t) {
+        if (t == null) {
+            throw new IllegalArgumentException("Can not return a null item to the pool");
+        }
         synchronized (this) {
             if (closed) {
                 cleanup(t);

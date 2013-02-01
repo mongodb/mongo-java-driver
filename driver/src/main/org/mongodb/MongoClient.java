@@ -18,6 +18,7 @@ package org.mongodb;
 
 
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.async.MongoAsyncOperations;
 
 import java.io.Closeable;
 import java.util.concurrent.Callable;
@@ -44,6 +45,11 @@ public interface MongoClient extends Closeable {
      * @return operations over this client
      */
     MongoOperations getOperations();    // TODO: I think we should get rid of this.   It's at the wrong level of abstraction.
+
+    /**
+     * @return aynchronous operations over this client
+     */
+    MongoAsyncOperations getAsyncOperations();    // TODO: I think we should get rid of this.   It's at the wrong level of abstraction.
 
     /**
      * Run the given Runnable in the scope of a single connection.

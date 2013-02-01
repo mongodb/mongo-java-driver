@@ -27,7 +27,7 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.UpdateOperationsDocument;
-import org.mongodb.result.InsertResult;
+import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.CollectibleSerializer;
 
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
             documents.add(doc);
         }
 
-        final InsertResult res = collection.insert(documents);
+        final WriteResult res = collection.insert(documents);
         assertEquals(10, collection.count());
         assertNotNull(res);
     }

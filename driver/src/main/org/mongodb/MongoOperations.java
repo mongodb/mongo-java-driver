@@ -27,10 +27,8 @@ import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.GetMoreResult;
-import org.mongodb.result.InsertResult;
 import org.mongodb.result.QueryResult;
-import org.mongodb.result.RemoveResult;
-import org.mongodb.result.UpdateResult;
+import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.Serializer;
 
 public interface MongoOperations {
@@ -48,12 +46,13 @@ public interface MongoOperations {
     // TODO: needs a ServerAddress or doesn't make sense for some MongoClient implementations
     void killCursors(MongoKillCursor killCursor);
 
-    <T> InsertResult insert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer);
+    <T> WriteResult insert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer,
+                           final Serializer<Document> baseSerializer);
 
-    UpdateResult update(final MongoNamespace namespace, MongoUpdate update, Serializer<Document> serializer);
+    WriteResult update(final MongoNamespace namespace, MongoUpdate update, Serializer<Document> serializer);
 
-    <T> UpdateResult replace(MongoNamespace namespace, MongoReplace<T> replace, Serializer<Document> baseSerializer,
-                             Serializer<T> serializer);
+    <T> WriteResult replace(MongoNamespace namespace, MongoReplace<T> replace, Serializer<Document> baseSerializer,
+                            Serializer<T> serializer);
 
-    RemoveResult remove(final MongoNamespace namespace, MongoRemove remove, Serializer<Document> serializer);
+    WriteResult remove(final MongoNamespace namespace, MongoRemove remove, Serializer<Document> serializer);
 }

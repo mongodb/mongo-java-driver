@@ -16,6 +16,7 @@
 
 package org.mongodb.command;
 
+import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;
@@ -33,14 +34,22 @@ public final class GetLastError extends MongoCommand {
 
     public GetLastError(final WriteConcern writeConcern) {
         super(writeConcern.getCommand());
+        readPreference(ReadPreference.primary());
     }
 
     public CommandResult parseGetLastErrorResponse(final CommandResult commandResult) {
+        MongoCommandException exception = getCommandException(commandResult);
+        if (exception != null) {
+            throw exception;
+        }
+        return commandResult;
+    }
+
+    public MongoCommandException getCommandException(final CommandResult commandResult) {
         final Integer code = (Integer) commandResult.getResponse().get("code");
         if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
-            throw new MongoDuplicateKeyException(commandResult);
+            return new MongoDuplicateKeyException(commandResult);
         }
-
-        return commandResult;
+        return null;
     }
 }

@@ -22,6 +22,7 @@ import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.ServerAddress;
+import org.mongodb.async.MongoAsyncOperations;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 
 import java.nio.ByteBuffer;
@@ -33,7 +34,7 @@ abstract class AbstractMongoClient implements MongoClient {
     private final ClientAdmin admin;
 
     AbstractMongoClient(final MongoClientOptions options) {
-        this(options, new PowerOfTwoByteBufferPool(24));
+        this(options, new PowerOfTwoByteBufferPool());
     }
 
     AbstractMongoClient(final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
@@ -41,6 +42,9 @@ abstract class AbstractMongoClient implements MongoClient {
             this.options = MongoClientOptions.builder().build();
         } else {
             this.options = options;
+        }
+        if (bufferPool == null) {
+            throw new IllegalArgumentException("buffer pool can not be null");
         }
         this.bufferPool = bufferPool;
         admin = new ClientAdminImpl(getOperations(), this.options.getPrimitiveSerializers());
@@ -54,6 +58,11 @@ abstract class AbstractMongoClient implements MongoClient {
     @Override
     public MongoDatabaseImpl getDatabase(final String databaseName, final MongoDatabaseOptions optionsForOperation) {
         return new MongoDatabaseImpl(databaseName, this, optionsForOperation.withDefaults(this.getOptions()));
+    }
+
+    @Override
+    public MongoAsyncOperations getAsyncOperations() {
+        throw new UnsupportedOperationException("Asynchronous operations are not supported when running in a Java 6 virtual machine");
     }
 
     @Override

@@ -18,6 +18,9 @@
 
 package org.bson.io;
 
+import org.bson.io.async.AsyncCompletionHandler;
+import org.bson.io.async.AsyncWritableByteChannel;
+
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -80,9 +83,24 @@ public class BasicOutputBuffer extends OutputBuffer {
 
     @Override
     public void pipe(final SocketChannel socketChannel) throws IOException {
-        socketChannel.write(ByteBuffer.wrap(buffer, 0, size));
+        ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, size);
+        for (long bytesRead = 0; bytesRead < size();/*bytesRead incremented elsewhere*/) {
+            bytesRead += socketChannel.write(byteBuffer);
+        }
     }
 
+    @Override
+    public void pipe(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {
+        try {
+            ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, size);
+            for (long bytesRead = 0; bytesRead < byteBuffer.limit();/* bytesRead incremented elsewhere */) {
+                bytesRead += channel.write(byteBuffer).get();
+            }
+            handler.completed(size());
+        } catch (Throwable t) {
+            handler.failed(t);
+        }
+    }
 
     /**
      * @return bytes written

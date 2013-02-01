@@ -17,28 +17,26 @@
 package org.mongodb;
 
 import org.mongodb.operation.MongoUpdateOperations;
-import org.mongodb.result.InsertResult;
-import org.mongodb.result.RemoveResult;
-import org.mongodb.result.UpdateResult;
+import org.mongodb.result.WriteResult;
 
 public interface MongoWritableStream<T> {
     MongoWritableStream<T> writeConcern(WriteConcern writeConcern);
 
-    InsertResult insert(T document);
+    WriteResult insert(T document);
 
-    InsertResult insert(Iterable<T> document);
+    WriteResult insert(Iterable<T> document);
 
-    UpdateResult save(T document);
+    WriteResult save(T document);
 
-    RemoveResult remove();
+    WriteResult remove();
 
-    UpdateResult modify(MongoUpdateOperations updateOperations);
+    WriteResult modify(MongoUpdateOperations updateOperations);
 
-    UpdateResult modifyOrInsert(MongoUpdateOperations updateOperations);                // TODO: name
+    WriteResult modifyOrInsert(MongoUpdateOperations updateOperations);                // TODO: name
 
-    UpdateResult replace(T replacement);
+    WriteResult replace(T replacement);
 
-    UpdateResult replaceOrInsert(T replacement);                                        // TODO: name
+    WriteResult replaceOrInsert(T replacement);                                        // TODO: name
 
     T modifyAndGet(MongoUpdateOperations updateOperations, Get beforeOrAfter);
 
