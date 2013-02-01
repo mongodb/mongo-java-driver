@@ -57,7 +57,7 @@ public abstract class OutputBuffer extends OutputStream {
      *
      * @param socketChannel channel
      */
-    public abstract void pipe(SocketChannel socketChannel) throws IOException;
+    public abstract void pipeAndClose(SocketChannel socketChannel) throws IOException;
 
     /**
      * Pipe into the asynchronous channel.
@@ -65,7 +65,7 @@ public abstract class OutputBuffer extends OutputStream {
      * @param channel the channel
      * @param handler the handler to invoke on complete or failure
      */
-    public abstract void pipe(final AsyncWritableByteChannel channel, AsyncCompletionHandler handler);
+    public abstract void pipeAndClose(final AsyncWritableByteChannel channel, AsyncCompletionHandler handler);
 
     /**
      * mostly for testing

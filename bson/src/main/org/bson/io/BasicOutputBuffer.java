@@ -21,7 +21,6 @@ package org.bson.io;
 import org.bson.io.async.AsyncCompletionHandler;
 import org.bson.io.async.AsyncWritableByteChannel;
 
-import java.io.DataOutput;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -82,32 +81,31 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     @Override
-    public void pipe(final SocketChannel socketChannel) throws IOException {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, size);
-        for (long bytesRead = 0; bytesRead < size();/*bytesRead incremented elsewhere*/) {
-            bytesRead += socketChannel.write(byteBuffer);
+    public void pipeAndClose(final SocketChannel socketChannel) throws IOException {
+        try {
+            ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, size);
+            for (long bytesRead = 0; bytesRead < size();/*bytesRead incremented elsewhere*/) {
+                bytesRead += socketChannel.write(byteBuffer);
+            }
+        } finally {
+            close();
         }
     }
 
+    // TODO: make this actually asynchronous
     @Override
-    public void pipe(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {
+    public void pipeAndClose(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {
         try {
             ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, size);
             for (long bytesRead = 0; bytesRead < byteBuffer.limit();/* bytesRead incremented elsewhere */) {
                 bytesRead += channel.write(byteBuffer).get();
             }
+            close();
             handler.completed(size());
         } catch (Throwable t) {
+            close();
             handler.failed(t);
         }
-    }
-
-    /**
-     * @return bytes written
-     */
-    public int pipe(final DataOutput out) throws IOException {
-        out.write(buffer, 0, size);
-        return size;
     }
 
     private void ensure(final int more) {

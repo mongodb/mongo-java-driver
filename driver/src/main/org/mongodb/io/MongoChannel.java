@@ -81,11 +81,9 @@ public class MongoChannel {
 
     private void sendOneWayMessage(final MongoRequestMessage message) {
         try {
-            message.pipe(socketChannel);
+            message.pipeAndClose(socketChannel);
         } catch (IOException e) {
             throw new MongoSocketWriteException("Exception sending message", address, e);
-        } finally {
-            message.close();
         }
     }
 

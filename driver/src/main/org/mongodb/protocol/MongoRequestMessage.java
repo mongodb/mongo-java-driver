@@ -25,7 +25,6 @@ import org.mongodb.serialization.Serializer;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -77,13 +76,20 @@ public class MongoRequestMessage {
     }
     //CHECKSTYLE:ON
 
-    public void pipe(final SocketChannel out) throws IOException {
-        getBuffer().pipe(out);
+    public void pipeAndClose(final SocketChannel out) throws IOException {
+        try {
+            getBuffer().pipeAndClose(out);
+        } finally {
+            buffer = null;
+        }
     }
 
-    public void pipe(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler)
-            throws ExecutionException, InterruptedException {
-        getBuffer().pipe(channel, handler);
+    public void pipeAndClose(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {
+        try {
+            getBuffer().pipeAndClose(channel, handler);
+        } finally {
+            buffer = null;
+        }
     }
 
     public int size() {

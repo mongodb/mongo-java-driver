@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class PooledByteBufferOutput extends OutputBuffer {
@@ -117,30 +118,60 @@ public class PooledByteBufferOutput extends OutputBuffer {
     }
 
     @Override
-    public void pipe(final SocketChannel socketChannel) throws IOException {
+    public void pipeAndClose(final SocketChannel socketChannel) throws IOException {
         for (final ByteBuffer cur : bufferList) {
             cur.flip();
         }
 
         for (long bytesRead = 0; bytesRead < size();/*bytesRead incremented elsewhere*/) {
             bytesRead += socketChannel.write(bufferList.toArray(new ByteBuffer[bufferList.size()]), 0,
-                                            bufferList.size());
+                    bufferList.size());
         }
+        close();
     }
 
     @Override
-    public void pipe(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler)  {
-        try {
-            for (final ByteBuffer cur : bufferList) {
-                cur.flip();
-                for (long bytesRead = 0; bytesRead < cur.limit();/* bytesRead incremented elsewhere */) {
-                    bytesRead += channel.write(cur).get();
+    public void pipeAndClose(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {
+        final Iterator<ByteBuffer> iter = bufferList.iterator();
+        pipeOneBuffer(channel, iter.next(), new AsyncCompletionHandler() {
+            @Override
+            public void completed(final int bytesWritten) {
+                if (iter.hasNext()) {
+                    pipeOneBuffer(channel, iter.next(), this);
+                }
+                else {
+                    close();
+                    handler.completed(size());
                 }
             }
-            handler.completed(size());
-        } catch (Throwable t) {
-            handler.failed(t);
-        }
+
+            @Override
+            public void failed(final Throwable t) {
+                close();
+                handler.failed(t);
+            }
+        });
+    }
+
+    private void pipeOneBuffer(final AsyncWritableByteChannel channel, final ByteBuffer byteBuffer,
+                               final AsyncCompletionHandler outerHandler) {
+        byteBuffer.flip();
+        channel.write(byteBuffer, new AsyncCompletionHandler() {
+            @Override
+            public void completed(final int bytesWritten) {
+                if (byteBuffer.hasRemaining()) {
+                    channel.write(byteBuffer, this);
+                }
+                else {
+                    outerHandler.completed(byteBuffer.limit());
+                }
+            }
+
+            @Override
+            public void failed(final Throwable t) {
+                outerHandler.failed(t);
+            }
+        });
     }
 
     @Override
