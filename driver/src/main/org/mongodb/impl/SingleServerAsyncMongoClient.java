@@ -43,7 +43,6 @@ import java.util.concurrent.Future;
 public class SingleServerAsyncMongoClient extends SingleServerMongoClient {
     private final ServerAddress serverAddress;
     private final SimplePool<MongoAsynchronousChannel> channelPool;
-    private final ThreadLocal<SingleChannelMongoClient> boundClient = new ThreadLocal<SingleChannelMongoClient>();
 
     public SingleServerAsyncMongoClient(final ServerAddress serverAddress, final MongoClientOptions options) {
         this(serverAddress, options, new PowerOfTwoByteBufferPool());
