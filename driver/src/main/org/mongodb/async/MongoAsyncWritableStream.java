@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,25 +12,24 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package org.mongodb;
+package org.mongodb.async;
 
-import org.mongodb.async.MongoAsyncWritableStream;
-import org.mongodb.operation.MongoFieldSelector;
-import org.mongodb.operation.MongoQueryFilter;
-import org.mongodb.operation.MongoSortCriteria;
+import org.mongodb.result.WriteResult;
 
-public interface MongoStream<T> extends MongoWritableStream<T>, MongoReadableStream<T>, MongoAsyncWritableStream<T> {
-    MongoStream<T> filter(MongoQueryFilter filter);
+import java.util.concurrent.Future;
 
-    MongoStream<T> sort(MongoSortCriteria sortCriteria);
+/**
+ * Asynchronous write operations.
+ *
+ * @param <T>
+ *
+ * @since 3.0
+ */
+public interface MongoAsyncWritableStream<T> {
+    Future<WriteResult> asyncReplaceOrInsert(T replacement);
 
-    MongoStream<T> skip(int skip);
-
-    MongoStream<T> limit(int limit);
-
-    MongoStream<T> noLimit();
-
-    MongoStream<T> select(MongoFieldSelector selector);
+    void asyncReplaceOrInsert(T replacement, SingleResultCallback<WriteResult> callback);
 }

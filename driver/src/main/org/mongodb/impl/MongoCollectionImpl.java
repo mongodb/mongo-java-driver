@@ -32,6 +32,7 @@ import org.mongodb.MongoWritableStream;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
+import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
 import org.mongodb.command.Distinct;
@@ -60,6 +61,7 @@ import org.mongodb.serialization.Serializer;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Future;
 
 class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements MongoCollection<T> {
 
@@ -220,6 +222,16 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     @Override
     public T removeAndGet() {
         return new MongoCollectionStream().removeAndGet();
+    }
+
+    @Override
+    public Future<WriteResult> asyncReplaceOrInsert(final T replacement) {
+        return new MongoCollectionStream().asyncReplaceOrInsert(replacement);
+    }
+
+    @Override
+    public void asyncReplaceOrInsert(final T replacement, final SingleResultCallback<WriteResult> callback) {
+         new MongoCollectionStream().asyncReplaceOrInsert(replacement, callback);
     }
 
     @Override
@@ -545,6 +557,18 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                    .getValue();
         }
         //CHECKSTYLE:OFF
+
+        @Override
+        public Future<WriteResult> asyncReplaceOrInsert(final T replacement) {
+            final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
+            return getClient().getAsyncOperations().asyncReplace(getNamespace(), replace, getDocumentSerializer(), getSerializer());
+        }
+
+        @Override
+        public void asyncReplaceOrInsert(final T replacement, final SingleResultCallback<WriteResult> callback) {
+            final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
+            getClient().getAsyncOperations().asyncReplace(getNamespace(), replace, getDocumentSerializer(), getSerializer(), callback);
+        }
 
         private boolean getMultiFromLimit() {
             if (limitSet) {
