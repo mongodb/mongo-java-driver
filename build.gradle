@@ -259,9 +259,19 @@ project(':bson') {
 project(':driver') {
 
     sourceSets {
-        acceptance {
+        test {
             java {
-                srcDir 'src/acceptancetest'
+                srcDir 'src/test/acceptance'
+            }
+        }
+        functional {
+            java {
+                srcDir 'src/test/functional'
+            }
+        }
+        unit {
+            java {
+                srcDir 'src/test/unit'
             }
         }
     }
@@ -269,13 +279,16 @@ project(':driver') {
     dependencies {
         compile project(':common')
         compile project(':bson')
-        acceptanceCompile 'junit:junit:4.11'
-        acceptanceCompile sourceSets.main.runtimeClasspath
-        acceptanceCompile sourceSets.test.runtimeClasspath
+        unitCompile 'junit:junit:4.11'
+        unitCompile sourceSets.main.runtimeClasspath
+        functionalCompile 'junit:junit:4.11'
+        functionalCompile sourceSets.main.runtimeClasspath
+        functionalCompile sourceSets.unit.runtimeClasspath
     }
 
     idea.module {
-        testSourceDirs += project.sourceSets.acceptance.allSource.getSrcDirs()
+        testSourceDirs += project.sourceSets.unit.allSource.getSrcDirs()
+        testSourceDirs += project.sourceSets.functional.allSource.getSrcDirs()
     }
 
     jar {
@@ -292,10 +305,23 @@ project(':driver') {
         }
     }
 
-    task acceptanceTest(type: Test) {
-        testClassesDir = sourceSets.acceptance.output.classesDir
-        classpath = sourceSets.acceptance.runtimeClasspath
+    task unitTest(type: Test) {
+        testClassesDir = sourceSets.unit.output.classesDir
+        classpath = sourceSets.unit.runtimeClasspath
     }
+
+    task functionalTest(type: Test, dependsOn: unitTest) {
+        testClassesDir = sourceSets.functional.output.classesDir
+        classpath = sourceSets.functional.runtimeClasspath
+    }
+
+    task acceptanceTest(type: Test, dependsOn: functionalTest) {
+        testClassesDir = sourceSets.test.output.classesDir
+        classpath = sourceSets.test.runtimeClasspath
+    }
+
+    //acceptance and all other tests
+    test.dependsOn functionalTest
 
     sourcesJar {
         from project(':common').sourceSets.main.allSource
@@ -305,10 +331,6 @@ project(':driver') {
     javadoc {
         source project(':common').sourceSets.main.allJava
         source project(':bson').sourceSets.main.allJava
-    }
-
-    testsJar {
-        from sourceSets.acceptance.output
     }
 
     [project.installer, project.deployer]*.pom {

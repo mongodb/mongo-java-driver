@@ -35,14 +35,14 @@ public class MongoTest {
 
     @Test
     public void shouldUseGivenHost() throws UnknownHostException {
-        final Mongo mongo = new Mongo("www.google.com");
-        assertEquals(Arrays.asList(new ServerAddress("www.google.com")), mongo.getServerAddressList());
+        final Mongo mongo = new Mongo("localhost");
+        assertEquals(Arrays.asList(new ServerAddress("localhost")), mongo.getServerAddressList());
     }
 
     @Test
     public void shouldUseGivenServerAddress() throws UnknownHostException {
-        final Mongo mongo = new Mongo(new ServerAddress("www.google.com"));
-        assertEquals(Arrays.asList(new ServerAddress("www.google.com")), mongo.getServerAddressList());
+        final Mongo mongo = new Mongo(new ServerAddress("localhost"));
+        assertEquals(Arrays.asList(new ServerAddress("localhost")), mongo.getServerAddressList());
     }
 
     @Test
