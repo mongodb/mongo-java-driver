@@ -49,7 +49,7 @@ import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
 /**
  * An asynchronous socket channel for the MongoDB protocol.
- *
+ * <p/>
  * Note: This class is not part of the public API.  It may break binary compatibility even in minor releases.
  */
 public class MongoAsynchronousChannel {
@@ -112,59 +112,7 @@ public class MongoAsynchronousChannel {
 
     private <T> void receiveMessage(final MongoRequestMessage message, final Serializer<T> serializer, final long start,
                                     final SingleResultCallback<MongoReplyMessage<T>> callback) {
-        fillAndFlipBuffer(pool.get(REPLY_HEADER_LENGTH), new SingleResultCallback<ByteBuffer>() {
-            @Override
-            public void onResult(final ByteBuffer result, final MongoException e) {
-                if (e != null) {
-                    callback.onResult(null, e);
-                }
-
-                final InputBuffer headerInputBuffer = new ByteBufferInput(result);
-
-                final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
-
-                pool.done(result);
-
-                if (replyHeader.isCursorNotFound()) {
-                    callback.onResult(null, new MongoCursorNotFoundException(
-                            new ServerCursor(((MongoGetMoreMessage) message).getCursorId(), address)));
-                }
-                else if (replyHeader.getNumberReturned() == 0) {
-                    callback.onResult(new MongoReplyMessage<T>(replyHeader, System.nanoTime() - start), null);
-                }
-                else {
-                    fillAndFlipBuffer(pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH),
-                            new SingleResultCallback<ByteBuffer>() {
-                                @Override
-                                public void onResult(final ByteBuffer result, final MongoException e) {
-                                    if (e != null) {
-                                        callback.onResult(null, e);
-                                    }
-                                    InputBuffer bodyInputBuffer = new ByteBufferInput(result);
-                                    if (replyHeader.isQueryFailure()) {
-                                        final Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,
-                                                errorSerializer, System.nanoTime() - start).getDocuments().get(0);
-                                        callback.onResult(null, new MongoQueryFailureException(address, errorDocument));
-                                    }
-                                    else {
-                                        MongoReplyMessage<T> replyMessage = null;
-                                        try {
-                                            replyMessage = new MongoReplyMessage<T>(replyHeader, bodyInputBuffer, serializer,
-                                                    System.nanoTime() - start);
-                                        } catch (Throwable t) {
-                                            callback.onResult(null, new MongoException("", t)); // TODO: proper subclass
-                                        } finally {
-                                            pool.done(result);
-                                        }
-                                        if (replyMessage != null) {
-                                            callback.onResult(replyMessage, null);
-                                        }
-                                    }
-                                }
-                            });
-                }
-            }
-        });
+        fillAndFlipBuffer(pool.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback<T>(callback, message, start, serializer));
     }
 
     private void sendOneWayMessage(final MongoRequestMessage message, final AsyncCompletionHandler handler) {
@@ -271,6 +219,80 @@ public class MongoAsynchronousChannel {
         @Override
         public void failed(final Throwable t) {
             callback.onResult(null, new MongoException("", t));  // TODO
+        }
+    }
+
+    private class ResponseHeaderCallback<T> implements SingleResultCallback<ByteBuffer> {
+        private final SingleResultCallback<MongoReplyMessage<T>> callback;
+        private final MongoRequestMessage message;
+        private final long start;
+        private final Serializer<T> serializer;
+
+        public ResponseHeaderCallback(final SingleResultCallback<MongoReplyMessage<T>> callback,
+                                      final MongoRequestMessage message, final long start,
+                                      final Serializer<T> serializer) {
+            this.callback = callback;
+            this.message = message;
+            this.start = start;
+            this.serializer = serializer;
+        }
+
+        @Override
+        public void onResult(final ByteBuffer result, final MongoException e) {
+            if (e != null) {
+                callback.onResult(null, e);
+            }
+
+            final InputBuffer headerInputBuffer = new ByteBufferInput(result);
+
+            final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
+
+            pool.done(result);
+
+            if (replyHeader.isCursorNotFound()) {
+                callback.onResult(null, new MongoCursorNotFoundException(
+                        new ServerCursor(((MongoGetMoreMessage) message).getCursorId(), address)));
+            }
+            else if (replyHeader.getNumberReturned() == 0) {
+                callback.onResult(new MongoReplyMessage<T>(replyHeader, System.nanoTime() - start), null);
+            }
+            else {
+                fillAndFlipBuffer(pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH),
+                        new ResponseBodyCallback(replyHeader));
+            }
+        }
+
+        private class ResponseBodyCallback implements SingleResultCallback<ByteBuffer> {
+            private final MongoReplyHeader replyHeader;
+
+            public ResponseBodyCallback(final MongoReplyHeader replyHeader) {
+                this.replyHeader = replyHeader;
+            }
+
+            @Override
+            public void onResult(final ByteBuffer result, final MongoException e) {
+                if (e != null) {
+                    callback.onResult(null, e);
+                }
+                InputBuffer bodyInputBuffer = new ByteBufferInput(result);
+                if (replyHeader.isQueryFailure()) {
+                    final Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,
+                            errorSerializer, System.nanoTime() - start).getDocuments().get(0);
+                    callback.onResult(null, new MongoQueryFailureException(address, errorDocument));
+                }
+                else {
+                    try {
+                        MongoReplyMessage<T> replyMessage =
+                                new MongoReplyMessage<T>(replyHeader, bodyInputBuffer, serializer,
+                                        System.nanoTime() - start);
+                        callback.onResult(replyMessage, null);
+                    } catch (Throwable t) {
+                        callback.onResult(null, new MongoException("", t)); // TODO: proper subclass
+                    } finally {
+                        pool.done(result);
+                    }
+                }
+            }
         }
     }
 
