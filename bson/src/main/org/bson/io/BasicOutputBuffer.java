@@ -92,20 +92,27 @@ public class BasicOutputBuffer extends OutputBuffer {
         }
     }
 
-    // TODO: make this actually asynchronous
     @Override
     public void pipeAndClose(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {
-        try {
-            ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, size);
-            for (long bytesRead = 0; bytesRead < byteBuffer.limit();/* bytesRead incremented elsewhere */) {
-                bytesRead += channel.write(byteBuffer).get();
+        final ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, size);
+        channel.write(byteBuffer, new AsyncCompletionHandler() {
+            @Override
+            public void completed(final int bytesWritten) {
+                if (byteBuffer.hasRemaining()) {
+                    channel.write(byteBuffer, this);
+                }
+                else {
+                    close();
+                    handler.completed(byteBuffer.limit());
+                }
             }
-            close();
-            handler.completed(size());
-        } catch (Throwable t) {
-            close();
-            handler.failed(t);
-        }
+
+            @Override
+            public void failed(final Throwable t) {
+                close();
+                handler.failed(t);
+            }
+        });
     }
 
     private void ensure(final int more) {
