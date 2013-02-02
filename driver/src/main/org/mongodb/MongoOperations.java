@@ -40,10 +40,8 @@ public interface MongoOperations {
     <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Serializer<Document> baseSerializer,
                              Serializer<T> serializer);
 
-    // TODO: needs a ServerAddress or doesn't make sense for some MongoClient implementations
     <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> serializer);
 
-    // TODO: needs a ServerAddress or doesn't make sense for some MongoClient implementations
     void killCursors(MongoKillCursor killCursor);
 
     <T> WriteResult insert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer,
