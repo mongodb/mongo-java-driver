@@ -19,12 +19,16 @@ package org.mongodb.async;
 
 import org.bson.types.Document;
 import org.mongodb.MongoNamespace;
+import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommand;
+import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.CommandResult;
+import org.mongodb.result.GetMoreResult;
+import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.Serializer;
 
@@ -37,6 +41,16 @@ public interface MongoAsyncOperations {
     void asyncExecuteCommand(String database, MongoCommand commandOperation, Serializer<Document> serializer,
                              SingleResultCallback<CommandResult> callback);
 
+    <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, MongoFind find, Serializer<Document> baseSerializer,
+                                          Serializer<T> serializer);
+
+    <T> void asyncQuery(final MongoNamespace namespace, MongoFind find, Serializer<Document> baseSerializer,
+                        Serializer<T> serializer, SingleResultCallback<QueryResult<T>> callback);
+
+    <T> Future<GetMoreResult<T>> asyncGetMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> serializer);
+
+    <T> void asyncGetMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> serializer,
+                          SingleResultCallback<GetMoreResult<T>> callback);
 
     <T> Future<WriteResult> asyncInsert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer,
                                         final Serializer<Document> baseSerializer);
@@ -52,7 +66,7 @@ public interface MongoAsyncOperations {
 
 
     <T> Future<WriteResult> asyncReplace(MongoNamespace namespace, MongoReplace<T> replace, Serializer<Document> baseSerializer,
-                                          Serializer<T> serializer);
+                                         Serializer<T> serializer);
 
     <T> void asyncReplace(MongoNamespace namespace, MongoReplace<T> replace, Serializer<Document> baseSerializer,
                           Serializer<T> serializer, SingleResultCallback<WriteResult> callback);

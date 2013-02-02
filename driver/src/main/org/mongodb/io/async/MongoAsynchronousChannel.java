@@ -31,7 +31,6 @@ import org.mongodb.MongoQueryFailureException;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.MongoSocketOpenException;
-import org.mongodb.io.MongoSocketReadException;
 import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyHeader;
@@ -45,12 +44,14 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
+/**
+ * An asynchronous socket channel for the MongoDB protocol.
+ *
+ * Note: This class is not part of the public API.  It may break binary compatibility even in minor releases.
+ */
 public class MongoAsynchronousChannel {
     private final ServerAddress address;
     private final BufferPool<ByteBuffer> pool;
@@ -69,7 +70,6 @@ public class MongoAsynchronousChannel {
     }
 
     public void sendMessage(final MongoRequestMessage message) {
-        ensureOpen();
         sendOneWayMessage(message, new NoOpAsyncCompletionHandler());
     }
 
@@ -81,13 +81,13 @@ public class MongoAsynchronousChannel {
     public void sendMessage(final MongoRequestMessage message, final MongoQueryMessage writeConcernMessage,
                             final Serializer<Document> serializer,
                             final SingleResultCallback<MongoReplyMessage<Document>> callback) {
-        ensureOpen();
         sendOneWayMessage(message, new AsyncCompletionHandler() {
             @Override
             public void completed(final int bytesWritten) {
                 if (writeConcernMessage != null) {
                     sendQueryMessage(writeConcernMessage, serializer, callback);
-                } else {
+                }
+                else {
                     callback.onResult(null, null);
                 }
             }
@@ -99,36 +99,15 @@ public class MongoAsynchronousChannel {
         });
     }
 
-
-    public <T> MongoReplyMessage<T> sendQueryMessage(final MongoQueryMessage message, final Serializer<T> serializer) {
-        ensureOpen();
-        long start = System.nanoTime();
-        try {
-            sendOneWayMessage(message).get();
-            return receiveMessage(message, serializer, start);
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted while waiting for write to complete", e);
-        } catch (ExecutionException e) {
-            throw new MongoException("", e.getCause());  // TODO
-        }
+    public <T> void sendGetMoreMessage(final MongoGetMoreMessage message, final Serializer<T> serializer,
+                                       final SingleResultCallback<MongoReplyMessage<T>> callback) {
+        sendOneWayMessage(message, new ReceiveMessageCompletionHandler<T>(message, serializer, System.nanoTime(), callback));
     }
 
-    public <T> MongoReplyMessage<T> sendGetMoreMessage(final MongoGetMoreMessage message, final Serializer<T> serializer) {
-        ensureOpen();
-        long start = System.nanoTime();
-        try {
-            sendOneWayMessage(message).get();
-            return receiveMessage(message, serializer, start);
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted while waiting for write to complete", e);
-        } catch (ExecutionException e) {
-            throw new MongoException("", e.getCause());  // TODO
-        }
-    }
 
-    public void sendQueryMessage(final MongoQueryMessage message, final Serializer<Document> serializer,
-                                 final SingleResultCallback<MongoReplyMessage<Document>> callback) {
-        sendOneWayMessage(message, new ReceiveMessageCompletionHandler<Document>(message, serializer, System.nanoTime(), callback));
+    public <T> void sendQueryMessage(final MongoQueryMessage message, final Serializer<T> serializer,
+                                     final SingleResultCallback<MongoReplyMessage<T>> callback) {
+        sendOneWayMessage(message, new ReceiveMessageCompletionHandler<T>(message, serializer, System.nanoTime(), callback));
     }
 
     private <T> void receiveMessage(final MongoRequestMessage message, final Serializer<T> serializer, final long start,
@@ -146,7 +125,14 @@ public class MongoAsynchronousChannel {
 
                 pool.done(result);
 
-                if (replyHeader.getNumberReturned() > 0) {
+                if (replyHeader.isCursorNotFound()) {
+                    callback.onResult(null, new MongoCursorNotFoundException(
+                            new ServerCursor(((MongoGetMoreMessage) message).getCursorId(), address)));
+                }
+                else if (replyHeader.getNumberReturned() == 0) {
+                    callback.onResult(new MongoReplyMessage<T>(replyHeader, System.nanoTime() - start), null);
+                }
+                else {
                     fillAndFlipBuffer(pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH),
                             new SingleResultCallback<ByteBuffer>() {
                                 @Override
@@ -155,14 +141,12 @@ public class MongoAsynchronousChannel {
                                         callback.onResult(null, e);
                                     }
                                     InputBuffer bodyInputBuffer = new ByteBufferInput(result);
-                                    if (replyHeader.isCursorNotFound()) {
-                                        callback.onResult(null, new MongoCursorNotFoundException(
-                                                new ServerCursor(((MongoGetMoreMessage) message).getCursorId(), address)));
-                                    } else if (replyHeader.isQueryFailure()) {
+                                    if (replyHeader.isQueryFailure()) {
                                         final Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,
                                                 errorSerializer, System.nanoTime() - start).getDocuments().get(0);
                                         callback.onResult(null, new MongoQueryFailureException(address, errorDocument));
-                                    } else {
+                                    }
+                                    else {
                                         MongoReplyMessage<T> replyMessage = null;
                                         try {
                                             replyMessage = new MongoReplyMessage<T>(replyHeader, bodyInputBuffer, serializer,
@@ -183,129 +167,12 @@ public class MongoAsynchronousChannel {
         });
     }
 
-    private Future<Void> sendOneWayMessage(final MongoRequestMessage message) {
-        final WriteFuture retVal = new WriteFuture();
-        message.pipeAndClose(new Adapter(), new AsyncCompletionHandler() {
-            @Override
-            public void completed(final int bytesWritten) {
-                retVal.completed();
-            }
-
-            @Override
-            public void failed(final Throwable t) {
-                retVal.failure(t);
-            }
-        });
-        return retVal;
-    }
-
     private void sendOneWayMessage(final MongoRequestMessage message, final AsyncCompletionHandler handler) {
-        message.pipeAndClose(new Adapter(), handler);
-    }
-
-    private <T> MongoReplyMessage<T> receiveMessage(final MongoRequestMessage message, final Serializer<T> serializer, final long start) {
-        ByteBuffer headerByteBuffer = null;
-        ByteBuffer bodyByteBuffer = null;
-        try {
-            headerByteBuffer = pool.get(REPLY_HEADER_LENGTH);
-            fillAndFlipBuffer(headerByteBuffer);
-            final InputBuffer headerInputBuffer = new ByteBufferInput(headerByteBuffer);
-
-            final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
-
-            InputBuffer bodyInputBuffer = null;
-
-            if (replyHeader.getNumberReturned() > 0) {
-                bodyByteBuffer = pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
-                fillAndFlipBuffer(bodyByteBuffer);
-
-                bodyInputBuffer = new ByteBufferInput(bodyByteBuffer);
-            }
-
-            if (replyHeader.isCursorNotFound()) {
-                throw new MongoCursorNotFoundException(new ServerCursor(((MongoGetMoreMessage) message).getCursorId(),
-                        address));
-            } else if (replyHeader.isQueryFailure()) {
-                final Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,
-                        errorSerializer, System.nanoTime() - start).getDocuments().get(0);
-                throw new MongoQueryFailureException(address, errorDocument);
-            }
-            return new MongoReplyMessage<T>(replyHeader, bodyInputBuffer, serializer, System.nanoTime() - start);
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted opening socket " + address, e);
-        } catch (ExecutionException e) {
-            throw new MongoInternalException("Exception from calling Future.get while opening socket to " + address, e.getCause());
-        } finally {
-            if (headerByteBuffer != null) {
-                pool.done(headerByteBuffer);
-            }
-            if (bodyByteBuffer != null) {
-                pool.done(bodyByteBuffer);
-            }
-        }
-    }
-
-    private void fillAndFlipBuffer(final ByteBuffer buffer) throws ExecutionException, InterruptedException {
-        int totalBytesRead = 0;
-        while (totalBytesRead < buffer.limit()) {
-            final int bytesRead = asynchronousSocketChannel.read(buffer).get();
-            if (bytesRead == -1) {
-                throw new MongoSocketReadException("Prematurely reached end of stream", address);
-            }
-            totalBytesRead += bytesRead;
-        }
-        buffer.flip();
+        message.pipeAndClose(new AsyncWritableByteChannelAdapter(), handler);
     }
 
     private void fillAndFlipBuffer(final ByteBuffer buffer, final SingleResultCallback<ByteBuffer> callback) {
         asynchronousSocketChannel.read(buffer, null, new BasicCompletionHandler(buffer, callback));
-    }
-
-    private static class WriteFuture implements Future<Void> {
-        private volatile boolean done;
-        private volatile Throwable exception;
-
-        @Override
-        public boolean cancel(final boolean mayInterruptIfRunning) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean isCancelled() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean isDone() {
-            return done;
-        }
-
-        @Override
-        public synchronized Void get() throws InterruptedException, ExecutionException {
-            while (!done) {
-                wait();
-            }
-            if (exception != null) {
-                throw new ExecutionException(exception);
-            }
-
-            return null;
-        }
-
-        @Override
-        public Void get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-            throw new UnsupportedOperationException();
-        }
-
-        synchronized void completed() {
-            done = true;
-            notify();
-        }
-
-        void failure(final Throwable t) {
-            this.exception = t;
-            completed();
-        }
     }
 
     private final class BasicCompletionHandler implements CompletionHandler<Integer, Void> {
@@ -322,7 +189,8 @@ public class MongoAsynchronousChannel {
             if (!dst.hasRemaining()) {
                 dst.flip();
                 callback.onResult(dst, null);
-            } else {
+            }
+            else {
                 asynchronousSocketChannel.read(dst, null, new BasicCompletionHandler(dst, callback));
             }
         }
@@ -362,7 +230,7 @@ public class MongoAsynchronousChannel {
     }
     //CHECKSTYLE:ON
 
-    private class Adapter implements AsyncWritableByteChannel {
+    private class AsyncWritableByteChannelAdapter implements AsyncWritableByteChannel {
 
         @Override
         public void write(final ByteBuffer src, final org.bson.io.async.AsyncCompletionHandler handler) {
@@ -379,31 +247,15 @@ public class MongoAsynchronousChannel {
                 }
             });
         }
-
-        @Override
-        public Future<Integer> write(final ByteBuffer src) {
-            return asynchronousSocketChannel.write(src);
-        }
-    }
-
-    private static class NoOpAsyncCompletionHandler implements AsyncCompletionHandler {
-
-        @Override
-        public void completed(final int bytesWritten) {
-        }
-
-        @Override
-        public void failed(final Throwable t) {
-        }
     }
 
     private class ReceiveMessageCompletionHandler<T> implements AsyncCompletionHandler {
-        private final MongoQueryMessage message;
+        private final MongoRequestMessage message;
         private final Serializer<T> serializer;
         private final long start;
         private final SingleResultCallback<MongoReplyMessage<T>> callback;
 
-        public ReceiveMessageCompletionHandler(final MongoQueryMessage message, final Serializer<T> serializer,
+        public ReceiveMessageCompletionHandler(final MongoRequestMessage message, final Serializer<T> serializer,
                                                final long start, final SingleResultCallback<MongoReplyMessage<T>> callback) {
             this.message = message;
             this.serializer = serializer;
@@ -419,6 +271,16 @@ public class MongoAsynchronousChannel {
         @Override
         public void failed(final Throwable t) {
             callback.onResult(null, new MongoException("", t));  // TODO
+        }
+    }
+
+    private static class NoOpAsyncCompletionHandler implements AsyncCompletionHandler {
+        @Override
+        public void completed(final int bytesWritten) {
+        }
+
+        @Override
+        public void failed(final Throwable t) {
         }
     }
 }

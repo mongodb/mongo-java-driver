@@ -26,13 +26,17 @@ import org.mongodb.async.MongoAsyncOperations;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.io.async.MongoAsynchronousChannel;
+import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommand;
+import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.pool.SimplePool;
 import org.mongodb.result.CommandResult;
+import org.mongodb.result.GetMoreResult;
+import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
@@ -97,6 +101,49 @@ public class SingleServerAsyncMongoClient extends SingleServerMongoClient {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 mongoClient.getAsyncOperations().asyncExecuteCommand(database, commandOperation, serializer, callback);
+            } finally {
+                releaseChannelClient(mongoClient);
+            }
+        }
+
+        @Override
+        public <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
+                                                     final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+            final SingleChannelMongoClient mongoClient = getChannelClient();
+            try {
+                return mongoClient.getAsyncOperations().asyncQuery(namespace, find, baseSerializer, serializer);
+            } finally {
+                releaseChannelClient(mongoClient);
+            }
+        }
+
+        @Override
+        public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Serializer<Document> baseSerializer,
+                                   final Serializer<T> serializer, final SingleResultCallback<QueryResult<T>> callback) {
+            final SingleChannelMongoClient mongoClient = getChannelClient();
+            try {
+                mongoClient.getAsyncOperations().asyncQuery(namespace, find, baseSerializer, serializer, callback);
+            } finally {
+                releaseChannelClient(mongoClient);
+            }
+        }
+
+        @Override
+        public <T> Future<GetMoreResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer) {
+            final SingleChannelMongoClient mongoClient = getChannelClient();
+            try {
+                return mongoClient.getAsyncOperations().asyncGetMore(namespace, getMore, serializer);
+            } finally {
+                releaseChannelClient(mongoClient);
+            }
+        }
+
+        @Override
+        public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer,
+                                     final SingleResultCallback<GetMoreResult<T>> callback) {
+            final SingleChannelMongoClient mongoClient = getChannelClient();
+            try {
+                mongoClient.getAsyncOperations().asyncGetMore(namespace, getMore, serializer, callback);
             } finally {
                 releaseChannelClient(mongoClient);
             }

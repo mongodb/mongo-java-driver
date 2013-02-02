@@ -202,6 +202,30 @@ class ReplicaSetMongoClient extends AbstractMongoClient {
         }
 
         @Override
+        public <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
+                                                     final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+            return getClient(find.getReadPreference()).getAsyncOperations().asyncQuery(namespace, find, baseSerializer, serializer);
+        }
+
+        @Override
+        public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Serializer<Document> baseSerializer,
+                                   final Serializer<T> serializer, final SingleResultCallback<QueryResult<T>> callback) {
+            getClient(find.getReadPreference()).getAsyncOperations().asyncQuery(namespace, find, baseSerializer, serializer, callback);
+        }
+
+        @Override
+        public <T> Future<GetMoreResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
+                                                         final Serializer<T> serializer) {
+            return getClient(getMore.getServerCursor().getAddress()).getAsyncOperations().asyncGetMore(namespace, getMore, serializer);
+        }
+
+        @Override
+        public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer,
+                                     final SingleResultCallback<GetMoreResult<T>> callback) {
+            getClient(getMore.getServerCursor().getAddress()).getAsyncOperations().asyncGetMore(namespace, getMore, serializer, callback);
+        }
+
+        @Override
         public <T> Future<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
                                                    final Serializer<T> serializer, final Serializer<Document> baseSerializer) {
             return getPrimary().getAsyncOperations().asyncInsert(namespace, insert, serializer, baseSerializer);

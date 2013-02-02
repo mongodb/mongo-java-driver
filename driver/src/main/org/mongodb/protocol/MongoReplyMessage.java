@@ -33,16 +33,20 @@ public class MongoReplyMessage<T> {
 
     public MongoReplyMessage(final MongoReplyHeader replyHeader, final InputBuffer bodyInputBuffer,
                              final Serializer<T> serializer, final long elapsedNanoseconds) {
-        this.replyHeader = replyHeader;
-        this.elapsedNanoseconds = elapsedNanoseconds;
-
-        documents = new ArrayList<T>(replyHeader.getNumberReturned());
+        this(replyHeader, elapsedNanoseconds);
 
         while (documents.size() < replyHeader.getNumberReturned()) {
             final BSONReader reader = new BSONBinaryReader(new BsonReaderSettings(), bodyInputBuffer);
             documents.add(serializer.deserialize(reader));
             reader.close();
         }
+    }
+
+    public MongoReplyMessage(final MongoReplyHeader replyHeader, final long elapsedNanoseconds) {
+        this.replyHeader = replyHeader;
+        this.elapsedNanoseconds = elapsedNanoseconds;
+
+        documents = new ArrayList<T>(replyHeader.getNumberReturned());
     }
 
     public MongoReplyHeader getReplyHeader() {

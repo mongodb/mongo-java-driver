@@ -18,7 +18,6 @@
 package org.bson.io.async;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.Future;
 
 /**
  * An asynchronous channel that can write bytes.
@@ -72,27 +71,4 @@ public interface AsyncWritableByteChannel {
      *          group} that has terminated
      */
     void write(ByteBuffer src, AsyncCompletionHandler handler);
-
-    /**
-     * Writes a sequence of bytes to this channel from the given buffer.
-     *
-     * <p> This method initiates an asynchronous write operation to write a
-     * sequence of bytes to this channel from the given buffer. The method
-     * behaves in exactly the same manner as the {@link
-     * #write(ByteBuffer,AsyncCompletionHandler)
-     * write(ByteBuffer,AsyncCompletionHandler)} method except that instead
-     * of specifying a completion handler, this method returns a {@code Future}
-     * representing the pending result. The {@code Future}'s {@link java.util.concurrent.Future#get()
-     * get} method returns the number of bytes written.
-     *
-     * @param   src
-     *          The buffer from which bytes are to be retrieved
-     *
-     * @return A Future representing the result of the operation
-     *
-     * @throws java.nio.channels.WritePendingException
-     *          If the channel does not allow more than one write to be outstanding
-     *          and a previous write has not completed
-     */
-    Future<Integer> write(ByteBuffer src);
 }

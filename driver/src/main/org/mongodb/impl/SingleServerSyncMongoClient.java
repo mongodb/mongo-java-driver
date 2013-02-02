@@ -27,7 +27,7 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
 import java.nio.ByteBuffer;
 
 /**
- * An implementation of {@code MongoClient} that represents a connection to a single server.
+ * An implementation of {@code MongoClient} that represents a connection to a single server using a synchronous channel.
  */
 class SingleServerSyncMongoClient extends SingleServerMongoClient {
 
