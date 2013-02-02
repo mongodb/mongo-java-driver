@@ -23,6 +23,7 @@ import org.mongodb.MongoDatabase;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.QueryFilterDocument;
+import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.command.CollStats;
 import org.mongodb.command.Drop;
@@ -67,8 +68,9 @@ public class CollectionAdminImpl implements CollectionAdmin {
         indexesNamespace = new MongoNamespace(database.getName(), "system.indexes");
         this.collectionNamespace = collectionNamespace;
         collStatsCommand = new CollStats(collectionNamespace.getCollectionName());
-        queryForCollectionNamespace = new MongoFind(new QueryFilterDocument(NAMESPACE_KEY_NAME,
-                                                                            this.collectionNamespace.getFullName()));
+        queryForCollectionNamespace = new MongoFind(
+                new QueryFilterDocument(NAMESPACE_KEY_NAME, this.collectionNamespace.getFullName()))
+                .readPreference(ReadPreference.primary());
         dropCollectionCommand = new Drop(this.collectionNamespace.getCollectionName());
     }
 
@@ -86,7 +88,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
     @Override
     public List<Document> getIndexes() {
         final QueryResult<Document> systemCollection = operations.query(indexesNamespace, queryForCollectionNamespace,
-                                                                       documentSerializer, documentSerializer);
+                documentSerializer, documentSerializer);
         return systemCollection.getResults();
     }
 
