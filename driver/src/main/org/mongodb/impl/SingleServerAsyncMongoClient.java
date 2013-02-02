@@ -129,7 +129,8 @@ public class SingleServerAsyncMongoClient extends SingleServerMongoClient {
         }
 
         @Override
-        public <T> Future<GetMoreResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer) {
+        public <T> Future<GetMoreResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
+                                                         final Serializer<T> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getAsyncOperations().asyncGetMore(namespace, getMore, serializer);
