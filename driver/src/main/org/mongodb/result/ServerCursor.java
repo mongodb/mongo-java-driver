@@ -19,23 +19,23 @@ package org.mongodb.result;
 import org.mongodb.ServerAddress;
 
 public class ServerCursor {
-    private final long getId;
+    private final long id;
     private final ServerAddress address;
 
-    public ServerCursor(final long getId, final ServerAddress address) {
-        if (getId == 0) {
+    public ServerCursor(final long id, final ServerAddress address) {
+        if (id == 0) {
             throw new IllegalArgumentException();
         }
         if (address == null) {
             throw new IllegalArgumentException();
         }
 
-        this.getId = getId;
+        this.id = id;
         this.address = address;
     }
 
     public long getId() {
-        return getId;
+        return id;
     }
 
     public ServerAddress getAddress() {
@@ -53,7 +53,7 @@ public class ServerCursor {
 
         final ServerCursor that = (ServerCursor) o;
 
-        if (getId != that.getId) {
+        if (id != that.id) {
             return false;
         }
         if (address != null ? !address.equals(that.address) : that.address != null) {
@@ -65,13 +65,13 @@ public class ServerCursor {
 
     @Override
     public int hashCode() {
-        int result = (int) (getId ^ (getId >>> 32));
+        int result = (int) (id ^ (id >>> 32));
         result = 31 * result + (address != null ? address.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return "ServerCursor{getId=" + getId + ", address=" + address + '}';
+        return "ServerCursor{getId=" + id + ", address=" + address + '}';
     }
 }
