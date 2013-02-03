@@ -20,10 +20,6 @@ import java.util.List;
 
 public interface MongoReadableStream<T> extends MongoIterable<T> {
 
-    MongoReadableStream<T> batchSize(int batchSize);   // TODO: what to do about this
-
-    MongoReadableStream<T> readPreference(ReadPreference readPreference);
-
     MongoCursor<T> all();
 
     T one();

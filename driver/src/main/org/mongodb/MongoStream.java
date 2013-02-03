@@ -22,6 +22,13 @@ import org.mongodb.operation.MongoQueryFilter;
 import org.mongodb.operation.MongoSortCriteria;
 
 public interface MongoStream<T> extends MongoWritableStream<T>, MongoReadableStream<T>, MongoAsyncWritableStream<T> {
+
+    MongoStream<T> batchSize(int batchSize);   // TODO: what to do about this
+
+    MongoStream<T> readPreference(ReadPreference readPreference);
+
+    MongoStream<T> writeConcern(WriteConcern writeConcern);
+
     MongoStream<T> filter(MongoQueryFilter filter);
 
     MongoStream<T> sort(MongoSortCriteria sortCriteria);

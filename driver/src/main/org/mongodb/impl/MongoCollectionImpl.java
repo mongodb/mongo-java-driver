@@ -26,9 +26,7 @@ import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoIterable;
 import org.mongodb.MongoOperations;
-import org.mongodb.MongoReadableStream;
 import org.mongodb.MongoStream;
-import org.mongodb.MongoWritableStream;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
@@ -75,12 +73,12 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
-    public MongoReadableStream<T> batchSize(final int batchSize) {
+    public MongoStream<T> batchSize(final int batchSize) {
         return new MongoCollectionStream().batchSize(batchSize);
     }
 
     @Override
-    public MongoReadableStream<T> readPreference(final ReadPreference readPreference) {
+    public MongoStream<T> readPreference(final ReadPreference readPreference) {
         return new MongoCollectionStream().readPreference(readPreference);
     }
 
@@ -170,7 +168,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
-    public MongoWritableStream<T> writeConcern(final WriteConcern writeConcern) {
+    public MongoStream<T> writeConcern(final WriteConcern writeConcern) {
         return new MongoCollectionStream().writeConcern(writeConcern);
     }
 

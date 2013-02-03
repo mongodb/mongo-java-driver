@@ -20,8 +20,6 @@ import org.mongodb.operation.MongoUpdateOperations;
 import org.mongodb.result.WriteResult;
 
 public interface MongoWritableStream<T> {
-    MongoWritableStream<T> writeConcern(WriteConcern writeConcern);
-
     WriteResult insert(T document);
 
     WriteResult insert(Iterable<T> document);
