@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,17 +12,27 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package org.mongodb;
+package org.mongodb.async;
 
-import java.io.Closeable;
-import java.io.IOException;
+import org.mongodb.MongoIterable;
 
-// TODO: figure out the API for this!
-public class MongoAsyncCursor<T> implements Closeable {
-    @Override
-    public void close() throws IOException {
-        throw new UnsupportedOperationException();
-    }
+import java.util.concurrent.Future;
+
+/**
+ * Interface describing the asynchronous read operations.
+ *
+ * @param <T> the document type to read
+ */
+public interface MongoAsyncReadableStream<T> extends MongoIterable<T> {
+
+    Future<T> asyncOne();
+
+    void asyncOne(SingleResultCallback<T> callback);
+
+    Future<Long> asyncCount();
+
+    void asyncCount(SingleResultCallback<Long> callback);
 }

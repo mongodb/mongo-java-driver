@@ -24,6 +24,7 @@ import org.mongodb.Get;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoCursor;
+import org.mongodb.MongoException;
 import org.mongodb.MongoIterable;
 import org.mongodb.MongoOperations;
 import org.mongodb.MongoStream;
@@ -52,6 +53,7 @@ import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoSortCriteria;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoUpdateOperations;
+import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.CollectibleSerializer;
@@ -59,7 +61,10 @@ import org.mongodb.serialization.Serializer;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements MongoCollection<T> {
 
@@ -69,7 +74,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                                final CollectibleSerializer<T> serializer, final MongoCollectionOptions options) {
         super(serializer, name, database, options);
         admin = new CollectionAdminImpl(database.getClient().getOperations(), options.getPrimitiveSerializers(),
-                                       getNamespace(), getDatabase());
+                getNamespace(), getDatabase());
     }
 
     @Override
@@ -229,7 +234,27 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     @Override
     public void asyncReplaceOrInsert(final T replacement, final SingleResultCallback<WriteResult> callback) {
-         new MongoCollectionStream().asyncReplaceOrInsert(replacement, callback);
+        new MongoCollectionStream().asyncReplaceOrInsert(replacement, callback);
+    }
+
+    @Override
+    public Future<T> asyncOne() {
+        return new MongoCollectionStream().asyncOne();
+    }
+
+    @Override
+    public void asyncOne(final SingleResultCallback<T> callback) {
+        new MongoCollectionStream().asyncOne(callback);
+    }
+
+    @Override
+    public Future<Long> asyncCount() {
+        return new MongoCollectionStream().asyncCount();
+    }
+
+    @Override
+    public void asyncCount(final SingleResultCallback<Long> callback) {
+        new MongoCollectionStream().asyncCount(callback);
     }
 
     @Override
@@ -326,8 +351,8 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         @Override
         public T one() {
             final QueryResult<T> res = getClient().getOperations().query(getNamespace(), findOp.batchSize(-1),
-                                                                        getDocumentSerializer(),
-                                                                        getSerializer());
+                    getDocumentSerializer(),
+                    getSerializer());
             if (res.getResults().isEmpty()) {
                 return null;
             }
@@ -384,15 +409,15 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         @Override
         public WriteResult insert(final T document) {
             return getClient().getOperations().insert(getNamespace(),
-                                                     new MongoInsert<T>(document).writeConcern(writeConcern),
-                                                     getSerializer(), getDocumentSerializer());
+                    new MongoInsert<T>(document).writeConcern(writeConcern),
+                    getSerializer(), getDocumentSerializer());
         }
 
         @Override
         public WriteResult insert(final Iterable<T> documents) {
             return getClient().getOperations().insert(getNamespace(),
-                                                     new MongoInsert<T>(documents).writeConcern(writeConcern),
-                                                     getSerializer(), getDocumentSerializer());
+                    new MongoInsert<T>(documents).writeConcern(writeConcern),
+                    getSerializer(), getDocumentSerializer());
         }
 
         @Override
@@ -409,40 +434,40 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         @Override
         public WriteResult remove() {
             final MongoRemove remove = new MongoRemove(findOp.getFilter()).multi(getMultiFromLimit())
-                                                                          .writeConcern(writeConcern);
+                    .writeConcern(writeConcern);
             return getClient().getOperations().remove(getNamespace(), remove, getDocumentSerializer());
         }
 
         @Override
         public WriteResult modify(final MongoUpdateOperations updateOperations) {
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).multi(getMultiFromLimit())
-                                                                                            .writeConcern(writeConcern);
+                    .writeConcern(writeConcern);
             return getClient().getOperations().update(getNamespace(), update, getDocumentSerializer());
         }
 
         @Override
         public WriteResult modifyOrInsert(final MongoUpdateOperations updateOperations) {
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).upsert(true)
-                                                                                            .multi(getMultiFromLimit())
-                                                                                            .writeConcern(writeConcern);
+                    .multi(getMultiFromLimit())
+                    .writeConcern(writeConcern);
             return getClient().getOperations().update(getNamespace(), update, getDocumentSerializer());
         }
 
         @Override
         public WriteResult replace(final T replacement) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement)
-                                            .writeConcern(writeConcern);
+                    .writeConcern(writeConcern);
             return getClient().getOperations().replace(getNamespace(), replace, getDocumentSerializer(),
-                                                      getSerializer());
+                    getSerializer());
         }
 
         @Override
         public WriteResult replaceOrInsert(final T replacement) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement)
-                                            .upsert(true)
-                                            .writeConcern(writeConcern);
+                    .upsert(true)
+                    .writeConcern(writeConcern);
             return getClient().getOperations().replace(getNamespace(), replace, getDocumentSerializer(),
-                                                      getSerializer());
+                    getSerializer());
         }
 
         @Override
@@ -451,108 +476,108 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         public T modifyAndGet(final MongoUpdateOperations updateOperations, final Get beforeOrAfter) {
             final MongoFindAndUpdate<T> findAndUpdate;
             findAndUpdate = new MongoFindAndUpdate<T>().where(findOp.getFilter())
-                                                    .updateWith(updateOperations)
-                                                    .returnNew(asBoolean(beforeOrAfter))
-                                                    .select(findOp.getFields())
-                                                    .sortBy(findOp.getOrder());
+                    .updateWith(updateOperations)
+                    .returnNew(asBoolean(beforeOrAfter))
+                    .select(findOp.getFields())
+                    .sortBy(findOp.getOrder());
             final MongoOperations operations = getClient().getOperations();
 
             //TODO: Still need to tidy up some of this command stuff, especially around return values
             final FindAndUpdate<T> findAndUpdateCommand = new FindAndUpdate<T>(MongoCollectionImpl.this, findAndUpdate);
             final FindAndModifyCommandResultSerializer<T> serializer = new
-                                                                 FindAndModifyCommandResultSerializer<T>(
-                                                                                                        getOptions()
-                                                                                                        .getPrimitiveSerializers(),
-                                                                                                        getSerializer());
+                    FindAndModifyCommandResultSerializer<T>(
+                    getOptions()
+                            .getPrimitiveSerializers(),
+                    getSerializer());
             return new FindAndModifyCommandResult<T>(operations.executeCommand(getDatabase().getName(),
-                                                                              findAndUpdateCommand,
-                                                                              serializer)).getValue();
+                    findAndUpdateCommand,
+                    serializer)).getValue();
         }
 
         @Override
         public T modifyOrInsertAndGet(final MongoUpdateOperations updateOperations, final Get beforeOrAfter) {
             final MongoFindAndUpdate<T> findAndUpdate = new MongoFindAndUpdate<T>().where(findOp.getFilter()).updateWith(
 
-                                                                                                                        updateOperations)
-                                                                             .upsert(true)
-                                                                             .returnNew(asBoolean(beforeOrAfter))
-                                                                             .select(findOp.getFields()).sortBy(
-                                                                                                               findOp
-                                                                                                               .getOrder());
+                    updateOperations)
+                    .upsert(true)
+                    .returnNew(asBoolean(beforeOrAfter))
+                    .select(findOp.getFields()).sortBy(
+                            findOp
+                                    .getOrder());
             return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
-                                                                                               new FindAndUpdate<T>(
-                                                                                                                MongoCollectionImpl.this,
-                                                                                                                findAndUpdate),
-                                                                                               new FindAndModifyCommandResultSerializer<T>(
-                                                                                                                                          getOptions()
-                                                                                                                                          .getPrimitiveSerializers(),
-                                                                                                                                          getSerializer())))
-                   .getValue();
+                    new FindAndUpdate<T>(
+                            MongoCollectionImpl.this,
+                            findAndUpdate),
+                    new FindAndModifyCommandResultSerializer<T>(
+                            getOptions()
+                                    .getPrimitiveSerializers(),
+                            getSerializer())))
+                    .getValue();
         }
 
         @Override
         public T replaceAndGet(final T replacement, final Get beforeOrAfter) {
             final MongoFindAndReplace<T> findAndReplace = new MongoFindAndReplace<T>(replacement).where(
-                                                                                                       findOp
-                                                                                                       .getFilter())
-                                                                                                 .returnNew(asBoolean(
-                                                                                                                     beforeOrAfter))
-                                                                                                 .select(findOp
-                                                                                                         .getFields())
-                                                                                                 .sortBy(
-                                                                                                        findOp
-                                                                                                        .getOrder());
+                    findOp
+                            .getFilter())
+                    .returnNew(asBoolean(
+                            beforeOrAfter))
+                    .select(findOp
+                            .getFields())
+                    .sortBy(
+                            findOp
+                                    .getOrder());
             return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
-                                                                                               new FindAndReplace<T>(
-                                                                                                                 MongoCollectionImpl.this,
-                                                                                                                 findAndReplace),
-                                                                                               new FindAndModifyCommandResultSerializer<T>(
-                                                                                                                                          getOptions()
-                                                                                                                                          .getPrimitiveSerializers(),
-                                                                                                                                          getSerializer())))
-                   .getValue();
+                    new FindAndReplace<T>(
+                            MongoCollectionImpl.this,
+                            findAndReplace),
+                    new FindAndModifyCommandResultSerializer<T>(
+                            getOptions()
+                                    .getPrimitiveSerializers(),
+                            getSerializer())))
+                    .getValue();
         }
 
         @Override
         public T replaceOrInsertAndGet(final T replacement, final Get beforeOrAfter) {
             final MongoFindAndReplace<T> findAndReplace = new MongoFindAndReplace<T>(replacement).where(
-                                                                                                       findOp
-                                                                                                       .getFilter())
-                                                                                                 .returnNew(asBoolean(
-                                                                                                                     beforeOrAfter))
-                                                                                                 .upsert(true).select(
-                                                                                                                     findOp
-                                                                                                                     .getFields())
-                                                                                                 .sortBy(
-                                                                                                        findOp
-                                                                                                        .getOrder());
+                    findOp
+                            .getFilter())
+                    .returnNew(asBoolean(
+                            beforeOrAfter))
+                    .upsert(true).select(
+                            findOp
+                                    .getFields())
+                    .sortBy(
+                            findOp
+                                    .getOrder());
             return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
-                                                                                               new FindAndReplace<T>(
-                                                                                                                 MongoCollectionImpl.this,
-                                                                                                                 findAndReplace),
-                                                                                               new FindAndModifyCommandResultSerializer<T>(
-                                                                                                                                          getOptions()
-                                                                                                                                          .getPrimitiveSerializers(),
-                                                                                                                                          getSerializer())))
-                   .getValue();
+                    new FindAndReplace<T>(
+                            MongoCollectionImpl.this,
+                            findAndReplace),
+                    new FindAndModifyCommandResultSerializer<T>(
+                            getOptions()
+                                    .getPrimitiveSerializers(),
+                            getSerializer())))
+                    .getValue();
         }
 
         @Override
         public T removeAndGet() {
             final MongoFindAndRemove<T> findAndRemove = new MongoFindAndRemove<T>().where(findOp.getFilter())
-                                                                                   .select(findOp.getFields())
-                                                                                   .sortBy(findOp.getOrder());
+                    .select(findOp.getFields())
+                    .sortBy(findOp.getOrder());
 
             final MongoOperations operations = getClient().getOperations();
             final FindAndModifyCommandResultSerializer<T> serializer
-                = new FindAndModifyCommandResultSerializer<T>(getOptions().getPrimitiveSerializers(),
-                                                             getSerializer());
+                    = new FindAndModifyCommandResultSerializer<T>(getOptions().getPrimitiveSerializers(),
+                    getSerializer());
             return new FindAndModifyCommandResult<T>(operations.executeCommand(getDatabase().getName(),
-                                                                              new FindAndRemove<T>(
-                                                                                               MongoCollectionImpl.this,
-                                                                                               findAndRemove),
-                                                                              serializer))
-                   .getValue();
+                    new FindAndRemove<T>(
+                            MongoCollectionImpl.this,
+                            findAndRemove),
+                    serializer))
+                    .getValue();
         }
         //CHECKSTYLE:OFF
 
@@ -566,6 +591,124 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         public void asyncReplaceOrInsert(final T replacement, final SingleResultCallback<WriteResult> callback) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
             getClient().getAsyncOperations().asyncReplace(getNamespace(), replace, getDocumentSerializer(), getSerializer(), callback);
+        }
+
+        boolean asBoolean(final Get get) {
+            return get == Get.BeforeChangeApplied;
+        }
+
+        @Override
+        public Future<T> asyncOne() {
+            final Future<QueryResult<T>> queryResultFuture =
+                    getClient().getAsyncOperations().asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentSerializer(),
+                            getSerializer());
+            return new Future<T>() {
+                @Override
+                public boolean cancel(final boolean mayInterruptIfRunning) {
+                    return queryResultFuture.cancel(mayInterruptIfRunning);
+                }
+
+                @Override
+                public boolean isCancelled() {
+                    return queryResultFuture.isCancelled();
+                }
+
+                @Override
+                public boolean isDone() {
+                    return queryResultFuture.isDone();
+                }
+
+                @Override
+                public T get() throws InterruptedException, ExecutionException {
+                    QueryResult<T> queryResult = queryResultFuture.get();
+                    if (queryResult.getResults().isEmpty()) {
+                        return null;
+                    }
+                    else {
+                        return queryResult.getResults().get(0);
+                    }
+                }
+
+                @Override
+                public T get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                    QueryResult<T> queryResult = queryResultFuture.get(timeout, unit);
+                    if (queryResult.getResults().isEmpty()) {
+                        return null;
+                    }
+                    else {
+                        return queryResult.getResults().get(0);
+                    }
+                }
+            };
+        }
+
+        @Override
+        public void asyncOne(final SingleResultCallback<T> callback) {
+            getClient().getAsyncOperations().asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentSerializer(),
+                    getSerializer(), new SingleResultCallback<QueryResult<T>>() {
+                @Override
+                public void onResult(final QueryResult<T> result, final MongoException e) {
+                    if (e != null) {
+                        callback.onResult(null, e);
+                    }
+                    if (result.getResults().isEmpty()) {
+                        callback.onResult(null, null);
+                    }
+
+                    callback.onResult(result.getResults().get(0), null);
+                }
+            });
+        }
+
+        @Override
+        public Future<Long> asyncCount() {
+            final Future<CommandResult> commandResultFuture = getClient().getAsyncOperations()
+                    .asyncExecuteCommand(getDatabase().getName(), new Count(findOp, getName()), getDocumentSerializer());
+            return new Future<Long>() {
+                @Override
+                public boolean cancel(final boolean mayInterruptIfRunning) {
+                    return commandResultFuture.cancel(mayInterruptIfRunning);
+                }
+
+                @Override
+                public boolean isCancelled() {
+                    return commandResultFuture.isCancelled();
+                }
+
+                @Override
+                public boolean isDone() {
+                    return commandResultFuture.isDone();
+                }
+
+                @Override
+                public Long get() throws InterruptedException, ExecutionException {
+                    CommandResult commandResult = commandResultFuture.get();
+                    return new CountCommandResult(commandResult).getCount();
+                }
+
+                @Override
+                public Long get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                    CommandResult commandResult = commandResultFuture.get(timeout, unit);
+                    return new CountCommandResult(commandResult).getCount();
+                }
+            };
+        }
+
+        @Override
+        public void asyncCount(final SingleResultCallback<Long> callback) {
+            getClient().getAsyncOperations().asyncExecuteCommand(getDatabase().getName(), new Count(findOp, getName()),
+                    getDocumentSerializer(),
+                    new SingleResultCallback<CommandResult>() {
+                        @Override
+                        public void onResult(final CommandResult result, final MongoException e) {
+                            if (e != null) {
+                                callback.onResult(null, e);
+                            }
+                            else {
+                                callback.onResult(new CountCommandResult(result).getCount(), null);
+                            }
+                        }
+                    });
         }
 
         private boolean getMultiFromLimit() {
@@ -584,11 +727,6 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                 return false;
             }
         }
-
-        boolean asBoolean(final Get get) {
-            return get == Get.BeforeChangeApplied;
-        }
-
     }
 
     private static class MongoIterableCollection<U, V> implements MongoIterable<V> {

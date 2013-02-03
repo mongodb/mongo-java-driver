@@ -19,21 +19,24 @@ package org.mongodb;
 
 import org.bson.types.Document;
 import org.junit.Test;
-import org.mongodb.result.WriteResult;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
-public class MongoAsyncReplaceTest extends DatabaseTestCase {
+public class MongoAsyncReadTest extends DatabaseTestCase {
     @Test
-    public void testReplaceOrInsert() throws ExecutionException, InterruptedException {
-        Document document = new Document();
-        Future<WriteResult> resultFuture = collection.asyncReplaceOrInsert(document);
-        WriteResult result = resultFuture.get();
-        assertNotNull(result);
-        assertEquals(collection.one(), document);
+    public void testCountFuture() throws ExecutionException, InterruptedException {
+        assertEquals(0L, (long) collection.asyncCount().get());
     }
+
+    @Test
+    public void testOneFuture() throws ExecutionException, InterruptedException {
+        assertNull(collection.asyncOne().get());
+        final Document document = new Document();
+        collection.insert(document);
+        assertEquals(document, collection.asyncOne().get());
+    }
+
 }

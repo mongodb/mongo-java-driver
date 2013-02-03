@@ -16,12 +16,14 @@
 
 package org.mongodb;
 
+import org.mongodb.async.MongoAsyncReadableStream;
 import org.mongodb.async.MongoAsyncWritableStream;
 import org.mongodb.operation.MongoFieldSelector;
 import org.mongodb.operation.MongoQueryFilter;
 import org.mongodb.operation.MongoSortCriteria;
 
-public interface MongoStream<T> extends MongoWritableStream<T>, MongoReadableStream<T>, MongoAsyncWritableStream<T> {
+public interface MongoStream<T> extends MongoWritableStream<T>, MongoReadableStream<T>,
+        MongoAsyncWritableStream<T>, MongoAsyncReadableStream<T> {
 
     MongoStream<T> batchSize(int batchSize);   // TODO: what to do about this
 
