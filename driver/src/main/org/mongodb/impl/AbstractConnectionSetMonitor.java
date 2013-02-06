@@ -16,35 +16,32 @@
 
 package org.mongodb.impl;
 
-import org.bson.util.BufferPool;
 import org.mongodb.CommandDocument;
+import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoClients;
 import org.mongodb.ServerAddress;
 import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.operation.MongoCommand;
-
-import java.nio.ByteBuffer;
 
 /**
  * Base class for classes that manage connections to mongo instances as background tasks.
  */
 abstract class AbstractConnectionSetMonitor extends Thread {
 
-    AbstractConnectionSetMonitor(final AbstractMongoClient mongoClient, final String name) {
-        super(name);
-        setDaemon(true);
-        clientOptions = CLIENT_OPTIONS_DEFAULTS;
-        this.mongoClient = mongoClient;
-    }
-
-    private final AbstractMongoClient mongoClient;
     private volatile boolean closed;
     private final MongoClientOptions clientOptions;
-
     private static final int UPDATER_INTERVAL_MS;
+
     private static final int UPDATER_INTERVAL_NO_PRIMARY_MS;
     private static final float LATENCY_SMOOTH_FACTOR;
     private static final MongoClientOptions CLIENT_OPTIONS_DEFAULTS = MongoClientOptions.builder().build();
+
+    AbstractConnectionSetMonitor(final String name) {
+        super(name);
+        setDaemon(true);
+        clientOptions = CLIENT_OPTIONS_DEFAULTS;
+    }
 
     static int getUpdaterIntervalMS() {
         return UPDATER_INTERVAL_MS;
@@ -88,10 +85,6 @@ abstract class AbstractConnectionSetMonitor extends Thread {
         LATENCY_SMOOTH_FACTOR = Float.parseFloat(System.getProperty("com.mongodb.latencySmoothFactor", "4"));
     }
 
-    protected AbstractMongoClient getMongoClient() {
-        return mongoClient;
-    }
-
     protected MongoClientOptions getClientOptions() {
         return clientOptions;
     }
@@ -105,10 +98,12 @@ abstract class AbstractConnectionSetMonitor extends Thread {
     }
 
     class MongoClientIsMasterExecutor implements IsMasterExecutor {
-        private final SingleChannelMongoClient client;
+        private final MongoClient client;
+        private final ServerAddress serverAddress;
 
-        MongoClientIsMasterExecutor(final SingleChannelMongoClient client) {
+        MongoClientIsMasterExecutor(final MongoClient client, final ServerAddress serverAddress) {
             this.client = client;
+            this.serverAddress = serverAddress;
         }
 
         @Override
@@ -119,7 +114,7 @@ abstract class AbstractConnectionSetMonitor extends Thread {
 
         @Override
         public ServerAddress getServerAddress() {
-            return client.getServerAddress();
+            return serverAddress;
         }
 
         @Override
@@ -134,17 +129,15 @@ abstract class AbstractConnectionSetMonitor extends Thread {
 
     class MongoClientIsMasterExecutorFactory implements IsMasterExecutorFactory {
 
-        private BufferPool<ByteBuffer> bufferPool;
         private MongoClientOptions options;
 
-        MongoClientIsMasterExecutorFactory(final BufferPool<ByteBuffer> bufferPool, final MongoClientOptions options) {
-            this.bufferPool = bufferPool;
+        MongoClientIsMasterExecutorFactory(final MongoClientOptions options) {
             this.options = options;
         }
 
         @Override
         public IsMasterExecutor create(final ServerAddress serverAddress) {
-            return new MongoClientIsMasterExecutor(new SingleChannelSyncMongoClient(serverAddress, bufferPool, options));
+            return new MongoClientIsMasterExecutor(MongoClients.create(serverAddress, options), serverAddress);
         }
     }
 

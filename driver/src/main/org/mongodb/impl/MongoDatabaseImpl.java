@@ -22,6 +22,7 @@ import org.mongodb.MongoClient;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
+import org.mongodb.MongoOperations;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.CollectibleSerializer;
@@ -34,11 +35,21 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final MongoClient client;
     private final MongoDatabaseOptions options;
     private final String name;
+    private final MongoOperations operations;
     private final DatabaseAdmin admin;
 
     public MongoDatabaseImpl(final String name, final MongoClient client, final MongoDatabaseOptions options) {
         this.name = name;
         this.client = client;
+        this.options = options;
+        this.operations = null;
+        this.admin = new DatabaseAdminImpl(name, client);
+    }
+
+    public MongoDatabaseImpl(final String name, final MongoOperations operations, final MongoDatabaseOptions options) {
+        this.name = name;
+        this.operations = operations;
+        this.client = null;
         this.options = options;
         this.admin = new DatabaseAdminImpl(name, client);
     }

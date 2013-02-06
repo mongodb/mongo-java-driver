@@ -19,6 +19,7 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.mongodb.MongoClosedException;
 import org.mongodb.MongoInterruptedException;
+import org.mongodb.MongoOperations;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.IsMasterCommandResult;
@@ -49,7 +50,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
     private static final int SLAVE_ACCEPTABLE_LATENCY_MS;
     private static final int INET_ADDR_CACHE_MS;
 
-    private final ReplicaSetHolder replicaSetHolder = new ReplicaSetHolder();
+    private final ReplicaSetHolder replicaSetHolder;
 
     // will get changed to use replica set name once it's found
     private volatile Logger logger = LOGGER;
@@ -63,11 +64,12 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
         INET_ADDR_CACHE_MS = Integer.parseInt(System.getProperty("com.mongodb.inetAddrCacheMS", "300000"));
     }
 
-    ReplicaSetMonitor(final List<ServerAddress> seedList, final AbstractMongoClient client) {
-        super(client, "ReplicaSetMonitor");
+    ReplicaSetMonitor(final List<ServerAddress> seedList, final MongoOperations operations) {
+        super("ReplicaSetMonitor");
         replicaSetStateGenerator = new ReplicaSetStateGenerator(seedList,
-                new MongoClientIsMasterExecutorFactory(getMongoClient().getBufferPool(), getClientOptions()), getLatencySmoothFactor());
+                new MongoClientIsMasterExecutorFactory(getClientOptions()), getLatencySmoothFactor());
         nextResolveTime = System.currentTimeMillis() + INET_ADDR_CACHE_MS;
+        replicaSetHolder = new ReplicaSetHolder(getClientOptions().getConnectTimeout());
     }
 
     ReplicaSet getCurrentState() {
@@ -323,12 +325,17 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
     @ThreadSafe
     class ReplicaSetHolder {
         private volatile ReplicaSet members;
+        private final long connectTimeout;
+
+        ReplicaSetHolder(final long connectTimeout) {
+            this.connectTimeout = connectTimeout;
+        }
 
         // blocks until replica set is set, or a timeout occurs
         synchronized ReplicaSet get() {
             while (members == null) {
                 try {
-                    wait(getMongoClient().getOptions().getConnectTimeout());
+                    wait(connectTimeout);
                 } catch (InterruptedException e) {
                     throw new MongoInterruptedException("Interrupted while waiting for next update to replica set status", e);
                 }
@@ -352,7 +359,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
         // blocks until the replica set is set again
         synchronized void waitForNextUpdate() {  // TODO: currently unused
             try {
-                wait(getMongoClient().getOptions().getConnectTimeout());
+                wait(connectTimeout);
             } catch (InterruptedException e) {
                 throw new MongoInterruptedException("Interrupted while waiting for next update to replica set status", e);
             }
