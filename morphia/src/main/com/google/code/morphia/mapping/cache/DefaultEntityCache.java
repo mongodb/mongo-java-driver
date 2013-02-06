@@ -29,10 +29,11 @@ import java.util.Map;
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DefaultEntityCache implements EntityCache {
 
+    @SuppressWarnings({ "unused" })
     private static final Logr LOG = MorphiaLoggerFactory.get(DefaultEntityCache.class);
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private final Map<Key, Object> entityMap = new ReferenceMap(ReferenceMap.HARD, ReferenceMap.WEAK);
+    private final Map entityMap = new ReferenceMap(ReferenceMap.HARD, ReferenceMap.WEAK);
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private final Map<Key, Object> proxyMap = new ReferenceMap(ReferenceMap.WEAK, ReferenceMap.WEAK);
     private final Map<Key, Boolean> existenceMap = new HashMap<Key, Boolean>();
