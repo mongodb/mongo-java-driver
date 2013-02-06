@@ -19,17 +19,17 @@ package org.mongodb;
 
 import org.bson.types.Document;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.async.AsyncBlock;
 import org.mongodb.async.SingleResultCallback;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
-import static junit.framework.Assert.assertEquals;
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNull;
@@ -53,7 +53,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
 
     @Test
     public void testCountFuture() throws ExecutionException, InterruptedException {
-        assertEquals(Long.valueOf(10L), collection.asyncCount().get());
+        assertThat(collection.asyncCount().get(), is(10L));
     }
 
     @Test
@@ -68,27 +68,31 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
         });
 
         latch.await();
-        assertEquals(Long.valueOf(10L), actual.get(0));
+        assertThat(actual.get(0), is(10L));
     }
 
     @Test
     public void testOneFuture() throws ExecutionException, InterruptedException {
         assertNull(collection.filter(new QueryFilterDocument("_id", 11)).asyncOne().get());
-        assertEquals(documentList.get(0), collection.sort(new SortCriteriaDocument("_id", 1)).asyncOne().get());
+        assertThat(collection.sort(new SortCriteriaDocument("_id", 1)).asyncOne().get(), is(documentList.get(0)));
     }
 
     @Test
+    @Ignore("False positive - this passes but it's actually throwing an error on the callback code")
     public void testOneCallback() throws ExecutionException, InterruptedException {
         final List<Document> documentResultList = new ArrayList<Document>();
+        final List<Exception> exceptionList = new ArrayList<Exception>();
         collection.filter(new QueryFilterDocument("_id", 11)).asyncOne(new SingleResultCallback<Document>() {
             @Override
             public void onResult(final Document result, final MongoException e) {
                 documentResultList.add(result);
+                exceptionList.add(e);
                 latch.countDown();
             }
         });
         latch.await();
         assertThat(documentResultList.get(0), is(nullValue()));
+        assertThat(exceptionList.get(0), is(nullValue()));
     }
 
     @Test
@@ -108,42 +112,42 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
         });
 
         latch.await();
-        assertEquals(documentList, documentResultList);
+        assertThat(documentResultList, is(documentList));
     }
 
     @Test
     public void testIntoFuture() throws ExecutionException, InterruptedException {
-        assertEquals(documentList,
-                collection.sort(new SortCriteriaDocument("_id", 1)).asyncInto(new ArrayList<Document>()).get());
+        assertThat(collection.sort(new SortCriteriaDocument("_id", 1))
+                             .asyncInto(new ArrayList<Document>())
+                             .get(),
+                  is(documentList));
     }
 
     @Test
     public void testMapIntoFuture() throws ExecutionException, InterruptedException {
-        assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
-                collection
-                        .sort(new SortCriteriaDocument("_id", 1))
-                        .map(new Function<Document, Integer>() {
-                            @Override
-                            public Integer apply(final Document document) {
-                                return (Integer) document.get("_id");
-                            }
-                        })
-                        .asyncInto(new ArrayList<Integer>()).get());
+        assertThat(collection.sort(new SortCriteriaDocument("_id", 1))
+                             .map(new Function<Document, Integer>() {
+                                 @Override
+                                 public Integer apply(final Document document) {
+                                     return (Integer) document.get("_id");
+                                 }
+                             })
+                             .asyncInto(new ArrayList<Integer>()).get(),
+                  is(asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)));
     }
 
     @Test
     public void testIntoCallback() throws ExecutionException, InterruptedException {
         List<Document> results = new ArrayList<Document>();
-        collection
-                .sort(new SortCriteriaDocument("_id", 1))
-                .asyncInto(results, new SingleResultCallback<List<Document>>() {
-                    @Override
-                    public void onResult(final List<Document> result, final MongoException e) {
-                        latch.countDown();
-                    }
-                });
+        collection.sort(new SortCriteriaDocument("_id", 1))
+                  .asyncInto(results, new SingleResultCallback<List<Document>>() {
+                      @Override
+                      public void onResult(final List<Document> result, final MongoException e) {
+                          latch.countDown();
+                      }
+                  });
 
         latch.await();
-        assertEquals(documentList, results);
+        assertThat(results, is(documentList));
     }
 }

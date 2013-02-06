@@ -259,6 +259,11 @@ project(':bson') {
 project(':driver') {
 
     sourceSets {
+        async {
+            java {
+                srcDir 'src/test/async'
+            }
+        }
         acceptance {
             java {
                 srcDir 'src/test/acceptance'
@@ -287,11 +292,16 @@ project(':driver') {
         acceptanceCompile 'junit:junit:4.11'
         acceptanceCompile sourceSets.main.runtimeClasspath
         acceptanceCompile sourceSets.functional.runtimeClasspath
+        asyncCompile 'junit:junit:4.11'
+        asyncCompile sourceSets.main.runtimeClasspath
+        asyncCompile sourceSets.functional.runtimeClasspath
     }
 
     idea.module {
         testSourceDirs += project.sourceSets.unit.allSource.getSrcDirs()
         testSourceDirs += project.sourceSets.functional.allSource.getSrcDirs()
+        testSourceDirs += project.sourceSets.acceptance.allSource.getSrcDirs()
+        testSourceDirs += project.sourceSets.async.allSource.getSrcDirs()
     }
 
     jar {
@@ -323,8 +333,10 @@ project(':driver') {
         classpath = sourceSets.acceptance.runtimeClasspath
     }
 
-    //acceptance and all other tests
-//    test.dependsOn acceptanceTest
+    task asyncTest(type: Test, dependsOn: functionalTest) {
+        testClassesDir = sourceSets.async.output.classesDir
+        classpath = sourceSets.async.runtimeClasspath
+    }
 
     sourcesJar {
         from project(':common').sourceSets.main.allSource
