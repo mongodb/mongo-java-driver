@@ -87,7 +87,7 @@ class ReplicaSetMongoClient extends AbstractMongoClient {
     }
 
     @Override
-    List<ServerAddress> getServerAddressList() {
+    public List<ServerAddress> getServerAddressList() {
         return seedList;
     }
 

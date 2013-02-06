@@ -17,6 +17,7 @@
 package org.mongodb.impl;
 
 import org.bson.util.BufferPool;
+import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
 import org.mongodb.ServerAddress;
@@ -57,15 +58,15 @@ public final class MongoClientsImpl {
         }
     }
 
-    public static ReplicaSetMongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new ReplicaSetMongoClient(seedList, options);
+    public static MongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        return new MongoClientImpl(new ReplicaSetMongoOperations(seedList, options));
     }
 
-    public static AbstractMongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
+    public static MongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
         return create(mongoURI, mongoURI.getOptions());
     }
 
-    public static AbstractMongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
+    public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
             return create(new ServerAddress(mongoURI.getHosts().get(0)), options);
         }

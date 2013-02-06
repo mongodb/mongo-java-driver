@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class MongoClientAdapter {
 
-    private final AbstractMongoClient adapted;
+    private final MongoClient adapted;
 
     public MongoClientAdapter(final ServerAddress serverAddress, final MongoClientOptions options) {
         adapted = MongoClientsImpl.create(serverAddress, options);
@@ -53,13 +53,5 @@ public class MongoClientAdapter {
 
     public List<ServerAddress> getServerAddressList() {
         return adapted.getServerAddressList();
-    }
-
-    public void bindToConnection() {
-        adapted.bindToConnection();
-    }
-
-    public void unbindFromConnection() {
-        adapted.unbindFromConnection();
     }
 }

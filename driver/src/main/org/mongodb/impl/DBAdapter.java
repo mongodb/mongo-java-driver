@@ -16,15 +16,17 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoDatabase;
+
 //import com.mongodb.CommandResult;
 //import com.mongodb.DBObject;
 //import org.mongodb.Database;
 //
 public class DBAdapter {
     @SuppressWarnings("unused")
-    private final MongoDatabaseImpl impl;
+    private final MongoDatabase impl;
 
-    public DBAdapter(final MongoDatabaseImpl database) {
+    public DBAdapter(final MongoDatabase database) {
         this.impl = database;
     }
 //

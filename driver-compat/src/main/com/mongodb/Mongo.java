@@ -153,21 +153,21 @@ public class Mongo {
         return clientAdapter.getClient();
     }
 
+    //******* Missing functionality from the old driver *******/
+
     void requestStart() {
-        clientAdapter.bindToConnection();
+        throw new UnsupportedOperationException("Not implemented yet!");
     }
 
     void requestDone() {
-        clientAdapter.unbindFromConnection();
+        throw new UnsupportedOperationException("Not implemented yet!");
     }
 
-    //******* Missing functionality from the old driver *******/
-
     public void addOption(final int option) {
-        throw new IllegalStateException("Not implemented yet!");
+        throw new UnsupportedOperationException("Not implemented yet!");
     }
 
     public int getOptions() {
-        throw new IllegalStateException("Not implemented yet!");
+        throw new UnsupportedOperationException("Not implemented yet!");
     }
 }

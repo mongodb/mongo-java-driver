@@ -130,7 +130,7 @@ public class SingleChannelSyncMongoClient extends SingleChannelMongoClient {
     }
 
     @Override
-    List<ServerAddress> getServerAddressList() {
+    public List<ServerAddress> getServerAddressList() {
         return Arrays.asList(channel.getAddress());
     }
 

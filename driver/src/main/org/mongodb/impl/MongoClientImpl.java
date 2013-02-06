@@ -22,8 +22,10 @@ import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.MongoOperations;
+import org.mongodb.ServerAddress;
 import org.mongodb.async.MongoAsyncOperations;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -78,5 +80,10 @@ public class MongoClientImpl implements MongoClient {
     @Override
     public ClientAdmin tools() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<ServerAddress> getServerAddressList() {
+        throw new UnsupportedOperationException("Not implemented yet!");
     }
 }

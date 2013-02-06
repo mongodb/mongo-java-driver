@@ -21,6 +21,7 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.async.MongoAsyncOperations;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -80,4 +81,6 @@ public interface MongoClient extends Closeable {
      * @return the ClientAdmin that provides admin methods that can be performed
      */
     ClientAdmin tools();
+
+    List<ServerAddress> getServerAddressList();
 }

@@ -52,7 +52,7 @@ public abstract class SingleServerMongoClient extends AbstractMongoClient {
     }
 
     @Override
-    List<ServerAddress> getServerAddressList() {
+    public List<ServerAddress> getServerAddressList() {
         return Arrays.asList(serverAddress);
     }
 

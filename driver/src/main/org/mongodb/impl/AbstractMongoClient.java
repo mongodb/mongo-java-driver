@@ -21,12 +21,10 @@ import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoDatabaseOptions;
-import org.mongodb.ServerAddress;
 import org.mongodb.async.MongoAsyncOperations;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 abstract class AbstractMongoClient implements MongoClient {
     private final MongoClientOptions options;
@@ -77,7 +75,6 @@ abstract class AbstractMongoClient implements MongoClient {
 
     abstract void bindToConnection();
     abstract void unbindFromConnection();
-    abstract List<ServerAddress> getServerAddressList();
 
     BufferPool<ByteBuffer> getBufferPool() {
         return bufferPool;
