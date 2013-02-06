@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
@@ -33,11 +34,11 @@ public class DBOldTest extends DatabaseTestCase {
         database.getCollection("foo4").drop();
 
         BasicDBObject o1 = new BasicDBObject("capped", false);
-        DBCollection c = database.createCollection("foo1", o1);
+        database.createCollection("foo1", o1);
 
         DBObject o2 = BasicDBObjectBuilder.start().add("capped", true)
                                           .add("size", 100000).add("max", 10).get();
-        c = database.createCollection("foo2", o2);
+        DBCollection c = database.createCollection("foo2", o2);
         for (int i = 0; i < 30; i++) {
             c.insert(new BasicDBObject("x", i));
         }
@@ -54,7 +55,7 @@ public class DBOldTest extends DatabaseTestCase {
         try {
             DBObject o4 = BasicDBObjectBuilder.start().add("capped", true)
                                               .add("size", -20).get();
-            c = database.createCollection("foo4", o4);
+            database.createCollection("foo4", o4);
         } catch (MongoException e) {
             return;
         }
@@ -71,7 +72,7 @@ public class DBOldTest extends DatabaseTestCase {
         assertFalse(database.collectionExists("foo1"));
 
         BasicDBObject o1 = new BasicDBObject("capped", false);
-        DBCollection c = database.createCollection("foo1", o1);
+        database.createCollection("foo1", o1);
 
         assertTrue("Collection 'foo' was supposed to be created, but 'collectionExists' did not return true.",
                   database.collectionExists("foo1"));
@@ -128,6 +129,7 @@ public class DBOldTest extends DatabaseTestCase {
 //        }
 
     @Test
+    @Ignore("not sure we're going to support this functionality, probably not at the client level at least")
     public void testEnsureConnection() throws UnknownHostException {
         //it doesn't fail, I'll give you that....
         database.requestStart();
