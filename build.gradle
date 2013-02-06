@@ -259,7 +259,7 @@ project(':bson') {
 project(':driver') {
 
     sourceSets {
-        test {
+        acceptance {
             java {
                 srcDir 'src/test/acceptance'
             }
@@ -284,6 +284,9 @@ project(':driver') {
         functionalCompile 'junit:junit:4.11'
         functionalCompile sourceSets.main.runtimeClasspath
         functionalCompile sourceSets.unit.runtimeClasspath
+        acceptanceCompile 'junit:junit:4.11'
+        acceptanceCompile sourceSets.main.runtimeClasspath
+        acceptanceCompile sourceSets.functional.runtimeClasspath
     }
 
     idea.module {
@@ -316,12 +319,12 @@ project(':driver') {
     }
 
     task acceptanceTest(type: Test, dependsOn: functionalTest) {
-        testClassesDir = sourceSets.test.output.classesDir
-        classpath = sourceSets.test.runtimeClasspath
+        testClassesDir = sourceSets.acceptance.output.classesDir
+        classpath = sourceSets.acceptance.runtimeClasspath
     }
 
     //acceptance and all other tests
-    test.dependsOn functionalTest
+//    test.dependsOn acceptanceTest
 
     sourcesJar {
         from project(':common').sourceSets.main.allSource
