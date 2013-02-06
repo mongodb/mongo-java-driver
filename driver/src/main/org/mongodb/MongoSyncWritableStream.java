@@ -19,7 +19,7 @@ package org.mongodb;
 import org.mongodb.operation.MongoUpdateOperations;
 import org.mongodb.result.WriteResult;
 
-public interface MongoWritableStream<T> {
+public interface MongoSyncWritableStream<T> {
     WriteResult insert(T document);
 
     WriteResult insert(Iterable<T> document);

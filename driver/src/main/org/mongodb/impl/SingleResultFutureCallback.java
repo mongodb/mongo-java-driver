@@ -15,22 +15,20 @@
  *
  */
 
-package org.mongodb.async;
+package org.mongodb.impl;
 
-import java.util.concurrent.Future;
+import org.mongodb.MongoException;
+import org.mongodb.async.SingleResultCallback;
 
-/**
- * Interface describing the asynchronous read operations.
- *
- * @param <T> the document type to read
- */
-public interface MongoAsyncReadableStream<T> {
+class SingleResultFutureCallback<T> implements SingleResultCallback<T> {
+    private final SingleResultFuture<T> retVal;
 
-    Future<T> asyncOne();
+    public SingleResultFutureCallback(final SingleResultFuture<T> retVal) {
+        this.retVal = retVal;
+    }
 
-    void asyncOne(SingleResultCallback<T> callback);
-
-    Future<Long> asyncCount();
-
-    void asyncCount(SingleResultCallback<Long> callback);
+    @Override
+    public void onResult(final T result, final MongoException e) {
+        retVal.init(result, e);
+    }
 }

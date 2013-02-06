@@ -36,7 +36,6 @@ import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.CommandResult;
-import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.ServerCursor;
 import org.mongodb.result.WriteResult;
@@ -154,7 +153,7 @@ class ReplicaSetMongoClient extends AbstractMongoClient {
         }
 
         @Override
-        public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer) {
+        public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer) {
             return getClient(getMore.getServerCursor().getAddress()).getOperations().getMore(namespace, getMore, serializer);
         }
 
@@ -214,14 +213,14 @@ class ReplicaSetMongoClient extends AbstractMongoClient {
         }
 
         @Override
-        public <T> Future<GetMoreResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
+        public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
                                                          final Serializer<T> serializer) {
             return getClient(getMore.getServerCursor().getAddress()).getAsyncOperations().asyncGetMore(namespace, getMore, serializer);
         }
 
         @Override
         public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer,
-                                     final SingleResultCallback<GetMoreResult<T>> callback) {
+                                     final SingleResultCallback<QueryResult<T>> callback) {
             getClient(getMore.getServerCursor().getAddress()).getAsyncOperations().asyncGetMore(namespace, getMore, serializer, callback);
         }
 

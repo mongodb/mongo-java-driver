@@ -26,7 +26,6 @@ import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.CommandResult;
-import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.Serializer;
@@ -40,7 +39,7 @@ public interface MongoOperations {
     <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Serializer<Document> baseSerializer,
                              Serializer<T> serializer);
 
-    <T> GetMoreResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> serializer);
+    <T> QueryResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> serializer);
 
     void killCursors(MongoKillCursor killCursor);
 

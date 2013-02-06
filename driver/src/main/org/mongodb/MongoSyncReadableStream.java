@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,25 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package org.mongodb.async;
+package org.mongodb;
 
-import java.util.concurrent.Future;
+import java.util.List;
 
-/**
- * Interface describing the asynchronous read operations.
- *
- * @param <T> the document type to read
- */
-public interface MongoAsyncReadableStream<T> {
+public interface MongoSyncReadableStream<T> {
 
-    Future<T> asyncOne();
+    MongoCursor<T> all();
 
-    void asyncOne(SingleResultCallback<T> callback);
+    T one();
 
-    Future<Long> asyncCount();
+    long count();
 
-    void asyncCount(SingleResultCallback<Long> callback);
+    //TODO: not always going to be a string
+    List<String> distinct(String field);
 }

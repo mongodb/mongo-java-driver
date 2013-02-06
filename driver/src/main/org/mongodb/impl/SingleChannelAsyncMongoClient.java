@@ -51,7 +51,6 @@ import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.protocol.MongoRequestMessage;
 import org.mongodb.protocol.MongoUpdateMessage;
 import org.mongodb.result.CommandResult;
-import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.Serializer;
@@ -60,8 +59,6 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
     private final SimplePool<MongoAsynchronousChannel> channelPool;
@@ -172,10 +169,10 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
         }
 
         @Override
-        public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
-                                            final Serializer<T> serializer) {
+        public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
+                                          final Serializer<T> serializer) {
             try {
-                GetMoreResult<T> result = asyncGetMore(namespace, getMore, serializer).get();
+                QueryResult<T> result = asyncGetMore(namespace, getMore, serializer).get();
                 if (result == null) {
                     throw new MongoInternalException("Query result should not be null", null);
                 }
@@ -249,9 +246,9 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
         @Override
         public Future<CommandResult> asyncExecuteCommand(final String database, final MongoCommand commandOperation,
                                                          final Serializer<Document> serializer) {
-            final ChannelFuture<CommandResult> retVal = new ChannelFuture<CommandResult>();
+            final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
-            asyncExecuteCommand(database, commandOperation, serializer, new ChannelSingleResultCallback<CommandResult>(retVal));
+            asyncExecuteCommand(database, commandOperation, serializer, new SingleResultFutureCallback<CommandResult>(retVal));
 
             return retVal;
         }
@@ -271,9 +268,9 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
         @Override
         public <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
                                                      final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
-            final ChannelFuture<QueryResult<T>> retVal = new ChannelFuture<QueryResult<T>>();
+            final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-            asyncQuery(namespace, find, baseSerializer, serializer, new ChannelSingleResultCallback<QueryResult<T>>(retVal));
+            asyncQuery(namespace, find, baseSerializer, serializer, new SingleResultFutureCallback<QueryResult<T>>(retVal));
 
             return retVal;
         }
@@ -289,18 +286,18 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
         }
 
         @Override
-        public <T> Future<GetMoreResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
+        public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
                                                          final Serializer<T> serializer) {
-            final ChannelFuture<GetMoreResult<T>> retVal = new ChannelFuture<GetMoreResult<T>>();
+            final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-            asyncGetMore(namespace, getMore, serializer, new ChannelSingleResultCallback<GetMoreResult<T>>(retVal));
+            asyncGetMore(namespace, getMore, serializer, new SingleResultFutureCallback<QueryResult<T>>(retVal));
 
             return retVal;
         }
 
         @Override
         public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer,
-                                     final SingleResultCallback<GetMoreResult<T>> callback) {
+                                     final SingleResultCallback<QueryResult<T>> callback) {
             final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
                     new PooledByteBufferOutput(getBufferPool()));
             channel.sendGetMoreMessage(message, serializer,
@@ -310,9 +307,9 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
         @Override
         public <T> Future<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
                                                    final Serializer<T> serializer, final Serializer<Document> baseSerializer) {
-            final ChannelFuture<WriteResult> retVal = new ChannelFuture<WriteResult>();
+            final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-            asyncInsert(namespace, insert, serializer, baseSerializer, new ChannelSingleResultCallback<WriteResult>(retVal));
+            asyncInsert(namespace, insert, serializer, baseSerializer, new SingleResultFutureCallback<WriteResult>(retVal));
 
             return retVal;
         }
@@ -329,9 +326,9 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
         @Override
         public Future<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
                                                final Serializer<Document> serializer) {
-            final ChannelFuture<WriteResult> retVal = new ChannelFuture<WriteResult>();
+            final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-            asyncUpdate(namespace, update, serializer, new ChannelSingleResultCallback<WriteResult>(retVal));
+            asyncUpdate(namespace, update, serializer, new SingleResultFutureCallback<WriteResult>(retVal));
 
             return retVal;
         }
@@ -348,9 +345,9 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
         @Override
         public <T> Future<WriteResult> asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
                                                     final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
-            final ChannelFuture<WriteResult> retVal = new ChannelFuture<WriteResult>();
+            final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-            asyncReplace(namespace, replace, baseSerializer, serializer, new ChannelSingleResultCallback<WriteResult>(retVal));
+            asyncReplace(namespace, replace, baseSerializer, serializer, new SingleResultFutureCallback<WriteResult>(retVal));
 
             return retVal;
         }
@@ -368,9 +365,9 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
         @Override
         public Future<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
                                                final Serializer<Document> serializer) {
-            final ChannelFuture<WriteResult> retVal = new ChannelFuture<WriteResult>();
+            final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-            asyncRemove(namespace, remove, serializer, new ChannelSingleResultCallback<WriteResult>(retVal));
+            asyncRemove(namespace, remove, serializer, new SingleResultFutureCallback<WriteResult>(retVal));
 
             return retVal;
         }
@@ -411,70 +408,6 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
             else {
                 throw new MongoException("", e.getCause());
             }
-        }
-    }
-
-    private static class ChannelFuture<T> implements Future<T> {
-        private T result;
-        private MongoException exception;
-
-        synchronized void init(final T newResult, final MongoException newException) {
-            this.result = newResult;
-            this.exception = newException;
-            notifyAll();
-        }
-
-        @Override
-        public boolean cancel(final boolean mayInterruptIfRunning) {
-            return false;
-        }
-
-        @Override
-        public boolean isCancelled() {
-            return false;
-        }
-
-        @Override
-        public synchronized boolean isDone() {
-            return result != null || exception != null;
-        }
-
-        @Override
-        public synchronized T get() throws InterruptedException, ExecutionException {
-            while (!isDone()) {
-                wait();
-            }
-            if (exception != null) {
-                throw new ExecutionException(exception);
-            }
-            return result;
-        }
-
-        @Override
-        public T get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-            if (!isDone()) {
-                wait(unit.toMillis(timeout));
-            }
-            if (!isDone()) {
-                throw new TimeoutException(String.format("Timed out waiting for %d %s", timeout, unit));
-            }
-            if (exception != null) {
-                throw new ExecutionException(exception);
-            }
-            return result;
-        }
-    }
-
-    private static class ChannelSingleResultCallback<T> implements SingleResultCallback<T> {
-        private final ChannelFuture<T> retVal;
-
-        public ChannelSingleResultCallback(final ChannelFuture<T> retVal) {
-            this.retVal = retVal;
-        }
-
-        @Override
-        public void onResult(final T result, final MongoException e) {
-            retVal.init(result, e);
         }
     }
 
@@ -572,9 +505,9 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
     }
 
     private static class MongoReplyMessageGetMoreResultCallback<T> extends MongoReplyMessageResultCallback<T> {
-        private final SingleResultCallback<GetMoreResult<T>> callback;
+        private final SingleResultCallback<QueryResult<T>> callback;
 
-        public MongoReplyMessageGetMoreResultCallback(final SingleResultCallback<GetMoreResult<T>> callback,
+        public MongoReplyMessageGetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback,
                                                       final SingleChannelAsyncMongoClient client) {
             super(client);
             this.callback = callback;
@@ -586,7 +519,9 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
                 callback.onResult(null, e);
             }
             else {
-                callback.onResult(new GetMoreResult<T>(replyMessage, serverAddress), e);
+                final MongoReplyMessage<T> replyMessage1 = replyMessage;
+                final ServerAddress address = serverAddress;
+                callback.onResult(new QueryResult<T>(replyMessage1, address), e);
             }
         }
     }

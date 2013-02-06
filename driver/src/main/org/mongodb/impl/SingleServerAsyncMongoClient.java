@@ -35,7 +35,6 @@ import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.pool.SimplePool;
 import org.mongodb.result.CommandResult;
-import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.Serializer;
@@ -129,7 +128,7 @@ public class SingleServerAsyncMongoClient extends SingleServerMongoClient {
         }
 
         @Override
-        public <T> Future<GetMoreResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
+        public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
                                                          final Serializer<T> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
@@ -141,7 +140,7 @@ public class SingleServerAsyncMongoClient extends SingleServerMongoClient {
 
         @Override
         public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer,
-                                     final SingleResultCallback<GetMoreResult<T>> callback) {
+                                     final SingleResultCallback<QueryResult<T>> callback) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 mongoClient.getAsyncOperations().asyncGetMore(namespace, getMore, serializer, callback);

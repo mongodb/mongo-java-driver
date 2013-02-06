@@ -46,7 +46,6 @@ import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.protocol.MongoRequestMessage;
 import org.mongodb.protocol.MongoUpdateMessage;
 import org.mongodb.result.CommandResult;
-import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.Serializer;
@@ -190,11 +189,13 @@ public class SingleChannelSyncMongoClient extends SingleChannelMongoClient {
         }
 
         @Override
-        public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
-                                            final Serializer<T> serializer) {
+        public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
+                                          final Serializer<T> serializer) {
             final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
                     new PooledByteBufferOutput(getBufferPool()));
-            return new GetMoreResult<T>(channel.sendGetMoreMessage(message, serializer), channel.getAddress());
+            final MongoReplyMessage<T> replyMessage = channel.sendGetMoreMessage(message, serializer);
+            final ServerAddress address = channel.getAddress();
+            return new QueryResult<T>(replyMessage, address);
         }
 
         @Override

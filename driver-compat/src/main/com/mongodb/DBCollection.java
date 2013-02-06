@@ -22,7 +22,7 @@ import org.mongodb.Get;
 import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoStream;
-import org.mongodb.MongoWritableStream;
+import org.mongodb.MongoSyncWritableStream;
 import org.mongodb.OrderBy;
 import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.annotations.ThreadSafe;
@@ -138,7 +138,7 @@ public class DBCollection implements IDBCollection {
         if (multi) {
             stream = stream.noLimit();
         }
-        final MongoWritableStream<DBObject> writableStream = stream.writeConcern(concern.toNew());
+        final MongoSyncWritableStream<DBObject> writableStream = stream.writeConcern(concern.toNew());
         try {
             final org.mongodb.result.WriteResult result;
             if (!o.keySet().isEmpty() && o.keySet().iterator().next().startsWith("$")) {
@@ -763,7 +763,7 @@ public class DBCollection implements IDBCollection {
     public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert) {
-        final MongoWritableStream<DBObject> stream = collection.filter(DBObjects.toQueryFilterDocument(query))
+        final MongoSyncWritableStream<DBObject> stream = collection.filter(DBObjects.toQueryFilterDocument(query))
                                                                .select(DBObjects.toFieldSelectorDocument(fields))
                                                                .sort(DBObjects.toSortCriteriaDocument(sort))
                                                                .writeConcern(getWriteConcern().toNew());

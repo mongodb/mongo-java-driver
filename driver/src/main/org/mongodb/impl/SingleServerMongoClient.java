@@ -32,7 +32,6 @@ import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.CommandResult;
-import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.Serializer;
@@ -153,8 +152,8 @@ public abstract class SingleServerMongoClient extends AbstractMongoClient {
         }
 
         @Override
-        public <T> GetMoreResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
-                                            final Serializer<T> serializer) {
+        public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
+                                          final Serializer<T> serializer) {
             final SingleChannelMongoClient mongoClient = getChannelClient();
             try {
                 return mongoClient.getOperations().getMore(namespace, getMore, serializer);

@@ -31,6 +31,7 @@ import org.mongodb.MongoStream;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
+import org.mongodb.async.AsyncBlock;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
@@ -41,6 +42,7 @@ import org.mongodb.command.FindAndModifyCommandResultSerializer;
 import org.mongodb.command.FindAndRemove;
 import org.mongodb.command.FindAndReplace;
 import org.mongodb.command.FindAndUpdate;
+import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFieldSelector;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
@@ -258,6 +260,21 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
+    public void asyncForEach(final AsyncBlock<? super T> block) {
+        new MongoCollectionStream().asyncForEach(block);
+    }
+
+    @Override
+    public <A extends Collection<? super T>> Future<A> asyncInto(final A target) {
+        return new MongoCollectionStream().asyncInto(target);
+    }
+
+    @Override
+    public <A extends Collection<? super T>> void asyncInto(final A target, final SingleResultCallback<A> callback) {
+        new MongoCollectionStream().asyncInto(target, callback);
+    }
+
+    @Override
     public CollectionAdmin tools() {
         return admin;
     }
@@ -351,8 +368,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         @Override
         public T one() {
             final QueryResult<T> res = getClient().getOperations().query(getNamespace(), findOp.batchSize(-1),
-                    getDocumentSerializer(),
-                    getSerializer());
+                    getDocumentSerializer(), getSerializer());
             if (res.getResults().isEmpty()) {
                 return null;
             }
@@ -376,19 +392,23 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             final MongoCursor<T> cursor = all();
             try {
                 while (cursor.hasNext()) {
-                    block.run(cursor.next());
+                    if (!block.run(cursor.next())) {
+                        break;
+                    }
                 }
             } finally {
                 cursor.close();
             }
         }
 
+
         @Override
         public <A extends Collection<? super T>> A into(final A target) {
             forEach(new Block<T>() {
                 @Override
-                public void run(final T t) {
+                public boolean run(final T t) {
                     target.add(t);
+                    return true;
                 }
             });
             return target;
@@ -727,6 +747,65 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                 return false;
             }
         }
+
+        @Override
+        public void asyncForEach(final AsyncBlock<? super T> block) {
+            getClient().getAsyncOperations().asyncQuery(getNamespace(), findOp, getDocumentSerializer(),
+                    getSerializer(), new QueryResultSingleResultCallback(block));
+        }
+
+        @Override
+        public <A extends Collection<? super T>> Future<A> asyncInto(final A target) {
+            final SingleResultFuture<A> future = new SingleResultFuture<A>();
+
+            asyncInto(target, new SingleResultFutureCallback<A>(future));
+            return future;
+        }
+
+        @Override
+        public <A extends Collection<? super T>> void asyncInto(final A target, final SingleResultCallback<A> callback) {
+            asyncForEach(new AsyncBlock<T>() {
+                @Override
+                public void done() {
+                    callback.onResult(target, null);
+                }
+
+                @Override
+                public boolean run(final T t) {
+                    target.add(t);
+                    return true;
+                }
+            });
+        }
+
+        private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
+            private final AsyncBlock<? super T> block;
+
+            public QueryResultSingleResultCallback(final AsyncBlock<? super T> block) {
+                this.block = block;
+            }
+
+            @Override
+            public void onResult(final QueryResult<T> result, final MongoException e) {
+                if (e != null) {
+                   // TODO: Error handling.  Call done with an ExecutionException...
+                }
+
+                for (T cur : result.getResults()) {
+                    if (!block.run(cur)) {
+                        break;
+                    }
+                }
+                if (result.getCursor() == null) {
+                    block.done();
+                }
+                else {
+                    getClient().getAsyncOperations()
+                            .asyncGetMore(getNamespace(), new GetMore(result.getCursor(), findOp.getBatchSize()),
+                                    getSerializer(), new QueryResultSingleResultCallback(block));
+                }
+            }
+        }
     }
 
     private static class MongoIterableCollection<U, V> implements MongoIterable<V> {
@@ -748,8 +827,8 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         public void forEach(final Block<? super V> block) {
             iterable.forEach(new Block<U>() {
                 @Override
-                public void run(final U document) {
-                    block.run(mapper.apply(document));
+                public boolean run(final U document) {
+                    return block.run(mapper.apply(document));
                 }
             });
 
@@ -759,8 +838,9 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         public <A extends Collection<? super V>> A into(final A target) {
             forEach(new Block<V>() {
                 @Override
-                public void run(final V v) {
+                public boolean run(final V v) {
                     target.add(v);
+                    return true;
                 }
             });
             return target;
@@ -769,6 +849,44 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         @Override
         public <W> MongoIterable<W> map(final Function<V, W> mapper) {
             return new MongoIterableCollection<V, W>(this, mapper);
+        }
+
+        @Override
+        public void asyncForEach(final AsyncBlock<? super V> block) {
+            iterable.asyncForEach(new AsyncBlock<U>() {
+                @Override
+                public void done() {
+                    block.done();
+                }
+
+                @Override
+                public boolean run(final U u) {
+                    return block.run(mapper.apply(u));
+                }
+            });
+        }
+
+        @Override
+        public <A extends Collection<? super V>> Future<A> asyncInto(final A target) {
+            final SingleResultFuture<A> future = new SingleResultFuture<A>();
+            asyncInto(target, new SingleResultFutureCallback<A>(future));
+            return future;
+        }
+
+        @Override
+        public <A extends Collection<? super V>> void asyncInto(final A target, final SingleResultCallback<A> callback) {
+            asyncForEach(new AsyncBlock<V>() {
+                @Override
+                public void done() {
+                    callback.onResult(target, null);
+                }
+
+                @Override
+                public boolean run(final V v) {
+                    target.add(v);
+                    return true;
+                }
+            });
         }
     }
 }

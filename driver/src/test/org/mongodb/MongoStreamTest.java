@@ -54,7 +54,7 @@ public class MongoStreamTest extends DatabaseTestCase {
         }
 
         for (final Document cur : collection.filter(new QueryFilterDocument("_id", 1))
-                            .sort(new SortCriteriaDocument("_id", 1))) {
+                .sort(new SortCriteriaDocument("_id", 1))) {
             System.out.println(cur);
         }
 
@@ -76,21 +76,24 @@ public class MongoStreamTest extends DatabaseTestCase {
 
         collection.forEach(new Block<Document>() {
             @Override
-            public void run(final Document e) {
+            public boolean run(final Document e) {
                 System.out.println(e);
+                return true;
             }
         });
 
         collection.forEach(new Block<Document>() {
             @Override
-            public void run(final Document t) {
+            public boolean run(final Document t) {
                 System.out.println(t);
+                return true;
             }
         });
 
         collection.forEach(new Block<Document>() {
-            public void run(final Document document) {
+            public boolean run(final Document document) {
                 System.out.println(document);
+                return true;
             }
         });
 
@@ -103,18 +106,25 @@ public class MongoStreamTest extends DatabaseTestCase {
             System.out.println(id);
         }
 
-        collection.map(new Function<Document, Integer>() {
+        List<String> list = collection.map(new Function<Document, Integer>() {
             @Override
             public Integer apply(final Document document) {
                 return (Integer) document.get("_id");
             }
-        });
+        }).map(new Function<Integer, String>() {
+            @Override
+            public String apply(final Integer integer) {
+                return integer.toString();
+            }
+        }).into(new ArrayList<String>());
 
+        System.out.println(list);
 
         collection.forEach(new Block<Document>() {
             @Override
-            public void run(final Document t) {
+            public boolean run(final Document t) {
                 System.out.println(t);
+                return true;
             }
         });
 
@@ -136,17 +146,17 @@ public class MongoStreamTest extends DatabaseTestCase {
         collection.modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
         collection.filter(new QueryFilterDocument("_id", 1))
-                  .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
+                .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
         collection.filter(new QueryFilterDocument("_id", 1))
-                  .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
+                .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
         collection.filter(new QueryFilterDocument("_id", 2))
-                  .modifyOrInsert(new UpdateOperationsDocument("$set", new Document("x", 1)));
+                .modifyOrInsert(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
         final Document doc = collection.filter(new QueryFilterDocument("_id", 1))
-                                       .modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", 1)),
-                                                    Get.BeforeChangeApplied);
+                .modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", 1)),
+                        Get.BeforeChangeApplied);
         System.out.println(doc);
     }
 
@@ -164,30 +174,30 @@ public class MongoStreamTest extends DatabaseTestCase {
     @Test
     public void testTypeCollection() {
         final MongoCollection<Concrete> concreteCollection = database.getCollection(collectionName,
-                                                                                   new ConcreteSerializer());
+                new ConcreteSerializer());
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
 
         System.out.println(concreteCollection.filter(new QueryFilterDocument("i", 1))
-                                             .map(new Function<Concrete, ObjectId>() {
-                                                 @Override
-                                                 public ObjectId apply(final Concrete concrete) {
-                                                     return concrete.getId();
-                                                 }
-                                             }).map(new Function<ObjectId, String>() {
-            @Override
-            public String apply(final ObjectId o) {
-                return o.toString();
-            }
-        }).into(new ArrayList<String>()));
+                .map(new Function<Concrete, ObjectId>() {
+                    @Override
+                    public ObjectId apply(final Concrete concrete) {
+                        return concrete.getId();
+                    }
+                }).map(new Function<ObjectId, String>() {
+                    @Override
+                    public String apply(final ObjectId o) {
+                        return o.toString();
+                    }
+                }).into(new ArrayList<String>()));
 
         System.out.println(concreteCollection.filter(new QueryFilterDocument("i", 1))
-                                             .map(new Function<Concrete, ObjectId>() {
-                                                 @Override
-                                                 public ObjectId apply(final Concrete concrete) {
-                                                     return concrete.getId();
-                                                 }
-                                             }).into(new ArrayList<ObjectId>()));
+                .map(new Function<Concrete, ObjectId>() {
+                    @Override
+                    public ObjectId apply(final Concrete concrete) {
+                        return concrete.getId();
+                    }
+                }).into(new ArrayList<ObjectId>()));
     }
 }
 
@@ -215,7 +225,7 @@ class Concrete {
     @Override
     public String toString() {
         return "Concrete{id=" + getId() + ", str='" + getStr() + '\'' + ", i=" + getI() + ", l=" + getL() + ", d="
-               + getD() + ", date=" + getDate() + '}';
+                + getD() + ", date=" + getDate() + '}';
     }
 
     ObjectId getId() {

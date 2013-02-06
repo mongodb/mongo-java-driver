@@ -16,15 +16,8 @@
 
 package org.mongodb;
 
-import java.util.Collection;
+import org.mongodb.async.MongoAsyncIterable;
 
-public interface MongoIterable<T> extends Iterable<T> {
-    @Override
-    MongoCursor<T> iterator();
-
-    void forEach(Block<? super T> block);
-
-    <A extends Collection<? super T>> A into(A target);
-
+public interface MongoIterable<T> extends MongoSyncIterable<T>, MongoAsyncIterable<T> {
     <U> MongoIterable<U> map(Function<T, U> mapper);
 }

@@ -15,22 +15,15 @@
  *
  */
 
-package org.mongodb.async;
+package org.mongodb;
 
-import java.util.concurrent.Future;
+import java.util.Collection;
 
-/**
- * Interface describing the asynchronous read operations.
- *
- * @param <T> the document type to read
- */
-public interface MongoAsyncReadableStream<T> {
+public interface MongoSyncIterable<T> extends Iterable<T> {
+    @Override
+    MongoCursor<T> iterator();
 
-    Future<T> asyncOne();
+    void forEach(Block<? super T> block);
 
-    void asyncOne(SingleResultCallback<T> callback);
-
-    Future<Long> asyncCount();
-
-    void asyncCount(SingleResultCallback<Long> callback);
+    <A extends Collection<? super T>> A into(A target);
 }

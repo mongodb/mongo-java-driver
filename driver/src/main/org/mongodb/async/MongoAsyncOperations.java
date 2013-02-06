@@ -27,7 +27,6 @@ import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.CommandResult;
-import org.mongodb.result.GetMoreResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.Serializer;
@@ -47,10 +46,10 @@ public interface MongoAsyncOperations {
     <T> void asyncQuery(final MongoNamespace namespace, MongoFind find, Serializer<Document> baseSerializer,
                         Serializer<T> serializer, SingleResultCallback<QueryResult<T>> callback);
 
-    <T> Future<GetMoreResult<T>> asyncGetMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> serializer);
+    <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> serializer);
 
     <T> void asyncGetMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> serializer,
-                          SingleResultCallback<GetMoreResult<T>> callback);
+                          SingleResultCallback<QueryResult<T>> callback);
 
     <T> Future<WriteResult> asyncInsert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer,
                                         final Serializer<Document> baseSerializer);
