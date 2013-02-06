@@ -32,7 +32,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 
 @Ignore
-public class ReplicaSetMongoClientTest {
+public class ReplicaSetTest {
     private MongoClient client;
     private MongoCollection<Document> collection;
 

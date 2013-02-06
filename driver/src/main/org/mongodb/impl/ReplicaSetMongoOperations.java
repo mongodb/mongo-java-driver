@@ -45,8 +45,6 @@ import org.mongodb.rs.ReplicaSetMember;
 import org.mongodb.serialization.Serializer;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,14 +53,12 @@ import java.util.concurrent.Future;
 class ReplicaSetMongoOperations implements MongoOperations, MongoAsyncOperations {
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
-    private final List<ServerAddress> seedList;
     private final ReplicaSetMonitor replicaSetMonitor;
     private Map<ServerAddress, SingleServerMongoClient> mongoClientMap = new HashMap<ServerAddress, SingleServerMongoClient>();
 
     ReplicaSetMongoOperations(final List<ServerAddress> seedList, final MongoClientOptions options) {
         this.options = options;
         this.bufferPool = new PowerOfTwoByteBufferPool();
-        this.seedList = Collections.unmodifiableList(new ArrayList<ServerAddress>(seedList));
         replicaSetMonitor = new ReplicaSetMonitor(seedList, this);
         replicaSetMonitor.start();
     }
