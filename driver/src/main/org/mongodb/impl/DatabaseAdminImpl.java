@@ -30,7 +30,7 @@ import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
-import org.mongodb.serialization.serializers.DocumentSerializer;
+import org.mongodb.serialization.Serializer;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -47,11 +47,11 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     private static final MongoFind FIND_ALL = new MongoFind(new QueryFilterDocument()).readPreference(ReadPreference.primary());
 
     private final String databaseName;
-    private final DocumentSerializer documentSerializer;
+    private final Serializer<Document> documentSerializer;
     private final MongoOperations operations;
 
     public DatabaseAdminImpl(final String databaseName, final MongoOperations operations,
-                             final DocumentSerializer documentSerializer) {
+                             final Serializer<Document> documentSerializer) {
         this.databaseName = databaseName;
         this.operations = operations;
         this.documentSerializer = documentSerializer;

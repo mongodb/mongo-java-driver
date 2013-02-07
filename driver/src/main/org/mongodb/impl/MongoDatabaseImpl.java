@@ -25,8 +25,8 @@ import org.mongodb.MongoOperations;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.CollectibleSerializer;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.CollectibleDocumentSerializer;
-import org.mongodb.serialization.serializers.DocumentSerializer;
 import org.mongodb.serialization.serializers.ObjectIdGenerator;
 
 class MongoDatabaseImpl implements MongoDatabase {
@@ -34,13 +34,13 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final String name;
     private final MongoOperations operations;
     private final DatabaseAdmin admin;
-    private final DocumentSerializer documentSerializer;
+    private final Serializer<Document> documentSerializer;
 
     public MongoDatabaseImpl(final String name, final MongoOperations operations, final MongoDatabaseOptions options) {
         this.name = name;
         this.operations = operations;
         this.options = options;
-        documentSerializer = new DocumentSerializer(options.getPrimitiveSerializers());
+        documentSerializer = options.getDocumentSerializer();
         this.admin = new DatabaseAdminImpl(name, operations, documentSerializer);
     }
 

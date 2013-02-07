@@ -44,7 +44,7 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoDatabase getDatabase(final String databaseName, final MongoDatabaseOptions options) {
-        return new MongoDatabaseImpl(databaseName, operations, options);
+        return new MongoDatabaseImpl(databaseName, operations, options.withDefaults(getOptions()));
     }
 
     @Override
