@@ -32,8 +32,10 @@ import java.util.concurrent.ExecutionException;
 public class MongoClientImpl implements MongoClient {
 
     private final MongoOperations operations;
+    private final MongoClientOptions clientOptions;
 
-    public MongoClientImpl(final MongoOperations operations) {
+    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoOperations operations) {
+        this.clientOptions = clientOptions;
         this.operations = operations;
     }
 
@@ -44,7 +46,7 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoDatabase getDatabase(final String databaseName, final MongoDatabaseOptions options) {
-        return new MongoDatabaseImpl(databaseName, operations, options.withDefaults(getOptions()));
+        return new MongoDatabaseImpl(databaseName, operations, options.withDefaults(clientOptions));
     }
 
     @Override
@@ -74,7 +76,7 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoClientOptions getOptions() {
-        throw new UnsupportedOperationException();
+        return clientOptions;
     }
 
     @Override

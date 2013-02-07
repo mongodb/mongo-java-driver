@@ -59,7 +59,7 @@ public final class MongoClientsImpl {
     }
 
     public static MongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MongoClientImpl(new ReplicaSetMongoOperations(seedList, options));
+        return new MongoClientImpl(options, new ReplicaSetMongoOperations(seedList, options));
     }
 
     public static MongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
