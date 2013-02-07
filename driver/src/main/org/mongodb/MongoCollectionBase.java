@@ -37,7 +37,7 @@ public interface MongoCollectionBase<T> {
 
     MongoNamespace getNamespace();
 
-    MongoClient getClient();
+//    MongoClient getClient();
 
     MongoCollectionOptions getOptions();
 

@@ -18,7 +18,6 @@ package org.mongodb.impl;
 
 import org.bson.types.Document;
 import org.mongodb.DatabaseAdmin;
-import org.mongodb.MongoClient;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
@@ -26,32 +25,23 @@ import org.mongodb.MongoOperations;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.CollectibleSerializer;
-import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.CollectibleDocumentSerializer;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 import org.mongodb.serialization.serializers.ObjectIdGenerator;
 
 class MongoDatabaseImpl implements MongoDatabase {
-    private final MongoClient client;
     private final MongoDatabaseOptions options;
     private final String name;
     private final MongoOperations operations;
     private final DatabaseAdmin admin;
-
-    public MongoDatabaseImpl(final String name, final MongoClient client, final MongoDatabaseOptions options) {
-        this.name = name;
-        this.client = client;
-        this.options = options;
-        this.operations = null;
-        this.admin = new DatabaseAdminImpl(name, client);
-    }
+    private final DocumentSerializer documentSerializer;
 
     public MongoDatabaseImpl(final String name, final MongoOperations operations, final MongoDatabaseOptions options) {
         this.name = name;
         this.operations = operations;
-        this.client = null;
         this.options = options;
-        this.admin = new DatabaseAdminImpl(name, client);
+        documentSerializer = new DocumentSerializer(options.getPrimitiveSerializers());
+        this.admin = new DatabaseAdminImpl(name, operations, documentSerializer);
     }
 
     @Override
@@ -84,7 +74,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
                                                     final CollectibleSerializer<T> serializer,
                                                     final MongoCollectionOptions operationOptions) {
-        return new MongoCollectionImpl<T>(collectionName, this, serializer, operationOptions.withDefaults(options));
+        return new MongoCollectionImpl<T>(collectionName, this, serializer, operationOptions.withDefaults(options),
+                                         operations, null);
     }
 
     @Override
@@ -95,16 +86,13 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
-        final PrimitiveSerializers primitiveSerializers = options.getPrimitiveSerializers();
-        return new CommandResult(client.getOperations().executeCommand(getName(),
-                                                                      commandOperation,
-                                                                      new DocumentSerializer(primitiveSerializers)));
+        return new CommandResult(operations.executeCommand(getName(), commandOperation, documentSerializer));
     }
 
-    @Override
-    public MongoClient getClient() {
-        return client;
-    }
+//    @Override
+//    public MongoClient getClient() {
+//        return null;
+//    }
 
     @Override
     public MongoDatabaseOptions getOptions() {

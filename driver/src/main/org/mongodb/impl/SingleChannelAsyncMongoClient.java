@@ -19,6 +19,7 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
@@ -101,6 +102,16 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
         }
         channel = null;
         closePending = false;
+    }
+
+    @Override
+    public MongoDatabaseImpl getDatabase(final String databaseName) {
+        return getDatabase(databaseName, MongoDatabaseOptions.builder().build());
+    }
+
+    @Override
+    public MongoDatabaseImpl getDatabase(final String databaseName, final MongoDatabaseOptions optionsForOperation) {
+        return new MongoDatabaseImpl(databaseName, operations, optionsForOperation.withDefaults(this.getOptions()));
     }
 
     private Serializer<Document> withDocumentSerializer(final Serializer<Document> serializer) {

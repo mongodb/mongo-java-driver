@@ -31,7 +31,7 @@ public class MongoGetMoreTest extends DatabaseTestCase {
         collection.insert(Arrays.asList(new Document(), new Document(), new Document()));
 
         final MongoCursor<Document> cursor = collection.batchSize(2).all();
-        database.getClient().getOperations().killCursors(new MongoKillCursor(cursor.getServerCursor()));
+        Fixture.getMongoClient().getOperations().killCursors(new MongoKillCursor(cursor.getServerCursor()));
         cursor.next();
         cursor.next();
         try {

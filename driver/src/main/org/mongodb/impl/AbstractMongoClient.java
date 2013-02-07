@@ -20,7 +20,6 @@ import org.bson.util.BufferPool;
 import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.async.MongoAsyncOperations;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 
@@ -46,16 +45,6 @@ abstract class AbstractMongoClient implements MongoClient {
         }
         this.bufferPool = bufferPool;
         admin = new ClientAdminImpl(getOperations(), this.options.getPrimitiveSerializers());
-    }
-
-    @Override
-    public MongoDatabaseImpl getDatabase(final String databaseName) {
-        return getDatabase(databaseName, MongoDatabaseOptions.builder().build());
-    }
-
-    @Override
-    public MongoDatabaseImpl getDatabase(final String databaseName, final MongoDatabaseOptions optionsForOperation) {
-        return new MongoDatabaseImpl(databaseName, this, optionsForOperation.withDefaults(this.getOptions()));
     }
 
     @Override

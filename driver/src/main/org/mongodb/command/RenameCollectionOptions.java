@@ -17,7 +17,6 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.MongoDatabase;
 
 import static org.mongodb.MongoNamespace.asNamespaceString;
 
@@ -37,9 +36,9 @@ public class RenameCollectionOptions {
         this.dropTarget = dropTarget;
     }
 
-    CommandDocument toCommandDocument(final MongoDatabase database) {
-        return new CommandDocument("renameCollection", asNamespaceString(database.getName(), originalCollectionName))
-                                   .append("to", asNamespaceString(database.getName(), newCollectionName))
+    CommandDocument toCommandDocument(final String databaseName) {
+        return new CommandDocument("renameCollection", asNamespaceString(databaseName, originalCollectionName))
+                                   .append("to", asNamespaceString(databaseName, newCollectionName))
                                    .append("dropTarget", dropTarget);
     }
 }

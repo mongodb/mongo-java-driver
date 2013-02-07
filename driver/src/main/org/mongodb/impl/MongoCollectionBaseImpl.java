@@ -16,7 +16,6 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCollectionBase;
 import org.mongodb.MongoCollectionOptions;
@@ -61,10 +60,10 @@ public class MongoCollectionBaseImpl<T> implements MongoCollectionBase<T> {
         return serializer;
     }
 
-    @Override
-    public MongoClient getClient() {
-        return getDatabase().getClient();
-    }
+//    @Override
+//    public MongoClient getClient() {
+//        return getDatabase().getClient();
+//    }
 
     @Override
     public MongoCollectionOptions getOptions() {

@@ -32,6 +32,7 @@ import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.async.AsyncBlock;
+import org.mongodb.async.MongoAsyncOperations;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
@@ -71,11 +72,16 @@ import java.util.concurrent.TimeoutException;
 class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements MongoCollection<T> {
 
     private final CollectionAdmin admin;
+    private final MongoOperations operations;
+    private final MongoAsyncOperations asyncOperations;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final CollectibleSerializer<T> serializer, final MongoCollectionOptions options) {
+                               final CollectibleSerializer<T> serializer, final MongoCollectionOptions options,
+                               final MongoOperations operations, final MongoAsyncOperations asyncOperations) {
         super(serializer, name, database, options);
-        admin = new CollectionAdminImpl(database.getClient().getOperations(), options.getPrimitiveSerializers(),
+        this.operations = operations;
+        this.asyncOperations = asyncOperations;
+        admin = new CollectionAdminImpl(operations, options.getPrimitiveSerializers(),
                 getNamespace(), getDatabase());
     }
 
@@ -362,12 +368,12 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
         @Override
         public MongoCursor<T> all() {
-            return new MongoCollectionCursor<T>(MongoCollectionImpl.this, findOp);
+            return new MongoCollectionCursor<T>(MongoCollectionImpl.this, findOp, operations);
         }
 
         @Override
         public T one() {
-            final QueryResult<T> res = getClient().getOperations().query(getNamespace(), findOp.batchSize(-1),
+            final QueryResult<T> res = operations.query(getNamespace(), findOp.batchSize(-1),
                     getDocumentSerializer(), getSerializer());
             if (res.getResults().isEmpty()) {
                 return null;
@@ -428,14 +434,14 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
         @Override
         public WriteResult insert(final T document) {
-            return getClient().getOperations().insert(getNamespace(),
+            return operations.insert(getNamespace(),
                     new MongoInsert<T>(document).writeConcern(writeConcern),
                     getSerializer(), getDocumentSerializer());
         }
 
         @Override
         public WriteResult insert(final Iterable<T> documents) {
-            return getClient().getOperations().insert(getNamespace(),
+            return operations.insert(getNamespace(),
                     new MongoInsert<T>(documents).writeConcern(writeConcern),
                     getSerializer(), getDocumentSerializer());
         }
@@ -455,14 +461,14 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         public WriteResult remove() {
             final MongoRemove remove = new MongoRemove(findOp.getFilter()).multi(getMultiFromLimit())
                     .writeConcern(writeConcern);
-            return getClient().getOperations().remove(getNamespace(), remove, getDocumentSerializer());
+            return operations.remove(getNamespace(), remove, getDocumentSerializer());
         }
 
         @Override
         public WriteResult modify(final MongoUpdateOperations updateOperations) {
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).multi(getMultiFromLimit())
                     .writeConcern(writeConcern);
-            return getClient().getOperations().update(getNamespace(), update, getDocumentSerializer());
+            return operations.update(getNamespace(), update, getDocumentSerializer());
         }
 
         @Override
@@ -470,14 +476,14 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).upsert(true)
                     .multi(getMultiFromLimit())
                     .writeConcern(writeConcern);
-            return getClient().getOperations().update(getNamespace(), update, getDocumentSerializer());
+            return operations.update(getNamespace(), update, getDocumentSerializer());
         }
 
         @Override
         public WriteResult replace(final T replacement) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement)
                     .writeConcern(writeConcern);
-            return getClient().getOperations().replace(getNamespace(), replace, getDocumentSerializer(),
+            return operations.replace(getNamespace(), replace, getDocumentSerializer(),
                     getSerializer());
         }
 
@@ -486,7 +492,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement)
                     .upsert(true)
                     .writeConcern(writeConcern);
-            return getClient().getOperations().replace(getNamespace(), replace, getDocumentSerializer(),
+            return operations.replace(getNamespace(), replace, getDocumentSerializer(),
                     getSerializer());
         }
 
@@ -500,7 +506,6 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                     .returnNew(asBoolean(beforeOrAfter))
                     .select(findOp.getFields())
                     .sortBy(findOp.getOrder());
-            final MongoOperations operations = getClient().getOperations();
 
             //TODO: Still need to tidy up some of this command stuff, especially around return values
             final FindAndUpdate<T> findAndUpdateCommand = new FindAndUpdate<T>(MongoCollectionImpl.this, findAndUpdate);
@@ -524,7 +529,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                     .select(findOp.getFields()).sortBy(
                             findOp
                                     .getOrder());
-            return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
+            return new FindAndModifyCommandResult<T>(operations.executeCommand(getDatabase().getName(),
                     new FindAndUpdate<T>(
                             MongoCollectionImpl.this,
                             findAndUpdate),
@@ -541,13 +546,13 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                     findOp
                             .getFilter())
                     .returnNew(asBoolean(
-                            beforeOrAfter))
+                                        beforeOrAfter))
                     .select(findOp
                             .getFields())
                     .sortBy(
-                            findOp
-                                    .getOrder());
-            return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
+                           findOp
+                           .getOrder());
+            return new FindAndModifyCommandResult<T>(operations.executeCommand(getDatabase().getName(),
                     new FindAndReplace<T>(
                             MongoCollectionImpl.this,
                             findAndReplace),
@@ -564,14 +569,14 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                     findOp
                             .getFilter())
                     .returnNew(asBoolean(
-                            beforeOrAfter))
+                                        beforeOrAfter))
                     .upsert(true).select(
                             findOp
                                     .getFields())
                     .sortBy(
-                            findOp
-                                    .getOrder());
-            return new FindAndModifyCommandResult<T>(getClient().getOperations().executeCommand(getDatabase().getName(),
+                           findOp
+                           .getOrder());
+            return new FindAndModifyCommandResult<T>(operations.executeCommand(getDatabase().getName(),
                     new FindAndReplace<T>(
                             MongoCollectionImpl.this,
                             findAndReplace),
@@ -588,7 +593,6 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                     .select(findOp.getFields())
                     .sortBy(findOp.getOrder());
 
-            final MongoOperations operations = getClient().getOperations();
             final FindAndModifyCommandResultSerializer<T> serializer
                     = new FindAndModifyCommandResultSerializer<T>(getOptions().getPrimitiveSerializers(),
                     getSerializer());
@@ -604,13 +608,13 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         @Override
         public Future<WriteResult> asyncReplaceOrInsert(final T replacement) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
-            return getClient().getAsyncOperations().asyncReplace(getNamespace(), replace, getDocumentSerializer(), getSerializer());
+            return asyncOperations.asyncReplace(getNamespace(), replace, getDocumentSerializer(), getSerializer());
         }
 
         @Override
         public void asyncReplaceOrInsert(final T replacement, final SingleResultCallback<WriteResult> callback) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
-            getClient().getAsyncOperations().asyncReplace(getNamespace(), replace, getDocumentSerializer(), getSerializer(), callback);
+            asyncOperations.asyncReplace(getNamespace(), replace, getDocumentSerializer(), getSerializer(), callback);
         }
 
         boolean asBoolean(final Get get) {
@@ -620,7 +624,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         @Override
         public Future<T> asyncOne() {
             final Future<QueryResult<T>> queryResultFuture =
-                    getClient().getAsyncOperations().asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentSerializer(),
+                    asyncOperations.asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentSerializer(),
                             getSerializer());
             return new Future<T>() {
                 @Override
@@ -664,7 +668,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
         @Override
         public void asyncOne(final SingleResultCallback<T> callback) {
-            getClient().getAsyncOperations().asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentSerializer(),
+            asyncOperations.asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentSerializer(),
                     getSerializer(), new SingleResultCallback<QueryResult<T>>() {
                 @Override
                 public void onResult(final QueryResult<T> result, final MongoException e) {
@@ -682,7 +686,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
         @Override
         public Future<Long> asyncCount() {
-            final Future<CommandResult> commandResultFuture = getClient().getAsyncOperations()
+            final Future<CommandResult> commandResultFuture = asyncOperations
                     .asyncExecuteCommand(getDatabase().getName(), new Count(findOp, getName()), getDocumentSerializer());
             return new Future<Long>() {
                 @Override
@@ -716,7 +720,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
         @Override
         public void asyncCount(final SingleResultCallback<Long> callback) {
-            getClient().getAsyncOperations().asyncExecuteCommand(getDatabase().getName(), new Count(findOp, getName()),
+            asyncOperations.asyncExecuteCommand(getDatabase().getName(), new Count(findOp, getName()),
                     getDocumentSerializer(),
                     new SingleResultCallback<CommandResult>() {
                         @Override
@@ -750,7 +754,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
         @Override
         public void asyncForEach(final AsyncBlock<? super T> block) {
-            getClient().getAsyncOperations().asyncQuery(getNamespace(), findOp, getDocumentSerializer(),
+            asyncOperations.asyncQuery(getNamespace(), findOp, getDocumentSerializer(),
                     getSerializer(), new QueryResultSingleResultCallback(block));
         }
 
@@ -800,7 +804,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                     block.done();
                 }
                 else {
-                    getClient().getAsyncOperations()
+                    asyncOperations
                             .asyncGetMore(getNamespace(), new GetMore(result.getCursor(), findOp.getBatchSize()),
                                     getSerializer(), new QueryResultSingleResultCallback(block));
                 }

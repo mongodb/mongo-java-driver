@@ -19,8 +19,8 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseAdmin;
-import org.mongodb.MongoClient;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoOperations;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.command.Create;
@@ -48,25 +48,26 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
 
     private final String databaseName;
     private final DocumentSerializer documentSerializer;
-    private final MongoClient client;
+    private final MongoOperations operations;
 
-    public DatabaseAdminImpl(final String databaseName, final MongoClient client) {
+    public DatabaseAdminImpl(final String databaseName, final MongoOperations operations,
+                             final DocumentSerializer documentSerializer) {
         this.databaseName = databaseName;
-        this.client = client;
-        documentSerializer = new DocumentSerializer(client.getOptions().getPrimitiveSerializers());
+        this.operations = operations;
+        this.documentSerializer = documentSerializer;
     }
 
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        new CommandResult(client.getDatabase(databaseName).executeCommand(DROP_DATABASE));
+        new CommandResult(operations.executeCommand(databaseName, DROP_DATABASE, documentSerializer));
     }
 
     @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
-        final QueryResult<Document> query = client.getOperations().query(namespacesCollection, FIND_ALL,
-                                                                         documentSerializer, documentSerializer);
+        final QueryResult<Document> query = operations.query(namespacesCollection, FIND_ALL,
+                                                            documentSerializer, documentSerializer);
 
         final HashSet<String> collections = new HashSet<String>();
         final int lengthOfDatabaseName = databaseName.length();
@@ -88,7 +89,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         final CommandResult commandResult = new CommandResult(
-                client.getDatabase(databaseName).executeCommand(new Create(createCollectionOptions)));
+                operations.executeCommand(databaseName, new Create(createCollectionOptions), documentSerializer));
         handleErrors(commandResult);
     }
 
@@ -99,8 +100,8 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
 
     @Override
     public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
-        final RenameCollection rename = new RenameCollection(renameCollectionOptions, client.getDatabase(databaseName));
-        final CommandResult commandResult = client.getOperations().executeCommand("admin", rename, documentSerializer);
+        final RenameCollection rename = new RenameCollection(renameCollectionOptions, databaseName);
+        final CommandResult commandResult = operations.executeCommand("admin", rename, documentSerializer);
         handleErrors(commandResult);
     }
 }

@@ -20,6 +20,7 @@ import org.bson.types.Document;
 import org.bson.util.BufferPool;
 import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.ServerAddress;
@@ -134,6 +135,17 @@ public class SingleChannelSyncMongoClient extends SingleChannelMongoClient {
         return Arrays.asList(channel.getAddress());
     }
 
+    @Override
+    public MongoDatabaseImpl getDatabase(final String databaseName) {
+        return getDatabase(databaseName, MongoDatabaseOptions.builder().build());
+    }
+
+    @Override
+    public MongoDatabaseImpl getDatabase(final String databaseName, final MongoDatabaseOptions optionsForOperation) {
+        return new MongoDatabaseImpl(databaseName, singleChannelMongoOperations,
+                                    optionsForOperation.withDefaults(this.getOptions()));
+    }
+
     private Serializer<Document> withDocumentSerializer(final Serializer<Document> serializer) {
         if (serializer != null) {
             return serializer;
@@ -155,7 +167,10 @@ public class SingleChannelSyncMongoClient extends SingleChannelMongoClient {
     private CommandResult getLastError(final MongoNamespace namespace, final MongoWrite write) {
         final GetLastError getLastError = new GetLastError(write.getWriteConcern());
 
-        final CommandResult commandResult = getDatabase(namespace.getDatabaseName()).executeCommand(getLastError);
+        final DocumentSerializer serializer = new DocumentSerializer(getOptions().getPrimitiveSerializers());
+        final CommandResult commandResult = singleChannelMongoOperations.executeCommand(namespace.getDatabaseName(),
+                                                                                       getLastError,
+                                                                                       serializer);
         return getLastError.parseGetLastErrorResponse(commandResult);
     }
 

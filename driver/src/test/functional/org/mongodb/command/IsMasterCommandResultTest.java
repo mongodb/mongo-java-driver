@@ -19,6 +19,7 @@ package org.mongodb.command;
 import org.junit.Test;
 import org.mongodb.CommandDocument;
 import org.mongodb.DatabaseTestCase;
+import org.mongodb.Fixture;
 import org.mongodb.MongoDatabase;
 import org.mongodb.operation.MongoCommand;
 
@@ -27,21 +28,21 @@ import static org.junit.Assert.assertTrue;
 
 public class IsMasterCommandResultTest extends DatabaseTestCase {
 
-    private MongoDatabase adminDatabase = database.getClient().getDatabase("admin");
+    private MongoDatabase adminDatabase = Fixture.getMongoClient().getDatabase("admin");
     private CommandDocument isMasterCommandDocument = new CommandDocument("ismaster", 1);
     private MongoCommand command = new MongoCommand(isMasterCommandDocument);
 
     @Test
     public void testIsPrimary() {
         IsMasterCommandResult result =
-                new IsMasterCommandResult(adminDatabase.executeCommand(command));
+        new IsMasterCommandResult(adminDatabase.executeCommand(command));
         assertTrue(result.isMaster());
     }
 
     @Test
     public void testIsSecondary() {
         IsMasterCommandResult result =
-                new IsMasterCommandResult(adminDatabase.executeCommand(command));
+        new IsMasterCommandResult(adminDatabase.executeCommand(command));
         assertFalse(result.isSecondary());
     }
 }

@@ -31,7 +31,7 @@ public interface MongoDatabase {
 
     CommandResult executeCommand(MongoCommand commandOperation);
 
-    MongoClient getClient();
+//    MongoClient getClient();
 
     MongoDatabaseOptions getOptions();
 

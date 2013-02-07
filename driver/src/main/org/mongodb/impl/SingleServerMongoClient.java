@@ -20,6 +20,7 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoOperations;
 import org.mongodb.ServerAddress;
@@ -107,6 +108,16 @@ public abstract class SingleServerMongoClient extends AbstractMongoClient {
     @Override
     public MongoOperations getOperations() {
         return new SingleServerMongoOperations();
+    }
+
+    @Override
+    public MongoDatabaseImpl getDatabase(final String databaseName) {
+        return getDatabase(databaseName, MongoDatabaseOptions.builder().build());
+    }
+
+    @Override
+    public MongoDatabaseImpl getDatabase(final String databaseName, final MongoDatabaseOptions optionsForOperation) {
+        return new MongoDatabaseImpl(databaseName, getOperations(), optionsForOperation.withDefaults(this.getOptions()));
     }
 
     protected SingleChannelMongoClient getChannelClient() {
