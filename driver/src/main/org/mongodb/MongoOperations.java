@@ -53,4 +53,6 @@ public interface MongoOperations {
 
     WriteResult remove(final MongoNamespace namespace, MongoRemove remove, Serializer<Document> serializer);
 
+    void close();
+
 }

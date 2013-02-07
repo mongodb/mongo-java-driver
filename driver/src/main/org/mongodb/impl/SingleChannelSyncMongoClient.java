@@ -261,5 +261,10 @@ public class SingleChannelSyncMongoClient extends SingleChannelMongoClient {
                     killCursor);
             channel.sendMessage(message);
         }
+
+        @Override
+        public void close() {
+            throw new UnsupportedOperationException("Not implemented yet!");
+        }
     }
 }

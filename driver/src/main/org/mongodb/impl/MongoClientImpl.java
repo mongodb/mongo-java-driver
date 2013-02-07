@@ -51,7 +51,7 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoOperations getOperations() {
-        throw new UnsupportedOperationException();
+        return operations;
     }
 
     @Override
@@ -71,7 +71,7 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public void close() {
-        throw new UnsupportedOperationException();
+        operations.close();
     }
 
     @Override

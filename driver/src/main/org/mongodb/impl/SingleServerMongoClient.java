@@ -226,5 +226,10 @@ public abstract class SingleServerMongoClient extends AbstractMongoClient {
                 releaseChannelClient(mongoClient);
             }
         }
+
+        @Override
+        public void close() {
+            throw new UnsupportedOperationException("Not implemented yet!");
+        }
     }
 }

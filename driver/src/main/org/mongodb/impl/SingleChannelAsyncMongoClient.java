@@ -400,6 +400,11 @@ public class SingleChannelAsyncMongoClient extends SingleChannelMongoClient {
             sendAsyncWriteMessage(namespace, remove, serializer, callback, message);
         }
 
+        @Override
+        public void close() {
+            throw new UnsupportedOperationException("Not implemented yet!");
+        }
+
         private void sendAsyncWriteMessage(final MongoNamespace namespace, final MongoWrite write, final Serializer<Document> serializer,
                                            final SingleResultCallback<WriteResult> callback, final MongoRequestMessage message) {
             if (write.getWriteConcern().callGetLastError()) {
