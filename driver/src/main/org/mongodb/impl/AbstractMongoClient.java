@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
 abstract class AbstractMongoClient implements MongoClient {
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
-    private final ClientAdmin admin;
+    private final ClientAdmin tools;
 
     AbstractMongoClient(final MongoClientOptions options) {
         this(options, new PowerOfTwoByteBufferPool());
@@ -44,7 +44,7 @@ abstract class AbstractMongoClient implements MongoClient {
             throw new IllegalArgumentException("buffer pool can not be null");
         }
         this.bufferPool = bufferPool;
-        admin = new ClientAdminImpl(getOperations(), this.options.getPrimitiveSerializers());
+        tools = new ClientAdminImpl(getOperations(), this.options.getPrimitiveSerializers());
     }
 
     @Override
@@ -59,7 +59,7 @@ abstract class AbstractMongoClient implements MongoClient {
 
     @Override
     public ClientAdmin tools() {
-        return admin;
+        return tools;
     }
 
     abstract void bindToConnection();

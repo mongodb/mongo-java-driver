@@ -100,6 +100,7 @@ public class SingleChannelSyncMongoClient extends SingleChannelMongoClient {
         }
     }
 
+    @Override
     public ServerAddress getServerAddress() {
         return channel.getAddress();
     }
