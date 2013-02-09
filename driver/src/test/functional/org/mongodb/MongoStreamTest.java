@@ -151,6 +151,14 @@ public class MongoStreamTest extends DatabaseTestCase {
         collection.filter(new QueryFilterDocument("_id", 1))
                 .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
+
+        collection.filter(new QueryFilterDocument("x", 1))
+                .noLimit()
+                .modifyOrInsert(new UpdateOperationsDocument("$inc", new Document("x", 1)));
+
+        collection.filter(new QueryFilterDocument("_id", 1))
+                .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
+
         collection.filter(new QueryFilterDocument("_id", 2))
                 .modifyOrInsert(new UpdateOperationsDocument("$set", new Document("x", 1)));
 

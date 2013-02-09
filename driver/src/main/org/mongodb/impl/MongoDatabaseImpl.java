@@ -21,7 +21,7 @@ import org.mongodb.DatabaseAdmin;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
-import org.mongodb.MongoOperations;
+import org.mongodb.MongoConnection;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.CollectibleSerializer;
@@ -32,11 +32,11 @@ import org.mongodb.serialization.serializers.ObjectIdGenerator;
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;
     private final String name;
-    private final MongoOperations operations;
+    private final MongoConnection operations;
     private final DatabaseAdmin admin;
     private final Serializer<Document> documentSerializer;
 
-    public MongoDatabaseImpl(final String name, final MongoOperations operations, final MongoDatabaseOptions options) {
+    public MongoDatabaseImpl(final String name, final MongoConnection operations, final MongoDatabaseOptions options) {
         this.name = name;
         this.operations = operations;
         this.options = options;
@@ -75,7 +75,7 @@ class MongoDatabaseImpl implements MongoDatabase {
                                                     final CollectibleSerializer<T> serializer,
                                                     final MongoCollectionOptions operationOptions) {
         return new MongoCollectionImpl<T>(collectionName, this, serializer, operationOptions.withDefaults(options),
-                                         operations, null);
+                                         operations);
     }
 
     @Override

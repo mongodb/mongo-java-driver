@@ -17,12 +17,10 @@
 package org.mongodb.impl;
 
 import org.bson.util.BufferPool;
-import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.async.AsyncDetector;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -39,34 +37,25 @@ public final class MongoClientsImpl {
     private MongoClientsImpl() {
     }
 
-    public static SingleServerMongoClient create(final ServerAddress serverAddress, final MongoClientOptions options) {
-        if (AsyncDetector.javaVersionSupportsAsync()) {
-            return new SingleServerAsyncMongoClient(serverAddress, options);
-        }
-        else {
-            return new SingleServerSyncMongoClient(serverAddress, options);
-        }
+    public static MongoClientImpl create(final ServerAddress serverAddress, final MongoClientOptions options) {
+        return new MongoClientImpl(options, MongoConnectionsImpl.create(serverAddress, options));
     }
 
-    public static SingleServerMongoClient create(final ServerAddress serverAddress, final MongoClientOptions options,
-                                                 final BufferPool<ByteBuffer> bufferPool) {
-        if (AsyncDetector.javaVersionSupportsAsync()) {
-            return new SingleServerAsyncMongoClient(serverAddress, options, bufferPool);
-        }
-        else {
-            return new SingleServerSyncMongoClient(serverAddress, options, bufferPool);
-        }
+    public static MongoClientImpl create(final ServerAddress serverAddress, final MongoClientOptions options,
+                                     final BufferPool<ByteBuffer> bufferPool) {
+        return new MongoClientImpl(options, MongoConnectionsImpl.create(serverAddress, options, bufferPool));
     }
 
-    public static MongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MongoClientImpl(options, new ReplicaSetMongoOperations(seedList, options));
+    public static MongoClientImpl create(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        return new MongoClientImpl(options, new ReplicaSetMongoConnection(seedList, options));
     }
 
-    public static MongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
+    public static MongoClientImpl create(final MongoClientURI mongoURI) throws UnknownHostException {
         return create(mongoURI, mongoURI.getOptions());
     }
 
-    public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
+    public static MongoClientImpl create(final MongoClientURI mongoURI, final MongoClientOptions options)
+            throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
             return create(new ServerAddress(mongoURI.getHosts().get(0)), options);
         }

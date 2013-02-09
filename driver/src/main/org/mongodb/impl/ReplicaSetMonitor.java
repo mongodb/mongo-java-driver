@@ -19,7 +19,7 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.mongodb.MongoClosedException;
 import org.mongodb.MongoInterruptedException;
-import org.mongodb.MongoOperations;
+import org.mongodb.MongoConnection;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.IsMasterCommandResult;
@@ -64,7 +64,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
         INET_ADDR_CACHE_MS = Integer.parseInt(System.getProperty("com.mongodb.inetAddrCacheMS", "300000"));
     }
 
-    ReplicaSetMonitor(final List<ServerAddress> seedList, final MongoOperations operations) {
+    ReplicaSetMonitor(final List<ServerAddress> seedList, final MongoConnection operations) {
         super("ReplicaSetMonitor");
         replicaSetStateGenerator = new ReplicaSetStateGenerator(seedList,
                 new MongoClientIsMasterExecutorFactory(getClientOptions()), getLatencySmoothFactor());

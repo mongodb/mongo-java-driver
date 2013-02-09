@@ -19,11 +19,11 @@ package org.mongodb.impl;
 import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoConnection;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
-import org.mongodb.MongoOperations;
 import org.mongodb.ServerAddress;
-import org.mongodb.async.MongoAsyncOperations;
+import org.mongodb.serialization.PrimitiveSerializers;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -31,12 +31,12 @@ import java.util.concurrent.ExecutionException;
 
 public class MongoClientImpl implements MongoClient {
 
-    private final MongoOperations operations;
+    private final MongoConnection connection;
     private final MongoClientOptions clientOptions;
 
-    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoOperations operations) {
+    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoConnection connection) {
         this.clientOptions = clientOptions;
-        this.operations = operations;
+        this.connection = connection;
     }
 
     @Override
@@ -46,17 +46,7 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoDatabase getDatabase(final String databaseName, final MongoDatabaseOptions options) {
-        return new MongoDatabaseImpl(databaseName, operations, options.withDefaults(clientOptions));
-    }
-
-    @Override
-    public MongoOperations getOperations() {
-        return operations;
-    }
-
-    @Override
-    public MongoAsyncOperations getAsyncOperations() {
-        throw new UnsupportedOperationException();
+        return new MongoDatabaseImpl(databaseName, connection, options.withDefaults(clientOptions));
     }
 
     @Override
@@ -71,7 +61,7 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public void close() {
-        operations.close();
+        connection.close();
     }
 
     @Override
@@ -81,11 +71,15 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public ClientAdmin tools() {
-        throw new UnsupportedOperationException();
+        return new ClientAdminImpl(connection, PrimitiveSerializers.createDefault());
     }
 
     @Override
     public List<ServerAddress> getServerAddressList() {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return connection.getServerAddressList();
+    }
+
+    public MongoConnection getConnection() {
+        return connection;
     }
 }

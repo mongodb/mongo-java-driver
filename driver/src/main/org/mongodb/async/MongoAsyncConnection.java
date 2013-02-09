@@ -33,7 +33,7 @@ import org.mongodb.serialization.Serializer;
 
 import java.util.concurrent.Future;
 
-public interface MongoAsyncOperations {
+public interface MongoAsyncConnection {
     // TODO: should this really be a separate call from query?
     Future<CommandResult> asyncExecuteCommand(String database, MongoCommand commandOperation, Serializer<Document> serializer);
 

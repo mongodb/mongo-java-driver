@@ -16,6 +16,9 @@
 
 package org.mongodb;
 
+import org.mongodb.impl.MongoClientImpl;
+import org.mongodb.impl.MongoClientsImpl;
+
 import java.net.UnknownHostException;
 
 /**
@@ -25,7 +28,7 @@ public final class Fixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
 
-    private static MongoClient mongoClient;
+    private static MongoClientImpl mongoClient;
 
     private Fixture() {
     }
@@ -36,7 +39,7 @@ public final class Fixture {
             final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
                                           ? DEFAULT_URI : mongoURIProperty;
             try {
-                mongoClient = MongoClients.create(new MongoClientURI(mongoURIString));
+                mongoClient = MongoClientsImpl.create(new MongoClientURI(mongoURIString));
             } catch (UnknownHostException e) {
                 throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURIString, e);
             }
@@ -44,12 +47,16 @@ public final class Fixture {
         return mongoClient;
     }
 
+
+    public static MongoConnection getMongoConnection() {
+        return mongoClient.getConnection();
+    }
+
     // Note this is not safe for concurrent access - if you run multiple tests in parallel from the same class,
     // you'll drop the DB
     public static MongoDatabase getCleanDatabaseForTest(final Class<?> testClass) {
         final MongoDatabase database = getMongoClient().getDatabase(testClass.getSimpleName());
 
-        //oooh, just realised this is nasty, looks like we're dropping the admin database
         database.tools().drop();
         return database;
     }

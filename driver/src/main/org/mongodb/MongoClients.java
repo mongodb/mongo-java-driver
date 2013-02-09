@@ -28,7 +28,7 @@ public final class MongoClients {
     }
 
     public static MongoClient create(final ServerAddress serverAddress) {
-        return MongoClientsImpl.create(serverAddress, null);
+        return MongoClientsImpl.create(serverAddress, MongoClientOptions.builder().build());
     }
 
     public static MongoClient create(final ServerAddress serverAddress, final MongoClientOptions options) {
@@ -36,7 +36,7 @@ public final class MongoClients {
     }
 
     public static MongoClient create(final List<ServerAddress> serverAddresses) {
-        return MongoClientsImpl.create(serverAddresses, null);
+        return MongoClientsImpl.create(serverAddresses, MongoClientOptions.builder().build());
     }
 
     public static MongoClient create(final List<ServerAddress> serverAddresses, final MongoClientOptions options) {

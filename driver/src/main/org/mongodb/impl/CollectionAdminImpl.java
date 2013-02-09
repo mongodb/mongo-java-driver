@@ -19,9 +19,9 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.mongodb.CollectionAdmin;
 import org.mongodb.Index;
+import org.mongodb.MongoConnection;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoOperations;
 import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
@@ -47,7 +47,7 @@ import static org.mongodb.impl.ErrorHandling.handleErrors;
 public class CollectionAdminImpl implements CollectionAdmin {
     private static final String NAMESPACE_KEY_NAME = "ns";
 
-    private final MongoOperations operations;
+    private final MongoConnection operations;
     private final MongoDatabase database;
     //TODO: need to do something about these default serialisers, they're created everywhere
     private final DocumentSerializer documentSerializer;
@@ -58,7 +58,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
     private final CollStats collStatsCommand;
     private final Drop dropCollectionCommand;
 
-    CollectionAdminImpl(final MongoOperations operations,
+    CollectionAdminImpl(final MongoConnection operations,
                         final PrimitiveSerializers primitiveSerializers,
                         final MongoNamespace collectionNamespace,
                         final MongoDatabase database) {

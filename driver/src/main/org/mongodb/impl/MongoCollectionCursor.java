@@ -17,8 +17,8 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoCollection;
+import org.mongodb.MongoConnection;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoOperations;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFind;
@@ -33,18 +33,18 @@ import java.util.NoSuchElementException;
 class MongoCollectionCursor<T> implements MongoCursor<T> {
     private final MongoCollection<T> collection;
     private final MongoFind find;
-    private final MongoOperations operations;
+    private final MongoConnection connection;
     private QueryResult<T> currentResult;
     private Iterator<T> currentIterator;
     private long nextCount;
     private boolean closed;
 
     public MongoCollectionCursor(final MongoCollection<T> collection, final MongoFind find,
-                                 final MongoOperations operations) {
+                                 final MongoConnection connection) {
         this.collection = collection;
         this.find = find;
-        this.operations = operations;
-        currentResult = operations.query(collection.getNamespace(), find,
+        this.connection = connection;
+        currentResult = connection.query(collection.getNamespace(), find,
                                         collection.getOptions().getDocumentSerializer(),
                                         collection.getSerializer());
         currentIterator = currentResult.getResults().iterator();
@@ -54,7 +54,7 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
     public void close() {
         closed = true;
         if (currentResult != null && currentResult.getCursor() != null) {
-            operations.killCursors(new MongoKillCursor(currentResult.getCursor()));
+            connection.killCursors(new MongoKillCursor(currentResult.getCursor()));
         }
         currentResult = null;
         currentIterator = null;
@@ -108,7 +108,7 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
     }
 
     private void getMore() {
-        currentResult = operations.getMore(collection.getNamespace(),
+        currentResult = connection.getMore(collection.getNamespace(),
                                                                      new GetMore(currentResult.getCursor(),
                                                                                 find.getBatchSize()),
                                                                      collection.getSerializer());

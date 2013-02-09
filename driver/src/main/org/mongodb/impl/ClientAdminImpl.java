@@ -17,7 +17,7 @@
 package org.mongodb.impl;
 
 import org.mongodb.ClientAdmin;
-import org.mongodb.MongoOperations;
+import org.mongodb.MongoConnection;
 import org.mongodb.command.Ping;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.PrimitiveSerializers;
@@ -32,10 +32,10 @@ class ClientAdminImpl implements ClientAdmin {
     private static final Ping PING_COMMAND = new Ping();
 
     private final DocumentSerializer documentSerializer;
-    private final MongoOperations operations;
+    private final MongoConnection connection;
 
-    ClientAdminImpl(final MongoOperations operations, final PrimitiveSerializers primitiveSerializers) {
-        this.operations = operations;
+    ClientAdminImpl(final MongoConnection connection, final PrimitiveSerializers primitiveSerializers) {
+        this.connection = connection;
         documentSerializer = new DocumentSerializer(primitiveSerializers);
     }
 
@@ -43,7 +43,7 @@ class ClientAdminImpl implements ClientAdmin {
     //http://docs.mongodb.org/manual/reference/command/ping/
     @Override
     public double ping() {
-        final CommandResult pingResult = operations.executeCommand(ADMIN_DATABASE, PING_COMMAND, documentSerializer);
+        final CommandResult pingResult = connection.executeCommand(ADMIN_DATABASE, PING_COMMAND, documentSerializer);
 
         return (Double) pingResult.getResponse().get("ok");
     }

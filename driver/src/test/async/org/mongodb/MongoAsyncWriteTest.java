@@ -18,7 +18,6 @@
 package org.mongodb;
 
 import org.bson.types.Document;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.result.WriteResult;
 
@@ -28,7 +27,6 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-@Ignore("Not going to work in Jenkins yet")
 public class MongoAsyncWriteTest extends DatabaseTestCase {
     @Test
     public void testReplaceOrInsertFuture() throws ExecutionException, InterruptedException {

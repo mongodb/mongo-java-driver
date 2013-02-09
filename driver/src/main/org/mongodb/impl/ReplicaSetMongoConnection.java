@@ -18,15 +18,13 @@ package org.mongodb.impl;
 
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
-import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoConnection;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoNoPrimaryException;
-import org.mongodb.MongoOperations;
 import org.mongodb.MongoReadPreferenceException;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
-import org.mongodb.async.MongoAsyncOperations;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.GetMore;
@@ -51,14 +49,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-class ReplicaSetMongoOperations implements MongoOperations, MongoAsyncOperations {
+class ReplicaSetMongoConnection implements MongoConnection {
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
     private final ReplicaSetMonitor replicaSetMonitor;
-    private Map<ServerAddress, SingleServerMongoClient> mongoClientMap
-    = new HashMap<ServerAddress, SingleServerMongoClient>();
+    private Map<ServerAddress, SingleServerMongoConnection> mongoClientMap =
+            new HashMap<ServerAddress, SingleServerMongoConnection>();
 
-    ReplicaSetMongoOperations(final List<ServerAddress> seedList, final MongoClientOptions options) {
+    ReplicaSetMongoConnection(final List<ServerAddress> seedList, final MongoClientOptions options) {
         this.options = options;
         this.bufferPool = new PowerOfTwoByteBufferPool();
         replicaSetMonitor = new ReplicaSetMonitor(seedList, this);
@@ -68,28 +66,25 @@ class ReplicaSetMongoOperations implements MongoOperations, MongoAsyncOperations
     @Override
     public CommandResult executeCommand(final String database, final MongoCommand commandOperation,
                                         final Serializer<Document> serializer) {
-        return getClient(commandOperation.getReadPreference()).getOperations().executeCommand(database,
-                                                                                             commandOperation,
-                                                                                             serializer);
+        return getConnection(commandOperation.getReadPreference()).executeCommand(database, commandOperation, serializer);
     }
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
                                     final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
-        return getClient(find.getReadPreference()).getOperations().query(namespace, find, baseSerializer, serializer);
+        return getConnection(find.getReadPreference()).query(namespace, find, baseSerializer, serializer);
     }
 
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
                                       final Serializer<T> serializer) {
-        return getClient(getMore.getServerCursor().getAddress()).getOperations()
-               .getMore(namespace, getMore, serializer);
+        return getConnection(getMore.getServerCursor().getAddress()).getMore(namespace, getMore, serializer);
     }
 
     @Override
     public void killCursors(final MongoKillCursor killCursor) {
         for (ServerCursor cursor : killCursor.getServerCursors()) {
-            getClient(cursor.getAddress()).getOperations().killCursors(new MongoKillCursor(cursor));
+            getConnection(cursor.getAddress()).killCursors(new MongoKillCursor(cursor));
         }
     }
 
@@ -97,79 +92,71 @@ class ReplicaSetMongoOperations implements MongoOperations, MongoAsyncOperations
     public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert,
                                   final Serializer<T> serializer,
                                   final Serializer<Document> baseSerializer) {
-        return getPrimary().getOperations().insert(namespace, insert, serializer, baseSerializer);
+        return getPrimary().insert(namespace, insert, serializer, baseSerializer);
     }
 
     @Override
     public WriteResult update(final MongoNamespace namespace, final MongoUpdate update,
                               final Serializer<Document> serializer) {
-        return getPrimary().getOperations().update(namespace, update, serializer);
+        return getPrimary().update(namespace, update, serializer);
     }
 
     @Override
     public <T> WriteResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
                                    final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
-        return getPrimary().getOperations().replace(namespace, replace, baseSerializer, serializer);
+        return getPrimary().replace(namespace, replace, baseSerializer, serializer);
     }
 
     @Override
     public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove,
                               final Serializer<Document> serializer) {
-        return getPrimary().getOperations().remove(namespace, remove, serializer);
+        return getPrimary().remove(namespace, remove, serializer);
     }
 
     @Override
     public Future<CommandResult> asyncExecuteCommand(final String database, final MongoCommand commandOperation,
                                                      final Serializer<Document> serializer) {
-        return getClient(commandOperation.getReadPreference()).
-                                                              getAsyncOperations()
-               .asyncExecuteCommand(database, commandOperation, serializer);
+        return getConnection(commandOperation.getReadPreference()).asyncExecuteCommand(database, commandOperation, serializer);
     }
 
     @Override
     public void asyncExecuteCommand(final String database, final MongoCommand commandOperation,
                                     final Serializer<Document> serializer,
                                     final SingleResultCallback<CommandResult> callback) {
-        getClient(commandOperation.getReadPreference()).
-                                                       getAsyncOperations()
-        .asyncExecuteCommand(database, commandOperation, serializer, callback);
+        getConnection(commandOperation.getReadPreference()).asyncExecuteCommand(database, commandOperation, serializer, callback);
     }
 
     @Override
     public <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
                                                  final Serializer<Document> baseSerializer,
                                                  final Serializer<T> serializer) {
-        return getClient(find.getReadPreference()).getAsyncOperations()
-               .asyncQuery(namespace, find, baseSerializer, serializer);
+        return getConnection(find.getReadPreference()).asyncQuery(namespace, find, baseSerializer, serializer);
     }
 
     @Override
     public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find,
                                final Serializer<Document> baseSerializer,
                                final Serializer<T> serializer, final SingleResultCallback<QueryResult<T>> callback) {
-        getClient(find.getReadPreference()).getAsyncOperations()
-        .asyncQuery(namespace, find, baseSerializer, serializer, callback);
+        getConnection(find.getReadPreference()).asyncQuery(namespace, find, baseSerializer, serializer, callback);
     }
 
     @Override
     public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
                                                    final Serializer<T> serializer) {
-        return getClient(getMore.getServerCursor().getAddress()).getAsyncOperations()
-               .asyncGetMore(namespace, getMore, serializer);
+        return getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, serializer);
     }
 
     @Override
     public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer,
                                  final SingleResultCallback<QueryResult<T>> callback) {
-        getClient(getMore.getServerCursor().getAddress()).getAsyncOperations()
-        .asyncGetMore(namespace, getMore, serializer, callback);
+        getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, serializer, callback);
     }
 
     @Override
     public <T> Future<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
                                                final Serializer<T> serializer,
                                                final Serializer<Document> baseSerializer) {
-        return getPrimary().getAsyncOperations().asyncInsert(namespace, insert, serializer, baseSerializer);
+        return getPrimary().asyncInsert(namespace, insert, serializer, baseSerializer);
     }
 
     @Override
@@ -177,84 +164,90 @@ class ReplicaSetMongoOperations implements MongoOperations, MongoAsyncOperations
                                 final Serializer<T> serializer,
                                 final Serializer<Document> baseSerializer,
                                 final SingleResultCallback<WriteResult> callback) {
-        getPrimary().getAsyncOperations().asyncInsert(namespace, insert, serializer, baseSerializer, callback);
+        getPrimary().asyncInsert(namespace, insert, serializer, baseSerializer, callback);
     }
 
     @Override
     public Future<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
                                            final Serializer<Document> serializer) {
-        return getPrimary().getAsyncOperations().asyncUpdate(namespace, update, serializer);
+        return getPrimary().asyncUpdate(namespace, update, serializer);
     }
 
     @Override
     public void asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
                             final Serializer<Document> serializer,
                             final SingleResultCallback<WriteResult> callback) {
-        getPrimary().getAsyncOperations().asyncUpdate(namespace, update, serializer, callback);
+        getPrimary().asyncUpdate(namespace, update, serializer, callback);
     }
 
     @Override
     public <T> Future<WriteResult> asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
                                                 final Serializer<Document> baseSerializer,
                                                 final Serializer<T> serializer) {
-        return getPrimary().getAsyncOperations().asyncReplace(namespace, replace, baseSerializer, serializer);
+        return getPrimary().asyncReplace(namespace, replace, baseSerializer, serializer);
     }
 
     @Override
     public <T> void asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
                                  final Serializer<Document> baseSerializer, final Serializer<T> serializer,
                                  final SingleResultCallback<WriteResult> callback) {
-        getPrimary().getAsyncOperations().asyncReplace(namespace, replace, baseSerializer, serializer, callback);
+        getPrimary().asyncReplace(namespace, replace, baseSerializer, serializer, callback);
     }
 
     @Override
     public Future<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
                                            final Serializer<Document> serializer) {
-        return getPrimary().getAsyncOperations().asyncRemove(namespace, remove, serializer);
+        return getPrimary().asyncRemove(namespace, remove, serializer);
     }
 
     @Override
     public void asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
                             final Serializer<Document> serializer,
                             final SingleResultCallback<WriteResult> callback) {
-        getPrimary().getAsyncOperations().asyncRemove(namespace, remove, serializer, callback);
+        getPrimary().asyncRemove(namespace, remove, serializer, callback);
     }
 
     @Override
     public void close() {
         replicaSetMonitor.close();
-        for (MongoClient cur : mongoClientMap.values()) {
+        for (SingleServerMongoConnection cur : mongoClientMap.values()) {
             cur.close();
         }
     }
 
-    SingleServerMongoClient getPrimary() {
+    @Override
+    public List<ServerAddress> getServerAddressList() {
+        // TODO: get this from current ReplicaSetMonitor state
+        throw new UnsupportedOperationException();
+    }
+
+    SingleServerMongoConnection getPrimary() {
         ReplicaSet currentState = replicaSetMonitor.getCurrentState();
         ReplicaSetMember primary = currentState.getPrimary();
         if (primary == null) {
             throw new MongoNoPrimaryException(currentState);
         }
-        return getClient(primary.getServerAddress());
+        return getConnection(primary.getServerAddress());
     }
 
-    SingleServerMongoClient getClient(final ReadPreference readPreference) {
-        // TODO: this is hiding potential bugs.  ReadPrefence should not be null
+    SingleServerMongoConnection getConnection(final ReadPreference readPreference) {
+        // TODO: this is hiding potential bugs.  ReadPreference should not be null
         ReadPreference appliedReadPreference = readPreference == null ? ReadPreference.primary() : readPreference;
         final ReplicaSet replicaSet = replicaSetMonitor.getCurrentState();
         final ReplicaSetMember replicaSetMember = appliedReadPreference.chooseReplicaSetMember(replicaSet);
         if (replicaSetMember == null) {
             throw new MongoReadPreferenceException(readPreference, replicaSet);
         }
-        return getClient(replicaSetMember.getServerAddress());
+        return getConnection(replicaSetMember.getServerAddress());
     }
 
-    private synchronized SingleServerMongoClient getClient(final ServerAddress serverAddress) {
-        SingleServerMongoClient client = mongoClientMap.get(serverAddress);
-        if (client == null) {
-            client = MongoClientsImpl.create(serverAddress, options, bufferPool);
-            mongoClientMap.put(serverAddress, client);
+    private synchronized SingleServerMongoConnection getConnection(final ServerAddress serverAddress) {
+        SingleServerMongoConnection connection = mongoClientMap.get(serverAddress);
+        if (connection == null) {
+            connection = MongoConnectionsImpl.create(serverAddress, options, bufferPool);
+            mongoClientMap.put(serverAddress, connection);
         }
-        return client;
+        return connection;
     }
 
 }

@@ -17,7 +17,6 @@
 package org.mongodb.acceptancetest.core;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClients;
@@ -49,8 +48,7 @@ public class MongoClientConnectedAcceptanceTest {
         assertThat(pingValue, is(1.0));
     }
 
-    @Test
-    @Ignore("Not working at the moment because SingleServerMongoClient hasn't implemented close")
+    @Test(expected = IllegalStateException.class)
     public void shouldDisconnectFromServerWhenRequested() {
         final MongoClient mongoClient = MongoClients.create(serverAddress);
 
