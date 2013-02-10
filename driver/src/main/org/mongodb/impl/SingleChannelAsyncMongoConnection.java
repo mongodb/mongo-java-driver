@@ -19,7 +19,6 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoConnection;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
@@ -60,22 +59,22 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class SingleChannelAsyncMongoConnection implements MongoConnection {
+public class SingleChannelAsyncMongoConnection implements MongoPoolableConnection {
     private final ServerAddress serverAddress;
-    private final SimplePool<MongoAsynchronousChannel> channelPool;
+    private final SimplePool<MongoPoolableConnection> channelPool;
     private final BufferPool<ByteBuffer> bufferPool;
     private final MongoClientOptions options;
-    private MongoAsynchronousChannel channel;
+    private volatile MongoAsynchronousChannel channel;
     private volatile boolean activeAsyncCall;
-    private volatile boolean closePending;
+    private volatile boolean releasePending;
 
-    SingleChannelAsyncMongoConnection(final ServerAddress serverAddress, final SimplePool<MongoAsynchronousChannel> channelPool,
+    SingleChannelAsyncMongoConnection(final ServerAddress serverAddress, final SimplePool<MongoPoolableConnection> channelPool,
                                       final BufferPool<ByteBuffer> bufferPool, final MongoClientOptions options) {
         this.serverAddress = serverAddress;
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.options = options;
-        this.channel = channelPool.get();
+        this.channel = new MongoAsynchronousChannel(serverAddress, bufferPool, new DocumentSerializer(options.getPrimitiveSerializers()));
     }
 
     public ServerAddress getServerAddress() {
@@ -83,22 +82,29 @@ public class SingleChannelAsyncMongoConnection implements MongoConnection {
     }
 
     @Override
-    public void close() {
-        if (activeAsyncCall) {
-            closePending = true;
-            return;
+    public synchronized void close() {
+        if (channel != null) {
+            channel.close();
+            channel = null;
         }
+    }
+
+    @Override
+    public synchronized void release() {
         if (channel == null) {
-            return;
+            throw new IllegalStateException("Can not release a channel that's already closed");
         }
-        if (channelPool != null) {
-            channelPool.done(channel);
+        if (channelPool == null) {
+            throw new IllegalStateException("Can not release a channel not associated with a pool");
+        }
+
+        if (activeAsyncCall) {
+            releasePending = true;
         }
         else {
-            channel.close();
+            releasePending = false;
+            channelPool.done(this);
         }
-        channel = null;
-        closePending = false;
     }
 
     @Override
@@ -113,10 +119,10 @@ public class SingleChannelAsyncMongoConnection implements MongoConnection {
         return new DocumentSerializer(options.getPrimitiveSerializers());
     }
 
-    private void closeIfPending() {
+    private synchronized void releaseIfPending() {
         activeAsyncCall = false;
-        if (closePending) {
-            close();
+        if (releasePending) {
+            release();
         }
     }
 
@@ -430,7 +436,7 @@ public class SingleChannelAsyncMongoConnection implements MongoConnection {
             }
             closed = true;
             final ServerAddress address = connection.getServerAddress();
-            connection.closeIfPending();
+            connection.releaseIfPending();
             if (replyMessage != null) {
                 callCallback(address, replyMessage, e);
             }

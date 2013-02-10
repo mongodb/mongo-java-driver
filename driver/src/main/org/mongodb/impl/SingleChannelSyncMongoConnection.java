@@ -20,7 +20,6 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.bson.util.BufferPool;
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoConnection;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
@@ -56,26 +55,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
 
-final class SingleChannelSyncMongoConnection implements MongoConnection {
+final class SingleChannelSyncMongoConnection implements MongoPoolableConnection {
     private final BufferPool<ByteBuffer> bufferPool;
     private final MongoClientOptions options;
-    private final SimplePool<MongoChannel> channelPool;
+    private final SimplePool<MongoPoolableConnection> channelPool;
     private MongoChannel channel;
 
-    SingleChannelSyncMongoConnection(final ServerAddress serverAddress, final BufferPool<ByteBuffer> bufferPool,
-                                     final MongoClientOptions options) {
-        this.bufferPool = bufferPool;
-        this.options = options;
-        this.channelPool = null;
-        this.channel = new MongoChannel(serverAddress, bufferPool, new DocumentSerializer(options.getPrimitiveSerializers()));
-    }
-
-    SingleChannelSyncMongoConnection(final ServerAddress serverAddress, final SimplePool<MongoChannel> channelPool,
+    SingleChannelSyncMongoConnection(final ServerAddress serverAddress, final SimplePool<MongoPoolableConnection> channelPool,
                                      final BufferPool<ByteBuffer> bufferPool, final MongoClientOptions options) {
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.options = options;
-        this.channel = channelPool.get();
+        this.channel = new MongoChannel(serverAddress, bufferPool, new DocumentSerializer(options.getPrimitiveSerializers()));
     }
 
     @Override
@@ -158,6 +149,27 @@ final class SingleChannelSyncMongoConnection implements MongoConnection {
         channel.sendMessage(message);
     }
 
+    @Override
+    public void close() {
+        if (channel != null) {
+            channel.close();
+            channel = null;
+        }
+    }
+
+    @Override
+    public void release() {
+        if (channel == null) {
+            throw new IllegalStateException("Can not release a channel that's already closed");
+        }
+        if (channelPool == null) {
+            throw new IllegalStateException("Can not release a channel not associated with a pool");
+        }
+
+        channelPool.done(this);
+    }
+
+
     private Serializer<Document> withDocumentSerializer(final Serializer<Document> serializer) {
         if (serializer != null) {
             return serializer;
@@ -184,19 +196,6 @@ final class SingleChannelSyncMongoConnection implements MongoConnection {
                 getLastError,
                 serializer);
         return getLastError.parseGetLastErrorResponse(commandResult);
-    }
-
-    @Override
-    public void close() {
-        if (channel != null) {
-            if (channelPool != null) {
-                channelPool.done(channel);
-            }
-            else {
-                channel.close();
-            }
-            channel = null;
-        }
     }
 
     @Override

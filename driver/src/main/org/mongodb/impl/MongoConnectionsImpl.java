@@ -21,6 +21,8 @@ import org.bson.util.BufferPool;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.AsyncDetector;
+import org.mongodb.io.PowerOfTwoByteBufferPool;
+import org.mongodb.pool.SimplePool;
 
 import java.nio.ByteBuffer;
 
@@ -29,21 +31,28 @@ public final class MongoConnectionsImpl {
     }
 
     public static SingleServerMongoConnection create(final ServerAddress serverAddress, final MongoClientOptions options) {
-        if (AsyncDetector.javaVersionSupportsAsync()) {
-            return new SingleServerAsyncMongoConnection(serverAddress, options);
-        }
-        else {
-            return new SingleServerAsyncMongoConnection(serverAddress, options);
-        }
+        return create(serverAddress, options, new PowerOfTwoByteBufferPool());
     }
 
     public static SingleServerMongoConnection create(final ServerAddress serverAddress, final MongoClientOptions options,
                                                      final BufferPool<ByteBuffer> bufferPool) {
         if (AsyncDetector.javaVersionSupportsAsync()) {
-            return new SingleServerAsyncMongoConnection(serverAddress, options, bufferPool);
+            return new SingleServerMongoConnection(options, serverAddress,
+                    new SimplePool<MongoPoolableConnection>(serverAddress.toString(), options.getConnectionsPerHost()) {
+                        @Override
+                        protected MongoPoolableConnection createNew() {
+                            return new SingleChannelAsyncMongoConnection(serverAddress, this, bufferPool, options);
+                        }
+                    });
         }
         else {
-            return new SingleServerSyncMongoConnection(serverAddress, options, bufferPool);
+            return new SingleServerMongoConnection(options, serverAddress,
+                    new SimplePool<MongoPoolableConnection>(serverAddress.toString(), options.getConnectionsPerHost()) {
+                        @Override
+                        protected MongoPoolableConnection createNew() {
+                            return new SingleChannelSyncMongoConnection(serverAddress, this, bufferPool, options);
+                        }
+                    });
         }
     }
 
