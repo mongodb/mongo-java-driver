@@ -24,7 +24,6 @@ import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoQueryFailureException;
 import org.mongodb.ServerAddress;
 import org.mongodb.protocol.MongoGetMoreMessage;
-import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyHeader;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.protocol.MongoRequestMessage;
@@ -64,15 +63,7 @@ public class MongoChannel {
         sendOneWayMessage(message);
     }
 
-    public <T> MongoReplyMessage<T> sendQueryMessage(final MongoQueryMessage message, final Serializer<T> serializer) {
-        ensureOpen();
-        long start = System.nanoTime();
-        sendOneWayMessage(message);
-        return receiveMessage(message, serializer, start);
-    }
-
-    public <T> MongoReplyMessage<T> sendGetMoreMessage(final MongoGetMoreMessage message,
-                                                       final Serializer<T> serializer) {
+    public <T> MongoReplyMessage<T> sendMessage(final MongoRequestMessage message, final Serializer<T> serializer) {
         ensureOpen();
         long start = System.nanoTime();
         sendOneWayMessage(message);
