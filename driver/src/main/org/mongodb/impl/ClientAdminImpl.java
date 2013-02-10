@@ -43,7 +43,7 @@ class ClientAdminImpl implements ClientAdmin {
     //http://docs.mongodb.org/manual/reference/command/ping/
     @Override
     public double ping() {
-        final CommandResult pingResult = connection.executeCommand(ADMIN_DATABASE, PING_COMMAND, documentSerializer);
+        final CommandResult pingResult = connection.command(ADMIN_DATABASE, PING_COMMAND, documentSerializer);
 
         return (Double) pingResult.getResponse().get("ok");
     }

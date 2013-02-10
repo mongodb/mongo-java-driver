@@ -82,7 +82,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
         insertIndexOperation.writeConcern(WriteConcern.ACKNOWLEDGED);
 
-        operations.insert(indexesNamespace, insertIndexOperation, documentSerializer, documentSerializer);
+        operations.insert(indexesNamespace, insertIndexOperation, documentSerializer);
     }
 
     @Override

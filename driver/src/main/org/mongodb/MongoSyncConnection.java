@@ -32,24 +32,21 @@ import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.Serializer;
 
 public interface MongoSyncConnection {
-    // TODO: should this really be a separate call from query?
-    CommandResult executeCommand(String database, MongoCommand commandOperation,
-                                 Serializer<Document> serializer);
+    CommandResult command(String database, MongoCommand commandOperation, Serializer<Document> serializer);
 
-    <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Serializer<Document> baseSerializer,
-                             Serializer<T> serializer);
+    <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Serializer<Document> querySerializer,
+                             Serializer<T> resultSerializer);
 
-    <T> QueryResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> serializer);
+    <T> QueryResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> resultSerializer);
 
     void killCursors(MongoKillCursor killCursor);
 
-    <T> WriteResult insert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer,
-                           final Serializer<Document> baseSerializer);
+    <T> WriteResult insert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer);
 
-    WriteResult update(final MongoNamespace namespace, MongoUpdate update, Serializer<Document> serializer);
+    WriteResult update(final MongoNamespace namespace, MongoUpdate update, Serializer<Document> querySerializer);
 
-    <T> WriteResult replace(MongoNamespace namespace, MongoReplace<T> replace, Serializer<Document> baseSerializer,
+    <T> WriteResult replace(MongoNamespace namespace, MongoReplace<T> replace, Serializer<Document> querySerializer,
                             Serializer<T> serializer);
 
-    WriteResult remove(final MongoNamespace namespace, MongoRemove remove, Serializer<Document> serializer);
+    WriteResult remove(final MongoNamespace namespace, MongoRemove remove, Serializer<Document> querySerializer);
 }

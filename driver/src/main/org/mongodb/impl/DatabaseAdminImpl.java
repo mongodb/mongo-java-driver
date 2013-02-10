@@ -60,7 +60,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        new CommandResult(operations.executeCommand(databaseName, DROP_DATABASE, documentSerializer));
+        new CommandResult(operations.command(databaseName, DROP_DATABASE, documentSerializer));
     }
 
     @Override
@@ -89,7 +89,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         final CommandResult commandResult = new CommandResult(
-                operations.executeCommand(databaseName, new Create(createCollectionOptions), documentSerializer));
+                operations.command(databaseName, new Create(createCollectionOptions), documentSerializer));
         handleErrors(commandResult);
     }
 
@@ -101,7 +101,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
         final RenameCollection rename = new RenameCollection(renameCollectionOptions, databaseName);
-        final CommandResult commandResult = operations.executeCommand("admin", rename, documentSerializer);
+        final CommandResult commandResult = operations.command("admin", rename, documentSerializer);
         handleErrors(commandResult);
     }
 }

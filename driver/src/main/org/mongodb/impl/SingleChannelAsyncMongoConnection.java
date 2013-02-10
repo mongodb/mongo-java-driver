@@ -127,10 +127,10 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
     }
 
     @Override
-    public CommandResult executeCommand(final String database, final MongoCommand commandOperation,
-                                        final Serializer<Document> serializer) {
+    public CommandResult command(final String database, final MongoCommand commandOperation,
+                                 final Serializer<Document> serializer) {
         try {
-            CommandResult result = asyncExecuteCommand(database, commandOperation, serializer).get();
+            CommandResult result = asyncCommand(database, commandOperation, serializer).get();
             if (result == null) {
                 throw new MongoInternalException("Command result should not be null", null);
             }
@@ -145,9 +145,9 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
 
     @Override
     public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                  final Serializer<T> serializer, final Serializer<Document> baseSerializer) {
+                                  final Serializer<T> serializer) {
         try {
-            WriteResult result = asyncInsert(namespace, insert, serializer, baseSerializer).get();
+            WriteResult result = asyncInsert(namespace, insert, serializer).get();
             if (result == null) {
                 throw new MongoInternalException("Command result should not be null", null);
             }
@@ -162,9 +162,9 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
-                                    final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+                                    final Serializer<Document> querySerializer, final Serializer<T> resultSerializer) {
         try {
-            QueryResult<T> result = asyncQuery(namespace, find, baseSerializer, serializer).get();
+            QueryResult<T> result = asyncQuery(namespace, find, querySerializer, resultSerializer).get();
             if (result == null) {
                 throw new MongoInternalException("Query result should not be null", null);
             }
@@ -179,9 +179,9 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
 
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
-                                      final Serializer<T> serializer) {
+                                      final Serializer<T> resultSerializer) {
         try {
-            QueryResult<T> result = asyncGetMore(namespace, getMore, serializer).get();
+            QueryResult<T> result = asyncGetMore(namespace, getMore, resultSerializer).get();
             if (result == null) {
                 throw new MongoInternalException("Query result should not be null", null);
             }
@@ -195,9 +195,9 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
     }
 
     @Override
-    public WriteResult update(final MongoNamespace namespace, final MongoUpdate update, final Serializer<Document> serializer) {
+    public WriteResult update(final MongoNamespace namespace, final MongoUpdate update, final Serializer<Document> querySerializer) {
         try {
-            WriteResult result = asyncUpdate(namespace, update, serializer).get();
+            WriteResult result = asyncUpdate(namespace, update, querySerializer).get();
             if (result == null) {
                 throw new MongoInternalException("Command result should not be null", null);
             }
@@ -212,10 +212,10 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
 
     @Override
     public <T> WriteResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                   final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+                                   final Serializer<Document> querySerializer, final Serializer<T> serializer) {
 
         try {
-            WriteResult result = asyncReplace(namespace, replace, baseSerializer, serializer).get();
+            WriteResult result = asyncReplace(namespace, replace, querySerializer, serializer).get();
             if (result == null) {
                 throw new MongoInternalException("Command result should not be null", null);
             }
@@ -230,9 +230,9 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
 
     @Override
     public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove,
-                              final Serializer<Document> serializer) {
+                              final Serializer<Document> querySerializer) {
         try {
-            WriteResult result = asyncRemove(namespace, remove, serializer).get();
+            WriteResult result = asyncRemove(namespace, remove, querySerializer).get();
             if (result == null) {
                 throw new MongoInternalException("Command result should not be null", null);
             }
@@ -253,18 +253,18 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
     }
 
     @Override
-    public Future<CommandResult> asyncExecuteCommand(final String database, final MongoCommand commandOperation,
-                                                     final Serializer<Document> serializer) {
+    public Future<CommandResult> asyncCommand(final String database, final MongoCommand commandOperation,
+                                              final Serializer<Document> serializer) {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
-        asyncExecuteCommand(database, commandOperation, serializer, new SingleResultFutureCallback<CommandResult>(retVal));
+        asyncCommand(database, commandOperation, serializer, new SingleResultFutureCallback<CommandResult>(retVal));
 
         return retVal;
     }
 
     @Override
-    public void asyncExecuteCommand(final String database, final MongoCommand commandOperation, final Serializer<Document> serializer,
-                                    final SingleResultCallback<CommandResult> callback) {
+    public void asyncCommand(final String database, final MongoCommand commandOperation, final Serializer<Document> serializer,
+                             final SingleResultCallback<CommandResult> callback) {
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
         final MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", commandOperation,
                 new PooledByteBufferOutput(bufferPool),
@@ -276,68 +276,68 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
 
     @Override
     public <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
-                                                 final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+                                                 final Serializer<Document> querySerializer, final Serializer<T> resultSerializer) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        asyncQuery(namespace, find, baseSerializer, serializer, new SingleResultFutureCallback<QueryResult<T>>(retVal));
+        asyncQuery(namespace, find, querySerializer, resultSerializer, new SingleResultFutureCallback<QueryResult<T>>(retVal));
 
         return retVal;
     }
 
     @Override
-    public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Serializer<Document> baseSerializer,
-                               final Serializer<T> serializer, final SingleResultCallback<QueryResult<T>> callback) {
+    public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Serializer<Document> querySerializer,
+                               final Serializer<T> resultSerializer, final SingleResultCallback<QueryResult<T>> callback) {
         final MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find,
                 new PooledByteBufferOutput(bufferPool),
-                withDocumentSerializer(baseSerializer));
-        channel.sendQueryMessage(message, serializer,
+                withDocumentSerializer(querySerializer));
+        channel.sendQueryMessage(message, resultSerializer,
                 new MongoReplyMessageQueryResultCallback<T>(callback, SingleChannelAsyncMongoConnection.this));
     }
 
     @Override
     public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
-                                                   final Serializer<T> serializer) {
+                                                   final Serializer<T> resultSerializer) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        asyncGetMore(namespace, getMore, serializer, new SingleResultFutureCallback<QueryResult<T>>(retVal));
+        asyncGetMore(namespace, getMore, resultSerializer, new SingleResultFutureCallback<QueryResult<T>>(retVal));
 
         return retVal;
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> resultSerializer,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
                 new PooledByteBufferOutput(bufferPool));
-        channel.sendGetMoreMessage(message, serializer,
+        channel.sendGetMoreMessage(message, resultSerializer,
                 new MongoReplyMessageGetMoreResultCallback<T>(callback, SingleChannelAsyncMongoConnection.this));
     }
 
     @Override
     public <T> Future<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                               final Serializer<T> serializer, final Serializer<Document> baseSerializer) {
+                                               final Serializer<T> serializer) {
         final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-        asyncInsert(namespace, insert, serializer, baseSerializer, new SingleResultFutureCallback<WriteResult>(retVal));
+        asyncInsert(namespace, insert, serializer, new SingleResultFutureCallback<WriteResult>(retVal));
 
         return retVal;
     }
 
     @Override
     public <T> void asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert, final Serializer<T> serializer,
-                                final Serializer<Document> baseSerializer, final SingleResultCallback<WriteResult> callback) {
+                                final SingleResultCallback<WriteResult> callback) {
         insert.writeConcernIfAbsent(options.getWriteConcern());
         final MongoInsertMessage<T> message = new MongoInsertMessage<T>(namespace.getFullName(), insert,
                 new PooledByteBufferOutput(bufferPool), serializer);
-        sendAsyncWriteMessage(namespace, insert, baseSerializer, callback, message);
+        sendAsyncWriteMessage(namespace, insert, withDocumentSerializer(null), callback, message);
     }
 
     @Override
     public Future<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
-                                           final Serializer<Document> serializer) {
+                                           final Serializer<Document> querySerializer) {
         final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-        asyncUpdate(namespace, update, serializer, new SingleResultFutureCallback<WriteResult>(retVal));
+        asyncUpdate(namespace, update, querySerializer, new SingleResultFutureCallback<WriteResult>(retVal));
 
         return retVal;
     }
@@ -353,42 +353,42 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
 
     @Override
     public <T> Future<WriteResult> asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                                final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+                                                final Serializer<Document> querySerializer, final Serializer<T> serializer) {
         final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-        asyncReplace(namespace, replace, baseSerializer, serializer, new SingleResultFutureCallback<WriteResult>(retVal));
+        asyncReplace(namespace, replace, querySerializer, serializer, new SingleResultFutureCallback<WriteResult>(retVal));
 
         return retVal;
     }
 
     @Override
     public <T> void asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                 final Serializer<Document> baseSerializer, final Serializer<T> serializer,
+                                 final Serializer<Document> querySerializer, final Serializer<T> serializer,
                                  final SingleResultCallback<WriteResult> callback) {
         replace.writeConcernIfAbsent(options.getWriteConcern());
         final MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), replace,
-                new PooledByteBufferOutput(bufferPool), withDocumentSerializer(baseSerializer), serializer);
-        sendAsyncWriteMessage(namespace, replace, baseSerializer, callback, message);
+                new PooledByteBufferOutput(bufferPool), withDocumentSerializer(querySerializer), serializer);
+        sendAsyncWriteMessage(namespace, replace, querySerializer, callback, message);
     }
 
     @Override
     public Future<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
-                                           final Serializer<Document> serializer) {
+                                           final Serializer<Document> querySerializer) {
         final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-        asyncRemove(namespace, remove, serializer, new SingleResultFutureCallback<WriteResult>(retVal));
+        asyncRemove(namespace, remove, querySerializer, new SingleResultFutureCallback<WriteResult>(retVal));
 
         return retVal;
     }
 
     @Override
-    public void asyncRemove(final MongoNamespace namespace, final MongoRemove remove, final Serializer<Document> serializer,
+    public void asyncRemove(final MongoNamespace namespace, final MongoRemove remove, final Serializer<Document> querySerializer,
                             final SingleResultCallback<WriteResult> callback) {
         remove.writeConcernIfAbsent(options.getWriteConcern());
         final MongoDeleteMessage message = new MongoDeleteMessage(namespace.getFullName(), remove,
                 new PooledByteBufferOutput(bufferPool),
-                withDocumentSerializer(serializer));
-        sendAsyncWriteMessage(namespace, remove, serializer, callback, message);
+                withDocumentSerializer(querySerializer));
+        sendAsyncWriteMessage(namespace, remove, querySerializer, callback, message);
     }
 
     private void sendAsyncWriteMessage(final MongoNamespace namespace, final MongoWrite write, final Serializer<Document> serializer,

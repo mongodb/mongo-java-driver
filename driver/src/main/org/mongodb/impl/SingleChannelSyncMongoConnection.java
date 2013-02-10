@@ -70,39 +70,42 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
     }
 
     @Override
-    public CommandResult executeCommand(final String database, final MongoCommand commandOperation,
-                                        final Serializer<Document> serializer) {
+    public CommandResult command(final String database, final MongoCommand commandOperation, final Serializer<Document> serializer) {
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
         final MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", commandOperation,
                 new PooledByteBufferOutput(bufferPool), withDocumentSerializer(serializer));
         final MongoReplyMessage<Document> replyMessage = channel.sendMessage(message, serializer);
 
+        return createCommandResult(commandOperation, replyMessage);
+    }
+
+    private CommandResult createCommandResult(final MongoCommand commandOperation, final MongoReplyMessage<Document> replyMessage) {
         return new CommandResult(commandOperation.toDocument(), channel.getAddress(),
                 replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds());
     }
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
-                                    final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+                                    final Serializer<Document> querySerializer, final Serializer<T> resultSerializer) {
         find.readPreferenceIfAbsent(options.getReadPreference());
         final MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find,
-                new PooledByteBufferOutput(bufferPool), withDocumentSerializer(baseSerializer));
-        final MongoReplyMessage<T> replyMessage = channel.sendMessage(message, serializer);
+                new PooledByteBufferOutput(bufferPool), withDocumentSerializer(querySerializer));
+        final MongoReplyMessage<T> replyMessage = channel.sendMessage(message, resultSerializer);
         return new QueryResult<T>(replyMessage, channel.getAddress());
     }
 
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
-                                      final Serializer<T> serializer) {
+                                      final Serializer<T> resultSerializer) {
         final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
                 new PooledByteBufferOutput(bufferPool));
-        final MongoReplyMessage<T> replyMessage = channel.sendMessage(message, serializer);
+        final MongoReplyMessage<T> replyMessage = channel.sendMessage(message, resultSerializer);
         return new QueryResult<T>(replyMessage, channel.getAddress());
     }
 
     @Override
     public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                  final Serializer<T> serializer, final Serializer<Document> baseSerializer) {
+                                  final Serializer<T> serializer) {
         insert.writeConcernIfAbsent(options.getWriteConcern());
         final MongoInsertMessage<T> insertMessage = new MongoInsertMessage<T>(namespace.getFullName(), insert,
                 new PooledByteBufferOutput(bufferPool), serializer);
@@ -111,28 +114,28 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
 
     @Override
     public WriteResult update(final MongoNamespace namespace, final MongoUpdate update,
-                              final Serializer<Document> serializer) {
+                              final Serializer<Document> querySerializer) {
         update.writeConcernIfAbsent(options.getWriteConcern());
         final MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), update,
-                new PooledByteBufferOutput(bufferPool), withDocumentSerializer(serializer));
+                new PooledByteBufferOutput(bufferPool), withDocumentSerializer(querySerializer));
         return new WriteResult(update, sendWriteMessage(namespace, message, update.getWriteConcern()));
     }
 
     @Override
     public <T> WriteResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                   final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+                                   final Serializer<Document> querySerializer, final Serializer<T> serializer) {
         replace.writeConcernIfAbsent(options.getWriteConcern());
         final MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), replace,
-                new PooledByteBufferOutput(bufferPool), withDocumentSerializer(baseSerializer), serializer);
+                new PooledByteBufferOutput(bufferPool), withDocumentSerializer(querySerializer), serializer);
         return new WriteResult(replace, sendWriteMessage(namespace, message, replace.getWriteConcern()));
     }
 
     @Override
     public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove,
-                              final Serializer<Document> serializer) {
+                              final Serializer<Document> querySerializer) {
         remove.writeConcernIfAbsent(options.getWriteConcern());
         final MongoDeleteMessage message = new MongoDeleteMessage(namespace.getFullName(), remove,
-                new PooledByteBufferOutput(bufferPool), withDocumentSerializer(serializer));
+                new PooledByteBufferOutput(bufferPool), withDocumentSerializer(querySerializer));
         return new WriteResult(remove, sendWriteMessage(namespace, message, remove.getWriteConcern()));
     }
 
@@ -141,7 +144,6 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
         final MongoKillCursorsMessage message = new MongoKillCursorsMessage(new PooledByteBufferOutput(bufferPool), killCursor);
         channel.sendMessage(message);
     }
-
 
     @Override
     public void close() {
@@ -190,61 +192,61 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
         final GetLastError getLastError = new GetLastError(writeConcern);
 
         final DocumentSerializer serializer = new DocumentSerializer(options.getPrimitiveSerializers());
-        final CommandResult commandResult = executeCommand(namespace.getDatabaseName(), getLastError, serializer);
+        final CommandResult commandResult = command(namespace.getDatabaseName(), getLastError, serializer);
         return getLastError.parseGetLastErrorResponse(commandResult);
     }
 
     @Override
-    public Future<CommandResult> asyncExecuteCommand(final String database, final MongoCommand commandOperation,
-                                                     final Serializer<Document> serializer) {
+    public Future<CommandResult> asyncCommand(final String database, final MongoCommand commandOperation,
+                                              final Serializer<Document> serializer) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void asyncExecuteCommand(final String database, final MongoCommand commandOperation,
-                                    final Serializer<Document> serializer, final SingleResultCallback<CommandResult> callback) {
+    public void asyncCommand(final String database, final MongoCommand commandOperation,
+                             final Serializer<Document> serializer, final SingleResultCallback<CommandResult> callback) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
-                                                 final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+                                                 final Serializer<Document> querySerializer, final Serializer<T> resultSerializer) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Serializer<Document> baseSerializer,
-                               final Serializer<T> serializer, final SingleResultCallback<QueryResult<T>> callback) {
+    public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Serializer<Document> querySerializer,
+                               final Serializer<T> resultSerializer, final SingleResultCallback<QueryResult<T>> callback) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
-                                                   final Serializer<T> serializer) {
+                                                   final Serializer<T> resultSerializer) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> resultSerializer,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> Future<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                               final Serializer<T> serializer, final Serializer<Document> baseSerializer) {
+                                               final Serializer<T> serializer) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> void asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert, final Serializer<T> serializer,
-                                final Serializer<Document> baseSerializer, final SingleResultCallback<WriteResult> callback) {
+                                final SingleResultCallback<WriteResult> callback) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public Future<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
-                                           final Serializer<Document> serializer) {
+                                           final Serializer<Document> querySerializer) {
         throw new UnsupportedOperationException();
     }
 
@@ -256,25 +258,25 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
 
     @Override
     public <T> Future<WriteResult> asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                                final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+                                                final Serializer<Document> querySerializer, final Serializer<T> serializer) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> void asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                 final Serializer<Document> baseSerializer, final Serializer<T> serializer,
+                                 final Serializer<Document> querySerializer, final Serializer<T> serializer,
                                  final SingleResultCallback<WriteResult> callback) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public Future<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
-                                           final Serializer<Document> serializer) {
+                                           final Serializer<Document> querySerializer) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void asyncRemove(final MongoNamespace namespace, final MongoRemove remove, final Serializer<Document> serializer,
+    public void asyncRemove(final MongoNamespace namespace, final MongoRemove remove, final Serializer<Document> querySerializer,
                             final SingleResultCallback<WriteResult> callback) {
         throw new UnsupportedOperationException();
     }

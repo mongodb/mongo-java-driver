@@ -64,21 +64,21 @@ class ReplicaSetMongoConnection implements MongoConnection {
     }
 
     @Override
-    public CommandResult executeCommand(final String database, final MongoCommand commandOperation,
-                                        final Serializer<Document> serializer) {
-        return getConnection(commandOperation.getReadPreference()).executeCommand(database, commandOperation, serializer);
+    public CommandResult command(final String database, final MongoCommand commandOperation,
+                                 final Serializer<Document> serializer) {
+        return getConnection(commandOperation.getReadPreference()).command(database, commandOperation, serializer);
     }
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
-                                    final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
-        return getConnection(find.getReadPreference()).query(namespace, find, baseSerializer, serializer);
+                                    final Serializer<Document> querySerializer, final Serializer<T> resultSerializer) {
+        return getConnection(find.getReadPreference()).query(namespace, find, querySerializer, resultSerializer);
     }
 
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
-                                      final Serializer<T> serializer) {
-        return getConnection(getMore.getServerCursor().getAddress()).getMore(namespace, getMore, serializer);
+                                      final Serializer<T> resultSerializer) {
+        return getConnection(getMore.getServerCursor().getAddress()).getMore(namespace, getMore, resultSerializer);
     }
 
     @Override
@@ -89,88 +89,79 @@ class ReplicaSetMongoConnection implements MongoConnection {
     }
 
     @Override
-    public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                  final Serializer<T> serializer,
-                                  final Serializer<Document> baseSerializer) {
-        return getPrimary().insert(namespace, insert, serializer, baseSerializer);
+    public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert, final Serializer<T> serializer) {
+        return getPrimary().insert(namespace, insert, serializer);
     }
 
     @Override
-    public WriteResult update(final MongoNamespace namespace, final MongoUpdate update,
-                              final Serializer<Document> serializer) {
-        return getPrimary().update(namespace, update, serializer);
+    public WriteResult update(final MongoNamespace namespace, final MongoUpdate update, final Serializer<Document> querySerializer) {
+        return getPrimary().update(namespace, update, querySerializer);
     }
 
     @Override
     public <T> WriteResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                   final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
-        return getPrimary().replace(namespace, replace, baseSerializer, serializer);
+                                   final Serializer<Document> querySerializer, final Serializer<T> serializer) {
+        return getPrimary().replace(namespace, replace, querySerializer, serializer);
     }
 
     @Override
-    public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove,
-                              final Serializer<Document> serializer) {
-        return getPrimary().remove(namespace, remove, serializer);
+    public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove, final Serializer<Document> querySerializer) {
+        return getPrimary().remove(namespace, remove, querySerializer);
+   }
+
+    @Override
+    public Future<CommandResult> asyncCommand(final String database, final MongoCommand commandOperation,
+                                              final Serializer<Document> serializer) {
+        return getConnection(commandOperation.getReadPreference()).asyncCommand(database, commandOperation, serializer);
     }
 
     @Override
-    public Future<CommandResult> asyncExecuteCommand(final String database, final MongoCommand commandOperation,
-                                                     final Serializer<Document> serializer) {
-        return getConnection(commandOperation.getReadPreference()).asyncExecuteCommand(database, commandOperation, serializer);
-    }
-
-    @Override
-    public void asyncExecuteCommand(final String database, final MongoCommand commandOperation,
-                                    final Serializer<Document> serializer,
-                                    final SingleResultCallback<CommandResult> callback) {
-        getConnection(commandOperation.getReadPreference()).asyncExecuteCommand(database, commandOperation, serializer, callback);
+    public void asyncCommand(final String database, final MongoCommand commandOperation, final Serializer<Document> serializer,
+                             final SingleResultCallback<CommandResult> callback) {
+        getConnection(commandOperation.getReadPreference()).asyncCommand(database, commandOperation, serializer, callback);
     }
 
     @Override
     public <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
-                                                 final Serializer<Document> baseSerializer,
-                                                 final Serializer<T> serializer) {
-        return getConnection(find.getReadPreference()).asyncQuery(namespace, find, baseSerializer, serializer);
+                                                 final Serializer<Document> querySerializer, final Serializer<T> resultSerializer) {
+        return getConnection(find.getReadPreference()).asyncQuery(namespace, find, querySerializer, resultSerializer);
     }
 
     @Override
-    public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find,
-                               final Serializer<Document> baseSerializer,
-                               final Serializer<T> serializer, final SingleResultCallback<QueryResult<T>> callback) {
-        getConnection(find.getReadPreference()).asyncQuery(namespace, find, baseSerializer, serializer, callback);
+    public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Serializer<Document> querySerializer,
+                               final Serializer<T> resultSerializer, final SingleResultCallback<QueryResult<T>> callback) {
+        getConnection(find.getReadPreference()).asyncQuery(namespace, find, querySerializer, resultSerializer, callback);
     }
 
     @Override
     public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
-                                                   final Serializer<T> serializer) {
-        return getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, serializer);
+                                                   final Serializer<T> resultSerializer) {
+        return getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultSerializer);
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> serializer,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> resultSerializer,
                                  final SingleResultCallback<QueryResult<T>> callback) {
-        getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, serializer, callback);
+        getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultSerializer, callback);
     }
 
     @Override
     public <T> Future<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                               final Serializer<T> serializer,
-                                               final Serializer<Document> baseSerializer) {
-        return getPrimary().asyncInsert(namespace, insert, serializer, baseSerializer);
+                                               final Serializer<T> serializer) {
+        return getPrimary().asyncInsert(namespace, insert, serializer);
     }
 
     @Override
     public <T> void asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
                                 final Serializer<T> serializer,
-                                final Serializer<Document> baseSerializer,
                                 final SingleResultCallback<WriteResult> callback) {
-        getPrimary().asyncInsert(namespace, insert, serializer, baseSerializer, callback);
+        getPrimary().asyncInsert(namespace, insert, serializer, callback);
     }
 
     @Override
     public Future<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
-                                           final Serializer<Document> serializer) {
-        return getPrimary().asyncUpdate(namespace, update, serializer);
+                                           final Serializer<Document> querySerializer) {
+        return getPrimary().asyncUpdate(namespace, update, querySerializer);
     }
 
     @Override
@@ -182,29 +173,29 @@ class ReplicaSetMongoConnection implements MongoConnection {
 
     @Override
     public <T> Future<WriteResult> asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                                final Serializer<Document> baseSerializer,
+                                                final Serializer<Document> querySerializer,
                                                 final Serializer<T> serializer) {
-        return getPrimary().asyncReplace(namespace, replace, baseSerializer, serializer);
+        return getPrimary().asyncReplace(namespace, replace, querySerializer, serializer);
     }
 
     @Override
     public <T> void asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                 final Serializer<Document> baseSerializer, final Serializer<T> serializer,
+                                 final Serializer<Document> querySerializer, final Serializer<T> serializer,
                                  final SingleResultCallback<WriteResult> callback) {
-        getPrimary().asyncReplace(namespace, replace, baseSerializer, serializer, callback);
+        getPrimary().asyncReplace(namespace, replace, querySerializer, serializer, callback);
     }
 
     @Override
     public Future<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
-                                           final Serializer<Document> serializer) {
-        return getPrimary().asyncRemove(namespace, remove, serializer);
+                                           final Serializer<Document> querySerializer) {
+        return getPrimary().asyncRemove(namespace, remove, querySerializer);
     }
 
     @Override
     public void asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
-                            final Serializer<Document> serializer,
+                            final Serializer<Document> querySerializer,
                             final SingleResultCallback<WriteResult> callback) {
-        getPrimary().asyncRemove(namespace, remove, serializer, callback);
+        getPrimary().asyncRemove(namespace, remove, querySerializer, callback);
     }
 
     @Override
@@ -249,5 +240,4 @@ class ReplicaSetMongoConnection implements MongoConnection {
         }
         return connection;
     }
-
 }
