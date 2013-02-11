@@ -48,8 +48,9 @@ public class Mongo {
         this(hosts, new MongoOptions());
     }
 
-    public Mongo(final List<ServerAddress> hosts, final MongoOptions mongoOptions) {
-        this(hosts.get(0), mongoOptions);
+    public Mongo(final List<ServerAddress> seedList, final MongoOptions mongoOptions) {
+        this(new MongoClientAdapter(createNewSeedList(seedList),
+                MongoClientOptions.builder().fromMongoOptions(mongoOptions).build().toNew()));
     }
 
     public Mongo(final MongoURI mongoURI) throws UnknownHostException {
@@ -169,5 +170,13 @@ public class Mongo {
 
     public int getOptions() {
         throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    private static List<org.mongodb.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
+        List<org.mongodb.ServerAddress> retVal = new ArrayList<org.mongodb.ServerAddress>(seedList.size());
+        for (ServerAddress cur : seedList) {
+            retVal.add(cur.toNew());
+        }
+        return retVal;
     }
 }

@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class MongoClientAdapter {
 
-    private final MongoClient adapted;
+    private final MongoClientImpl adapted;
 
     public MongoClientAdapter(final ServerAddress serverAddress, final MongoClientOptions options) {
         adapted = MongoClientsImpl.create(serverAddress, options);
