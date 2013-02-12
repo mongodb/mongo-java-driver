@@ -177,7 +177,7 @@ public class DBPort {
         if ( data == null )
             throw new MongoInternalException( "something is wrong, no command result" );
 
-        CommandResult cr = new CommandResult(cmd, res.serverUsed());
+        CommandResult cr = new CommandResult(res.serverUsed());
         cr.putAll( data );
         return cr;
     }

@@ -25,14 +25,9 @@ package com.mongodb;
 public class CommandResult extends BasicDBObject {
 
     CommandResult(ServerAddress srv) {
-        this(null, srv);
-    }
-
-    CommandResult(DBObject cmd, ServerAddress srv) {
         if (srv == null) {
             throw new IllegalArgumentException("server address is null");
         }
-        _cmd = cmd;
         _host = srv;
         //so it is shown in toString/debug
         put("serverUsed", srv.toString());
@@ -61,55 +56,36 @@ public class CommandResult extends BasicDBObject {
      * @return The error message or null
      */
     public String getErrorMessage(){
-        Object foo = get( "errmsg" );
-        if ( foo == null )
+        Object errorMessage = get( "errmsg" );
+        if ( errorMessage == null )
             return null;
-        return foo.toString();
+        return errorMessage.toString();
     }
 
     /**
      * utility method to create an exception with the command name
      * @return The mongo exception or null
      */
-    public MongoException getException(){
-        if ( !ok() ) {
-            StringBuilder buf = new StringBuilder();
-
-            String cmdName;
-            if (_cmd != null) {
-                cmdName = _cmd.keySet().iterator().next();
-                buf.append( "command failed [" ).append( cmdName ).append( "]: " );
-            } else {
-                buf.append( "operation failed: ");
+    public MongoException getException() {
+        if ( !ok() ) {   // check for command failure
+            return new CommandFailureException( this );
+        } else if ( hasErr() ) { // check for errors reported by getlasterror command
+            if (getCode() == 11000 || getCode() == 11001 || getCode() == 12582) {
+                return new MongoException.DuplicateKey(this);
             }
-            
-            buf.append( toString() );
-
-            return new CommandFailure( this , buf.toString() );
-        } else {
-            // GLE check
-            if ( hasErr() ) {
-                Object foo = get( "err" );
-
-                int code = getCode();
-
-                String s = foo.toString();
-                if ( code == 11000 || code == 11001 || s.startsWith( "E11000" ) || s.startsWith( "E11001" ) )
-                    return new MongoException.DuplicateKey( code , s );
-
-                return new MongoException( code , s );
+            else {
+                return new MongoException.WriteConcernException(this);
             }
         }
 
-        //all good, should never get here.
-        return  null;
+        throw new IllegalStateException("This method should not be called if there is no exception");
     }
 
     /**
      * returns the "code" field, as an int
      * @return -1 if there is no code
      */
-    int getCode(){
+    int getCode() {
         int code = -1;
         if ( get( "code" ) instanceof Number )
             code = ((Number)get("code")).intValue();
@@ -139,20 +115,24 @@ public class CommandResult extends BasicDBObject {
 	return _host;
     }
 
-    private final DBObject _cmd;
     private final ServerAddress _host;
     private static final long serialVersionUID = 1L;
 
-    static class CommandFailure extends MongoException {
+    static class CommandFailureException extends MongoException {
         private static final long serialVersionUID = 1L;
+        private final CommandResult commandResult;
 
         /**
          * 
-         * @param res the result
-         * @param msg the message
+         * @param commandResult the result
          */
-        public CommandFailure( CommandResult res , String msg ){
-            super( ServerError.getCode( res ) , msg );
+        public CommandFailureException(CommandResult commandResult){
+            super(ServerError.getCode(commandResult), commandResult.toString());
+            this.commandResult = commandResult;
+        }
+
+        public CommandResult getCommandResult() {
+            return commandResult;
         }
     }
 }

@@ -58,7 +58,7 @@ public class DBPortTest extends TestCase {
             try {
                 port.checkAuth(m);
                 fail("should throw");
-            } catch (CommandResult.CommandFailure e) {
+            } catch (CommandResult.CommandFailureException e) {
                 // all good
             }
         }

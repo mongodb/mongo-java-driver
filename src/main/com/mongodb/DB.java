@@ -266,7 +266,7 @@ public abstract class DB {
 
         DBObject res = i.next();
         ServerAddress sa = (i instanceof Result) ? ((Result) i).getServerAddress() : null;
-        CommandResult cr = new CommandResult(cmd, sa);
+        CommandResult cr = new CommandResult(sa);
         cr.putAll( res );
         return cr;
     }
@@ -629,20 +629,20 @@ public abstract class DB {
         try {
             authenticationTestCommandResult = doAuthenticate(credentials);
             return new CommandResultPair(authenticationTestCommandResult);
-        } catch (CommandResult.CommandFailure commandFailure) {
-            return new CommandResultPair(commandFailure);
+        } catch (CommandResult.CommandFailureException commandFailureException) {
+            return new CommandResultPair(commandFailureException);
         }
     }
 
     class CommandResultPair {
         CommandResult result;
-        CommandResult.CommandFailure failure;
+        CommandResult.CommandFailureException failure;
 
         public CommandResultPair(final CommandResult result) {
             this.result = result;
         }
 
-        public CommandResultPair(final CommandResult.CommandFailure failure) {
+        public CommandResultPair(final CommandResult.CommandFailureException failure) {
             this.failure = failure;
         }
     }
