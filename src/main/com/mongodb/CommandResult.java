@@ -74,7 +74,7 @@ public class CommandResult extends BasicDBObject {
                 return new MongoException.DuplicateKey(this);
             }
             else {
-                return new MongoException.WriteConcernException(this);
+                return new WriteConcernException(this);
             }
         }
 
@@ -118,21 +118,4 @@ public class CommandResult extends BasicDBObject {
     private final ServerAddress _host;
     private static final long serialVersionUID = 1L;
 
-    static class CommandFailureException extends MongoException {
-        private static final long serialVersionUID = 1L;
-        private final CommandResult commandResult;
-
-        /**
-         * 
-         * @param commandResult the result
-         */
-        public CommandFailureException(CommandResult commandResult){
-            super(ServerError.getCode(commandResult), commandResult.toString());
-            this.commandResult = commandResult;
-        }
-
-        public CommandResult getCommandResult() {
-            return commandResult;
-        }
-    }
 }

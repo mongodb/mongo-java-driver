@@ -629,20 +629,20 @@ public abstract class DB {
         try {
             authenticationTestCommandResult = doAuthenticate(credentials);
             return new CommandResultPair(authenticationTestCommandResult);
-        } catch (CommandResult.CommandFailureException commandFailureException) {
+        } catch (CommandFailureException commandFailureException) {
             return new CommandResultPair(commandFailureException);
         }
     }
 
     class CommandResultPair {
         CommandResult result;
-        CommandResult.CommandFailureException failure;
+        CommandFailureException failure;
 
         public CommandResultPair(final CommandResult result) {
             this.result = result;
         }
 
-        public CommandResultPair(final CommandResult.CommandFailureException failure) {
+        public CommandResultPair(final CommandFailureException failure) {
             this.failure = failure;
         }
     }

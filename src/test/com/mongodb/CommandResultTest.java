@@ -29,7 +29,7 @@ public class CommandResultTest extends TestCase {
         try {
             commandResult.throwOnError();
             fail("Should throw");
-        } catch (CommandResult.CommandFailureException e) {
+        } catch (CommandFailureException e) {
             assertEquals(commandResult, e.getCommandResult());
             assertEquals(-5, e.getCode());
         }
@@ -43,7 +43,7 @@ public class CommandResultTest extends TestCase {
         try {
             commandResult.throwOnError();
             fail("Should throw");
-        } catch (CommandResult.CommandFailureException e) {
+        } catch (CommandFailureException e) {
             assertEquals(commandResult, e.getCommandResult());
             assertEquals(5000, e.getCode());
         }

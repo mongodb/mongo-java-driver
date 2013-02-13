@@ -119,30 +119,6 @@ public class MongoException extends RuntimeException {
     }
 
     /**
-     * An exception representing an error reported due to a write failure.
-     */
-    public static class WriteConcernException extends MongoException {
-
-        private static final long serialVersionUID = 841056799207039974L;
-
-        private final CommandResult commandResult;
-
-        public WriteConcernException(final CommandResult commandResult) {
-            super(commandResult.getCode(), commandResult.toString());
-            this.commandResult = commandResult;
-        }
-
-        /**
-         * Gets the getlasterror command result document.
-         *
-         * @return the command result
-         */
-        public CommandResult getCommandResult() {
-            return commandResult;
-        }
-    }
-
-    /**
      * Subclass of WriteConcernException representing a duplicate key error
      */
     public static class DuplicateKey extends WriteConcernException {

@@ -694,7 +694,7 @@ public class JavaClientTest extends TestCase {
             try {
                 db.authenticateCommand( "xx" , "f".toCharArray());
                 fail("Auth should have failed");
-            } catch (CommandResult.CommandFailureException e) {
+            } catch (CommandFailureException e) {
                 // all good
             }
             assertTrue(db.authenticateCommand("xx", "e".toCharArray()).ok());
