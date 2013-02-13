@@ -81,30 +81,34 @@ public class MongoClientURITest extends TestCase {
 
     @Test()
     public void testUserPass() {
+        final String userName = "user";
+        final char[] password = "pass".toCharArray();
+
         MongoClientURI u = new MongoClientURI("mongodb://user:pass@host/bar");
         assertEquals(1, u.getHosts().size());
         assertEquals("host", u.getHosts().get(0));
-        assertEquals("user", u.getUsername());
-        assertEquals("pass", new String(u.getPassword()));
-        assertEquals(new MongoCredential("user", "pass".toCharArray(), MongoAuthenticationMechanism.MONGO_CR, "bar"), u.getCredentials());
+        assertEquals(userName, u.getUsername());
+        assertArrayEquals(password, u.getPassword());
+
+        assertEquals(MongoCredential.createMongoCRCredential(userName, "bar", password), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user@host/?authProtocol=GSSAPI");
-        assertEquals(new MongoCredential("user", MongoAuthenticationMechanism.GSSAPI), u.getCredentials());
+        assertEquals(MongoCredential.createGSSAPICredential(userName), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user:pass@host/?authProtocol=MONGO-CR");
-        assertEquals(new MongoCredential("user", "pass".toCharArray(), MongoAuthenticationMechanism.MONGO_CR), u.getCredentials());
+        assertEquals(MongoCredential.createMongoCRCredential(userName, "admin", password), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user:pass@host/?authSource=test");
-        assertEquals(new MongoCredential("user", "pass".toCharArray(), "test"), u.getCredentials());
+        assertEquals(MongoCredential.createMongoCRCredential(userName, "test", password), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user:pass@host");
-        assertEquals(new MongoCredential("user", "pass".toCharArray(), "admin"), u.getCredentials());
+        assertEquals(MongoCredential.createMongoCRCredential(userName, "admin", password), u.getCredentials());
     }
 
     @Test
     public void testURIEncoding() {
         MongoClientURI u = new MongoClientURI("mongodb://use%24:he%21%21o@localhost");
-        assertEquals(new MongoCredential("use$", "he!!o".toCharArray()), u.getCredentials());
+        assertEquals(MongoCredential.createMongoCRCredential("use$", "admin", "he!!o".toCharArray()), u.getCredentials());
     }
 
     @Test()

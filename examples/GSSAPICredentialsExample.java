@@ -16,7 +16,6 @@
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
-import com.mongodb.MongoAuthenticationMechanism;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
@@ -69,7 +68,7 @@ public class GSSAPICredentialsExample {
         System.out.println();
 
         MongoClient mongoClient = new MongoClient(new ServerAddress(server),
-                        Arrays.asList(new MongoCredential(user, MongoAuthenticationMechanism.GSSAPI)),
+                        Arrays.asList(MongoCredential.createGSSAPICredential(user)),
                 new MongoClientOptions.Builder().socketKeepAlive(true).socketTimeout(30000).build());
         DB testDB = mongoClient.getDB(databaseName);
 

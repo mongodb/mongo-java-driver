@@ -389,7 +389,11 @@ public class MongoClientURI {
             return null;
         }
 
-        MongoAuthenticationMechanism protocol = MongoAuthenticationMechanism.MONGO_CR;
+        if (database == null) {
+            database = "admin";
+        }
+
+        String mechanism = MongoCredential.MONGO_CR_MECHANISM;
         String authSource = database;
 
         for (String key : authKeys) {
@@ -400,13 +404,18 @@ public class MongoClientURI {
             }
 
             if (key.equals("authprotocol")) {
-                protocol = MongoAuthenticationMechanism.byMechanismName(value);
+                mechanism = value;
             } else if (key.equals("authsource")) {
                 authSource = value;
             }
         }
 
-        return new MongoCredential(userName, password, protocol, authSource);
+        if (mechanism.equals(MongoCredential.GSSAPI_MECHANISM)) {
+            return MongoCredential.createGSSAPICredential(userName);
+        }
+        else {
+            return MongoCredential.createMongoCRCredential(userName, authSource, password);
+        }
     }
 
     private String getLastValue(final Map<String, List<String>> optionsMap, final String key) {
