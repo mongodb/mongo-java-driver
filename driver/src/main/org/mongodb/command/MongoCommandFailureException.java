@@ -22,14 +22,13 @@ import org.mongodb.result.CommandResult;
 /**
  * Exception thrown when a command fails.
  */
-public class MongoCommandException extends MongoServerException {
+public class MongoCommandFailureException extends MongoServerException {
     private static final long serialVersionUID = -50109343643507362L;
 
     private final CommandResult commandResult;
 
-    public MongoCommandException(final CommandResult commandResult) {
-        super("Command failed with error code " + commandResult.getErrorCode() + " and error message '"
-              + commandResult.getErrorMessage() + "' on server " + commandResult.getAddress(),
+    public MongoCommandFailureException(final CommandResult commandResult) {
+        super("Command failed with response " + commandResult.getResponse() + " on server " + commandResult.getAddress(),
              commandResult.getAddress());
         this.commandResult = commandResult;
     }

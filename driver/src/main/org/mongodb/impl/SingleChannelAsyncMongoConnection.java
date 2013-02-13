@@ -26,7 +26,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.GetLastError;
-import org.mongodb.command.MongoCommandException;
+import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.io.PooledByteBufferOutput;
 import org.mongodb.io.async.MongoAsynchronousChannel;
 import org.mongodb.operation.GetMore;
@@ -485,6 +485,9 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
             if (e != null) {
                 callback.onResult(null, e);
             }
+            else if (!commandResult.isOk()) {
+                callback.onResult(null, new MongoCommandFailureException(commandResult));
+            }
             else {
                 callback.onResult(commandResult, null);
             }
@@ -551,8 +554,11 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
             if (e != null) {
                 callback.onResult(null, e);
             }
+            else if (getLastError != null && !commandResult.isOk()) {
+                callback.onResult(null, new MongoCommandFailureException(commandResult));
+            }
             else {
-                MongoCommandException commandException = null;
+                MongoCommandFailureException commandException = null;
                 if (getLastError != null) {
                     commandException = getLastError.getCommandException(commandResult);
                 }

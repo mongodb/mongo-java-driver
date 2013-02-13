@@ -23,7 +23,7 @@ import org.mongodb.MongoConnection;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.IsMasterCommandResult;
-import org.mongodb.command.MongoCommandException;
+import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.rs.ReplicaSet;
 import org.mongodb.rs.ReplicaSetMember;
 import org.mongodb.rs.Tag;
@@ -227,7 +227,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
             try {
                 IsMasterCommandResult res = channelState.executor.execute();
                 if (!res.isOk()) {
-                    throw new MongoCommandException(res);  // TODO: should the command throw this if not ok?
+                    throw new MongoCommandFailureException(res);  // TODO: should the command throw this if not ok?
                 }
 
                 addHosts(seenAddresses, res.getHosts());

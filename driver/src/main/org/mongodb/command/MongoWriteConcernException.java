@@ -18,10 +18,19 @@ package org.mongodb.command;
 
 import org.mongodb.result.CommandResult;
 
-public class MongoGetLastErrorException extends MongoCommandException {
+/**
+ * Exception indicating a failure to successfully complete a write operation according to the WriteConcern
+ * used for the operation.
+ */
+public class MongoWriteConcernException extends MongoCommandFailureException {
     private static final long serialVersionUID = -1139302724723542251L;
 
-    public MongoGetLastErrorException(final CommandResult commandResult) {
+    /**
+     * Construct a new instance with the command result returned from checking the success of the write operation.
+     *
+     * @param commandResult the command result
+     */
+    public MongoWriteConcernException(final CommandResult commandResult) {
         super(commandResult);
     }
 }

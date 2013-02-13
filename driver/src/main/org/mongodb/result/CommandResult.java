@@ -54,12 +54,13 @@ public class CommandResult {
     public boolean isOk() {
         return getResponse().get("ok").equals(1.0);
     }
+
     public int getErrorCode() {
         return (Integer) getResponse().get("code");
     }
 
     public String getErrorMessage() {
-        return (String) getResponse().get("err");
+        return (String) getResponse().get("errmsg");
     }
 
     public long getElapsedNanoseconds() {

@@ -28,6 +28,7 @@ import org.mongodb.WriteConcern;
 import org.mongodb.command.CollStats;
 import org.mongodb.command.Drop;
 import org.mongodb.command.DropIndex;
+import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.CommandResult;
@@ -110,9 +111,13 @@ public class CollectionAdminImpl implements CollectionAdmin {
 
     @Override
     public void drop() {
-        database.executeCommand(dropCollectionCommand);
-        //ignores errors
-        //TODO: which errors should be handled on drop?
+        try {
+            database.executeCommand(dropCollectionCommand);
+        } catch (MongoCommandFailureException e) {
+            if (!e.getCommandResult().getErrorMessage().equals("ns not found")) {
+                throw e;
+            }
+        }
     }
 
     @Override

@@ -25,6 +25,7 @@ import org.mongodb.ServerAddress;
 import org.mongodb.WriteConcern;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.GetLastError;
+import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.io.MongoChannel;
 import org.mongodb.io.PooledByteBufferOutput;
 import org.mongodb.operation.GetMore;
@@ -80,8 +81,14 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
     }
 
     private CommandResult createCommandResult(final MongoCommand commandOperation, final MongoReplyMessage<Document> replyMessage) {
-        return new CommandResult(commandOperation.toDocument(), channel.getAddress(),
+
+        CommandResult commandResult = new CommandResult(commandOperation.toDocument(), channel.getAddress(),
                 replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds());
+        if (!commandResult.isOk()) {
+            throw new MongoCommandFailureException(commandResult);
+        }
+
+        return commandResult;
     }
 
     @Override

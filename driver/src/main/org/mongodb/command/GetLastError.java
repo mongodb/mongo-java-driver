@@ -29,8 +29,7 @@ import java.util.List;
  */
 public final class GetLastError extends MongoCommand {
 
-    // TODO: there are more of these...
-    private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000);
+    private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
 
     public GetLastError(final WriteConcern writeConcern) {
         super(writeConcern.getCommand());
@@ -38,14 +37,14 @@ public final class GetLastError extends MongoCommand {
     }
 
     public CommandResult parseGetLastErrorResponse(final CommandResult commandResult) {
-        MongoCommandException exception = getCommandException(commandResult);
+        MongoCommandFailureException exception = getCommandException(commandResult);
         if (exception != null) {
             throw exception;
         }
         return commandResult;
     }
 
-    public MongoCommandException getCommandException(final CommandResult commandResult) {
+    public MongoCommandFailureException getCommandException(final CommandResult commandResult) {
         final Integer code = (Integer) commandResult.getResponse().get("code");
         if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
             return new MongoDuplicateKeyException(commandResult);
