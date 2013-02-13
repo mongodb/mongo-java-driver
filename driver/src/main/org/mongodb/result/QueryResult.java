@@ -21,9 +21,8 @@ import org.mongodb.protocol.MongoReplyMessage;
 
 import java.util.List;
 
-// TODO: Should this extend MongoResult, and if so, would have to make it generic
 public class QueryResult<T> {
-    private final List<T> results;  // TODO: Make this iterable
+    private final List<T> results;
     private final ServerCursor serverCursor;
 
     public QueryResult(final MongoReplyMessage<T> replyMessage, final ServerAddress address) {

@@ -26,6 +26,8 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
+ *
+ * @since 3.0.0
  */
 @ThreadSafe
 public interface MongoClient extends Closeable {
