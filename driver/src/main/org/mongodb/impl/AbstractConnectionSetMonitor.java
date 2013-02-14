@@ -17,12 +17,13 @@
 package org.mongodb.impl;
 
 import org.mongodb.CommandDocument;
-import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoClients;
+import org.mongodb.MongoConnection;
 import org.mongodb.ServerAddress;
 import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.operation.MongoCommand;
+import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.serializers.DocumentSerializer;
 
 /**
  * Base class for classes that manage connections to mongo instances as background tasks.
@@ -98,18 +99,19 @@ abstract class AbstractConnectionSetMonitor extends Thread {
     }
 
     class MongoClientIsMasterExecutor implements IsMasterExecutor {
-        private final MongoClient client;
+        private final MongoConnection connection;
         private final ServerAddress serverAddress;
 
-        MongoClientIsMasterExecutor(final MongoClient client, final ServerAddress serverAddress) {
-            this.client = client;
+        MongoClientIsMasterExecutor(final MongoConnection connection, final ServerAddress serverAddress) {
+            this.connection = connection;
             this.serverAddress = serverAddress;
         }
 
         @Override
         public IsMasterCommandResult execute() {
-            return new IsMasterCommandResult(client.getDatabase("admin").executeCommand(
-                    new MongoCommand(new CommandDocument("ismaster", 1))));
+            return new IsMasterCommandResult(
+                    connection.command("admin", new MongoCommand(new CommandDocument("ismaster", 1)),
+                            new DocumentSerializer(PrimitiveSerializers.createDefault())));
         }
 
         @Override
@@ -119,7 +121,7 @@ abstract class AbstractConnectionSetMonitor extends Thread {
 
         @Override
         public void close() {
-            client.close();
+            connection.close();
         }
     }
 
@@ -137,7 +139,7 @@ abstract class AbstractConnectionSetMonitor extends Thread {
 
         @Override
         public IsMasterExecutor create(final ServerAddress serverAddress) {
-            return new MongoClientIsMasterExecutor(MongoClients.create(serverAddress, options), serverAddress);
+            return new MongoClientIsMasterExecutor(MongoConnectionsImpl.create(serverAddress, options), serverAddress);
         }
     }
 

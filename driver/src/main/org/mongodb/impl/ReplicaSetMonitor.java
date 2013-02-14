@@ -57,14 +57,15 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
 
     private final ReplicaSetStateGenerator replicaSetStateGenerator;
 
-    private volatile long nextResolveTime;
+    private volatile long nextResolveTime;  // TODO: use this
 
     static {
         SLAVE_ACCEPTABLE_LATENCY_MS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
         INET_ADDR_CACHE_MS = Integer.parseInt(System.getProperty("com.mongodb.inetAddrCacheMS", "300000"));
     }
 
-    ReplicaSetMonitor(final List<ServerAddress> seedList, final MongoConnection operations) {
+    // TODO: do we need the connection?  Maybe just for some client options
+    ReplicaSetMonitor(final List<ServerAddress> seedList, final MongoConnection connection) {
         super("ReplicaSetMonitor");
         replicaSetStateGenerator = new ReplicaSetStateGenerator(seedList,
                 new MongoClientIsMasterExecutorFactory(getClientOptions()), getLatencySmoothFactor());
