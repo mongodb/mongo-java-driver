@@ -24,6 +24,7 @@ package org.bson.types;
 import org.bson.BSON;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
    generic binary holder
@@ -60,6 +61,26 @@ public class Binary implements Serializable {
 
     public int length(){
         return _data.length;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Binary)) return false;
+
+        Binary binary = (Binary) o;
+
+        if (_type != binary._type) return false;
+        if (!Arrays.equals(_data, binary._data)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) _type;
+        result = 31 * result + (_data != null ? Arrays.hashCode(_data) : 0);
+        return result;
     }
 
     final byte _type;
