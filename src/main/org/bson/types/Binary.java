@@ -24,9 +24,10 @@ package org.bson.types;
 import org.bson.BSON;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
-   generic binary holder
+ * generic binary holder
  */
 public class Binary implements Serializable {
 
@@ -34,32 +35,62 @@ public class Binary implements Serializable {
 
     /**
      * Creates a Binary object with the default binary type of 0
+     *
      * @param data raw data
      */
-    public Binary( byte[] data ){
+    public Binary(byte[] data) {
         this(BSON.B_GENERAL, data);
     }
 
     /**
      * Creates a Binary object
+     *
      * @param type type of the field as encoded in BSON
      * @param data raw data
      */
-    public Binary( byte type , byte[] data ){
+    public Binary(byte type, byte[] data) {
         _type = type;
         _data = data;
     }
 
-    public byte getType(){
+    public byte getType() {
         return _type;
     }
 
-    public byte[] getData(){
+    public byte[] getData() {
         return _data;
     }
 
-    public int length(){
+    public int length() {
         return _data.length;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Binary)) {
+            return false;
+        }
+
+        Binary binary = (Binary) o;
+
+        if (_type != binary._type) {
+            return false;
+        }
+        if (!Arrays.equals(_data, binary._data)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) _type;
+        result = 31 * result + (_data != null ? Arrays.hashCode(_data) : 0);
+        return result;
     }
 
     final byte _type;
