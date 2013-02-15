@@ -334,6 +334,7 @@ project(':driver') {
     }
 
     task asyncTest(type: Test, dependsOn: functionalTest) {
+        onlyIf { JavaVersion.current().isJava7Compatible() }
         testClassesDir = sourceSets.async.output.classesDir
         classpath = sourceSets.async.runtimeClasspath
     }
