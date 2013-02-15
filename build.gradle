@@ -90,6 +90,8 @@ subprojects {
         options.fork = true
         options.debug = true
         options.compilerArgs = ['-Xlint:all']
+
+        onlyIf { JavaVersion.current().isJava7Compatible() }
     }
 
     tasks.withType(Test) {
