@@ -38,7 +38,7 @@ public final class MongoCredential {
     /**
      * The MongoDB Challenge Response mechanism.
      */
-    public static final String MONGO_CR_MECHANISM = "MONGO-CR";
+    public static final String MONGODB_CR_MECHANISM = "MONGODB-CR";
 
 
     private final String mechanism;
@@ -55,7 +55,7 @@ public final class MongoCredential {
      * @return the credential
      */
     public static MongoCredential createMongoCRCredential(String userName, String database, char[] password) {
-        return new MongoCredential(MONGO_CR_MECHANISM, userName, database, password);
+        return new MongoCredential(MONGODB_CR_MECHANISM, userName, database, password);
     }
 
     /**
@@ -86,8 +86,8 @@ public final class MongoCredential {
             throw new IllegalArgumentException("username can not be null");
         }
 
-        if (mechanism.equals(MONGO_CR_MECHANISM) && password == null) {
-            throw new IllegalArgumentException("Password can not be null for " + MONGO_CR_MECHANISM + " mechanism");
+        if (mechanism.equals(MONGODB_CR_MECHANISM) && password == null) {
+            throw new IllegalArgumentException("Password can not be null for " + MONGODB_CR_MECHANISM + " mechanism");
         }
 
         if (mechanism.equals(GSSAPI_MECHANISM) && password != null) {

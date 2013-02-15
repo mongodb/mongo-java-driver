@@ -312,7 +312,7 @@ public class DBPort {
 
     CommandResult authenticate(Mongo mongo, final MongoCredential credentials) {
         Authenticator authenticator;
-        if (credentials.getMechanism().equals(MongoCredential.MONGO_CR_MECHANISM)) {
+        if (credentials.getMechanism().equals(MongoCredential.MONGODB_CR_MECHANISM)) {
             authenticator = new NativeAuthenticator(mongo, credentials);
         } else if (credentials.getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
             authenticator = new GSSAPIAuthenticator(mongo, credentials);

@@ -31,7 +31,7 @@ public class MongoCredentialTest extends TestCase {
     public void testCredentials() {
         MongoCredential credentials;
 
-        final String mechanism = MongoCredential.MONGO_CR_MECHANISM;
+        final String mechanism = MongoCredential.MONGODB_CR_MECHANISM;
         final String userName = "user";
         final String database = "test";
         final char[] password = "pwd".toCharArray();
@@ -41,7 +41,7 @@ public class MongoCredentialTest extends TestCase {
         assertEquals(userName, credentials.getUserName());
         assertEquals(database, credentials.getSource());
         assertArrayEquals(password, credentials.getPassword());
-        assertEquals(MongoCredential.MONGO_CR_MECHANISM, credentials.getMechanism());
+        assertEquals(MongoCredential.MONGODB_CR_MECHANISM, credentials.getMechanism());
 
         try {
             MongoCredential.createMongoCRCredential(userName, database, null);

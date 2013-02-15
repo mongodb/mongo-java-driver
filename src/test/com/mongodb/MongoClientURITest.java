@@ -92,10 +92,10 @@ public class MongoClientURITest extends TestCase {
 
         assertEquals(MongoCredential.createMongoCRCredential(userName, "bar", password), u.getCredentials());
 
-        u = new MongoClientURI("mongodb://user@host/?authProtocol=GSSAPI");
+        u = new MongoClientURI("mongodb://user@host/?authMechanism=GSSAPI");
         assertEquals(MongoCredential.createGSSAPICredential(userName), u.getCredentials());
 
-        u = new MongoClientURI("mongodb://user:pass@host/?authProtocol=MONGO-CR");
+        u = new MongoClientURI("mongodb://user:pass@host/?authMechanism=MONGODB-CR");
         assertEquals(MongoCredential.createMongoCRCredential(userName, "admin", password), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user:pass@host/?authSource=test");
@@ -103,6 +103,16 @@ public class MongoClientURITest extends TestCase {
 
         u = new MongoClientURI("mongodb://user:pass@host");
         assertEquals(MongoCredential.createMongoCRCredential(userName, "admin", password), u.getCredentials());
+    }
+
+    @Test
+    public void testUnsupportedAuthMechanism() {
+        try {
+            new MongoClientURI("mongodb://user:pass@host/?authMechanism=UNKNOWN");
+            fail("Should fail due to unknown authMechanism");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
     }
 
     @Test

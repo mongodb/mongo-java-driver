@@ -127,8 +127,8 @@ import java.util.logging.Logger;
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
- * <li>{@code authProtocol=MONGO-CR|GSSAPI}: The authentication protocol to use if a credential was supplied.
- * The default is MONGO-CR, which is the native MongoDB Challenge Response mechanism.
+ * <li>{@code authMechanism=MONGO-CR|GSSAPI}: The authentication mechanism to use if a credential was supplied.
+ * The default is MONGODB-CR, which is the native MongoDB Challenge Response mechanism.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
  * the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
@@ -269,7 +269,7 @@ public class MongoClientURI {
         writeConcernKeys.add("fsync");
         writeConcernKeys.add("j");
 
-        authKeys.add("authprotocol");
+        authKeys.add("authmechanism");
         authKeys.add("authsource");
 
         allKeys.addAll(generalOptionsKeys);
@@ -393,7 +393,7 @@ public class MongoClientURI {
             database = "admin";
         }
 
-        String mechanism = MongoCredential.MONGO_CR_MECHANISM;
+        String mechanism = MongoCredential.MONGODB_CR_MECHANISM;
         String authSource = database;
 
         for (String key : authKeys) {
@@ -403,7 +403,7 @@ public class MongoClientURI {
                 continue;
             }
 
-            if (key.equals("authprotocol")) {
+            if (key.equals("authmechanism")) {
                 mechanism = value;
             } else if (key.equals("authsource")) {
                 authSource = value;
@@ -413,8 +413,11 @@ public class MongoClientURI {
         if (mechanism.equals(MongoCredential.GSSAPI_MECHANISM)) {
             return MongoCredential.createGSSAPICredential(userName);
         }
-        else {
+        else if (mechanism.equals(MongoCredential.MONGODB_CR_MECHANISM)) {
             return MongoCredential.createMongoCRCredential(userName, authSource, password);
+        }
+        else {
+             throw new IllegalArgumentException("Unsupported authMechanism: " + mechanism);
         }
     }
 
