@@ -17,11 +17,15 @@
 
 package com.mongodb;
 
-class CommandFailureException extends MongoException {
-    private static final long serialVersionUID = 1L;
+/**
+ * An exception indicating a failed command.
+ */
+public class CommandFailureException extends MongoException {
+    private static final long serialVersionUID = -1180715413196161037L;
     private final CommandResult commandResult;
 
     /**
+     * Construct a new instance with the CommandResult from a failed command
      *
      * @param commandResult the result
      */
@@ -30,6 +34,11 @@ class CommandFailureException extends MongoException {
         this.commandResult = commandResult;
     }
 
+    /**
+     * Gets the getlasterror command result document.
+     *
+     * @return the command result
+     */
     public CommandResult getCommandResult() {
         return commandResult;
     }

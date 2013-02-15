@@ -26,6 +26,11 @@ public class WriteConcernException extends MongoException {
 
     private final CommandResult commandResult;
 
+    /**
+     * Construct a new instance with the CommandResult from getlasterror command
+     *
+     * @param commandResult the command result
+     */
     public WriteConcernException(final CommandResult commandResult) {
         super(commandResult.getCode(), commandResult.toString());
         this.commandResult = commandResult;
