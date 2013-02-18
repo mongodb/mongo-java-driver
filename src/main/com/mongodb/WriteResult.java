@@ -69,7 +69,7 @@ public class WriteResult {
      * @return
      * @throws MongoException
      */
-    public synchronized CommandResult getLastError(){
+    public CommandResult getLastError(){
     	return getLastError(null);
     }
 
