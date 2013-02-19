@@ -89,7 +89,7 @@ subprojects {
         options.encoding = 'ISO-8859-1'
         options.fork = true
         options.debug = true
-        options.compilerArgs = ['-Xlint:all']
+        options.compilerArgs = ['-Xlint:all','-Xlint:-options']
 
         onlyIf { JavaVersion.current().isJava7Compatible() }
     }
