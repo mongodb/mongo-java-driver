@@ -73,6 +73,14 @@ subprojects {
         configFile = new File("$configDir/checkstyle.xml")
     }
 
+    checkstyleMain {
+        classpath += configurations.compile
+    }
+
+    checkstyleTest {
+        classpath += configurations.testCompile
+    }
+
     findbugs {
         ignoreFailures = true
     }
@@ -106,11 +114,6 @@ subprojects {
     task javadocJar(type: Jar, dependsOn: javadoc) {
         classifier = 'javadoc'
         from javadoc
-    }
-
-    task testsJar(type: Jar) {
-        classifier = 'tests'
-        from sourceSets.test.output
     }
 
     javadoc {

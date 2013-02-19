@@ -23,6 +23,10 @@ gradle.useLogger(new TaskExecutionListener(){
 sourceCompatibility = '1.6'
 targetCompatibility = '1.6'
 
+tasks.withType(Compile) {
+    options.compilerArgs = ['-Xlint:none']
+}
+
 dependencies {
     compile files("${System.getProperty('java.home')}/../lib/tools.jar")
 }
