@@ -21,7 +21,6 @@ import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseAdmin;
 import org.mongodb.MongoConnection;
 import org.mongodb.MongoNamespace;
-import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
@@ -44,7 +43,7 @@ import static org.mongodb.impl.ErrorHandling.handleErrors;
  */
 public class DatabaseAdminImpl implements DatabaseAdmin {
     private static final DropDatabase DROP_DATABASE = new DropDatabase();
-    private static final MongoFind FIND_ALL = new MongoFind(new QueryFilterDocument()).readPreference(ReadPreference.primary());
+    private static final MongoFind FIND_ALL = new MongoFind().readPreference(ReadPreference.primary());
 
     private final String databaseName;
     private final Serializer<Document> documentSerializer;

@@ -18,9 +18,7 @@ package org.mongodb;
 
 import org.bson.types.Document;
 
-// TODO: This probably should not subclass QueryFilterDocument, since it's not... a query filter
-// Did it this way so that I can pass it to MongoQueryMessage constructor
-public class CommandDocument extends QueryFilterDocument implements ConvertibleToDocument {
+public class CommandDocument extends Document {
     private static final long serialVersionUID = -986632617844878612L;
 
     public CommandDocument() {
@@ -36,8 +34,4 @@ public class CommandDocument extends QueryFilterDocument implements ConvertibleT
         return this;
     }
 
-    @Override
-    public Document toDocument() {
-        return this;
-    }
 }

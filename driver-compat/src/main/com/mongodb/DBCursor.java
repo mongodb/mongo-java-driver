@@ -71,7 +71,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         }
         this.collection = collection;
         find = new MongoFind();
-        find.where(DBObjects.toQueryFilterDocument(query))
+        find.where(DBObjects.toDocument(query))
             .select(DBObjects.toFieldSelectorDocument(fields))
             .readPreference(readPreference.toNew());
     }

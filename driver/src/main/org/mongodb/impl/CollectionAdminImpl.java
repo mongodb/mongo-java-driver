@@ -22,7 +22,6 @@ import org.mongodb.Index;
 import org.mongodb.MongoConnection;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoNamespace;
-import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.command.CollStats;
@@ -70,7 +69,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
         this.collectionNamespace = collectionNamespace;
         collStatsCommand = new CollStats(collectionNamespace.getCollectionName());
         queryForCollectionNamespace = new MongoFind(
-                new QueryFilterDocument(NAMESPACE_KEY_NAME, this.collectionNamespace.getFullName()))
+                new Document(NAMESPACE_KEY_NAME, this.collectionNamespace.getFullName()))
                 .readPreference(ReadPreference.primary());
         dropCollectionCommand = new Drop(this.collectionNamespace.getCollectionName());
     }

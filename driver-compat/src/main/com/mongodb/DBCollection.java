@@ -37,6 +37,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.DBObjects.toDocument;
+
 @ThreadSafe
 @SuppressWarnings({ "rawtypes", "deprecation" })
 public class DBCollection implements IDBCollection {
@@ -134,7 +136,7 @@ public class DBCollection implements IDBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        MongoStream<DBObject> stream = collection.filter(DBObjects.toQueryFilterDocument(q));
+        MongoStream<DBObject> stream = collection.filter(toDocument(q));
         if (multi) {
             stream = stream.noLimit();
         }
@@ -225,7 +227,7 @@ public class DBCollection implements IDBCollection {
 
 
     public WriteResult remove(final DBObject filter, final WriteConcern writeConcernToUse) {
-        final org.mongodb.result.WriteResult result = collection.filter(DBObjects.toQueryFilterDocument(filter))
+        final org.mongodb.result.WriteResult result = collection.filter(toDocument(filter))
                                               .writeConcern(writeConcernToUse.toNew()).remove();
         return new WriteResult(result, writeConcernToUse);
     }
@@ -329,7 +331,7 @@ public class DBCollection implements IDBCollection {
     public DBObject findOne(final DBObject o, final DBObject fields, final DBObject orderBy,
                             final ReadPreference readPref) {
 
-        final DBObject obj = collection.filter(DBObjects.toQueryFilterDocument(o))
+        final DBObject obj = collection.filter(toDocument(o))
                                        .sort(DBObjects.toSortCriteriaDocument(orderBy))
                                        .select(DBObjects.toFieldSelectorDocument(fields))
                                        .readPreference(readPref.toNew()).one();
@@ -510,7 +512,7 @@ public class DBCollection implements IDBCollection {
         }
         MongoStream<DBObject> stream = collection;
         if (query != null) {
-            stream = stream.filter(DBObjects.toQueryFilterDocument(query));
+            stream = stream.filter(toDocument(query));
         }
         // TODO: investigate case of int to long for skip
         return stream.limit((int) limit).skip((int) skip).readPreference(readPreference.toNew()).count();
@@ -576,7 +578,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public List distinct(final String key, final DBObject query) {
-        return collection.filter(DBObjects.toQueryFilterDocument(query)).distinct(key);
+        return collection.filter(toDocument(query)).distinct(key);
     }
 
     @Override
@@ -763,7 +765,7 @@ public class DBCollection implements IDBCollection {
     public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert) {
-        final MongoSyncWritableStream<DBObject> stream = collection.filter(DBObjects.toQueryFilterDocument(query))
+        final MongoSyncWritableStream<DBObject> stream = collection.filter(toDocument(query))
                                                                .select(DBObjects.toFieldSelectorDocument(fields))
                                                                .sort(DBObjects.toSortCriteriaDocument(sort))
                                                                .writeConcern(getWriteConcern().toNew());

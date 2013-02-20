@@ -53,6 +53,6 @@ public class MongoCommand extends MongoQuery implements ConvertibleToDocument {
 
     @Override
     public Document toDocument() {
-        return command.toDocument();
+        return command;
     }
 }

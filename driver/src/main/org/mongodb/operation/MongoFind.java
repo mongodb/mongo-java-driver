@@ -17,7 +17,6 @@
 package org.mongodb.operation;
 
 import org.bson.types.Document;
-import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 
 public class MongoFind extends MongoQuery {
@@ -27,10 +26,10 @@ public class MongoFind extends MongoQuery {
     private boolean snapshotMode;
 
     public MongoFind() {
-        this.filter = new QueryFilterDocument();
+        this.filter = new Document();
     }
 
-    public MongoFind(final QueryFilterDocument filter) {
+    public MongoFind(final Document filter) {
         this.filter = filter;
     }
 
@@ -56,7 +55,7 @@ public class MongoFind extends MongoQuery {
 
     //CHECKSTYLE:OFF
     //I think we're going to have to turn off "hides a field" unless we can work out how to ignore it for builders
-    public MongoFind where(final QueryFilterDocument filter) {
+    public MongoFind where(final Document filter) {
         this.filter = filter;
         return this;
     }

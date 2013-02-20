@@ -20,7 +20,6 @@ import org.bson.BSONObject;
 import org.bson.types.Document;
 import org.mongodb.CommandDocument;
 import org.mongodb.FieldSelectorDocument;
-import org.mongodb.QueryFilterDocument;
 import org.mongodb.SortCriteriaDocument;
 import org.mongodb.UpdateOperationsDocument;
 
@@ -44,12 +43,6 @@ public class DBObjects {
             res[i] = toDocument(dbObjects[i]);
         }
         return res;
-    }
-
-    public static QueryFilterDocument toQueryFilterDocument(final DBObject obj) {
-        final QueryFilterDocument doc = new QueryFilterDocument();
-        fill(obj, doc);
-        return doc;
     }
 
     public static FieldSelectorDocument toFieldSelectorDocument(final DBObject fields) {
