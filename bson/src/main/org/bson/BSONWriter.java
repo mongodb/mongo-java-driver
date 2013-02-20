@@ -27,6 +27,11 @@ import java.util.Arrays;
 
 import static java.lang.String.format;
 
+/**
+ * Represents a BSON writer for some external format (see subclasses).
+ *
+ * @since 3.0.0
+ */
 public abstract class BSONWriter implements Closeable {
     private final BsonWriterSettings settings;
     private State state;
@@ -36,11 +41,11 @@ public abstract class BSONWriter implements Closeable {
     private int serializationDepth;
     private boolean closed;
 
-    // constructors
-    /// <summary>
-    /// Initializes a new instance of the BsonWriter class.
-    /// </summary>
-    /// <param name="settings">The writer settings.</param>
+    /**
+     * Initializes a new instance of the BsonWriter class.
+     *
+     * @param settings The writer settings.
+     */
     protected BSONWriter(final BsonWriterSettings settings) {
         this.settings = settings;
         state = State.INITIAL;
@@ -62,283 +67,204 @@ public abstract class BSONWriter implements Closeable {
         return state;
     }
 
-    //    // public static methods
-
-    //    /// <summary>
-    //    /// Creates a BsonWriter to a BsonBuffer.
-    //    /// </summary>
-    //    /// <param name="settings">Optional BsonBinaryWriterSettings.</param>
-    //    /// <returns>A BsonWriter.</returns>
-    //    public static BsonWriter Create(BsonBinaryWriterSettings settings)
-    //    {
-    //        return new BsonBinaryWriter(null, null, settings);
-    //    }
-    //
-    //    /// <summary>
-    //    /// Creates a BsonWriter to a BsonBuffer.
-    //    /// </summary>
-    //    /// <param name="buffer">A BsonBuffer.</param>
-    //    /// <returns>A BsonWriter.</returns>
-    //    public static BsonWriter Create(BsonBuffer buffer)
-    //    {
-    //        return new BsonBinaryWriter(null, buffer, BsonBinaryWriterSettings.Defaults);
-    //    }
-    //
-    //    /// <summary>
-    //    /// Creates a BsonWriter to a BsonBuffer.
-    //    /// </summary>
-    //    /// <param name="buffer">A BsonBuffer.</param>
-    //    /// <param name="settings">Optional BsonBinaryWriterSettings.</param>
-    //    /// <returns>A BsonWriter.</returns>
-    //    public static BsonWriter Create(BsonBuffer buffer, BsonBinaryWriterSettings settings)
-    //    {
-    //        return new BsonBinaryWriter(null, buffer, settings);
-    //    }
-    //
-    //    /// <summary>
-    //    /// Creates a BsonWriter to a BsonDocument.
-    //    /// </summary>
-    //    /// <param name="document">A BsonDocument.</param>
-    //    /// <returns>A BsonWriter.</returns>
-    //    public static BsonWriter Create(BsonDocument document)
-    //    {
-    //        return Create(document, BsonDocumentWriterSettings.Defaults);
-    //    }
-    //
-    //    /// <summary>
-    //    /// Creates a BsonWriter to a BsonDocument.
-    //    /// </summary>
-    //    /// <param name="document">A BsonDocument.</param>
-    //    /// <param name="settings">The settings.</param>
-    //    /// <returns>A BsonWriter.</returns>
-    //    public static BsonWriter Create(BsonDocument document, BsonDocumentWriterSettings settings)
-    //    {
-    //        return new BsonDocumentWriter(document, settings);
-    //    }
-    //
-    //    /// <summary>
-    //    /// Creates a BsonWriter to a BSON Stream.
-    //    /// </summary>
-    //    /// <param name="stream">A Stream.</param>
-    //    /// <returns>A BsonWriter.</returns>
-    //    public static BsonWriter Create(Stream stream)
-    //    {
-    //        return Create(stream, BsonBinaryWriterSettings.Defaults);
-    //    }
-    //
-    //    /// <summary>
-    //    /// Creates a BsonWriter to a BSON Stream.
-    //    /// </summary>
-    //    /// <param name="stream">A Stream.</param>
-    //    /// <param name="settings">Optional BsonBinaryWriterSettings.</param>
-    //    /// <returns>A BsonWriter.</returns>
-    //    public static BsonWriter Create(Stream stream, BsonBinaryWriterSettings settings)
-    //    {
-    //        return new BsonBinaryWriter(stream, null, BsonBinaryWriterSettings.Defaults);
-    //    }
-    //
-    //    /// <summary>
-    //    /// Creates a BsonWriter to a JSON TextWriter.
-    //    /// </summary>
-    //    /// <param name="writer">A TextWriter.</param>
-    //    /// <returns>A BsonWriter.</returns>
-    //    public static BsonWriter Create(TextWriter writer)
-    //    {
-    //        return new JsonWriter(writer, JsonWriterSettings.Defaults);
-    //    }
-    //
-    //    /// <summary>
-    //    /// Creates a BsonWriter to a JSON TextWriter.
-    //    /// </summary>
-    //    /// <param name="writer">A TextWriter.</param>
-    //    /// <param name="settings">Optional JsonWriterSettings.</param>
-    //    /// <returns>A BsonWriter.</returns>
-    //    public static BsonWriter Create(TextWriter writer, JsonWriterSettings settings)
-    //    {
-    //        return new JsonWriter(writer, settings);
-    //    }
-
-    /// <summary>
-    /// Flushes any pending data to the output destination.
-    /// </summary>
+    /**
+     * Flushes any pending data to the output destination.
+     */
     public abstract void flush();
 
-    /// <summary>
-    /// Writes a BSON binary data element to the writer.
-    /// </summary>
-    /// <param name="bytes">The binary data.</param>
-    /// <param name="subType">The binary data subtype.</param>
+    /**
+     * Writes a BSON Binary data element to the writer.
+     *
+     * @param binary The Binary data.
+     */
     public abstract void writeBinaryData(Binary binary);
 
-    /// <summary>
-    /// Writes a BSON binary data element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="bytes">The binary data.</param>
-    /// <param name="subType">The binary data subtype.</param>
+    /**
+     * Writes a BSON Binary data element to the writer.
+     *
+     * @param name   The name of the element.
+     * @param binary The Binary data value.
+     */
     public void writeBinaryData(final String name, final Binary binary) {
         writeName(name);
         writeBinaryData(binary);
     }
 
-    /// <summary>
-    /// Writes a BSON Boolean to the writer.
-    /// </summary>
-    /// <param name="value">The Boolean value.</param>
+    /**
+     * Writes a BSON Boolean to the writer.
+     *
+     * @param value The Boolean value.
+     */
     public abstract void writeBoolean(boolean value);
 
-    /// <summary>
-    /// Writes a BSON Boolean element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="value">The Boolean value.</param>
+    /**
+     * Writes a BSON Boolean element to the writer.
+     *
+     * @param name  The name of the element.
+     * @param value The Boolean value.
+     */
     public void writeBoolean(final String name, final boolean value) {
         writeName(name);
         writeBoolean(value);
     }
 
-    /// <summary>
-    /// Writes a BSON DateTime to the writer.
-    /// </summary>
-    /// <param name="value">The number of milliseconds since the Unix epoch.</param>
+    /**
+     * Writes a BSON DateTime to the writer.
+     *
+     * @param value The number of milliseconds since the Unix epoch.
+     */
     public abstract void writeDateTime(long value);
 
-    /// <summary>
-    /// Writes a BSON DateTime element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="value">The number of milliseconds since the Unix epoch.</param>
+    /**
+     * Writes a BSON DateTime element to the writer.
+     *
+     * @param name  The name of the element.
+     * @param value The number of milliseconds since the Unix epoch.
+     */
     public void writeDateTime(final String name, final long value) {
         writeName(name);
         writeDateTime(value);
     }
 
-    /// <summary>
-    /// Writes a BSON Double to the writer.
-    /// </summary>
-    /// <param name="value">The Double value.</param>
+    /**
+     * Writes a BSON Double to the writer.
+     *
+     * @param value The Double value.
+     */
     public abstract void writeDouble(double value);
 
-    /// <summary>
-    /// Writes a BSON Double element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="value">The Double value.</param>
+    /**
+     * Writes a BSON Double element to the writer.
+     *
+     * @param name  The name of the element.
+     * @param value The Double value.
+     */
     public void writeDouble(final String name, final double value) {
         writeName(name);
         writeDouble(value);
     }
 
-    /// <summary>
-    /// Writes the end of a BSON array to the writer.
-    /// </summary>
+    /**
+     * Writes the end of a BSON array to the writer.
+     */
     public void writeEndArray() {
         serializationDepth--;
     }
 
-    /// <summary>
-    /// Writes the end of a BSON document to the writer.
-    /// </summary>
+    /**
+     * Writes the end of a BSON document to the writer.
+     */
     public void writeEndDocument() {
         serializationDepth--;
     }
 
-    /// <summary>
-    /// Writes a BSON INT32 to the writer.
-    /// </summary>
-    /// <param name="value">The INT32 value.</param>
+    /**
+     * Writes a BSON Int32 to the writer.
+     *
+     * @param value The Int32 value.
+     */
     public abstract void writeInt32(int value);
 
-    /// <summary>
-    /// Writes a BSON INT32 element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="value">The INT32 value.</param>
+    /**
+     * Writes a BSON Int32 element to the writer.
+     *
+     * @param name  The name of the element.
+     * @param value The Int32 value.
+     */
     public void writeInt32(final String name, final int value) {
         writeName(name);
         writeInt32(value);
     }
 
-    /// <summary>
-    /// Writes a BSON Int64 to the writer.
-    /// </summary>
-    /// <param name="value">The Int64 value.</param>
+    /**
+     * Writes a BSON Int64 to the writer.
+     *
+     * @param value The Int64 value.
+     */
     public abstract void writeInt64(long value);
 
-    /// <summary>
-    /// Writes a BSON Int64 element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="value">The Int64 value.</param>
+    /**
+     * Writes a BSON Int64 element to the writer.
+     *
+     * @param name  The name of the element.
+     * @param value The Int64 value.
+     */
     public void writeInt64(final String name, final long value) {
         writeName(name);
         writeInt64(value);
     }
 
-    /// <summary>
-    /// Writes a BSON JavaScript to the writer.
-    /// </summary>
-    /// <param name="code">The JavaScript code.</param>
+    /**
+     * Writes a BSON JavaScript to the writer.
+     *
+     * @param code The JavaScript code.
+     */
     public abstract void writeJavaScript(String code);
 
-    /// <summary>
-    /// Writes a BSON JavaScript element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="code">The JavaScript code.</param>
+    /**
+     * Writes a BSON JavaScript element to the writer.
+     *
+     * @param name The name of the element.
+     * @param code The JavaScript code.
+     */
     public void writeJavaScript(final String name, final String code) {
         writeName(name);
         writeJavaScript(code);
     }
 
-    /// <summary>
-    /// Writes a BSON JavaScript to the writer (call WriteStartDocument to start writing the scope).
-    /// </summary>
-    /// <param name="code">The JavaScript code.</param>
+    /**
+     * Writes a BSON JavaScript to the writer (call WriteStartDocument to start writing the scope).
+     *
+     * @param code The JavaScript code.
+     */
     public abstract void writeJavaScriptWithScope(String code);
 
-    /// <summary>
-    /// Writes a BSON JavaScript element to the writer (call WriteStartDocument to start writing the scope).
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="code">The JavaScript code.</param>
+    /**
+     * Writes a BSON JavaScript element to the writer (call WriteStartDocument to start writing the scope).
+     *
+     * @param name The name of the element.
+     * @param code The JavaScript code.
+     */
     public void writeJavaScriptWithScope(final String name, final String code) {
         writeName(name);
         writeJavaScriptWithScope(code);
     }
 
-    /// <summary>
-    /// Writes a BSON MaxKey to the writer.
-    /// </summary>
+    /**
+     * Writes a BSON MaxKey to the writer.
+     */
     public abstract void writeMaxKey();
 
-    /// <summary>
-    /// Writes a BSON MaxKey element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Writes a BSON MaxKey element to the writer.
+     *
+     * @param name The name of the element.
+     */
     public void writeMaxKey(final String name) {
         writeName(name);
         writeMaxKey();
     }
 
-    /// <summary>
-    /// Writes a BSON MinKey to the writer.
-    /// </summary>
+    /**
+     * Writes a BSON MinKey to the writer.
+     */
     public abstract void writeMinKey();
 
-    /// <summary>
-    /// Writes a BSON MinKey element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Writes a BSON MinKey element to the writer.
+     *
+     * @param name The name of the element.
+     */
     public void writeMinKey(final String name) {
         writeName(name);
         writeMinKey();
     }
 
-    /// <summary>
-    /// Writes the name of an element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Writes the name of an element to the writer.
+     *
+     * @param name The name of the element.
+     */
     public void writeName(final String name) {
         if (state != State.NAME) {
             throwInvalidState("WriteName", State.NAME);
@@ -349,163 +275,177 @@ public abstract class BSONWriter implements Closeable {
         state = State.VALUE;
     }
 
-    /// <summary>
-    /// Writes a BSON null to the writer.
-    /// </summary>
+    /**
+     * Writes a BSON null to the writer.
+     */
     public abstract void writeNull();
 
-    /// <summary>
-    /// Writes a BSON null element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Writes a BSON null element to the writer.
+     *
+     * @param name The name of the element.
+     */
     public void writeNull(final String name) {
         writeName(name);
         writeNull();
     }
 
-    /// <summary>
-    /// Writes a BSON ObjectId to the writer.
-    /// </summary>
-    /// <param name="timestamp">The timestamp.</param>
-    /// <param name="machine">The machine hash.</param>
-    /// <param name="pid">The PID.</param>
-    /// <param name="increment">The increment.</param>
+    /**
+     * Writes a BSON ObjectId to the writer.
+     *
+     * @param objectId The ObjectId value.
+     */
     public abstract void writeObjectId(ObjectId objectId);
 
-    /// <summary>
-    /// Writes a BSON ObjectId element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="timestamp">The timestamp.</param>
-    /// <param name="machine">The machine hash.</param>
-    /// <param name="pid">The PID.</param>
-    /// <param name="increment">The increment.</param>
+    /**
+     * Writes a BSON ObjectId element to the writer.
+     *
+     * @param name      The name of the element.
+     * @param objectId  The ObjectId value.
+     */
     public void writeObjectId(final String name, final ObjectId objectId) {
         writeName(name);
         writeObjectId(objectId);
     }
 
-    /// <summary>
-    /// Writes a BSON regular expression to the writer.
-    /// </summary>
+    /**
+     * Writes a BSON regular expression to the writer.
+     */
     public abstract void writeRegularExpression(RegularExpression regularExpression);
 
-    /// <summary>
-    /// Writes a BSON regular expression element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Writes a BSON regular expression element to the writer.
+     *
+     * @param name The name of the element.
+     * @param regularExpression The RegularExpression value.
+     */
     public void writeRegularExpression(final String name, final RegularExpression regularExpression) {
         writeName(name);
         writeRegularExpression(regularExpression);
     }
 
-    /// <summary>
-    /// Writes the start of a BSON array to the writer.
-    /// </summary>
+    /**
+     * Writes the start of a BSON array to the writer.
+     *
+     * @throws BsonSerializationException if maximum serialization depth exceeded.
+     */
     public void writeStartArray() {
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
             throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
-                                                         + "serialized have a circular reference?).");
+                    + "serialized have a circular reference?).");
         }
     }
 
-    /// <summary>
-    /// Writes the start of a BSON array element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Writes the start of a BSON array element to the writer.
+     *
+     * @param name The name of the element.
+     */
     public void writeStartArray(final String name) {
         writeName(name);
         writeStartArray();
     }
 
-    /// <summary>
-    /// Writes the start of a BSON document to the writer.
-    /// </summary>
+    /**
+     * Writes the start of a BSON document to the writer.
+     *
+     * @throws BsonSerializationException if maximum serialization depth exceeded.
+     */
     public void writeStartDocument() {
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
             throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
-                                                         + "serialized have a circular reference?).");
+                    + "serialized have a circular reference?).");
         }
     }
 
-    /// <summary>
-    /// Writes the start of a BSON document element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Writes the start of a BSON document element to the writer.
+     *
+     * @param name The name of the element.
+     */
     public void writeStartDocument(final String name) {
         writeName(name);
         writeStartDocument();
     }
 
-    /// <summary>
-    /// Writes a BSON String to the writer.
-    /// </summary>
-    /// <param name="value">The String value.</param>
+    /**
+     * Writes a BSON String to the writer.
+     *
+     * @param value The String value.
+     */
     public abstract void writeString(String value);
 
-    /// <summary>
-    /// Writes a BSON String element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="value">The String value.</param>
+    /**
+     * Writes a BSON String element to the writer.
+     *
+     * @param name  The name of the element.
+     * @param value The String value.
+     */
     public void writeString(final String name, final String value) {
         writeName(name);
         writeString(value);
     }
 
-    /// <summary>
-    /// Writes a BSON Symbol to the writer.
-    /// </summary>
-    /// <param name="value">The symbol.</param>
+    /**
+     * Writes a BSON Symbol to the writer.
+     *
+     * @param value The symbol.
+     */
     public abstract void writeSymbol(String value);
 
-    /// <summary>
-    /// Writes a BSON Symbol element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="value">The symbol.</param>
+    /**
+     * Writes a BSON Symbol element to the writer.
+     *
+     * @param name  The name of the element.
+     * @param value The symbol.
+     */
     public void writeSymbol(final String name, final String value) {
         writeName(name);
         writeSymbol(value);
     }
 
-    /// <summary>
-    /// Writes a BSON timestamp to the writer.
-    /// </summary>
-    /// <param name="value">The combined timestamp/increment value.</param>
+    /**
+     * Writes a BSON Timestamp to the writer.
+     *
+     * @param value The combined timestamp/increment value.
+     */
     public abstract void writeTimestamp(BSONTimestamp value);
 
-    /// <summary>
-    /// Writes a BSON timestamp element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="value">The combined timestamp/increment value.</param>
+    /**
+     * Writes a BSON Timestamp element to the writer.
+     *
+     * @param name  The name of the element.
+     * @param value The combined timestamp/increment value.
+     */
     public void writeTimestamp(final String name, final BSONTimestamp value) {
         writeName(name);
         writeTimestamp(value);
     }
 
-    /// <summary>
-    /// Writes a BSON undefined to the writer.
-    /// </summary>
+    /**
+     * Writes a BSON undefined to the writer.
+     */
     public abstract void writeUndefined();
 
-    /// <summary>
-    /// Writes a BSON undefined element to the writer.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Writes a BSON undefined element to the writer.
+     *
+     * @param name The name of the element.
+     */
     public void writeUndefined(final String name) {
         writeName(name);
         writeUndefined();
     }
 
-    // protected methods
-    /// <summary>
-    /// Checks that the element name is valid.
-    /// </summary>
-    /// <param name="name">The element name to be checked.</param>
+    /**
+     * Checks that the element name is valid.
+     *
+     * @param name The element name to be checked.
+     *
+     * @throws BsonSerializationException if element name is not valid.
+     */
     protected void checkElementName(final String name) {
         if (checkUpdateDocument) {
             checkElementNames = (name.charAt(0) != '$');
@@ -530,26 +470,32 @@ public abstract class BSONWriter implements Closeable {
         }
     }
 
-    /// <summary>
-    /// Throws an InvalidOperationException when the method called is not valid for the current ContextType.
-    /// </summary>
-    /// <param name="methodName">The name of the method.</param>
-    /// <param name="actualContextType">The actual ContextType.</param>
-    /// <param name="validContextTypes">The valid ContextTypes.</param>
+    /**
+     * Throws an InvalidOperationException when the method called is not valid for the current ContextType.
+     *
+     * @param methodName        The name of the method.
+     * @param actualContextType The actual ContextType.
+     * @param validContextTypes The valid ContextTypes.
+     *
+     * @throws InvalidOperationException
+     */
     protected void throwInvalidContextType(final String methodName, final ContextType actualContextType,
                                            final ContextType... validContextTypes) {
         final String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
         final String message = format("%s can only be called when ContextType is %s, "
-                                              + "not when ContextType is %s.", methodName, validContextTypesString,
-                                      actualContextType);
+                + "not when ContextType is %s.", methodName, validContextTypesString,
+                actualContextType);
         throw new InvalidOperationException(message);
     }
 
-    /// <summary>
-    /// Throws an InvalidOperationException when the method called is not valid for the current state.
-    /// </summary>
-    /// <param name="methodName">The name of the method.</param>
-    /// <param name="validStates">The valid states.</param>
+    /**
+     * Throws an InvalidOperationException when the method called is not valid for the current state.
+     *
+     * @param methodName  The name of the method.
+     * @param validStates The valid states.
+     *
+     * @throws InvalidOperationException
+     */
     protected void throwInvalidState(final String methodName, final State... validStates) {
         final String message;
         if (state == State.INITIAL || state == State.SCOPE_DOCUMENT || state == State.DONE) {
@@ -574,10 +520,18 @@ public abstract class BSONWriter implements Closeable {
         throw new InvalidOperationException(message);
     }
 
+    /**
+     * Closes the writer.
+     */
     public void close() {
         closed = true;
     }
 
+    /**
+     * Reads from BSONReader and writes data to the writer.
+     *
+     * @param reader The source.
+     */
     public void pipe(final BSONReader reader) {
         pipeDocument(reader);
     }
@@ -665,17 +619,34 @@ public abstract class BSONWriter implements Closeable {
     }
 
     protected enum State {
-        // The initial state.
+        /**
+         * The initial state.
+         */
         INITIAL,
-        // The writer is positioned to write a name.
+
+        /**
+         * The writer is positioned to write a name.
+         */
         NAME,
-        // The writer is positioned to write a value.
+
+        /**
+         * The writer is positioned to write a value.
+         */
         VALUE,
-        // The writer is positioned to write a scope document (call WriteStartDocument to start writing the scope document).
+
+        /**
+         * The writer is positioned to write a scope document (call WriteStartDocument to start writing the scope document).
+         */
         SCOPE_DOCUMENT,
-        // The writer is done.
+
+        /**
+         * The writer is done.
+         */
         DONE,
-        // The writer is closed.
+
+        /**
+         * The writer is closed.
+         */
         CLOSED
     }
 }

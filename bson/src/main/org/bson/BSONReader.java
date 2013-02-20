@@ -32,20 +32,19 @@ public abstract class BSONReader implements Closeable {
     private String currentName;
     private boolean closed;
 
-    // constructors
-    /// <summary>
-    /// Initializes a new instance of the BsonReader class.
-    /// </summary>
-    /// <param name="settings">The reader settings.</param>
+    /**
+     * Initializes a new instance of the BsonReader class.
+     *
+     * @param settings The reader settings.
+     */
     protected BSONReader(final BsonReaderSettings settings) {
         this.settings = settings;
         state = State.INITIAL;
     }
 
-    // public properties
-    /// <summary>
-    /// Gets the current BsonType.
-    /// </summary>
+    /**
+     * @return The current BsonType.
+     */
     public BsonType getCurrentBsonType() {
         return currentBsonType;
     }
@@ -54,16 +53,16 @@ public abstract class BSONReader implements Closeable {
         currentBsonType = newType;
     }
 
-    /// <summary>
-    /// Gets the settings of the reader.
-    /// </summary>
+    /**
+     * @return The settings of the reader.
+     */
     public BsonReaderSettings getSettings() {
         return settings;
     }
 
-    /// <summary>
-    /// Gets the current state of the reader.
-    /// </summary>
+    /**
+     * @return The current state of the reader.
+     */
     public State getState() {
         return state;
     }
@@ -72,10 +71,9 @@ public abstract class BSONReader implements Closeable {
         state = newState;
     }
 
-    // protected properties
-    /// <summary>
-    /// Gets the current name.
-    /// </summary>
+    /**
+     * @return The current name.
+     */
     protected String getCurrentName() {
         return currentName;
     }
@@ -84,10 +82,9 @@ public abstract class BSONReader implements Closeable {
         currentName = newName;
     }
 
-    // public methods
-    /// <summary>
-    /// Closes the reader.
-    /// </summary>
+    /**
+     * Closes the reader.
+     */
     public void close() {
         closed = true;
     }
@@ -96,73 +93,9 @@ public abstract class BSONReader implements Closeable {
         return closed;
     }
 
-    /// <summary>
-    /// Positions the reader to an element by name.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <returns>True if the element was found.</returns>
-//    public bool FindElement(string name)
-//    {
-//        if (_disposed) { ThrowObjectDisposedException(); }
-//        if (state != State.TYPE)
-//        {
-//            ThrowInvalidState("FindElement", State.TYPE);
-//        }
-//
-//        BsonType bsonType;
-//        while ((bsonType = ReadBsonType()) != BsonType.END_OF_DOCUMENT)
-//        {
-//            var elementName = ReadName();
-//            if (elementName == name)
-//            {
-//                return true;
-//            }
-//            SkipValue();
-//        }
-//
-//        return false;
-//    }
-
-    /// <summary>
-    /// Positions the reader to a string element by name.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <returns>True if the element was found.</returns>
-//    public string FindStringElement(string name)
-//    {
-//        if (_disposed) { ThrowObjectDisposedException(); }
-//        if (state != State.TYPE)
-//        {
-//            ThrowInvalidState("FindStringElement", State.TYPE);
-//        }
-//
-//        BsonType bsonType;
-//        while ((bsonType = readBsonType()) != BsonType.END_OF_DOCUMENT)
-//        {
-//            var elementName = readName();
-//            if (bsonType == BsonType.String && elementName == name)
-//            {
-//                return readString();
-//            }
-//            else
-//            {
-//                SkipValue();
-//            }
-//        }
-//
-//        return null;
-//    }
-
-    /// <summary>
-    /// Gets a bookmark to the reader's current position and state.
-    /// </summary>
-    /// <returns>A bookmark.</returns>
-//    public abstract BsonReaderBookmark GetBookmark();
-
-    /// <summary>
-    /// Gets the current BsonType (calls readBsonType if necessary).
-    /// </summary>
-    /// <returns>The current BsonType.</returns>
+    /**
+     * @return The current BsonType (calls readBsonType if necessary).
+     */
     public BsonType getNextBsonType() {
         if (state == State.INITIAL || state == State.DONE || state == State.SCOPE_DOCUMENT || state == State.TYPE) {
             readBsonType();
@@ -173,184 +106,202 @@ public abstract class BSONReader implements Closeable {
         return currentBsonType;
     }
 
-    /// <summary>
-    /// Reads BSON binary data from the reader.
-    /// </summary>
-    /// <param name="bytes">The binary data.</param>
-    /// <param name="subType">The binary data subtype.</param>
+    /**
+     * Reads BSON Binary data from the reader.
+     *
+     * @return A Binary.
+     */
     public abstract Binary readBinaryData();
 
-    /// <summary>
-    /// Reads a BSON binary data element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="bytes">The binary data.</param>
-    /// <param name="subType">The binary data subtype.</param>
+    /**
+     * Reads a BSON Binary data element from the reader.
+     *
+     * @param name The name of the element.
+     * @return A Binary.
+     */
     public Binary readBinaryData(final String name) {
         verifyName(name);
         return readBinaryData();
     }
 
-    /// <summary>
-    /// Reads a BSON boolean from the reader.
-    /// </summary>
-    /// <returns>A Boolean.</returns>
+    /**
+     * Reads a BSON Boolean from the reader.
+     *
+     * @return A Boolean.
+     */
     public abstract boolean readBoolean();
 
-    /// <summary>
-    /// Reads a BSON boolean element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <returns>A Boolean.</returns>
+    /**
+     * Reads a BSON Boolean element from the reader.
+     *
+     * @param name The name of the element.
+     * @return A Boolean.
+     */
     public boolean readBoolean(final String name) {
         verifyName(name);
         return readBoolean();
     }
 
-    /// <summary>
-    /// Reads a BsonType from the reader.
-    /// </summary>
-    /// <returns>A BsonType.</returns>
+    /**
+     * Reads a BsonType from the reader.
+     *
+     * @return A BsonType.
+     */
     public abstract BsonType readBsonType();
 
-    /// <summary>
-    /// Reads a BSON DateTime from the reader.
-    /// </summary>
-    /// <returns>The number of milliseconds since the Unix epoch.</returns>
+    /**
+     * Reads a BSON DateTime from the reader.
+     *
+     * @return The number of milliseconds since the Unix epoch.
+     */
     public abstract long readDateTime();
 
-    /// <summary>
-    /// Reads a BSON DateTime element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <returns>The number of milliseconds since the Unix epoch.</returns>
+    /**
+     * Reads a BSON DateTime element from the reader.
+     *
+     * @param name The name of the element.
+     * @return The number of milliseconds since the Unix epoch.
+     */
     public long readDateTime(final String name) {
         verifyName(name);
         return readDateTime();
     }
 
-    /// <summary>
-    /// Reads a BSON Double from the reader.
-    /// </summary>
-    /// <returns>A Double.</returns>
+    /**
+     * Reads a BSON Double from the reader.
+     *
+     * @return A Double.
+     */
     public abstract double readDouble();
 
-    /// <summary>
-    /// Reads a BSON Double element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <returns>A Double.</returns>
+    /**
+     * Reads a BSON Double element from the reader.
+     *
+     * @param name The name of the element.
+     * @return A Double.
+     */
     public double readDouble(final String name) {
         verifyName(name);
         return readDouble();
     }
 
-    /// <summary>
-    /// Reads the end of a BSON array from the reader.
-    /// </summary>
+    /**
+     * Reads the end of a BSON array from the reader.
+     */
     public abstract void readEndArray();
 
-    /// <summary>
-    /// Reads the end of a BSON document from the reader.
-    /// </summary>
+    /**
+     * Reads the end of a BSON document from the reader.
+     */
     public abstract void readEndDocument();
 
-    /// <summary>
-    /// Reads a BSON INT32 from the reader.
-    /// </summary>
-    /// <returns>An INT32.</returns>
+    /**
+     * Reads a BSON Int32 from the reader.
+     *
+     * @return An Int32.
+     */
     public abstract int readInt32();
 
-    /// <summary>
-    /// Reads a BSON INT32 element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <returns>An INT32.</returns>
+    /**
+     * Reads a BSON Int32 element from the reader.
+     *
+     * @param name The name of the element.
+     * @return An Int32.
+     */
     public int readInt32(final String name) {
         verifyName(name);
         return readInt32();
     }
 
-    /// <summary>
-    /// Reads a BSON Int64 from the reader.
-    /// </summary>
-    /// <returns>An Int64.</returns>
+    /**
+     * Reads a BSON Int64 from the reader.
+     *
+     * @return An Int64.
+     */
     public abstract long readInt64();
 
-    /// <summary>
-    /// Reads a BSON Int64 element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <returns>An Int64.</returns>
+    /**
+     * Reads a BSON Int64 element from the reader.
+     *
+     * @param name The name of the element.
+     * @return An Int64.
+     */
     public long readInt64(final String name) {
         verifyName(name);
         return readInt64();
     }
 
-    /// <summary>
-    /// Reads a BSON JavaScript from the reader.
-    /// </summary>
-    /// <returns>A string.</returns>
+    /**
+     * Reads a BSON JavaScript from the reader.
+     *
+     * @return A string.
+     */
     public abstract String readJavaScript();
 
-    /// <summary>
-    /// Reads a BSON JavaScript element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <returns>A string.</returns>
+    /**
+     * Reads a BSON JavaScript element from the reader.
+     *
+     * @param name The name of the element.
+     * @return A string.
+     */
     public String readJavaScript(final String name) {
         verifyName(name);
         return readJavaScript();
     }
 
-    /// <summary>
-    /// Reads a BSON JavaScript with scope from the reader (call readStartDocument next to read the scope).
-    /// </summary>
-    /// <returns>A string.</returns>
+    /**
+     * Reads a BSON JavaScript with scope from the reader (call readStartDocument next to read the scope).
+     *
+     * @return A string.
+     */
     public abstract String readJavaScriptWithScope();
 
-    /// <summary>
-    /// Reads a BSON JavaScript with scope element from the reader (call readStartDocument next to read the scope).
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <returns>A string.</returns>
+    /**
+     * Reads a BSON JavaScript with scope element from the reader (call readStartDocument next to read the scope).
+     *
+     * @param name The name of the element.
+     * @return A string.
+     */
     public String readJavaScriptWithScope(final String name) {
         verifyName(name);
         return readJavaScriptWithScope();
     }
 
-    /// <summary>
-    /// Reads a BSON MaxKey from the reader.
-    /// </summary>
+    /**
+     * Reads a BSON MaxKey from the reader.
+     */
     public abstract void readMaxKey();
 
-    /// <summary>
-    /// Reads a BSON MaxKey element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Reads a BSON MaxKey element from the reader.
+     *
+     * @param name The name of the element.
+     */
     public void readMaxKey(final String name) {
         verifyName(name);
         readMaxKey();
     }
 
-    /// <summary>
-    /// Reads a BSON MinKey from the reader.
-    /// </summary>
+    /**
+     * Reads a BSON MinKey from the reader.
+     */
     public abstract void readMinKey();
 
-    /// <summary>
-    /// Reads a BSON MinKey element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Reads a BSON MinKey element from the reader.
+     *
+     * @param name The name of the element.
+     */
     public void readMinKey(final String name) {
         verifyName(name);
         readMinKey();
     }
 
-    /// <summary>
-    /// Reads the name of an element from the reader.
-    /// </summary>
-    /// <returns>The name of the element.</returns>
+    /**
+     * Reads the name of an element from the reader.
+     *
+     * @return The name of the element.
+     */
     public String readName() {
         if (state == State.TYPE) {
             readBsonType();
@@ -363,158 +314,162 @@ public abstract class BSONReader implements Closeable {
         return currentName;
     }
 
-    /// <summary>
-    /// Reads the name of an element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Reads the name of an element from the reader.
+     *
+     * @param name The name of the element.
+     */
     public void readName(final String name) {
         verifyName(name);
     }
 
-    /// <summary>
-    /// Reads a BSON null from the reader.
-    /// </summary>
+    /**
+     * Reads a BSON null from the reader.
+     */
     public abstract void readNull();
 
-    /// <summary>
-    /// Reads a BSON null element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Reads a BSON null element from the reader.
+     *
+     * @param name The name of the element.
+     */
     public void readNull(final String name) {
         verifyName(name);
         readNull();
     }
 
-    /// <summary>
-    /// Reads a BSON ObjectId from the reader.
-    /// </summary>
-    /// <param name="timestamp">The timestamp.</param>
-    /// <param name="machine">The machine hash.</param>
-    /// <param name="pid">The PID.</param>
-    /// <param name="increment">The increment.</param>
+    /**
+     * Reads a BSON ObjectId from the reader.
+     */
     public abstract ObjectId readObjectId();
 
-    /// <summary>
-    /// Reads a BSON ObjectId element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <param name="timestamp">The timestamp.</param>
-    /// <param name="machine">The machine hash.</param>
-    /// <param name="pid">The PID.</param>
-    /// <param name="increment">The increment.</param>
+    /**
+     * Reads a BSON ObjectId element from the reader.
+     *
+     * @param name The name of the element.
+     * @return ObjectId.
+     */
     public ObjectId readObjectId(final String name) {
         verifyName(name);
         return readObjectId();
     }
 
-    /// <summary>
-    /// Reads a BSON regular expression from the reader.
-    /// </summary>
+    /**
+     * Reads a BSON regular expression from the reader.
+     *
+     * @return A regular expression.
+     */
     public abstract RegularExpression readRegularExpression();
 
-    /// <summary>
-    /// Reads a BSON regular expression element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Reads a BSON regular expression element from the reader.
+     *
+     * @param name The name of the element.
+     * @return A regular expression.
+     */
     public RegularExpression readRegularExpression(final String name) {
         verifyName(name);
         return readRegularExpression();
     }
 
-    /// <summary>
-    /// Reads the start of a BSON array.
-    /// </summary>
+    /**
+     * Reads the start of a BSON array.
+     */
     public abstract void readStartArray();
 
-    /// <summary>
-    /// Reads the start of a BSON document.
-    /// </summary>
+    /**
+     * Reads the start of a BSON document.
+     */
     public abstract void readStartDocument();
 
-    /// <summary>
-    /// Reads a BSON String from the reader.
-    /// </summary>
-    /// <returns>A String.</returns>
+    /**
+     * Reads a BSON String from the reader.
+     *
+     * @return A String.
+     */
     public abstract String readString();
 
-    /// <summary>
-    /// Reads a BSON string element from the reader.
-    /// </summary>
-    /// <returns>A String.</returns>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Reads a BSON string element from the reader.
+     *
+     * @param name The name of the element.
+     * @return A String.
+     */
     public String readString(final String name) {
         verifyName(name);
         return readString();
     }
 
-    /// <summary>
-    /// Reads a BSON symbol from the reader.
-    /// </summary>
-    /// <returns>A string.</returns>
+    /**
+     * Reads a BSON symbol from the reader.
+     *
+     * @return A string.
+     */
     public abstract String readSymbol();
 
-    /// <summary>
-    /// Reads a BSON symbol element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
-    /// <returns>A string.</returns>
+    /**
+     * Reads a BSON symbol element from the reader.
+     *
+     * @param name The name of the element.
+     * @return A string.
+     */
     public String readSymbol(final String name) {
         verifyName(name);
         return readSymbol();
     }
 
-    /// <summary>
-    /// Reads a BSON timestamp from the reader.
-    /// </summary>
-    /// <returns>The combined timestamp/increment.</returns>
+    /**
+     * Reads a BSON timestamp from the reader.
+     *
+     * @return The combined timestamp/increment.
+     */
     public abstract BSONTimestamp readTimestamp();
 
-    /// <summary>
-    /// Reads a BSON timestamp element from the reader.
-    /// </summary>
-    /// <returns>The combined timestamp/increment.</returns>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Reads a BSON timestamp element from the reader.
+     *
+     * @param name The name of the element.
+     * @return The combined timestamp/increment.
+     */
     public BSONTimestamp readTimestamp(final String name) {
         verifyName(name);
         return readTimestamp();
     }
 
-    /// <summary>
-    /// Reads a BSON undefined from the reader.
-    /// </summary>
+    /**
+     * Reads a BSON undefined from the reader.
+     */
     public abstract void readUndefined();
 
-    /// <summary>
-    /// Reads a BSON undefined element from the reader.
-    /// </summary>
-    /// <param name="name">The name of the element.</param>
+    /**
+     * Reads a BSON undefined element from the reader.
+     *
+     * @param name The name of the element.
+     */
     public void readUndefined(final String name) {
         verifyName(name);
         readUndefined();
     }
 
-    /// <summary>
-    /// Returns the reader to previously bookmarked position and state.
-    /// </summary>
-    /// <param name="bookmark">The bookmark.</param>
-//    public abstract void ReturnToBookmark(BsonReaderBookmark bookmark);
-
-    /// <summary>
-    /// Skips the name (reader must be positioned on a name).
-    /// </summary>
+    /**
+     * Skips the name (reader must be positioned on a name).
+     */
     public abstract void skipName();
 
-    /// <summary>
-    /// Skips the value (reader must be positioned on a value).
-    /// </summary>
+    /**
+     * Skips the value (reader must be positioned on a value).
+     */
     public abstract void skipValue();
 
-    /// <summary>
-    /// Throws an InvalidOperationException when the method called is not valid for the current ContextType.
-    /// </summary>
-    /// <param name="methodName">The name of the method.</param>
-    /// <param name="actualContextType">The actual ContextType.</param>
-    /// <param name="validContextTypes">The valid ContextTypes.</param>
+    /**
+     * Throws an InvalidOperationException when the method called is not valid for the current ContextType.
+     *
+     * @param methodName        The name of the method.
+     * @param actualContextType The actual ContextType.
+     * @param validContextTypes The valid ContextTypes.
+     *
+     * @throws InvalidOperationException
+     */
     protected void throwInvalidContextType(final String methodName, final ContextType actualContextType,
                                            final ContextType... validContextTypes) {
         final String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
@@ -524,11 +479,14 @@ public abstract class BSONReader implements Closeable {
         throw new InvalidOperationException(message);
     }
 
-    /// <summary>
-    /// Throws an InvalidOperationException when the method called is not valid for the current state.
-    /// </summary>
-    /// <param name="methodName">The name of the method.</param>
-    /// <param name="validStates">The valid states.</param>
+    /**
+     * Throws an InvalidOperationException when the method called is not valid for the current state.
+     *
+     * @param methodName  The name of the method.
+     * @param validStates The valid states.
+     *
+     * @throws InvalidOperationException
+     */
     protected void throwInvalidState(final String methodName, final State... validStates) {
         final String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
         final String message = String.format(
@@ -537,11 +495,12 @@ public abstract class BSONReader implements Closeable {
         throw new InvalidOperationException(message);
     }
 
-    /// <summary>
-    /// Verifies the current state and BsonType of the reader.
-    /// </summary>
-    /// <param name="methodName">The name of the method calling this one.</param>
-    /// <param name="requiredBsonType">The required BSON type.</param>
+    /**
+     * Verifies the current state and BsonType of the reader.
+     *
+     * @param methodName       The name of the method calling this one.
+     * @param requiredBsonType The required BSON type.
+     */
     protected void verifyBsonType(final String methodName, final BsonType requiredBsonType) {
         if (state == State.INITIAL || state == State.SCOPE_DOCUMENT || state == State.TYPE) {
             readBsonType();
@@ -561,10 +520,13 @@ public abstract class BSONReader implements Closeable {
         }
     }
 
-    /// <summary>
-    /// Verifies the name of the current element.
-    /// </summary>
-    /// <param name="expectedName">The expected name.</param>
+    /**
+     * Verifies the name of the current element.
+     *
+     * @param expectedName The expected name.
+     *
+     * @throws BsonSerializationException
+     */
     protected void verifyName(final String expectedName) {
         readBsonType();
         final String actualName = readName();
@@ -577,41 +539,49 @@ public abstract class BSONReader implements Closeable {
     }
 
     protected enum State {
-        /// <summary>
-        /// The initial state.
-        /// </summary>
+        /**
+         * The initial state.
+         */
         INITIAL,
-        /// <summary>
-        /// The reader is positioned at the type of an element or value.
-        /// </summary>
+
+        /**
+         * The reader is positioned at the type of an element or value.
+         */
         TYPE,
-        /// <summary>
-        /// The reader is positioned at the name of an element.
-        /// </summary>
+
+        /**
+         * The reader is positioned at the name of an element.
+         */
         NAME,
-        /// <summary>
-        /// The reader is positioned at a value.
-        /// </summary>
+
+        /**
+         * The reader is positioned at a value.
+         */
         VALUE,
-        /// <summary>
-        /// The reader is positioned at a scope document.
-        /// </summary>
+
+        /**
+         * The reader is positioned at a scope document.
+         */
         SCOPE_DOCUMENT,
-        /// <summary>
-        /// The reader is positioned at the end of a document.
-        /// </summary>
+
+        /**
+         * The reader is positioned at the end of a document.
+         */
         END_OF_DOCUMENT,
-        /// <summary>
-        /// The reader is positioned at the end of an array.
-        /// </summary>
+
+        /**
+         * The reader is positioned at the end of an array.
+         */
         END_OF_ARRAY,
-        /// <summary>
-        /// The reader has finished reading a document.
-        /// </summary>
+
+        /**
+         * The reader has finished reading a document.
+         */
         DONE,
-        /// <summary>
-        /// The reader is closed.
-        /// </summary>
+
+        /**
+         * The reader is closed.
+         */
         CLOSED
     }
 }

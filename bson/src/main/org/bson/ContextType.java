@@ -16,28 +16,34 @@
 
 package org.bson;
 
-/// <summary>
-/// Used by BsonReaders and BsonWriters to represent the current context.
-/// </summary>
+/**
+ * Used by BsonReaders and BsonWriters to represent the current context.
+ *
+ * @since 3.0.0
+ */
 public enum ContextType {
-    /// <summary>
-    /// The top level of a BSON document.
-    /// </summary>
+    /**
+     * The top level of a BSON document.
+     */
     TOP_LEVEL,
-    /// <summary>
-    /// A (possibly embedded) BSON document.
-    /// </summary>
+
+    /**
+     * A (possibly embedded) BSON document.
+     */
     DOCUMENT,
-    /// <summary>
-    /// A BSON array.
-    /// </summary>
+
+    /**
+     * A BSON array.
+     */
     ARRAY,
-    /// <summary>
-    /// A JAVASCRIPT_WITH_SCOPE BSON value.
-    /// </summary>
+
+    /**
+     * A JAVASCRIPT_WITH_SCOPE BSON value.
+     */
     JAVASCRIPT_WITH_SCOPE,
-    /// <summary>
-    /// The scope document of a JAVASCRIPT_WITH_SCOPE BSON value.
-    /// </summary>
+
+    /**
+     * The scope document of a JAVASCRIPT_WITH_SCOPE BSON value.
+     */
     SCOPE_DOCUMENT
 }
