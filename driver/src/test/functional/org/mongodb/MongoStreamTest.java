@@ -49,11 +49,11 @@ public class MongoStreamTest extends DatabaseTestCase {
             cursor.close();
         }
 
-        for (final Document cur : collection.filter(new QueryFilterDocument("_id", 1))) {
+        for (final Document cur : collection.filter(new Document("_id", 1))) {
             System.out.println(cur);
         }
 
-        for (final Document cur : collection.filter(new QueryFilterDocument("_id", 1))
+        for (final Document cur : collection.filter(new Document("_id", 1))
                 .sort(new SortCriteriaDocument("_id", 1))) {
             System.out.println(cur);
         }
@@ -65,13 +65,13 @@ public class MongoStreamTest extends DatabaseTestCase {
         long count = collection.count();
         System.out.println(count);
 
-        count = collection.filter(new QueryFilterDocument("_id", new Document("$gt", 2))).count();
+        count = collection.filter(new Document("_id", new Document("$gt", 2))).count();
         System.out.println(count);
 
         Document doc = collection.one();
         System.out.println(doc);
 
-        doc = collection.filter(new QueryFilterDocument("_id", 1)).one();
+        doc = collection.filter(new Document("_id", 1)).one();
         System.out.println(doc);
 
         collection.forEach(new Block<Document>() {
@@ -145,24 +145,24 @@ public class MongoStreamTest extends DatabaseTestCase {
 
         collection.modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
-        collection.filter(new QueryFilterDocument("_id", 1))
+        collection.filter(new Document("_id", 1))
                 .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
-        collection.filter(new QueryFilterDocument("_id", 1))
+        collection.filter(new Document("_id", 1))
                 .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
 
-        collection.filter(new QueryFilterDocument("x", 1))
+        collection.filter(new Document("x", 1))
                 .noLimit()
                 .modifyOrInsert(new UpdateOperationsDocument("$inc", new Document("x", 1)));
 
-        collection.filter(new QueryFilterDocument("_id", 1))
+        collection.filter(new Document("_id", 1))
                 .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
-        collection.filter(new QueryFilterDocument("_id", 2))
+        collection.filter(new Document("_id", 2))
                 .modifyOrInsert(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
-        final Document doc = collection.filter(new QueryFilterDocument("_id", 1))
+        final Document doc = collection.filter(new Document("_id", 1))
                 .modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", 1)),
                         Get.BeforeChangeApplied);
         System.out.println(doc);
@@ -172,11 +172,11 @@ public class MongoStreamTest extends DatabaseTestCase {
     public void testInsertOrReplace() {
         final Document replacement = new Document("_id", 3).append("x", 2);
         collection.replaceOrInsert(replacement);
-        assertEquals(replacement, collection.filter(new QueryFilterDocument("_id", 3)).one());
+        assertEquals(replacement, collection.filter(new Document("_id", 3)).one());
 
         replacement.append("y", 3);
         collection.replaceOrInsert(replacement);
-        assertEquals(replacement, collection.filter(new QueryFilterDocument("_id", 3)).one());
+        assertEquals(replacement, collection.filter(new Document("_id", 3)).one());
     }
 
     @Test
@@ -186,7 +186,7 @@ public class MongoStreamTest extends DatabaseTestCase {
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
 
-        System.out.println(concreteCollection.filter(new QueryFilterDocument("i", 1))
+        System.out.println(concreteCollection.filter(new Document("i", 1))
                 .map(new Function<Concrete, ObjectId>() {
                     @Override
                     public ObjectId apply(final Concrete concrete) {
@@ -199,7 +199,7 @@ public class MongoStreamTest extends DatabaseTestCase {
                     }
                 }).into(new ArrayList<String>()));
 
-        System.out.println(concreteCollection.filter(new QueryFilterDocument("i", 1))
+        System.out.println(concreteCollection.filter(new Document("i", 1))
                 .map(new Function<Concrete, ObjectId>() {
                     @Override
                     public ObjectId apply(final Concrete concrete) {

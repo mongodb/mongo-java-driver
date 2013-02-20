@@ -25,7 +25,6 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Get;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
-import org.mongodb.QueryFilterDocument;
 import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.CollectibleSerializer;
@@ -59,8 +58,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(doc);
         assertNotNull(doc.get("_id"));
         assertEquals(ObjectId.class, doc.get("_id").getClass());
-        assertEquals(1, collection.filter(new QueryFilterDocument("_id", doc.get("_id"))).count());
-        assertEquals(1, collection.filter(new QueryFilterDocument("_id", doc.get("_id"))).one().size());
+        assertEquals(1, collection.filter(new Document("_id", doc.get("_id"))).count());
+        assertEquals(1, collection.filter(new Document("_id", doc.get("_id"))).one().size());
     }
 
     @Test
@@ -68,10 +67,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         collection.insert(new Document("_id", 1));
 
-        collection.filter(new QueryFilterDocument("_id", 1))
+        collection.filter(new Document("_id", 1))
                   .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
 
-        assertEquals(1, collection.filter(new QueryFilterDocument("_id", 1).append("x", 1)).count());
+        assertEquals(1, collection.filter(new Document("_id", 1).append("x", 1)).count());
     }
 
     @Test
@@ -79,10 +78,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         collection.insert(new Document("_id", 1).append("x", 1));
 
-        collection.filter(new QueryFilterDocument("_id", 1)).replace(new Document("_id", 1).append("y", 2));
+        collection.filter(new Document("_id", 1)).replace(new Document("_id", 1).append("y", 2));
 
-        assertEquals(0, collection.filter(new QueryFilterDocument("_id", 1).append("x", 1)).count());
-        assertEquals(1, collection.filter(new QueryFilterDocument("_id", 1).append("y", 2)).count());
+        assertEquals(0, collection.filter(new Document("_id", 1).append("x", 1)).count());
+        assertEquals(1, collection.filter(new Document("_id", 1).append("y", 2)).count());
     }
 
     @Test
@@ -95,7 +94,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         }
 
         collection.insert(documents);
-        collection.filter(new QueryFilterDocument("_id", 5)).remove();
+        collection.filter(new Document("_id", 5)).remove();
         assertEquals(9, collection.count());
     }
 
@@ -139,7 +138,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         long count = collection.count();
         assertEquals(11, count);
 
-        count = collection.filter(new QueryFilterDocument("_id", 10)).count();
+        count = collection.filter(new Document("_id", 10)).count();
         assertEquals(1, count);
     }
 
@@ -148,7 +147,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         collection.insert(new Document("_id", 1).append("x", true));
 
-        final Document newDoc = collection.filter(new QueryFilterDocument("x", true))
+        final Document newDoc = collection.filter(new Document("x", true))
                                           .modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", false)),
                                                        Get.AfterChangeApplied);
 
@@ -163,7 +162,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         final Concrete doc = new Concrete(new ObjectId(), true);
         collection.insert(doc);
 
-        final Concrete newDoc = collection.filter(new QueryFilterDocument("x", true))
+        final Concrete newDoc = collection.filter(new Document("x", true))
                                           .modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", false)),
                                                        Get.AfterChangeApplied);
 

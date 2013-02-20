@@ -20,7 +20,6 @@ import org.bson.types.Document;
 import org.junit.Test;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoStream;
-import org.mongodb.QueryFilterDocument;
 import org.mongodb.SortCriteriaDocument;
 import org.mongodb.acceptancetest.AcceptanceTestCase;
 
@@ -36,7 +35,7 @@ public class FilterAcceptanceTest extends AcceptanceTestCase {
         final int numberOfDocuments = 10;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
-        final MongoStream<Document> filteredCollection = collection.filter(new QueryFilterDocument("_id", 3));
+        final MongoStream<Document> filteredCollection = collection.filter(new Document("_id", 3));
 
         assertThat(filteredCollection.count(), is(1L));
         for (final Document document : filteredCollection) {
@@ -86,7 +85,7 @@ public class FilterAcceptanceTest extends AcceptanceTestCase {
         initialiseCollectionWithDocuments(numberOfDocuments);
 
         final MongoCursor<Document> filterResults = collection
-                                                    .filter(new QueryFilterDocument("_id", new Document("$gt", 2)))
+                                                    .filter(new Document("_id", new Document("$gt", 2)))
                                                     .sort(new SortCriteriaDocument("_id", 1))
                                                     .all();
 

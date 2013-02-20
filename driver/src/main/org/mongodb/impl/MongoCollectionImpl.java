@@ -19,6 +19,7 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.mongodb.Block;
 import org.mongodb.CollectionAdmin;
+import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Function;
 import org.mongodb.Get;
 import org.mongodb.MongoCollection;
@@ -148,6 +149,11 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     @Override
     public MongoStream<T> filter(final Document filter) {
         return new MongoCollectionStream().filter(filter);
+    }
+
+    @Override
+    public MongoStream<T> filter(final ConvertibleToDocument filter) {
+        return filter(filter.toDocument());
     }
 
     @Override
@@ -311,6 +317,11 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
             final MongoCollectionStream newStream = new MongoCollectionStream(this);
             newStream.findOp.filter(filter);
             return newStream;
+        }
+
+        @Override
+        public MongoStream<T> filter(final ConvertibleToDocument filter) {
+            return filter(filter.toDocument());
         }
 
         @Override

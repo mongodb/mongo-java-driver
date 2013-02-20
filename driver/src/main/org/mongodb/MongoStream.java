@@ -33,6 +33,8 @@ public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWr
 
     MongoStream<T> filter(Document filter);
 
+    MongoStream<T> filter(ConvertibleToDocument filter);
+
     MongoStream<T> sort(MongoSortCriteria sortCriteria);
 
     MongoStream<T> skip(int skip);

@@ -22,9 +22,9 @@ import org.bson.types.Document;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mongodb.ConvertibleToDocument;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
-import org.mongodb.QueryFilterDocument;
 import org.mongodb.acceptancetest.AcceptanceTestCase;
 import org.mongodb.serialization.CollectibleSerializer;
 
@@ -36,7 +36,7 @@ public class QueryAcceptanceTest extends AcceptanceTestCase {
     public void shouldBeAbleToQueryWithDocumentSpecification() {
         collection.insert(new Document("name", "Bob"));
 
-        final QueryFilterDocument query = new QueryFilterDocument("name", "Bob");
+        final Document query = new Document("name", "Bob");
         final MongoCursor<Document> results = collection.filter(query).all();
 
         assertThat(results.next().get("name").toString(), is("Bob"));
@@ -53,11 +53,22 @@ public class QueryAcceptanceTest extends AcceptanceTestCase {
     }
 
     @Test
-    public void shouldBeAbleToQueryWithType() {
+    public void shouldBeAbleToQueryTypedCollectionWithDocument() {
         final MongoCollection<Person> personCollection = database.getCollection(collectionName, new PersonSerializer());
         personCollection.insert(new Person("Bob"));
 
         final MongoCursor<Person> results = personCollection.filter(new Document("name", "Bob")).all();
+
+        assertThat(results.next().name, is("Bob"));
+    }
+
+    @Test
+    public void shouldBeAbleToQueryWithType() {
+        final MongoCollection<Person> personCollection = database.getCollection(collectionName, new PersonSerializer());
+        final Person bob = new Person("Bob");
+        personCollection.insert(bob);
+
+        final MongoCursor<Person> results = personCollection.filter(bob).all();
 
         assertThat(results.next().name, is("Bob"));
     }
@@ -102,7 +113,7 @@ public class QueryAcceptanceTest extends AcceptanceTestCase {
         }
     }
 
-    private class Person {
+    private class Person implements ConvertibleToDocument {
         private ObjectId id = new ObjectId();
         private String name;
 
@@ -113,6 +124,11 @@ public class QueryAcceptanceTest extends AcceptanceTestCase {
         public Person(final ObjectId id, final String name) {
             this.id = id;
             this.name = name;
+        }
+
+        @Override
+        public Document toDocument() {
+            return new Document("name", name);
         }
     }
 }

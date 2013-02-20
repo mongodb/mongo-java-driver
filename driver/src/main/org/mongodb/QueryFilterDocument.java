@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.bson.types.Document;
 
-public class QueryFilterDocument extends Document implements ConvertibleToDocument {
+public class QueryFilterDocument extends Document {
     private static final long serialVersionUID = -4703247391554552538L;
 
     public QueryFilterDocument(final String key, final Object value) {
@@ -27,11 +27,6 @@ public class QueryFilterDocument extends Document implements ConvertibleToDocume
 
     public QueryFilterDocument() {
         super();
-    }
-
-    @Override
-    public Document toDocument() {
-        return this;
     }
 
     @Override

@@ -19,7 +19,6 @@ package org.mongodb.acceptancetest.crud;
 import org.bson.types.Document;
 import org.junit.Test;
 import org.mongodb.MongoStream;
-import org.mongodb.QueryFilterDocument;
 import org.mongodb.SortCriteriaDocument;
 import org.mongodb.acceptancetest.AcceptanceTestCase;
 
@@ -46,7 +45,7 @@ public class FindAndRemoveAcceptanceTest extends AcceptanceTestCase {
         assertThat(collection.count(), is(1L));
 
         // when
-        final QueryFilterDocument filter = new QueryFilterDocument(KEY, VALUE_TO_CARE_ABOUT);
+        final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
         final Document documentRetrieved = collection.filter(filter).removeAndGet();
 
         // then
@@ -67,7 +66,7 @@ public class FindAndRemoveAcceptanceTest extends AcceptanceTestCase {
         assertThat(collection.count(), is(3L));
 
         // when
-        final QueryFilterDocument filter = new QueryFilterDocument(KEY, VALUE_TO_CARE_ABOUT);
+        final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
         final Document documentRetrieved = collection.filter(filter).removeAndGet();
 
         // then
@@ -87,7 +86,7 @@ public class FindAndRemoveAcceptanceTest extends AcceptanceTestCase {
         assertThat(collection.count(), is(3L));
 
         // when
-        final QueryFilterDocument filter = new QueryFilterDocument(KEY, VALUE_TO_CARE_ABOUT);
+        final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
         final Document documentRetrieved = collection.filter(filter).removeAndGet();
 
         // then
@@ -107,7 +106,7 @@ public class FindAndRemoveAcceptanceTest extends AcceptanceTestCase {
         assertThat(collection.count(), is(3L));
 
         // when
-        final QueryFilterDocument filter = new QueryFilterDocument(KEY, VALUE_TO_CARE_ABOUT);
+        final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
         final MongoStream<Document> resultsOfSearchingByFilter = collection.filter(filter);
         assertThat(resultsOfSearchingByFilter.count(), is(3L));
 
@@ -132,7 +131,7 @@ public class FindAndRemoveAcceptanceTest extends AcceptanceTestCase {
         assertThat(collection.count(), is(3L));
 
         // when
-        final QueryFilterDocument filter = new QueryFilterDocument(KEY, VALUE_TO_CARE_ABOUT);
+        final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
         final Document documentRetrieved = collection.filter(filter)
                                                .sort(new SortCriteriaDocument(secondKey, 1))
                                                .removeAndGet();
@@ -146,7 +145,7 @@ public class FindAndRemoveAcceptanceTest extends AcceptanceTestCase {
     @Test
     public void shouldReturnNullIfNoDocumentRemoved() {
         // when
-        final QueryFilterDocument filter = new QueryFilterDocument(KEY, VALUE_TO_CARE_ABOUT);
+        final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
         final Document documentRetrieved = collection.filter(filter).removeAndGet();
 
         // then

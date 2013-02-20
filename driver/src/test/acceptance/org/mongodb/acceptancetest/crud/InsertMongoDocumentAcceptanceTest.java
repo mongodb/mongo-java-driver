@@ -20,7 +20,6 @@ import org.bson.types.Document;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.MongoCursor;
-import org.mongodb.QueryFilterDocument;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -33,7 +32,7 @@ public class InsertMongoDocumentAcceptanceTest extends DatabaseTestCase {
 
         assertThat(collection.count(), is(1L));
 
-        final QueryFilterDocument queryFilter = new QueryFilterDocument("name", "Billy");
+        final Document queryFilter = new Document("name", "Billy");
         final MongoCursor<Document> insertTestDocumentMongoCursor = collection.filter(queryFilter).all();
 
         assertThat((String) insertTestDocumentMongoCursor.next().get("name"), is("Billy"));

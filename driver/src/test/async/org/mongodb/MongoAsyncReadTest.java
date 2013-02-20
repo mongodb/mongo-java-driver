@@ -73,7 +73,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
 
     @Test
     public void testOneFuture() throws ExecutionException, InterruptedException {
-        assertNull(collection.filter(new QueryFilterDocument("_id", 11)).asyncOne().get());
+        assertNull(collection.filter(new Document("_id", 11)).asyncOne().get());
         assertThat(collection.sort(new SortCriteriaDocument("_id", 1)).asyncOne().get(), is(documentList.get(0)));
     }
 
@@ -82,7 +82,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     public void testOneCallback() throws ExecutionException, InterruptedException {
         final List<Document> documentResultList = new ArrayList<Document>();
         final List<Exception> exceptionList = new ArrayList<Exception>();
-        collection.filter(new QueryFilterDocument("_id", 11)).asyncOne(new SingleResultCallback<Document>() {
+        collection.filter(new Document("_id", 11)).asyncOne(new SingleResultCallback<Document>() {
             @Override
             public void onResult(final Document result, final MongoException e) {
                 documentResultList.add(result);
