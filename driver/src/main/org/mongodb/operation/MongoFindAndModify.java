@@ -16,8 +16,10 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.Document;
+
 public abstract class MongoFindAndModify extends MongoQuery {
-    private MongoQueryFilter filter;
+    private Document filter;
     private MongoFieldSelector selector;
     private MongoSortCriteria sortCriteria;
     private boolean returnNew;
@@ -27,7 +29,7 @@ public abstract class MongoFindAndModify extends MongoQuery {
     }
 
     //CHECKSTYLE:OFF
-    public MongoFindAndModify where(final MongoQueryFilter filter) {
+    public MongoFindAndModify where(final Document filter) {
         this.filter = filter;
         return this;
     }
@@ -54,7 +56,7 @@ public abstract class MongoFindAndModify extends MongoQuery {
     }
     //CHECKSTYLE:ON
 
-    public MongoQueryFilter getFilter() {
+    public Document getFilter() {
         return filter;
     }
 

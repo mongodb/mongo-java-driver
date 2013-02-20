@@ -29,7 +29,7 @@ public class Distinct extends MongoCommand {
         final CommandDocument cmd = new CommandDocument("distinct", collectionName);
         cmd.put("key", fieldName);
         if (query.getFilter() != null) {
-            cmd.put("query", query.getFilter().toDocument());
+            cmd.put("query", query.getFilter());
         }
         return cmd;
     }

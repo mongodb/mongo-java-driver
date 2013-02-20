@@ -16,15 +16,17 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.Document;
+
 public abstract class MongoUpdateBase extends MongoWrite {
-    private final MongoQueryFilter filter;
+    private final Document filter;
     private boolean isUpsert = false;
 
-    public MongoUpdateBase(final MongoQueryFilter filter) {
+    public MongoUpdateBase(final Document filter) {
         this.filter = filter;
     }
 
-    public MongoQueryFilter getFilter() {
+    public Document getFilter() {
         return filter;
     }
 

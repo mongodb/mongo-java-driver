@@ -16,10 +16,10 @@
 
 package org.mongodb;
 
+import org.bson.types.Document;
 import org.mongodb.async.MongoAsyncReadableStream;
 import org.mongodb.async.MongoAsyncWritableStream;
 import org.mongodb.operation.MongoFieldSelector;
-import org.mongodb.operation.MongoQueryFilter;
 import org.mongodb.operation.MongoSortCriteria;
 
 public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWritableStream<T>,
@@ -31,7 +31,7 @@ public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWr
 
     MongoStream<T> writeConcern(WriteConcern writeConcern);
 
-    MongoStream<T> filter(MongoQueryFilter filter);
+    MongoStream<T> filter(Document filter);
 
     MongoStream<T> sort(MongoSortCriteria sortCriteria);
 

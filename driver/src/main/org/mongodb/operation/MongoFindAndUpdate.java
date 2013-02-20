@@ -16,6 +16,8 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.Document;
+
 public class MongoFindAndUpdate<T> extends MongoFindAndModify {
     private MongoUpdateOperations updateOperations;
 
@@ -31,7 +33,7 @@ public class MongoFindAndUpdate<T> extends MongoFindAndModify {
     }
 
     @Override
-    public MongoFindAndUpdate<T> where(final MongoQueryFilter filter) {
+    public MongoFindAndUpdate<T> where(final Document filter) {
         super.where(filter);
         return this;
     }

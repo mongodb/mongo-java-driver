@@ -35,7 +35,7 @@ public class MongoDeleteMessage extends MongoRequestMessage {
         getBuffer().writeInt(0); // reserved
         getBuffer().writeCString(getCollectionName());
 
-        final Document queryFilterDocument = remove.getFilter().toDocument();
+        final Document queryFilterDocument = remove.getFilter();
 
         final Collection<String> keys = queryFilterDocument.keySet();
 

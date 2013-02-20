@@ -28,7 +28,6 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoException;
 import org.mongodb.MongoIterable;
 import org.mongodb.MongoStream;
-import org.mongodb.QueryFilterDocument;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.async.AsyncBlock;
@@ -49,7 +48,6 @@ import org.mongodb.operation.MongoFindAndRemove;
 import org.mongodb.operation.MongoFindAndReplace;
 import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoQueryFilter;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoSortCriteria;
@@ -148,7 +146,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
-    public MongoStream<T> filter(final MongoQueryFilter filter) {
+    public MongoStream<T> filter(final Document filter) {
         return new MongoCollectionStream().filter(filter);
     }
 
@@ -309,7 +307,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         }
 
         @Override
-        public MongoStream<T> filter(final MongoQueryFilter filter) {
+        public MongoStream<T> filter(final Document filter) {
             final MongoCollectionStream newStream = new MongoCollectionStream(this);
             newStream.findOp.filter(filter);
             return newStream;
@@ -450,7 +448,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                 return insert(document);
             }
             else {
-                return filter(new QueryFilterDocument("_id", id)).replaceOrInsert(document);
+                return filter(new Document("_id", id)).replaceOrInsert(document);
             }
         }
 

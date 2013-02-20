@@ -53,6 +53,6 @@ public class MongoUpdateMessage extends MongoRequestMessage {
         }
         getBuffer().writeInt(flags);
 
-        addDocument(update.getFilter().toDocument(), serializer);
+        addDocument(update.getFilter(), serializer);
     }
 }

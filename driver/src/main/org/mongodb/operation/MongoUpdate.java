@@ -16,13 +16,14 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.Document;
 import org.mongodb.WriteConcern;
 
 public class MongoUpdate extends MongoUpdateBase {
     private final MongoUpdateOperations updateOperations;
     private boolean isMulti = false;
 
-    public MongoUpdate(final MongoQueryFilter filter, final MongoUpdateOperations updateOperations) {
+    public MongoUpdate(final Document filter, final MongoUpdateOperations updateOperations) {
         super(filter);
 
         this.updateOperations = updateOperations;

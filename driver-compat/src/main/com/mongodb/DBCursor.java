@@ -440,7 +440,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public DBObject getQuery() {
-        return DBObjects.toDBObject(find.getFilter().toDocument());
+        return DBObjects.toDBObject(find.getFilter());
     }
 
     /**

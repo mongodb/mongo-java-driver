@@ -16,17 +16,18 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.Document;
 import org.mongodb.WriteConcern;
 
 public class MongoRemove extends MongoWrite {
-    private final MongoQueryFilter filter;
+    private final Document filter;
     private boolean isMulti = false;
 
-    public MongoRemove(final MongoQueryFilter filter) {
+    public MongoRemove(final Document filter) {
         this.filter = filter;
     }
 
-    public MongoQueryFilter getFilter() {
+    public Document getFilter() {
         return filter;
     }
 

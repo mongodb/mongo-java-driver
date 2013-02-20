@@ -16,12 +16,13 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.Document;
 import org.mongodb.WriteConcern;
 
 public class MongoReplace<T> extends MongoUpdateBase {
     private final T replacement;
 
-    public MongoReplace(final MongoQueryFilter filter, final T replacement) {
+    public MongoReplace(final Document filter, final T replacement) {
         super(filter);
         this.replacement = replacement;
     }

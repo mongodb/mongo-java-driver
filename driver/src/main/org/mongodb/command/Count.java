@@ -31,7 +31,7 @@ public final class Count extends MongoCommand {
         final CommandDocument document = new CommandDocument("count", collectionName);
 
         if (find.getFilter() != null) {
-            document.put("query", find.getFilter().toDocument());
+            document.put("query", find.getFilter());
         }
         if (find.getLimit() > 0) {
             document.put("limit", find.getLimit());

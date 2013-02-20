@@ -16,6 +16,8 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.Document;
+
 public class MongoFindAndReplace<T> extends MongoFindAndModify {
     private final T replacement;
 
@@ -46,7 +48,7 @@ public class MongoFindAndReplace<T> extends MongoFindAndModify {
     }
 
     @Override
-    public MongoFindAndReplace<T> where(final MongoQueryFilter filter) {
+    public MongoFindAndReplace<T> where(final Document filter) {
         super.where(filter);
         return this;
     }

@@ -16,13 +16,15 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.Document;
+
 public class MongoFindAndRemove<T> extends MongoFindAndModify {
     public boolean isRemove() {
         return true;
     }
 
     @Override
-    public MongoFindAndRemove<T> where(final MongoQueryFilter filter) {
+    public MongoFindAndRemove<T> where(final Document filter) {
         super.where(filter);
         return this;
     }
