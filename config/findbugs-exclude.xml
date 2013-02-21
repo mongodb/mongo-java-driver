@@ -1,0 +1,25 @@
+<FindBugsFilter>
+    <Match>
+        <Package name="~com\.google\.code\.morphia.*"/>
+    </Match>
+
+    <Match>
+        <Class name="org.bson.JsonWriterSettings"/>
+    </Match>
+
+    <Match>
+        <Class name="org.mongodb.acceptancetest.AcceptanceTestCase">
+            <Bug code="MS"/>
+        </Class>
+
+    </Match>
+
+    <!-- All bugs in test classes, except for JUnit-specific bugs -->
+    <Match>
+        <Class name="~.*\.*Test"/>
+        <Not>
+            <Bug code="IJU"/>
+        </Not>
+    </Match>
+
+</FindBugsFilter>
