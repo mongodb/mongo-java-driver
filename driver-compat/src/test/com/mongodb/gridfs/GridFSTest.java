@@ -26,6 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Random;
 
 import static java.nio.charset.Charset.defaultCharset;
 import static org.junit.Assert.assertArrayEquals;
@@ -127,6 +128,7 @@ public class GridFSTest extends DatabaseTestCase {
         }
 
         final byte[] randomBytes = new byte[fileSize];
+        final Random rnd = new Random();
         for (int idx = 0; idx < fileSize; ++idx) {
             randomBytes[idx] = (byte) (256 * Math.random());
         }

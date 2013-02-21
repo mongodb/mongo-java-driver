@@ -28,8 +28,11 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.nio.charset.Charset.defaultCharset;
 
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
@@ -55,7 +58,7 @@ public class CollectionOfValuesTest extends TestBase {
     public void testTwoDimensionalArrayMapping() throws Exception {
         morphia.map(ContainsTwoDimensionalArray.class);
         final ContainsTwoDimensionalArray entity = new ContainsTwoDimensionalArray();
-        final byte[][] test2DimBa = new byte[][]{"Joseph".getBytes(), "uwe".getBytes()};
+        final byte[][] test2DimBa = new byte[][]{"Joseph".getBytes(defaultCharset()), "uwe".getBytes(defaultCharset())};
         entity.twoDimArray = test2DimBa;
         final Key<ContainsTwoDimensionalArray> savedKey = ds.save(entity);
         final ContainsTwoDimensionalArray loaded = ds.get(ContainsTwoDimensionalArray.class, savedKey.getId());

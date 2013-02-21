@@ -523,6 +523,11 @@ public class MappedClass {
         }
     }
 
+    @Override
+    public int hashCode() {
+        return getClazz().hashCode();
+    }
+
     //CHECKSTYLE:OFF
     public boolean equals(final MappedClass clazz) {
         return this.getClazz().equals(clazz.getClazz());

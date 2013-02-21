@@ -59,6 +59,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 
+import static java.nio.charset.Charset.defaultCharset;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -184,7 +185,7 @@ public class MappingTest extends TestBase {
     private static class ContainsbyteArray {
         @Id
         private ObjectId id;
-        private final byte[] bytes = "Scott".getBytes();
+        private final byte[] bytes = "Scott".getBytes(defaultCharset());
     }
 
     private static class ContainsSerializedData {
@@ -684,7 +685,8 @@ public class MappingTest extends TestBase {
         morphia.map(ContainsbyteArray.class);
         final Key<ContainsbyteArray> savedKey = ds.save(new ContainsbyteArray());
         final ContainsbyteArray loaded = ds.get(ContainsbyteArray.class, savedKey.getId());
-        assertEquals(new String((new ContainsbyteArray()).bytes), new String(loaded.bytes));
+        assertEquals(new String((new ContainsbyteArray()).bytes, defaultCharset()),
+                    new String(loaded.bytes, defaultCharset()));
         assertNotNull(loaded.id);
     }
 

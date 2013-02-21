@@ -43,6 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static java.nio.charset.Charset.defaultCharset;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -497,7 +498,7 @@ public class QueryTest extends TestBase {
         ds.save(new PhotoWithKeywords());
         PhotoWithKeywords p = ds.find(PhotoWithKeywords.class, "keywords.keyword", 1).get();
         assertNull(p);
-        p = ds.find(PhotoWithKeywords.class, "keywords.keyword", "california".getBytes()).get();
+        p = ds.find(PhotoWithKeywords.class, "keywords.keyword", "california".getBytes(defaultCharset())).get();
         assertNull(p);
         p = ds.find(PhotoWithKeywords.class, "keywords.keyword", null).get();
         assertNull(p);

@@ -27,6 +27,7 @@ import com.google.code.morphia.testutil.TestEntity;
 import com.mongodb.DBObject;
 import org.junit.Test;
 
+import static java.nio.charset.Charset.defaultCharset;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -36,11 +37,11 @@ public class SerializedNameTest extends TestBase {
     public static class E extends TestEntity {
         private static final long serialVersionUID = 1L;
         @Serialized("changedName")
-        private final byte[] b = "foo".getBytes();
+        private final byte[] b = "foo".getBytes(defaultCharset());
 
         @PreSave
         public void preSave(final DBObject o) {
-            document = new String((byte[]) o.get("changedName"));
+            document = new String((byte[]) o.get("changedName"), defaultCharset());
         }
 
         @Transient

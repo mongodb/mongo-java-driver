@@ -33,6 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import static java.nio.charset.Charset.defaultCharset;
 import static org.junit.Assert.assertEquals;
 
 public class BSONTypeSerializableTest {
@@ -67,7 +68,7 @@ public class BSONTypeSerializableTest {
 
     @Test
     public void testSerializeBinary() throws Exception {
-        final Binary binary = new Binary((byte) 0x00, "hello world".getBytes());
+        final Binary binary = new Binary((byte) 0x00, "hello world".getBytes(defaultCharset()));
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         final ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
