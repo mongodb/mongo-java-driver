@@ -85,6 +85,10 @@ subprojects {
         ignoreFailures = true
     }
 
+    tasks.withType(FindBugs) {
+        excludeFilter = new File("$configDir/findbugs-exclude.xml")
+    }
+
     pmd {
         ignoreFailures = true
     }

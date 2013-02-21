@@ -41,7 +41,7 @@ public class JsonWriterTest {
         writer = new JsonWriter(stringWriter, new JsonWriterSettings());
     }
 
-    private class TestData<T> {
+    private static class TestData<T> {
         private final T value;
         private final String expected;
 
