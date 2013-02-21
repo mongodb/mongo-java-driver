@@ -21,6 +21,6 @@ import org.mongodb.operation.MongoCommand;
 
 public final class Create extends MongoCommand {
     public Create(final CreateCollectionOptions createCollectionOptions) {
-        super(createCollectionOptions.asCommandDocument());
+        super(createCollectionOptions.asDocument());
     }
 }

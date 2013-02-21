@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import org.bson.types.Document;
 import org.mongodb.annotations.Immutable;
 
 import java.io.Serializable;
@@ -246,8 +247,8 @@ public class WriteConcern implements Serializable {
      *
      * @return getlasterror command, even if <code>w <= 0</code>
      */
-    public CommandDocument getCommand() {
-        final CommandDocument command = new CommandDocument("getlasterror", 1);
+    public Document getCommand() {
+        final Document command = new Document("getlasterror", 1);
 
         if (w instanceof Integer && ((Integer) w > 1) || (w instanceof String)) {
             command.put("w", w);

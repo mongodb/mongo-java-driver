@@ -17,14 +17,13 @@
 package org.mongodb.operation;
 
 import org.bson.types.Document;
-import org.mongodb.CommandDocument;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.ReadPreference;
 
 public class MongoCommand extends MongoQuery implements ConvertibleToDocument {
-    private final CommandDocument command;
+    private final Document command;
 
-    public MongoCommand(final CommandDocument commandDocument) {
+    public MongoCommand(final Document commandDocument) {
         this.command = commandDocument;
         batchSize = -1;
     }

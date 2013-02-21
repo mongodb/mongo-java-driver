@@ -16,11 +16,11 @@
 
 package org.mongodb.command;
 
-import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 import org.mongodb.operation.MongoCommand;
 
 public final class DropDatabase extends MongoCommand {
     public DropDatabase() {
-        super(new CommandDocument("dropDatabase", 1));
+        super(new Document("dropDatabase", 1));
     }
 }

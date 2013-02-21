@@ -16,11 +16,11 @@
 
 package org.mongodb.command;
 
-import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 import org.mongodb.operation.MongoCommand;
 
 public final class Ping extends MongoCommand {
     public Ping() {
-        super(new CommandDocument("ping", 1));
+        super(new Document("ping", 1));
     }
 }

@@ -16,19 +16,19 @@
 
 package org.mongodb.command;
 
-import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
 
 public final class Count extends MongoCommand {
     public Count(final MongoFind find, final String collectionName) {
-        super(asCommandDocument(find, collectionName));
+        super(asDocument(find, collectionName));
         readPreference(find.getReadPreference());
     }
 
-    private static CommandDocument asCommandDocument(final MongoFind find, final String collectionName) {
+    private static Document asDocument(final MongoFind find, final String collectionName) {
 
-        final CommandDocument document = new CommandDocument("count", collectionName);
+        final Document document = new Document("count", collectionName);
 
         if (find.getFilter() != null) {
             document.put("query", find.getFilter());

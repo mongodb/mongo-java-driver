@@ -16,8 +16,8 @@
 
 package org.mongodb.command;
 
+import org.bson.types.Document;
 import org.junit.Test;
-import org.mongodb.CommandDocument;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Fixture;
 import org.mongodb.MongoDatabase;
@@ -29,7 +29,7 @@ import static org.junit.Assert.assertTrue;
 public class IsMasterCommandResultTest extends DatabaseTestCase {
 
     private MongoDatabase adminDatabase = Fixture.getMongoClient().getDatabase("admin");
-    private CommandDocument isMasterCommandDocument = new CommandDocument("ismaster", 1);
+    private Document isMasterCommandDocument = new Document("ismaster", 1);
     private MongoCommand command = new MongoCommand(isMasterCommandDocument);
 
     @Test

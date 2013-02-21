@@ -16,17 +16,17 @@
 
 package org.mongodb.command;
 
-import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 import org.mongodb.operation.MongoCommand;
 
 public class DropIndex  extends MongoCommand {
     public DropIndex(final String collectionName, final String indexName) {
         //TODO: should fail
-        super(createCommandDocument(collectionName, indexName));
+        super(createDocument(collectionName, indexName));
     }
 
-    private static CommandDocument createCommandDocument(final String collectionName, final String indexName) {
-        final CommandDocument dropIndexesCommand = new CommandDocument("dropIndexes", collectionName);
+    private static Document createDocument(final String collectionName, final String indexName) {
+        final Document dropIndexesCommand = new Document("dropIndexes", collectionName);
         dropIndexesCommand.append("index", indexName);
         return dropIndexesCommand;
     }

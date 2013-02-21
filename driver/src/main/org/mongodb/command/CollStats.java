@@ -16,11 +16,11 @@
 
 package org.mongodb.command;
 
-import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 import org.mongodb.operation.MongoCommand;
 
 public final class CollStats extends MongoCommand {
     public CollStats(final String collectionName) {
-        super(new CommandDocument("collStats", collectionName));
+        super(new Document("collStats", collectionName));
     }
 }

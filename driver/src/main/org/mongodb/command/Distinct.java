@@ -16,17 +16,18 @@
 
 package org.mongodb.command;
 
-import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
 
 public class Distinct extends MongoCommand {
     public Distinct(final String collectionName, final String fieldName, final MongoFind query) {
-        super(toCommandDocument(collectionName, fieldName, query));
+        super(toDocument(collectionName, fieldName, query));
     }
 
-    private static CommandDocument toCommandDocument(final String collectionName, final String fieldName, final MongoFind query) {
-        final CommandDocument cmd = new CommandDocument("distinct", collectionName);
+    private static Document toDocument(final String collectionName, final String fieldName,
+                                              final MongoFind query) {
+        final Document cmd = new Document("distinct", collectionName);
         cmd.put("key", fieldName);
         if (query.getFilter() != null) {
             cmd.put("query", query.getFilter());

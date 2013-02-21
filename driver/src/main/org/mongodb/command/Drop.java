@@ -16,7 +16,7 @@
 
 package org.mongodb.command;
 
-import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 import org.mongodb.operation.MongoCommand;
 
 /**
@@ -24,6 +24,6 @@ import org.mongodb.operation.MongoCommand;
  */
 public final class Drop extends MongoCommand {
     public Drop(final String collectionName) {
-        super(new CommandDocument("drop", collectionName));
+        super(new Document("drop", collectionName));
     }
 }

@@ -18,7 +18,6 @@ package com.mongodb;
 
 import org.bson.BSONObject;
 import org.bson.types.Document;
-import org.mongodb.CommandDocument;
 import org.mongodb.FieldSelectorDocument;
 import org.mongodb.SortCriteriaDocument;
 import org.mongodb.UpdateOperationsDocument;
@@ -73,13 +72,6 @@ public class DBObjects {
         fill(o, doc);
         return doc;
     }
-
-    public static CommandDocument toCommandDocument(final DBObject commandObject) {
-        final CommandDocument doc = new CommandDocument();
-        fill(commandObject, doc);
-        return doc;
-    }
-
 
     public static CommandResult toCommandResult(final DBObject command, final ServerAddress serverAddress,
                                                 final Document document) {

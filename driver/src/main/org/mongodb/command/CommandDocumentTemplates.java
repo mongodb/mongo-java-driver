@@ -16,7 +16,7 @@
 
 package org.mongodb.command;
 
-import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 import org.mongodb.operation.MongoFindAndModify;
 
 final class CommandDocumentTemplates {
@@ -24,9 +24,9 @@ final class CommandDocumentTemplates {
     private CommandDocumentTemplates() {
     }
 
-    static CommandDocument getFindAndModify(final MongoFindAndModify findAndModify,
+    static Document getFindAndModify(final MongoFindAndModify findAndModify,
                                             final String collectionName) {
-        final CommandDocument cmd = new CommandDocument("findandmodify", collectionName);
+        final Document cmd = new Document("findandmodify", collectionName);
         if (findAndModify.getFilter() != null) {
             cmd.put("query", findAndModify.getFilter());
         }

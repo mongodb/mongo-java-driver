@@ -28,6 +28,8 @@ import org.mongodb.serialization.PrimitiveSerializers;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.mongodb.DBObjects.toCommandResult;
+
 @ThreadSafe
 @SuppressWarnings({ "deprecation" })
 public class DB implements IDB {
@@ -209,11 +211,10 @@ public class DB implements IDB {
      * @dochub commands
      */
     public CommandResult command(final DBObject cmd) {
-        final org.mongodb.result.CommandResult baseCommandResult
-        = database.executeCommand(new MongoCommand(DBObjects.toCommandDocument(cmd))
-                                  .readPreference(getReadPreference().toNew()));
-        return DBObjects.toCommandResult(cmd, new ServerAddress(baseCommandResult.getAddress()), baseCommandResult
-                                                                                                 .getResponse());
+        final MongoCommand command = new MongoCommand(DBObjects.toDocument(cmd))
+                                     .readPreference(getReadPreference().toNew());
+        final org.mongodb.result.CommandResult baseCommandResult = database.executeCommand(command);
+        return toCommandResult(cmd, new ServerAddress(baseCommandResult.getAddress()), baseCommandResult.getResponse());
     }
 
     /**

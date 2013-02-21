@@ -17,6 +17,7 @@
 package org.mongodb;
 
 
+import org.bson.types.Document;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -141,14 +142,14 @@ public class WriteConcernTest {
 
     @Test
     public void testCommand() {
-        assertEquals(new CommandDocument("getlasterror", 1), WriteConcern.UNACKNOWLEDGED.getCommand());
-        assertEquals(new CommandDocument("getlasterror", 1), WriteConcern.ACKNOWLEDGED.getCommand());
-        assertEquals(new CommandDocument("getlasterror", 1).append("w", 2), WriteConcern.REPLICA_ACKNOWLEDGED.getCommand());
-        assertEquals(new CommandDocument("getlasterror", 1).append("w", "majority"), new WriteConcern("majority").getCommand());
-        assertEquals(new CommandDocument("getlasterror", 1).append("wtimeout",
+        assertEquals(new Document("getlasterror", 1), WriteConcern.UNACKNOWLEDGED.getCommand());
+        assertEquals(new Document("getlasterror", 1), WriteConcern.ACKNOWLEDGED.getCommand());
+        assertEquals(new Document("getlasterror", 1).append("w", 2), WriteConcern.REPLICA_ACKNOWLEDGED.getCommand());
+        assertEquals(new Document("getlasterror", 1).append("w", "majority"), new WriteConcern("majority").getCommand());
+        assertEquals(new Document("getlasterror", 1).append("wtimeout",
                                                                    100), new WriteConcern(1, 100).getCommand());
-        assertEquals(new CommandDocument("getlasterror", 1).append("fsync", true), WriteConcern.FSYNCED.getCommand());
-        assertEquals(new CommandDocument("getlasterror", 1).append("j", true), WriteConcern.JOURNALED.getCommand());
+        assertEquals(new Document("getlasterror", 1).append("fsync", true), WriteConcern.FSYNCED.getCommand());
+        assertEquals(new Document("getlasterror", 1).append("j", true), WriteConcern.JOURNALED.getCommand());
     }
 
     @Test

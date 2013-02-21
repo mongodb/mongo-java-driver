@@ -16,7 +16,7 @@
 
 package org.mongodb.command;
 
-import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 
 import static org.mongodb.MongoNamespace.asNamespaceString;
 
@@ -26,7 +26,7 @@ public class RenameCollectionOptions {
     private final boolean dropTarget;
 
     public RenameCollectionOptions(final String originalCollectionName, final String newCollectionName) {
-        this (originalCollectionName, newCollectionName, false);
+        this(originalCollectionName, newCollectionName, false);
     }
 
     public RenameCollectionOptions(final String originalCollectionName, final String newCollectionName,
@@ -36,9 +36,9 @@ public class RenameCollectionOptions {
         this.dropTarget = dropTarget;
     }
 
-    CommandDocument toCommandDocument(final String databaseName) {
-        return new CommandDocument("renameCollection", asNamespaceString(databaseName, originalCollectionName))
-                                   .append("to", asNamespaceString(databaseName, newCollectionName))
-                                   .append("dropTarget", dropTarget);
+    Document toDocument(final String databaseName) {
+        return new Document("renameCollection", asNamespaceString(databaseName, originalCollectionName))
+               .append("to", asNamespaceString(databaseName, newCollectionName))
+               .append("dropTarget", dropTarget);
     }
 }

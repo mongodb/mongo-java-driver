@@ -19,7 +19,6 @@ package org.mongodb.impl;
 import org.bson.types.Document;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.CommandDocument;
 import org.mongodb.MongoException;
 import org.mongodb.ServerAddress;
 import org.mongodb.command.IsMasterCommandResult;
@@ -43,7 +42,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ReplicaSetStateGeneratorTest {
     private ServerAddress serverAddress;
-    private CommandDocument isMasterCommand = new CommandDocument("ismaster", 1);
+    private Document isMasterCommand = new Document("ismaster", 1);
     private Document isMasterResponse;
     private Document errorIsMasterResponse;
     private Map<ServerAddress, CommandResult> commandResultMap;

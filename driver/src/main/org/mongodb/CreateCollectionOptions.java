@@ -16,8 +16,10 @@
 
 package org.mongodb;
 
+import org.bson.types.Document;
+
 public class CreateCollectionOptions {
-    private final CommandDocument createDocument;
+    private final Document createDocument;
     private final String collectionName;
 
     public CreateCollectionOptions(final String collectionName) {
@@ -36,7 +38,7 @@ public class CreateCollectionOptions {
     public CreateCollectionOptions(final String collectionName, final boolean capped, final int sizeInBytes,
                                    final boolean autoIndex, final int maxDocuments) {
         this.collectionName = collectionName;
-        createDocument = new CommandDocument("create", collectionName);
+        createDocument = new Document("create", collectionName);
         createDocument.put("capped", capped);
         //I want this to be >0 (seems correct) but for backwards compatibility with some of the tests had to change this
         if (sizeInBytes != 0) {
@@ -54,7 +56,7 @@ public class CreateCollectionOptions {
         return collectionName;
     }
 
-    public CommandDocument asCommandDocument() {
+    public Document asDocument() {
         return createDocument;
     }
 }

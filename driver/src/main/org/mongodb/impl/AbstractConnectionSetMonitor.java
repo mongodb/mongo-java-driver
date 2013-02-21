@@ -16,7 +16,7 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.CommandDocument;
+import org.bson.types.Document;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnection;
 import org.mongodb.ServerAddress;
@@ -79,7 +79,8 @@ abstract class AbstractConnectionSetMonitor extends Thread {
 
     static {
         UPDATER_INTERVAL_MS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
-        UPDATER_INTERVAL_NO_PRIMARY_MS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10"));
+        UPDATER_INTERVAL_NO_PRIMARY_MS = Integer.parseInt(System
+                                                          .getProperty("com.mongodb.updaterIntervalNoMasterMS", "10"));
 // TODO: clean this up
 //        CLIENT_OPTIONS_DEFAULTS.connectTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
 //        CLIENT_OPTIONS_DEFAULTS.socketTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
@@ -110,7 +111,7 @@ abstract class AbstractConnectionSetMonitor extends Thread {
         @Override
         public IsMasterCommandResult execute() {
             return new IsMasterCommandResult(
-                    connection.command("admin", new MongoCommand(new CommandDocument("ismaster", 1)),
+                    connection.command("admin", new MongoCommand(new Document("ismaster", 1)),
                             new DocumentSerializer(PrimitiveSerializers.createDefault())));
         }
 
