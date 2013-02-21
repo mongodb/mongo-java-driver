@@ -28,9 +28,9 @@ import static org.junit.Assert.assertTrue;
 
 public class IsMasterCommandResultTest extends DatabaseTestCase {
 
-    private MongoDatabase adminDatabase = Fixture.getMongoClient().getDatabase("admin");
-    private Document isMasterCommandDocument = new Document("ismaster", 1);
-    private MongoCommand command = new MongoCommand(isMasterCommandDocument);
+    private final MongoDatabase adminDatabase = Fixture.getMongoClient().getDatabase("admin");
+    private final Document isMasterCommandDocument = new Document("ismaster", 1);
+    private final MongoCommand command = new MongoCommand(isMasterCommandDocument);
 
     @Test
     public void testIsPrimary() {

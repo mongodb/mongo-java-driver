@@ -42,7 +42,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ReplicaSetStateGeneratorTest {
     private ServerAddress serverAddress;
-    private Document isMasterCommand = new Document("ismaster", 1);
+    private final Document isMasterCommand = new Document("ismaster", 1);
     private Document isMasterResponse;
     private Document errorIsMasterResponse;
     private Map<ServerAddress, CommandResult> commandResultMap;
@@ -194,7 +194,7 @@ public class ReplicaSetStateGeneratorTest {
 
         private final ServerAddress serverAddress;
         private CommandResult commandResult;
-        private MongoException exception;
+        private final MongoException exception;
 
         MockIsMasterExecutor(final ServerAddress serverAddress) {
             this.serverAddress = serverAddress;

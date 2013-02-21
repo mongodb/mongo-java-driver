@@ -132,7 +132,7 @@ abstract class AbstractConnectionSetMonitor extends Thread {
 
     class MongoClientIsMasterExecutorFactory implements IsMasterExecutorFactory {
 
-        private MongoClientOptions options;
+        private final MongoClientOptions options;
 
         MongoClientIsMasterExecutorFactory(final MongoClientOptions options) {
             this.options = options;

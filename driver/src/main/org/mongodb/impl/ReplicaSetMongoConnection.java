@@ -53,7 +53,7 @@ class ReplicaSetMongoConnection implements MongoConnection {
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
     private final ReplicaSetMonitor replicaSetMonitor;
-    private Map<ServerAddress, SingleServerMongoConnection> mongoClientMap =
+    private final Map<ServerAddress, SingleServerMongoConnection> mongoClientMap =
             new HashMap<ServerAddress, SingleServerMongoConnection>();
 
     ReplicaSetMongoConnection(final List<ServerAddress> seedList, final MongoClientOptions options) {

@@ -53,11 +53,11 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
     private final ReplicaSetHolder replicaSetHolder;
 
     // will get changed to use replica set name once it's found
-    private volatile Logger logger = LOGGER;
+    private final volatile Logger logger = LOGGER;
 
     private final ReplicaSetStateGenerator replicaSetStateGenerator;
 
-    private volatile long nextResolveTime;  // TODO: use this
+    private final volatile long nextResolveTime;  // TODO: use this
 
     static {
         SLAVE_ACCEPTABLE_LATENCY_MS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
@@ -162,7 +162,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
         private final Random random = new Random();
         private final float latencySmoothFactor;
         private final IsMasterExecutorFactory isMasterExecutorFactory;
-        private Set<ChannelState> channelStates = new HashSet<ChannelState>();
+        private final Set<ChannelState> channelStates = new HashSet<ChannelState>();
 
         ReplicaSetStateGenerator(final List<ServerAddress> seedList, final IsMasterExecutorFactory isMasterExecutorFactory,
                                  final float latencySmoothFactor) {

@@ -115,7 +115,7 @@ public class QueryAcceptanceTest extends AcceptanceTestCase {
 
     private class Person implements ConvertibleToDocument {
         private ObjectId id = new ObjectId();
-        private String name;
+        private final String name;
 
         public Person(final String name) {
             this.name = name;
