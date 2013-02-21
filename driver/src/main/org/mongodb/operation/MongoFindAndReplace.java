@@ -30,7 +30,7 @@ public class MongoFindAndReplace<T> extends MongoFindAndModify {
     }
 
     @Override
-    public MongoFindAndReplace<T> sortBy(final MongoSortCriteria sortCriteria) {
+    public MongoFindAndReplace<T> sortBy(final Document sortCriteria) {
         super.sortBy(sortCriteria);
         return this;
     }

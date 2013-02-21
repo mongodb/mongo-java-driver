@@ -74,7 +74,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     @Test
     public void testOneFuture() throws ExecutionException, InterruptedException {
         assertNull(collection.filter(new Document("_id", 11)).asyncOne().get());
-        assertThat(collection.sort(new SortCriteriaDocument("_id", 1)).asyncOne().get(), is(documentList.get(0)));
+        assertThat(collection.sort(new Document("_id", 1)).asyncOne().get(), is(documentList.get(0)));
     }
 
     @Test
@@ -98,7 +98,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     @Test
     public void testForEach() throws InterruptedException {
         final List<Document> documentResultList = new ArrayList<Document>();
-        collection.batchSize(2).sort(new SortCriteriaDocument("_id", 1)).asyncForEach(new AsyncBlock<Document>() {
+        collection.batchSize(2).sort(new Document("_id", 1)).asyncForEach(new AsyncBlock<Document>() {
             @Override
             public void done() {
                 latch.countDown();
@@ -117,7 +117,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
 
     @Test
     public void testIntoFuture() throws ExecutionException, InterruptedException {
-        assertThat(collection.sort(new SortCriteriaDocument("_id", 1))
+        assertThat(collection.sort(new Document("_id", 1))
                              .asyncInto(new ArrayList<Document>())
                              .get(),
                   is(documentList));
@@ -125,7 +125,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
 
     @Test
     public void testMapIntoFuture() throws ExecutionException, InterruptedException {
-        assertThat(collection.sort(new SortCriteriaDocument("_id", 1))
+        assertThat(collection.sort(new Document("_id", 1))
                              .map(new Function<Document, Integer>() {
                                  @Override
                                  public Integer apply(final Document document) {
@@ -139,7 +139,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     @Test
     public void testIntoCallback() throws ExecutionException, InterruptedException {
         List<Document> results = new ArrayList<Document>();
-        collection.sort(new SortCriteriaDocument("_id", 1))
+        collection.sort(new Document("_id", 1))
                   .asyncInto(results, new SingleResultCallback<List<Document>>() {
                       @Override
                       public void onResult(final List<Document> result, final MongoException e) {

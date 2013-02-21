@@ -51,7 +51,6 @@ import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
-import org.mongodb.operation.MongoSortCriteria;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoUpdateOperations;
 import org.mongodb.result.CommandResult;
@@ -157,8 +156,13 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
-    public MongoStream<T> sort(final MongoSortCriteria sortCriteria) {
+    public MongoStream<T> sort(final Document sortCriteria) {
         return new MongoCollectionStream().sort(sortCriteria);
+    }
+
+    @Override
+    public MongoStream<T> sort(final ConvertibleToDocument sortCriteria) {
+        return sort(sortCriteria.toDocument());
     }
 
     @Override
@@ -325,7 +329,12 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         }
 
         @Override
-        public MongoStream<T> sort(final MongoSortCriteria sortCriteria) {
+        public MongoStream<T> sort(final ConvertibleToDocument sortCriteria) {
+            return sort(sortCriteria.toDocument());
+        }
+
+        @Override
+        public MongoStream<T> sort(final Document sortCriteria) {
             final MongoCollectionStream newStream = new MongoCollectionStream(this);
             newStream.findOp.order(sortCriteria);
             return newStream;

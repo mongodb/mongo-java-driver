@@ -36,7 +36,7 @@ public class MongoFindAndRemove<T> extends MongoFindAndModify {
     }
 
     @Override
-    public MongoFindAndRemove<T> sortBy(final MongoSortCriteria sortCriteria) {
+    public MongoFindAndRemove<T> sortBy(final Document sortCriteria) {
         super.sortBy(sortCriteria);
         return this;
     }

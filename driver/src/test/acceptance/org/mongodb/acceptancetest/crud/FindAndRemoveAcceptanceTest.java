@@ -19,7 +19,6 @@ package org.mongodb.acceptancetest.crud;
 import org.bson.types.Document;
 import org.junit.Test;
 import org.mongodb.MongoStream;
-import org.mongodb.SortCriteriaDocument;
 import org.mongodb.acceptancetest.AcceptanceTestCase;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -133,7 +132,7 @@ public class FindAndRemoveAcceptanceTest extends AcceptanceTestCase {
         // when
         final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
         final Document documentRetrieved = collection.filter(filter)
-                                               .sort(new SortCriteriaDocument(secondKey, 1))
+                                               .sort(new Document(secondKey, 1))
                                                .removeAndGet();
 
         // then

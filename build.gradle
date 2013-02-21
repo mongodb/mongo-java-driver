@@ -204,7 +204,6 @@ configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat', '
 configure(subprojects.findAll { it.name in ['driver-compat', 'morphia'] }) {
     checkstyle {
         configFile = new File("$configDir/checkstyle-lite.xml")
-        ignoreFailures = true
     }
 
     idea.module.iml {

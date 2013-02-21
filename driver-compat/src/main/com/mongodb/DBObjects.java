@@ -19,7 +19,6 @@ package com.mongodb;
 import org.bson.BSONObject;
 import org.bson.types.Document;
 import org.mongodb.FieldSelectorDocument;
-import org.mongodb.SortCriteriaDocument;
 import org.mongodb.UpdateOperationsDocument;
 
 import java.util.List;
@@ -59,16 +58,6 @@ public class DBObjects {
         }
 
         final UpdateOperationsDocument doc = new UpdateOperationsDocument();
-        fill(o, doc);
-        return doc;
-    }
-
-    public static SortCriteriaDocument toSortCriteriaDocument(final DBObject o) {
-        if (o == null) {
-            return null;
-        }
-
-        final SortCriteriaDocument doc = new SortCriteriaDocument();
         fill(o, doc);
         return doc;
     }

@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.mongodb.BsonDocumentBuffer;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.MongoCollection;
-import org.mongodb.SortCriteriaDocument;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.serialization.BsonDocumentBufferSerializer;
 import org.mongodb.serialization.PrimitiveSerializers;
@@ -53,7 +52,7 @@ public class BsonDocumentBufferSerializerTest extends DatabaseTestCase {
         lazyCollection.tools().drop();
         lazyCollection.insert(docs);
 
-        assertEquals(originalDocuments, collection.sort(new SortCriteriaDocument("_id", 1)).into(new ArrayList<Document>()));
+        assertEquals(originalDocuments, collection.sort(new Document("_id", 1)).into(new ArrayList<Document>()));
     }
 
     @Test

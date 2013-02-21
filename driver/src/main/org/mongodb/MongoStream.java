@@ -20,7 +20,6 @@ import org.bson.types.Document;
 import org.mongodb.async.MongoAsyncReadableStream;
 import org.mongodb.async.MongoAsyncWritableStream;
 import org.mongodb.operation.MongoFieldSelector;
-import org.mongodb.operation.MongoSortCriteria;
 
 public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWritableStream<T>,
         MongoSyncReadableStream<T>, MongoAsyncReadableStream<T>, MongoIterable<T> {
@@ -35,7 +34,9 @@ public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWr
 
     MongoStream<T> filter(ConvertibleToDocument filter);
 
-    MongoStream<T> sort(MongoSortCriteria sortCriteria);
+    MongoStream<T> sort(Document sortCriteria);
+
+    MongoStream<T> sort(ConvertibleToDocument sortCriteria);
 
     MongoStream<T> skip(int skip);
 

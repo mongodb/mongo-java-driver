@@ -45,7 +45,7 @@ public class MongoFindAndUpdate<T> extends MongoFindAndModify {
     }
 
     @Override
-    public MongoFindAndUpdate<T> sortBy(final MongoSortCriteria sortCriteria) {
+    public MongoFindAndUpdate<T> sortBy(final Document sortCriteria) {
         super.sortBy(sortCriteria);
         return this;
     }

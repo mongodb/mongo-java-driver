@@ -22,7 +22,7 @@ import org.mongodb.ReadPreference;
 public class MongoFind extends MongoQuery {
     private Document filter;
     private MongoFieldSelector fields;
-    private MongoSortCriteria sortCriteria;
+    private Document sortCriteria;
     private boolean snapshotMode;
 
     public MongoFind() {
@@ -45,7 +45,7 @@ public class MongoFind extends MongoQuery {
         return filter;
     }
 
-    public MongoSortCriteria getOrder() {
+    public Document getOrder() {
         return sortCriteria;
     }
 
@@ -70,7 +70,7 @@ public class MongoFind extends MongoQuery {
         return this;
     }
 
-    public MongoFind order(final MongoSortCriteria sortCriteria) {
+    public MongoFind order(final Document sortCriteria) {
         this.sortCriteria = sortCriteria;
         return this;
     }

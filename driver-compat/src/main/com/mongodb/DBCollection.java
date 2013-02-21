@@ -332,7 +332,7 @@ public class DBCollection implements IDBCollection {
                             final ReadPreference readPref) {
 
         final DBObject obj = collection.filter(toDocument(o))
-                                       .sort(DBObjects.toSortCriteriaDocument(orderBy))
+                                       .sort(toDocument(orderBy))
                                        .select(DBObjects.toFieldSelectorDocument(fields))
                                        .readPreference(readPref.toNew()).one();
 
@@ -767,7 +767,7 @@ public class DBCollection implements IDBCollection {
                                   final boolean returnNew, final boolean upsert) {
         final MongoSyncWritableStream<DBObject> stream = collection.filter(toDocument(query))
                                                                .select(DBObjects.toFieldSelectorDocument(fields))
-                                                               .sort(DBObjects.toSortCriteriaDocument(sort))
+                                                               .sort(toDocument(sort))
                                                                .writeConcern(getWriteConcern().toNew());
         if (remove) {
             return stream.removeAndGet();

@@ -54,11 +54,11 @@ public class MongoStreamTest extends DatabaseTestCase {
         }
 
         for (final Document cur : collection.filter(new Document("_id", 1))
-                .sort(new SortCriteriaDocument("_id", 1))) {
+                .sort(new Document("_id", 1))) {
             System.out.println(cur);
         }
 
-        for (final Document cur : collection.skip(3).limit(2).sort(new SortCriteriaDocument("_id", -1))) {
+        for (final Document cur : collection.skip(3).limit(2).sort(new Document("_id", -1))) {
             System.out.println(cur);
         }
 

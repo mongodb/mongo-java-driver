@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.mongodb.DBObjects.toDocument;
+
 /**
  * An iterator over database results. Doing a <code>find()</code> query on a collection returns a <code>DBCursor</code>
  * thus
@@ -71,7 +73,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         }
         this.collection = collection;
         find = new MongoFind();
-        find.where(DBObjects.toDocument(query))
+        find.where(toDocument(query))
             .select(DBObjects.toFieldSelectorDocument(fields))
             .readPreference(readPreference.toNew());
     }
@@ -215,7 +217,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return a cursor pointing to the first element of the sorted results
      */
     public DBCursor sort(final DBObject orderBy) {
-        find.order(DBObjects.toSortCriteriaDocument(orderBy));
+        find.order(toDocument(orderBy));
         return this;
     }
 

@@ -20,7 +20,6 @@ import org.bson.types.Document;
 import org.junit.Test;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoStream;
-import org.mongodb.SortCriteriaDocument;
 import org.mongodb.acceptancetest.AcceptanceTestCase;
 
 import java.util.List;
@@ -49,7 +48,7 @@ public class FilterAcceptanceTest extends AcceptanceTestCase {
         initialiseCollectionWithDocuments(numberOfDocuments);
 
         //TODO: I think we can make this prettier
-        final MongoCursor<Document> filteredAndSortedCollection = collection.sort(new SortCriteriaDocument("_id", -1))
+        final MongoCursor<Document> filteredAndSortedCollection = collection.sort(new Document("_id", -1))
                                                                             .all();
 
         assertThat((Integer) filteredAndSortedCollection.next().get("_id"), is(9));
@@ -71,7 +70,7 @@ public class FilterAcceptanceTest extends AcceptanceTestCase {
 
         final MongoCursor<Document> filteredAndSortedCollection = collection.skip(3)
                                                                             .limit(2)
-                                                                            .sort(new SortCriteriaDocument("_id", -1))
+                                                                            .sort(new Document("_id", -1))
                                                                             .all();
 
         assertThat((Integer) filteredAndSortedCollection.next().get("_id"), is(6));
@@ -86,7 +85,7 @@ public class FilterAcceptanceTest extends AcceptanceTestCase {
 
         final MongoCursor<Document> filterResults = collection
                                                     .filter(new Document("_id", new Document("$gt", 2)))
-                                                    .sort(new SortCriteriaDocument("_id", 1))
+                                                    .sort(new Document("_id", 1))
                                                     .all();
 
         assertThat((Integer) filterResults.next().get("_id"), is(3));
@@ -129,7 +128,7 @@ public class FilterAcceptanceTest extends AcceptanceTestCase {
         collection.insert(new Document("name", "Bob"));
         collection.insert(new Document("name", "Eric"));
 
-        final List<String> filterResults = collection.sort(new SortCriteriaDocument("name", 1))
+        final List<String> filterResults = collection.sort(new Document("name", 1))
                                                      .distinct("name");
         assertThat(filterResults.get(0), is("Bob"));
         assertThat(filterResults.get(1), is("George"));

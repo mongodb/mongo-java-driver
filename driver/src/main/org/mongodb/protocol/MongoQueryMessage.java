@@ -89,8 +89,8 @@ public class MongoQueryMessage extends MongoRequestMessage {
     private Document getQueryDocument(final MongoFind find) {
         final Document document = new Document();
         document.put("query", find.getFilter());
-        if (find.getOrder() != null && !find.getOrder().toDocument().isEmpty()) {
-            document.put("orderby", find.getOrder().toDocument());
+        if (find.getOrder() != null && !find.getOrder().isEmpty()) {
+            document.put("orderby", find.getOrder());
         }
         if (find.isSnapshotMode()) {
             document.put("$snapshot", true);
