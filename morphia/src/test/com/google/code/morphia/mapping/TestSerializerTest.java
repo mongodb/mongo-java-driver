@@ -28,6 +28,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static java.nio.charset.Charset.defaultCharset;
+
 /**
  * @author Uwe Schaefer, (us@thomas-daily.de)
  */
@@ -42,14 +44,14 @@ public class TestSerializerTest extends TestBase {
     @Test
     public final void testSerialize() throws IOException, ClassNotFoundException {
         final byte[] test = new byte[2048];
-        final byte[] stringBytes = TEST_TEXT.getBytes();
+        final byte[] stringBytes = TEST_TEXT.getBytes(defaultCharset());
         System.arraycopy(stringBytes, 0, test, 0, stringBytes.length);
 
         byte[] ser = Serializer.serialize(test, false);
         byte[] after = (byte[]) Serializer.deserialize(ser, false);
         Assert.assertTrue(ser.length > 2048);
         Assert.assertTrue(after.length == 2048);
-        Assert.assertTrue(new String(after).startsWith(TEST_TEXT));
+        Assert.assertTrue(new String(after, defaultCharset()).startsWith(TEST_TEXT));
 
         ser = Serializer.serialize(test, true);
         after = (byte[]) Serializer.deserialize(ser, true);
@@ -61,7 +63,7 @@ public class TestSerializerTest extends TestBase {
     @Test
     public final void testSerializedAttribute() throws IOException, ClassNotFoundException {
         final byte[] test = new byte[2048];
-        final byte[] stringBytes = TEST_TEXT.getBytes();
+        final byte[] stringBytes = TEST_TEXT.getBytes(defaultCharset());
         System.arraycopy(stringBytes, 0, test, 0, stringBytes.length);
 
         E e = new E();
@@ -72,7 +74,7 @@ public class TestSerializerTest extends TestBase {
         e = ds.get(e);
 
         Assert.assertTrue(e.payload1.length == 2048);
-        Assert.assertTrue(new String(e.payload1).startsWith(TEST_TEXT));
+        Assert.assertTrue(new String(e.payload1, defaultCharset()).startsWith(TEST_TEXT));
 
         Assert.assertTrue(e.payload2.length == 2048);
         Assert.assertTrue(new String(e.payload2).startsWith(TEST_TEXT));

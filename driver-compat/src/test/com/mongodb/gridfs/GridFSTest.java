@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import static java.nio.charset.Charset.defaultCharset;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -63,7 +64,7 @@ public class GridFSTest extends DatabaseTestCase {
 
         final GridFSInputFile in = gridFS.createFile();
         final OutputStream writeStream = in.getOutputStream();
-        writeStream.write(s.getBytes(), 0, s.length());
+        writeStream.write(s.getBytes(defaultCharset()), 0, s.length());
         writeStream.close();
         final GridFSDBFile out = gridFS.findOne(new BasicDBObject("_id", in.getId()));
         assert (out.getId().equals(in.getId()));
@@ -71,7 +72,7 @@ public class GridFSTest extends DatabaseTestCase {
 
         final ByteArrayOutputStream bout = new ByteArrayOutputStream();
         out.writeTo(bout);
-        final String outString = new String(bout.toByteArray());
+        final String outString = new String(bout.toByteArray(), defaultCharset());
         assert (outString.equals(s));
 
         out.remove();
@@ -110,7 +111,7 @@ public class GridFSTest extends DatabaseTestCase {
     @Test
     public void testMetadata() throws Exception {
 
-        final GridFSInputFile in = gridFS.createFile("foo".getBytes());
+        final GridFSInputFile in = gridFS.createFile("foo".getBytes(defaultCharset()));
         in.put("meta", 5);
         in.save();
         final GridFSDBFile out = gridFS.findOne(new BasicDBObject("_id", in.getId()));
@@ -264,7 +265,7 @@ public class GridFSTest extends DatabaseTestCase {
 
         final int[] start = _get();
 
-        final GridFSInputFile in = gridFS.createFile(s.getBytes());
+        final GridFSInputFile in = gridFS.createFile(s.getBytes(defaultCharset()));
         in.save();
         final GridFSDBFile out = gridFS.findOne(new BasicDBObject("_id", in.getId()));
         assert (out.getId().equals(in.getId()));
@@ -272,7 +273,7 @@ public class GridFSTest extends DatabaseTestCase {
 
         final ByteArrayOutputStream bout = new ByteArrayOutputStream();
         out.writeTo(bout);
-        final String outString = new String(bout.toByteArray());
+        final String outString = new String(bout.toByteArray(), defaultCharset());
         assert (outString.equals(s));
 
         out.remove();
