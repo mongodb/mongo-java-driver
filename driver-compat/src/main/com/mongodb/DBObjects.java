@@ -18,8 +18,6 @@ package com.mongodb;
 
 import org.bson.BSONObject;
 import org.bson.types.Document;
-import org.mongodb.FieldSelectorDocument;
-import org.mongodb.UpdateOperationsDocument;
 
 import java.util.List;
 import java.util.Map;
@@ -43,23 +41,19 @@ public class DBObjects {
         return res;
     }
 
-    public static FieldSelectorDocument toFieldSelectorDocument(final DBObject fields) {
+    public static Document toFieldSelectorDocument(final DBObject fields) {
         if (fields == null) {
             return null;
         }
-        final FieldSelectorDocument doc = new FieldSelectorDocument();
-        fill(fields, doc);
-        return doc;
+        return toDocument(fields);
     }
 
-    public static UpdateOperationsDocument toUpdateOperationsDocument(final DBObject o) {
+    public static Document toUpdateOperationsDocument(final DBObject o) {
         if (o == null) {
             return null;
         }
 
-        final UpdateOperationsDocument doc = new UpdateOperationsDocument();
-        fill(o, doc);
-        return doc;
+        return toDocument(o);
     }
 
     public static CommandResult toCommandResult(final DBObject command, final ServerAddress serverAddress,

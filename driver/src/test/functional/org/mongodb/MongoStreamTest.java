@@ -143,27 +143,27 @@ public class MongoStreamTest extends DatabaseTestCase {
     public void testUpdate() {
         collection.insert(new Document("_id", 1));
 
-        collection.modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
+        collection.modify(new Document("$set", new Document("x", 1)));
 
         collection.filter(new Document("_id", 1))
-                .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
+                .modify(new Document("$set", new Document("x", 1)));
 
         collection.filter(new Document("_id", 1))
-                .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
+                .modify(new Document("$set", new Document("x", 1)));
 
 
         collection.filter(new Document("x", 1))
                 .noLimit()
-                .modifyOrInsert(new UpdateOperationsDocument("$inc", new Document("x", 1)));
+                .modifyOrInsert(new Document("$inc", new Document("x", 1)));
 
         collection.filter(new Document("_id", 1))
-                .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
+                .modify(new Document("$set", new Document("x", 1)));
 
         collection.filter(new Document("_id", 2))
-                .modifyOrInsert(new UpdateOperationsDocument("$set", new Document("x", 1)));
+                .modifyOrInsert(new Document("$set", new Document("x", 1)));
 
         final Document doc = collection.filter(new Document("_id", 1))
-                .modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", 1)),
+                .modifyAndGet(new Document("$set", new Document("x", 1)),
                         Get.BeforeChangeApplied);
         System.out.println(doc);
     }

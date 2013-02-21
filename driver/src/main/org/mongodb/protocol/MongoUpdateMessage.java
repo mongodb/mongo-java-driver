@@ -28,7 +28,7 @@ public class MongoUpdateMessage extends MongoRequestMessage {
                               final Serializer<Document> serializer) {
         super(collectionName, OpCode.OP_UPDATE, buffer);
         writeBaseUpdate(update, serializer);
-        addDocument(update.getUpdateOperations().toDocument(), serializer);
+        addDocument(update.getUpdateOperations(), serializer);
         backpatchMessageLength();
     }
 

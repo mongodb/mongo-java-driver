@@ -433,7 +433,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         if (find.getFields() == null) {
             return null;
         }
-        return DBObjects.toDBObject(find.getFields().toDocument());
+        return DBObjects.toDBObject(find.getFields());
     }
 
     /**
@@ -521,7 +521,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         current = cursor.next();
         numSeen++;
 
-        if (find.getFields() != null && !find.getFields().toDocument().isEmpty()) {
+        if (find.getFields() != null && !find.getFields().isEmpty()) {
             current.markAsPartialObject();
         }
 

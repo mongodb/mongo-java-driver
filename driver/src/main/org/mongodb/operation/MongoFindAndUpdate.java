@@ -19,16 +19,16 @@ package org.mongodb.operation;
 import org.bson.types.Document;
 
 public class MongoFindAndUpdate<T> extends MongoFindAndModify {
-    private MongoUpdateOperations updateOperations;
+    private Document updateOperations;
 
     //CHECKSTYLE:OFF
-    public MongoFindAndUpdate<T> updateWith(final MongoUpdateOperations updateOperations) {
+    public MongoFindAndUpdate<T> updateWith(final Document updateOperations) {
         this.updateOperations = updateOperations;
         return this;
     }
     //CHECKSTYLE:ON
 
-    public MongoUpdateOperations getUpdateOperations() {
+    public Document getUpdateOperations() {
         return updateOperations;
     }
 
@@ -39,7 +39,7 @@ public class MongoFindAndUpdate<T> extends MongoFindAndModify {
     }
 
     @Override
-    public MongoFindAndUpdate<T> select(final MongoFieldSelector selector) {
+    public MongoFindAndUpdate<T> select(final Document selector) {
         super.select(selector);
         return this;
     }

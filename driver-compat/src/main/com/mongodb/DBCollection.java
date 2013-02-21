@@ -24,7 +24,6 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoStream;
 import org.mongodb.MongoSyncWritableStream;
 import org.mongodb.OrderBy;
-import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollectionOptions;
@@ -777,7 +776,7 @@ public class DBCollection implements IDBCollection {
                 throw new IllegalArgumentException("update document can not be null");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-                final UpdateOperationsDocument updateOperations = DBObjects.toUpdateOperationsDocument(update);
+                final Document updateOperations = DBObjects.toUpdateOperationsDocument(update);
                 return upsert ?
                        stream.modifyOrInsertAndGet(updateOperations, asGetOrder(returnNew)) :
                        stream.modifyAndGet(updateOperations, asGetOrder(returnNew));

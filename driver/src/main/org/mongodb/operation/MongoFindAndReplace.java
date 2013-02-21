@@ -54,7 +54,7 @@ public class MongoFindAndReplace<T> extends MongoFindAndModify {
     }
 
     @Override
-    public MongoFindAndReplace<T> select(final MongoFieldSelector selector) {
+    public MongoFindAndReplace<T> select(final Document selector) {
         super.select(selector);
         return this;
     }

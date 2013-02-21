@@ -25,7 +25,6 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Get;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
-import org.mongodb.UpdateOperationsDocument;
 import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.CollectibleSerializer;
 
@@ -68,7 +67,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(new Document("_id", 1));
 
         collection.filter(new Document("_id", 1))
-                  .modify(new UpdateOperationsDocument("$set", new Document("x", 1)));
+                  .modify(new Document("$set", new Document("x", 1)));
 
         assertEquals(1, collection.filter(new Document("_id", 1).append("x", 1)).count());
     }
@@ -148,7 +147,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(new Document("_id", 1).append("x", true));
 
         final Document newDoc = collection.filter(new Document("x", true))
-                                          .modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", false)),
+                                          .modifyAndGet(new Document("$set", new Document("x", false)),
                                                        Get.AfterChangeApplied);
 
         assertNotNull(newDoc);
@@ -163,7 +162,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(doc);
 
         final Concrete newDoc = collection.filter(new Document("x", true))
-                                          .modifyAndGet(new UpdateOperationsDocument("$set", new Document("x", false)),
+                                          .modifyAndGet(new Document("$set", new Document("x", false)),
                                                        Get.AfterChangeApplied);
 
         assertNotNull(newDoc);

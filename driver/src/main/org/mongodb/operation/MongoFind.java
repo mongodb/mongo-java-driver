@@ -21,7 +21,7 @@ import org.mongodb.ReadPreference;
 
 public class MongoFind extends MongoQuery {
     private Document filter;
-    private MongoFieldSelector fields;
+    private Document fields;
     private Document sortCriteria;
     private boolean snapshotMode;
 
@@ -65,7 +65,7 @@ public class MongoFind extends MongoQuery {
         return this;
     }
 
-    public MongoFind select(final MongoFieldSelector fields) {
+    public MongoFind select(final Document fields) {
         this.fields = fields;
         return this;
     }
@@ -105,7 +105,7 @@ public class MongoFind extends MongoQuery {
         throw new UnsupportedOperationException();
     }
 
-    public MongoFieldSelector getFields() {
+    public Document getFields() {
         return fields;
     }
 

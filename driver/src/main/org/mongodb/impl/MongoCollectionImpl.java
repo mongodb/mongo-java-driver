@@ -43,7 +43,6 @@ import org.mongodb.command.FindAndRemove;
 import org.mongodb.command.FindAndReplace;
 import org.mongodb.command.FindAndUpdate;
 import org.mongodb.operation.GetMore;
-import org.mongodb.operation.MongoFieldSelector;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
 import org.mongodb.operation.MongoFindAndReplace;
@@ -52,7 +51,6 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
-import org.mongodb.operation.MongoUpdateOperations;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
@@ -181,7 +179,12 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
-    public MongoStream<T> select(final MongoFieldSelector selector) {
+    public MongoStream<T> select(final Document selector) {
+        return new MongoCollectionStream().select(selector);
+    }
+
+    @Override
+    public MongoStream<T> select(final ConvertibleToDocument selector) {
         return new MongoCollectionStream().select(selector);
     }
 
@@ -196,12 +199,17 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
-    public WriteResult modify(final MongoUpdateOperations updateOperations) {
+    public WriteResult modify(final Document updateOperations) {
         return new MongoCollectionStream().modify(updateOperations);
     }
 
     @Override
-    public WriteResult modifyOrInsert(final MongoUpdateOperations updateOperations) {
+    public WriteResult modifyOrInsert(final Document updateOperations) {
+        return new MongoCollectionStream().modifyOrInsert(updateOperations);
+    }
+
+    @Override
+    public WriteResult modifyOrInsert(final ConvertibleToDocument updateOperations) {
         return new MongoCollectionStream().modifyOrInsert(updateOperations);
     }
 
@@ -216,12 +224,22 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
     }
 
     @Override
-    public T modifyAndGet(final MongoUpdateOperations updateOperations, final Get beforeOrAfter) {
+    public T modifyAndGet(final Document updateOperations, final Get beforeOrAfter) {
         return new MongoCollectionStream().modifyAndGet(updateOperations, beforeOrAfter);
     }
 
     @Override
-    public T modifyOrInsertAndGet(final MongoUpdateOperations updateOperations, final Get beforeOrAfter) {
+    public T modifyAndGet(final ConvertibleToDocument updateOperations, final Get beforeOrAfter) {
+        return new MongoCollectionStream().modifyAndGet(updateOperations, beforeOrAfter);
+    }
+
+    @Override
+    public T modifyOrInsertAndGet(final Document updateOperations, final Get beforeOrAfter) {
+        return new MongoCollectionStream().modifyOrInsertAndGet(updateOperations, beforeOrAfter);
+    }
+
+    @Override
+    public T modifyOrInsertAndGet(final ConvertibleToDocument updateOperations, final Get beforeOrAfter) {
         return new MongoCollectionStream().modifyOrInsertAndGet(updateOperations, beforeOrAfter);
     }
 
@@ -341,10 +359,15 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         }
 
         @Override
-        public MongoStream<T> select(final MongoFieldSelector selector) {
+        public MongoStream<T> select(final Document selector) {
             final MongoCollectionStream newStream = new MongoCollectionStream(this);
             newStream.findOp.select(selector);
             return newStream;
+        }
+
+        @Override
+        public MongoStream<T> select(final ConvertibleToDocument selector) {
+            return select(selector.toDocument());
         }
 
         @Override
@@ -480,18 +503,23 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         }
 
         @Override
-        public WriteResult modify(final MongoUpdateOperations updateOperations) {
+        public WriteResult modify(final Document updateOperations) {
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).multi(getMultiFromLimit())
                     .writeConcern(writeConcern);
             return operations.update(getNamespace(), update, getDocumentSerializer());
         }
 
         @Override
-        public WriteResult modifyOrInsert(final MongoUpdateOperations updateOperations) {
+        public WriteResult modifyOrInsert(final Document updateOperations) {
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).upsert(true)
                     .multi(getMultiFromLimit())
                     .writeConcern(writeConcern);
             return operations.update(getNamespace(), update, getDocumentSerializer());
+        }
+
+        @Override
+        public WriteResult modifyOrInsert(final ConvertibleToDocument updateOperations) {
+            return modifyOrInsert(updateOperations.toDocument());
         }
 
         @Override
@@ -514,7 +542,7 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         @Override
         //CHECKSTYLE:OFF
         //TODO: absolute disaster area
-        public T modifyAndGet(final MongoUpdateOperations updateOperations, final Get beforeOrAfter) {
+        public T modifyAndGet(final Document updateOperations, final Get beforeOrAfter) {
             final MongoFindAndUpdate<T> findAndUpdate;
             findAndUpdate = new MongoFindAndUpdate<T>().where(findOp.getFilter())
                     .updateWith(updateOperations)
@@ -535,7 +563,12 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
         }
 
         @Override
-        public T modifyOrInsertAndGet(final MongoUpdateOperations updateOperations, final Get beforeOrAfter) {
+        public T modifyAndGet(final ConvertibleToDocument updateOperations, final Get beforeOrAfter) {
+            return modifyAndGet(updateOperations.toDocument(), beforeOrAfter);
+        }
+
+        @Override
+        public T modifyOrInsertAndGet(final Document updateOperations, final Get beforeOrAfter) {
             final MongoFindAndUpdate<T> findAndUpdate = new MongoFindAndUpdate<T>().where(findOp.getFilter()).updateWith(
 
                     updateOperations)
@@ -553,6 +586,11 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
                                     .getPrimitiveSerializers(),
                             getSerializer())))
                     .getValue();
+        }
+
+        @Override
+        public T modifyOrInsertAndGet(final ConvertibleToDocument updateOperations, final Get beforeOrAfter) {
+            return modifyOrInsertAndGet(updateOperations.toDocument(), beforeOrAfter);
         }
 
         @Override

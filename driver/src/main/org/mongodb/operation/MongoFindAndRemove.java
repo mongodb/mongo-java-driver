@@ -30,7 +30,7 @@ public class MongoFindAndRemove<T> extends MongoFindAndModify {
     }
 
     @Override
-    public MongoFindAndRemove<T> select(final MongoFieldSelector selector) {
+    public MongoFindAndRemove<T> select(final Document selector) {
         super.select(selector);
         return this;
     }

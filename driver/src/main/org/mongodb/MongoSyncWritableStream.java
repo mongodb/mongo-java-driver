@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.MongoUpdateOperations;
+import org.bson.types.Document;
 import org.mongodb.result.WriteResult;
 
 public interface MongoSyncWritableStream<T> {
@@ -28,21 +28,27 @@ public interface MongoSyncWritableStream<T> {
 
     WriteResult remove();
 
-    WriteResult modify(MongoUpdateOperations updateOperations);
+    WriteResult modify(Document updateOperations);
 
-    WriteResult modifyOrInsert(MongoUpdateOperations updateOperations);                // TODO: name
+    WriteResult modifyOrInsert(Document updateOperations);                             // TODO: name
+
+    WriteResult modifyOrInsert(ConvertibleToDocument updateOperations);                // TODO: name
 
     WriteResult replace(T replacement);
 
     WriteResult replaceOrInsert(T replacement);                                        // TODO: name
 
-    T modifyAndGet(MongoUpdateOperations updateOperations, Get beforeOrAfter);
+    T modifyAndGet(Document updateOperations, Get beforeOrAfter);
 
-    T modifyOrInsertAndGet(MongoUpdateOperations updateOperations, Get beforeOrAfter);  // TODO: name
+    T modifyAndGet(ConvertibleToDocument updateOperations, Get beforeOrAfter);
+
+    T modifyOrInsertAndGet(Document updateOperations, Get beforeOrAfter);              // TODO: name
+
+    T modifyOrInsertAndGet(ConvertibleToDocument updateOperations, Get beforeOrAfter); // TODO: name
 
     T replaceAndGet(T replacement, Get beforeOrAfter);
 
-    T replaceOrInsertAndGet(T replacement, Get beforeOrAfter);                          // TODO: name
+    T replaceOrInsertAndGet(T replacement, Get beforeOrAfter);                         // TODO: name
 
     T removeAndGet();
 }

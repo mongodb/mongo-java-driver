@@ -20,7 +20,7 @@ import org.bson.types.Document;
 
 public abstract class MongoFindAndModify extends MongoQuery {
     private Document filter;
-    private MongoFieldSelector selector;
+    private Document selector;
     private Document sortCriteria;
     private boolean returnNew;
     private boolean upsert;
@@ -34,7 +34,7 @@ public abstract class MongoFindAndModify extends MongoQuery {
         return this;
     }
 
-    public MongoFindAndModify select(final MongoFieldSelector selector) {
+    public MongoFindAndModify select(final Document selector) {
         this.selector = selector;
         return this;
     }
@@ -60,7 +60,7 @@ public abstract class MongoFindAndModify extends MongoQuery {
         return filter;
     }
 
-    public MongoFieldSelector getSelector() {
+    public Document getSelector() {
         return selector;
     }
 

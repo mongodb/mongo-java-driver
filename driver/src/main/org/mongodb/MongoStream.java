@@ -19,7 +19,6 @@ package org.mongodb;
 import org.bson.types.Document;
 import org.mongodb.async.MongoAsyncReadableStream;
 import org.mongodb.async.MongoAsyncWritableStream;
-import org.mongodb.operation.MongoFieldSelector;
 
 public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWritableStream<T>,
         MongoSyncReadableStream<T>, MongoAsyncReadableStream<T>, MongoIterable<T> {
@@ -44,5 +43,7 @@ public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWr
 
     MongoStream<T> noLimit();
 
-    MongoStream<T> select(MongoFieldSelector selector);
+    MongoStream<T> select(Document selector);
+
+    MongoStream<T> select(ConvertibleToDocument selector);
 }
