@@ -17,7 +17,7 @@
 
 package org.mongodb.impl;
 
-import org.bson.util.BufferPool;
+import org.mongodb.io.BufferPool;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.AsyncDetector;

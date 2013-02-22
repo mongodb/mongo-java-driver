@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package org.bson.util;
+package org.mongodb.json;
 
 /**
  * Provides Base64 encoding and decoding </a>. <p/> <p> This class implements Base64 encoding <p/> Thanks to Apache
  * Commons project. This class refactored from org.apache.commons.codec.binary <p/> Original Thanks to "commons" project
  * in ws.apache.org for this code. http://svn.apache.org/repos/asf/webservices/commons/trunk/modules/util/ </p>
  */
-public class Base64Codec {
+class Base64Codec {
 
     private static final int BYTES_PER_UNENCODED_BLOCK = 3;
     private static final int BYTES_PER_ENCODED_BLOCK = 4;

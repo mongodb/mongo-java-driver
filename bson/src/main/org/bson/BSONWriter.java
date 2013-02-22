@@ -20,7 +20,7 @@ import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
-import org.bson.util.StringUtils;
+import org.bson.StringUtils;
 
 import java.io.Closeable;
 import java.util.Arrays;

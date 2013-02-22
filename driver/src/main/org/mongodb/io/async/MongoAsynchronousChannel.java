@@ -22,7 +22,7 @@ import org.bson.io.InputBuffer;
 import org.bson.io.async.AsyncCompletionHandler;
 import org.bson.io.async.AsyncWritableByteChannel;
 import org.mongodb.Document;
-import org.bson.util.BufferPool;
+import org.mongodb.io.BufferPool;
 import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;

@@ -23,7 +23,6 @@ import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
-import org.bson.util.Base64Codec;
 
 import java.io.IOException;
 import java.io.Writer;

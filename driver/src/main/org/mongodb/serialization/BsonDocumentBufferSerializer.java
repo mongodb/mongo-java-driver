@@ -22,7 +22,7 @@ import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;
 import org.bson.io.ByteBufferInput;
-import org.bson.util.BufferPool;
+import org.mongodb.io.BufferPool;
 import org.mongodb.BsonDocumentBuffer;
 import org.mongodb.MongoInternalException;
 import org.mongodb.io.PooledByteBufferOutput;

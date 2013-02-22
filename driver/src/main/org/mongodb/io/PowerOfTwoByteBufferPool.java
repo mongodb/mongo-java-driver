@@ -16,7 +16,6 @@
 
 package org.mongodb.io;
 
-import org.bson.util.BufferPool;
 import org.mongodb.pool.SimplePool;
 
 import java.nio.ByteBuffer;

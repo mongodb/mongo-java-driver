@@ -18,7 +18,7 @@
 package org.mongodb.impl;
 
 import org.mongodb.Document;
-import org.bson.util.BufferPool;
+import org.mongodb.io.BufferPool;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerAddress;

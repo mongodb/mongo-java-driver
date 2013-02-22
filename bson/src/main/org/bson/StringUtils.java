@@ -14,13 +14,25 @@
  * limitations under the License.
  */
 
-package org.bson.util;
+package org.bson;
 
-public abstract class BufferPool<T> {
+import java.util.Collection;
+import java.util.Iterator;
 
-    public abstract T get(int size);
+final class StringUtils {
+    public static String join(final String delimiter, final Collection<?> s) {
+        final StringBuilder builder = new StringBuilder();
+        final Iterator<?> iter = s.iterator();
+        while (iter.hasNext()) {
+            builder.append(iter.next());
+            if (!iter.hasNext()) {
+                break;
+            }
+            builder.append(delimiter);
+        }
+        return builder.toString();
+    }
 
-    public abstract void done(T buffer);
-
-    public abstract T createNew(int size);
+    private StringUtils() {
+    }
 }

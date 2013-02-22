@@ -19,7 +19,6 @@ package org.mongodb.io;
 import org.bson.io.OutputBuffer;
 import org.bson.io.async.AsyncCompletionHandler;
 import org.bson.io.async.AsyncWritableByteChannel;
-import org.bson.util.BufferPool;
 
 import java.io.IOException;
 import java.io.OutputStream;
