@@ -151,7 +151,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
      */
     @Test
     public void testDropDatabase() throws Exception {
-        final Mongo mongo = new Mongo("127.0.0.1");
+        final Mongo mongo = new MongoClient("127.0.0.1");
         mongo.getDB("com_mongodb_unittest_dropDatabaseTest").dropDatabase();
         mongo.close();
     }

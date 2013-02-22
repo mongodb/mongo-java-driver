@@ -27,6 +27,7 @@ import com.google.code.morphia.annotations.Version;
 import com.google.code.morphia.dao.BasicDAO;
 import com.google.code.morphia.logging.MorphiaLoggerFactory;
 import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
@@ -203,7 +204,7 @@ public class ExampleServiceTest {
 
         private MongoConnectionManager() {
             try {
-                final Mongo m = new Mongo();
+                final Mongo m = new MongoClient();
                 db = new Morphia().map(BookingDetail.class).createDatastore(m, DB_NAME);
                 db.ensureIndexes();
             } catch (Exception e) {

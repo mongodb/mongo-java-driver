@@ -29,51 +29,45 @@ public class MongoTest {
 
     @Test
     public void shouldDefaultToLocalhost() throws UnknownHostException {
-        final Mongo mongo = new Mongo();
+        final Mongo mongo = new MongoClient();
         assertEquals(Arrays.asList(new ServerAddress()), mongo.getServerAddressList());
     }
 
     @Test
     public void shouldUseGivenHost() throws UnknownHostException {
-        final Mongo mongo = new Mongo("localhost");
+        final Mongo mongo = new MongoClient("localhost");
         assertEquals(Arrays.asList(new ServerAddress("localhost")), mongo.getServerAddressList());
     }
 
     @Test
     public void shouldUseGivenServerAddress() throws UnknownHostException {
-        final Mongo mongo = new Mongo(new ServerAddress("localhost"));
+        final Mongo mongo = new MongoClient(new ServerAddress("localhost"));
         assertEquals(Arrays.asList(new ServerAddress("localhost")), mongo.getServerAddressList());
     }
 
     @Test
     public void shouldDefaultToPrimaryReadPreference() throws UnknownHostException {
-        final Mongo mongo = new Mongo();
+        final Mongo mongo = new MongoClient();
         assertEquals(ReadPreference.primary(), mongo.getReadPreference());
     }
 
     @Test
-    public void shouldDefaultToUnacknowledgedWriteConcern() throws UnknownHostException {
-        final Mongo mongo = new Mongo();
-        assertEquals(WriteConcern.UNACKNOWLEDGED, mongo.getWriteConcern());
-    }
-
-    @Test
     public void shouldSaveDefaultReadPreference() throws UnknownHostException {
-        final Mongo mongo = new Mongo();
+        final Mongo mongo = new MongoClient();
         mongo.setReadPreference(ReadPreference.nearest());
         assertEquals(ReadPreference.nearest(), mongo.getReadPreference());
     }
 
     @Test
     public void shouldSaveDefaultWriteConcern() throws UnknownHostException {
-        final Mongo mongo = new Mongo();
+        final Mongo mongo = new MongoClient();
         mongo.setWriteConcern(WriteConcern.ACKNOWLEDGED);
         assertEquals(WriteConcern.ACKNOWLEDGED, mongo.getWriteConcern());
     }
 
     @Test
     public void shouldGetDB() throws UnknownHostException {
-        final Mongo mongo = new Mongo();
+        final Mongo mongo = new MongoClient();
         final DB db = mongo.getDB("test");
         assertNotNull(db);
         assertEquals("test", db.getName());
@@ -81,7 +75,7 @@ public class MongoTest {
 
     @Test
     public void shouldGetSameDB() throws UnknownHostException {
-        final Mongo mongo = new Mongo();
+        final Mongo mongo = new MongoClient();
         assertSame(mongo.getDB("test"), mongo.getDB("test"));
     }
 }

@@ -24,6 +24,7 @@ import com.google.code.morphia.mapping.cache.EntityCache;
 import com.google.code.morphia.utils.ReflectionUtils;
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -154,7 +155,7 @@ public class Morphia {
     @Deprecated
     public Datastore createDatastore(final String dbName, final String user, final char[] pw) {
         try {
-            return createDatastore(new Mongo(), dbName, user, pw);
+            return createDatastore(new MongoClient(), dbName, user, pw);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

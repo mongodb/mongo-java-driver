@@ -18,6 +18,7 @@ package com.mongodb.gridfs;
 
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
 import com.mongodb.util.Util;
 
 import java.io.File;
@@ -49,7 +50,7 @@ public class CLI {
 
     private static Mongo getMongo() throws Exception {
         if (_mongo == null) {
-            _mongo = new Mongo(host);
+            _mongo = new MongoClient(host);
         }
         return _mongo;
     }

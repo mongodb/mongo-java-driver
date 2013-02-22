@@ -132,8 +132,8 @@ public class MongoClient extends Mongo {
      * @throws MongoException
      * @see com.mongodb.ServerAddress
      */
-    public MongoClient(final ServerAddress addr, final MongoClientOptions options) {
-        super(addr, new MongoOptions(options));
+    private MongoClient(final ServerAddress addr, final MongoClientOptions options) {
+        super(addr, options);
     }
 
     /**
@@ -170,8 +170,8 @@ public class MongoClient extends Mongo {
      * @throws MongoException
      * @see com.mongodb.ServerAddress
      */
-    public MongoClient(final List<ServerAddress> seeds, final MongoClientOptions options) {
-        super(seeds, new MongoOptions(options));
+    private MongoClient(final List<ServerAddress> seeds, final MongoClientOptions options) {
+        super(seeds, options);
     }
 
 
@@ -183,9 +183,8 @@ public class MongoClient extends Mongo {
      * @throws MongoException
      * @throws UnknownHostException
      * @dochub connections
-     * @see MongoURI
      */
     public MongoClient(final MongoClientURI uri) throws UnknownHostException {
-        super(new MongoURI(uri));
+        super(uri);
     }
 }

@@ -32,34 +32,16 @@ public class Mongo {
     private volatile ReadPreference readPreference = ReadPreference.primary();
     private volatile WriteConcern writeConcern = WriteConcern.UNACKNOWLEDGED;
 
-    public Mongo() throws UnknownHostException {
-        this(new ServerAddress());
+    Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
+        this(new MongoClientAdapter(createNewSeedList(seedList), mongoOptions.toNew()));
     }
 
-    public Mongo(final String host) throws UnknownHostException {
-        this(new ServerAddress(host));
-    }
-
-    public Mongo(final ServerAddress serverAddress) {
-        this(serverAddress, new MongoOptions());
-    }
-
-    public Mongo(final List<ServerAddress> hosts) {
-        this(hosts, new MongoOptions());
-    }
-
-    public Mongo(final List<ServerAddress> seedList, final MongoOptions mongoOptions) {
-        this(new MongoClientAdapter(createNewSeedList(seedList),
-                MongoClientOptions.builder().fromMongoOptions(mongoOptions).build().toNew()));
-    }
-
-    public Mongo(final MongoURI mongoURI) throws UnknownHostException {
+    Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
         this(new MongoClientAdapter(mongoURI.toNew()));
     }
 
-    public Mongo(final ServerAddress serverAddress, final MongoOptions mongoOptions) {
-        this(new MongoClientAdapter(serverAddress.toNew(),
-                MongoClientOptions.builder().fromMongoOptions(mongoOptions).build().toNew()));
+    Mongo(final ServerAddress serverAddress, final MongoClientOptions mongoOptions) {
+        this(new MongoClientAdapter(serverAddress.toNew(), mongoOptions.toNew()));
     }
 
     Mongo(final MongoClientAdapter clientAdapter) {

@@ -22,6 +22,7 @@ import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.dao.BasicDAO;
 import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Assert;
@@ -42,7 +43,7 @@ public class MappingTest {
 
     @Before
     public void setUp() throws UnknownHostException {
-        final Mongo mongo = new Mongo();
+        final Mongo mongo = new MongoClient();
         datastore = new DatastoreImpl(morphia, mongo, "MY_DB");
     }
 

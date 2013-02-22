@@ -141,7 +141,7 @@ public class DBGeneralOldTests {
     @Test
     @Ignore("Not sure exactly what behaviour this test is asserting.  Needs re-writing")
     public void testGetCollectionNamesToSecondary() throws UnknownHostException {
-        Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"),
+        Mongo mongo = new MongoClient(Arrays.asList(new ServerAddress("127.0.0.1"),
                                              new ServerAddress("127.0.0.1", 27018)));
 
         try {
@@ -151,7 +151,7 @@ public class DBGeneralOldTests {
 
             final String secondary = getMemberNameByState(mongo, "secondary");
             mongo.close();
-            mongo = new Mongo(secondary);
+            mongo = new MongoClient(secondary);
             final DB db = mongo.getDB("secondaryTest");
             db.setReadPreference(ReadPreference.secondary());
             db.getCollectionNames();

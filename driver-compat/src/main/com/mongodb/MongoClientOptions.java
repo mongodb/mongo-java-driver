@@ -207,33 +207,6 @@ public class MongoClientOptions {
         public MongoClientOptions build() {
             return new MongoClientOptions(this);
         }
-
-        public Builder legacyDefaults() {
-            proxied.connectionsPerHost(10);
-            proxied.writeConcern(org.mongodb.WriteConcern.UNACKNOWLEDGED);
-            return this;
-        }
-
-        public Builder fromMongoOptions(final MongoOptions options) {
-            proxied.description(options.getDescription());
-            proxied.connectionsPerHost(options.getConnectionsPerHost());
-            proxied.threadsAllowedToBlockForConnectionMultiplier(
-                                                                options
-                                                                .getThreadsAllowedToBlockForConnectionMultiplier());
-            proxied.maxWaitTime(options.getMaxWaitTime());
-            proxied.connectTimeout(options.getConnectTimeout());
-            proxied.socketTimeout(options.getSocketTimeout());
-            proxied.socketKeepAlive(options.isSocketKeepAlive());
-            proxied.autoConnectRetry(options.isAutoConnectRetry());
-            proxied.maxAutoConnectRetryTime(options.getMaxAutoConnectRetryTime());
-            if (options.getReadPreference() != null) {
-                proxied.readPreference(options.getReadPreference().toNew());
-            }
-            if (options.getWriteConcern() != null) {
-                proxied.writeConcern(options.getWriteConcern().toNew());
-            }
-            return this;
-        }
     }
 
     /**
