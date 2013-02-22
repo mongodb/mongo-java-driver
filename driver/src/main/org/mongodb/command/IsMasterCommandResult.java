@@ -50,7 +50,7 @@ public class IsMasterCommandResult extends CommandResult {
     }
 
     public int getMaxBSONObjectSize() {
-        return (Integer) getResponse().get("maxBSONObjectSize");
+        return (Integer) getResponse().get("maxBsonObjectSize");
     }
 
     public Document getTags() {
