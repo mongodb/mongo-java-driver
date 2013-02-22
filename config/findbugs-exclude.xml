@@ -4,7 +4,7 @@
     </Match>
 
     <Match>
-        <Class name="org.bson.JsonWriterSettings"/>
+        <Class name="org.bson.JSONWriterSettings"/>
     </Match>
 
     <Match>

@@ -35,16 +35,16 @@ import java.util.TimeZone;
  *
  * @since 3.0.0
  */
-public class JsonWriter extends BSONWriter {
+public class JSONWriter extends BSONWriter {
     private final Writer writer;
     private Context context;
-    private final JsonWriterSettings settings;
+    private final JSONWriterSettings settings;
 
-    public JsonWriter(final Writer writer) {
-        this(writer, new JsonWriterSettings());
+    public JSONWriter(final Writer writer) {
+        this(writer, new JSONWriterSettings());
     }
 
-    public JsonWriter(final Writer writer, final JsonWriterSettings settings) {
+    public JSONWriter(final Writer writer, final JSONWriterSettings settings) {
         super(settings);
         this.settings = settings;
         this.writer = writer;
@@ -199,7 +199,7 @@ public class JsonWriter extends BSONWriter {
                     }
                     break;
                 default:
-                    throw new BSONException("Unexpected JsonOutputMode.");
+                    throw new BSONException("Unexpected JSONOutputMode.");
             }
 
             setState(getNextState());
@@ -436,7 +436,7 @@ public class JsonWriter extends BSONWriter {
     private void writeNameHelper(final String name) throws IOException {
         switch (context.contextType) {
             case ARRAY:
-                // don't write Array element names in Json
+                // don't write Array element names in JSON
                 if (context.hasElements) {
                     writer.write(", ");
                 }

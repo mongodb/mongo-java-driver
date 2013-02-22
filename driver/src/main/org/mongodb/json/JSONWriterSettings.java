@@ -20,27 +20,27 @@ import org.bson.BSONWriterSettings;
 import org.mongodb.annotations.Immutable;
 
 /**
- * Settings to control the behavior of a {@code JsonWriter} instance.
+ * Settings to control the behavior of a {@code JSONWriter} instance.
  *
- * @see JsonWriter
+ * @see JSONWriter
  * @since 3.0.0
  */
 @Immutable
-public class JsonWriterSettings extends BSONWriterSettings {
+public class JSONWriterSettings extends BSONWriterSettings {
     private final boolean indent;
     private final String newLineCharacters;
     private final String indentCharacters;
-    private final JsonOutputMode outputMode;
+    private final JSONOutputMode outputMode;
 
     /**
-     * Builder to create an immutable instance of JsonWriterSettings
+     * Builder to create an immutable instance of JSONWriterSettings
      * @since 3.0.0
      */
     public final class Builder {
         private boolean indent;
         private String newLineCharacters;
         private String indentCharacters;
-        private JsonOutputMode outputMode;
+        private JSONOutputMode outputMode;
 
         private Builder() {
         }
@@ -55,8 +55,8 @@ public class JsonWriterSettings extends BSONWriterSettings {
     /**
      * Creates a new instance with default values for all properties.
      */
-    public JsonWriterSettings() {
-        this(JsonOutputMode.Strict, false, null, null);
+    public JSONWriterSettings() {
+        this(JSONOutputMode.Strict, false, null, null);
     }
 
     /**
@@ -64,7 +64,7 @@ public class JsonWriterSettings extends BSONWriterSettings {
      *
      * @param outputMode the output mode
      */
-    public JsonWriterSettings(final JsonOutputMode outputMode) {
+    public JSONWriterSettings(final JSONOutputMode outputMode) {
         this(outputMode, false, null, null);
     }
 
@@ -73,8 +73,8 @@ public class JsonWriterSettings extends BSONWriterSettings {
      *
      * @param indent whether indent mode is enabled
      */
-    public JsonWriterSettings(final boolean indent) {
-        this(JsonOutputMode.Strict, true, "  ", null);
+    public JSONWriterSettings(final boolean indent) {
+        this(JSONOutputMode.Strict, true, "  ", null);
     }
 
     /**
@@ -84,7 +84,7 @@ public class JsonWriterSettings extends BSONWriterSettings {
      * @param outputMode the output mode
      * @param indent     whether indent mode is enabled
      */
-    public JsonWriterSettings(final JsonOutputMode outputMode, final boolean indent) {
+    public JSONWriterSettings(final JSONOutputMode outputMode, final boolean indent) {
         this(outputMode, true, "  ", null);
     }
 
@@ -95,7 +95,7 @@ public class JsonWriterSettings extends BSONWriterSettings {
      * @param outputMode       the output mode
      * @param indentCharacters the indent characters
      */
-    public JsonWriterSettings(final JsonOutputMode outputMode, final String indentCharacters) {
+    public JSONWriterSettings(final JSONOutputMode outputMode, final String indentCharacters) {
         this(outputMode, true, indentCharacters, null);
     }
 
@@ -106,12 +106,12 @@ public class JsonWriterSettings extends BSONWriterSettings {
      * @param indentCharacters  the indent characters
      * @param newLineCharacters the new line character(s) to use
      */
-    public JsonWriterSettings(final JsonOutputMode outputMode, final String indentCharacters,
+    public JSONWriterSettings(final JSONOutputMode outputMode, final String indentCharacters,
                               final String newLineCharacters) {
         this(outputMode, true, indentCharacters, newLineCharacters);
     }
 
-    private JsonWriterSettings(final JsonOutputMode outputMode, final boolean indent, final String indentCharacters,
+    private JSONWriterSettings(final JSONOutputMode outputMode, final boolean indent, final String indentCharacters,
                                final String newLineCharacters) {
         if (indent) {
             if (indentCharacters == null) {
@@ -166,11 +166,11 @@ public class JsonWriterSettings extends BSONWriterSettings {
     }
 
     /**
-     * The output mode to use.  The default value is {@code }JsonOutputMode.Strict}.
+     * The output mode to use.  The default value is {@code }JSONOutputMode.Strict}.
      *
      * @return the output mode.
      */
-    public JsonOutputMode getOutputMode() {
+    public JSONOutputMode getOutputMode() {
         return outputMode;
     }
 }

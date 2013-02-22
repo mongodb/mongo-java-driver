@@ -17,13 +17,13 @@
 package org.mongodb.json;
 
 /**
- * An enumeration of the supported output modes of {@code JsonWriter}.  The first three correspond to the syntax documented
+ * An enumeration of the supported output modes of {@code JSONWriter}.  The first three correspond to the syntax documented
  * <a href="http://www.mongodb.org/display/DOCS/Mongo+Extended+JSON">here</a>.
  *
- * @see JsonWriter
+ * @see JSONWriter
  * @since 3.0.0
  */
-public enum JsonOutputMode {
+public enum JSONOutputMode {
 
     /**
      * Strict mode produces output conforming to the <a href="http://www.json.org">JSON RFC spec</a>.

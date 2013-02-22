@@ -31,14 +31,14 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("unchecked")
-public class JsonWriterTest {
+public class JSONWriterTest {
     private StringWriter stringWriter;
-    private JsonWriter writer;
+    private JSONWriter writer;
 
     @Before
     public void before() {
         stringWriter = new StringWriter();
-        writer = new JsonWriter(stringWriter, new JsonWriterSettings());
+        writer = new JSONWriter(stringWriter, new JSONWriterSettings());
     }
 
     private static class TestData<T> {
@@ -70,7 +70,7 @@ public class JsonWriterTest {
 
     @Test
     public void testIndentedEmptyDocument() {
-        writer = new JsonWriter(stringWriter, new JsonWriterSettings(true));
+        writer = new JSONWriter(stringWriter, new JSONWriterSettings(true));
         writer.writeStartDocument();
         writer.writeEndDocument();
         final String expected = "{ }";
@@ -79,7 +79,7 @@ public class JsonWriterTest {
 
     @Test
     public void testIndentedOneElement() {
-        writer = new JsonWriter(stringWriter, new JsonWriterSettings(true));
+        writer = new JSONWriter(stringWriter, new JSONWriterSettings(true));
         writer.writeStartDocument();
         writer.writeString("name", "value");
         writer.writeEndDocument();
@@ -89,7 +89,7 @@ public class JsonWriterTest {
 
     @Test
     public void testIndentedTwoElements() {
-        writer = new JsonWriter(stringWriter, new JsonWriterSettings(true));
+        writer = new JSONWriter(stringWriter, new JSONWriterSettings(true));
         writer.writeStartDocument();
         writer.writeString("a", "x");
         writer.writeString("b", "y");
@@ -126,7 +126,7 @@ public class JsonWriterTest {
                                                     new TestData<Double>(Double.POSITIVE_INFINITY, "Infinity"));
         for (final TestData<Double> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings());
+            writer = new JSONWriter(stringWriter, new JSONWriterSettings());
             writer.writeStartDocument();
             writer.writeDouble("d", cur.value);
             writer.writeEndDocument();
@@ -151,7 +151,7 @@ public class JsonWriterTest {
                                                                      "NumberLong(\"9223372036854775807\")"));
         for (final TestData<Long> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonOutputMode.Shell));
+            writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONOutputMode.Shell));
             writer.writeStartDocument();
             writer.writeInt64("l", cur.value);
             writer.writeEndDocument();
@@ -171,7 +171,7 @@ public class JsonWriterTest {
 
         for (final TestData<Long> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonOutputMode.Strict));
+            writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONOutputMode.Strict));
             writer.writeStartDocument();
             writer.writeInt64("l", cur.value);
             writer.writeEndDocument();
@@ -195,7 +195,7 @@ public class JsonWriterTest {
 
     @Test
     public void testIndentedEmbeddedDocument() {
-        writer = new JsonWriter(stringWriter, new JsonWriterSettings(true));
+        writer = new JSONWriter(stringWriter, new JSONWriterSettings(true));
         writer.writeStartDocument();
         writer.writeStartDocument("doc");
         writer.writeInt32("a", 1);
@@ -238,7 +238,7 @@ public class JsonWriterTest {
                                                                          + "\"$type\" : \"a\" }"));
         for (final TestData<Binary> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonOutputMode.Strict));
+            writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONOutputMode.Strict));
             writer.writeStartDocument();
             writer.writeBinaryData("binary", cur.value);
             writer.writeEndDocument();
@@ -261,7 +261,7 @@ public class JsonWriterTest {
                                                                          "new BinData(a, \"AQID\")"));
         for (final TestData<Binary> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonOutputMode.Shell));
+            writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONOutputMode.Shell));
             writer.writeStartDocument();
             writer.writeBinaryData("binary", cur.value);
             writer.writeEndDocument();
@@ -279,7 +279,7 @@ public class JsonWriterTest {
                                                                      "{ \"$date\" : -9223372036854775808 }"));
         for (final TestData<Date> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonOutputMode.Strict));
+            writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONOutputMode.Strict));
             writer.writeStartDocument();
             writer.writeDateTime("date", cur.value.getTime());
             writer.writeEndDocument();
@@ -302,7 +302,7 @@ public class JsonWriterTest {
                                                                      "new Date(-9223372036854775808)"));
         for (final TestData<Date> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonOutputMode.Shell));
+            writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONOutputMode.Shell));
             writer.writeStartDocument();
             writer.writeDateTime("date", cur.value.getTime());
             writer.writeEndDocument();
@@ -321,7 +321,7 @@ public class JsonWriterTest {
                                                                      "new Date(-9223372036854775808)"));
         for (final TestData<Date> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonOutputMode.TenGen));
+            writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONOutputMode.TenGen));
             writer.writeStartDocument();
             writer.writeDateTime("date", cur.value.getTime());
             writer.writeEndDocument();
@@ -381,7 +381,7 @@ public class JsonWriterTest {
 
     @Test
     public void testObjectIdShell() {
-        writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonOutputMode.Shell));
+        writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONOutputMode.Shell));
         final ObjectId objectId = new ObjectId("4d0ce088e447ad08b4721a37");
 
         writer.writeStartDocument();
@@ -418,7 +418,7 @@ public class JsonWriterTest {
                       new TestData<RegularExpression>(new RegularExpression("a", "imxs"), "/a/imxs"));
         for (final TestData<RegularExpression> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonOutputMode.Shell));
+            writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONOutputMode.Shell));
             writer.writeStartDocument();
             writer.writeRegularExpression("regex", cur.value);
             writer.writeEndDocument();
@@ -460,7 +460,7 @@ public class JsonWriterTest {
                                                      "{ \"$regex\" : \"a\"," + " \"$options\" : \"imxs\" }"));
         for (final TestData<RegularExpression> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonOutputMode.Strict));
+            writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONOutputMode.Strict));
             writer.writeStartDocument();
             writer.writeRegularExpression("regex", cur.value);
             writer.writeEndDocument();
@@ -485,7 +485,7 @@ public class JsonWriterTest {
                       new TestData<String>("\u0080\u0081\u0082", "\"\\u0080\\u0081\\u0082\""));
         for (final TestData<String> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonOutputMode.Strict));
+            writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONOutputMode.Strict));
             writer.writeStartDocument();
             writer.writeString("str", cur.value);
             writer.writeEndDocument();
@@ -515,7 +515,7 @@ public class JsonWriterTest {
 
     @Test
     public void testTimestampShell() {
-        writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonOutputMode.Shell));
+        writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONOutputMode.Shell));
         writer.writeStartDocument();
         writer.writeTimestamp("timestamp", new BSONTimestamp(1000, 1));
         writer.writeEndDocument();
