@@ -16,34 +16,18 @@
 
 package org.bson;
 
-/**
- * Used by BsonReaders and BsonWriters to represent the current context.
- *
- * @since 3.0.0
- */
-public enum ContextType {
-    /**
-     * The top level of a BSON document.
-     */
-    TOP_LEVEL,
+public class BSONBinaryWriterSettings {
+    private final int maxDocumentSize;
 
-    /**
-     * A (possibly embedded) BSON document.
-     */
-    DOCUMENT,
+    public BSONBinaryWriterSettings(final int maxDocumentSize) {
+        this.maxDocumentSize = maxDocumentSize;
+    }
 
-    /**
-     * A BSON array.
-     */
-    ARRAY,
+    public BSONBinaryWriterSettings() {
+        this(16 * 1024 * 1024);
+    }
 
-    /**
-     * A JAVASCRIPT_WITH_SCOPE BSON value.
-     */
-    JAVASCRIPT_WITH_SCOPE,
-
-    /**
-     * The scope document of a JAVASCRIPT_WITH_SCOPE BSON value.
-     */
-    SCOPE_DOCUMENT
+    public int getMaxDocumentSize() {
+        return maxDocumentSize;
+    }
 }

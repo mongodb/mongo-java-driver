@@ -29,14 +29,14 @@ public class BSONBinaryReader extends BSONReader {
     private Context context;
     private final InputBuffer buffer;
 
-    public BSONBinaryReader(final BsonReaderSettings settings, final InputBuffer buffer) {
+    public BSONBinaryReader(final BSONReaderSettings settings, final InputBuffer buffer) {
         super(settings);
         this.buffer = buffer;
-        context = new Context(null, ContextType.TOP_LEVEL, 0, 0);
+        context = new Context(null, BSONContextType.TOP_LEVEL, 0, 0);
     }
 
     public BSONBinaryReader(final InputBuffer buffer) {
-        this(new BsonReaderSettings(), buffer);
+        this(new BSONReaderSettings(), buffer);
     }
 
     /**
@@ -49,14 +49,14 @@ public class BSONBinaryReader extends BSONReader {
     }
 
     @Override
-    public BsonType readBsonType() {
+    public BSONType readBsonType() {
         if (isClosed()) {
             throw new IllegalStateException("BsonBinaryWriter");
         }
 
         if (getState() == State.INITIAL || getState() == State.DONE || getState() == State.SCOPE_DOCUMENT) {
             // there is an implied type of Document for the top level and for scope documents
-            setCurrentBsonType(BsonType.DOCUMENT);
+            setCurrentBsonType(BSONType.DOCUMENT);
             setState(State.VALUE);
             return getCurrentBsonType();
         }
@@ -66,19 +66,19 @@ public class BSONBinaryReader extends BSONReader {
 
         setCurrentBsonType(buffer.readBsonType());
 
-        if (getCurrentBsonType() == BsonType.END_OF_DOCUMENT) {
+        if (getCurrentBsonType() == BSONType.END_OF_DOCUMENT) {
             switch (context.contextType) {
                 case ARRAY:
                     setState(State.END_OF_ARRAY);
-                    return BsonType.END_OF_DOCUMENT;
+                    return BSONType.END_OF_DOCUMENT;
                 case DOCUMENT:
                 case SCOPE_DOCUMENT:
                     setState(State.END_OF_DOCUMENT);
-                    return BsonType.END_OF_DOCUMENT;
+                    return BSONType.END_OF_DOCUMENT;
                 default:
                     final String message = format("BsonType EndOfDocument is not valid when ContextType is %s.",
                             context.contextType);
-                    throw new BsonSerializationException(message);
+                    throw new BSONSerializationException(message);
             }
         }
         else {
@@ -102,14 +102,14 @@ public class BSONBinaryReader extends BSONReader {
 
     @Override
     public Binary readBinaryData() {
-        checkPreconditions("readBinaryDate", BsonType.BINARY);
+        checkPreconditions("readBinaryDate", BSONType.BINARY);
         setState(getNextState());
 
         // TODO: implement
         int numBytes = buffer.readInt32();
         final byte type = buffer.readByte();
 
-        if (type == BsonBinarySubType.OldBinary.getValue()) {
+        if (type == BSONBinarySubType.OldBinary.getValue()) {
             buffer.readInt32();
             numBytes -= 4;
         }
@@ -120,54 +120,54 @@ public class BSONBinaryReader extends BSONReader {
 
     @Override
     public boolean readBoolean() {
-        checkPreconditions("readBoolean", BsonType.BOOLEAN);
+        checkPreconditions("readBoolean", BSONType.BOOLEAN);
         setState(getNextState());
         return buffer.readBoolean();
     }
 
     @Override
     public long readDateTime() {
-        checkPreconditions("readDateTime", BsonType.DATE_TIME);
+        checkPreconditions("readDateTime", BSONType.DATE_TIME);
         setState(getNextState());
         return buffer.readInt64();
     }
 
     @Override
     public double readDouble() {
-        checkPreconditions("readDouble", BsonType.DOUBLE);
+        checkPreconditions("readDouble", BSONType.DOUBLE);
         setState(getNextState());
         return buffer.readDouble();
     }
 
     @Override
     public int readInt32() {
-        checkPreconditions("readInt32", BsonType.INT32);
+        checkPreconditions("readInt32", BSONType.INT32);
         setState(getNextState());
         return buffer.readInt32();
     }
 
     @Override
     public long readInt64() {
-        checkPreconditions("readInt64", BsonType.INT64);
+        checkPreconditions("readInt64", BSONType.INT64);
         setState(getNextState());
         return buffer.readInt64();
     }
 
     @Override
     public String readJavaScript() {
-        checkPreconditions("readJavaScript", BsonType.JAVASCRIPT);
+        checkPreconditions("readJavaScript", BSONType.JAVASCRIPT);
         setState(getNextState());
         return buffer.readString();
     }
 
     @Override
     public String readJavaScriptWithScope() {
-        checkPreconditions("readInt64", BsonType.JAVASCRIPT_WITH_SCOPE);
+        checkPreconditions("readInt64", BSONType.JAVASCRIPT_WITH_SCOPE);
         setState(getNextState());
 
         final int startPosition = buffer.getPosition(); // position of size field
         final int size = readSize();
-        context = new Context(context, ContextType.JAVASCRIPT_WITH_SCOPE, startPosition, size);
+        context = new Context(context, BSONContextType.JAVASCRIPT_WITH_SCOPE, startPosition, size);
         final String code = buffer.readString();
 
         setState(State.SCOPE_DOCUMENT);
@@ -176,53 +176,53 @@ public class BSONBinaryReader extends BSONReader {
 
     @Override
     public void readMaxKey() {
-        checkPreconditions("readMaxKey", BsonType.MAX_KEY);
+        checkPreconditions("readMaxKey", BSONType.MAX_KEY);
         setState(getNextState());
     }
 
     @Override
     public void readMinKey() {
-        checkPreconditions("readMinKey", BsonType.MIN_KEY);
+        checkPreconditions("readMinKey", BSONType.MIN_KEY);
         setState(getNextState());
     }
 
     @Override
     public void readNull() {
-        checkPreconditions("readNull", BsonType.NULL);
+        checkPreconditions("readNull", BSONType.NULL);
         setState(getNextState());
     }
 
     @Override
     public ObjectId readObjectId() {
-        checkPreconditions("readObjectId", BsonType.OBJECT_ID);
+        checkPreconditions("readObjectId", BSONType.OBJECT_ID);
         setState(getNextState());
         return buffer.readObjectId();
     }
 
     @Override
     public RegularExpression readRegularExpression() {
-        checkPreconditions("readRegularExpression", BsonType.REGULAR_EXPRESSION);
+        checkPreconditions("readRegularExpression", BSONType.REGULAR_EXPRESSION);
         setState(getNextState());
         return new RegularExpression(buffer.readCString(), buffer.readCString());
     }
 
     @Override
     public String readString() {
-        checkPreconditions("readString", BsonType.STRING);
+        checkPreconditions("readString", BSONType.STRING);
         setState(getNextState());
         return buffer.readString();
     }
 
     @Override
     public String readSymbol() {
-        checkPreconditions("readSymbol", BsonType.SYMBOL);
+        checkPreconditions("readSymbol", BSONType.SYMBOL);
         setState(getNextState());
         return buffer.readString();
     }
 
     @Override
     public BSONTimestamp readTimestamp() {
-        checkPreconditions("readTimestamp", BsonType.TIMESTAMP);
+        checkPreconditions("readTimestamp", BSONType.TIMESTAMP);
         setState(getNextState());
         final int increment = buffer.readInt32();
         final int time = buffer.readInt32();
@@ -231,25 +231,25 @@ public class BSONBinaryReader extends BSONReader {
 
     @Override
     public void readUndefined() {
-        checkPreconditions("readUndefined", BsonType.UNDEFINED);
+        checkPreconditions("readUndefined", BSONType.UNDEFINED);
         setState(getNextState());
     }
 
     @Override
     public void readStartArray() {
-        checkPreconditions("readStartArray", BsonType.ARRAY);
+        checkPreconditions("readStartArray", BSONType.ARRAY);
 
         final int startPosition = buffer.getPosition(); // position of size field
         final int size = readSize();
-        context = new Context(context, ContextType.ARRAY, startPosition, size);
+        context = new Context(context, BSONContextType.ARRAY, startPosition, size);
         setState(State.TYPE);
     }
 
     @Override
     public void readStartDocument() {
-        checkPreconditions("readStartDocument", BsonType.DOCUMENT);
+        checkPreconditions("readStartDocument", BSONType.DOCUMENT);
 
-        final ContextType contextType = (getState() == State.SCOPE_DOCUMENT) ? ContextType.SCOPE_DOCUMENT : ContextType.DOCUMENT;
+        final BSONContextType contextType = (getState() == State.SCOPE_DOCUMENT) ? BSONContextType.SCOPE_DOCUMENT : BSONContextType.DOCUMENT;
         final int startPosition = buffer.getPosition(); // position of size field
         final int size = readSize();
         context = new Context(context, contextType, startPosition, size);
@@ -261,8 +261,8 @@ public class BSONBinaryReader extends BSONReader {
         if (isClosed()) {
             throw new IllegalStateException("BsonBinaryWriter");
         }
-        if (context.contextType != ContextType.ARRAY) {
-            throwInvalidContextType("readEndArray", context.contextType, ContextType.ARRAY);
+        if (context.contextType != BSONContextType.ARRAY) {
+            throwInvalidContextType("readEndArray", context.contextType, BSONContextType.ARRAY);
         }
         if (getState() == State.TYPE) {
             readBsonType(); // will set state to EndOfArray if at end of array
@@ -280,8 +280,8 @@ public class BSONBinaryReader extends BSONReader {
         if (isClosed()) {
             throw new IllegalStateException("BsonBinaryWriter");
         }
-        if (context.contextType != ContextType.DOCUMENT && context.contextType != ContextType.SCOPE_DOCUMENT) {
-            throwInvalidContextType("readEndDocument", context.contextType, ContextType.DOCUMENT, ContextType.SCOPE_DOCUMENT);
+        if (context.contextType != BSONContextType.DOCUMENT && context.contextType != BSONContextType.SCOPE_DOCUMENT) {
+            throwInvalidContextType("readEndDocument", context.contextType, BSONContextType.DOCUMENT, BSONContextType.SCOPE_DOCUMENT);
         }
         if (getState() == State.TYPE) {
             readBsonType(); // will set state to EndOfDocument if at end of document
@@ -291,7 +291,7 @@ public class BSONBinaryReader extends BSONReader {
         }
 
         context = context.popContext(buffer.getPosition());
-        if (context != null && context.contextType == ContextType.JAVASCRIPT_WITH_SCOPE) {
+        if (context != null && context.contextType == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
             context = context.popContext(buffer.getPosition()); // JavaScriptWithScope
         }
 
@@ -398,7 +398,7 @@ public class BSONBinaryReader extends BSONReader {
         setState(State.TYPE);
     }
 
-    private void checkPreconditions(final String methodName, final BsonType type) {
+    private void checkPreconditions(final String methodName, final BSONType type) {
         if (isClosed()) {
             throw new IllegalStateException("BsonBinaryWriter");
         }
@@ -423,7 +423,7 @@ public class BSONBinaryReader extends BSONReader {
         final int size = buffer.readInt32();
         if (size < 0) {
             final String message = format("Size %s is not valid because it is negative.", size);
-            throw new BsonSerializationException(message);
+            throw new BSONSerializationException(message);
         }
         return size;
     }
@@ -432,12 +432,12 @@ public class BSONBinaryReader extends BSONReader {
     private static class Context {
         // private fields
         private final Context parentContext;
-        private final ContextType contextType;
+        private final BSONContextType contextType;
         private final int startPosition;
         private final int size;
 
         // constructors
-        Context(final Context parentContext, final ContextType contextType, final int startPosition, final int size) {
+        Context(final Context parentContext, final BSONContextType contextType, final int startPosition, final int size) {
             this.parentContext = parentContext;
             this.contextType = contextType;
             this.startPosition = startPosition;
@@ -457,7 +457,7 @@ public class BSONBinaryReader extends BSONReader {
             final int actualSize = position - startPosition;
             if (actualSize != size) {
                 final String message = format("Expected size to be %d, not %d.", size, actualSize);
-                throw new BsonSerializationException(message);
+                throw new BSONSerializationException(message);
             }
             return parentContext;
         }

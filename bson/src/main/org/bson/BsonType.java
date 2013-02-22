@@ -16,7 +16,7 @@
 
 package org.bson;
 
-public enum BsonType {
+public enum BSONType {
     /**
      * Not a real BSON type. Used to signal the end of a document.
      */
@@ -98,17 +98,17 @@ public enum BsonType {
      */
     MAX_KEY(0x7f);
 
-    private static final BsonType[] LOOKUP_TABLE = new BsonType[MIN_KEY.getValue() + 1];
+    private static final BSONType[] LOOKUP_TABLE = new BSONType[MIN_KEY.getValue() + 1];
 
     private final int value;
 
     static {
-        for (final BsonType cur : BsonType.values()) {
+        for (final BSONType cur : BSONType.values()) {
             LOOKUP_TABLE[cur.getValue()] = cur;
         }
     }
 
-    BsonType(final int value) {
+    BSONType(final int value) {
         this.value = value;
     }
 
@@ -116,7 +116,7 @@ public enum BsonType {
         return value;
     }
 
-    public static BsonType findByValue(final int value) {
+    public static BSONType findByValue(final int value) {
         return LOOKUP_TABLE[value];
     }
 

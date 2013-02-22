@@ -26,8 +26,8 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.ReflectionDBObject;
 import org.bson.BSON;
 import org.bson.BSONReader;
+import org.bson.BSONType;
 import org.bson.BSONWriter;
-import org.bson.BsonType;
 import org.bson.types.Binary;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
@@ -180,7 +180,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         final DBObject document = getNewInstance(path);
 
         reader.readStartDocument();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
             document.put(fieldName, readValue(reader, fieldName, path));
         }
@@ -235,7 +235,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         final DBObject document = getNewInstance(path);
 
         reader.readStartDocument();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
             document.put(fieldName, readValue(reader, fieldName, path));
         }
@@ -252,14 +252,14 @@ public class DBObjectSerializer implements Serializer<DBObject> {
 
     private Object readValue(final BSONReader reader, final String fieldName,
                              final List<String> path) {
-        final BsonType bsonType = reader.getCurrentBsonType();
+        final BSONType bsonType = reader.getCurrentBsonType();
         final Object initialRetVal;
-        if (bsonType.equals(BsonType.DOCUMENT)) {
+        if (bsonType.equals(BSONType.DOCUMENT)) {
             path.add(fieldName);
             initialRetVal = deserializeDocument(reader, path);
             path.remove(path.size() - 1);
         }
-        else if (bsonType.equals(BsonType.ARRAY)) {
+        else if (bsonType.equals(BSONType.ARRAY)) {
             path.add(fieldName);
             initialRetVal = readArray(reader, path);
             path.remove(path.size() - 1);
@@ -274,7 +274,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     private List readArray(final BSONReader reader, final List<String> path) {
         reader.readStartArray();
         final BasicDBList list = new BasicDBList();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
             list.add(readValue(reader, null, path));   // TODO: why is this a warning?
         }
         reader.readEndArray();

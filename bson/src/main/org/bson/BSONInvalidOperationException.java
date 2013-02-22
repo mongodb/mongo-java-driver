@@ -16,18 +16,10 @@
 
 package org.bson;
 
-public class BinaryWriterSettings {
-    private final int maxDocumentSize;
+public class BSONInvalidOperationException extends BSONException {
+    private static final long serialVersionUID = 7684248076818601418L;
 
-    public BinaryWriterSettings(final int maxDocumentSize) {
-        this.maxDocumentSize = maxDocumentSize;
-    }
-
-    public BinaryWriterSettings() {
-        this(16 * 1024 * 1024);
-    }
-
-    public int getMaxDocumentSize() {
-        return maxDocumentSize;
+    public BSONInvalidOperationException(final String message) {
+        super(message);
     }
 }

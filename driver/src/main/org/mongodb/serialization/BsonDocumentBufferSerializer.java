@@ -19,8 +19,8 @@ package org.mongodb.serialization;
 import org.bson.BSONBinaryReader;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONReader;
+import org.bson.BSONType;
 import org.bson.BSONWriter;
-import org.bson.BsonType;
 import org.bson.io.ByteBufferInput;
 import org.mongodb.io.BufferPool;
 import org.mongodb.BsonDocumentBuffer;
@@ -77,7 +77,7 @@ public class BsonDocumentBufferSerializer implements CollectibleSerializer<BsonD
     public Object getId(final BsonDocumentBuffer document) {
         BSONReader reader = new BSONBinaryReader(new ByteBufferInput(document.getByteBuffer()));
         reader.readStartDocument();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
             String name = reader.readName();
             if (name.equals("_id")) {
                 return primitiveSerializers.deserialize(reader);  // TODO: handle non-primitive identifiers

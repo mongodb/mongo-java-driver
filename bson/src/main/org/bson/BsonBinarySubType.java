@@ -16,7 +16,7 @@
 
 package org.bson;
 
-public enum BsonBinarySubType {
+public enum BSONBinarySubType {
     /**
      * Binary data.
      */
@@ -54,7 +54,7 @@ public enum BsonBinarySubType {
 
     private final byte value;
 
-    BsonBinarySubType(final byte value) {
+    BSONBinarySubType(final byte value) {
         this.value = value;
     }
 

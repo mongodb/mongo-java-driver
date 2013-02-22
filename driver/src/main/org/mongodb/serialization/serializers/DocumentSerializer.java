@@ -17,8 +17,8 @@
 package org.mongodb.serialization.serializers;
 
 import org.bson.BSONReader;
+import org.bson.BSONType;
 import org.bson.BSONWriter;
-import org.bson.BsonType;
 import org.bson.types.Binary;
 import org.mongodb.Document;
 import org.mongodb.DBRef;
@@ -139,7 +139,7 @@ public class DocumentSerializer implements Serializer<Document> {
         final Document document = new Document();
 
         reader.readStartDocument();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
             document.put(fieldName, readValue(reader, fieldName));
         }
@@ -150,11 +150,11 @@ public class DocumentSerializer implements Serializer<Document> {
     }
 
     private Object readValue(final BSONReader reader, final String fieldName) {
-        final BsonType bsonType = reader.getCurrentBsonType();
-        if (bsonType.equals(BsonType.DOCUMENT)) {
+        final BSONType bsonType = reader.getCurrentBsonType();
+        if (bsonType.equals(BSONType.DOCUMENT)) {
             return getDocumentDeserializerForField(fieldName).deserialize(reader);
         }
-        else if (bsonType.equals(BsonType.ARRAY)) {
+        else if (bsonType.equals(BSONType.ARRAY)) {
             return readArray(reader);
         }
         else {
@@ -166,7 +166,7 @@ public class DocumentSerializer implements Serializer<Document> {
     private List<Object> readArray(final BSONReader reader) {
         reader.readStartArray();
         final List<Object> list = new ArrayList<Object>();  // TODO: figure out a way to change concrete class
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
             list.add(readValue(reader, null));
         }
         reader.readEndArray();

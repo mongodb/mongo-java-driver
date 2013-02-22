@@ -16,14 +16,14 @@
 
 package org.bson;
 
-public class BsonWriterSettings {
+public class BSONWriterSettings {
     private final int maxSerializationDepth;
 
-    public BsonWriterSettings(final int maxSerializationDepth) {
+    public BSONWriterSettings(final int maxSerializationDepth) {
         this.maxSerializationDepth = maxSerializationDepth;
     }
 
-    public BsonWriterSettings() {
+    public BSONWriterSettings() {
         this(1024);
     }
 

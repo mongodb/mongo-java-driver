@@ -16,7 +16,7 @@
 
 package org.bson.io;
 
-import org.bson.BsonType;
+import org.bson.BSONType;
 import org.bson.types.ObjectId;
 
 public interface InputBuffer {
@@ -38,7 +38,7 @@ public interface InputBuffer {
 
     ObjectId readObjectId();
 
-    BsonType readBsonType();
+    BSONType readBsonType();
 
     String readCString();
 

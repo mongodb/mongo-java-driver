@@ -16,9 +16,9 @@
 
 package org.mongodb.json;
 
+import org.bson.BSONContextType;
 import org.bson.BSONException;
 import org.bson.BSONWriter;
-import org.bson.ContextType;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
@@ -48,7 +48,7 @@ public class JsonWriter extends BSONWriter {
         super(settings);
         this.settings = settings;
         this.writer = writer;
-        context = new Context(null, ContextType.TOP_LEVEL, "");
+        context = new Context(null, BSONContextType.TOP_LEVEL, "");
     }
 
     @Override
@@ -69,8 +69,8 @@ public class JsonWriter extends BSONWriter {
             }
             writer.write("{");
 
-            final ContextType contextType = (getState()
-                    == State.SCOPE_DOCUMENT) ? ContextType.SCOPE_DOCUMENT : ContextType.DOCUMENT;
+            final BSONContextType contextType = (getState()
+                    == State.SCOPE_DOCUMENT) ? BSONContextType.SCOPE_DOCUMENT : BSONContextType.DOCUMENT;
             context = new Context(context, contextType, settings.getIndentCharacters());
             setState(State.NAME);
         } catch (IOException e) {
@@ -93,7 +93,7 @@ public class JsonWriter extends BSONWriter {
                 writer.write(" }");
             }
 
-            if (context.contextType == ContextType.SCOPE_DOCUMENT) {
+            if (context.contextType == BSONContextType.SCOPE_DOCUMENT) {
                 context = context.parentContext;
                 writeEndDocument();
             }
@@ -120,7 +120,7 @@ public class JsonWriter extends BSONWriter {
             writeNameHelper(getName());
             writer.write("[");
 
-            context = new Context(context, ContextType.ARRAY, settings.getIndentCharacters());
+            context = new Context(context, BSONContextType.ARRAY, settings.getIndentCharacters());
             setState(State.VALUE);
         } catch (IOException e) {
             throwBSONException(e);
@@ -425,7 +425,7 @@ public class JsonWriter extends BSONWriter {
     }
 
     private State getNextState() {
-        if (context.contextType == ContextType.ARRAY) {
+        if (context.contextType == BSONContextType.ARRAY) {
             return State.VALUE;
         }
         else {
@@ -533,11 +533,11 @@ public class JsonWriter extends BSONWriter {
 
     class Context {
         private final Context parentContext;
-        private final ContextType contextType;
+        private final BSONContextType contextType;
         private final String indentation;
         private boolean hasElements;
 
-        public Context(final Context parentContext, final ContextType contextType, final String indentChars) {
+        public Context(final Context parentContext, final BSONContextType contextType, final String indentChars) {
             this.parentContext = parentContext;
             this.contextType = contextType;
             this.indentation = (parentContext == null) ? indentChars : parentContext.indentation + indentChars;

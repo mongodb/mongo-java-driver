@@ -20,7 +20,6 @@ import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
-import org.bson.StringUtils;
 
 import java.io.Closeable;
 import java.util.Arrays;
@@ -33,7 +32,7 @@ import static java.lang.String.format;
  * @since 3.0.0
  */
 public abstract class BSONWriter implements Closeable {
-    private final BsonWriterSettings settings;
+    private final BSONWriterSettings settings;
     private State state;
     private String currentName;
     private boolean checkElementNames;
@@ -46,7 +45,7 @@ public abstract class BSONWriter implements Closeable {
      *
      * @param settings The writer settings.
      */
-    protected BSONWriter(final BsonWriterSettings settings) {
+    protected BSONWriter(final BSONWriterSettings settings) {
         this.settings = settings;
         state = State.INITIAL;
     }
@@ -327,12 +326,12 @@ public abstract class BSONWriter implements Closeable {
     /**
      * Writes the start of a BSON array to the writer.
      *
-     * @throws BsonSerializationException if maximum serialization depth exceeded.
+     * @throws BSONSerializationException if maximum serialization depth exceeded.
      */
     public void writeStartArray() {
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
-            throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
+            throw new BSONSerializationException("Maximum serialization depth exceeded (does the object being "
                     + "serialized have a circular reference?).");
         }
     }
@@ -350,12 +349,12 @@ public abstract class BSONWriter implements Closeable {
     /**
      * Writes the start of a BSON document to the writer.
      *
-     * @throws BsonSerializationException if maximum serialization depth exceeded.
+     * @throws BSONSerializationException if maximum serialization depth exceeded.
      */
     public void writeStartDocument() {
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
-            throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
+            throw new BSONSerializationException("Maximum serialization depth exceeded (does the object being "
                     + "serialized have a circular reference?).");
         }
     }
@@ -444,7 +443,7 @@ public abstract class BSONWriter implements Closeable {
      *
      * @param name The element name to be checked.
      *
-     * @throws BsonSerializationException if element name is not valid.
+     * @throws BSONSerializationException if element name is not valid.
      */
     protected void checkElementName(final String name) {
         if (checkUpdateDocument) {
@@ -460,12 +459,12 @@ public abstract class BSONWriter implements Closeable {
                               || name.equals("$id"))) {
                     final String message = format(
                             "Element name '%s' is not valid because it starts with a '$'" + ".", name);
-                    throw new BsonSerializationException(message);
+                    throw new BSONSerializationException(message);
                 }
             }
             if (name.indexOf('.') != -1) {
                 final String message = format("Element name '%s' is not valid because it contains a '.'.", name);
-                throw new BsonSerializationException(message);
+                throw new BSONSerializationException(message);
             }
         }
     }
@@ -477,15 +476,15 @@ public abstract class BSONWriter implements Closeable {
      * @param actualContextType The actual ContextType.
      * @param validContextTypes The valid ContextTypes.
      *
-     * @throws InvalidOperationException
+     * @throws BSONInvalidOperationException
      */
-    protected void throwInvalidContextType(final String methodName, final ContextType actualContextType,
-                                           final ContextType... validContextTypes) {
+    protected void throwInvalidContextType(final String methodName, final BSONContextType actualContextType,
+                                           final BSONContextType... validContextTypes) {
         final String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
         final String message = format("%s can only be called when ContextType is %s, "
                 + "not when ContextType is %s.", methodName, validContextTypesString,
                 actualContextType);
-        throw new InvalidOperationException(message);
+        throw new BSONInvalidOperationException(message);
     }
 
     /**
@@ -494,7 +493,7 @@ public abstract class BSONWriter implements Closeable {
      * @param methodName  The name of the method.
      * @param validStates The valid states.
      *
-     * @throws InvalidOperationException
+     * @throws BSONInvalidOperationException
      */
     protected void throwInvalidState(final String methodName, final State... validStates) {
         final String message;
@@ -510,14 +509,14 @@ public abstract class BSONWriter implements Closeable {
                 }
                 message = format("%s %s value cannot be written to the root level of a BSON document.", article,
                                  typeName);
-                throw new InvalidOperationException(message);
+                throw new BSONInvalidOperationException(message);
             }
         }
 
         final String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
         message = format("%s can only be called when State is %s, not when State is %s", methodName,
                          validStatesString, state);
-        throw new InvalidOperationException(message);
+        throw new BSONInvalidOperationException(message);
     }
 
     /**
@@ -538,7 +537,7 @@ public abstract class BSONWriter implements Closeable {
 
     private void pipeDocument(final BSONReader reader) {
         reader.readStartDocument();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
             writeName(reader.readName());
             pipeValue(reader);
         }
@@ -548,7 +547,7 @@ public abstract class BSONWriter implements Closeable {
 
     private void pipeArray(final BSONReader reader) {
         writeStartArray();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
             pipeValue(reader);
         }
         writeEndArray();

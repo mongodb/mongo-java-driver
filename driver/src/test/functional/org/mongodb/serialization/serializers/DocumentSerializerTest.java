@@ -18,10 +18,10 @@ package org.mongodb.serialization.serializers;
 
 import org.bson.BSONBinaryReader;
 import org.bson.BSONBinaryWriter;
+import org.bson.BSONBinaryWriterSettings;
+import org.bson.BSONReaderSettings;
 import org.bson.BSONWriter;
-import org.bson.BinaryWriterSettings;
-import org.bson.BsonReaderSettings;
-import org.bson.BsonWriterSettings;
+import org.bson.BSONWriterSettings;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferInput;
 import org.bson.io.InputBuffer;
@@ -51,7 +51,7 @@ public class DocumentSerializerTest extends DatabaseTestCase {
     public void setUp() {
         super.setUp();
         buffer = new BasicOutputBuffer();
-        writer = new BSONBinaryWriter(new BsonWriterSettings(100), new BinaryWriterSettings(1024 * 1024), buffer);
+        writer = new BSONBinaryWriter(new BSONWriterSettings(100), new BSONBinaryWriterSettings(1024 * 1024), buffer);
         serializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
     }
 
@@ -72,7 +72,7 @@ public class DocumentSerializerTest extends DatabaseTestCase {
         serializer.serialize(writer, doc);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(),
+        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BSONReaderSettings(),
                                                                                      inputBuffer));
         assertEquals(doc, deserializedDoc);
     }
@@ -86,7 +86,7 @@ public class DocumentSerializerTest extends DatabaseTestCase {
         serializer.serialize(writer, doc);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(),
+        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BSONReaderSettings(),
                                                                                      inputBuffer));
         assertEquals(doc, deserializedDoc);
     }
@@ -99,7 +99,7 @@ public class DocumentSerializerTest extends DatabaseTestCase {
         serializer.serialize(writer, doc);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BsonReaderSettings(),
+        final Document deserializedDoc = serializer.deserialize(new BSONBinaryReader(new BSONReaderSettings(),
                                                                                      inputBuffer));
         assertEquals(doc, deserializedDoc);
     }

@@ -17,9 +17,9 @@
 package org.mongodb.serialization.serializers;
 
 import org.bson.BSONBinaryWriter;
+import org.bson.BSONBinaryWriterSettings;
 import org.bson.BSONWriter;
-import org.bson.BinaryWriterSettings;
-import org.bson.BsonWriterSettings;
+import org.bson.BSONWriterSettings;
 import org.bson.io.BasicOutputBuffer;
 import org.mongodb.Document;
 import org.junit.Before;
@@ -48,7 +48,7 @@ public class CollectibleDocumentSerializerTest {
             }
         });
         outputBuffer = new BasicOutputBuffer();
-        writer = new BSONBinaryWriter(new BsonWriterSettings(10), new BinaryWriterSettings(100), outputBuffer);
+        writer = new BSONBinaryWriter(new BSONWriterSettings(10), new BSONBinaryWriterSettings(100), outputBuffer);
         writer.writeStartDocument();
     }
 

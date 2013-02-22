@@ -18,7 +18,7 @@ package org.mongodb.protocol;
 
 import org.bson.BSONBinaryReader;
 import org.bson.BSONReader;
-import org.bson.BsonReaderSettings;
+import org.bson.BSONReaderSettings;
 import org.bson.io.InputBuffer;
 import org.mongodb.serialization.Serializer;
 
@@ -36,7 +36,7 @@ public class MongoReplyMessage<T> {
         this(replyHeader, elapsedNanoseconds);
 
         while (documents.size() < replyHeader.getNumberReturned()) {
-            final BSONReader reader = new BSONBinaryReader(new BsonReaderSettings(), bodyInputBuffer);
+            final BSONReader reader = new BSONBinaryReader(new BSONReaderSettings(), bodyInputBuffer);
             documents.add(serializer.deserialize(reader));
             reader.close();
         }
