@@ -16,7 +16,7 @@
 
 package org.mongodb.impl;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseAdmin;
 import org.mongodb.MongoConnection;

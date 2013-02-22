@@ -16,7 +16,7 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 
 public abstract class MongoFindAndModify extends MongoQuery {
     private Document filter;

@@ -16,7 +16,7 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.WriteConcern;
 
 public class MongoUpdate extends MongoUpdateBase {

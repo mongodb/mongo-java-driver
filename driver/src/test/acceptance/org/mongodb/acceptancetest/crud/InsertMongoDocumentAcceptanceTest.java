@@ -16,7 +16,7 @@
 
 package org.mongodb.acceptancetest.crud;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.MongoCursor;

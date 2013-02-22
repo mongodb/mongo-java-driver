@@ -16,7 +16,7 @@
 
 package org.mongodb.result;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.ServerAddress;
 
 public class CommandResult {

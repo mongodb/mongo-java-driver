@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-import org.bson.types.Document;
-
 public class CreateCollectionOptions {
     private final Document createDocument;
     private final String collectionName;

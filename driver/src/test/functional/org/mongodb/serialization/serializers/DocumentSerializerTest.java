@@ -26,7 +26,7 @@ import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferInput;
 import org.bson.io.InputBuffer;
 import org.bson.types.Binary;
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;

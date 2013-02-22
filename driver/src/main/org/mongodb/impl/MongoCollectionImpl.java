@@ -16,7 +16,7 @@
 
 package org.mongodb.impl;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.Block;
 import org.mongodb.CollectionAdmin;
 import org.mongodb.ConvertibleToDocument;

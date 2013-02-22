@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;

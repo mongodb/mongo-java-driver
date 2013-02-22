@@ -18,7 +18,7 @@ package org.mongodb.io;
 
 import org.bson.io.ByteBufferInput;
 import org.bson.io.InputBuffer;
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.bson.util.BufferPool;
 import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoQueryFailureException;

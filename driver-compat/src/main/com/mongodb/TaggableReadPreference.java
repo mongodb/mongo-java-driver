@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.annotations.Immutable;
 
 import java.util.ArrayList;

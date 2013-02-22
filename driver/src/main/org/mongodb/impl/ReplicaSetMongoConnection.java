@@ -16,7 +16,7 @@
 
 package org.mongodb.impl;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.bson.util.BufferPool;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnection;

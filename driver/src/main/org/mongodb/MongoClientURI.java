@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-import org.bson.types.Document;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;

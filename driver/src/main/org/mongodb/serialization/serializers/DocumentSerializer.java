@@ -20,7 +20,7 @@ import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.BsonType;
 import org.bson.types.Binary;
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.DBRef;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;

@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.bson.types.Document;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;

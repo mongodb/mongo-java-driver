@@ -17,7 +17,7 @@
 package org.mongodb.serialization.serializers;
 
 import org.bson.BSONWriter;
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.serialization.CollectibleSerializer;
 import org.mongodb.serialization.IdGenerator;
 import org.mongodb.serialization.PrimitiveSerializers;

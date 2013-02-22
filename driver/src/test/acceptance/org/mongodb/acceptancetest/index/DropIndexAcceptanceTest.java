@@ -16,7 +16,7 @@
 
 package org.mongodb.acceptancetest.index;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;

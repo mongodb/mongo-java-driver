@@ -16,7 +16,7 @@
 
 package org.mongodb.command;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 
 import static org.mongodb.MongoNamespace.asNamespaceString;
 

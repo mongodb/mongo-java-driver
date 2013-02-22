@@ -17,7 +17,6 @@
 
 package org.mongodb;
 
-import org.bson.types.Document;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;

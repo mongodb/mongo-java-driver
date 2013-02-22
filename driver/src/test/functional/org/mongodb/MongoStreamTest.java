@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.types.Document;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.mongodb.serialization.CollectibleSerializer;

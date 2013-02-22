@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.types;
+package org.mongodb;
 
 import java.io.Serializable;
 import java.util.Collection;

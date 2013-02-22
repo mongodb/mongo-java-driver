@@ -17,7 +17,7 @@
 package com.mongodb;
 
 import org.bson.BSONObject;
-import org.bson.types.Document;
+import org.mongodb.Document;
 
 import java.util.List;
 import java.util.Map;

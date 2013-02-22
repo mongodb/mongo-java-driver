@@ -17,7 +17,7 @@
 package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoQuery;

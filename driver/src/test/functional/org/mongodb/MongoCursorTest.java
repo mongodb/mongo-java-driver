@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.bson.types.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

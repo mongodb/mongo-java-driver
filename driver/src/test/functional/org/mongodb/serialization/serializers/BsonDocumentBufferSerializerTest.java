@@ -18,7 +18,7 @@ package org.mongodb.serialization.serializers;
 
 import org.bson.BSONBinaryWriter;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.junit.Test;
 import org.mongodb.BsonDocumentBuffer;
 import org.mongodb.DatabaseTestCase;

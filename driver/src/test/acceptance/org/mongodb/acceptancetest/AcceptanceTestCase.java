@@ -16,7 +16,7 @@
 
 package org.mongodb.acceptancetest;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.mongodb.Fixture;

@@ -16,7 +16,7 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 
 public abstract class MongoUpdateBase extends MongoWrite {
     private final Document filter;

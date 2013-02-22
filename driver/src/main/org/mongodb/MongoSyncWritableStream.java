@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.bson.types.Document;
 import org.mongodb.result.WriteResult;
 
 public interface MongoSyncWritableStream<T> {

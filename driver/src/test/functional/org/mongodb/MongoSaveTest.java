@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.bson.types.Document;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 

@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.bson.types.Document;
 import org.junit.Test;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;

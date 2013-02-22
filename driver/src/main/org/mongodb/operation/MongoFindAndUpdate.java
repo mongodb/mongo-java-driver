@@ -16,7 +16,7 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 
 public class MongoFindAndUpdate<T> extends MongoFindAndModify {
     private Document updateOperations;

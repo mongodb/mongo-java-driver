@@ -16,7 +16,7 @@
 
 package org.mongodb.command;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.operation.MongoCommand;
 
 public class DropIndex  extends MongoCommand {

@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.bson.types.Document;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.rs.ReplicaSet;
 import org.mongodb.rs.ReplicaSetMember;

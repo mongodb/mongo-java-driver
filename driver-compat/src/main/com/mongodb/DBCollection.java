@@ -17,7 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.serializers.CollectibleDBObjectSerializer;
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.Get;
 import org.mongodb.Index;
 import org.mongodb.MongoCollection;

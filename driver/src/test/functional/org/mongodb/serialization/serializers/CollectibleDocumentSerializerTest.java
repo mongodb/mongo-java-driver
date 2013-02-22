@@ -21,7 +21,7 @@ import org.bson.BSONWriter;
 import org.bson.BinaryWriterSettings;
 import org.bson.BsonWriterSettings;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.serialization.IdGenerator;

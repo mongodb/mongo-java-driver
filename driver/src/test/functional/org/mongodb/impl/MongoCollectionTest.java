@@ -18,7 +18,7 @@ package org.mongodb.impl;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;

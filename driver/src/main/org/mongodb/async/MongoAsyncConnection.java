@@ -17,7 +17,7 @@
 
 package org.mongodb.async;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommand;

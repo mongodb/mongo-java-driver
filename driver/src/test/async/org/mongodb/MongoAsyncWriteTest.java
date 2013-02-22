@@ -17,7 +17,6 @@
 
 package org.mongodb;
 
-import org.bson.types.Document;
 import org.junit.Test;
 import org.mongodb.result.WriteResult;
 

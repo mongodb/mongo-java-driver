@@ -16,7 +16,7 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.ReadPreference;
 

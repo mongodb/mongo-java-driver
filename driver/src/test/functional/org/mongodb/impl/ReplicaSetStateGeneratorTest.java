@@ -16,7 +16,7 @@
 
 package org.mongodb.impl;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.MongoException;

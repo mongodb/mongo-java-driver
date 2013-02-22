@@ -17,7 +17,7 @@
 
 package org.mongodb.impl;
 
-import org.bson.types.Document;
+import org.mongodb.Document;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnection;
 import org.mongodb.MongoNamespace;

@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.bson.types.Document;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
