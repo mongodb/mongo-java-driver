@@ -139,7 +139,7 @@ public class DocumentSerializer implements Serializer<Document> {
         final Document document = new Document();
 
         reader.readStartDocument();
-        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
             document.put(fieldName, readValue(reader, fieldName));
         }
@@ -150,7 +150,7 @@ public class DocumentSerializer implements Serializer<Document> {
     }
 
     private Object readValue(final BSONReader reader, final String fieldName) {
-        final BSONType bsonType = reader.getCurrentBsonType();
+        final BSONType bsonType = reader.getCurrentBSONType();
         if (bsonType.equals(BSONType.DOCUMENT)) {
             return getDocumentDeserializerForField(fieldName).deserialize(reader);
         }
@@ -166,7 +166,7 @@ public class DocumentSerializer implements Serializer<Document> {
     private List<Object> readArray(final BSONReader reader) {
         reader.readStartArray();
         final List<Object> list = new ArrayList<Object>();  // TODO: figure out a way to change concrete class
-        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             list.add(readValue(reader, null));
         }
         reader.readEndArray();

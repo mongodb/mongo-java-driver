@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * A simple BsonDocumentBuffer serializer.  It does not attempt to validate the contents of the underlying ByteBuffer.
+ * A simple BSONDocumentBuffer serializer.  It does not attempt to validate the contents of the underlying ByteBuffer.
  * It assumes that it contains a single, serialized BSON document.
  * <p>
  * This should even be usable as a nested document serializer by adding an instance of it to a PrimitiveSerializers instance.
@@ -77,7 +77,7 @@ public class BSONDocumentBufferSerializer implements CollectibleSerializer<BSOND
     public Object getId(final BSONDocumentBuffer document) {
         BSONReader reader = new BSONBinaryReader(new ByteBufferInput(document.getByteBuffer()));
         reader.readStartDocument();
-        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             String name = reader.readName();
             if (name.equals("_id")) {
                 return primitiveSerializers.deserialize(reader);  // TODO: handle non-primitive identifiers

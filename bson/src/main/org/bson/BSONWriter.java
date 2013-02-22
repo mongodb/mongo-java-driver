@@ -41,7 +41,7 @@ public abstract class BSONWriter implements Closeable {
     private boolean closed;
 
     /**
-     * Initializes a new instance of the BsonWriter class.
+     * Initializes a new instance of the BSONWriter class.
      *
      * @param settings The writer settings.
      */
@@ -537,7 +537,7 @@ public abstract class BSONWriter implements Closeable {
 
     private void pipeDocument(final BSONReader reader) {
         reader.readStartDocument();
-        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             writeName(reader.readName());
             pipeValue(reader);
         }
@@ -547,14 +547,14 @@ public abstract class BSONWriter implements Closeable {
 
     private void pipeArray(final BSONReader reader) {
         writeStartArray();
-        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             pipeValue(reader);
         }
         writeEndArray();
     }
 
     private void pipeValue(final BSONReader reader) {
-        switch (reader.getCurrentBsonType()) {
+        switch (reader.getCurrentBSONType()) {
             case DOCUMENT:
                 pipe(reader);
                 break;
@@ -613,7 +613,7 @@ public abstract class BSONWriter implements Closeable {
                 writeMinKey();
                 break;
             default:
-                throw new IllegalArgumentException("unhandled BSON type: " + reader.getCurrentBsonType());
+                throw new IllegalArgumentException("unhandled BSON type: " + reader.getCurrentBSONType());
         }
     }
 

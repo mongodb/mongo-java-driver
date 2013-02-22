@@ -367,7 +367,7 @@ public class BSONBinaryWriter extends BSONWriter {
 
     private void checkPreconditions(final String methodName, final State... validStates) {
         if (isClosed()) {
-            throw new IllegalStateException("BsonBinaryWriter");
+            throw new IllegalStateException("BSONBinaryWriter");
         }
 
         if (!checkState(validStates)) {

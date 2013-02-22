@@ -38,7 +38,7 @@ public interface InputBuffer {
 
     ObjectId readObjectId();
 
-    BSONType readBsonType();
+    BSONType readBSONType();
 
     String readCString();
 

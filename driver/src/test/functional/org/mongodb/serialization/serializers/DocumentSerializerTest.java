@@ -56,7 +56,7 @@ public class DocumentSerializerTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testPrimitiveBsonTypeSerialization() throws IOException {
+    public void testPrimitiveBSONTypeSerialization() throws IOException {
         final Document doc = new Document();
         doc.put("oid", new ObjectId());
         doc.put("integer", 1);

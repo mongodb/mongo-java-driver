@@ -460,65 +460,65 @@ public class BSONBinaryWriterTest {
 
         final BSONBinaryReader reader = new BSONBinaryReader(new BSONReaderSettings(), byteBufferInput);
 
-        assertEquals(BSONType.DOCUMENT, reader.getNextBsonType());
+        assertEquals(BSONType.DOCUMENT, reader.getNextBSONType());
         reader.readStartDocument();
         {
             assertEquals("b1", reader.readName());
-            assertEquals(BSONType.BOOLEAN, reader.getNextBsonType());
+            assertEquals(BSONType.BOOLEAN, reader.getNextBSONType());
             assertEquals(true, reader.readBoolean());
 
             assertEquals("b2", reader.readName());
-            assertEquals(BSONType.BOOLEAN, reader.getNextBsonType());
+            assertEquals(BSONType.BOOLEAN, reader.getNextBSONType());
             assertEquals(false, reader.readBoolean());
 
             assertEquals("a1", reader.readName());
-            assertEquals(BSONType.ARRAY, reader.getNextBsonType());
+            assertEquals(BSONType.ARRAY, reader.getNextBSONType());
             reader.readStartArray();
             {
-                assertEquals(BSONType.STRING, reader.getNextBsonType());
+                assertEquals(BSONType.STRING, reader.getNextBSONType());
                 assertEquals("danke", reader.readString());
 
-                assertEquals(BSONType.STRING, reader.getNextBsonType());
+                assertEquals(BSONType.STRING, reader.getNextBSONType());
                 assertEquals("", reader.readString());
             }
-            assertEquals(BSONType.END_OF_DOCUMENT, reader.readBsonType());
+            assertEquals(BSONType.END_OF_DOCUMENT, reader.readBSONType());
             reader.readEndArray();
             assertEquals("d1", reader.readName());
             reader.readStartDocument();
             {
                 assertEquals("do", reader.readName());
-                assertEquals(BSONType.DOUBLE, reader.getNextBsonType());
+                assertEquals(BSONType.DOUBLE, reader.getNextBSONType());
                 assertEquals(60, reader.readDouble(), 0);
 
                 assertEquals("i32", reader.readName());
-                assertEquals(BSONType.INT32, reader.getNextBsonType());
+                assertEquals(BSONType.INT32, reader.getNextBSONType());
                 assertEquals(40, reader.readInt32());
 
                 assertEquals("i64", reader.readName());
-                assertEquals(BSONType.INT64, reader.getNextBsonType());
+                assertEquals(BSONType.INT64, reader.getNextBSONType());
                 assertEquals(Long.MAX_VALUE, reader.readInt64());
             }
-            assertEquals(BSONType.END_OF_DOCUMENT, reader.readBsonType());
+            assertEquals(BSONType.END_OF_DOCUMENT, reader.readBSONType());
             reader.readEndDocument();
 
             assertEquals("js1", reader.readName());
-            assertEquals(BSONType.JAVASCRIPT_WITH_SCOPE, reader.getNextBsonType());
+            assertEquals(BSONType.JAVASCRIPT_WITH_SCOPE, reader.getNextBSONType());
             assertEquals("print x", reader.readJavaScriptWithScope());
 
             reader.readStartDocument();
             {
                 assertEquals("x", reader.readName());
-                assertEquals(BSONType.INT32, reader.getNextBsonType());
+                assertEquals(BSONType.INT32, reader.getNextBSONType());
                 assertEquals(1, reader.readInt32());
             }
-            assertEquals(BSONType.END_OF_DOCUMENT, reader.readBsonType());
+            assertEquals(BSONType.END_OF_DOCUMENT, reader.readBSONType());
             reader.readEndDocument();
 
             assertEquals("oid1", reader.readName());
-            assertEquals(BSONType.OBJECT_ID, reader.getNextBsonType());
+            assertEquals(BSONType.OBJECT_ID, reader.getNextBSONType());
             assertEquals(oid1, reader.readObjectId());
 
-            assertEquals(BSONType.END_OF_DOCUMENT, reader.readBsonType());
+            assertEquals(BSONType.END_OF_DOCUMENT, reader.readBSONType());
             reader.readEndDocument();
 
         }

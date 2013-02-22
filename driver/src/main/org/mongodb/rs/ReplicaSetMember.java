@@ -40,8 +40,8 @@ public class ReplicaSetMember extends Node {
 
     public ReplicaSetMember(final ServerAddress serverAddress, final String setName, final float pingTime,
                             final boolean ok, final boolean isPrimary, final boolean isSecondary,
-                            final Set<Tag> tags, final int maxBsonObjectSize) {
-        super(pingTime, serverAddress, maxBsonObjectSize, ok);
+                            final Set<Tag> tags, final int maxBSONObjectSize) {
+        super(pingTime, serverAddress, maxBSONObjectSize, ok);
         this.setName = setName;
         this.isPrimary = isPrimary;
         this.isSecondary = isSecondary;
@@ -76,7 +76,7 @@ public class ReplicaSetMember extends Node {
         buf.append("isPrimary:").append(isPrimary).append(", ");
         buf.append("isSecondary:").append(isSecondary).append(", ");
         buf.append("setName:").append(setName).append(", ");
-        buf.append("maxBsonObjectSize:").append(getMaxBsonObjectSize()).append(", ");
+        buf.append("maxBSONObjectSize:").append(getMaxBSONObjectSize()).append(", ");
         if (tags != null && tags.size() > 0) {
             final List<Document> tagObjects = new ArrayList<Document>();
             for (final Tag tag : tags) {
@@ -141,7 +141,7 @@ public class ReplicaSetMember extends Node {
                 + "address=" + getServerAddress()
                 + ", pingTime=" + getPingTime()
                 + ", ok=" + isOk()
-                + ", maxBsonObjectSize=" + getMaxBsonObjectSize()
+                + ", maxBSONObjectSize=" + getMaxBSONObjectSize()
                 + "} ";
     }
 }

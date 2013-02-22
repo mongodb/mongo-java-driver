@@ -55,7 +55,7 @@ public class ReplicaSetStateGeneratorTest {
         isMasterResponse = new Document("ok", 1.0)
                 .append("ismaster", true)
                 .append("secondary", false)
-                .append("maxBsonObjectSize", 4 * 1024 * 1024)
+                .append("maxBSONObjectSize", 4 * 1024 * 1024)
                 .append("setName", "test");
         errorIsMasterResponse = new Document("ok", 0.0);
         commandResultMap = new HashMap<ServerAddress, CommandResult>();

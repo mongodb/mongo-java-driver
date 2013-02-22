@@ -49,24 +49,24 @@ public class BSONBinaryReader extends BSONReader {
     }
 
     @Override
-    public BSONType readBsonType() {
+    public BSONType readBSONType() {
         if (isClosed()) {
-            throw new IllegalStateException("BsonBinaryWriter");
+            throw new IllegalStateException("BSONBinaryWriter");
         }
 
         if (getState() == State.INITIAL || getState() == State.DONE || getState() == State.SCOPE_DOCUMENT) {
             // there is an implied type of Document for the top level and for scope documents
-            setCurrentBsonType(BSONType.DOCUMENT);
+            setCurrentBSONType(BSONType.DOCUMENT);
             setState(State.VALUE);
-            return getCurrentBsonType();
+            return getCurrentBSONType();
         }
         if (getState() != State.TYPE) {
-            throwInvalidState("ReadBsonType", State.TYPE);
+            throwInvalidState("ReadBSONType", State.TYPE);
         }
 
-        setCurrentBsonType(buffer.readBsonType());
+        setCurrentBSONType(buffer.readBSONType());
 
-        if (getCurrentBsonType() == BSONType.END_OF_DOCUMENT) {
+        if (getCurrentBSONType() == BSONType.END_OF_DOCUMENT) {
             switch (context.contextType) {
                 case ARRAY:
                     setState(State.END_OF_ARRAY);
@@ -76,7 +76,7 @@ public class BSONBinaryReader extends BSONReader {
                     setState(State.END_OF_DOCUMENT);
                     return BSONType.END_OF_DOCUMENT;
                 default:
-                    final String message = format("BsonType EndOfDocument is not valid when ContextType is %s.",
+                    final String message = format("BSONType EndOfDocument is not valid when ContextType is %s.",
                             context.contextType);
                     throw new BSONSerializationException(message);
             }
@@ -96,7 +96,7 @@ public class BSONBinaryReader extends BSONReader {
                     throw new BSONException("Unexpected ContextType.");
             }
 
-            return getCurrentBsonType();
+            return getCurrentBSONType();
         }
     }
 
@@ -260,13 +260,13 @@ public class BSONBinaryReader extends BSONReader {
     @Override
     public void readEndArray() {
         if (isClosed()) {
-            throw new IllegalStateException("BsonBinaryWriter");
+            throw new IllegalStateException("BSONBinaryWriter");
         }
         if (context.contextType != BSONContextType.ARRAY) {
             throwInvalidContextType("readEndArray", context.contextType, BSONContextType.ARRAY);
         }
         if (getState() == State.TYPE) {
-            readBsonType(); // will set state to EndOfArray if at end of array
+            readBSONType(); // will set state to EndOfArray if at end of array
         }
         if (getState() != State.END_OF_ARRAY) {
             throwInvalidState("ReadEndArray", State.END_OF_ARRAY);
@@ -279,13 +279,13 @@ public class BSONBinaryReader extends BSONReader {
     @Override
     public void readEndDocument() {
         if (isClosed()) {
-            throw new IllegalStateException("BsonBinaryWriter");
+            throw new IllegalStateException("BSONBinaryWriter");
         }
         if (context.contextType != BSONContextType.DOCUMENT && context.contextType != BSONContextType.SCOPE_DOCUMENT) {
             throwInvalidContextType("readEndDocument", context.contextType, BSONContextType.DOCUMENT, BSONContextType.SCOPE_DOCUMENT);
         }
         if (getState() == State.TYPE) {
-            readBsonType(); // will set state to EndOfDocument if at end of document
+            readBSONType(); // will set state to EndOfDocument if at end of document
         }
         if (getState() != State.END_OF_DOCUMENT) {
             throwInvalidState("readEndDocument", State.END_OF_DOCUMENT);
@@ -316,7 +316,7 @@ public class BSONBinaryReader extends BSONReader {
     @Override
     public void skipName() {
         if (isClosed()) {
-            throw new IllegalStateException("BsonBinaryWriter");
+            throw new IllegalStateException("BSONBinaryWriter");
         }
         if (getState() != State.NAME) {
             throwInvalidState("skipName", State.NAME);
@@ -328,14 +328,14 @@ public class BSONBinaryReader extends BSONReader {
     @Override
     public void skipValue() {
         if (isClosed()) {
-            throw new IllegalStateException("BsonBinaryWriter");
+            throw new IllegalStateException("BSONBinaryWriter");
         }
         if (getState() != State.VALUE) {
             throwInvalidState("skipValue", State.VALUE);
         }
 
         int skip;
-        switch (getCurrentBsonType()) {
+        switch (getCurrentBSONType()) {
             case ARRAY:
                 skip = readSize() - 4;
                 break;
@@ -392,7 +392,7 @@ public class BSONBinaryReader extends BSONReader {
                 break;
             case UNDEFINED: skip = 0;
                 break;
-            default: throw new BSONException("Unexpected BSON type: " + getCurrentBsonType());
+            default: throw new BSONException("Unexpected BSON type: " + getCurrentBSONType());
         }
         buffer.skip(skip);
 
@@ -401,10 +401,10 @@ public class BSONBinaryReader extends BSONReader {
 
     private void checkPreconditions(final String methodName, final BSONType type) {
         if (isClosed()) {
-            throw new IllegalStateException("BsonBinaryWriter");
+            throw new IllegalStateException("BSONBinaryWriter");
         }
 
-        verifyBsonType(methodName, type);
+        verifyBSONType(methodName, type);
     }
 
     private State getNextState() {

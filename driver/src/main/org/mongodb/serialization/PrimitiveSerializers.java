@@ -75,7 +75,7 @@ public final class PrimitiveSerializers implements Serializer<Object> {
 
     @Override
     public Object deserialize(final BSONReader reader) {
-        final BSONType bsonType = reader.getCurrentBsonType();
+        final BSONType bsonType = reader.getCurrentBSONType();
         final Serializer serializer = bsonTypeSerializerMap.get(bsonType);
         if (serializer == null) {
             throw new MongoException("Unable to find deserializer for BSON type " + bsonType);

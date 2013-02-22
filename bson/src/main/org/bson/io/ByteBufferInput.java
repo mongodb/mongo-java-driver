@@ -84,7 +84,7 @@ public class ByteBufferInput implements InputBuffer {
     }
 
     @Override
-    public BSONType readBsonType() {
+    public BSONType readBSONType() {
         return BSONType.findByValue(buffer.get());
     }
 
