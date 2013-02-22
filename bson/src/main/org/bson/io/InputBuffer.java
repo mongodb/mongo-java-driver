@@ -19,6 +19,8 @@ package org.bson.io;
 import org.bson.BSONType;
 import org.bson.types.ObjectId;
 
+// TODO: fix asymmetry where this is an interface and OutputBuffer is a class.
+// Can this be an abstract class that extends InputStream?
 public interface InputBuffer {
     int getPosition();
 

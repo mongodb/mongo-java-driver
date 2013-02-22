@@ -18,8 +18,8 @@ package org.mongodb;
 
 import org.bson.BSONBinaryReader;
 import org.bson.BSONBinaryWriter;
+import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.io.ByteBufferInputBuffer;
 import org.mongodb.serialization.Serializer;
 
 import java.nio.ByteBuffer;
@@ -76,6 +76,6 @@ public class BSONDocumentBuffer {
      * @return the deserialized document
      */
     public <T> T deserialize(final Serializer<T> serializer) {
-        return serializer.deserialize(new BSONBinaryReader(new ByteBufferInputBuffer(getByteBuffer())));
+        return serializer.deserialize(new BSONBinaryReader(new BasicInputBuffer(getByteBuffer())));
     }
 }

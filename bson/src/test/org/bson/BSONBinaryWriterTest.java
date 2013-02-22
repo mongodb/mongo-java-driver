@@ -16,8 +16,8 @@
 
 package org.bson;
 
+import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.io.ByteBufferInputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
@@ -456,9 +456,9 @@ public class BSONBinaryWriterTest {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         buffer.pipe(baos);
 
-        final ByteBufferInputBuffer byteBufferInputBuffer = new ByteBufferInputBuffer(ByteBuffer.wrap(baos.toByteArray()));
+        final BasicInputBuffer basicInputBuffer = new BasicInputBuffer(ByteBuffer.wrap(baos.toByteArray()));
 
-        final BSONBinaryReader reader = new BSONBinaryReader(new BSONReaderSettings(), byteBufferInputBuffer);
+        final BSONBinaryReader reader = new BSONBinaryReader(new BSONReaderSettings(), basicInputBuffer);
 
         assertEquals(BSONType.DOCUMENT, reader.getNextBSONType());
         reader.readStartDocument();
@@ -534,7 +534,7 @@ public class BSONBinaryWriterTest {
         byte[] bytes = writer.getBuffer().toByteArray();
 
         BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer());
-        newWriter.pipe(new BSONBinaryReader(new ByteBufferInputBuffer(ByteBuffer.wrap(bytes))));
+        newWriter.pipe(new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(bytes))));
         assertArrayEquals(bytes, newWriter.getBuffer().toByteArray());
     }
 }

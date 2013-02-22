@@ -16,7 +16,7 @@
 
 package org.mongodb.io;
 
-import org.bson.io.ByteBufferInputBuffer;
+import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
 import org.mongodb.Document;
 import org.mongodb.MongoCursorNotFoundException;
@@ -83,7 +83,7 @@ public class MongoChannel {
         try {
             headerByteBuffer = pool.get(REPLY_HEADER_LENGTH);
             fillAndFlipBuffer(headerByteBuffer);
-            final InputBuffer headerInputBuffer = new ByteBufferInputBuffer(headerByteBuffer);
+            final InputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
 
             final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
 
@@ -93,7 +93,7 @@ public class MongoChannel {
                 bodyByteBuffer = pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
                 fillAndFlipBuffer(bodyByteBuffer);
 
-                bodyInputBuffer = new ByteBufferInputBuffer(bodyByteBuffer);
+                bodyInputBuffer = new BasicInputBuffer(bodyByteBuffer);
             }
 
             if (replyHeader.isCursorNotFound()) {
