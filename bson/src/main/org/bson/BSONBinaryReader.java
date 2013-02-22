@@ -249,7 +249,8 @@ public class BSONBinaryReader extends BSONReader {
     public void readStartDocument() {
         checkPreconditions("readStartDocument", BSONType.DOCUMENT);
 
-        final BSONContextType contextType = (getState() == State.SCOPE_DOCUMENT) ? BSONContextType.SCOPE_DOCUMENT : BSONContextType.DOCUMENT;
+        final BSONContextType contextType = (getState() == State.SCOPE_DOCUMENT)
+                                            ? BSONContextType.SCOPE_DOCUMENT : BSONContextType.DOCUMENT;
         final int startPosition = buffer.getPosition(); // position of size field
         final int size = readSize();
         context = new Context(context, contextType, startPosition, size);

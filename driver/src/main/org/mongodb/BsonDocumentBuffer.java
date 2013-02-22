@@ -33,8 +33,8 @@ public class BSONDocumentBuffer {
     private final byte[] bytes;
 
     /**
-     * Constructs a new instance with the given byte array.  Note that it does not make a copy
-     * of the array, so do not modify it after passing it to this constructor.
+     * Constructs a new instance with the given byte array.  Note that it does not make a copy of the array, so do not
+     * modify it after passing it to this constructor.
      *
      * @param bytes the bytes representing a BSON document.
      */
@@ -48,7 +48,7 @@ public class BSONDocumentBuffer {
     /**
      * Construct a new instance from the given document and serializer for the document type.
      *
-     * @param document the document to transform
+     * @param document   the document to transform
      * @param serializer the serializer to facilitate the transformation
      */
     public <T> BSONDocumentBuffer(final T document, final Serializer<T> serializer) {
@@ -58,8 +58,8 @@ public class BSONDocumentBuffer {
     }
 
     /**
-     * Returns a ByteBuffer that wraps the byte array, withe the proper byte order.  Any changes
-     * made to this ByteBuffer will be reflected in the underlying byte array owned by this instance.
+     * Returns a ByteBuffer that wraps the byte array, withe the proper byte order.  Any changes made to this ByteBuffer
+     * will be reflected in the underlying byte array owned by this instance.
      *
      * @return a byte buffer that wraps the byte array owned by this instance.
      */

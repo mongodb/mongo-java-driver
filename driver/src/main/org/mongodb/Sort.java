@@ -16,9 +16,9 @@
 
 package org.mongodb;
 
-import org.bson.types.Document;
-
-public class Sort {
+public final class Sort {
+    private Sort() {
+    }
 
     public static Document sortDescending(final String field) {
         return new Document(field, -1);

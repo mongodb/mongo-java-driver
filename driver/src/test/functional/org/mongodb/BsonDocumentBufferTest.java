@@ -34,7 +34,6 @@ public class BSONDocumentBufferTest {
         BSONDocumentBuffer buffer = new BSONDocumentBuffer(document, documentSerializer);
 
         assertNotNull(buffer.getByteBuffer());
-
         assertEquals(document, buffer.deserialize(documentSerializer));
     }
 }

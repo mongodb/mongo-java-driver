@@ -119,5 +119,4 @@ public enum BSONType {
     public static BSONType findByValue(final int value) {
         return LOOKUP_TABLE[value];
     }
-
 }
