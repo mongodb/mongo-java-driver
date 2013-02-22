@@ -16,8 +16,6 @@
 
 package org.bson.types;
 
-import org.mongodb.annotations.Immutable;
-
 import java.net.NetworkInterface;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -41,9 +39,10 @@ import java.util.logging.Logger;
  * </tr>
  * </table>
  *
+ * Instances of this class are immutable.
+ *
  * @mongodb.driver.manual core/object-id
  */
-@Immutable
 public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
 
     private static final long serialVersionUID = 3670079982654483072L;

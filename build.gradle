@@ -232,15 +232,7 @@ configure(subprojects.findAll { it.name in ['driver-compat', 'morphia'] }) {
 // Project specific behavior            //
 //////////////////////////////////////////
 
-project(':common') {
-
-}
-
 project(':bson') {
-
-    dependencies {
-        compile project(':common')
-    }
 
     jar {
         manifest {
@@ -290,7 +282,6 @@ project(':driver') {
     }
 
     dependencies {
-        compile project(':common')
         compile project(':bson')
         unitCompile 'junit:junit:4.11'
         unitCompile sourceSets.main.runtimeClasspath
@@ -313,7 +304,6 @@ project(':driver') {
     }
 
     jar {
-        from project(':common').sourceSets.main.output
         from project(':bson').sourceSets.main.output
         manifest {
             attributes(
@@ -348,12 +338,10 @@ project(':driver') {
     }
 
     sourcesJar {
-        from project(':common').sourceSets.main.allSource
         from project(':bson').sourceSets.main.allSource
     }
 
     javadoc {
-        source project(':common').sourceSets.main.allJava
         source project(':bson').sourceSets.main.allJava
     }
 
@@ -385,7 +373,6 @@ project(':driver-compat') {
     }
 
     jar {
-        from project(':common').sourceSets.main.output
         from project(':bson').sourceSets.main.output
         from project(':driver').sourceSets.main.output
         manifest {
@@ -399,13 +386,11 @@ project(':driver-compat') {
     }
 
     sourcesJar {
-        from project(':common').sourceSets.main.allSource
         from project(':bson').sourceSets.main.allSource
         from project(':driver').sourceSets.main.allSource
     }
 
     javadoc {
-        source project(':common').sourceSets.main.allJava
         source project(':bson').sourceSets.main.allJava
         source project(':driver').sourceSets.main.allJava
     }
