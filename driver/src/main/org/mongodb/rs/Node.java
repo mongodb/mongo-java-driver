@@ -25,12 +25,12 @@ public class Node {
     private final ServerAddress address;
     private final float pingTime;
     private final boolean ok;
-    private final int maxBsonObjectSize;
+    private final int maxBSONObjectSize;
 
-    Node(final float pingTime, final ServerAddress addr, final int maxBsonObjectSize, final boolean ok) {
+    Node(final float pingTime, final ServerAddress addr, final int maxBSONObjectSize, final boolean ok) {
         this.pingTime = pingTime;
         this.address = addr;
-        this.maxBsonObjectSize = maxBsonObjectSize;
+        this.maxBSONObjectSize = maxBSONObjectSize;
         this.ok = ok;
     }
 
@@ -38,8 +38,8 @@ public class Node {
         return ok;
     }
 
-    public int getMaxBsonObjectSize() {
-        return maxBsonObjectSize;
+    public int getMaxBSONObjectSize() {
+        return maxBSONObjectSize;
     }
 
     public ServerAddress getServerAddress() {
@@ -65,7 +65,7 @@ public class Node {
 
         final Node node = (Node) o;
 
-        if (getMaxBsonObjectSize() != node.getMaxBsonObjectSize()) {
+        if (getMaxBSONObjectSize() != node.getMaxBSONObjectSize()) {
             return false;
         }
         if (isOk() != node.isOk()) {
@@ -86,7 +86,7 @@ public class Node {
         int result = getAddress().hashCode();
         result = 31 * result + (getPingTime() != +0.0f ? Float.floatToIntBits(getPingTime()) : 0);
         result = 31 * result + (isOk() ? 1 : 0);
-        result = 31 * result + getMaxBsonObjectSize();
+        result = 31 * result + getMaxBSONObjectSize();
         return result;
     }
 
@@ -96,7 +96,7 @@ public class Node {
         buf.append("address:'").append(getAddress()).append("', ");
         buf.append("ok:").append(isOk()).append(", ");
         buf.append("ping:").append(getPingTime()).append(", ");
-        buf.append("maxBsonObjectSize:").append(getMaxBsonObjectSize()).append(", ");
+        buf.append("maxBSONObjectSize:").append(getMaxBSONObjectSize()).append(", ");
         buf.append("}");
 
         return buf.toString();
@@ -108,8 +108,8 @@ public class Node {
                 + "address=" + address
                 + ", pingTime=" + pingTime
                 + ", ok=" + ok
-                + ", maxBsonObjectSize="
-                + maxBsonObjectSize
+                + ", maxBSONObjectSize="
+                + maxBSONObjectSize
                 + '}';
     }
 }

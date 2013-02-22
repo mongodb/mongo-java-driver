@@ -87,9 +87,9 @@ public class ReplicaSet {
         return primary;
     }
 
-    //    public int getMaxBsonObjectSize() {
+    //    public int getMaxBSONObjectSize() {
     //        if (hasMaster()) {
-    //            return getMaster().getMaxBsonObjectSize();
+    //            return getMaster().getMaxBSONObjectSize();
     //        } else {
     //            return Bytes.MAX_OBJECT_SIZE;
     //        }

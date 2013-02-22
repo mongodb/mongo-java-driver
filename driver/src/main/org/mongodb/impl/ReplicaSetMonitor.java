@@ -251,7 +251,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
                 channelState.mostRecentState = new ReplicaSetMember(
                         channelState.executor.getServerAddress(), res.getSetName(),
                         normalizedPingTimeMilliseconds, res.isOk(), res.isMaster(),
-                        res.isSecondary(), tags, res.getMaxBsonObjectSize());
+                        res.isSecondary(), tags, res.getMaxBSONObjectSize());
             } catch (Exception e) {
                 channelState.mostRecentState = new ReplicaSetMember(channelState.executor.getServerAddress());
                 if (logger.isLoggable(Level.FINE)) {

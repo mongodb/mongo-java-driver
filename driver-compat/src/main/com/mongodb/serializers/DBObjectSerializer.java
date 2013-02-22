@@ -180,7 +180,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         final DBObject document = getNewInstance(path);
 
         reader.readStartDocument();
-        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
             document.put(fieldName, readValue(reader, fieldName, path));
         }
@@ -235,7 +235,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
         final DBObject document = getNewInstance(path);
 
         reader.readStartDocument();
-        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
             document.put(fieldName, readValue(reader, fieldName, path));
         }
@@ -252,7 +252,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
 
     private Object readValue(final BSONReader reader, final String fieldName,
                              final List<String> path) {
-        final BSONType bsonType = reader.getCurrentBsonType();
+        final BSONType bsonType = reader.getCurrentBSONType();
         final Object initialRetVal;
         if (bsonType.equals(BSONType.DOCUMENT)) {
             path.add(fieldName);
@@ -274,7 +274,7 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     private List readArray(final BSONReader reader, final List<String> path) {
         reader.readStartArray();
         final BasicDBList list = new BasicDBList();
-        while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             list.add(readValue(reader, null, path));   // TODO: why is this a warning?
         }
         reader.readEndArray();
