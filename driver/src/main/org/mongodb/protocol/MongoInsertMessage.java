@@ -16,13 +16,14 @@
 
 package org.mongodb.protocol;
 
-import org.bson.io.OutputBuffer;
 import org.mongodb.WriteConcern;
+import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.serialization.Serializer;
 
 public class MongoInsertMessage<T> extends MongoRequestMessage {
-    public MongoInsertMessage(final String collectionName, final MongoInsert<T> insert, final OutputBuffer buffer,
+    public MongoInsertMessage(final String collectionName, final MongoInsert<T> insert,
+                              final ChannelAwareOutputBuffer buffer,
                               final Serializer<T> serializer) {
         super(collectionName, OpCode.OP_INSERT, buffer);
         writeInsertPrologue(insert.getWriteConcern());

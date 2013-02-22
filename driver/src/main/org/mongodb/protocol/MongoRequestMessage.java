@@ -17,10 +17,10 @@
 package org.mongodb.protocol;
 
 import org.bson.BSONBinaryWriter;
-import org.bson.io.OutputBuffer;
-import org.bson.io.async.AsyncCompletionHandler;
-import org.bson.io.async.AsyncWritableByteChannel;
+import org.mongodb.io.async.AsyncCompletionHandler;
+import org.mongodb.io.async.AsyncWritableByteChannel;
 import org.mongodb.ReadPreference;
+import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.serialization.Serializer;
 
 import java.io.IOException;
@@ -35,27 +35,28 @@ public class MongoRequestMessage {
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
     private final String collectionName;
-    private volatile OutputBuffer buffer;
+    private volatile ChannelAwareOutputBuffer buffer;
     private final int id;
     private final OpCode opCode;
     private volatile int numDocuments; // only one thread will modify this field, so volatile is sufficient synchronization
     private final int messageStartPosition;
 
-    MongoRequestMessage(final OpCode opCode, final OutputBuffer buffer) {
+    MongoRequestMessage(final OpCode opCode, final ChannelAwareOutputBuffer buffer) {
         this(null, opCode, buffer);
     }
 
-    MongoRequestMessage(final String collectionName, final OpCode opCode, final OutputBuffer buffer) {
+    MongoRequestMessage(final String collectionName, final OpCode opCode, final ChannelAwareOutputBuffer buffer) {
         this(collectionName, opCode, -1, null, buffer);
     }
 
     MongoRequestMessage(final String collectionName, final int options, final ReadPreference readPref,
-                        final OutputBuffer buffer) {
+                        final ChannelAwareOutputBuffer buffer) {
         this(collectionName, OpCode.OP_QUERY, options, readPref, buffer);
     }
 
     MongoRequestMessage(final String collectionName, final OpCode opCode,
-                        final int options, final ReadPreference readPreference, final OutputBuffer buffer) {
+                        final int options, final ReadPreference readPreference,
+                        final ChannelAwareOutputBuffer buffer) {
         this.collectionName = collectionName;
 
         this.buffer = buffer;
@@ -139,7 +140,7 @@ public class MongoRequestMessage {
         buffer = null;
     }
 
-    protected OutputBuffer getBuffer() {
+    protected ChannelAwareOutputBuffer getBuffer() {
         return buffer;
     }
 

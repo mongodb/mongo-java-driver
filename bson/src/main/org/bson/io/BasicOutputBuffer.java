@@ -18,13 +18,8 @@
 
 package org.bson.io;
 
-import org.bson.io.async.AsyncCompletionHandler;
-import org.bson.io.async.AsyncWritableByteChannel;
-
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 
 public class BasicOutputBuffer extends OutputBuffer {
 
@@ -78,41 +73,6 @@ public class BasicOutputBuffer extends OutputBuffer {
     @Override
     public void pipe(final OutputStream out) throws IOException {
         out.write(buffer, 0, size);
-    }
-
-    @Override
-    public void pipeAndClose(final SocketChannel socketChannel) throws IOException {
-        try {
-            ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, size);
-            for (long bytesRead = 0; bytesRead < size();/*bytesRead incremented elsewhere*/) {
-                bytesRead += socketChannel.write(byteBuffer);
-            }
-        } finally {
-            close();
-        }
-    }
-
-    @Override
-    public void pipeAndClose(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {
-        final ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, size);
-        channel.write(byteBuffer, new AsyncCompletionHandler() {
-            @Override
-            public void completed(final int bytesWritten) {
-                if (byteBuffer.hasRemaining()) {
-                    channel.write(byteBuffer, this);
-                }
-                else {
-                    close();
-                    handler.completed(byteBuffer.limit());
-                }
-            }
-
-            @Override
-            public void failed(final Throwable t) {
-                close();
-                handler.failed(t);
-            }
-        });
     }
 
     private void ensure(final int more) {

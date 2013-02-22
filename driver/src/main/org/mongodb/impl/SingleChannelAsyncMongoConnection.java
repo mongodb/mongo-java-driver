@@ -27,7 +27,7 @@ import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.io.PooledByteBufferOutput;
+import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.async.MongoAsynchronousChannel;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommand;
@@ -247,7 +247,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
 
     @Override
     public void killCursors(final MongoKillCursor killCursor) {
-        final MongoKillCursorsMessage message = new MongoKillCursorsMessage(new PooledByteBufferOutput(bufferPool),
+        final MongoKillCursorsMessage message = new MongoKillCursorsMessage(new PooledByteBufferOutputBuffer(bufferPool),
                 killCursor);
         channel.sendMessage(message);
     }
@@ -267,7 +267,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
                              final SingleResultCallback<CommandResult> callback) {
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
         final MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", commandOperation,
-                new PooledByteBufferOutput(bufferPool),
+                new PooledByteBufferOutputBuffer(bufferPool),
                 withDocumentSerializer(serializer));
         channel.sendQueryMessage(message, serializer, new MongoReplyMessageCommandResultCallback(callback, commandOperation,
                 SingleChannelAsyncMongoConnection.this));
@@ -288,7 +288,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
     public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Serializer<Document> querySerializer,
                                final Serializer<T> resultSerializer, final SingleResultCallback<QueryResult<T>> callback) {
         final MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find,
-                new PooledByteBufferOutput(bufferPool),
+                new PooledByteBufferOutputBuffer(bufferPool),
                 withDocumentSerializer(querySerializer));
         channel.sendQueryMessage(message, resultSerializer,
                 new MongoReplyMessageQueryResultCallback<T>(callback, SingleChannelAsyncMongoConnection.this));
@@ -308,7 +308,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
     public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> resultSerializer,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
-                new PooledByteBufferOutput(bufferPool));
+                new PooledByteBufferOutputBuffer(bufferPool));
         channel.sendGetMoreMessage(message, resultSerializer,
                 new MongoReplyMessageGetMoreResultCallback<T>(callback, SingleChannelAsyncMongoConnection.this));
     }
@@ -328,7 +328,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
                                 final SingleResultCallback<WriteResult> callback) {
         insert.writeConcernIfAbsent(options.getWriteConcern());
         final MongoInsertMessage<T> message = new MongoInsertMessage<T>(namespace.getFullName(), insert,
-                new PooledByteBufferOutput(bufferPool), serializer);
+                new PooledByteBufferOutputBuffer(bufferPool), serializer);
         sendAsyncWriteMessage(namespace, insert, withDocumentSerializer(null), callback, message);
     }
 
@@ -347,7 +347,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
                             final SingleResultCallback<WriteResult> callback) {
         replace.writeConcernIfAbsent(options.getWriteConcern());
         final MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), replace,
-                new PooledByteBufferOutput(bufferPool), withDocumentSerializer(serializer));
+                new PooledByteBufferOutputBuffer(bufferPool), withDocumentSerializer(serializer));
         sendAsyncWriteMessage(namespace, replace, serializer, callback, message);
     }
 
@@ -367,7 +367,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
                                  final SingleResultCallback<WriteResult> callback) {
         replace.writeConcernIfAbsent(options.getWriteConcern());
         final MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), replace,
-                new PooledByteBufferOutput(bufferPool), withDocumentSerializer(querySerializer), serializer);
+                new PooledByteBufferOutputBuffer(bufferPool), withDocumentSerializer(querySerializer), serializer);
         sendAsyncWriteMessage(namespace, replace, querySerializer, callback, message);
     }
 
@@ -386,7 +386,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
                             final SingleResultCallback<WriteResult> callback) {
         remove.writeConcernIfAbsent(options.getWriteConcern());
         final MongoDeleteMessage message = new MongoDeleteMessage(namespace.getFullName(), remove,
-                new PooledByteBufferOutput(bufferPool),
+                new PooledByteBufferOutputBuffer(bufferPool),
                 withDocumentSerializer(querySerializer));
         sendAsyncWriteMessage(namespace, remove, querySerializer, callback, message);
     }
@@ -396,7 +396,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
         if (write.getWriteConcern().callGetLastError()) {
             final GetLastError getLastError = new GetLastError(write.getWriteConcern());
             final MongoQueryMessage writeConcernMessage = new MongoQueryMessage(namespace.getDatabaseName() + ".$cmd",
-                    getLastError, new PooledByteBufferOutput(bufferPool),
+                    getLastError, new PooledByteBufferOutputBuffer(bufferPool),
                     withDocumentSerializer(serializer));
             channel.sendMessage(message, writeConcernMessage, serializer,
                     new MongoReplyMessageWriteResultCallback(callback, write, getLastError, SingleChannelAsyncMongoConnection.this));

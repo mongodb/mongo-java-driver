@@ -16,9 +16,8 @@
 
 package org.mongodb.io;
 
-import org.bson.io.OutputBuffer;
-import org.bson.io.async.AsyncCompletionHandler;
-import org.bson.io.async.AsyncWritableByteChannel;
+import org.mongodb.io.async.AsyncCompletionHandler;
+import org.mongodb.io.async.AsyncWritableByteChannel;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class PooledByteBufferOutput extends OutputBuffer {
+public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
 
     public static final int INITIAL_BUFFER_SIZE = 1024;
     private final BufferPool<ByteBuffer> pool;
@@ -36,7 +35,7 @@ public class PooledByteBufferOutput extends OutputBuffer {
     private int curBufferIndex = 0;
     private int position = 0;
 
-    public PooledByteBufferOutput(final BufferPool<ByteBuffer> pool) {
+    public PooledByteBufferOutputBuffer(final BufferPool<ByteBuffer> pool) {
         if (pool == null) {
             throw new IllegalArgumentException("pool can not be null");
         }

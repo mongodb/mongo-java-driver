@@ -16,15 +16,16 @@
 
 package org.mongodb.protocol;
 
-import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
+import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.serialization.Serializer;
 
 import java.util.Collection;
 
 public class MongoDeleteMessage extends MongoRequestMessage {
-    public MongoDeleteMessage(final String collectionName, final MongoRemove remove, final OutputBuffer buffer,
+    public MongoDeleteMessage(final String collectionName, final MongoRemove remove,
+                              final ChannelAwareOutputBuffer buffer,
                               final Serializer<Document> serializer) {
         super(collectionName, OpCode.OP_DELETE, buffer);
         writeDelete(remove, serializer);

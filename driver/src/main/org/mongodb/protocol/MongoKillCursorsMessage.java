@@ -16,12 +16,12 @@
 
 package org.mongodb.protocol;
 
-import org.bson.io.OutputBuffer;
+import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.result.ServerCursor;
 
 public class MongoKillCursorsMessage extends MongoRequestMessage {
-    public MongoKillCursorsMessage(final OutputBuffer buffer, final MongoKillCursor killCursor) {
+    public MongoKillCursorsMessage(final ChannelAwareOutputBuffer buffer, final MongoKillCursor killCursor) {
         super(OpCode.OP_KILL_CURSORS, buffer);
         writeKillCursorsPrologue(killCursor.getServerCursors().size());
         for (final ServerCursor curServerCursor : killCursor.getServerCursors()) {

@@ -21,11 +21,11 @@ import org.bson.BSONBinaryWriter;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
-import org.bson.io.ByteBufferInput;
+import org.bson.io.ByteBufferInputBuffer;
 import org.mongodb.BSONDocumentBuffer;
 import org.mongodb.MongoInternalException;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.PooledByteBufferOutput;
+import org.mongodb.io.PooledByteBufferOutputBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -49,13 +49,13 @@ public class BSONDocumentBufferSerializer implements CollectibleSerializer<BSOND
 
     @Override
     public void serialize(final BSONWriter bsonWriter, final BSONDocumentBuffer value) {
-        bsonWriter.pipe(new BSONBinaryReader(new ByteBufferInput(value.getByteBuffer())));
+        bsonWriter.pipe(new BSONBinaryReader(new ByteBufferInputBuffer(value.getByteBuffer())));
     }
 
     @Override
     public BSONDocumentBuffer deserialize(final BSONReader reader) {
         try {
-            BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutput(bufferPool));
+            BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferPool));
             binaryWriter.pipe(reader);
             final BufferExposingByteArrayOutputStream byteArrayOutputStream =
                     new BufferExposingByteArrayOutputStream(binaryWriter.getBuffer().size());
@@ -75,7 +75,7 @@ public class BSONDocumentBufferSerializer implements CollectibleSerializer<BSOND
 
     @Override
     public Object getId(final BSONDocumentBuffer document) {
-        BSONReader reader = new BSONBinaryReader(new ByteBufferInput(document.getByteBuffer()));
+        BSONReader reader = new BSONBinaryReader(new ByteBufferInputBuffer(document.getByteBuffer()));
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             String name = reader.readName();

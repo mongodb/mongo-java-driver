@@ -15,7 +15,7 @@
  *
  */
 
-package org.bson.io.async;
+package org.mongodb.io.async;
 
 /**
  * Completion handler for asynchronous I/O

@@ -17,10 +17,10 @@
 
 package org.mongodb.io.async;
 
-import org.bson.io.ByteBufferInput;
+import org.bson.io.ByteBufferInputBuffer;
 import org.bson.io.InputBuffer;
-import org.bson.io.async.AsyncCompletionHandler;
-import org.bson.io.async.AsyncWritableByteChannel;
+import org.mongodb.io.async.AsyncCompletionHandler;
+import org.mongodb.io.async.AsyncWritableByteChannel;
 import org.mongodb.Document;
 import org.mongodb.io.BufferPool;
 import org.mongodb.MongoCursorNotFoundException;
@@ -181,7 +181,7 @@ public class MongoAsynchronousChannel {
     private class AsyncWritableByteChannelAdapter implements AsyncWritableByteChannel {
 
         @Override
-        public void write(final ByteBuffer src, final org.bson.io.async.AsyncCompletionHandler handler) {
+        public void write(final ByteBuffer src, final AsyncCompletionHandler handler) {
             ensureOpen();
             asynchronousSocketChannel.write(src, null, new CompletionHandler<Integer, Object>() {
                 @Override
@@ -243,7 +243,7 @@ public class MongoAsynchronousChannel {
                 callback.onResult(null, e);
             }
 
-            final InputBuffer headerInputBuffer = new ByteBufferInput(result);
+            final InputBuffer headerInputBuffer = new ByteBufferInputBuffer(result);
 
             final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
 
@@ -274,7 +274,7 @@ public class MongoAsynchronousChannel {
                 if (e != null) {
                     callback.onResult(null, e);
                 }
-                InputBuffer bodyInputBuffer = new ByteBufferInput(result);
+                InputBuffer bodyInputBuffer = new ByteBufferInputBuffer(result);
                 if (replyHeader.isQueryFailure()) {
                     final Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,
                             errorSerializer, System.nanoTime() - start).getDocuments().get(0);

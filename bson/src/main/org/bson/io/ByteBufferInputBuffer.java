@@ -23,12 +23,12 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
-public class ByteBufferInput implements InputBuffer {
+public class ByteBufferInputBuffer implements InputBuffer {
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
     private final ByteBuffer buffer;
 
-    public ByteBufferInput(final ByteBuffer buffer) {
+    public ByteBufferInputBuffer(final ByteBuffer buffer) {
         this.buffer = buffer;
         buffer.order(ByteOrder.LITTLE_ENDIAN);
     }

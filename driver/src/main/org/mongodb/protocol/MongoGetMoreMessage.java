@@ -16,13 +16,13 @@
 
 package org.mongodb.protocol;
 
-import org.bson.io.OutputBuffer;
+import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.GetMore;
 
 public class MongoGetMoreMessage extends MongoRequestMessage {
     private final long cursorId;
 
-    public MongoGetMoreMessage(final String collectionName, final GetMore getMore, final OutputBuffer buffer) {
+    public MongoGetMoreMessage(final String collectionName, final GetMore getMore, final ChannelAwareOutputBuffer buffer) {
         super(collectionName, OpCode.OP_GETMORE, buffer);
         cursorId = getMore.getServerCursor().getId();
         writeGetMore(getMore);

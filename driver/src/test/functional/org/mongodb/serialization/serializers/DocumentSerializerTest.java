@@ -23,7 +23,7 @@ import org.bson.BSONReaderSettings;
 import org.bson.BSONWriter;
 import org.bson.BSONWriterSettings;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.io.ByteBufferInput;
+import org.bson.io.ByteBufferInputBuffer;
 import org.bson.io.InputBuffer;
 import org.bson.types.Binary;
 import org.mongodb.Document;
@@ -118,7 +118,7 @@ public class DocumentSerializerTest extends DatabaseTestCase {
     private InputBuffer createInputBuffer() throws IOException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         buffer.pipe(baos);
-        return new ByteBufferInput(ByteBuffer.wrap(baos.toByteArray()));
+        return new ByteBufferInputBuffer(ByteBuffer.wrap(baos.toByteArray()));
     }
 
 }

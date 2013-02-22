@@ -16,15 +16,16 @@
 
 package org.mongodb.protocol;
 
-import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
+import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoUpdateBase;
 import org.mongodb.serialization.Serializer;
 
 public class MongoUpdateMessage extends MongoRequestMessage {
-    public MongoUpdateMessage(final String collectionName, final MongoUpdate update, final OutputBuffer buffer,
+    public MongoUpdateMessage(final String collectionName, final MongoUpdate update,
+                              final ChannelAwareOutputBuffer buffer,
                               final Serializer<Document> serializer) {
         super(collectionName, OpCode.OP_UPDATE, buffer);
         writeBaseUpdate(update, serializer);
@@ -33,7 +34,7 @@ public class MongoUpdateMessage extends MongoRequestMessage {
     }
 
     public <T> MongoUpdateMessage(final String collectionName, final MongoReplace<T> replace,
-                              final OutputBuffer buffer,
+                              final ChannelAwareOutputBuffer buffer,
                               final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
         super(collectionName, OpCode.OP_UPDATE, buffer);
         writeBaseUpdate(replace, baseSerializer);

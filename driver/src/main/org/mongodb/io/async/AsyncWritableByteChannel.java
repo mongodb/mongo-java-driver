@@ -15,7 +15,7 @@
  *
  */
 
-package org.bson.io.async;
+package org.mongodb.io.async;
 
 import java.nio.ByteBuffer;
 

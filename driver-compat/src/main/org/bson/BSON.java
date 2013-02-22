@@ -20,7 +20,7 @@ import com.mongodb.DBObject;
 import com.mongodb.MongoInternalException;
 import com.mongodb.serializers.DBObjectSerializer;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.io.ByteBufferInput;
+import org.bson.io.ByteBufferInputBuffer;
 import org.bson.io.InputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.util.ClassMap;
@@ -222,7 +222,7 @@ public class BSON {
      * @return the document as a DBObject
      */
     public static DBObject decode(final byte[] bytes) {
-        final InputBuffer buffer = new ByteBufferInput(ByteBuffer.wrap(bytes));
+        final InputBuffer buffer = new ByteBufferInputBuffer(ByteBuffer.wrap(bytes));
         return new DBObjectSerializer(PrimitiveSerializers.createDefault()).deserialize(new BSONBinaryReader(buffer));
     }
 
