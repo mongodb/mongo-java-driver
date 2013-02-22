@@ -17,7 +17,6 @@
 package org.mongodb.acceptancetest.crud;
 
 import org.bson.BSONReader;
-import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
@@ -26,7 +25,6 @@ import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
-import org.mongodb.Sort;
 import org.mongodb.acceptancetest.AcceptanceTestCase;
 import org.mongodb.serialization.CollectibleSerializer;
 
