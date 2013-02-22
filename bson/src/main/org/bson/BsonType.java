@@ -99,7 +99,6 @@ public enum BSONType {
     MAX_KEY(0x7f);
 
     private static final BSONType[] LOOKUP_TABLE = new BSONType[MIN_KEY.getValue() + 1];
-
     private final int value;
 
     static {
