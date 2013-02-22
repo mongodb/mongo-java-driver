@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.bson;
+package org.mongodb.json;
 
+import org.bson.BsonWriterSettings;
 import org.mongodb.annotations.Immutable;
 
 /**

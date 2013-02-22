@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package org.bson;
+package org.mongodb.json;
 
+import org.mongodb.json.JsonOutputMode;
+import org.mongodb.json.JsonWriter;
+import org.mongodb.json.JsonWriterSettings;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;

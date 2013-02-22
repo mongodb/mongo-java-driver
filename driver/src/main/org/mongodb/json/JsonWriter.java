@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package org.bson;
+package org.mongodb.json;
 
+import org.bson.BSONException;
+import org.bson.BSONWriter;
+import org.bson.ContextType;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;

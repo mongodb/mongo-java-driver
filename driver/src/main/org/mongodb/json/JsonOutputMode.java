@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson;
+package org.mongodb.json;
 
 /**
  * An enumeration of the supported output modes of {@code JsonWriter}.  The first three correspond to the syntax documented
