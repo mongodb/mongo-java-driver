@@ -17,6 +17,7 @@
 package org.mongodb.acceptancetest.crud;
 
 import org.bson.BSONReader;
+import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
@@ -25,15 +26,20 @@ import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
+import org.mongodb.Sort;
 import org.mongodb.acceptancetest.AcceptanceTestCase;
 import org.mongodb.serialization.CollectibleSerializer;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Arrays.asList;
+import static org.bson.BSONType.INT32;
+import static org.bson.BSONType.INT64;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Sort.sortDescending;
+import static org.mongodb.Sort.ascending;
+import static org.mongodb.Sort.descending;
 
 public class QueryAcceptanceTest extends AcceptanceTestCase {
     @Test
@@ -100,27 +106,41 @@ public class QueryAcceptanceTest extends AcceptanceTestCase {
         collection.insert(new Document("product", "CD").append("numTimesOrdered", "6"));
         collection.insert(new Document("product", "DVD").append("numTimesOrdered", 9));
         collection.insert(new Document("product", "SomethingElse").append("numTimesOrdered", 10));
+        collection.insert(new Document("product", "VeryPopular").append("numTimesOrdered", 7843273657286478L));
 
         final List<Document> results = new ArrayList<Document>();
-        collection.filter(new Document("numTimesOrdered", new Document("$type", 16)))
-                  .sort(sortDescending("numTimesOrdered"))
+        final Document filter = new Document("$or", asList(new Document("numTimesOrdered", new Document("$type",
+                                                                                                       INT32.getValue())),
+                                                          new Document("numTimesOrdered", new Document("$type", INT64.getValue()))));
+        collection.filter(filter)
+                  .sort(descending("numTimesOrdered"))
                   .into(results);
 
-        assertThat(results.size(), is(2));
-        assertThat(results.get(0).get("product").toString(), is("SomethingElse"));
-        assertThat(results.get(1).get("product").toString(), is("DVD"));
+        assertThat(results.size(), is(3));
+        assertThat(results.get(0).get("product").toString(), is("VeryPopular"));
+        assertThat(results.get(1).get("product").toString(), is("SomethingElse"));
+        assertThat(results.get(2).get("product").toString(), is("DVD"));
     }
 
+    @Test
+    public void shouldBeAbleToSortAscending() {
+        collection.insert(new Document("product", "Book"));
+        collection.insert(new Document("product", "DVD"));
+        collection.insert(new Document("product", "CD"));
+
+        final List<Document> results = new ArrayList<Document>();
+        collection.sort(ascending("product"))
+                  .into(results);
+
+        assertThat(results.size(), is(3));
+        assertThat(results.get(0).get("product").toString(), is("Book"));
+        assertThat(results.get(1).get("product").toString(), is("CD"));
+        assertThat(results.get(2).get("product").toString(), is("DVD"));
+    }
 
     @Test
     @Ignore("JSON stuff not implemented")
     public void shouldBeAbleToQueryWithJSON() {
-        //        collection.insert(new Document("name", "Bob"));
-        //
-        //        final Document query = new Document("name", "Bob");
-        //        final MongoCursor<Document> results = collection.filter(query.toJSONString()).all();
-
-        //        assertThat(results.next().get("name").toString(), is("Bob"));
     }
 
     private class PersonSerializer implements CollectibleSerializer<Person> {

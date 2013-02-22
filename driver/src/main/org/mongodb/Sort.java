@@ -20,7 +20,11 @@ public final class Sort {
     private Sort() {
     }
 
-    public static Document sortDescending(final String field) {
+    public static Document descending(final String field) {
         return new Document(field, -1);
+    }
+
+    public static Document ascending(final String field) {
+        return new Document(field, 1);
     }
 }
