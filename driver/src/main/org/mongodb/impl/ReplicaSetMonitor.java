@@ -53,11 +53,11 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
     private final ReplicaSetHolder replicaSetHolder;
 
     // will get changed to use replica set name once it's found
-    private final volatile Logger logger = LOGGER;
+    private volatile Logger logger = LOGGER;
 
     private final ReplicaSetStateGenerator replicaSetStateGenerator;
 
-    private final volatile long nextResolveTime;  // TODO: use this
+    private volatile long nextResolveTime;  // TODO: use this
 
     static {
         SLAVE_ACCEPTABLE_LATENCY_MS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
