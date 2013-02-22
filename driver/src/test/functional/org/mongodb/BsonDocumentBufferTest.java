@@ -24,14 +24,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 // A unit test
-public class BsonDocumentBufferTest {
+public class BSONDocumentBufferTest {
     @Test
     public void testRoundTrip() {
         Document document = new Document("a", 1).append("b", 2);
 
         DocumentSerializer documentSerializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
 
-        BsonDocumentBuffer buffer = new BsonDocumentBuffer(document, documentSerializer);
+        BSONDocumentBuffer buffer = new BSONDocumentBuffer(document, documentSerializer);
 
         assertNotNull(buffer.getByteBuffer());
 

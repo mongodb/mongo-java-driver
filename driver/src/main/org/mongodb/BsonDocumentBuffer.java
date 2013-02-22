@@ -29,8 +29,7 @@ import java.nio.ByteOrder;
  * A simple wrapper around a byte array that is the representation of a single BSON document.
  */
 // TODO: Add an easy way to iterate over the fields?
-// TODO: Should this be in the bson module?
-public class BsonDocumentBuffer {
+public class BSONDocumentBuffer {
     private final byte[] bytes;
 
     /**
@@ -39,7 +38,7 @@ public class BsonDocumentBuffer {
      *
      * @param bytes the bytes representing a BSON document.
      */
-    public BsonDocumentBuffer(final byte[] bytes) {
+    public BSONDocumentBuffer(final byte[] bytes) {
         if (bytes == null) {
             throw new IllegalArgumentException("bytes can not be null");
         }
@@ -52,7 +51,7 @@ public class BsonDocumentBuffer {
      * @param document the document to transform
      * @param serializer the serializer to facilitate the transformation
      */
-    public <T> BsonDocumentBuffer(final T document, final Serializer<T> serializer) {
+    public <T> BSONDocumentBuffer(final T document, final Serializer<T> serializer) {
         BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer());
         serializer.serialize(writer, document);
         this.bytes = writer.getBuffer().toByteArray();

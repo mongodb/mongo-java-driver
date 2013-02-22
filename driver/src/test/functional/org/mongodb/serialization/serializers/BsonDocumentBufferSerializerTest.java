@@ -18,13 +18,13 @@ package org.mongodb.serialization.serializers;
 
 import org.bson.BSONBinaryWriter;
 import org.bson.io.BasicOutputBuffer;
+import org.mongodb.BSONDocumentBuffer;
 import org.mongodb.Document;
 import org.junit.Test;
-import org.mongodb.BsonDocumentBuffer;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.MongoCollection;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
-import org.mongodb.serialization.BsonDocumentBufferSerializer;
+import org.mongodb.serialization.BSONDocumentBufferSerializer;
 import org.mongodb.serialization.PrimitiveSerializers;
 
 import java.util.ArrayList;
@@ -33,10 +33,10 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class BsonDocumentBufferSerializerTest extends DatabaseTestCase {
+public class BSONDocumentBufferSerializerTest extends DatabaseTestCase {
 
-    private final BsonDocumentBufferSerializer serializer =
-            new BsonDocumentBufferSerializer(new PowerOfTwoByteBufferPool(24), PrimitiveSerializers.createDefault());
+    private final BSONDocumentBufferSerializer serializer =
+            new BSONDocumentBufferSerializer(new PowerOfTwoByteBufferPool(24), PrimitiveSerializers.createDefault());
 
     @Test
     public void shouldBeAbleToQueryThenInsert() {
@@ -47,8 +47,8 @@ public class BsonDocumentBufferSerializerTest extends DatabaseTestCase {
 
         collection.insert(originalDocuments);
 
-        final MongoCollection<BsonDocumentBuffer> lazyCollection = database.getCollection(collectionName, serializer);
-        final List<BsonDocumentBuffer> docs = lazyCollection.into(new ArrayList<BsonDocumentBuffer>());
+        final MongoCollection<BSONDocumentBuffer> lazyCollection = database.getCollection(collectionName, serializer);
+        final List<BSONDocumentBuffer> docs = lazyCollection.into(new ArrayList<BSONDocumentBuffer>());
         lazyCollection.tools().drop();
         lazyCollection.insert(docs);
 
@@ -60,7 +60,7 @@ public class BsonDocumentBufferSerializerTest extends DatabaseTestCase {
         final Document doc = new Document("a", 1).append("b", new Document("c", 1));
         final BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer());
         new DocumentSerializer(PrimitiveSerializers.createDefault()).serialize(writer, doc);
-        final BsonDocumentBuffer documentBuffer = new BsonDocumentBuffer(writer.getBuffer().toByteArray());
+        final BSONDocumentBuffer documentBuffer = new BSONDocumentBuffer(writer.getBuffer().toByteArray());
 
         assertNull(serializer.getId(documentBuffer));
     }
@@ -71,7 +71,7 @@ public class BsonDocumentBufferSerializerTest extends DatabaseTestCase {
         final Document doc = new Document("a", 1).append("b", new Document("c", 1)).append("_id", id);
         final BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer());
         new DocumentSerializer(PrimitiveSerializers.createDefault()).serialize(writer, doc);
-        final BsonDocumentBuffer documentBuffer = new BsonDocumentBuffer(writer.getBuffer().toByteArray());
+        final BSONDocumentBuffer documentBuffer = new BSONDocumentBuffer(writer.getBuffer().toByteArray());
 
         assertEquals(id, serializer.getId(documentBuffer));
     }

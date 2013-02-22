@@ -22,9 +22,9 @@ import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.io.ByteBufferInput;
-import org.mongodb.io.BufferPool;
-import org.mongodb.BsonDocumentBuffer;
+import org.mongodb.BSONDocumentBuffer;
 import org.mongodb.MongoInternalException;
+import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutput;
 
 import java.io.ByteArrayOutputStream;
@@ -37,30 +37,30 @@ import java.nio.ByteBuffer;
  * <p>
  * This should even be usable as a nested document serializer by adding an instance of it to a PrimitiveSerializers instance.
  */
-public class BsonDocumentBufferSerializer implements CollectibleSerializer<BsonDocumentBuffer> {
+public class BSONDocumentBufferSerializer implements CollectibleSerializer<BSONDocumentBuffer> {
     private final BufferPool<ByteBuffer> bufferPool;
     private final PrimitiveSerializers primitiveSerializers;
 
-    public BsonDocumentBufferSerializer(final BufferPool<ByteBuffer> bufferPool,
+    public BSONDocumentBufferSerializer(final BufferPool<ByteBuffer> bufferPool,
                                         final PrimitiveSerializers primitiveSerializers) {
         this.bufferPool = bufferPool;
         this.primitiveSerializers = primitiveSerializers;
     }
 
     @Override
-    public void serialize(final BSONWriter bsonWriter, final BsonDocumentBuffer value) {
+    public void serialize(final BSONWriter bsonWriter, final BSONDocumentBuffer value) {
         bsonWriter.pipe(new BSONBinaryReader(new ByteBufferInput(value.getByteBuffer())));
     }
 
     @Override
-    public BsonDocumentBuffer deserialize(final BSONReader reader) {
+    public BSONDocumentBuffer deserialize(final BSONReader reader) {
         try {
             BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutput(bufferPool));
             binaryWriter.pipe(reader);
             final BufferExposingByteArrayOutputStream byteArrayOutputStream =
                     new BufferExposingByteArrayOutputStream(binaryWriter.getBuffer().size());
             binaryWriter.getBuffer().pipe(byteArrayOutputStream);
-            return new BsonDocumentBuffer(byteArrayOutputStream.getInternalBytes());
+            return new BSONDocumentBuffer(byteArrayOutputStream.getInternalBytes());
         } catch (IOException e) {
             // impossible with a byte array output stream
             throw new MongoInternalException("impossible", e);
@@ -69,12 +69,12 @@ public class BsonDocumentBufferSerializer implements CollectibleSerializer<BsonD
     }
 
     @Override
-    public Class<BsonDocumentBuffer> getSerializationClass() {
-        return BsonDocumentBuffer.class;
+    public Class<BSONDocumentBuffer> getSerializationClass() {
+        return BSONDocumentBuffer.class;
     }
 
     @Override
-    public Object getId(final BsonDocumentBuffer document) {
+    public Object getId(final BSONDocumentBuffer document) {
         BSONReader reader = new BSONBinaryReader(new ByteBufferInput(document.getByteBuffer()));
         reader.readStartDocument();
         while (reader.readBsonType() != BSONType.END_OF_DOCUMENT) {
