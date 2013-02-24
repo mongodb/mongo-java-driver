@@ -376,7 +376,7 @@ public class QueryBuilder {
      * @param ors the list of conditions to or together
      * @return Returns the current QueryBuilder with appended "or" operator
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked","rawtypes"})
     public QueryBuilder or(final Document... ors) {
         List l = (List) query.get(QueryOperators.OR);
         if (l == null) {
@@ -387,7 +387,7 @@ public class QueryBuilder {
         return this;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked","rawtypes"})
     public QueryBuilder or(final QueryBuilder operand) {
         List<Document> orOperands = (List<Document>) query.get(QueryOperators.OR);
         if (orOperands == null) {
