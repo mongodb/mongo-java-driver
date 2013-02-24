@@ -25,6 +25,7 @@ import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
+import org.mongodb.QueryBuilder;
 import org.mongodb.acceptancetest.AcceptanceTestCase;
 import org.mongodb.serialization.CollectibleSerializer;
 
@@ -36,6 +37,8 @@ import static org.bson.BSONType.INT32;
 import static org.bson.BSONType.INT64;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.mongodb.QueryBuilder.query;
+import static org.mongodb.QueryOperators.TYPE;
 import static org.mongodb.Sort.ascending;
 import static org.mongodb.Sort.descending;
 
@@ -107,6 +110,7 @@ public class QueryAcceptanceTest extends AcceptanceTestCase {
         collection.insert(new Document("product", "VeryPopular").append("numTimesOrdered", 7843273657286478L));
 
         final List<Document> results = new ArrayList<Document>();
+        //TODO make BSON type serializable
         final Document filter = new Document("$or", asList(new Document("numTimesOrdered", new Document("$type",
                                                                                                        INT32.getValue())),
                                                           new Document("numTimesOrdered", new Document("$type", INT64.getValue()))));
@@ -135,6 +139,30 @@ public class QueryAcceptanceTest extends AcceptanceTestCase {
         assertThat(results.get(1).get("product").toString(), is("CD"));
         assertThat(results.get(2).get("product").toString(), is("DVD"));
     }
+
+    @Test
+    public void shouldBeAbleToUseQueryBuilderForFilter() {
+        collection.insert(new Document("product", "Book").append("numTimesOrdered", "some"));
+        collection.insert(new Document("product", "CD").append("numTimesOrdered", "6"));
+        collection.insert(new Document("product", "DVD").append("numTimesOrdered", 9));
+        collection.insert(new Document("product", "SomethingElse").append("numTimesOrdered", 10));
+        collection.insert(new Document("product", "VeryPopular").append("numTimesOrdered", 7843273657286478L));
+
+        final List<Document> results = new ArrayList<Document>();
+
+        final Document filter = new QueryBuilder().or(query("numTimesOrdered").is(query(TYPE).is(INT32.getValue())))
+                                                  .or(query("numTimesOrdered").is(query(TYPE).is(INT64.getValue())))
+                                                  .get();
+        collection.filter(filter)
+                  .sort(descending("numTimesOrdered"))
+                  .into(results);
+
+        assertThat(results.size(), is(3));
+        assertThat(results.get(0).get("product").toString(), is("VeryPopular"));
+        assertThat(results.get(1).get("product").toString(), is("SomethingElse"));
+        assertThat(results.get(2).get("product").toString(), is("DVD"));
+    }
+
 
     @Test
     @Ignore("JSON stuff not implemented")
