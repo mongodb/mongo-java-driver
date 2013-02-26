@@ -76,7 +76,8 @@ public class DBCollectionTest extends TestCase {
            Assert.fail();
         }
         catch (MongoException.DuplicateKey e) {
-           // Proves that a DuplicateKey exception is thrown, as test will fail if any other exception is thrown
+            assertNotNull(e.getCommandResult());
+            assertEquals(11000, e.getCode());
         }
     }
 

@@ -23,12 +23,29 @@ import java.net.UnknownHostException;
 
 public class CommandResultTest extends TestCase {
     @Test
-    public void testNullCommand() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(null, new ServerAddress("localhost"));
+    public void testNullErrorCode() throws UnknownHostException {
+        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
         commandResult.put("ok", 0);
-        MongoException e = commandResult.getException();
-        assertNotNull(e);
-        assert(e instanceof CommandResult.CommandFailure);
-        assertEquals(-5, e.getCode());
+        try {
+            commandResult.throwOnError();
+            fail("Should throw");
+        } catch (CommandFailureException e) {
+            assertEquals(commandResult, e.getCommandResult());
+            assertEquals(-5, e.getCode());
+        }
+    }
+
+    @Test
+    public void testCommandFailure() throws UnknownHostException {
+        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
+        final DBObject result = new BasicDBObject("ok", 0.0).append("errmsg", "no not found").append("code", 5000);
+        commandResult.putAll(result);
+        try {
+            commandResult.throwOnError();
+            fail("Should throw");
+        } catch (CommandFailureException e) {
+            assertEquals(commandResult, e.getCommandResult());
+            assertEquals(5000, e.getCode());
+        }
     }
 }

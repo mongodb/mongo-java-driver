@@ -17,7 +17,6 @@
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
-import com.mongodb.MongoAuthenticationMechanism;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
@@ -40,7 +39,7 @@ public class MongoCredentialsExample {
         System.out.println();
 
         MongoClient mongoClient = new MongoClient(new ServerAddress(server),
-                Arrays.asList(new MongoCredential(user, password.toCharArray(), MongoAuthenticationMechanism.MONGO_CR, "test")),
+                Arrays.asList(MongoCredential.createMongoCRCredential(user, "test", password.toCharArray())),
                 new MongoClientOptions.Builder().socketKeepAlive(true).socketTimeout(30000).build());
         DB testDB = mongoClient.getDB(databaseName);
 

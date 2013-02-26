@@ -28,85 +28,76 @@ import java.util.Arrays;
  * @since 2.11.0
  */
 @Immutable
-public class MongoCredential {
+public final class MongoCredential {
 
-    private final MongoAuthenticationMechanism mechanism;
+    /**
+     * The GSSAPI mechanism.  See the <a href="http://tools.ietf.org/html/rfc4752">RFC</a>.
+     */
+    public static final String GSSAPI_MECHANISM = "GSSAPI";
+
+    /**
+     * The MongoDB Challenge Response mechanism.
+     */
+    public static final String MONGODB_CR_MECHANISM = "MONGODB-CR";
+
+
+    private final String mechanism;
     private final String userName;
-    private final char[] password;
     private final String source;
+    private final char[] password;
 
     /**
-     * Constructs a new instance using the given user name and password and the default mechanism and source.
+     * Creates a MongoCredential instance for the MongoDB Challenge Response protocol.
      *
      * @param userName the user name
-     * @param password the password
+     * @param database the database where the user is defined
+     * @param password the user's password
+     * @return the credential
      */
-    public MongoCredential(final String userName, final char[] password) {
-        this(userName, password, MongoAuthenticationMechanism.MONGO_CR);
+    public static MongoCredential createMongoCRCredential(String userName, String database, char[] password) {
+        return new MongoCredential(MONGODB_CR_MECHANISM, userName, database, password);
     }
 
     /**
-     * Constructs a new instance using the given user name, password and source and the default mechanism.
+     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.
      *
      * @param userName the user name
-     * @param password the password
-     * @param source   the source of the credentials
+     * @return the credential
      */
-    public MongoCredential(final String userName, final char[] password, String source) {
-        this(userName, password, MongoAuthenticationMechanism.MONGO_CR, source);
+    public static MongoCredential createGSSAPICredential(String userName) {
+        return new MongoCredential(GSSAPI_MECHANISM, userName, "$external", null);
     }
 
     /**
-     * Constructs a new instance using the given user name, password and mechanism and the default source for that mechanism.
      *
+     * Constructs a new instance using the given mechanism, userName, source, and password
+     *
+     * @param mechanism the authentication mechanism
      * @param userName the user name
+     * @param source the source of the user name, typically a database name
      * @param password the password
-     * @param mechanism the mechanism to use for authentication
      */
-    public MongoCredential(final String userName, final char[] password, MongoAuthenticationMechanism mechanism) {
-        this(userName, password, mechanism, null);
-    }
-
-    /**
-     * Constructs a new instance using the given user name and mechanism.  This really only applies to the GSSAPI
-     * mechanism, since it's the only one that doesn't require a password.
-     *
-     * @param userName the user name
-     * @param mechanism the mechanism to use for authentication
-     */
-    public MongoCredential(final String userName, final MongoAuthenticationMechanism mechanism) {
-        this(userName, null, mechanism);
-    }
-
-    /**
-     /**
-     * Constructs a new instance using the given user name, password, mechanism, and source.
-     *
-     * @param userName the user name
-     * @param password the password
-     * @param mechanism the mechanism
-     * @param source   the source of the credentials
-     */
-    public MongoCredential(final String userName, final char[] password, MongoAuthenticationMechanism mechanism, String source) {
-        if (userName == null) {
-            throw new IllegalArgumentException();
-        }
+    MongoCredential(final String mechanism, final String userName, final String source, final char[] password) {
         if (mechanism == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("mechanism can not be null");
         }
 
-        if (mechanism == MongoAuthenticationMechanism.MONGO_CR && password == null) {
-            throw new IllegalArgumentException("password can not be null for " + MongoAuthenticationMechanism.MONGO_CR);
+        if (userName == null) {
+            throw new IllegalArgumentException("username can not be null");
         }
 
-        if (mechanism == MongoAuthenticationMechanism.GSSAPI && password != null) {
-            throw new IllegalArgumentException("password must be null for " + MongoAuthenticationMechanism.GSSAPI);
+        if (mechanism.equals(MONGODB_CR_MECHANISM) && password == null) {
+            throw new IllegalArgumentException("Password can not be null for " + MONGODB_CR_MECHANISM + " mechanism");
         }
 
-        this.userName = userName;
-        this.password = password;
-        this.source = source != null ? source : getDefaultDatabase(mechanism);
+        if (mechanism.equals(GSSAPI_MECHANISM) && password != null) {
+            throw new IllegalArgumentException("Password must be null for the " + GSSAPI_MECHANISM + " mechanism");
+        }
+
         this.mechanism = mechanism;
+        this.userName = userName;
+        this.source = source;
+        this.password = password != null ? password.clone() : null;
     }
 
     /**
@@ -114,7 +105,7 @@ public class MongoCredential {
      *
      * @return the mechanism.
      */
-    public MongoAuthenticationMechanism getMechanism() {
+    public String getMechanism() {
         return mechanism;
     }
 
@@ -125,6 +116,15 @@ public class MongoCredential {
      */
     public String getUserName() {
         return userName;
+    }
+
+    /**
+     * Gets the source of the user name, typically the name of the database where the user is defined.
+     *
+     * @return the user name.  Can never be null.
+     */
+    public String getSource() {
+        return source;
     }
 
     /**
@@ -139,15 +139,6 @@ public class MongoCredential {
         return password.clone();
     }
 
-    /**
-     * Gets the source, which is usually the name of the database that the credentials are stored in.
-     *
-     * @return the source.
-     */
-    public String getSource() {
-        return source;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -155,8 +146,8 @@ public class MongoCredential {
 
         final MongoCredential that = (MongoCredential) o;
 
+        if (!mechanism.equals(that.mechanism)) return false;
         if (!Arrays.equals(password, that.password)) return false;
-        if (mechanism != that.mechanism) return false;
         if (!source.equals(that.source)) return false;
         if (!userName.equals(that.userName)) return false;
 
@@ -167,26 +158,18 @@ public class MongoCredential {
     public int hashCode() {
         int result = mechanism.hashCode();
         result = 31 * result + userName.hashCode();
-        result = 31 * result + (password != null ? Arrays.hashCode(password) : 0);
         result = 31 * result + source.hashCode();
+        result = 31 * result + (password != null ? Arrays.hashCode(password) : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return "MongoCredentials{" +
-                "mechanism=" + mechanism +
-                ", userName='" + userName +
-                ", password=" + "<hidden>" +
-                ", source='" + source +
+        return "MongoCredential{" +
+                "mechanism='" + mechanism + '\'' +
+                ", userName='" + userName + '\'' +
+                ", source='" + source + '\'' +
+                ", password=<hidden>"  +
                 '}';
-    }
-
-    private String getDefaultDatabase(final MongoAuthenticationMechanism mechanism) {
-        if (mechanism == null) {
-            return "admin";
-        } else {
-            return mechanism.getDefaultSource();
-        }
     }
 }

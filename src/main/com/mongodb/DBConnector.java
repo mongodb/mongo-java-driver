@@ -109,7 +109,7 @@ public interface DBConnector {
      *
      * @param credentials the credentials.
      * @return the result of the authentication command, if successful
-     * @throws com.mongodb.CommandResult.CommandFailure if the authentication failed
+     * @throws CommandFailureException if the authentication failed
      * @since 2.11.0
      */
     public CommandResult authenticate(MongoCredential credentials);

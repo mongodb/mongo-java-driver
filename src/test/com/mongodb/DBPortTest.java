@@ -44,8 +44,8 @@ public class DBPortTest extends TestCase {
 
             assertEquals(expected, port.authenticatedDatabases);
 
-            m.getAuthority().getCredentialsStore().add(new MongoCredential("u1", "e".toCharArray(), "DBPortTest1"));
-            m.getAuthority().getCredentialsStore().add(new MongoCredential("u2", "e".toCharArray(), "DBPortTest2"));
+            m.getAuthority().getCredentialsStore().add(MongoCredential.createMongoCRCredential("u1", "DBPortTest1", "e".toCharArray()));
+            m.getAuthority().getCredentialsStore().add(MongoCredential.createMongoCRCredential("u2", "DBPortTest2", "e".toCharArray()));
 
             port.checkAuth(m);
 
@@ -53,12 +53,12 @@ public class DBPortTest extends TestCase {
             expected.add("DBPortTest2");
             assertEquals(expected, port.authenticatedDatabases);
 
-            m.getAuthority().getCredentialsStore().add(new MongoCredential("u2", "e".toCharArray(), "DBPortTest3"));
+            m.getAuthority().getCredentialsStore().add(MongoCredential.createMongoCRCredential("u2", "DBPortTest3", "e".toCharArray()));
 
             try {
                 port.checkAuth(m);
                 fail("should throw");
-            } catch (CommandResult.CommandFailure e) {
+            } catch (CommandFailureException e) {
                 // all good
             }
         }

@@ -119,19 +119,14 @@ public class MongoException extends RuntimeException {
     }
 
     /**
-     * Subclass of MongoException representing a duplicate key exception
+     * Subclass of WriteConcernException representing a duplicate key error
      */
-    public static class DuplicateKey extends MongoException {
+    public static class DuplicateKey extends WriteConcernException {
 
         private static final long serialVersionUID = -4415279469780082174L;
 
-        /**
-         * 
-         * @param code the error code
-         * @param msg the message
-         */
-        public DuplicateKey( int code , String msg ){
-            super( code , msg );
+        public DuplicateKey(final CommandResult commandResult) {
+            super(commandResult);
         }
     }
 
