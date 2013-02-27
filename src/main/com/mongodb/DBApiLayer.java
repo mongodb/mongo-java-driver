@@ -362,15 +362,15 @@ public class DBApiLayer extends DB {
         }
 
         private void init( Response res ){
+            if ( ( res._flags & Bytes.RESULTFLAG_CURSORNOTFOUND ) > 0 ){
+                throw new MongoException.CursorNotFound(_curResult.cursor(), res.serverUsed());
+            }
+
             _totalBytes += res._len;
             _curResult = res;
             _cur = res.iterator();
             _sizes.add( res.size() );
             _numFetched += res.size();
-
-            if ( ( res._flags & Bytes.RESULTFLAG_CURSORNOTFOUND ) > 0 ){
-                throw new MongoException.CursorNotFound(res._cursor, res.serverUsed());
-            }
 
             if (res._cursor != 0 && _limit > 0 && _limit - _numFetched <= 0) {
                 // fetched all docs within limit, close cursor server-side
