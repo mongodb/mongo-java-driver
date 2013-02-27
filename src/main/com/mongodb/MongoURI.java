@@ -132,12 +132,17 @@ public class MongoURI {
      * Creates a MongoURI from a string.
      * @param uri the URI
      * @dochub connections
+     *
+     * @deprecated Replaced by {@link MongoClientURI#MongoClientURI(String)}
+     *
      */
+    @Deprecated
     public MongoURI( String uri ) {
         this.mongoClientURI = new MongoClientURI(uri, new MongoClientOptions.Builder().legacyDefaults());
         mongoOptions = new MongoOptions(mongoClientURI.getOptions());
     }
 
+    @Deprecated
     public MongoURI(final MongoClientURI mongoClientURI) {
         this.mongoClientURI = mongoClientURI;
         mongoOptions = new MongoOptions(mongoClientURI.getOptions());
