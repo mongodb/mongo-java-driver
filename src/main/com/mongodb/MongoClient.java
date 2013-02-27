@@ -70,6 +70,8 @@ import java.util.List;
  */
 public class MongoClient extends Mongo {
 
+    private final MongoClientOptions options;
+
     /**
      * Creates an instance based on a (single) mongodb node (localhost, default port).
      *
@@ -163,6 +165,7 @@ public class MongoClient extends Mongo {
      */
     public MongoClient(ServerAddress addr, List<MongoCredential> credentialsList, MongoClientOptions options) {
         super(MongoAuthority.direct(addr, new MongoCredentialsStore(credentialsList)), new MongoOptions(options));
+        this.options = options;
     }
 
     /**
@@ -246,6 +249,7 @@ public class MongoClient extends Mongo {
      */
     public MongoClient(List<ServerAddress> seeds, List<MongoCredential> credentialsList, MongoClientOptions options) {
         super(MongoAuthority.dynamicSet(seeds, new MongoCredentialsStore(credentialsList)), new MongoOptions(options));
+        this.options = options;
     }
 
 
@@ -260,6 +264,7 @@ public class MongoClient extends Mongo {
      */
     public MongoClient(MongoClientURI uri) throws UnknownHostException {
         super(new MongoURI(uri));
+        this.options = uri.getOptions();
     }
 
     /**
@@ -270,5 +275,9 @@ public class MongoClient extends Mongo {
      */
     public List<MongoCredential> getCredentialsList() {
         return getAuthority().getCredentialsStore().asList();
+    }
+
+    public MongoClientOptions getMongoClientOptions() {
+        return options;
     }
 }
