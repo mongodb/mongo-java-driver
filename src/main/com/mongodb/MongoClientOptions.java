@@ -511,7 +511,55 @@ public class MongoClientOptions {
         return alwaysUseMBeans;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        final MongoClientOptions that = (MongoClientOptions) o;
+
+        if (alwaysUseMBeans != that.alwaysUseMBeans) return false;
+        if (autoConnectRetry != that.autoConnectRetry) return false;
+        if (connectTimeout != that.connectTimeout) return false;
+        if (connectionsPerHost != that.connectionsPerHost) return false;
+        if (cursorFinalizerEnabled != that.cursorFinalizerEnabled) return false;
+        if (maxAutoConnectRetryTime != that.maxAutoConnectRetryTime) return false;
+        if (maxWaitTime != that.maxWaitTime) return false;
+        if (socketKeepAlive != that.socketKeepAlive) return false;
+        if (socketTimeout != that.socketTimeout) return false;
+        if (threadsAllowedToBlockForConnectionMultiplier != that.threadsAllowedToBlockForConnectionMultiplier)
+            return false;
+        if (!dbDecoderFactory.equals(that.dbDecoderFactory)) return false;
+        if (!dbEncoderFactory.equals(that.dbEncoderFactory)) return false;
+        if (description != null ? !description.equals(that.description) : that.description != null) return false;
+        if (!readPreference.equals(that.readPreference)) return false;
+        // Compare SocketFactory Class, since some equivalent SocketFactory instances are not equal to each other
+        if (!socketFactory.getClass().equals(that.socketFactory.getClass())) return false;
+        if (!writeConcern.equals(that.writeConcern)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = description != null ? description.hashCode() : 0;
+        result = 31 * result + connectionsPerHost;
+        result = 31 * result + threadsAllowedToBlockForConnectionMultiplier;
+        result = 31 * result + maxWaitTime;
+        result = 31 * result + connectTimeout;
+        result = 31 * result + socketTimeout;
+        result = 31 * result + (socketKeepAlive ? 1 : 0);
+        result = 31 * result + (autoConnectRetry ? 1 : 0);
+        result = 31 * result + (int) (maxAutoConnectRetryTime ^ (maxAutoConnectRetryTime >>> 32));
+        result = 31 * result + readPreference.hashCode();
+        result = 31 * result + dbDecoderFactory.hashCode();
+        result = 31 * result + dbEncoderFactory.hashCode();
+        result = 31 * result + writeConcern.hashCode();
+        result = 31 * result + socketFactory.hashCode();
+        result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
+        result = 31 * result + (alwaysUseMBeans ? 1 : 0);
+        return result;
+    }
 
     private MongoClientOptions(final Builder builder) {
         description = builder.description;

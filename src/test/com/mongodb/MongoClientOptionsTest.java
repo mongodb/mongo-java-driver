@@ -160,4 +160,13 @@ public class MongoClientOptionsTest {
     public void testStaticBuilderCreate() {
         Assert.assertNotNull(MongoClientOptions.builder());
     }
+
+    @Test
+    public void testEqualsAndHashCode() {
+        Assert.assertEquals(MongoClientOptions.builder().build(), MongoClientOptions.builder().build());
+        Assert.assertEquals(MongoClientOptions.builder().build().hashCode(), MongoClientOptions.builder().build().hashCode());
+
+        Assert.assertEquals(MongoClientOptions.builder().socketFactory(SSLSocketFactory.getDefault()).build(),
+                MongoClientOptions.builder().socketFactory(SSLSocketFactory.getDefault()).build());
+    }
 }
