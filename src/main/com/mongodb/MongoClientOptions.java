@@ -311,6 +311,15 @@ public class MongoClientOptions {
     }
 
     /**
+     * Create a new Builder instance.  This is a convenience method, equivalent to {@code new MongoClientOptions.Builder()}.
+     *
+     * @return a new instance of a Builder
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
      * Gets the description for this MongoClient, which is used in various places like logging and JMX.
      * <p/>
      * Default is null.
@@ -501,6 +510,8 @@ public class MongoClientOptions {
     public boolean isAlwaysUseMBeans() {
         return alwaysUseMBeans;
     }
+
+
 
     private MongoClientOptions(final Builder builder) {
         description = builder.description;

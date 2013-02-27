@@ -155,4 +155,9 @@ public class MongoClientOptionsTest {
         Assert.assertEquals(encoderFactory, options.getDbEncoderFactory());
         Assert.assertEquals(decoderFactory, options.getDbDecoderFactory());
     }
+
+    @Test
+    public void testStaticBuilderCreate() {
+        Assert.assertNotNull(MongoClientOptions.builder());
+    }
 }
