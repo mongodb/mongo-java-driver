@@ -131,7 +131,11 @@ public class Mongo {
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
      * @throws UnknownHostException
      * @throws MongoException
+     *
+     * @deprecated Replaced by {@link MongoClient#MongoClient()})
+     *
      */
+    @Deprecated
     public Mongo()
         throws UnknownHostException {
         this( new ServerAddress() );
@@ -142,7 +146,11 @@ public class Mongo {
      * @param host server to connect to
      * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
+     *
+     * @deprecated Replaced by {@link MongoClient#MongoClient(String)}
+     *
      */
+    @Deprecated
     public Mongo( String host )
         throws UnknownHostException{
         this( new ServerAddress( host ) );
@@ -154,7 +162,11 @@ public class Mongo {
      * @param options default query options
      * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
+     *
+     * @deprecated Replaced by {@link MongoClient#MongoClient(String, MongoClientOptions)}
+     *
      */
+    @Deprecated
     public Mongo( String host , MongoOptions options )
         throws UnknownHostException {
         this( new ServerAddress( host ) , options );
@@ -166,7 +178,11 @@ public class Mongo {
      * @param port the port on which the database is running
      * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
+     *
+     * @deprecated Replaced by {@link MongoClient#MongoClient(String, int)}
+     *
      */
+    @Deprecated
     public Mongo( String host , int port )
         throws UnknownHostException {
         this( new ServerAddress( host , port ) );
@@ -176,8 +192,12 @@ public class Mongo {
      * Creates a Mongo instance based on a (single) mongodb node
      * @see com.mongodb.ServerAddress
      * @param addr the database address
-     * @throws MongoException 
+     * @throws MongoException
+     *
+     * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress)}
+     *
      */
+    @Deprecated
     public Mongo( ServerAddress addr ) {
         this(addr, new MongoOptions());
     }
@@ -188,7 +208,11 @@ public class Mongo {
      * @param addr the database address
      * @param options default query options
      * @throws MongoException
+     *
+     * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress, MongoClientOptions)}
+     *
      */
+    @Deprecated
     public Mongo( ServerAddress addr , MongoOptions options ) {
         this(MongoAuthority.direct(addr), options);
     }
@@ -238,7 +262,11 @@ public class Mongo {
      *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
      *              sharded cluster.
      * @throws MongoException
+     *
+     * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List)}
+     *
      */
+    @Deprecated
     public Mongo( List<ServerAddress> seeds ) {
         this( seeds , new MongoOptions() );
     }
@@ -257,8 +285,12 @@ public class Mongo {
      *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
      *              sharded cluster.
      * @param options for configuring this Mongo instance
-     * @throws MongoException 
+     * @throws MongoException
+     *
+     * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)}
+     *
      */
+    @Deprecated
     public Mongo( List<ServerAddress> seeds , MongoOptions options ) {
         this(MongoAuthority.dynamicSet(seeds), options);
     }
@@ -277,8 +309,11 @@ public class Mongo {
      * @throws MongoException
      * @throws UnknownHostException
      * @dochub connections
+     *
+     * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
+     *
      */
-
+    @Deprecated
     public Mongo( MongoURI uri ) throws UnknownHostException {
         this(getMongoAuthorityFromURI(uri), uri.getOptions());
     }
@@ -434,7 +469,7 @@ public class Mongo {
      * Gets the list of server addresses currently seen by the connector.
      * This includes addresses auto-discovered from a replica set.
      * @return
-     * @throws MongoException 
+     * @throws MongoException
      */
     public List<ServerAddress> getServerAddressList() {
         return _connector.getServerAddressList();
@@ -618,7 +653,7 @@ public class Mongo {
      * Forces the master server to fsync the RAM data to disk
      * This is done automatically by the server at intervals, but can be forced for better reliability. 
      * @param async if true, the fsync will be done asynchronously on the server.
-     * @return 
+     * @return
      * @throws MongoException
      */
     public CommandResult fsync(boolean async) {
@@ -632,7 +667,7 @@ public class Mongo {
     /**
      * Forces the master server to fsync the RAM data to disk, then lock all writes.
      * The database will be read-only after this command returns.
-     * @return 
+     * @return
      * @throws MongoException
      */
     public CommandResult fsyncAndLock() {
@@ -644,7 +679,7 @@ public class Mongo {
     /**
      * Unlocks the database, allowing the write operations to go through.
      * This command may be asynchronous on the server, which means there may be a small delay before the database becomes writable.
-     * @return 
+     * @return
      * @throws MongoException
      */
     public DBObject unlock() {
@@ -655,7 +690,7 @@ public class Mongo {
 
     /**
      * Returns true if the database is locked (read-only), false otherwise.
-     * @return 
+     * @return
      * @throws MongoException
      */
     public boolean isLocked() {
@@ -716,7 +751,7 @@ public class Mongo {
             buf.append( uri.getUsername() );
             return buf.toString();
         }
-        
+
         public static Holder singleton() { return _default; }
 
         private static Holder _default = new Holder();

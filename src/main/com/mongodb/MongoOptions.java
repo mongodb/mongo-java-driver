@@ -29,10 +29,15 @@ import javax.net.SocketFactory;
  */
 public class MongoOptions {
 
+    @Deprecated
     public MongoOptions(){
         reset();
     }
 
+    /**
+     * @deprecated Replaced by {@link MongoClientOptions}
+     */
+    @Deprecated
     public MongoOptions(final MongoClientOptions options) {
         connectionsPerHost = options.getConnectionsPerHost();
         threadsAllowedToBlockForConnectionMultiplier = options.getThreadsAllowedToBlockForConnectionMultiplier();
