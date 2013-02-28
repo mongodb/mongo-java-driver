@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.mongodb.json.tokens;
 
-public class DoubleJSONToken extends JSONToken {
+import org.mongodb.json.JSONToken;
+import org.mongodb.json.JSONTokenType;
+
+public class DoubleToken extends JSONToken {
 
     private final double value;
 
-    public DoubleJSONToken(String lexeme, double value) {
+    public DoubleToken(final String lexeme, final double value) {
         super(JSONTokenType.DOUBLE, lexeme);
         this.value = value;
     }

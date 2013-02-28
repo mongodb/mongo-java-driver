@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.mongodb.json.tokens;
 
-import org.bson.types.RegularExpression;
+import org.bson.types.ObjectId;
+import org.mongodb.json.JSONToken;
+import org.mongodb.json.JSONTokenType;
 
-public class RegularExpressionJSONToken extends JSONToken {
+public class ObjectIdToken extends JSONToken {
 
-    private final RegularExpression value;
+    private final ObjectId value;
 
-    public RegularExpressionJSONToken(String lexeme, RegularExpression value) {
-        super(JSONTokenType.REGULAR_EXPRESSION, lexeme);
+    public ObjectIdToken(final String lexeme, final ObjectId value) {
+        super(JSONTokenType.OBJECT_ID, lexeme);
         this.value = value;
     }
 
     @Override
-    public RegularExpression asRegularExpression() {
+    public ObjectId asObjectId() {
         return value;
     }
 }

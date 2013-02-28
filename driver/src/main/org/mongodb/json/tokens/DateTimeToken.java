@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.mongodb.json.tokens;
 
-public class Int64JSONToken extends JSONToken {
+import org.mongodb.json.JSONToken;
+import org.mongodb.json.JSONTokenType;
+
+public class DateTimeToken extends JSONToken {
 
     private final long value;
 
-    public Int64JSONToken(String lexeme, long value) {
-        super(JSONTokenType.INT64, lexeme);
+    public DateTimeToken(final String lexeme, final long value) {
+        super(JSONTokenType.DATE_TIME, lexeme);
         this.value = value;
     }
 
+
     @Override
-    public long asInt64() {
+    public long asDateTime() {
         return value;
     }
 }

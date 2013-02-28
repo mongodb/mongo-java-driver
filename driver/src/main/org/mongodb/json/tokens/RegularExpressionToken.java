@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.mongodb.json.tokens;
 
-public class DateTimeJSONToken extends JSONToken {
+import org.bson.types.RegularExpression;
+import org.mongodb.json.JSONToken;
+import org.mongodb.json.JSONTokenType;
 
-    private final long value;
+public class RegularExpressionToken extends JSONToken {
 
-    public DateTimeJSONToken(String lexeme, long value) {
-        super(JSONTokenType.DATE_TIME, lexeme);
+    private final RegularExpression value;
+
+    public RegularExpressionToken(final String lexeme, final RegularExpression value) {
+        super(JSONTokenType.REGULAR_EXPRESSION, lexeme);
         this.value = value;
     }
 
-
     @Override
-    public long asDateTime() {
+    public RegularExpression asRegularExpression() {
         return value;
     }
 }

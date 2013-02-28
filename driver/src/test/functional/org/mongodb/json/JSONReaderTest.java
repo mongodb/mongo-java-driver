@@ -107,8 +107,6 @@ public class JSONReaderTest {
         bsonReader = new JSONReader(json);
         assertEquals(BSONType.DATE_TIME, bsonReader.readBSONType());
         long k = bsonReader.readDateTime();
-        System.out.println(new Date(9223372036854775807L));
-        System.out.println(new Date(k).getTime());
         assertEquals(9223372036854775807L, k);
         assertEquals(BSONReader.State.DONE, bsonReader.getState());
     }

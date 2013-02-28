@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.mongodb.json.tokens;
 
-import org.bson.types.ObjectId;
+import org.mongodb.json.JSONToken;
+import org.mongodb.json.JSONTokenType;
 
-public class ObjectIdJSONToken extends JSONToken {
+public class Int64Token extends JSONToken {
 
-    private final ObjectId value;
+    private final long value;
 
-    public ObjectIdJSONToken(String lexeme, ObjectId value) {
-        super(JSONTokenType.OBJECT_ID, lexeme);
+    public Int64Token(final String lexeme, final long value) {
+        super(JSONTokenType.INT64, lexeme);
         this.value = value;
     }
 
     @Override
-    public ObjectId asObjectId() {
+    public long asInt64() {
         return value;
     }
 }

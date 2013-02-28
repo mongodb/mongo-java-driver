@@ -1,5 +1,5 @@
-package org.mongodb.json;/*
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+/*
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,5 +14,22 @@ package org.mongodb.json;/*
  * limitations under the License.
  */
 
-public class DateTimeJsonToken {
+package org.mongodb.json.tokens;
+
+import org.mongodb.json.JSONToken;
+import org.mongodb.json.JSONTokenType;
+
+public class StringToken extends JSONToken {
+
+    private final String value;
+
+    public StringToken(final JSONTokenType type, final String lexeme, final String value) {
+        super(type, lexeme);
+        this.value = value;
+    }
+
+    @Override
+    public String asString() {
+        return value;
+    }
 }

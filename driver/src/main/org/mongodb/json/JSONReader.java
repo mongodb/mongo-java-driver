@@ -30,6 +30,23 @@ import java.util.TimeZone;
 
 import static java.lang.String.format;
 
+
+/**
+ * Reads a JSON in one of the following modes:
+ *
+ * <ul>
+ *     <li><b>Strict mode</b> that conforms to the <a href="http://www.json.org/">JSON RFC specifications.</a></li>
+ *     <li><b>JavaScript mode</b> that that most JavaScript interpreters can process</li>
+ *     <li>
+ *         <b>Shell mode</b> that the <a href="http://docs.mongodb.org/manual/reference/mongo/#mongo">mongo</a> shell can process.
+ *         This is also called "extended" JavaScript format.
+ *     </li>
+ * </ul>
+ *
+ * For more information about this modes please see <a href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/">http://docs.mongodb.org/manual/reference/mongodb-extended-json/</a>
+ *
+ * @since 3.0.0
+ */
 public class JSONReader extends BSONReader {
 
     private Context context;
@@ -39,24 +56,25 @@ public class JSONReader extends BSONReader {
     private JSONToken currentToken;
 
     /**
-     * Initializes a new instance of the BsonReader class.
+     * Constructs new {@code JSONReader}
      *
      * @param settings The reader settings.
-     * @param json     The json.
+     * @param json     A string representation of a JSON.
      */
     public JSONReader(final BSONReaderSettings settings, final String json) {
         super(settings);
-
-        JSONBuffer buffer = new JSONBuffer(json);
-        scanner = new JSONScanner(buffer);
+        scanner = new JSONScanner(json);
         context = new Context(null, BSONContextType.TOP_LEVEL);
-
     }
 
+    /**
+     * Constructs new {@code JSONReader} with default settings.
+     *
+     * @param json A string representation of a JSON.
+     */
     public JSONReader(final String json) {
         this(new BSONReaderSettings(), json);
     }
-
 
     @Override
     public Binary readBinaryData() {
@@ -86,7 +104,7 @@ public class JSONReader extends BSONReader {
         }
 
         if (context.getContextType() == BSONContextType.DOCUMENT) {
-            JSONToken nameToken = popToken();
+            final JSONToken nameToken = popToken();
             switch (nameToken.getType()) {
                 case STRING:
                 case UNQUOTED_STRING:
@@ -96,18 +114,18 @@ public class JSONReader extends BSONReader {
                     setState(State.END_OF_DOCUMENT);
                     return BSONType.END_OF_DOCUMENT;
                 default:
-                    String message = format("JSON reader was expecting a name but found '{0}'.", nameToken.getLexeme());
-                    throw new IllegalArgumentException(message);
+                    final String message = format("JSON reader was expecting a name but found '%s'.", nameToken.getLexeme());
+                    throw new BSONException(message);
             }
 
-            JSONToken colonToken = popToken();
+            final JSONToken colonToken = popToken();
             if (colonToken.getType() != JSONTokenType.COLON) {
-                String message = format("JSON reader was expecting ':' but found '{0}'.", colonToken.getLexeme());
-                throw new IllegalArgumentException(message);
+                final String message = format("JSON reader was expecting ':' but found '%s'.", colonToken.getLexeme());
+                throw new BSONException(message);
             }
         }
 
-        JSONToken valueToken = popToken();
+        final JSONToken valueToken = popToken();
         if (context.getContextType() == BSONContextType.ARRAY && valueToken.getType() == JSONTokenType.END_ARRAY) {
             setState(State.END_OF_ARRAY);
             return BSONType.END_OF_DOCUMENT;
@@ -119,7 +137,7 @@ public class JSONReader extends BSONReader {
                 setCurrentBSONType(BSONType.ARRAY);
                 break;
             case BEGIN_OBJECT:
-                setCurrentBSONType(parseExtendedJSON());
+                visitExtendedJSON();
                 break;
             case DATE_TIME:
                 setCurrentBSONType(BSONType.DATE_TIME);
@@ -154,52 +172,52 @@ public class JSONReader extends BSONReader {
                 break;
             case UNQUOTED_STRING:
                 if ("false".equals(valueToken.getLexeme())
-                        || "true".equals(valueToken.getLexeme())) {
+                        || "true".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.BOOLEAN);
-                    currentValue = Boolean.parseBoolean(valueToken.getLexeme());
-                } else if ("Infinity".equals(valueToken.getLexeme())) {
+                    currentValue = Boolean.parseBoolean(valueToken.asString());
+                } else if ("Infinity".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.DOUBLE);
                     currentValue = Double.POSITIVE_INFINITY;
-                } else if ("NaN".equals(valueToken.getLexeme())) {
+                } else if ("NaN".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.DOUBLE);
                     currentValue = Double.NaN;
-                } else if ("null".equals(valueToken.getLexeme())) {
+                } else if ("null".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.NULL);
-                } else if ("undefined".equals(valueToken.getLexeme())) {
+                } else if ("undefined".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.UNDEFINED);
-                } else if ("BinData".equals(valueToken.getLexeme())) {
+                } else if ("BinData".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.BINARY);
-                    currentValue = parseBinDataConstructor();
-                } else if ("Date".equals(valueToken.getLexeme())) {
+                    currentValue = visitBinDataConstructor();
+                } else if ("Date".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.STRING);
-                    currentValue = parseDateTimeConstructor(false); // withNew = false
-                } else if ("HexData".equals(valueToken.getLexeme())) {
+                    currentValue = visitDateTimeConstructor(); // withNew = false
+                } else if ("HexData".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.BINARY);
-                    currentValue = parseHexDataConstructor();
-                } else if ("ISODate".equals(valueToken.getLexeme())) {
+                    currentValue = visitHexDataConstructor();
+                } else if ("ISODate".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.DATE_TIME);
-                    currentValue = parseISODateTimeConstructor();
-                } else if ("NumberLong".equals(valueToken.getLexeme())) {
+                    currentValue = visitISODateTimeConstructor();
+                } else if ("NumberLong".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.INT64);
-                    currentValue = parseNumberLongConstructor();
-                } else if ("ObjectId".equals(valueToken.getLexeme())) {
+                    currentValue = visitNumberLongConstructor();
+                } else if ("ObjectId".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.OBJECT_ID);
-                    currentValue = parseObjectIdConstructor();
-                } else if ("RegExp".equals(valueToken.getLexeme())) {
+                    currentValue = visitObjectIdConstructor();
+                } else if ("RegExp".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.REGULAR_EXPRESSION);
-                    currentValue = parseRegularExpressionConstructor();
-                } else if ("UUID".equals(valueToken.getLexeme())
-                        || "GUID".equals(valueToken.getLexeme())
-                        || "CSUUID".equals(valueToken.getLexeme())
-                        || "CSGUID".equals(valueToken.getLexeme())
-                        || "JUUID".equals(valueToken.getLexeme())
-                        || "JGUID".equals(valueToken.getLexeme())
-                        || "PYUUID".equals(valueToken.getLexeme())
-                        || "PYGUID".equals(valueToken.getLexeme())) {
+                    currentValue = visitRegularExpressionConstructor();
+                } else if ("UUID".equals(valueToken.asString())
+                        || "GUID".equals(valueToken.asString())
+                        || "CSUUID".equals(valueToken.asString())
+                        || "CSGUID".equals(valueToken.asString())
+                        || "JUUID".equals(valueToken.asString())
+                        || "JGUID".equals(valueToken.asString())
+                        || "PYUUID".equals(valueToken.asString())
+                        || "PYGUID".equals(valueToken.asString())) {
                     setCurrentBSONType(BSONType.BINARY);
-                    currentValue = parseUUIDConstructor(valueToken.getLexeme());
-                } else if ("new".equals(valueToken.getLexeme())) {
-                    setCurrentBSONType(parseNew());
+                    currentValue = visitUUIDConstructor(valueToken.asString());
+                } else if ("new".equals(valueToken.asString())) {
+                    visitNew();
                 } else {
                     noValueFound = true;
                 }
@@ -209,13 +227,13 @@ public class JSONReader extends BSONReader {
                 break;
         }
         if (noValueFound) {
-            String message = format("JSON reader was expecting a value but found '%s'.", valueToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader was expecting a value but found '%s'.", valueToken.getLexeme());
+            throw new BSONException(message);
         }
         currentToken = valueToken;
 
         if (context.getContextType() == BSONContextType.ARRAY || context.getContextType() == BSONContextType.DOCUMENT) {
-            JSONToken commaToken = popToken();
+            final JSONToken commaToken = popToken();
             if (commaToken.getType() != JSONTokenType.COMMA) {
                 pushToken(commaToken);
             }
@@ -236,59 +254,11 @@ public class JSONReader extends BSONReader {
         return getCurrentBSONType();
     }
 
-    private BSONType parseNew() {
-        JSONToken typeToken = popToken();
-        if (typeToken.getType() != JSONTokenType.UNQUOTED_STRING) {
-            String message = format("JSON reader expected a type name but found '%s'.", typeToken.getLexeme());
-            throw new IllegalArgumentException(message);
-        }
-
-        if ("BinData".equals(typeToken.getLexeme())) {
-            currentValue = parseBinDataConstructor();
-            return BSONType.BINARY;
-        } else if ("Date".equals(typeToken.getLexeme())) {
-            currentValue = parseDateTimeConstructor(true);
-            return BSONType.DATE_TIME;
-        } else if ("HexData".equals(typeToken.getLexeme())) {
-            currentValue = parseHexDataConstructor();
-            return BSONType.BINARY;
-        } else if ("ISODate".equals(typeToken.getLexeme())) {
-            currentValue = parseISODateTimeConstructor();
-            return BSONType.DATE_TIME;
-        } else if ("NumberLong".equals(typeToken.getLexeme())) {
-            currentValue = parseNumberLongConstructor();
-            return BSONType.INT64;
-        } else if ("ObjectId".equals(typeToken.getLexeme())) {
-            currentValue = parseObjectIdConstructor();
-            return BSONType.OBJECT_ID;
-        } else if ("RegExp".equals(typeToken.getLexeme())) {
-            currentValue = parseRegularExpressionConstructor();
-            return BSONType.REGULAR_EXPRESSION;
-        } else if ("UUID".equals(typeToken.getLexeme())
-                || "GUID".equals(typeToken.getLexeme())
-                || "CSUUID".equals(typeToken.getLexeme())
-                || "CSGUID".equals(typeToken.getLexeme())
-                || "JUUID".equals(typeToken.getLexeme())
-                || "JGUID".equals(typeToken.getLexeme())
-                || "PYUUID".equals(typeToken.getLexeme())
-                || "PYGUID".equals(typeToken.getLexeme())) {
-            currentValue = parseUUIDConstructor(typeToken.getLexeme());
-            return BSONType.BINARY;
-        } else {
-            String message = format("JSON reader expected a type name but found '%s'.", typeToken.getLexeme());
-            throw new IllegalArgumentException(message);
-        }
-    }
-
     @Override
     public long readDateTime() {
         checkPreconditions("readDateTime", BSONType.DATE_TIME);
         setState(getNextState());
-        if (currentValue instanceof Date) {
-            return ((Date) currentValue).getTime();
-        } else {
-            return (Long) currentValue;
-        }
+        return (Long) currentValue;
     }
 
     @Override
@@ -328,7 +298,7 @@ public class JSONReader extends BSONReader {
         }
 
         if (context.getContextType() == BSONContextType.ARRAY || context.getContextType() == BSONContextType.DOCUMENT) {
-            JSONToken commaToken = popToken();
+            final JSONToken commaToken = popToken();
             if (commaToken.getType() != JSONTokenType.COMMA) {
                 pushToken(commaToken);
             }
@@ -367,7 +337,7 @@ public class JSONReader extends BSONReader {
         }
 
         if (context.getContextType() == BSONContextType.ARRAY || context.getContextType() == BSONContextType.DOCUMENT) {
-            JSONToken commaToken = popToken();
+            final JSONToken commaToken = popToken();
             if (commaToken.getType() != JSONTokenType.COMMA) {
                 pushToken(commaToken);
             }
@@ -435,11 +405,9 @@ public class JSONReader extends BSONReader {
         return (RegularExpression) currentValue;
     }
 
-
     @Override
     public void readStartArray() {
         checkPreconditions("readStartArray", BSONType.ARRAY);
-
         context = new Context(context, BSONContextType.ARRAY);
         setState(State.TYPE);
     }
@@ -447,7 +415,6 @@ public class JSONReader extends BSONReader {
     @Override
     public void readStartDocument() {
         checkPreconditions("readStartDocument", BSONType.DOCUMENT);
-
         context = new Context(context, BSONContextType.DOCUMENT);
         setState(State.TYPE);
     }
@@ -481,25 +448,110 @@ public class JSONReader extends BSONReader {
 
     @Override
     public void skipName() {
-        throw new UnsupportedOperationException();
+        if (isClosed()) {
+            throw new IllegalStateException("This instance has been closed");
+        }
+        if (getState() != State.NAME) {
+            throwInvalidState("skipName", State.NAME);
+        }
+        setState(State.VALUE);
     }
 
     @Override
     public void skipValue() {
-        throw new UnsupportedOperationException();
-    }
-
-    private JSONToken popToken() {
-        if (pushedToken != null) {
-            JSONToken token = pushedToken;
-            pushedToken = null;
-            return token;
-        } else {
-            return scanner.next();
+        if (isClosed()) {
+            throw new IllegalStateException("This instance has been closed");
+        }
+        if (getState() != State.VALUE) {
+            throwInvalidState("skipValue", State.VALUE);
+        }
+        switch (getCurrentBSONType()) {
+            case ARRAY:
+                readStartArray();
+                while (readBSONType() != BSONType.END_OF_DOCUMENT) {
+                    skipValue();
+                }
+                readEndArray();
+                break;
+            case BINARY:
+                readBinaryData();
+                break;
+            case BOOLEAN:
+                readBoolean();
+                break;
+            case DATE_TIME:
+                readDateTime();
+                break;
+            case DOCUMENT:
+                readStartDocument();
+                while (readBSONType() != BSONType.END_OF_DOCUMENT) {
+                    skipName();
+                    skipValue();
+                }
+                readEndDocument();
+                break;
+            case DOUBLE:
+                readDouble();
+                break;
+            case INT32:
+                readInt32();
+                break;
+            case INT64:
+                readInt64();
+                break;
+            case JAVASCRIPT:
+                readJavaScript();
+                break;
+            case JAVASCRIPT_WITH_SCOPE:
+                readJavaScriptWithScope();
+                readStartDocument();
+                while (readBSONType() != BSONType.END_OF_DOCUMENT) {
+                    skipName();
+                    skipValue();
+                }
+                readEndDocument();
+                break;
+            case MAX_KEY:
+                readMaxKey();
+                break;
+            case MIN_KEY:
+                readMinKey();
+                break;
+            case NULL:
+                readNull();
+                break;
+            case OBJECT_ID:
+                readObjectId();
+                break;
+            case REGULAR_EXPRESSION:
+                readRegularExpression();
+                break;
+            case STRING:
+                readString();
+                break;
+            case SYMBOL:
+                readSymbol();
+                break;
+            case TIMESTAMP:
+                readTimestamp();
+                break;
+            case UNDEFINED:
+                readUndefined();
+                break;
         }
     }
 
-    private void pushToken(JSONToken token) {
+    private final JSONToken popToken() {
+        if (pushedToken != null) {
+            final JSONToken token = pushedToken;
+            pushedToken = null;
+            return token;
+        } else {
+            return scanner.nextToken();
+        }
+    }
+
+    private void pushToken(final JSONToken token) {
         if (pushedToken == null) {
             pushedToken = token;
         } else {
@@ -508,130 +560,213 @@ public class JSONReader extends BSONReader {
     }
 
     private void verifyToken(String expectedLexeme) {
-        JSONToken token = popToken();
+        final JSONToken token = popToken();
         if (!token.getLexeme().equals(expectedLexeme)) {
-            String message = format("JSON reader expected '%s' but found '%s'.", expectedLexeme, token.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected '%s' but found '%s'.", expectedLexeme, token.getLexeme());
+            throw new BSONException(message);
         }
     }
 
     private void verifyString(String expectedString) {
-        JSONToken token = popToken();
+        final JSONToken token = popToken();
         if ((token.getType() != JSONTokenType.STRING && token.getType() != JSONTokenType.UNQUOTED_STRING) || !token.asString().equals(expectedString)) {
-            String message = format("JSON reader expected '%s' but found '%s'.", expectedString, token.asString());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected '%s' but found '%s'.", expectedString, token.asString());
+            throw new BSONException(message);
         }
     }
 
-    private BSONType parseExtendedJSON() {
-        JSONToken nameToken = popToken();
+    private void visitNew() {
+        final JSONToken typeToken = popToken();
+        if (typeToken.getType() != JSONTokenType.UNQUOTED_STRING) {
+            final String message = format("JSON reader expected a type name but found '%s'.", typeToken.getLexeme());
+            throw new BSONException(message);
+        }
+
+        if ("BinData".equals(typeToken.asString())) {
+            currentValue = visitBinDataConstructor();
+            setCurrentBSONType(BSONType.BINARY);
+        } else if ("Date".equals(typeToken.asString())) {
+            currentValue = visitDateTimeConstructorWithNew();
+            setCurrentBSONType(BSONType.DATE_TIME);
+        } else if ("HexData".equals(typeToken.asString())) {
+            currentValue = visitHexDataConstructor();
+            setCurrentBSONType(BSONType.BINARY);
+        } else if ("ISODate".equals(typeToken.asString())) {
+            currentValue = visitISODateTimeConstructor();
+            setCurrentBSONType(BSONType.DATE_TIME);
+        } else if ("NumberLong".equals(typeToken.asString())) {
+            currentValue = visitNumberLongConstructor();
+            setCurrentBSONType(BSONType.INT64);
+        } else if ("ObjectId".equals(typeToken.asString())) {
+            currentValue = visitObjectIdConstructor();
+            setCurrentBSONType(BSONType.OBJECT_ID);
+        } else if ("RegExp".equals(typeToken.asString())) {
+            currentValue = visitRegularExpressionConstructor();
+            setCurrentBSONType(BSONType.REGULAR_EXPRESSION);
+        } else if ("UUID".equals(typeToken.asString())
+                || "GUID".equals(typeToken.asString())
+                || "CSUUID".equals(typeToken.asString())
+                || "CSGUID".equals(typeToken.asString())
+                || "JUUID".equals(typeToken.asString())
+                || "JGUID".equals(typeToken.asString())
+                || "PYUUID".equals(typeToken.asString())
+                || "PYGUID".equals(typeToken.asString())) {
+            currentValue = visitUUIDConstructor(typeToken.asString());
+            setCurrentBSONType(BSONType.BINARY);
+        } else {
+            final String message = format("JSON reader expected a type name but found '%s'.", typeToken.getLexeme());
+            throw new BSONException(message);
+        }
+    }
+
+    private void visitExtendedJSON() {
+        final JSONToken nameToken = popToken();
         if (nameToken.getType() == JSONTokenType.STRING || nameToken.getType() == JSONTokenType.UNQUOTED_STRING) {
-            //TODO Refactor this
             if ("$binary".equals(nameToken.asString())) {
-                currentValue = parseBinDataExtendedJson();
-                return BSONType.BINARY;
+                currentValue = visitBinDataExtendedJson();
+                setCurrentBSONType(BSONType.BINARY);
+                return;
             } else if ("$code".equals(nameToken.asString())) {
-                BSONType type = parseJavaScriptExtendedJson();
-                setCurrentBSONType(type);
-                return type;
+                visitJavaScriptExtendedJson();
+                return;
             } else if ("$date".equals(nameToken.asString())) {
-                currentValue = parseDateTimeExtendedJson();
-                return BSONType.DATE_TIME;
+                currentValue = visitDateTimeExtendedJson();
+                setCurrentBSONType(BSONType.DATE_TIME);
+                return;
             } else if ("$maxkey".equals(nameToken.asString())) {
-                currentValue = parseMaxKeyExtendedJson();
-                return BSONType.MAX_KEY;
+                currentValue = visitMaxKeyExtendedJson();
+                setCurrentBSONType(BSONType.MAX_KEY);
+                return;
             } else if ("$minkey".equals(nameToken.asString())) {
-                currentValue = parseMinKeyExtendedJson();
-                return BSONType.MIN_KEY;
+                currentValue = visitMinKeyExtendedJson();
+                setCurrentBSONType(BSONType.MIN_KEY);
+                return;
             } else if ("$oid".equals(nameToken.asString())) {
-                currentValue = parseObjectIdExtendedJson();
-                return BSONType.OBJECT_ID;
+                currentValue = visitObjectIdExtendedJson();
+                setCurrentBSONType(BSONType.OBJECT_ID);
+                return;
             } else if ("$regex".equals(nameToken.asString())) {
-                currentValue = parseRegularExpressionExtendedJson();
-                return BSONType.REGULAR_EXPRESSION;
+                currentValue = visitRegularExpressionExtendedJson();
+                setCurrentBSONType(BSONType.REGULAR_EXPRESSION);
+                return;
             } else if ("$symbol".equals(nameToken.asString())) {
-                currentValue = parseSymbolExtendedJson();
-                return BSONType.SYMBOL;
+                currentValue = visitSymbolExtendedJson();
+                setCurrentBSONType(BSONType.SYMBOL);
+                return;
             } else if ("$timestamp".equals(nameToken.asString())) {
-                currentValue = parseTimestampExtendedJson();
-                return BSONType.TIMESTAMP;
+                currentValue = visitTimestampExtendedJson();
+                setCurrentBSONType(BSONType.TIMESTAMP);
+                return;
             }
         }
         pushToken(nameToken);
-        return BSONType.DOCUMENT;
+        setCurrentBSONType(BSONType.DOCUMENT);
     }
 
-    private Object parseBinDataConstructor() {
+    private Binary visitBinDataConstructor() {
         verifyToken("(");
-        JSONToken subTypeToken = popToken();
+        final JSONToken subTypeToken = popToken();
         if (subTypeToken.getType() != JSONTokenType.INT32) {
-            String message = format("JSON reader expected a binary subtype but found '%s'.", subTypeToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected a binary subtype but found '%s'.", subTypeToken.getLexeme());
+            throw new BSONException(message);
         }
         verifyToken(",");
-        JSONToken bytesToken = popToken();
+        final JSONToken bytesToken = popToken();
         if (bytesToken.getType() != JSONTokenType.STRING) {
-            String message = format("JSON reader expected a string but found '%s'.", bytesToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected a string but found '%s'.", bytesToken.getLexeme());
+            throw new BSONException(message);
         }
         verifyToken(")");
 
-        byte[] bytes = new Base64Codec().decode(bytesToken.asString());
+        byte[] bytes = DatatypeConverter.parseBase64Binary(bytesToken.asString());
         BSONBinarySubType subType = BSONBinarySubType.values()[subTypeToken.asInt32()];
         return new Binary(subType, bytes);
     }
 
-    private Object parseUUIDConstructor(String lexeme) {
-        throw new UnsupportedOperationException();
-    }
-
-    private Object parseRegularExpressionConstructor() {
-        throw new UnsupportedOperationException();
-    }
-
-    private Object parseObjectIdConstructor() {
+    private Binary visitUUIDConstructor(String uuidConstructorName) {
+        //TODO verify information related to https://jira.mongodb.org/browse/SERVER-3168
         verifyToken("(");
-        JSONToken valueToken = popToken();
+        final JSONToken bytesToken = popToken();
+        if (bytesToken.getType() != JSONTokenType.STRING) {
+            String message = format("JSON reader expected a string but found '%s'.", bytesToken.getLexeme());
+            throw new BSONException(message);
+        }
+        verifyToken(")");
+        String hexString = bytesToken.asString().replaceAll("{", "").replace("}", "").replace("-", "");
+        final byte[] bytes = DatatypeConverter.parseHexBinary(hexString);
+        BSONBinarySubType subType = BSONBinarySubType.UuidStandard;
+        if (!"UUID".equals(uuidConstructorName) || !"GUID".equals(uuidConstructorName)) {
+            subType = BSONBinarySubType.UuidLegacy;
+        }
+        return new Binary(subType, bytes);
+    }
+
+    private RegularExpression visitRegularExpressionConstructor() {
+        verifyToken("(");
+        final JSONToken patternToken = popToken();
+        if (patternToken.getType() != JSONTokenType.STRING) {
+            String message = format("JSON reader expected a string but found '%s'.", patternToken.getLexeme());
+            throw new BSONException(message);
+        }
+        String options = "";
+        final JSONToken commaToken = popToken();
+        if (commaToken.getType() == JSONTokenType.COMMA) {
+            JSONToken optionsToken = popToken();
+            if (optionsToken.getType() != JSONTokenType.STRING) {
+                String message = format("JSON reader expected a string but found '%s'.", optionsToken.getLexeme());
+                throw new BSONException(message);
+            }
+            options = optionsToken.asString();
+        } else {
+            pushToken(commaToken);
+        }
+        verifyToken(")");
+        return new RegularExpression(patternToken.asString(), options);
+    }
+
+    private ObjectId visitObjectIdConstructor() {
+        verifyToken("(");
+        final JSONToken valueToken = popToken();
         if (valueToken.getType() != JSONTokenType.STRING) {
-            String message = format("JSON reader expected a string but found '%s'.", valueToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected a string but found '%s'.", valueToken.getLexeme());
+            throw new BSONException(message);
         }
         verifyToken(")");
         return new ObjectId(valueToken.asString());
     }
 
-    private long parseNumberLongConstructor() {
+    private long visitNumberLongConstructor() {
         verifyToken("(");
-        JSONToken valueToken = popToken();
+        final JSONToken valueToken = popToken();
         long value;
         if (valueToken.getType() == JSONTokenType.INT32 || valueToken.getType() == JSONTokenType.INT64) {
             value = valueToken.asInt64();
         } else if (valueToken.getType() == JSONTokenType.STRING) {
             value = Long.parseLong(valueToken.asString());
         } else {
-            String message = format("JSON reader expected an integer or a string but found '%s'.", valueToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected an integer or a string but found '%s'.", valueToken.getLexeme());
+            throw new BSONException(message);
         }
         verifyToken(")");
         return value;
     }
 
-    private long parseISODateTimeConstructor() {
+    private long visitISODateTimeConstructor() {
         verifyToken("(");
-        JSONToken valueToken = popToken();
+        final JSONToken valueToken = popToken();
         if (valueToken.getType() != JSONTokenType.STRING) {
-            String message = format("JSON reader expected a string but found '%s'.", valueToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected a string but found '%s'.", valueToken.getLexeme());
+            throw new BSONException(message);
         }
         verifyToken(")");
         final String[] patterns = {"yyyy-MM-dd", "yyyy-MM-dd'T'hh:mm:ssz", "yyyy-MM-dd'T'hh:mm:ss.SSSz"};
 
         final SimpleDateFormat format = new SimpleDateFormat(patterns[0], Locale.ENGLISH);
-        ParsePosition pos = new ParsePosition(0);
-        String str = valueToken.asString();
+        final ParsePosition pos = new ParsePosition(0);
+        String s = valueToken.asString();
 
-        if (str.endsWith("Z")) {
-            str = str.substring(0, str.length() - 1) + "GMT-00:00";
+        if (s.endsWith("Z")) {
+            s = s.substring(0, s.length() - 1) + "GMT-00:00";
         }
 
         for (String pattern : patterns) {
@@ -639,27 +774,27 @@ public class JSONReader extends BSONReader {
             format.setLenient(true);
             pos.setIndex(0);
 
-            Date date = format.parse(str, pos);
+            Date date = format.parse(s, pos);
 
-            if (date != null && pos.getIndex() == str.length()) {
+            if (date != null && pos.getIndex() == s.length()) {
                 return date.getTime();
             }
         }
-        throw new IllegalArgumentException("Invalid date format.");
+        throw new BSONException("Invalid date format.");
     }
 
-    private Object parseHexDataConstructor() {
+    private Binary visitHexDataConstructor() {
         verifyToken("(");
-        JSONToken subTypeToken = popToken();
+        final JSONToken subTypeToken = popToken();
         if (subTypeToken.getType() != JSONTokenType.INT32) {
-            String message = format("JSON reader expected a binary subtype but found '%s'.", subTypeToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected a binary subtype but found '%s'.", subTypeToken.getLexeme());
+            throw new BSONException(message);
         }
         verifyToken(",");
-        JSONToken bytesToken = popToken();
+        final JSONToken bytesToken = popToken();
         if (bytesToken.getType() != JSONTokenType.STRING) {
-            String message = format("JSON reader expected a string but found '%s'.", bytesToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected a string but found '%s'.", bytesToken.getLexeme());
+            throw new BSONException(message);
         }
         verifyToken(")");
 
@@ -678,53 +813,55 @@ public class JSONReader extends BSONReader {
 
     }
 
-    private Object parseDateTimeConstructor(boolean withNew) {
+    private long visitDateTimeConstructorWithNew() {
         final DateFormat df = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss z");
 
         verifyToken("(");
 
-        // Date when used without "new" behaves differently (JavaScript has some weird parts)
-        if (!withNew) {
-            verifyToken(")");
-            return df.format(new Date());
-        }
-
         JSONToken token = popToken();
-        if (")".equals(token.getLexeme())) {
-            return new Date();
+        if (token.getType() == JSONTokenType.RIGHT_PAREN) {
+            return new Date().getTime();
         } else if (token.getType() == JSONTokenType.STRING) {
             verifyToken(")");
-            Date dateTime = df.parse(token.asString(), new ParsePosition(0));
-            return dateTime;
+            final String s = token.asString();
+            final ParsePosition pos = new ParsePosition(0);
+            final Date dateTime = df.parse(s, pos);
+            if (dateTime != null || pos.getIndex() == s.length()) {
+                return dateTime.getTime();
+            } else {
+                final String message = format("JSON reader expected a date in 'EEE MMM dd yyyy HH:mm:ss z' format but found '%s'.", s);
+                throw new BSONException(message);
+            }
+
         } else if (token.getType() == JSONTokenType.INT32 || token.getType() == JSONTokenType.INT64) {
-            long[] values = new long[7];
+            final long[] values = new long[7];
             int pos = 0;
             while (true) {
                 if (pos < values.length) {
                     values[pos++] = token.asInt64();
                 }
                 token = popToken();
-                if (")".equals(token.getLexeme())) {
+                if (token.getType() == JSONTokenType.RIGHT_PAREN) {
                     break;
                 }
-                if (!",".equals(token.getLexeme())) {
-                    String message = format("JSON reader expected a ',' or a ')' but found '%s'.", token.getLexeme());
-                    throw new IllegalArgumentException(message);
+                if (token.getType() != JSONTokenType.COMMA) {
+                    final String message = format("JSON reader expected a ',' or a ')' but found '%s'.", token.getLexeme());
+                    throw new BSONException(message);
                 }
                 token = popToken();
                 if (token.getType() != JSONTokenType.INT32 && token.getType() != JSONTokenType.INT64) {
-                    String message = format("JSON reader expected an integer but found '%s'.", token.getLexeme());
-                    throw new IllegalArgumentException(message);
+                    final String message = format("JSON reader expected an integer but found '%s'.", token.getLexeme());
+                    throw new BSONException(message);
                 }
             }
             if (pos == 1) {
-                return new Date(values[0]);
+                return values[0];
             } else if (pos < 3 && pos > 7) {
-                String message = format("JSON reader expected 1 or 3-7 integers but found %d.", pos);
-                throw new IllegalArgumentException(message);
+                final String message = format("JSON reader expected 1 or 3-7 integers but found %d.", pos);
+                throw new BSONException(message);
             }
 
-            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+            final Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
             calendar.set(Calendar.YEAR, (int) values[0]);
             calendar.set(Calendar.MONTH, (int) values[1]);
             calendar.set(Calendar.DAY_OF_MONTH, (int) values[2]);
@@ -732,69 +869,98 @@ public class JSONReader extends BSONReader {
             calendar.set(Calendar.MINUTE, (int) values[4]);
             calendar.set(Calendar.SECOND, (int) values[5]);
             calendar.set(Calendar.MILLISECOND, (int) values[6]);
-            return calendar.getTime();
+            return calendar.getTimeInMillis();
         } else {
-            String message = format("JSON reader expected an integer or a string but found '{0}'.", token.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected an integer or a string but found '%s'.", token.getLexeme());
+            throw new BSONException(message);
         }
     }
 
-    private Object parseBinDataExtendedJson() {
-        throw new UnsupportedOperationException();
+    private String visitDateTimeConstructor() {
+        verifyToken("(");
+        verifyToken(")");
+        final DateFormat df = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss z");
+        return df.format(new Date());
     }
 
-    private Object parseDateTimeExtendedJson() {
+    private Binary visitBinDataExtendedJson() {
         verifyToken(":");
-        JSONToken valueToken = popToken();
-        if (valueToken.getType() != JSONTokenType.INT32 && valueToken.getType() != JSONTokenType.INT64) {
-            String message = format("JSON reader expected an integer but found '%s'.", valueToken.getLexeme());
-            throw new IllegalArgumentException(message);
+        final JSONToken bytesToken = popToken();
+        if (bytesToken.getType() != JSONTokenType.STRING) {
+            String message = format("JSON reader expected a string but found '%s'.", bytesToken.getLexeme());
+            throw new BSONException(message);
+        }
+        verifyToken(",");
+        verifyString("$type");
+        verifyToken(":");
+        final JSONToken subTypeToken = popToken();
+        if (subTypeToken.getType() != JSONTokenType.STRING) {
+            String message = format("JSON reader expected a string but found '%s'.", subTypeToken.getLexeme());
+            throw new BSONException(message);
         }
         verifyToken("}");
-        return new Date(valueToken.asInt64());
+
+        for (BSONBinarySubType subType : BSONBinarySubType.values()) {
+            if (subType.getValue() == subTypeToken.asInt32()) {
+                return new Binary(subType, DatatypeConverter.parseBase64Binary(bytesToken.asString()));
+            }
+        }
+
+        return new Binary(DatatypeConverter.parseBase64Binary(bytesToken.asString()));
     }
 
-    private MaxKey parseMaxKeyExtendedJson() {
+    private long visitDateTimeExtendedJson() {
+        verifyToken(":");
+        final JSONToken valueToken = popToken();
+        if (valueToken.getType() != JSONTokenType.INT32 && valueToken.getType() != JSONTokenType.INT64) {
+            final String message = format("JSON reader expected an integer but found '%s'.", valueToken.getLexeme());
+            throw new BSONException(message);
+        }
+        verifyToken("}");
+        return valueToken.asInt64();
+    }
+
+    private MaxKey visitMaxKeyExtendedJson() {
         verifyToken(":");
         verifyToken("1");
         verifyToken("}");
         return new MaxKey();
     }
 
-    private MinKey parseMinKeyExtendedJson() {
+    private MinKey visitMinKeyExtendedJson() {
         verifyToken(":");
         verifyToken("1");
         verifyToken("}");
         return new MinKey();
     }
 
-    private Object parseObjectIdExtendedJson() {
+    private ObjectId visitObjectIdExtendedJson() {
         verifyToken(":");
-        JSONToken valueToken = popToken();
+        final JSONToken valueToken = popToken();
         if (valueToken.getType() != JSONTokenType.STRING) {
-            String message = format("JSON reader expected a string but found '%s'.", valueToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected a string but found '%s'.", valueToken.getLexeme());
+            throw new BSONException(message);
         }
         verifyToken("}");
         return new ObjectId(valueToken.asString());
     }
 
-    private Object parseRegularExpressionExtendedJson() {
+    private RegularExpression visitRegularExpressionExtendedJson() {
         verifyToken(":");
-        JSONToken patternToken = popToken();
+        final JSONToken patternToken = popToken();
         if (patternToken.getType() != JSONTokenType.STRING) {
-            String message = format("JSON reader expected a string but found '%s'.", patternToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected a string but found '%s'.", patternToken.getLexeme());
+            throw new BSONException(message);
         }
         String options = "";
-        JSONToken commaToken = popToken();
+        final JSONToken commaToken = popToken();
         if (commaToken.getType() == JSONTokenType.COMMA) {
             verifyString("$options");
             verifyToken(":");
-            JSONToken optionsToken = popToken();
+            final JSONToken optionsToken = popToken();
             if (optionsToken.getType() != JSONTokenType.STRING) {
-                String message = format("JSON reader expected a string but found '%s'.", optionsToken.getLexeme());
-                throw new IllegalArgumentException(message);
+                final String message = format("JSON reader expected a string but found '%s'.", optionsToken.getLexeme());
+                throw new BSONException(message);
             }
             options = optionsToken.asString();
         } else {
@@ -804,57 +970,58 @@ public class JSONReader extends BSONReader {
         return new RegularExpression(patternToken.asString(), options);
     }
 
-    private String parseSymbolExtendedJson() {
+    private String visitSymbolExtendedJson() {
         verifyToken(":");
-        JSONToken nameToken = popToken();
+        final JSONToken nameToken = popToken();
         if (nameToken.getType() != JSONTokenType.STRING) {
-            String message = format("JSON reader expected a string but found '%s'.", nameToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected a string but found '%s'.", nameToken.getLexeme());
+            throw new BSONException(message);
         }
         verifyToken("}");
-        return nameToken.asString(); // will be converted to a BsonSymbol at a higher level
+        return nameToken.asString();
     }
 
-    private Object parseTimestampExtendedJson() {
+    private BSONTimestamp visitTimestampExtendedJson() {
         verifyToken(":");
-        JSONToken valueToken = popToken();
+        final JSONToken valueToken = popToken();
         int value;
         if (valueToken.getType() == JSONTokenType.INT32 || valueToken.getType() == JSONTokenType.INT64) {
             value = valueToken.asInt32();
-        } else if (valueToken.getType() == JSONTokenType.UNQUOTED_STRING && "NumberLong".equals(valueToken.getLexeme())) {
-            value = (int) parseNumberLongConstructor();
+        } else if (valueToken.getType() == JSONTokenType.UNQUOTED_STRING && "NumberLong".equals(valueToken.asString())) {
+            value = (int) visitNumberLongConstructor();
         } else {
-            String message = format("JSON reader expected an integer but found '%s'.", valueToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected an integer but found '%s'.", valueToken.getLexeme());
+            throw new BSONException(message);
         }
         verifyToken("}");
         return new BSONTimestamp(value, 1);
     }
 
-    private BSONType parseJavaScriptExtendedJson() {
+    private void visitJavaScriptExtendedJson() {
         verifyToken(":");
-        JSONToken codeToken = popToken();
+        final JSONToken codeToken = popToken();
         if (codeToken.getType() != JSONTokenType.STRING) {
-            String message = format("JSON reader expected a string but found '%s'.", codeToken.getLexeme());
-            throw new IllegalArgumentException(message);
+            final String message = format("JSON reader expected a string but found '%s'.", codeToken.getLexeme());
+            throw new BSONException(message);
         }
-        JSONToken nextToken = popToken();
+        final JSONToken nextToken = popToken();
         switch (nextToken.getType()) {
             case COMMA:
                 verifyString("$scope");
                 verifyToken(":");
                 setState(State.VALUE);
                 currentValue = codeToken.asString();
-                return BSONType.JAVASCRIPT_WITH_SCOPE;
+                setCurrentBSONType(BSONType.JAVASCRIPT_WITH_SCOPE);
+                break;
             case END_OBJECT:
                 currentValue = codeToken.asString();
-                return BSONType.JAVASCRIPT;
+                setCurrentBSONType(BSONType.JAVASCRIPT);
+                break;
             default:
-                String message = format("JSON reader expected ',' or '}' but found '%s'.", codeToken.getLexeme());
-                throw new IllegalArgumentException(message);
+                final String message = format("JSON reader expected ',' or '}' but found '%s'.", codeToken.getLexeme());
+                throw new BSONException(message);
         }
     }
-
 
     private void checkPreconditions(final String methodName, final BSONType type) {
         if (isClosed()) {

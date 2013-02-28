@@ -17,26 +17,41 @@
 package org.mongodb.json;
 
 import org.bson.types.RegularExpression;
+import org.mongodb.json.tokens.*;
 
-import java.util.Iterator;
-
-public class JSONScanner implements Iterator<JSONToken> {
+/**
+ * Parses the string representation of a JSON object into a set of {@link JSONToken}-derived objects.
+ *
+ * @since 3.0.0
+ */
+public class JSONScanner {
 
     private final JSONBuffer buffer;
-    private boolean closed = false;
 
-
-    public JSONScanner(JSONBuffer buffer) {
+    /**
+     * Constructs a a new {@code JSONScanner} that produces values scanned from specified {@code JSONBuffer}.
+     * @param buffer A buffer to be scanned.
+     */
+    public JSONScanner(final JSONBuffer buffer) {
         this.buffer = buffer;
     }
 
-    @Override
-    public boolean hasNext() {
-        return false;
+    /**
+     * Constructs a a new {@code JSONScanner} that produces values scanned from the specified {@code String}.
+     * @param json A string representation of a JSON to be scanned.
+     */
+    public JSONScanner(final String json) {
+        this(new JSONBuffer(json));
     }
 
-    @Override
-    public JSONToken next() {
+    /**
+     * Finds and returns the next complete token from this scanner.
+     * If scanner reached the end of the source, it will return a token with {@code JSONTokenType.END_OF_FILE} type.
+     *
+     * @return The next token.
+     * @throws JSONParseException if source is invalid.
+     */
+    public JSONToken nextToken() {
 
         int c = buffer.read();
         while (c != -1 && Character.isWhitespace(c)) {
@@ -46,7 +61,7 @@ public class JSONScanner implements Iterator<JSONToken> {
             return new JSONToken(JSONTokenType.END_OF_FILE, "<eof>");
         }
 
-        switch ((char) c) {
+        switch (c) {
             case '{':
                 return new JSONToken(JSONTokenType.BEGIN_OBJECT, "{");
             case '}':
@@ -65,67 +80,83 @@ public class JSONScanner implements Iterator<JSONToken> {
                 return new JSONToken(JSONTokenType.COMMA, ",");
             case '\'':
             case '"':
-                return nextStringToken((char) c);
+                return scanString((char) c);
             case '/':
-                return nextRegularExpressionToken();
+                return scanRegularExpression();
             default:
                 if (c == '-' || Character.isDigit(c)) {
-                    return nextNumberToken((char) c);
+                    return scanNumber((char) c);
                 } else if (c == '$' || c == '_' || Character.isLetter(c)) {
-                    return nextUnquotedStringToken();
+                    return scanUnquotedString();
                 } else {
+                    final int position = buffer.getPosition();
                     buffer.unread(c);
-                    throw new IllegalArgumentException("Invalid JSON input");  //TODO correct message
+                    throw new JSONParseException("Invalid JSON input. Position: %d. Character: '%c'.", position, c);
                 }
         }
     }
 
-    private JSONToken nextRegularExpressionToken() {
-        // opening slash has already been read
-        int startPattern = buffer.getPosition() - 1;
-        int startOptions = -1;
+    /**
+     * Reads {@code RegularExpressionToken} from source. The following variants of lexemes are possible:
+     *
+     *<pre>
+     *  /pattern/
+     *  /\(pattern\)/
+     *  /pattern/ims
+     *</pre>
+     *
+     * Options can include 'i','m','x','s'
+     *
+     * @return The regular expression token.
+     *
+     * @throws JSONParseException if regular expression representation is not valid.
+     */
+    private JSONToken scanRegularExpression() {
 
-        RegularExpressionState state = RegularExpressionState.InPattern;
+        final int start = buffer.getPosition() - 1;
+        int options = -1;
+
+        RegularExpressionState state = RegularExpressionState.IN_PATTERN;
         while (true) {
             int c = buffer.read();
             switch (state) {
-                case InPattern:
+                case IN_PATTERN:
                     switch (c) {
                         case '/':
-                            state = RegularExpressionState.InOptions;
-                            startOptions = buffer.getPosition();
+                            state = RegularExpressionState.IN_OPTIONS;
+                            options = buffer.getPosition();
                             break;
                         case '\\':
-                            state = RegularExpressionState.InEscapeSequence;
+                            state = RegularExpressionState.IN_ESCAPE_SEQUENCE;
                             break;
                         default:
-                            state = RegularExpressionState.InPattern;
+                            state = RegularExpressionState.IN_PATTERN;
                             break;
                     }
                     break;
-                case InEscapeSequence:
-                    state = RegularExpressionState.InPattern;
+                case IN_ESCAPE_SEQUENCE:
+                    state = RegularExpressionState.IN_PATTERN;
                     break;
-                case InOptions:
+                case IN_OPTIONS:
                     switch (c) {
                         case 'i':
                         case 'm':
                         case 'x':
                         case 's':
-                            state = RegularExpressionState.InOptions;
+                            state = RegularExpressionState.IN_OPTIONS;
                             break;
                         case ',':
                         case '}':
                         case ']':
                         case ')':
                         case -1:
-                            state = RegularExpressionState.Done;
+                            state = RegularExpressionState.DONE;
                             break;
                         default:
-                            if (Character.isWhitespace((char) c)) {
-                                state = RegularExpressionState.Done;
+                            if (Character.isWhitespace(c)) {
+                                state = RegularExpressionState.DONE;
                             } else {
-                                state = RegularExpressionState.Invalid;
+                                state = RegularExpressionState.INVALID;
                             }
                             break;
                     }
@@ -133,36 +164,54 @@ public class JSONScanner implements Iterator<JSONToken> {
             }
 
             switch (state) {
-                case Done:
+                case DONE:
                     buffer.unread(c);
-                    RegularExpression regex;
-                    if (startOptions < 0){
-                        String pattern = buffer.substring(startPattern+1, buffer.getPosition());
-                        regex = new RegularExpression(pattern);
-                    } else {
-                        String pattern = buffer.substring(startPattern+1, startOptions - 1);
-                        String options = buffer.substring(startOptions, buffer.getPosition());
-                        regex = new RegularExpression(pattern,options);
-                    }
-                    return new RegularExpressionJSONToken(buffer.substring(startPattern,buffer.getPosition()), regex);
-                case Invalid:
-                    throw new IllegalArgumentException("Invalid JSON regular expression"); //TODO Correct message;
+                    final int end = buffer.getPosition();
+                    final RegularExpression regex = new RegularExpression(buffer.substring(start+1, options-1), buffer.substring(options, end));
+                    return new RegularExpressionToken(buffer.substring(start, end), regex);
+                case INVALID:
+                    throw new JSONParseException("Invalid JSON regular expression. Position: %d.", buffer.getPosition());
             }
         }
     }
 
-    private JSONToken nextUnquotedStringToken() {
-        int start = buffer.getPosition() - 1;
+    /**
+     * Reads {@code StringToken} from source.
+     *
+     * @return The string token.
+     */
+    private JSONToken scanUnquotedString() {
+        final int start = buffer.getPosition() - 1;
         int c = buffer.read();
-        while (c == '$' || c == '_' || Character.isLetterOrDigit((char) c)) {
+        while (c == '$' || c == '_' || Character.isLetterOrDigit(c)) {
             c = buffer.read();
         }
         buffer.unread(c);
         String lexeme = buffer.substring(start, buffer.getPosition());
-        return new StringJSONToken(JSONTokenType.UNQUOTED_STRING, lexeme, lexeme);
+        return new StringToken(JSONTokenType.UNQUOTED_STRING, lexeme, lexeme);
     }
 
-    private JSONToken nextNumberToken(char firstChar) {
+    /**
+     * Reads number token from source. The following variants of lexemes are possible:
+     *
+     *<pre>
+     *  12
+     *  123
+     *  -0
+     *  -345
+     *  -0.0
+     *  0e1
+     *  0e-1
+     *  -0e-1
+     *  1e12
+     *  -Infinity
+     *</pre>
+     *
+     * @return The number token.
+     *
+     * @throws JSONParseException if number representation is invalid.
+     */
+    private JSONToken scanNumber(char firstChar) {
 
         int c = firstChar;
 
@@ -172,13 +221,13 @@ public class JSONScanner implements Iterator<JSONToken> {
 
         switch (c) {
             case '-':
-                state = NumberState.SawLeadingMinus;
+                state = NumberState.SAW_LEADING_MINUS;
                 break;
             case '0':
-                state = NumberState.SawLeadingZero;
+                state = NumberState.SAW_LEADING_ZERO;
                 break;
             default:
-                state = NumberState.SawIntegerDigits;
+                state = NumberState.SAW_INTEGER_DIGITS;
                 break;
         }
 
@@ -188,153 +237,152 @@ public class JSONScanner implements Iterator<JSONToken> {
         while (true) {
             c = buffer.read();
             switch (state) {
-                case SawLeadingMinus:
+                case SAW_LEADING_MINUS:
                     switch (c) {
                         case '0':
-                            state = NumberState.SawLeadingZero;
+                            state = NumberState.SAW_LEADING_ZERO;
                             break;
                         case 'I':
-                            state = NumberState.SawMinusI;
+                            state = NumberState.SAW_MINUS_I;
                             break;
                         default:
-                            if (Character.isDigit((char) c)) {
-                                state = NumberState.SawIntegerDigits;
+                            if (Character.isDigit(c)) {
+                                state = NumberState.SAW_INTEGER_DIGITS;
                             } else {
-                                state = NumberState.Invalid;
+                                state = NumberState.INVALID;
                             }
                             break;
                     }
                     break;
-                case SawLeadingZero:
+                case SAW_LEADING_ZERO:
                     switch (c) {
                         case '.':
-                            state = NumberState.SawDecimalPoint;
+                            state = NumberState.SAW_DECIMAL_POINT;
                             break;
                         case 'e':
                         case 'E':
-                            state = NumberState.SawExponentLetter;
+                            state = NumberState.SAW_EXPONENT_LETTER;
                             break;
                         case ',':
                         case '}':
                         case ']':
                         case ')':
                         case -1:
-                            state = NumberState.Done;
+                            state = NumberState.DONE;
                             break;
                         default:
-                            if (Character.isWhitespace((char) c)) {
-                                state = NumberState.Done;
+                            if (Character.isWhitespace(c)) {
+                                state = NumberState.DONE;
                             } else {
-                                state = NumberState.Invalid;
+                                state = NumberState.INVALID;
                             }
                             break;
                     }
                     break;
-                case SawIntegerDigits:
+                case SAW_INTEGER_DIGITS:
                     switch (c) {
                         case '.':
-                            state = NumberState.SawDecimalPoint;
+                            state = NumberState.SAW_DECIMAL_POINT;
                             break;
                         case 'e':
                         case 'E':
-                            state = NumberState.SawExponentLetter;
+                            state = NumberState.SAW_EXPONENT_LETTER;
                             break;
                         case ',':
                         case '}':
                         case ']':
                         case ')':
                         case -1:
-                            state = NumberState.Done;
+                            state = NumberState.DONE;
                             break;
                         default:
-                            if (Character.isDigit((char) c)) {
-                                state = NumberState.SawIntegerDigits;
-                            } else if (Character.isWhitespace((char) c)) {
-                                state = NumberState.Done;
+                            if (Character.isDigit(c)) {
+                                state = NumberState.SAW_INTEGER_DIGITS;
+                            } else if (Character.isWhitespace(c)) {
+                                state = NumberState.DONE;
                             } else {
-                                state = NumberState.Invalid;
+                                state = NumberState.INVALID;
                             }
                             break;
                     }
                     break;
-                case SawDecimalPoint:
+                case SAW_DECIMAL_POINT:
                     type = JSONTokenType.DOUBLE;
-                    if (Character.isDigit((char) c)) {
-                        state = NumberState.SawFractionDigits;
+                    if (Character.isDigit(c)) {
+                        state = NumberState.SAW_FRACTION_DIGITS;
                     } else {
-                        state = NumberState.Invalid;
+                        state = NumberState.INVALID;
                     }
                     break;
-                case SawFractionDigits:
+                case SAW_FRACTION_DIGITS:
                     switch (c) {
                         case 'e':
                         case 'E':
-                            state = NumberState.SawExponentLetter;
+                            state = NumberState.SAW_EXPONENT_LETTER;
                             break;
                         case ',':
                         case '}':
                         case ']':
                         case ')':
                         case -1:
-                            state = NumberState.Done;
+                            state = NumberState.DONE;
                             break;
                         default:
-                            if (Character.isDigit((char) c)) {
-                                state = NumberState.SawFractionDigits;
-                            } else if (Character.isWhitespace((char) c)) {
-                                state = NumberState.Done;
+                            if (Character.isDigit(c)) {
+                                state = NumberState.SAW_FRACTION_DIGITS;
+                            } else if (Character.isWhitespace(c)) {
+                                state = NumberState.DONE;
                             } else {
-                                state = NumberState.Invalid;
+                                state = NumberState.INVALID;
                             }
                             break;
                     }
                     break;
-                case SawExponentLetter:
+                case SAW_EXPONENT_LETTER:
                     type = JSONTokenType.DOUBLE;
                     switch (c) {
                         case '+':
                         case '-':
-                            state = NumberState.SawExponentSign;
+                            state = NumberState.SAW_EXPONENT_SIGN;
                             break;
                         default:
-                            if (Character.isDigit((char) c)) {
-                                state = NumberState.SawExponentDigits;
+                            if (Character.isDigit(c)) {
+                                state = NumberState.SAW_EXPONENT_DIGITS;
                             } else {
-                                state = NumberState.Invalid;
+                                state = NumberState.INVALID;
                             }
                             break;
                     }
                     break;
-                case SawExponentSign:
-                    if (Character.isDigit((char) c)) {
-                        state = NumberState.SawExponentDigits;
+                case SAW_EXPONENT_SIGN:
+                    if (Character.isDigit(c)) {
+                        state = NumberState.SAW_EXPONENT_DIGITS;
                     } else {
-                        state = NumberState.Invalid;
+                        state = NumberState.INVALID;
                     }
                     break;
-                case SawExponentDigits:
+                case SAW_EXPONENT_DIGITS:
                     switch (c) {
                         case ',':
                         case '}':
                         case ']':
                         case ')':
-                        case -1:
-                            state = NumberState.Done;
+                            state = NumberState.DONE;
                             break;
                         default:
-                            if (Character.isDigit((char) c)) {
-                                state = NumberState.SawExponentDigits;
-                            } else if (Character.isWhitespace((char) c)) {
-                                state = NumberState.Done;
+                            if (Character.isDigit(c)) {
+                                state = NumberState.SAW_EXPONENT_DIGITS;
+                            } else if (Character.isWhitespace(c)) {
+                                state = NumberState.DONE;
                             } else {
-                                state = NumberState.Invalid;
+                                state = NumberState.INVALID;
                             }
                             break;
                     }
                     break;
-                case SawMinusI:
+                case SAW_MINUS_I:
                     boolean sawMinusInfinity = true;
-                    char[] nfinity = new char[]{'n', 'f', 'i', 'n', 'i', 't', 'y'};
+                    final char[] nfinity = new char[]{'n', 'f', 'i', 'n', 'i', 't', 'y'};
                     for (int i = 0; i < nfinity.length; i++) {
                         if (c != nfinity[i]) {
                             sawMinusInfinity = false;
@@ -350,54 +398,61 @@ public class JSONScanner implements Iterator<JSONToken> {
                             case ']':
                             case ')':
                             case -1:
-                                state = NumberState.Done;
+                                state = NumberState.DONE;
                                 break;
                             default:
-                                if (Character.isWhitespace((char) c)) {
-                                    state = NumberState.Done;
+                                if (Character.isWhitespace(c)) {
+                                    state = NumberState.DONE;
                                 } else {
-                                    state = NumberState.Invalid;
+                                    state = NumberState.INVALID;
                                 }
                                 break;
                         }
                     } else {
-                        state = NumberState.Invalid;
+                        state = NumberState.INVALID;
                     }
                     break;
             }
 
             switch (state) {
-                case Done:
+                case DONE:
                     buffer.unread(c);
-                    String lexeme = buffer.substring(start, buffer.getPosition());
+                    final String lexeme = buffer.substring(start, buffer.getPosition());
                     if (type == JSONTokenType.DOUBLE) {
-                        double value = Double.parseDouble(lexeme);
-                        return new DoubleJSONToken(lexeme, value);
+                        final double value = Double.parseDouble(lexeme);
+                        return new DoubleToken(lexeme, value);
                     } else {
-                        long value = Long.parseLong(lexeme);
+                        final long value = Long.parseLong(lexeme);
                         if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-                            return new Int64JSONToken(lexeme, value);
+                            return new Int64Token(lexeme, value);
                         } else {
-                            return new Int32JSONToken(lexeme, (int) value);
+                            return new Int32Token(lexeme, (int) value);
                         }
                     }
-                case Invalid:
-                    throw new IllegalArgumentException("Invalid JSON number"); //TODO correct message
+                case INVALID:
+                    throw new JSONParseException("Invalid JSON number");
             }
         }
 
     }
 
-    private JSONToken nextStringToken(char quoteCharacter) {
-        int start = buffer.getPosition() - 1;
-        StringBuilder sb = new StringBuilder();
+    /**
+     * Reads {@code StringToken} from source.
+     *
+     * @return The string token.
+     */
+    private JSONToken scanString(char quoteCharacter) {
+
+        final int start = buffer.getPosition() - 1;
+
+        final StringBuilder sb = new StringBuilder();
 
         while (true) {
             int c = buffer.read();
-            switch ((char) c) {
+            switch (c) {
                 case '\\':
                     c = buffer.read();
-                    switch ((char) c) {
+                    switch (c) {
                         case '\'':
                             sb.append('\'');
                             break;
@@ -436,60 +491,44 @@ public class JSONScanner implements Iterator<JSONToken> {
                             }
                             break;
                         default:
-                            if (c != -1) {
-                                throw new IllegalArgumentException(String.format("Invalid escape sequence in JSON string '\\{0}'.", c)); //TODO correct message
-                            }
-                            break;
+                            throw new JSONParseException("Invalid escape sequence in JSON string '\\%c'.", c);
                     }
                     break;
 
                 default:
                     if (c == quoteCharacter) {
                         String lexeme = buffer.substring(start, buffer.getPosition());
-                        return new StringJSONToken(JSONTokenType.STRING, lexeme, sb.toString());
+                        return new StringToken(JSONTokenType.STRING, lexeme, sb.toString());
                     }
                     if (c != -1) {
                         sb.append((char) c);
                     }
             }
             if (c == -1) {
-                throw new IllegalArgumentException("End of file in JSON string."); //TODO correct message
+                throw new JSONParseException("End of file in JSON string.");
             }
         }
     }
 
-
-    /**
-     * The remove operation is not supported by this implementation of
-     * <code>Iterator</code>.
-     *
-     * @throws UnsupportedOperationException if this method is invoked.
-     * @see java.util.Iterator
-     */
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException();
-    }
-
     private enum NumberState {
-        SawLeadingMinus,
-        SawLeadingZero,
-        SawIntegerDigits,
-        SawDecimalPoint,
-        SawFractionDigits,
-        SawExponentLetter,
-        SawExponentSign,
-        SawExponentDigits,
-        SawMinusI,
-        Done,
-        Invalid
+        SAW_LEADING_MINUS,
+        SAW_LEADING_ZERO,
+        SAW_INTEGER_DIGITS,
+        SAW_DECIMAL_POINT,
+        SAW_FRACTION_DIGITS,
+        SAW_EXPONENT_LETTER,
+        SAW_EXPONENT_SIGN,
+        SAW_EXPONENT_DIGITS,
+        SAW_MINUS_I,
+        DONE,
+        INVALID
     }
 
     private enum RegularExpressionState {
-        InPattern,
-        InEscapeSequence,
-        InOptions,
-        Done,
-        Invalid
+        IN_PATTERN,
+        IN_ESCAPE_SEQUENCE,
+        IN_OPTIONS,
+        DONE,
+        INVALID
     }
 }

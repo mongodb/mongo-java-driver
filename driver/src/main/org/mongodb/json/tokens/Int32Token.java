@@ -14,19 +14,27 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.mongodb.json.tokens;
 
-public class StringJSONToken extends JSONToken {
+import org.mongodb.json.JSONToken;
+import org.mongodb.json.JSONTokenType;
 
-    private final String value;
+public class Int32Token extends JSONToken {
 
-    public StringJSONToken(JSONTokenType type, String lexeme, String value) {
-        super(type, lexeme);
+    private final int value;
+
+    public Int32Token(final String lexeme, final int value) {
+        super(JSONTokenType.INT32, lexeme);
         this.value = value;
     }
 
     @Override
-    public String asString() {
+    public int asInt32() {
+        return value;
+    }
+
+    @Override
+    public long asInt64() {
         return value;
     }
 }

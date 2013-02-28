@@ -19,12 +19,15 @@ package org.mongodb.json;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 
+/**
+ * A JSON token.
+ */
 public class JSONToken {
 
     private final String lexeme;
     private final JSONTokenType type;
 
-    public JSONToken(JSONTokenType type, String lexeme) {
+    public JSONToken(final JSONTokenType type, final String lexeme) {
         this.lexeme = lexeme;
         this.type = type;
     }
