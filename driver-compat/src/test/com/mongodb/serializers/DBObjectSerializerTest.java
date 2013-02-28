@@ -38,13 +38,13 @@ public class DBObjectSerializerTest extends DatabaseTestCase {
     public void testGetters() {
         final PrimitiveSerializers serializers = PrimitiveSerializers.createDefault();
         final DBObjectSerializer serializer = new DBObjectSerializer(database, serializers,
-                                                              BasicDBObject.class,
-                                                              new HashMap<String, Class<? extends DBObject>>());
+                BasicDBObject.class,
+                new HashMap<String, Class<? extends DBObject>>());
         assertEquals(database, serializer.getDb());
         assertEquals(BasicDBObject.class, serializer.getTopLevelClass());
         assertEquals(serializers, serializer.getPrimitiveSerializers());
         final HashMap<List<String>, Class<? extends DBObject>> expected
-        = new HashMap<List<String>, Class<? extends DBObject>>();
+                = new HashMap<List<String>, Class<? extends DBObject>>();
         expected.put(new ArrayList<String>(), BasicDBObject.class);
         assertEquals(expected, serializer.getPathToClassMap());
     }
@@ -52,13 +52,13 @@ public class DBObjectSerializerTest extends DatabaseTestCase {
     @Test
     public void testPathToClassMap() {
         final HashMap<String, Class<? extends DBObject>> stringPathToClassMap
-        = new HashMap<String, Class<? extends DBObject>>();
+                = new HashMap<String, Class<? extends DBObject>>();
         stringPathToClassMap.put("a", NestedOneDBObject.class);
         stringPathToClassMap.put("a.b", NestedTwoDBObject.class);
         final DBObjectSerializer serializer = new DBObjectSerializer(database, PrimitiveSerializers.createDefault(),
-                                                              TopLevelDBObject.class, stringPathToClassMap);
+                TopLevelDBObject.class, stringPathToClassMap);
         final Map<List<String>, Class<? extends DBObject>> pathToClassMap
-        = new HashMap<List<String>, Class<? extends DBObject>>();
+                = new HashMap<List<String>, Class<? extends DBObject>>();
         pathToClassMap.put(new ArrayList<String>(), TopLevelDBObject.class);
         pathToClassMap.put(Arrays.asList("a"), NestedOneDBObject.class);
         pathToClassMap.put(Arrays.asList("a", "b"), NestedTwoDBObject.class);
@@ -71,8 +71,10 @@ public class DBObjectSerializerTest extends DatabaseTestCase {
         collection.setInternalClass("a", NestedOneDBObject.class);
         collection.setInternalClass("a.b", NestedTwoDBObject.class);
 
-        final DBObject doc = new TopLevelDBObject().append("a", new NestedOneDBObject().append("b", new NestedTwoDBObject())
-                                                                                 .append("c", new BasicDBObject()));
+        final DBObject doc = new TopLevelDBObject()
+                .append("a", new NestedOneDBObject()
+                        .append("b", Arrays.asList(new NestedTwoDBObject()))
+                        .append("c", new BasicDBObject()));
         collection.save(doc);
         assertEquals(doc, collection.findOne());
     }

@@ -254,15 +254,22 @@ public class DBObjectSerializer implements Serializer<DBObject> {
                              final List<String> path) {
         final BSONType bsonType = reader.getCurrentBSONType();
         final Object initialRetVal;
-        if (bsonType.equals(BSONType.DOCUMENT)) {
-            path.add(fieldName);
-            initialRetVal = deserializeDocument(reader, path);
-            path.remove(path.size() - 1);
-        }
-        else if (bsonType.equals(BSONType.ARRAY)) {
-            path.add(fieldName);
-            initialRetVal = readArray(reader, path);
-            path.remove(path.size() - 1);
+        if (bsonType.isContainer()) {
+            if (fieldName != null) {
+                path.add(fieldName);
+            }
+
+            if (bsonType.equals(BSONType.DOCUMENT)) {
+                initialRetVal = deserializeDocument(reader, path);
+            }
+            // Must be an array, since there are only two container types
+            else {
+                initialRetVal = readArray(reader, path);
+            }
+
+            if (fieldName != null) {
+                path.remove(path.size() - 1);
+            }
         }
         else {
             initialRetVal = primitiveSerializers.deserialize(reader);
@@ -282,13 +289,13 @@ public class DBObjectSerializer implements Serializer<DBObject> {
     }
 
     private Map<List<String>, Class<? extends DBObject>> createPathToClassMap(
-                                                                             final Class<? extends DBObject>
-                                                                             topLevelClass,
-                                                                             final HashMap<String,
-                                                                                          Class<? extends DBObject>>
-                                                                             stringPathToClassMap) {
+            final Class<? extends DBObject>
+                    topLevelClass,
+            final HashMap<String,
+                    Class<? extends DBObject>>
+                    stringPathToClassMap) {
         final Map<List<String>, Class<? extends DBObject>> pathToClassMap
-        = new HashMap<List<String>, Class<? extends DBObject>>();
+                = new HashMap<List<String>, Class<? extends DBObject>>();
         pathToClassMap.put(EMPTY_PATH, topLevelClass);
         for (final Map.Entry<String, Class<? extends DBObject>> cur : stringPathToClassMap.entrySet()) {
             final List<String> path = Arrays.asList(cur.getKey().split("\\."));

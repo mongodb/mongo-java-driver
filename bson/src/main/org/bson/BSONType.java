@@ -120,4 +120,7 @@ public enum BSONType {
         return LOOKUP_TABLE[value];
     }
 
+    public boolean isContainer() {
+        return this == DOCUMENT || this == ARRAY;
+    }
 }
