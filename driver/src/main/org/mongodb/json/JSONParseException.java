@@ -37,7 +37,7 @@ public class JSONParseException extends RuntimeException {
      *
      * @param s The detail message.
      */
-    public JSONParseException(String s) {
+    public JSONParseException(final String s) {
         super(s);
     }
 
@@ -47,7 +47,7 @@ public class JSONParseException extends RuntimeException {
      * @param pattern A {@link  java.util.Formatter format string}.
      * @param args
      */
-    public JSONParseException(String pattern, Object... args) {
+    public JSONParseException(final String pattern, final Object... args) {
         super(String.format(pattern, args));
     }
 }

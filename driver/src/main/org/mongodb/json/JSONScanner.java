@@ -17,19 +17,25 @@
 package org.mongodb.json;
 
 import org.bson.types.RegularExpression;
-import org.mongodb.json.tokens.*;
+import org.mongodb.json.tokens.DoubleToken;
+import org.mongodb.json.tokens.Int32Token;
+import org.mongodb.json.tokens.Int64Token;
+import org.mongodb.json.tokens.RegularExpressionToken;
+import org.mongodb.json.tokens.StringToken;
 
 /**
  * Parses the string representation of a JSON object into a set of {@link JSONToken}-derived objects.
  *
  * @since 3.0.0
  */
+//CHECKSTYLE:OFF
 public class JSONScanner {
 
     private final JSONBuffer buffer;
 
     /**
      * Constructs a a new {@code JSONScanner} that produces values scanned from specified {@code JSONBuffer}.
+     *
      * @param buffer A buffer to be scanned.
      */
     public JSONScanner(final JSONBuffer buffer) {
@@ -38,6 +44,7 @@ public class JSONScanner {
 
     /**
      * Constructs a a new {@code JSONScanner} that produces values scanned from the specified {@code String}.
+     *
      * @param json A string representation of a JSON to be scanned.
      */
     public JSONScanner(final String json) {
@@ -98,17 +105,16 @@ public class JSONScanner {
 
     /**
      * Reads {@code RegularExpressionToken} from source. The following variants of lexemes are possible:
-     *
-     *<pre>
+     * <p/>
+     * <pre>
      *  /pattern/
      *  /\(pattern\)/
      *  /pattern/ims
-     *</pre>
-     *
+     * </pre>
+     * <p/>
      * Options can include 'i','m','x','s'
      *
      * @return The regular expression token.
-     *
      * @throws JSONParseException if regular expression representation is not valid.
      */
     private JSONToken scanRegularExpression() {
@@ -167,7 +173,8 @@ public class JSONScanner {
                 case DONE:
                     buffer.unread(c);
                     final int end = buffer.getPosition();
-                    final RegularExpression regex = new RegularExpression(buffer.substring(start+1, options-1), buffer.substring(options, end));
+                    final RegularExpression regex
+                            = new RegularExpression(buffer.substring(start + 1, options - 1), buffer.substring(options, end));
                     return new RegularExpressionToken(buffer.substring(start, end), regex);
                 case INVALID:
                     throw new JSONParseException("Invalid JSON regular expression. Position: %d.", buffer.getPosition());
@@ -193,8 +200,8 @@ public class JSONScanner {
 
     /**
      * Reads number token from source. The following variants of lexemes are possible:
-     *
-     *<pre>
+     * <p/>
+     * <pre>
      *  12
      *  123
      *  -0
@@ -205,13 +212,12 @@ public class JSONScanner {
      *  -0e-1
      *  1e12
      *  -Infinity
-     *</pre>
+     * </pre>
      *
      * @return The number token.
-     *
      * @throws JSONParseException if number representation is invalid.
      */
-    private JSONToken scanNumber(char firstChar) {
+    private JSONToken scanNumber(final char firstChar) {
 
         int c = firstChar;
 
@@ -441,7 +447,8 @@ public class JSONScanner {
      *
      * @return The string token.
      */
-    private JSONToken scanString(char quoteCharacter) {
+    //CHECKSTYLE:OFF
+    private JSONToken scanString(final char quoteCharacter) {
 
         final int start = buffer.getPosition() - 1;
 
@@ -532,3 +539,4 @@ public class JSONScanner {
         INVALID
     }
 }
+//CHECKSTYLE:ON

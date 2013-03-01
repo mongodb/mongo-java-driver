@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-package org.bson;
+package org.mongodb.json;
 
+import org.bson.BSONReader;
+import org.bson.BSONType;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.junit.Test;
-import org.mongodb.json.JSONOutputMode;
-import org.mongodb.json.JSONReader;
-import org.mongodb.json.JSONWriterSettings;
 
-
-import java.util.Date;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -89,7 +86,7 @@ public class JSONReaderTest {
         bsonReader = new JSONReader(json);
         assertEquals(BSONType.BOOLEAN, bsonReader.readBSONType());
         assertEquals(true, bsonReader.readBoolean());
-        assertEquals(BSONReader.State.DONE, bsonReader.getState());//
+        assertEquals(BSONReader.State.DONE, bsonReader.getState());
     }
 
     @Test
@@ -206,7 +203,7 @@ public class JSONReaderTest {
         String json = "1.5";
         bsonReader = new JSONReader(json);
         assertEquals(BSONType.DOUBLE, bsonReader.readBSONType());
-        assertEquals(1.5, bsonReader.readDouble(),0);
+        assertEquals(1.5, bsonReader.readDouble(), 0);
         assertEquals(BSONReader.State.DONE, bsonReader.getState());
     }
 
@@ -428,7 +425,7 @@ public class JSONReaderTest {
         String json = "{ \"$timestamp\" : NumberLong(1234) }";
         bsonReader = new JSONReader(json);
         assertEquals(BSONType.TIMESTAMP, bsonReader.readBSONType());
-        assertEquals(new BSONTimestamp(1234,1), bsonReader.readTimestamp());
+        assertEquals(new BSONTimestamp(1234, 1), bsonReader.readTimestamp());
         assertEquals(BSONReader.State.DONE, bsonReader.getState());
     }
 

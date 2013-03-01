@@ -16,8 +16,6 @@
 
 package org.mongodb.json;
 
-import org.bson.types.RegularExpression;
-
 public enum JSONTokenType {
     /**
      * An invalid token.

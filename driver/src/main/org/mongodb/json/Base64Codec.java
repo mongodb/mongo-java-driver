@@ -67,7 +67,7 @@ class Base64Codec {
     };
 
 
-    public byte[] decode(String str) {
+    public byte[] decode(final String str) {
 
         byte[] in = str.getBytes(Charset.forName("UTF-8"));
 
@@ -84,7 +84,7 @@ class Base64Codec {
         }
 
         int pad = 0;
-        for (int i = in.length; i > 1 && DECODE_TABLE[in[--i] & MASK_8BITS] <= 0; ) {
+        for (int i = in.length; i > 1 && DECODE_TABLE[in[--i] & MASK_8BITS] <= 0;) {
             if (in[i] == '=') {
                 pad++;
             }
@@ -94,7 +94,7 @@ class Base64Codec {
 
         byte[] buffer = new byte[numEncodedBytes];
 
-        for (int s = 0, d = 0; d < numEncodedBytes; ) {
+        for (int s = 0, d = 0; d < numEncodedBytes;) {
             int i = 0;
             for (int j = 0; j < 4; j++) {
                 int c = DECODE_TABLE[in[s++] & MASK_8BITS];

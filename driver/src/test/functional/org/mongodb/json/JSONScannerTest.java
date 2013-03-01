@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package org.bson;
+package org.mongodb.json;
 
 import org.junit.Test;
-import org.mongodb.json.*;
 
 import static org.junit.Assert.assertEquals;
 

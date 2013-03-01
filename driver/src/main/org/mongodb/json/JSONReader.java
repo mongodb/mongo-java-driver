@@ -16,8 +16,20 @@
 
 package org.mongodb.json;
 
-import org.bson.*;
-import org.bson.types.*;
+
+import org.bson.BSONBinarySubType;
+import org.bson.BSONContextType;
+import org.bson.BSONException;
+import org.bson.BSONInvalidOperationException;
+import org.bson.BSONReader;
+import org.bson.BSONReaderSettings;
+import org.bson.BSONType;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Binary;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
+import org.bson.types.RegularExpression;
 
 import javax.xml.bind.DatatypeConverter;
 import java.text.DateFormat;
@@ -33,20 +45,24 @@ import static java.lang.String.format;
 
 /**
  * Reads a JSON in one of the following modes:
- *
+ * <p/>
  * <ul>
- *     <li><b>Strict mode</b> that conforms to the <a href="http://www.json.org/">JSON RFC specifications.</a></li>
- *     <li><b>JavaScript mode</b> that that most JavaScript interpreters can process</li>
- *     <li>
- *         <b>Shell mode</b> that the <a href="http://docs.mongodb.org/manual/reference/mongo/#mongo">mongo</a> shell can process.
- *         This is also called "extended" JavaScript format.
- *     </li>
+ * <li><b>Strict mode</b> that conforms to the <a href="http://www.json.org/">JSON RFC specifications.</a></li>
+ * <li><b>JavaScript mode</b> that that most JavaScript interpreters can process</li>
+ * <li>
+ * <b>Shell mode</b> that the <a href="http://docs.mongodb.org/manual/reference/mongo/#mongo">mongo</a> shell can process.
+ * This is also called "extended" JavaScript format.
+ * </li>
  * </ul>
- *
- * For more information about this modes please see <a href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/">http://docs.mongodb.org/manual/reference/mongodb-extended-json/</a>
+ * <p/>
+ * For more information about this modes please see
+ * <a href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/">
+ * http://docs.mongodb.org/manual/reference/mongodb-extended-json/
+ * </a>
  *
  * @since 3.0.0
  */
+//CHECKSTYLE:OFF
 public class JSONReader extends BSONReader {
 
     private Context context;
@@ -541,7 +557,7 @@ public class JSONReader extends BSONReader {
         }
     }
 
-    private final JSONToken popToken() {
+    private JSONToken popToken() {
         if (pushedToken != null) {
             final JSONToken token = pushedToken;
             pushedToken = null;
@@ -559,7 +575,7 @@ public class JSONReader extends BSONReader {
         }
     }
 
-    private void verifyToken(String expectedLexeme) {
+    private void verifyToken(final String expectedLexeme) {
         final JSONToken token = popToken();
         if (!token.getLexeme().equals(expectedLexeme)) {
             final String message = format("JSON reader expected '%s' but found '%s'.", expectedLexeme, token.getLexeme());
@@ -567,9 +583,12 @@ public class JSONReader extends BSONReader {
         }
     }
 
-    private void verifyString(String expectedString) {
+    private void verifyString(final String expectedString) {
         final JSONToken token = popToken();
-        if ((token.getType() != JSONTokenType.STRING && token.getType() != JSONTokenType.UNQUOTED_STRING) || !token.asString().equals(expectedString)) {
+        if (
+                (token.getType() != JSONTokenType.STRING && token.getType() != JSONTokenType.UNQUOTED_STRING)
+                        || !token.asString().equals(expectedString)
+                ) {
             final String message = format("JSON reader expected '%s' but found '%s'.", expectedString, token.asString());
             throw new BSONException(message);
         }
@@ -683,7 +702,7 @@ public class JSONReader extends BSONReader {
         return new Binary(subType, bytes);
     }
 
-    private Binary visitUUIDConstructor(String uuidConstructorName) {
+    private Binary visitUUIDConstructor(final String uuidConstructorName) {
         //TODO verify information related to https://jira.mongodb.org/browse/SERVER-3168
         verifyToken("(");
         final JSONToken bytesToken = popToken();
@@ -1071,3 +1090,5 @@ public class JSONReader extends BSONReader {
         }
     }
 }
+//CHECKSTYLE:ON
+

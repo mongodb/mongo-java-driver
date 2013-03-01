@@ -21,7 +21,7 @@ public class JSONBuffer {
     private final String buffer;
     private int position;
 
-    public JSONBuffer(String buffer) {
+    public JSONBuffer(final String buffer) {
         this.buffer = buffer;
     }
 
@@ -29,7 +29,7 @@ public class JSONBuffer {
         return position;
     }
 
-    public void setPosition(int position) {
+    public void setPosition(final int position) {
         this.position = position;
     }
 
@@ -37,17 +37,17 @@ public class JSONBuffer {
         return (position >= buffer.length()) ? -1 : buffer.codePointAt(position++);
     }
 
-    public void unread(int c) {
+    public void unread(final int c) {
         if (c != -1 && buffer.codePointAt(position - 1) == c) {
             position--;
         }
     }
 
-    public String substring(int beginIndex) {
+    public String substring(final int beginIndex) {
         return buffer.substring(beginIndex);
     }
 
-    public String substring(int beginIndex, int endIndex) {
+    public String substring(final int beginIndex, final int endIndex) {
         return buffer.substring(beginIndex, endIndex);
     }
 }
