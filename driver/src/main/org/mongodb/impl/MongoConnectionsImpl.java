@@ -17,10 +17,9 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.io.BufferPool;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
-import org.mongodb.async.AsyncDetector;
+import org.mongodb.io.BufferPool;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.pool.SimplePool;
 
@@ -36,7 +35,9 @@ public final class MongoConnectionsImpl {
 
     public static SingleServerMongoConnection create(final ServerAddress serverAddress, final MongoClientOptions options,
                                                      final BufferPool<ByteBuffer> bufferPool) {
-        if (AsyncDetector.javaVersionSupportsAsync()) {
+        if (options.isAsyncEnabled()
+                && !options.isSSLEnabled()
+                && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
             return new SingleServerMongoConnection(options, serverAddress,
                     new SimplePool<MongoPoolableConnection>(serverAddress.toString(), options.getConnectionsPerHost()) {
                         @Override

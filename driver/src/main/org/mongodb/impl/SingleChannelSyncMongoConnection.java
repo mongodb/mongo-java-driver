@@ -18,7 +18,6 @@
 package org.mongodb.impl;
 
 import org.mongodb.Document;
-import org.mongodb.io.BufferPool;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerAddress;
@@ -26,7 +25,8 @@ import org.mongodb.WriteConcern;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.io.MongoChannel;
+import org.mongodb.io.BufferPool;
+import org.mongodb.io.MongoGateway;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommand;
@@ -60,14 +60,14 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
     private final BufferPool<ByteBuffer> bufferPool;
     private final MongoClientOptions options;
     private final SimplePool<MongoPoolableConnection> channelPool;
-    private MongoChannel channel;
+    private MongoGateway channel;
 
     SingleChannelSyncMongoConnection(final ServerAddress serverAddress, final SimplePool<MongoPoolableConnection> channelPool,
                                      final BufferPool<ByteBuffer> bufferPool, final MongoClientOptions options) {
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.options = options;
-        this.channel = new MongoChannel(serverAddress, bufferPool, new DocumentSerializer(options.getPrimitiveSerializers()));
+        this.channel = MongoGateway.create(serverAddress, bufferPool, new DocumentSerializer(options.getPrimitiveSerializers()), options);
     }
 
     @Override
@@ -75,7 +75,7 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
         final MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", commandOperation,
                 new PooledByteBufferOutputBuffer(bufferPool), withDocumentSerializer(serializer));
-        final MongoReplyMessage<Document> replyMessage = channel.sendMessage(message, serializer);
+        final MongoReplyMessage<Document> replyMessage = channel.sendAndReceiveMessasge(message, serializer);
 
         return createCommandResult(commandOperation, replyMessage);
     }
@@ -97,7 +97,7 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
         find.readPreferenceIfAbsent(options.getReadPreference());
         final MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find,
                 new PooledByteBufferOutputBuffer(bufferPool), withDocumentSerializer(querySerializer));
-        final MongoReplyMessage<T> replyMessage = channel.sendMessage(message, resultSerializer);
+        final MongoReplyMessage<T> replyMessage = channel.sendAndReceiveMessasge(message, resultSerializer);
         return new QueryResult<T>(replyMessage, channel.getAddress());
     }
 
@@ -106,7 +106,7 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
                                       final Serializer<T> resultSerializer) {
         final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
                 new PooledByteBufferOutputBuffer(bufferPool));
-        final MongoReplyMessage<T> replyMessage = channel.sendMessage(message, resultSerializer);
+        final MongoReplyMessage<T> replyMessage = channel.sendAndReceiveMessasge(message, resultSerializer);
         return new QueryResult<T>(replyMessage, channel.getAddress());
     }
 

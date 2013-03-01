@@ -63,7 +63,7 @@ public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
 
     @Override
     public ByteBuffer createNew(final int size) {
-        final ByteBuffer buf = ByteBuffer.allocateDirect(size);
+        final ByteBuffer buf = ByteBuffer.allocate(size);  // TODO: configure whether this uses allocateDirect or allocate
         buf.order(ByteOrder.LITTLE_ENDIAN);
         return buf;
     }

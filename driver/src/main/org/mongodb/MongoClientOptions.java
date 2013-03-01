@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
+import org.mongodb.async.AsyncDetector;
 import org.mongodb.serialization.PrimitiveSerializers;
 
 /**
@@ -40,6 +41,10 @@ public final class MongoClientOptions {
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
     private final PrimitiveSerializers primitiveSerializers;
+    //CHECKSTYLE:OFF
+    private final boolean SSLEnabled;
+    //CHECKSTYLE:ON
+    private final boolean asyncEnabled;
 
     /**
      * Convenience method to create a Builder.
@@ -70,6 +75,10 @@ public final class MongoClientOptions {
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
+        //CHECKSTYLE:OFF
+        private boolean SSLEnabled = false;
+        //CHECKSTYLE:ON
+        private boolean asyncEnabled = AsyncDetector.isAsyncEnabled();
 
         /**
          * Sets the description.
@@ -234,7 +243,10 @@ public final class MongoClientOptions {
         }
 
         /**
+         * Sets the PrimitiveSerializers to use.
          *
+         * @return {@code this}
+         * @see org.mongodb.MongoClientOptions#getPrimitiveSerializers()
          */
         public Builder primitiveSerializers(final PrimitiveSerializers aPrimitiveSerializers) {
             if (aPrimitiveSerializers == null) {
@@ -243,6 +255,36 @@ public final class MongoClientOptions {
             this.primitiveSerializers = aPrimitiveSerializers;
             return this;
         }
+
+        /**
+         *  Sets whether to use SSL.  Currently this has rather large ramifications.  For one, async will not be
+         *  available.  For two, the driver will use Socket instances instead of SocketChannel instances,
+         *  which won't be quite as efficient.
+         *
+         * @return {@code this}
+         * @see org.mongodb.MongoClientOptions#isSSLEnabled()
+         */
+        //CHECKSTYLE:OFF
+        public Builder SSLEnabled(final boolean aSSLEnabled) {
+            this.SSLEnabled = aSSLEnabled;
+            return this;
+        }
+        //CHECKSTYLE:ON
+
+        /**
+         *  Sets whether to disable async.
+         *
+         * @return {@code this}
+         * @see org.mongodb.MongoClientOptions#isAsyncEnabled()
+         */
+        public Builder asyncEnabled(final boolean aAsyncEnabled) {
+            if (aAsyncEnabled && !AsyncDetector.isAsyncEnabled()) {
+                throw new IllegalArgumentException("Can not enable async if the platform version is not supported");
+            }
+            this.asyncEnabled = aAsyncEnabled;
+            return this;
+        }
+
 
         /**
          * Build an instance of MongoClientOptions.
@@ -401,6 +443,24 @@ public final class MongoClientOptions {
         return primitiveSerializers;
     }
 
+    /**
+     * Whether to use SSL. The default is {@code false}.
+     *
+     * @return true if SSL should be used
+     */
+    public boolean isSSLEnabled() {
+        return SSLEnabled;
+    }
+
+    /**
+     * Whether to enable asynchronous operations.  The default is true if the platform version supports it
+     * (currently Java 7 and above), and false otherwise/
+     *
+     */
+    public boolean isAsyncEnabled() {
+        return asyncEnabled;
+    }
+
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
         connectionsPerHost = builder.connectionsPerHost;
@@ -414,5 +474,7 @@ public final class MongoClientOptions {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         primitiveSerializers = builder.primitiveSerializers;
+        SSLEnabled = builder.SSLEnabled;
+        asyncEnabled = builder.asyncEnabled;
     }
 }

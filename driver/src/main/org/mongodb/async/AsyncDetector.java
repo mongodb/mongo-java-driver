@@ -19,24 +19,29 @@ package org.mongodb.async;
 
 public final class AsyncDetector {
 
-    private static final boolean JAVA_VERSION_SUPPORTS_ASYNC;
+    private static final boolean ASYNC_ENABLED;
 
     private AsyncDetector() {
     }
 
     static {
-        String javaSpecificationVersion = System.getProperty("java.specification.version");
-        String minorVersionString = javaSpecificationVersion.substring(javaSpecificationVersion.lastIndexOf(".") + 1);
-        boolean javaSevenOrGreater = false;
-        try {
-            javaSevenOrGreater = Integer.parseInt(minorVersionString) >= 7;
-        } catch (NumberFormatException e) {
-            // TODO: log this
+        if (System.getProperty("org.mongodb.disableAsync", "false").equals("true")) {
+            ASYNC_ENABLED = false;
         }
-        JAVA_VERSION_SUPPORTS_ASYNC = javaSevenOrGreater;
+        else {
+            String javaSpecificationVersion = System.getProperty("java.specification.version");
+            String minorVersionString = javaSpecificationVersion.substring(javaSpecificationVersion.lastIndexOf(".") + 1);
+            boolean javaSevenOrGreater = false;
+            try {
+                javaSevenOrGreater = Integer.parseInt(minorVersionString) >= 7;
+            } catch (NumberFormatException e) {
+                // TODO: log this
+            }
+            ASYNC_ENABLED = javaSevenOrGreater;
+        }
     }
 
-    public static boolean javaVersionSupportsAsync() {
-        return JAVA_VERSION_SUPPORTS_ASYNC;
+    public static boolean isAsyncEnabled() {
+        return ASYNC_ENABLED;
     }
 }

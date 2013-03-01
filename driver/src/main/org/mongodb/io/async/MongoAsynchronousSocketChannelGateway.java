@@ -46,18 +46,18 @@ import java.util.concurrent.ExecutionException;
 import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
 /**
- * An asynchronous socket channel for the MongoDB protocol.
- * <p/>
+ * An asynchronous gateway for the MongoDB protocol.
+ * <p>
  * Note: This class is not part of the public API.  It may break binary compatibility even in minor releases.
  */
-public class MongoAsynchronousChannel {
+public class MongoAsynchronousSocketChannelGateway {
     private final ServerAddress address;
     private final BufferPool<ByteBuffer> pool;
     private final Serializer<Document> errorSerializer;
     private volatile AsynchronousSocketChannel asynchronousSocketChannel;
 
-    public MongoAsynchronousChannel(final ServerAddress address, final BufferPool<ByteBuffer> pool,
-                                    final Serializer<Document> errorSerializer) {
+    public MongoAsynchronousSocketChannelGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool,
+                                                 final Serializer<Document> errorSerializer) {
         this.address = address;
         this.pool = pool;
         this.errorSerializer = errorSerializer;
@@ -83,7 +83,7 @@ public class MongoAsynchronousChannel {
             @Override
             public void completed(final int bytesWritten) {
                 if (writeConcernMessage != null) {
-                    sendQueryMessage(writeConcernMessage, serializer, callback);
+                    sendAndReceiveMessage(writeConcernMessage, serializer, callback);
                 }
                 else {
                     callback.onResult(null, null);
@@ -97,14 +97,8 @@ public class MongoAsynchronousChannel {
         });
     }
 
-    public <T> void sendGetMoreMessage(final MongoGetMoreMessage message, final Serializer<T> serializer,
-                                       final SingleResultCallback<MongoReplyMessage<T>> callback) {
-        sendOneWayMessage(message, new ReceiveMessageCompletionHandler<T>(message, serializer, System.nanoTime(), callback));
-    }
-
-
-    public <T> void sendQueryMessage(final MongoQueryMessage message, final Serializer<T> serializer,
-                                     final SingleResultCallback<MongoReplyMessage<T>> callback) {
+    public <T> void sendAndReceiveMessage(final MongoRequestMessage message, final Serializer<T> serializer,
+                                          final SingleResultCallback<MongoReplyMessage<T>> callback) {
         sendOneWayMessage(message, new ReceiveMessageCompletionHandler<T>(message, serializer, System.nanoTime(), callback));
     }
 

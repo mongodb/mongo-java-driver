@@ -21,6 +21,7 @@ import org.mongodb.io.async.AsyncWritableByteChannel;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
@@ -125,6 +126,17 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
             bytesRead += socketChannel.write(bufferList.toArray(new ByteBuffer[bufferList.size()]), 0,
                     bufferList.size());
         }
+        close();
+    }
+
+
+    @Override
+    public void pipeAndClose(final Socket socket) throws IOException {
+        for (final ByteBuffer cur : bufferList) {
+            cur.flip();
+            socket.getOutputStream().write(cur.array(), 0, cur.limit());
+        }
+
         close();
     }
 

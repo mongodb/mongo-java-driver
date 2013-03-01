@@ -28,7 +28,7 @@ import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
-import org.mongodb.io.async.MongoAsynchronousChannel;
+import org.mongodb.io.async.MongoAsynchronousSocketChannelGateway;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
@@ -64,7 +64,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
     private final SimplePool<MongoPoolableConnection> channelPool;
     private final BufferPool<ByteBuffer> bufferPool;
     private final MongoClientOptions options;
-    private volatile MongoAsynchronousChannel channel;
+    private volatile MongoAsynchronousSocketChannelGateway channel;
     private volatile boolean activeAsyncCall;
     private volatile boolean releasePending;
 
@@ -74,7 +74,8 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.options = options;
-        this.channel = new MongoAsynchronousChannel(serverAddress, bufferPool, new DocumentSerializer(options.getPrimitiveSerializers()));
+        this.channel = new MongoAsynchronousSocketChannelGateway(serverAddress, bufferPool,
+                new DocumentSerializer(options.getPrimitiveSerializers()));
     }
 
     public ServerAddress getServerAddress() {
@@ -269,7 +270,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
         final MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", commandOperation,
                 new PooledByteBufferOutputBuffer(bufferPool),
                 withDocumentSerializer(serializer));
-        channel.sendQueryMessage(message, serializer, new MongoReplyMessageCommandResultCallback(callback, commandOperation,
+        channel.sendAndReceiveMessage(message, serializer, new MongoReplyMessageCommandResultCallback(callback, commandOperation,
                 SingleChannelAsyncMongoConnection.this));
 
     }
@@ -290,7 +291,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
         final MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find,
                 new PooledByteBufferOutputBuffer(bufferPool),
                 withDocumentSerializer(querySerializer));
-        channel.sendQueryMessage(message, resultSerializer,
+        channel.sendAndReceiveMessage(message, resultSerializer,
                 new MongoReplyMessageQueryResultCallback<T>(callback, SingleChannelAsyncMongoConnection.this));
     }
 
@@ -309,7 +310,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
                                  final SingleResultCallback<QueryResult<T>> callback) {
         final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
                 new PooledByteBufferOutputBuffer(bufferPool));
-        channel.sendGetMoreMessage(message, resultSerializer,
+        channel.sendAndReceiveMessage(message, resultSerializer,
                 new MongoReplyMessageGetMoreResultCallback<T>(callback, SingleChannelAsyncMongoConnection.this));
     }
 

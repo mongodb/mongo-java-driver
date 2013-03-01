@@ -22,6 +22,7 @@ import org.mongodb.io.async.AsyncCompletionHandler;
 import org.mongodb.io.async.AsyncWritableByteChannel;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.nio.channels.SocketChannel;
 
 public abstract class ChannelAwareOutputBuffer extends OutputBuffer {
@@ -39,4 +40,6 @@ public abstract class ChannelAwareOutputBuffer extends OutputBuffer {
      * @param handler the handler to invoke on complete or failure
      */
     public abstract void pipeAndClose(final AsyncWritableByteChannel channel, AsyncCompletionHandler handler);
+
+    public abstract void pipeAndClose(final Socket out) throws IOException;
 }
