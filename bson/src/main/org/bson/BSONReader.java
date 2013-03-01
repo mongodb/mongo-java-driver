@@ -537,7 +537,7 @@ public abstract class BSONReader implements Closeable {
         }
     }
 
-    protected enum State {
+    public enum State {
         /**
          * The initial state.
          */
