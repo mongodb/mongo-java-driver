@@ -16,18 +16,20 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.Document;
 import org.mongodb.Block;
 import org.mongodb.CollectionAdmin;
 import org.mongodb.ConvertibleToDocument;
+import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.Get;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoConnection;
 import org.mongodb.MongoCursor;
+import org.mongodb.MongoDatabase;
 import org.mongodb.MongoException;
 import org.mongodb.MongoIterable;
+import org.mongodb.MongoNamespace;
 import org.mongodb.MongoStream;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
@@ -64,15 +66,23 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements MongoCollection<T> {
+class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     private final CollectionAdmin admin;
     private final MongoConnection operations;
+    private final String name;
+    private final MongoDatabase database;
+    private final MongoCollectionOptions options;
+    private final CollectibleSerializer<T> serializer;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
                                final CollectibleSerializer<T> serializer, final MongoCollectionOptions options,
                                final MongoConnection operations) {
-        super(serializer, name, database, options);
+
+        this.serializer = serializer;
+        this.name = name;
+        this.database = database;
+        this.options = options;
         this.operations = operations;
         admin = new CollectionAdminImpl(operations, options.getPrimitiveSerializers(),
                 getNamespace(), getDatabase());
@@ -310,6 +320,31 @@ class MongoCollectionImpl<T> extends MongoCollectionBaseImpl<T> implements Mongo
 
     private Serializer<Document> getDocumentSerializer() {
         return getOptions().getDocumentSerializer();
+    }
+
+    @Override
+    public MongoDatabase getDatabase() {
+        return database;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public CollectibleSerializer<T> getSerializer() {
+        return serializer;
+    }
+
+    @Override
+    public MongoCollectionOptions getOptions() {
+        return options;
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return new MongoNamespace(getDatabase().getName(), getName());
     }
 
     private final class MongoCollectionStream implements MongoStream<T> {

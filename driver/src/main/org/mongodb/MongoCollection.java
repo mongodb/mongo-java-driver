@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.serialization.CollectibleSerializer;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
@@ -24,6 +25,29 @@ import org.mongodb.annotations.ThreadSafe;
  * @param <T> The type that this collection will serialize documents from and to
  */
 @ThreadSafe
-public interface MongoCollection<T> extends MongoCollectionBase<T>, MongoStream<T> {
+public interface MongoCollection<T> extends MongoStream<T> {
+    /**
+     * Gets the database in which this collection resides.
+     *
+     * @return the database
+     */
+    MongoDatabase getDatabase();
+
+    /**
+     * Gets the name of this collection.  This is the simple name of the collection and is not prefixed with the
+     * database name.
+     *
+     * @return the collection name
+     */
+    String getName();
+
+    MongoNamespace getNamespace();
+
+//    MongoClient getClient();
+
+    MongoCollectionOptions getOptions();
+
+    CollectibleSerializer<T> getSerializer();
+
     CollectionAdmin tools();
 }
