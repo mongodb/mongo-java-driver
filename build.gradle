@@ -17,12 +17,8 @@
 def configDir = new File(rootDir, 'config')
 
 buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'net.saliman:gradle-cobertura-plugin:1.1.0'
-    }
+    repositories { mavenCentral() }
+    dependencies { classpath 'org.ajoberstar:gradle-jacoco:0.2.0' }
 }
 
 //////////////////////////////////////////
@@ -40,7 +36,7 @@ subprojects {
     apply plugin: 'pmd'
     apply plugin: 'findbugs'
     apply plugin: 'osgi'
-    apply plugin: 'cobertura'
+    apply plugin: 'jacoco'
 
 
     group = 'org.mongodb'
@@ -93,10 +89,6 @@ subprojects {
         ignoreFailures = true
     }
 
-    cobertura {
-        coverageFormats = ['xml', 'html']
-    }
-
     tasks.withType(Compile) {
         options.encoding = 'ISO-8859-1'
         options.fork = true
@@ -131,6 +123,14 @@ subprojects {
     artifacts {
         archives sourcesJar
         archives javadocJar
+    }
+
+    gradle.taskGraph.whenReady { taskGraph ->
+        if (taskGraph.hasTask(tasks.getByName('check'))) {
+            tasks.withType(Test) { jacoco { enabled = true } }
+        } else {
+            tasks.withType(Test) { jacoco { enabled = false } }
+        }
     }
 }
 
