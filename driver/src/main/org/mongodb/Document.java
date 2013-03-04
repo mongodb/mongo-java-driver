@@ -26,6 +26,8 @@ import java.util.Set;
  * A representation of a document as a {@code Map}.  All iterators will traverse the elements in
  * insertion order, as with {@code LinkedHashMap}.
  *
+ * @since 3.0.0
+ *
  * @mongodb.driver.manual core/document document
  */
 public class Document implements Map<String, Object>, Serializable {
