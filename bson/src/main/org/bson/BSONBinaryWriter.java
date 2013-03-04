@@ -27,7 +27,6 @@ public class BSONBinaryWriter extends BSONWriter {
     private final BSONBinaryWriterSettings binaryWriterSettings;
 
     private final OutputBuffer buffer;
-    private Context context;
 
     public BSONBinaryWriter(final OutputBuffer buffer) {
         this(new BSONWriterSettings(), new BSONBinaryWriterSettings(), buffer);
@@ -51,6 +50,11 @@ public class BSONBinaryWriter extends BSONWriter {
 
     @Override
     public void flush() {
+    }
+
+    @Override
+    protected Context getContext() {
+        return (Context) super.getContext();
     }
 
     @Override
@@ -148,7 +152,7 @@ public class BSONBinaryWriter extends BSONWriter {
 
         buffer.write(BSONType.JAVASCRIPT_WITH_SCOPE.getValue());
         writeCurrentName();
-        context = new Context(context, BSONContextType.JAVASCRIPT_WITH_SCOPE, buffer.getPosition());
+        setContext(new Context(getContext(), BSONContextType.JAVASCRIPT_WITH_SCOPE, buffer.getPosition()));
         buffer.writeInt(0);
         buffer.writeString(code);
 
@@ -257,9 +261,6 @@ public class BSONBinaryWriter extends BSONWriter {
     public void close() {
     }
 
-    /// <summary>
-    /// Writes the start of a BSON array to the writer.
-    /// </summary>
     @Override
     public void writeStartArray() {
         checkPreconditions("writeStartArray", State.VALUE);
@@ -267,15 +268,12 @@ public class BSONBinaryWriter extends BSONWriter {
         super.writeStartArray();
         buffer.write(BSONType.ARRAY.getValue());
         writeCurrentName();
-        context = new Context(context, BSONContextType.ARRAY, buffer.getPosition());
+        setContext(new Context(getContext(), BSONContextType.ARRAY, buffer.getPosition()));
         buffer.writeInt(0); // reserve space for size
 
         setState(State.VALUE);
     }
 
-    /// <summary>
-    /// Writes the start of a BSON document to the writer.
-    /// </summary>
     @Override
     public void writeStartDocument() {
         checkPreconditions("writeStartDocument", State.INITIAL, State.VALUE, State.SCOPE_DOCUMENT, State.DONE);
@@ -285,53 +283,49 @@ public class BSONBinaryWriter extends BSONWriter {
             buffer.write(BSONType.DOCUMENT.getValue());
             writeCurrentName();
         }
-        context = new Context(context, BSONContextType.DOCUMENT, buffer.getPosition());
+        setContext(new Context(getContext(), BSONContextType.DOCUMENT, buffer.getPosition()));
         buffer.writeInt(0); // reserve space for size
 
         setState(State.NAME);
     }
 
-    /// <summary>
-    /// Writes the end of a BSON array to the writer.
-    /// </summary>
     @Override
     public void writeEndArray() {
         checkPreconditions("writeEndArray", State.VALUE);
 
-        if (context.contextType != BSONContextType.ARRAY) {
-            throwInvalidContextType("WriteEndArray", context.contextType, BSONContextType.ARRAY);
+        if (getContext().getContextType() != BSONContextType.ARRAY) {
+            throwInvalidContextType("WriteEndArray", getContext().getContextType(), BSONContextType.ARRAY);
         }
 
         super.writeEndArray();
         buffer.write(0);
         backpatchSize(); // size of document
 
-        context = context.parentContext;
+        setContext(getContext().getParentContext());
         setState(getNextState());
     }
 
-    /// <summary>
-    /// Writes the end of a BSON document to the writer.
-    /// </summary>
     @Override
     public void writeEndDocument() {
         checkPreconditions("writeEndDocument", State.NAME);
 
-        if (context.contextType != BSONContextType.DOCUMENT && context.contextType != BSONContextType.SCOPE_DOCUMENT) {
-            throwInvalidContextType("WriteEndDocument", context.contextType, BSONContextType.DOCUMENT, BSONContextType.SCOPE_DOCUMENT);
+        BSONContextType contextType = getContext().getContextType();
+
+        if (contextType != BSONContextType.DOCUMENT && contextType != BSONContextType.SCOPE_DOCUMENT) {
+            throwInvalidContextType("WriteEndDocument", contextType, BSONContextType.DOCUMENT, BSONContextType.SCOPE_DOCUMENT);
         }
 
         super.writeEndDocument();
         buffer.write(0);
         backpatchSize(); // size of document
 
-        context = context.parentContext;
-        if (context == null) {
+        setContext(getContext().getParentContext());
+        if (getContext() == null) {
             setState(State.DONE);
         } else {
-            if (context.contextType == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
+            if (getContext().getContextType() == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
                 backpatchSize(); // size of the JavaScript with scope value
-                context = context.parentContext;
+                setContext(getContext().getParentContext());
             }
             setState(getNextState());
         }
@@ -350,42 +344,16 @@ public class BSONBinaryWriter extends BSONWriter {
     }
 
     private void writeCurrentName() {
-        if (context.contextType == BSONContextType.ARRAY) {
-            buffer.writeCString(Integer.toString(context.index++));
+        if (getContext().getContextType() == BSONContextType.ARRAY) {
+            buffer.writeCString(Integer.toString(getContext().index++));
         } else {
             buffer.writeCString(getName());
         }
     }
 
-    private State getNextState() {
-        if (context.contextType == BSONContextType.ARRAY) {
-            return State.VALUE;
-        } else {
-            return State.NAME;
-        }
-    }
-
-    private void checkPreconditions(final String methodName, final State... validStates) {
-        if (isClosed()) {
-            throw new IllegalStateException("BSONBinaryWriter");
-        }
-
-        if (!checkState(validStates)) {
-            throwInvalidState(methodName, validStates);
-        }
-    }
-
-    private boolean checkState(final State[] validStates) {
-        for (final State cur : validStates) {
-            if (cur == getState()) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     private void backpatchSize() {
-        final int size = buffer.getPosition() - context.startPosition;
+        final int size = buffer.getPosition() - getContext().startPosition;
         if (size > binaryWriterSettings.getMaxDocumentSize()) {
             final String message = String.format("Size %d is larger than MaxDocumentSize %d.", size,
                                                  binaryWriterSettings.getMaxDocumentSize());
@@ -394,17 +362,18 @@ public class BSONBinaryWriter extends BSONWriter {
         buffer.backpatchSize(size);
     }
 
-    private static class Context {
-        // private fields
-        private final Context parentContext;
-        private final BSONContextType contextType;
+    public class Context extends BSONWriter.Context {
         private final int startPosition;
         private int index; // used when contextType is an array
 
-        Context(final Context parentContext, final BSONContextType contextType, final int startPosition) {
-            this.parentContext = parentContext;
-            this.contextType = contextType;
+        public Context(final Context parentContext, final BSONContextType contextType, final int startPosition) {
+            super(parentContext, contextType);
             this.startPosition = startPosition;
+        }
+
+        @Override
+        public Context getParentContext() {
+            return (Context) super.getParentContext();
         }
     }
 }

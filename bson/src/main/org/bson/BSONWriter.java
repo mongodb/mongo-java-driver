@@ -34,6 +34,7 @@ import static java.lang.String.format;
 public abstract class BSONWriter implements Closeable {
     private final BSONWriterSettings settings;
     private State state;
+    private Context context;
     private String currentName;
     private boolean checkElementNames;
     private boolean checkUpdateDocument;
@@ -64,6 +65,14 @@ public abstract class BSONWriter implements Closeable {
 
     protected State getState() {
         return state;
+    }
+
+    protected Context getContext() {
+        return context;
+    }
+
+    protected void setContext(final Context context) {
+        this.context = context;
     }
 
     /**
@@ -299,8 +308,8 @@ public abstract class BSONWriter implements Closeable {
     /**
      * Writes a BSON ObjectId element to the writer.
      *
-     * @param name      The name of the element.
-     * @param objectId  The ObjectId value.
+     * @param name     The name of the element.
+     * @param objectId The ObjectId value.
      */
     public void writeObjectId(final String name, final ObjectId objectId) {
         writeName(name);
@@ -315,7 +324,7 @@ public abstract class BSONWriter implements Closeable {
     /**
      * Writes a BSON regular expression element to the writer.
      *
-     * @param name The name of the element.
+     * @param name              The name of the element.
      * @param regularExpression The RegularExpression value.
      */
     public void writeRegularExpression(final String name, final RegularExpression regularExpression) {
@@ -455,7 +464,7 @@ public abstract class BSONWriter implements Closeable {
             if (name.charAt(0) == '$') {
                 // a few element names starting with $ have to be allowed for historical reasons
                 if (!(name.equals("$code") || name.equals("$db") || name.equals("$ref") || name.equals("$scope")
-                              || name.equals("$id"))) {
+                        || name.equals("$id"))) {
                     final String message = format(
                             "Element name '%s' is not valid because it starts with a '$'" + ".", name);
                     throw new BSONSerializationException(message);
@@ -465,6 +474,33 @@ public abstract class BSONWriter implements Closeable {
                 final String message = format("Element name '%s' is not valid because it contains a '.'.", name);
                 throw new BSONSerializationException(message);
             }
+        }
+    }
+
+    protected State getNextState() {
+        if (getContext().getContextType() == BSONContextType.ARRAY) {
+            return State.VALUE;
+        } else {
+            return State.NAME;
+        }
+    }
+
+    protected boolean checkState(final State[] validStates) {
+        for (final State cur : validStates) {
+            if (cur == getState()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected void checkPreconditions(final String methodName, final State... validStates) {
+        if (isClosed()) {
+            throw new IllegalStateException("BSONWriter");
+        }
+
+        if (!checkState(validStates)) {
+            throwInvalidState(methodName, validStates);
         }
     }
 
@@ -505,14 +541,14 @@ public abstract class BSONWriter implements Closeable {
                     article = "An";
                 }
                 message = format("%s %s value cannot be written to the root level of a BSON document.", article,
-                                 typeName);
+                        typeName);
                 throw new BSONInvalidOperationException(message);
             }
         }
 
         final String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
         message = format("%s can only be called when State is %s, not when State is %s", methodName,
-                         validStatesString, state);
+                validStatesString, state);
         throw new BSONInvalidOperationException(message);
     }
 
@@ -644,5 +680,23 @@ public abstract class BSONWriter implements Closeable {
          * The writer is closed.
          */
         CLOSED
+    }
+
+    public class Context {
+        private final Context parentContext;
+        private final BSONContextType contextType;
+
+        public Context(final Context parentContext, final BSONContextType contextType) {
+            this.parentContext = parentContext;
+            this.contextType = contextType;
+        }
+
+        public Context getParentContext() {
+            return parentContext;
+        }
+
+        public BSONContextType getContextType() {
+            return contextType;
+        }
     }
 }

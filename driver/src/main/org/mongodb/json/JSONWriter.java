@@ -37,7 +37,6 @@ import java.util.TimeZone;
  */
 public class JSONWriter extends BSONWriter {
     private final Writer writer;
-    private Context context;
     private final JSONWriterSettings settings;
 
     public JSONWriter(final Writer writer) {
@@ -48,7 +47,12 @@ public class JSONWriter extends BSONWriter {
         super(settings);
         this.settings = settings;
         this.writer = writer;
-        context = new Context(null, BSONContextType.TOP_LEVEL, "");
+        setContext(new Context(null, BSONContextType.TOP_LEVEL, ""));
+    }
+
+    @Override
+    public Context getContext() {
+        return (Context) super.getContext();
     }
 
     @Override
@@ -73,7 +77,7 @@ public class JSONWriter extends BSONWriter {
 
             final BSONContextType contextType = (getState()
                     == State.SCOPE_DOCUMENT) ? BSONContextType.SCOPE_DOCUMENT : BSONContextType.DOCUMENT;
-            context = new Context(context, contextType, settings.getIndentCharacters());
+            setContext(new Context(getContext(), contextType, settings.getIndentCharacters()));
             setState(State.NAME);
         } catch (IOException e) {
             throwBSONException(e);
@@ -86,29 +90,26 @@ public class JSONWriter extends BSONWriter {
 
         try {
             super.writeEndDocument();
-            if (settings.isIndent() && context.hasElements) {
+            if (settings.isIndent() && getContext().hasElements) {
                 writer.write(settings.getNewLineCharacters());
-                if (context.parentContext != null) {
-                    writer.write(context.parentContext.indentation);
+                if (getContext().getParentContext() != null) {
+                    writer.write(getContext().getParentContext().indentation);
                 }
                 writer.write("}");
-            }
-            else {
+            } else {
                 writer.write(" }");
             }
 
-            if (context.contextType == BSONContextType.SCOPE_DOCUMENT) {
-                context = context.parentContext;
+            if (getContext().getContextType() == BSONContextType.SCOPE_DOCUMENT) {
+                setContext(getContext().getParentContext());
                 writeEndDocument();
-            }
-            else {
-                context = context.parentContext;
+            } else {
+                setContext(getContext().getParentContext());
             }
 
-            if (context == null) {
+            if (getContext() == null) {
                 setState(State.DONE);
-            }
-            else {
+            } else {
                 setState(getNextState());
             }
         } catch (IOException e) {
@@ -126,7 +127,7 @@ public class JSONWriter extends BSONWriter {
             writeNameHelper(getName());
             writer.write("[");
 
-            context = new Context(context, BSONContextType.ARRAY, settings.getIndentCharacters());
+            setContext(new Context(getContext(), BSONContextType.ARRAY, settings.getIndentCharacters()));
             setState(State.VALUE);
         } catch (IOException e) {
             throwBSONException(e);
@@ -141,7 +142,7 @@ public class JSONWriter extends BSONWriter {
             super.writeEndArray();
             writer.write("]");
 
-            context = context.parentContext;
+            setContext(getContext().getParentContext());
             setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
@@ -157,7 +158,7 @@ public class JSONWriter extends BSONWriter {
                 case Shell:
                     writeNameHelper(getName());
                     writer.write(String.format("new BinData(%s, \"%s\")", Integer.toHexString(binary.getType()),
-                                               new Base64Codec().encode(binary.getData())));
+                            new Base64Codec().encode(binary.getData())));
                     break;
                 default:
                     writeStartDocument();
@@ -207,8 +208,7 @@ public class JSONWriter extends BSONWriter {
                     dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
                     if (value >= -59014396800000L && value <= 253399536000000L) {
                         writer.write(String.format("ISODate(\"%s\")", dateFormat.format(new Date(value))));
-                    }
-                    else {
+                    } else {
                         writer.write(String.format("new Date(%d)", value));
                     }
                     break;
@@ -262,8 +262,7 @@ public class JSONWriter extends BSONWriter {
                 case Shell:
                     if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
                         writer.write(String.format("NumberLong(%d)", value));
-                    }
-                    else {
+                    } else {
                         writer.write(String.format("NumberLong(\"%d\")", value));
                     }
                     break;
@@ -466,52 +465,23 @@ public class JSONWriter extends BSONWriter {
         }
     }
 
-    private State getNextState() {
-        if (context.contextType == BSONContextType.ARRAY) {
-            return State.VALUE;
-        }
-        else {
-            return State.NAME;
-        }
-    }
-
-    private void checkPreconditions(final String methodName, final State... validStates) {
-        if (isClosed()) {
-            throw new IllegalStateException("JSONWriter");
-        }
-
-        if (!checkState(validStates)) {
-            throwInvalidState(methodName, validStates);
-        }
-    }
-
-    private boolean checkState(final State[] validStates) {
-        for (final State cur : validStates) {
-            if (cur == getState()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void writeNameHelper(final String name) throws IOException {
-        switch (context.contextType) {
+        switch (getContext().getContextType()) {
             case ARRAY:
                 // don't write Array element names in JSON
-                if (context.hasElements) {
+                if (getContext().hasElements) {
                     writer.write(", ");
                 }
                 break;
             case DOCUMENT:
             case SCOPE_DOCUMENT:
-                if (context.hasElements) {
+                if (getContext().hasElements) {
                     writer.write(",");
                 }
                 if (settings.isIndent()) {
                     writer.write(settings.getNewLineCharacters());
-                    writer.write(context.indentation);
-                }
-                else {
+                    writer.write(getContext().indentation);
+                } else {
                     writer.write(" ");
                 }
                 writeStringHelper(name);
@@ -523,7 +493,7 @@ public class JSONWriter extends BSONWriter {
                 throw new BSONException("Invalid contextType.");
         }
 
-        context.hasElements = true;
+        getContext().hasElements = true;
     }
 
     private void writeStringHelper(final String str) throws IOException {
@@ -592,16 +562,18 @@ public class JSONWriter extends BSONWriter {
         throw new BSONException("Wrapping IOException", e);
     }
 
-    class Context {
-        private final Context parentContext;
-        private final BSONContextType contextType;
+    public class Context extends BSONWriter.Context {
         private final String indentation;
         private boolean hasElements;
 
         public Context(final Context parentContext, final BSONContextType contextType, final String indentChars) {
-            this.parentContext = parentContext;
-            this.contextType = contextType;
+            super(parentContext, contextType);
             this.indentation = (parentContext == null) ? indentChars : parentContext.indentation + indentChars;
+        }
+
+        @Override
+        public Context getParentContext() {
+            return (Context) super.getParentContext();
         }
     }
 }
