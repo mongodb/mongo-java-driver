@@ -100,6 +100,7 @@ subprojects {
 
     tasks.withType(Test) {
         systemProperty 'org.mongodb.test.uri', System.getProperty('org.mongodb.test.uri', null)
+        jacoco { enabled = false }
     }
 
     task sourcesJar(type: Jar) {
@@ -124,19 +125,16 @@ subprojects {
         archives sourcesJar
         archives javadocJar
     }
-
-    gradle.taskGraph.whenReady { taskGraph ->
-        if (taskGraph.hasTask(tasks.getByName('check'))) {
-            tasks.withType(Test) { jacoco { enabled = true } }
-        } else {
-            tasks.withType(Test) { jacoco { enabled = false } }
-        }
-    }
 }
 
 configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat'] }) {
     tasks.withType(Test) {
         maxParallelForks = 16
+    }
+    gradle.taskGraph.whenReady { taskGraph ->
+        if (taskGraph.hasTask(tasks.getByName('check'))) {
+            tasks.withType(Test) { jacoco { enabled = true } }
+        }
     }
 }
 
