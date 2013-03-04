@@ -1,5 +1,3 @@
-[![Build Status](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/)
-
 ## MongoDB Java Driver ##
  * release notes: http://github.com/mongodb/mongo-java-driver/wiki/Release-Notes
  * driver home: http://github.com/mongodb/mongo-java-driver
@@ -8,7 +6,7 @@
 
 ### Questions and Bug Reports
  * mailing list: http://groups.google.com/group/mongodb-user
- * jira: http://jira.mongodb.org/browse/JAVA
+ * Jira: http://jira.mongodb.org/browse/JAVA
 
 ### Maintainers
 * Jeff Yemin           jeff.yemin@10gen.com
@@ -18,6 +16,7 @@
 * Scott Hernandez      scott@10gen.com
 * Craig Wilson         craig.wilson@10gen.com
 * Ryan Nitz            ryan@10gen.com
+* Uladzmir Mihura      trnl.me@gmail.com
 
 ### Build status:
 [![Build Status](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/)
