@@ -22,82 +22,159 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A representation of a document as a {@code Map}.  All iterators will traverse the elements in
+ * insertion order, as with {@code LinkedHashMap}.
+ *
+ * @mongodb.driver.manual core/document document
+ */
 public class Document implements Map<String, Object>, Serializable {
     private static final long serialVersionUID = 6297731997167536582L;
 
-    private final LinkedHashMap<String, Object> documentAsMap = new LinkedHashMap<String, Object>();
+    private final LinkedHashMap<String, Object> documentAsMap;
 
+    /**
+     *  Creates an empty Document instance.
+     */
     public Document() {
+        documentAsMap = new LinkedHashMap<String, Object>();
     }
 
+    /**
+     * Create a Document instance initialized with the given key/value pair.
+     *
+     * @param key key
+     * @param value  value
+     */
     public Document(final String key, final Object value) {
+        documentAsMap = new LinkedHashMap<String, Object>();
         documentAsMap.put(key, value);
     }
 
+    /**
+     * Creates a Document instance initialized with the given map.
+     *
+     * @param map  initial map
+     */
+     public Document(final Map<String, Object> map) {
+         documentAsMap = new LinkedHashMap<String, Object>(map);
+     }
+    /**
+     * Put the given key/value pair into this Document and return this.  Useful for chaining puts in a single expression,
+     * e.g.  {@code doc.append("a", 1).append("b", 2)}
+     *
+     * @param key key
+     * @param value value
+     * @return this
+     */
     public Document append(final String key, final Object value) {
         documentAsMap.put(key, value);
         return this;
     }
 
+    /**
+     * Gets the value of the given key, casting it to the given {@code Class<T>}.  This is useful to avoid having casts
+     * in client code, though the effect is the same.  So to get the value of a key that is of type String, you would write
+     * {@code String name = doc.get("name", String.class)} instead of {@code String name = (String) doc.get("x") }.
+     *
+     * @param key the key
+     * @param clazz the class to cast the value to
+     * @param <T> the type of the class
+     * @return the value of the given key, or null if the instance does not contain this key.
+     * @throws ClassCastException if the value of the given key is not of type T
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T get(final Object key, final Class<T> clazz) {
+        return (T) documentAsMap.get(key);
+    }
+
     // Vanilla Map methods delegate to map field
+
+    @Override
     public int size() {
         return documentAsMap.size();
     }
 
+    @Override
     public boolean isEmpty() {
         return documentAsMap.isEmpty();
     }
 
-    public boolean containsValue(final Object o) {
-        return documentAsMap.containsValue(o);
+    @Override
+    public boolean containsValue(final Object value) {
+        return documentAsMap.containsValue(value);
     }
 
-    public boolean containsKey(final Object o) {
-        return documentAsMap.containsKey(o);
+    @Override
+    public boolean containsKey(final Object key) {
+        return documentAsMap.containsKey(key);
     }
 
-    public Object get(final Object o) {
-        return documentAsMap.get(o);
+    @Override
+    public Object get(final Object key) {
+        return documentAsMap.get(key);
     }
 
-    public Object put(final String s, final Object o) {
-        return documentAsMap.put(s, o);
+    @Override
+    public Object put(final String key, final Object value) {
+        return documentAsMap.put(key, value);
     }
 
-    public Object remove(final Object o) {
-        return documentAsMap.remove(o);
+    @Override
+    public Object remove(final Object key) {
+        return documentAsMap.remove(key);
     }
 
+    @Override
     public void putAll(final Map<? extends String, ?> map) {
         documentAsMap.putAll(map);
     }
 
+    @Override
     public void clear() {
         documentAsMap.clear();
     }
 
+    @Override
     public Set<String> keySet() {
         return documentAsMap.keySet();
     }
 
+    @Override
     public Collection<Object> values() {
         return documentAsMap.values();
     }
 
+    @Override
     public Set<Map.Entry<String, Object>> entrySet() {
         return documentAsMap.entrySet();
     }
 
+    @Override
     public boolean equals(final Object o) {
-        return documentAsMap.equals(o);
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final Document document = (Document) o;
+
+        if (!documentAsMap.equals(document.documentAsMap)) {
+            return false;
+        }
+
+        return true;
     }
 
+    @Override
     public int hashCode() {
         return documentAsMap.hashCode();
     }
 
+    @Override
     public String toString() {
         return documentAsMap.toString();
     }
-
 }
