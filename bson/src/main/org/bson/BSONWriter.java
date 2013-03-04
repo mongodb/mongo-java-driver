@@ -442,7 +442,6 @@ public abstract class BSONWriter implements Closeable {
      * Checks that the element name is valid.
      *
      * @param name The element name to be checked.
-     *
      * @throws BSONSerializationException if element name is not valid.
      */
     protected void checkElementName(final String name) {
@@ -475,7 +474,6 @@ public abstract class BSONWriter implements Closeable {
      * @param methodName        The name of the method.
      * @param actualContextType The actual ContextType.
      * @param validContextTypes The valid ContextTypes.
-     *
      * @throws BSONInvalidOperationException
      */
     protected void throwInvalidContextType(final String methodName, final BSONContextType actualContextType,
@@ -492,7 +490,6 @@ public abstract class BSONWriter implements Closeable {
      *
      * @param methodName  The name of the method.
      * @param validStates The valid states.
-     *
      * @throws BSONInvalidOperationException
      */
     protected void throwInvalidState(final String methodName, final State... validStates) {
@@ -617,7 +614,7 @@ public abstract class BSONWriter implements Closeable {
         }
     }
 
-    protected enum State {
+    public enum State {
         /**
          * The initial state.
          */

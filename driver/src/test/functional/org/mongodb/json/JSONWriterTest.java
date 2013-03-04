@@ -16,6 +16,7 @@
 
 package org.mongodb.json;
 
+import org.bson.BSONInvalidOperationException;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
@@ -49,6 +50,125 @@ public class JSONWriterTest {
             this.value = value;
             this.expected = expected;
         }
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowExceptionForBooleanWhenWritingBeforeStartingDocument() {
+        writer.writeBoolean("b1", true);
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowExceptionForNameWhenWritingBeforeStartingDocument() {
+        writer.writeName("name");
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowExceptionForStringWhenStateIsValue() {
+        writer.writeStartDocument();
+        writer.writeString("SomeString");
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowExceptionWhenEndingAnArrayWhenStateIsValue() {
+        writer.writeStartDocument();
+        writer.writeEndArray();
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowExceptionWhenWritingASecondName() {
+        writer.writeStartDocument();
+        writer.writeName("f1");
+        writer.writeName("i2");
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowExceptionWhenEndingADocumentBeforeValueIsWritten() {
+        writer.writeStartDocument();
+        writer.writeName("f1");
+        writer.writeEndDocument();
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowAnExceptionWhenTryingToWriteASecondValue() {
+        writer.writeDouble(100);
+        writer.writeString("i2");
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowAnExceptionWhenTryingToWriteJavaScript() {
+        writer.writeDouble(100);
+        writer.writeJavaScript("var i");
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowAnExceptionWhenWritingANameInAnArray() {
+        writer.writeStartDocument();
+        writer.writeStartArray("f2");
+        writer.writeName("i3");
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowAnExceptionWhenEndingDocumentInTheMiddleOfWritingAnArray() {
+        writer.writeStartDocument();
+        writer.writeStartArray("f2");
+        writer.writeEndDocument();
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowAnExceptionWhenEndingAnArrayInASubDocument() {
+        writer.writeStartDocument();
+        writer.writeStartArray("f2");
+        writer.writeStartDocument();
+        writer.writeEndArray();
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowAnExceptionWhenWritingANameInAnArrayEvenWhenSubDocumentExistsInArray() {
+        writer.writeStartDocument();
+        writer.writeStartArray("f2");
+        writer.writeStartDocument();
+        writer.writeEndDocument();
+        writer.writeName("i3");
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowAnExceptionWhenAttemptingToEndAnArrayThatWasNotStarted() {
+        writer.writeStartDocument();
+        writer.writeStartArray("f2");
+        writer.writeEndArray();
+        writer.writeEndArray();
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowAnErrorIfTryingToWriteNameIntoAJavascriptScope() {
+        writer.writeStartDocument();
+        writer.writeJavaScriptWithScope("js1", "var i = 1");
+
+        writer.writeName("b1");
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowAnErrorIfTryingToWriteValueIntoAJavascriptScope() {
+        writer.writeStartDocument();
+        writer.writeJavaScriptWithScope("js1", "var i = 1");
+
+        writer.writeBinaryData(new Binary(new byte[]{0, 0, 1, 0}));
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowAnErrorIfTryingToWriteArrayIntoAJavascriptScope() {
+        writer.writeStartDocument();
+        writer.writeJavaScriptWithScope("js1", "var i = 1");
+
+        writer.writeStartArray();
+    }
+
+    @Test(expected = BSONInvalidOperationException.class)
+    public void shouldThrowAnErrorIfTryingToWriteEndDocumentIntoAJavascriptScope() {
+        writer.writeStartDocument();
+        writer.writeJavaScriptWithScope("js1", "var i = 1");
+
+        writer.writeEndDocument();
     }
 
     @Test

@@ -62,6 +62,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeStartDocument() {
+        checkPreconditions("writeStartDocument", State.INITIAL, State.VALUE, State.SCOPE_DOCUMENT);
+
         try {
             super.writeStartDocument();
             if (getState() == State.VALUE || getState() == State.SCOPE_DOCUMENT) {
@@ -80,6 +82,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeEndDocument() {
+        checkPreconditions("writeEndDocument", State.NAME);
+
         try {
             super.writeEndDocument();
             if (settings.isIndent() && context.hasElements) {
@@ -115,6 +119,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeStartArray() {
+        checkPreconditions("writeStartArray", State.VALUE, State.INITIAL);
+
         try {
             super.writeStartArray();
             writeNameHelper(getName());
@@ -129,6 +135,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeEndArray() {
+        checkPreconditions("writeEndArray", State.VALUE);
+
         try {
             super.writeEndArray();
             writer.write("]");
@@ -142,6 +150,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeBinaryData(final Binary binary) {
+        checkPreconditions("writeBinaryData", State.VALUE, State.INITIAL);
+
         try {
             switch (settings.getOutputMode()) {
                 case Shell:
@@ -163,6 +173,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeBoolean(final boolean value) {
+        checkPreconditions("writeBoolean", State.VALUE, State.INITIAL);
+
         try {
             writeNameHelper(getName());
             writer.write(value ? "true" : "false");
@@ -174,6 +186,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeDateTime(final long value) {
+        checkPreconditions("writeDateTime", State.VALUE, State.INITIAL);
+
         try {
             switch (settings.getOutputMode()) {
                 case Strict:
@@ -210,6 +224,7 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeDouble(final double value) {
+        checkPreconditions("writeDouble", State.VALUE, State.INITIAL);
         try {
             writeNameHelper(getName());
             writer.write(Double.toString(value));
@@ -221,6 +236,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeInt32(final int value) {
+        checkPreconditions("writeInt32", State.VALUE, State.INITIAL);
+
         try {
             writeNameHelper(getName());
             writer.write(Integer.toString(value));
@@ -232,6 +249,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeInt64(final long value) {
+        checkPreconditions("writeInt64", State.VALUE, State.INITIAL);
+
         try {
             writeNameHelper(getName());
             switch (settings.getOutputMode()) {
@@ -261,6 +280,7 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeJavaScript(final String code) {
+        checkPreconditions("writeJavaScript", State.VALUE, State.INITIAL);
 
         writeStartDocument();
         writeString("$code", code);
@@ -271,6 +291,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeJavaScriptWithScope(final String code) {
+        checkPreconditions("writeJavaScriptWithScope", State.VALUE, State.INITIAL);
+
         writeStartDocument();
         writeString("$code", code);
         writeName("$scope");
@@ -280,6 +302,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeMaxKey() {
+        checkPreconditions("writeMaxKey", State.VALUE, State.INITIAL);
+
         writeStartDocument();
         writeInt32("$maxkey", 1);
         writeEndDocument();
@@ -289,6 +313,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeMinKey() {
+        checkPreconditions("writeMinKey", State.VALUE, State.INITIAL);
+
         writeStartDocument();
         writeInt32("$minkey", 1);
         writeEndDocument();
@@ -298,9 +324,13 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeNull() {
+        checkPreconditions("writeNull", State.VALUE, State.INITIAL);
+
         try {
             writeNameHelper(getName());
             writer.write("null");
+
+            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
@@ -308,6 +338,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeObjectId(final ObjectId objectId) {
+        checkPreconditions("writeObjectId", State.VALUE, State.INITIAL);
+
         try {
             switch (settings.getOutputMode()) {
                 case Strict:
@@ -333,6 +365,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeRegularExpression(final RegularExpression regularExpression) {
+        checkPreconditions("writeRegularExpression", State.VALUE, State.INITIAL);
+
         try {
             switch (settings.getOutputMode()) {
                 case Strict:
@@ -364,6 +398,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeString(final String value) {
+        checkPreconditions("writeString", State.VALUE, State.INITIAL);
+
         try {
             writeNameHelper(getName());
             writeStringHelper(value);
@@ -375,6 +411,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeSymbol(final String value) {
+        checkPreconditions("writeSymbol", State.VALUE, State.INITIAL);
+
         writeStartDocument();
         writeString("$symbol", value);
         writeEndDocument();
@@ -384,6 +422,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeTimestamp(final BSONTimestamp value) {
+        checkPreconditions("writeTimestamp", State.VALUE, State.INITIAL);
+
         try {
             switch (settings.getOutputMode()) {
                 case Strict:
@@ -414,6 +454,8 @@ public class JSONWriter extends BSONWriter {
 
     @Override
     public void writeUndefined() {
+        checkPreconditions("writeUndefined", State.VALUE, State.INITIAL);
+
         try {
             writeNameHelper(getName());
             writer.write("undefined");
@@ -431,6 +473,25 @@ public class JSONWriter extends BSONWriter {
         else {
             return State.NAME;
         }
+    }
+
+    private void checkPreconditions(final String methodName, final State... validStates) {
+        if (isClosed()) {
+            throw new IllegalStateException("JSONWriter");
+        }
+
+        if (!checkState(validStates)) {
+            throwInvalidState(methodName, validStates);
+        }
+    }
+
+    private boolean checkState(final State[] validStates) {
+        for (final State cur : validStates) {
+            if (cur == getState()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void writeNameHelper(final String name) throws IOException {
