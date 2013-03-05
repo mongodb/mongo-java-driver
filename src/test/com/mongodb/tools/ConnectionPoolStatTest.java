@@ -17,8 +17,6 @@
 package com.mongodb.tools;
 
 import com.mongodb.DBObject;
-import com.mongodb.Mongo;
-import com.mongodb.MongoException;
 import com.mongodb.util.JSON;
 import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
@@ -27,9 +25,6 @@ import javax.management.JMException;
 import java.io.IOException;
 
 public class ConnectionPoolStatTest extends TestCase {
-    public ConnectionPoolStatTest() throws IOException, MongoException {
-        cleanupMongo = new Mongo();
-    }
 
     @Test
     public void testBasic() throws IOException, JMException {
@@ -39,5 +34,4 @@ public class ConnectionPoolStatTest extends TestCase {
         DBObject obj = (DBObject) JSON.parse(stats);
         assertNotNull(obj);
     }
-
 }

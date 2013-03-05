@@ -26,7 +26,6 @@ import com.mongodb.QueryBuilder.QueryBuilderException;
 import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -38,10 +37,7 @@ import java.util.regex.Pattern;
 public class QueryBuilderTest extends TestCase {
     private DB _testDB;
 
-    public QueryBuilderTest()
-            throws IOException, MongoException {
-        super();
-        cleanupMongo = new Mongo( "127.0.0.1" );
+    public QueryBuilderTest() {
         _testDB = cleanupMongo.getDB( "queryBuilderTest" );
         _testDB.dropDatabase();
     }

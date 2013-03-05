@@ -16,41 +16,25 @@
 
 package com.mongodb.gridfs;
 
-import java.io.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCursor;
+import com.mongodb.MongoException;
+import com.mongodb.util.TestCase;
+import org.testng.annotations.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
-
-import org.testng.annotations.*;
-
-import com.mongodb.*;
-import com.mongodb.util.*;
 
 public class GridFSTest extends TestCase {
     
-    public GridFSTest()
-        throws IOException , MongoException {
-        super();
-        try {
-        cleanupMongo = new Mongo( "127.0.0.1" );
+    public GridFSTest() {
         cleanupDB = "com_mongodb_unittest_GridFSTest";
-        _db = cleanupMongo.getDB( cleanupDB );
-            _fs = new GridFS( _db );
-        }
-        catch ( MongoException e ){
-            e.printStackTrace();
-            throw e;
-        }
-        catch ( IOException io ){
-            io.printStackTrace();
-            throw io;
-        }
-        catch ( RuntimeException re ){
-            re.printStackTrace();
-            throw re;
-        }
-        catch ( Throwable t ){
-            t.printStackTrace();
-            throw new RuntimeException( t );
-        }
+        _db = cleanupMongo.getDB(cleanupDB);
+        _fs = new GridFS(_db);
     }
 
     int[] _get(){

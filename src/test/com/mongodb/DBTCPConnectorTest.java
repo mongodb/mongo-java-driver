@@ -19,6 +19,7 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -27,21 +28,33 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 
 /**
- * Testing functionality of database TCP connector
+ * Testing functionality of database TCP connector.  The structure of this class is a bit unusual,
+ * as it creates its own MongoClient, yet still extends TestCase, which has its own.
  */
 public class DBTCPConnectorTest extends TestCase {
 
+    private MongoClient _mongoClient;
+    private DB _db;
+    private DBCollection _collection;
+    private DBTCPConnector _connector;
+
     @BeforeClass
     public void beforeClass() throws UnknownHostException {
-        cleanupMongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1:27018")));
-        cleanupDB = "com_mongodb_unittest_DBTCPConnectorTest";
-        _db = cleanupMongo.getDB(cleanupDB);
+        _mongoClient = new MongoClient(Arrays.asList(new ServerAddress("localhost:27017"), new ServerAddress("localhost:27018")));
+        cleanupDB = "com_mongodb_DBTCPConnectorTest";
+        _db = _mongoClient.getDB(cleanupDB);
         _collection = _db.getCollection("testCol");
+    }
+
+    @AfterClass
+    public void afterClass() {
+        _mongoClient.close();
+        _connector.close();
     }
 
     @BeforeMethod
     public void beforeMethod() throws UnknownHostException {
-        _connector = new DBTCPConnector(cleanupMongo);
+        _connector = new DBTCPConnector(_mongoClient);
         _connector.start();
     }
 
@@ -52,10 +65,14 @@ public class DBTCPConnectorTest extends TestCase {
     public void testRequestReservation() {
         assertEquals(false, _connector.getMyPort()._inRequest);
         _connector.requestStart();
-        assertNull(_connector.getMyPort()._requestPort);
-        assertEquals(true, _connector.getMyPort()._inRequest);
-        _connector.requestDone();
-        assertEquals(false, _connector.getMyPort()._inRequest);
+        try {
+            assertNull(_connector.getMyPort()._requestPort);
+            assertEquals(true, _connector.getMyPort()._inRequest);
+            _connector.requestDone();
+            assertEquals(false, _connector.getMyPort()._inRequest);
+        } finally {
+            _connector.requestDone();
+        }
     }
 
     /**
@@ -64,11 +81,15 @@ public class DBTCPConnectorTest extends TestCase {
     @Test
     public void testConnectionReservationForWrites() {
         _connector.requestStart();
-        _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
-        assertNotNull(_connector.getMyPort()._requestPort);
-        DBPort requestPort = _connector.getMyPort()._requestPort;
-        _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
-        assertEquals(requestPort, _connector.getMyPort()._requestPort);
+        try {
+            _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
+            assertNotNull(_connector.getMyPort()._requestPort);
+            DBPort requestPort = _connector.getMyPort()._requestPort;
+            _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
+            assertEquals(requestPort, _connector.getMyPort()._requestPort);
+        } finally {
+            _connector.requestDone();
+        }
     }
 
     /**
@@ -77,12 +98,16 @@ public class DBTCPConnectorTest extends TestCase {
     @Test
     public void testConnectionReservationForWriteThenRead() {
         _connector.requestStart();
-        _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
-        DBPort requestPort = _connector.getMyPort()._requestPort;
-        _connector.call(_db, _collection,
-                OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
-                null, 0);
-        assertEquals(requestPort, _connector.getMyPort()._requestPort);
+        try {
+            _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
+            DBPort requestPort = _connector.getMyPort()._requestPort;
+            _connector.call(_db, _collection,
+                    OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
+                    null, 0);
+            assertEquals(requestPort, _connector.getMyPort()._requestPort);
+        } finally {
+            _connector.requestDone();
+        }
     }
 
     /**
@@ -95,13 +120,17 @@ public class DBTCPConnectorTest extends TestCase {
         }
 
         _connector.requestStart();
-        _connector.call(_db, _collection,
-                OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.secondary()),
-                null, 0, ReadPreference.secondary(), null);
-        DBPort requestPort = _connector.getMyPort()._requestPort;
-        _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
-        assertNotEquals(requestPort, _connector.getMyPort()._requestPort);
-        assertEquals(_connector.getReplicaSetStatus().getMaster(), _connector.getMyPort()._requestPort.serverAddress());
+        try {
+            _connector.call(_db, _collection,
+                    OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.secondary()),
+                    null, 0, ReadPreference.secondary(), null);
+            DBPort requestPort = _connector.getMyPort()._requestPort;
+            _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
+            assertNotEquals(requestPort, _connector.getMyPort()._requestPort);
+            assertEquals(_connector.getReplicaSetStatus().getMaster(), _connector.getMyPort()._requestPort.serverAddress());
+        } finally {
+            _connector.requestDone();
+        }
     }
 
     /**
@@ -110,10 +139,14 @@ public class DBTCPConnectorTest extends TestCase {
     @Test
     public void testConnectionReservationForReads() {
         _connector.requestStart();
-        _connector.call(_db, _collection,
-                OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
-                null, 0);
-        assertNotNull(_connector.getMyPort()._requestPort);
+        try {
+            _connector.call(_db, _collection,
+                    OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
+                    null, 0);
+            assertNotNull(_connector.getMyPort()._requestPort);
+        } finally {
+            _connector.requestDone();
+        }
     }
 
 
@@ -123,8 +156,4 @@ public class DBTCPConnectorTest extends TestCase {
 
         return om;
     }
-
-    private DB _db;
-    private DBCollection _collection;
-    private DBTCPConnector _connector;
 }

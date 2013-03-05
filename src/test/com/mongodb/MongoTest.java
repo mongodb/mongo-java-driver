@@ -26,11 +26,12 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
+@SuppressWarnings("deprecation")
 public class MongoTest extends TestCase {
     
     public MongoTest()
         throws IOException , MongoException {
-        _db = new Mongo().getDB( "mongotest" );        
+        _db = new MongoClient().getDB( "mongotest" );
     }
     
     final DB _db;
@@ -46,7 +47,7 @@ public class MongoTest extends TestCase {
     public void testClose_shouldNotReturnUntilCleanupThreadIsFinished() throws Exception {
         Mongo.cleanerIntervalMS = 250000; //set to a suitably large value to avoid race conditions in the test
 
-        Mongo mongo = new Mongo();
+        Mongo mongo = new MongoClient();
         assertNotEquals(mongo._cleaner.getState(), Thread.State.NEW);
 
         mongo.close();

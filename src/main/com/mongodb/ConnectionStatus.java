@@ -41,6 +41,7 @@ abstract class ConnectionStatus {
 
     protected static int updaterIntervalMS;
     protected static int updaterIntervalNoMasterMS;
+    @SuppressWarnings("deprecation")
     protected static final MongoOptions mongoOptionsDefaults = new MongoOptions();
     protected static final float latencySmoothFactor;
     protected static final DBObject isMasterCmd = new BasicDBObject("ismaster", 1);

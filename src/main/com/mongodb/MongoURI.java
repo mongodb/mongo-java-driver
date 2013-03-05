@@ -215,6 +215,7 @@ public class MongoURI {
      * @throws MongoException
      * @throws UnknownHostException
      */
+    @SuppressWarnings("deprecation")
     public Mongo connect()
             throws UnknownHostException {
         // TODO caching?

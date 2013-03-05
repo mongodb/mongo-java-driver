@@ -16,11 +16,8 @@
 
 package com.mongodb;
 
-import java.io.*;
-
+import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
-
-import com.mongodb.util.*;
 
 public class ReflectionTest extends TestCase {
     
@@ -40,9 +37,7 @@ public class ReflectionTest extends TestCase {
         String _name;
     }
 
-    public ReflectionTest()
-        throws IOException , MongoException {
-	cleanupMongo = new Mongo( "127.0.0.1" );
+    public ReflectionTest() {
 	cleanupDB = "com_mongodb_unittest_ReflectionTest";
 	_db = cleanupMongo.getDB( cleanupDB );
     }    

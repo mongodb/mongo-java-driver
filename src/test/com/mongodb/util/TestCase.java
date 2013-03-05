@@ -21,12 +21,16 @@ package com.mongodb.util;
 import com.mongodb.BasicDBObject;
 import com.mongodb.CommandResult;
 import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
+import org.testng.annotations.AfterClass;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -105,7 +109,17 @@ public class TestCase extends MyAsserts {
         this( null );
     }
 
-    public TestCase( String name ){
+    public TestCase( String name ) {
+        if (staticMongoClient == null) {
+            try {
+                staticMongoClient = new MongoClient();
+                staticMongoClient.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
+            } catch (UnknownHostException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        cleanupMongo = staticMongoClient;
+
         for ( Method m : getClass().getMethods() ){
             
             if ( ! m.getName().startsWith( "test" ) )
@@ -137,13 +151,14 @@ public class TestCase extends MyAsserts {
     public String cleanupDB = null;
     public Mongo cleanupMongo = null;
 
-    @org.testng.annotations.AfterClass
+    private static MongoClient staticMongoClient;
+
+    @AfterClass
     public void cleanup() {
         if (cleanupMongo != null) {
             if (cleanupDB != null) {
                 cleanupMongo.dropDatabase(cleanupDB);
             }
-            cleanupMongo.close();
         }
     }
 

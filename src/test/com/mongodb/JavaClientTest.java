@@ -22,21 +22,29 @@ import com.mongodb.util.TestCase;
 import com.mongodb.util.Util;
 import org.bson.BSON;
 import org.bson.Transformer;
-import org.bson.types.*;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Binary;
+import org.bson.types.Code;
+import org.bson.types.CodeWScope;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 public class JavaClientTest extends TestCase {
 
-    public JavaClientTest()
-        throws IOException , MongoException {
-        _mongo = new Mongo( "localhost" );
-	cleanupMongo = _mongo;
+    public JavaClientTest() {
+	_mongo = cleanupMongo;
 	cleanupDB = "com_mongodb_unittest_JavaClientTest";
 	_db = cleanupMongo.getDB( cleanupDB );
     }
@@ -493,7 +501,8 @@ public class JavaClientTest extends TestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testMapReduceInlineSecondary() throws Exception {
-        Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1", 27017), new ServerAddress("127.0.0.1", 27018)));
+        Mongo mongo = new MongoClient(Arrays.asList(new ServerAddress("127.0.0.1", 27017), new ServerAddress("127.0.0.1", 27018)),
+                MongoClientOptions.builder().writeConcern(WriteConcern.UNACKNOWLEDGED).build());
 
         if (isStandalone(mongo)) {
             return;
@@ -646,7 +655,7 @@ public class JavaClientTest extends TestCase {
     public void testAuthenticate() throws UnknownHostException {
         assertEquals( "26e3d12bd197368526409177b3e8aab6" , _db._hash( "e" , "j".toCharArray() ) );
 
-        Mongo m = new Mongo();
+        Mongo m = new MongoClient();
         DB db = m.getDB(cleanupDB);
         DBCollection usersCollection = db.getCollection( "system.users" );
 
@@ -680,7 +689,7 @@ public class JavaClientTest extends TestCase {
 
     @Test
     public void testAuthenticateCommand() throws UnknownHostException {
-        Mongo m = new Mongo();
+        Mongo m = new MongoClient();
         DB db = m.getDB(cleanupDB);
         DBCollection usersCollections = db.getCollection( "system.users" );
 
@@ -715,7 +724,7 @@ public class JavaClientTest extends TestCase {
     @Test
     public void testAuthenticateWithCredentialsInURIAndNoDatabase() throws UnknownHostException {
         // First add the user
-        Mongo m = new Mongo(new MongoURI("mongodb://localhost"));
+        Mongo m = new MongoClient(new MongoClientURI("mongodb://localhost"));
         DB db = m.getDB("admin");
         DBCollection usersCollection = db.getCollection( "system.users" );
         try {
@@ -729,7 +738,7 @@ public class JavaClientTest extends TestCase {
             m.close();
         }
 
-        m = new Mongo(new MongoURI("mongodb://xx:e@localhost"));
+        m = new MongoClient(new MongoClientURI("mongodb://xx:e@localhost"));
         db = m.getDB("admin");
 
         try {
@@ -745,7 +754,7 @@ public class JavaClientTest extends TestCase {
     @Test
     public void testAuthenticateWithCredentialsInURI() throws UnknownHostException {
         // First add the user
-        Mongo m = new Mongo(new MongoURI("mongodb://localhost"));
+        Mongo m = new MongoClient(new MongoClientURI("mongodb://localhost"));
         DB db = m.getDB(cleanupDB);
         DBCollection usersCollection = db.getCollection( "system.users" );
         try {
@@ -759,7 +768,7 @@ public class JavaClientTest extends TestCase {
             m.close();
         }
 
-        m = new Mongo(new MongoURI("mongodb://xx:e@localhost/" + cleanupDB));
+        m = new MongoClient(new MongoClientURI("mongodb://xx:e@localhost/" + cleanupDB));
         db = m.getDB(cleanupDB);
 
         try {
@@ -775,7 +784,7 @@ public class JavaClientTest extends TestCase {
     @Test
     public void testAuthenticateCommandWithCredentialsInURI() throws UnknownHostException {
         // First add the user
-        Mongo m = new Mongo(new MongoURI("mongodb://localhost"));
+        Mongo m = new MongoClient(new MongoClientURI("mongodb://localhost"));
         DB db = m.getDB(cleanupDB);
         DBCollection usersCollection = db.getCollection( "system.users" );
         try {
@@ -789,7 +798,7 @@ public class JavaClientTest extends TestCase {
             m.close();
         }
 
-        m = new Mongo(new MongoURI("mongodb://xx:e@localhost/" + cleanupDB));
+        m = new MongoClient(new MongoClientURI("mongodb://xx:e@localhost/" + cleanupDB));
         db = m.getDB(cleanupDB);
 
         try {
@@ -1134,6 +1143,7 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testMongoHolder() throws MongoException, UnknownHostException {
         Mongo m1 = Mongo.Holder.singleton().connect( new MongoURI( "mongodb://localhost" ) );
         Mongo m2 = Mongo.Holder.singleton().connect( new MongoURI( "mongodb://localhost" ) );

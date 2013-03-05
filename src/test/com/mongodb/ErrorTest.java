@@ -29,7 +29,6 @@ public class ErrorTest extends TestCase {
 
     @BeforeClass
     public void setUp() throws Exception{
-	cleanupMongo = new Mongo( "127.0.0.1" );
 	cleanupDB = "com_mongodb_unittest_ErrorTest";
         _db = cleanupMongo.getDB(cleanupDB);
     }

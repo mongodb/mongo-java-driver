@@ -30,7 +30,7 @@ public class Circular {
     public static void main(String[] args) 
         throws Exception {
 
-        DB db = new Mongo().getDB( "driver_test_framework" );
+        DB db = new MongoClient().getDB( "driver_test_framework" );
         DBObject foo = new BasicDBObject();
         DBCollection b = db.getCollection( "b" );
         foo.put( "c", b );

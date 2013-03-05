@@ -31,7 +31,7 @@ public class ReplSetTest {
         @SuppressWarnings("deprecation")
         R( ServerAddress a ){
             _a = a;
-            _mongo = new Mongo(a);
+            _mongo = new MongoClient(a);
             _db = _mongo.getDB( "test" );
             _coll = _db.getCollection( "foo" );
 
@@ -73,7 +73,7 @@ public class ReplSetTest {
             addrs.add( new ServerAddress( "localhost" , 27021 ) );
         }
 
-        Mongo m = rs ? new Mongo( addrs ) : new Mongo();
+        Mongo m = rs ? new MongoClient( addrs ) : new MongoClient();
         DB db = m.getDB( "test" );
         DBCollection c = db.getCollection( "foo" );
         c.drop();

@@ -16,10 +16,11 @@
 
 package com.mongodb;
 
-import java.util.*;
-import java.net.UnknownHostException;
+import org.bson.types.BasicBSONList;
 
-import org.bson.types.*;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Date;
 
 @SuppressWarnings("unchecked")
 public class PerformanceTest {
@@ -240,7 +241,7 @@ public class PerformanceTest {
 
     public static void main(String[] args) {
         try {
-            _db = new Mongo().getDB( "performance" );        
+            _db = new MongoClient().getDB( "performance" );
         } 
         catch (MongoException e) {
             return;

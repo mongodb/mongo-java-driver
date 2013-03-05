@@ -77,6 +77,7 @@ public class MongoOptionsTest extends TestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testGetterSetters() throws Exception {
 
         final MongoOptions options = new MongoOptions();
@@ -125,6 +126,7 @@ public class MongoOptionsTest extends TestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testGetWriteConcern() {
         MongoOptions options = new MongoOptions();
         assertEquals(WriteConcern.NORMAL, options.getWriteConcern());

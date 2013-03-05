@@ -26,7 +26,7 @@ public class ReplPairTest {
         @SuppressWarnings("deprecation")
         R( ServerAddress a ){
             _a = a;
-            _mongo = new Mongo(a);
+            _mongo = new MongoClient(a);
             _db = _mongo.getDB( "test" );
             _coll = _db.getCollection( "foo" );
 

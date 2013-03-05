@@ -15,18 +15,23 @@
  */
 package com.mongodb.framework;
 
-import java.util.*;
-import java.net.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoException;
 
-import com.mongodb.*;
-import com.mongodb.util.*;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.Set;
 
 public class Dbs {
 
     public static void main(String[] args) 
         throws UnknownHostException , MongoException {
 
-        DB db = new Mongo().getDB( "driver_test_framework" );
+        DB db = new MongoClient().getDB( "driver_test_framework" );
         DBCollection coll = db.getCollection( "dbs_1" );
         DBObject o = new BasicDBObject();
         o.put( "foo", "bar" );

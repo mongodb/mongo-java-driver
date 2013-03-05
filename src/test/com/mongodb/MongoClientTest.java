@@ -26,6 +26,7 @@ import java.util.List;
 
 public class MongoClientTest {
     @Test
+    @SuppressWarnings("deprecation")
     public void testConstructors() throws UnknownHostException {
         MongoClientOptions customClientOptions = new MongoClientOptions.Builder().connectionsPerHost(500).build();
         MongoOptions customOptions = new MongoOptions(customClientOptions);

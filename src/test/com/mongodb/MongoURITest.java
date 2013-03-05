@@ -25,6 +25,7 @@ import javax.net.SocketFactory;
 import java.util.Arrays;
 
 
+@SuppressWarnings("deprecation")
 public class MongoURITest extends TestCase {
 
     @Test

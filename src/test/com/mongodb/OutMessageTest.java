@@ -32,7 +32,7 @@ public class OutMessageTest {
 
     @BeforeTest
     public void setup() throws UnknownHostException {
-        m = new Mongo();
+        m = new MongoClient();
     }
 
     // Ensure defensive code is in place after doneWithMessage is called.

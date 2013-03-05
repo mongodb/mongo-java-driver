@@ -36,7 +36,7 @@ public class Stress1 {
     public static void main(String[] args) 
         throws UnknownHostException , MongoException {
 
-        DB db = new Mongo().getDB( "driver_test_framework" );
+        DB db = new MongoClient().getDB( "driver_test_framework" );
         DBCollection c = db.getCollection( "stress1" );
 
         String blah = "lksjhasoh1298alshasoidiohaskjasiouashoasasiugoas" + 

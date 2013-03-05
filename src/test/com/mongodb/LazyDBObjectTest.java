@@ -17,37 +17,37 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.bson.types.*;
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
-
-import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.UUID;
 import org.bson.BSONEncoder;
 import org.bson.BasicBSONEncoder;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Binary;
+import org.bson.types.Code;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
+import org.bson.types.Symbol;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @SuppressWarnings( { "unchecked" , "deprecation" } )
 public class LazyDBObjectTest extends TestCase {
 
     public LazyDBObjectTest(){
-        super();
-        try {
-            cleanupMongo = new Mongo( "127.0.0.1" );
-            cleanupDB = "com_mongodb_unittest_LazyDBObjectTest";
-            _db = cleanupMongo.getDB( cleanupDB );
-        }
-        catch ( UnknownHostException e ) {
-            throw new MongoException( "couldn't connect" );
-        }
+        cleanupDB = "com_mongodb_unittest_LazyDBObjectTest";
+        _db = cleanupMongo.getDB(cleanupDB);
     }
 
     BSONEncoder e;

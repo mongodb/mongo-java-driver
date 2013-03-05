@@ -16,16 +16,18 @@
 
 package com.mongodb.framework;
 
-import java.net.*;
-
-import com.mongodb.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
 
 public class Find {
 
     public static void main(String[] args) 
         throws Exception {
 
-        DB db = new Mongo().getDB( "driver_test_framework" );
+        DB db = new MongoClient().getDB( "driver_test_framework" );
         DBCollection c = db.getCollection( "test" );
 
         DBObject foo = new BasicDBObject();

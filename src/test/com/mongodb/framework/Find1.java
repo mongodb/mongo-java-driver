@@ -15,11 +15,11 @@
  */
 package com.mongodb.framework;
 
-import java.util.*;
-import java.net.*;
-
-import com.mongodb.*;
-import com.mongodb.util.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
 
 
 public class Find1 {
@@ -27,7 +27,7 @@ public class Find1 {
     public static void main(String[] args) 
         throws Exception {
 
-        DB db = new Mongo().getDB( "driver_test_framework" );
+        DB db = new MongoClient().getDB( "driver_test_framework" );
         DBObject foo = new BasicDBObject();
         foo.put( "x", 1 );
         DBObject bar = new BasicDBObject();

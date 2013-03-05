@@ -17,50 +17,52 @@
 package com.mongodb;
 
 import com.mongodb.ReplicaSetStatus.ReplicaSetNode;
-import com.mongodb.util.TestCase;
-
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.net.UnknownHostException;
 import java.util.List;
-import java.util.Random;
 
 
 /**
  * This is a placeholder. A node needs to be able to be created outside of ReplicaSetStatus.
  */
-public class ReplicaSetStatusTest extends TestCase {
-    public ReplicaSetStatusTest() throws IOException, MongoException {
-        cleanupMongo = new Mongo(new MongoURI("mongodb://127.0.0.1:27017,127.0.0.1:27018"));
+public class ReplicaSetStatusTest {
+    private Mongo mongoClient;
 
-        cleanupDB = "com_mongodb_unittest_ReplicaSetStatusUpdaterTest";
+    @BeforeClass
+    public void beforeClass() throws UnknownHostException {
+        mongoClient = new MongoClient(new MongoClientURI("mongodb://127.0.0.1:27017,127.0.0.1:27018"));
+    }
+
+    @AfterClass
+    public void afterClass() {
+        mongoClient.close();
     }
 
     @Test
     public void testClose() throws InterruptedException {
-        ReplicaSetStatus replicaSetStatus = new ReplicaSetStatus(cleanupMongo, cleanupMongo.getAllAddress());
+        ReplicaSetStatus replicaSetStatus = new ReplicaSetStatus(mongoClient, mongoClient.getAllAddress());
         replicaSetStatus.start();
-        assertNotNull(replicaSetStatus._replicaSetHolder.get());
+        Assert.assertNotNull(replicaSetStatus._replicaSetHolder.get());
 
         replicaSetStatus.close();
 
         replicaSetStatus._updater.join(5000);
 
-        assertTrue(!replicaSetStatus._updater.isAlive());
+        Assert.assertTrue(!replicaSetStatus._updater.isAlive());
     }
     
     @Test
     public void testSetNames() throws Exception {
-        String replicaSetName = cleanupMongo.getConnector().getReplicaSetStatus().getName();
+        String replicaSetName = mongoClient.getConnector().getReplicaSetStatus().getName();
         
-        List<ReplicaSetNode> nodes = cleanupMongo.getConnector().getReplicaSetStatus()._replicaSetHolder.get().getAll();
+        List<ReplicaSetNode> nodes = mongoClient.getConnector().getReplicaSetStatus()._replicaSetHolder.get().getAll();
         
         for(ReplicaSetNode node : nodes){
-            assertEquals(replicaSetName, node.getSetName());
+            Assert.assertEquals(replicaSetName, node.getSetName());
         }
         
     }

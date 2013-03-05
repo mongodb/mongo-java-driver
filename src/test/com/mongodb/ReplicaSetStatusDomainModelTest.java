@@ -253,6 +253,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
                 true, !isSecondary, isSecondary, tags, Bytes.MAX_OBJECT_SIZE));
     }
 
+    @SuppressWarnings("deprecation")
     private final MongoOptions _mongoOptions = new MongoOptions();
     private final AtomicReference<String> _setName = new AtomicReference<String>("test");
     private final AtomicReference<Logger> _logger = new AtomicReference<Logger>(Logger.getLogger("test"));

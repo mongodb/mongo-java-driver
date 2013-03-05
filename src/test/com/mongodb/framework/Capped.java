@@ -15,11 +15,14 @@
  */
 package com.mongodb.framework;
 
-import java.util.*;
-import java.net.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoException;
 
-import com.mongodb.*;
-import com.mongodb.util.*;
+import java.net.UnknownHostException;
 
 
 public class Capped {
@@ -27,7 +30,7 @@ public class Capped {
     public static void main(String[] args) 
         throws MongoException , UnknownHostException {
 
-        DB db = new Mongo().getDB( "driver_test_framework" );
+        DB db = new MongoClient().getDB( "driver_test_framework" );
         DBObject foo = new BasicDBObject();
         foo.put( "create", "capped1" );
         foo.put( "capped", true );

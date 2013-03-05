@@ -30,10 +30,8 @@ public class DBTests extends TestCase {
     final Mongo _mongo;
     final DB _db;
 
-    public DBTests()
-            throws Exception {
-        _mongo = new Mongo("127.0.0.1");
-        cleanupMongo = _mongo;
+    public DBTests() {
+        _mongo = cleanupMongo;
         cleanupDB = "java_com_mongodb_unittest_DBTests";
         _db = cleanupMongo.getDB(cleanupDB);
     }
@@ -132,7 +130,7 @@ public class DBTests extends TestCase {
 
     @Test
     public void testGetCollectionNamesToSecondary() throws MongoException, UnknownHostException {
-        Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27018)));
+        Mongo mongo = new MongoClient(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27018)));
 
         try {
             if (isStandalone(mongo)) {
@@ -141,7 +139,7 @@ public class DBTests extends TestCase {
 
             String secondary = getASecondaryAsString(mongo);
             mongo.close();
-            mongo = new Mongo(secondary);
+            mongo = new MongoClient(secondary);
             DB db = mongo.getDB("secondaryTest");
             db.setReadPreference(ReadPreference.secondary());
             db.getCollectionNames();

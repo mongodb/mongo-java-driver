@@ -18,13 +18,13 @@
 
 package com.mongodb.util;
 
-import org.testng.ITestContext;
-import org.testng.ITestResult;
-import org.testng.TestListenerAdapter;
-
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
+import org.testng.ITestContext;
+import org.testng.ITestResult;
+import org.testng.TestListenerAdapter;
 
 import java.net.UnknownHostException;
 
@@ -83,7 +83,7 @@ public class TestNGListener extends TestListenerAdapter {
         obj.put( "total", context.getEndDate().getTime()-context.getStartDate().getTime() );
         obj.put( "time", System.currentTimeMillis() );
 
-        Mongo mongo = new Mongo();
+        Mongo mongo = new MongoClient();
         try {
             mongo.getDB( "results" ).getCollection( "testng" ).save( obj );
         }

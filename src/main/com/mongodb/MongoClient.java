@@ -163,6 +163,7 @@ public class MongoClient extends Mongo {
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
+    @SuppressWarnings("deprecation")
     public MongoClient(ServerAddress addr, List<MongoCredential> credentialsList, MongoClientOptions options) {
         super(MongoAuthority.direct(addr, new MongoCredentialsStore(credentialsList)), new MongoOptions(options));
         this.options = options;
@@ -247,6 +248,7 @@ public class MongoClient extends Mongo {
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
+    @SuppressWarnings("deprecation")
     public MongoClient(List<ServerAddress> seeds, List<MongoCredential> credentialsList, MongoClientOptions options) {
         super(MongoAuthority.dynamicSet(seeds, new MongoCredentialsStore(credentialsList)), new MongoOptions(options));
         this.options = options;
@@ -262,6 +264,7 @@ public class MongoClient extends Mongo {
      * @see MongoURI
      * @dochub connections
      */
+    @SuppressWarnings("deprecation")
     public MongoClient(MongoClientURI uri) throws UnknownHostException {
         super(new MongoURI(uri));
         this.options = uri.getOptions();

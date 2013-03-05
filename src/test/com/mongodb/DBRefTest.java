@@ -24,21 +24,14 @@ import org.bson.io.OutputBuffer;
 import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DBRefTest extends TestCase {
 
     public DBRefTest() {
-        try {
-	    cleanupMongo = new Mongo( "127.0.0.1" );
-	    cleanupDB = "com_monogodb_unittest_DBRefTest";
-	    _db = cleanupMongo.getDB( cleanupDB );
-        }
-        catch(UnknownHostException e) {
-            throw new MongoException("couldn't connect");
-        }
+        cleanupDB = "com_monogodb_unittest_DBRefTest";
+        _db = cleanupMongo.getDB(cleanupDB);
     }
 
     @Test(groups = {"basic"})

@@ -20,11 +20,11 @@ package com.mongodb;
  public class SingleThreadedMongoPerfTest {
      public static void main(String... args) throws Exception {
          // connection pool size is 10
-         MongoOptions opts = new MongoOptions();
-         opts.connectionsPerHost = 10;
+         MongoClientOptions opts = new MongoClientOptions.Builder().
+                 writeConcern(WriteConcern.UNACKNOWLEDGED).connectionsPerHost(10).build();
 
          ServerAddress addr = new ServerAddress("127.0.0.1", 27017);
-         Mongo mongo = new Mongo(addr, opts);
+         MongoClient mongo = new MongoClient(addr, opts);
          DB db = mongo.getDB("mongotest");
          DBCollection collection = db.getCollection("mongoperftest");
 

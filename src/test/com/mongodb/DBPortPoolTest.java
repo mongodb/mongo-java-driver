@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 public class DBPortPoolTest extends com.mongodb.util.TestCase {
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testReuse() throws Exception {
         MongoOptions options = new MongoOptions();
         options.connectionsPerHost = 10;
@@ -85,6 +86,7 @@ public class DBPortPoolTest extends com.mongodb.util.TestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testInterruptedException() throws UnknownHostException, InterruptedException {
         MongoOptions options = new MongoOptions();
         options.connectionsPerHost = 1;

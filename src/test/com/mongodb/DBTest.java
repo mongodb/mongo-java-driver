@@ -23,10 +23,8 @@ import java.util.Arrays;
 
 public class DBTest extends TestCase {
 
-    public DBTest()
-        throws UnknownHostException {
+    public DBTest() {
         super();
-	cleanupMongo = new Mongo( "127.0.0.1" );
 	cleanupDB = "com_mongodb_unittest_DBTest";
 	_db = cleanupMongo.getDB( cleanupDB );
     }
@@ -126,7 +124,7 @@ public class DBTest extends TestCase {
     @Test(groups = {"basic"})
     public void testEnsureConnection() throws UnknownHostException {
 
-        Mongo m = new Mongo(Arrays.asList(new ServerAddress("localhost")));
+        Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")));
 
         if (isStandalone(m)) {
             return;

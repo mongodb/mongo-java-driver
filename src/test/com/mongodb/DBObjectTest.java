@@ -16,30 +16,23 @@
 
 package com.mongodb;
 
-import java.net.*;
-import java.util.*;
-
-
+import com.mongodb.util.TestCase;
+import org.bson.types.BasicBSONList;
+import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
 
-import com.mongodb.util.*;
-
-import org.bson.*;
-import org.bson.types.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings({"unchecked", "deprecation"})
 public class DBObjectTest extends TestCase {
 
     public DBObjectTest() {
         super();
-        try {
-	    cleanupMongo = new Mongo( "127.0.0.1" );
-	    cleanupDB = "com_monogodb_unittest_DBObjectTest";
-	    _db = cleanupMongo.getDB( cleanupDB );
-        }
-        catch(UnknownHostException e) {
-            throw new MongoException("couldn't connect");
-        }
+        cleanupDB = "com_monogodb_unittest_DBObjectTest";
+        _db = cleanupMongo.getDB(cleanupDB);
     }
 
     @Test(groups = {"basic"})

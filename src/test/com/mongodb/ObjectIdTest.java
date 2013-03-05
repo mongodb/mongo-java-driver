@@ -18,23 +18,20 @@
 
 package com.mongodb;
 
-import java.util.*;
-
+import com.mongodb.util.TestCase;
+import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
 
-import com.mongodb.util.*;
-import org.bson.*;
-import org.bson.types.*;
+import java.util.Date;
+import java.util.Random;
 
 public class ObjectIdTest extends TestCase {
     
     final Mongo _mongo;
     final DB _db;
 
-    public ObjectIdTest()
-        throws Exception {
-        _mongo = new Mongo();
-	cleanupMongo = _mongo;
+    public ObjectIdTest() {
+        _mongo = cleanupMongo;
 	cleanupDB = "com_mongodb_unittest_ObjectIdTest";
         _db = cleanupMongo.getDB(cleanupDB);
     }

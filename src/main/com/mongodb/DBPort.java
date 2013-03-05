@@ -67,6 +67,7 @@ public class DBPort {
      * creates a new DBPort
      * @param addr the server address
      */
+    @SuppressWarnings("deprecation")
     public DBPort( ServerAddress addr ){
         this( addr , null , new MongoOptions() );
     }

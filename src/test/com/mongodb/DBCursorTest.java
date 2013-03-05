@@ -35,9 +35,8 @@ public class DBCursorTest extends TestCase {
 
     public DBCursorTest() throws IOException , MongoException {
         super();
-	    cleanupMongo = new Mongo( "127.0.0.1" );
-	    cleanupDB = "com_mongodb_unittest_DBCursorTest";
-        _db = cleanupMongo.getDB( cleanupDB );
+        cleanupDB = "com_mongodb_unittest_DBCursorTest";
+        _db = cleanupMongo.getDB(cleanupDB);
     }
 
     @Test(groups = {"basic"})
@@ -502,9 +501,8 @@ public class DBCursorTest extends TestCase {
         cursor.close();
 
         // finally, no finalizer if disabled in mongo options
-        MongoOptions mongoOptions = new MongoOptions();
-        mongoOptions.cursorFinalizerEnabled = false;
-        Mongo m = new Mongo("127.0.0.1", mongoOptions);
+        MongoClientOptions mongoOptions = new MongoClientOptions.Builder().cursorFinalizerEnabled(false).build();
+        Mongo m = new MongoClient("127.0.0.1", mongoOptions);
         try {
             c = m.getDB(cleanupDB).getCollection("HasFinalizerTest");
             cursor = c.find();

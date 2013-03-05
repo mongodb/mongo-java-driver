@@ -26,8 +26,9 @@ import java.util.Set;
 
 public class DBPortTest extends TestCase {
     @Test
+    @SuppressWarnings("deprecation")
     public void testAuthentication() throws IOException {
-        Mongo m = new Mongo();
+        Mongo m = new MongoClient();
         DB db1 = m.getDB("DBPortTest1");
         DB db2 = m.getDB("DBPortTest2");
         db1.dropDatabase();

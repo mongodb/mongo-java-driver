@@ -27,7 +27,7 @@ public class Count1 {
     public static void main(String[] args) 
         throws Exception {
 
-        DB db = new Mongo().getDB( "driver_test_framework" );
+        DB db = new MongoClient().getDB( "driver_test_framework" );
         System.out.println( db.getCollection( "test1" ).find().count() );
         System.out.println( db.getCollection( "test2" ).find().count() );
         DBCollection coll = db.getCollection( "test3" );
