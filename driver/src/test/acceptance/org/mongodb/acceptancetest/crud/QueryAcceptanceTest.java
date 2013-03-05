@@ -152,7 +152,7 @@ public class QueryAcceptanceTest extends AcceptanceTestCase {
 
         final Document filter = new QueryBuilder().or(query("numTimesOrdered").is(query(TYPE).is(INT32.getValue())))
                                                   .or(query("numTimesOrdered").is(query(TYPE).is(INT64.getValue())))
-                                                  .get();
+                                                  .toDocument();
         collection.filter(filter)
                   .sort(descending("numTimesOrdered"))
                   .into(results);

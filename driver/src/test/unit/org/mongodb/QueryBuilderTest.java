@@ -33,7 +33,7 @@ public class QueryBuilderTest {
 
         final String expectedQuery = "{$or=[{name=first}, {age=43}]}";
 
-        assertThat(queryBuilder.get().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
 
     /**
@@ -46,7 +46,7 @@ public class QueryBuilderTest {
 
         final String expectedQuery = "{$or=[{name=first}, {age=43}]}";
 
-        assertThat(queryBuilder.get().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
 
     /**
@@ -59,7 +59,7 @@ public class QueryBuilderTest {
 
         final String expectedQuery = "{$or=[{name=first}, {age=43}]}";
 
-        assertThat(queryBuilder.get().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
 
     @Test
@@ -68,7 +68,7 @@ public class QueryBuilderTest {
 
         final String expectedQuery = "{name=first}";
 
-        assertThat(queryBuilder.get().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
 
     @Test
@@ -77,7 +77,7 @@ public class QueryBuilderTest {
 
         final String expectedQuery = "{numericValue={$type=16}}";
 
-        assertThat(queryBuilder.get().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
 
 }

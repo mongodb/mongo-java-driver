@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class QueryBuilder {
+public class QueryBuilder implements ConvertibleToDocument{
     //CHECKSTYLE:OFF
 
 
@@ -127,22 +127,22 @@ public class QueryBuilder {
     /**
      * Equivalent of the find({key:value})
      *
-     * @param object Value to query
+     * @param value Value to query
      * @return Returns the current QueryBuilder with an appended equality query
      */
-    public QueryBuilder is(final Object object) {
-        addOperand(null, object);
+    public QueryBuilder is(final Object value) {
+        addOperand(null, value);
         return this;
     }
 
     /**
      * Equivalent of the find({key:value})
      *
-     * @param queryBuilder Value to query
+     * @param value value to query
      * @return Returns the current QueryBuilder with an appended equality query
      */
-    public QueryBuilder is(final QueryBuilder queryBuilder) {
-        addOperand(null, queryBuilder.get());
+    public QueryBuilder is(final QueryBuilder value) {
+        addOperand(null, value.toDocument());
         return this;
     }
 
@@ -394,7 +394,7 @@ public class QueryBuilder {
             orOperands = new ArrayList<Document>();
             query.put(QueryOperators.OR, orOperands);
         }
-        orOperands.add(operand.get());
+        orOperands.add(operand.toDocument());
         return this;
     }
 
@@ -421,7 +421,8 @@ public class QueryBuilder {
      * @return Returns a Document query instance
      * @throws RuntimeException if a key does not have a matching operand
      */
-    public Document get() {
+    @Override
+    public Document toDocument() {
         for (final String key : query.keySet()) {
             if (query.get(key) instanceof NullObject) {
                 throw new QueryBuilderException("No operand for key:" + key);

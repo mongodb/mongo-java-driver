@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.mongodb.QueryBuilder.query;
 
 public class MongoStreamTest extends DatabaseTestCase {
 
@@ -56,6 +57,14 @@ public class MongoStreamTest extends DatabaseTestCase {
                 .sort(new Document("_id", 1))) {
             System.out.println(cur);
         }
+
+        System.out.println();
+
+        for (final Document cur : collection.filter(query("_id").greaterThan(4)).sort(new Document("_id", 1))) {
+            System.out.println(cur);
+        }
+
+        System.out.println();
 
         for (final Document cur : collection.skip(3).limit(2).sort(new Document("_id", -1))) {
             System.out.println(cur);
