@@ -159,7 +159,16 @@ public class MongoClientURI {
         this(uri, new MongoClientOptions.Builder());
     }
 
-    MongoClientURI(String uri, MongoClientOptions.Builder builder) {
+    /**
+     * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured
+     * with default options, which may be overridden by options specified in the URI string.
+     *
+     * @param uri  the URI
+     * @param builder a Builder
+     * @see com.mongodb.MongoClientURI#getOptions()
+     * @since 2.11.0
+     */
+    public MongoClientURI(String uri, MongoClientOptions.Builder builder) {
         try {
             this.uri = uri;
             if (!uri.startsWith(PREFIX))

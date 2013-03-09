@@ -32,6 +32,11 @@ public class MongoClientURITest extends TestCase {
     }
 
     @Test
+    public void testURIGetter() {
+       assertEquals("mongodb://localhost", new MongoClientURI("mongodb://localhost").getURI());
+    }
+
+    @Test
     public void testOptionsWithoutTrailingSlash() {
         try {
             new MongoClientURI("mongodb://localhost?wTimeout=5");
@@ -195,6 +200,14 @@ public class MongoClientURITest extends TestCase {
                 "connectTimeoutMS=2500;socketTimeoutMS=5500&autoConnectRetry=true;" +
                 "slaveOk=true;safe=false&w=1;wtimeout=2500;fsync=true");
         assertOnOptions(uMixed.getOptions());
+    }
+
+    @Test
+    public void testBuilderOverrides() {
+        MongoClientURI uri = new MongoClientURI("mongodb://localhost/?maxPoolSize=150",
+                MongoClientOptions.builder().autoConnectRetry(true).connectionsPerHost(200));
+        assertTrue(uri.getOptions().isAutoConnectRetry());
+        assertEquals(150, uri.getOptions().getConnectionsPerHost());
     }
 
     @Test()
