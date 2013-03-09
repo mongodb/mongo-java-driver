@@ -43,13 +43,13 @@ public abstract class DB {
     static {
         _obedientCommands.add("group");
         _obedientCommands.add("aggregate");
-        _obedientCommands.add("collStats");
-        _obedientCommands.add("dbStats");
+        _obedientCommands.add("collstats");
+        _obedientCommands.add("dbstats");
         _obedientCommands.add("count");
         _obedientCommands.add("distinct");
-        _obedientCommands.add("geoNear");
-        _obedientCommands.add("geoSearch");
-        _obedientCommands.add("geoWalk");
+        _obedientCommands.add("geonear");
+        _obedientCommands.add("geosearch");
+        _obedientCommands.add("geowalk");
     }
 
     /**
@@ -88,7 +88,7 @@ public abstract class DB {
             else
                 primaryRequired = true;
         } else {
-           primaryRequired =  !_obedientCommands.contains(comString);
+           primaryRequired =  !_obedientCommands.contains(comString.toLowerCase());
         }
 
         if (primaryRequired) {

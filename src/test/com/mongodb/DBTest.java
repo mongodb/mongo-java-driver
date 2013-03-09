@@ -119,6 +119,9 @@ public class DBTest extends TestCase {
 
         obj = new BasicDBObject("count", 1);
         assertEquals(ReadPreference.primary(), _db.getCommandReadPreference(obj, null));
+
+        obj = new BasicDBObject("collStats", 1);
+        assertEquals(ReadPreference.secondaryPreferred(), _db.getCommandReadPreference(obj, ReadPreference.secondaryPreferred()));
     }
 
     @Test(groups = {"basic"})
