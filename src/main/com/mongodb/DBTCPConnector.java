@@ -66,7 +66,7 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public void requestStart(){
-        _myPort.get().requestStart();
+        _myPort.requestStart();
     }
 
     /**
@@ -78,7 +78,7 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public void requestDone(){
-        _myPort.get().requestDone();
+        _myPort.requestDone();
     }
 
     /**
@@ -87,7 +87,7 @@ public class DBTCPConnector implements DBConnector {
     @Override
     public void requestEnsureConnection(){
         checkMaster( false , true );
-        _myPort.get().requestEnsureConnection();
+        _myPort.requestEnsureConnection();
     }
 
     void _checkClosed(){
@@ -133,8 +133,7 @@ public class DBTCPConnector implements DBConnector {
         _checkClosed();
         checkMaster( false , true );
 
-        MyPort mp = _myPort.get();
-        DBPort port = mp.get( true , ReadPreference.primary(), hostNeeded );
+        DBPort port = _myPort.get(true, ReadPreference.primary(), hostNeeded);
 
         try {
             port.checkAuth( db.getMongo() );
@@ -147,7 +146,7 @@ public class DBTCPConnector implements DBConnector {
             }
         }
         catch ( IOException ioe ){
-            mp.error( port , ioe );
+            _myPort.error(port, ioe);
             _error( ioe, false );
 
             if ( concern.raiseNetworkErrors() )
@@ -162,11 +161,11 @@ public class DBTCPConnector implements DBConnector {
             throw me;
         }
         catch ( RuntimeException re ){
-            mp.error( port , re );
+            _myPort.error(port, re);
             throw re;
         }
         finally {
-            mp.done( port );
+            _myPort.done(port);
             m.doneWithMessage();
         }
     }
@@ -236,8 +235,7 @@ public class DBTCPConnector implements DBConnector {
         if (!secondaryOk || getReplicaSetStatus() == null)
             checkMaster( false, !secondaryOk );
 
-        final MyPort mp = _myPort.get();
-        final DBPort port = mp.get( false , readPref, hostNeeded );
+        final DBPort port = _myPort.get(false, readPref, hostNeeded);
 
         Response res = null;
         boolean retry = false;
@@ -248,7 +246,7 @@ public class DBTCPConnector implements DBConnector {
                 throw new MongoException( "ids don't match" );
         }
         catch ( IOException ioe ){
-            mp.error( port , ioe );
+            _myPort.error(port, ioe);
             retry = retries > 0 && !coll._name.equals( "$cmd" )
                     && !(ioe instanceof SocketTimeoutException) && _error( ioe, secondaryOk );
             if ( !retry ){
@@ -257,10 +255,10 @@ public class DBTCPConnector implements DBConnector {
             }
         }
         catch ( RuntimeException re ){
-            mp.error( port , re );
+            _myPort.error(port, re);
             throw re;
         } finally {
-            mp.done( port );
+            _myPort.done(port);
         }
 
         if (retry)
@@ -372,27 +370,29 @@ public class DBTCPConnector implements DBConnector {
 
         DBPort get( boolean keep , ReadPreference readPref, ServerAddress hostNeeded ){
 
-            if ( hostNeeded != null ){
-                if (_requestPort != null && _requestPort.serverAddress().equals(hostNeeded)) {
-                    return _requestPort;
+            DBPort requestPort = getPinnedRequestPort();
+
+            if ( hostNeeded != null ) {
+                if (requestPort != null && requestPort.serverAddress().equals(hostNeeded)) {
+                    return requestPort;
                 }
 
                 // asked for a specific host
                 return _portHolder.get( hostNeeded ).get();
             }
 
-            if ( _requestPort != null ){
+            if ( requestPort != null ){
                 // we are within a request, and have a port, should stick to it
-                if ( _requestPort.getPool() == _masterPortPool || !keep ) {
+                if ( requestPort.getPool() == _masterPortPool || !keep ) {
                     // if keep is false, it's a read, so we use port even if master changed
-                    return _requestPort;
+                    return requestPort;
                 }
 
                 // it's write and master has changed
                 // we fall back on new master and try to go on with request
                 // this may not be best behavior if spec of request is to stick with same server
-                _requestPort.getPool().done(_requestPort);
-                _requestPort = null;
+                requestPort.getPool().done(requestPort);
+                pinnedRequestStatusThreadLocal.get().requestPort = null;
             }
 
             DBPort p;
@@ -414,17 +414,19 @@ public class DBTCPConnector implements DBConnector {
                 p = _portHolder.get(node.getServerAddress()).get();
             }
 
-            if ( _inRequest ) {
-                // if within request, remember port to stick to same server
-                _requestPort = p;
+            // if within request, remember port to stick to same server
+            if ( pinnedRequestStatusThreadLocal.get() != null) {
+                pinnedRequestStatusThreadLocal.get().requestPort = p;
             }
 
             return p;
         }
 
-        void done( DBPort p ){
+        void done( DBPort p ) {
+            DBPort requestPort = getPinnedRequestPort();
+
             // keep request port
-            if ( p != _requestPort ){
+            if (p != requestPort) {
                 p.getPool().done(p);
             }
         }
@@ -436,7 +438,7 @@ public class DBTCPConnector implements DBConnector {
          */
         void error( DBPort p , Exception e ){
             p.close();
-            _requestPort = null;
+            pinnedRequestStatusThreadLocal.remove();
 
             // depending on type of error, may need to close other connections in pool
             boolean recoverable = p.getPool().gotError(e);
@@ -449,28 +451,39 @@ public class DBTCPConnector implements DBConnector {
         }
 
         void requestEnsureConnection(){
-            if ( ! _inRequest )
+            if ( pinnedRequestStatusThreadLocal.get() == null )
                 return;
 
-            if ( _requestPort != null )
+            if ( getPinnedRequestPort() != null )
                 return;
 
-            _requestPort = _masterPortPool.get();
+            pinnedRequestStatusThreadLocal.get().requestPort = _masterPortPool.get();
         }
 
         void requestStart(){
-            _inRequest = true;
+            pinnedRequestStatusThreadLocal.set(new PinnedRequestStatus());
         }
 
         void requestDone(){
-            if ( _requestPort != null )
-                _requestPort.getPool().done( _requestPort );
-            _requestPort = null;
-            _inRequest = false;
+            DBPort requestPort = getPinnedRequestPort();
+            if ( requestPort != null )
+                requestPort.getPool().done( requestPort );
+            pinnedRequestStatusThreadLocal.remove();
         }
 
-        DBPort _requestPort;
-        boolean _inRequest;
+        PinnedRequestStatus getPinnedRequestStatus() {
+            return pinnedRequestStatusThreadLocal.get();
+        }
+
+        DBPort getPinnedRequestPort() {
+            return pinnedRequestStatusThreadLocal.get() != null ? pinnedRequestStatusThreadLocal.get().requestPort : null;
+        }
+
+        private final ThreadLocal<PinnedRequestStatus> pinnedRequestStatusThreadLocal = new ThreadLocal<PinnedRequestStatus>();
+    }
+
+    static class PinnedRequestStatus {
+        DBPort requestPort;
     }
 
     void checkMaster( boolean force , boolean failIfNoMaster ){
@@ -566,10 +579,6 @@ public class DBTCPConnector implements DBConnector {
                 _connectionStatus = null;
             } catch (final Throwable t) { /* nada */ }
         }
-
-        // below this will remove the myport for this thread only
-        // client using thread pool in web framework may need to call close() from all threads
-        _myPort.remove();
     }
 
     /**
@@ -598,15 +607,14 @@ public class DBTCPConnector implements DBConnector {
 
     @Override
     public CommandResult authenticate(MongoCredential credentials) {
-        final MyPort mp = _myPort.get();
-        final DBPort port = mp.get(false, ReadPreference.primaryPreferred(), null);
+        final DBPort port = _myPort.get(false, ReadPreference.primaryPreferred(), null);
 
         try {
             CommandResult result = port.authenticate(_mongo, credentials);
             _mongo.getAuthority().getCredentialsStore().add(credentials);
             return result;
        } finally {
-            mp.done(port);
+            _myPort.done(port);
         }
     }
 
@@ -621,7 +629,7 @@ public class DBTCPConnector implements DBConnector {
 
     // expose for unit testing
     MyPort getMyPort() {
-        return _myPort.get();
+        return _myPort;
     }
 
     private volatile DBPortPool _masterPortPool;
@@ -634,10 +642,5 @@ public class DBTCPConnector implements DBConnector {
     private volatile int _maxBsonObjectSize;
     private volatile Boolean _isMongosDirectConnection;
 
-    private ThreadLocal<MyPort> _myPort = new ThreadLocal<MyPort>(){
-        protected MyPort initialValue(){
-            return new MyPort();
-        }
-    };
-
+    MyPort _myPort = new MyPort();
 }
