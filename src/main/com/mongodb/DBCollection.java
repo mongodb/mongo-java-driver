@@ -20,7 +20,6 @@ package com.mongodb;
 
 // Mongo
 
-import org.bson.LazyBSONObject;
 import org.bson.LazyDBList;
 import org.bson.types.ObjectId;
 
@@ -1149,9 +1148,9 @@ public abstract class DBCollection {
      * @return
      * @throws MongoException
      */
-	public List distinct( String key , DBObject query ){
-        return distinct(key, query, getReadPreference());
-    }
+     public List distinct( String key , DBObject query ){
+         return distinct(key, query, getReadPreference());
+     }
 
     /**
      * find distinct values for a key
@@ -1172,7 +1171,7 @@ public abstract class DBCollection {
         res.throwOnError();
         return (List)(res.get( "values" ));
     }
-	
+
     /**
      * performs a map reduce operation
      * Runs the command in REPLACE output mode (saves to named collection)
@@ -1262,11 +1261,7 @@ public abstract class DBCollection {
     public MapReduceOutput mapReduce( MapReduceCommand command ){
         DBObject cmd = command.toDBObject();
         // if type in inline, then query options like slaveOk is fine
-        CommandResult res = null;
-        if (command.getOutputType() == MapReduceCommand.OutputType.INLINE)
-            res = _db.command( cmd, getOptions(), command.getReadPreference() != null ? command.getReadPreference() : getReadPreference() );
-        else
-            res = _db.command( cmd );
+        CommandResult res = _db.command( cmd, getOptions(), command.getReadPreference() != null ? command.getReadPreference() : getReadPreference() );
         res.throwOnError();
         return new MapReduceOutput( this , cmd, res );
     }
@@ -1282,7 +1277,7 @@ public abstract class DBCollection {
     public MapReduceOutput mapReduce( DBObject command ){
         if ( command.get( "mapreduce" ) == null && command.get( "mapReduce" ) == null )
             throw new IllegalArgumentException( "need mapreduce arg" );
-        CommandResult res = _db.command( command );
+        CommandResult res = _db.command( command, getOptions(), getReadPreference() );
         res.throwOnError();
         return new MapReduceOutput( this , command, res );
     }
@@ -1309,7 +1304,7 @@ public abstract class DBCollection {
         Collections.addAll(pipelineOps, additionalOps);
         command.put( "pipeline", pipelineOps );
         
-        CommandResult res = _db.command( command );
+        CommandResult res = _db.command( command, getOptions(), getReadPreference() );
         res.throwOnError();
         return new AggregationOutput( command, res );
     }
@@ -1360,7 +1355,7 @@ public abstract class DBCollection {
      * @throws MongoException
      */
     public CommandResult getStats() {
-        return getDB().command(new BasicDBObject("collstats", getName()), getOptions());
+        return getDB().command(new BasicDBObject("collstats", getName()), getOptions(), getReadPreference());
     }
 
     /**
