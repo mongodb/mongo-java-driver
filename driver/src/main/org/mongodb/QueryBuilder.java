@@ -138,7 +138,7 @@ public class QueryBuilder {
     /**
      * Equivalent of the find({key:value})
      *
-     * @param object Value to query
+     * @param queryBuilder Value to query
      * @return Returns the current QueryBuilder with an appended equality query
      */
     public QueryBuilder is(final QueryBuilder queryBuilder) {
@@ -404,7 +404,7 @@ public class QueryBuilder {
      * @param ands the list of conditions to and together
      * @return Returns the current QueryBuilder with appended "and" operator
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked","rawtypes"})
     public QueryBuilder and(final Document... ands) {
         List l = (List) query.get(QueryOperators.AND);
         if (l == null) {
