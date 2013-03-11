@@ -202,8 +202,7 @@ public class DBPort {
         _open();
     }
 
-    boolean _open()
-        throws IOException {
+    void _open() throws IOException {
         
         long sleepTime = 100;
 
@@ -212,11 +211,9 @@ public class DBPort {
             maxAutoConnectRetryTime = _options.maxAutoConnectRetryTime;
         }
 
+        boolean successfullyConnected = false;
         final long start = System.currentTimeMillis();
-        while ( true ){
-            
-            IOException lastError = null;
-
+        do {
             try {
                 _socket = _options.socketFactory.createSocket();
                 _socket.connect( _addr , _options.connectTimeout );
@@ -226,30 +223,28 @@ public class DBPort {
                 _socket.setSoTimeout( _options.socketTimeout );
                 _in = new BufferedInputStream( _socket.getInputStream() );
                 _out = _socket.getOutputStream();
-                return true;
+                successfullyConnected = true;
             }
-            catch ( IOException ioe ){
-                lastError = new IOException( "couldn't connect to [" + _addr + "] bc:" + ioe );
-                _logger.log( Level.INFO , "connect fail to : " + _addr , ioe );
+            catch ( IOException e ){
                 close();
+
+                if (!_options.autoConnectRetry || (_pool != null && !_pool._everWorked))
+                    throw e;
+
+                long waitSoFar = System.currentTimeMillis() - start;
+
+                if (waitSoFar >= maxAutoConnectRetryTime)
+                    throw e;
+
+                if (sleepTime + waitSoFar > maxAutoConnectRetryTime)
+                    sleepTime = maxAutoConnectRetryTime - waitSoFar;
+
+                _logger.log(Level.WARNING, "Exception connecting to " + serverAddress().getHost() + ": " + e +
+                        ".  Total wait time so far is " + waitSoFar + " ms.  Will retry after sleeping for " + sleepTime + " ms.");
+                ThreadUtil.sleep(sleepTime);
+                sleepTime *= 2;
             }
-            
-            if ( ! _options.autoConnectRetry || ( _pool != null && ! _pool._everWorked ) )
-                throw lastError;
-            
-            long sleptSoFar = System.currentTimeMillis() - start;
-
-            if ( sleptSoFar >= maxAutoConnectRetryTime )
-                throw lastError;
-            
-            if ( sleepTime + sleptSoFar > maxAutoConnectRetryTime )
-                sleepTime = maxAutoConnectRetryTime - sleptSoFar;
-
-            _logger.severe( "going to sleep and retry.  total sleep time after = " + ( sleptSoFar + sleptSoFar ) + "ms  this time:" + sleepTime + "ms" );
-            ThreadUtil.sleep( sleepTime );
-            sleepTime *= 2;
-            
-        }
+        } while (!successfullyConnected);
     }
 
     @Override

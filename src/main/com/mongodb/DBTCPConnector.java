@@ -150,7 +150,7 @@ public class DBTCPConnector implements DBConnector {
             _error( ioe, false );
 
             if ( concern.raiseNetworkErrors() )
-                throw new MongoException.Network( "can't say something" , ioe );
+                throw new MongoException.Network("Write operation to server " + port.host() + " failed on database " + db , ioe );
 
             CommandResult res = new CommandResult(port.serverAddress());
             res.put( "ok" , false );
@@ -250,8 +250,7 @@ public class DBTCPConnector implements DBConnector {
             retry = retries > 0 && !coll._name.equals( "$cmd" )
                     && !(ioe instanceof SocketTimeoutException) && _error( ioe, secondaryOk );
             if ( !retry ){
-                throw new MongoException.Network( "can't call something : " + port.host() + "/" + db,
-                                                  ioe );
+                throw  new MongoException.Network("Read operation to server " + port.host() + " failed on database " + db , ioe );
             }
         }
         catch ( RuntimeException re ){

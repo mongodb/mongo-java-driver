@@ -21,6 +21,7 @@ import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -66,6 +67,25 @@ public class DBPortTest extends TestCase {
         finally {
             m.close();
         }
+    }
+
+    @Test
+    public void testOpenFailure() throws UnknownHostException {
+        final MongoOptions options = new MongoOptions();
+        options.autoConnectRetry = true;
+        options.maxAutoConnectRetryTime = 350;
+
+        final DBPortPool portPool = new DBPortPool(new ServerAddress("localhost", 50051), options);
+        portPool._everWorked = true;
+
+        DBPort port = new DBPort(new ServerAddress("localhost", 50051), portPool, options);
+        try {
+            port._open();
+            fail("Open should fail");
+        } catch (IOException e) {
+            // should get exception
+        }
+
     }
 
 }
