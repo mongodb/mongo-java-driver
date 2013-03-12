@@ -186,21 +186,20 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
 
     private CommandResult sendWriteMessage(final MongoNamespace namespace, final MongoRequestMessage writeMessage,
                                            final WriteConcern writeConcern) {
-        channel.sendMessage(writeMessage);
         if (writeConcern.callGetLastError()) {
-            return getLastError(namespace, writeConcern);
+            // This code is a bit weird, because we're piggybacking the getLastError command on the same
+            // buffer as the writeMessage.  We do this by sending the buffer being used by the writeMessage
+            // into the constructor that we're using to serialize the getLastError command.
+            final GetLastError getLastError = new GetLastError(writeConcern);
+            final DocumentSerializer serializer = new DocumentSerializer(options.getPrimitiveSerializers());
+            new MongoQueryMessage(namespace.getDatabaseName() + ".$cmd", getLastError, writeMessage.getBuffer(), serializer);
+            final MongoReplyMessage<Document> getLastErrorReply = channel.sendAndReceiveMessasge(writeMessage, serializer);
+            return getLastError.parseGetLastErrorResponse(createCommandResult(getLastError, getLastErrorReply));
         }
         else {
+            channel.sendMessage(writeMessage);
             return null;
         }
-    }
-
-    private CommandResult getLastError(final MongoNamespace namespace, final WriteConcern writeConcern) {
-        final GetLastError getLastError = new GetLastError(writeConcern);
-
-        final DocumentSerializer serializer = new DocumentSerializer(options.getPrimitiveSerializers());
-        final CommandResult commandResult = command(namespace.getDatabaseName(), getLastError, serializer);
-        return getLastError.parseGetLastErrorResponse(commandResult);
     }
 
     @Override

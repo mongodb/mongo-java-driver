@@ -149,7 +149,7 @@ public class MongoRequestMessage {
         buffer = null;
     }
 
-    protected ChannelAwareOutputBuffer getBuffer() {
+    public ChannelAwareOutputBuffer getBuffer() {
         return buffer;
     }
 
