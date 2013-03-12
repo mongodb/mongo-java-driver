@@ -18,7 +18,10 @@ package org.mongodb.result;
 
 import org.mongodb.ServerAddress;
 
-public class ServerCursor {
+import java.io.Serializable;
+
+public final class ServerCursor implements Serializable {
+
     private final long id;
     private final ServerAddress address;
 
