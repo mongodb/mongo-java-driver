@@ -42,6 +42,7 @@ class MongoSocketGateway extends MongoGateway {
         try {
             if (socket == null) {
                 socket = socketFactory.createSocket(getAddress().getSocketAddress().getAddress(), getAddress().getPort());
+                socket.setTcpNoDelay(true);
             }
         } catch (IOException e) {
             throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);

@@ -22,6 +22,7 @@ import org.mongodb.protocol.MongoRequestMessage;
 import org.mongodb.serialization.Serializer;
 
 import java.io.IOException;
+import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
@@ -38,6 +39,7 @@ class MongoSocketChannelGateway extends MongoGateway {
         try {
             if (socketChannel == null) {
                 socketChannel = SocketChannel.open(getAddress().getSocketAddress());
+                socketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
             }
         } catch (IOException e) {
             throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
