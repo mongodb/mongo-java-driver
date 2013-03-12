@@ -369,39 +369,39 @@ public class DBTCPConnector implements DBConnector {
 
         DBPort get( boolean keep , ReadPreference readPref, ServerAddress hostNeeded ){
 
-            DBPort requestPort = getPinnedRequestPort();
+            DBPort pinnedRequestPort = getPinnedRequestPortForThread();
 
             if ( hostNeeded != null ) {
-                if (requestPort != null && requestPort.serverAddress().equals(hostNeeded)) {
-                    return requestPort;
+                if (pinnedRequestPort != null && pinnedRequestPort.serverAddress().equals(hostNeeded)) {
+                    return pinnedRequestPort;
                 }
 
                 // asked for a specific host
                 return _portHolder.get( hostNeeded ).get();
             }
 
-            if ( requestPort != null ){
+            if ( pinnedRequestPort != null ){
                 // we are within a request, and have a port, should stick to it
-                if ( requestPort.getPool() == _masterPortPool || !keep ) {
+                if ( pinnedRequestPort.getPool() == _masterPortPool || !keep ) {
                     // if keep is false, it's a read, so we use port even if master changed
-                    return requestPort;
+                    return pinnedRequestPort;
                 }
 
                 // it's write and master has changed
                 // we fall back on new master and try to go on with request
                 // this may not be best behavior if spec of request is to stick with same server
-                requestPort.getPool().done(requestPort);
-                pinnedRequestStatusThreadLocal.get().requestPort = null;
+                pinnedRequestPort.getPool().done(pinnedRequestPort);
+                setPinnedRequestPortForThread(null);
             }
 
-            DBPort p;
+            DBPort port;
             if (getReplicaSetStatus() == null){
                 if (_masterPortPool == null) {
                     // this should only happen in rare case that no master was ever found
                     // may get here at startup if it's a read, slaveOk=true, and ALL servers are down
                     throw new MongoException("Rare case where master=null, probably all servers are down");
                 }
-                p = _masterPortPool.get();
+                port = _masterPortPool.get();
             }
             else {
                 ReplicaSetStatus.ReplicaSet replicaSet = getReplicaSetStatus()._replicaSetHolder.get();
@@ -410,38 +410,38 @@ public class DBTCPConnector implements DBConnector {
                 if (node == null)
                     throw new MongoException("No replica set members available in " +  replicaSet + " for " + readPref.toDBObject().toString());
             
-                p = _portHolder.get(node.getServerAddress()).get();
+                port = _portHolder.get(node.getServerAddress()).get();
             }
 
             // if within request, remember port to stick to same server
-            if ( pinnedRequestStatusThreadLocal.get() != null) {
-                pinnedRequestStatusThreadLocal.get().requestPort = p;
+            if (threadHasPinnedRequest()) {
+                setPinnedRequestPortForThread(port);
             }
 
-            return p;
+            return port;
         }
 
-        void done( DBPort p ) {
-            DBPort requestPort = getPinnedRequestPort();
+        void done( DBPort port ) {
+            DBPort requestPort = getPinnedRequestPortForThread();
 
             // keep request port
-            if (p != requestPort) {
-                p.getPool().done(p);
+            if (port != requestPort) {
+                port.getPool().done(port);
             }
         }
 
         /**
          * call this method when there is an IOException or other low level error on port.
-         * @param p
+         * @param port
          * @param e
          */
-        void error( DBPort p , Exception e ){
-            p.close();
+        void error( DBPort port , Exception e ){
+            port.close();
             pinnedRequestStatusThreadLocal.remove();
 
             // depending on type of error, may need to close other connections in pool
-            boolean recoverable = p.getPool().gotError(e);
-            if (!recoverable && _connectionStatus != null && _masterPortPool._addr.equals(p.serverAddress())) {
+            boolean recoverable = port.getPool().gotError(e);
+            if (!recoverable && _connectionStatus != null && _masterPortPool._addr.equals(port.serverAddress())) {
                 ConnectionStatus.Node newMaster = _connectionStatus.ensureMaster();
                 if (newMaster != null) {
                     setMaster(newMaster);
@@ -450,13 +450,13 @@ public class DBTCPConnector implements DBConnector {
         }
 
         void requestEnsureConnection(){
-            if ( pinnedRequestStatusThreadLocal.get() == null )
+            if ( !threadHasPinnedRequest() )
                 return;
 
-            if ( getPinnedRequestPort() != null )
+            if ( getPinnedRequestPortForThread() != null )
                 return;
 
-            pinnedRequestStatusThreadLocal.get().requestPort = _masterPortPool.get();
+            setPinnedRequestPortForThread(_masterPortPool.get());
         }
 
         void requestStart(){
@@ -464,18 +464,26 @@ public class DBTCPConnector implements DBConnector {
         }
 
         void requestDone(){
-            DBPort requestPort = getPinnedRequestPort();
+            DBPort requestPort = getPinnedRequestPortForThread();
             if ( requestPort != null )
                 requestPort.getPool().done( requestPort );
             pinnedRequestStatusThreadLocal.remove();
         }
 
-        PinnedRequestStatus getPinnedRequestStatus() {
+        PinnedRequestStatus getPinnedRequestStatusForThread() {
             return pinnedRequestStatusThreadLocal.get();
         }
 
-        DBPort getPinnedRequestPort() {
-            return pinnedRequestStatusThreadLocal.get() != null ? pinnedRequestStatusThreadLocal.get().requestPort : null;
+        boolean threadHasPinnedRequest() {
+            return pinnedRequestStatusThreadLocal.get() != null;
+        }
+
+        DBPort getPinnedRequestPortForThread() {
+            return threadHasPinnedRequest() ? pinnedRequestStatusThreadLocal.get().requestPort : null;
+        }
+
+        void setPinnedRequestPortForThread(final DBPort port) {
+            pinnedRequestStatusThreadLocal.get().requestPort = port;
         }
 
         private final ThreadLocal<PinnedRequestStatus> pinnedRequestStatusThreadLocal = new ThreadLocal<PinnedRequestStatus>();

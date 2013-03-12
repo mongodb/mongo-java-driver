@@ -64,17 +64,17 @@ public class DBTCPConnectorTest extends TestCase {
     @Test
     public void testRequestReservation() {
         final DBTCPConnector.MyPort myPort = _connector.getMyPort();
-        assertNull(myPort.getPinnedRequestStatus());
+        assertNull(myPort.getPinnedRequestStatusForThread());
         _connector.requestStart();
         try {
-            assertNull(myPort.getPinnedRequestPort());
-            assertNotNull(myPort.getPinnedRequestStatus());
+            assertNull(myPort.getPinnedRequestPortForThread());
+            assertNotNull(myPort.getPinnedRequestStatusForThread());
             _connector.requestDone();
-            assertNull(myPort.getPinnedRequestStatus());
+            assertNull(myPort.getPinnedRequestStatusForThread());
         } finally {
             _connector.requestDone();
         }
-        assertNull(myPort.getPinnedRequestPort());
+        assertNull(myPort.getPinnedRequestPortForThread());
     }
 
     /**
@@ -86,10 +86,10 @@ public class DBTCPConnectorTest extends TestCase {
         _connector.requestStart();
         try {
             _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
-            assertNotNull(myPort.getPinnedRequestStatus());
-            DBPort requestPort = myPort.getPinnedRequestPort();
+            assertNotNull(myPort.getPinnedRequestStatusForThread());
+            DBPort requestPort = myPort.getPinnedRequestPortForThread();
             _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
-            assertEquals(requestPort, myPort.getPinnedRequestPort());
+            assertEquals(requestPort, myPort.getPinnedRequestPortForThread());
         } finally {
             _connector.requestDone();
         }
@@ -104,11 +104,11 @@ public class DBTCPConnectorTest extends TestCase {
         _connector.requestStart();
         try {
             _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
-            DBPort requestPort = myPort.getPinnedRequestPort();
+            DBPort requestPort = myPort.getPinnedRequestPortForThread();
             _connector.call(_db, _collection,
                     OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
                     null, 0);
-            assertEquals(requestPort, myPort.getPinnedRequestPort());
+            assertEquals(requestPort, myPort.getPinnedRequestPortForThread());
         } finally {
             _connector.requestDone();
         }
@@ -129,11 +129,11 @@ public class DBTCPConnectorTest extends TestCase {
             _connector.call(_db, _collection,
                     OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.secondary()),
                     null, 0, ReadPreference.secondary(), null);
-            DBPort requestPort = myPort.getPinnedRequestPort();
+            DBPort requestPort = myPort.getPinnedRequestPortForThread();
             _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
-            assertNotEquals(requestPort, myPort.getPinnedRequestPort());
-            DBTCPConnector.PinnedRequestStatus status = myPort.getPinnedRequestStatus();
-            assertEquals(_connector.getReplicaSetStatus().getMaster(), myPort.getPinnedRequestPort().serverAddress());
+            assertNotEquals(requestPort, myPort.getPinnedRequestPortForThread());
+            DBTCPConnector.PinnedRequestStatus status = myPort.getPinnedRequestStatusForThread();
+            assertEquals(_connector.getReplicaSetStatus().getMaster(), myPort.getPinnedRequestPortForThread().serverAddress());
         } finally {
             _connector.requestDone();
         }
@@ -150,7 +150,7 @@ public class DBTCPConnectorTest extends TestCase {
             _connector.call(_db, _collection,
                     OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
                     null, 0);
-            assertNotNull(myPort.getPinnedRequestPort());
+            assertNotNull(myPort.getPinnedRequestPortForThread());
         } finally {
             _connector.requestDone();
         }
