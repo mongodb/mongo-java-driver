@@ -16,8 +16,11 @@
 
 package org.mongodb;
 
+import org.bson.types.ObjectId;
+
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -88,6 +91,34 @@ public class Document implements Map<String, Object>, Serializable {
     @SuppressWarnings("unchecked")
     public <T> T get(final Object key, final Class<T> clazz) {
         return (T) documentAsMap.get(key);
+    }
+
+    public Integer getInteger(final Object key) {
+        return (Integer) get(key);
+    }
+
+    public Long getLong(final Object key) {
+        return (Long) get(key);
+    }
+
+    public Double getDouble(final Object key) {
+        return (Double) get(key);
+    }
+
+    public String getString(final Object key) {
+        return (String) get(key);
+    }
+
+    public Boolean getBoolean(final Object key) {
+        return (Boolean) get(key);
+    }
+
+    public ObjectId getObjectId(final Object key) {
+        return (ObjectId) get(key);
+    }
+
+    public Date getDate(final Object key) {
+        return (Date) get(key);
     }
 
     // Vanilla Map methods delegate to map field
