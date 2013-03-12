@@ -77,7 +77,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     }
 
     @Test
-    @Ignore("False positive - this passes but it's actually throwing an error on the callback code")
+    @Ignore("False positive - this passes but it's actually throwing an error on the callback code")  // TODO: investigate
     public void testOneCallback() throws ExecutionException, InterruptedException {
         final List<Document> documentResultList = new ArrayList<Document>();
         final List<Exception> exceptionList = new ArrayList<Exception>();
