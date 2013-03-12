@@ -396,10 +396,9 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
                                        final SingleResultCallback<WriteResult> callback, final MongoRequestMessage message) {
         if (write.getWriteConcern().callGetLastError()) {
             final GetLastError getLastError = new GetLastError(write.getWriteConcern());
-            final MongoQueryMessage writeConcernMessage = new MongoQueryMessage(namespace.getDatabaseName() + ".$cmd",
-                    getLastError, new PooledByteBufferOutputBuffer(bufferPool),
-                    withDocumentSerializer(serializer));
-            channel.sendMessage(message, writeConcernMessage, serializer,
+            new MongoQueryMessage(namespace.getDatabaseName() + ".$cmd",
+                    getLastError, message.getBuffer(), withDocumentSerializer(serializer));
+            channel.sendAndReceiveMessage(message, serializer,
                     new MongoReplyMessageWriteResultCallback(callback, write, getLastError, SingleChannelAsyncMongoConnection.this));
         }
         else {

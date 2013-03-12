@@ -20,7 +20,6 @@ package org.mongodb.io.async;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
 import org.mongodb.Document;
-import org.mongodb.io.BufferPool;
 import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
@@ -28,9 +27,9 @@ import org.mongodb.MongoInterruptedException;
 import org.mongodb.MongoQueryFailureException;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
+import org.mongodb.io.BufferPool;
 import org.mongodb.io.MongoSocketOpenException;
 import org.mongodb.protocol.MongoGetMoreMessage;
-import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyHeader;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.protocol.MongoRequestMessage;
@@ -73,21 +72,10 @@ public class MongoAsynchronousSocketChannelGateway {
 
     public void sendMessage(final MongoRequestMessage message,
                             final SingleResultCallback<MongoReplyMessage<Document>> callback) {
-        sendMessage(message, null, null, callback);
-    }
-
-    public void sendMessage(final MongoRequestMessage message, final MongoQueryMessage writeConcernMessage,
-                            final Serializer<Document> serializer,
-                            final SingleResultCallback<MongoReplyMessage<Document>> callback) {
         sendOneWayMessage(message, new AsyncCompletionHandler() {
             @Override
             public void completed(final int bytesWritten) {
-                if (writeConcernMessage != null) {
-                    sendAndReceiveMessage(writeConcernMessage, serializer, callback);
-                }
-                else {
-                    callback.onResult(null, null);
-                }
+                callback.onResult(null, null);
             }
 
             @Override
