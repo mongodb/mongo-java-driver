@@ -279,6 +279,24 @@ class OutMessage extends BasicBSONEncoder {
         return _numDocuments;
     }
 
+    String getQueryDetails(long timeTaken){
+        String name = "[" +_collection.getName() + "]";
+        if(_opCode == OpCode.OP_QUERY){
+            String prefix = "";
+            if(! "$cmd".equals(_collection.getName())){
+                prefix = "[" +_collection.getName() + "] ";
+            }
+            name = prefix + _query.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Request : ")
+                .append("Id: ").append(_id)
+                .append(" (").append(timeTaken).append(" ms) ")
+                .append(_opCode.name())
+                .append(", ").append(name);
+        return sb.toString();
+    }
+
     @Override
     public int putObject(BSONObject o) {
         if (_buffer == null) {

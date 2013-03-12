@@ -126,7 +126,7 @@ public class DBPort {
         
         if ( _out == null )
             throw new IllegalStateException( "_out shouldn't be null" );
-
+        long start = System.currentTimeMillis();
         try {
             msg.prepare();
             _activeState = new ActiveState(msg);
@@ -148,6 +148,10 @@ public class DBPort {
         finally {
             _activeState = null;
             _processingResponse = false;
+            if(DBApiLayer.willTrace()){
+                long timeTaken = System.currentTimeMillis() - start;
+                DBApiLayer.trace(msg.getQueryDetails(timeTaken));
+            }
         }
     }
 
