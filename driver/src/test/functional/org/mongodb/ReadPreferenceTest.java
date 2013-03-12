@@ -37,6 +37,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ReadPreferenceTest {
     private static final int FOUR_MEG = 4 * 1024 * 1024;
+    private static final String HOST = "localhost";
 
     private ReplicaSetMember primary, secondary, otherSecondary;
     private ReplicaSet set;
@@ -45,9 +46,6 @@ public class ReadPreferenceTest {
 
     @Before
     public void setUp() throws IOException {
-        final Set<String> names = new HashSet<String>();
-        names.add("primary");
-
         final Set<Tag> tagSet1 = new HashSet<Tag>();
         tagSet1.add(new Tag("foo", "1"));
         tagSet1.add(new Tag("bar", "2"));
@@ -68,17 +66,13 @@ public class ReadPreferenceTest {
         final float acceptablePingTime = bestPingTime + (acceptableLatencyMS / 2);
         final float unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
 
-        primary = new ReplicaSetMember(new ServerAddress("127.0.0.1", 27017), "", acceptablePingTime, true, true,
+        primary = new ReplicaSetMember(new ServerAddress(HOST, 27017), "", acceptablePingTime, true, true,
                                      false, tagSet1, FOUR_MEG);
 
-        names.clear();
-        names.add("secondary");
-        secondary = new ReplicaSetMember(new ServerAddress("127.0.0.1", 27018), "", bestPingTime, true, false,
+        secondary = new ReplicaSetMember(new ServerAddress(HOST, 27018), "", bestPingTime, true, false,
                                        true, tagSet2, FOUR_MEG);
 
-        names.clear();
-        names.add("tertiary");
-        otherSecondary = new ReplicaSetMember(new ServerAddress("127.0.0.1", 27019), "", unacceptablePingTime,
+        otherSecondary = new ReplicaSetMember(new ServerAddress(HOST, 27019), "", unacceptablePingTime,
                                             true, false, true, tagSet3, FOUR_MEG);
 
         final List<ReplicaSetMember> nodeList = new ArrayList<ReplicaSetMember>();

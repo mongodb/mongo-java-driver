@@ -18,6 +18,9 @@ package org.bson.types;
 
 import org.junit.Test;
 
+import java.util.Date;
+import java.util.Random;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -45,7 +48,7 @@ public class ObjectIdTest {
         assertEquals(expected, actual);
 
         byte[] b = new byte[12];
-        java.util.Random r = new java.util.Random(17);
+        Random r = new Random(17);
         for (int i = 0; i < b.length; i++) {
             b[i] = (byte) (r.nextInt());
         }
@@ -63,7 +66,7 @@ public class ObjectIdTest {
 
     @Test
     public void testDateCons() {
-        java.util.Date d = new java.util.Date();
+        Date d = new Date();
         ObjectId a = new ObjectId(d);
         assertEquals(d.getTime() / 1000, a.getDate().getTime() / 1000);
     }

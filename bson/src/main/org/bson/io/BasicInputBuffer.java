@@ -104,8 +104,8 @@ public class BasicInputBuffer implements InputBuffer {
 
     private void readUntilNullByte() {
         //CHECKSTYLE:OFF
-        while (buffer.get() != 0) {
-            //do nothing - checkstyle hates this, not surprisingly
+        while (buffer.get() != 0) { //NOPMD
+            //do nothing - checkstyle & PMD hate this, not surprisingly
         }
         //CHECKSTYLE:ON
     }

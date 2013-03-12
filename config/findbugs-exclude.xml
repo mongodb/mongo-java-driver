@@ -11,6 +11,9 @@
         <Class name="org.mongodb.acceptancetest.AcceptanceTestCase">
             <Bug code="MS"/>
         </Class>
+        <Class name="org.mongodb.DatabaseTestCase">
+            <Bug code="MS"/>
+        </Class>
 
     </Match>
 

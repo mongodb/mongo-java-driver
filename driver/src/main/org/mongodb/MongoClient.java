@@ -30,7 +30,7 @@ import java.util.concurrent.ExecutionException;
  * @since 3.0.0
  */
 @ThreadSafe
-public interface MongoClient extends Closeable {
+public interface  MongoClient extends Closeable {
     /**
      * @param databaseName the name of the database to retrieve
      * @return a MongoDatabase representing the specified database

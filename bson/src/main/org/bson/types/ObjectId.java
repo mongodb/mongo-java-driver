@@ -512,7 +512,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
                         sb.append(bb.getChar());
                         sb.append(bb.getChar());
                         sb.append(bb.getChar());
-                    } catch (BufferUnderflowException shortHardwareAddressException) {
+                    } catch (BufferUnderflowException shortHardwareAddressException) { //NOPMD
                         // mac with less than 6 bytes. continue
                     }
                 }
