@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class QueryBuilder implements ConvertibleToDocument{
+public class QueryBuilder implements ConvertibleToDocument {
     //CHECKSTYLE:OFF
 
 

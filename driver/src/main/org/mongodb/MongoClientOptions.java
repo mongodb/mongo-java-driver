@@ -463,22 +463,22 @@ public final class MongoClientOptions {
 
     @Override
     public String toString() {
-        return "MongoClientOptions {" +
-                "description='" + description + '\'' +
-                ", connectionsPerHost=" + connectionsPerHost +
-                ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier +
-                ", maxWaitTime=" + maxWaitTime +
-                ", connectTimeout=" + connectTimeout +
-                ", socketTimeout=" + socketTimeout +
-                ", socketKeepAlive=" + socketKeepAlive +
-                ", autoConnectRetry=" + autoConnectRetry +
-                ", maxAutoConnectRetryTime=" + maxAutoConnectRetryTime +
-                ", readPreference=" + readPreference +
-                ", writeConcern=" + writeConcern +
-                ", primitiveSerializers=" + primitiveSerializers +
-                ", SSLEnabled=" + SSLEnabled +
-                ", asyncEnabled=" + asyncEnabled +
-                '}';
+        return "MongoClientOptions {"
+                + "description='" + description + '\''
+                + ", connectionsPerHost=" + connectionsPerHost
+                + ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier
+                + ", maxWaitTime=" + maxWaitTime
+                + ", connectTimeout=" + connectTimeout
+                + ", socketTimeout=" + socketTimeout
+                + ", socketKeepAlive=" + socketKeepAlive
+                + ", autoConnectRetry=" + autoConnectRetry
+                + ", maxAutoConnectRetryTime=" + maxAutoConnectRetryTime
+                + ", readPreference=" + readPreference
+                + ", writeConcern=" + writeConcern
+                + ", primitiveSerializers=" + primitiveSerializers
+                + ", SSLEnabled=" + SSLEnabled
+                + ", asyncEnabled=" + asyncEnabled
+                + '}';
     }
 
     private MongoClientOptions(final Builder builder) {
