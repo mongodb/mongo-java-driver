@@ -48,7 +48,6 @@ public class DBCollection implements IDBCollection {
     private Class<? extends DBObject> objectClass = BasicDBObject.class;
     private final Map<String, Class<? extends DBObject>> pathToClassMap = new HashMap<String,
                                                                                      Class<? extends DBObject>>();
-    //    private ReflectionDBObject.JavaWrapper _wrapper = null;
 
     DBCollection(final String name, final DB database) {
         this.database = database;
@@ -1055,17 +1054,9 @@ public class DBCollection implements IDBCollection {
     }
 
     private void setCollection(final String name) {
-        final HashMap<String, Class<? extends DBObject>> map
-        = new HashMap<String, Class<? extends DBObject>>(pathToClassMap);
-        this.collection = database.toNew()
-                                  .getCollection(name,
-                                                new CollectibleDBObjectSerializer(database,
-                                                                                 database.getMongo()
-                                                                                         .getNew()
-                                                                                         .getOptions()
-                                                                                         .getPrimitiveSerializers(),
-                                                                                 new ObjectIdGenerator(),
-                                                                                 objectClass,
-                                                                                 map));
+        final HashMap<String, Class<? extends DBObject>> map = new HashMap<String, Class<? extends DBObject>>(pathToClassMap);
+        this.collection = database.toNew().getCollection(name,
+                new CollectibleDBObjectSerializer(database,
+                        database.getMongo().getNew().getOptions().getPrimitiveSerializers(), new ObjectIdGenerator(), objectClass, map));
     }
 }
