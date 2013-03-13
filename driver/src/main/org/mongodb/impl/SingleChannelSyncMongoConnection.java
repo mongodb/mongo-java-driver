@@ -75,7 +75,7 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
         final MongoQueryMessage message = new MongoQueryMessage(database + ".$cmd", commandOperation,
                 new PooledByteBufferOutputBuffer(bufferPool), withDocumentSerializer(serializer));
-        final MongoReplyMessage<Document> replyMessage = channel.sendAndReceiveMessasge(message, serializer);
+        final MongoReplyMessage<Document> replyMessage = channel.sendAndReceiveMessage(message, serializer);
 
         return createCommandResult(commandOperation, replyMessage);
     }
@@ -97,7 +97,7 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
         find.readPreferenceIfAbsent(options.getReadPreference());
         final MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find,
                 new PooledByteBufferOutputBuffer(bufferPool), withDocumentSerializer(querySerializer));
-        final MongoReplyMessage<T> replyMessage = channel.sendAndReceiveMessasge(message, resultSerializer);
+        final MongoReplyMessage<T> replyMessage = channel.sendAndReceiveMessage(message, resultSerializer);
         return new QueryResult<T>(replyMessage, channel.getAddress());
     }
 
@@ -106,7 +106,7 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
                                       final Serializer<T> resultSerializer) {
         final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore,
                 new PooledByteBufferOutputBuffer(bufferPool));
-        final MongoReplyMessage<T> replyMessage = channel.sendAndReceiveMessasge(message, resultSerializer);
+        final MongoReplyMessage<T> replyMessage = channel.sendAndReceiveMessage(message, resultSerializer);
         return new QueryResult<T>(replyMessage, channel.getAddress());
     }
 
@@ -193,7 +193,7 @@ final class SingleChannelSyncMongoConnection implements MongoPoolableConnection 
             final GetLastError getLastError = new GetLastError(writeConcern);
             final DocumentSerializer serializer = new DocumentSerializer(options.getPrimitiveSerializers());
             new MongoQueryMessage(namespace.getDatabaseName() + ".$cmd", getLastError, writeMessage.getBuffer(), serializer);
-            final MongoReplyMessage<Document> getLastErrorReply = channel.sendAndReceiveMessasge(writeMessage, serializer);
+            final MongoReplyMessage<Document> getLastErrorReply = channel.sendAndReceiveMessage(writeMessage, serializer);
             return getLastError.parseGetLastErrorResponse(createCommandResult(getLastError, getLastErrorReply));
         }
         else {

@@ -76,7 +76,7 @@ public abstract class MongoGateway {
         sendOneWayMessage(message);
     }
 
-    public <T> MongoReplyMessage<T> sendAndReceiveMessasge(final MongoRequestMessage message, final Serializer<T> serializer) {
+    public <T> MongoReplyMessage<T> sendAndReceiveMessage(final MongoRequestMessage message, final Serializer<T> serializer) {
         ensureOpen();
         long start = System.nanoTime();
         sendOneWayMessage(message);
