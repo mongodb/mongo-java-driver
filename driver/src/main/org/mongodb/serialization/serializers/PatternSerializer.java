@@ -76,7 +76,7 @@ public class PatternSerializer implements Serializer<Pattern> {
             if (flag != null) {
                 optionsInt |= flag.javaFlag;
                 //CHECKSTYLE:OFF
-                if (flag.unsupported != null) {
+                if (flag.unsupported != null) { // NOPMD
                     // TODO: deal with logging
                     // warnUnsupportedRegex( flag.unsupported );
                 }

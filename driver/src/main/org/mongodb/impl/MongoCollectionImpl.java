@@ -879,7 +879,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
             @Override
             public void onResult(final QueryResult<T> result, final MongoException e) {
-                if (e != null) {
+                if (e != null) { // NOPMD
                    // TODO: Error handling.  Call done with an ExecutionException...
                 }
 

@@ -231,6 +231,10 @@ configure(subprojects.findAll { it.name in ['driver-compat', 'morphia'] }) {
 
 project(':bson') {
 
+    pmd {
+        ignoreFailures = false
+    }
+
     jar {
         manifest {
             attributes(

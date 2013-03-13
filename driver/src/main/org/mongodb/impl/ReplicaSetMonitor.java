@@ -101,7 +101,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
 
                 Thread.sleep(curUpdateIntervalMS);
             }
-        } catch (Exception e) {
+        } catch (Exception e) { // NOPMD
             // Allow thread to exit
         }
 
@@ -177,7 +177,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
             for (ChannelState channelState : channelStates) {
                 try {
                     channelState.executor.close();
-                } catch (final Throwable t) {
+                } catch (final Throwable t) { // NOPMD
                     // ignore
                 }
             }

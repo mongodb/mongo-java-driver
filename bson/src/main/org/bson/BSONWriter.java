@@ -463,8 +463,10 @@ public abstract class BSONWriter implements Closeable {
         if (checkElementNames) {
             if (name.charAt(0) == '$') {
                 // a few element names starting with $ have to be allowed for historical reasons
-                if (!(name.equals("$code") || name.equals("$db") || name.equals("$ref") || name.equals("$scope")
-                        || name.equals("$id"))) {
+                if (!(name.equals("$code") || name.equals("$db") //NOPMD
+                      || name.equals("$ref") || name.equals("$scope")
+                      || name.equals("$id"))) {
+                    //NOPMD collapsing these if statements will not aid readability
                     final String message = format(
                             "Element name '%s' is not valid because it starts with a '$'" + ".", name);
                     throw new BSONSerializationException(message);
@@ -531,7 +533,8 @@ public abstract class BSONWriter implements Closeable {
     protected void throwInvalidState(final String methodName, final State... validStates) {
         final String message;
         if (state == State.INITIAL || state == State.SCOPE_DOCUMENT || state == State.DONE) {
-            if (!methodName.startsWith("end") && !methodName.equals("writeName")) {
+            if (!methodName.startsWith("end") && !methodName.equals("writeName")) { // NOPMD
+                //NOPMD collapsing these if statements will not aid readability
                 String typeName = methodName.substring(5);
                 if (typeName.startsWith("start")) {
                     typeName = typeName.substring(5);

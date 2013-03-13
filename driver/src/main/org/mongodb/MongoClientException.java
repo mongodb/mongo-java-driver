@@ -20,6 +20,8 @@ package org.mongodb;
  * A base class for exceptions indicating a failure condition within the driver.
  */
 public abstract class MongoClientException extends MongoException {
+    private static final long serialVersionUID = -6156258093031308896L;
+
     /**
      * Constructs a new instance with the given message.
      *

@@ -46,37 +46,37 @@ public class MongoClientOptionsTest {
             builder.writeConcern(null);
             Assert.fail();
         } catch (IllegalArgumentException e) {
-            // all good
+            // NOPMD all good
         }
         try {
             builder.readPreference(null);
             Assert.fail();
         } catch (IllegalArgumentException e) {
-            // all good
+            // NOPMD all good
         }
         try {
             builder.connectionsPerHost(0);
             Assert.fail();
         } catch (IllegalArgumentException e) {
-            // all good
+            // NOPMD all good
         }
         try {
             builder.connectTimeout(-1);
             Assert.fail();
         } catch (IllegalArgumentException e) {
-            // all good
+            // NOPMD all good
         }
         try {
             builder.maxAutoConnectRetryTime(-1);
             Assert.fail();
         } catch (IllegalArgumentException e) {
-            // all good
+            // NOPMD all good
         }
         try {
             builder.threadsAllowedToBlockForConnectionMultiplier(0);
             Assert.fail();
         } catch (IllegalArgumentException e) {
-            // all good
+            // NOPMD all good
         }
 
     }

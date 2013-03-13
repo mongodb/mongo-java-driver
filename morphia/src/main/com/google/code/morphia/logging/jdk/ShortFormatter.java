@@ -32,17 +32,10 @@ public class ShortFormatter extends Formatter {
 
     @Override
     public String format(final LogRecord record) {
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         String source = record.getSourceClassName() == null ? record.getLoggerName() : record.getSourceClassName();
-        source = source.substring(source.length() - 15) + "." + (record.getSourceMethodName() == null ? "" : record
-
-
-
-
-
-
-
-                                                                                                             .getSourceMethodName());
+        source = source.substring(source.length() - 15) + "."
+                 + (record.getSourceMethodName() == null ? "" : record.getSourceMethodName());
 
         final Object[] arguments = new Object[6];
         arguments[0] = source;
@@ -53,14 +46,11 @@ public class ShortFormatter extends Formatter {
         sb.append(messageFormat.format(arguments));
 
         if (record.getThrown() != null) {
-            try {
-                final StringWriter sw = new StringWriter();
-                final PrintWriter pw = new PrintWriter(sw);
-                record.getThrown().printStackTrace(pw);
-                pw.close();
-                sb.append(sw.toString());
-            } catch (Exception ex) {
-            }
+            final StringWriter sw = new StringWriter();
+            final PrintWriter pw = new PrintWriter(sw);
+            record.getThrown().printStackTrace(pw);
+            pw.close();
+            sb.append(sw.toString());
         }
         sb.append("\n");
         return sb.toString();

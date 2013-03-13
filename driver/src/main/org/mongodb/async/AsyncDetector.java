@@ -34,7 +34,7 @@ public final class AsyncDetector {
             boolean javaSevenOrGreater = false;
             try {
                 javaSevenOrGreater = Integer.parseInt(minorVersionString) >= 7;
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException e) { // NOPMD
                 // TODO: log this
             }
             ASYNC_ENABLED = javaSevenOrGreater;

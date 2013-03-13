@@ -21,7 +21,7 @@ import org.mongodb.ServerAddress;
 import java.io.Serializable;
 
 public final class ServerCursor implements Serializable {
-
+    private static final long serialVersionUID = 6469149391944297594L;
     private final long id;
     private final ServerAddress address;
 

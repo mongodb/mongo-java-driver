@@ -8,13 +8,18 @@
     </Match>
 
     <Match>
+        <Class name="com.mongodb.serializers.DocumentSerializer">
+            <Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS" />
+        </Class>
+    </Match>
+
+    <Match>
         <Class name="org.mongodb.acceptancetest.AcceptanceTestCase">
             <Bug code="MS"/>
         </Class>
         <Class name="org.mongodb.DatabaseTestCase">
             <Bug code="MS"/>
         </Class>
-
     </Match>
 
     <!-- All bugs in test classes, except for JUnit-specific bugs -->

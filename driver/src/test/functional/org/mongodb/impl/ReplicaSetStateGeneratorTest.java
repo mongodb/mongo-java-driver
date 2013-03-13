@@ -64,7 +64,7 @@ public class ReplicaSetStateGeneratorTest {
     }
 
     @Test
-    public void shouldReturnReplicaSetMemberThatIsNotOkIfCommandResultIsNotOk() throws UnknownHostException {
+    public void shouldReturnReplicaSetMemberThatIsNotOkIfCommandResultIsNotOk() {
         commandResultMap.put(serverAddress, new CommandResult(isMasterCommand, serverAddress, errorIsMasterResponse, 35000004));
         ReplicaSetMonitor.ReplicaSetStateGenerator generator =
                 new ReplicaSetMonitor.ReplicaSetStateGenerator(Arrays.asList(serverAddress), masterExecutorFactory, 4.0f);
