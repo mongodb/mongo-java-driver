@@ -37,6 +37,7 @@ import org.mongodb.result.ServerCursor;
 import org.mongodb.serialization.Serializer;
 
 import java.io.IOException;
+import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
@@ -135,6 +136,7 @@ public class MongoAsynchronousSocketChannelGateway {
             if (asynchronousSocketChannel == null) {
                 asynchronousSocketChannel = AsynchronousSocketChannel.open();
                 asynchronousSocketChannel.connect(address.getSocketAddress()).get();
+                asynchronousSocketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
             }
         } catch (IOException e) {
             throw new MongoSocketOpenException("Exception opening socket", address, e);
