@@ -16,9 +16,20 @@
 
 package org.mongodb;
 
+import org.bson.BSONReader;
+import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
+import org.mongodb.json.JSONMode;
+import org.mongodb.json.JSONReader;
+import org.mongodb.json.JSONReaderSettings;
+import org.mongodb.json.JSONWriter;
+import org.mongodb.json.JSONWriterSettings;
+import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
+import org.mongodb.serialization.serializers.DocumentSerializer;
 
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -29,9 +40,8 @@ import java.util.Set;
  * A representation of a document as a {@code Map}.  All iterators will traverse the elements in
  * insertion order, as with {@code LinkedHashMap}.
  *
- * @since 3.0.0
- *
  * @mongodb.driver.manual core/document document
+ * @since 3.0.0
  */
 public class Document implements Map<String, Object>, Serializable {
     private static final long serialVersionUID = 6297731997167536582L;
@@ -39,7 +49,7 @@ public class Document implements Map<String, Object>, Serializable {
     private final LinkedHashMap<String, Object> documentAsMap;
 
     /**
-     *  Creates an empty Document instance.
+     * Creates an empty Document instance.
      */
     public Document() {
         documentAsMap = new LinkedHashMap<String, Object>();
@@ -48,8 +58,8 @@ public class Document implements Map<String, Object>, Serializable {
     /**
      * Create a Document instance initialized with the given key/value pair.
      *
-     * @param key key
-     * @param value  value
+     * @param key   key
+     * @param value value
      */
     public Document(final String key, final Object value) {
         documentAsMap = new LinkedHashMap<String, Object>();
@@ -59,16 +69,43 @@ public class Document implements Map<String, Object>, Serializable {
     /**
      * Creates a Document instance initialized with the given map.
      *
-     * @param map  initial map
+     * @param map initial map
      */
-     public Document(final Map<String, Object> map) {
-         documentAsMap = new LinkedHashMap<String, Object>(map);
-     }
+    public Document(final Map<String, Object> map) {
+        documentAsMap = new LinkedHashMap<String, Object>(map);
+    }
+
+
+    /**
+     * Converts a string in JSON format to a {@code Document}
+     *
+     * @param s document representation in JSON format that conforms <a href="http://www.json.org/">JSON RFC specifications</a>.
+     * @return a corresponding {@code Document} object
+     * @throws org.mongodb.json.JSONParseException
+     *          if the input is invalid
+     */
+    public static Document valueOf(final String s) {
+        return Document.valueOf(s, JSONMode.Strict);
+    }
+
+    /**
+     * Converts a string in JSON format to a {@code Document}
+     *
+     * @param s document representation in JSON format
+     * @return a corresponding {@code Document} object
+     * @throws org.mongodb.json.JSONParseException
+     *          if the input is invalid
+     */
+    public static Document valueOf(final String s, final JSONMode mode) {
+        final BSONReader bsonReader = new JSONReader(new JSONReaderSettings(mode), s);
+        return new DocumentSerializer(PrimitiveSerializers.createDefault()).deserialize(bsonReader);
+    }
+
     /**
      * Put the given key/value pair into this Document and return this.  Useful for chaining puts in a single expression,
      * e.g.  {@code doc.append("a", 1).append("b", 2)}
      *
-     * @param key key
+     * @param key   key
      * @param value value
      * @return this
      */
@@ -82,9 +119,9 @@ public class Document implements Map<String, Object>, Serializable {
      * in client code, though the effect is the same.  So to get the value of a key that is of type String, you would write
      * {@code String name = doc.get("name", String.class)} instead of {@code String name = (String) doc.get("x") }.
      *
-     * @param key the key
+     * @param key   the key
      * @param clazz the class to cast the value to
-     * @param <T> the type of the class
+     * @param <T>   the type of the class
      * @return the value of the given key, or null if the instance does not contain this key.
      * @throws ClassCastException if the value of the given key is not of type T
      */
@@ -206,8 +243,17 @@ public class Document implements Map<String, Object>, Serializable {
         return documentAsMap.hashCode();
     }
 
+    /**
+     * Returns a String object representing this Document's in a <a href="http://www.json.org/">JSON RFC</a> format.
+     * @return a json representation of the document.
+     */
     @Override
     public String toString() {
-        return documentAsMap.toString();
+        final StringWriter writer = new StringWriter();
+        final BSONWriter bsonWriter = new JSONWriter(writer, new JSONWriterSettings(JSONMode.Strict));
+        final Serializer serializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
+        serializer.serialize(bsonWriter, this);
+
+        return writer.toString();
     }
 }

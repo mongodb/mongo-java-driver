@@ -16,56 +16,36 @@
 
 package org.mongodb.json;
 
-import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-
 /**
  * A JSON token.
  */
 public class JSONToken {
 
-    private final String lexeme;
+    private final Object value;
     private final JSONTokenType type;
 
-    public JSONToken(final JSONTokenType type, final String lexeme) {
-        this.lexeme = lexeme;
+    public JSONToken(final JSONTokenType type, final Object value) {
+        this.value = value;
         this.type = type;
     }
 
-    public String getLexeme() {
-        return lexeme;
+    public Object getValue() {
+        return value;
+    }
+
+    public <T> T getValue(final Class<T> clazz) {
+        if (Long.class == clazz && value instanceof Integer) {
+            return clazz.cast(((Integer) value).longValue());
+        }
+
+        try {
+            return clazz.cast(value);
+        } catch (ClassCastException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     public JSONTokenType getType() {
         return type;
     }
-
-    public String asString() {
-        throw new UnsupportedOperationException();
-    }
-
-    public ObjectId asObjectId() {
-        throw new UnsupportedOperationException();
-    }
-
-    public long asDateTime() {
-        throw new UnsupportedOperationException();
-    }
-
-    public double asDouble() {
-        throw new UnsupportedOperationException();
-    }
-
-    public int asInt32() {
-        throw new UnsupportedOperationException();
-    }
-
-    public long asInt64() {
-        throw new UnsupportedOperationException();
-    }
-
-    public RegularExpression asRegularExpression() {
-        throw new UnsupportedOperationException();
-    }
-
 }

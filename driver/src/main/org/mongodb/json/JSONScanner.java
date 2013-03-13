@@ -17,19 +17,13 @@
 package org.mongodb.json;
 
 import org.bson.types.RegularExpression;
-import org.mongodb.json.tokens.DoubleToken;
-import org.mongodb.json.tokens.Int32Token;
-import org.mongodb.json.tokens.Int64Token;
-import org.mongodb.json.tokens.RegularExpressionToken;
-import org.mongodb.json.tokens.StringToken;
 
 /**
  * Parses the string representation of a JSON object into a set of {@link JSONToken}-derived objects.
  *
  * @since 3.0.0
  */
-//CHECKSTYLE:OFF
-public class JSONScanner {
+class JSONScanner {
 
     private final JSONBuffer buffer;
 
@@ -167,6 +161,7 @@ public class JSONScanner {
                             break;
                     }
                     break;
+                default:
             }
 
             switch (state) {
@@ -175,9 +170,10 @@ public class JSONScanner {
                     final int end = buffer.getPosition();
                     final RegularExpression regex
                             = new RegularExpression(buffer.substring(start + 1, options - 1), buffer.substring(options, end));
-                    return new RegularExpressionToken(buffer.substring(start, end), regex);
+                    return new JSONToken(JSONTokenType.REGULAR_EXPRESSION, regex);
                 case INVALID:
                     throw new JSONParseException("Invalid JSON regular expression. Position: %d.", buffer.getPosition());
+                 default:
             }
         }
     }
@@ -195,7 +191,7 @@ public class JSONScanner {
         }
         buffer.unread(c);
         String lexeme = buffer.substring(start, buffer.getPosition());
-        return new StringToken(JSONTokenType.UNQUOTED_STRING, lexeme, lexeme);
+        return new JSONToken(JSONTokenType.UNQUOTED_STRING, lexeme);
     }
 
     /**
@@ -217,6 +213,7 @@ public class JSONScanner {
      * @return The number token.
      * @throws JSONParseException if number representation is invalid.
      */
+    //CHECKSTYLE:OFF
     private JSONToken scanNumber(final char firstChar) {
 
         int c = firstChar;
@@ -418,6 +415,7 @@ public class JSONScanner {
                         state = NumberState.INVALID;
                     }
                     break;
+                default:
             }
 
             switch (state) {
@@ -425,14 +423,13 @@ public class JSONScanner {
                     buffer.unread(c);
                     final String lexeme = buffer.substring(start, buffer.getPosition());
                     if (type == JSONTokenType.DOUBLE) {
-                        final double value = Double.parseDouble(lexeme);
-                        return new DoubleToken(lexeme, value);
+                        return new JSONToken(JSONTokenType.DOUBLE, Double.parseDouble(lexeme));
                     } else {
                         final long value = Long.parseLong(lexeme);
                         if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-                            return new Int64Token(lexeme, value);
+                            return new JSONToken(JSONTokenType.INT64, value);
                         } else {
-                            return new Int32Token(lexeme, (int) value);
+                            return new JSONToken(JSONTokenType.INT32, (int) value);
                         }
                     }
                 case INVALID:
@@ -441,6 +438,7 @@ public class JSONScanner {
         }
 
     }
+    //CHECKSTYLE:ON
 
     /**
      * Reads {@code StringToken} from source.
@@ -504,8 +502,7 @@ public class JSONScanner {
 
                 default:
                     if (c == quoteCharacter) {
-                        String lexeme = buffer.substring(start, buffer.getPosition());
-                        return new StringToken(JSONTokenType.STRING, lexeme, sb.toString());
+                        return new JSONToken(JSONTokenType.STRING, sb.toString());
                     }
                     if (c != -1) {
                         sb.append((char) c);
@@ -539,4 +536,3 @@ public class JSONScanner {
         INVALID
     }
 }
-//CHECKSTYLE:ON

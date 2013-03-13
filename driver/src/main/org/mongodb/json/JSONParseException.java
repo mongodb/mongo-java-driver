@@ -50,4 +50,8 @@ public class JSONParseException extends RuntimeException {
     public JSONParseException(final String pattern, final Object... args) {
         super(String.format(pattern, args));
     }
+
+    public JSONParseException(final Throwable t) {
+        super(t);
+    }
 }

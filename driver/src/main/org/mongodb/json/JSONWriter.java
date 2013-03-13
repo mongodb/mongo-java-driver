@@ -213,7 +213,7 @@ public class JSONWriter extends BSONWriter {
                     }
                     break;
                 default:
-                    throw new BSONException("Unexpected JSONOutputMode.");
+                    throw new BSONException("Unexpected JSONMode.");
             }
 
             setState(getNextState());
@@ -304,7 +304,7 @@ public class JSONWriter extends BSONWriter {
         checkPreconditions("writeMaxKey", State.VALUE, State.INITIAL);
 
         writeStartDocument();
-        writeInt32("$maxkey", 1);
+        writeInt32("$maxKey", 1);
         writeEndDocument();
 
         setState(getNextState());
@@ -315,7 +315,7 @@ public class JSONWriter extends BSONWriter {
         checkPreconditions("writeMinKey", State.VALUE, State.INITIAL);
 
         writeStartDocument();
-        writeInt32("$minkey", 1);
+        writeInt32("$minKey", 1);
         writeEndDocument();
 
         setState(getNextState());

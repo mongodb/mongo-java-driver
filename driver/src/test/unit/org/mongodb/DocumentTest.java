@@ -18,10 +18,14 @@ package org.mongodb;
 
 import org.bson.types.ObjectId;
 import org.junit.Test;
+import org.mongodb.json.JSONMode;
+import org.mongodb.json.JSONParseException;
 
 import java.util.Date;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class DocumentTest {
     @Test
@@ -41,5 +45,45 @@ public class DocumentTest {
         assertEquals(date, doc.getDate("date"));
 
         assertEquals(objectId, doc.get("objectId", ObjectId.class));
+    }
+
+    @Test
+    public void testValueOfMethod() {
+        final String json = "{ \"int\" : 1, \"string\" : \"abc\" }";
+        final Document document = Document.valueOf(json);
+        assertNotNull(document);
+        assertEquals(2, document.keySet().size());
+        assertEquals(Integer.valueOf(1), document.getInteger("int"));
+        assertEquals("abc", document.getString("string"));
+    }
+
+    @Test
+    public void testValueOfMethodWithMode() {
+        final String json = "{\"regex\" : /abc/im }";
+        final Pattern expectedPattern = Pattern.compile("abc", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
+        final Document document = Document.valueOf(json, JSONMode.JavaScript);
+        assertNotNull(document);
+        assertEquals(1, document.keySet().size());
+
+        final Pattern actualPattern = (Pattern) document.get("regex");
+
+        assertEquals(expectedPattern.flags(), actualPattern.flags());
+        assertEquals(expectedPattern.pattern(), actualPattern.pattern());
+    }
+
+    @Test(expected = JSONParseException.class)
+    public void testValueOfMethodWithInvalidInput() {
+        final String json = "{ \"int\" : 1, \"string\" : }";
+        Document.valueOf(json);
+    }
+
+    @Test
+    public void testToStringMethod() {
+        final Document document = new Document()
+                .append("int", 1)
+                .append("string", "abc");
+
+        assertEquals("{ \"int\" : 1, \"string\" : \"abc\" }", document.toString());
     }
 }

@@ -31,7 +31,7 @@ public class QueryBuilderTest {
     public void shouldCreateValidBSONDocumentForOrWithDocumentVarargsOperands() {
         final QueryBuilder queryBuilder = QueryBuilder.query().or(new Document("name", "first"), new Document("age", 43));
 
-        final String expectedQuery = "{$or=[{name=first}, {age=43}]}";
+        final String expectedQuery = "{ \"$or\" : [{ \"name\" : \"first\" }, { \"age\" : 43 }] }";
 
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
@@ -44,7 +44,7 @@ public class QueryBuilderTest {
         final QueryBuilder queryBuilder = QueryBuilder.query().or(new Document("name", "first"))
                                                               .or(new Document("age", 43));
 
-        final String expectedQuery = "{$or=[{name=first}, {age=43}]}";
+        final String expectedQuery = "{ \"$or\" : [{ \"name\" : \"first\" }, { \"age\" : 43 }] }";
 
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
@@ -57,7 +57,7 @@ public class QueryBuilderTest {
         final QueryBuilder queryBuilder = QueryBuilder.query().or(QueryBuilder.query("name").is("first"))
                                                               .or(QueryBuilder.query("age").is(43));
 
-        final String expectedQuery = "{$or=[{name=first}, {age=43}]}";
+        final String expectedQuery = "{ \"$or\" : [{ \"name\" : \"first\" }, { \"age\" : 43 }] }";
 
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
@@ -66,7 +66,7 @@ public class QueryBuilderTest {
     public void shouldCreateValidBSONDocumentToTestForValue() {
         final QueryBuilder queryBuilder = QueryBuilder.query("name").is("first");
 
-        final String expectedQuery = "{name=first}";
+        final String expectedQuery = "{ \"name\" : \"first\" }";
 
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
@@ -75,7 +75,7 @@ public class QueryBuilderTest {
     public void shouldCreateValidBSONDocumentToTestForQueryBuilderValue() {
         final QueryBuilder queryBuilder = QueryBuilder.query("numericValue").is(query(TYPE).is(16));
 
-        final String expectedQuery = "{numericValue={$type=16}}";
+        final String expectedQuery = "{ \"numericValue\" : { \"$type\" : 16 } }";
 
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
