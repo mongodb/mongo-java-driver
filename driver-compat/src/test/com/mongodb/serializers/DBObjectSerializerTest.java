@@ -107,32 +107,15 @@ public class DBObjectSerializerTest extends DatabaseTestCase {
         assertEquals(Double.class, collection.findOne().get("x").getClass());
     }
 
-    //CHECKSTYLE:OFF
     public static class TopLevelDBObject extends BasicDBObject {
         private static final long serialVersionUID = 7029929727222305692L;
-
-        @Override
-        public boolean equals(final Object o) {
-            return getClass() == o.getClass() && super.equals(o);
-        }
     }
 
     public static class NestedOneDBObject extends BasicDBObject {
         private static final long serialVersionUID = -5821458746671670383L;
-
-        @Override
-        public boolean equals(final Object o) {
-            return getClass() == o.getClass() && super.equals(o);
-        }
     }
 
     public static class NestedTwoDBObject extends BasicDBObject {
         private static final long serialVersionUID = 5243874721805359328L;
-
-        @Override
-        public boolean equals(final Object o) {
-            return getClass() == o.getClass() && super.equals(o);
-        }
     }
-    //CHECKSTYLE:ON
 }

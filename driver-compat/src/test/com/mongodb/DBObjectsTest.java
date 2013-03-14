@@ -180,11 +180,10 @@ public class DBObjectsTest {
         return testObject;
     }
 
-    private class MyTestObject {
+    private static class MyTestObject {
         private String myStringField;
         private int myIntField;
         private double myDoubleField;
-        private MyTestObject myTestObject;
 
         @Override
         public boolean equals(final Object o) {
@@ -206,9 +205,6 @@ public class DBObjectsTest {
             if (!myStringField.equals(that.myStringField)) {
                 return false;
             }
-            if (myTestObject != null ? !myTestObject.equals(that.myTestObject) : that.myTestObject != null) {
-                return false;
-            }
 
             return true;
         }
@@ -221,7 +217,6 @@ public class DBObjectsTest {
             result = 31 * result + myIntField;
             temp = myDoubleField != +0.0d ? Double.doubleToLongBits(myDoubleField) : 0L;
             result = 31 * result + (int) (temp ^ (temp >>> 32));
-            result = 31 * result + (myTestObject != null ? myTestObject.hashCode() : 0);
             return result;
         }
     }

@@ -1,24 +1,31 @@
 <FindBugsFilter>
-    <Match>
-        <Package name="~com\.google\.code\.morphia.*"/>
-    </Match>
-
+    <!-- specific excludes which should be fixed -->
     <Match>
         <Class name="org.bson.JSONWriterSettings"/>
     </Match>
 
+    <!-- ignore morphia -->
     <Match>
-        <Class name="com.mongodb.serializers.DocumentSerializer">
-            <Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS" />
-        </Class>
+        <Package name="~com\.google\.code\.morphia.*"/>
+    </Match>
+    <Match>
+        <Package name="~relocated\.morphia\.org\.apache\.commons\.collections.*"/>
     </Match>
 
+    <!-- these specific issues are deliberate design decisions -->
+    <Match>
+        <Class name="com.mongodb.serializers.DocumentSerializer">
+            <Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS"/>
+        </Class>
+    </Match>
     <Match>
         <Class name="org.mongodb.acceptancetest.AcceptanceTestCase">
-            <Bug code="MS"/>
+            <Bug pattern="MS_PKGPROTECT"/>
         </Class>
+    </Match>
+    <Match>
         <Class name="org.mongodb.DatabaseTestCase">
-            <Bug code="MS"/>
+            <Bug pattern="MS_PKGPROTECT"/>
         </Class>
     </Match>
 
