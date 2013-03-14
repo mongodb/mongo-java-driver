@@ -205,7 +205,7 @@ configure(subprojects.findAll { it.name in ['driver-compat', 'morphia'] }) {
 
     pmd {
         //cut down version of PMD for the older code base
-        ruleSets =  ["braces","junit"]
+        ruleSets =  ["braces"]
         ignoreFailures = false
     }
 
