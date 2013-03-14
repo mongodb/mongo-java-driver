@@ -203,6 +203,12 @@ configure(subprojects.findAll { it.name in ['driver-compat', 'morphia'] }) {
         configFile = new File("$configDir/checkstyle-lite.xml")
     }
 
+    pmd {
+        //cut down version of PMD for the older code base
+        ruleSets =  ["braces","junit"]
+        ignoreFailures = false
+    }
+
     idea.module.iml {
         withXml { provider ->
 
