@@ -28,6 +28,11 @@
             <Bug pattern="MS_PKGPROTECT"/>
         </Class>
     </Match>
+    <Match>
+        <Class name="com.mongodb.DatabaseTestCase">
+            <Bug pattern="MS_PKGPROTECT"/>
+        </Class>
+    </Match>
 
     <!-- All bugs in test classes, except for JUnit-specific bugs -->
     <Match>

@@ -139,7 +139,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
                     return true;
                 }
 
-                if (!getClass().equals(o.getClass())) {
+                if (o == null || getClass() != o.getClass()) {
                     return false;
                 }
 

@@ -37,13 +37,25 @@ public class CodeWithScope extends Code {
         return scope;
     }
 
+    @Override
     public boolean equals(final Object o) {
-        if (!(o instanceof CodeWithScope)) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
             return false;
         }
 
-        final CodeWithScope c = (CodeWithScope) o;
-        return getCode().equals(c.getCode()) && scope.equals(c.scope);
+        final CodeWithScope that = (CodeWithScope) o;
+
+        if (scope != null ? !scope.equals(that.scope) : that.scope != null) {
+            return false;
+        }
+
+        return true;
     }
 
     public int hashCode() {

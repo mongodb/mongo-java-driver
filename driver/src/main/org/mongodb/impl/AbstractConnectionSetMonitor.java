@@ -99,7 +99,7 @@ abstract class AbstractConnectionSetMonitor extends Thread {
         void close();
     }
 
-    class MongoClientIsMasterExecutor implements IsMasterExecutor {
+    static class MongoClientIsMasterExecutor implements IsMasterExecutor {
         private final MongoConnection connection;
         private final ServerAddress serverAddress;
 
