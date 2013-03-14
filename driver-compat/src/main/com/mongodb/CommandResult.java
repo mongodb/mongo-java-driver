@@ -25,13 +25,16 @@ package com.mongodb;
  * A simple wrapper for the result of getLastError() calls and other commands
  */
 public class CommandResult extends BasicDBObject {
+    private static final long serialVersionUID = 5907909423864204060L;
+    private final DBObject cmd;
+    private final ServerAddress host;
 
     CommandResult(final DBObject cmd, final ServerAddress srv) {
         if (srv == null) {
             throw new IllegalArgumentException("server address is null");
         }
-        _cmd = cmd;
-        _host = srv;
+        this.cmd = cmd;
+        host = srv;
         //so it is shown in toString/debug
         put("serverUsed", srv.toString());
     }
@@ -85,8 +88,8 @@ public class CommandResult extends BasicDBObject {
             final StringBuilder buf = new StringBuilder();
 
             final String cmdName;
-            if (_cmd != null) {
-                cmdName = _cmd.keySet().iterator().next();
+            if (cmd != null) {
+                cmdName = cmd.keySet().iterator().next();
                 buf.append("command failed [").append(cmdName).append("]: ");
             }
             else {
@@ -147,15 +150,11 @@ public class CommandResult extends BasicDBObject {
     }
 
     public ServerAddress getServerUsed() {
-        return _host;
+        return host;
     }
 
-    private final DBObject _cmd;
-    private final ServerAddress _host;
-    private static final long serialVersionUID = 1L;
-
     static class CommandFailure extends MongoException {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = 3858350117192078001L;
 
         /**
          * @param res the result

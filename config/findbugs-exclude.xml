@@ -4,6 +4,11 @@
         <Class name="org.bson.JSONWriterSettings"/>
     </Match>
 
+    <!-- ignore driver-compat for now - this should be addressed after bson/driver warnings fixed -->
+    <Match>
+        <Package name="~com\.mongodb.*"/>
+    </Match>
+
     <!-- ignore morphia -->
     <Match>
         <Package name="~com\.google\.code\.morphia.*"/>
