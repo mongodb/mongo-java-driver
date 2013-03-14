@@ -20,8 +20,9 @@ import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.types.Binary;
-import org.mongodb.Document;
+import org.bson.types.CodeWithScope;
 import org.mongodb.DBRef;
+import org.mongodb.Document;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.Serializer;
 
@@ -85,21 +86,19 @@ public class DocumentSerializer implements Serializer<Document> {
         // TODO: is this a good idea to allow DBRef to be treated all special?
         if (value instanceof DBRef) {
             serializeDBRef(bsonWriter, (DBRef) value);
-        }
-        else if (value instanceof Map) {
+        } else if (value instanceof CodeWithScope) {
+            serializerCodeWithScope(bsonWriter, (CodeWithScope) value);
+        } else if (value instanceof Map) {
             serializeMap(bsonWriter, (Map<String, Object>) value);
-        }
-        else if (value instanceof Iterable<?>) {
+        } else if (value instanceof Iterable<?>) {
             serializeIterable(bsonWriter, (Iterable) value);
         }
         // TODO: Is this a good idea to allow byte[] to be treated all special?
         else if (value instanceof byte[]) {
             primitiveSerializers.serialize(bsonWriter, new Binary((byte[]) value));
-        }
-        else if (value != null && value.getClass().isArray()) {
+        } else if (value != null && value.getClass().isArray()) {
             serializeArray(bsonWriter, value);
-        }
-        else {
+        } else {
             primitiveSerializers.serialize(bsonWriter, value);
         }
     }
@@ -112,6 +111,11 @@ public class DocumentSerializer implements Serializer<Document> {
         writeValue(bsonWriter, dbRef.getId());
 
         bsonWriter.writeEndDocument();
+    }
+
+    private void serializerCodeWithScope(final BSONWriter bsonWriter, final CodeWithScope codeWithScope) {
+        bsonWriter.writeJavaScriptWithScope(codeWithScope.getCode());
+        this.serialize(bsonWriter, codeWithScope.getScope());
     }
 
     private void serializeIterable(final BSONWriter bsonWriter, final Iterable<?> iterable) {
@@ -153,13 +157,19 @@ public class DocumentSerializer implements Serializer<Document> {
         final BSONType bsonType = reader.getCurrentBSONType();
         if (bsonType.equals(BSONType.DOCUMENT)) {
             return getDocumentDeserializerForField(fieldName).deserialize(reader);
-        }
-        else if (bsonType.equals(BSONType.ARRAY)) {
+        } else if (bsonType.equals(BSONType.JAVASCRIPT_WITH_SCOPE)) {
+            return readCodeWithScope(reader);
+        } else if (bsonType.equals(BSONType.ARRAY)) {
             return readArray(reader);
-        }
-        else {
+        } else {
             return primitiveSerializers.deserialize(reader);
         }
+    }
+
+    private CodeWithScope readCodeWithScope(final BSONReader bsonReader) {
+        final String code = bsonReader.readJavaScriptWithScope();
+        final Document scope = deserialize(bsonReader);
+        return new CodeWithScope(code, scope);
     }
 
     @SuppressWarnings("unchecked")

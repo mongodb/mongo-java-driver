@@ -24,11 +24,14 @@ import org.mongodb.serialization.serializers.BinarySerializer;
 import org.mongodb.serialization.serializers.BooleanSerializer;
 import org.mongodb.serialization.serializers.ByteArraySerializer;
 import org.mongodb.serialization.serializers.ByteSerializer;
+import org.mongodb.serialization.serializers.CodeSerializer;
 import org.mongodb.serialization.serializers.DateSerializer;
 import org.mongodb.serialization.serializers.DoubleSerializer;
 import org.mongodb.serialization.serializers.FloatSerializer;
 import org.mongodb.serialization.serializers.IntegerSerializer;
 import org.mongodb.serialization.serializers.LongSerializer;
+import org.mongodb.serialization.serializers.MaxKeySerializer;
+import org.mongodb.serialization.serializers.MinKeySerializer;
 import org.mongodb.serialization.serializers.NullSerializer;
 import org.mongodb.serialization.serializers.ObjectIdSerializer;
 import org.mongodb.serialization.serializers.PatternSerializer;
@@ -109,6 +112,9 @@ public final class PrimitiveSerializers implements Serializer<Object> {
                .timestampSerializer(new TimestampSerializer())
                .booleanSerializer(new BooleanSerializer())
                .patternSerializer(new PatternSerializer())
+               .minKeySerializer(new MinKeySerializer())
+               .maxKeySerializer(new MaxKeySerializer())
+               .codeSerializer(new CodeSerializer())
                .nullSerializer(new NullSerializer())
                .otherSerializer(new FloatSerializer())
                .otherSerializer(new ShortSerializer())
@@ -178,6 +184,21 @@ public final class PrimitiveSerializers implements Serializer<Object> {
 
         public Builder patternSerializer(final Serializer serializer) {
             registerSerializer(BSONType.REGULAR_EXPRESSION, serializer);
+            return this;
+        }
+
+        public Builder minKeySerializer(final Serializer serializer) {
+            registerSerializer(BSONType.MIN_KEY, serializer);
+            return this;
+        }
+
+        public Builder maxKeySerializer(final Serializer serializer) {
+            registerSerializer(BSONType.MAX_KEY, serializer);
+            return this;
+        }
+
+        public Builder codeSerializer(final Serializer serializer) {
+            registerSerializer(BSONType.JAVASCRIPT, serializer);
             return this;
         }
 

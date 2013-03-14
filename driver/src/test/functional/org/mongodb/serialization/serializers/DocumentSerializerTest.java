@@ -26,6 +26,9 @@ import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.InputBuffer;
 import org.bson.types.Binary;
+import org.bson.types.Code;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
 import org.mongodb.Document;
 import org.bson.types.ObjectId;
 import org.junit.Before;
@@ -66,6 +69,9 @@ public class DocumentSerializerTest extends DatabaseTestCase {
         doc.put("binary", new Binary(new byte[]{0, 1, 2, 3}));
         doc.put("date", new Date(1000));
         doc.put("boolean", true);
+        doc.put("code", new Code("var i = 0"));
+        doc.put("minkey", new MinKey());
+        doc.put("maxkey", new MaxKey());
 //        doc.put("pattern", Pattern.compile("^hello"));  // TODO: Pattern doesn't override equals method!
         doc.put("null", null);
 
