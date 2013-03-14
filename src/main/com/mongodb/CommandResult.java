@@ -78,7 +78,7 @@ public class CommandResult extends BasicDBObject {
             }
         }
 
-        throw new IllegalStateException("This method should not be called if there is no exception");
+        return null;
     }
 
     /**

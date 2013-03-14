@@ -23,9 +23,17 @@ import java.net.UnknownHostException;
 
 public class CommandResultTest extends TestCase {
     @Test
+    public void testOkCommandResult() throws UnknownHostException {
+        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
+        commandResult.put("ok", 1);
+        assertNull(commandResult.getException());
+    }
+
+    @Test
     public void testNullErrorCode() throws UnknownHostException {
         CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
         commandResult.put("ok", 0);
+        assertEquals(CommandFailureException.class, commandResult.getException().getClass());
         try {
             commandResult.throwOnError();
             fail("Should throw");
@@ -40,6 +48,7 @@ public class CommandResultTest extends TestCase {
         CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
         final DBObject result = new BasicDBObject("ok", 0.0).append("errmsg", "no not found").append("code", 5000);
         commandResult.putAll(result);
+        assertEquals(CommandFailureException.class, commandResult.getException().getClass());
         try {
             commandResult.throwOnError();
             fail("Should throw");
