@@ -95,7 +95,7 @@ public class MongoClientOptionsTest {
                 final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
                 builder.asyncEnabled(true);
                 fail();
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException e) { // NOPMD
                // all good
             }
         }

@@ -274,10 +274,8 @@ public class MongoClientURI {
                                                              .toArray(new Document[remainingTagSets.size()])));
             }
         }
-        else if (slaveOk != null) {
-            if (slaveOk.equals(Boolean.TRUE)) {
-                builder.readPreference(ReadPreference.secondaryPreferred());
-            }
+        else if (slaveOk != null && slaveOk.equals(Boolean.TRUE)) {
+            builder.readPreference(ReadPreference.secondaryPreferred());
         }
     }
 

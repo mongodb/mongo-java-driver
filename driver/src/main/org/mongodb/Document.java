@@ -251,7 +251,7 @@ public class Document implements Map<String, Object>, Serializable {
     public String toString() {
         final StringWriter writer = new StringWriter();
         final BSONWriter bsonWriter = new JSONWriter(writer, new JSONWriterSettings(JSONMode.Strict));
-        final Serializer serializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
+        final Serializer<Document> serializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
         serializer.serialize(bsonWriter, this);
 
         return writer.toString();

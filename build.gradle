@@ -85,10 +85,6 @@ subprojects {
         excludeFilter = new File("$configDir/findbugs-exclude.xml")
     }
 
-    pmd {
-        ignoreFailures = true
-    }
-
     tasks.withType(Compile) {
         options.encoding = 'ISO-8859-1'
         options.fork = true
@@ -236,10 +232,6 @@ configure(subprojects.findAll { it.name in ['driver-compat', 'morphia'] }) {
 //////////////////////////////////////////
 
 project(':bson') {
-
-    pmd {
-        ignoreFailures = false
-    }
 
     jar {
         manifest {

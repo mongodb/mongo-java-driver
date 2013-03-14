@@ -203,7 +203,7 @@ public class ServerAddress {
      * @return IP address of default host.
      */
     public static String defaultHost() {
-        return "127.0.0.1";
+        return "127.0.0.1"; // NOPMD
     }
 
     /**
