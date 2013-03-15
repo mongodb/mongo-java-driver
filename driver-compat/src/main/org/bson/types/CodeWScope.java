@@ -39,10 +39,12 @@ public class CodeWScope extends Code {
     }
 
     public boolean equals(final Object o) {
-        if (!(o instanceof CodeWScope)) {
+        if (o == null) {
             return false;
         }
-
+        if (getClass() != o.getClass()) {
+            return false;
+        }
         final CodeWScope c = (CodeWScope) o;
         return getCode().equals(c.getCode()) && scope.equals(c.scope);
     }

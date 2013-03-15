@@ -24,6 +24,7 @@ import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
@@ -158,11 +159,12 @@ public class JSONWriter extends BSONWriter {
                 case Shell:
                     writeNameHelper(getName());
                     writer.write(String.format("new BinData(%s, \"%s\")", Integer.toHexString(binary.getType()),
-                            new Base64Codec().encode(binary.getData())));
+                            DatatypeConverter.printBase64Binary(binary.getData())));
+
                     break;
                 default:
                     writeStartDocument();
-                    writeString("$binary", new Base64Codec().encode(binary.getData()));
+                    writeString("$binary", DatatypeConverter.printBase64Binary(binary.getData()));
                     writeString("$type", Integer.toHexString(binary.getType()));
                     writeEndDocument();
             }

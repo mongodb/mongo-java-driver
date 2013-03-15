@@ -334,6 +334,10 @@ public class JSONReader extends BSONReader {
             verifyToken("}"); // outermost closing bracket for JavaScriptWithScope
         }
 
+        if (context == null) {
+            throw new JSONParseException("Unexpected end of document.");
+        }
+
         switch (context.getContextType()) {
             case ARRAY:
             case DOCUMENT:
@@ -710,7 +714,7 @@ public class JSONReader extends BSONReader {
             throw new JSONParseException("JSON reader expected a string but found '%s'.", bytesToken.getValue());
         }
         verifyToken(")");
-        final String hexString = bytesToken.getValue(String.class).replaceAll("{", "").replace("}", "").replace("-", "");
+        final String hexString = bytesToken.getValue(String.class).replaceAll("\\{", "").replaceAll("\\}", "").replaceAll("-", "");
         final byte[] bytes = DatatypeConverter.parseHexBinary(hexString);
         BSONBinarySubType subType = BSONBinarySubType.UuidStandard;
         if (!"UUID".equals(uuidConstructorName) || !"GUID".equals(uuidConstructorName)) {
@@ -835,7 +839,7 @@ public class JSONReader extends BSONReader {
             final String s = token.getValue(String.class);
             final ParsePosition pos = new ParsePosition(0);
             final Date dateTime = df.parse(s, pos);
-            if (dateTime != null || pos.getIndex() == s.length()) {
+            if (dateTime != null && pos.getIndex() == s.length()) {
                 return dateTime.getTime();
             } else {
                 throw new JSONParseException("JSON reader expected a date in 'EEE MMM dd yyyy HH:mm:ss z' format but found '%s'.", s);

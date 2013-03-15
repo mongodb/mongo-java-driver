@@ -448,8 +448,6 @@ class JSONScanner {
     //CHECKSTYLE:OFF
     private JSONToken scanString(final char quoteCharacter) {
 
-        final int start = buffer.getPosition() - 1;
-
         final StringBuilder sb = new StringBuilder();
 
         while (true) {

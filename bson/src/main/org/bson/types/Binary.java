@@ -61,7 +61,7 @@ public class Binary implements Serializable {
      */
     public Binary(final byte type, final byte[] data) {
         this.type = type;
-        this.data = data;
+        this.data = data.clone();
     }
 
     public byte getType() {
@@ -69,7 +69,7 @@ public class Binary implements Serializable {
     }
 
     public byte[] getData() {
-        return data;
+        return data.clone();
     }
 
     public int length() {
