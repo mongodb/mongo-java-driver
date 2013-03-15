@@ -158,8 +158,12 @@ public class DBPort {
 
     synchronized private Response findOne( DB db , String coll , DBObject q ) throws IOException {
         OutMessage msg = OutMessage.query( db.getCollection(coll) , 0 , 0 , -1 , q , null );
-        Response res = go( msg , db.getCollection( coll ) , null );
-        return res;
+        try {
+            Response res = go( msg , db.getCollection( coll ) , null );
+            return res;
+        } finally {
+            msg.doneWithMessage();
+        }
     }
 
     synchronized CommandResult runCommand( DB db , DBObject cmd ) throws IOException {
