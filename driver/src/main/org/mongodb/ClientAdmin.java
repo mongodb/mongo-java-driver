@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import java.util.Set;
+
 /**
  * All the commands that can be run without needing a specific database.
  */
@@ -26,4 +28,9 @@ public interface ClientAdmin {
     //TODO: it's not clear from the documentation what the return type should be
     //http://docs.mongodb.org/manual/reference/command/ping/
     double ping();
+
+    /**
+     * @return a Set of the names of all the databases on the server
+     */
+    Set<String> getDatabaseNames();
 }

@@ -154,6 +154,10 @@ public class Mongo {
         throw new UnsupportedOperationException("Not implemented yet!");
     }
 
+    public List<String> getDatabaseNames() {
+        return new ArrayList<String>(clientAdapter.getClient().tools().getDatabaseNames());
+    }
+
     private static List<org.mongodb.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
         List<org.mongodb.ServerAddress> retVal = new ArrayList<org.mongodb.ServerAddress>(seedList.size());
         for (ServerAddress cur : seedList) {

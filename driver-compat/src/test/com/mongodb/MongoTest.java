@@ -21,9 +21,11 @@ import org.junit.Test;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
 
 public class MongoTest {
 
@@ -77,5 +79,15 @@ public class MongoTest {
     public void shouldGetSameDB() throws UnknownHostException {
         final Mongo mongo = new MongoClient();
         assertSame(mongo.getDB("test"), mongo.getDB("test"));
+    }
+
+    @Test
+    public void shouldGetDatabaseNames() throws UnknownHostException {
+        final Mongo mongo = new MongoClient();
+
+        mongo.getDB("test1").getCollectionNames();
+        mongo.getDB("test2").getCollectionNames();
+
+        assertThat(mongo.getDatabaseNames(), hasItems("test1", "test2"));
     }
 }

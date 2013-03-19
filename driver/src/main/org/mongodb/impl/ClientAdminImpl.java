@@ -17,12 +17,18 @@
 package org.mongodb.impl;
 
 import org.mongodb.ClientAdmin;
+import org.mongodb.Document;
 import org.mongodb.MongoConnection;
+import org.mongodb.command.ListDatabases;
 import org.mongodb.command.Ping;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 /**
  * Contains the commands that can be run on MongoDB that do not require a database to be selected first.  These commands
  * can be accessed via MongoClient.
@@ -30,6 +36,7 @@ import org.mongodb.serialization.serializers.DocumentSerializer;
 class ClientAdminImpl implements ClientAdmin {
     private static final String ADMIN_DATABASE = "admin";
     private static final Ping PING_COMMAND = new Ping();
+    private static final ListDatabases LIST_DATABASES = new ListDatabases();
 
     private final DocumentSerializer documentSerializer;
     private final MongoConnection connection;
@@ -46,6 +53,18 @@ class ClientAdminImpl implements ClientAdmin {
         final CommandResult pingResult = connection.command(ADMIN_DATABASE, PING_COMMAND, documentSerializer);
 
         return (Double) pingResult.getResponse().get("ok");
+    }
+
+    @Override
+    public Set<String> getDatabaseNames() {
+        final CommandResult listDatabasesResult = connection.command(ADMIN_DATABASE, LIST_DATABASES, documentSerializer);
+        final List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
+
+        final Set<String> databaseNames = new HashSet<String>();
+        for (final Document d : databases) {
+            databaseNames.add(d.get("name", String.class));
+        }
+        return Collections.unmodifiableSet(databaseNames);
     }
 
 }
