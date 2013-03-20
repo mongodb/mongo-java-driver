@@ -73,6 +73,35 @@ public class MongoCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    public void testUpdateMulti() {
+        final List<Document> documents = new ArrayList<Document>();
+        for (int i = 0; i < 10; i++) {
+            final Document doc = new Document("_id", i);
+            documents.add(doc);
+        }
+        collection.insert(documents);
+
+        WriteResult res = collection.noLimit().modify(new Document("$set", new Document("x", 1)));
+        assertEquals(10, res.getGetLastErrorResult().getResponse().get("n"));
+    }
+
+    @Test
+    public void testUpdateOne() {
+        final List<Document> documents = new ArrayList<Document>();
+        for (int i = 0; i < 10; i++) {
+            final Document doc = new Document("_id", i);
+            documents.add(doc);
+        }
+        collection.insert(documents);
+
+        WriteResult res = collection.modify(new Document("$set", new Document("x", 1)));
+        assertEquals(1, res.getGetLastErrorResult().getResponse().get("n"));
+
+        res = collection.limit(1).modify(new Document("$set", new Document("x", 1)));
+        assertEquals(1, res.getGetLastErrorResult().getResponse().get("n"));
+    }
+
+    @Test
     public void testReplace() {
 
         collection.insert(new Document("_id", 1).append("x", 1));
@@ -93,7 +122,24 @@ public class MongoCollectionTest extends DatabaseTestCase {
         }
 
         collection.insert(documents);
-        collection.filter(new Document("_id", 5)).remove();
+        collection.filter(new Document("_id", new Document("$gt", 5))).noLimit().remove();
+        assertEquals(6, collection.count());
+
+        collection.filter(new Document("_id", new Document("$lt", 5))).remove();
+        assertEquals(1, collection.count());
+    }
+
+    @Test
+    public void testRemoveOne() {
+
+        final List<Document> documents = new ArrayList<Document>();
+        for (int i = 0; i < 10; i++) {
+            final Document doc = new Document("_id", i);
+            documents.add(doc);
+        }
+
+        collection.insert(documents);
+        collection.filter(new Document("_id", new Document("$gt", 5))).limit(1).remove();
         assertEquals(9, collection.count());
     }
 

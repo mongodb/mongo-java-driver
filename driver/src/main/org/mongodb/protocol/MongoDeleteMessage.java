@@ -21,8 +21,6 @@ import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.serialization.Serializer;
 
-import java.util.Collection;
-
 public class MongoDeleteMessage extends MongoRequestMessage {
     private final MongoRemove remove;
     private final Serializer<Document> serializer;
@@ -42,18 +40,14 @@ public class MongoDeleteMessage extends MongoRequestMessage {
         buffer.writeInt(0); // reserved
         buffer.writeCString(getCollectionName());
 
-        final Document queryFilterDocument = remove.getFilter();
-
-        final Collection<String> keys = queryFilterDocument.keySet();
-
         if (remove.isMulti()) {
             buffer.writeInt(0);
         }
         else {
-            buffer.writeInt(0);
+            buffer.writeInt(1);
         }
 
-        addDocument(queryFilterDocument, serializer, buffer);
+        addDocument(remove.getFilter(), serializer, buffer);
     }
 }
 

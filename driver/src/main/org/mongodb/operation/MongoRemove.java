@@ -21,7 +21,7 @@ import org.mongodb.WriteConcern;
 
 public class MongoRemove extends MongoWrite {
     private final Document filter;
-    private boolean isMulti = false;
+    private boolean isMulti = true;
 
     public MongoRemove(final Document filter) {
         this.filter = filter;

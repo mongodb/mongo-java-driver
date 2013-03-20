@@ -347,6 +347,24 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         return new MongoNamespace(getDatabase().getName(), getName());
     }
 
+    private enum UpdateType {
+        modify {
+            @Override
+            boolean isMultiByDefault() {
+                return false;
+            }
+        },
+
+        remove {
+            @Override
+            boolean isMultiByDefault() {
+                return true;
+            }
+        };
+
+        abstract boolean isMultiByDefault();
+    }
+
     private final class MongoCollectionStream implements MongoStream<T> {
         private final MongoFind findOp;
         private WriteConcern writeConcern;
@@ -532,14 +550,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult remove() {
-            final MongoRemove remove = new MongoRemove(findOp.getFilter()).multi(getMultiFromLimit())
+            final MongoRemove remove = new MongoRemove(findOp.getFilter()).multi(getMultiFromLimit(UpdateType.remove))
                     .writeConcern(writeConcern);
             return operations.remove(getNamespace(), remove, getDocumentSerializer());
         }
 
         @Override
         public WriteResult modify(final Document updateOperations) {
-            final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).multi(getMultiFromLimit())
+            final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).multi(getMultiFromLimit(UpdateType.modify))
                     .writeConcern(writeConcern);
             return operations.update(getNamespace(), update, getDocumentSerializer());
         }
@@ -547,7 +565,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public WriteResult modifyOrInsert(final Document updateOperations) {
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).upsert(true)
-                    .multi(getMultiFromLimit())
+                    .multi(getMultiFromLimit(UpdateType.modify))
                     .writeConcern(writeConcern);
             return operations.update(getNamespace(), update, getDocumentSerializer());
         }
@@ -823,7 +841,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     });
         }
 
-        private boolean getMultiFromLimit() {
+        private boolean getMultiFromLimit(UpdateType updateType) {
             if (limitSet) {
                 if (findOp.getLimit() == 1) {
                     return false;
@@ -835,9 +853,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     throw new IllegalArgumentException("Update currently only supports a limit of either none or 1");
                 }
             }
-            else {
-                return false;
-            }
+            else return updateType.isMultiByDefault();
         }
 
         @Override
