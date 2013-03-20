@@ -18,11 +18,11 @@ package org.mongodb.result;
 
 import org.mongodb.ServerAddress;
 
-import java.io.Serializable;
-
-public final class ServerCursor implements Serializable {
-
-    private static final long serialVersionUID = 6469149391944297594L;
+/** A class representing a cursor id associated with a server address (host/port)
+ *  Since cursor ids are only useful in the context of a single MongoDB server process, you
+ *  need both values to do a getMore on the cursor.
+ */
+public final class ServerCursor {
 
     private final long id;
     private final ServerAddress address;
