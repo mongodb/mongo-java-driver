@@ -21,6 +21,7 @@ import org.mongodb.impl.MongoClientAdapter;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -110,6 +111,12 @@ public class Mongo {
     }
 
 
+    /**
+     * Gets a database object
+     *
+     * @param dbName the name of the database to retrieve
+     * @return a DB representing the specified database
+     */
     public DB getDB(final String dbName) {
         DB db = dbCache.get(dbName);
         if (db != null) {
@@ -123,6 +130,27 @@ public class Mongo {
         }
         return db;
     }
+
+    /**
+     * Returns the list of databases used by the driver since this Mongo instance was created.
+     * This may include DBs that exist in the client but not yet on the server.
+     *
+     * @return a collection of database objects
+     */
+    public Collection<DB> getUsedDatabases() {
+        return dbCache.values();
+    }
+
+    /**
+     * Drops the database if it exists.
+     *
+     * @param dbName name of database to drop
+     * @throws MongoException
+     */
+    public void dropDatabase(final String dbName) {
+        getDB(dbName).dropDatabase();
+    }
+
 
     /**
      * Closes all resources associated with this instance, in particular any open network connections. Once called, this

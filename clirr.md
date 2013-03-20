@@ -37,40 +37,40 @@
 - [ ] Method 'public com.mongodb.DBCursor setDecoderFactory(com.mongodb.DBDecoderFactory)' has been removed
 
 ### com.mongodb.Mongo
-- [ ] Field MAJOR_VERSION has been removed, but it was previously a constant
-- [ ] Field MINOR_VERSION has been removed, but it was previously a constant
-- [ ] Parameter 1 of 'public Mongo(java.lang.String)' has changed its type to com.mongodb.MongoClientURI
-- [ ] Accessibility of method 'public Mongo(java.lang.String)' has been decreased from public to package
-- [ ] Parameter 1 of 'public Mongo(com.mongodb.ServerAddress)' has changed its type to org.mongodb.impl.MongoClientAdapter
-- [ ] Accessibility of method 'public Mongo(com.mongodb.ServerAddress)' has been decreased from public to package
-- [ ] Parameter 2 of 'public Mongo(com.mongodb.ServerAddress, com.mongodb.MongoOptions)' has changed its type to com.mongodb.MongoClientOptions
-- [ ] Accessibility of method 'public Mongo(com.mongodb.ServerAddress, com.mongodb.MongoOptions)' has been decreased from public to package
-- [ ] Parameter 2 of 'public Mongo(java.util.List, com.mongodb.MongoOptions)' has changed its type to com.mongodb.MongoClientOptions
-- [ ] Accessibility of method 'public Mongo(java.util.List, com.mongodb.MongoOptions)' has been decreased from public to package
-- [ ] Method 'public Mongo()' has been removed
-- [ ] Method 'public Mongo(java.lang.String, com.mongodb.MongoOptions)' has been removed
-- [ ] Method 'public Mongo(java.lang.String, int)' has been removed
-- [ ] Method 'public Mongo(com.mongodb.ServerAddress, com.mongodb.ServerAddress)' has been removed
-- [ ] Method 'public Mongo(com.mongodb.ServerAddress, com.mongodb.ServerAddress, com.mongodb.MongoOptions)' has been removed
-- [ ] Method 'public Mongo(java.util.List)' has been removed
-- [ ] Method 'public Mongo(com.mongodb.MongoURI)' has been removed
-- [ ] Method 'public com.mongodb.DB connect(com.mongodb.DBAddress)' has been removed
-- [ ] Method 'public java.lang.String debugString()' has been removed
-- [ ] Method 'public void dropDatabase(java.lang.String)' has been removed
+- [-] Field MAJOR_VERSION has been removed, but it was previously a constant
+- [-] Field MINOR_VERSION has been removed, but it was previously a constant
+- [-] Parameter 1 of 'public Mongo(java.lang.String)' has changed its type to com.mongodb.MongoClientURI
+- [-] Accessibility of method 'public Mongo(java.lang.String)' has been decreased from public to package
+- [-] Parameter 1 of 'public Mongo(com.mongodb.ServerAddress)' has changed its type to org.mongodb.impl.MongoClientAdapter
+- [-] Accessibility of method 'public Mongo(com.mongodb.ServerAddress)' has been decreased from public to package
+- [-] Parameter 2 of 'public Mongo(com.mongodb.ServerAddress, com.mongodb.MongoOptions)' has changed its type to com.mongodb.MongoClientOptions
+- [-] Accessibility of method 'public Mongo(com.mongodb.ServerAddress, com.mongodb.MongoOptions)' has been decreased from public to package
+- [-] Parameter 2 of 'public Mongo(java.util.List, com.mongodb.MongoOptions)' has changed its type to com.mongodb.MongoClientOptions
+- [-] Accessibility of method 'public Mongo(java.util.List, com.mongodb.MongoOptions)' has been decreased from public to package
+- [-] Method 'public Mongo()' has been removed
+- [-] Method 'public Mongo(java.lang.String, com.mongodb.MongoOptions)' has been removed
+- [-] Method 'public Mongo(java.lang.String, int)' has been removed
+- [-] Method 'public Mongo(com.mongodb.ServerAddress, com.mongodb.ServerAddress)' has been removed
+- [-] Method 'public Mongo(com.mongodb.ServerAddress, com.mongodb.ServerAddress, com.mongodb.MongoOptions)' has been removed
+- [-] Method 'public Mongo(java.util.List)' has been removed
+- [-] Method 'public Mongo(com.mongodb.MongoURI)' has been removed
+- [-] Method 'public com.mongodb.DB connect(com.mongodb.DBAddress)' has been removed
+- [-] Method 'public java.lang.String debugString()' has been removed
+- [-] Method 'public java.util.List getAllAddress()' has been removed
+- [-] Method 'public int getMajorVersion()' has been removed
+- [-] Method 'public int getMinorVersion()' has been removed
+- [-] Method 'public com.mongodb.MongoOptions getMongoOptions()' has been removed  //TODO add to getFullVersion()
+- [x] Method 'public void dropDatabase(java.lang.String)' has been removed
+- [ ] Method 'public com.mongodb.DBTCPConnector getConnector()' has been removed
+- [x] Method 'public java.util.List getDatabaseNames()' has been removed
+- [x] Method 'public java.util.Collection getUsedDatabases()' has been removed
+- [ ] Method 'public java.lang.String getVersion()' has been removed
+- [ ] Method 'public java.lang.String getConnectPoint()' has been removed
 - [ ] Method 'public com.mongodb.CommandResult fsync(boolean)' has been removed
 - [ ] Method 'public com.mongodb.CommandResult fsyncAndLock()' has been removed
 - [ ] Method 'public com.mongodb.ServerAddress getAddress()' has been removed
-- [ ] Method 'public java.util.List getAllAddress()' has been removed
-- [ ] Method 'public java.lang.String getConnectPoint()' has been removed
-- [ ] Method 'public com.mongodb.DBTCPConnector getConnector()' has been removed
-- [ ] Method 'public java.util.List getDatabaseNames()' has been removed
-- [ ] Method 'public int getMajorVersion()' has been removed
 - [ ] Method 'public int getMaxBsonObjectSize()' has been removed
-- [ ] Method 'public int getMinorVersion()' has been removed
-- [ ] Method 'public com.mongodb.MongoOptions getMongoOptions()' has been removed
 - [ ] Method 'public com.mongodb.ReplicaSetStatus getReplicaSetStatus()' has been removed
-- [ ] Method 'public java.util.Collection getUsedDatabases()' has been removed
-- [ ] Method 'public java.lang.String getVersion()' has been removed
 - [ ] Method 'public boolean isLocked()' has been removed
 - [ ] Method 'public void resetOptions()' has been removed
 - [ ] Method 'public void setOptions(int)' has been removed
@@ -78,8 +78,8 @@
 - [ ] Method 'public com.mongodb.DBObject unlock()' has been removed
 
 ### com.mongodb.MongoClient
-- [ ] Accessibility of method 'public MongoClient(com.mongodb.ServerAddress, com.mongodb.MongoClientOptions)' has been decreased from public to private
-- [ ] Accessibility of method 'public MongoClient(java.util.List, com.mongodb.MongoClientOptions)' has been decreased from public to private
+- [x] Accessibility of method 'public MongoClient(com.mongodb.ServerAddress, com.mongodb.MongoClientOptions)' has been decreased from public to private
+- [x] Accessibility of method 'public MongoClient(java.util.List, com.mongodb.MongoClientOptions)' has been decreased from public to private
 
 ### com.mongodb.MongoClientOptions
 - [ ] Method 'public com.mongodb.DBDecoderFactory getDbDecoderFactory()' has been removed

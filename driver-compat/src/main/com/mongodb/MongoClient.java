@@ -132,7 +132,7 @@ public class MongoClient extends Mongo {
      * @throws MongoException
      * @see com.mongodb.ServerAddress
      */
-    private MongoClient(final ServerAddress addr, final MongoClientOptions options) {
+    public MongoClient(final ServerAddress addr, final MongoClientOptions options) {
         super(addr, options);
     }
 
