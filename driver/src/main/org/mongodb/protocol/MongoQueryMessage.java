@@ -18,76 +18,29 @@ package org.mongodb.protocol;
 
 import org.mongodb.Document;
 import org.mongodb.io.ChannelAwareOutputBuffer;
-import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoQuery;
 import org.mongodb.serialization.Serializer;
 
-public class MongoQueryMessage extends MongoRequestMessage {
+public class MongoQueryMessage extends MongoQueryBaseMessage {
+    private final MongoFind find;
+    private Serializer<Document> serializer;
 
-    public MongoQueryMessage(final String collectionName, final MongoFind find,
-                             final ChannelAwareOutputBuffer buffer,
-                             final Serializer<Document> serializer) {
-        super(collectionName, find.getOptions(), find.getReadPreference(), buffer);
+    public MongoQueryMessage(final String collectionName, final MongoFind find, final Serializer<Document> serializer) {
+        super(collectionName);
+        this.find = find;
+        this.serializer = serializer;
+    }
 
-        init(find);
-        addDocument(getQueryDocument(find), serializer);
+    @Override
+    protected void serializeMessageBody(final ChannelAwareOutputBuffer buffer) {
+        writeQueryPrologue(find, buffer);
+        addDocument(getQueryDocument(), serializer, buffer);
         if (find.getFields() != null) {
-            addDocument(find.getFields(), serializer);
+            addDocument(find.getFields(), serializer, buffer);
         }
-        backpatchMessageLength();
     }
 
-    public MongoQueryMessage(final String collectionName, final MongoCommand commandOperation,
-                             final ChannelAwareOutputBuffer buffer, final Serializer<Document> serializer) {
-        super(collectionName, 0, commandOperation.getReadPreference(), buffer);
-
-        init(commandOperation);
-        addDocument(commandOperation.toDocument(), serializer);
-        backpatchMessageLength();
-    }
-
-    private void init(final MongoQuery query) {
-        int allOptions = 0;
-        if (query.getReadPreference().isSlaveOk()) {
-            allOptions |= QueryOptions.SLAVEOK;
-        }
-
-        writeQueryPrologue(allOptions, query);
-    }
-
-    private void writeQueryPrologue(final int queryOptions, final MongoQuery query) {
-        getBuffer().writeInt(queryOptions);
-        getBuffer().writeCString(getCollectionName());
-
-        getBuffer().writeInt(query.getSkip());
-        getBuffer().writeInt(chooseBatchSize(query.getBatchSize(), query.getLimit(), 0));
-    }
-
-    // TODO: test this, extensively
-    private int chooseBatchSize(final int batchSize, final int limit, final int fetched) {
-        final int bs = Math.abs(batchSize);
-        final int remaining = limit > 0 ? limit - fetched : 0;
-        int res;
-        if (bs == 0 && remaining > 0) {
-            res = remaining;
-        }
-        else if (bs > 0 && remaining == 0) {
-            res = bs;
-        }
-        else {
-            res = Math.min(bs, remaining);
-        }
-
-        if (batchSize < 0) {
-            // force close
-            res = -res;
-        }
-
-        return res;
-    }
-
-    private Document getQueryDocument(final MongoFind find) {
+    private Document getQueryDocument() {
         final Document document = new Document();
         document.put("query", find.getFilter());
         if (find.getOrder() != null && !find.getOrder().isEmpty()) {

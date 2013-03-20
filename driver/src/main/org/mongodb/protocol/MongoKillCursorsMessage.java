@@ -21,17 +21,23 @@ import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.result.ServerCursor;
 
 public class MongoKillCursorsMessage extends MongoRequestMessage {
-    public MongoKillCursorsMessage(final ChannelAwareOutputBuffer buffer, final MongoKillCursor killCursor) {
-        super(OpCode.OP_KILL_CURSORS, buffer);
-        writeKillCursorsPrologue(killCursor.getServerCursors().size());
+    private final MongoKillCursor killCursor;
+
+    public MongoKillCursorsMessage(final MongoKillCursor killCursor) {
+        super(OpCode.OP_KILL_CURSORS);
+        this.killCursor = killCursor;
+    }
+
+    @Override
+    protected void serializeMessageBody(final ChannelAwareOutputBuffer buffer) {
+        writeKillCursorsPrologue(killCursor.getServerCursors().size(), buffer);
         for (final ServerCursor curServerCursor : killCursor.getServerCursors()) {
             buffer.writeLong(curServerCursor.getId());
         }
-        backpatchMessageLength();
     }
 
-    private void writeKillCursorsPrologue(final int numCursors) {
-        getBuffer().writeInt(0); // reserved
-        getBuffer().writeInt(numCursors);
+    private void writeKillCursorsPrologue(final int numCursors, final ChannelAwareOutputBuffer buffer) {
+        buffer.writeInt(0); // reserved
+        buffer.writeInt(numCursors);
     }
 }

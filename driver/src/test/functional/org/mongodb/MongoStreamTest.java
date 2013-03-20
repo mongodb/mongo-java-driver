@@ -37,55 +37,56 @@ public class MongoStreamTest extends DatabaseTestCase {
         }
 
         for (final Document cur : collection) {
-            System.out.println(cur);
+//            System.out.println(cur);
         }
 
         final MongoCursor<Document> cursor = collection.all();
         try {
             while (cursor.hasNext()) {
-                System.out.println(cursor.next());
+                cursor.next();
+//                System.out.println(cursor.next());
             }
         } finally {
             cursor.close();
         }
 
         for (final Document cur : collection.filter(new Document("_id", 1))) {
-            System.out.println(cur);
+//            System.out.println(cur);
         }
 
         for (final Document cur : collection.filter(new Document("_id", 1))
                 .sort(new Document("_id", 1))) {
-            System.out.println(cur);
+//            System.out.println(cur);
         }
 
-        System.out.println();
+//        System.out.println();
 
         for (final Document cur : collection.filter(query("_id").greaterThan(4)).sort(new Document("_id", 1))) {
-            System.out.println(cur);
+//            System.out.println(cur);
         }
 
-        System.out.println();
+//        System.out.println();
 
         for (final Document cur : collection.skip(3).limit(2).sort(new Document("_id", -1))) {
-            System.out.println(cur);
+//            System.out.println(cur);
         }
 
         long count = collection.count();
-        System.out.println(count);
+//        System.out.println(count);
 
         count = collection.filter(new Document("_id", new Document("$gt", 2))).count();
-        System.out.println(count);
+//        System.out.println(count);
 
         Document doc = collection.one();
-        System.out.println(doc);
+//        System.out.println(doc);
 
         doc = collection.filter(new Document("_id", 1)).one();
-        System.out.println(doc);
+//        System.out.println(doc);
 
         collection.forEach(new Block<Document>() {
             @Override
             public boolean run(final Document e) {
-                System.out.println(e);
+//                System.out.println(e);
                 return true;
             }
         });
@@ -93,14 +94,14 @@ public class MongoStreamTest extends DatabaseTestCase {
         collection.forEach(new Block<Document>() {
             @Override
             public boolean run(final Document t) {
-                System.out.println(t);
+//                System.out.println(t);
                 return true;
             }
         });
 
         collection.forEach(new Block<Document>() {
             public boolean run(final Document document) {
-                System.out.println(document);
+//                System.out.println(document);
                 return true;
             }
         });
@@ -111,7 +112,7 @@ public class MongoStreamTest extends DatabaseTestCase {
                 return (Integer) document.get("_id");
             }
         })) {
-            System.out.println(id);
+//            System.out.println(id);
         }
 
         List<String> list = collection.map(new Function<Document, Integer>() {
@@ -126,12 +127,12 @@ public class MongoStreamTest extends DatabaseTestCase {
             }
         }).into(new ArrayList<String>());
 
-        System.out.println(list);
+//        System.out.println(list);
 
         collection.forEach(new Block<Document>() {
             @Override
             public boolean run(final Document t) {
-                System.out.println(t);
+//               System.out.println(t);
                 return true;
             }
         });
@@ -143,7 +144,7 @@ public class MongoStreamTest extends DatabaseTestCase {
             }
         }).into(new ArrayList<Integer>());
 
-        System.out.println(idList);
+//        System.out.println(idList);
     }
 
 
@@ -173,7 +174,7 @@ public class MongoStreamTest extends DatabaseTestCase {
         final Document doc = collection.filter(new Document("_id", 1))
                 .modifyAndGet(new Document("$set", new Document("x", 1)),
                         Get.BeforeChangeApplied);
-        System.out.println(doc);
+//        System.out.println(doc);
     }
 
     @Test
@@ -194,26 +195,26 @@ public class MongoStreamTest extends DatabaseTestCase {
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
 
-        System.out.println(concreteCollection.filter(new Document("i", 1))
-                .map(new Function<Concrete, ObjectId>() {
-                    @Override
-                    public ObjectId apply(final Concrete concrete) {
-                        return concrete.getId();
-                    }
-                }).map(new Function<ObjectId, String>() {
-                    @Override
-                    public String apply(final ObjectId o) {
-                        return o.toString();
-                    }
-                }).into(new ArrayList<String>()));
-
-        System.out.println(concreteCollection.filter(new Document("i", 1))
-                .map(new Function<Concrete, ObjectId>() {
-                    @Override
-                    public ObjectId apply(final Concrete concrete) {
-                        return concrete.getId();
-                    }
-                }).into(new ArrayList<ObjectId>()));
+//        System.out.println(concreteCollection.filter(new Document("i", 1))
+//                .map(new Function<Concrete, ObjectId>() {
+//                    @Override
+//                    public ObjectId apply(final Concrete concrete) {
+//                        return concrete.getId();
+//                    }
+//                }).map(new Function<ObjectId, String>() {
+//                    @Override
+//                    public String apply(final ObjectId o) {
+//                        return o.toString();
+//                    }
+//                }).into(new ArrayList<String>()));
+//
+//        System.out.println(concreteCollection.filter(new Document("i", 1))
+//                .map(new Function<Concrete, ObjectId>() {
+//                    @Override
+//                    public ObjectId apply(final Concrete concrete) {
+//                        return concrete.getId();
+//                    }
+//                }).into(new ArrayList<ObjectId>()));
     }
 }
 

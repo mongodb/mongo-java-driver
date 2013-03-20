@@ -16,35 +16,31 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.WriteConcern;
+import org.mongodb.Document;
 import org.mongodb.io.ChannelAwareOutputBuffer;
-import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.MongoReplace;
+import org.mongodb.operation.MongoUpdateBase;
 import org.mongodb.serialization.Serializer;
 
-public class MongoInsertMessage<T> extends MongoRequestMessage {
-    private final MongoInsert<T> insert;
+public class MongoReplaceMessage<T> extends MongoUpdateBaseMessage {
+    private MongoReplace<T> replace;
     private final Serializer<T> serializer;
 
-    public MongoInsertMessage(final String collectionName, final MongoInsert<T> insert, final Serializer<T> serializer) {
-        super(collectionName, OpCode.OP_INSERT);
-        this.insert = insert;
+    public MongoReplaceMessage(final String collectionName, final MongoReplace<T> replace,
+                               final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
+        super(collectionName, OpCode.OP_UPDATE, baseSerializer);
+        this.replace = replace;
         this.serializer = serializer;
     }
 
     @Override
     protected void serializeMessageBody(final ChannelAwareOutputBuffer buffer) {
-        writeInsertPrologue(insert.getWriteConcern(), buffer);
-        for (final T document : insert.getDocuments()) {
-            addDocument(document, serializer, buffer);
-        }
+        writeBaseUpdate(buffer);
+        addDocument(replace.getReplacement(), serializer, buffer);
     }
 
-    private void writeInsertPrologue(final WriteConcern concern, final ChannelAwareOutputBuffer buffer) {
-        int flags = 0;
-        if (concern.getContinueOnErrorForInsert()) {
-            flags |= 1;
-        }
-        buffer.writeInt(flags);
-        buffer.writeCString(getCollectionName());
+    @Override
+    protected MongoUpdateBase getUpdateBase() {
+        return replace;
     }
 }

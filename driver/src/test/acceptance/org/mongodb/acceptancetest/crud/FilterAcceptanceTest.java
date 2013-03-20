@@ -16,18 +16,18 @@
 
 package org.mongodb.acceptancetest.crud;
 
-import org.mongodb.Document;
 import org.junit.Test;
+import org.mongodb.DatabaseTestCase;
+import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoStream;
-import org.mongodb.acceptancetest.AcceptanceTestCase;
 
 import java.util.List;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class FilterAcceptanceTest extends AcceptanceTestCase {
+public class FilterAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldFindASingleDocumentById() {

@@ -126,5 +126,4 @@ public class DocumentSerializerTest extends DatabaseTestCase {
         buffer.pipe(baos);
         return new BasicInputBuffer(ByteBuffer.wrap(baos.toByteArray()));
     }
-
 }

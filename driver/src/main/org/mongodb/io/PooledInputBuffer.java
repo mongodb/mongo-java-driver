@@ -16,13 +16,25 @@
 
 package org.mongodb.io;
 
-public abstract class BufferPool<T> {
 
-    public abstract T get(int size);
+import org.bson.io.BasicInputBuffer;
 
-    public abstract void done(T buffer);
+import java.nio.ByteBuffer;
 
-    public abstract T createNew(int size);
+public class PooledInputBuffer extends BasicInputBuffer {
+    private ByteBuffer pooledBuffer;
+    private final BufferPool<ByteBuffer> pool;
 
-    public abstract void close();
+    public PooledInputBuffer(final ByteBuffer buffer, final BufferPool<ByteBuffer> pool) {
+        super(buffer);
+        pooledBuffer = buffer;
+        this.pool = pool;
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        pool.done(pooledBuffer);
+        pooledBuffer = null;
+    }
 }

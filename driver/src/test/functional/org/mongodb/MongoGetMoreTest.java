@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.mongodb.operation.MongoKillCursor;
 
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -35,9 +36,10 @@ public class MongoGetMoreTest extends DatabaseTestCase {
         cursor.next();
         try {
             cursor.next();
-            fail("Should throw exception");
         } catch (MongoCursorNotFoundException e) {
             assertEquals(cursor.getServerCursor(), e.getCursor());
+        } catch (NoSuchElementException e) {
+            fail();
         }
     }
 }

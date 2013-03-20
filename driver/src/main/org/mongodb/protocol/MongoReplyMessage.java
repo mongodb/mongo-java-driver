@@ -20,6 +20,7 @@ import org.bson.BSONBinaryReader;
 import org.bson.BSONReader;
 import org.bson.BSONReaderSettings;
 import org.bson.io.InputBuffer;
+import org.mongodb.io.ResponseBuffers;
 import org.mongodb.serialization.Serializer;
 
 import java.util.ArrayList;
@@ -47,6 +48,11 @@ public class MongoReplyMessage<T> {
         this.elapsedNanoseconds = elapsedNanoseconds;
 
         documents = new ArrayList<T>(replyHeader.getNumberReturned());
+    }
+
+    public MongoReplyMessage(final ResponseBuffers responseBuffers, final Serializer<T> serializer) {
+        this(responseBuffers.getReplyHeader(), responseBuffers.getBodyByteBuffer(), serializer,
+                responseBuffers.getElapsedNanoseconds());
     }
 
     public MongoReplyHeader getReplyHeader() {

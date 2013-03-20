@@ -19,17 +19,9 @@ package org.mongodb.io;
 
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
-import org.mongodb.Document;
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoCursorNotFoundException;
-import org.mongodb.MongoQueryFailureException;
 import org.mongodb.ServerAddress;
-import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.protocol.MongoReplyHeader;
-import org.mongodb.protocol.MongoReplyMessage;
-import org.mongodb.protocol.MongoRequestMessage;
-import org.mongodb.result.ServerCursor;
-import org.mongodb.serialization.Serializer;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
@@ -45,25 +37,23 @@ import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
 /**
  * A gateway for the MongoDB wire protocol.
- * <p>
+ * <p/>
  * Note: This class is not part of the public API.  It may break binary compatibility even in minor releases.
  */
 public abstract class MongoGateway {
     private final ServerAddress address;
     private final BufferPool<ByteBuffer> pool;
-    private final Serializer<Document> errorSerializer;
 
     public static MongoGateway create(final ServerAddress address, final BufferPool<ByteBuffer> pool,
-                                      final Serializer<Document> errorSerializer,
                                       final MongoClientOptions options) {
         if (options.isSSLEnabled()) {
-            return new MongoSocketGateway(address, pool, errorSerializer, SSLSocketFactory.getDefault());
+            return new MongoSocketGateway(address, pool, SSLSocketFactory.getDefault());
         }
         else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            return new MongoSocketGateway(address, pool, errorSerializer, SocketFactory.getDefault());
+            return new MongoSocketGateway(address, pool, SocketFactory.getDefault());
         }
         else {
-            return new MongoSocketChannelGateway(address, pool, errorSerializer);
+            return new MongoSocketChannelGateway(address, pool);
         }
     }
 
@@ -71,29 +61,30 @@ public abstract class MongoGateway {
         return address;
     }
 
-    public void sendMessage(final MongoRequestMessage message) {
+
+    public void sendMessage(final ChannelAwareOutputBuffer buffer) {
         ensureOpen();
-        sendOneWayMessage(message);
+        sendOneWayMessage(buffer);
     }
 
-    public <T> MongoReplyMessage<T> sendAndReceiveMessage(final MongoRequestMessage message, final Serializer<T> serializer) {
+    protected abstract void sendOneWayMessage(final ChannelAwareOutputBuffer buffer);
+
+
+    public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
         ensureOpen();
         long start = System.nanoTime();
-        sendOneWayMessage(message);
-        return receiveMessage(message, serializer, start);
+        sendOneWayMessage(buffer);
+        return receiveMessage(start);
     }
 
     public abstract void close();
 
-    protected MongoGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool, final Serializer<Document> errorSerializer) {
+    protected MongoGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool) {
         this.address = address;
         this.pool = pool;
-        this.errorSerializer = errorSerializer;
     }
 
     protected abstract void ensureOpen();
-
-    protected abstract void sendOneWayMessage(final MongoRequestMessage message);
 
     protected abstract void fillAndFlipBuffer(final ByteBuffer buffer);
 
@@ -109,42 +100,28 @@ public abstract class MongoGateway {
         }
     }
 
-    private <T> MongoReplyMessage<T> receiveMessage(final MongoRequestMessage message, final Serializer<T> serializer, final long start) {
-        ByteBuffer headerByteBuffer = null;
-        ByteBuffer bodyByteBuffer = null;
+    private ResponseBuffers receiveMessage(final long start) {
+        ByteBuffer headerByteBuffer = pool.get(REPLY_HEADER_LENGTH);
+
+        final MongoReplyHeader replyHeader;
         try {
-            headerByteBuffer = pool.get(REPLY_HEADER_LENGTH);
             fillAndFlipBuffer(headerByteBuffer);
             final InputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
 
-            final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
-
-            InputBuffer bodyInputBuffer = null;
-
-            if (replyHeader.getNumberReturned() > 0) {
-                bodyByteBuffer = pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
-                fillAndFlipBuffer(bodyByteBuffer);
-
-                bodyInputBuffer = new BasicInputBuffer(bodyByteBuffer);
-            }
-
-            if (replyHeader.isCursorNotFound()) {
-                throw new MongoCursorNotFoundException(new ServerCursor(((MongoGetMoreMessage) message).getCursorId(),
-                        address));
-            }
-            else if (replyHeader.isQueryFailure()) {
-                final Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,
-                        errorSerializer, System.nanoTime() - start).getDocuments().get(0);
-                throw new MongoQueryFailureException(address, errorDocument);
-            }
-            return new MongoReplyMessage<T>(replyHeader, bodyInputBuffer, serializer, System.nanoTime() - start);
+            replyHeader = new MongoReplyHeader(headerInputBuffer);
         } finally {
-            if (headerByteBuffer != null) {
-                pool.done(headerByteBuffer);
-            }
-            if (bodyByteBuffer != null) {
-                pool.done(bodyByteBuffer);
-            }
+            pool.done(headerByteBuffer);
         }
+
+        PooledInputBuffer bodyInputBuffer = null;
+
+        if (replyHeader.getNumberReturned() > 0) {
+            ByteBuffer bodyByteBuffer = pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
+            fillAndFlipBuffer(bodyByteBuffer);
+
+            bodyInputBuffer = new PooledInputBuffer(bodyByteBuffer, pool);
+        }
+
+        return new ResponseBuffers(replyHeader, bodyInputBuffer, System.nanoTime() - start);
     }
 }

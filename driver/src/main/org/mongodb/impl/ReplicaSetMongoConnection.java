@@ -201,6 +201,11 @@ class ReplicaSetMongoConnection implements MongoConnection {
     @Override
     public void close() {
         replicaSetMonitor.close();
+        try {
+            replicaSetMonitor.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException();
+        }
         for (SingleServerMongoConnection cur : mongoClientMap.values()) {
             cur.close();
         }

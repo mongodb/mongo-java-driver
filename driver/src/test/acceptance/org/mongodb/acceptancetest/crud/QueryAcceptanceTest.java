@@ -22,11 +22,11 @@ import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.ConvertibleToDocument;
+import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryBuilder;
-import org.mongodb.acceptancetest.AcceptanceTestCase;
 import org.mongodb.serialization.CollectibleSerializer;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ import static org.mongodb.QueryOperators.TYPE;
 import static org.mongodb.Sort.ascending;
 import static org.mongodb.Sort.descending;
 
-public class QueryAcceptanceTest extends AcceptanceTestCase {
+public class QueryAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToQueryWithDocumentSpecification() {
         collection.insert(new Document("name", "Bob"));

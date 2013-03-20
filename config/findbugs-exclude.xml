@@ -24,11 +24,6 @@
         </Class>
     </Match>
     <Match>
-        <Class name="org.mongodb.acceptancetest.AcceptanceTestCase">
-            <Bug pattern="MS_PKGPROTECT"/>
-        </Class>
-    </Match>
-    <Match>
         <Class name="org.mongodb.DatabaseTestCase">
             <Bug pattern="MS_PKGPROTECT"/>
         </Class>

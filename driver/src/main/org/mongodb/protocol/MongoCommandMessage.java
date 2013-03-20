@@ -16,30 +16,24 @@
 
 package org.mongodb.protocol;
 
+import org.mongodb.Document;
 import org.mongodb.io.ChannelAwareOutputBuffer;
-import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoCommand;
+import org.mongodb.serialization.Serializer;
 
-public class MongoGetMoreMessage extends MongoRequestMessage {
-    private final GetMore getMore;
+public class MongoCommandMessage extends MongoQueryBaseMessage {
+    private final MongoCommand commandOperation;
+    private final Serializer<Document> serializer;
 
-    public MongoGetMoreMessage(final String collectionName, final GetMore getMore) {
-        super(collectionName, OpCode.OP_GETMORE);
-        this.getMore = getMore;
-    }
-
-    public long getCursorId() {
-        return getMore.getServerCursor().getId();
+    public MongoCommandMessage(final String collectionName, final MongoCommand commandOperation, final Serializer<Document> serializer) {
+        super(collectionName);
+        this.commandOperation = commandOperation;
+        this.serializer = serializer;
     }
 
     @Override
     protected void serializeMessageBody(final ChannelAwareOutputBuffer buffer) {
-        writeGetMore(buffer);
-    }
-
-    private void writeGetMore(final ChannelAwareOutputBuffer buffer) {
-        buffer.writeInt(0);
-        buffer.writeCString(getCollectionName());
-        buffer.writeInt(getMore.getBatchSize());
-        buffer.writeLong(getMore.getServerCursor().getId());
+        writeQueryPrologue(commandOperation, buffer);
+        addDocument(commandOperation.toDocument(), serializer, buffer);
     }
 }

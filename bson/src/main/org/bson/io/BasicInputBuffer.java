@@ -19,14 +19,15 @@ package org.bson.io;
 import org.bson.BSONType;
 import org.bson.types.ObjectId;
 
+import java.io.Closeable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
-public class BasicInputBuffer implements InputBuffer {
+public class BasicInputBuffer implements InputBuffer, Closeable {
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
-    private final ByteBuffer buffer;
+    private ByteBuffer buffer;
 
     public BasicInputBuffer(final ByteBuffer buffer) {
         this.buffer = buffer;
@@ -118,5 +119,9 @@ public class BasicInputBuffer implements InputBuffer {
     @Override
     public void skip(final int numBytes) {
         buffer.position(buffer.position() + numBytes);
+    }
+
+    public void close() {
+        buffer = null;
     }
 }

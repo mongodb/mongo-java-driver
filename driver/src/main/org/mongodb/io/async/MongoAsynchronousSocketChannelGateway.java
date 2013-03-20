@@ -19,22 +19,17 @@ package org.mongodb.io.async;
 
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
-import org.mongodb.Document;
-import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
-import org.mongodb.MongoQueryFailureException;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.BufferPool;
+import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.MongoSocketOpenException;
-import org.mongodb.protocol.MongoGetMoreMessage;
+import org.mongodb.io.PooledInputBuffer;
+import org.mongodb.io.ResponseBuffers;
 import org.mongodb.protocol.MongoReplyHeader;
-import org.mongodb.protocol.MongoReplyMessage;
-import org.mongodb.protocol.MongoRequestMessage;
-import org.mongodb.result.ServerCursor;
-import org.mongodb.serialization.Serializer;
 
 import java.io.IOException;
 import java.net.StandardSocketOptions;
@@ -47,33 +42,25 @@ import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
 /**
  * An asynchronous gateway for the MongoDB protocol.
- * <p>
+ * <p/>
  * Note: This class is not part of the public API.  It may break binary compatibility even in minor releases.
  */
 public class MongoAsynchronousSocketChannelGateway {
     private final ServerAddress address;
     private final BufferPool<ByteBuffer> pool;
-    private final Serializer<Document> errorSerializer;
     private volatile AsynchronousSocketChannel asynchronousSocketChannel;
 
-    public MongoAsynchronousSocketChannelGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool,
-                                                 final Serializer<Document> errorSerializer) {
+    public MongoAsynchronousSocketChannelGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool) {
         this.address = address;
         this.pool = pool;
-        this.errorSerializer = errorSerializer;
     }
 
     public ServerAddress getAddress() {
         return address;
     }
 
-    public void sendMessage(final MongoRequestMessage message) {
-        sendOneWayMessage(message, new NoOpAsyncCompletionHandler());
-    }
-
-    public void sendMessage(final MongoRequestMessage message,
-                            final SingleResultCallback<MongoReplyMessage<Document>> callback) {
-        sendOneWayMessage(message, new AsyncCompletionHandler() {
+    public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+        sendOneWayMessage(buffer, new AsyncCompletionHandler() {
             @Override
             public void completed(final int bytesWritten) {
                 callback.onResult(null, null);
@@ -86,18 +73,20 @@ public class MongoAsynchronousSocketChannelGateway {
         });
     }
 
-    public <T> void sendAndReceiveMessage(final MongoRequestMessage message, final Serializer<T> serializer,
-                                          final SingleResultCallback<MongoReplyMessage<T>> callback) {
-        sendOneWayMessage(message, new ReceiveMessageCompletionHandler<T>(message, serializer, System.nanoTime(), callback));
+    public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+        sendOneWayMessage(buffer, new ReceiveMessageCompletionHandler(System.nanoTime(), callback));
     }
 
-    private <T> void receiveMessage(final MongoRequestMessage message, final Serializer<T> serializer, final long start,
-                                    final SingleResultCallback<MongoReplyMessage<T>> callback) {
-        fillAndFlipBuffer(pool.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback<T>(callback, message, start, serializer));
+    private void receiveMessage(final long start, final SingleResultCallback<ResponseBuffers> callback) {
+        fillAndFlipBuffer(pool.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(callback, start));
     }
 
-    private void sendOneWayMessage(final MongoRequestMessage message, final AsyncCompletionHandler handler) {
-        message.pipeAndClose(new AsyncWritableByteChannelAdapter(), handler);
+    public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+        sendOneWayMessage(buffer, new NoOpAsyncCompletionHandler());
+    }
+
+    private void sendOneWayMessage(final ChannelAwareOutputBuffer buffer, final AsyncCompletionHandler handler) {
+        buffer.pipeAndClose(new AsyncWritableByteChannelAdapter(), handler);
     }
 
     private void fillAndFlipBuffer(final ByteBuffer buffer, final SingleResultCallback<ByteBuffer> callback) {
@@ -179,23 +168,18 @@ public class MongoAsynchronousSocketChannelGateway {
         }
     }
 
-    private class ReceiveMessageCompletionHandler<T> implements AsyncCompletionHandler {
-        private final MongoRequestMessage message;
-        private final Serializer<T> serializer;
+    private class ReceiveMessageCompletionHandler implements AsyncCompletionHandler {
         private final long start;
-        private final SingleResultCallback<MongoReplyMessage<T>> callback;
+        private final SingleResultCallback<ResponseBuffers> callback;
 
-        public ReceiveMessageCompletionHandler(final MongoRequestMessage message, final Serializer<T> serializer,
-                                               final long start, final SingleResultCallback<MongoReplyMessage<T>> callback) {
-            this.message = message;
-            this.serializer = serializer;
+        public ReceiveMessageCompletionHandler(final long start, final SingleResultCallback<ResponseBuffers> callback) {
             this.start = start;
             this.callback = callback;
         }
 
         @Override
         public void completed(final int bytesWritten) {
-            receiveMessage(message, serializer, start, callback);
+            receiveMessage(start, callback);
         }
 
         @Override
@@ -204,19 +188,13 @@ public class MongoAsynchronousSocketChannelGateway {
         }
     }
 
-    private class ResponseHeaderCallback<T> implements SingleResultCallback<ByteBuffer> {
-        private final SingleResultCallback<MongoReplyMessage<T>> callback;
-        private final MongoRequestMessage message;
+    private class ResponseHeaderCallback implements SingleResultCallback<ByteBuffer> {
+        private final SingleResultCallback<ResponseBuffers> callback;
         private final long start;
-        private final Serializer<T> serializer;
 
-        public ResponseHeaderCallback(final SingleResultCallback<MongoReplyMessage<T>> callback,
-                                      final MongoRequestMessage message, final long start,
-                                      final Serializer<T> serializer) {
+        public ResponseHeaderCallback(final SingleResultCallback<ResponseBuffers> callback, final long start) {
             this.callback = callback;
-            this.message = message;
             this.start = start;
-            this.serializer = serializer;
         }
 
         @Override
@@ -231,16 +209,11 @@ public class MongoAsynchronousSocketChannelGateway {
 
             pool.done(result);
 
-            if (replyHeader.isCursorNotFound()) {
-                callback.onResult(null, new MongoCursorNotFoundException(
-                        new ServerCursor(((MongoGetMoreMessage) message).getCursorId(), address)));
-            }
-            else if (replyHeader.getNumberReturned() == 0) {
-                callback.onResult(new MongoReplyMessage<T>(replyHeader, System.nanoTime() - start), null);
+            if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
+                callback.onResult(new ResponseBuffers(replyHeader, null, System.nanoTime() - start), null);
             }
             else {
-                fillAndFlipBuffer(pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH),
-                        new ResponseBodyCallback(replyHeader));
+                fillAndFlipBuffer(pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH), new ResponseBodyCallback(replyHeader));
             }
         }
 
@@ -256,23 +229,11 @@ public class MongoAsynchronousSocketChannelGateway {
                 if (e != null) {
                     callback.onResult(null, e);
                 }
-                InputBuffer bodyInputBuffer = new BasicInputBuffer(result);
-                if (replyHeader.isQueryFailure()) {
-                    final Document errorDocument = new MongoReplyMessage<Document>(replyHeader, bodyInputBuffer,
-                            errorSerializer, System.nanoTime() - start).getDocuments().get(0);
-                    callback.onResult(null, new MongoQueryFailureException(address, errorDocument));
-                }
-                else {
-                    try {
-                        MongoReplyMessage<T> replyMessage =
-                                new MongoReplyMessage<T>(replyHeader, bodyInputBuffer, serializer,
-                                        System.nanoTime() - start);
-                        callback.onResult(replyMessage, null);
-                    } catch (Throwable t) {
-                        callback.onResult(null, new MongoException("", t)); // TODO: proper subclass
-                    } finally {
-                        pool.done(result);
-                    }
+                PooledInputBuffer bodyInputBuffer = new PooledInputBuffer(result, pool);
+                try {
+                    callback.onResult(new ResponseBuffers(replyHeader, bodyInputBuffer, System.nanoTime() - start), null);
+                } catch (Throwable t) {
+                    callback.onResult(null, new MongoException("", t)); // TODO: proper subclass
                 }
             }
         }

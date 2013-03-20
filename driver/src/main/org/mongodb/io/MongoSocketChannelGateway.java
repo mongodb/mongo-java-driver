@@ -16,10 +16,7 @@
 
 package org.mongodb.io;
 
-import org.mongodb.Document;
 import org.mongodb.ServerAddress;
-import org.mongodb.protocol.MongoRequestMessage;
-import org.mongodb.serialization.Serializer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -29,9 +26,8 @@ import java.nio.channels.SocketChannel;
 class MongoSocketChannelGateway extends MongoGateway {
     private volatile SocketChannel socketChannel;
 
-    public MongoSocketChannelGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool,
-                                     final Serializer<Document> errorSerializer) {
-        super(address, pool, errorSerializer);
+    public MongoSocketChannelGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool) {
+        super(address, pool);
     }
 
     protected void ensureOpen() {
@@ -45,14 +41,14 @@ class MongoSocketChannelGateway extends MongoGateway {
         }
     }
 
-    protected void sendOneWayMessage(final MongoRequestMessage message) {
+    @Override
+    protected void sendOneWayMessage(final ChannelAwareOutputBuffer buffer) {
         try {
-            message.pipeAndClose(socketChannel);
+            buffer.pipeAndClose(socketChannel);
         } catch (IOException e) {
             throw new MongoSocketWriteException("Exception sending message", getAddress(), e);
         }
     }
-
 
     protected void fillAndFlipBuffer(final ByteBuffer buffer) {
         try {

@@ -26,20 +26,27 @@ import java.net.Socket;
 import java.nio.channels.SocketChannel;
 
 public abstract class ChannelAwareOutputBuffer extends OutputBuffer {
+
     /**
-     * Pipe into the socket channel
+     * Pipe the contents of the buffer into the given socket channel
      *
      * @param socketChannel channel
      */
     public abstract void pipeAndClose(SocketChannel socketChannel) throws IOException;
 
     /**
-     * Pipe into the asynchronous channel.
+     * Pipe the contents of the buffer into the given socket
+     * @param out
+     * @throws IOException
+     */
+    public abstract void pipeAndClose(final Socket out) throws IOException;
+
+    /**
+     * Pipe the contents of the buffer into the given asynchronous channel.
      *
      * @param channel the channel
      * @param handler the handler to invoke on complete or failure
      */
     public abstract void pipeAndClose(final AsyncWritableByteChannel channel, AsyncCompletionHandler handler);
 
-    public abstract void pipeAndClose(final Socket out) throws IOException;
 }

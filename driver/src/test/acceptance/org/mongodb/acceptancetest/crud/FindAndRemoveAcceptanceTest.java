@@ -16,10 +16,10 @@
 
 package org.mongodb.acceptancetest.crud;
 
-import org.mongodb.Document;
 import org.junit.Test;
+import org.mongodb.DatabaseTestCase;
+import org.mongodb.Document;
 import org.mongodb.MongoStream;
-import org.mongodb.acceptancetest.AcceptanceTestCase;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -31,7 +31,7 @@ import static org.junit.Assert.assertThat;
  * <p/>
  * http://docs.mongodb.org/manual/reference/command/findAndModify/
  */
-public class FindAndRemoveAcceptanceTest extends AcceptanceTestCase {
+public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
     private static final String KEY = "searchKey";
     private static final String VALUE_TO_CARE_ABOUT = "Value to match";
 

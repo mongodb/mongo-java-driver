@@ -17,93 +17,37 @@
 package org.mongodb.protocol;
 
 import org.bson.BSONBinaryWriter;
-import org.mongodb.ReadPreference;
 import org.mongodb.io.ChannelAwareOutputBuffer;
-import org.mongodb.io.async.AsyncCompletionHandler;
-import org.mongodb.io.async.AsyncWritableByteChannel;
 import org.mongodb.serialization.Serializer;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Abstract base class for all MongoDB Wire Protocol request messages.
  */
-public class MongoRequestMessage {
+public abstract class MongoRequestMessage {
     // TODO: is rollover a problem
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
     private final String collectionName;
-    private volatile ChannelAwareOutputBuffer buffer;
     private final int id;
     private final OpCode opCode;
-    private volatile int numDocuments; // only one thread will modify this field, so volatile is sufficient synchronization
-    private final int messageStartPosition;
 
-    MongoRequestMessage(final OpCode opCode, final ChannelAwareOutputBuffer buffer) {
-        this(null, opCode, buffer);
-    }
-
-    MongoRequestMessage(final String collectionName, final OpCode opCode, final ChannelAwareOutputBuffer buffer) {
-        this(collectionName, opCode, -1, null, buffer);
-    }
-
-    MongoRequestMessage(final String collectionName, final int options, final ReadPreference readPref,
-                        final ChannelAwareOutputBuffer buffer) {
-        this(collectionName, OpCode.OP_QUERY, options, readPref, buffer);
-    }
-
-    MongoRequestMessage(final String collectionName, final OpCode opCode,
-                        final int options, final ReadPreference readPreference,
-                        final ChannelAwareOutputBuffer buffer) {
+    public MongoRequestMessage(final String collectionName, final OpCode opCode) {
         this.collectionName = collectionName;
-
-        this.buffer = buffer;
-        messageStartPosition = buffer.getPosition();
-
         id = REQUEST_ID.getAndIncrement();
         this.opCode = opCode;
-
-        writeMessagePrologue(opCode);
     }
 
-    //CHECKSTYLE:OFF
-    private void writeMessagePrologue(final OpCode opCode) {
-        getBuffer().writeInt(0); // length: will set this later
-        getBuffer().writeInt(id);
-        getBuffer().writeInt(0); // response to
-        getBuffer().writeInt(opCode.getValue());
-    }
-    //CHECKSTYLE:ON
-
-    public void pipeAndClose(final SocketChannel out) throws IOException {
-        try {
-            getBuffer().pipeAndClose(out);
-        } finally {
-            buffer = null;
-        }
+    public MongoRequestMessage(final OpCode opCode) {
+        this(null, opCode);
     }
 
-    public void pipeAndClose(final Socket out) throws IOException {
-        try {
-            getBuffer().pipeAndClose(out);
-        } finally {
-            buffer = null;
-        }
-    }
-
-    public void pipeAndClose(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {
-        try {
-            getBuffer().pipeAndClose(channel, handler);
-        } finally {
-            buffer = null;
-        }
-    }
-
-    public int size() {
-        return getBuffer().size();
+    protected void writeMessagePrologue(final ChannelAwareOutputBuffer buffer) {
+        buffer.writeInt(0); // length: will set this later
+        buffer.writeInt(id);
+        buffer.writeInt(0); // response to
+        buffer.writeInt(opCode.getValue());
     }
 
     public int getId() {
@@ -118,12 +62,17 @@ public class MongoRequestMessage {
         return getCollectionName() != null ? getCollectionName() : null;
     }
 
-    public int getNumDocuments() {
-        return numDocuments;
+    public void serialize(final ChannelAwareOutputBuffer buffer) {
+        int messageStartPosition = buffer.getPosition();
+        writeMessagePrologue(buffer);
+        serializeMessageBody(buffer);
+        backpatchMessageLength(messageStartPosition, buffer);
     }
 
-    protected  <T> void addDocument(final T obj, final Serializer<T> serializer) {
-        final BSONBinaryWriter writer = new BSONBinaryWriter(getBuffer());
+    protected abstract void serializeMessageBody(final ChannelAwareOutputBuffer buffer);
+
+    protected <T> void addDocument(final T obj, final Serializer<T> serializer, final ChannelAwareOutputBuffer buffer) {
+        final BSONBinaryWriter writer = new BSONBinaryWriter(buffer);
 
         try {
             serializer.serialize(writer, obj);
@@ -132,25 +81,11 @@ public class MongoRequestMessage {
         }
 
         // TODO: Figure out how to deal with exceeding max BSON object size
-        numDocuments++;
-        backpatchMessageLength();
     }
 
-    protected void backpatchMessageLength() {
-        final int messageLength = getBuffer().getPosition() - messageStartPosition;
-        getBuffer().backpatchSize(messageLength);
-    }
-
-    public void close() {
-        if (getBuffer() == null) {
-            throw new IllegalStateException("Buffer is already closed");
-        }
-        getBuffer().close();
-        buffer = null;
-    }
-
-    public ChannelAwareOutputBuffer getBuffer() {
-        return buffer;
+    protected void backpatchMessageLength(final int startPosition, final ChannelAwareOutputBuffer buffer) {
+        final int messageLength = buffer.getPosition() - startPosition;
+        buffer.backpatchSize(messageLength);
     }
 
     protected String getCollectionName() {

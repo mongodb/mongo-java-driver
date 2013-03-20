@@ -16,10 +16,7 @@
 
 package org.mongodb.io;
 
-import org.mongodb.Document;
 import org.mongodb.ServerAddress;
-import org.mongodb.protocol.MongoRequestMessage;
-import org.mongodb.serialization.Serializer;
 
 import javax.net.SocketFactory;
 import java.io.IOException;
@@ -31,9 +28,8 @@ class MongoSocketGateway extends MongoGateway {
     private final SocketFactory socketFactory;
     private volatile Socket socket;
 
-    public MongoSocketGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool,
-                              final Serializer<Document> errorSerializer, final SocketFactory socketFactory) {
-        super(address, pool, errorSerializer);
+    public MongoSocketGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool, final SocketFactory socketFactory) {
+        super(address, pool);
         this.socketFactory = socketFactory;
     }
 
@@ -48,9 +44,10 @@ class MongoSocketGateway extends MongoGateway {
         }
     }
 
-    protected void sendOneWayMessage(final MongoRequestMessage message) {
+    @Override
+    protected void sendOneWayMessage(final ChannelAwareOutputBuffer buffer) {
         try {
-            message.pipeAndClose(socket);
+            buffer.pipeAndClose(socket);
         } catch (IOException e) {
             throw new MongoSocketWriteException("Exception sending message", getAddress(), e);
         }

@@ -16,12 +16,12 @@
 
 package org.mongodb.acceptancetest.crud;
 
-import org.mongodb.Document;
 import org.junit.Test;
+import org.mongodb.DatabaseTestCase;
+import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.WriteConcern;
-import org.mongodb.acceptancetest.AcceptanceTestCase;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
@@ -30,7 +30,7 @@ import static org.junit.Assert.assertThat;
 /**
  * Documents the basic functionality of MongoDB Collections available via the Java driver.
  */
-public class CollectionAcceptanceTest extends AcceptanceTestCase {
+public class CollectionAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToIterateOverACollection() {
         final int numberOfDocuments = 10;

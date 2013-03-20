@@ -24,30 +24,36 @@ import org.mongodb.serialization.Serializer;
 import java.util.Collection;
 
 public class MongoDeleteMessage extends MongoRequestMessage {
-    public MongoDeleteMessage(final String collectionName, final MongoRemove remove,
-                              final ChannelAwareOutputBuffer buffer,
-                              final Serializer<Document> serializer) {
-        super(collectionName, OpCode.OP_DELETE, buffer);
-        writeDelete(remove, serializer);
-        backpatchMessageLength();
+    private final MongoRemove remove;
+    private final Serializer<Document> serializer;
+
+    public MongoDeleteMessage(final String collectionName, final MongoRemove remove, final Serializer<Document> serializer) {
+        super(collectionName, OpCode.OP_DELETE);
+        this.remove = remove;
+        this.serializer = serializer;
     }
 
-    private void writeDelete(final MongoRemove remove, final Serializer<Document> serializer) {
-        getBuffer().writeInt(0); // reserved
-        getBuffer().writeCString(getCollectionName());
+    @Override
+    protected void serializeMessageBody(final ChannelAwareOutputBuffer buffer) {
+        writeDelete(buffer);
+    }
+
+    private void writeDelete(final ChannelAwareOutputBuffer buffer) {
+        buffer.writeInt(0); // reserved
+        buffer.writeCString(getCollectionName());
 
         final Document queryFilterDocument = remove.getFilter();
 
         final Collection<String> keys = queryFilterDocument.keySet();
 
         if (remove.isMulti()) {
-            getBuffer().writeInt(0);
+            buffer.writeInt(0);
         }
         else {
-            getBuffer().writeInt(0);
+            buffer.writeInt(0);
         }
 
-        addDocument(queryFilterDocument, serializer);
+        addDocument(queryFilterDocument, serializer, buffer);
     }
 }
 

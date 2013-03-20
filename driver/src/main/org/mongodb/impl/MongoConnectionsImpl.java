@@ -44,6 +44,12 @@ public final class MongoConnectionsImpl {
                         protected MongoPoolableConnection createNew() {
                             return new SingleChannelAsyncMongoConnection(serverAddress, this, bufferPool, options);
                         }
+
+                        @Override
+                        public void close() {
+                            super.close();
+                            bufferPool.close();
+                        }
                     });
         }
         else {
@@ -52,6 +58,12 @@ public final class MongoConnectionsImpl {
                         @Override
                         protected MongoPoolableConnection createNew() {
                             return new SingleChannelSyncMongoConnection(serverAddress, this, bufferPool, options);
+                        }
+
+                        @Override
+                        public void close() {
+                            super.close();
+                            bufferPool.close();
                         }
                     });
         }

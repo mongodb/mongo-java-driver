@@ -16,13 +16,13 @@
 
 package org.mongodb.acceptancetest.index;
 
-import org.mongodb.Document;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.DatabaseTestCase;
+import org.mongodb.Document;
 import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.OrderBy;
-import org.mongodb.acceptancetest.AcceptanceTestCase;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -38,12 +38,10 @@ import static org.mongodb.OrderBy.fromInt;
  * Use cases for adding indexes to your MongoDB database via the Java driver.  Documents the index options that are
  * currently supported by the updated driver.
  */
-public class AddIndexAcceptanceTest extends AcceptanceTestCase {
+public class AddIndexAcceptanceTest extends DatabaseTestCase {
     @Before
     public void setUp() {
         super.setUp();
-        assertThat("Should only be the default index on _id at this stage",
-                  collection.tools().getIndexes().size(), is(1));
     }
 
     @Test

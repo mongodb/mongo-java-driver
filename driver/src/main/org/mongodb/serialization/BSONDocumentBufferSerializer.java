@@ -64,7 +64,6 @@ public class BSONDocumentBufferSerializer implements CollectibleSerializer<BSOND
         } catch (IOException e) {
             // impossible with a byte array output stream
             throw new MongoInternalException("impossible", e);
-
         }
     }
 

@@ -18,42 +18,26 @@ package org.mongodb.protocol;
 
 import org.mongodb.Document;
 import org.mongodb.io.ChannelAwareOutputBuffer;
-import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoUpdateBase;
 import org.mongodb.serialization.Serializer;
 
-public class MongoUpdateMessage extends MongoRequestMessage {
-    public MongoUpdateMessage(final String collectionName, final MongoUpdate update,
-                              final ChannelAwareOutputBuffer buffer,
-                              final Serializer<Document> serializer) {
-        super(collectionName, OpCode.OP_UPDATE, buffer);
-        writeBaseUpdate(update, serializer);
-        addDocument(update.getUpdateOperations(), serializer);
-        backpatchMessageLength();
+public class MongoUpdateMessage extends MongoUpdateBaseMessage {
+    private MongoUpdate update;
+
+    public MongoUpdateMessage(final String fullName, final MongoUpdate update, final Serializer<Document> baseSerializer) {
+        super(fullName, OpCode.OP_UPDATE, baseSerializer);
+        this.update = update;
     }
 
-    public <T> MongoUpdateMessage(final String collectionName, final MongoReplace<T> replace,
-                              final ChannelAwareOutputBuffer buffer,
-                              final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
-        super(collectionName, OpCode.OP_UPDATE, buffer);
-        writeBaseUpdate(replace, baseSerializer);
-        addDocument(replace.getReplacement(), serializer);
+    @Override
+    protected void serializeMessageBody(final ChannelAwareOutputBuffer buffer) {
+        writeBaseUpdate(buffer);
+        addDocument(update.getUpdateOperations(), getBaseSerializer(), buffer);
     }
 
-    void writeBaseUpdate(final MongoUpdateBase update, final Serializer<Document> serializer) {
-        getBuffer().writeInt(0); // reserved
-        getBuffer().writeCString(getCollectionName());
-
-        int flags = 0;
-        if (update.isUpsert()) {
-            flags |= 1;
-        }
-        if (update.isMulti()) {
-            flags |= 2;
-        }
-        getBuffer().writeInt(flags);
-
-        addDocument(update.getFilter(), serializer);
+    @Override
+    protected MongoUpdateBase getUpdateBase() {
+        return update;
     }
 }

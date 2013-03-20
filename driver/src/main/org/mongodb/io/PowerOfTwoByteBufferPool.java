@@ -68,6 +68,13 @@ public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
         return buf;
     }
 
+    @Override
+    public void close() {
+        for (SimplePool<ByteBuffer> cur : powerOfTwoToPoolMap.values()) {
+            cur.close();
+        }
+    }
+
     static int roundUpToNextHighestPowerOfTwo(final int size) {
         int v = size;
         v--;

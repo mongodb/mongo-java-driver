@@ -145,10 +145,6 @@ public abstract class SimplePool<T> {
             }
             out.put(t, true);
 
-            if (out.size() > 1000) {
-                System.out.println("oops");
-            }
-
             return t;
         }
     }
