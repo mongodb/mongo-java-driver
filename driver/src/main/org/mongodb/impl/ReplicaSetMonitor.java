@@ -57,7 +57,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
 
     private final ReplicaSetStateGenerator replicaSetStateGenerator;
 
-    private volatile long nextResolveTime;  // TODO: use this
+    // private volatile long nextResolveTime;  // TODO: use this
 
     static {
         SLAVE_ACCEPTABLE_LATENCY_MS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
@@ -69,7 +69,7 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
         super("ReplicaSetMonitor");
         replicaSetStateGenerator = new ReplicaSetStateGenerator(seedList,
                 new MongoClientIsMasterExecutorFactory(getClientOptions()), getLatencySmoothFactor());
-        nextResolveTime = System.currentTimeMillis() + INET_ADDR_CACHE_MS;
+//        nextResolveTime = System.currentTimeMillis() + INET_ADDR_CACHE_MS;
         replicaSetHolder = new ReplicaSetHolder(getClientOptions().getConnectTimeout());
     }
 

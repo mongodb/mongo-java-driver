@@ -340,7 +340,7 @@ public class MongoClientURI {
      * @return the password
      */
     public char[] getPassword() {
-        return password;
+        return password != null ? password.clone() : null;
     }
 
     /**

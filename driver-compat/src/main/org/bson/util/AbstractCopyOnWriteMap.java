@@ -18,7 +18,6 @@ package org.bson.util;
 
 import org.mongodb.annotations.ThreadSafe;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -582,9 +581,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         }
     }
 
-    final class Immutable extends View<K, V> implements Serializable {
-
-        private static final long serialVersionUID = -4158727180429303818L;
+    final class Immutable extends View<K, V> {
 
         @Override
         public Set<K> keySet() {
@@ -602,9 +599,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         }
     }
 
-    final class Mutable extends View<K, V> implements Serializable {
-
-        private static final long serialVersionUID = 1624520291194797634L;
+    final class Mutable extends View<K, V> {
 
         private final transient KeySet keySet = new KeySet();
         private final transient EntrySet entrySet = new EntrySet();
