@@ -493,7 +493,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
                     callback.onResult(null, new MongoQueryFailureException(getConnection().channel.getAddress(), errorDocument));
                 }
                 else {
-                    callback.onResult(new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, serializer), serverAddress), e);
+                    callback.onResult(new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, serializer), serverAddress), null);
                 }
             } finally {
                 if (responseBuffers != null) {
@@ -529,7 +529,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
                             new ServerCursor(cursorId, getConnection().channel.getAddress())));
                 }
                 else {
-                    callback.onResult(new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, serializer), serverAddress), e);
+                    callback.onResult(new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, serializer), serverAddress), null);
                 }
             } finally {
                 if (responseBuffers != null) {

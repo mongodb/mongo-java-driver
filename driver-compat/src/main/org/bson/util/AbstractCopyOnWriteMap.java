@@ -40,8 +40,7 @@ import static org.bson.util.Assertions.notNull;
  * @param <M> the internal {@link java.util.Map} or extension for things like sorted and navigable maps.
  */
 @ThreadSafe
-abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements ConcurrentMap<K, V>, Serializable {
-    private static final long serialVersionUID = 4508989182041753878L;
+abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements ConcurrentMap<K, V> {
 
     // @GuardedBy("lock")
     private volatile M delegate;

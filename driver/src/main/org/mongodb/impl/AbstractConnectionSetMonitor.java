@@ -130,7 +130,7 @@ abstract class AbstractConnectionSetMonitor extends Thread {
         IsMasterExecutor create(ServerAddress serverAddress);
     }
 
-    class MongoClientIsMasterExecutorFactory implements IsMasterExecutorFactory {
+    static class MongoClientIsMasterExecutorFactory implements IsMasterExecutorFactory {
 
         private final MongoClientOptions options;
 
