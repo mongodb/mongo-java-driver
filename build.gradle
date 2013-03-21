@@ -194,39 +194,6 @@ configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat'] }
     }
 }
 
-configure(subprojects.findAll { it.name in ['driver-compat'] }) {
-    checkstyle {
-        configFile = new File("$configDir/checkstyle-lite.xml")
-    }
-
-    pmd {
-        //cut down version of PMD for the older code base
-        ruleSets =  ["braces"]
-        ignoreFailures = false
-    }
-
-    idea.module.iml {
-        withXml { provider ->
-
-            def node = provider.node.component.find { it.@name == 'CheckStyle-IDEA-Module' }
-            if (node == null) {
-                node = provider.node.appendNode('component')
-            }
-            node.replaceNode {
-                component(name:'CheckStyle-IDEA-Module') {
-                    option(name:'configuration'){
-                        map {
-                            entry(key: 'active-configuration', value: 'FILE:$PROJECT_DIR$/config/checkstyle-lite.xml:Lite')
-                        }
-                    }
-                }
-            }
-
-        }
-    }
-
-}
-
 //////////////////////////////////////////
 // Project specific behavior            //
 //////////////////////////////////////////
@@ -403,6 +370,36 @@ project(':driver-compat') {
 
         whenConfigured { pom ->
             pom.dependencies.removeAll { true }
+        }
+    }
+
+    checkstyle {
+        configFile = new File("$configDir/checkstyle-lite.xml")
+    }
+
+    pmd {
+        //cut down version of PMD for the older code base
+        ruleSets =  ["braces"]
+        ignoreFailures = false
+    }
+
+    idea.module.iml {
+        withXml { provider ->
+
+            def node = provider.node.component.find { it.@name == 'CheckStyle-IDEA-Module' }
+            if (node == null) {
+                node = provider.node.appendNode('component')
+            }
+            node.replaceNode {
+                component(name:'CheckStyle-IDEA-Module') {
+                    option(name:'configuration'){
+                        map {
+                            entry(key: 'active-configuration', value: 'FILE:$PROJECT_DIR$/config/checkstyle-lite.xml:Lite')
+                        }
+                    }
+                }
+            }
+
         }
     }
 }
