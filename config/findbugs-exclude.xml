@@ -25,6 +25,11 @@
             <Bug pattern="MS_PKGPROTECT"/>
         </Class>
     </Match>
+    <Match>
+        <Class name="org.mongodb.BSONDocumentBuffer" />
+        <Method name="&lt;init&gt;" />
+        <Bug pattern="EI_EXPOSE_REP2" />
+    </Match>
 
     <!-- All bugs in test classes, except for JUnit-specific bugs -->
     <Match>
