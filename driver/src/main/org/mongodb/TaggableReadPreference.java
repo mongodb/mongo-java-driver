@@ -24,6 +24,7 @@ import org.mongodb.rs.Tag;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract class for all preference which can be combined with tags
@@ -104,8 +105,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     private static List<Tag> getTagListFromMongoDocument(final Document curTagSet) {
         final List<Tag> tagList = new ArrayList<Tag>();
-        for (final String key : curTagSet.keySet()) {
-            tagList.add(new Tag(key, curTagSet.get(key).toString()));
+        for (final Map.Entry<String, Object> entry : curTagSet.entrySet()) {
+            tagList.add(new Tag(entry.getKey(), entry.getValue().toString()));
         }
         return tagList;
     }
