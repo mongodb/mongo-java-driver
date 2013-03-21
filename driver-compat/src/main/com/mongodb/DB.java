@@ -284,18 +284,18 @@ public class DB implements IDB {
     // ********* Missing functionality.  Sadly, also missing tests....
 
     @Override
-    public CommandResult command(final DBObject cmd, final IDBCollection.DBEncoder encoder) {
+    public CommandResult command(final DBObject cmd, final DBEncoder encoder) {
         throw new IllegalStateException("Not implemented yet!");
     }
 
     @Override
-    public CommandResult command(final DBObject cmd, final int options, final IDBCollection.DBEncoder encoder) {
+    public CommandResult command(final DBObject cmd, final int options, final DBEncoder encoder) {
         throw new IllegalStateException("Not implemented yet!");
     }
 
     @Override
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs,
-                                 final IDBCollection.DBEncoder encoder) {
+                                 final DBEncoder encoder) {
         throw new IllegalStateException("Not implemented yet!");
     }
 

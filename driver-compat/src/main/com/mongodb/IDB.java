@@ -49,13 +49,13 @@ public interface IDB {
 
     CommandResult command(DBObject cmd);
 
-    CommandResult command(DBObject cmd, IDBCollection.DBEncoder encoder);
+    CommandResult command(DBObject cmd, DBEncoder encoder);
 
-    CommandResult command(DBObject cmd, int options, IDBCollection.DBEncoder encoder);
+    CommandResult command(DBObject cmd, int options, DBEncoder encoder);
 
     CommandResult command(DBObject cmd, int options, ReadPreference readPrefs);
 
-    CommandResult command(DBObject cmd, int options, ReadPreference readPrefs, IDBCollection.DBEncoder encoder);
+    CommandResult command(DBObject cmd, int options, ReadPreference readPrefs, DBEncoder encoder);
 
     CommandResult command(DBObject cmd, int options);
 
