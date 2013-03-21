@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-include 'bson', 'driver', 'driver-compat', 'morphia'
+include 'bson', 'driver', 'driver-compat'

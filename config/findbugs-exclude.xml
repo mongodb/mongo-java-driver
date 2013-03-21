@@ -9,14 +9,6 @@
         <Package name="~com\.mongodb.*"/>
     </Match>
 
-    <!-- ignore morphia -->
-    <Match>
-        <Package name="~com\.google\.code\.morphia.*"/>
-    </Match>
-    <Match>
-        <Package name="~relocated\.morphia\.org\.apache\.commons\.collections.*"/>
-    </Match>
-
     <!-- these specific issues are deliberate design decisions -->
     <Match>
         <Class name="com.mongodb.serializers.DocumentSerializer">

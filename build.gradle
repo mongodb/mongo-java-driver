@@ -134,7 +134,7 @@ configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat'] }
     }
 }
 
-configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat', 'morphia'] }) {
+configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat'] }) {
     apply plugin: 'maven'
     apply plugin: 'signing'
 
@@ -194,7 +194,7 @@ configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat', '
     }
 }
 
-configure(subprojects.findAll { it.name in ['driver-compat', 'morphia'] }) {
+configure(subprojects.findAll { it.name in ['driver-compat'] }) {
     checkstyle {
         configFile = new File("$configDir/checkstyle-lite.xml")
     }
@@ -403,33 +403,6 @@ project(':driver-compat') {
 
         whenConfigured { pom ->
             pom.dependencies.removeAll { true }
-        }
-    }
-}
-
-project(':morphia') {
-    dependencies {
-        compile 'com.thoughtworks.proxytoys:proxytoys:1.0'
-        compile project(':driver-compat')
-    }
-
-    [project.installer, project.deployer]*.pom {
-        project {
-            name 'morphia'
-            description 'A lightweight library for mapping Java objects to/from MongoDB (see mongodb.org).'
-            url 'http://code.google.com/p/morphia/'
-
-            scm {
-                url 'http://code.google.com/p/morphia/source/browse'
-                connection 'http://morphia.googlecode.com/svn/trunk/'
-            }
-
-            developers {
-                developer {
-                    id 'oli.gauti'
-                    name 'Olafur Gauti Gudmundsson'
-                }
-            }
         }
     }
 }
