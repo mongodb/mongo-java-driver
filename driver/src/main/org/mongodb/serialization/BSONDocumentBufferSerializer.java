@@ -89,7 +89,7 @@ public class BSONDocumentBufferSerializer implements CollectibleSerializer<BSOND
     }
 
     // Just so we don't have to copy the buffer
-    private     static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
+    private static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
         BufferExposingByteArrayOutputStream(final int size) {
             super(size);
         }
