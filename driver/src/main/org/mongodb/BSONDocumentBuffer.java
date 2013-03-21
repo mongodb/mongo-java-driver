@@ -36,7 +36,9 @@ public class BSONDocumentBuffer {
      * Constructs a new instance with the given byte array.  Note that it does not make a copy of the array, so do not
      * modify it after passing it to this constructor.
      *
-     * @param bytes the bytes representing a BSON document.
+     * @param bytes the bytes representing a BSON document.  Note that the byte array is NOT copied, so care
+     *              must be taken not to modify it after passing it to this construction, unless of course
+     *              that is your intention.
      */
     public BSONDocumentBuffer(final byte[] bytes) {
         if (bytes == null) {
