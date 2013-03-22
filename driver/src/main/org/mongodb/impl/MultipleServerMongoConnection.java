@@ -21,8 +21,6 @@ import org.mongodb.io.BufferPool;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnection;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoNoPrimaryException;
-import org.mongodb.MongoReadPreferenceException;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
@@ -39,8 +37,6 @@ import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.ServerCursor;
 import org.mongodb.result.WriteResult;
-import org.mongodb.rs.ReplicaSet;
-import org.mongodb.rs.ReplicaSetMember;
 import org.mongodb.serialization.Serializer;
 
 import java.nio.ByteBuffer;
@@ -49,18 +45,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-class ReplicaSetMongoConnection implements MongoConnection {
+class MultipleServerMongoConnection implements MongoConnection {
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
-    private final ReplicaSetMonitor replicaSetMonitor;
     private final Map<ServerAddress, SingleServerMongoConnection> mongoClientMap =
             new HashMap<ServerAddress, SingleServerMongoConnection>();
+    private final MultipleServerConnectionStrategy connectionStrategy;
 
-    ReplicaSetMongoConnection(final List<ServerAddress> seedList, final MongoClientOptions options) {
+    MultipleServerMongoConnection(final MultipleServerConnectionStrategy connectionStrategy, final MongoClientOptions options) {
+        this.connectionStrategy = connectionStrategy;
         this.options = options;
         this.bufferPool = new PowerOfTwoByteBufferPool();
-        replicaSetMonitor = new ReplicaSetMonitor(seedList, this);
-        replicaSetMonitor.start();
     }
 
     @Override
@@ -200,41 +195,27 @@ class ReplicaSetMongoConnection implements MongoConnection {
 
     @Override
     public void close() {
-        replicaSetMonitor.close();
-        try {
-            replicaSetMonitor.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException();
-        }
         for (SingleServerMongoConnection cur : mongoClientMap.values()) {
             cur.close();
         }
+        connectionStrategy.close();
     }
 
     @Override
     public List<ServerAddress> getServerAddressList() {
-        // TODO: get this from current ReplicaSetMonitor state
+        // TODO: get this from current MultipleServerConnectionStrategy state
         throw new UnsupportedOperationException();
     }
 
     SingleServerMongoConnection getPrimary() {
-        ReplicaSet currentState = replicaSetMonitor.getCurrentState();
-        ReplicaSetMember primary = currentState.getPrimary();
-        if (primary == null) {
-            throw new MongoNoPrimaryException(currentState);
-        }
-        return getConnection(primary.getServerAddress());
+        final ServerAddress serverAddress = connectionStrategy.getAddressOfPrimary();
+        return getConnection(serverAddress);
     }
 
     SingleServerMongoConnection getConnection(final ReadPreference readPreference) {
-        // TODO: this is hiding potential bugs.  ReadPreference should not be null
-        ReadPreference appliedReadPreference = readPreference == null ? ReadPreference.primary() : readPreference;
-        final ReplicaSet replicaSet = replicaSetMonitor.getCurrentState();
-        final ReplicaSetMember replicaSetMember = appliedReadPreference.chooseReplicaSetMember(replicaSet);
-        if (replicaSetMember == null) {
-            throw new MongoReadPreferenceException(readPreference, replicaSet);
-        }
-        return getConnection(replicaSetMember.getServerAddress());
+        final ServerAddress serverAddress = connectionStrategy.getAddressForReadPreference(readPreference);
+
+        return getConnection(serverAddress);
     }
 
     private synchronized SingleServerMongoConnection getConnection(final ServerAddress serverAddress) {
