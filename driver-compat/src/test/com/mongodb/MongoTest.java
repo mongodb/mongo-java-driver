@@ -32,25 +32,41 @@ public class MongoTest {
     @Test
     public void shouldDefaultToLocalhost() throws UnknownHostException {
         final Mongo mongo = new MongoClient();
-        assertEquals(Arrays.asList(new ServerAddress()), mongo.getServerAddressList());
+        try {
+            assertEquals(Arrays.asList(new ServerAddress()), mongo.getServerAddressList());
+        } finally {
+            mongo.close();
+        }
     }
 
     @Test
     public void shouldUseGivenHost() throws UnknownHostException {
         final Mongo mongo = new MongoClient("localhost");
-        assertEquals(Arrays.asList(new ServerAddress("localhost")), mongo.getServerAddressList());
+        try {
+            assertEquals(Arrays.asList(new ServerAddress("localhost")), mongo.getServerAddressList());
+        } finally {
+            mongo.close();
+        }
     }
 
     @Test
     public void shouldUseGivenServerAddress() throws UnknownHostException {
         final Mongo mongo = new MongoClient(new ServerAddress("localhost"));
-        assertEquals(Arrays.asList(new ServerAddress("localhost")), mongo.getServerAddressList());
+        try {
+            assertEquals(Arrays.asList(new ServerAddress("localhost")), mongo.getServerAddressList());
+        } finally {
+            mongo.close();
+        }
     }
 
     @Test
     public void shouldDefaultToPrimaryReadPreference() throws UnknownHostException {
         final Mongo mongo = new MongoClient();
-        assertEquals(ReadPreference.primary(), mongo.getReadPreference());
+        try {
+            assertEquals(ReadPreference.primary(), mongo.getReadPreference());
+        } finally {
+            mongo.close();
+        }
     }
 
     @Test
@@ -63,31 +79,49 @@ public class MongoTest {
     @Test
     public void shouldSaveDefaultWriteConcern() throws UnknownHostException {
         final Mongo mongo = new MongoClient();
-        mongo.setWriteConcern(WriteConcern.ACKNOWLEDGED);
-        assertEquals(WriteConcern.ACKNOWLEDGED, mongo.getWriteConcern());
+        try {
+            mongo.setWriteConcern(WriteConcern.ACKNOWLEDGED);
+            assertEquals(WriteConcern.ACKNOWLEDGED, mongo.getWriteConcern());
+        } finally {
+            mongo.close();
+        }
     }
 
     @Test
     public void shouldGetDB() throws UnknownHostException {
         final Mongo mongo = new MongoClient();
-        final DB db = mongo.getDB("test");
-        assertNotNull(db);
-        assertEquals("test", db.getName());
+        try {
+            final DB db = mongo.getDB("test");
+            assertNotNull(db);
+            assertEquals("test", db.getName());
+        } finally {
+            mongo.close();
+        }
     }
 
     @Test
     public void shouldGetSameDB() throws UnknownHostException {
         final Mongo mongo = new MongoClient();
-        assertSame(mongo.getDB("test"), mongo.getDB("test"));
+        try {
+            assertSame(mongo.getDB("test"), mongo.getDB("test"));
+        } finally {
+            mongo.close();
+        }
     }
 
     @Test
     public void shouldGetDatabaseNames() throws UnknownHostException {
         final Mongo mongo = new MongoClient();
 
-        mongo.getDB("test1").getCollectionNames();
-        mongo.getDB("test2").getCollectionNames();
+        try {
+            mongo.getDB("test1").getCollectionNames();
+            mongo.getDB("test2").getCollectionNames();
 
-        assertThat(mongo.getDatabaseNames(), hasItems("test1", "test2"));
+            assertThat(mongo.getDatabaseNames(), hasItems("test1", "test2"));
+        } finally {
+            mongo.dropDatabase("test1");
+            mongo.dropDatabase("test2");
+            mongo.close();
+        }
     }
 }
