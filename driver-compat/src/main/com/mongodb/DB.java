@@ -16,15 +16,21 @@
 
 package com.mongodb;
 
-import com.mongodb.serializers.DocumentSerializer;
 import org.mongodb.CreateCollectionOptions;
-import org.mongodb.MongoDatabase;
-import org.mongodb.MongoDatabaseOptions;
+import org.mongodb.Document;
+import org.mongodb.MongoConnection;
+import org.mongodb.MongoNamespace;
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.command.Create;
+import org.mongodb.command.DropDatabase;
 import org.mongodb.command.GetLastError;
+import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.operation.MongoCommand;
-import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.operation.MongoFind;
+import org.mongodb.result.QueryResult;
+import org.mongodb.serialization.Serializer;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,17 +40,19 @@ import static com.mongodb.DBObjects.toCommandResult;
 @SuppressWarnings({ "deprecation" })
 public class DB implements IDB {
     private final Mongo mongo;
-    private final MongoDatabase database;
-    private final ConcurrentHashMap<String, DBCollection> collectionCache = new ConcurrentHashMap<String,
-                                                                                                 DBCollection>();
+    private final String name;
+    private final ConcurrentHashMap<String, DBCollection> collectionCache =
+            new ConcurrentHashMap<String, DBCollection>();
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
-    DB(final Mongo mongo, final String dbName) {
+    private final Serializer<Document> documentSerializer;
+
+
+    DB(final Mongo mongo, final String dbName, final Serializer<Document> documentSerializer) {
         this.mongo = mongo;
-        database = mongo.getNew().getDatabase(dbName, MongoDatabaseOptions.builder()
-                .primitiveSerializers(PrimitiveSerializers.createDefault())
-                .documentSerializer(new DocumentSerializer(PrimitiveSerializers.createDefault())).build());
+        this.name = dbName;
+        this.documentSerializer = documentSerializer;
     }
 
     /**
@@ -103,7 +111,7 @@ public class DB implements IDB {
             return collection;
         }
 
-        collection = new DBCollection(name, this);
+        collection = new DBCollection(name, this, documentSerializer);
         final DBCollection old = collectionCache.putIfAbsent(name, collection);
         return old != null ? old : collection;
     }
@@ -114,7 +122,7 @@ public class DB implements IDB {
      * @throws MongoException
      */
     public void dropDatabase() {
-        database.tools().drop();
+        executeCommand(new DropDatabase());
     }
 
     /**
@@ -132,8 +140,7 @@ public class DB implements IDB {
             s = s.substring(idx + 1);
             if (foo == null) {
                 foo = getCollection(b);
-            }
-            else {
+            } else {
                 foo = foo.getCollection(b);
             }
             idx = s.indexOf(".");
@@ -146,7 +153,7 @@ public class DB implements IDB {
     }
 
     public String getName() {
-        return database.getName();
+        return name;
     }
 
     /**
@@ -156,7 +163,25 @@ public class DB implements IDB {
      * @throws MongoException
      */
     public Set<String> getCollectionNames() {
-        return database.tools().getCollectionNames();
+        final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
+        final MongoFind findAll = new MongoFind().readPreference(org.mongodb.ReadPreference.primary());
+        final QueryResult<Document> query = getConnection().query(
+                namespacesCollection,
+                findAll,
+                documentSerializer,
+                documentSerializer
+        );
+
+        final HashSet<String> collections = new HashSet<String>();
+        final int lengthOfDatabaseName = getName().length();
+        for (final Document namespace : query.getResults()) {
+            final String collectionName = (String) namespace.get("name");
+            if (!collectionName.contains("$")) {
+                final String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
+                collections.add(collectionNameWithoutDatabasePrefix);
+            }
+        }
+        return collections;
     }
 
     public DBCollection createCollection(final String collName, final DBObject options) {
@@ -176,13 +201,16 @@ public class DB implements IDB {
         if (options.get("max") != null) {
             maxDocuments = ((Number) options.get("max")).intValue();
         }
+        final CreateCollectionOptions createCollectionOptions =
+                new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex, maxDocuments);
+
         try {
-            database.tools().createCollection(new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex,
-                                                                         maxDocuments));
+            executeCommand(new Create(createCollectionOptions));
             return getCollection(collName);
-        } catch (org.mongodb.MongoException newStyleException) {
-            throw new MongoException(newStyleException);
+        } catch (MongoCommandFailureException ex) {
+            throw new MongoException(ex);
         }
+
     }
 
     public boolean authenticate(final String username, final char[] password) {
@@ -212,8 +240,8 @@ public class DB implements IDB {
      */
     public CommandResult command(final DBObject cmd) {
         final MongoCommand command = new MongoCommand(DBObjects.toDocument(cmd))
-                                     .readPreference(getReadPreference().toNew());
-        final org.mongodb.result.CommandResult baseCommandResult = database.executeCommand(command);
+                .readPreference(getReadPreference().toNew());
+        final org.mongodb.result.CommandResult baseCommandResult = executeCommand(command);
         return toCommandResult(cmd, new ServerAddress(baseCommandResult.getAddress()), baseCommandResult.getResponse());
     }
 
@@ -256,13 +284,9 @@ public class DB implements IDB {
         return mongo.getDB(name);
     }
 
-    MongoDatabase toNew() {
-        return database;
-    }
-
     @Override
     public boolean collectionExists(final String collectionName) {
-        final Set<String> collectionNames = database.tools().getCollectionNames();
+        final Set<String> collectionNames = getCollectionNames();
         for (final String name : collectionNames) {
             if (name.equalsIgnoreCase(collectionName)) {
                 return true;
@@ -274,9 +298,9 @@ public class DB implements IDB {
     @Override
     public CommandResult getLastError(final WriteConcern concern) {
         //TODO: this should be reflected somewhere in the new API?
-        final GetLastError getLastError = new GetLastError(concern.toNew());
-        org.mongodb.result.CommandResult commandResult = database.executeCommand(getLastError);
-        commandResult = getLastError.parseGetLastErrorResponse(commandResult);
+        final GetLastError getLastErrorCommand = new GetLastError(concern.toNew());
+        org.mongodb.result.CommandResult commandResult = executeCommand(getLastErrorCommand);
+        commandResult = getLastErrorCommand.parseGetLastErrorResponse(commandResult);
 
         return new CommandResult(commandResult);
     }
@@ -407,5 +431,15 @@ public class DB implements IDB {
     @Override
     public void cleanCursors(final boolean force) {
         throw new IllegalStateException("Not implemented yet!");
+    }
+
+    protected MongoConnection getConnection() {
+        return getMongo().getConnection();
+    }
+
+    protected org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
+        commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
+        return new org.mongodb.result.CommandResult(getConnection().command(getName(), commandOperation, documentSerializer));
+
     }
 }

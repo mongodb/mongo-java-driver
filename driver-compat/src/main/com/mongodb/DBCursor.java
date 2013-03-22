@@ -16,14 +16,18 @@
 
 package com.mongodb;
 
-import org.mongodb.MongoCursor;
+import org.mongodb.MongoConnection;
 import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoKillCursor;
+import org.mongodb.result.QueryResult;
 
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static com.mongodb.DBObjects.toDocument;
 
@@ -53,10 +57,12 @@ import static com.mongodb.DBObjects.toDocument;
 public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeable {
     private final DBCollection collection;
     private final MongoFind find;
-    private MongoCursor<DBObject> cursor;
     private CursorType cursorType;
-    private DBObject current;
+    private QueryResult<DBObject> currentResult;
+    private Iterator<DBObject> currentIterator;
+    private DBObject currentObject;
     private int numSeen;
+    private boolean closed;
     private final List<DBObject> all = new ArrayList<DBObject>();
 
     /**
@@ -69,13 +75,13 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      */
     public DBCursor(final DBCollection collection, final DBObject query, final DBObject fields, final ReadPreference readPreference) {
         if (collection == null) {
-            throw new IllegalArgumentException("collection is null");
+            throw new IllegalArgumentException("Collection can't be null");
         }
         this.collection = collection;
         find = new MongoFind();
         find.where(toDocument(query))
-            .select(DBObjects.toFieldSelectorDocument(fields))
-            .readPreference(readPreference.toNew());
+                .select(DBObjects.toFieldSelectorDocument(fields))
+                .readPreference(readPreference.toNew());
     }
 
     /**
@@ -88,14 +94,37 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
     public boolean hasNext() {
-        if (cursor == null) {
-            getCursor();
+
+        if (closed) {
+            throw new IllegalStateException("Cursor has been closed");
         }
-        return cursor.hasNext();
+
+        if (currentResult == null && currentIterator == null) {
+            query();
+        }
+
+        if (currentIterator.hasNext()) {
+            return true;
+        }
+
+        if (find.getLimit() > 0 && find.getLimit() <= numSeen) {
+            return false;
+        }
+
+        if (currentResult.getCursor() == null) {
+            return false;
+        }
+
+        getMore();
+        return currentIterator.hasNext();
     }
 
     public DBObject next() {
         checkCursorType(CursorType.ITERATOR);
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+
         return nextInternal();
     }
 
@@ -105,7 +134,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return the next element
      */
     public DBObject curr() {
-        return current;
+        return currentObject;
     }
 
     @Override
@@ -277,10 +306,10 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return the cursor id, or 0 if there is no active cursor.
      */
     public long getCursorId() {
-        if (cursor != null) {
-            return cursor.getServerCursor().getId();
-        }
-        else {
+
+        if (currentResult != null && currentResult.getCursor() != null) {
+            return currentResult.getCursor().getId();
+        } else {
             return 0;
         }
     }
@@ -318,9 +347,14 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      */
     @Override
     public void close() {
-        if (cursor != null) {
-            cursor.close();
+        closed = true;
+
+        if (currentResult != null && currentResult.getCursor() != null) {
+            getConnection().killCursors(new MongoKillCursor(currentResult.getCursor()));
         }
+        currentResult = null;
+        currentIterator = null;
+        currentObject = null;
     }
 
     /**
@@ -377,9 +411,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @see DBCursor#size
      */
     public int count() {
-        return (int) collection.toNew().filter(find.getFilter()).readPreference(
-                                                                               find.getReadPreference())
-                               .count();  // TODO: dangerous cast.  Throw exception instead?
+        return (int) collection.count(getQuery(), getReadPreference());
+        // TODO: dangerous cast.  Throw exception instead?
     }
 
     /**
@@ -461,10 +494,11 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public ServerAddress getServerAddress() {
-        if (cursor == null) {
+        if (currentResult == null || currentResult.getCursor() == null) {
             return null;
+        } else {
+            return new ServerAddress(currentResult.getCursor().getAddress());
         }
-        return new ServerAddress(cursor.getServerCursor().getAddress());
     }
 
     /**
@@ -490,10 +524,10 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     @Override
     public String toString() {
         return "DBCursor{" +
-               "collection=" + collection +
-               ", find=" + find +
-               (cursor != null ? (", cursor=" + cursor.getServerCursor()) : "") +
-               '}';
+                "collection=" + collection +
+                ", find=" + find +
+                (currentResult != null ? (", cursor=" + currentResult.getCursor()) : "") +
+                '}';
     }
 
     private DBCursor(final DBCollection collection, final MongoFind find) {
@@ -509,29 +543,6 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         ARRAY
     }
 
-    private DBObject nextInternal() {
-        if (cursorType == null) {
-            checkCursorType(CursorType.ITERATOR);
-        }
-
-        if (cursor == null) {
-            getCursor();
-        }
-
-        current = cursor.next();
-        numSeen++;
-
-        if (find.getFields() != null && !find.getFields().isEmpty()) {
-            current.markAsPartialObject();
-        }
-
-        if (cursorType == CursorType.ARRAY) {
-            all.add(current);
-        }
-
-        return current;
-    }
-
     void checkCursorType(final CursorType type) {
         if (cursorType == null) {
             cursorType = type;
@@ -542,27 +553,50 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             return;
         }
 
-        throw new IllegalArgumentException("can't switch cursor access methods");
+        throw new IllegalArgumentException("Can't switch cursor access methods");
     }
 
     void fillArray(final int n) {
         checkCursorType(CursorType.ARRAY);
         while (n >= all.size() && hasNext()) {
-            nextInternal();
+            all.add(nextInternal());
         }
     }
 
-    private void getCursor() {
-        try {
-            cursor = collection.toNew().filter(find.getFilter()).select(find.getFields()).sort(find.getOrder()).skip(
-                                                                                                                    find
-                                                                                                                    .getSkip())
-                               .limit(find.getLimit()).batchSize(find.getBatchSize()).readPreference(
-                                                                                                    find
-                                                                                                    .getReadPreference())
-                               .all();
-        } catch (org.mongodb.MongoException e) {
-            throw new MongoException(e);
+    private DBObject nextInternal() {
+        if (cursorType == null) {
+            checkCursorType(CursorType.ITERATOR);
         }
+
+        currentObject = currentIterator.next();
+        numSeen++;
+
+        if (find.getFields() != null && !find.getFields().isEmpty()) {
+            currentObject.markAsPartialObject();
+        }
+
+        return currentObject;
     }
+
+    private void getMore() {
+        currentResult = getConnection().getMore(
+                collection.getNamespace(),
+                new GetMore(currentResult.getCursor(), find.getBatchSize()),
+                collection.getObjectSerializer());
+        currentIterator = currentResult.getResults().iterator();
+    }
+
+    private void query() {
+        currentResult = getConnection().query(
+                collection.getNamespace(),
+                find,
+                collection.getDocumentSerializer(),
+                collection.getObjectSerializer());
+        currentIterator = currentResult.getResults().iterator();
+    }
+
+    protected MongoConnection getConnection() {
+        return getCollection().getConnection();
+    }
+
 }

@@ -24,6 +24,7 @@ import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.pool.SimplePool;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public final class MongoConnectionsImpl {
     private MongoConnectionsImpl() {
@@ -51,8 +52,7 @@ public final class MongoConnectionsImpl {
                             bufferPool.close();
                         }
                     });
-        }
-        else {
+        } else {
             return new SingleServerMongoConnection(options, serverAddress,
                     new SimplePool<MongoPoolableConnection>(serverAddress.toString(), options.getConnectionsPerHost()) {
                         @Override
@@ -67,6 +67,10 @@ public final class MongoConnectionsImpl {
                         }
                     });
         }
+    }
+
+    public static MultipleServerMongoConnection create(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        return new MultipleServerMongoConnection(new ReplicaSetConnectionStrategy(seedList), options);
     }
 
 }

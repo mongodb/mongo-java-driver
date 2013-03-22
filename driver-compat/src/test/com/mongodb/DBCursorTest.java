@@ -18,7 +18,6 @@ package com.mongodb;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -140,7 +139,6 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
-    @Ignore("not implemented yet")
     public void testGetServerAddress() {
         final DBCursor cursor = collection.find().limit(2);
         assertEquals(null, cursor.getServerAddress());

@@ -20,13 +20,30 @@ import com.mongodb.serializers.CollectibleDBObjectSerializer;
 import org.mongodb.Document;
 import org.mongodb.Get;
 import org.mongodb.Index;
-import org.mongodb.MongoCollection;
-import org.mongodb.MongoStream;
-import org.mongodb.MongoSyncWritableStream;
+import org.mongodb.MongoConnection;
+import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.command.CollStats;
+import org.mongodb.command.Count;
+import org.mongodb.command.CountCommandResult;
+import org.mongodb.command.Distinct;
+import org.mongodb.command.DistinctCommandResult;
+import org.mongodb.command.Drop;
+import org.mongodb.command.DropIndex;
+import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoDuplicateKeyException;
+import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
+import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.MongoRemove;
+import org.mongodb.operation.MongoReplace;
+import org.mongodb.operation.MongoUpdate;
+import org.mongodb.result.QueryResult;
+import org.mongodb.serialization.CollectibleSerializer;
+import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.serialization.Serializer;
 import org.mongodb.serialization.serializers.ObjectIdGenerator;
 import org.mongodb.util.FieldHelpers;
 
@@ -37,21 +54,36 @@ import java.util.List;
 import java.util.Map;
 
 import static com.mongodb.DBObjects.toDocument;
+import static com.mongodb.DBObjects.toFieldSelectorDocument;
+import static com.mongodb.DBObjects.toUpdateOperationsDocument;
 
 @ThreadSafe
 @SuppressWarnings({ "rawtypes", "deprecation" })
 public class DBCollection implements IDBCollection {
-    private volatile MongoCollection<DBObject> collection;
+    private static final String NAMESPACE_KEY_NAME = "ns";
+
     private final DB database;
+    private final String name;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
-    private Class<? extends DBObject> objectClass = BasicDBObject.class;
-    private final Map<String, Class<? extends DBObject>> pathToClassMap = new HashMap<String,
-                                                                                     Class<? extends DBObject>>();
 
-    DBCollection(final String name, final DB database) {
+    private CollectibleSerializer<DBObject> objectSerializer;
+    private final Serializer<Document> documentSerializer;
+
+    private final Map<String, Class<? extends DBObject>> pathToClassMap =
+            new HashMap<String, Class<? extends DBObject>>();
+
+    DBCollection(final String name, final DB database, final Serializer<Document> documentSerializer) {
+        this.name = name;
         this.database = database;
-        setCollection(name);
+        this.documentSerializer = documentSerializer;
+        updateObjectSerializer(BasicDBObject.class);
+    }
+
+    private void updateObjectSerializer(final Class<? extends DBObject> objectClass) {
+        final HashMap<String, Class<? extends DBObject>> map = new HashMap<String, Class<? extends DBObject>>(pathToClassMap);
+        this.objectSerializer = new CollectibleDBObjectSerializer(database,
+                PrimitiveSerializers.createDefault(), new ObjectIdGenerator(), objectClass, map);
     }
 
     public WriteResult insert(final DBObject document, final WriteConcern writeConcern) {
@@ -80,8 +112,10 @@ public class DBCollection implements IDBCollection {
     }
 
     public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern) {
+        final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
+                .writeConcern(writeConcern.toNew());
         try {
-            final org.mongodb.result.WriteResult result = collection.writeConcern(writeConcern.toNew()).insert(documents);
+            final org.mongodb.result.WriteResult result = getConnection().insert(getNamespace(), mongoInsert, objectSerializer);
             return new WriteResult(result, writeConcern);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
@@ -99,14 +133,23 @@ public class DBCollection implements IDBCollection {
     }
 
     public WriteResult save(final DBObject obj, final WriteConcern wc) {
-        try {
-            final org.mongodb.result.WriteResult result = collection.writeConcern(wc.toNew()).save(obj);
-            return new WriteResult(result, wc);
-        } catch (MongoDuplicateKeyException e) {
-            throw new MongoException.DuplicateKey(e);
-        } catch (org.mongodb.MongoException e) {
-            throw new MongoException(e);
+        final Object id = getObjectSerializer().getId(obj);
+        if (id == null) {
+            return insert(obj, wc);
+        } else {
+            return replaceOrInsert(obj, wc);
         }
+    }
+
+    private WriteResult replaceOrInsert(final DBObject obj, final WriteConcern wc) {
+        final Document filter = new Document("_id", getObjectSerializer().getId(obj));
+
+        final MongoReplace<DBObject> replace = new MongoReplace<DBObject>(filter, obj)
+                .upsert(true)
+                .writeConcern(wc.toNew());
+
+        return new WriteResult(getConnection().replace(getNamespace(), replace, getDocumentSerializer(),
+                getObjectSerializer()), wc);
     }
 
     /**
@@ -134,23 +177,14 @@ public class DBCollection implements IDBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        MongoStream<DBObject> stream = collection.filter(toDocument(q));
-        if (multi) {
-            stream = stream.noLimit();
-        }
-        final MongoSyncWritableStream<DBObject> writableStream = stream.writeConcern(concern.toNew());
+        final MongoUpdate mongoUpdate = new MongoUpdate(toDocument(q), toUpdateOperationsDocument(o))
+                .upsert(upsert)
+                .multi(multi)
+                .writeConcern(concern.toNew());
+
         try {
-            final org.mongodb.result.WriteResult result;
-            if (!o.keySet().isEmpty() && o.keySet().iterator().next().startsWith("$")) {
-                result = upsert ?
-                         writableStream.modifyOrInsert(DBObjects.toUpdateOperationsDocument(o)) :
-                         writableStream.modify(DBObjects.toUpdateOperationsDocument(o));
-            }
-            else {
-                result = upsert ?
-                         writableStream.replaceOrInsert(o) :
-                         writableStream.replace(o);
-            }
+            final org.mongodb.result.WriteResult result =
+                    getConnection().update(getNamespace(), mongoUpdate, documentSerializer);
             return new WriteResult(result, concern);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
@@ -225,8 +259,12 @@ public class DBCollection implements IDBCollection {
 
 
     public WriteResult remove(final DBObject filter, final WriteConcern writeConcernToUse) {
-        final org.mongodb.result.WriteResult result = collection.filter(toDocument(filter))
-                                              .writeConcern(writeConcernToUse.toNew()).remove();
+
+        final MongoRemove mongoRemove = new MongoRemove(toDocument(filter))
+                .writeConcern(writeConcernToUse.toNew());
+
+        final org.mongodb.result.WriteResult result = getConnection().remove(getNamespace(), mongoRemove, documentSerializer);
+
         return new WriteResult(result, writeConcernToUse);
     }
 
@@ -329,15 +367,20 @@ public class DBCollection implements IDBCollection {
     public DBObject findOne(final DBObject o, final DBObject fields, final DBObject orderBy,
                             final ReadPreference readPref) {
 
-        final DBObject obj = collection.filter(toDocument(o))
-                                       .sort(toDocument(orderBy))
-                                       .select(DBObjects.toFieldSelectorDocument(fields))
-                                       .readPreference(readPref.toNew()).one();
+        final MongoFind mongoFind = new MongoFind()
+                .select(toFieldSelectorDocument(fields))
+                .where(toDocument(o))
+                .order(toDocument(orderBy))
+                .readPreference(readPref.toNew())
+                .batchSize(-1);
 
-        if (obj != null && (fields != null && fields.keySet().size() > 0)) {
-            obj.markAsPartialObject();
+        final QueryResult<DBObject> res = getConnection().query(getNamespace(), mongoFind,
+                documentSerializer, getObjectSerializer());
+        if (res.getResults().isEmpty()) {
+            return null;
         }
-        return obj;
+
+        return res.getResults().get(0);
     }
 
     @Override
@@ -508,12 +551,13 @@ public class DBCollection implements IDBCollection {
         if (skip > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("skip is too large: " + skip);
         }
-        MongoStream<DBObject> stream = collection;
-        if (query != null) {
-            stream = stream.filter(toDocument(query));
-        }
+
         // TODO: investigate case of int to long for skip
-        return stream.limit((int) limit).skip((int) skip).readPreference(readPreference.toNew()).count();
+        final Count countCommand = new Count(new MongoFind(toDocument(query)), getName());
+        countCommand.limit((int) limit).skip((int) skip).readPreference(readPreference.toNew());
+
+
+        return new CountCommandResult(getDB().executeCommand(countCommand)).getCount();
     }
 
     @Override
@@ -523,9 +567,11 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public DBCollection rename(final String newName, final boolean dropTarget) {
+
+        final RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
+        final RenameCollection renameCommand = new RenameCollection(renameCollectionOptions, getDB().getName());
         try {
-            collection.getDatabase().tools().renameCollection(new RenameCollectionOptions(getName(), newName,
-                                                             dropTarget));
+            getConnection().command("admin", renameCommand, getDocumentSerializer());
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
@@ -565,23 +611,27 @@ public class DBCollection implements IDBCollection {
     }
 
     @Override
-    public List distinct(final String key) {
-        return collection.distinct(key);
+    public List distinct(final String fieldName) {
+        return distinct(fieldName, getReadPreference());
     }
 
     @Override
-    public List distinct(final String key, final ReadPreference readPrefs) {
-        throw new UnsupportedOperationException();
+    public List distinct(final String fieldName, final ReadPreference readPrefs) {
+        return distinct(fieldName, new BasicDBObject(), readPrefs);
     }
 
     @Override
-    public List distinct(final String key, final DBObject query) {
-        return collection.filter(toDocument(query)).distinct(key);
+    public List distinct(final String fieldName, final DBObject query) {
+        return distinct(fieldName, query, getReadPreference());
     }
 
     @Override
-    public List distinct(final String key, final DBObject query, final ReadPreference readPrefs) {
-        throw new UnsupportedOperationException();
+    public List distinct(final String fieldName, final DBObject query, final ReadPreference readPrefs) {
+        final MongoFind mongoFind = new MongoFind()
+                .filter(toDocument(query))
+                .readPreference(readPreference.toNew());
+        final Distinct distinctOperation = new Distinct(getName(), fieldName, mongoFind);
+        return new DistinctCommandResult(getDB().executeCommand(distinctOperation)).getValue();
     }
 
     @Override
@@ -609,7 +659,7 @@ public class DBCollection implements IDBCollection {
      * @return the name of this collection
      */
     public String getName() {
-        return collection.getName();
+        return name;
     }
 
     /**
@@ -618,7 +668,7 @@ public class DBCollection implements IDBCollection {
      * @return the name of this collection
      */
     public String getFullName() {
-        return collection.getNamespace().getFullName();
+        return getNamespace().getFullName();
     }
 
 
@@ -668,8 +718,15 @@ public class DBCollection implements IDBCollection {
             }
         }
         final List<Index.Key> keys = getKeysFromDBObject(fields);
+        final Index index = new Index(name, unique, keys.toArray(new Index.Key[keys.size()]));
+
+        final Document indexDetails = index.toDocument();
+        indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
+
+        final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
+        insertIndexOperation.writeConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
         try {
-            collection.tools().ensureIndex(new Index(name, unique, keys.toArray(new Index.Key[keys.size()])));
+            getConnection().insert(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, documentSerializer);
         } catch (MongoDuplicateKeyException exception) {
             throw new MongoException.DuplicateKey(exception);
         }
@@ -763,29 +820,32 @@ public class DBCollection implements IDBCollection {
     public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert) {
-        final MongoSyncWritableStream<DBObject> stream = collection.filter(toDocument(query))
-                                                               .select(DBObjects.toFieldSelectorDocument(fields))
-                                                               .sort(toDocument(sort))
-                                                               .writeConcern(getWriteConcern().toNew());
-        if (remove) {
-            return stream.removeAndGet();
-        }
-        else {
-            if (update == null) {
-                throw new IllegalArgumentException("update document can not be null");
-            }
-            if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-                final Document updateOperations = DBObjects.toUpdateOperationsDocument(update);
-                return upsert ?
-                       stream.modifyOrInsertAndGet(updateOperations, asGetOrder(returnNew)) :
-                       stream.modifyAndGet(updateOperations, asGetOrder(returnNew));
-            }
-            else {
-                return upsert ?
-                       stream.replaceOrInsertAndGet(update, asGetOrder(returnNew)) :
-                       stream.replaceAndGet(update, asGetOrder(returnNew));
-            }
-        }
+//        final MongoSyncWritableStream<DBObject> stream = collection.filter(toDocument(query))
+//                .select(toFieldSelectorDocument(fields))
+//                .sort(toDocument(sort))
+//                .writeConcern(getWriteConcern().toNew());
+//
+//        final MongoOperation mongoOperation;
+//
+//        if (remove) {
+//            mongoOperation = new FindAndRemove<DBObject>()
+//            return stream.removeAndGet();
+//        } else {
+//            if (update == null) {
+//                throw new IllegalArgumentException("update document can not be null");
+//            }
+//            if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
+//                final Document updateOperations = toUpdateOperationsDocument(update);
+//                return upsert ?
+//                        stream.modifyOrInsertAndGet(updateOperations, asGetOrder(returnNew)) :
+//                        stream.modifyAndGet(updateOperations, asGetOrder(returnNew));
+//            } else {
+//                return upsert ?
+//                        stream.replaceOrInsertAndGet(update, asGetOrder(returnNew)) :
+//                        stream.replaceAndGet(update, asGetOrder(returnNew));
+//            }
+//        }
+        throw new UnsupportedOperationException();
     }
 
     private Get asGetOrder(final boolean returnNew) {
@@ -804,7 +864,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public Class getObjectClass() {
-        throw new UnsupportedOperationException();
+        return objectSerializer.getSerializationClass();
     }
 
     /**
@@ -878,7 +938,13 @@ public class DBCollection implements IDBCollection {
      * @throws MongoException
      */
     public void drop() {
-        collection.tools().drop();
+        try {
+            org.mongodb.result.CommandResult commandResult = getDB().executeCommand(new Drop(getName()));
+        } catch (MongoCommandFailureException ex) {
+            if (!"ns not found".equals(ex.getErrorMessage())) {
+                throw new MongoException(ex);
+            }
+        }
     }
 
     /**
@@ -894,10 +960,9 @@ public class DBCollection implements IDBCollection {
         final CommandResult res;
         if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
             res = database.command(cmd, getOptions(),
-                                  command.getReadPreference() != null ? command.getReadPreference()
-                                                                      : getReadPreference());
-        }
-        else {
+                    command.getReadPreference() != null ? command.getReadPreference()
+                            : getReadPreference());
+        } else {
             res = database.command(cmd);
         }
         res.throwOnError();
@@ -946,7 +1011,17 @@ public class DBCollection implements IDBCollection {
      */
     public List<DBObject> getIndexInfo() {
         final ArrayList<DBObject> res = new ArrayList<DBObject>();
-        final List<Document> indexes = collection.tools().getIndexes();
+
+        final MongoFind queryForCollectionNamespace = new MongoFind(
+                new Document(NAMESPACE_KEY_NAME, getNamespace().getFullName()))
+                .readPreference(org.mongodb.ReadPreference.primary());
+
+        final QueryResult<Document> systemCollection = getConnection().query(
+                new MongoNamespace(database.getName(), "system.indexes"),
+                queryForCollectionNamespace,
+                documentSerializer, documentSerializer);
+
+        final List<Document> indexes = systemCollection.getResults();
         for (final Document curIndex : indexes) {
             res.add(DBObjects.toDBObject(curIndex));
         }
@@ -957,17 +1032,20 @@ public class DBCollection implements IDBCollection {
     public void dropIndex(final DBObject keys) {
         final List<Index.Key> keysFromDBObject = getKeysFromDBObject(keys);
         final Index indexToDrop = new Index(keysFromDBObject.toArray(new Index.Key[keysFromDBObject.size()]));
-        collection.tools().dropIndex(indexToDrop);
+        final DropIndex dropIndex = new DropIndex(getName(), indexToDrop.getName());
+        getDB().executeCommand(dropIndex);
     }
 
     @Override
     public void dropIndex(final String name) {
-        collection.tools().dropIndex(getIndexFromName(name));
+        final DropIndex dropIndex = new DropIndex(getName(), name);
+        getDB().executeCommand(dropIndex);
+        //TODO: currently doesn't deal with errors
     }
 
     @Override
     public void dropIndexes() {
-        collection.tools().dropIndexes();
+        dropIndexes("*");
     }
 
     @Override
@@ -982,18 +1060,19 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public boolean isCapped() {
-        return collection.tools().isCapped();
+        final org.mongodb.result.CommandResult commandResult = getDB().executeCommand(new CollStats(getName()));
+        final Object cappedField = commandResult.getResponse().get("capped");
+        return cappedField != null && (cappedField.equals(1) || cappedField.equals(true));
     }
 
     /**
      * Sets a default class for objects in this collection; null resets the class to nothing.
      *
-     * @param clazz the class
+     * @param objectClass the class
      * @throws IllegalArgumentException if <code>c</code> is not a DBObject
      */
-    public synchronized void setObjectClass(final Class<? extends DBObject> clazz) {
-        objectClass = clazz;
-        resetCollection();
+    public synchronized void setObjectClass(final Class<? extends DBObject> objectClass) {
+        updateObjectSerializer(objectClass);
     }
 
     /**
@@ -1004,11 +1083,6 @@ public class DBCollection implements IDBCollection {
      */
     public synchronized void setInternalClass(final String path, final Class<? extends DBObject> clazz) {
         pathToClassMap.put(path, clazz);
-        resetCollection();
-    }
-
-    MongoCollection<DBObject> toNew() {
-        return collection;
     }
 
     private static Index getIndexFromName(final String name) {
@@ -1022,8 +1096,7 @@ public class DBCollection implements IDBCollection {
             final Index.Key key;
             if (keyType.equals("2d")) {
                 key = new Index.GeoKey(keyField);
-            }
-            else {
+            } else {
                 key = new Index.OrderedKey(keyField, OrderBy.fromInt(Integer.valueOf(keyType)));
             }
             keys[i / 2] = key;
@@ -1037,11 +1110,9 @@ public class DBCollection implements IDBCollection {
             final Object keyType = fields.get(key);
             if (keyType instanceof Integer) {
                 keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
-            }
-            else if (keyType.equals("2d")) {
+            } else if (keyType.equals("2d")) {
                 keys.add(new Index.GeoKey(key));
-            }
-            else {
+            } else {
                 throw new UnsupportedOperationException("Unsupported index type: " + keyType);
             }
 
@@ -1049,14 +1120,19 @@ public class DBCollection implements IDBCollection {
         return keys;
     }
 
-    private void resetCollection() {
-        setCollection(getName());
+    protected MongoConnection getConnection() {
+        return getDB().getConnection();
     }
 
-    private void setCollection(final String name) {
-        final HashMap<String, Class<? extends DBObject>> map = new HashMap<String, Class<? extends DBObject>>(pathToClassMap);
-        this.collection = database.toNew().getCollection(name,
-                new CollectibleDBObjectSerializer(database,
-                        database.getMongo().getNew().getOptions().getPrimitiveSerializers(), new ObjectIdGenerator(), objectClass, map));
+    protected CollectibleSerializer<DBObject> getObjectSerializer() {
+        return objectSerializer;
+    }
+
+    protected MongoNamespace getNamespace() {
+        return new MongoNamespace(getDB().getName(), getName());
+    }
+
+    protected Serializer<Document> getDocumentSerializer() {
+        return documentSerializer;
     }
 }

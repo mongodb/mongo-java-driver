@@ -16,11 +16,11 @@
 
 package com.mongodb;
 
-import org.mongodb.Document;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mongodb.Document;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -108,7 +108,7 @@ public class DBGeneralOldTests {
             firstCollection.rename(secondCollectionName);
             fail("Rename to existing collection must fail");
         } catch (MongoException e) {
-            assertEquals(e.getCode(), 10027);
+            assertEquals(10027, e.getCode());
         }
     }
 
@@ -202,7 +202,7 @@ public class DBGeneralOldTests {
         return result;
     }
 
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings("unchecked")
     protected String getMemberNameByState(final Mongo mongo, final String stateStrToMatch) {
         final CommandResult replicaSetStatus = runReplicaSetStatusCommand(mongo);
 
