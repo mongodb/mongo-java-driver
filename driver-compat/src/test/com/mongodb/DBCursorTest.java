@@ -143,7 +143,7 @@ public class DBCursorTest extends DatabaseTestCase {
         final DBCursor cursor = collection.find().limit(2);
         assertEquals(null, cursor.getServerAddress());
         cursor.hasNext();
-        assertEquals(getClient().getServerAddressList().get(0), cursor.getServerAddress());
+        assertTrue(getClient().getServerAddressList().contains(cursor.getServerAddress()));
     }
 
     @Test

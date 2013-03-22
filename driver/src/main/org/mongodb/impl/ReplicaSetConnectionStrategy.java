@@ -23,6 +23,7 @@ import org.mongodb.ServerAddress;
 import org.mongodb.rs.ReplicaSet;
 import org.mongodb.rs.ReplicaSetMember;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ReplicaSetConnectionStrategy implements MultipleServerConnectionStrategy {
@@ -63,5 +64,15 @@ public class ReplicaSetConnectionStrategy implements MultipleServerConnectionStr
         } catch (InterruptedException e) {
             throw new RuntimeException();
         }
+    }
+
+    @Override
+    public List<ServerAddress> getAllAddresses() {
+        List<ServerAddress> addressList = new ArrayList<ServerAddress>();
+        ReplicaSet currentState = replicaSetMonitor.getCurrentState();
+        for (ReplicaSetMember cur : currentState.getAll()) {
+             addressList.add(cur.getAddress());
+        }
+        return addressList;
     }
 }

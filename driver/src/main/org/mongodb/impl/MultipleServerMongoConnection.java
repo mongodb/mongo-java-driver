@@ -203,8 +203,7 @@ class MultipleServerMongoConnection implements MongoConnection {
 
     @Override
     public List<ServerAddress> getServerAddressList() {
-        // TODO: get this from current MultipleServerConnectionStrategy state
-        throw new UnsupportedOperationException();
+        return connectionStrategy.getAllAddresses();
     }
 
     SingleServerMongoConnection getPrimary() {

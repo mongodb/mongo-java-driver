@@ -19,10 +19,14 @@ package org.mongodb.impl;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 
+import java.util.List;
+
 public interface MultipleServerConnectionStrategy {
     ServerAddress getAddressOfPrimary();
 
     ServerAddress getAddressForReadPreference(ReadPreference readPreference);
 
     void close();
+
+    List<ServerAddress> getAllAddresses();
 }
