@@ -95,39 +95,9 @@ public class ReadPreference {
      */
     public static TaggableReadPreference primaryPreferred(final DBObject firstTagSet, final DBObject... remainingTagSets) {
         return new TaggableReadPreference(org.mongodb.ReadPreference.primaryPreferred(
-                                                                                     DBObjects.toDocument(firstTagSet),
-                                                                                     DBObjects.toDocumentArray(
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                                                              remainingTagSets)));
+                DBObjects.toDocument(firstTagSet),
+                DBObjects.toDocumentArray(remainingTagSets))
+        );
     }
 
     /**
@@ -142,9 +112,9 @@ public class ReadPreference {
      */
     public static TaggableReadPreference secondary(final DBObject firstTagSet, final DBObject... remainingTagSets) {
         return new TaggableReadPreference(org.mongodb.ReadPreference.secondary(
-                                                                              DBObjects.toDocument(firstTagSet),
-                                                                              DBObjects
-                                                                              .toDocumentArray(remainingTagSets)));
+                DBObjects.toDocument(firstTagSet),
+                DBObjects.toDocumentArray(remainingTagSets))
+        );
     }
 
     /**
@@ -160,10 +130,9 @@ public class ReadPreference {
      */
     public static TaggableReadPreference secondaryPreferred(final DBObject firstTagSet, final DBObject... remainingTagSets) {
         return new TaggableReadPreference(org.mongodb.ReadPreference.secondaryPreferred(
-                                                                                       DBObjects
-                                                                                       .toDocument(firstTagSet),
-                                                                                       DBObjects.toDocumentArray(
-                                                                                                                remainingTagSets)));
+                DBObjects.toDocument(firstTagSet),
+                DBObjects.toDocumentArray(remainingTagSets))
+        );
     }
 
     /**
@@ -178,9 +147,9 @@ public class ReadPreference {
      */
     public static TaggableReadPreference nearest(final DBObject firstTagSet, final DBObject... remainingTagSets) {
         return new TaggableReadPreference(org.mongodb.ReadPreference.nearest(
-                                                                            DBObjects.toDocument(firstTagSet), DBObjects
-                                                                                                               .toDocumentArray(
-                                                                                                                               remainingTagSets)));
+                DBObjects.toDocument(firstTagSet),
+                DBObjects.toDocumentArray(remainingTagSets))
+        );
     }
 
     public static ReadPreference valueOf(final String name) {
@@ -189,17 +158,17 @@ public class ReadPreference {
 
     public static TaggableReadPreference valueOf(final String name, final DBObject firstTagSet,
                                                  final DBObject... remainingTagSets) {
-        return (TaggableReadPreference) fromNew(org.mongodb.ReadPreference.valueOf(name, DBObjects.toDocument(
-                                                                                                             firstTagSet),
-                                                                                  DBObjects
-                                                                                  .toDocumentArray(remainingTagSets)));
+        return (TaggableReadPreference) fromNew(org.mongodb.ReadPreference.valueOf(
+                name,
+                DBObjects.toDocument(firstTagSet),
+                DBObjects.toDocumentArray(remainingTagSets))
+        );
     }
 
     public static ReadPreference fromNew(final org.mongodb.ReadPreference readPreference) {
         if (readPreference instanceof org.mongodb.TaggableReadPreference) {
             return new TaggableReadPreference((org.mongodb.TaggableReadPreference) readPreference);
-        }
-        else {
+        } else {
             return new ReadPreference(readPreference);
         }
     }

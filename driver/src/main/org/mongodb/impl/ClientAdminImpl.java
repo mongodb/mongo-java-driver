@@ -58,6 +58,8 @@ class ClientAdminImpl implements ClientAdmin {
     @Override
     public Set<String> getDatabaseNames() {
         final CommandResult listDatabasesResult = connection.command(ADMIN_DATABASE, LIST_DATABASES, documentSerializer);
+
+        @SuppressWarnings("unchecked")
         final List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
 
         final Set<String> databaseNames = new HashSet<String>();
