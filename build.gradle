@@ -37,10 +37,13 @@ subprojects {
     apply plugin: 'findbugs'
     apply plugin: 'osgi'
     apply plugin: 'jacoco'
+    apply plugin: 'maven'
+    apply plugin: 'signing'
 
 
     group = 'org.mongodb'
     version = '3.0.0-SNAPSHOT'
+    project.ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
     sourceCompatibility = '1.6'
     targetCompatibility = '1.6'
 
@@ -65,6 +68,32 @@ subprojects {
         }
     }
 
+    /* Compiling */
+    tasks.withType(Compile) {
+        options.encoding = 'ISO-8859-1'
+        options.fork = true
+        options.debug = true
+        options.compilerArgs = ['-Xlint:all','-Xlint:-options']
+
+        onlyIf { JavaVersion.current().isJava7Compatible() }
+    }
+
+
+    /* Testing */
+    tasks.withType(Test) {
+        maxParallelForks = 16
+        systemProperty 'org.mongodb.test.uri', System.getProperty('org.mongodb.test.uri', null)
+        jacoco { enabled = false }
+    }
+
+    gradle.taskGraph.whenReady { taskGraph ->
+        if (taskGraph.hasTask(tasks.getByName('check'))) {
+            tasks.withType(Test) { jacoco { enabled = true } }
+        }
+    }
+
+
+    /* Code quality */
     checkstyle {
         configFile = new File("$configDir/checkstyle.xml")
     }
@@ -79,26 +108,18 @@ subprojects {
 
     findbugs {
         ignoreFailures = true
-    }
-
-    tasks.withType(FindBugs) {
         excludeFilter = new File("$configDir/findbugs-exclude.xml")
     }
 
-    tasks.withType(Compile) {
-        options.encoding = 'ISO-8859-1'
-        options.fork = true
-        options.debug = true
-        options.compilerArgs = ['-Xlint:all','-Xlint:-options']
-
-        onlyIf { JavaVersion.current().isJava7Compatible() }
+    tasks.matching { (it instanceof FindBugs) || (it instanceof Pmd) }.all {
+        reports {
+            xml.enabled = project.hasProperty('xmlReportsEnabled')
+            html.enabled = !project.hasProperty('xmlReportsEnabled')
+        }
     }
 
-    tasks.withType(Test) {
-        systemProperty 'org.mongodb.test.uri', System.getProperty('org.mongodb.test.uri', null)
-        jacoco { enabled = false }
-    }
 
+    /* Artifacts */
     task sourcesJar(type: Jar) {
         classifier = 'sources'
         from sourceSets.main.allSource
@@ -121,24 +142,6 @@ subprojects {
         archives sourcesJar
         archives javadocJar
     }
-}
-
-configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat'] }) {
-    tasks.withType(Test) {
-        maxParallelForks = 16
-    }
-    gradle.taskGraph.whenReady { taskGraph ->
-        if (taskGraph.hasTask(tasks.getByName('check'))) {
-            tasks.withType(Test) { jacoco { enabled = true } }
-        }
-    }
-}
-
-configure(subprojects.findAll { it.name in ['bson', 'driver', 'driver-compat'] }) {
-    apply plugin: 'maven'
-    apply plugin: 'signing'
-
-    project.ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
     signing {
         required { project.isReleaseVersion && gradle.taskGraph.hasTask("deploy") }
