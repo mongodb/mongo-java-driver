@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.regex.Pattern;
 
 @SuppressWarnings({ "rawtypes" })
 public class BSON {
@@ -69,6 +70,24 @@ public class BSON {
     public static final byte B_FUNC = 1;
     public static final byte B_BINARY = 2;
     public static final byte B_UUID = 3;
+
+    // --- regex flags
+
+    private static final int FLAG_GLOBAL = 256;
+
+    private static final int[] FLAG_LOOKUP = new int[Character.MAX_VALUE];
+
+    static {
+        FLAG_LOOKUP['g'] = FLAG_GLOBAL;
+        FLAG_LOOKUP['i'] = Pattern.CASE_INSENSITIVE;
+        FLAG_LOOKUP['m'] = Pattern.MULTILINE;
+        FLAG_LOOKUP['s'] = Pattern.DOTALL;
+        FLAG_LOOKUP['c'] = Pattern.CANON_EQ;
+        FLAG_LOOKUP['x'] = Pattern.COMMENTS;
+        FLAG_LOOKUP['d'] = Pattern.UNIX_LINES;
+        FLAG_LOOKUP['t'] = Pattern.LITERAL;
+        FLAG_LOOKUP['u'] = Pattern.UNICODE_CASE;
+    }
 
     private static volatile boolean _encodeHooks = false;
     private static volatile boolean _decodeHooks = false;
@@ -225,6 +244,71 @@ public class BSON {
         final InputBuffer buffer = new BasicInputBuffer(ByteBuffer.wrap(bytes));
         return new DBObjectSerializer(PrimitiveSerializers.createDefault()).deserialize(new BSONBinaryReader(buffer));
     }
+
+    /**
+     * Converts a sequence of regular expression modifiers from the database into Java regular
+     * expression flags.
+     *
+     * @param s regular expression modifiers
+     * @return the Java flags
+     * @throws IllegalArgumentException If sequence contains invalid flags.
+     */
+    public static int regexFlags(final String s) {
+        int flags = 0;
+
+        if (s == null) {
+            return flags;
+        }
+
+        for (char f : s.toLowerCase().toCharArray()) {
+            flags |= regexFlag(f);
+        }
+
+        return flags;
+    }
+
+    /**
+     * Converts a regular expression modifier from the database into Java regular expression flags.
+     *
+     * @param c regular expression modifier
+     * @return the Java flags
+     * @throws IllegalArgumentException If sequence contains invalid flags.
+     */
+    public static int regexFlag(final char c) {
+
+        final int flag = FLAG_LOOKUP[c];
+
+        if (flag == 0) {
+            throw new IllegalArgumentException(String.format("Unrecognized flag [%c]", c));
+        }
+
+        return flag;
+    }
+
+    /**
+     * Converts Java regular expression flags into regular expression modifiers from the database.
+     *
+     * @param flags the Java flags
+     * @return the Java flags
+     * @throws IllegalArgumentException if some flags couldn't be recognized.
+     */
+    public static String regexFlags(int flags) {
+        StringBuilder buf = new StringBuilder();
+
+        for (int i = 0; i < FLAG_LOOKUP.length; i++) {
+            if ((flags & FLAG_LOOKUP[i]) > 0) {
+                buf.append((char) i);
+                flags -= FLAG_LOOKUP[i];
+            }
+        }
+
+        if (flags > 0) {
+            throw new IllegalArgumentException("Some flags could not be recognized.");
+        }
+
+        return buf.toString();
+    }
+
 
     // Just so we don't have to copy the buffer
     static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {

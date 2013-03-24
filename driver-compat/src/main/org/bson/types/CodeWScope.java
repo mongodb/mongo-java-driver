@@ -18,23 +18,23 @@
 
 package org.bson.types;
 
-import com.mongodb.DBObject;
+import org.bson.BSONObject;
 
 /**
  * for using the CodeWScope type
  */
 public class CodeWScope extends Code {
 
-    private final DBObject scope;
+    private final BSONObject scope;
 
     private static final long serialVersionUID = -6284832275113680002L;
 
-    public CodeWScope(final String code, final DBObject scope) {
+    public CodeWScope(final String code, final BSONObject scope) {
         super(code);
         this.scope = scope;
     }
 
-    public DBObject getScope() {
+    public BSONObject getScope() {
         return scope;
     }
 
