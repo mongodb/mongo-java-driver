@@ -17,9 +17,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.SimpleTimeZone;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -113,12 +114,12 @@ public class JSONSerializersTest {
         assertEquals("[ { \"key1\" : \"val1\"} , { \"key2\" : \"val2\"}]", buf.toString());
 
         // test  MAP
-        HashMap<String, String> testMap = new HashMap<String, String>();
+        Map<String, String> testMap = new TreeMap<String, String>();
         testMap.put("key1", "val1");
         testMap.put("key2", "val2");
         buf = new StringBuilder();
         serializer.serialize(testMap, buf);
-        assertEquals("{ \"key2\" : \"val2\" , \"key1\" : \"val1\"}", buf.toString());
+        assertEquals("{ \"key1\" : \"val1\" , \"key2\" : \"val2\"}", buf.toString());
 
         // test  MAXKEY
         buf = new StringBuilder();
