@@ -120,19 +120,16 @@ public class ReplicaSetStateGeneratorTest {
                         masterExecutorFactory, 4.0f);
         ReplicaSet replicaSetState = generator.getReplicaSetState();
         assertEquals(3, replicaSetState.getAll().size());
-        assertEquals(3, generator.getChannelStates().size());
+        assertEquals(3, generator.getIsMasterExecutorMap().size());
         assertNotNull(replicaSetState.getMember(serverAddress));
         assertTrue(replicaSetState.getMember(serverAddress).isOk());
         assertNotNull(replicaSetState.getMember(serverAddress2));
         assertTrue(replicaSetState.getMember(serverAddress2).isOk());
         assertNotNull(replicaSetState.getMember(serverAddress3));
         assertTrue(replicaSetState.getMember(serverAddress3).isOk());
-        assertTrue(generator.getChannelStates().contains(
-                new ReplicaSetMonitor.ReplicaSetStateGenerator.ChannelState(new MockIsMasterExecutor(serverAddress))));
-        assertTrue(generator.getChannelStates().contains(
-                new ReplicaSetMonitor.ReplicaSetStateGenerator.ChannelState(new MockIsMasterExecutor(serverAddress2))));
-        assertTrue(generator.getChannelStates().contains(
-                new ReplicaSetMonitor.ReplicaSetStateGenerator.ChannelState(new MockIsMasterExecutor(serverAddress3))));
+        assertTrue(generator.getIsMasterExecutorMap().containsKey(serverAddress));
+        assertTrue(generator.getIsMasterExecutorMap().containsKey(serverAddress2));
+        assertTrue(generator.getIsMasterExecutorMap().containsKey(serverAddress3));
     }
 
     @Test

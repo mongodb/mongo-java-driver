@@ -16,6 +16,7 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.io.BufferPool;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
@@ -46,8 +47,9 @@ public final class MongoClientsImpl {
         return new MongoClientImpl(options, MongoConnectionsImpl.create(serverAddress, options, bufferPool));
     }
 
-    public static MongoClientImpl create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MongoClientImpl(options, new MultipleServerMongoConnection(new ReplicaSetConnectionStrategy(seedList), options));
+    public static MongoClientImpl create(final MongoConnectionStrategy connectionStrategy,
+                                         final MongoClientOptions options) {
+        return new MongoClientImpl(options, new MultipleServerMongoConnection(connectionStrategy, options));
     }
 
     public static MongoClientImpl create(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -64,7 +66,7 @@ public final class MongoClientsImpl {
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(cur));
             }
-            return create(seedList, options);
+            return create(MongoConnectionStrategiesImpl.replicaSet(seedList), options);
         }
     }
 }

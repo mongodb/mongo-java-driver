@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-package org.mongodb.impl;
+package org.mongodb;
 
-import org.mongodb.ReadPreference;
-import org.mongodb.ServerAddress;
+
+import org.mongodb.impl.MongoConnectionStrategiesImpl;
 
 import java.util.List;
 
-public interface MultipleServerConnectionStrategy {
-    ServerAddress getAddressOfPrimary();
+public final class MongoConnectionStrategies {
+    private MongoConnectionStrategies() {
+    }
 
-    ServerAddress getAddressForReadPreference(ReadPreference readPreference);
+    public static MongoConnectionStrategy replicaSet(final List<ServerAddress> serverAddressSeedList) {
+        return MongoConnectionStrategiesImpl.replicaSet(serverAddressSeedList);
+    }
 
-    void close();
-
-    List<ServerAddress> getAllAddresses();
+    public static MongoConnectionStrategy mongosHighAvailability(final List<ServerAddress> serverAddressList) {
+        return MongoConnectionStrategiesImpl.mongosHighAvailability(serverAddressList);
+    }
 }

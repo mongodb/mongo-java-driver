@@ -16,14 +16,15 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mongodb.Document;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClients;
 import org.mongodb.MongoCollection;
+import org.mongodb.MongoConnectionStrategies;
 import org.mongodb.MongoReadPreferenceException;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
@@ -38,7 +39,7 @@ public class ReplicaSetTest {
 
     @Before
     public void before() throws UnknownHostException {
-        client = MongoClients.create(Arrays.asList(new ServerAddress()));
+        client = MongoClients.create(MongoConnectionStrategies.replicaSet(Arrays.asList(new ServerAddress())));
         collection = client.getDatabase("ReplicaSetMongoClientTest")
                            .getCollection("Collection" + System.currentTimeMillis());
         collection.tools().drop();

@@ -16,6 +16,7 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.MongoNoPrimaryException;
 import org.mongodb.MongoReadPreferenceException;
 import org.mongodb.ReadPreference;
@@ -26,11 +27,11 @@ import org.mongodb.rs.ReplicaSetMember;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReplicaSetConnectionStrategy implements MultipleServerConnectionStrategy {
+public class ReplicaSetConnectionStrategy implements MongoConnectionStrategy {
     private final ReplicaSetMonitor replicaSetMonitor;
 
     public ReplicaSetConnectionStrategy(final List<ServerAddress> seedList) {
-        replicaSetMonitor = new ReplicaSetMonitor(seedList, null);
+        replicaSetMonitor = new ReplicaSetMonitor(seedList);
         replicaSetMonitor.start();
     }
 
@@ -57,16 +58,6 @@ public class ReplicaSetConnectionStrategy implements MultipleServerConnectionStr
     }
 
     @Override
-    public void close() {
-        replicaSetMonitor.close();
-        try {
-            replicaSetMonitor.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException();
-        }
-    }
-
-    @Override
     public List<ServerAddress> getAllAddresses() {
         List<ServerAddress> addressList = new ArrayList<ServerAddress>();
         ReplicaSet currentState = replicaSetMonitor.getCurrentState();
@@ -74,5 +65,15 @@ public class ReplicaSetConnectionStrategy implements MultipleServerConnectionStr
              addressList.add(cur.getAddress());
         }
         return addressList;
+    }
+
+    @Override
+    public void close() {
+        replicaSetMonitor.close();
+        try {
+            replicaSetMonitor.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException();
+        }
     }
 }

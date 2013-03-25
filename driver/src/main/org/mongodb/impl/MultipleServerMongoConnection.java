@@ -17,6 +17,7 @@
 package org.mongodb.impl;
 
 import org.mongodb.Document;
+import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.io.BufferPool;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnection;
@@ -50,9 +51,9 @@ class MultipleServerMongoConnection implements MongoConnection {
     private final BufferPool<ByteBuffer> bufferPool;
     private final Map<ServerAddress, SingleServerMongoConnection> mongoClientMap =
             new HashMap<ServerAddress, SingleServerMongoConnection>();
-    private final MultipleServerConnectionStrategy connectionStrategy;
+    private final MongoConnectionStrategy connectionStrategy;
 
-    MultipleServerMongoConnection(final MultipleServerConnectionStrategy connectionStrategy, final MongoClientOptions options) {
+    MultipleServerMongoConnection(final MongoConnectionStrategy connectionStrategy, final MongoClientOptions options) {
         this.connectionStrategy = connectionStrategy;
         this.options = options;
         this.bufferPool = new PowerOfTwoByteBufferPool();
