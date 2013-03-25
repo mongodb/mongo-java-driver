@@ -17,6 +17,7 @@
 package org.mongodb.rs;
 
 import org.mongodb.Document;
+import org.mongodb.Node;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.Immutable;
 
@@ -40,8 +41,9 @@ public class ReplicaSetMember extends Node {
 
     public ReplicaSetMember(final ServerAddress serverAddress, final String setName, final float pingTime,
                             final boolean ok, final boolean isPrimary, final boolean isSecondary,
-                            final Set<Tag> tags, final int maxBSONObjectSize) {
-        super(pingTime, serverAddress, maxBSONObjectSize, ok);
+                            final Set<Tag> tags, final int maxBSONObjectSize, final float latencySmoothFactor,
+                            final ReplicaSetMember previous) {
+        super(pingTime, serverAddress, maxBSONObjectSize, ok, latencySmoothFactor, previous);
         this.setName = setName;
         this.isPrimary = isPrimary;
         this.isSecondary = isSecondary;
@@ -49,7 +51,7 @@ public class ReplicaSetMember extends Node {
     }
 
     public ReplicaSetMember(final ServerAddress serverAddress) {
-        this(serverAddress, null, 0, false, false, false, new HashSet<Tag>(), 0);
+        this(serverAddress, null, 0, false, false, false, new HashSet<Tag>(), 0, 0, null);
     }
 
     public boolean primary() {
@@ -72,7 +74,7 @@ public class ReplicaSetMember extends Node {
         final StringBuilder buf = new StringBuilder();
         buf.append("{ address:'").append(getAddress()).append("', ");
         buf.append("ok:").append(isOk()).append(", ");
-        buf.append("ping:").append(super.getPingTime()).append(", ");
+        buf.append("ping:").append(super.getNormalizedPingTime()).append(", ");
         buf.append("isPrimary:").append(isPrimary).append(", ");
         buf.append("isSecondary:").append(isSecondary).append(", ");
         buf.append("setName:").append(setName).append(", ");
@@ -139,7 +141,7 @@ public class ReplicaSetMember extends Node {
                 + ", isSecondary=" + isSecondary
                 + ", setName='" + setName + '\''
                 + "address=" + getServerAddress()
-                + ", pingTime=" + getPingTime()
+                + ", pingTime=" + getNormalizedPingTime()
                 + ", ok=" + isOk()
                 + ", maxBSONObjectSize=" + getMaxBSONObjectSize()
                 + "} ";

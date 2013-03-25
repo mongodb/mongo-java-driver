@@ -16,17 +16,19 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
-import org.mongodb.Node;
 
-// TODO: Should this be public and move out of impl?  Should it have a common base class with ReplicaSetMember
-class MongosSetMember extends Node {
-    public MongosSetMember(final ServerAddress serverAddress, final float pingTime, final boolean ok, final int maxBSONObjectSize,
-                           final float latencySmoothFactor, final MongosSetMember previous) {
-        super(pingTime, serverAddress, maxBSONObjectSize, ok, latencySmoothFactor, previous);
+class MongoConnectionIsMasterExecutorFactory implements IsMasterExecutorFactory {
+
+    private final MongoClientOptions options;
+
+    MongoConnectionIsMasterExecutorFactory(final MongoClientOptions options) {
+        this.options = options;
     }
 
-    public MongosSetMember(final ServerAddress serverAddress) {
-        this(serverAddress, 0, false, 0, 0, null);
+    @Override
+    public IsMasterExecutor create(final ServerAddress serverAddress) {
+        return new MongoConnectionIsMasterExecutor(MongoConnectionsImpl.create(serverAddress, options), serverAddress);
     }
 }

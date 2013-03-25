@@ -67,13 +67,13 @@ public class ReadPreferenceTest {
         final float unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
 
         primary = new ReplicaSetMember(new ServerAddress(HOST, 27017), "", acceptablePingTime, true, true,
-                                     false, tagSet1, FOUR_MEG);
+                                     false, tagSet1, FOUR_MEG, 0, null);
 
         secondary = new ReplicaSetMember(new ServerAddress(HOST, 27018), "", bestPingTime, true, false,
-                                       true, tagSet2, FOUR_MEG);
+                                       true, tagSet2, FOUR_MEG, 0, null);
 
         otherSecondary = new ReplicaSetMember(new ServerAddress(HOST, 27019), "", unacceptablePingTime,
-                                            true, false, true, tagSet3, FOUR_MEG);
+                                            true, false, true, tagSet3, FOUR_MEG, 0, null);
 
         final List<ReplicaSetMember> nodeList = new ArrayList<ReplicaSetMember>();
         nodeList.add(primary);

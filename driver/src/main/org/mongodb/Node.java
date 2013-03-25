@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-package org.mongodb.rs;
+package org.mongodb;
 
-import org.mongodb.ServerAddress;
 import org.mongodb.annotations.Immutable;
 
 @Immutable
-public class Node {
+public abstract class Node {
 
     private final ServerAddress address;
-    private final float pingTime;
+    private final float normalizedPingTime;
     private final boolean ok;
     private final int maxBSONObjectSize;
 
-    Node(final float pingTime, final ServerAddress addr, final int maxBSONObjectSize, final boolean ok) {
-        this.pingTime = pingTime;
-        this.address = addr;
+    protected Node(final float pingTime, final ServerAddress serverAddress, final int maxBSONObjectSize, final boolean ok,
+                   final float latencySmoothFactor, final Node previous) {
+        this.address = serverAddress;
         this.maxBSONObjectSize = maxBSONObjectSize;
         this.ok = ok;
+        this.normalizedPingTime = previous == null || !previous.isOk()
+                ? pingTime
+                : previous.getNormalizedPingTime() + ((pingTime - previous.getNormalizedPingTime()) / latencySmoothFactor);
     }
 
     public boolean isOk() {
@@ -50,8 +52,8 @@ public class Node {
         return address;
     }
 
-    public float getPingTime() {
-        return pingTime;
+    public float getNormalizedPingTime() {
+        return normalizedPingTime;
     }
 
     @Override
@@ -71,7 +73,7 @@ public class Node {
         if (isOk() != node.isOk()) {
             return false;
         }
-        if (Float.compare(node.getPingTime(), getPingTime()) != 0) {
+        if (Float.compare(node.getNormalizedPingTime(), getNormalizedPingTime()) != 0) {
             return false;
         }
         if (!getAddress().equals(node.getAddress())) {
@@ -84,7 +86,7 @@ public class Node {
     @Override
     public int hashCode() {
         int result = getAddress().hashCode();
-        result = 31 * result + (getPingTime() != +0.0f ? Float.floatToIntBits(getPingTime()) : 0);
+        result = 31 * result + (getNormalizedPingTime() != +0.0f ? Float.floatToIntBits(getNormalizedPingTime()) : 0);
         result = 31 * result + (isOk() ? 1 : 0);
         result = 31 * result + getMaxBSONObjectSize();
         return result;
@@ -95,7 +97,7 @@ public class Node {
         buf.append("{");
         buf.append("address:'").append(getAddress()).append("', ");
         buf.append("ok:").append(isOk()).append(", ");
-        buf.append("ping:").append(getPingTime()).append(", ");
+        buf.append("ping:").append(getNormalizedPingTime()).append(", ");
         buf.append("maxBSONObjectSize:").append(getMaxBSONObjectSize()).append(", ");
         buf.append("}");
 
@@ -106,7 +108,7 @@ public class Node {
     public String toString() {
         return "Node{"
                 + "address=" + address
-                + ", pingTime=" + pingTime
+                + ", normalizedPingTime=" + normalizedPingTime
                 + ", ok=" + ok
                 + ", maxBSONObjectSize="
                 + maxBSONObjectSize

@@ -17,39 +17,40 @@
 package org.mongodb.impl;
 
 import org.mongodb.ServerAddress;
-import org.mongodb.command.IsMasterCommandResult;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class MongosSetMonitor extends AbstractConnectionSetMonitor {
+import static org.mongodb.impl.MonitorDefaults.CLIENT_OPTIONS_DEFAULTS;
+import static org.mongodb.impl.MonitorDefaults.LATENCY_SMOOTH_FACTOR;
+import static org.mongodb.impl.MonitorDefaults.UPDATER_INTERVAL_MS;
+import static org.mongodb.impl.MonitorDefaults.UPDATER_INTERVAL_NO_PRIMARY_MS;
+
+public class MongosSetMonitor extends Thread {
 
     private static final Logger LOGGER = Logger.getLogger("org.mongodb.MongosSetMonitor");
 
     private final MongosSetStateGenerator mongosSetStateGenerator;
+    private final Holder holder = new Holder(CLIENT_OPTIONS_DEFAULTS.getConnectTimeout());
 
     MongosSetMonitor(final List<ServerAddress> serverAddressList) {
         super("MongosSetMonitor: " + serverAddressList);
+        setDaemon(true);
         mongosSetStateGenerator = new MongosSetStateGenerator(serverAddressList,
-                new MongoConnectionIsMasterExecutorFactory(getClientOptions()), getLatencySmoothFactor());
+                new MongoConnectionIsMasterExecutorFactory(CLIENT_OPTIONS_DEFAULTS), LATENCY_SMOOTH_FACTOR);
     }
 
     MongosSet getCurrentState() {
         checkClosed();
-        return (MongosSet) getHolder().get();
+        return (MongosSet) holder.get();
     }
 
     @Override
     public void run() {
         try {
             while (!Thread.interrupted()) {
-                int curUpdateIntervalMS = getUpdaterIntervalNoPrimaryMS();
+                int curUpdateIntervalMS = UPDATER_INTERVAL_NO_PRIMARY_MS;
 
                 try {
 //                    updateInetAddresses();
@@ -57,10 +58,10 @@ public class MongosSetMonitor extends AbstractConnectionSetMonitor {
                     MongosSet mongosSet = mongosSetStateGenerator.getMongosSetState();
 
                     if (mongosSet.getPreferred() != null) {
-                        curUpdateIntervalMS = getUpdaterIntervalMS();
+                        curUpdateIntervalMS = UPDATER_INTERVAL_MS;
                     }
 
-                    getHolder().set(mongosSet);
+                    holder.set(mongosSet);
                 } catch (Exception e) {
                     // TODO: can any exceptions get through to here?
                     LOGGER.log(Level.WARNING, "Exception in mongos set monitor update pass", e);
@@ -76,50 +77,20 @@ public class MongosSetMonitor extends AbstractConnectionSetMonitor {
 //        replicaSetStateGenerator.close();
     }
 
+    /**
+     * Stop the updater if there is one
+     */
+    void close() {
+        holder.close();
+        interrupt();
+    }
 
-    static class MongosSetStateGenerator {
-        private final float latencySmoothFactor;
-        private final Map<ServerAddress, IsMasterExecutor> isMasterExecutorMap = new HashMap<ServerAddress, IsMasterExecutor>();
-        private final Map<ServerAddress, MongosSetMember> mostRecentStateMap = new HashMap<ServerAddress, MongosSetMember>();
-        private MongosSet currentMongosSet;
-
-        MongosSetStateGenerator(final List<ServerAddress> serverAddressList, final IsMasterExecutorFactory isMasterExecutorFactory,
-                                final float latencySmoothFactor) {
-            this.latencySmoothFactor = latencySmoothFactor;
-            for (ServerAddress serverAddress : serverAddressList) {
-                isMasterExecutorMap.put(serverAddress, isMasterExecutorFactory.create(serverAddress));
-            }
-        }
-
-        public MongosSet getMongosSetState() {
-            for (IsMasterExecutor executor : isMasterExecutorMap.values()) {
-                updateMemberState(executor);
-            }
-            currentMongosSet = new MongosSet(new ArrayList<MongosSetMember>(mostRecentStateMap.values()), currentMongosSet);
-            return currentMongosSet;
-        }
-
-        Set<ServerAddress> updateMemberState(final IsMasterExecutor executor) {
-            final Set<ServerAddress> seenAddresses = new HashSet<ServerAddress>();
-            try {
-                // TODO: this is duplicated in ReplicaSetStateGenerator
-                IsMasterCommandResult res = executor.execute();
-
-                float elapsedMilliseconds = res.getElapsedNanoseconds() / 1000000F;
-                final MongosSetMember mostRecentState = mostRecentStateMap.get(executor.getServerAddress());
-                float normalizedPingTimeMilliseconds = mostRecentState == null || !mostRecentState.isOk()
-                        ? elapsedMilliseconds
-                        : mostRecentState.getPingTime() + ((elapsedMilliseconds - mostRecentState.getPingTime()) / latencySmoothFactor);
-
-                mostRecentStateMap.put(executor.getServerAddress(), new MongosSetMember(executor.getServerAddress(),
-                        normalizedPingTimeMilliseconds, res.isOk(), res.getMaxBSONObjectSize()));
-            } catch (Exception e) {
-                mostRecentStateMap.put(executor.getServerAddress(), new MongosSetMember(executor.getServerAddress()));
-                if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.log(Level.FINE, "Exception reaching mongos at: " + executor.getServerAddress(), e);
-                }
-            }
-            return seenAddresses;
+    /**
+     * Whether this connection has been closed.
+     */
+    void checkClosed() {
+        if (holder.isClosed()) {
+            throw new IllegalStateException("ReplicaSetStatus closed");  // TODO: different exception
         }
     }
 }

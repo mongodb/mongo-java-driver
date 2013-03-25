@@ -39,7 +39,7 @@ class MongosSet {
                     retVal = cur;
                     break;
                 }
-                if (retVal == null || cur.getPingTime() < retVal.getPingTime()) {
+                if (retVal == null || cur.getNormalizedPingTime() < retVal.getNormalizedPingTime()) {
                     retVal = cur;
                 }
             }

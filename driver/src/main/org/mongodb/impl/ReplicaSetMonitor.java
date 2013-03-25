@@ -16,32 +16,26 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.Document;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.rs.ReplicaSet;
-import org.mongodb.rs.ReplicaSetMember;
-import org.mongodb.rs.Tag;
 
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.mongodb.impl.MonitorDefaults.CLIENT_OPTIONS_DEFAULTS;
+import static org.mongodb.impl.MonitorDefaults.INET_ADDRESS_CACHE_MS;
+import static org.mongodb.impl.MonitorDefaults.LATENCY_SMOOTH_FACTOR;
+import static org.mongodb.impl.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS;
+import static org.mongodb.impl.MonitorDefaults.UPDATER_INTERVAL_MS;
+import static org.mongodb.impl.MonitorDefaults.UPDATER_INTERVAL_NO_PRIMARY_MS;
 
 /**
  * Keeps replica set status.  Maintains a background thread to ping all held of the set to keep the status current.
  */
 @ThreadSafe
-class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
+class ReplicaSetMonitor extends Thread {
 
     private static final Logger LOGGER = Logger.getLogger("org.mongodb.ReplicaSetMonitor");
 
@@ -52,25 +46,26 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
 
     // private volatile long nextResolveTime;  // TODO: use this
 
-    // TODO: do we need a MongoConnection?  Maybe just for some client options
+    private final Holder holder = new Holder(CLIENT_OPTIONS_DEFAULTS.getConnectTimeout());
+
     ReplicaSetMonitor(final List<ServerAddress> seedList) {
         super("ReplicaSetMonitor: " + seedList);
+        setDaemon(true);
         replicaSetStateGenerator = new ReplicaSetStateGenerator(seedList,
-                new MongoConnectionIsMasterExecutorFactory(getClientOptions()), getLatencySmoothFactor());
+                new MongoConnectionIsMasterExecutorFactory(CLIENT_OPTIONS_DEFAULTS), LATENCY_SMOOTH_FACTOR);
 //        nextResolveTime = System.currentTimeMillis() + INET_ADDRESS_CACHE_MS;
     }
 
     ReplicaSet getCurrentState() {
         checkClosed();
-        return (ReplicaSet) getHolder().get();
+        return (ReplicaSet) holder.get();
     }
-
 
     @Override
     public void run() {
         try {
             while (!Thread.interrupted()) {
-                int curUpdateIntervalMS = getUpdaterIntervalNoPrimaryMS();
+                int curUpdateIntervalMS = UPDATER_INTERVAL_NO_PRIMARY_MS;
 
                 try {
                     updateInetAddresses();
@@ -78,9 +73,9 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
                     ReplicaSet replicaSet = replicaSetStateGenerator.getReplicaSetState();
 
                     if (replicaSet.getErrorStatus().isOk() && replicaSet.hasPrimary()) {
-                        curUpdateIntervalMS = getUpdaterIntervalMS();
+                        curUpdateIntervalMS = UPDATER_INTERVAL_MS;
                     }
-                    getHolder().set(replicaSet);
+                    holder.set(replicaSet);
                 } catch (Exception e) {
                     // TODO: can any exceptions get through to here?
                     logger.log(Level.WARNING, "Exception in replica set monitor update pass", e);
@@ -92,167 +87,39 @@ class ReplicaSetMonitor extends AbstractConnectionSetMonitor {
             // Allow thread to exit
         }
 
-        getHolder().close();
+        holder.close();
         replicaSetStateGenerator.close();
+    }
+
+    /**
+     * Stop the updater if there is one
+     */
+    void close() {
+        holder.close();
+        interrupt();
+    }
+
+    /**
+     * Whether this connection has been closed.
+     */
+    void checkClosed() {
+        if (holder.isClosed()) {
+            throw new IllegalStateException("ReplicaSetStatus closed");  // TODO: different exception
+        }
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(", members: ").append(getHolder());
-        sb.append(", updaterIntervalMS: ").append(getUpdaterIntervalMS());
-        sb.append(", updaterIntervalNoMasterMS: ").append(getUpdaterIntervalNoPrimaryMS());
+        sb.append(", members: ").append(holder);
+        sb.append(", updaterIntervalMS: ").append(UPDATER_INTERVAL_MS);
+        sb.append(", updaterIntervalNoMasterMS: ").append(UPDATER_INTERVAL_NO_PRIMARY_MS);
         sb.append(", slaveAcceptableLatencyMS: ").append(SLAVE_ACCEPTABLE_LATENCY_MS);
         sb.append(", inetAddressCacheMS: ").append(INET_ADDRESS_CACHE_MS);
-        sb.append(", latencySmoothFactor: ").append(getLatencySmoothFactor());
+        sb.append(", latencySmoothFactor: ").append(LATENCY_SMOOTH_FACTOR);
         sb.append("}");
 
         return sb.toString();
-    }
-
-    static class ReplicaSetStateGenerator {
-
-        private Logger logger = Logger.getLogger("org.mongodb.ReplicaSetMonitor");
-        private final Random random = new Random();
-        private final float latencySmoothFactor;
-        private final IsMasterExecutorFactory isMasterExecutorFactory;
-        private final Map<ServerAddress, IsMasterExecutor> isMasterExecutorMap = new HashMap<ServerAddress, IsMasterExecutor>();
-        private final Map<ServerAddress, ReplicaSetMember> mostRecentStateMap = new HashMap<ServerAddress, ReplicaSetMember>();
-
-        ReplicaSetStateGenerator(final List<ServerAddress> seedList, final IsMasterExecutorFactory isMasterExecutorFactory,
-                                 final float latencySmoothFactor) {
-            this.isMasterExecutorFactory = isMasterExecutorFactory;
-            this.latencySmoothFactor = latencySmoothFactor;
-            for (ServerAddress cur : seedList) {
-                isMasterExecutorMap.put(cur, isMasterExecutorFactory.create(cur));
-            }
-        }
-
-        void close() {
-            for (IsMasterExecutor executor : isMasterExecutorMap.values()) {
-                try {
-                    executor.close();
-                } catch (final Throwable t) { // NOPMD
-                    // ignore
-                }
-            }
-        }
-
-        Map<ServerAddress, IsMasterExecutor> getIsMasterExecutorMap() {
-            return isMasterExecutorMap;
-        }
-
-        ReplicaSet getReplicaSetState() {
-            Set<ServerAddress> seenAddresses = new HashSet<ServerAddress>();
-
-            updateAll(seenAddresses);
-            removeUnused(seenAddresses);
-            addMissingMemberClients(seenAddresses);
-
-            return new ReplicaSet(new ArrayList<ReplicaSetMember>(mostRecentStateMap.values()), random, SLAVE_ACCEPTABLE_LATENCY_MS);
-        }
-
-        private void updateAll(final Set<ServerAddress> seenAddresses) {
-            for (IsMasterExecutor executor : isMasterExecutorMap.values()) {
-                seenAddresses.addAll(updateMemberState(executor));
-            }
-        }
-
-        private void removeUnused(final Set<ServerAddress> seenAddresses) {
-            if (!seenAddresses.isEmpty()) {
-                for (Iterator<Map.Entry<ServerAddress, IsMasterExecutor>> iter =
-                             isMasterExecutorMap.entrySet().iterator(); iter.hasNext();) {
-                    Map.Entry<ServerAddress, IsMasterExecutor> entry = iter.next();
-                    if (!seenAddresses.contains(entry.getKey())) {
-                        iter.remove();
-                        entry.getValue().close();
-                    }
-                }
-            }
-        }
-
-        Set<ServerAddress> updateMemberState(final IsMasterExecutor executor) {
-            final Set<ServerAddress> seenAddresses = new HashSet<ServerAddress>();
-            try {
-                IsMasterCommandResult res = executor.execute();
-
-                addHosts(seenAddresses, res.getHosts());
-                addHosts(seenAddresses, res.getPassives());
-
-                Set<Tag> tags = getTagsFromMap(res.getTags());
-
-                if (res.getSetName() != null) {
-                    logger = Logger.getLogger(LOGGER.getName() + "." + res.getSetName());
-                }
-
-                float elapsedMilliseconds = res.getElapsedNanoseconds() / 1000000F;
-                final ReplicaSetMember mostRecentState = mostRecentStateMap.get(executor.getServerAddress());
-                float normalizedPingTimeMilliseconds = mostRecentState == null || !mostRecentState.isOk()
-                                ? elapsedMilliseconds
-                                : mostRecentState.getPingTime() + ((elapsedMilliseconds - mostRecentState.getPingTime()) / latencySmoothFactor);
-
-                mostRecentStateMap.put(executor.getServerAddress(), new ReplicaSetMember(executor.getServerAddress(), res.getSetName(),
-                        normalizedPingTimeMilliseconds, res.isOk(), res.isMaster(), res.isSecondary(), tags, res.getMaxBSONObjectSize()));
-            } catch (Exception e) {
-                mostRecentStateMap.put(executor.getServerAddress(), new ReplicaSetMember(executor.getServerAddress()));
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.log(Level.FINE, "Exception reaching replica set member at: " + executor.getServerAddress(), e);
-                }
-            }
-            return seenAddresses;
-        }
-
-        private Set<Tag> getTagsFromMap(final Document tagsDocuments) {
-            if (tagsDocuments == null) {
-                return Collections.emptySet();
-            }
-            final Set<Tag> tagSet = new HashSet<Tag>();
-            for (final Map.Entry<String, Object> curEntry : tagsDocuments.entrySet()) {
-                tagSet.add(new Tag(curEntry.getKey(), curEntry.getValue().toString()));
-            }
-            return tagSet;
-        }
-
-        // TODO: need to cache this lookup
-        private void addHosts(final Set<ServerAddress> serverAddresses, final List<String> hosts) {
-            if (hosts == null) {
-                return;
-            }
-
-            for (Object host : hosts) {
-                try {
-                    serverAddresses.add(new ServerAddress(host.toString()));
-                } catch (UnknownHostException e) {
-                    logger.log(Level.WARNING, "couldn't resolve host [" + host + "]");  // TODO: this will get annoying
-                }
-            }
-        }
-
-
-        // TODO: handle this
-        private void updateAddr() {
-//            try {
-//                if (serverAddress.updateInetAddress()) {
-//                    // address changed, need to use new ports
-//                    port = new DBPort(addr, null, mongoOptions);
-//                    mongo.getConnector().updatePortPool(addr);
-//                    logger.get().log(Level.INFO, "Address of host " + serverAddress.toString() + " changed to " +
-//                               serverAddress.getSocketAddress().toString());
-//                }
-//            } catch (UnknownHostException ex) {
-//                logger.get().log(Level.WARNING, null, ex);
-//            }
-        }
-
-        private void addMissingMemberClients(final Set<ServerAddress> seenAddresses) {
-            for (ServerAddress seenAddress : seenAddresses) {
-                if (!isMasterExecutorMap.containsKey(seenAddress)) {
-                    final IsMasterExecutor executor = isMasterExecutorFactory.create(seenAddress);
-                    isMasterExecutorMap.put(seenAddress, executor);
-                    updateMemberState(executor);
-                }
-            }
-        }
     }
 
     // TODO: handle this

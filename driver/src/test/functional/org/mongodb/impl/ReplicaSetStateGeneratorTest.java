@@ -66,8 +66,8 @@ public class ReplicaSetStateGeneratorTest {
     @Test
     public void shouldReturnReplicaSetMemberThatIsNotOkIfCommandResultIsNotOk() {
         commandResultMap.put(serverAddress, new CommandResult(isMasterCommand, serverAddress, errorIsMasterResponse, 35000004));
-        ReplicaSetMonitor.ReplicaSetStateGenerator generator =
-                new ReplicaSetMonitor.ReplicaSetStateGenerator(Arrays.asList(serverAddress), masterExecutorFactory, 4.0f);
+        ReplicaSetStateGenerator generator =
+                new ReplicaSetStateGenerator(Arrays.asList(serverAddress), masterExecutorFactory, 4.0f);
         ReplicaSet replicaSetState = generator.getReplicaSetState();
         assertEquals(new ReplicaSetMember(serverAddress), replicaSetState.getMember(serverAddress));
     }
@@ -75,8 +75,8 @@ public class ReplicaSetStateGeneratorTest {
     @Test
     public void shouldReturnReplicaSetMemberThatIsNotOkIfCommandThrowsException() {
         exceptionMap.put(serverAddress, new MongoSocketReadTimeoutException("", serverAddress, new SocketTimeoutException()));
-        ReplicaSetMonitor.ReplicaSetStateGenerator generator =
-                new ReplicaSetMonitor.ReplicaSetStateGenerator(Arrays.asList(serverAddress),
+        ReplicaSetStateGenerator generator =
+                new ReplicaSetStateGenerator(Arrays.asList(serverAddress),
                         masterExecutorFactory, 4.0f);
         ReplicaSet replicaSetState = generator.getReplicaSetState();
         assertEquals(new ReplicaSetMember(serverAddress), replicaSetState.getMember(serverAddress));
@@ -85,11 +85,11 @@ public class ReplicaSetStateGeneratorTest {
     @Test
     public void shouldCreateCorrectReplicaSetMember() {
         commandResultMap.put(serverAddress, new CommandResult(isMasterCommand, serverAddress, isMasterResponse, 35000004));
-        ReplicaSetMonitor.ReplicaSetStateGenerator generator =
-                new ReplicaSetMonitor.ReplicaSetStateGenerator(Arrays.asList(serverAddress),
-                        masterExecutorFactory, 4.0f);
+        ReplicaSetStateGenerator generator =
+                new ReplicaSetStateGenerator(Arrays.asList(serverAddress), masterExecutorFactory, 4.0f);
         ReplicaSet replicaSetState = generator.getReplicaSetState();
-        assertEquals(new ReplicaSetMember(serverAddress, "test", 35.000004f, true, true, false, new HashSet<Tag>(), 4 * 1024 * 1024),
+        assertEquals(new ReplicaSetMember(serverAddress, "test", 35.000004f, true, true, false, new HashSet<Tag>(),
+                4 * 1024 * 1024, 0, null),
                 replicaSetState.getMember(serverAddress));
     }
 
@@ -97,8 +97,8 @@ public class ReplicaSetStateGeneratorTest {
     public void shouldCreateCorrectReplicaSetMemberWithTags() {
         isMasterResponse.append("tags", new Document("dc", "ny").append("rack", "1"));
         commandResultMap.put(serverAddress, new CommandResult(isMasterCommand, serverAddress, isMasterResponse, 35000004));
-        ReplicaSetMonitor.ReplicaSetStateGenerator generator =
-                new ReplicaSetMonitor.ReplicaSetStateGenerator(Arrays.asList(serverAddress),
+        ReplicaSetStateGenerator generator =
+                new ReplicaSetStateGenerator(Arrays.asList(serverAddress),
                         masterExecutorFactory, 4.0f);
         ReplicaSet replicaSetState = generator.getReplicaSetState();
         assertEquals(new HashSet<Tag>(Arrays.asList(new Tag("dc", "ny"), new Tag("rack", "1"))),
@@ -115,8 +115,8 @@ public class ReplicaSetStateGeneratorTest {
         commandResultMap.put(serverAddress, new CommandResult(isMasterCommand, serverAddress, isMasterResponse, 35000004));
         commandResultMap.put(serverAddress2, new CommandResult(isMasterCommand, serverAddress, isMasterResponse, 35000004));
         commandResultMap.put(serverAddress3, new CommandResult(isMasterCommand, serverAddress, isMasterResponse, 35000004));
-        ReplicaSetMonitor.ReplicaSetStateGenerator generator =
-                new ReplicaSetMonitor.ReplicaSetStateGenerator(Arrays.asList(serverAddress),
+        ReplicaSetStateGenerator generator =
+                new ReplicaSetStateGenerator(Arrays.asList(serverAddress),
                         masterExecutorFactory, 4.0f);
         ReplicaSet replicaSetState = generator.getReplicaSetState();
         assertEquals(3, replicaSetState.getAll().size());
@@ -135,25 +135,25 @@ public class ReplicaSetStateGeneratorTest {
     @Test
     public void testPingTimeSmoothing() {
         commandResultMap.put(serverAddress, new CommandResult(isMasterCommand, serverAddress, isMasterResponse, 3500004));
-        ReplicaSetMonitor.ReplicaSetStateGenerator generator =
-                new ReplicaSetMonitor.ReplicaSetStateGenerator(Arrays.asList(serverAddress),
+        ReplicaSetStateGenerator generator =
+                new ReplicaSetStateGenerator(Arrays.asList(serverAddress),
                         masterExecutorFactory, 4.0f);
         ReplicaSet replicaSetState = generator.getReplicaSetState();
-        assertEquals(3.5000040531158447f, replicaSetState.getMember(serverAddress).getPingTime(), 0.0);
+        assertEquals(3.5000040531158447f, replicaSetState.getMember(serverAddress).getNormalizedPingTime(), 0.0);
 
         masterExecutorFactory.all.get(serverAddress).commandResult = new CommandResult(isMasterCommand, serverAddress,
                 isMasterResponse, 2500004);
         replicaSetState = generator.getReplicaSetState();
-        assertEquals(3.2500040531158447f, replicaSetState.getMember(serverAddress).getPingTime(), 0.0);
+        assertEquals(3.2500040531158447f, replicaSetState.getMember(serverAddress).getNormalizedPingTime(), 0.0);
 
         masterExecutorFactory.all.get(serverAddress).commandResult = new CommandResult(isMasterCommand, serverAddress,
                 isMasterResponse, 500004);
         replicaSetState = generator.getReplicaSetState();
-        assertEquals(2.5625040531158447f, replicaSetState.getMember(serverAddress).getPingTime(), 0.0);
+        assertEquals(2.5625040531158447f, replicaSetState.getMember(serverAddress).getNormalizedPingTime(), 0.0);
     }
 
 
-    static class MockIsMasterExecutorFactory implements AbstractConnectionSetMonitor.IsMasterExecutorFactory {
+    static class MockIsMasterExecutorFactory implements IsMasterExecutorFactory {
         private final Map<ServerAddress, CommandResult> commandResultMap;
         private final Map<ServerAddress, MongoException> exceptionMap;
         private final Map<ServerAddress, MockIsMasterExecutor> all = new HashMap<ServerAddress, MockIsMasterExecutor>();
@@ -175,11 +175,12 @@ public class ReplicaSetStateGeneratorTest {
         }
 
         @Override
-        public AbstractConnectionSetMonitor.IsMasterExecutor create(final ServerAddress serverAddress) {
+        public IsMasterExecutor create(final ServerAddress serverAddress) {
             MockIsMasterExecutor retVal;
             if (exceptionMap.get(serverAddress) != null) {
                 retVal = new MockIsMasterExecutor(serverAddress, exceptionMap.get(serverAddress));
-            } else {
+            }
+            else {
                 retVal = new MockIsMasterExecutor(serverAddress, commandResultMap.get(serverAddress));
             }
             all.put(serverAddress, retVal);
@@ -187,7 +188,7 @@ public class ReplicaSetStateGeneratorTest {
         }
     }
 
-    static class MockIsMasterExecutor implements AbstractConnectionSetMonitor.IsMasterExecutor {
+    static class MockIsMasterExecutor implements IsMasterExecutor {
 
         private final ServerAddress serverAddress;
         private CommandResult commandResult;

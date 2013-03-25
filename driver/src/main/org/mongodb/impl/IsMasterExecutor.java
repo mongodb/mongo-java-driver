@@ -17,16 +17,12 @@
 package org.mongodb.impl;
 
 import org.mongodb.ServerAddress;
-import org.mongodb.Node;
+import org.mongodb.command.IsMasterCommandResult;
 
-// TODO: Should this be public and move out of impl?  Should it have a common base class with ReplicaSetMember
-class MongosSetMember extends Node {
-    public MongosSetMember(final ServerAddress serverAddress, final float pingTime, final boolean ok, final int maxBSONObjectSize,
-                           final float latencySmoothFactor, final MongosSetMember previous) {
-        super(pingTime, serverAddress, maxBSONObjectSize, ok, latencySmoothFactor, previous);
-    }
+interface IsMasterExecutor {
+    IsMasterCommandResult execute();
 
-    public MongosSetMember(final ServerAddress serverAddress) {
-        this(serverAddress, 0, false, 0, 0, null);
-    }
+    ServerAddress getServerAddress();
+
+    void close();
 }

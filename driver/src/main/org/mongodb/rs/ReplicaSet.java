@@ -242,8 +242,8 @@ public class ReplicaSet {
             if (!cur.secondary()) {
                 continue;
             }
-            if (cur.getPingTime() < bestPingTime) {
-                bestPingTime = cur.getPingTime();
+            if (cur.getNormalizedPingTime() < bestPingTime) {
+                bestPingTime = cur.getNormalizedPingTime();
             }
         }
         return bestPingTime;
@@ -256,7 +256,7 @@ public class ReplicaSet {
             if (!cur.isOk()) {
                 continue;
             }
-            if (cur.getPingTime() - acceptableLatencyMS <= bestPingTime) {
+            if (cur.getNormalizedPingTime() - acceptableLatencyMS <= bestPingTime) {
                 goodSecondaries.add(cur);
             }
         }
@@ -270,7 +270,7 @@ public class ReplicaSet {
             if (!cur.secondary()) {
                 continue;
             }
-            if (cur.getPingTime() - acceptableLatencyMS <= bestPingTime) {
+            if (cur.getNormalizedPingTime() - acceptableLatencyMS <= bestPingTime) {
                 goodSecondaries.add(cur);
             }
         }
