@@ -50,6 +50,16 @@ class MongosSetStateGenerator {
         return currentMongosSet;
     }
 
+    void close() {
+        for (IsMasterExecutor executor : isMasterExecutorMap.values()) {
+            try {
+                executor.close();
+            } catch (final Throwable t) { // NOPMD
+                // ignore
+            }
+        }
+    }
+
     void updateMemberState(final IsMasterExecutor executor) {
         try {
             IsMasterCommandResult res = executor.execute();

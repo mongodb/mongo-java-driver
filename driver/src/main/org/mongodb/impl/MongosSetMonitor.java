@@ -71,10 +71,10 @@ public class MongosSetMonitor extends Thread {
             }
         } catch (Exception e) { // NOPMD
             // Allow thread to exit
+        } finally {
+            holder.close();
+            mongosSetStateGenerator.close();
         }
-
-//        replicaSetHolder.close();
-//        replicaSetStateGenerator.close();
     }
 
     /**

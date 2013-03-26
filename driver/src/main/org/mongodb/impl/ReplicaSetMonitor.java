@@ -85,10 +85,10 @@ class ReplicaSetMonitor extends Thread {
             }
         } catch (Exception e) { // NOPMD
             // Allow thread to exit
+        } finally {
+            holder.close();
+            replicaSetStateGenerator.close();
         }
-
-        holder.close();
-        replicaSetStateGenerator.close();
     }
 
     /**
