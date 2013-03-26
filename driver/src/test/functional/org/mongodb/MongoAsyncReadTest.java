@@ -20,8 +20,10 @@ package org.mongodb;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mongodb.async.AsyncBlock;
 import org.mongodb.async.SingleResultCallback;
+import category.Async;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +36,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
+@Category(Async.class)
 public class MongoAsyncReadTest extends DatabaseTestCase {
     private CountDownLatch latch;
     private List<Document> documentList;

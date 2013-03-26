@@ -18,6 +18,8 @@
 package org.mongodb;
 
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import category.Async;
 import org.mongodb.result.WriteResult;
 
 import java.util.concurrent.ExecutionException;
@@ -26,6 +28,7 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+@Category(Async.class)
 public class MongoAsyncWriteTest extends DatabaseTestCase {
     @Test
     public void testReplaceOrInsertFuture() throws ExecutionException, InterruptedException {

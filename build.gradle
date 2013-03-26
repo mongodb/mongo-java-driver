@@ -228,11 +228,6 @@ project(':bson') {
 project(':driver') {
 
     sourceSets {
-        async {
-            java {
-                srcDir 'src/test/async'
-            }
-        }
         acceptance {
             java {
                 srcDir 'src/test/acceptance'
@@ -260,16 +255,12 @@ project(':driver') {
         acceptanceCompile 'junit:junit:4.11'
         acceptanceCompile sourceSets.main.runtimeClasspath
         acceptanceCompile sourceSets.functional.runtimeClasspath
-        asyncCompile 'junit:junit:4.11'
-        asyncCompile sourceSets.main.runtimeClasspath
-        asyncCompile sourceSets.functional.runtimeClasspath
     }
 
     idea.module {
         testSourceDirs += project.sourceSets.unit.allSource.getSrcDirs()
         testSourceDirs += project.sourceSets.functional.allSource.getSrcDirs()
         testSourceDirs += project.sourceSets.acceptance.allSource.getSrcDirs()
-        testSourceDirs += project.sourceSets.async.allSource.getSrcDirs()
     }
 
     jar {
@@ -293,17 +284,16 @@ project(':driver') {
     task functionalTest(type: Test, dependsOn: unitTest) {
         testClassesDir = sourceSets.functional.output.classesDir
         classpath = sourceSets.functional.runtimeClasspath
+        useJUnit(){
+            if (!JavaVersion.current().isJava7Compatible()) {
+                excludeCategories 'category.Async'
+            }
+        }
     }
 
     task acceptanceTest(type: Test, dependsOn: functionalTest) {
         testClassesDir = sourceSets.acceptance.output.classesDir
         classpath = sourceSets.acceptance.runtimeClasspath
-    }
-
-    task asyncTest(type: Test, dependsOn: functionalTest) {
-        onlyIf { JavaVersion.current().isJava7Compatible() }
-        testClassesDir = sourceSets.async.output.classesDir
-        classpath = sourceSets.async.runtimeClasspath
     }
 
     sourcesJar {
@@ -410,6 +400,10 @@ project(':driver-compat') {
 //////////////////////////////////////////
 // Root project configuration           //
 //////////////////////////////////////////
+task wrapper(type: Wrapper) {
+    distributionUrl = 'https://s3.amazonaws.com/trnl/gradle-1.6.zip'
+}
+
 
 idea {
     project {
