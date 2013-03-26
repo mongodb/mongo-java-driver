@@ -29,25 +29,24 @@ public interface MongoSyncWritableStream<T> {
 
     WriteResult modify(Document updateOperations);
 
-    WriteResult modifyOrInsert(Document updateOperations);                             // TODO: name
+    WriteResult modifyOrInsert(Document updateOperations);
 
-    WriteResult modifyOrInsert(ConvertibleToDocument updateOperations);                // TODO: name
+    WriteResult modifyOrInsert(ConvertibleToDocument updateOperations);
 
     WriteResult replace(T replacement);
 
-    WriteResult replaceOrInsert(T replacement);                                        // TODO: name
-
+    WriteResult replaceOrInsert(T replacement);
     T modifyAndGet(Document updateOperations, Get beforeOrAfter);
 
     T modifyAndGet(ConvertibleToDocument updateOperations, Get beforeOrAfter);
 
-    T modifyOrInsertAndGet(Document updateOperations, Get beforeOrAfter);              // TODO: name
+    T modifyOrInsertAndGet(Document updateOperations, Get beforeOrAfter);
 
-    T modifyOrInsertAndGet(ConvertibleToDocument updateOperations, Get beforeOrAfter); // TODO: name
+    T modifyOrInsertAndGet(ConvertibleToDocument updateOperations, Get beforeOrAfter);
 
     T replaceAndGet(T replacement, Get beforeOrAfter);
 
-    T replaceOrInsertAndGet(T replacement, Get beforeOrAfter);                         // TODO: name
+    T replaceOrInsertAndGet(T replacement, Get beforeOrAfter);
 
     T removeAndGet();
 }

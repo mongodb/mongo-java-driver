@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-// TODO: need ServerAddress and cursorId
-
 import org.mongodb.result.ServerCursor;
 
 /**
