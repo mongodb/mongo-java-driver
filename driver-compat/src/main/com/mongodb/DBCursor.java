@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.mongodb.MongoConnection;
+import org.mongodb.MongoConnector;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFind;
@@ -595,7 +595,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         currentIterator = currentResult.getResults().iterator();
     }
 
-    protected MongoConnection getConnection() {
+    protected MongoConnector getConnection() {
         return getCollection().getConnection();
     }
 

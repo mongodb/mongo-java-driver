@@ -19,9 +19,9 @@ package org.mongodb.impl;
 import org.mongodb.Document;
 import org.mongodb.DatabaseAdmin;
 import org.mongodb.MongoCollectionOptions;
+import org.mongodb.MongoConnector;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
-import org.mongodb.MongoConnection;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;
 import org.mongodb.serialization.CollectibleSerializer;
@@ -32,11 +32,11 @@ import org.mongodb.serialization.serializers.ObjectIdGenerator;
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;
     private final String name;
-    private final MongoConnection operations;
+    private final MongoConnector operations;
     private final DatabaseAdmin admin;
     private final Serializer<Document> documentSerializer;
 
-    public MongoDatabaseImpl(final String name, final MongoConnection operations, final MongoDatabaseOptions options) {
+    public MongoDatabaseImpl(final String name, final MongoConnector operations, final MongoDatabaseOptions options) {
         this.name = name;
         this.operations = operations;
         this.options = options;

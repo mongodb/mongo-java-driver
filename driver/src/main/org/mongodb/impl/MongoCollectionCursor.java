@@ -17,7 +17,7 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoCollection;
-import org.mongodb.MongoConnection;
+import org.mongodb.MongoConnector;
 import org.mongodb.MongoCursor;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.GetMore;
@@ -33,14 +33,14 @@ import java.util.NoSuchElementException;
 class MongoCollectionCursor<T> implements MongoCursor<T> {
     private final MongoCollection<T> collection;
     private final MongoFind find;
-    private final MongoConnection connection;
+    private final MongoConnector connection;
     private QueryResult<T> currentResult;
     private Iterator<T> currentIterator;
     private long nextCount;
     private boolean closed;
 
     public MongoCollectionCursor(final MongoCollection<T> collection, final MongoFind find,
-                                 final MongoConnection connection) {
+                                 final MongoConnector connection) {
         this.collection = collection;
         this.find = find;
         this.connection = connection;

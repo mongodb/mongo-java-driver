@@ -30,20 +30,20 @@ public final class MongoConnectionsImpl {
     private MongoConnectionsImpl() {
     }
 
-    public static SingleServerMongoConnection create(final ServerAddress serverAddress, final MongoClientOptions options) {
+    public static SingleServerMongoConnector create(final ServerAddress serverAddress, final MongoClientOptions options) {
         return create(serverAddress, options, new PowerOfTwoByteBufferPool());
     }
 
-    public static SingleServerMongoConnection create(final ServerAddress serverAddress, final MongoClientOptions options,
+    public static SingleServerMongoConnector create(final ServerAddress serverAddress, final MongoClientOptions options,
                                                      final BufferPool<ByteBuffer> bufferPool) {
         if (options.isAsyncEnabled()
                 && !options.isSSLEnabled()
                 && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            return new SingleServerMongoConnection(options, serverAddress,
-                    new SimplePool<MongoPoolableConnection>(serverAddress.toString(), options.getConnectionsPerHost()) {
+            return new SingleServerMongoConnector(options, serverAddress,
+                    new SimplePool<MongoPoolableConnector>(serverAddress.toString(), options.getConnectionsPerHost()) {
                         @Override
-                        protected MongoPoolableConnection createNew() {
-                            return new SingleChannelAsyncMongoConnection(serverAddress, this, bufferPool, options);
+                        protected MongoPoolableConnector createNew() {
+                            return new SingleChannelAsyncMongoConnector(serverAddress, this, bufferPool, options);
                         }
 
                         @Override
@@ -53,11 +53,11 @@ public final class MongoConnectionsImpl {
                         }
                     });
         } else {
-            return new SingleServerMongoConnection(options, serverAddress,
-                    new SimplePool<MongoPoolableConnection>(serverAddress.toString(), options.getConnectionsPerHost()) {
+            return new SingleServerMongoConnector(options, serverAddress,
+                    new SimplePool<MongoPoolableConnector>(serverAddress.toString(), options.getConnectionsPerHost()) {
                         @Override
-                        protected MongoPoolableConnection createNew() {
-                            return new SingleChannelSyncMongoConnection(serverAddress, this, bufferPool, options);
+                        protected MongoPoolableConnector createNew() {
+                            return new SingleChannelSyncMongoConnector(serverAddress, this, bufferPool, options);
                         }
 
                         @Override
@@ -69,8 +69,8 @@ public final class MongoConnectionsImpl {
         }
     }
 
-    public static MultipleServerMongoConnection create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MultipleServerMongoConnection(new ReplicaSetConnectionStrategy(seedList), options);
+    public static MultipleServerMongoConnector create(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        return new MultipleServerMongoConnector(new ReplicaSetConnectionStrategy(seedList), options);
     }
 
 }

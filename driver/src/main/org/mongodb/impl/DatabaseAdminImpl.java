@@ -19,7 +19,7 @@ package org.mongodb.impl;
 import org.mongodb.Document;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseAdmin;
-import org.mongodb.MongoConnection;
+import org.mongodb.MongoConnector;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.command.Create;
@@ -47,9 +47,9 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
 
     private final String databaseName;
     private final Serializer<Document> documentSerializer;
-    private final MongoConnection operations;
+    private final MongoConnector operations;
 
-    public DatabaseAdminImpl(final String databaseName, final MongoConnection operations,
+    public DatabaseAdminImpl(final String databaseName, final MongoConnector operations,
                              final Serializer<Document> documentSerializer) {
         this.databaseName = databaseName;
         this.operations = operations;

@@ -65,17 +65,17 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class SingleChannelAsyncMongoConnection implements MongoPoolableConnection {
+public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector {
     private final ServerAddress serverAddress;
-    private final SimplePool<MongoPoolableConnection> channelPool;
+    private final SimplePool<MongoPoolableConnector> channelPool;
     private final BufferPool<ByteBuffer> bufferPool;
     private final MongoClientOptions options;
     private volatile MongoAsynchronousSocketChannelGateway channel;
     private volatile boolean activeAsyncCall;
     private volatile boolean releasePending;
 
-    SingleChannelAsyncMongoConnection(final ServerAddress serverAddress, final SimplePool<MongoPoolableConnection> channelPool,
-                                      final BufferPool<ByteBuffer> bufferPool, final MongoClientOptions options) {
+    SingleChannelAsyncMongoConnector(final ServerAddress serverAddress, final SimplePool<MongoPoolableConnector> channelPool,
+                                     final BufferPool<ByteBuffer> bufferPool, final MongoClientOptions options) {
         this.serverAddress = serverAddress;
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
@@ -438,10 +438,10 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
 
 
     private abstract static class MongoResponseCallback implements SingleResultCallback<ResponseBuffers> {
-        private final SingleChannelAsyncMongoConnection connection;
+        private final SingleChannelAsyncMongoConnector connection;
         private volatile boolean closed;
 
-        public MongoResponseCallback(final SingleChannelAsyncMongoConnection connection) {
+        public MongoResponseCallback(final SingleChannelAsyncMongoConnector connection) {
             this.connection = connection;
             this.connection.activeAsyncCall = true;
         }
@@ -462,7 +462,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
             }
         }
 
-        public SingleChannelAsyncMongoConnection getConnection() {
+        public SingleChannelAsyncMongoConnector getConnection() {
             return connection;
         }
 
@@ -474,7 +474,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
         private final Serializer<T> serializer;
 
         public MongoQueryResultCallback(final SingleResultCallback<QueryResult<T>> callback,
-                                        final SingleChannelAsyncMongoConnection connection,
+                                        final SingleChannelAsyncMongoConnector connection,
                                         final Serializer<T> serializer) {
             super(connection);
             this.callback = callback;
@@ -509,7 +509,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
         private final long cursorId;
 
         public MongoGetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback,
-                                          final SingleChannelAsyncMongoConnection connection,
+                                          final SingleChannelAsyncMongoConnector connection,
                                           final Serializer<T> serializer,
                                           final long cursorId) {
             super(connection);
@@ -544,7 +544,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
         private final Serializer<Document> serializer;
 
         public MongoCommandResultBaseCallback(final MongoCommand commandOperation,
-                                              final SingleChannelAsyncMongoConnection client, final Serializer<Document> serializer) {
+                                              final SingleChannelAsyncMongoConnector client, final Serializer<Document> serializer) {
             super(client);
             this.commandOperation = commandOperation;
             this.serializer = serializer;
@@ -575,7 +575,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
         private final SingleResultCallback<CommandResult> callback;
 
         public MongoCommandResultCallback(final SingleResultCallback<CommandResult> callback,
-                                          final MongoCommand commandOperation, final SingleChannelAsyncMongoConnection client,
+                                          final MongoCommand commandOperation, final SingleChannelAsyncMongoConnector client,
                                           final Serializer<Document> serializer) {
             super(commandOperation, client, serializer);
             this.callback = callback;
@@ -603,7 +603,7 @@ public class SingleChannelAsyncMongoConnection implements MongoPoolableConnectio
 
         public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback,
                                         final MongoWrite writeOperation, final GetLastError getLastError,
-                                        final SingleChannelAsyncMongoConnection client,
+                                        final SingleChannelAsyncMongoConnector client,
                                         final Serializer<Document> serializer) {
             super(getLastError, client, serializer);
             this.callback = callback;

@@ -20,7 +20,7 @@ import com.mongodb.serializers.CollectibleDBObjectSerializer;
 import org.mongodb.Document;
 import org.mongodb.Get;
 import org.mongodb.Index;
-import org.mongodb.MongoConnection;
+import org.mongodb.MongoConnector;
 import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
@@ -1120,7 +1120,7 @@ public class DBCollection implements IDBCollection {
         return keys;
     }
 
-    protected MongoConnection getConnection() {
+    protected MongoConnector getConnection() {
         return getDB().getConnection();
     }
 

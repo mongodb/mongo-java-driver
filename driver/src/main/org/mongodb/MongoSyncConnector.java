@@ -30,7 +30,7 @@ import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
 import org.mongodb.serialization.Serializer;
 
-public interface MongoSyncConnection {
+public interface MongoSyncConnector {
     CommandResult command(String database, MongoCommand commandOperation, Serializer<Document> serializer);
 
     <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Serializer<Document> querySerializer,

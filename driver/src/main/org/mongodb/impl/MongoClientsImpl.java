@@ -49,7 +49,7 @@ public final class MongoClientsImpl {
 
     public static MongoClientImpl create(final MongoConnectionStrategy connectionStrategy,
                                          final MongoClientOptions options) {
-        return new MongoClientImpl(options, new MultipleServerMongoConnection(connectionStrategy, options));
+        return new MongoClientImpl(options, new MultipleServerMongoConnector(connectionStrategy, options));
     }
 
     public static MongoClientImpl create(final MongoClientURI mongoURI) throws UnknownHostException {

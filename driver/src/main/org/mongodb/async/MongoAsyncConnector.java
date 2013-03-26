@@ -33,7 +33,7 @@ import org.mongodb.serialization.Serializer;
 
 import java.util.concurrent.Future;
 
-public interface MongoAsyncConnection {
+public interface MongoAsyncConnector {
     Future<CommandResult> asyncCommand(String database, MongoCommand commandOperation, Serializer<Document> serializer);
 
     void asyncCommand(String database, MongoCommand commandOperation, Serializer<Document> serializer,

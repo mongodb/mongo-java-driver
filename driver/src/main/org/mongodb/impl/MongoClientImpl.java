@@ -19,7 +19,7 @@ package org.mongodb.impl;
 import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoConnection;
+import org.mongodb.MongoConnector;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.ServerAddress;
@@ -31,10 +31,10 @@ import java.util.concurrent.ExecutionException;
 
 public class MongoClientImpl implements MongoClient {
 
-    private final MongoConnection connection;
+    private final MongoConnector connection;
     private final MongoClientOptions clientOptions;
 
-    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoConnection connection) {
+    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoConnector connection) {
         this.clientOptions = clientOptions;
         this.connection = connection;
     }
@@ -79,7 +79,7 @@ public class MongoClientImpl implements MongoClient {
         return connection.getServerAddressList();
     }
 
-    public MongoConnection getConnection() {
+    public MongoConnector getConnection() {
         return connection;
     }
 }

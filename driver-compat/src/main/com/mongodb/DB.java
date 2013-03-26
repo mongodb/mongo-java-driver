@@ -18,7 +18,7 @@ package com.mongodb;
 
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
-import org.mongodb.MongoConnection;
+import org.mongodb.MongoConnector;
 import org.mongodb.MongoNamespace;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.Create;
@@ -433,7 +433,7 @@ public class DB implements IDB {
         throw new IllegalStateException("Not implemented yet!");
     }
 
-    protected MongoConnection getConnection() {
+    protected MongoConnector getConnection() {
         return getMongo().getConnection();
     }
 

@@ -18,9 +18,9 @@ package org.mongodb.impl;
 
 import org.mongodb.Document;
 import org.mongodb.MongoConnectionStrategy;
+import org.mongodb.MongoConnector;
 import org.mongodb.io.BufferPool;
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoConnection;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
@@ -46,14 +46,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-class MultipleServerMongoConnection implements MongoConnection {
+class MultipleServerMongoConnector implements MongoConnector {
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
-    private final Map<ServerAddress, SingleServerMongoConnection> mongoClientMap =
-            new HashMap<ServerAddress, SingleServerMongoConnection>();
+    private final Map<ServerAddress, SingleServerMongoConnector> mongoClientMap =
+            new HashMap<ServerAddress, SingleServerMongoConnector>();
     private final MongoConnectionStrategy connectionStrategy;
 
-    MultipleServerMongoConnection(final MongoConnectionStrategy connectionStrategy, final MongoClientOptions options) {
+    MultipleServerMongoConnector(final MongoConnectionStrategy connectionStrategy, final MongoClientOptions options) {
         this.connectionStrategy = connectionStrategy;
         this.options = options;
         this.bufferPool = new PowerOfTwoByteBufferPool();
@@ -196,7 +196,7 @@ class MultipleServerMongoConnection implements MongoConnection {
 
     @Override
     public void close() {
-        for (SingleServerMongoConnection cur : mongoClientMap.values()) {
+        for (SingleServerMongoConnector cur : mongoClientMap.values()) {
             cur.close();
         }
         connectionStrategy.close();
@@ -207,19 +207,19 @@ class MultipleServerMongoConnection implements MongoConnection {
         return connectionStrategy.getAllAddresses();
     }
 
-    SingleServerMongoConnection getPrimary() {
+    SingleServerMongoConnector getPrimary() {
         final ServerAddress serverAddress = connectionStrategy.getAddressOfPrimary();
         return getConnection(serverAddress);
     }
 
-    SingleServerMongoConnection getConnection(final ReadPreference readPreference) {
+    SingleServerMongoConnector getConnection(final ReadPreference readPreference) {
         final ServerAddress serverAddress = connectionStrategy.getAddressForReadPreference(readPreference);
 
         return getConnection(serverAddress);
     }
 
-    private synchronized SingleServerMongoConnection getConnection(final ServerAddress serverAddress) {
-        SingleServerMongoConnection connection = mongoClientMap.get(serverAddress);
+    private synchronized SingleServerMongoConnector getConnection(final ServerAddress serverAddress) {
+        SingleServerMongoConnector connection = mongoClientMap.get(serverAddress);
         if (connection == null) {
             connection = MongoConnectionsImpl.create(serverAddress, options, bufferPool);
             mongoClientMap.put(serverAddress, connection);

@@ -17,7 +17,7 @@
 package org.mongodb.impl;
 
 import org.mongodb.Document;
-import org.mongodb.MongoConnection;
+import org.mongodb.MongoConnector;
 import org.mongodb.ServerAddress;
 import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.operation.MongoCommand;
@@ -25,10 +25,10 @@ import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
 class MongoConnectionIsMasterExecutor implements IsMasterExecutor {
-    private final MongoConnection connection;
+    private final MongoConnector connection;
     private final ServerAddress serverAddress;
 
-    MongoConnectionIsMasterExecutor(final MongoConnection connection, final ServerAddress serverAddress) {
+    MongoConnectionIsMasterExecutor(final MongoConnector connection, final ServerAddress serverAddress) {
         this.connection = connection;
         this.serverAddress = serverAddress;
     }

@@ -18,7 +18,7 @@ package org.mongodb.impl;
 
 import org.mongodb.ClientAdmin;
 import org.mongodb.Document;
-import org.mongodb.MongoConnection;
+import org.mongodb.MongoConnector;
 import org.mongodb.command.ListDatabases;
 import org.mongodb.command.Ping;
 import org.mongodb.result.CommandResult;
@@ -39,9 +39,9 @@ class ClientAdminImpl implements ClientAdmin {
     private static final ListDatabases LIST_DATABASES = new ListDatabases();
 
     private final DocumentSerializer documentSerializer;
-    private final MongoConnection connection;
+    private final MongoConnector connection;
 
-    ClientAdminImpl(final MongoConnection connection, final PrimitiveSerializers primitiveSerializers) {
+    ClientAdminImpl(final MongoConnector connection, final PrimitiveSerializers primitiveSerializers) {
         this.connection = connection;
         documentSerializer = new DocumentSerializer(primitiveSerializers);
     }

@@ -17,7 +17,7 @@
 package com.mongodb;
 
 import org.mongodb.Document;
-import org.mongodb.MongoConnection;
+import org.mongodb.MongoConnector;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.ListDatabases;
 import org.mongodb.impl.MongoConnectionsImpl;
@@ -44,7 +44,7 @@ public class Mongo {
     private volatile ReadPreference readPreference;
 
     private final Serializer<Document> documentSerializer;
-    private final MongoConnection connection;
+    private final MongoConnector connection;
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
         this(MongoConnectionsImpl.create(createNewSeedList(seedList), mongoOptions.toNew()), mongoOptions);
@@ -58,7 +58,7 @@ public class Mongo {
         this(MongoConnectionsImpl.create(serverAddress.toNew(), mongoOptions.toNew()), mongoOptions);
     }
 
-    Mongo(final MongoConnection connection, final MongoClientOptions options) {
+    Mongo(final MongoConnector connection, final MongoClientOptions options) {
         this.connection = connection;
         this.documentSerializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
         this.readPreference = options.getReadPreference() != null ?
@@ -230,7 +230,7 @@ public class Mongo {
         return retVal;
     }
 
-    private static MongoConnection createConnection(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
+    private static MongoConnector createConnection(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
             return MongoConnectionsImpl.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)), mongoURI.getOptions());
         } else {
@@ -242,7 +242,7 @@ public class Mongo {
         }
     }
 
-    protected MongoConnection getConnection() {
+    protected MongoConnector getConnection() {
         return connection;
     }
 

@@ -48,7 +48,7 @@ public final class Fixture {
     }
 
 
-    public static MongoConnection getMongoConnection() {
+    public static MongoConnector getMongoConnection() {
         return mongoClient.getConnection();
     }
 

@@ -24,7 +24,7 @@ import org.mongodb.Function;
 import org.mongodb.Get;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCollectionOptions;
-import org.mongodb.MongoConnection;
+import org.mongodb.MongoConnector;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoException;
@@ -69,7 +69,7 @@ import java.util.concurrent.TimeoutException;
 class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     private final CollectionAdmin admin;
-    private final MongoConnection operations;
+    private final MongoConnector operations;
     private final String name;
     private final MongoDatabase database;
     private final MongoCollectionOptions options;
@@ -77,7 +77,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
                                final CollectibleSerializer<T> serializer, final MongoCollectionOptions options,
-                               final MongoConnection operations) {
+                               final MongoConnector operations) {
 
         this.serializer = serializer;
         this.name = name;
