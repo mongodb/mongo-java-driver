@@ -165,7 +165,7 @@ public class DB implements IDB {
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         final MongoFind findAll = new MongoFind().readPreference(org.mongodb.ReadPreference.primary());
-        final QueryResult<Document> query = getConnection().query(
+        final QueryResult<Document> query = getConnector().query(
                 namespacesCollection,
                 findAll,
                 documentSerializer,
@@ -433,13 +433,13 @@ public class DB implements IDB {
         throw new IllegalStateException("Not implemented yet!");
     }
 
-    protected MongoConnector getConnection() {
-        return getMongo().getConnection();
+    protected MongoConnector getConnector() {
+        return getMongo().getConnector();
     }
 
     protected org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
-        return new org.mongodb.result.CommandResult(getConnection().command(getName(), commandOperation, documentSerializer));
+        return new org.mongodb.result.CommandResult(getConnector().command(getName(), commandOperation, documentSerializer));
 
     }
 }

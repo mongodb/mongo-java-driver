@@ -44,22 +44,22 @@ public class Mongo {
     private volatile ReadPreference readPreference;
 
     private final Serializer<Document> documentSerializer;
-    private final MongoConnector connection;
+    private final MongoConnector connector;
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
         this(MongoConnectionsImpl.create(createNewSeedList(seedList), mongoOptions.toNew()), mongoOptions);
     }
 
     Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
-        this(createConnection(mongoURI.toNew()), mongoURI.getOptions());
+        this(createConnector(mongoURI.toNew()), mongoURI.getOptions());
     }
 
     Mongo(final ServerAddress serverAddress, final MongoClientOptions mongoOptions) {
         this(MongoConnectionsImpl.create(serverAddress.toNew(), mongoOptions.toNew()), mongoOptions);
     }
 
-    Mongo(final MongoConnector connection, final MongoClientOptions options) {
-        this.connection = connection;
+    Mongo(final MongoConnector connector, final MongoClientOptions options) {
+        this.connector = connector;
         this.documentSerializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
         this.readPreference = options.getReadPreference() != null ?
                 options.getReadPreference() : ReadPreference.primary();
@@ -124,7 +124,7 @@ public class Mongo {
      */
     public List<ServerAddress> getServerAddressList() {
         List<ServerAddress> retVal = new ArrayList<ServerAddress>();
-        for (org.mongodb.ServerAddress serverAddress : getConnection().getServerAddressList()) {
+        for (org.mongodb.ServerAddress serverAddress : getConnector().getServerAddressList()) {
             retVal.add(new ServerAddress(serverAddress));
         }
         return retVal;
@@ -140,7 +140,7 @@ public class Mongo {
     public List<String> getDatabaseNames() {
         final org.mongodb.result.CommandResult listDatabasesResult;
         try {
-            listDatabasesResult = getConnection().command(ADMIN_DATABASE_NAME, new ListDatabases(), documentSerializer);
+            listDatabasesResult = getConnector().command(ADMIN_DATABASE_NAME, new ListDatabases(), documentSerializer);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
@@ -201,7 +201,7 @@ public class Mongo {
      * instance and any databases obtained from it can no longer be used.
      */
     public void close() {
-        getConnection().close();
+        getConnector().close();
     }
 
     //******* Missing functionality from the old driver *******//
@@ -230,7 +230,7 @@ public class Mongo {
         return retVal;
     }
 
-    private static MongoConnector createConnection(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
+    private static MongoConnector createConnector(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
             return MongoConnectionsImpl.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)), mongoURI.getOptions());
         } else {
@@ -242,8 +242,8 @@ public class Mongo {
         }
     }
 
-    protected MongoConnector getConnection() {
-        return connection;
+    protected MongoConnector getConnector() {
+        return connector;
     }
 
 }

@@ -31,12 +31,12 @@ import java.util.concurrent.ExecutionException;
 
 public class MongoClientImpl implements MongoClient {
 
-    private final MongoConnector connection;
+    private final MongoConnector connector;
     private final MongoClientOptions clientOptions;
 
-    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoConnector connection) {
+    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoConnector connector) {
         this.clientOptions = clientOptions;
-        this.connection = connection;
+        this.connector = connector;
     }
 
     @Override
@@ -46,7 +46,7 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoDatabase getDatabase(final String databaseName, final MongoDatabaseOptions options) {
-        return new MongoDatabaseImpl(databaseName, connection, options.withDefaults(clientOptions));
+        return new MongoDatabaseImpl(databaseName, connector, options.withDefaults(clientOptions));
     }
 
     @Override
@@ -61,7 +61,7 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public void close() {
-        connection.close();
+        connector.close();
     }
 
     @Override
@@ -71,15 +71,15 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public ClientAdmin tools() {
-        return new ClientAdminImpl(connection, PrimitiveSerializers.createDefault());
+        return new ClientAdminImpl(connector, PrimitiveSerializers.createDefault());
     }
 
     @Override
     public List<ServerAddress> getServerAddressList() {
-        return connection.getServerAddressList();
+        return connector.getServerAddressList();
     }
 
-    public MongoConnector getConnection() {
-        return connection;
+    public MongoConnector getConnector() {
+        return connector;
     }
 }

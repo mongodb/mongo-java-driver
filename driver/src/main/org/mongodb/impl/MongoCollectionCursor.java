@@ -33,18 +33,18 @@ import java.util.NoSuchElementException;
 class MongoCollectionCursor<T> implements MongoCursor<T> {
     private final MongoCollection<T> collection;
     private final MongoFind find;
-    private final MongoConnector connection;
+    private final MongoConnector connector;
     private QueryResult<T> currentResult;
     private Iterator<T> currentIterator;
     private long nextCount;
     private boolean closed;
 
     public MongoCollectionCursor(final MongoCollection<T> collection, final MongoFind find,
-                                 final MongoConnector connection) {
+                                 final MongoConnector connector) {
         this.collection = collection;
         this.find = find;
-        this.connection = connection;
-        currentResult = connection.query(collection.getNamespace(), find,
+        this.connector = connector;
+        currentResult = connector.query(collection.getNamespace(), find,
                                         collection.getOptions().getDocumentSerializer(),
                                         collection.getSerializer());
         currentIterator = currentResult.getResults().iterator();
@@ -54,7 +54,7 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
     public void close() {
         closed = true;
         if (currentResult != null && currentResult.getCursor() != null) {
-            connection.killCursors(new MongoKillCursor(currentResult.getCursor()));
+            connector.killCursors(new MongoKillCursor(currentResult.getCursor()));
         }
         currentResult = null;
         currentIterator = null;
@@ -108,7 +108,7 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
     }
 
     private void getMore() {
-        currentResult = connection.getMore(collection.getNamespace(),
+        currentResult = connector.getMore(collection.getNamespace(),
                                                                      new GetMore(currentResult.getCursor(),
                                                                                 find.getBatchSize()),
                                                                      collection.getSerializer());

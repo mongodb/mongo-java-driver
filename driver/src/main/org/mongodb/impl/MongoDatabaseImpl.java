@@ -32,16 +32,16 @@ import org.mongodb.serialization.serializers.ObjectIdGenerator;
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;
     private final String name;
-    private final MongoConnector operations;
+    private final MongoConnector connector;
     private final DatabaseAdmin admin;
     private final Serializer<Document> documentSerializer;
 
-    public MongoDatabaseImpl(final String name, final MongoConnector operations, final MongoDatabaseOptions options) {
+    public MongoDatabaseImpl(final String name, final MongoConnector connector, final MongoDatabaseOptions options) {
         this.name = name;
-        this.operations = operations;
+        this.connector = connector;
         this.options = options;
         documentSerializer = options.getDocumentSerializer();
-        this.admin = new DatabaseAdminImpl(name, operations, documentSerializer);
+        this.admin = new DatabaseAdminImpl(name, connector, documentSerializer);
     }
 
     @Override
@@ -75,7 +75,7 @@ class MongoDatabaseImpl implements MongoDatabase {
                                                     final CollectibleSerializer<T> serializer,
                                                     final MongoCollectionOptions operationOptions) {
         return new MongoCollectionImpl<T>(collectionName, this, serializer, operationOptions.withDefaults(options),
-                                         operations);
+                connector);
     }
 
     @Override
@@ -86,7 +86,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
-        return new CommandResult(operations.command(getName(), commandOperation, documentSerializer));
+        return new CommandResult(connector.command(getName(), commandOperation, documentSerializer));
     }
 
 //    @Override

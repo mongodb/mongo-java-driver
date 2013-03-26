@@ -47,25 +47,25 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
 
     private final String databaseName;
     private final Serializer<Document> documentSerializer;
-    private final MongoConnector operations;
+    private final MongoConnector connector;
 
-    public DatabaseAdminImpl(final String databaseName, final MongoConnector operations,
+    public DatabaseAdminImpl(final String databaseName, final MongoConnector connector,
                              final Serializer<Document> documentSerializer) {
         this.databaseName = databaseName;
-        this.operations = operations;
+        this.connector = connector;
         this.documentSerializer = documentSerializer;
     }
 
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        new CommandResult(operations.command(databaseName, DROP_DATABASE, documentSerializer));
+        new CommandResult(connector.command(databaseName, DROP_DATABASE, documentSerializer));
     }
 
     @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
-        final QueryResult<Document> query = operations.query(namespacesCollection, FIND_ALL,
+        final QueryResult<Document> query = connector.query(namespacesCollection, FIND_ALL,
                                                             documentSerializer, documentSerializer);
 
         final HashSet<String> collections = new HashSet<String>();
@@ -88,7 +88,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         final CommandResult commandResult = new CommandResult(
-                operations.command(databaseName, new Create(createCollectionOptions), documentSerializer));
+                connector.command(databaseName, new Create(createCollectionOptions), documentSerializer));
         handleErrors(commandResult);
     }
 
@@ -100,7 +100,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
         final RenameCollection rename = new RenameCollection(renameCollectionOptions, databaseName);
-        final CommandResult commandResult = operations.command("admin", rename, documentSerializer);
+        final CommandResult commandResult = connector.command("admin", rename, documentSerializer);
         handleErrors(commandResult);
     }
 }

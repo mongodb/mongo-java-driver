@@ -48,8 +48,8 @@ public final class Fixture {
     }
 
 
-    public static MongoConnector getMongoConnection() {
-        return mongoClient.getConnection();
+    public static MongoConnector getMongoConnector() {
+        return mongoClient.getConnector();
     }
 
     // Note this is not safe for concurrent access - if you run multiple tests in parallel from the same class,

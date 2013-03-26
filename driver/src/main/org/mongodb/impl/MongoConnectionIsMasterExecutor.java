@@ -25,18 +25,18 @@ import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 
 class MongoConnectionIsMasterExecutor implements IsMasterExecutor {
-    private final MongoConnector connection;
+    private final MongoConnector connector;
     private final ServerAddress serverAddress;
 
-    MongoConnectionIsMasterExecutor(final MongoConnector connection, final ServerAddress serverAddress) {
-        this.connection = connection;
+    MongoConnectionIsMasterExecutor(final MongoConnector connector, final ServerAddress serverAddress) {
+        this.connector = connector;
         this.serverAddress = serverAddress;
     }
 
     @Override
     public IsMasterCommandResult execute() {
         return new IsMasterCommandResult(
-                connection.command("admin", new MongoCommand(new Document("ismaster", 1)),
+                connector.command("admin", new MongoCommand(new Document("ismaster", 1)),
                         new DocumentSerializer(PrimitiveSerializers.createDefault())));
     }
 
@@ -47,6 +47,6 @@ class MongoConnectionIsMasterExecutor implements IsMasterExecutor {
 
     @Override
     public void close() {
-        connection.close();
+        connector.close();
     }
 }

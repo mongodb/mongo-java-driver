@@ -47,7 +47,7 @@ import static org.mongodb.impl.ErrorHandling.handleErrors;
 public class CollectionAdminImpl implements CollectionAdmin {
     private static final String NAMESPACE_KEY_NAME = "ns";
 
-    private final MongoConnector operations;
+    private final MongoConnector connector;
     private final MongoDatabase database;
     //TODO: need to do something about these default serialisers, they're created everywhere
     private final DocumentSerializer documentSerializer;
@@ -58,11 +58,11 @@ public class CollectionAdminImpl implements CollectionAdmin {
     private final CollStats collStatsCommand;
     private final Drop dropCollectionCommand;
 
-    CollectionAdminImpl(final MongoConnector operations,
+    CollectionAdminImpl(final MongoConnector connector,
                         final PrimitiveSerializers primitiveSerializers,
                         final MongoNamespace collectionNamespace,
                         final MongoDatabase database) {
-        this.operations = operations;
+        this.connector = connector;
         this.database = database;
         this.documentSerializer = new DocumentSerializer(primitiveSerializers);
         indexesNamespace = new MongoNamespace(database.getName(), "system.indexes");
@@ -82,12 +82,12 @@ public class CollectionAdminImpl implements CollectionAdmin {
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
         insertIndexOperation.writeConcern(WriteConcern.ACKNOWLEDGED);
 
-        operations.insert(indexesNamespace, insertIndexOperation, documentSerializer);
+        connector.insert(indexesNamespace, insertIndexOperation, documentSerializer);
     }
 
     @Override
     public List<Document> getIndexes() {
-        final QueryResult<Document> systemCollection = operations.query(indexesNamespace, queryForCollectionNamespace,
+        final QueryResult<Document> systemCollection = connector.query(indexesNamespace, queryForCollectionNamespace,
                 documentSerializer, documentSerializer);
         return systemCollection.getResults();
     }

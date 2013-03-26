@@ -39,10 +39,10 @@ class ClientAdminImpl implements ClientAdmin {
     private static final ListDatabases LIST_DATABASES = new ListDatabases();
 
     private final DocumentSerializer documentSerializer;
-    private final MongoConnector connection;
+    private final MongoConnector connector;
 
-    ClientAdminImpl(final MongoConnector connection, final PrimitiveSerializers primitiveSerializers) {
-        this.connection = connection;
+    ClientAdminImpl(final MongoConnector connector, final PrimitiveSerializers primitiveSerializers) {
+        this.connector = connector;
         documentSerializer = new DocumentSerializer(primitiveSerializers);
     }
 
@@ -50,14 +50,14 @@ class ClientAdminImpl implements ClientAdmin {
     //http://docs.mongodb.org/manual/reference/command/ping/
     @Override
     public double ping() {
-        final CommandResult pingResult = connection.command(ADMIN_DATABASE, PING_COMMAND, documentSerializer);
+        final CommandResult pingResult = connector.command(ADMIN_DATABASE, PING_COMMAND, documentSerializer);
 
         return (Double) pingResult.getResponse().get("ok");
     }
 
     @Override
     public Set<String> getDatabaseNames() {
-        final CommandResult listDatabasesResult = connection.command(ADMIN_DATABASE, LIST_DATABASES, documentSerializer);
+        final CommandResult listDatabasesResult = connector.command(ADMIN_DATABASE, LIST_DATABASES, documentSerializer);
 
         @SuppressWarnings("unchecked")
         final List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");

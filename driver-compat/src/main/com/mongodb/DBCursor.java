@@ -350,7 +350,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         closed = true;
 
         if (currentResult != null && currentResult.getCursor() != null) {
-            getConnection().killCursors(new MongoKillCursor(currentResult.getCursor()));
+            getConnector().killCursors(new MongoKillCursor(currentResult.getCursor()));
         }
         currentResult = null;
         currentIterator = null;
@@ -579,7 +579,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
     private void getMore() {
-        currentResult = getConnection().getMore(
+        currentResult = getConnector().getMore(
                 collection.getNamespace(),
                 new GetMore(currentResult.getCursor(), find.getBatchSize()),
                 collection.getObjectSerializer());
@@ -587,7 +587,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
     private void query() {
-        currentResult = getConnection().query(
+        currentResult = getConnector().query(
                 collection.getNamespace(),
                 find,
                 collection.getDocumentSerializer(),
@@ -595,8 +595,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         currentIterator = currentResult.getResults().iterator();
     }
 
-    protected MongoConnector getConnection() {
-        return getCollection().getConnection();
+    protected MongoConnector getConnector() {
+        return getCollection().getConnector();
     }
 
 }

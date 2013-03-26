@@ -115,7 +115,7 @@ public class DBCollection implements IDBCollection {
         final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
                 .writeConcern(writeConcern.toNew());
         try {
-            final org.mongodb.result.WriteResult result = getConnection().insert(getNamespace(), mongoInsert, objectSerializer);
+            final org.mongodb.result.WriteResult result = getConnector().insert(getNamespace(), mongoInsert, objectSerializer);
             return new WriteResult(result, writeConcern);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
@@ -148,7 +148,7 @@ public class DBCollection implements IDBCollection {
                 .upsert(true)
                 .writeConcern(wc.toNew());
 
-        return new WriteResult(getConnection().replace(getNamespace(), replace, getDocumentSerializer(),
+        return new WriteResult(getConnector().replace(getNamespace(), replace, getDocumentSerializer(),
                 getObjectSerializer()), wc);
     }
 
@@ -184,7 +184,7 @@ public class DBCollection implements IDBCollection {
 
         try {
             final org.mongodb.result.WriteResult result =
-                    getConnection().update(getNamespace(), mongoUpdate, documentSerializer);
+                    getConnector().update(getNamespace(), mongoUpdate, documentSerializer);
             return new WriteResult(result, concern);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
@@ -263,7 +263,7 @@ public class DBCollection implements IDBCollection {
         final MongoRemove mongoRemove = new MongoRemove(toDocument(filter))
                 .writeConcern(writeConcernToUse.toNew());
 
-        final org.mongodb.result.WriteResult result = getConnection().remove(getNamespace(), mongoRemove, documentSerializer);
+        final org.mongodb.result.WriteResult result = getConnector().remove(getNamespace(), mongoRemove, documentSerializer);
 
         return new WriteResult(result, writeConcernToUse);
     }
@@ -374,7 +374,7 @@ public class DBCollection implements IDBCollection {
                 .readPreference(readPref.toNew())
                 .batchSize(-1);
 
-        final QueryResult<DBObject> res = getConnection().query(getNamespace(), mongoFind,
+        final QueryResult<DBObject> res = getConnector().query(getNamespace(), mongoFind,
                 documentSerializer, getObjectSerializer());
         if (res.getResults().isEmpty()) {
             return null;
@@ -571,7 +571,7 @@ public class DBCollection implements IDBCollection {
         final RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
         final RenameCollection renameCommand = new RenameCollection(renameCollectionOptions, getDB().getName());
         try {
-            getConnection().command("admin", renameCommand, getDocumentSerializer());
+            getConnector().command("admin", renameCommand, getDocumentSerializer());
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
@@ -726,7 +726,7 @@ public class DBCollection implements IDBCollection {
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
         insertIndexOperation.writeConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
         try {
-            getConnection().insert(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, documentSerializer);
+            getConnector().insert(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, documentSerializer);
         } catch (MongoDuplicateKeyException exception) {
             throw new MongoException.DuplicateKey(exception);
         }
@@ -1016,7 +1016,7 @@ public class DBCollection implements IDBCollection {
                 new Document(NAMESPACE_KEY_NAME, getNamespace().getFullName()))
                 .readPreference(org.mongodb.ReadPreference.primary());
 
-        final QueryResult<Document> systemCollection = getConnection().query(
+        final QueryResult<Document> systemCollection = getConnector().query(
                 new MongoNamespace(database.getName(), "system.indexes"),
                 queryForCollectionNamespace,
                 documentSerializer, documentSerializer);
@@ -1120,8 +1120,8 @@ public class DBCollection implements IDBCollection {
         return keys;
     }
 
-    protected MongoConnector getConnection() {
-        return getDB().getConnection();
+    protected MongoConnector getConnector() {
+        return getDB().getConnector();
     }
 
     protected CollectibleSerializer<DBObject> getObjectSerializer() {
