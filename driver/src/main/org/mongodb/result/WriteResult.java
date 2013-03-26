@@ -18,7 +18,7 @@ package org.mongodb.result;
 
 import org.mongodb.operation.MongoWrite;
 
-public class WriteResult extends MongoResult {
+public class WriteResult {
     private final MongoWrite write;
     private final CommandResult getLastErrorResult;
 

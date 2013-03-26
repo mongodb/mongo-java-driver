@@ -192,7 +192,6 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
         bufferList.clear();
     }
 
-    // TODO: go backwards instead of forwards?  Probably doesn't matter with power of two
     // TODO: desperately seeking unit test
     private void backpatchSizeWithOffset(final int size, final int additionalOffset) {
         final int backpatchPosition = position - size - additionalOffset;

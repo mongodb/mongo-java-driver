@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-// TODO: can we get rid of this class?
 public class StringRangeSet implements Set<String> {
 
     private final int size;

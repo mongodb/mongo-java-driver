@@ -79,7 +79,7 @@ public class BSONDocumentBufferSerializer implements CollectibleSerializer<BSOND
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             String name = reader.readName();
             if (name.equals("_id")) {
-                return primitiveSerializers.deserialize(reader);  // TODO: handle non-primitive identifiers
+                return primitiveSerializers.deserialize(reader);
             }
             else {
                 reader.skipValue();

@@ -33,8 +33,6 @@ import java.nio.ByteBuffer;
 import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
 
-// TODO: authentication
-
 /**
  * A gateway for the MongoDB wire protocol.
  * <p/>

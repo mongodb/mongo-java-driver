@@ -102,10 +102,9 @@ public class BSONBinaryReader extends BSONReader {
 
     @Override
     public Binary readBinaryData() {
-        checkPreconditions("readBinaryDate", BSONType.BINARY);
+        checkPreconditions("readBinaryData", BSONType.BINARY);
         setState(getNextState());
 
-        // TODO: implement
         int numBytes = buffer.readInt32();
         final byte type = buffer.readByte();
 

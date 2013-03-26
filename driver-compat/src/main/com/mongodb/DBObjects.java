@@ -22,7 +22,6 @@ import org.mongodb.Document;
 import java.util.List;
 import java.util.Map;
 
-// TODO: Implement these methods
 public class DBObjects {
     private DBObjects() {
     }
@@ -69,7 +68,6 @@ public class DBObjects {
         return res;
     }
 
-    // TODO: This needs to be recursive, to translate nested DBObject and DBList and arrays...
     private static void fill(final DBObject obj, final Document document) {
         if (obj != null) {
             for (final String key : obj.keySet()) {
