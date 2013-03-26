@@ -26,7 +26,12 @@ public final class MongoNamespace {
     private final String collectionName;
 
     public MongoNamespace(final String databaseName, final String collectionName) {
-        // TODO: check args
+        if (databaseName == null) {
+            throw new IllegalArgumentException("database name can not be null");
+        }
+        if (collectionName == null) {
+            throw new IllegalArgumentException("Collection name can not be null");
+        }
 
         this.databaseName = databaseName;
         this.collectionName = collectionName;
