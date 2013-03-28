@@ -595,8 +595,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         currentIterator = currentResult.getResults().iterator();
     }
 
-    protected MongoConnector getConnector() {
+    private MongoConnector getConnector() {
         return getCollection().getConnector();
     }
-
 }
