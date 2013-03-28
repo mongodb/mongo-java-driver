@@ -227,7 +227,7 @@ public class DB implements IDB {
      * @param cmd command to execute
      * @return result of command from the database
      * @throws MongoException
-     * @dochub commands
+     * @mongodb.driver.manual tutorial/use-database-commands commands
      */
     public CommandResult command(final String cmd) {
         return command(new BasicDBObject(cmd, Boolean.TRUE));
@@ -239,7 +239,7 @@ public class DB implements IDB {
      * @param cmd document representing the command to execute
      * @return result of command from the database
      * @throws MongoException
-     * @dochub commands
+     * @mongodb.driver.manual tutorial/use-database-commands commands
      */
     public CommandResult command(final DBObject cmd) {
         final MongoCommand command = new MongoCommand(DBObjects.toDocument(cmd))
@@ -262,8 +262,7 @@ public class DB implements IDB {
      * @param readPrefs ReadPreferences for this command (nodes selection is the biggest part of this)
      * @return result of command from the database
      * @throws MongoException
-     * @dochub commands
-     * @see <a href="http://mongodb.onconfluence.com/display/DOCS/List+of+Database+Commands">List of Commands</a>
+     * @mongodb.driver.manual tutorial/use-database-commands commands
      */
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs) {
         //        readPrefs = getCommandReadPreference(cmd, readPrefs);

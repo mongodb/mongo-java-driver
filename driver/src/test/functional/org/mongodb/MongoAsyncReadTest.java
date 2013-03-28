@@ -80,7 +80,8 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     }
 
     @Test
-    @Ignore("False positive - this passes but it's actually throwing an error on the callback code")  // TODO: investigate
+    @Ignore("False positive - this passes but it's actually throwing an error on the callback code")
+    // TODO: investigate
     public void testOneCallback() throws ExecutionException, InterruptedException {
         final List<Document> documentResultList = new ArrayList<Document>();
         final List<Exception> exceptionList = new ArrayList<Exception>();
@@ -120,34 +121,34 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     @Test
     public void testIntoFuture() throws ExecutionException, InterruptedException {
         assertThat(collection.sort(new Document("_id", 1))
-                             .asyncInto(new ArrayList<Document>())
-                             .get(),
-                  is(documentList));
+                .asyncInto(new ArrayList<Document>())
+                .get(),
+                is(documentList));
     }
 
     @Test
     public void testMapIntoFuture() throws ExecutionException, InterruptedException {
         assertThat(collection.sort(new Document("_id", 1))
-                             .map(new Function<Document, Integer>() {
-                                 @Override
-                                 public Integer apply(final Document document) {
-                                     return (Integer) document.get("_id");
-                                 }
-                             })
-                             .asyncInto(new ArrayList<Integer>()).get(),
-                  is(asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)));
+                .map(new Function<Document, Integer>() {
+                    @Override
+                    public Integer apply(final Document document) {
+                        return (Integer) document.get("_id");
+                    }
+                })
+                .asyncInto(new ArrayList<Integer>()).get(),
+                is(asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)));
     }
 
     @Test
     public void testIntoCallback() throws ExecutionException, InterruptedException {
         List<Document> results = new ArrayList<Document>();
         collection.sort(new Document("_id", 1))
-                  .asyncInto(results, new SingleResultCallback<List<Document>>() {
-                      @Override
-                      public void onResult(final List<Document> result, final MongoException e) {
-                          latch.countDown();
-                      }
-                  });
+                .asyncInto(results, new SingleResultCallback<List<Document>>() {
+                    @Override
+                    public void onResult(final List<Document> result, final MongoException e) {
+                        latch.countDown();
+                    }
+                });
 
         latch.await();
         assertThat(results, is(documentList));

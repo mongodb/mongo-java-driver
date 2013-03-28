@@ -67,6 +67,7 @@ import java.util.List;
  *
  * @see MongoClientOptions for the default values for all options
  * @since 2.10.0
+ * @mongodb.driver.manual reference/connection-string Connection String URI Format
  */
 public class MongoClientURI {
     private final org.mongodb.MongoClientURI proxied;
@@ -75,7 +76,6 @@ public class MongoClientURI {
      * Creates a MongoURI from the given string.
      *
      * @param uri the URI
-     * @dochub connections
      */
     public MongoClientURI(final String uri) {
         this(uri, new MongoClientOptions.Builder());

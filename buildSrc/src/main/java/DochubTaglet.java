@@ -16,6 +16,7 @@
 
 import com.sun.tools.doclets.Taglet;
 
+import java.lang.String;
 import java.util.Map;
 
 public class DochubTaglet extends DocTaglet {

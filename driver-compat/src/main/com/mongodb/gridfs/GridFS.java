@@ -32,11 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implementation of GridFS v1.0
- * <p/>
- * <a href="http://www.mongodb.org/display/DOCS/GridFS+Specification">GridFS 1.0 spec</a>
+ * Implementation of GridFS specification.
  *
- * @dochub gridfs
+ * @mongodb.driver.manual applications/gridfs GridFS
  */
 @SuppressWarnings("rawtypes")
 public class GridFS {

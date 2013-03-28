@@ -182,7 +182,6 @@ public class MongoClient extends Mongo {
      * @param uri the URI
      * @throws MongoException
      * @throws UnknownHostException
-     * @dochub connections
      */
     public MongoClient(final MongoClientURI uri) throws UnknownHostException {
         super(uri);

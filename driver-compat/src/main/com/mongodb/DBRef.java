@@ -23,7 +23,7 @@ import org.bson.BSONObject;
 /**
  * overrides DBRefBase to understand a BSONObject representation of a reference.
  *
- * @dochub dbrefs
+ * @mongodb.driver.manual applications/database-references Database References
  */
 public class DBRef extends DBRefBase {
     /**

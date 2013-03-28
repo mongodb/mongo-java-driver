@@ -51,7 +51,7 @@ import static com.mongodb.DBObjects.toDocument;
  * List<DBObject> obj = collection.find( query ).skip( 1000 ).limit( 100 ).toArray();
  * </pre></blockquote>
  *
- * @dochub cursors
+ * @mongodb.driver.manual core/read-operations Read Operations
  */
 @NotThreadSafe
 public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeable {
@@ -185,7 +185,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @param name the name of the special query operator
      * @param o    the value of the special query operator
      * @return this
-     * @dochub specialOperators
+     * @mongodb.driver.manual reference/operator Special Operators
      */
     public DBCursor addSpecial(final String name, final Object o) {
         throw new UnsupportedOperationException();  // TODO
@@ -233,7 +233,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      *
      * @return a <code>DBObject</code>
      * @throws MongoException
-     * @dochub explain
+     * @mongodb.driver.manual reference/explain Explain Output
      */
     public DBObject explain() {
         throw new UnsupportedOperationException();  // TODO
@@ -257,7 +257,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      *
      * @param n the number of elements to return
      * @return a cursor to iterate the results
-     * @dochub limit
+     * @mongodb.driver.manual reference/method/cursor.limit Limit
      */
     public DBCursor limit(final int n) {
         find.limit(n);

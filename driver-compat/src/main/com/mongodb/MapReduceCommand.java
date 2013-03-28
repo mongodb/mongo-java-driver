@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * This class groups the argument for a map/reduce operation and can build the underlying command object
  *
- * @dochub mapreduce
+ * @mongodb.driver.manual applications/map-reduce Map-Reduce
  */
 public class MapReduceCommand {
 
@@ -46,8 +46,6 @@ public class MapReduceCommand {
      * @param outputCollection optional - leave null if want to get the result inline
      * @param type             the type of output
      * @param query            the query to use on input
-     * @return
-     * @dochub mapreduce
      */
     public MapReduceCommand(final DBCollection inputCollection, final String map, final String reduce, final String outputCollection,
                             final OutputType type, final DBObject query) {

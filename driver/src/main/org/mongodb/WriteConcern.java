@@ -34,7 +34,7 @@ import java.util.Map;
  * Other options: <ul> <li><b>j</b>: wait for group commit to journal</li> <li><b>fsync</b>: force fsync to disk</li>
  * </ul>
  *
- * @dochub databases
+ * @mongodb.driver.manual core/write-operations/#write-concern Write Concern
  */
 @Immutable
 public class WriteConcern implements Serializable {

@@ -46,7 +46,7 @@ public interface IDBCollection {
      * @param concern the write concern
      * @return
      * @throws com.mongodb.MongoException
-     * @dochub insert
+     * @mongodb.driver.manual applications/create/#insert insert
      */
     WriteResult insert(List<DBObject> list, WriteConcern concern, DBEncoder encoder);
 
@@ -66,7 +66,7 @@ public interface IDBCollection {
      * @param encoder the DBEncoder to use
      * @return
      * @throws com.mongodb.MongoException
-     * @dochub update
+     * @mongodb.driver.manual applications/update update
      */
     WriteResult update(DBObject q, DBObject o, boolean upsert, boolean multi, WriteConcern concern, DBEncoder encoder);
 
@@ -86,7 +86,7 @@ public interface IDBCollection {
      * @param encoder the DBEncoder to use
      * @return
      * @throws com.mongodb.MongoException
-     * @dochub remove
+     * @mongodb.driver.manual reference/method/db.collection.remove remove
      */
     WriteResult remove(DBObject o, WriteConcern concern, DBEncoder encoder);
 
