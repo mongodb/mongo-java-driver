@@ -46,6 +46,8 @@ public class DB implements IDB {
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
+    private final Bytes.OptionHolder optionHolder;
+
     private final Serializer<Document> documentSerializer;
 
 
@@ -53,6 +55,7 @@ public class DB implements IDB {
         this.mongo = mongo;
         this.name = dbName;
         this.documentSerializer = documentSerializer;
+        this.optionHolder = new Bytes.OptionHolder(mongo.getOptionHolder());
     }
 
     /**
@@ -410,22 +413,22 @@ public class DB implements IDB {
 
     @Override
     public void addOption(final int option) {
-        throw new IllegalStateException("Not implemented yet!");
+        optionHolder.add(option);
     }
 
     @Override
     public void setOptions(final int options) {
-        throw new IllegalStateException("Not implemented yet!");
+        optionHolder.set(options);
     }
 
     @Override
     public void resetOptions() {
-        throw new IllegalStateException("Not implemented yet!");
+        optionHolder.reset();
     }
 
     @Override
     public int getOptions() {
-        throw new IllegalStateException("Not implemented yet!");
+        return optionHolder.get();
     }
 
     @Override
@@ -441,5 +444,9 @@ public class DB implements IDB {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
         return new org.mongodb.result.CommandResult(getConnector().command(getName(), commandOperation, documentSerializer));
 
+    }
+
+    protected Bytes.OptionHolder getOptionHolder() {
+        return optionHolder;
     }
 }

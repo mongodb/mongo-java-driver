@@ -16,11 +16,19 @@
 
 package com.mongodb;
 
+import org.bson.BSONBinaryWriter;
+import org.bson.BSONObject;
+import org.bson.BSONWriter;
+import org.bson.io.OutputBuffer;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.DBObjectMatchers.hasFields;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -63,8 +71,8 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void testUpdate() {
         final WriteResult res = collection.update(new BasicDBObject("_id", 1),
-                                           new BasicDBObject("$set", new BasicDBObject("x", 2)),
-                                           true, false);
+                new BasicDBObject("$set", new BasicDBObject("x", 2)),
+                true, false);
         assertNotNull(res);
         assertEquals(1L, collection.count());
         assertEquals(new BasicDBObject("_id", 1).append("x", 2), collection.findOne());
@@ -79,7 +87,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testDotsInKeys() {
+    public void testDotInDBObject() {
         try {
             collection.save(new BasicDBObject("x.y", 1));
             fail("Should throw exception");
@@ -104,7 +112,103 @@ public class DBCollectionTest extends DatabaseTestCase {
         }
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testJAVA_794() {
+        final Map<String, String> nested = new HashMap<String, String>();
+        nested.put("my.dot.field", "foo");
+        final List<Map<String, String>> list = new ArrayList<Map<String, String>>();
+        list.add(nested);
+        collection.save(new BasicDBObject("_document_", new BasicDBObject("array", list)));
+    }
+
+    @Test
+    public void testInsertWithDBEncoder() {
+        final List<DBObject> objects = new ArrayList<DBObject>();
+        objects.add(new BasicDBObject("a", 1));
+        collection.insert(objects, WriteConcern.ACKNOWLEDGED, new MyEncoder());
+        assertEquals(MyEncoder.getConstantObject(), collection.findOne());
+    }
+
+    @Test
+    public void testInsertWithDBEncoderFactorySet() {
+        collection.setDBEncoderFactory(new MyEncoderFactory());
+        final List<DBObject> objects = new ArrayList<DBObject>();
+        objects.add(new BasicDBObject("a", 1));
+        collection.insert(objects, WriteConcern.ACKNOWLEDGED, null);
+        assertEquals(MyEncoder.getConstantObject(), collection.findOne());
+        collection.setDBEncoderFactory(null);
+    }
+
+    @Test
+    public void testcreateIndexWithDBEncoder() {
+        collection.createIndex(
+                new BasicDBObject("a", 1),
+                new BasicDBObject("unique", false),
+                new MyIndexDBEncoder(collection.getFullName())
+        );
+
+
+        final Map<String, Object> map = new HashMap<String, Object>();
+        map.put("name", "z_1");
+        map.put("ns", collection.getFullName());
+        map.put("key", new BasicDBObject("z", 1));
+        map.put("unique", true);
+
+        assertThat(collection.getIndexInfo(), hasItem(hasFields(map.entrySet())));
+    }
+
+
     public static class MyDBObject extends BasicDBObject {
         private static final long serialVersionUID = 3352369936048544621L;
+    }
+
+    public static class MyEncoder implements DBEncoder {
+        @Override
+        public int writeObject(OutputBuffer outputBuffer, BSONObject document) {
+            final int start = outputBuffer.getPosition();
+            BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer);
+            bsonWriter.writeStartDocument();
+            bsonWriter.writeInt32("_id", 1);
+            bsonWriter.writeString("s", "foo");
+            bsonWriter.writeEndDocument();
+            return outputBuffer.getPosition() - start;
+        }
+
+        public static DBObject getConstantObject() {
+            return new BasicDBObject()
+                    .append("_id", 1)
+                    .append("s", "foo");
+        }
+    }
+
+    public static class MyEncoderFactory implements DBEncoderFactory {
+        @Override
+        public DBEncoder create() {
+            return new MyEncoder();
+        }
+    }
+
+    public static class MyIndexDBEncoder implements DBEncoder {
+
+        private final String ns;
+
+        public MyIndexDBEncoder(final String ns) {
+            this.ns = ns;
+        }
+
+        @Override
+        public int writeObject(OutputBuffer outputBuffer, BSONObject document) {
+            final int start = outputBuffer.getPosition();
+            BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer);
+            bsonWriter.writeStartDocument();
+            bsonWriter.writeString("name", "z_1");
+            bsonWriter.writeStartDocument("key");
+            bsonWriter.writeInt32("z", 1);
+            bsonWriter.writeEndDocument();
+            bsonWriter.writeBoolean("unique", true);
+            bsonWriter.writeString("ns", ns);
+            bsonWriter.writeEndDocument();
+            return outputBuffer.getPosition() - start;
+        }
     }
 }

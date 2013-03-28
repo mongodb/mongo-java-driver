@@ -43,6 +43,8 @@ public class Mongo {
     private volatile WriteConcern writeConcern;
     private volatile ReadPreference readPreference;
 
+    private final Bytes.OptionHolder optionHolder;
+
     private final Serializer<Document> documentSerializer;
     private final MongoConnector connector;
 
@@ -65,6 +67,7 @@ public class Mongo {
                 options.getReadPreference() : ReadPreference.primary();
         this.writeConcern = options.getWriteConcern() != null ?
                 options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
+        this.optionHolder = new Bytes.OptionHolder(null);
     }
 
     /**
@@ -215,11 +218,11 @@ public class Mongo {
     }
 
     public void addOption(final int option) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        optionHolder.add(option);
     }
 
     public int getOptions() {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return optionHolder.get();
     }
 
     private static List<org.mongodb.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
@@ -244,6 +247,10 @@ public class Mongo {
 
     protected MongoConnector getConnector() {
         return connector;
+    }
+
+    protected Bytes.OptionHolder getOptionHolder() {
+        return optionHolder;
     }
 
 }

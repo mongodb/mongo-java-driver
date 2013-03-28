@@ -17,6 +17,8 @@
 package com.mongodb;
 
 import com.mongodb.serializers.CollectibleDBObjectSerializer;
+import com.mongodb.serializers.DBEncoderDecoderSerializer;
+import org.bson.types.ObjectId;
 import org.mongodb.Document;
 import org.mongodb.Get;
 import org.mongodb.Index;
@@ -49,95 +51,267 @@ import org.mongodb.util.FieldHelpers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.DBObjects.toDBObject;
 import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.DBObjects.toFieldSelectorDocument;
 import static com.mongodb.DBObjects.toUpdateOperationsDocument;
 
+
+/**
+ * Implementation of a database collection.
+ * <p>
+ *     A typical invocation sequence is thus
+ * <blockquote>
+ *     <pre>
+ *     MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", 27017));
+ *     DB db = mongo.getDB("mydb");
+ *     DBCollection collection = db.getCollection("test");
+ * </pre>
+ * </blockquote>
+ *
+ * To get a collection to use, just specify the name of the collection to the getCollection(String collectionName) method:
+ * <blockquote>
+ * <pre>
+ *     DBCollection coll = db.getCollection("testCollection");
+ * </pre>
+ * </blockquote>
+ *
+ * Once you have the collection object, you can insert documents into the collection:
+ * <blockquote>
+ * <pre>
+ *     BasicDBObject doc = new BasicDBObject("name", "MongoDB")
+ *     .append("type", "database")
+ *     .append("count", 1)
+ *     .append("info", new BasicDBObject("x", 203).append("y", 102));
+ *     coll.insert(doc);
+ * </pre>
+ * </blockquote>
+ *
+ * To show that the document we inserted in the previous step is there, we can do a simple findOne() operation to get the first document in the collection:
+ * <blockquote>
+ * <pre>
+ *     DBObject myDoc = coll.findOne();
+ *     System.out.println(myDoc);
+ * </pre>
+ * </blockquote>
+ *
+ */
 @ThreadSafe
 @SuppressWarnings({ "rawtypes", "deprecation" })
 public class DBCollection implements IDBCollection {
     private static final String NAMESPACE_KEY_NAME = "ns";
-
     private final DB database;
     private final String name;
+    private final Map<String, Class<? extends DBObject>> pathToClassMap =
+            new HashMap<String, Class<? extends DBObject>>();
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
-    private CollectibleSerializer<DBObject> objectSerializer;
-    private final Serializer<Document> documentSerializer;
+    private List<DBObject> hintFields;
+    private final Bytes.OptionHolder optionHolder;
 
-    private final Map<String, Class<? extends DBObject>> pathToClassMap =
-            new HashMap<String, Class<? extends DBObject>>();
+    private DBEncoderFactory encoderFactory;
+    private DBDecoderFactory decoderFactory;
+
+    private final Serializer<Document> documentSerializer;
+    private CollectibleSerializer<DBObject> objectSerializer;
 
     DBCollection(final String name, final DB database, final Serializer<Document> documentSerializer) {
         this.name = name;
         this.database = database;
         this.documentSerializer = documentSerializer;
+        optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
         updateObjectSerializer(BasicDBObject.class);
     }
 
-    private void updateObjectSerializer(final Class<? extends DBObject> objectClass) {
-        final HashMap<String, Class<? extends DBObject>> map = new HashMap<String, Class<? extends DBObject>>(pathToClassMap);
-        this.objectSerializer = new CollectibleDBObjectSerializer(database,
-                PrimitiveSerializers.createDefault(), new ObjectIdGenerator(), objectClass, map);
-    }
-
+    /**
+     * Insert a document into a collection.
+     * If the collection does not exists on the server, then it will be created.
+     * If the new document does not contain an '_id' field, it will be added.
+     *
+     * @param document     {@code DBObject} to be inserted
+     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     */
+    @Override
     public WriteResult insert(final DBObject document, final WriteConcern writeConcern) {
         return insert(Arrays.asList(document), writeConcern);
     }
 
+    /**
+     * Insert documents into a collection.
+     * If the collection does not exists on the server, then it will be created.
+     * If the new document does not contain an '_id' field, it will be added.
+     * Collection wide {@code WriteConcern} will be used.
+     *
+     * @param documents {@code DBObject}'s to be inserted
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     */
+    @Override
     public WriteResult insert(final DBObject... documents) {
         return insert(Arrays.asList(documents), getWriteConcern());
     }
 
+    /**
+     * Insert documents into a collection.
+     * If the collection does not exists on the server, then it will be created.
+     * If the new document does not contain an '_id' field, it will be added.
+     *
+     * @param documents    {@code DBObject}'s to be inserted
+     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     */
+    @Override
     public WriteResult insert(final WriteConcern writeConcern, final DBObject... documents) {
         return insert(documents, writeConcern);
     }
 
+    /**
+     * Insert documents into a collection.
+     * If the collection does not exists on the server, then it will be created.
+     * If the new document does not contain an '_id' field, it will be added.
+     *
+     * @param documents    {@code DBObject}'s to be inserted
+     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     */
+    @Override
     public WriteResult insert(final DBObject[] documents, final WriteConcern writeConcern) {
         return insert(Arrays.asList(documents), writeConcern);
     }
 
+    /**
+     * Insert documents into a collection.
+     * If the collection does not exists on the server, then it will be created.
+     * If the new document does not contain an '_id' field, it will be added.
+     *
+     * @param documents list of {@code DBObject} to be inserted
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     */
     @Override
-    public WriteResult insert(final DBObject[] arr, final WriteConcern concern, final DBEncoder encoder) {
-        throw new UnsupportedOperationException();
-    }
-
     public WriteResult insert(final List<DBObject> documents) {
         return insert(documents, getWriteConcern());
     }
 
+    /**
+     * Insert documents into a collection.
+     * If the collection does not exists on the server, then it will be created.
+     * If the new document does not contain an '_id' field, it will be added.
+     *
+     * @param documents    list of {@code DBObject}'s to be inserted
+     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     */
+    @Override
     public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern) {
         final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
                 .writeConcern(writeConcern.toNew());
+        return insert(mongoInsert, objectSerializer);
+    }
+
+    /**
+     * Insert documents into a collection.
+     * If the collection does not exists on the server, then it will be created.
+     * If the new document does not contain an '_id' field, it will be added.
+     *
+     * @param documents    {@code DBObject}'s to be inserted
+     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @param encoder      {@code DBEncoder} to be used
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     */
+    @Override
+    public WriteResult insert(final DBObject[] documents, final WriteConcern writeConcern, final DBEncoder encoder) {
+        return insert(Arrays.asList(documents), writeConcern, encoder);
+    }
+
+    /**
+     * Insert documents into a collection.
+     * If the collection does not exists on the server, then it will be created.
+     * If the new document does not contain an '_id' field, it will be added.
+     *
+     * @param documents    a list of {@code DBObject}'s to be inserted
+     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @param encoder      {@code DBEncoder} to be used
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     */
+    @Override
+    public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern, final DBEncoder encoder) {
+        final Serializer<DBObject> serializer;
+        //TODO: Is this really how it should work?
+        if (encoder != null) {
+            serializer = new DBEncoderDecoderSerializer(encoder, null, null, null);
+        } else if (encoderFactory != null) {
+            serializer = new DBEncoderDecoderSerializer(encoderFactory.create(), null, null, null);
+        } else {
+            serializer = objectSerializer;
+        }
+
+        final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
+                .writeConcern(this.writeConcern.toNew());
+        return insert(mongoInsert, serializer);
+    }
+
+    private WriteResult insert(final MongoInsert<DBObject> mongoInsert, Serializer<DBObject> serializer) {
         try {
-            final org.mongodb.result.WriteResult result = getConnector().insert(getNamespace(), mongoInsert, objectSerializer);
+            final org.mongodb.result.WriteResult result = getConnector().insert(getNamespace(), mongoInsert, serializer);
             return new WriteResult(result, writeConcern);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
         }
     }
 
+    /**
+     * Update an existing document or insert a document depending on the parameter.
+     * If the document does not contain an '_id' field, then the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectid value.
+     * If the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field:
+     * <ul>
+     * <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in the document.</li>
+     * <li>If a document exists with the specified '_id' value, the method performs an update, replacing all field in the existing record with the fields from the document.</li>
+     * </ul>
+     *
+     * @param document {@link DBObject} to save to the collection.
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     */
     @Override
-    public WriteResult insert(final List<DBObject> list, final WriteConcern concern, final DBEncoder encoder) {
-        throw new UnsupportedOperationException();
+    public WriteResult save(final DBObject document) {
+        return save(document, getWriteConcern());
     }
 
-
-    public WriteResult save(final DBObject obj) {
-        return save(obj, getWriteConcern());
-    }
-
-    public WriteResult save(final DBObject obj, final WriteConcern wc) {
-        final Object id = getObjectSerializer().getId(obj);
+    /**
+     * Update an existing document or insert a document depending on the parameter.
+     * If the document does not contain an '_id' field, then the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectid value.
+     * If the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field:
+     * <ul>
+     * <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in the document.</li>
+     * <li>If a document exists with the specified '_id' value, the method performs an update, replacing all field in the existing record with the fields from the document.</li>
+     * </ul>
+     *
+     * @param document     {@link DBObject} to save to the collection.
+     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     */
+    @Override
+    public WriteResult save(final DBObject document, final WriteConcern writeConcern) {
+        final Object id = getObjectSerializer().getId(document);
         if (id == null) {
-            return insert(obj, wc);
+            return insert(document, writeConcern);
         } else {
-            return replaceOrInsert(obj, wc);
+            return replaceOrInsert(document, writeConcern);
         }
     }
 
@@ -153,225 +327,288 @@ public class DBCollection implements IDBCollection {
     }
 
     /**
-     * Performs an update operation.
+     * Modify an existing document or documents in collection.
+     * The query parameter employs the same query selectors, as used in {@code find()}.
      *
-     * @param q       search query for old object to update
-     * @param o       object with which to update <tt>q</tt>
-     * @param upsert  if the database should create the element if it does not exist
-     * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object
-     *                will not be inserted if it does not exist in the collection and upsert=true and multi=true. See <a
-     *                href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb
-     *                .org/display/DOCS/Atomic+Operations</a>
-     * @param concern the write concern
-     * @return
-     * @throws MongoException
-     * @dochub update
+     * @param query        the selection criteria for the update
+     * @param update       the modifications to apply
+     * @param upsert       insert a document if no document matches the update query criteria
+     * @param multi        update all documents in the collection that match the update query criteria
+     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @return the result of the operation
      */
-    public WriteResult update(final DBObject q, final DBObject o, final boolean upsert, final boolean multi,
-                              final WriteConcern concern) {
-        if (o == null) {
+    @Override
+    public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
+                              final WriteConcern writeConcern) {
+        if (update == null) {
             throw new IllegalArgumentException("update can not be null");
         }
 
-        if (q == null) {
+        if (query == null) {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        final MongoUpdate mongoUpdate = new MongoUpdate(toDocument(q), toUpdateOperationsDocument(o))
+        final MongoUpdate mongoUpdate = new MongoUpdate(toDocument(query), toUpdateOperationsDocument(update))
                 .upsert(upsert)
                 .multi(multi)
-                .writeConcern(concern.toNew());
+                .writeConcern(writeConcern.toNew());
 
         try {
             final org.mongodb.result.WriteResult result =
                     getConnector().update(getNamespace(), mongoUpdate, documentSerializer);
-            return new WriteResult(result, concern);
+            return new WriteResult(result, writeConcern);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
     }
 
+    /**
+     * Modify an existing document or documents in collection.
+     * By default the method updates a single document.
+     * The query parameter employs the same query selectors, as used in {@code find()}.
+     *
+     * @param query        the selection criteria for the update
+     * @param update       the modifications to apply
+     * @param upsert       insert a document if no document matches the update query criteria
+     * @param multi        update all documents in the collection that match the update query criteria
+     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @param encoder      {@code DBEncoder} to be used
+     * @return the result of the operation
+     */
     @Override
-    public WriteResult update(final DBObject q, final DBObject o, final boolean upsert, final boolean multi,
-                              final WriteConcern concern, final DBEncoder encoder) {
-        throw new UnsupportedOperationException();
+    public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
+                              final WriteConcern writeConcern, final DBEncoder encoder) {
+        throw new UnsupportedOperationException(); //TODO We need to generify MongoUpdate class to implement this.
     }
 
     /**
-     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean,
-     * com.mongodb.WriteConcern)} with default WriteConcern.
+     * Modify an existing document or documents in collection.
+     * The query parameter employs the same query selectors, as used in {@code find()}.
      *
-     * @param q      search query for old object to update
-     * @param o      object with which to update <tt>q</tt>
-     * @param upsert if the database should create the element if it does not exist
-     * @param multi  if the update should be applied to all objects matching (db version 1.1.3 and above) See
-     *               http://www.mongodb.org/display/DOCS/Atomic+Operations
-     * @return
-     * @throws MongoException
-     * @dochub update
+     * @param query  the selection criteria for the update
+     * @param update the modifications to apply
+     * @param upsert insert a document if no document matches the update query criteria
+     * @param multi  update all documents in the collection that match the update query criteria
+     * @return the result of the operation
      */
-    public WriteResult update(final DBObject q, final DBObject o, final boolean upsert, final boolean multi) {
-        return update(q, o, upsert, multi, getWriteConcern());
+    @Override
+    public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi) {
+        return update(query, update, upsert, multi, getWriteConcern());
     }
 
     /**
-     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false
-     * and multi=false
+     * Modify an existing document.
+     * The query parameter employs the same query selectors, as used in {@code find()}.
      *
-     * @param q search query for old object to update
-     * @param o object with which to update <tt>q</tt>
-     * @return
-     * @throws MongoException
-     * @dochub update
+     * @param query  the selection criteria for the update
+     * @param update the modifications to apply
+     * @return the result of the operation
      */
-    public WriteResult update(final DBObject q, final DBObject o) {
-        return update(q, o, false, false);
+    @Override
+    public WriteResult update(final DBObject query, final DBObject update) {
+        return update(query, update, false, false);
     }
 
     /**
-     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false
-     * and multi=true
+     * Modify documents in collection.
+     * The query parameter employs the same query selectors, as used in {@code find()}.
      *
-     * @param q search query for old object to update
-     * @param o object with which to update <tt>q</tt>
-     * @return
-     * @throws MongoException
-     * @dochub update
+     * @param query  the selection criteria for the update
+     * @param update the modifications to apply
+     * @return the result of the operation
      */
-    public WriteResult updateMulti(final DBObject q, final DBObject o) {
-        return update(q, o, false, true);
-    }
-
-    public WriteResult remove(final DBObject filter) {
-        return remove(filter, getWriteConcern());
-    }
-
     @Override
-    public DBCursor find(final DBObject query, final DBObject fields, final int numToSkip, final int batchSize,
-                         final int options) {
-        throw new UnsupportedOperationException();
+    public WriteResult updateMulti(final DBObject query, final DBObject update) {
+        return update(query, update, false, true);
     }
 
+    /**
+     * Remove documents from a collection.
+     *
+     * @param query he deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all documents in the collection.
+     * @return the result of the operation
+     */
     @Override
-    public DBCursor find(final DBObject query, final DBObject fields, final int numToSkip, final int batchSize) {
-        throw new UnsupportedOperationException();
+    public WriteResult remove(final DBObject query) {
+        return remove(query, getWriteConcern());
     }
 
+    /**
+     * Remove documents from a collection.
+     *
+     * @param query        the deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all documents in the collection.
+     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @return the result of the operation
+     */
+    @Override
+    public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
 
-    public WriteResult remove(final DBObject filter, final WriteConcern writeConcernToUse) {
-
-        final MongoRemove mongoRemove = new MongoRemove(toDocument(filter))
-                .writeConcern(writeConcernToUse.toNew());
+        final MongoRemove mongoRemove = new MongoRemove(toDocument(query))
+                .writeConcern(writeConcern.toNew());
 
         final org.mongodb.result.WriteResult result = getConnector().remove(getNamespace(), mongoRemove, documentSerializer);
 
-        return new WriteResult(result, writeConcernToUse);
+        return new WriteResult(result, writeConcern);
     }
 
+    /**
+     * Remove documents from a collection.
+     *
+     * @param query        the deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all documents in the collection.
+     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @param encoder      {@code DBEncoder} to be used
+     * @return
+     */
     @Override
-    public WriteResult remove(final DBObject o, final WriteConcern concern, final DBEncoder encoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    public DBCursor find(final DBObject filter) {
-        return find(filter, null);
-    }
-
-    public DBCursor find(final DBObject filter, final DBObject fields) {
-        return new DBCursor(this, filter, fields, getReadPreference());
+    public WriteResult remove(final DBObject query, final WriteConcern writeConcern, final DBEncoder encoder) {
+        throw new UnsupportedOperationException(); //TODO We need to generify MongoRemove class to implement this.
     }
 
     /**
-     * Queries for all objects in this collection.
+     * Select documents in collection and get a cursor to the selected documents.
      *
-     * @return a cursor which will iterate over every object
-     * @dochub find
+     * @param query      the selection criteria using query operators. Omit the query parameter or pass an empty document to return all documents in the collection.
+     * @param projection specifies which fields MongoDB will return from the documents in the result set.
+     * @param numToSkip  number of documents to skip
+     * @param batchSize  see {@link DBCursor#batchSize(int)} for more information
+     * @param options    query options to be used
+     * @return A cursor to the documents that match the query criteria
      */
+    @Override
+    public DBCursor find(final DBObject query, final DBObject projection, final int numToSkip, final int batchSize,
+                         final int options) {
+        return new DBCursor(this, query, projection, getReadPreference())
+                .batchSize(batchSize)
+                .skip(numToSkip)
+                .setOptions(options);
+    }
+
+    /**
+     * Select documents in collection and get a cursor to the selected documents.
+     *
+     * @param query      the selection criteria using query operators. Omit the query parameter or pass an empty document to return all documents in the collection.
+     * @param projection specifies which fields MongoDB will return from the documents in the result set.
+     * @param numToSkip  number of documents to skip
+     * @param batchSize  see {@link DBCursor#batchSize(int)} for more information
+     * @return A cursor to the documents that match the query criteria
+     */
+    @Override
+    public DBCursor find(final DBObject query, final DBObject projection, final int numToSkip, final int batchSize) {
+        return new DBCursor(this, query, projection, getReadPreference())
+                .batchSize(batchSize)
+                .skip(numToSkip);
+    }
+
+    /**
+     * Select documents in collection and get a cursor to the selected documents.
+     *
+     * @param query the selection criteria using query operators. Omit the query parameter or pass an empty document to return all documents in the collection.
+     * @return A cursor to the documents that match the query criteria
+     */
+    @Override
+    public DBCursor find(final DBObject query) {
+        return new DBCursor(this, query, null, getReadPreference());
+    }
+
+    /**
+     * Select documents in collection and get a cursor to the selected documents.
+     *
+     * @param query      the selection criteria using query operators. Omit the query parameter or pass an empty document to return all documents in the collection.
+     * @param projection specifies which fields MongoDB will return from the documents in the result set.
+     * @return A cursor to the documents that match the query criteria
+     */
+    @Override
+    public DBCursor find(final DBObject query, final DBObject projection) {
+        return new DBCursor(this, query, projection, getReadPreference());
+    }
+
+    /**
+     * Select all documents in collection and get a cursor to the selected documents.
+     *
+     * @return A cursor to the documents that match the query criteria
+     */
+    @Override
     public DBCursor find() {
-        return find(new BasicDBObject(), null);
+        return find(new BasicDBObject());
     }
 
-
     /**
-     * Returns a single object from this collection.
+     * Get a single document from collection.
      *
-     * @return the object found, or <code>null</code> if the collection is empty
-     * @throws MongoException
+     * @return A document that satisfies the query specified as the argument to this method.
      */
+    @Override
     public DBObject findOne() {
         return findOne(new BasicDBObject());
     }
 
     /**
-     * Returns a single object from this collection matching the query.
+     * Get a single document from collection.
      *
-     * @param o the query object
-     * @return the object found, or <code>null</code> if no such object exists
-     * @throws MongoException
+     * @param query the selection criteria using query operators.
+     * @return A document that satisfies the query specified as the argument to this method.
      */
-    public DBObject findOne(final DBObject o) {
-        return findOne(o, null, null, getReadPreference());
+    @Override
+    public DBObject findOne(final DBObject query) {
+        return findOne(query, null, null, getReadPreference());
     }
 
     /**
-     * Returns a single object from this collection matching the query.
+     * Get a single document from collection.
      *
-     * @param o      the query object
-     * @param fields fields to return
-     * @return the object found, or <code>null</code> if no such object exists
-     * @throws MongoException
-     * @dochub find
+     * @param query      the selection criteria using query operators.
+     * @param projection specifies which fields MongoDB will return from the documents in the result set.
+     * @return A document that satisfies the query specified as the argument to this method.
      */
-    public DBObject findOne(final DBObject o, final DBObject fields) {
-        return findOne(o, fields, null, getReadPreference());
+    @Override
+    public DBObject findOne(final DBObject query, final DBObject projection) {
+        return findOne(query, projection, null, getReadPreference());
     }
 
     /**
-     * Returns a single obejct from this collection matching the query.
+     * Get a single document from collection.
      *
-     * @param o       the query object
-     * @param fields  fields to return
-     * @param orderBy fields to order by
-     * @return the object found, or <code>null</code> if no such object exists
-     * @throws MongoException
-     * @dochub find
+     * @param query      the selection criteria using query operators.
+     * @param projection specifies which fields MongoDB will return from the documents in the result set.
+     * @param sort       A document whose fields specify the attributes on which to sort the result set.
+     * @return A document that satisfies the query specified as the argument to this method.
      */
-    public DBObject findOne(final DBObject o, final DBObject fields, final DBObject orderBy) {
-        return findOne(o, fields, orderBy, getReadPreference());
+    @Override
+    public DBObject findOne(final DBObject query, final DBObject projection, final DBObject sort) {
+        return findOne(query, projection, sort, getReadPreference());
     }
 
     /**
-     * Returns a single object from this collection matching the query.
+     * Get a single document from collection.
      *
-     * @param o        the query object
-     * @param fields   fields to return
-     * @param readPref
-     * @return the object found, or <code>null</code> if no such object exists
-     * @throws MongoException
-     * @dochub find
+     * @param query          the selection criteria using query operators.
+     * @param projection     specifies which fields MongoDB will return from the documents in the result set.
+     * @param readPreference {@link ReadPreference} to be used for this operation
+     * @return A document that satisfies the query specified as the argument to this method.
      */
-    public DBObject findOne(final DBObject o, final DBObject fields, final ReadPreference readPref) {
-        return findOne(o, fields, null, readPref);
+    @Override
+    public DBObject findOne(final DBObject query, final DBObject projection, final ReadPreference readPreference) {
+        return findOne(query, projection, null, readPreference);
     }
 
     /**
-     * Returns a single object from this collection matching the query.
+     * Get a single document from collection.
      *
-     * @param o       the query object
-     * @param fields  fields to return
-     * @param orderBy fields to order by
-     * @return the object found, or <code>null</code> if no such object exists
-     * @throws MongoException
-     * @dochub find
+     * @param query          the selection criteria using query operators.
+     * @param projection     specifies which projection MongoDB will return from the documents in the result set.
+     * @param sort           A document whose fields specify the attributes on which to sort the result set.
+     * @param readPreference {@code ReadPreference} to be used for this operation
+     * @return A document that satisfies the query specified as the argument to this method.
      */
-    public DBObject findOne(final DBObject o, final DBObject fields, final DBObject orderBy,
-                            final ReadPreference readPref) {
+    @Override
+    public DBObject findOne(final DBObject query, final DBObject projection, final DBObject sort,
+                            final ReadPreference readPreference) {
 
         final MongoFind mongoFind = new MongoFind()
-                .select(toFieldSelectorDocument(fields))
-                .where(toDocument(o))
-                .order(toDocument(orderBy))
-                .readPreference(readPref.toNew())
+                .select(toFieldSelectorDocument(projection))
+                .where(toDocument(query))
+                .order(toDocument(sort))
+                .readPreference(readPreference.toNew())
                 .batchSize(-1);
 
         final QueryResult<DBObject> res = getConnector().query(getNamespace(), mongoFind,
@@ -383,166 +620,197 @@ public class DBCollection implements IDBCollection {
         return res.getResults().get(0);
     }
 
+    /**
+     * Get a single document from collection by '_id'.
+     *
+     * @param id value of '_id' field of a document we are looking for
+     * @return A document with '_id' provided as the argument to this method.
+     */
     @Override
-    public Object apply(final DBObject o) {
-        throw new UnsupportedOperationException();
+    public DBObject findOne(final Object id) {
+        return findOne(id, null);
     }
 
+    /**
+     * Get a single document from collection by '_id'.
+     *
+     * @param id         value of '_id' field of a document we are looking for
+     * @param projection specifies which projection MongoDB will return from the documents in the result set.
+     * @return A document that satisfies the query specified as the argument to this method.
+     */
     @Override
-    public Object apply(final DBObject jo, final boolean ensureID) {
-        throw new UnsupportedOperationException();
+    public DBObject findOne(final Object id, final DBObject projection) {
+        return findOne(new BasicDBObject("_id", id), projection);
     }
 
     /**
-     * Finds an object by its id. This compares the passed in value to the _id field of the document
+     * Template method pattern.
+     * Please extend DBCollection and ovverride {@link #doapply(DBObject)} if you need to add specific fields before saving object to collection.
      *
-     * @param obj any valid object
-     * @return the object, if found, otherwise <code>null</code>
-     * @throws MongoException
+     * @param document document to be passed to {@code doapply()}
+     * @return '_id' of the document
      */
-    public DBObject findOne(final Object obj) {
-        return findOne(obj, null);
+    @Override
+    public Object apply(final DBObject document) {
+        return apply(document, true);
     }
 
-
     /**
-     * Finds an object by its id. This compares the passed in value to the _id field of the document
+     * Template method pattern.
+     * Please extend DBCollection and ovverride {@link #doapply(DBObject)} if you need to add specific fields before saving object to collection.
      *
-     * @param obj    any valid object
-     * @param fields fields to return
-     * @return the object, if found, otherwise <code>null</code>
-     * @throws MongoException
-     * @dochub find
+     * @param document document to be passed to {@code doapply()}
+     * @param ensureId specifies if '_id' field needs to be added to the document in case of absence.
+     * @return '_id' of the document
      */
-    public DBObject findOne(final Object obj, final DBObject fields) {
-        return findOne(new BasicDBObject("_id", obj), fields);
+    @Override
+    public Object apply(final DBObject document, final boolean ensureId) {
+        Object id = document.get("_id");
+        if (ensureId && id == null) {
+            id = ObjectId.get();
+            document.put("_id", id);
+        }
+
+        doapply(document);
+
+        return id;
     }
 
+    /**
+     * Method to be overridden if you need to add any fields to a given document before saving it to the collection.
+     *
+     * @param document object to which to add the fields
+     */
+    protected void doapply(final DBObject document) {
+    }
 
     /**
-     * returns the number of documents in this collection.
+     * Same as {@link #getCount()}
      *
-     * @return
+     * @return the number of documents in collection
      * @throws MongoException
      */
+    @Override
     public long count() {
         return getCount(new BasicDBObject(), null);
     }
 
     /**
-     * returns the number of documents that match a query.
+     * Same as {@link #getCount(DBObject)}
      *
-     * @param query query to match
-     * @return
+     * @param query specifies the selection criteria
+     * @return the number of documents that matches selection criteria
      * @throws MongoException
      */
+    @Override
     public long count(final DBObject query) {
         return getCount(query, null);
     }
 
     /**
-     * returns the number of documents that match a query.
+     * Get the count of documents in collection that would match a criteria.
      *
-     * @param query     query to match
-     * @param readPrefs ReadPreferences for this query
-     * @return
+     * @param query          specifies the selection criteria
+     * @param readPreference {@link ReadPreference} to be used for this operation
+     * @return the number of documents that matches selection criteria
      * @throws MongoException
      */
-    public long count(final DBObject query, final ReadPreference readPrefs) {
-        return getCount(query, null, readPrefs);
+    @Override
+    public long count(final DBObject query, final ReadPreference readPreference) {
+        return getCount(query, null, readPreference);
     }
 
-
     /**
-     * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject)} with an empty query and null
-     * fields.
+     * Get the count of documents in collection.
      *
-     * @return number of documents that match query
+     * @return the number of documents in collection
      * @throws MongoException
      */
+    @Override
     public long getCount() {
         return getCount(new BasicDBObject(), null);
     }
 
     /**
-     * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.ReadPreference)} with
-     * empty query and null fields.
+     * Get the count of documents in collection.
      *
-     * @param readPrefs ReadPreferences for this command
-     * @return number of documents that match query
+     * @param readPreference {@link ReadPreference} to be used for this operation
+     * @return the number of documents in collection
      * @throws MongoException
      */
-    public long getCount(final ReadPreference readPrefs) {
-        return getCount(new BasicDBObject(), null, readPrefs);
+    @Override
+    public long getCount(final ReadPreference readPreference) {
+        return getCount(new BasicDBObject(), null, readPreference);
     }
 
+
     /**
-     * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject)} with null fields.
+     * Get the count of documents in collection that would match a criteria.
      *
-     * @param query query to match
-     * @return
+     * @param query specifies the selection criteria
+     * @return the number of documents that matches selection criteria
      * @throws MongoException
      */
+    @Override
     public long getCount(final DBObject query) {
         return getCount(query, null);
     }
 
-
     /**
-     * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject, long, long)} with limit=0 and
-     * skip=0
+     * Get the count of documents in collection that would match a criteria.
      *
-     * @param query  query to match
-     * @param fields fields to return
-     * @return
+     * @param query      specifies the selection criteria
+     * @param projection this is ignored
+     * @return the number of documents that matches selection criteria
      * @throws MongoException
      */
-    public long getCount(final DBObject query, final DBObject fields) {
-        return getCount(query, fields, 0, 0);
+    @Override
+    public long getCount(final DBObject query, final DBObject projection) {
+        return getCount(query, projection, 0, 0);
     }
 
     /**
-     * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject, long, long,
-     * com.mongodb.ReadPreference)} with limit=0 and skip=0
+     * Get the count of documents in collection that would match a criteria.
      *
-     * @param query          query to match
-     * @param fields         fields to return
-     * @param readPreference ReadPreferences for this command
-     * @return
+     * @param query          specifies the selection criteria
+     * @param projection     this is ignored
+     * @param readPreference {@link ReadPreference} to be used for this operation
+     * @return the number of documents that matches selection criteria
      * @throws MongoException
      */
-    public long getCount(final DBObject query, final DBObject fields, final ReadPreference readPreference) {
-        return getCount(query, fields, 0, 0, readPreference);
+    @Override
+    public long getCount(final DBObject query, final DBObject projection, final ReadPreference readPreference) {
+        return getCount(query, projection, 0, 0, readPreference);
     }
 
     /**
-     * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject, long, long,
-     * com.mongodb.ReadPreference)} with the DBCollection's ReadPreference
+     * Get the count of documents in collection that would match a criteria.
      *
-     * @param query  query to match
-     * @param fields fields to return
-     * @param limit  limit the count to this value
-     * @param skip   skip number of entries to skip
-     * @return
+     * @param query      specifies the selection criteria
+     * @param projection this is ignored
+     * @param limit      limit the count to this value
+     * @param skip       number of documents to skip
+     * @return the number of documents that matches selection criteria
      * @throws MongoException
      */
-    public long getCount(final DBObject query, final DBObject fields, final long limit, final long skip) {
-        return getCount(query, fields, limit, skip, getReadPreference());
+    @Override
+    public long getCount(final DBObject query, final DBObject projection, final long limit, final long skip) {
+        return getCount(query, projection, limit, skip, getReadPreference());
     }
 
     /**
-     * Returns the number of documents in the collection that match the specified query
+     * Get the count of documents in collection that would match a criteria.
      *
-     * @param query          query to select documents to count
-     * @param fields         fields to return. This is ignored.
+     * @param query          specifies the selection criteria
+     * @param projection     this is ignored
      * @param limit          limit the count to this value
-     * @param skip           number of entries to skip
-     * @param readPreference ReadPreferences for this command
-     * @return number of documents that match query and fields
+     * @param skip           number of documents to skip
+     * @param readPreference {@link ReadPreference} to be used for this operation
+     * @return the number of documents that matches selection criteria
      * @throws MongoException
      */
-
-    public long getCount(final DBObject query, final DBObject fields, final long limit, final long skip,
+    @Override
+    public long getCount(final DBObject query, final DBObject projection, final long limit, final long skip,
                          final ReadPreference readPreference) {
         if (limit > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("limit is too large: " + limit);
@@ -560,11 +828,26 @@ public class DBCollection implements IDBCollection {
         return new CountCommandResult(getDB().executeCommand(countCommand)).getCount();
     }
 
+    /**
+     * Change the name of an existing collection.
+     *
+     * @param newName specifies the new name of the collection
+     * @return the collection with new name
+     * @throws MongoException if target is the name of an existing collection.
+     */
     @Override
     public DBCollection rename(final String newName) {
         return rename(newName, false);
     }
 
+    /**
+     * Change the name of an existing collection.
+     *
+     * @param newName    specifies the new name of the collection
+     * @param dropTarget If {@code true}, mongod will drop the collection with the target name in case it exists
+     * @return the collection with new name
+     * @throws MongoException if target is the name of an existing collection and {@code dropTarget=false}.
+     */
     @Override
     public DBCollection rename(final String newName, final boolean dropTarget) {
 
@@ -578,102 +861,282 @@ public class DBCollection implements IDBCollection {
         }
     }
 
+    /**
+     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
+     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
+     *
+     * @param key     specifies one or more document fields to group
+     * @param cond    specifies the selection criteria to determine which documents in the collection to process
+     * @param initial initializes the aggregation result document
+     * @param reduce  specifies an $reduce function, that operates on the documents during the grouping operation
+     * @return a document with the grouped records as well as the command meta-data
+     */
     @Override
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce) {
-        throw new UnsupportedOperationException();
+        return group(key, cond, initial, reduce, null);
     }
 
+    /**
+     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
+     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
+     *
+     * @param key      specifies one or more document fields to group
+     * @param cond     specifies the selection criteria to determine which documents in the collection to process
+     * @param initial  initializes the aggregation result document
+     * @param reduce   specifies an $reduce Javascript function, that operates on the documents during the grouping operation
+     * @param finalize specifies a Javascript function that runs each item in the result set before final value will be returned
+     * @return a document with the grouped records as well as the command meta-data
+     */
     @Override
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
                           final String finalize) {
-        throw new UnsupportedOperationException();
+        return group(key, cond, initial, reduce, finalize, getReadPreference());
     }
 
+    /**
+     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
+     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
+     *
+     * @param key            specifies one or more document fields to group
+     * @param cond           specifies the selection criteria to determine which documents in the collection to process
+     * @param initial        initializes the aggregation result document
+     * @param reduce         specifies an $reduce Javascript function, that operates on the documents during the grouping operation
+     * @param finalize       specifies a Javascript function that runs each item in the result set before final value will be returned
+     * @param readPreference {@link ReadPreference} to be used for this operation
+     * @return a document with the grouped records as well as the command meta-data
+     */
     @Override
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
-                          final String finalize, final ReadPreference readPrefs) {
-        throw new UnsupportedOperationException();
+                          final String finalize, final ReadPreference readPreference) {
+        throw new UnsupportedOperationException(); //TODO We neew GroupCommand to implement this
     }
 
+    /**
+     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
+     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
+     *
+     * @param cmd the group command
+     * @return a document with the grouped records as well as the command meta-data
+     */
     @Override
     public DBObject group(final GroupCommand cmd) {
-        throw new UnsupportedOperationException();
+        return group(cmd, getReadPreference());
     }
 
+    /**
+     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
+     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
+     *
+     * @param cmd            the group command
+     * @param readPreference {@link ReadPreference} to be used for this operation
+     * @return a document with the grouped records as well as the command meta-data
+     */
     @Override
-    public DBObject group(final GroupCommand cmd, final ReadPreference readPrefs) {
-        throw new UnsupportedOperationException();
+    public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
+        throw new UnsupportedOperationException(); //TODO We neew GroupCommand to implement this
     }
 
+    /**
+     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
+     * Deprecated. Use {@link #group(com.mongodb.IDBCollection.GroupCommand)} instead.
+     *
+     * @param args specifies the arguments to the group function
+     * @return a document with the grouped records as well as the command meta-data
+     */
     @Override
+    @Deprecated
     public DBObject group(final DBObject args) {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException(); //TODO We neew GroupCommand to implement this
     }
 
+    /**
+     * Find the distinct values for a specified field across a collection and returns the results in an array.
+     *
+     * @param fieldName Specifies the field for which to return the distinct values.
+     * @return an array of the distinct values
+     */
     @Override
     public List distinct(final String fieldName) {
         return distinct(fieldName, getReadPreference());
     }
 
+    /**
+     * Find the distinct values for a specified field across a collection and returns the results in an array.
+     *
+     * @param fieldName      Specifies the field for which to return the distinct values
+     * @param readPreference {@link ReadPreference} to be used for this operation
+     * @return an array of the distinct values
+     */
     @Override
-    public List distinct(final String fieldName, final ReadPreference readPrefs) {
-        return distinct(fieldName, new BasicDBObject(), readPrefs);
+    public List distinct(final String fieldName, final ReadPreference readPreference) {
+        return distinct(fieldName, new BasicDBObject(), readPreference);
     }
 
+    /**
+     * Find the distinct values for a specified field across a collection and returns the results in an array.
+     *
+     * @param fieldName Specifies the field for which to return the distinct values
+     * @param query     specifies the selection query to determine the subset of documents from which to retrieve the distinct values
+     * @return an array of the distinct values
+     */
     @Override
     public List distinct(final String fieldName, final DBObject query) {
         return distinct(fieldName, query, getReadPreference());
     }
 
+    /**
+     * Find the distinct values for a specified field across a collection and returns the results in an array.
+     *
+     * @param fieldName      Specifies the field for which to return the distinct values
+     * @param query          specifies the selection query to determine the subset of documents from which to retrieve the distinct values
+     * @param readPreference {@link ReadPreference} to be used for this operation
+     * @return an array of the distinct values
+     */
     @Override
-    public List distinct(final String fieldName, final DBObject query, final ReadPreference readPrefs) {
+    public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
         final MongoFind mongoFind = new MongoFind()
                 .filter(toDocument(query))
-                .readPreference(readPreference.toNew());
+                .readPreference(this.readPreference.toNew());
         final Distinct distinctOperation = new Distinct(getName(), fieldName, mongoFind);
         return new DistinctCommandResult(getDB().executeCommand(distinctOperation)).getValue();
     }
 
+    /**
+     * Perform mapReduce operation.
+     *
+     * @param map          a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
+     * @param reduce       a JavaScript function that "reduces" to a single object all the values associated with a particular key.
+     * @param outputTarget specifies the location of the result of the map-reduce operation.
+     * @param query        specifies the selection criteria using query operators for determining the documents input to the map function.
+     * @return a mapReduce output
+     */
     @Override
     public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
                                      final DBObject query) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
-                                     final MapReduceCommand.OutputType outputType, final DBObject query) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
-                                     final MapReduceCommand.OutputType outputType, final DBObject query,
-                                     final ReadPreference readPrefs) {
-        throw new UnsupportedOperationException();
+        final MapReduceCommand command = new MapReduceCommand(this, map, reduce, outputTarget, MapReduceCommand.OutputType.REDUCE, query);
+        return mapReduce(command);
     }
 
     /**
-     * Returns the name of this collection.
+     * Perform mapReduce operation.
      *
-     * @return the name of this collection
+     * @param map          a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
+     * @param reduce       a JavaScript function that "reduces" to a single object all the values associated with a particular key.
+     * @param outputTarget specifies the location of the result of the map-reduce operation.
+     * @param outputType   specifies the type of job output
+     * @param query        specifies the selection criteria using query operators for determining the documents input to the map function.
+     * @return a mapReduce output
      */
+    @Override
+    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
+                                     final MapReduceCommand.OutputType outputType, final DBObject query) {
+        final MapReduceCommand command = new MapReduceCommand(this, map, reduce, outputTarget, outputType, query);
+        return mapReduce(command);
+    }
+
+    /**
+     * Perform mapReduce operation.
+     *
+     * @param map          a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
+     * @param reduce       a JavaScript function that "reduces" to a single object all the values associated with a particular key.
+     * @param outputTarget specifies the location of the result of the map-reduce operation.
+     * @param outputType   specifies the type of job output
+     * @param query        specifies the selection criteria using query operators for determining the documents input to the map function.
+     * @return a mapReduce output
+     */
+    @Override
+    public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
+                                     final MapReduceCommand.OutputType outputType, final DBObject query,
+                                     final ReadPreference readPreference) {
+        final MapReduceCommand command = new MapReduceCommand(this, map, reduce, outputTarget, outputType, query);
+        command.setReadPreference(readPreference);
+        return mapReduce(command);
+    }
+
+    /**
+     * Perform mapReduce operation.
+     *
+     * @param command specifies the command parameters
+     * @return a mapReduce output
+     */
+    @Override
+    public MapReduceOutput mapReduce(final MapReduceCommand command) {
+        //TODO Check that implementation is correct.
+        final DBObject cmd = command.toDBObject();
+        // if type in inline, then query options like slaveOk is fine
+        final CommandResult res;
+        if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
+            res = database.command(cmd, getOptions(),
+                    command.getReadPreference() != null ? command.getReadPreference()
+                            : getReadPreference());
+        } else {
+            res = database.command(cmd);
+        }
+        res.throwOnError();
+        return new MapReduceOutput(this, cmd, res);
+    }
+
+    /**
+     * Perform mapReduce operation.
+     *
+     * @param command specifies the command parameters
+     * @return a mapReduce output
+     */
+    @Override
+    public MapReduceOutput mapReduce(final DBObject command) {
+        throw new UnsupportedOperationException(); //TODO DBObject needs to be converted to mapReduceCommand or directly sent to db.executeCommand
+    }
+
+    /**
+     * Method implements aggregation framework.
+     *
+     * @param firstOp       requisite first operation to be performed in the aggregation pipeline
+     * @param additionalOps additional operations to be performed in the aggregation pipeline
+     * @return the aggregation operation's result set
+     */
+    @Override
+    public AggregationOutput aggregate(final DBObject firstOp, final DBObject... additionalOps) {
+        if (firstOp == null) {
+            throw new IllegalArgumentException("Aggregate can not accept null pipeline operation");
+        }
+
+        DBObject command = new BasicDBObject("aggregate", getName());
+
+        List<DBObject> pipelineOps = new ArrayList<DBObject>();
+        pipelineOps.add(firstOp);
+        Collections.addAll(pipelineOps, additionalOps);
+        command.put("pipeline", pipelineOps);
+
+        CommandResult res = getDB().command(command);
+        //TODO Is this the right way to handle errors?
+        res.throwOnError();
+        //TODO AggregationOutput needs to be implemented.
+        return null;
+//        return new AggregationOutput(command, res);
+    }
+
+    /**
+     * Get the name of a collection.
+     *
+     * @return the name of a collection
+     */
+    @Override
     public String getName() {
         return name;
     }
 
     /**
-     * Returns the full name of this collection, with the database name as a prefix.
+     * Get the full name of a collection, with the database name as a prefix.
      *
-     * @return the name of this collection
+     * @return the name of a collection
      */
+    @Override
     public String getFullName() {
         return getNamespace().getFullName();
     }
 
-
     /**
-     * Finds a collection that is prefixed with this collection's name. A typical use of this might be
+     * Find a collection that is prefixed with this collection's name. A typical use of this might be
      * <blockquote><pre>
      *    DBCollection users = mongo.getCollection( "wiki" ).getCollection( "users" );
      * </pre></blockquote>
@@ -682,22 +1145,43 @@ public class DBCollection implements IDBCollection {
      *   DBCollection users = mongo.getCollection( "wiki.users" );
      * </pre></blockquote>
      *
-     * @param n the name of the collection to find
+     * @param name the name of the collection to find
      * @return the matching collection
      */
-    public DBCollection getCollection(final String n) {
-        return database.getCollection(getName() + "." + n);
+    @Override
+    public DBCollection getCollection(final String name) {
+        return database.getCollection(getName() + "." + name);
     }
 
-    public void ensureIndex(final DBObject fields) {
-        ensureIndex(fields, (DBObject) null);
+    /**
+     * Creates an index on the field specified, if that index does not already exist.
+     *
+     * @param keys a document that contains pairs with the name of the field or fields to index and order of the index
+     */
+    @Override
+    public void ensureIndex(final DBObject keys) {
+        ensureIndex(keys, (DBObject) null);
     }
 
+    /**
+     * Creates an index on the field specified, if that index does not already exist.
+     *
+     * @param keys a document that contains pairs with the name of the field or fields to index and order of the index
+     * @param name specifies the name of the index
+     */
     @Override
     public void ensureIndex(final DBObject keys, final String name) {
-        ensureIndex(keys, name, false);
+        final BasicDBObject options = new BasicDBObject("name", name);
+        ensureIndex(keys, options);
     }
 
+    /**
+     * Creates an index on the field specified, if that index does not already exist.
+     *
+     * @param keys   a document that contains pairs with the name of the field or fields to index and order of the index
+     * @param name   specifies the name of the index
+     * @param unique specify true to create a unique index so that the collection will not accept insertion of documents where the index key or keys matches an existing value in the index
+     */
     @Override
     public void ensureIndex(final DBObject keys, final String name, final boolean unique) {
         final BasicDBObject options = new BasicDBObject("name", name);
@@ -705,121 +1189,167 @@ public class DBCollection implements IDBCollection {
         ensureIndex(keys, options);
     }
 
-    // TODO: check if these are all the supported options
-    public void ensureIndex(final DBObject fields, final DBObject opts) {
-        String name = null;
-        boolean unique = false;
-        if (opts != null) {
-            if (opts.get("name") != null) {
-                name = (String) opts.get("name");
-            }
-            if (opts.get("unique") != null) {
-                unique = FieldHelpers.asBoolean(opts.get("unique"));
-            }
-        }
-        final List<Index.Key> keys = getKeysFromDBObject(fields);
-        final Index index = new Index(name, unique, keys.toArray(new Index.Key[keys.size()]));
+    /**
+     * Creates an index on the field specified, if that index does not already exist.
+     *
+     * @param keys    a document that contains pairs with the name of the field or fields to index and order of the index
+     * @param options a document that controls the creation of the index.
+     */
+    @Override
+    public void ensureIndex(final DBObject keys, final DBObject options) {
+        // TODO: Check if these are all the supported options
+        final MongoInsert<Document> insertIndexOperation
+                = new MongoInsert<Document>(toIndexDetailsDocument(keys, options));
+        insertIndex(insertIndexOperation, documentSerializer);
+    }
 
+    /**
+     * Creates an ascending index on the field specified with default options, if that index does not already exist.
+     *
+     * @param name specifies name of field to index on
+     */
+    @Override
+    public void ensureIndex(final String name) {
+        final Index index = getIndexFromName(name);
         final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
+        final MongoInsert<Document> insertIndexOperation
+                = new MongoInsert<Document>(indexDetails);
+        insertIndex(insertIndexOperation, documentSerializer);
+    }
 
-        final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
+    /**
+     * Deprecated. The {@link #ensureIndex(DBObject)} method is the preferred way to create indexes on collections.
+     *
+     * @param keys a document that contains pairs with the name of the field or fields to index and order of the index
+     */
+    @Override
+    public void createIndex(final DBObject keys) {
+        ensureIndex(keys);
+    }
+
+    /**
+     * Deprecated. The {@link #ensureIndex(DBObject)} method is the preferred way to create indexes on collections.
+     *
+     * @param keys    a document that contains pairs with the name of the field or fields to index and order of the index
+     * @param options a document that controls the creation of the index.
+     */
+    @Override
+    public void createIndex(final DBObject keys, final DBObject options) {
+        ensureIndex(keys, options);
+    }
+
+    /**
+     * Deprecated. The {@link #ensureIndex(DBObject)} method is the preferred way to create indexes on collections.
+     *
+     * @param keys    a document that contains pairs with the name of the field or fields to index and order of the index
+     * @param options a document that controls the creation of the index.
+     * @param encoder specifies the encoder that used during operation
+     */
+    @Override
+    public void createIndex(final DBObject keys, final DBObject options, final DBEncoder encoder) {
+
+        final Serializer<DBObject> serializer;
+        if (encoder != null) {
+            serializer = new DBEncoderDecoderSerializer(encoder, null, null, null);
+        } else if (encoderFactory != null) {
+            serializer = new DBEncoderDecoderSerializer(encoderFactory.create(), null, null, null);
+        } else {
+            serializer = objectSerializer;
+        }
+
+        final Document indexDetails = toIndexDetailsDocument(keys, options);
+
+        final MongoInsert<DBObject> insertIndexOperation = new MongoInsert<DBObject>(toDBObject(indexDetails));
+        insertIndex(insertIndexOperation, serializer);
+    }
+
+    private <T> void insertIndex(final MongoInsert<T> insertIndexOperation, final Serializer<T> serializer) {
         insertIndexOperation.writeConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
         try {
-            getConnector().insert(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, documentSerializer);
+            getConnector().insert(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, serializer);
         } catch (MongoDuplicateKeyException exception) {
             throw new MongoException.DuplicateKey(exception);
         }
     }
 
+    /**
+     * Clears all indices that have not yet been applied to this collection.
+     */
     @Override
     public void resetIndexCache() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setHintFields(final List<DBObject> lst) {
-        throw new UnsupportedOperationException();
     }
 
     /**
-     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject,
-     * boolean, com.mongodb.DBObject, boolean, boolean)} with fields=null, remove=false, returnNew=false, upsert=false
+     * Override MongoDB's default index selection and query optimization process.
      *
-     * @param query
-     * @param sort
-     * @param update
-     * @return the old document
-     * @throws MongoException
+     * @param indexes list of indexes to "hint" or force MongoDB to use when performing the query.
      */
+    @Override
+    public void setHintFields(final List<DBObject> indexes) {
+        hintFields = indexes;
+    }
+
+
+    /**
+     * Atomically modify and return a single document.
+     * By default, the returned document does not include the modifications made on the update.
+     *
+     * @param query  specifies the selection criteria for the modification
+     * @param sort   determines which document the operation will modify if the query selects multiple documents
+     * @param update performs an update of the selected document
+     * @return pre-modification document
+     */
+    @Override
     public DBObject findAndModify(final DBObject query, final DBObject sort, final DBObject update) {
         return findAndModify(query, null, sort, false, update, false, false);
     }
 
+
     /**
-     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject,
-     * boolean, com.mongodb.DBObject, boolean, boolean)} with fields=null, sort=null, remove=false, returnNew=false,
-     * upsert=false
+     * Atomically modify and return a single document.
+     * By default, the returned document does not include the modifications made on the update.
      *
-     * @param query
-     * @param update
-     * @return the old document
-     * @throws MongoException
+     * @param query  specifies the selection criteria for the modification
+     * @param update performs an update of the selected document
+     * @return pre-modification document
      */
+    @Override
     public DBObject findAndModify(final DBObject query, final DBObject update) {
         return findAndModify(query, null, null, false, update, false, false);
     }
 
+
     /**
-     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject,
-     * boolean, com.mongodb.DBObject, boolean, boolean)} with fields=null, sort=null, remove=true, returnNew=false,
-     * upsert=false
+     * Atomically modify and return a single document.
+     * By default, the returned document does not include the modifications made on the update.
      *
-     * @param query
-     * @return the removed document
-     * @throws MongoException
+     * @param query specifies the selection criteria for the modification
+     * @return pre-modification document
      */
+    @Override
     public DBObject findAndRemove(final DBObject query) {
         return findAndModify(query, null, null, true, null, false, false);
     }
 
-    @Override
-    public void createIndex(final DBObject keys) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void createIndex(final DBObject keys, final DBObject options) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void createIndex(final DBObject keys, final DBObject options, final DBEncoder encoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void ensureIndex(final String name) {
-        throw new UnsupportedOperationException();
-    }
-
     /**
-     * Finds the first document in the query and updates it.
+     * Atomically modify and return a single document.
+     * By default, the returned document does not include the modifications made on the update.
      *
-     * @param query     query to match
-     * @param fields    fields to be returned
-     * @param sort      sort to apply before picking first document
-     * @param remove    if true, document found will be removed
-     * @param update    update to apply
-     * @param returnNew if true, the updated document is returned, otherwise the old document is returned (or it would
-     *                  be lost forever)
-     * @param upsert    do upsert (insert if document not present)
-     * @return the document
-     * @throws MongoException
+     * @param query     specifies the selection criteria for the modification
+     * @param fields    a subset of fields to return
+     * @param sort      determines which document the operation will modify if the query selects multiple documents
+     * @param remove    when {@code true}, removes the selected document
+     * @param returnNew when true, returns the modified document rather than the original
+     * @param update    performs an update of the selected document
+     * @param upsert    when true, operation creates a new document if the query returns no documents
+     * @return pre-modification document
      */
+    @Override
     public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert) {
+        //TODO Full implementation here required.
 //        final MongoSyncWritableStream<DBObject> stream = collection.filter(toDocument(query))
 //                .select(toFieldSelectorDocument(fields))
 //                .sort(toDocument(sort))
@@ -857,7 +1387,7 @@ public class DBCollection implements IDBCollection {
      *
      * @return this collection's database
      */
-
+    @Override
     public DB getDB() {
         return database;
     }
@@ -868,20 +1398,20 @@ public class DBCollection implements IDBCollection {
     }
 
     /**
-     * Set the write concern for this collection. Will be used for writes to this collection. Overrides any setting of
-     * write concern at the DB level. See the documentation for {@link WriteConcern} for more information.
+     * Sets a default class for objects in this collection; null resets the class to nothing.
      *
-     * @param writeConcern write concern to use
+     * @param objectClass the class
      */
-    public void setWriteConcern(final WriteConcern writeConcern) {
-        this.writeConcern = writeConcern;
+    public synchronized void setObjectClass(final Class<? extends DBObject> objectClass) {
+        updateObjectSerializer(objectClass);
     }
 
     /**
-     * Get the write concern for this collection.
+     * Get the {@link WriteConcern} for this collection.
      *
-     * @return
+     * @return WriteConcern value
      */
+    @Override
     public WriteConcern getWriteConcern() {
         if (writeConcern != null) {
             return writeConcern;
@@ -890,20 +1420,22 @@ public class DBCollection implements IDBCollection {
     }
 
     /**
-     * Sets the read preference for this collection. Will be used as default for reads from this collection; overrides
-     * DB & Connection level settings. See the * documentation for {@link ReadPreference} for more information.
+     * Set the {@link WriteConcern} for this collection. Will be used for writes to this collection. Overrides any setting of
+     * write concern at the DB level.
      *
-     * @param preference Read Preference to use
+     * @param writeConcern WriteConcern to use
      */
-    public void setReadPreference(final ReadPreference preference) {
-        this.readPreference = preference;
+    @Override
+    public void setWriteConcern(final WriteConcern writeConcern) {
+        this.writeConcern = writeConcern;
     }
 
     /**
-     * Gets the read preference
+     * Gets the {@link ReadPreference}.
      *
-     * @return
+     * @return ReadPreference value
      */
+    @Override
     public ReadPreference getReadPreference() {
         if (readPreference != null) {
             return readPreference;
@@ -911,32 +1443,50 @@ public class DBCollection implements IDBCollection {
         return database.getReadPreference();
     }
 
+    /**
+     * Sets the {@link ReadPreference} for this collection. Will be used as default for reads from this collection; overrides
+     * DB & Connection level settings. See the * documentation for {@link ReadPreference} for more information.
+     *
+     * @param preference ReadPreference to use
+     */
     @Override
+    public void setReadPreference(final ReadPreference preference) {
+        this.readPreference = preference;
+    }
+
+    @Override
+    @Deprecated
     public void slaveOk() {
-        throw new UnsupportedOperationException();
+        addOption(Bytes.QUERYOPTION_SLAVEOK);
     }
 
     @Override
     public void addOption(final int option) {
-        throw new UnsupportedOperationException();
+        optionHolder.add(option);
+    }
+
+
+    @Override
+    public void resetOptions() {
+        optionHolder.reset();
+    }
+
+    @Override
+    public int getOptions() {
+        return optionHolder.get();
     }
 
     @Override
     public void setOptions(final int options) {
-        throw new UnsupportedOperationException();
+        optionHolder.set(options);
     }
-
-    @Override
-    public void resetOptions() {
-        throw new UnsupportedOperationException();
-    }
-
 
     /**
-     * Drops (deletes) this collection. Use with care.
+     * Drops (deletes) this collection from the database. Use with care.
      *
      * @throws MongoException
      */
+    @Override
     public void drop() {
         try {
             org.mongodb.result.CommandResult commandResult = getDB().executeCommand(new Drop(getName()));
@@ -947,60 +1497,24 @@ public class DBCollection implements IDBCollection {
         }
     }
 
-    /**
-     * performs a map reduce operation
-     *
-     * @param command object representing the parameters
-     * @return
-     * @throws MongoException
-     */
-    public MapReduceOutput mapReduce(final MapReduceCommand command) {
-        final DBObject cmd = command.toDBObject();
-        // if type in inline, then query options like slaveOk is fine
-        final CommandResult res;
-        if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
-            res = database.command(cmd, getOptions(),
-                    command.getReadPreference() != null ? command.getReadPreference()
-                            : getReadPreference());
-        } else {
-            res = database.command(cmd);
-        }
-        res.throwOnError();
-        return new MapReduceOutput(this, cmd, res);
-    }
-
-    @Override
-    public MapReduceOutput mapReduce(final DBObject command) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public AggregationOutput aggregate(final DBObject firstOp, final DBObject... additionalOps) {
-        throw new UnsupportedOperationException();
-    }
-
-    public int getOptions() {
-        return 0;   // TODO: Support options
-    }
-
-    @Override
-    public void setDBDecoderFactory(final DBDecoderFactory fact) {
-        throw new UnsupportedOperationException();
-    }
-
     @Override
     public DBDecoderFactory getDBDecoderFactory() {
-        throw new UnsupportedOperationException();
+        return decoderFactory;
     }
 
     @Override
-    public void setDBEncoderFactory(final DBEncoderFactory fact) {
-        throw new UnsupportedOperationException();
+    public void setDBDecoderFactory(final DBDecoderFactory factory) {
+        this.decoderFactory = factory;
     }
 
     @Override
     public DBEncoderFactory getDBEncoderFactory() {
-        throw new UnsupportedOperationException();
+        return this.encoderFactory;
+    }
+
+    @Override
+    public void setDBEncoderFactory(final DBEncoderFactory factory) {
+        this.encoderFactory = factory;
     }
 
     /**
@@ -1009,6 +1523,7 @@ public class DBCollection implements IDBCollection {
      * @return list of index documents
      * @throws MongoException
      */
+    @Override
     public List<DBObject> getIndexInfo() {
         final ArrayList<DBObject> res = new ArrayList<DBObject>();
 
@@ -1055,24 +1570,15 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public CommandResult getStats() {
-        throw new UnsupportedOperationException();
+        final org.mongodb.result.CommandResult commandResult = getDB().executeCommand(new CollStats(getName()));
+        return new CommandResult(commandResult);
     }
 
     @Override
     public boolean isCapped() {
-        final org.mongodb.result.CommandResult commandResult = getDB().executeCommand(new CollStats(getName()));
-        final Object cappedField = commandResult.getResponse().get("capped");
+        final CommandResult commandResult = getStats();
+        final Object cappedField = commandResult.get("capped");
         return cappedField != null && (cappedField.equals(1) || cappedField.equals(true));
-    }
-
-    /**
-     * Sets a default class for objects in this collection; null resets the class to nothing.
-     *
-     * @param objectClass the class
-     * @throws IllegalArgumentException if <code>c</code> is not a DBObject
-     */
-    public synchronized void setObjectClass(final Class<? extends DBObject> objectClass) {
-        updateObjectSerializer(objectClass);
     }
 
     /**
@@ -1085,7 +1591,7 @@ public class DBCollection implements IDBCollection {
         pathToClassMap.put(path, clazz);
     }
 
-    private static Index getIndexFromName(final String name) {
+    private Index getIndexFromName(final String name) {
         //Yuk, string manipulation, my favourite...
         //Should be a better way to do this, now we're turning string into object back into string
         final String[] keysAndTypes = name.split("_");
@@ -1094,6 +1600,7 @@ public class DBCollection implements IDBCollection {
             final String keyField = keysAndTypes[i];
             final String keyType = keysAndTypes[i + 1];
             final Index.Key key;
+            //Possible problems with 'text' index
             if (keyType.equals("2d")) {
                 key = new Index.GeoKey(keyField);
             } else {
@@ -1102,6 +1609,31 @@ public class DBCollection implements IDBCollection {
             keys[i / 2] = key;
         }
         return new Index(keys);
+    }
+
+    private void updateObjectSerializer(final Class<? extends DBObject> objectClass) {
+        final HashMap<String, Class<? extends DBObject>> map = new HashMap<String, Class<? extends DBObject>>(pathToClassMap);
+        this.objectSerializer = new CollectibleDBObjectSerializer(database,
+                PrimitiveSerializers.createDefault(), new ObjectIdGenerator(), objectClass, map);
+    }
+
+    private Document toIndexDetailsDocument(DBObject keys, DBObject options) {
+        String name = null;
+        boolean unique = false;
+
+        if (options != null) {
+            if (options.get("name") != null) {
+                name = (String) options.get("name");
+            }
+            if (options.get("unique") != null) {
+                unique = FieldHelpers.asBoolean(options.get("unique"));
+            }
+        }
+        final List<Index.Key> keyList = getKeysFromDBObject(keys);
+        final Index index = new Index(name, unique, keyList.toArray(new Index.Key[keyList.size()]));
+        final Document indexDetails = index.toDocument();
+        indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
+        return indexDetails;
     }
 
     private List<Index.Key> getKeysFromDBObject(final DBObject fields) {
@@ -1120,19 +1652,19 @@ public class DBCollection implements IDBCollection {
         return keys;
     }
 
-    protected MongoConnector getConnector() {
+    MongoConnector getConnector() {
         return getDB().getConnector();
     }
 
-    protected CollectibleSerializer<DBObject> getObjectSerializer() {
+    CollectibleSerializer<DBObject> getObjectSerializer() {
         return objectSerializer;
     }
 
-    protected MongoNamespace getNamespace() {
+    MongoNamespace getNamespace() {
         return new MongoNamespace(getDB().getName(), getName());
     }
 
-    protected Serializer<Document> getDocumentSerializer() {
+    Serializer<Document> getDocumentSerializer() {
         return documentSerializer;
     }
 }

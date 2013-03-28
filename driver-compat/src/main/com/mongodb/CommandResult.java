@@ -36,6 +36,7 @@ public class CommandResult extends BasicDBObject {
         this.cmd = cmd;
         host = srv;
         //so it is shown in toString/debug
+        putAll(cmd);
         put("serverUsed", srv.toString());
     }
 

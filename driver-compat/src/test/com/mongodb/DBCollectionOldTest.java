@@ -55,7 +55,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         options.put("size", collectionSize);
         c = database.createCollection(collectionName, options);
 
-        assertEquals(c.isCapped(), true);
+        assertEquals(true, c.isCapped());
     }
 
     @Test(expected = MongoException.DuplicateKey.class)
