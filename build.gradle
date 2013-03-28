@@ -135,7 +135,7 @@ subprojects {
         options.version = true
         options.links 'http://download.oracle.com/javase/1.5.0/docs/api/'
         options.tagletPath file("$rootDir/buildSrc/build/classes/main")
-        options.taglets 'DochubTaglet', 'ManualTaglet'
+        options.taglets 'ManualTaglet'
     }
 
     artifacts {
