@@ -51,7 +51,6 @@ import org.mongodb.util.FieldHelpers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,23 +63,23 @@ import static com.mongodb.DBObjects.toUpdateOperationsDocument;
 
 /**
  * Implementation of a database collection.
- * <p>
- *     A typical invocation sequence is thus
+ * <p/>
+ * A typical invocation sequence is thus
  * <blockquote>
- *     <pre>
+ * <pre>
  *     MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", 27017));
  *     DB db = mongo.getDB("mydb");
  *     DBCollection collection = db.getCollection("test");
  * </pre>
  * </blockquote>
- *
+ * <p/>
  * To get a collection to use, just specify the name of the collection to the getCollection(String collectionName) method:
  * <blockquote>
  * <pre>
  *     DBCollection coll = db.getCollection("testCollection");
  * </pre>
  * </blockquote>
- *
+ * <p/>
  * Once you have the collection object, you can insert documents into the collection:
  * <blockquote>
  * <pre>
@@ -91,7 +90,7 @@ import static com.mongodb.DBObjects.toUpdateOperationsDocument;
  *     coll.insert(doc);
  * </pre>
  * </blockquote>
- *
+ * <p/>
  * To show that the document we inserted in the previous step is there, we can do a simple findOne() operation to get the first document in the collection:
  * <blockquote>
  * <pre>
@@ -99,10 +98,9 @@ import static com.mongodb.DBObjects.toUpdateOperationsDocument;
  *     System.out.println(myDoc);
  * </pre>
  * </blockquote>
- *
  */
 @ThreadSafe
-@SuppressWarnings({ "rawtypes", "deprecation" })
+@SuppressWarnings({"rawtypes", "deprecation"})
 public class DBCollection implements IDBCollection {
     private static final String NAMESPACE_KEY_NAME = "ns";
     private final DB database;
@@ -1096,23 +1094,7 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public AggregationOutput aggregate(final DBObject firstOp, final DBObject... additionalOps) {
-        if (firstOp == null) {
-            throw new IllegalArgumentException("Aggregate can not accept null pipeline operation");
-        }
-
-        DBObject command = new BasicDBObject("aggregate", getName());
-
-        List<DBObject> pipelineOps = new ArrayList<DBObject>();
-        pipelineOps.add(firstOp);
-        Collections.addAll(pipelineOps, additionalOps);
-        command.put("pipeline", pipelineOps);
-
-        CommandResult res = getDB().command(command);
-        //TODO Is this the right way to handle errors?
-        res.throwOnError();
-        //TODO AggregationOutput needs to be implemented.
-        return null;
-//        return new AggregationOutput(command, res);
+        throw new UnsupportedOperationException("Not implemented yet."); //TODO: We need AggregationCommand to implement this.
     }
 
     /**
@@ -1197,7 +1179,6 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public void ensureIndex(final DBObject keys, final DBObject options) {
-        // TODO: Check if these are all the supported options
         final MongoInsert<Document> insertIndexOperation
                 = new MongoInsert<Document>(toIndexDetailsDocument(keys, options));
         insertIndex(insertIndexOperation, documentSerializer);
@@ -1618,6 +1599,7 @@ public class DBCollection implements IDBCollection {
     }
 
     private Document toIndexDetailsDocument(DBObject keys, DBObject options) {
+        // TODO: Check if these are all the supported options. driver:index still not supports all options. Waiting for https://trello.com/card/additional-index-functionality-that-isn-t-supported-yet/50c237ecaad6596f2f001a3e/127
         String name = null;
         boolean unique = false;
 

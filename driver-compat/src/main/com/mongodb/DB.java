@@ -244,7 +244,13 @@ public class DB implements IDB {
     public CommandResult command(final DBObject cmd) {
         final MongoCommand command = new MongoCommand(DBObjects.toDocument(cmd))
                 .readPreference(getReadPreference().toNew());
-        final org.mongodb.result.CommandResult baseCommandResult = executeCommand(command);
+        final org.mongodb.result.CommandResult baseCommandResult;
+        try {
+            baseCommandResult = executeCommand(command);
+        } catch (MongoCommandFailureException ex){
+            throw new MongoException(ex);
+        }
+
         return toCommandResult(cmd, new ServerAddress(baseCommandResult.getAddress()), baseCommandResult.getResponse());
     }
 
