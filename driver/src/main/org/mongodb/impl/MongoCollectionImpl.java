@@ -604,7 +604,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     .sortBy(findOp.getOrder());
 
             //TODO: Still need to tidy up some of this command stuff, especially around return values
-            final FindAndUpdate<T> findAndUpdateCommand = new FindAndUpdate<T>(MongoCollectionImpl.this, findAndUpdate);
+            final FindAndUpdate<T> findAndUpdateCommand = new FindAndUpdate<T>(findAndUpdate, getName());
             final FindAndModifyCommandResultSerializer<T> serializer = new
                     FindAndModifyCommandResultSerializer<T>(
                     getOptions()
@@ -631,9 +631,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                             findOp
                                     .getOrder());
             return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
-                    new FindAndUpdate<T>(
-                            MongoCollectionImpl.this,
-                            findAndUpdate),
+                    new FindAndUpdate<T>(findAndUpdate, getName()),
                     new FindAndModifyCommandResultSerializer<T>(
                             getOptions()
                                     .getPrimitiveSerializers(),
@@ -659,9 +657,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                            findOp
                            .getOrder());
             return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
-                    new FindAndReplace<T>(
-                            MongoCollectionImpl.this,
-                            findAndReplace),
+                    new FindAndReplace<T>(findAndReplace,getName()),
                     new FindAndModifyCommandResultSerializer<T>(
                             getOptions()
                                     .getPrimitiveSerializers(),
@@ -683,9 +679,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                            findOp
                            .getOrder());
             return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
-                    new FindAndReplace<T>(
-                            MongoCollectionImpl.this,
-                            findAndReplace),
+                    new FindAndReplace<T>(findAndReplace, getName()),
                     new FindAndModifyCommandResultSerializer<T>(
                             getOptions()
                                     .getPrimitiveSerializers(),
@@ -703,9 +697,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     = new FindAndModifyCommandResultSerializer<T>(getOptions().getPrimitiveSerializers(),
                     getSerializer());
             return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
-                    new FindAndRemove<T>(
-                            MongoCollectionImpl.this,
-                            findAndRemove),
+                    new FindAndRemove<T>(findAndRemove,getName()),
                     serializer))
                     .getValue();
         }

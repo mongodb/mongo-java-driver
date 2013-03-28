@@ -17,7 +17,6 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFindAndModify;
 
@@ -25,12 +24,12 @@ import static org.mongodb.command.CommandDocumentTemplates.getFindAndModify;
 
 public final class FindAndRemove<T> extends MongoCommand {
 
-    public FindAndRemove(final MongoCollection<T> collection, final MongoFindAndModify findAndModify) {
-        super(asDocument(findAndModify, collection.getName()));
+    public FindAndRemove(final MongoFindAndModify findAndModify, final String collectionName) {
+        super(asDocument(findAndModify, collectionName));
     }
 
     private static Document asDocument(final MongoFindAndModify findAndModify,
-                                              final String collectionName) {
+                                       final String collectionName) {
         final Document cmd = getFindAndModify(findAndModify, collectionName);
         cmd.put("remove", true);
         return cmd;

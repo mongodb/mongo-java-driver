@@ -100,7 +100,7 @@ import static com.mongodb.DBObjects.toUpdateOperationsDocument;
  * </blockquote>
  */
 @ThreadSafe
-@SuppressWarnings({"rawtypes", "deprecation"})
+@SuppressWarnings({ "rawtypes", "deprecation" })
 public class DBCollection implements IDBCollection {
     private static final String NAMESPACE_KEY_NAME = "ns";
     private final DB database;

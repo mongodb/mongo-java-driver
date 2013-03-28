@@ -17,7 +17,6 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.MongoCollection;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFindAndUpdate;
 
@@ -25,8 +24,8 @@ import static org.mongodb.command.CommandDocumentTemplates.getFindAndModify;
 
 public final class FindAndUpdate<T> extends MongoCommand {
 
-    public FindAndUpdate(final MongoCollection<T> collection, final MongoFindAndUpdate<T> findAndUpdate) {
-        super(asDocument(findAndUpdate, collection.getName()));
+    public FindAndUpdate(final MongoFindAndUpdate<T> findAndUpdate, final String collectionName) {
+        super(asDocument(findAndUpdate, collectionName));
     }
 
     private static <T> Document asDocument(final MongoFindAndUpdate<T> findAndUpdate,

@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.mongodb.DBObjects.toCommandResult;
 
 @ThreadSafe
-@SuppressWarnings({ "deprecation" })
+@SuppressWarnings("deprecation")
 public class DB implements IDB {
     private final Mongo mongo;
     private final String name;
@@ -247,7 +247,7 @@ public class DB implements IDB {
         final org.mongodb.result.CommandResult baseCommandResult;
         try {
             baseCommandResult = executeCommand(command);
-        } catch (MongoCommandFailureException ex){
+        } catch (MongoCommandFailureException ex) {
             throw new MongoException(ex);
         }
 

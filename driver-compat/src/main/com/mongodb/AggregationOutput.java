@@ -10,11 +10,11 @@ public class AggregationOutput {
     /**
      * Create new container. This class should be hidden, so don't use it in your code.
      *
-     * @param command command, used to perform the operation
+     * @param command       command, used to perform the operation
      * @param commandResult result of the operation
      */
     public AggregationOutput(final DBObject command, final CommandResult commandResult) {
-        if (!commandResult.containsField("result") && !(command.get("result") instanceof Iterable)){
+        if (!commandResult.containsField("result") && !(command.get("result") instanceof Iterable)) {
             throw new IllegalArgumentException("Result undefined");
         }
         this.commandResult = commandResult;
@@ -23,23 +23,26 @@ public class AggregationOutput {
 
     /**
      * Returns the results of the aggregation.
+     *
      * @return iterable collection of {@link DBObject}
      */
     @SuppressWarnings("unchecked")
     public Iterable<DBObject> results() {
-         return (Iterable<DBObject>) commandResult.get("result");
+        return (Iterable<DBObject>) commandResult.get("result");
     }
 
     /**
      * Returns the command result of the aggregation.
+     *
      * @return aggregation command result
      */
-    public CommandResult getCommandResult(){
+    public CommandResult getCommandResult() {
         return commandResult;
     }
 
     /**
      * Returns the original aggregation command.
+     *
      * @return a command document
      */
     public DBObject getCommand() {
@@ -48,6 +51,7 @@ public class AggregationOutput {
 
     /**
      * Returns the address of the server used to execute the aggregation.
+     *
      * @return address of the server
      */
     public ServerAddress getServerUsed() {
@@ -55,7 +59,7 @@ public class AggregationOutput {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return commandResult.toString();
     }
 }
