@@ -630,13 +630,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     .select(findOp.getFields()).sortBy(
                             findOp
                                     .getOrder());
-            return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
-                    new FindAndUpdate<T>(findAndUpdate, getName()),
-                    new FindAndModifyCommandResultSerializer<T>(
-                            getOptions()
-                                    .getPrimitiveSerializers(),
-                            getSerializer())))
-                    .getValue();
+            return new FindAndModifyCommandResult<T>(
+                    connector.command(
+                            getDatabase().getName(),
+                            new FindAndUpdate<T>(findAndUpdate, getName()),
+                            new FindAndModifyCommandResultSerializer<T>(getOptions().getPrimitiveSerializers(),getSerializer())
+                    )).getValue();
         }
 
         @Override

@@ -33,11 +33,20 @@ import org.mongodb.command.Distinct;
 import org.mongodb.command.DistinctCommandResult;
 import org.mongodb.command.Drop;
 import org.mongodb.command.DropIndex;
+import org.mongodb.command.FindAndModifyCommandResult;
+import org.mongodb.command.FindAndModifyCommandResultSerializer;
+import org.mongodb.command.FindAndRemove;
+import org.mongodb.command.FindAndReplace;
+import org.mongodb.command.FindAndUpdate;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
+import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoFindAndRemove;
+import org.mongodb.operation.MongoFindAndReplace;
+import org.mongodb.operation.MongoFindAndUpdate;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
@@ -117,7 +126,7 @@ public class DBCollection implements IDBCollection {
     private DBDecoderFactory decoderFactory;
 
     private final Serializer<Document> documentSerializer;
-    private CollectibleSerializer<DBObject> objectSerializer;
+    private CollectibleSerializer<DBObject> serializer;
 
     DBCollection(final String name, final DB database, final Serializer<Document> documentSerializer) {
         this.name = name;
@@ -215,7 +224,7 @@ public class DBCollection implements IDBCollection {
     public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern) {
         final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
                 .writeConcern(writeConcern.toNew());
-        return insert(mongoInsert, objectSerializer);
+        return insert(mongoInsert, serializer);
     }
 
     /**
@@ -254,7 +263,7 @@ public class DBCollection implements IDBCollection {
         } else if (encoderFactory != null) {
             serializer = new DBEncoderDecoderSerializer(encoderFactory.create(), null, null, null);
         } else {
-            serializer = objectSerializer;
+            serializer = this.serializer;
         }
 
         final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
@@ -305,7 +314,7 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public WriteResult save(final DBObject document, final WriteConcern writeConcern) {
-        final Object id = getObjectSerializer().getId(document);
+        final Object id = getSerializer().getId(document);
         if (id == null) {
             return insert(document, writeConcern);
         } else {
@@ -314,14 +323,14 @@ public class DBCollection implements IDBCollection {
     }
 
     private WriteResult replaceOrInsert(final DBObject obj, final WriteConcern wc) {
-        final Document filter = new Document("_id", getObjectSerializer().getId(obj));
+        final Document filter = new Document("_id", getSerializer().getId(obj));
 
         final MongoReplace<DBObject> replace = new MongoReplace<DBObject>(filter, obj)
                 .upsert(true)
                 .writeConcern(wc.toNew());
 
         return new WriteResult(getConnector().replace(getNamespace(), replace, getDocumentSerializer(),
-                getObjectSerializer()), wc);
+                getSerializer()), wc);
     }
 
     /**
@@ -610,7 +619,7 @@ public class DBCollection implements IDBCollection {
                 .batchSize(-1);
 
         final QueryResult<DBObject> res = getConnector().query(getNamespace(), mongoFind,
-                documentSerializer, getObjectSerializer());
+                documentSerializer, getSerializer());
         if (res.getResults().isEmpty()) {
             return null;
         }
@@ -1236,7 +1245,7 @@ public class DBCollection implements IDBCollection {
         } else if (encoderFactory != null) {
             serializer = new DBEncoderDecoderSerializer(encoderFactory.create(), null, null, null);
         } else {
-            serializer = objectSerializer;
+            serializer = this.serializer;
         }
 
         final Document indexDetails = toIndexDetailsDocument(keys, options);
@@ -1330,33 +1339,50 @@ public class DBCollection implements IDBCollection {
     public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert) {
-        //TODO Full implementation here required.
-//        final MongoSyncWritableStream<DBObject> stream = collection.filter(toDocument(query))
-//                .select(toFieldSelectorDocument(fields))
-//                .sort(toDocument(sort))
-//                .writeConcern(getWriteConcern().toNew());
-//
-//        final MongoOperation mongoOperation;
-//
-//        if (remove) {
-//            mongoOperation = new FindAndRemove<DBObject>()
-//            return stream.removeAndGet();
-//        } else {
-//            if (update == null) {
-//                throw new IllegalArgumentException("update document can not be null");
-//            }
-//            if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-//                final Document updateOperations = toUpdateOperationsDocument(update);
-//                return upsert ?
-//                        stream.modifyOrInsertAndGet(updateOperations, asGetOrder(returnNew)) :
-//                        stream.modifyAndGet(updateOperations, asGetOrder(returnNew));
-//            } else {
-//                return upsert ?
-//                        stream.replaceOrInsertAndGet(update, asGetOrder(returnNew)) :
-//                        stream.replaceAndGet(update, asGetOrder(returnNew));
-//            }
-//        }
-        throw new UnsupportedOperationException();
+        final MongoCommand mongoCommand;
+
+        if (remove) {
+            final MongoFindAndRemove<DBObject> mongoFindAndRemove = new MongoFindAndRemove<DBObject>()
+                    .where(toDocument(query))
+                    .sortBy(toDocument(sort))
+                    .returnNew(returnNew);
+            mongoCommand = new FindAndRemove<DBObject>(mongoFindAndRemove, getName());
+        } else {
+            if (update == null) {
+                throw new IllegalArgumentException("Update document can't be null");
+            }
+            if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
+
+                final MongoFindAndUpdate<DBObject> mongoFindAndUpdate = new MongoFindAndUpdate<DBObject>()
+                        .where(toDocument(query))
+                        .sortBy(toDocument(sort))
+                        .returnNew(returnNew)
+                        .select(toDocument(fields))
+                        .updateWith(toUpdateOperationsDocument(update))
+                        .upsert(upsert);
+                mongoCommand = new FindAndUpdate<DBObject>(mongoFindAndUpdate, getName());
+            } else {
+                final MongoFindAndReplace<DBObject> mongoFindAndReplace
+                        = new MongoFindAndReplace<DBObject>(update)
+                        .where(toDocument(query))
+                        .sortBy(toDocument(sort))
+                        .select(toDocument(fields))
+                        .returnNew(returnNew)
+                        .upsert(upsert);
+                mongoCommand = new FindAndReplace<DBObject>(mongoFindAndReplace, getName());
+            }
+        }
+
+        final FindAndModifyCommandResultSerializer<DBObject> serializer = new
+                FindAndModifyCommandResultSerializer<DBObject>(
+                PrimitiveSerializers.createDefault(),
+                getSerializer()
+        );
+
+        final FindAndModifyCommandResult<DBObject> commandResult =
+                new FindAndModifyCommandResult<DBObject>(getConnector().command(getDB().getName(), mongoCommand, serializer));
+
+        return commandResult.getValue();
     }
 
     private Get asGetOrder(final boolean returnNew) {
@@ -1375,7 +1401,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public Class getObjectClass() {
-        return objectSerializer.getSerializationClass();
+        return serializer.getSerializationClass();
     }
 
     /**
@@ -1594,7 +1620,7 @@ public class DBCollection implements IDBCollection {
 
     private void updateObjectSerializer(final Class<? extends DBObject> objectClass) {
         final HashMap<String, Class<? extends DBObject>> map = new HashMap<String, Class<? extends DBObject>>(pathToClassMap);
-        this.objectSerializer = new CollectibleDBObjectSerializer(database,
+        this.serializer = new CollectibleDBObjectSerializer(database,
                 PrimitiveSerializers.createDefault(), new ObjectIdGenerator(), objectClass, map);
     }
 
@@ -1638,8 +1664,8 @@ public class DBCollection implements IDBCollection {
         return getDB().getConnector();
     }
 
-    CollectibleSerializer<DBObject> getObjectSerializer() {
-        return objectSerializer;
+    CollectibleSerializer<DBObject> getSerializer() {
+        return serializer;
     }
 
     MongoNamespace getNamespace() {

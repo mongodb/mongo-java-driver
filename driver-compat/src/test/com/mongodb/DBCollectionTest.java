@@ -157,6 +157,75 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertThat(collection.getIndexInfo(), hasItem(hasFields(map.entrySet())));
     }
 
+    @Test
+    public void testFindAndRemove() {
+        final DBObject doc = new BasicDBObject("_id", 1).append("x", true);
+        collection.insert(doc);
+        final DBObject newDoc = collection.findAndRemove(new BasicDBObject("_id", 1));
+        assertEquals(doc, newDoc);
+        assertEquals(0, collection.count());
+    }
+
+    @Test
+    public void testFindAndReplace() {
+        final DBObject doc1 = new BasicDBObject("_id", 1).append("x", true);
+        final DBObject doc2 = new BasicDBObject("_id", 1).append("y", false);
+
+        collection.insert(doc1);
+        final DBObject newDoc = collection.findAndModify(
+                new BasicDBObject("x", true),
+                doc2
+        );
+        assertEquals(doc1, newDoc);
+        assertEquals(doc2, collection.findOne());
+    }
+
+    @Test
+    public void testFindAndReplaceOrInsert() {
+        collection.insert(new BasicDBObject("_id", 1).append("p", "abc"));
+
+        final DBObject doc = new BasicDBObject("_id", 2).append("p", "foo");
+
+        final DBObject newDoc = collection.findAndModify(
+                new BasicDBObject("p", "bar"),
+                null,
+                null,
+                false,
+                doc,
+                false,
+                true
+        );
+        assertEquals(new BasicDBObject(), newDoc);
+        assertEquals(doc, collection.findOne(null, null, new BasicDBObject("_id", -1)));
+    }
+
+    @Test
+    public void testFindAndUpdate() {
+        collection.insert(new BasicDBObject("_id", 1).append("x", true));
+        final DBObject newDoc = collection.findAndModify(
+                new BasicDBObject("x", true),
+                new BasicDBObject("$set", new BasicDBObject("x", false))
+        );
+        assertNotNull(newDoc);
+        assertEquals(new BasicDBObject("_id", 1).append("x", true), newDoc);
+        assertEquals(new BasicDBObject("_id", 1).append("x", false), collection.findOne());
+    }
+
+    @Test
+    public void findAndUpdateAndReturnNew() {
+        collection.insert(new BasicDBObject("_id", 1).append("x", true));
+        final DBObject newDoc = collection.findAndModify(
+                new BasicDBObject("x", false),
+                null,
+                null,
+                false,
+                new BasicDBObject("$set", new BasicDBObject("x", false)),
+                true,
+                true
+        );
+        assertNotNull(newDoc);
+        assertThat(newDoc, hasFields(new BasicDBObject("x", false).toMap().entrySet()));
+    }
 
     public static class MyDBObject extends BasicDBObject {
         private static final long serialVersionUID = 3352369936048544621L;
