@@ -18,7 +18,7 @@ package org.mongodb.operation;
 
 import org.mongodb.result.ServerCursor;
 
-public class MongoGetMore extends MongoOperation {
+public class MongoGetMore {
     private final int batchSize;
     private final ServerCursor serverCursor;
 

@@ -715,7 +715,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         boolean asBoolean(final Get get) {
-            return get == Get.BeforeChangeApplied;
+            return get == Get.AfterChangeApplied;
         }
 
         @Override
