@@ -21,7 +21,6 @@ import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Fixture;
 import org.mongodb.MongoDatabase;
-import org.mongodb.operation.MongoCommand;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

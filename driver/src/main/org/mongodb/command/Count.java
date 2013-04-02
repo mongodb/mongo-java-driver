@@ -17,7 +17,6 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
 
 public final class Count extends MongoCommand {

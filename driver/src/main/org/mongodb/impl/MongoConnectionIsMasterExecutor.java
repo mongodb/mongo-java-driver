@@ -20,7 +20,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoConnector;
 import org.mongodb.ServerAddress;
 import org.mongodb.command.IsMasterCommandResult;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.serialization.PrimitiveSerializers;
 import org.mongodb.serialization.serializers.DocumentSerializer;
 

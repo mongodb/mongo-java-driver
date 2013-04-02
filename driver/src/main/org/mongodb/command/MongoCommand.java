@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb.command;
 
 import org.mongodb.Document;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.ReadPreference;
+import org.mongodb.operation.MongoQuery;
 
 public class MongoCommand extends MongoQuery implements ConvertibleToDocument {
     private final Document command;

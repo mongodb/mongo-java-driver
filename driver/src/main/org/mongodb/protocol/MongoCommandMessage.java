@@ -18,7 +18,7 @@ package org.mongodb.protocol;
 
 import org.mongodb.Document;
 import org.mongodb.io.ChannelAwareOutputBuffer;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.serialization.Serializer;
 
 public class MongoCommandMessage extends MongoQueryBaseMessage {

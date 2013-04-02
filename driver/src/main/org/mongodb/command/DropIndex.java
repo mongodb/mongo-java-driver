@@ -17,7 +17,6 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.operation.MongoCommand;
 
 public class DropIndex  extends MongoCommand {
     public DropIndex(final String collectionName, final String indexName) {
