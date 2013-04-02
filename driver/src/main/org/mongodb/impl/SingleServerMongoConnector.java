@@ -23,7 +23,7 @@ import org.mongodb.MongoConnector;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
-import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoGetMore;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
@@ -95,11 +95,11 @@ public class SingleServerMongoConnector implements MongoConnector {
     }
 
     @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
+    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore,
                                       final Serializer<T> resultSerializer) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.getMore(namespace, getMore, resultSerializer);
+            return connection.getMore(namespace, mongoGetMore, resultSerializer);
         } finally {
             connection.release();
         }
@@ -208,23 +208,23 @@ public class SingleServerMongoConnector implements MongoConnector {
     }
 
     @Override
-    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
+    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore,
                                                    final Serializer<T> resultSerializer) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.asyncGetMore(namespace, getMore, resultSerializer);
+            return connection.asyncGetMore(namespace, mongoGetMore, resultSerializer);
         } finally {
             connection.release();
         }
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore,
                                  final Serializer<T> resultSerializer,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            connection.asyncGetMore(namespace, getMore, resultSerializer, callback);
+            connection.asyncGetMore(namespace, mongoGetMore, resultSerializer, callback);
         } finally {
             connection.release();
         }

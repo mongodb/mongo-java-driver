@@ -17,18 +17,18 @@
 package org.mongodb.protocol;
 
 import org.mongodb.io.ChannelAwareOutputBuffer;
-import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoGetMore;
 
 public class MongoGetMoreMessage extends MongoRequestMessage {
-    private final GetMore getMore;
+    private final MongoGetMore mongoGetMore;
 
-    public MongoGetMoreMessage(final String collectionName, final GetMore getMore) {
+    public MongoGetMoreMessage(final String collectionName, final MongoGetMore mongoGetMore) {
         super(collectionName, OpCode.OP_GETMORE);
-        this.getMore = getMore;
+        this.mongoGetMore = mongoGetMore;
     }
 
     public long getCursorId() {
-        return getMore.getServerCursor().getId();
+        return mongoGetMore.getServerCursor().getId();
     }
 
     @Override
@@ -39,7 +39,7 @@ public class MongoGetMoreMessage extends MongoRequestMessage {
     private void writeGetMore(final ChannelAwareOutputBuffer buffer) {
         buffer.writeInt(0);
         buffer.writeCString(getCollectionName());
-        buffer.writeInt(getMore.getBatchSize());
-        buffer.writeLong(getMore.getServerCursor().getId());
+        buffer.writeInt(mongoGetMore.getBatchSize());
+        buffer.writeLong(mongoGetMore.getServerCursor().getId());
     }
 }

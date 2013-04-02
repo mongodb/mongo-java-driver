@@ -18,7 +18,7 @@ package com.mongodb;
 
 import org.mongodb.MongoConnector;
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.result.QueryResult;
@@ -581,7 +581,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     private void getMore() {
         currentResult = getConnector().getMore(
                 collection.getNamespace(),
-                new GetMore(currentResult.getCursor(), find.getBatchSize()),
+                new MongoGetMore(currentResult.getCursor(), find.getBatchSize()),
                 collection.getSerializer());
         currentIterator = currentResult.getResults().iterator();
     }
