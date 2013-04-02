@@ -16,9 +16,15 @@
 
 package com.mongodb;
 
+import org.bson.BSONBinaryReader;
 import org.bson.BSONObject;
+import org.bson.BSONReader;
+import org.bson.io.BasicInputBuffer;
+import org.bson.io.BasicOutputBuffer;
 import org.mongodb.Document;
+import org.mongodb.serialization.Serializer;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +36,13 @@ public class DBObjects {
         final Document res = new Document();
         fill(obj, res);
         return res;
+    }
+
+    public static Document toDocument(final DBObject obj, final DBEncoder encoder, final Serializer<Document> documentSerializer) {
+        final BasicOutputBuffer buffer = new BasicOutputBuffer();
+        encoder.writeObject(buffer, obj);
+        final BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(buffer.toByteArray())));
+        return documentSerializer.deserialize(bsonReader);
     }
 
     public static Document[] toDocumentArray(final DBObject[] dbObjects) {
