@@ -314,8 +314,8 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
     }
 
     @Override
-    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
-                                                   final Serializer<T> resultSerializer) {
+    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
+                                                   final Decoder<T> resultDecoder) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         asyncGetMore(namespace, getMore, resultDecoder, new SingleResultFutureCallback<QueryResult<T>>(retVal));
@@ -324,7 +324,7 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> resultSerializer,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore, final Decoder<T> resultDecoder,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
         final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore);

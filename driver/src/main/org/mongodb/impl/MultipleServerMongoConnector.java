@@ -132,13 +132,13 @@ class MultipleServerMongoConnector implements MongoConnector {
     }
 
     @Override
-    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
-                                                   final Serializer<T> resultSerializer) {
-        return getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultSerializer);
+    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
+                                                   final Decoder<T> resultDecoder) {
+        return getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultDecoder);
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> resultSerializer,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore, final Decoder<T> resultDecoder,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultDecoder, callback);
     }

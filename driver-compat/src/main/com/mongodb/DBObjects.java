@@ -21,8 +21,8 @@ import org.bson.BSONObject;
 import org.bson.BSONReader;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
+import org.mongodb.Decoder;
 import org.mongodb.Document;
-import org.mongodb.serialization.Serializer;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -38,11 +38,11 @@ public class DBObjects {
         return res;
     }
 
-    public static Document toDocument(final DBObject obj, final DBEncoder encoder, final Serializer<Document> documentSerializer) {
+    public static Document toDocument(final DBObject obj, final DBEncoder encoder, final Decoder<Document> documentDecoder) {
         final BasicOutputBuffer buffer = new BasicOutputBuffer();
         encoder.writeObject(buffer, obj);
         final BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(buffer.toByteArray())));
-        return documentSerializer.deserialize(bsonReader);
+        return documentDecoder.decode(bsonReader);
     }
 
     public static Document[] toDocumentArray(final DBObject[] dbObjects) {
