@@ -23,8 +23,6 @@ import org.mongodb.Document;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.MongoCollection;
-import org.mongodb.codecs.BSONDocumentBufferCodec;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.PrimitiveCodecs;
 

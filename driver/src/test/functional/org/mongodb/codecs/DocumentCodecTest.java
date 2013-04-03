@@ -35,7 +35,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.PrimitiveCodecs;
-import org.mongodb.codecs.DocumentCodec;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
