@@ -20,23 +20,23 @@ import org.mongodb.Document;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdateBase;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Encoder;
 
 public class MongoReplaceMessage<T> extends MongoUpdateBaseMessage {
     private MongoReplace<T> replace;
-    private final Serializer<T> serializer;
+    private final Encoder<T> encoder;
 
     public MongoReplaceMessage(final String collectionName, final MongoReplace<T> replace,
-                               final Serializer<Document> baseSerializer, final Serializer<T> serializer) {
-        super(collectionName, OpCode.OP_UPDATE, baseSerializer);
+                               final Encoder<Document> baseEncoder, final Encoder<T> encoder) {
+        super(collectionName, OpCode.OP_UPDATE, baseEncoder);
         this.replace = replace;
-        this.serializer = serializer;
+        this.encoder = encoder;
     }
 
     @Override
-    protected void serializeMessageBody(final ChannelAwareOutputBuffer buffer) {
+    protected void encodeMessageBody(final ChannelAwareOutputBuffer buffer) {
         writeBaseUpdate(buffer);
-        addDocument(replace.getReplacement(), serializer, buffer);
+        addDocument(replace.getReplacement(), encoder, buffer);
     }
 
     @Override

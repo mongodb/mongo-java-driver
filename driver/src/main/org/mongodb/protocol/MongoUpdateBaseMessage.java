@@ -19,15 +19,15 @@ package org.mongodb.protocol;
 import org.mongodb.Document;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoUpdateBase;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Encoder;
 
 public abstract class MongoUpdateBaseMessage extends MongoRequestMessage {
-    private final Serializer<Document> baseSerializer;
+    private final Encoder<Document> baseEncoder;
 
 
-    public MongoUpdateBaseMessage(final String collectionName, final OpCode opCode, final Serializer<Document> baseSerializer) {
+    public MongoUpdateBaseMessage(final String collectionName, final OpCode opCode, final Encoder<Document> encoder) {
         super(collectionName, opCode);
-        this.baseSerializer = baseSerializer;
+        this.baseEncoder = encoder;
     }
 
     protected void writeBaseUpdate(final ChannelAwareOutputBuffer buffer) {
@@ -43,12 +43,12 @@ public abstract class MongoUpdateBaseMessage extends MongoRequestMessage {
         }
         buffer.writeInt(flags);
 
-        addDocument(getUpdateBase().getFilter(), baseSerializer, buffer);
+        addDocument(getUpdateBase().getFilter(), baseEncoder, buffer);
     }
 
     protected abstract MongoUpdateBase getUpdateBase();
 
-    public Serializer<Document> getBaseSerializer() {
-        return baseSerializer;
+    public Encoder<Document> getBaseEncoder() {
+        return baseEncoder;
     }
 }

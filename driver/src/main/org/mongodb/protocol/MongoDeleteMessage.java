@@ -19,20 +19,20 @@ package org.mongodb.protocol;
 import org.mongodb.Document;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoRemove;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Encoder;
 
 public class MongoDeleteMessage extends MongoRequestMessage {
     private final MongoRemove remove;
-    private final Serializer<Document> serializer;
+    private final Encoder<Document> encoder;
 
-    public MongoDeleteMessage(final String collectionName, final MongoRemove remove, final Serializer<Document> serializer) {
+    public MongoDeleteMessage(final String collectionName, final MongoRemove remove, final Encoder<Document> encoder) {
         super(collectionName, OpCode.OP_DELETE);
         this.remove = remove;
-        this.serializer = serializer;
+        this.encoder = encoder;
     }
 
     @Override
-    protected void serializeMessageBody(final ChannelAwareOutputBuffer buffer) {
+    protected void encodeMessageBody(final ChannelAwareOutputBuffer buffer) {
         writeDelete(buffer);
     }
 
@@ -47,7 +47,7 @@ public class MongoDeleteMessage extends MongoRequestMessage {
             buffer.writeInt(1);
         }
 
-        addDocument(remove.getFilter(), serializer, buffer);
+        addDocument(remove.getFilter(), encoder, buffer);
     }
 }
 

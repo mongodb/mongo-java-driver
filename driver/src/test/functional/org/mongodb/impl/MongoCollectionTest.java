@@ -26,7 +26,7 @@ import org.mongodb.Get;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.result.WriteResult;
-import org.mongodb.serialization.CollectibleSerializer;
+import org.mongodb.CollectibleCodec;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -202,7 +202,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testFindAndUpdateWithGenerics() {
-        final MongoCollection<Concrete> collection = database.getCollection(collectionName, new ConcreteSerializer());
+        final MongoCollection<Concrete> collection = database.getCollection(collectionName, new ConcreteCodec());
 
         final Concrete doc = new Concrete(new ObjectId(), true);
         collection.insert(doc);
@@ -265,10 +265,10 @@ class Concrete {
     }
 }
 
-class ConcreteSerializer implements CollectibleSerializer<Concrete> {
+class ConcreteCodec implements CollectibleCodec<Concrete> {
 
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Concrete value) {
+    public void encode(final BSONWriter bsonWriter, final Concrete value) {
         bsonWriter.writeStartDocument();
 
         bsonWriter.writeObjectId("_id", value.getId());
@@ -278,7 +278,7 @@ class ConcreteSerializer implements CollectibleSerializer<Concrete> {
     }
 
     @Override
-    public Concrete deserialize(final BSONReader reader) {
+    public Concrete decode(final BSONReader reader) {
         final Concrete c;
         reader.readStartDocument();
 
@@ -291,7 +291,7 @@ class ConcreteSerializer implements CollectibleSerializer<Concrete> {
     }
 
     @Override
-    public Class<Concrete> getSerializationClass() {
+    public Class<Concrete> getEncoderClass() {
         return Concrete.class;
     }
 

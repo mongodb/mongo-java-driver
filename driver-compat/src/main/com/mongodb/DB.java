@@ -28,7 +28,7 @@ import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.result.QueryResult;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Codec;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -48,13 +48,13 @@ public class DB implements IDB {
 
     private final Bytes.OptionHolder optionHolder;
 
-    private final Serializer<Document> documentSerializer;
+    private final Codec<Document> documentCodec;
 
 
-    DB(final Mongo mongo, final String dbName, final Serializer<Document> documentSerializer) {
+    DB(final Mongo mongo, final String dbName, final Codec<Document> documentCodec) {
         this.mongo = mongo;
         this.name = dbName;
-        this.documentSerializer = documentSerializer;
+        this.documentCodec = documentCodec;
         this.optionHolder = new Bytes.OptionHolder(mongo.getOptionHolder());
     }
 
@@ -114,7 +114,7 @@ public class DB implements IDB {
             return collection;
         }
 
-        collection = new DBCollection(name, this, documentSerializer);
+        collection = new DBCollection(name, this, documentCodec);
         final DBCollection old = collectionCache.putIfAbsent(name, collection);
         return old != null ? old : collection;
     }
@@ -171,8 +171,8 @@ public class DB implements IDB {
         final QueryResult<Document> query = getConnector().query(
                 namespacesCollection,
                 findAll,
-                documentSerializer,
-                documentSerializer
+                documentCodec,
+                documentCodec
         );
 
         final HashSet<String> collections = new HashSet<String>();
@@ -447,7 +447,7 @@ public class DB implements IDB {
 
     protected org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
-        return new org.mongodb.result.CommandResult(getConnector().command(getName(), commandOperation, documentSerializer));
+        return new org.mongodb.result.CommandResult(getConnector().command(getName(), commandOperation, documentCodec));
 
     }
 

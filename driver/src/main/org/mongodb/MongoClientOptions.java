@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
 import org.mongodb.async.AsyncDetector;
-import org.mongodb.serialization.PrimitiveSerializers;
 
 /**
  * Various settings to control the behavior of a <code>MongoClient</code>.
@@ -30,21 +29,23 @@ import org.mongodb.serialization.PrimitiveSerializers;
 public final class MongoClientOptions {
 
     private final String description;
+    private final ReadPreference readPreference;
+    private final WriteConcern writeConcern;
+    private final PrimitiveCodecs primitiveCodecs;
+
     private final int connectionsPerHost;
     private final int threadsAllowedToBlockForConnectionMultiplier;
     private final int maxWaitTime;
+
     private final int connectTimeout;
     private final int socketTimeout;
     private final boolean socketKeepAlive;
     private final boolean autoConnectRetry;
     private final long maxAutoConnectRetryTime;
-    private final ReadPreference readPreference;
-    private final WriteConcern writeConcern;
-    private final PrimitiveSerializers primitiveSerializers;
+    private final boolean asyncEnabled;
     //CHECKSTYLE:OFF
     private final boolean SSLEnabled;
     //CHECKSTYLE:ON
-    private final boolean asyncEnabled;
 
     /**
      * Convenience method to create a Builder.
@@ -64,6 +65,10 @@ public final class MongoClientOptions {
     public static class Builder {
 
         private String description;
+        private ReadPreference readPreference = ReadPreference.primary();
+        private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
+        private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
+
         private int connectionsPerHost = 100;
         private int threadsAllowedToBlockForConnectionMultiplier = 5;
         private int maxWaitTime = 1000 * 60 * 2;
@@ -72,9 +77,6 @@ public final class MongoClientOptions {
         private boolean socketKeepAlive = false;
         private boolean autoConnectRetry = false;
         private long maxAutoConnectRetryTime = 0;
-        private ReadPreference readPreference = ReadPreference.primary();
-        private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
-        private PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
         //CHECKSTYLE:OFF
         private boolean SSLEnabled = false;
         //CHECKSTYLE:ON
@@ -243,16 +245,16 @@ public final class MongoClientOptions {
         }
 
         /**
-         * Sets the PrimitiveSerializers to use.
+         * Sets the PrimitiveCodecs to use.
          *
          * @return {@code this}
-         * @see org.mongodb.MongoClientOptions#getPrimitiveSerializers()
+         * @see org.mongodb.MongoClientOptions#getPrimitiveCodecs()
          */
-        public Builder primitiveSerializers(final PrimitiveSerializers aPrimitiveSerializers) {
-            if (aPrimitiveSerializers == null) {
+        public Builder primitiveCodecs(final PrimitiveCodecs aPrimitiveCodecs) {
+            if (aPrimitiveCodecs == null) {
                 throw new IllegalArgumentException("null is not a legal value");
             }
-            this.primitiveSerializers = aPrimitiveSerializers;
+            this.primitiveCodecs = aPrimitiveCodecs;
             return this;
         }
 
@@ -284,7 +286,6 @@ public final class MongoClientOptions {
             this.asyncEnabled = aAsyncEnabled;
             return this;
         }
-
 
         /**
          * Build an instance of MongoClientOptions.
@@ -435,12 +436,12 @@ public final class MongoClientOptions {
     }
 
     /**
-     * The primitive serializers to use. <p> Default is {@code PrimitiveSerializers.createDefault()} </p>
+     * The primitive codecs to use. <p> Default is {@code PrimitiveCodecs.createDefault()} </p>
      *
-     * @return primitive serializers
+     * @return primitive codecs
      */
-    public PrimitiveSerializers getPrimitiveSerializers() {
-        return primitiveSerializers;
+    public PrimitiveCodecs getPrimitiveCodecs() {
+        return primitiveCodecs;
     }
 
     /**
@@ -475,7 +476,7 @@ public final class MongoClientOptions {
                 + ", maxAutoConnectRetryTime=" + maxAutoConnectRetryTime
                 + ", readPreference=" + readPreference
                 + ", writeConcern=" + writeConcern
-                + ", primitiveSerializers=" + primitiveSerializers
+                + ", primitiveCodecs=" + primitiveCodecs
                 + ", SSLEnabled=" + SSLEnabled
                 + ", asyncEnabled=" + asyncEnabled
                 + '}';
@@ -493,7 +494,7 @@ public final class MongoClientOptions {
         maxAutoConnectRetryTime = builder.maxAutoConnectRetryTime;
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
-        primitiveSerializers = builder.primitiveSerializers;
+        primitiveCodecs = builder.primitiveCodecs;
         SSLEnabled = builder.SSLEnabled;
         asyncEnabled = builder.asyncEnabled;
     }

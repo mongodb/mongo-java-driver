@@ -29,49 +29,47 @@ import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Decoder;
+import org.mongodb.Encoder;
+import org.mongodb.Codec;
 
 import java.util.concurrent.Future;
 
 public interface MongoAsyncConnector {
-    Future<CommandResult> asyncCommand(String database, MongoCommand commandOperation, Serializer<Document> serializer);
+    Future<CommandResult> asyncCommand(String database, MongoCommand commandOperation, Codec<Document> codec);
 
-    void asyncCommand(String database, MongoCommand commandOperation, Serializer<Document> serializer,
+    void asyncCommand(String database, MongoCommand commandOperation, Codec<Document> codec,
                       SingleResultCallback<CommandResult> callback);
 
-    <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, MongoFind find, Serializer<Document> querySerializer,
-                                          Serializer<T> resultSerializer);
+    <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, MongoFind find, Encoder<Document> queryEncoder,
+                                          Decoder<T> resultDecoder);
 
-    <T> void asyncQuery(final MongoNamespace namespace, MongoFind find, Serializer<Document> querySerializer,
-                        Serializer<T> resultSerializer, SingleResultCallback<QueryResult<T>> callback);
+    <T> void asyncQuery(final MongoNamespace namespace, MongoFind find, Encoder<Document> queryEncoder,
+                        Decoder<T> resultDecoder, SingleResultCallback<QueryResult<T>> callback);
 
-    <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> resultSerializer);
+    <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, GetMore getMore, Decoder<T> resultDecoder);
 
-    <T> void asyncGetMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> resultSerializer,
+    <T> void asyncGetMore(final MongoNamespace namespace, GetMore getMore, Decoder<T> resultDecoder,
                           SingleResultCallback<QueryResult<T>> callback);
 
-    <T> Future<WriteResult> asyncInsert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer);
+    <T> Future<WriteResult> asyncInsert(MongoNamespace namespace, MongoInsert<T> insert, Encoder<T> encoder);
 
-    <T> void asyncInsert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer,
+    <T> void asyncInsert(MongoNamespace namespace, MongoInsert<T> insert, Encoder<T> encoder,
                          SingleResultCallback<WriteResult> callback);
 
+    Future<WriteResult> asyncUpdate(final MongoNamespace namespace, MongoUpdate update, Encoder<Document> queryEncoder);
 
-    Future<WriteResult> asyncUpdate(final MongoNamespace namespace, MongoUpdate update, Serializer<Document> querySerializer);
-
-    void asyncUpdate(final MongoNamespace namespace, MongoUpdate update, Serializer<Document> serializer,
+    void asyncUpdate(final MongoNamespace namespace, MongoUpdate update, Encoder<Document> queryEncoder,
                      SingleResultCallback<WriteResult> callback);
 
+    <T> Future<WriteResult> asyncReplace(MongoNamespace namespace, MongoReplace<T> replace, Encoder<Document> queryEncoder,
+                                         Encoder<T> encoder);
 
-    <T> Future<WriteResult> asyncReplace(MongoNamespace namespace, MongoReplace<T> replace, Serializer<Document> querySerializer,
-                                         Serializer<T> serializer);
+    <T> void asyncReplace(MongoNamespace namespace, MongoReplace<T> replace, Encoder<Document> queryEncoder,
+                          Encoder<T> encoder, SingleResultCallback<WriteResult> callback);
 
-    <T> void asyncReplace(MongoNamespace namespace, MongoReplace<T> replace, Serializer<Document> querySerializer,
-                          Serializer<T> serializer, SingleResultCallback<WriteResult> callback);
+    Future<WriteResult> asyncRemove(final MongoNamespace namespace, MongoRemove remove, Encoder<Document> queryEncoder);
 
-
-    Future<WriteResult> asyncRemove(final MongoNamespace namespace, MongoRemove remove, Serializer<Document> querySerializer);
-
-    void asyncRemove(final MongoNamespace namespace, MongoRemove remove, Serializer<Document> querySerializer,
+    void asyncRemove(final MongoNamespace namespace, MongoRemove remove, Encoder<Document> queryEncoder,
                      SingleResultCallback<WriteResult> callback);
-
 }

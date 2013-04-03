@@ -20,20 +20,20 @@ import org.mongodb.Document;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoUpdateBase;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Encoder;
 
 public class MongoUpdateMessage extends MongoUpdateBaseMessage {
     private MongoUpdate update;
 
-    public MongoUpdateMessage(final String fullName, final MongoUpdate update, final Serializer<Document> baseSerializer) {
-        super(fullName, OpCode.OP_UPDATE, baseSerializer);
+    public MongoUpdateMessage(final String fullName, final MongoUpdate update, final Encoder<Document> encoder) {
+        super(fullName, OpCode.OP_UPDATE, encoder);
         this.update = update;
     }
 
     @Override
-    protected void serializeMessageBody(final ChannelAwareOutputBuffer buffer) {
+    protected void encodeMessageBody(final ChannelAwareOutputBuffer buffer) {
         writeBaseUpdate(buffer);
-        addDocument(update.getUpdateOperations(), getBaseSerializer(), buffer);
+        addDocument(update.getUpdateOperations(), getBaseEncoder(), buffer);
     }
 
     @Override

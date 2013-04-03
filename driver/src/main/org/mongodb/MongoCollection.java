@@ -17,12 +17,11 @@
 package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.serialization.CollectibleSerializer;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
  *
- * @param <T> The type that this collection will serialize documents from and to
+ * @param <T> The type that this collection will encode documents from and decode documents to
  */
 @ThreadSafe
 public interface MongoCollection<T> extends MongoStream<T> {
@@ -47,7 +46,7 @@ public interface MongoCollection<T> extends MongoStream<T> {
 
     MongoCollectionOptions getOptions();
 
-    CollectibleSerializer<T> getSerializer();
+    CollectibleCodec<T> getCodec();
 
     CollectionAdmin tools();
 }

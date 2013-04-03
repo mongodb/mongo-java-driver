@@ -35,7 +35,9 @@ import org.mongodb.pool.SimplePool;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Codec;
+import org.mongodb.Decoder;
+import org.mongodb.Encoder;
 
 import java.util.Arrays;
 import java.util.List;
@@ -74,10 +76,10 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public CommandResult command(final String database, final MongoCommand commandOperation,
-                                 final Serializer<Document> serializer) {
+                                 final Codec<Document> codec) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.command(database, commandOperation, serializer);
+            return connection.command(database, commandOperation, codec);
         } finally {
             connection.release();
         }
@@ -85,10 +87,10 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
-                                    final Serializer<Document> querySerializer, final Serializer<T> resultSerializer) {
+                                    final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.query(namespace, find, querySerializer, resultSerializer);
+            return connection.query(namespace, find, queryEncoder, resultDecoder);
         } finally {
             connection.release();
         }
@@ -96,10 +98,10 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
-                                      final Serializer<T> resultSerializer) {
+                                      final Decoder<T> resultDecoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.getMore(namespace, getMore, resultSerializer);
+            return connection.getMore(namespace, getMore, resultDecoder);
         } finally {
             connection.release();
         }
@@ -107,10 +109,10 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                  final Serializer<T> serializer) {
+                                  final Encoder<T> encoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.insert(namespace, insert, serializer);
+            return connection.insert(namespace, insert, encoder);
         } finally {
             connection.release();
         }
@@ -118,10 +120,10 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public WriteResult update(final MongoNamespace namespace, final MongoUpdate update,
-                              final Serializer<Document> querySerializer) {
+                              final Encoder<Document> queryEncoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.update(namespace, update, querySerializer);
+            return connection.update(namespace, update, queryEncoder);
         } finally {
             connection.release();
         }
@@ -129,10 +131,10 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> WriteResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                   final Serializer<Document> querySerializer, final Serializer<T> serializer) {
+                                   final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.replace(namespace, replace, querySerializer, serializer);
+            return connection.replace(namespace, replace, queryEncoder, encoder);
         } finally {
             connection.release();
         }
@@ -140,10 +142,10 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove,
-                              final Serializer<Document> querySerializer) {
+                              final Encoder<Document> queryEncoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.remove(namespace, remove, querySerializer);
+            return connection.remove(namespace, remove, queryEncoder);
         } finally {
             connection.release();
         }
@@ -161,10 +163,10 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public Future<CommandResult> asyncCommand(final String database, final MongoCommand commandOperation,
-                                              final Serializer<Document> serializer) {
+                                              final Codec<Document> codec) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.asyncCommand(database, commandOperation, serializer);
+            return connection.asyncCommand(database, commandOperation, codec);
         } finally {
             connection.release();
         }
@@ -172,11 +174,11 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public void asyncCommand(final String database, final MongoCommand commandOperation,
-                             final Serializer<Document> serializer,
+                             final Codec<Document> codec,
                              final SingleResultCallback<CommandResult> callback) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            connection.asyncCommand(database, commandOperation, serializer, callback);
+            connection.asyncCommand(database, commandOperation, codec, callback);
         } finally {
             connection.release();
         }
@@ -184,11 +186,11 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
-                                                 final Serializer<Document> querySerializer,
-                                                 final Serializer<T> resultSerializer) {
+                                                 final Encoder<Document> queryEncoder,
+                                                 final Decoder<T> resultDecoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.asyncQuery(namespace, find, querySerializer, resultSerializer);
+            return connection.asyncQuery(namespace, find, queryEncoder, resultDecoder);
         } finally {
             connection.release();
         }
@@ -196,12 +198,12 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find,
-                               final Serializer<Document> querySerializer,
-                               final Serializer<T> resultSerializer,
+                               final Encoder<Document> queryEncoder,
+                               final Decoder<T> resultDecoder,
                                final SingleResultCallback<QueryResult<T>> callback) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            connection.asyncQuery(namespace, find, querySerializer, resultSerializer, callback);
+            connection.asyncQuery(namespace, find, queryEncoder, resultDecoder, callback);
         } finally {
             connection.release();
         }
@@ -209,10 +211,10 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
-                                                   final Serializer<T> resultSerializer) {
+                                                   final Decoder<T> resultDecoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.asyncGetMore(namespace, getMore, resultSerializer);
+            return connection.asyncGetMore(namespace, getMore, resultDecoder);
         } finally {
             connection.release();
         }
@@ -220,11 +222,11 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
-                                 final Serializer<T> resultSerializer,
+                                 final Decoder<T> resultDecoder,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            connection.asyncGetMore(namespace, getMore, resultSerializer, callback);
+            connection.asyncGetMore(namespace, getMore, resultDecoder, callback);
         } finally {
             connection.release();
         }
@@ -232,10 +234,10 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> Future<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                               final Serializer<T> serializer) {
+                                               final Encoder<T> encoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.asyncInsert(namespace, insert, serializer);
+            return connection.asyncInsert(namespace, insert, encoder);
         } finally {
             connection.release();
         }
@@ -243,11 +245,11 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> void asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                final Serializer<T> serializer,
+                                final Encoder<T> encoder,
                                 final SingleResultCallback<WriteResult> callback) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            connection.asyncInsert(namespace, insert, serializer, callback);
+            connection.asyncInsert(namespace, insert, encoder, callback);
         } finally {
             connection.release();
         }
@@ -255,10 +257,10 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public Future<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
-                                           final Serializer<Document> querySerializer) {
+                                           final Encoder<Document> queryEncoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.asyncUpdate(namespace, update, querySerializer);
+            return connection.asyncUpdate(namespace, update, queryEncoder);
         } finally {
             connection.release();
         }
@@ -266,11 +268,11 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public void asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
-                            final Serializer<Document> serializer,
+                            final Encoder<Document> queryEncoder,
                             final SingleResultCallback<WriteResult> callback) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            connection.asyncUpdate(namespace, update, serializer, callback);
+            connection.asyncUpdate(namespace, update, queryEncoder, callback);
         } finally {
             connection.release();
         }
@@ -278,11 +280,11 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> Future<WriteResult> asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                                final Serializer<Document> querySerializer,
-                                                final Serializer<T> serializer) {
+                                                final Encoder<Document> queryEncoder,
+                                                final Encoder<T> encoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.asyncReplace(namespace, replace, querySerializer, serializer);
+            return connection.asyncReplace(namespace, replace, queryEncoder, encoder);
         } finally {
             connection.release();
         }
@@ -290,11 +292,11 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> void asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                 final Serializer<Document> querySerializer, final Serializer<T> serializer,
+                                 final Encoder<Document> queryEncoder, final Encoder<T> encoder,
                                  final SingleResultCallback<WriteResult> callback) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            connection.asyncReplace(namespace, replace, querySerializer, serializer, callback);
+            connection.asyncReplace(namespace, replace, queryEncoder, encoder, callback);
         } finally {
             connection.release();
         }
@@ -302,10 +304,10 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public Future<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
-                                           final Serializer<Document> querySerializer) {
+                                           final Encoder<Document> queryEncoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.asyncRemove(namespace, remove, querySerializer);
+            return connection.asyncRemove(namespace, remove, queryEncoder);
         } finally {
             connection.release();
         }
@@ -313,11 +315,11 @@ public class SingleServerMongoConnector implements MongoConnector {
 
     @Override
     public void asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
-                            final Serializer<Document> querySerializer,
+                            final Encoder<Document> queryEncoder,
                             final SingleResultCallback<WriteResult> callback) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            connection.asyncRemove(namespace, remove, querySerializer, callback);
+            connection.asyncRemove(namespace, remove, queryEncoder, callback);
         } finally {
             connection.release();
         }

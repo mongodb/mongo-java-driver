@@ -27,7 +27,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryBuilder;
-import org.mongodb.serialization.CollectibleSerializer;
+import org.mongodb.CollectibleCodec;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +65,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToQueryTypedCollectionWithDocument() {
-        final MongoCollection<Person> personCollection = database.getCollection(collectionName, new PersonSerializer());
+        final MongoCollection<Person> personCollection = database.getCollection(collectionName, new PersonCodec());
         personCollection.insert(new Person("Bob"));
 
         final MongoCursor<Person> results = personCollection.filter(new Document("name", "Bob")).all();
@@ -75,7 +75,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToQueryWithType() {
-        final MongoCollection<Person> personCollection = database.getCollection(collectionName, new PersonSerializer());
+        final MongoCollection<Person> personCollection = database.getCollection(collectionName, new PersonCodec());
         final Person bob = new Person("Bob");
         personCollection.insert(bob);
 
@@ -169,14 +169,14 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
     public void shouldBeAbleToQueryWithJSON() {
     }
 
-    private class PersonSerializer implements CollectibleSerializer<Person> {
+    private class PersonCodec implements CollectibleCodec<Person> {
         @Override
         public Object getId(final Person person) {
             return person.id;
         }
 
         @Override
-        public void serialize(final BSONWriter bsonWriter, final Person value) {
+        public void encode(final BSONWriter bsonWriter, final Person value) {
             bsonWriter.writeStartDocument();
             bsonWriter.writeObjectId("_id", value.id);
             bsonWriter.writeString("name", value.name);
@@ -184,7 +184,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
 
         @Override
-        public Person deserialize(final BSONReader reader) {
+        public Person decode(final BSONReader reader) {
             reader.readStartDocument();
             final ObjectId id = reader.readObjectId("_id");
             final String name = reader.readString("name");
@@ -193,7 +193,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
 
         @Override
-        public Class<Person> getSerializationClass() {
+        public Class<Person> getEncoderClass() {
             return Person.class;
         }
     }

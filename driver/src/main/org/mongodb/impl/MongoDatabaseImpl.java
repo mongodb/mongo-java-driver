@@ -24,24 +24,24 @@ import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;
-import org.mongodb.serialization.CollectibleSerializer;
-import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.serializers.CollectibleDocumentSerializer;
-import org.mongodb.serialization.serializers.ObjectIdGenerator;
+import org.mongodb.CollectibleCodec;
+import org.mongodb.Codec;
+import org.mongodb.codecs.CollectibleDocumentCodec;
+import org.mongodb.codecs.ObjectIdGenerator;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;
     private final String name;
     private final MongoConnector connector;
     private final DatabaseAdmin admin;
-    private final Serializer<Document> documentSerializer;
+    private final Codec<Document> documentCodec;
 
     public MongoDatabaseImpl(final String name, final MongoConnector connector, final MongoDatabaseOptions options) {
         this.name = name;
         this.connector = connector;
         this.options = options;
-        documentSerializer = options.getDocumentSerializer();
-        this.admin = new DatabaseAdminImpl(name, connector, documentSerializer);
+        documentCodec = options.getDocumentCodec();
+        this.admin = new DatabaseAdminImpl(name, connector, documentCodec);
     }
 
     @Override
@@ -57,24 +57,24 @@ class MongoDatabaseImpl implements MongoDatabase {
     public MongoCollectionImpl<Document> getCollection(final String collectionName,
                                                        final MongoCollectionOptions operationOptions) {
         return getCollection(collectionName,
-                            new CollectibleDocumentSerializer(operationOptions
+                            new CollectibleDocumentCodec(operationOptions
                                                               .withDefaults(options)
-                                                              .getPrimitiveSerializers(),
+                                                              .getPrimitiveCodecs(),
                                                              new ObjectIdGenerator()),
                             operationOptions);
     }
 
     @Override
     public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
-                                                    final CollectibleSerializer<T> serializer) {
-        return getCollection(collectionName, serializer, MongoCollectionOptions.builder().build());
+                                                    final CollectibleCodec<T> codec) {
+        return getCollection(collectionName, codec, MongoCollectionOptions.builder().build());
     }
 
     @Override
     public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
-                                                    final CollectibleSerializer<T> serializer,
+                                                    final CollectibleCodec<T> codec,
                                                     final MongoCollectionOptions operationOptions) {
-        return new MongoCollectionImpl<T>(collectionName, this, serializer, operationOptions.withDefaults(options),
+        return new MongoCollectionImpl<T>(collectionName, this, codec, operationOptions.withDefaults(options),
                 connector);
     }
 
@@ -86,7 +86,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
-        return new CommandResult(connector.command(getName(), commandOperation, documentSerializer));
+        return new CommandResult(connector.command(getName(), commandOperation, documentCodec));
     }
 
 //    @Override

@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.junit.Test;
 import org.mongodb.async.AsyncDetector;
-import org.mongodb.serialization.PrimitiveSerializers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -46,9 +45,9 @@ public class MongoClientOptionsTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testPrimitiveSerializersIllegalArguments() {
+    public void testPrimitiveCodecsIllegalArguments() {
         final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
-        builder.primitiveSerializers(null);
+        builder.primitiveCodecs(null);
         fail();
     }
 
@@ -115,8 +114,8 @@ public class MongoClientOptionsTest {
         builder.socketKeepAlive(true);
         builder.SSLEnabled(true);
         builder.asyncEnabled(false);
-        final PrimitiveSerializers primitiveSerializers = PrimitiveSerializers.createDefault();
-        builder.primitiveSerializers(primitiveSerializers);
+        final PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
+        builder.primitiveCodecs(primitiveCodecs);
 
         final MongoClientOptions options = builder.build();
 
@@ -131,6 +130,6 @@ public class MongoClientOptionsTest {
         assertEquals(true, options.isSocketKeepAlive());
         assertTrue(options.isSSLEnabled());
         assertFalse(options.isAsyncEnabled());
-        assertSame(primitiveSerializers, options.getPrimitiveSerializers());
+        assertSame(primitiveCodecs, options.getPrimitiveCodecs());
     }
 }

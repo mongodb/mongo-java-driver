@@ -22,8 +22,8 @@ import org.mongodb.MongoConnector;
 import org.mongodb.command.ListDatabases;
 import org.mongodb.command.Ping;
 import org.mongodb.result.CommandResult;
-import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.serializers.DocumentSerializer;
+import org.mongodb.PrimitiveCodecs;
+import org.mongodb.codecs.DocumentCodec;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -38,26 +38,26 @@ class ClientAdminImpl implements ClientAdmin {
     private static final Ping PING_COMMAND = new Ping();
     private static final ListDatabases LIST_DATABASES = new ListDatabases();
 
-    private final DocumentSerializer documentSerializer;
+    private final DocumentCodec documentCodec;
     private final MongoConnector connector;
 
-    ClientAdminImpl(final MongoConnector connector, final PrimitiveSerializers primitiveSerializers) {
+    ClientAdminImpl(final MongoConnector connector, final PrimitiveCodecs primitiveCodecs) {
         this.connector = connector;
-        documentSerializer = new DocumentSerializer(primitiveSerializers);
+        documentCodec = new DocumentCodec(primitiveCodecs);
     }
 
     //TODO: it's not clear from the documentation what the return type should be
     //http://docs.mongodb.org/manual/reference/command/ping/
     @Override
     public double ping() {
-        final CommandResult pingResult = connector.command(ADMIN_DATABASE, PING_COMMAND, documentSerializer);
+        final CommandResult pingResult = connector.command(ADMIN_DATABASE, PING_COMMAND, documentCodec);
 
         return (Double) pingResult.getResponse().get("ok");
     }
 
     @Override
     public Set<String> getDatabaseNames() {
-        final CommandResult listDatabasesResult = connector.command(ADMIN_DATABASE, LIST_DATABASES, documentSerializer);
+        final CommandResult listDatabasesResult = connector.command(ADMIN_DATABASE, LIST_DATABASES, documentCodec);
 
         @SuppressWarnings("unchecked")
         final List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");

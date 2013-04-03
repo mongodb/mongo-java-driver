@@ -21,7 +21,7 @@ import org.bson.BSONReader;
 import org.bson.BSONReaderSettings;
 import org.bson.io.InputBuffer;
 import org.mongodb.io.ResponseBuffers;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Decoder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,12 +33,12 @@ public class MongoReplyMessage<T> {
     private final List<T> documents;
 
     public MongoReplyMessage(final MongoReplyHeader replyHeader, final InputBuffer bodyInputBuffer,
-                             final Serializer<T> serializer, final long elapsedNanoseconds) {
+                             final Decoder<T> decoder, final long elapsedNanoseconds) {
         this(replyHeader, elapsedNanoseconds);
 
         while (documents.size() < replyHeader.getNumberReturned()) {
             final BSONReader reader = new BSONBinaryReader(new BSONReaderSettings(), bodyInputBuffer);
-            documents.add(serializer.deserialize(reader));
+            documents.add(decoder.decode(reader));
             reader.close();
         }
     }
@@ -50,9 +50,8 @@ public class MongoReplyMessage<T> {
         documents = new ArrayList<T>(replyHeader.getNumberReturned());
     }
 
-    public MongoReplyMessage(final ResponseBuffers responseBuffers, final Serializer<T> serializer) {
-        this(responseBuffers.getReplyHeader(), responseBuffers.getBodyByteBuffer(), serializer,
-                responseBuffers.getElapsedNanoseconds());
+    public MongoReplyMessage(final ResponseBuffers responseBuffers, final Decoder<T> decoder) {
+        this(responseBuffers.getReplyHeader(), responseBuffers.getBodyByteBuffer(), decoder, responseBuffers.getElapsedNanoseconds());
     }
 
     public MongoReplyHeader getReplyHeader() {

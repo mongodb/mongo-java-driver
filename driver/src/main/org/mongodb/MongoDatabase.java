@@ -19,7 +19,6 @@ package org.mongodb;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.operation.MongoCommand;
 import org.mongodb.result.CommandResult;
-import org.mongodb.serialization.CollectibleSerializer;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
@@ -38,9 +37,9 @@ public interface MongoDatabase {
 
     MongoCollection<Document> getCollection(String name, MongoCollectionOptions options);
 
-    <T> MongoCollection<T> getCollection(String name, CollectibleSerializer<T> serializer);
+    <T> MongoCollection<T> getCollection(String name, CollectibleCodec<T> codec);
 
-    <T> MongoCollection<T> getCollection(String name, CollectibleSerializer<T> serializer, MongoCollectionOptions options);
+    <T> MongoCollection<T> getCollection(String name, CollectibleCodec<T> codec, MongoCollectionOptions options);
 
     //TODO: still need to come up with a sensible name for this
     DatabaseAdmin tools();

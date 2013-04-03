@@ -17,8 +17,7 @@
 package org.mongodb;
 
 import org.junit.Test;
-import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.serializers.DocumentSerializer;
+import org.mongodb.codecs.DocumentCodec;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -29,11 +28,11 @@ public class BSONDocumentBufferTest {
     public void testRoundTrip() {
         Document document = new Document("a", 1).append("b", 2);
 
-        DocumentSerializer documentSerializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
+        DocumentCodec documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
 
-        BSONDocumentBuffer buffer = new BSONDocumentBuffer(document, documentSerializer);
+        BSONDocumentBuffer buffer = new BSONDocumentBuffer(document, documentCodec);
 
         assertNotNull(buffer.getByteBuffer());
-        assertEquals(document, buffer.deserialize(documentSerializer));
+        assertEquals(document, buffer.decode(documentCodec));
     }
 }

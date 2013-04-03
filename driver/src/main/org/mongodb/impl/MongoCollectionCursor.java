@@ -45,8 +45,8 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
         this.find = find;
         this.connector = connector;
         currentResult = connector.query(collection.getNamespace(), find,
-                                        collection.getOptions().getDocumentSerializer(),
-                                        collection.getSerializer());
+                                        collection.getOptions().getDocumentCodec(),
+                                        collection.getCodec());
         currentIterator = currentResult.getResults().iterator();
     }
 
@@ -111,7 +111,7 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
         currentResult = connector.getMore(collection.getNamespace(),
                                                                      new GetMore(currentResult.getCursor(),
                                                                                 find.getBatchSize()),
-                                                                     collection.getSerializer());
+                                                                     collection.getCodec());
         currentIterator = currentResult.getResults().iterator();
     }
 

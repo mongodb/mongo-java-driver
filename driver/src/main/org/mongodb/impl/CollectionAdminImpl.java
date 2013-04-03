@@ -32,8 +32,8 @@ import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
-import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.serializers.DocumentSerializer;
+import org.mongodb.PrimitiveCodecs;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.util.FieldHelpers;
 
 import java.util.List;
@@ -50,7 +50,7 @@ public class CollectionAdminImpl implements CollectionAdmin {
     private final MongoConnector connector;
     private final MongoDatabase database;
     //TODO: need to do something about these default serialisers, they're created everywhere
-    private final DocumentSerializer documentSerializer;
+    private final DocumentCodec documentCodec;
     private final MongoNamespace indexesNamespace;
     private final MongoNamespace collectionNamespace;
     private final MongoFind queryForCollectionNamespace;
@@ -59,12 +59,12 @@ public class CollectionAdminImpl implements CollectionAdmin {
     private final Drop dropCollectionCommand;
 
     CollectionAdminImpl(final MongoConnector connector,
-                        final PrimitiveSerializers primitiveSerializers,
+                        final PrimitiveCodecs primitiveCodecs,
                         final MongoNamespace collectionNamespace,
                         final MongoDatabase database) {
         this.connector = connector;
         this.database = database;
-        this.documentSerializer = new DocumentSerializer(primitiveSerializers);
+        this.documentCodec = new DocumentCodec(primitiveCodecs);
         indexesNamespace = new MongoNamespace(database.getName(), "system.indexes");
         this.collectionNamespace = collectionNamespace;
         collStatsCommand = new CollStats(collectionNamespace.getCollectionName());
@@ -82,13 +82,13 @@ public class CollectionAdminImpl implements CollectionAdmin {
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
         insertIndexOperation.writeConcern(WriteConcern.ACKNOWLEDGED);
 
-        connector.insert(indexesNamespace, insertIndexOperation, documentSerializer);
+        connector.insert(indexesNamespace, insertIndexOperation, documentCodec);
     }
 
     @Override
     public List<Document> getIndexes() {
         final QueryResult<Document> systemCollection = connector.query(indexesNamespace, queryForCollectionNamespace,
-                documentSerializer, documentSerializer);
+                documentCodec, documentCodec);
         return systemCollection.getResults();
     }
 

@@ -21,9 +21,9 @@ import org.mongodb.MongoConnector;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.ListDatabases;
 import org.mongodb.impl.MongoConnectionsImpl;
-import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.serializers.DocumentSerializer;
+import org.mongodb.Codec;
+import org.mongodb.PrimitiveCodecs;
+import org.mongodb.codecs.DocumentCodec;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ public class Mongo {
 
     private final Bytes.OptionHolder optionHolder;
 
-    private final Serializer<Document> documentSerializer;
+    private final Codec<Document> documentCodec;
     private final MongoConnector connector;
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
@@ -62,7 +62,7 @@ public class Mongo {
 
     Mongo(final MongoConnector connector, final MongoClientOptions options) {
         this.connector = connector;
-        this.documentSerializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
+        this.documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
         this.readPreference = options.getReadPreference() != null ?
                 options.getReadPreference() : ReadPreference.primary();
         this.writeConcern = options.getWriteConcern() != null ?
@@ -143,7 +143,7 @@ public class Mongo {
     public List<String> getDatabaseNames() {
         final org.mongodb.result.CommandResult listDatabasesResult;
         try {
-            listDatabasesResult = getConnector().command(ADMIN_DATABASE_NAME, new ListDatabases(), documentSerializer);
+            listDatabasesResult = getConnector().command(ADMIN_DATABASE_NAME, new ListDatabases(), documentCodec);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
@@ -170,7 +170,7 @@ public class Mongo {
             return db;
         }
 
-        db = new DB(this, dbName, documentSerializer);
+        db = new DB(this, dbName, documentCodec);
         final DB temp = dbCache.putIfAbsent(dbName, db);
         if (temp != null) {
             return temp;

@@ -17,23 +17,21 @@
 package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
-import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.serializers.DocumentSerializer;
+import org.mongodb.codecs.DocumentCodec;
 
 @Immutable
 public class MongoDatabaseOptions {
-    private final PrimitiveSerializers primitiveSerializers;
+    private final PrimitiveCodecs primitiveCodecs;
     private final WriteConcern writeConcern;
     private final ReadPreference readPreference;
-    private final Serializer<Document> documentSerializer;
+    private final Codec<Document> documentCodec;
 
     public static Builder builder() {
         return new Builder();
     }
 
-    public PrimitiveSerializers getPrimitiveSerializers() {
-        return primitiveSerializers;
+    public PrimitiveCodecs getPrimitiveCodecs() {
+        return primitiveCodecs;
     }
 
     public WriteConcern getWriteConcern() {
@@ -44,33 +42,33 @@ public class MongoDatabaseOptions {
         return readPreference;
     }
 
-    public Serializer<Document> getDocumentSerializer() {
-        return documentSerializer;
+    public Codec<Document> getDocumentCodec() {
+        return documentCodec;
     }
 
     public MongoDatabaseOptions withDefaults(final MongoClientOptions options) {
         final Builder builder = new Builder();
-        builder.primitiveSerializers = getPrimitiveSerializers() != null ? getPrimitiveSerializers()
-                                                                    : options.getPrimitiveSerializers();
+        builder.primitiveCodecs = getPrimitiveCodecs() != null ? getPrimitiveCodecs()
+                                                                    : options.getPrimitiveCodecs();
         builder.writeConcern = getWriteConcern() != null ? getWriteConcern() : options.getWriteConcern();
         builder.readPreference = getReadPreference() != null ? getReadPreference() : options.getReadPreference();
-        builder.documentSerializer = getDocumentSerializer() != null ? getDocumentSerializer()
-                                                                : new DocumentSerializer(builder
-                                                                                         .primitiveSerializers);
+        builder.documentCodec = getDocumentCodec() != null ? getDocumentCodec()
+                                                                : new DocumentCodec(builder
+                                                                                         .primitiveCodecs);
         return builder.build();
     }
 
     public static class Builder {
         //TODO: there is definitely a better way to share this state
         //CHECKSTYLE:OFF
-        PrimitiveSerializers primitiveSerializers;
+        PrimitiveCodecs primitiveCodecs;
         WriteConcern writeConcern;
         ReadPreference readPreference;
-        Serializer<Document> documentSerializer;
+        Codec<Document> documentCodec;
         //CHECKSTYLE:ON
 
-        public Builder primitiveSerializers(final PrimitiveSerializers aPrimitiveSerializers) {
-            this.primitiveSerializers = aPrimitiveSerializers;
+        public Builder primitiveCodecs(final PrimitiveCodecs aPrimitiveCodecs) {
+            this.primitiveCodecs = aPrimitiveCodecs;
             return this;
         }
 
@@ -84,25 +82,25 @@ public class MongoDatabaseOptions {
             return this;
         }
 
-        public Builder documentSerializer(final Serializer<Document> aDocumentSerializer) {
-            this.documentSerializer = aDocumentSerializer;
+        public Builder documentCodec(final Codec<Document> aDocumentCodec) {
+            this.documentCodec = aDocumentCodec;
             return this;
         }
 
         public MongoDatabaseOptions build() {
-            return new MongoDatabaseOptions(primitiveSerializers, writeConcern, readPreference, documentSerializer);
+            return new MongoDatabaseOptions(primitiveCodecs, writeConcern, readPreference, documentCodec);
         }
 
         Builder() {
         }
     }
 
-    MongoDatabaseOptions(final PrimitiveSerializers primitiveSerializers, final WriteConcern writeConcern,
-                         final ReadPreference readPreference, final Serializer<Document> documentSerializer) {
-        this.primitiveSerializers = primitiveSerializers;
+    MongoDatabaseOptions(final PrimitiveCodecs primitiveCodecs, final WriteConcern writeConcern,
+                         final ReadPreference readPreference, final Codec<Document> documentCodec) {
+        this.primitiveCodecs = primitiveCodecs;
         this.writeConcern = writeConcern;
         this.readPreference = readPreference;
-        this.documentSerializer = documentSerializer;
+        this.documentCodec = documentCodec;
     }
 
 }

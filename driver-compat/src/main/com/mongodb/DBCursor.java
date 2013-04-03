@@ -582,7 +582,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         currentResult = getConnector().getMore(
                 collection.getNamespace(),
                 new GetMore(currentResult.getCursor(), find.getBatchSize()),
-                collection.getSerializer());
+                collection.getCodec());
         currentIterator = currentResult.getResults().iterator();
     }
 
@@ -590,8 +590,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         currentResult = getConnector().query(
                 collection.getNamespace(),
                 find,
-                collection.getDocumentSerializer(),
-                collection.getSerializer());
+                collection.getDocumentCodec(),
+                collection.getCodec());
         currentIterator = currentResult.getResults().iterator();
     }
 

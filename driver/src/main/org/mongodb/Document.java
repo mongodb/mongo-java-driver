@@ -24,9 +24,7 @@ import org.mongodb.json.JSONReader;
 import org.mongodb.json.JSONReaderSettings;
 import org.mongodb.json.JSONWriter;
 import org.mongodb.json.JSONWriterSettings;
-import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.serializers.DocumentSerializer;
+import org.mongodb.codecs.DocumentCodec;
 
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -98,7 +96,7 @@ public class Document implements Map<String, Object>, Serializable {
      */
     public static Document valueOf(final String s, final JSONMode mode) {
         final BSONReader bsonReader = new JSONReader(new JSONReaderSettings(mode), s);
-        return new DocumentSerializer(PrimitiveSerializers.createDefault()).deserialize(bsonReader);
+        return new DocumentCodec(PrimitiveCodecs.createDefault()).decode(bsonReader);
     }
 
     /**
@@ -251,8 +249,8 @@ public class Document implements Map<String, Object>, Serializable {
     public String toString() {
         final StringWriter writer = new StringWriter();
         final BSONWriter bsonWriter = new JSONWriter(writer, new JSONWriterSettings(JSONMode.Strict));
-        final Serializer<Document> serializer = new DocumentSerializer(PrimitiveSerializers.createDefault());
-        serializer.serialize(bsonWriter, this);
+        final Codec<Document> codec = new DocumentCodec(PrimitiveCodecs.createDefault());
+        codec.encode(bsonWriter, this);
 
         return writer.toString();
     }

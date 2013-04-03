@@ -19,24 +19,24 @@ package org.mongodb.protocol;
 import org.mongodb.Document;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoFind;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Encoder;
 
 public class MongoQueryMessage extends MongoQueryBaseMessage {
     private final MongoFind find;
-    private Serializer<Document> serializer;
+    private Encoder<Document> encoder;
 
-    public MongoQueryMessage(final String collectionName, final MongoFind find, final Serializer<Document> serializer) {
+    public MongoQueryMessage(final String collectionName, final MongoFind find, final Encoder<Document> encoder) {
         super(collectionName);
         this.find = find;
-        this.serializer = serializer;
+        this.encoder = encoder;
     }
 
     @Override
-    protected void serializeMessageBody(final ChannelAwareOutputBuffer buffer) {
+    protected void encodeMessageBody(final ChannelAwareOutputBuffer buffer) {
         writeQueryPrologue(find, buffer);
-        addDocument(getQueryDocument(), serializer, buffer);
+        addDocument(getQueryDocument(), encoder, buffer);
         if (find.getFields() != null) {
-            addDocument(find.getFields(), serializer, buffer);
+            addDocument(find.getFields(), encoder, buffer);
         }
     }
 

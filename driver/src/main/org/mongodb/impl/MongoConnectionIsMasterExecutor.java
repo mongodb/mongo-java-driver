@@ -21,8 +21,8 @@ import org.mongodb.MongoConnector;
 import org.mongodb.ServerAddress;
 import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.operation.MongoCommand;
-import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.serializers.DocumentSerializer;
+import org.mongodb.PrimitiveCodecs;
+import org.mongodb.codecs.DocumentCodec;
 
 class MongoConnectionIsMasterExecutor implements IsMasterExecutor {
     private final MongoConnector connector;
@@ -37,7 +37,7 @@ class MongoConnectionIsMasterExecutor implements IsMasterExecutor {
     public IsMasterCommandResult execute() {
         return new IsMasterCommandResult(
                 connector.command("admin", new MongoCommand(new Document("ismaster", 1)),
-                        new DocumentSerializer(PrimitiveSerializers.createDefault())));
+                        new DocumentCodec(PrimitiveCodecs.createDefault())));
     }
 
     @Override

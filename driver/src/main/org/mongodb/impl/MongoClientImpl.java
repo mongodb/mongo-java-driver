@@ -23,7 +23,7 @@ import org.mongodb.MongoConnector;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.ServerAddress;
-import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.PrimitiveCodecs;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -71,7 +71,7 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public ClientAdmin tools() {
-        return new ClientAdminImpl(connector, PrimitiveSerializers.createDefault());
+        return new ClientAdminImpl(connector, PrimitiveCodecs.createDefault());
     }
 
     @Override

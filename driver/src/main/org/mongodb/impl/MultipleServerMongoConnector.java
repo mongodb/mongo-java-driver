@@ -17,14 +17,14 @@
 package org.mongodb.impl;
 
 import org.mongodb.Document;
+import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.MongoConnector;
-import org.mongodb.io.BufferPool;
-import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
+import org.mongodb.io.BufferPool;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoCommand;
@@ -38,7 +38,9 @@ import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.ServerCursor;
 import org.mongodb.result.WriteResult;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Codec;
+import org.mongodb.Decoder;
+import org.mongodb.Encoder;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -61,20 +63,20 @@ class MultipleServerMongoConnector implements MongoConnector {
 
     @Override
     public CommandResult command(final String database, final MongoCommand commandOperation,
-                                 final Serializer<Document> serializer) {
-        return getConnection(commandOperation.getReadPreference()).command(database, commandOperation, serializer);
+                                 final Codec<Document> codec) {
+        return getConnection(commandOperation.getReadPreference()).command(database, commandOperation, codec);
     }
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
-                                    final Serializer<Document> querySerializer, final Serializer<T> resultSerializer) {
-        return getConnection(find.getReadPreference()).query(namespace, find, querySerializer, resultSerializer);
+                                    final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
+        return getConnection(find.getReadPreference()).query(namespace, find, queryEncoder, resultDecoder);
     }
 
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
-                                      final Serializer<T> resultSerializer) {
-        return getConnection(getMore.getServerCursor().getAddress()).getMore(namespace, getMore, resultSerializer);
+                                      final Decoder<T> resultDecoder) {
+        return getConnection(getMore.getServerCursor().getAddress()).getMore(namespace, getMore, resultDecoder);
     }
 
     @Override
@@ -85,113 +87,113 @@ class MultipleServerMongoConnector implements MongoConnector {
     }
 
     @Override
-    public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert, final Serializer<T> serializer) {
-        return getPrimary().insert(namespace, insert, serializer);
+    public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert, final Encoder<T> encoder) {
+        return getPrimary().insert(namespace, insert, encoder);
     }
 
     @Override
-    public WriteResult update(final MongoNamespace namespace, final MongoUpdate update, final Serializer<Document> querySerializer) {
-        return getPrimary().update(namespace, update, querySerializer);
+    public WriteResult update(final MongoNamespace namespace, final MongoUpdate update, final Encoder<Document> queryEncoder) {
+        return getPrimary().update(namespace, update, queryEncoder);
     }
 
     @Override
     public <T> WriteResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                   final Serializer<Document> querySerializer, final Serializer<T> serializer) {
-        return getPrimary().replace(namespace, replace, querySerializer, serializer);
+                                   final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
+        return getPrimary().replace(namespace, replace, queryEncoder, encoder);
     }
 
     @Override
-    public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove, final Serializer<Document> querySerializer) {
-        return getPrimary().remove(namespace, remove, querySerializer);
+    public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove, final Encoder<Document> queryEncoder) {
+        return getPrimary().remove(namespace, remove, queryEncoder);
    }
 
     @Override
     public Future<CommandResult> asyncCommand(final String database, final MongoCommand commandOperation,
-                                              final Serializer<Document> serializer) {
-        return getConnection(commandOperation.getReadPreference()).asyncCommand(database, commandOperation, serializer);
+                                              final Codec<Document> codec) {
+        return getConnection(commandOperation.getReadPreference()).asyncCommand(database, commandOperation, codec);
     }
 
     @Override
-    public void asyncCommand(final String database, final MongoCommand commandOperation, final Serializer<Document> serializer,
+    public void asyncCommand(final String database, final MongoCommand commandOperation, final Codec<Document> codec,
                              final SingleResultCallback<CommandResult> callback) {
-        getConnection(commandOperation.getReadPreference()).asyncCommand(database, commandOperation, serializer, callback);
+        getConnection(commandOperation.getReadPreference()).asyncCommand(database, commandOperation, codec, callback);
     }
 
     @Override
     public <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
-                                                 final Serializer<Document> querySerializer, final Serializer<T> resultSerializer) {
-        return getConnection(find.getReadPreference()).asyncQuery(namespace, find, querySerializer, resultSerializer);
+                                                 final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
+        return getConnection(find.getReadPreference()).asyncQuery(namespace, find, queryEncoder, resultDecoder);
     }
 
     @Override
-    public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Serializer<Document> querySerializer,
-                               final Serializer<T> resultSerializer, final SingleResultCallback<QueryResult<T>> callback) {
-        getConnection(find.getReadPreference()).asyncQuery(namespace, find, querySerializer, resultSerializer, callback);
+    public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
+                               final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
+        getConnection(find.getReadPreference()).asyncQuery(namespace, find, queryEncoder, resultDecoder, callback);
     }
 
     @Override
     public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
-                                                   final Serializer<T> resultSerializer) {
-        return getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultSerializer);
+                                                   final Decoder<T> resultDecoder) {
+        return getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultDecoder);
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> resultSerializer,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder,
                                  final SingleResultCallback<QueryResult<T>> callback) {
-        getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultSerializer, callback);
+        getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultDecoder, callback);
     }
 
     @Override
     public <T> Future<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                               final Serializer<T> serializer) {
-        return getPrimary().asyncInsert(namespace, insert, serializer);
+                                               final Encoder<T> encoder) {
+        return getPrimary().asyncInsert(namespace, insert, encoder);
     }
 
     @Override
     public <T> void asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                final Serializer<T> serializer,
+                                final Encoder<T> encoder,
                                 final SingleResultCallback<WriteResult> callback) {
-        getPrimary().asyncInsert(namespace, insert, serializer, callback);
+        getPrimary().asyncInsert(namespace, insert, encoder, callback);
     }
 
     @Override
     public Future<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
-                                           final Serializer<Document> querySerializer) {
-        return getPrimary().asyncUpdate(namespace, update, querySerializer);
+                                           final Encoder<Document> queryEncoder) {
+        return getPrimary().asyncUpdate(namespace, update, queryEncoder);
     }
 
     @Override
     public void asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
-                            final Serializer<Document> serializer,
+                            final Encoder<Document> queryEncoder,
                             final SingleResultCallback<WriteResult> callback) {
-        getPrimary().asyncUpdate(namespace, update, serializer, callback);
+        getPrimary().asyncUpdate(namespace, update, queryEncoder, callback);
     }
 
     @Override
     public <T> Future<WriteResult> asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                                final Serializer<Document> querySerializer,
-                                                final Serializer<T> serializer) {
-        return getPrimary().asyncReplace(namespace, replace, querySerializer, serializer);
+                                                final Encoder<Document> queryEncoder,
+                                                final Encoder<T> encoder) {
+        return getPrimary().asyncReplace(namespace, replace, queryEncoder, encoder);
     }
 
     @Override
     public <T> void asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                 final Serializer<Document> querySerializer, final Serializer<T> serializer,
+                                 final Encoder<Document> queryEncoder, final Encoder<T> encoder,
                                  final SingleResultCallback<WriteResult> callback) {
-        getPrimary().asyncReplace(namespace, replace, querySerializer, serializer, callback);
+        getPrimary().asyncReplace(namespace, replace, queryEncoder, encoder, callback);
     }
 
     @Override
     public Future<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
-                                           final Serializer<Document> querySerializer) {
-        return getPrimary().asyncRemove(namespace, remove, querySerializer);
+                                           final Encoder<Document> queryEncoder) {
+        return getPrimary().asyncRemove(namespace, remove, queryEncoder);
     }
 
     @Override
     public void asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
-                            final Serializer<Document> querySerializer,
+                            final Encoder<Document> queryEncoder,
                             final SingleResultCallback<WriteResult> callback) {
-        getPrimary().asyncRemove(namespace, remove, querySerializer, callback);
+        getPrimary().asyncRemove(namespace, remove, queryEncoder, callback);
     }
 
     @Override

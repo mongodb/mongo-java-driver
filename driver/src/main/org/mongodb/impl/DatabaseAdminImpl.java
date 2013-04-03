@@ -29,7 +29,7 @@ import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Codec;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -46,27 +46,27 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     private static final MongoFind FIND_ALL = new MongoFind().readPreference(ReadPreference.primary());
 
     private final String databaseName;
-    private final Serializer<Document> documentSerializer;
+    private final Codec<Document> documentCodec;
     private final MongoConnector connector;
 
     public DatabaseAdminImpl(final String databaseName, final MongoConnector connector,
-                             final Serializer<Document> documentSerializer) {
+                             final Codec<Document> documentCodec) {
         this.databaseName = databaseName;
         this.connector = connector;
-        this.documentSerializer = documentSerializer;
+        this.documentCodec = documentCodec;
     }
 
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        new CommandResult(connector.command(databaseName, DROP_DATABASE, documentSerializer));
+        new CommandResult(connector.command(databaseName, DROP_DATABASE, documentCodec));
     }
 
     @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
         final QueryResult<Document> query = connector.query(namespacesCollection, FIND_ALL,
-                                                            documentSerializer, documentSerializer);
+                documentCodec, documentCodec);
 
         final HashSet<String> collections = new HashSet<String>();
         final int lengthOfDatabaseName = databaseName.length();
@@ -88,7 +88,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         final CommandResult commandResult = new CommandResult(
-                connector.command(databaseName, new Create(createCollectionOptions), documentSerializer));
+                connector.command(databaseName, new Create(createCollectionOptions), documentCodec));
         handleErrors(commandResult);
     }
 
@@ -100,7 +100,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
         final RenameCollection rename = new RenameCollection(renameCollectionOptions, databaseName);
-        final CommandResult commandResult = connector.command("admin", rename, documentSerializer);
+        final CommandResult commandResult = connector.command("admin", rename, documentCodec);
         handleErrors(commandResult);
     }
 }

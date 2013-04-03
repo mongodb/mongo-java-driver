@@ -19,23 +19,23 @@ package org.mongodb.protocol;
 import org.mongodb.WriteConcern;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Encoder;
 
 public class MongoInsertMessage<T> extends MongoRequestMessage {
     private final MongoInsert<T> insert;
-    private final Serializer<T> serializer;
+    private final Encoder<T> encoder;
 
-    public MongoInsertMessage(final String collectionName, final MongoInsert<T> insert, final Serializer<T> serializer) {
+    public MongoInsertMessage(final String collectionName, final MongoInsert<T> insert, final Encoder<T> encoder) {
         super(collectionName, OpCode.OP_INSERT);
         this.insert = insert;
-        this.serializer = serializer;
+        this.encoder = encoder;
     }
 
     @Override
-    protected void serializeMessageBody(final ChannelAwareOutputBuffer buffer) {
+    protected void encodeMessageBody(final ChannelAwareOutputBuffer buffer) {
         writeInsertPrologue(insert.getWriteConcern(), buffer);
         for (final T document : insert.getDocuments()) {
-            addDocument(document, serializer, buffer);
+            addDocument(document, encoder, buffer);
         }
     }
 

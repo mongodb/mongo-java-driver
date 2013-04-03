@@ -28,24 +28,23 @@ import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
-import org.mongodb.serialization.Serializer;
 
 public interface MongoSyncConnector {
-    CommandResult command(String database, MongoCommand commandOperation, Serializer<Document> serializer);
+    CommandResult command(String database, MongoCommand commandOperation, Codec<Document> codec);
 
-    <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Serializer<Document> querySerializer,
-                             Serializer<T> resultSerializer);
+    <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Encoder<Document> queryEncoder,
+                             Decoder<T> resultDecoder);
 
-    <T> QueryResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Serializer<T> resultSerializer);
+    <T> QueryResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Decoder<T> resultDecoder);
 
     void killCursors(MongoKillCursor killCursor);
 
-    <T> WriteResult insert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer);
+    <T> WriteResult insert(MongoNamespace namespace, MongoInsert<T> insert, Encoder<T> encoder);
 
-    WriteResult update(final MongoNamespace namespace, MongoUpdate update, Serializer<Document> querySerializer);
+    WriteResult update(final MongoNamespace namespace, MongoUpdate update, Encoder<Document> queryEncoder);
 
-    <T> WriteResult replace(MongoNamespace namespace, MongoReplace<T> replace, Serializer<Document> querySerializer,
-                            Serializer<T> serializer);
+    <T> WriteResult replace(MongoNamespace namespace, MongoReplace<T> replace, Encoder<Document> queryEncoder,
+                            Encoder<T> encoder);
 
-    WriteResult remove(final MongoNamespace namespace, MongoRemove remove, Serializer<Document> querySerializer);
+    WriteResult remove(final MongoNamespace namespace, MongoRemove remove, Encoder<Document> queryEncoder);
 }

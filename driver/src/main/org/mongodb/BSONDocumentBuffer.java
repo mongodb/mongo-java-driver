@@ -20,7 +20,6 @@ import org.bson.BSONBinaryReader;
 import org.bson.BSONBinaryWriter;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.mongodb.serialization.Serializer;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -48,14 +47,14 @@ public class BSONDocumentBuffer {
     }
 
     /**
-     * Construct a new instance from the given document and serializer for the document type.
+     * Construct a new instance from the given document and codec for the document type.
      *
      * @param document   the document to transform
-     * @param serializer the serializer to facilitate the transformation
+     * @param codec the codec to facilitate the transformation
      */
-    public <T> BSONDocumentBuffer(final T document, final Serializer<T> serializer) {
+    public <T> BSONDocumentBuffer(final T document, final Codec<T> codec) {
         BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer());
-        serializer.serialize(writer, document);
+        codec.encode(writer, document);
         this.bytes = writer.getBuffer().toByteArray();
     }
 
@@ -72,12 +71,12 @@ public class BSONDocumentBuffer {
     }
 
     /**
-     * Deserialize this into a document.
+     * Decode this into a document.
      *
-     * @param serializer the serializer to facilitate the transformation
-     * @return the deserialized document
+     * @param codec the codec to facilitate the transformation
+     * @return the decoded document
      */
-    public <T> T deserialize(final Serializer<T> serializer) {
-        return serializer.deserialize(new BSONBinaryReader(new BasicInputBuffer(getByteBuffer())));
+    public <T> T decode(final Codec<T> codec) {
+        return codec.decode(new BSONBinaryReader(new BasicInputBuffer(getByteBuffer())));
     }
 }

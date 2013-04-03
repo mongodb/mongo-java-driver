@@ -19,21 +19,21 @@ package org.mongodb.protocol;
 import org.mongodb.Document;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoCommand;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Encoder;
 
 public class MongoCommandMessage extends MongoQueryBaseMessage {
     private final MongoCommand commandOperation;
-    private final Serializer<Document> serializer;
+    private final Encoder<Document> encoder;
 
-    public MongoCommandMessage(final String collectionName, final MongoCommand commandOperation, final Serializer<Document> serializer) {
+    public MongoCommandMessage(final String collectionName, final MongoCommand commandOperation, final Encoder<Document> encoder) {
         super(collectionName);
         this.commandOperation = commandOperation;
-        this.serializer = serializer;
+        this.encoder = encoder;
     }
 
     @Override
-    protected void serializeMessageBody(final ChannelAwareOutputBuffer buffer) {
+    protected void encodeMessageBody(final ChannelAwareOutputBuffer buffer) {
         writeQueryPrologue(commandOperation, buffer);
-        addDocument(commandOperation.toDocument(), serializer, buffer);
+        addDocument(commandOperation.toDocument(), encoder, buffer);
     }
 }

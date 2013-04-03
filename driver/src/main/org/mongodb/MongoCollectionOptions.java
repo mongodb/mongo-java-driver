@@ -17,8 +17,6 @@
 package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
-import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.Serializer;
 
 @Immutable
 public final class MongoCollectionOptions extends MongoDatabaseOptions {
@@ -28,25 +26,25 @@ public final class MongoCollectionOptions extends MongoDatabaseOptions {
 
     public MongoCollectionOptions withDefaults(final MongoDatabaseOptions options) {
         final Builder builder = new Builder();
-        builder.primitiveSerializers = getPrimitiveSerializers() != null ? getPrimitiveSerializers()
-                                                                    : options.getPrimitiveSerializers();
+        builder.primitiveCodecs = getPrimitiveCodecs() != null ? getPrimitiveCodecs()
+                                                                    : options.getPrimitiveCodecs();
         builder.writeConcern = getWriteConcern() != null ? getWriteConcern() : options.getWriteConcern();
         builder.readPreference = getReadPreference() != null ? getReadPreference() : options.getReadPreference();
-        builder.documentSerializer = getDocumentSerializer() != null ? getDocumentSerializer() : options.getDocumentSerializer();
+        builder.documentCodec = getDocumentCodec() != null ? getDocumentCodec() : options.getDocumentCodec();
         return builder.build();
     }
 
     public static final class Builder extends MongoDatabaseOptions.Builder {
         public MongoCollectionOptions build() {
-            return new MongoCollectionOptions(primitiveSerializers, writeConcern, readPreference, documentSerializer);
+            return new MongoCollectionOptions(primitiveCodecs, writeConcern, readPreference, documentCodec);
         }
 
         private Builder() {
         }
     }
 
-    private MongoCollectionOptions(final PrimitiveSerializers primitiveSerializers, final WriteConcern writeConcern,
-                                   final ReadPreference readPreference, final Serializer<Document> documentSerializer) {
-        super(primitiveSerializers, writeConcern, readPreference, documentSerializer);
+    private MongoCollectionOptions(final PrimitiveCodecs primitiveCodecs, final WriteConcern writeConcern,
+                                   final ReadPreference readPreference, final Codec<Document> documentCodec) {
+        super(primitiveCodecs, writeConcern, readPreference, documentCodec);
     }
 }

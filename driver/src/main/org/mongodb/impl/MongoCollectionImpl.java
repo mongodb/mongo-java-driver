@@ -40,7 +40,7 @@ import org.mongodb.command.CountCommandResult;
 import org.mongodb.command.Distinct;
 import org.mongodb.command.DistinctCommandResult;
 import org.mongodb.command.FindAndModifyCommandResult;
-import org.mongodb.command.FindAndModifyCommandResultSerializer;
+import org.mongodb.command.FindAndModifyCommandResultCodec;
 import org.mongodb.command.FindAndRemove;
 import org.mongodb.command.FindAndReplace;
 import org.mongodb.command.FindAndUpdate;
@@ -56,8 +56,8 @@ import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
-import org.mongodb.serialization.CollectibleSerializer;
-import org.mongodb.serialization.Serializer;
+import org.mongodb.Codec;
+import org.mongodb.CollectibleCodec;
 
 import java.util.Collection;
 import java.util.List;
@@ -73,18 +73,18 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final String name;
     private final MongoDatabase database;
     private final MongoCollectionOptions options;
-    private final CollectibleSerializer<T> serializer;
+    private final CollectibleCodec<T> codec;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final CollectibleSerializer<T> serializer, final MongoCollectionOptions options,
+                               final CollectibleCodec<T> codec, final MongoCollectionOptions options,
                                final MongoConnector connector) {
 
-        this.serializer = serializer;
+        this.codec = codec;
         this.name = name;
         this.database = database;
         this.options = options;
         this.connector = connector;
-        admin = new CollectionAdminImpl(connector, options.getPrimitiveSerializers(),
+        admin = new CollectionAdminImpl(connector, options.getPrimitiveCodecs(),
                 getNamespace(), getDatabase());
     }
 
@@ -318,8 +318,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         return admin;
     }
 
-    private Serializer<Document> getDocumentSerializer() {
-        return getOptions().getDocumentSerializer();
+    private Codec<Document> getDocumentCodec() {
+        return getOptions().getDocumentCodec();
     }
 
     @Override
@@ -333,8 +333,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public CollectibleSerializer<T> getSerializer() {
-        return serializer;
+    public CollectibleCodec<T> getCodec() {
+        return codec;
     }
 
     @Override
@@ -465,7 +465,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public T one() {
             final QueryResult<T> res = connector.query(getNamespace(), findOp.batchSize(-1),
-                    getDocumentSerializer(), getSerializer());
+                    getDocumentCodec(), getCodec());
             if (res.getResults().isEmpty()) {
                 return null;
             }
@@ -527,19 +527,19 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public WriteResult insert(final T document) {
             return connector.insert(getNamespace(),
                     new MongoInsert<T>(document).writeConcern(writeConcern),
-                    getSerializer());
+                    getCodec());
         }
 
         @Override
         public WriteResult insert(final Iterable<T> documents) {
             return connector.insert(getNamespace(),
                     new MongoInsert<T>(documents).writeConcern(writeConcern),
-                    getSerializer());
+                    getCodec());
         }
 
         @Override
         public WriteResult save(final T document) {
-            final Object id = getSerializer().getId(document);
+            final Object id = getCodec().getId(document);
             if (id == null) {
                 return insert(document);
             }
@@ -552,14 +552,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public WriteResult remove() {
             final MongoRemove remove = new MongoRemove(findOp.getFilter()).multi(getMultiFromLimit(UpdateType.remove))
                     .writeConcern(writeConcern);
-            return connector.remove(getNamespace(), remove, getDocumentSerializer());
+            return connector.remove(getNamespace(), remove, getDocumentCodec());
         }
 
         @Override
         public WriteResult modify(final Document updateOperations) {
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).multi(getMultiFromLimit(UpdateType.modify))
                     .writeConcern(writeConcern);
-            return connector.update(getNamespace(), update, getDocumentSerializer());
+            return connector.update(getNamespace(), update, getDocumentCodec());
         }
 
         @Override
@@ -567,7 +567,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).upsert(true)
                     .multi(getMultiFromLimit(UpdateType.modify))
                     .writeConcern(writeConcern);
-            return connector.update(getNamespace(), update, getDocumentSerializer());
+            return connector.update(getNamespace(), update, getDocumentCodec());
         }
 
         @Override
@@ -579,8 +579,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public WriteResult replace(final T replacement) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement)
                     .writeConcern(writeConcern);
-            return connector.replace(getNamespace(), replace, getDocumentSerializer(),
-                    getSerializer());
+            return connector.replace(getNamespace(), replace, getDocumentCodec(),
+                    getCodec());
         }
 
         @Override
@@ -588,8 +588,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement)
                     .upsert(true)
                     .writeConcern(writeConcern);
-            return connector.replace(getNamespace(), replace, getDocumentSerializer(),
-                    getSerializer());
+            return connector.replace(getNamespace(), replace, getDocumentCodec(),
+                    getCodec());
         }
 
         @Override
@@ -605,14 +605,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
             //TODO: Still need to tidy up some of this command stuff, especially around return values
             final FindAndUpdate<T> findAndUpdateCommand = new FindAndUpdate<T>(findAndUpdate, getName());
-            final FindAndModifyCommandResultSerializer<T> serializer = new
-                    FindAndModifyCommandResultSerializer<T>(
+            final FindAndModifyCommandResultCodec<T> codec = new
+                    FindAndModifyCommandResultCodec<T>(
                     getOptions()
-                            .getPrimitiveSerializers(),
-                    getSerializer());
+                            .getPrimitiveCodecs(),
+                    getCodec());
             return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
                     findAndUpdateCommand,
-                    serializer)).getValue();
+                    codec)).getValue();
         }
 
         @Override
@@ -634,7 +634,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     connector.command(
                             getDatabase().getName(),
                             new FindAndUpdate<T>(findAndUpdate, getName()),
-                            new FindAndModifyCommandResultSerializer<T>(getOptions().getPrimitiveSerializers(),getSerializer())
+                            new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec())
                     )).getValue();
         }
 
@@ -657,10 +657,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                            .getOrder());
             return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
                     new FindAndReplace<T>(findAndReplace,getName()),
-                    new FindAndModifyCommandResultSerializer<T>(
+                    new FindAndModifyCommandResultCodec<T>(
                             getOptions()
-                                    .getPrimitiveSerializers(),
-                            getSerializer())))
+                                    .getPrimitiveCodecs(),
+                            getCodec())))
                     .getValue();
         }
 
@@ -679,10 +679,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                            .getOrder());
             return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
                     new FindAndReplace<T>(findAndReplace, getName()),
-                    new FindAndModifyCommandResultSerializer<T>(
+                    new FindAndModifyCommandResultCodec<T>(
                             getOptions()
-                                    .getPrimitiveSerializers(),
-                            getSerializer())))
+                                    .getPrimitiveCodecs(),
+                            getCodec())))
                     .getValue();
         }
 
@@ -692,12 +692,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     .select(findOp.getFields())
                     .sortBy(findOp.getOrder());
 
-            final FindAndModifyCommandResultSerializer<T> serializer
-                    = new FindAndModifyCommandResultSerializer<T>(getOptions().getPrimitiveSerializers(),
-                    getSerializer());
+            final FindAndModifyCommandResultCodec<T> codec
+                    = new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(),
+                    getCodec());
             return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
                     new FindAndRemove<T>(findAndRemove,getName()),
-                    serializer))
+                    codec))
                     .getValue();
         }
         //CHECKSTYLE:OFF
@@ -705,13 +705,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public Future<WriteResult> asyncReplaceOrInsert(final T replacement) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
-            return connector.asyncReplace(getNamespace(), replace, getDocumentSerializer(), getSerializer());
+            return connector.asyncReplace(getNamespace(), replace, getDocumentCodec(), getCodec());
         }
 
         @Override
         public void asyncReplaceOrInsert(final T replacement, final SingleResultCallback<WriteResult> callback) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
-            connector.asyncReplace(getNamespace(), replace, getDocumentSerializer(), getSerializer(), callback);
+            connector.asyncReplace(getNamespace(), replace, getDocumentCodec(), getCodec(), callback);
         }
 
         boolean asBoolean(final Get get) {
@@ -721,8 +721,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public Future<T> asyncOne() {
             final Future<QueryResult<T>> queryResultFuture =
-                    connector.asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentSerializer(),
-                            getSerializer());
+                    connector.asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentCodec(),
+                            getCodec());
             return new Future<T>() {
                 @Override
                 public boolean cancel(final boolean mayInterruptIfRunning) {
@@ -765,8 +765,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public void asyncOne(final SingleResultCallback<T> callback) {
-            connector.asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentSerializer(),
-                    getSerializer(), new SingleResultCallback<QueryResult<T>>() {
+            connector.asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentCodec(),
+                    getCodec(), new SingleResultCallback<QueryResult<T>>() {
                 @Override
                 public void onResult(final QueryResult<T> result, final MongoException e) {
                     if (e != null) {
@@ -784,7 +784,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public Future<Long> asyncCount() {
             final Future<CommandResult> commandResultFuture = connector
-                    .asyncCommand(getDatabase().getName(), new Count(findOp, getName()), getDocumentSerializer());
+                    .asyncCommand(getDatabase().getName(), new Count(findOp, getName()), getDocumentCodec());
             return new Future<Long>() {
                 @Override
                 public boolean cancel(final boolean mayInterruptIfRunning) {
@@ -818,7 +818,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public void asyncCount(final SingleResultCallback<Long> callback) {
             connector.asyncCommand(getDatabase().getName(), new Count(findOp, getName()),
-                    getDocumentSerializer(),
+                    getDocumentCodec(),
                     new SingleResultCallback<CommandResult>() {
                         @Override
                         public void onResult(final CommandResult result, final MongoException e) {
@@ -849,8 +849,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public void asyncForEach(final AsyncBlock<? super T> block) {
-            connector.asyncQuery(getNamespace(), findOp, getDocumentSerializer(),
-                    getSerializer(), new QueryResultSingleResultCallback(block));
+            connector.asyncQuery(getNamespace(), findOp, getDocumentCodec(),
+                    getCodec(), new QueryResultSingleResultCallback(block));
         }
 
         @Override
@@ -901,7 +901,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 else {
                     connector
                             .asyncGetMore(getNamespace(), new GetMore(result.getCursor(), findOp.getBatchSize()),
-                                    getSerializer(), new QueryResultSingleResultCallback(block));
+                                    getCodec(), new QueryResultSingleResultCallback(block));
                 }
             }
         }

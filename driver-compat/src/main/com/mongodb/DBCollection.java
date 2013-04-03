@@ -16,8 +16,8 @@
 
 package com.mongodb;
 
-import com.mongodb.serializers.CollectibleDBObjectSerializer;
-import com.mongodb.serializers.DBEncoderDecoderSerializer;
+import com.mongodb.codecs.CollectibleDBObjectCodec;
+import com.mongodb.codecs.DBEncoderDecoderCodec;
 import org.bson.types.ObjectId;
 import org.mongodb.Document;
 import org.mongodb.Get;
@@ -34,7 +34,7 @@ import org.mongodb.command.DistinctCommandResult;
 import org.mongodb.command.Drop;
 import org.mongodb.command.DropIndex;
 import org.mongodb.command.FindAndModifyCommandResult;
-import org.mongodb.command.FindAndModifyCommandResultSerializer;
+import org.mongodb.command.FindAndModifyCommandResultCodec;
 import org.mongodb.command.FindAndRemove;
 import org.mongodb.command.FindAndReplace;
 import org.mongodb.command.FindAndUpdate;
@@ -52,10 +52,10 @@ import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.QueryResult;
-import org.mongodb.serialization.CollectibleSerializer;
-import org.mongodb.serialization.PrimitiveSerializers;
-import org.mongodb.serialization.Serializer;
-import org.mongodb.serialization.serializers.ObjectIdGenerator;
+import org.mongodb.Codec;
+import org.mongodb.CollectibleCodec;
+import org.mongodb.PrimitiveCodecs;
+import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.util.FieldHelpers;
 
 import java.util.ArrayList;
@@ -125,15 +125,15 @@ public class DBCollection implements IDBCollection {
     private DBEncoderFactory encoderFactory;
     private DBDecoderFactory decoderFactory;
 
-    private final Serializer<Document> documentSerializer;
-    private CollectibleSerializer<DBObject> serializer;
+    private final Codec<Document> documentCodec;
+    private CollectibleCodec<DBObject> codec;
 
-    DBCollection(final String name, final DB database, final Serializer<Document> documentSerializer) {
+    DBCollection(final String name, final DB database, final Codec<Document> documentCodec) {
         this.name = name;
         this.database = database;
-        this.documentSerializer = documentSerializer;
+        this.documentCodec = documentCodec;
         optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
-        updateObjectSerializer(BasicDBObject.class);
+        updateObjectCodec(BasicDBObject.class);
     }
 
     /**
@@ -224,7 +224,7 @@ public class DBCollection implements IDBCollection {
     public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern) {
         final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
                 .writeConcern(writeConcern.toNew());
-        return insert(mongoInsert, serializer);
+        return insert(mongoInsert, codec);
     }
 
     /**
@@ -256,24 +256,24 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern, final DBEncoder encoder) {
-        final Serializer<DBObject> serializer;
+        final Codec<DBObject> codec;
         //TODO: Is this really how it should work?
         if (encoder != null) {
-            serializer = new DBEncoderDecoderSerializer(encoder, null, null, null);
+            codec = new DBEncoderDecoderCodec(encoder, null, null, null);
         } else if (encoderFactory != null) {
-            serializer = new DBEncoderDecoderSerializer(encoderFactory.create(), null, null, null);
+            codec = new DBEncoderDecoderCodec(encoderFactory.create(), null, null, null);
         } else {
-            serializer = this.serializer;
+            codec = this.codec;
         }
 
         final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
                 .writeConcern(this.writeConcern.toNew());
-        return insert(mongoInsert, serializer);
+        return insert(mongoInsert, codec);
     }
 
-    private WriteResult insert(final MongoInsert<DBObject> mongoInsert, Serializer<DBObject> serializer) {
+    private WriteResult insert(final MongoInsert<DBObject> mongoInsert, Codec<DBObject> codec) {
         try {
-            final org.mongodb.result.WriteResult result = getConnector().insert(getNamespace(), mongoInsert, serializer);
+            final org.mongodb.result.WriteResult result = getConnector().insert(getNamespace(), mongoInsert, codec);
             return new WriteResult(result, writeConcern);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
@@ -314,7 +314,7 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public WriteResult save(final DBObject document, final WriteConcern writeConcern) {
-        final Object id = getSerializer().getId(document);
+        final Object id = getCodec().getId(document);
         if (id == null) {
             return insert(document, writeConcern);
         } else {
@@ -323,14 +323,14 @@ public class DBCollection implements IDBCollection {
     }
 
     private WriteResult replaceOrInsert(final DBObject obj, final WriteConcern wc) {
-        final Document filter = new Document("_id", getSerializer().getId(obj));
+        final Document filter = new Document("_id", getCodec().getId(obj));
 
         final MongoReplace<DBObject> replace = new MongoReplace<DBObject>(filter, obj)
                 .upsert(true)
                 .writeConcern(wc.toNew());
 
-        return new WriteResult(getConnector().replace(getNamespace(), replace, getDocumentSerializer(),
-                getSerializer()), wc);
+        return new WriteResult(getConnector().replace(getNamespace(), replace, getDocumentCodec(),
+                getCodec()), wc);
     }
 
     /**
@@ -362,7 +362,7 @@ public class DBCollection implements IDBCollection {
 
         try {
             final org.mongodb.result.WriteResult result =
-                    getConnector().update(getNamespace(), mongoUpdate, documentSerializer);
+                    getConnector().update(getNamespace(), mongoUpdate, documentCodec);
             return new WriteResult(result, writeConcern);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
@@ -453,7 +453,7 @@ public class DBCollection implements IDBCollection {
         final MongoRemove mongoRemove = new MongoRemove(toDocument(query))
                 .writeConcern(writeConcern.toNew());
 
-        final org.mongodb.result.WriteResult result = getConnector().remove(getNamespace(), mongoRemove, documentSerializer);
+        final org.mongodb.result.WriteResult result = getConnector().remove(getNamespace(), mongoRemove, documentCodec);
 
         return new WriteResult(result, writeConcern);
     }
@@ -619,7 +619,7 @@ public class DBCollection implements IDBCollection {
                 .batchSize(-1);
 
         final QueryResult<DBObject> res = getConnector().query(getNamespace(), mongoFind,
-                documentSerializer, getSerializer());
+                documentCodec, getCodec());
         if (res.getResults().isEmpty()) {
             return null;
         }
@@ -861,7 +861,7 @@ public class DBCollection implements IDBCollection {
         final RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
         final RenameCollection renameCommand = new RenameCollection(renameCollectionOptions, getDB().getName());
         try {
-            getConnector().command("admin", renameCommand, getDocumentSerializer());
+            getConnector().command("admin", renameCommand, getDocumentCodec());
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
@@ -1190,7 +1190,7 @@ public class DBCollection implements IDBCollection {
     public void ensureIndex(final DBObject keys, final DBObject options) {
         final MongoInsert<Document> insertIndexOperation
                 = new MongoInsert<Document>(toIndexDetailsDocument(keys, options));
-        insertIndex(insertIndexOperation, documentSerializer);
+        insertIndex(insertIndexOperation, documentCodec);
     }
 
     /**
@@ -1205,7 +1205,7 @@ public class DBCollection implements IDBCollection {
         indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
         final MongoInsert<Document> insertIndexOperation
                 = new MongoInsert<Document>(indexDetails);
-        insertIndex(insertIndexOperation, documentSerializer);
+        insertIndex(insertIndexOperation, documentCodec);
     }
 
     /**
@@ -1239,25 +1239,25 @@ public class DBCollection implements IDBCollection {
     @Override
     public void createIndex(final DBObject keys, final DBObject options, final DBEncoder encoder) {
 
-        final Serializer<DBObject> serializer;
+        final Codec<DBObject> codec;
         if (encoder != null) {
-            serializer = new DBEncoderDecoderSerializer(encoder, null, null, null);
+            codec = new DBEncoderDecoderCodec(encoder, null, null, null);
         } else if (encoderFactory != null) {
-            serializer = new DBEncoderDecoderSerializer(encoderFactory.create(), null, null, null);
+            codec = new DBEncoderDecoderCodec(encoderFactory.create(), null, null, null);
         } else {
-            serializer = this.serializer;
+            codec = this.codec;
         }
 
         final Document indexDetails = toIndexDetailsDocument(keys, options);
 
         final MongoInsert<DBObject> insertIndexOperation = new MongoInsert<DBObject>(toDBObject(indexDetails));
-        insertIndex(insertIndexOperation, serializer);
+        insertIndex(insertIndexOperation, codec);
     }
 
-    private <T> void insertIndex(final MongoInsert<T> insertIndexOperation, final Serializer<T> serializer) {
+    private <T> void insertIndex(final MongoInsert<T> insertIndexOperation, final Codec<T> codec) {
         insertIndexOperation.writeConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
         try {
-            getConnector().insert(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, serializer);
+            getConnector().insert(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, codec);
         } catch (MongoDuplicateKeyException exception) {
             throw new MongoException.DuplicateKey(exception);
         }
@@ -1373,10 +1373,10 @@ public class DBCollection implements IDBCollection {
             }
         }
 
-        final FindAndModifyCommandResultSerializer<DBObject> serializer = new
-                FindAndModifyCommandResultSerializer<DBObject>(
-                PrimitiveSerializers.createDefault(),
-                getSerializer()
+        final FindAndModifyCommandResultCodec<DBObject> serializer = new
+                FindAndModifyCommandResultCodec<DBObject>(
+                PrimitiveCodecs.createDefault(),
+                getCodec()
         );
 
         final FindAndModifyCommandResult<DBObject> commandResult =
@@ -1401,7 +1401,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public Class getObjectClass() {
-        return serializer.getSerializationClass();
+        return codec.getEncoderClass();
     }
 
     /**
@@ -1410,7 +1410,7 @@ public class DBCollection implements IDBCollection {
      * @param objectClass the class
      */
     public synchronized void setObjectClass(final Class<? extends DBObject> objectClass) {
-        updateObjectSerializer(objectClass);
+        updateObjectCodec(objectClass);
     }
 
     /**
@@ -1541,7 +1541,7 @@ public class DBCollection implements IDBCollection {
         final QueryResult<Document> systemCollection = getConnector().query(
                 new MongoNamespace(database.getName(), "system.indexes"),
                 queryForCollectionNamespace,
-                documentSerializer, documentSerializer);
+                documentCodec, documentCodec);
 
         final List<Document> indexes = systemCollection.getResults();
         for (final Document curIndex : indexes) {
@@ -1618,10 +1618,10 @@ public class DBCollection implements IDBCollection {
         return new Index(keys);
     }
 
-    private void updateObjectSerializer(final Class<? extends DBObject> objectClass) {
+    private void updateObjectCodec(final Class<? extends DBObject> objectClass) {
         final HashMap<String, Class<? extends DBObject>> map = new HashMap<String, Class<? extends DBObject>>(pathToClassMap);
-        this.serializer = new CollectibleDBObjectSerializer(database,
-                PrimitiveSerializers.createDefault(), new ObjectIdGenerator(), objectClass, map);
+        this.codec = new CollectibleDBObjectCodec(database,
+                PrimitiveCodecs.createDefault(), new ObjectIdGenerator(), objectClass, map);
     }
 
     private Document toIndexDetailsDocument(DBObject keys, DBObject options) {
@@ -1664,15 +1664,15 @@ public class DBCollection implements IDBCollection {
         return getDB().getConnector();
     }
 
-    CollectibleSerializer<DBObject> getSerializer() {
-        return serializer;
+    CollectibleCodec<DBObject> getCodec() {
+        return codec;
     }
 
     MongoNamespace getNamespace() {
         return new MongoNamespace(getDB().getName(), getName());
     }
 
-    Serializer<Document> getDocumentSerializer() {
-        return documentSerializer;
+    Codec<Document> getDocumentCodec() {
+        return documentCodec;
     }
 }

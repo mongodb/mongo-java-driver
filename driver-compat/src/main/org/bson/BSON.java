@@ -18,13 +18,13 @@ package org.bson;
 
 import com.mongodb.DBObject;
 import com.mongodb.MongoInternalException;
-import com.mongodb.serializers.DBObjectSerializer;
+import com.mongodb.codecs.DBObjectCodec;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.InputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.util.ClassMap;
-import org.mongodb.serialization.PrimitiveSerializers;
+import org.mongodb.PrimitiveCodecs;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -224,7 +224,7 @@ public class BSON {
     public static byte[] encode(final DBObject doc) {
         try {
             final OutputBuffer buffer = new BasicOutputBuffer();
-            new DBObjectSerializer(PrimitiveSerializers.createDefault()).serialize(new BSONBinaryWriter(buffer), doc);
+            new DBObjectCodec(PrimitiveCodecs.createDefault()).encode(new BSONBinaryWriter(buffer), doc);
             final BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
             buffer.pipe(stream);
             return stream.getInternalBytes();
@@ -242,7 +242,7 @@ public class BSON {
      */
     public static DBObject decode(final byte[] bytes) {
         final InputBuffer buffer = new BasicInputBuffer(ByteBuffer.wrap(bytes));
-        return new DBObjectSerializer(PrimitiveSerializers.createDefault()).deserialize(new BSONBinaryReader(buffer));
+        return new DBObjectCodec(PrimitiveCodecs.createDefault()).decode(new BSONBinaryReader(buffer));
     }
 
     /**

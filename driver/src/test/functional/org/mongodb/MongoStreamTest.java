@@ -20,7 +20,6 @@ import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
 import org.junit.Test;
-import org.mongodb.serialization.CollectibleSerializer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -191,7 +190,7 @@ public class MongoStreamTest extends DatabaseTestCase {
     @Test
     public void testTypeCollection() {
         final MongoCollection<Concrete> concreteCollection = database.getCollection(collectionName,
-                new ConcreteSerializer());
+                new ConcreteCodec());
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
 
@@ -274,10 +273,10 @@ class Concrete {
     }
 }
 
-class ConcreteSerializer implements CollectibleSerializer<Concrete> {
+class ConcreteCodec implements CollectibleCodec<Concrete> {
 
     @Override
-    public void serialize(final BSONWriter bsonWriter, final Concrete c) {
+    public void encode(final BSONWriter bsonWriter, final Concrete c) {
         bsonWriter.writeStartDocument();
         if (c.getId() == null) {
             c.setId(new ObjectId());
@@ -292,7 +291,7 @@ class ConcreteSerializer implements CollectibleSerializer<Concrete> {
     }
 
     @Override
-    public Concrete deserialize(final BSONReader reader) {
+    public Concrete decode(final BSONReader reader) {
         reader.readStartDocument();
         final ObjectId id = reader.readObjectId("_id");
         final String str = reader.readString("str");
@@ -306,7 +305,7 @@ class ConcreteSerializer implements CollectibleSerializer<Concrete> {
     }
 
     @Override
-    public Class<Concrete> getSerializationClass() {
+    public Class<Concrete> getEncoderClass() {
         return Concrete.class;
     }
 
