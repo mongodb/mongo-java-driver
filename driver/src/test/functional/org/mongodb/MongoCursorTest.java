@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -44,6 +45,31 @@ public class MongoCursorTest extends DatabaseTestCase {
         super.tearDown();
         if (cursor != null) {
             cursor.close();
+        }
+    }
+
+    @Test
+    public void testLimitWithGetMore() {
+        final List<Document> list = new ArrayList<Document>();
+        collection.batchSize(2).limit(5).into(list);
+        assertEquals(5, list.size());
+    }
+
+    @Test
+    public void testLimitWithLargeDocuments() {
+        char[] array = new char[16000];
+        Arrays.fill(array, 'x');
+        final String bigString = new String(array);
+
+        for (int i = 11; i < 1000; i++) {
+            collection.insert(new Document("_id", i).append("s", bigString));
+        }
+
+        final List<Document> list = new ArrayList<Document>();
+        collection.limit(300).into(list);
+        assertEquals(300, list.size());
+        for (Document document : list) {
+            System.out.println(document.get("_id"));
         }
     }
 

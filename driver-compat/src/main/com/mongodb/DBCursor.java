@@ -588,7 +588,11 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     private void getMore() {
         currentResult = getConnector().getMore(
                 collection.getNamespace(),
-                new MongoGetMore(currentResult.getCursor(), find.getBatchSize()),
+                new MongoGetMore(currentResult.getCursor(), chooseNumberToReturn(
+                        find.getBatchSize(),
+                        find.getLimit(),
+                        numSeen)
+                ),
                 collection.getSerializer());
         currentIterator = currentResult.getResults().iterator();
     }
@@ -600,6 +604,19 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
                 collection.getDocumentSerializer(),
                 collection.getSerializer());
         currentIterator = currentResult.getResults().iterator();
+    }
+
+    private int chooseNumberToReturn(final int batchSize, final int limit, final int fetched) {
+        final int bs = Math.abs(batchSize);
+        final int remaining = limit > 0 ? limit - fetched : 0;
+        int res = bs * remaining != 0 ? Math.min(bs, remaining) : bs + remaining;
+
+        if (batchSize < 0) {
+            // force close
+            res = -res;
+        }
+
+        return res;
     }
 
     private MongoConnector getConnector() {
