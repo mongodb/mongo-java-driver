@@ -252,7 +252,9 @@ public class DBCollectionTest extends DatabaseTestCase {
                 true
         );
         assertNotNull(newDoc);
-        assertThat(newDoc, hasFields(new BasicDBObject("x", false).toMap().entrySet()));
+        Map<String, Object> fields = new HashMap<String, Object>();
+        fields.put("x", false);
+        assertThat(newDoc, hasFields(fields.entrySet()));
     }
 
     public static class MyDBObject extends BasicDBObject {
