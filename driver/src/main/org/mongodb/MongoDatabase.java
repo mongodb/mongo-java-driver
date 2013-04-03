@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.result.CommandResult;
 
 /**

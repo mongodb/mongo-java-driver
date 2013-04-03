@@ -26,8 +26,8 @@ import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
-import org.mongodb.operation.GetMore;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.operation.MongoGetMore;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
@@ -74,7 +74,7 @@ class MultipleServerMongoConnector implements MongoConnector {
     }
 
     @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
+    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                       final Decoder<T> resultDecoder) {
         return getConnection(getMore.getServerCursor().getAddress()).getMore(namespace, getMore, resultDecoder);
     }
@@ -133,12 +133,12 @@ class MultipleServerMongoConnector implements MongoConnector {
 
     @Override
     public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
-                                                   final Decoder<T> resultDecoder) {
-        return getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultDecoder);
+                                                   final Serializer<T> resultSerializer) {
+        return getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultSerializer);
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> resultSerializer,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultDecoder, callback);
     }

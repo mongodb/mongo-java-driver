@@ -140,7 +140,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testcreateIndexWithDBEncoder() {
+     public void testcreateIndexWithDBEncoder() {
         collection.createIndex(
                 new BasicDBObject("a", 1),
                 new BasicDBObject("unique", false),
@@ -155,6 +155,34 @@ public class DBCollectionTest extends DatabaseTestCase {
         map.put("unique", true);
 
         assertThat(collection.getIndexInfo(), hasItem(hasFields(map.entrySet())));
+    }
+
+    @Test
+    public void testRemoveWithDBEncoder() {
+        final DBObject document = new BasicDBObject("x", 1);
+        collection.insert(document);
+        collection.insert(MyEncoder.getConstantObject());
+        collection.remove(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED, new MyEncoder());
+
+        assertEquals(1, collection.count());
+        assertEquals(document, collection.findOne());
+    }
+
+    @Test
+    public void testUpdateWithDBEncoder() {
+        final DBObject document = new BasicDBObject("x", 1);
+        collection.insert(document);
+        collection.update(
+                new BasicDBObject("x", 1),
+                new BasicDBObject("y", false),
+                true,
+                false,
+                WriteConcern.ACKNOWLEDGED,
+                new MyEncoder()
+        );
+
+        assertEquals(2, collection.count());
+        assertThat(collection.find(), hasItem(MyEncoder.getConstantObject()));
     }
 
     @Test
@@ -224,7 +252,9 @@ public class DBCollectionTest extends DatabaseTestCase {
                 true
         );
         assertNotNull(newDoc);
-        assertThat(newDoc, hasFields(new BasicDBObject("x", false).toMap().entrySet()));
+        Map<String, Object> fields = new HashMap<String, Object>();
+        fields.put("x", false);
+        assertThat(newDoc, hasFields(fields.entrySet()));
     }
 
     public static class MyDBObject extends BasicDBObject {

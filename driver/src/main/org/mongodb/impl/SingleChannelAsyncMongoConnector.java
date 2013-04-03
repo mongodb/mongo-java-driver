@@ -32,8 +32,8 @@ import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
 import org.mongodb.io.async.MongoAsynchronousSocketChannelGateway;
-import org.mongodb.operation.GetMore;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.operation.MongoGetMore;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
@@ -197,7 +197,7 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
     }
 
     @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
+    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                       final Decoder<T> resultDecoder) {
         try {
             QueryResult<T> result = asyncGetMore(namespace, getMore, resultDecoder).get();
@@ -315,7 +315,7 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
 
     @Override
     public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
-                                                   final Decoder<T> resultDecoder) {
+                                                   final Serializer<T> resultSerializer) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         asyncGetMore(namespace, getMore, resultDecoder, new SingleResultFutureCallback<QueryResult<T>>(retVal));
@@ -324,7 +324,7 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore, final Serializer<T> resultSerializer,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
         final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore);

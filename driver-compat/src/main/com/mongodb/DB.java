@@ -25,7 +25,7 @@ import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.result.QueryResult;
 import org.mongodb.Codec;
@@ -441,17 +441,17 @@ public class DB implements IDB {
         throw new IllegalStateException("Not implemented yet!");
     }
 
-    protected MongoConnector getConnector() {
+    MongoConnector getConnector() {
         return getMongo().getConnector();
     }
 
-    protected org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
+    org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
         return new org.mongodb.result.CommandResult(getConnector().command(getName(), commandOperation, documentCodec));
 
     }
 
-    protected Bytes.OptionHolder getOptionHolder() {
+    Bytes.OptionHolder getOptionHolder() {
         return optionHolder;
     }
 }

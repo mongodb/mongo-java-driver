@@ -44,7 +44,7 @@ import org.mongodb.command.FindAndModifyCommandResultCodec;
 import org.mongodb.command.FindAndRemove;
 import org.mongodb.command.FindAndReplace;
 import org.mongodb.command.FindAndUpdate;
-import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
 import org.mongodb.operation.MongoFindAndReplace;
@@ -649,12 +649,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     findOp
                             .getFilter())
                     .returnNew(asBoolean(
-                                        beforeOrAfter))
+                            beforeOrAfter))
                     .select(findOp
                             .getFields())
                     .sortBy(
-                           findOp
-                           .getOrder());
+                            findOp
+                                    .getOrder());
             return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
                     new FindAndReplace<T>(findAndReplace,getName()),
                     new FindAndModifyCommandResultCodec<T>(
@@ -670,13 +670,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     findOp
                             .getFilter())
                     .returnNew(asBoolean(
-                                        beforeOrAfter))
+                            beforeOrAfter))
                     .upsert(true).select(
                             findOp
                                     .getFields())
                     .sortBy(
-                           findOp
-                           .getOrder());
+                            findOp
+                                    .getOrder());
             return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
                     new FindAndReplace<T>(findAndReplace, getName()),
                     new FindAndModifyCommandResultCodec<T>(
@@ -715,7 +715,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         boolean asBoolean(final Get get) {
-            return get == Get.BeforeChangeApplied;
+            return get == Get.AfterChangeApplied;
         }
 
         @Override
@@ -900,7 +900,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 }
                 else {
                     connector
-                            .asyncGetMore(getNamespace(), new GetMore(result.getCursor(), findOp.getBatchSize()),
+                            .asyncGetMore(getNamespace(), new MongoGetMore(result.getCursor(), findOp.getBatchSize()),
                                     getCodec(), new QueryResultSingleResultCallback(block));
                 }
             }

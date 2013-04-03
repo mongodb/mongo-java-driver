@@ -19,8 +19,8 @@ package org.mongodb.async;
 
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.operation.GetMore;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.operation.MongoGetMore;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
@@ -47,9 +47,9 @@ public interface MongoAsyncConnector {
     <T> void asyncQuery(final MongoNamespace namespace, MongoFind find, Encoder<Document> queryEncoder,
                         Decoder<T> resultDecoder, SingleResultCallback<QueryResult<T>> callback);
 
-    <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, GetMore getMore, Decoder<T> resultDecoder);
+    <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, MongoGetMore getMore, Decoder<T> resultDecoder);
 
-    <T> void asyncGetMore(final MongoNamespace namespace, GetMore getMore, Decoder<T> resultDecoder,
+    <T> void asyncGetMore(final MongoNamespace namespace, MongoGetMore getMore, Decoder<T> resultDecoder,
                           SingleResultCallback<QueryResult<T>> callback);
 
     <T> Future<WriteResult> asyncInsert(MongoNamespace namespace, MongoInsert<T> insert, Encoder<T> encoder);

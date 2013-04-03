@@ -22,7 +22,7 @@ import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.result.CommandResult;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.Codec;

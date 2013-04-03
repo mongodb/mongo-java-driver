@@ -23,8 +23,8 @@ import org.mongodb.MongoConnector;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
-import org.mongodb.operation.GetMore;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.operation.MongoGetMore;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
@@ -97,7 +97,7 @@ public class SingleServerMongoConnector implements MongoConnector {
     }
 
     @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore,
+    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                       final Decoder<T> resultDecoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
@@ -210,7 +210,7 @@ public class SingleServerMongoConnector implements MongoConnector {
     }
 
     @Override
-    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
+    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                                    final Decoder<T> resultDecoder) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
@@ -221,7 +221,7 @@ public class SingleServerMongoConnector implements MongoConnector {
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final GetMore getMore,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                  final Decoder<T> resultDecoder,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         final MongoPoolableConnector connection = getChannelConnection();

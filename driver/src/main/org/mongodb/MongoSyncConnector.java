@@ -17,8 +17,8 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.GetMore;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.operation.MongoGetMore;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
@@ -35,7 +35,7 @@ public interface MongoSyncConnector {
     <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Encoder<Document> queryEncoder,
                              Decoder<T> resultDecoder);
 
-    <T> QueryResult<T> getMore(final MongoNamespace namespace, GetMore getMore, Decoder<T> resultDecoder);
+    <T> QueryResult<T> getMore(final MongoNamespace namespace, MongoGetMore getMore, Decoder<T> resultDecoder);
 
     void killCursors(MongoKillCursor killCursor);
 

@@ -20,7 +20,7 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoCursor;
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.result.QueryResult;
@@ -109,7 +109,7 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
 
     private void getMore() {
         currentResult = connector.getMore(collection.getNamespace(),
-                                                                     new GetMore(currentResult.getCursor(),
+                                                                     new MongoGetMore(currentResult.getCursor(),
                                                                                 find.getBatchSize()),
                                                                      collection.getCodec());
         currentIterator = currentResult.getResults().iterator();

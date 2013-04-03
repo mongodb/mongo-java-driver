@@ -21,7 +21,7 @@ import org.mongodb.result.ServerCursor;
 import java.util.Arrays;
 import java.util.List;
 
-public class MongoKillCursor extends MongoOperation {
+public class MongoKillCursor {
     private final List<ServerCursor> serverCursors;
 
     public MongoKillCursor(final ServerCursor serverCursor) {
