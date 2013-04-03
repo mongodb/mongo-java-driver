@@ -63,6 +63,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     private DBObject currentObject;
     private int numSeen;
     private boolean closed;
+    private final Bytes.OptionHolder optionHolder;
     private final List<DBObject> all = new ArrayList<DBObject>();
 
     /**
@@ -78,10 +79,17 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             throw new IllegalArgumentException("Collection can't be null");
         }
         this.collection = collection;
-        find = new MongoFind();
-        find.where(toDocument(query))
+        optionHolder = new Bytes.OptionHolder(collection.getOptionHolder());
+        find = new MongoFind()
+                .where(toDocument(query))
                 .select(DBObjects.toFieldSelectorDocument(fields))
                 .readPreference(readPreference.toNew());
+    }
+
+    private DBCursor(final DBCollection collection, final MongoFind find, final Bytes.OptionHolder optionHolder) {
+        this.collection = collection;
+        this.find = new MongoFind(find);
+        this.optionHolder = optionHolder;
     }
 
     /**
@@ -90,7 +98,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return the new cursor
      */
     public DBCursor copy() {
-        return new DBCursor(collection, find);
+        return new DBCursor(collection, find, optionHolder);
     }
 
     public boolean hasNext() {
@@ -137,11 +145,11 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         return currentObject;
     }
 
+
     @Override
     public void remove() {
         throw new UnsupportedOperationException();
     }
-
 
     /**
      * adds a query option - see Bytes.QUERYOPTION_* for list
@@ -150,7 +158,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public DBCursor addOption(final int option) {
-        throw new UnsupportedOperationException();    // TODO
+        optionHolder.add(option);
+        return this;
     }
 
     /**
@@ -159,14 +168,16 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @param options
      */
     public DBCursor setOptions(final int options) {
-        throw new UnsupportedOperationException();   // TODO
+        optionHolder.set(options);
+        return this;
     }
 
     /**
      * resets the query options
      */
     public DBCursor resetOptions() {
-        throw new UnsupportedOperationException();   // TODO
+        optionHolder.reset();
+        return this;
     }
 
     /**
@@ -175,7 +186,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public int getOptions() {
-        throw new UnsupportedOperationException();   // TODO
+        return optionHolder.get();
     }
 
     /**
@@ -332,6 +343,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         throw new UnsupportedOperationException();  // TODO
     }
 
+
     /**
      * Returns the number of objects through which the cursor has iterated.
      *
@@ -340,7 +352,6 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     public int numSeen() {
         return numSeen;
     }
-
 
     /**
      * kills the current cursor on the server.
@@ -445,6 +456,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         return n;
     }
 
+
     /**
      * Counts the number of objects matching the query this does take limit/skip into consideration
      *
@@ -453,9 +465,9 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @see #count()
      */
     public int size() {
-        throw new UnsupportedOperationException();  // TODO
+        return (int) collection.getCount(getQuery(), getKeysWanted(), find.getLimit(), find.getSkip(), getReadPreference());
+        // TODO: dangerous cast.  Throw exception instead?
     }
-
 
     /**
      * gets the fields to be returned
@@ -528,11 +540,6 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
                 ", find=" + find +
                 (currentResult != null ? (", cursor=" + currentResult.getCursor()) : "") +
                 '}';
-    }
-
-    private DBCursor(final DBCollection collection, final MongoFind find) {
-        this.collection = collection;
-        this.find = new MongoFind(find);
     }
 
     /**

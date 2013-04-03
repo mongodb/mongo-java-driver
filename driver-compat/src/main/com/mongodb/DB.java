@@ -441,17 +441,17 @@ public class DB implements IDB {
         throw new IllegalStateException("Not implemented yet!");
     }
 
-    protected MongoConnector getConnector() {
+    MongoConnector getConnector() {
         return getMongo().getConnector();
     }
 
-    protected org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
+    org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
         return new org.mongodb.result.CommandResult(getConnector().command(getName(), commandOperation, documentSerializer));
 
     }
 
-    protected Bytes.OptionHolder getOptionHolder() {
+    Bytes.OptionHolder getOptionHolder() {
         return optionHolder;
     }
 }

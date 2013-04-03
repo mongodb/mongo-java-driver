@@ -1693,4 +1693,8 @@ public class DBCollection implements IDBCollection {
     Serializer<Document> getDocumentSerializer() {
         return documentSerializer;
     }
+
+    Bytes.OptionHolder getOptionHolder() {
+        return optionHolder;
+    }
 }
