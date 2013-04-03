@@ -42,7 +42,7 @@ import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
-import org.mongodb.operation.MongoCommand;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
 import org.mongodb.operation.MongoFindAndReplace;
@@ -216,15 +216,15 @@ public class DBCollection implements IDBCollection {
      * If the new document does not contain an '_id' field, it will be added.
      *
      * @param documents    list of {@code DBObject}'s to be inserted
-     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @param aWriteConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
      * @throws MongoException if the operation fails
      */
     @Override
-    public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern) {
+    public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern) {
         final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
-                .writeConcern(writeConcern.toNew());
-        return insert(mongoInsert, serializer);
+                .writeConcern(aWriteConcern.toNew());
+        return new WriteResult(insertInternal(mongoInsert, serializer), aWriteConcern);
     }
 
     /**
@@ -233,14 +233,14 @@ public class DBCollection implements IDBCollection {
      * If the new document does not contain an '_id' field, it will be added.
      *
      * @param documents    {@code DBObject}'s to be inserted
-     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @param aWriteConcern {@code WriteConcern} to be used during operation
      * @param encoder      {@code DBEncoder} to be used
      * @return the result of the operation
      * @throws MongoException if the operation fails
      */
     @Override
-    public WriteResult insert(final DBObject[] documents, final WriteConcern writeConcern, final DBEncoder encoder) {
-        return insert(Arrays.asList(documents), writeConcern, encoder);
+    public WriteResult insert(final DBObject[] documents, final WriteConcern aWriteConcern, final DBEncoder encoder) {
+        return insert(Arrays.asList(documents), aWriteConcern, encoder);
     }
 
     /**
@@ -249,15 +249,22 @@ public class DBCollection implements IDBCollection {
      * If the new document does not contain an '_id' field, it will be added.
      *
      * @param documents    a list of {@code DBObject}'s to be inserted
-     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @param aWriteConcern {@code WriteConcern} to be used during operation
      * @param encoder      {@code DBEncoder} to be used
      * @return the result of the operation
      * @throws MongoException if the operation fails
      */
     @Override
-    public WriteResult insert(final List<DBObject> documents, final WriteConcern writeConcern, final DBEncoder encoder) {
-        final Serializer<DBObject> serializer;
-        //TODO: Is this really how it should work?
+    public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder encoder) {
+        final Serializer<DBObject> serializer = toDBObjectSerializer(encoder);
+
+        final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
+                .writeConcern(this.writeConcern.toNew());
+        return new WriteResult(insertInternal(mongoInsert, serializer), aWriteConcern);
+    }
+
+    private Serializer<DBObject> toDBObjectSerializer(DBEncoder encoder) {
+        Serializer<DBObject> serializer;
         if (encoder != null) {
             serializer = new DBEncoderDecoderSerializer(encoder, null, null, null);
         } else if (encoderFactory != null) {
@@ -265,16 +272,12 @@ public class DBCollection implements IDBCollection {
         } else {
             serializer = this.serializer;
         }
-
-        final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
-                .writeConcern(this.writeConcern.toNew());
-        return insert(mongoInsert, serializer);
+        return serializer;
     }
 
-    private WriteResult insert(final MongoInsert<DBObject> mongoInsert, Serializer<DBObject> serializer) {
+    private org.mongodb.result.WriteResult insertInternal(final MongoInsert<DBObject> mongoInsert, Serializer<DBObject> serializer) {
         try {
-            final org.mongodb.result.WriteResult result = getConnector().insert(getNamespace(), mongoInsert, serializer);
-            return new WriteResult(result, writeConcern);
+            return getConnector().insert(getNamespace(), mongoInsert, serializer);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
         }
@@ -341,12 +344,12 @@ public class DBCollection implements IDBCollection {
      * @param update       the modifications to apply
      * @param upsert       insert a document if no document matches the update query criteria
      * @param multi        update all documents in the collection that match the update query criteria
-     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @param aWriteConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
      */
     @Override
     public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
-                              final WriteConcern writeConcern) {
+                              final WriteConcern aWriteConcern) {
         if (update == null) {
             throw new IllegalArgumentException("update can not be null");
         }
@@ -355,15 +358,17 @@ public class DBCollection implements IDBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        final MongoUpdate mongoUpdate = new MongoUpdate(toDocument(query), toUpdateOperationsDocument(update))
+        final MongoUpdate mongoUpdate = new MongoUpdate(toDocument(query), toDocument(update))
                 .upsert(upsert)
                 .multi(multi)
-                .writeConcern(writeConcern.toNew());
+                .writeConcern(aWriteConcern.toNew());
 
+        return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
+    }
+
+    private org.mongodb.result.WriteResult updateInternal(MongoUpdate mongoUpdate) {
         try {
-            final org.mongodb.result.WriteResult result =
-                    getConnector().update(getNamespace(), mongoUpdate, documentSerializer);
-            return new WriteResult(result, writeConcern);
+            return  getConnector().update(getNamespace(), mongoUpdate, documentSerializer);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
@@ -378,14 +383,29 @@ public class DBCollection implements IDBCollection {
      * @param update       the modifications to apply
      * @param upsert       insert a document if no document matches the update query criteria
      * @param multi        update all documents in the collection that match the update query criteria
-     * @param writeConcern {@code WriteConcern} to be used during operation
+     * @param aWriteConcern {@code WriteConcern} to be used during operation
      * @param encoder      {@code DBEncoder} to be used
      * @return the result of the operation
      */
     @Override
     public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
-                              final WriteConcern writeConcern, final DBEncoder encoder) {
-        throw new UnsupportedOperationException(); //TODO We need to generify MongoUpdate class to implement this.
+                              final WriteConcern aWriteConcern, final DBEncoder encoder) {
+        if (update == null) {
+            throw new IllegalArgumentException("update can not be null");
+        }
+
+        if (query == null) {
+            throw new IllegalArgumentException("update query can not be null");
+        }
+
+        final Document filter = toDocument(query, encoder, getDocumentSerializer());
+        final Document updateOperations = toDocument(update, encoder, getDocumentSerializer());
+        final MongoUpdate mongoUpdate = new MongoUpdate(filter, updateOperations)
+                .upsert(upsert)
+                .multi(multi)
+                .writeConcern(aWriteConcern.toNew());
+
+        return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
     }
 
     /**
@@ -468,7 +488,13 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern, final DBEncoder encoder) {
-        throw new UnsupportedOperationException(); //TODO We need to generify MongoRemove class to implement this.
+        final Document filter = toDocument(query, encoder, getDocumentSerializer());
+        final MongoRemove mongoRemove = new MongoRemove(filter)
+                .writeConcern(writeConcern.toNew());
+
+        final org.mongodb.result.WriteResult result = getConnector().remove(getNamespace(), mongoRemove, getDocumentSerializer());
+
+        return new WriteResult(result, writeConcern);
     }
 
     /**
@@ -1239,15 +1265,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public void createIndex(final DBObject keys, final DBObject options, final DBEncoder encoder) {
 
-        final Serializer<DBObject> serializer;
-        if (encoder != null) {
-            serializer = new DBEncoderDecoderSerializer(encoder, null, null, null);
-        } else if (encoderFactory != null) {
-            serializer = new DBEncoderDecoderSerializer(encoderFactory.create(), null, null, null);
-        } else {
-            serializer = this.serializer;
-        }
-
+        final Serializer<DBObject> serializer = toDBObjectSerializer(encoder);
         final Document indexDetails = toIndexDetailsDocument(keys, options);
 
         final MongoInsert<DBObject> insertIndexOperation = new MongoInsert<DBObject>(toDBObject(indexDetails));
@@ -1674,5 +1692,9 @@ public class DBCollection implements IDBCollection {
 
     Serializer<Document> getDocumentSerializer() {
         return documentSerializer;
+    }
+
+    Bytes.OptionHolder getOptionHolder() {
+        return optionHolder;
     }
 }

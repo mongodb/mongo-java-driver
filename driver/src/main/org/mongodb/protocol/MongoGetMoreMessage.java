@@ -17,12 +17,12 @@
 package org.mongodb.protocol;
 
 import org.mongodb.io.ChannelAwareOutputBuffer;
-import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoGetMore;
 
 public class MongoGetMoreMessage extends MongoRequestMessage {
-    private final GetMore getMore;
+    private final MongoGetMore getMore;
 
-    public MongoGetMoreMessage(final String collectionName, final GetMore getMore) {
+    public MongoGetMoreMessage(final String collectionName, final MongoGetMore getMore) {
         super(collectionName, OpCode.OP_GETMORE);
         this.getMore = getMore;
     }

@@ -17,7 +17,6 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.operation.MongoCommand;
 
 /**
  * Knows how to build the document that represents the Drop Collection command.

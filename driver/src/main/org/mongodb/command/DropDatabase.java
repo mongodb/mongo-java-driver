@@ -17,7 +17,6 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.operation.MongoCommand;
 
 public final class DropDatabase extends MongoCommand {
     public DropDatabase() {

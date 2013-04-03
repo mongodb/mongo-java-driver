@@ -16,8 +16,6 @@
 
 package org.mongodb.command;
 
-import org.mongodb.operation.MongoCommand;
-
 public class RenameCollection extends MongoCommand {
 
     public RenameCollection(final RenameCollectionOptions renameCollectionOptions, final String databaseName) {

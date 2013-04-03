@@ -17,7 +17,6 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.operation.MongoCommand;
 import org.mongodb.operation.MongoFindAndModify;
 
 import static org.mongodb.command.CommandDocumentTemplates.getFindAndModify;

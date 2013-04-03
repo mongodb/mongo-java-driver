@@ -194,7 +194,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         final Document newDoc = collection.filter(new Document("x", true))
                                           .modifyAndGet(new Document("$set", new Document("x", false)),
-                                                       Get.AfterChangeApplied);
+                                                       Get.BeforeChangeApplied);
 
         assertNotNull(newDoc);
         assertEquals(new Document("_id", 1).append("x", true), newDoc);
@@ -209,7 +209,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         final Concrete newDoc = collection.filter(new Document("x", true))
                                           .modifyAndGet(new Document("$set", new Document("x", false)),
-                                                       Get.AfterChangeApplied);
+                                                       Get.BeforeChangeApplied);
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);
