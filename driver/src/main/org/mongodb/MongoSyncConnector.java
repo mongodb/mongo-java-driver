@@ -36,7 +36,7 @@ public interface MongoSyncConnector {
     <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Serializer<Document> querySerializer,
                              Serializer<T> resultSerializer);
 
-    <T> QueryResult<T> getMore(final MongoNamespace namespace, MongoGetMore mongoGetMore, Serializer<T> resultSerializer);
+    <T> QueryResult<T> getMore(final MongoNamespace namespace, MongoGetMore getMore, Serializer<T> resultSerializer);
 
     void killCursors(MongoKillCursor killCursor);
 

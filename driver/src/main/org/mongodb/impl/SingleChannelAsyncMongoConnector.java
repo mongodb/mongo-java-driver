@@ -184,10 +184,10 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
     }
 
     @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore,
+    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                       final Serializer<T> resultSerializer) {
         try {
-            QueryResult<T> result = asyncGetMore(namespace, mongoGetMore, resultSerializer).get();
+            QueryResult<T> result = asyncGetMore(namespace, getMore, resultSerializer).get();
             if (result == null) {
                 throw new MongoInternalException("Query result should not be null", null);
             }
@@ -301,23 +301,23 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
     }
 
     @Override
-    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore,
+    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                                    final Serializer<T> resultSerializer) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        asyncGetMore(namespace, mongoGetMore, resultSerializer, new SingleResultFutureCallback<QueryResult<T>>(retVal));
+        asyncGetMore(namespace, getMore, resultSerializer, new SingleResultFutureCallback<QueryResult<T>>(retVal));
 
         return retVal;
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore, final Serializer<T> resultSerializer,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore, final Serializer<T> resultSerializer,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
-        final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), mongoGetMore);
+        final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore);
         serializeMessageToBuffer(message, buffer);
         channel.sendAndReceiveMessage(buffer, new MongoGetMoreResultCallback<T>(callback, this, resultSerializer,
-                mongoGetMore.getServerCursor().getId()));
+                getMore.getServerCursor().getId()));
     }
 
     @Override

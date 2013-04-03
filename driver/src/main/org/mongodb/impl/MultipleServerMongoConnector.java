@@ -72,9 +72,9 @@ class MultipleServerMongoConnector implements MongoConnector {
     }
 
     @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore,
+    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                       final Serializer<T> resultSerializer) {
-        return getConnection(mongoGetMore.getServerCursor().getAddress()).getMore(namespace, mongoGetMore, resultSerializer);
+        return getConnection(getMore.getServerCursor().getAddress()).getMore(namespace, getMore, resultSerializer);
     }
 
     @Override
@@ -130,15 +130,15 @@ class MultipleServerMongoConnector implements MongoConnector {
     }
 
     @Override
-    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore,
+    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                                    final Serializer<T> resultSerializer) {
-        return getConnection(mongoGetMore.getServerCursor().getAddress()).asyncGetMore(namespace, mongoGetMore, resultSerializer);
+        return getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultSerializer);
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore, final Serializer<T> resultSerializer,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore, final Serializer<T> resultSerializer,
                                  final SingleResultCallback<QueryResult<T>> callback) {
-        getConnection(mongoGetMore.getServerCursor().getAddress()).asyncGetMore(namespace, mongoGetMore, resultSerializer, callback);
+        getConnection(getMore.getServerCursor().getAddress()).asyncGetMore(namespace, getMore, resultSerializer, callback);
     }
 
     @Override

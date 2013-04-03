@@ -20,15 +20,15 @@ import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoGetMore;
 
 public class MongoGetMoreMessage extends MongoRequestMessage {
-    private final MongoGetMore mongoGetMore;
+    private final MongoGetMore getMore;
 
-    public MongoGetMoreMessage(final String collectionName, final MongoGetMore mongoGetMore) {
+    public MongoGetMoreMessage(final String collectionName, final MongoGetMore getMore) {
         super(collectionName, OpCode.OP_GETMORE);
-        this.mongoGetMore = mongoGetMore;
+        this.getMore = getMore;
     }
 
     public long getCursorId() {
-        return mongoGetMore.getServerCursor().getId();
+        return getMore.getServerCursor().getId();
     }
 
     @Override
@@ -39,7 +39,7 @@ public class MongoGetMoreMessage extends MongoRequestMessage {
     private void writeGetMore(final ChannelAwareOutputBuffer buffer) {
         buffer.writeInt(0);
         buffer.writeCString(getCollectionName());
-        buffer.writeInt(mongoGetMore.getBatchSize());
-        buffer.writeLong(mongoGetMore.getServerCursor().getId());
+        buffer.writeInt(getMore.getBatchSize());
+        buffer.writeLong(getMore.getServerCursor().getId());
     }
 }

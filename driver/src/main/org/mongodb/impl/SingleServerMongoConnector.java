@@ -95,11 +95,11 @@ public class SingleServerMongoConnector implements MongoConnector {
     }
 
     @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore,
+    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                       final Serializer<T> resultSerializer) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.getMore(namespace, mongoGetMore, resultSerializer);
+            return connection.getMore(namespace, getMore, resultSerializer);
         } finally {
             connection.release();
         }
@@ -208,23 +208,23 @@ public class SingleServerMongoConnector implements MongoConnector {
     }
 
     @Override
-    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore,
+    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                                    final Serializer<T> resultSerializer) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            return connection.asyncGetMore(namespace, mongoGetMore, resultSerializer);
+            return connection.asyncGetMore(namespace, getMore, resultSerializer);
         } finally {
             connection.release();
         }
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                  final Serializer<T> resultSerializer,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         final MongoPoolableConnector connection = getChannelConnection();
         try {
-            connection.asyncGetMore(namespace, mongoGetMore, resultSerializer, callback);
+            connection.asyncGetMore(namespace, getMore, resultSerializer, callback);
         } finally {
             connection.release();
         }

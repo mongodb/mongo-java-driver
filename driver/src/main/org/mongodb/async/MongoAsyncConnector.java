@@ -45,9 +45,9 @@ public interface MongoAsyncConnector {
     <T> void asyncQuery(final MongoNamespace namespace, MongoFind find, Serializer<Document> querySerializer,
                         Serializer<T> resultSerializer, SingleResultCallback<QueryResult<T>> callback);
 
-    <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, MongoGetMore mongoGetMore, Serializer<T> resultSerializer);
+    <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, MongoGetMore getMore, Serializer<T> resultSerializer);
 
-    <T> void asyncGetMore(final MongoNamespace namespace, MongoGetMore mongoGetMore, Serializer<T> resultSerializer,
+    <T> void asyncGetMore(final MongoNamespace namespace, MongoGetMore getMore, Serializer<T> resultSerializer,
                           SingleResultCallback<QueryResult<T>> callback);
 
     <T> Future<WriteResult> asyncInsert(MongoNamespace namespace, MongoInsert<T> insert, Serializer<T> serializer);

@@ -133,11 +133,11 @@ final class SingleChannelSyncMongoConnector implements MongoPoolableConnector {
     }
 
     @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore,
+    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                       final Serializer<T> resultSerializer) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
         try {
-            final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), mongoGetMore);
+            final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore);
             message.serialize(buffer);
             final ResponseBuffers responseBuffers = channel.sendAndReceiveMessage(buffer);
             try {
@@ -286,13 +286,13 @@ final class SingleChannelSyncMongoConnector implements MongoPoolableConnector {
     }
 
     @Override
-    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore,
+    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                                    final Serializer<T> resultSerializer) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore mongoGetMore, final Serializer<T> resultSerializer,
+    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore, final Serializer<T> resultSerializer,
                                  final SingleResultCallback<QueryResult<T>> callback) {
         throw new UnsupportedOperationException();
     }
