@@ -36,25 +36,16 @@ public abstract class MongoQueryBaseMessage extends MongoRequestMessage {
         buffer.writeCString(getCollectionName());
 
         buffer.writeInt(query.getSkip());
-        buffer.writeInt(chooseBatchSize(query.getBatchSize(), query.getLimit(), 0));
+        buffer.writeInt(chooseNumberToReturn(query.getBatchSize(), query.getLimit()));
     }
 
     // TODO: test this, extensively
-    private int chooseBatchSize(final int batchSize, final int limit, final int fetched) {
+    private int chooseNumberToReturn(final int batchSize, final int limit) {
         final int bs = Math.abs(batchSize);
-        final int remaining = limit > 0 ? limit - fetched : 0;
-        int res;
-        if (bs == 0 && remaining > 0) {
-            res = remaining;
-        }
-        else if (bs > 0 && remaining == 0) {
-            res = bs;
-        }
-        else {
-            res = Math.min(bs, remaining);
-        }
+        final int lm = Math.abs(limit);
+        int res = bs * lm != 0 ? Math.min(bs, lm) : bs + lm;
 
-        if (batchSize < 0) {
+        if (Math.min(batchSize, limit) < 0) {
             // force close
             res = -res;
         }
