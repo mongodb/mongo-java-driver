@@ -22,6 +22,8 @@ import javax.security.sasl.SaslException;
  * This exception is thrown when there is an error reported by the underlying client authentication mechanism.
  */
 public class MongoSecurityException extends MongoClientException {
+    private static final long serialVersionUID = -7044790409935567275L;
+
     private final MongoCredential credential;
 
     /**
