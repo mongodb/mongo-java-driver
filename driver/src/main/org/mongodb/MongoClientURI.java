@@ -16,79 +16,146 @@
 
 package org.mongodb;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 
 /**
- * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a> which can be used to create a
- * MongoClient instance. The URI describes the hosts to be used and options. <p>The format of the URI is:
+ * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>
+ * which can be used to create a MongoClient instance. The URI describes the hosts to
+ * be used and options.
+ * <p>The format of the URI is:
  * <pre>
  *   mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
  * </pre>
- * <ul> <li>{@code mongodb://} is a required prefix to identify that this is a string in the standard connection
- * format.</li> <li>{@code username:password@} are optional.  If given, the driver will attempt to login to a database
- * after connecting to a database server.</li> <li>{@code host1} is the only required part of the URI.  It identifies a
- * server address to connect to.</li> <li>{@code :portX} is optional and defaults to :27017 if not provided.</li>
- * <li>{@code /database} is the name of the database to login to and thus is only relevant if the {@code
- * username:password@} syntax is used. If not specified the "admin" database will be used by default.</li> <li>{@code
- * ?options} are connection options. Note that if {@code database} is absent there is still a {@code /} required between
- * the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs are separated by
- * "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;", but should be considered
- * as deprecated.</li> </ul> <p> The Java driver supports the following options (case insensitive): <p> Replica set
- * configuration: </p> <ul> <li>{@code replicaSet=name}: Implies that the hosts given are a seed list, and the driver
- * will attempt to find all members of the set.</li> </ul> <p>Connection Configuration:</p> <ul> <li>{@code
- * connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li> <li>{@code
- * socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li> </ul> <p>Connection pool
- * configuration:</p> <ul> <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
- * <li>{@code waitQueueMultiple=n} : this multiplier, multiplied with the maxPoolSize setting, gives the maximum number
- * of threads that may be waiting for a connection to become available from the pool.  All further threads will get an
- * exception right away.</li> <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may
- * wait for a connection to become available.</li> </ul> <p>Write concern configuration:</p> <ul> <li>{@code
- * safe=true|false} <ul> <li>{@code true}: the driver sends a getLastError command after every update to ensure that the
- * update succeeded (see also {@code w} and {@code wtimeoutMS}).</li> <li>{@code false}: the driver does not send a
- * getLastError command after every update.</li> </ul> </li> <li>{@code w=wValue} <ul> <li>The driver adds { w : wValue
- * } to the getLastError command. Implies {@code safe=true}.</li> <li>wValue is typically a number, but can be any
- * string in order to allow for specifications like {@code "majority"}</li> </ul> </li> <li>{@code wtimeoutMS=ms} <ul>
- * <li>The driver adds { wtimeout : ms } to the getlasterror command. Implies {@code safe=true}.</li> <li>Used in
- * combination with {@code w}</li> </ul> </li> </ul> <p>Read preference configuration:</p> <ul> <li>{@code
- * slaveOk=true|false}: Whether a driver connected to a replica set will send reads to slaves/secondaries.</li>
- * <li>{@code readPreference=enum}: The read preference for this connection.  If set, it overrides any slaveOk value.
- * <ul> <li>Enumerated values: <ul> <li>{@code primary}</li> <li>{@code primaryPreferred}</li> <li>{@code
- * secondary}</li> <li>{@code secondaryPreferred}</li> <li>{@code nearest}</li> </ul> </li> </ul> </li> <li>{@code
- * readPreferenceTags=string}.  A representation of a tag set as a comma-separated list of colon-separated key-value
- * pairs, e.g. {@code "dc:ny,rack:1}".  Spaces are stripped from beginning and end of all keys and values. To specify a
- * list of tag sets, using multiple readPreferenceTags, e.g. {@code readPreferenceTags=dc:ny,
- * rack:1;readPreferenceTags=dc:ny;readPreferenceTags=} <ul> <li>Note the empty value for the last one, which means
- * match any secondary as a last resort.</li> <li>Order matters when using multiple readPreferenceTags.</li> </ul> </li>
+ * <ul>
+ * <li>{@code mongodb://} is a required prefix to identify that this is a string in the standard connection format.</li>
+ * <li>{@code username:password@} are optional.  If given, the driver will attempt to login to a database after
+ * connecting to a database server.</li>
+ * <li>{@code host1} is the only required part of the URI.  It identifies a server address to connect to.</li>
+ * <li>{@code :portX} is optional and defaults to :27017 if not provided.</li>
+ * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
+ * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
+ * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
+ * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
+ * but should be considered as deprecated.</li>
  * </ul>
- * <p/>
- * Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
- * behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.
+ * <p>
+ * The Java driver supports the following options (case insensitive):
+ * <p>
+ * Replica set configuration:
+ * </p>
+ * <ul>
+ * <li>{@code replicaSet=name}: Implies that the hosts given are a seed list, and the driver will attempt to find
+ * all members of the set.</li>
+ * </ul>
+ * <p>Connection Configuration:</p>
+ * <ul>
+ * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
+ * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
+ * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
+ * </ul>
+ * <p>Connection pool configuration:</p>
+ * <ul>
+ * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
+ * <li>{@code waitQueueMultiple=n} : this multiplier, multiplied with the maxPoolSize setting, gives the maximum number of
+ * threads that may be waiting for a connection to become available from the pool.  All further threads will get an
+ * exception right away.</li>
+ * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
+ * become available.</li>
+ * </ul>
+ * <p>Write concern configuration:</p>
+ * <ul>
+ * <li>{@code safe=true|false}
+ * <ul>
+ * <li>{@code true}: the driver sends a getLastError command after every update to ensure that the update succeeded
+ * (see also {@code w} and {@code wtimeoutMS}).</li>
+ * <li>{@code false}: the driver does not send a getLastError command after every update.</li>
+ * </ul>
+ * </li>
+ * <li>{@code w=wValue}
+ * <ul>
+ * <li>The driver adds { w : wValue } to the getLastError command. Implies {@code safe=true}.</li>
+ * <li>wValue is typically a number, but can be any string in order to allow for specifications like
+ * {@code "majority"}</li>
+ * </ul>
+ * </li>
+ * <li>{@code wtimeoutMS=ms}
+ * <ul>
+ * <li>The driver adds { wtimeout : ms } to the getlasterror command. Implies {@code safe=true}.</li>
+ * <li>Used in combination with {@code w}</li>
+ * </ul>
+ * </li>
+ * </ul>
+ * <p>Read preference configuration:</p>
+ * <ul>
+ * <li>{@code slaveOk=true|false}: Whether a driver connected to a replica set will send reads to slaves/secondaries.</li>
+ * <li>{@code readPreference=enum}: The read preference for this connection.  If set, it overrides any slaveOk value.
+ * <ul>
+ * <li>Enumerated values:
+ * <ul>
+ * <li>{@code primary}</li>
+ * <li>{@code primaryPreferred}</li>
+ * <li>{@code secondary}</li>
+ * <li>{@code secondaryPreferred}</li>
+ * <li>{@code nearest}</li>
+ * </ul>
+ * </li>
+ * </ul>
+ * </li>
+ * <li>{@code readPreferenceTags=string}.  A representation of a tag set as a comma-separated list of colon-separated
+ * key-value pairs, e.g. {@code "dc:ny,rack:1}".  Spaces are stripped from beginning and end of all keys and values.
+ * To specify a list of tag sets, using multiple readPreferenceTags,
+ * e.g. {@code readPreferenceTags=dc:ny,rack:1;readPreferenceTags=dc:ny;readPreferenceTags=}
+ * <ul>
+ * <li>Note the empty value for the last one, which means match any secondary as a last resort.</li>
+ * <li>Order matters when using multiple readPreferenceTags.</li>
+ * </ul>
+ * </li>
+ * </ul>
+ * <p>Authentication configuration:</p>
+ * <ul>
+ * <li>{@code authMechanism=MONGO-CR|GSSAPI}: The authentication mechanism to use if a credential was supplied.
+ * The default is MONGODB-CR, which is the native MongoDB Challenge Response mechanism.
+ * </li>
+ * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
+ * the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
+ * If the database is specified in neither place, the default value is "admin".  For GSSAPI, it's not necessary to specify
+ * a source.
+ * </li>
+ * <ul>
+ * <p>
+ * Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference
+ * in behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.
+ * </p>
  *
  * @see MongoClientOptions for the default values for all options
- * @since 2.10.0
+ * @since 3.0.0
  * @mongodb.driver.manual reference/connection-string Connection String URI Format
  */
 public class MongoClientURI {
 
     private static final String PREFIX = "mongodb://";
+    private static final String UTF_8 = "UTF-8";
+
     private static final Logger LOGGER = Logger.getLogger("com.mongodb.MongoURI");
 
-    private final String userName;
-    private final char[] password;
+    private final MongoClientOptions options;
+    private final MongoCredential credentials;
     private final List<String> hosts;
     private final String database;
-
     private final String collection;
-
     private final String uri;
-
-    private MongoClientOptions options;
-
 
     /**
      * Creates a MongoURI from the given string.
@@ -99,33 +166,43 @@ public class MongoClientURI {
         this(uri, new MongoClientOptions.Builder());
     }
 
-    //CHECKSTYLE:OFF
-    //TODO: this is failing checkstyle and possibly wrong - the parameter is being manipulated
-    MongoClientURI(String uri, final MongoClientOptions.Builder builder) {
-        this.uri = uri;
-        if (!uri.startsWith(PREFIX)) {
-            throw new IllegalArgumentException("uri needs to start with " + PREFIX);
-        }
+    /**
+     * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured
+     * with default options, which may be overridden by options specified in the URI string.
+     *
+     * @param uri     the URI
+     * @param builder a Builder
+     * @see org.mongodb.MongoClientURI#getOptions()
+     * @since 2.11.0
+     */
+    public MongoClientURI(final String uri, final MongoClientOptions.Builder builder) {
+        try {
+            if (!uri.startsWith(PREFIX)) {
+                throw new IllegalArgumentException("uri needs to start with " + PREFIX);
+            }
 
-        uri = uri.substring(PREFIX.length());
+            this.uri = uri;
 
-        String serverPart;
-        String nsPart;
-        final String optionsPart;
+            String unprefixedURI = uri.substring(PREFIX.length());
 
-        {
-            int idx = uri.lastIndexOf("/");
+            String serverPart;
+            String nsPart;
+            String optionsPart;
+            String userName = null;
+            char[] password = null;
+
+            int idx = unprefixedURI.lastIndexOf("/");
             if (idx < 0) {
-                if (uri.contains("?")) {
+                if (unprefixedURI.contains("?")) {
                     throw new IllegalArgumentException("URI contains options without trailing slash");
                 }
-                serverPart = uri;
+                serverPart = unprefixedURI;
                 nsPart = null;
                 optionsPart = "";
             }
             else {
-                serverPart = uri.substring(0, idx);
-                nsPart = uri.substring(idx + 1);
+                serverPart = unprefixedURI.substring(0, idx);
+                nsPart = unprefixedURI.substring(idx + 1);
 
                 idx = nsPart.indexOf("?");
                 if (idx >= 0) {
@@ -137,95 +214,194 @@ public class MongoClientURI {
                 }
 
             }
-        }
+            List<String> all = new LinkedList<String>();
 
-        { // userName,password,hosts
-            final List<String> all = new LinkedList<String>();
-
-            int idx = serverPart.indexOf("@");
+            idx = serverPart.indexOf("@");
 
             if (idx > 0) {
-                final String authPart = serverPart.substring(0, idx);
+                String authPart = serverPart.substring(0, idx);
                 serverPart = serverPart.substring(idx + 1);
 
                 idx = authPart.indexOf(":");
-                userName = authPart.substring(0, idx);
-                password = authPart.substring(idx + 1).toCharArray();
-            }
-            else {
-                userName = null;
-                password = null;
+                if (idx == -1) {
+                    userName = URLDecoder.decode(authPart, UTF_8);
+                }
+                else {
+                    userName = URLDecoder.decode(authPart.substring(0, idx), UTF_8);
+                    password = URLDecoder.decode(authPart.substring(idx + 1), UTF_8).toCharArray();
+                }
             }
 
             Collections.addAll(all, serverPart.split(","));
 
             hosts = Collections.unmodifiableList(all);
-        }
 
-        if (nsPart != null) { // database,_collection
-            final int idx = nsPart.indexOf(".");
-            if (idx < 0) {
-                database = nsPart;
-                collection = null;
+            if (nsPart != null && !nsPart.isEmpty()) { // database,_collection
+                idx = nsPart.indexOf(".");
+                if (idx < 0) {
+                    database = nsPart;
+                    collection = null;
+                }
+                else {
+                    database = nsPart.substring(0, idx);
+                    collection = nsPart.substring(idx + 1);
+                }
             }
             else {
-                database = nsPart.substring(0, idx);
-                collection = nsPart.substring(idx + 1);
+                database = null;
+                collection = null;
+            }
+
+            Map<String, List<String>> optionsMap = parseOptions(optionsPart);
+            options = createOptions(optionsMap, builder);
+            credentials = createCredentials(optionsMap, userName, password);
+            warnOnUnsupportedOptions(optionsMap);
+        } catch (UnsupportedEncodingException e) {
+            throw new MongoInternalException("This should not happen", e);
+        }
+    }
+
+    private static Set<String> generalOptionsKeys = new HashSet<String>();
+    private static Set<String> authKeys = new HashSet<String>();
+    private static Set<String> readPreferenceKeys = new HashSet<String>();
+    private static Set<String> writeConcernKeys = new HashSet<String>();
+    private static Set<String> allKeys = new HashSet<String>();
+
+    static {
+        generalOptionsKeys.add("maxpoolsize");
+        generalOptionsKeys.add("waitqueuemultiple");
+        generalOptionsKeys.add("waitqueuetimeoutms");
+        generalOptionsKeys.add("connecttimeoutms");
+        generalOptionsKeys.add("sockettimeoutms");
+        generalOptionsKeys.add("sockettimeoutms");
+        generalOptionsKeys.add("autoconnectretry");
+        generalOptionsKeys.add("ssl");
+
+        readPreferenceKeys.add("slaveok");
+        readPreferenceKeys.add("readpreference");
+        readPreferenceKeys.add("readpreferencetags");
+
+        writeConcernKeys.add("safe");
+        writeConcernKeys.add("w");
+        writeConcernKeys.add("wtimeout");
+        writeConcernKeys.add("fsync");
+        writeConcernKeys.add("j");
+
+        authKeys.add("authmechanism");
+        authKeys.add("authsource");
+
+        allKeys.addAll(generalOptionsKeys);
+        allKeys.addAll(authKeys);
+        allKeys.addAll(readPreferenceKeys);
+        allKeys.addAll(writeConcernKeys);
+    }
+
+    private void warnOnUnsupportedOptions(final Map<String, List<String>> optionsMap) {
+        for (String key : optionsMap.keySet()) {
+            if (!allKeys.contains(key)) {
+                LOGGER.warning("Unknown or Unsupported Option '" + key + "'");
             }
         }
-        else {
-            database = null;
-            collection = null;
+    }
+
+    private MongoClientOptions createOptions(final Map<String, List<String>> optionsMap, final MongoClientOptions.Builder builder) {
+        for (String key : generalOptionsKeys) {
+            String value = getLastValue(optionsMap, key);
+            if (value == null) {
+                continue;
+            }
+
+            if (key.equals("maxpoolsize")) {
+                builder.connectionsPerHost(Integer.parseInt(value));
+            }
+            else if (key.equals("waitqueuemultiple")) {
+                builder.threadsAllowedToBlockForConnectionMultiplier(Integer.parseInt(value));
+            }
+            else if (key.equals("waitqueuetimeoutms")) {
+                builder.maxWaitTime(Integer.parseInt(value));
+            }
+            else if (key.equals("connecttimeoutms")) {
+                builder.connectTimeout(Integer.parseInt(value));
+            }
+            else if (key.equals("sockettimeoutms")) {
+                builder.socketTimeout(Integer.parseInt(value));
+            }
+            else if (key.equals("autoconnectretry")) {
+                builder.autoConnectRetry(parseBoolean(value));
+            }
+            else if (key.equals("ssl")) {
+                if (parseBoolean(value)) {
+                    builder.SSLEnabled(true);
+                }
+            }
         }
 
-        parseOptions(optionsPart, builder);
+        WriteConcern writeConcern = createWriteConcern(optionsMap);
+        ReadPreference readPreference = createReadPreference(optionsMap);
+
+        if (writeConcern != null) {
+            builder.writeConcern(writeConcern);
+        }
+        if (readPreference != null) {
+            builder.readPreference(readPreference);
+        }
+
+        return builder.build();
     }
-    //CHECKSTYLE:ON
 
-
-    private void parseOptions(final String optionsPart, final MongoClientOptions.Builder builder) {
-        String readPreferenceType = null;
-        Document firstTagSet = null;
-        final List<Document> remainingTagSets = new ArrayList<Document>();
-
+    private WriteConcern createWriteConcern(final Map<String, List<String>> optionsMap) {
         Boolean safe = null;
         String w = null;
         int wTimeout = 0;
         boolean fsync = false;
         boolean journal = false;
-        Boolean slaveOk = null;
-        for (final String part : optionsPart.split("&|;")) {
-            final int idx = part.indexOf("=");
-            if (idx >= 0) {
-                final String key = part.substring(0, idx).toLowerCase();
-                final String value = part.substring(idx + 1);
 
-                if (key.equals("maxpoolsize")) {
-                    builder.connectionsPerHost(Integer.parseInt(value));
-                }
-                else if (key.equals("waitqueuemultiple")) {
-                    builder.threadsAllowedToBlockForConnectionMultiplier(Integer.parseInt(value));
-                }
-                else if (key.equals("waitqueuetimeoutms")) {
-                    builder.maxWaitTime(Integer.parseInt(value));
-                }
-                else if (key.equals("connecttimeoutms")) {
-                    builder.connectTimeout(Integer.parseInt(value));
-                }
-                else if (key.equals("sockettimeoutms")) {
-                    builder.socketTimeout(Integer.parseInt(value));
-                }
-                else if (key.equals("autoconnectretry")) {
-                    builder.autoConnectRetry(parseBoolean(value));
-                }
-                else if (key.equals("slaveok")) {
-                    slaveOk = parseBoolean(value);
-                }
-                else if (key.equals("readpreference")) {
-                    readPreferenceType = value;
-                }
-                else if (key.equals("readpreferencetags")) {
-                    final Document tagSet = getTagSet(value.trim());
+        for (String key : writeConcernKeys) {
+            String value = getLastValue(optionsMap, key);
+            if (value == null) {
+                continue;
+            }
+
+            if (key.equals("safe")) {
+                safe = parseBoolean(value);
+            }
+            else if (key.equals("w")) {
+                w = value;
+            }
+            else if (key.equals("wtimeout")) {
+                wTimeout = Integer.parseInt(value);
+            }
+            else if (key.equals("fsync")) {
+                fsync = parseBoolean(value);
+            }
+            else if (key.equals("j")) {
+                journal = parseBoolean(value);
+            }
+        }
+        return buildWriteConcern(safe, w, wTimeout, fsync, journal);
+    }
+
+    private ReadPreference createReadPreference(final Map<String, List<String>> optionsMap) {
+        Boolean slaveOk = null;
+        String readPreferenceType = null;
+        Document firstTagSet = null;
+        List<Document> remainingTagSets = new ArrayList<Document>();
+
+        for (String key : readPreferenceKeys) {
+            String value = getLastValue(optionsMap, key);
+            if (value == null) {
+                continue;
+            }
+
+            if (key.equals("slaveok")) {
+                slaveOk = parseBoolean(value);
+            }
+            else if (key.equals("readpreference")) {
+                readPreferenceType = value;
+            }
+            else if (key.equals("readpreferencetags")) {
+                for (String cur : optionsMap.get(key)) {
+                    Document tagSet = getTagSet(cur.trim());
                     if (firstTagSet == null) {
                         firstTagSet = tagSet;
                     }
@@ -233,81 +409,123 @@ public class MongoClientURI {
                         remainingTagSets.add(tagSet);
                     }
                 }
-                else if (key.equals("safe")) {
-                    safe = parseBoolean(value);
-                }
-                else if (key.equals("w")) {
-                    w = value;
-                }
-                else if (key.equals("wtimeout")) {
-                    wTimeout = Integer.parseInt(value);
-                }
-                else if (key.equals("fsync")) {
-                    fsync = parseBoolean(value);
-                }
-                else if (key.equals("j")) {
-                    journal = parseBoolean(value);
-                }
-                else {
-                    LOGGER.warning("Unknown or Unsupported Option '" + key + "'");
-                }
+            }
+        }
+        return buildReadPreference(readPreferenceType, firstTagSet, remainingTagSets, slaveOk);
+    }
+
+    private MongoCredential createCredentials(final Map<String, List<String>> optionsMap, final String userName,
+                                              final char[] password) {
+        if (userName == null) {
+            return null;
+        }
+
+        String mechanism = MongoCredential.MONGODB_CR_MECHANISM;
+        String authSource = (database == null) ? "admin" : database;
+
+        for (String key : authKeys) {
+            String value = getLastValue(optionsMap, key);
+
+            if (value == null) {
+                continue;
+            }
+
+            if (key.equals("authmechanism")) {
+                mechanism = value;
+            }
+            else if (key.equals("authsource")) {
+                authSource = value;
             }
         }
 
-        buildWriteConcern(builder, safe, w, wTimeout, fsync, journal);
-
-        buildReadPreference(builder, readPreferenceType, firstTagSet, remainingTagSets, slaveOk);
-
-        options = builder.build();
+        if (mechanism.equals(MongoCredential.GSSAPI_MECHANISM)) {
+            return MongoCredential.createGSSAPICredential(userName);
+        }
+        else if (mechanism.equals(MongoCredential.MONGODB_CR_MECHANISM)) {
+            return MongoCredential.createMongoCRCredential(userName, authSource, password);
+        }
+        else {
+            throw new IllegalArgumentException("Unsupported authMechanism: " + mechanism);
+        }
     }
 
-    private void buildReadPreference(final MongoClientOptions.Builder builder, final String readPreferenceType,
-                                     final Document firstTagSet, final List<Document> remainingTagSets,
-                                     final Boolean slaveOk) {
+    private String getLastValue(final Map<String, List<String>> optionsMap, final String key) {
+        List<String> valueList = optionsMap.get(key);
+        if (valueList == null) {
+            return null;
+        }
+        return valueList.get(valueList.size() - 1);
+    }
+
+    private Map<String, List<String>> parseOptions(final String optionsPart) {
+        Map<String, List<String>> optionsMap = new HashMap<String, List<String>>();
+
+        for (String part : optionsPart.split("&|;")) {
+            int idx = part.indexOf("=");
+            if (idx >= 0) {
+                String key = part.substring(0, idx).toLowerCase();
+                String value = part.substring(idx + 1);
+                List<String> valueList = optionsMap.get(key);
+                if (valueList == null) {
+                    valueList = new ArrayList<String>(1);
+                }
+                valueList.add(value);
+                optionsMap.put(key, valueList);
+            }
+        }
+
+        return optionsMap;
+    }
+
+    private ReadPreference buildReadPreference(final String readPreferenceType, final Document firstTagSet,
+                                               final List<Document> remainingTagSets, final Boolean slaveOk) {
         if (readPreferenceType != null) {
             if (firstTagSet == null) {
-                builder.readPreference(ReadPreference.valueOf(readPreferenceType));
+                return ReadPreference.valueOf(readPreferenceType);
             }
             else {
-                builder.readPreference(ReadPreference.valueOf(readPreferenceType, firstTagSet,
-                                                             remainingTagSets
-                                                             .toArray(new Document[remainingTagSets.size()])));
+                return ReadPreference.valueOf(readPreferenceType, firstTagSet,
+                        remainingTagSets.toArray(new Document[remainingTagSets.size()]));
             }
         }
-        else if (slaveOk != null && slaveOk.equals(Boolean.TRUE)) {
-            builder.readPreference(ReadPreference.secondaryPreferred());
+        else if (slaveOk != null) {
+            if (slaveOk.equals(Boolean.TRUE)) {
+                return ReadPreference.secondaryPreferred();
+            }
         }
+        return null;
     }
 
-    private void buildWriteConcern(final MongoClientOptions.Builder builder, final Boolean safe, final String w,
-                                   final int wTimeout, final boolean fsync, final boolean journal) {
+    private WriteConcern buildWriteConcern(final Boolean safe, final String w,
+                                           final int wTimeout, final boolean fsync, final boolean journal) {
         if (w != null || wTimeout != 0 || fsync || journal) {
             if (w == null) {
-                builder.writeConcern(new WriteConcern(1, wTimeout, fsync, journal));
+                return new WriteConcern(1, wTimeout, fsync, journal);
             }
             else {
                 try {
-                    builder.writeConcern(new WriteConcern(Integer.parseInt(w), wTimeout, fsync, journal));
+                    return new WriteConcern(Integer.parseInt(w), wTimeout, fsync, journal);
                 } catch (NumberFormatException e) {
-                    builder.writeConcern(new WriteConcern(w, wTimeout, fsync, journal));
+                    return new WriteConcern(w, wTimeout, fsync, journal);
                 }
             }
         }
         else if (safe != null) {
             if (safe) {
-                builder.writeConcern(WriteConcern.ACKNOWLEDGED);
+                return WriteConcern.ACKNOWLEDGED;
             }
             else {
-                builder.writeConcern(WriteConcern.UNACKNOWLEDGED);
+                return WriteConcern.UNACKNOWLEDGED;
             }
         }
+        return null;
     }
 
     private Document getTagSet(final String tagSetString) {
-        final Document tagSet = new Document();
+        Document tagSet = new Document();
         if (tagSetString.length() > 0) {
-            for (final String tag : tagSetString.split(",")) {
-                final String[] tagKeyValuePair = tag.split(":");
+            for (String tag : tagSetString.split(",")) {
+                String[] tagKeyValuePair = tag.split(":");
                 if (tagKeyValuePair.length != 2) {
                     throw new IllegalArgumentException("Bad read preference tags: " + tagSetString);
                 }
@@ -318,9 +536,9 @@ public class MongoClientURI {
     }
 
     boolean parseBoolean(final String input) {
-        final String in = input.trim();
-        return in != null && in.length() > 0 && (in.equals("1") || in.toLowerCase().equals("true") || in.toLowerCase()
-                                                                                                        .equals("yes"));
+        final String trimmedInput = input.trim();
+        return trimmedInput != null && trimmedInput.length() > 0 && (trimmedInput.equals("1")
+                || trimmedInput.toLowerCase().equals("true") || trimmedInput.toLowerCase().equals("yes"));
     }
 
     // ---------------------------------
@@ -331,7 +549,7 @@ public class MongoClientURI {
      * @return the username
      */
     public String getUsername() {
-        return userName;
+        return credentials != null ? credentials.getUserName() : null;
     }
 
     /**
@@ -340,7 +558,7 @@ public class MongoClientURI {
      * @return the password
      */
     public char[] getPassword() {
-        return password != null ? password.clone() : null;
+        return credentials != null ? credentials.getPassword() : null;
     }
 
     /**
@@ -380,6 +598,16 @@ public class MongoClientURI {
         return uri;
     }
 
+
+    /**
+     * Gets the credentials.
+     *
+     * @return the credentials
+     */
+    public MongoCredential getCredentials() {
+        return credentials;
+    }
+
     /**
      * Gets the options
      *
@@ -388,8 +616,6 @@ public class MongoClientURI {
     public MongoClientOptions getOptions() {
         return options;
     }
-
-    // ---------------------------------
 
     @Override
     public String toString() {
