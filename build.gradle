@@ -83,6 +83,7 @@ subprojects {
     tasks.withType(Test) {
         maxParallelForks = 16
         systemProperty 'org.mongodb.test.uri', System.getProperty('org.mongodb.test.uri', null)
+        systemProperty 'org.mongodb.useSocket', System.getProperty('org.mongodb.useSocket', "false")
         jacoco { enabled = false }
     }
 
