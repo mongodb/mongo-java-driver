@@ -35,6 +35,10 @@ import java.util.Map;
 public class DocumentCodec implements Codec<Document> {
     private final PrimitiveCodecs primitiveCodecs;
 
+    public DocumentCodec() {
+        this(PrimitiveCodecs.createDefault());
+    }
+
     public DocumentCodec(final PrimitiveCodecs primitiveCodecs) {
         if (primitiveCodecs == null) {
             throw new IllegalArgumentException("primitiveCodecs is null");

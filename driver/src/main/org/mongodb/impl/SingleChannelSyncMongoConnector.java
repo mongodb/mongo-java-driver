@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,12 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.impl;
 
+import org.mongodb.Codec;
+import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.Encoder;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoNamespace;
@@ -25,15 +27,17 @@ import org.mongodb.MongoQueryFailureException;
 import org.mongodb.ServerAddress;
 import org.mongodb.WriteConcern;
 import org.mongodb.async.SingleResultCallback;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.io.BufferPool;
+import org.mongodb.io.CachingAuthenticator;
 import org.mongodb.io.MongoGateway;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
-import org.mongodb.operation.MongoGetMore;
-import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.MongoRemove;
@@ -54,10 +58,6 @@ import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.ServerCursor;
 import org.mongodb.result.WriteResult;
-import org.mongodb.Decoder;
-import org.mongodb.Encoder;
-import org.mongodb.Codec;
-import org.mongodb.codecs.DocumentCodec;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -75,7 +75,8 @@ final class SingleChannelSyncMongoConnector implements MongoPoolableConnector {
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.options = options;
-        this.channel = MongoGateway.create(serverAddress, bufferPool, options);
+        this.channel = MongoGateway.create(serverAddress, bufferPool, options,
+                new CachingAuthenticator(new MongoCredentialsStore(), this));
     }
 
     @Override

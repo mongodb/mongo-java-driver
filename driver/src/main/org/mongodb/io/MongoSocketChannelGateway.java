@@ -26,8 +26,9 @@ import java.nio.channels.SocketChannel;
 class MongoSocketChannelGateway extends MongoGateway {
     private volatile SocketChannel socketChannel;
 
-    public MongoSocketChannelGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool) {
-        super(address, pool);
+    public MongoSocketChannelGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool,
+                                     final CachingAuthenticator authenticator) {
+        super(address, pool, authenticator);
     }
 
     protected void ensureOpen() {

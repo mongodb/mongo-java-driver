@@ -28,8 +28,9 @@ class MongoSocketGateway extends MongoGateway {
     private final SocketFactory socketFactory;
     private volatile Socket socket;
 
-    public MongoSocketGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool, final SocketFactory socketFactory) {
-        super(address, pool);
+    public MongoSocketGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool, final SocketFactory socketFactory,
+                              final CachingAuthenticator authenticator) {
+        super(address, pool, authenticator);
         this.socketFactory = socketFactory;
     }
 

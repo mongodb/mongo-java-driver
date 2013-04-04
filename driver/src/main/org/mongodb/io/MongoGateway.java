@@ -41,17 +41,18 @@ import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 public abstract class MongoGateway {
     private final ServerAddress address;
     private final BufferPool<ByteBuffer> pool;
+    private CachingAuthenticator authenticator;
 
     public static MongoGateway create(final ServerAddress address, final BufferPool<ByteBuffer> pool,
-                                      final MongoClientOptions options) {
+                                      final MongoClientOptions options, final CachingAuthenticator authenticator) {
         if (options.isSSLEnabled()) {
-            return new MongoSocketGateway(address, pool, SSLSocketFactory.getDefault());
+            return new MongoSocketGateway(address, pool, SSLSocketFactory.getDefault(), authenticator);
         }
         else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            return new MongoSocketGateway(address, pool, SocketFactory.getDefault());
+            return new MongoSocketGateway(address, pool, SocketFactory.getDefault(), authenticator);
         }
         else {
-            return new MongoSocketChannelGateway(address, pool);
+            return new MongoSocketChannelGateway(address, pool, authenticator);
         }
     }
 
@@ -61,7 +62,7 @@ public abstract class MongoGateway {
 
 
     public void sendMessage(final ChannelAwareOutputBuffer buffer) {
-        ensureOpen();
+        check();
         sendOneWayMessage(buffer);
     }
 
@@ -69,7 +70,7 @@ public abstract class MongoGateway {
 
 
     public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
-        ensureOpen();
+        check();
         long start = System.nanoTime();
         sendOneWayMessage(buffer);
         return receiveMessage(start);
@@ -77,9 +78,11 @@ public abstract class MongoGateway {
 
     public abstract void close();
 
-    protected MongoGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool) {
+    protected MongoGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool,
+                           final CachingAuthenticator authenticator) {
         this.address = address;
         this.pool = pool;
+        this.authenticator = authenticator;
     }
 
     protected abstract void ensureOpen();
@@ -121,5 +124,10 @@ public abstract class MongoGateway {
         }
 
         return new ResponseBuffers(replyHeader, bodyInputBuffer, System.nanoTime() - start);
+    }
+
+    private void check() {
+        ensureOpen();
+        authenticator.authenticateAll();
     }
 }
