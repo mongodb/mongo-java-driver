@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.acceptancetest.crud;
+package org.mongodb.acceptancetest.core;
 
 import org.mongodb.Document;
 import org.junit.Ignore;
