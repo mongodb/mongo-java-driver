@@ -58,7 +58,7 @@ public final class MongoConnectorsImpl {
                     new SimplePool<MongoPoolableConnector>(serverAddress.toString(), options.getConnectionsPerHost()) {
                         @Override
                         protected MongoPoolableConnector createNew() {
-                            return new SingleChannelAsyncMongoConnector(serverAddress, this, bufferPool, options);
+                            return new SingleChannelAsyncMongoConnector(serverAddress, credentialList, this, bufferPool, options);
                         }
 
                         @Override

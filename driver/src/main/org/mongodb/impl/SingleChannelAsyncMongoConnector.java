@@ -16,8 +16,12 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.Codec;
+import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.Encoder;
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoCredential;
 import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
@@ -26,15 +30,17 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoQueryFailureException;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
+import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.io.BufferPool;
+import org.mongodb.io.CachingAuthenticator;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
 import org.mongodb.io.async.MongoAsynchronousSocketChannelGateway;
-import org.mongodb.operation.MongoGetMore;
-import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.MongoRemove;
@@ -56,10 +62,6 @@ import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.ServerCursor;
 import org.mongodb.result.WriteResult;
-import org.mongodb.Codec;
-import org.mongodb.Decoder;
-import org.mongodb.Encoder;
-import org.mongodb.codecs.DocumentCodec;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -76,13 +78,15 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
     private volatile boolean activeAsyncCall;
     private volatile boolean releasePending;
 
-    SingleChannelAsyncMongoConnector(final ServerAddress serverAddress, final SimplePool<MongoPoolableConnector> channelPool,
-                                     final BufferPool<ByteBuffer> bufferPool, final MongoClientOptions options) {
+    SingleChannelAsyncMongoConnector(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+                                     final SimplePool<MongoPoolableConnector> channelPool, final BufferPool<ByteBuffer> bufferPool,
+                                     final MongoClientOptions options) {
         this.serverAddress = serverAddress;
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.options = options;
-        this.channel = new MongoAsynchronousSocketChannelGateway(serverAddress, bufferPool);
+        this.channel = new MongoAsynchronousSocketChannelGateway(serverAddress,
+                new CachingAuthenticator(new MongoCredentialsStore(credentialList), this), bufferPool);
     }
 
     public ServerAddress getServerAddress() {

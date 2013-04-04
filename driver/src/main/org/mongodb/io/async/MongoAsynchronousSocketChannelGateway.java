@@ -25,6 +25,7 @@ import org.mongodb.MongoInterruptedException;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.BufferPool;
+import org.mongodb.io.CachingAuthenticator;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.MongoSocketOpenException;
 import org.mongodb.io.PooledInputBuffer;
@@ -47,11 +48,14 @@ import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
  */
 public class MongoAsynchronousSocketChannelGateway {
     private final ServerAddress address;
+    private CachingAuthenticator authenticator;
     private final BufferPool<ByteBuffer> pool;
     private volatile AsynchronousSocketChannel asynchronousSocketChannel;
 
-    public MongoAsynchronousSocketChannelGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool) {
+    public MongoAsynchronousSocketChannelGateway(final ServerAddress address, final CachingAuthenticator authenticator,
+                                                 final BufferPool<ByteBuffer> pool) {
         this.address = address;
+        this.authenticator = authenticator;
         this.pool = pool;
     }
 
@@ -126,6 +130,7 @@ public class MongoAsynchronousSocketChannelGateway {
                 asynchronousSocketChannel = AsynchronousSocketChannel.open();
                 asynchronousSocketChannel.connect(address.getSocketAddress()).get();
                 asynchronousSocketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
+                authenticator.authenticateAll();
             }
         } catch (IOException e) {
             throw new MongoSocketOpenException("Exception opening socket", address, e);
