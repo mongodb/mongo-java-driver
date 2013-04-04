@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
@@ -34,20 +32,7 @@ import static org.junit.Assert.fail;
 /**
  * Tests aspect of the DB - not really driver tests
  */
-public class DBGeneralOldTests {
-
-    private static DB database;
-
-    @BeforeClass
-    public static void setupTestSuite() throws UnknownHostException {
-        final MongoClient mongoClient = new MongoClient("127.0.0.1");
-        database = mongoClient.getDB(DBCollectionOldTest.class.getSimpleName());
-    }
-
-    @AfterClass
-    public static void teardownTestSuite() {
-        database.dropDatabase();
-    }
+public class DBGeneralOldTests extends DatabaseTestCase {
 
     @Test
     public void testGetCollectionNames() {

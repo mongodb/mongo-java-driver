@@ -21,13 +21,11 @@ import org.junit.Test;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
-import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
 
-public class MongoTest {
+public class MongoConstructorsTest {
 
     @Test
     public void shouldDefaultToLocalhost() throws UnknownHostException {
@@ -105,22 +103,6 @@ public class MongoTest {
         try {
             assertSame(mongo.getDB("test"), mongo.getDB("test"));
         } finally {
-            mongo.close();
-        }
-    }
-
-    @Test
-    public void shouldGetDatabaseNames() throws UnknownHostException {
-        final Mongo mongo = new MongoClient();
-
-        try {
-            mongo.getDB("test1").getCollectionNames();
-            mongo.getDB("test2").getCollectionNames();
-
-            assertThat(mongo.getDatabaseNames(), hasItems("test1", "test2"));
-        } finally {
-            mongo.dropDatabase("test1");
-            mongo.dropDatabase("test2");
             mongo.close();
         }
     }
