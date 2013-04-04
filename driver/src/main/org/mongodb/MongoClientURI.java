@@ -329,10 +329,8 @@ public class MongoClientURI {
             else if (key.equals("autoconnectretry")) {
                 builder.autoConnectRetry(parseBoolean(value));
             }
-            else if (key.equals("ssl")) {
-                if (parseBoolean(value)) {
-                    builder.SSLEnabled(true);
-                }
+            else if (key.equals("ssl") && parseBoolean(value)) {
+                builder.SSLEnabled(true);
             }
         }
 
@@ -488,10 +486,8 @@ public class MongoClientURI {
                         remainingTagSets.toArray(new Document[remainingTagSets.size()]));
             }
         }
-        else if (slaveOk != null) {
-            if (slaveOk.equals(Boolean.TRUE)) {
-                return ReadPreference.secondaryPreferred();
-            }
+        else if (slaveOk != null && slaveOk.equals(Boolean.TRUE)) {
+            return ReadPreference.secondaryPreferred();
         }
         return null;
     }

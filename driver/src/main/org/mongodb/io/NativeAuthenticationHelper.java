@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.io;
@@ -21,24 +20,27 @@ import org.mongodb.Document;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 final class NativeAuthenticationHelper {
+
+    private static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
 
     static Document getAuthCommand(final String userName, final char[] password, final String nonce) {
         return getAuthCommand(userName, createHash(userName, password), nonce);
     }
 
     static Document getAuthCommand(final String userName, final byte[] authHash, final String nonce) {
-        String key = nonce + userName + new String(authHash);
+        String key = nonce + userName + new String(authHash, UTF_8_CHARSET);
 
         Document cmd = new Document();
 
         cmd.put("authenticate", 1);
         cmd.put("user", userName);
         cmd.put("nonce", nonce);
-        cmd.put("key", hexMD5(key.getBytes()));
+        cmd.put("key", hexMD5(key.getBytes(UTF_8_CHARSET)));
 
         return cmd;
     }
@@ -50,8 +52,8 @@ final class NativeAuthenticationHelper {
     static byte[] createHash(final String userName, final char[] password) {
         ByteArrayOutputStream bout = new ByteArrayOutputStream(userName.length() + 20 + password.length);
         try {
-            bout.write(userName.getBytes());
-            bout.write(":mongo:".getBytes());
+            bout.write(userName.getBytes(UTF_8_CHARSET));
+            bout.write(":mongo:".getBytes(UTF_8_CHARSET));
             for (final char ch : password) {
                 if (ch >= 128) {
                     throw new IllegalArgumentException("can't handle non-ascii passwords yet");
@@ -61,7 +63,7 @@ final class NativeAuthenticationHelper {
         } catch (IOException ioe) {
             throw new RuntimeException("impossible", ioe);
         }
-        return hexMD5(bout.toByteArray()).getBytes();
+        return hexMD5(bout.toByteArray()).getBytes(UTF_8_CHARSET);
     }
 
     /**

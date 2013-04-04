@@ -58,7 +58,7 @@ abstract class SaslAuthenticator extends Authenticator {
         } finally {
             try {
                 saslClient.dispose();
-            } catch (SaslException e) {
+            } catch (SaslException e) { // NOPMD
                 // ignore
             }
         }

@@ -19,7 +19,6 @@ package org.mongodb.io;
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoCredential;
 import org.mongodb.impl.MongoCredentialsStore;
-import org.mongodb.result.CommandResult;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -57,8 +56,7 @@ public class CachingAuthenticator {
         else {
             throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
         }
-        CommandResult res = authenticator.authenticate();
+        authenticator.authenticate();
         authenticatedDatabases.add(credential.getSource());
     }
-
 }
