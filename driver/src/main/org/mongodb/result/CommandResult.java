@@ -56,7 +56,8 @@ public class CommandResult {
     }
 
     public int getErrorCode() {
-        return (Integer) getResponse().get("code");
+        Integer errorCode = (Integer) getResponse().get("code");
+        return (errorCode != null) ? errorCode : -1;
     }
 
     public String getErrorMessage() {
