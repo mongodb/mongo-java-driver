@@ -41,7 +41,8 @@ import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 public abstract class MongoGateway {
     private final ServerAddress address;
     private final BufferPool<ByteBuffer> pool;
-    private CachingAuthenticator authenticator;
+    private final CachingAuthenticator authenticator;
+    private boolean authenticating = false;
 
     public static MongoGateway create(final ServerAddress address, final BufferPool<ByteBuffer> pool,
                                       final MongoClientOptions options, final CachingAuthenticator authenticator) {
@@ -128,6 +129,13 @@ public abstract class MongoGateway {
 
     private void check() {
         ensureOpen();
-        authenticator.authenticateAll();
+        if (!authenticating) {
+            try {
+                authenticating = true;
+                authenticator.authenticateAll();
+            } finally {
+                authenticating = false;
+            }
+        }
     }
 }
