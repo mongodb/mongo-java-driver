@@ -20,7 +20,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoConnector;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.ListDatabases;
-import org.mongodb.impl.MongoConnectionsImpl;
+import org.mongodb.impl.MongoConnectorsImpl;
 import org.mongodb.Codec;
 import org.mongodb.PrimitiveCodecs;
 import org.mongodb.codecs.DocumentCodec;
@@ -49,7 +49,7 @@ public class Mongo {
     private final MongoConnector connector;
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
-        this(MongoConnectionsImpl.create(createNewSeedList(seedList), mongoOptions.toNew()), mongoOptions);
+        this(MongoConnectorsImpl.create(createNewSeedList(seedList), mongoOptions.toNew()), mongoOptions);
     }
 
     Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -57,7 +57,7 @@ public class Mongo {
     }
 
     Mongo(final ServerAddress serverAddress, final MongoClientOptions mongoOptions) {
-        this(MongoConnectionsImpl.create(serverAddress.toNew(), mongoOptions.toNew()), mongoOptions);
+        this(MongoConnectorsImpl.create(serverAddress.toNew(), mongoOptions.toNew()), mongoOptions);
     }
 
     Mongo(final MongoConnector connector, final MongoClientOptions options) {
@@ -235,13 +235,13 @@ public class Mongo {
 
     private static MongoConnector createConnector(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return MongoConnectionsImpl.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)), mongoURI.getOptions());
+            return MongoConnectorsImpl.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)), mongoURI.getOptions());
         } else {
             List<org.mongodb.ServerAddress> seedList = new ArrayList<org.mongodb.ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new org.mongodb.ServerAddress(cur));
             }
-            return MongoConnectionsImpl.create(seedList, mongoURI.getOptions());
+            return MongoConnectorsImpl.create(seedList, mongoURI.getOptions());
         }
     }
 

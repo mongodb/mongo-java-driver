@@ -29,6 +29,6 @@ class MongoConnectionIsMasterExecutorFactory implements IsMasterExecutorFactory 
 
     @Override
     public IsMasterExecutor create(final ServerAddress serverAddress) {
-        return new MongoConnectionIsMasterExecutor(MongoConnectionsImpl.create(serverAddress, options), serverAddress);
+        return new MongoConnectionIsMasterExecutor(MongoConnectorsImpl.create(serverAddress, options), serverAddress);
     }
 }

@@ -21,6 +21,7 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoCredential;
 import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoQueryFailureException;
@@ -70,13 +71,14 @@ final class SingleChannelSyncMongoConnector implements MongoPoolableConnector {
     private final SimplePool<MongoPoolableConnector> channelPool;
     private MongoGateway channel;
 
-    SingleChannelSyncMongoConnector(final ServerAddress serverAddress, final SimplePool<MongoPoolableConnector> channelPool,
-                                    final BufferPool<ByteBuffer> bufferPool, final MongoClientOptions options) {
+    SingleChannelSyncMongoConnector(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+                                    final SimplePool<MongoPoolableConnector> channelPool, final BufferPool<ByteBuffer> bufferPool,
+                                    final MongoClientOptions options) {
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.options = options;
         this.channel = MongoGateway.create(serverAddress, bufferPool, options,
-                new CachingAuthenticator(new MongoCredentialsStore(), this));
+                new CachingAuthenticator(new MongoCredentialsStore(credentialList), this));
     }
 
     @Override

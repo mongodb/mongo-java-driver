@@ -16,16 +16,15 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoConnectionStrategy;
-import org.mongodb.io.BufferPool;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
+import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
 
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -39,17 +38,12 @@ public final class MongoClientsImpl {
     }
 
     public static MongoClientImpl create(final ServerAddress serverAddress, final MongoClientOptions options) {
-        return new MongoClientImpl(options, MongoConnectionsImpl.create(serverAddress, options));
-    }
-
-    public static MongoClientImpl create(final ServerAddress serverAddress, final MongoClientOptions options,
-                                     final BufferPool<ByteBuffer> bufferPool) {
-        return new MongoClientImpl(options, MongoConnectionsImpl.create(serverAddress, options, bufferPool));
+        return new MongoClientImpl(options, MongoConnectorsImpl.create(serverAddress, options));
     }
 
     public static MongoClientImpl create(final MongoConnectionStrategy connectionStrategy,
                                          final MongoClientOptions options) {
-        return new MongoClientImpl(options, new MultipleServerMongoConnector(connectionStrategy, options));
+        return new MongoClientImpl(options, new MultipleServerMongoConnector(connectionStrategy, null, options));
     }
 
     public static MongoClientImpl create(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -59,14 +53,15 @@ public final class MongoClientsImpl {
     public static MongoClientImpl create(final MongoClientURI mongoURI, final MongoClientOptions options)
             throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return create(new ServerAddress(mongoURI.getHosts().get(0)), options);
+            return new MongoClientImpl(options, MongoConnectorsImpl.create(new ServerAddress(mongoURI.getHosts().get(0)),
+                    Arrays.asList(mongoURI.getCredentials()), options));
         }
         else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(cur));
             }
-            return create(MongoConnectionStrategiesImpl.replicaSet(seedList), options);
+            return new MongoClientImpl(options, MongoConnectorsImpl.create(seedList, Arrays.asList(mongoURI.getCredentials()), options));
         }
     }
 }

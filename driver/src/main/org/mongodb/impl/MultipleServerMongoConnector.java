@@ -20,6 +20,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.MongoConnector;
+import org.mongodb.MongoCredential;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
@@ -49,14 +50,17 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 class MultipleServerMongoConnector implements MongoConnector {
+    private final List<MongoCredential> credentialList;
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
     private final Map<ServerAddress, SingleServerMongoConnector> mongoClientMap =
             new HashMap<ServerAddress, SingleServerMongoConnector>();
     private final MongoConnectionStrategy connectionStrategy;
 
-    MultipleServerMongoConnector(final MongoConnectionStrategy connectionStrategy, final MongoClientOptions options) {
+    MultipleServerMongoConnector(final MongoConnectionStrategy connectionStrategy, final List<MongoCredential> credentialList,
+                                 final MongoClientOptions options) {
         this.connectionStrategy = connectionStrategy;
+        this.credentialList = credentialList;
         this.options = options;
         this.bufferPool = new PowerOfTwoByteBufferPool();
     }
@@ -223,7 +227,7 @@ class MultipleServerMongoConnector implements MongoConnector {
     private synchronized SingleServerMongoConnector getConnection(final ServerAddress serverAddress) {
         SingleServerMongoConnector connection = mongoClientMap.get(serverAddress);
         if (connection == null) {
-            connection = MongoConnectionsImpl.create(serverAddress, options, bufferPool);
+            connection = MongoConnectorsImpl.create(serverAddress, credentialList, options, bufferPool);
             mongoClientMap.put(serverAddress, connection);
         }
         return connection;

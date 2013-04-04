@@ -18,6 +18,7 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoCredential;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
@@ -26,16 +27,30 @@ import org.mongodb.pool.SimplePool;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public final class MongoConnectionsImpl {
-    private MongoConnectionsImpl() {
+public final class MongoConnectorsImpl {
+    private MongoConnectorsImpl() {
     }
 
     public static SingleServerMongoConnector create(final ServerAddress serverAddress, final MongoClientOptions options) {
-        return create(serverAddress, options, new PowerOfTwoByteBufferPool());
+        return create(serverAddress, null, options);
     }
 
-    public static SingleServerMongoConnector create(final ServerAddress serverAddress, final MongoClientOptions options,
-                                                     final BufferPool<ByteBuffer> bufferPool) {
+    public static SingleServerMongoConnector create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+                                                    final MongoClientOptions options) {
+        return create(serverAddress, credentialList, options, new PowerOfTwoByteBufferPool());
+    }
+
+    public static MultipleServerMongoConnector create(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        return new MultipleServerMongoConnector(new ReplicaSetConnectionStrategy(seedList), null, options);
+    }
+
+    public static MultipleServerMongoConnector create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
+                                                      final MongoClientOptions options) {
+        return new MultipleServerMongoConnector(new ReplicaSetConnectionStrategy(seedList), credentialList, options);
+    }
+
+    static SingleServerMongoConnector create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+                                             final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
         if (options.isAsyncEnabled()
                 && !options.isSSLEnabled()
                 && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
@@ -52,12 +67,13 @@ public final class MongoConnectionsImpl {
                             bufferPool.close();
                         }
                     });
-        } else {
+        }
+        else {
             return new SingleServerMongoConnector(options, serverAddress,
                     new SimplePool<MongoPoolableConnector>(serverAddress.toString(), options.getConnectionsPerHost()) {
                         @Override
                         protected MongoPoolableConnector createNew() {
-                            return new SingleChannelSyncMongoConnector(serverAddress, this, bufferPool, options);
+                            return new SingleChannelSyncMongoConnector(serverAddress, credentialList, this, bufferPool, options);
                         }
 
                         @Override
@@ -68,9 +84,4 @@ public final class MongoConnectionsImpl {
                     });
         }
     }
-
-    public static MultipleServerMongoConnector create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MultipleServerMongoConnector(new ReplicaSetConnectionStrategy(seedList), options);
-    }
-
 }
