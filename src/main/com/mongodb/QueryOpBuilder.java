@@ -106,36 +106,36 @@ class QueryOpBuilder {
 	 * Constructs the query operation DBObject
 	 * @return DBObject representing the query command to be sent to server
 	 */
-	public DBObject get(){
-		DBObject lclQuery = query;
-		
-		//must always have a query
-		if(lclQuery == null){
-			lclQuery = new BasicDBObject();
-		}
-		
-		if (hasSpecialQueryFields()) {
-			DBObject queryop = (specialFields == null ? new BasicDBObject() : specialFields);
+        public DBObject get() {
+            DBObject lclQuery = query;
 
-            addToQueryObject(queryop, "query", lclQuery, true);
-            addToQueryObject(queryop, "orderby", orderBy, false);
-            if (hintStr != null)
-                addToQueryObject(queryop, "$hint", hintStr);
-            if (hintObj != null)
-                addToQueryObject(queryop, "$hint", hintObj);
+            //must always have a query
+            if (lclQuery == null) {
+                lclQuery = new BasicDBObject();
+            }
 
-            if (explain)
-                queryop.put("$explain", true);
-            if (snapshot)
-                queryop.put("$snapshot", true);
-            if (readPref != null)
-                queryop.put(READ_PREFERENCE_META_OPERATOR, readPref);
+            if (hasSpecialQueryFields()) {
+                DBObject queryop = (specialFields == null ? new BasicDBObject() : specialFields);
 
-            return queryop;
-		}
-		
-		return lclQuery;
-	}
+                addToQueryObject(queryop, "$query", lclQuery, true);
+                addToQueryObject(queryop, "$orderby", orderBy, false);
+                if (hintStr != null)
+                    addToQueryObject(queryop, "$hint", hintStr);
+                if (hintObj != null)
+                    addToQueryObject(queryop, "$hint", hintObj);
+
+                if (explain)
+                    queryop.put("$explain", true);
+                if (snapshot)
+                    queryop.put("$snapshot", true);
+                if (readPref != null)
+                    queryop.put(READ_PREFERENCE_META_OPERATOR, readPref);
+
+                return queryop;
+            }
+
+            return lclQuery;
+        }
 
     private boolean hasSpecialQueryFields(){
         

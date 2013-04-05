@@ -30,41 +30,41 @@ public class QueryOpTest extends TestCase{
 		
 		
 		DBObject queryOp = new QueryOpBuilder().addQuery(query).addOrderBy(orderBy).addHint(hintStr).get();
-		assertEquals(queryOp.get("query"), query);
-		assertEquals(queryOp.get("orderby"), orderBy);
+		assertEquals(queryOp.get("$query"), query);
+		assertEquals(queryOp.get("$orderby"), orderBy);
 		assertEquals(queryOp.get("$hint"), hintStr);
 		assertNull(queryOp.get("$explain"));
 		assertNull(queryOp.get("$snapshot"));
 		
 		//orderby should only be there if added
 		queryOp = new QueryOpBuilder().addQuery(query).addHint(hintStr).get();
-		assertEquals(queryOp.get("query"), query);
-		assertNull(queryOp.get("orderby"));
+		assertEquals(queryOp.get("$query"), query);
+		assertNull(queryOp.get("$orderby"));
 		
 		//hintObj takes precedence over hintStr
 		queryOp = new QueryOpBuilder().addQuery(query).addOrderBy(orderBy).addHint(hintStr).addHint(hintObj).get();
-		assertEquals(queryOp.get("query"), query);
-		assertEquals(queryOp.get("orderby"), orderBy);
+		assertEquals(queryOp.get("$query"), query);
+		assertEquals(queryOp.get("$orderby"), orderBy);
 		assertEquals(queryOp.get("$hint"), hintObj);
 		
 		queryOp = new QueryOpBuilder().addQuery(query).addExplain(true).addSnapshot(true).get();
-		assertEquals(queryOp.get("query"), query);
-		assertNull(queryOp.get("orderby"));
+		assertEquals(queryOp.get("$query"), query);
+		assertNull(queryOp.get("$orderby"));
 		assertNull(queryOp.get("$hint"));
 		assertEquals(queryOp.get("$explain"), true);
 		assertEquals(queryOp.get("$snapshot"), true);
 		
 		queryOp = new QueryOpBuilder().addQuery(query).addSpecialFields(new BasicDBObject("flag", "val")).get();
 		assertEquals(queryOp.get("flag"), "val");
-		assertEquals(queryOp.get("query"), query);
-		assertNull(queryOp.get("orderby"));
+		assertEquals(queryOp.get("$query"), query);
+		assertNull(queryOp.get("$orderby"));
 		assertNull(queryOp.get("$hint"));
 		assertNull(queryOp.get("$explain"));
 		assertNull(queryOp.get("$snapshot"));
 		
 		queryOp = new QueryOpBuilder().addQuery(query).addReadPreference(readPref).get();
-        assertEquals(queryOp.get("query"), query);
-        assertNull(queryOp.get("orderby"));
+        assertEquals(queryOp.get("$query"), query);
+        assertNull(queryOp.get("$orderby"));
         assertNull(queryOp.get("$hint"));
         assertNull(queryOp.get("$explain"));
         assertNull(queryOp.get("$snapshot"));
