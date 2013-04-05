@@ -50,6 +50,10 @@ public class DatabaseTestCase {
         collection.tools().drop();
     }
 
+    protected String getDatabaseName() {
+        return database.getName();
+    }
+
     static class ShutdownHook extends Thread {
         @Override
         public void run() {
