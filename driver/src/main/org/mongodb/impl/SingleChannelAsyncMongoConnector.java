@@ -442,6 +442,7 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
     }
 
     private void handleExecutionException(final ExecutionException e) {
+        e.getCause().fillInStackTrace();
         if (e.getCause() instanceof RuntimeException) {
             throw (RuntimeException) e.getCause();
         }
