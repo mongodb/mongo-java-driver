@@ -17,10 +17,9 @@
 package org.mongodb.codecs;
 
 import org.bson.BSONWriter;
-import org.mongodb.Document;
 import org.mongodb.CollectibleCodec;
+import org.mongodb.Document;
 import org.mongodb.IdGenerator;
-import org.mongodb.PrimitiveCodecs;
 
 /**
  * Codec for documents that go in collections, and therefore have an _id.  Ensures that the _id field is written

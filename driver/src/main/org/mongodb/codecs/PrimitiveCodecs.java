@@ -14,29 +14,15 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
-import org.mongodb.codecs.BinaryCodec;
-import org.mongodb.codecs.BooleanCodec;
-import org.mongodb.codecs.ByteArrayCodec;
-import org.mongodb.codecs.ByteCodec;
-import org.mongodb.codecs.CodeCodec;
-import org.mongodb.codecs.DateCodec;
-import org.mongodb.codecs.DoubleCodec;
-import org.mongodb.codecs.FloatCodec;
-import org.mongodb.codecs.IntegerCodec;
-import org.mongodb.codecs.LongCodec;
-import org.mongodb.codecs.MaxKeyCodec;
-import org.mongodb.codecs.MinKeyCodec;
-import org.mongodb.codecs.NullCodec;
-import org.mongodb.codecs.ObjectIdCodec;
-import org.mongodb.codecs.PatternCodec;
-import org.mongodb.codecs.ShortCodec;
-import org.mongodb.codecs.StringCodec;
-import org.mongodb.codecs.TimestampCodec;
+import org.mongodb.Codec;
+import org.mongodb.Decoder;
+import org.mongodb.Encoder;
+import org.mongodb.MongoException;
 
 import java.util.HashMap;
 import java.util.Map;

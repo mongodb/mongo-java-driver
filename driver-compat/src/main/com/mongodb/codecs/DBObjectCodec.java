@@ -29,8 +29,8 @@ import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.types.Binary;
-import org.mongodb.PrimitiveCodecs;
 import org.mongodb.Codec;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;

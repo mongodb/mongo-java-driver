@@ -24,7 +24,7 @@ import org.bson.io.BasicOutputBuffer;
 import org.bson.io.InputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.util.ClassMap;
-import org.mongodb.PrimitiveCodecs;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

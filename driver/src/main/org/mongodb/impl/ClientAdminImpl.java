@@ -19,11 +19,11 @@ package org.mongodb.impl;
 import org.mongodb.ClientAdmin;
 import org.mongodb.Document;
 import org.mongodb.MongoConnector;
+import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
 import org.mongodb.command.Ping;
 import org.mongodb.result.CommandResult;
-import org.mongodb.PrimitiveCodecs;
-import org.mongodb.codecs.DocumentCodec;
 
 import java.util.Collections;
 import java.util.HashSet;

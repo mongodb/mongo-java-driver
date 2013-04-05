@@ -19,12 +19,13 @@ package org.mongodb;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
+import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.json.JSONMode;
 import org.mongodb.json.JSONReader;
 import org.mongodb.json.JSONReaderSettings;
 import org.mongodb.json.JSONWriter;
 import org.mongodb.json.JSONWriterSettings;
-import org.mongodb.codecs.DocumentCodec;
 
 import java.io.Serializable;
 import java.io.StringWriter;

@@ -17,8 +17,8 @@
 package org.mongodb.command;
 
 import org.mongodb.Codec;
-import org.mongodb.PrimitiveCodecs;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 //TODO: think these warnings mean we've got our types all wrong
 @SuppressWarnings({ "rawtypes", "unchecked" })

@@ -18,6 +18,7 @@ package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
 import org.mongodb.async.AsyncDetector;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 /**
  * Various settings to control the behavior of a <code>MongoClient</code>.

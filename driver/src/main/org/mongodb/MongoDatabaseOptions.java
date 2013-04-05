@@ -18,6 +18,7 @@ package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 @Immutable
 public class MongoDatabaseOptions {

@@ -21,11 +21,10 @@ import org.bson.BSONBinaryWriterSettings;
 import org.bson.BSONWriter;
 import org.bson.BSONWriterSettings;
 import org.bson.io.BasicOutputBuffer;
-import org.mongodb.Document;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.Document;
 import org.mongodb.IdGenerator;
-import org.mongodb.PrimitiveCodecs;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

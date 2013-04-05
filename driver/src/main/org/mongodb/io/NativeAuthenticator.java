@@ -18,8 +18,8 @@ package org.mongodb.io;
 
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoCredential;
-import org.mongodb.PrimitiveCodecs;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.result.CommandResult;
 

@@ -18,7 +18,7 @@ package com.mongodb.codecs;
 
 import com.mongodb.DBRef;
 import org.bson.BSONWriter;
-import org.mongodb.PrimitiveCodecs;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 public class DocumentCodec extends org.mongodb.codecs.DocumentCodec {
     public DocumentCodec(final PrimitiveCodecs primitiveCodecs) {

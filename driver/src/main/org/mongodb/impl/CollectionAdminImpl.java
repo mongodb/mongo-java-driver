@@ -16,14 +16,16 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.Document;
 import org.mongodb.CollectionAdmin;
+import org.mongodb.Document;
 import org.mongodb.Index;
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
+import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.CollStats;
 import org.mongodb.command.Drop;
 import org.mongodb.command.DropIndex;
@@ -32,8 +34,6 @@ import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
-import org.mongodb.PrimitiveCodecs;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.util.FieldHelpers;
 
 import java.util.List;

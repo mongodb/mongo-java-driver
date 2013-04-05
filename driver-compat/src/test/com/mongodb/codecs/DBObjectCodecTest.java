@@ -22,7 +22,7 @@ import com.mongodb.DatabaseTestCase;
 import org.bson.BSON;
 import org.bson.Transformer;
 import org.junit.Test;
-import org.mongodb.PrimitiveCodecs;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -23,9 +23,8 @@ import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.io.BasicInputBuffer;
 import org.mongodb.BSONDocumentBuffer;
-import org.mongodb.MongoInternalException;
 import org.mongodb.CollectibleCodec;
-import org.mongodb.PrimitiveCodecs;
+import org.mongodb.MongoInternalException;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 

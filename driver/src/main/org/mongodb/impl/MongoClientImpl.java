@@ -23,7 +23,7 @@ import org.mongodb.MongoConnector;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.ServerAddress;
-import org.mongodb.PrimitiveCodecs;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 import java.util.List;
 import java.util.concurrent.Callable;

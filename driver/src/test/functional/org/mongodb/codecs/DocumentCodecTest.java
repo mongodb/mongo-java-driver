@@ -29,12 +29,11 @@ import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
-import org.mongodb.Document;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
-import org.mongodb.PrimitiveCodecs;
+import org.mongodb.Document;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

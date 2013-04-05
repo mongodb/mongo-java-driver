@@ -18,13 +18,12 @@ package org.mongodb.codecs;
 
 import org.bson.BSONBinaryWriter;
 import org.bson.io.BasicOutputBuffer;
-import org.mongodb.BSONDocumentBuffer;
-import org.mongodb.Document;
 import org.junit.Test;
+import org.mongodb.BSONDocumentBuffer;
 import org.mongodb.DatabaseTestCase;
+import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
-import org.mongodb.PrimitiveCodecs;
 
 import java.util.ArrayList;
 import java.util.List;

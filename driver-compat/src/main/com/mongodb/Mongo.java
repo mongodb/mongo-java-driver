@@ -20,9 +20,9 @@ import org.mongodb.Codec;
 import org.mongodb.Document;
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoCredential;
-import org.mongodb.PrimitiveCodecs;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
 import org.mongodb.impl.MongoConnectorsImpl;
 

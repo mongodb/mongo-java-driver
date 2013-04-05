@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 @Immutable
 public final class MongoCollectionOptions extends MongoDatabaseOptions {

@@ -21,7 +21,7 @@ import com.mongodb.DBObject;
 import org.bson.BSONWriter;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.IdGenerator;
-import org.mongodb.PrimitiveCodecs;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 import java.util.HashMap;
 
