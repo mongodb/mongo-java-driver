@@ -21,6 +21,7 @@ import org.mongodb.MongoConnector;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.MongoSecurityException;
+import org.mongodb.async.SingleResultCallback;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.result.CommandResult;
@@ -62,6 +63,11 @@ abstract class SaslAuthenticator extends Authenticator {
                 // ignore
             }
         }
+    }
+
+    @Override
+    void asyncAuthenticate(final SingleResultCallback<CommandResult> callback) {
+        throw new UnsupportedOperationException();   // TODO: Implement this
     }
 
     protected abstract SaslClient createSaslClient();

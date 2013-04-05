@@ -18,12 +18,19 @@ package org.mongodb.io;
 
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoCredential;
+import org.mongodb.MongoException;
+import org.mongodb.async.SingleResultCallback;
 import org.mongodb.impl.MongoCredentialsStore;
+import org.mongodb.result.CommandResult;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * NOTE: This class is NOT part of the public API.
+ */
 public class CachingAuthenticator {
     private final MongoCredentialsStore credentialsStore;
     private final MongoConnector connector;
@@ -37,15 +44,70 @@ public class CachingAuthenticator {
 
     public void authenticateAll() {
         // get the difference between the set of credentialed databases and the set of authenticated databases on this connector
-        Set<String> unauthenticatedDatabases = new HashSet<String>(credentialsStore.getDatabases());
-        unauthenticatedDatabases.removeAll(authenticatedDatabases);
+        Set<String> unauthenticatedDatabases = getUnauthenticatedDatabases();
 
         for (String databaseName : unauthenticatedDatabases) {
             authenticate(credentialsStore.get(databaseName));
         }
     }
 
-     private void authenticate(final MongoCredential credential) {
+    private void authenticate(final MongoCredential credential) {
+        Authenticator authenticator = createAuthenticator(credential);
+        authenticator.authenticate();
+        authenticatedDatabases.add(credential.getSource());
+    }
+
+    public void asyncAuthenticateAll(final SingleResultCallback<Void> callback) {
+        new IteratingAuthenticator(callback).start();
+    }
+
+    // get the difference between the set of credentialed databases and the set of authenticated databases on this connector
+    private Set<String> getUnauthenticatedDatabases() {
+        Set<String> unauthenticatedDatabases = new HashSet<String>(credentialsStore.getDatabases());
+        unauthenticatedDatabases.removeAll(authenticatedDatabases);
+        return unauthenticatedDatabases;
+    }
+
+    private class IteratingAuthenticator implements SingleResultCallback<CommandResult> {
+        private final SingleResultCallback<Void> callback;
+        private volatile String curDatabaseName;
+        private final Iterator<String> iter;
+
+        private IteratingAuthenticator(final SingleResultCallback<Void> callback) {
+            this.callback = callback;
+            iter = getUnauthenticatedDatabases().iterator();
+        }
+
+        private void start() {
+            next();
+        }
+
+        private void next() {
+            if (!iter.hasNext()) {
+                callback.onResult(null, null);
+            }
+            else {
+                curDatabaseName = iter.next();
+                asyncAuthenticate(credentialsStore.get(curDatabaseName), this);
+            }
+        }
+
+        @Override
+        public void onResult(final CommandResult result, final MongoException e) {
+            if (e != null) {
+                callback.onResult(null, e);
+            }
+            else {
+                next();
+            }
+        }
+    }
+
+    private void asyncAuthenticate(final MongoCredential credential, final SingleResultCallback<CommandResult> callback) {
+        createAuthenticator(credential).asyncAuthenticate(callback);
+    }
+
+    private Authenticator createAuthenticator(final MongoCredential credential) {
         Authenticator authenticator;
         if (credential.getMechanism().equals(MongoCredential.MONGODB_CR_MECHANISM)) {
             authenticator = new NativeAuthenticator(credential, connector);
@@ -56,7 +118,6 @@ public class CachingAuthenticator {
         else {
             throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
         }
-        authenticator.authenticate();
-        authenticatedDatabases.add(credential.getSource());
+        return authenticator;
     }
 }

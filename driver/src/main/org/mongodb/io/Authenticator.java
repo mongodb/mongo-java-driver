@@ -18,6 +18,7 @@ package org.mongodb.io;
 
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoCredential;
+import org.mongodb.async.SingleResultCallback;
 import org.mongodb.result.CommandResult;
 
 abstract class Authenticator {
@@ -38,5 +39,6 @@ abstract class Authenticator {
     }
 
     abstract CommandResult authenticate();
-}
 
+    abstract void asyncAuthenticate(final SingleResultCallback<CommandResult> callback);
+}

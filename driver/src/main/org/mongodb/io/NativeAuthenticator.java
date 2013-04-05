@@ -18,6 +18,8 @@ package org.mongodb.io;
 
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoCredential;
+import org.mongodb.MongoException;
+import org.mongodb.async.SingleResultCallback;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.MongoCommand;
@@ -37,5 +39,30 @@ public class NativeAuthenticator extends Authenticator {
                 new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                     getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
                 new DocumentCodec(PrimitiveCodecs.createDefault()));
+    }
+
+    @Override
+    public void asyncAuthenticate(final SingleResultCallback<CommandResult> callback) {
+        getConnector().asyncCommand(getCredential().getSource(),
+                new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
+                new DocumentCodec(PrimitiveCodecs.createDefault()), new SingleResultCallback<CommandResult>() {
+            @Override
+            public void onResult(final CommandResult result, final MongoException e) {
+                if (e != null) {
+                    callback.onResult(result, e);
+                }
+                else {
+                    getConnector().asyncCommand(getCredential().getSource(),
+                            new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
+                                    getCredential().getPassword(), (String) result.getResponse().get("nonce"))),
+                            new DocumentCodec(PrimitiveCodecs.createDefault()), new SingleResultCallback<CommandResult>() {
+                        @Override
+                        public void onResult(final CommandResult result, final MongoException e) {
+                            callback.onResult(result, e);
+                        }
+                    });
+                }
+            }
+        });
     }
 }

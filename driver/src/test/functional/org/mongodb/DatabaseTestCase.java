@@ -23,6 +23,7 @@ import org.junit.BeforeClass;
 public class DatabaseTestCase {
     //For ease of use and readability, in this specific case we'll allow protected variables
     //CHECKSTYLE:OFF
+    protected static MongoConnector connector;
     protected static MongoDatabase database;
     protected MongoCollection<Document> collection;
     protected String collectionName;
@@ -31,6 +32,7 @@ public class DatabaseTestCase {
     @BeforeClass
     public static void setupTestSuite() {
         if (database == null) {
+            connector = Fixture.getMongoConnector();
             database = Fixture.getMongoClient().getDatabase("DriverTest-" + System.nanoTime());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }

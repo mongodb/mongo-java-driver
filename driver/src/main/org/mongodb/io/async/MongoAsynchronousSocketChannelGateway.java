@@ -20,8 +20,6 @@ package org.mongodb.io.async;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
 import org.mongodb.MongoException;
-import org.mongodb.MongoInternalException;
-import org.mongodb.MongoInterruptedException;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.BufferPool;
@@ -37,7 +35,6 @@ import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.concurrent.ExecutionException;
 
 import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
@@ -124,20 +121,38 @@ public class MongoAsynchronousSocketChannelGateway {
         }
     }
 
-    private void ensureOpen() {
+    private void ensureOpen(final AsyncCompletionHandler handler) {
         try {
-            if (asynchronousSocketChannel == null) {
+            if (asynchronousSocketChannel != null) {
+                handler.completed(0);
+            }
+            else {
                 asynchronousSocketChannel = AsynchronousSocketChannel.open();
-                asynchronousSocketChannel.connect(address.getSocketAddress()).get();
                 asynchronousSocketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
-                authenticator.authenticateAll();
+                asynchronousSocketChannel.connect(address.getSocketAddress(), null, new CompletionHandler<Void, Object>() {
+                    @Override
+                    public void completed(final Void result, final Object attachment) {
+                        authenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
+                            @Override
+                            public void onResult(final Void result, final MongoException e) {
+                                if (e != null) {
+                                    handler.failed(e);
+                                }
+                                else {
+                                    handler.completed(0);
+                                }
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void failed(final Throwable exc, final Object attachment) {
+                        handler.failed(exc);
+                    }
+                });
             }
         } catch (IOException e) {
             throw new MongoSocketOpenException("Exception opening socket", address, e);
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted opening socket " + address, e);
-        } catch (ExecutionException e) {
-            throw new MongoInternalException("Exception from calling Future.get while opening socket to " + address, e.getCause());
         }
     }
 
@@ -158,16 +173,25 @@ public class MongoAsynchronousSocketChannelGateway {
 
         @Override
         public void write(final ByteBuffer src, final AsyncCompletionHandler handler) {
-            ensureOpen();
-            asynchronousSocketChannel.write(src, null, new CompletionHandler<Integer, Object>() {
+            ensureOpen(new AsyncCompletionHandler() {
                 @Override
-                public void completed(final Integer result, final Object attachment) {
-                    handler.completed(result);
+                public void completed(final int bytesWritten) {
+                    asynchronousSocketChannel.write(src, null, new CompletionHandler<Integer, Object>() {
+                        @Override
+                        public void completed(final Integer result, final Object attachment) {
+                            handler.completed(result);
+                        }
+
+                        @Override
+                        public void failed(final Throwable exc, final Object attachment) {
+                            handler.failed(exc);
+                        }
+                    });
                 }
 
                 @Override
-                public void failed(final Throwable exc, final Object attachment) {
-                    handler.failed(exc);
+                public void failed(final Throwable t) {
+                    handler.failed(t);
                 }
             });
         }
