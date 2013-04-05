@@ -68,9 +68,6 @@ public class MongoCursorTest extends DatabaseTestCase {
         final List<Document> list = new ArrayList<Document>();
         collection.limit(300).into(list);
         assertEquals(300, list.size());
-        for (Document document : list) {
-            System.out.println(document.get("_id"));
-        }
     }
 
     @Test
