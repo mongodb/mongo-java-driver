@@ -80,7 +80,7 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         final Document collectionStatistics = newCollection.tools().getStatistics();
         assertThat(collectionStatistics, is(notNullValue()));
 
-        assertThat((String) collectionStatistics.get("ns"), is(database.getName() + "." + newCollectionName));
+        assertThat((String) collectionStatistics.get("ns"), is(getDatabaseName() + "." + newCollectionName));
     }
 
     @Test

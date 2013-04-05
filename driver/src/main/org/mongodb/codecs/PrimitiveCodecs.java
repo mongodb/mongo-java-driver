@@ -108,6 +108,9 @@ public final class PrimitiveCodecs implements Codec<Object> {
                .build();
     }
 
+    boolean canEncode(final Class<?> aClass) {
+        return classEncoderMap.containsKey(aClass);
+    }
 
     public static class Builder {
         private final Map<Class, Encoder<?>> classEncoderMap = new HashMap<Class, Encoder<?>>();

@@ -17,8 +17,10 @@
 package org.mongodb.impl;
 
 import org.mongodb.Datastore;
+import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
 import org.mongodb.codecs.PrimitiveCodecs;
+import org.mongodb.codecs.PojoCodec;
 
 //This will change - I need a way to separate morphia-like functionality from standard Collection functionality
 //I'm using morphia terminology at the moment, and will refactor when it becomes clearer what the correct
@@ -34,10 +36,9 @@ public class PojoDatastore implements Datastore {
 
     @Override
     public void insert(final Object object) {
-//        final String collectionName = object.getClass().getSimpleName().toLowerCase();
-//        final MongoCollection<Object> collection = database.getCollection(collectionName,
-//                                                                          new PojoSerializer(primitiveCodecs));
-//        collection.insert(object);
-        throw new UnsupportedOperationException("Not implemented");
+        final String collectionName = object.getClass().getSimpleName().toLowerCase();
+        final MongoCollection<Object> collection = database.getCollection(collectionName,
+                                                                          new PojoCodec(primitiveCodecs));
+        collection.insert(object);
     }
 }
