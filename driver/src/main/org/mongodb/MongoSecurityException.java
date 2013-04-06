@@ -36,6 +36,11 @@ public class MongoSecurityException extends MongoClientException {
         this.credential = credential;
     }
 
+    public MongoSecurityException(final MongoCredential credential, final String message) {
+        super(message);
+        this.credential = credential;
+    }
+
     /**
      * The credential being authenticated.
      *
