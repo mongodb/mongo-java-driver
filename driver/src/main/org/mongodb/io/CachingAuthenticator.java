@@ -68,7 +68,7 @@ public class CachingAuthenticator {
         return unauthenticatedDatabases;
     }
 
-    private class IteratingAuthenticator implements SingleResultCallback<CommandResult> {
+    private final class IteratingAuthenticator implements SingleResultCallback<CommandResult> {
         private final SingleResultCallback<Void> callback;
         private volatile String curDatabaseName;
         private final Iterator<String> iter;
