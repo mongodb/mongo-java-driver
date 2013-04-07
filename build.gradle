@@ -326,7 +326,7 @@ project(':driver-compat') {
     }
 
     clirr {
-        formats = ['plain']
+        formats = ['xml', 'html']
         baseline 'org.mongodb:mongo-java-driver:2.10.1'
         failOnBinError = false
         failOnSrcError = false

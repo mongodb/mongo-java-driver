@@ -25,6 +25,9 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.ReportingBasePlugin
 import org.gradle.api.reporting.ReportingExtension
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.stream.StreamResult
+import javax.xml.transform.stream.StreamSource
 
 class ClirrPlugin implements Plugin<Project> {
 
@@ -100,8 +103,19 @@ class ClirrPlugin implements Plugin<Project> {
                     origfiles(file: baseJar.getPath())
                     newfiles(dir: jarTask.destinationDir, includes: jarTask.archiveName)
                     extension.formats.each { format ->
-                        formatter(type: format, outfile: "$extension.reportsDir/report.${format == 'xml' ? 'xml' : 'txt'}")
+                        if (format != 'html'){
+                            formatter(type: format, outfile: "$extension.reportsDir/report.${format == 'xml' ? 'xml' : 'txt'}")
+                        } else {
+                            formatter(type: 'xml', outfile: "$extension.reportsDir/report.xml")
+                        }
                     }
+                }
+            }
+            doLast {
+                if (extension.formats.contains('html')){
+                    def factory = TransformerFactory.newInstance()
+                    def transformer = factory.newTransformer(new StreamSource(this.getClass().getResourceAsStream( '/clirr-html-template.xslt')))
+                    transformer.transform(new StreamSource(new FileReader("$extension.reportsDir/report.xml")), new StreamResult(new FileOutputStream("$extension.reportsDir/report.html")))
                 }
             }
         }
