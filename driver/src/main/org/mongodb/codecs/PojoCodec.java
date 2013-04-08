@@ -59,17 +59,17 @@ public class PojoCodec implements CollectibleCodec<Object> {
         System.out.println("encodePojo");
         bsonWriter.writeStartDocument();
 
-        for (Field field : value.getClass().getFields()) {
-            bsonWriter.writeName(field.getName());
+        for (Field field : value.getClass().getDeclaredFields()) {
+            final String fieldName = field.getName();
+            bsonWriter.writeName(fieldName);
 
             try {
-                primitiveCodecs.encode(bsonWriter, field.get(value));
+                final Object fieldValue = field.get(value);
+                primitiveCodecs.encode(bsonWriter, fieldValue);
             } catch (IllegalAccessException e) {
                 //TODO: this is really going to bugger up the writer if it throws an exception halfway through writing
-                throw new EncodingException("Could not encode field '" + field.getName() + "' from " + value, e);
+                throw new EncodingException("Could not encode field '" + fieldName + "' from " + value, e);
             }
-
-            encode(bsonWriter, value);
         }
 
         bsonWriter.writeEndDocument();
@@ -79,8 +79,7 @@ public class PojoCodec implements CollectibleCodec<Object> {
         return primitiveCodecs.canEncode(value.getClass());
     }
 
-
-    private class EncodingException extends MongoClientException {
+    private static class EncodingException extends MongoClientException {
         private static final long serialVersionUID = -8147079320437509154L;
 
         public EncodingException(final String message, final IllegalAccessException e) {

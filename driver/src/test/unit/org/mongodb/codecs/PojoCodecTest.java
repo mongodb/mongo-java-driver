@@ -94,9 +94,9 @@ public class PojoCodecTest {
     }
 
 
-    private class SimpleObject {
+    private static class SimpleObject {
         //CHECKSTYLE:OFF
-        public final String name;
+        private final String name;
         //CHECKSTYLE:ON
 
         public SimpleObject(final String name) {
