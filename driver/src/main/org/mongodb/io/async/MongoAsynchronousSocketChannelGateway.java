@@ -231,18 +231,19 @@ public class MongoAsynchronousSocketChannelGateway {
             if (e != null) {
                 callback.onResult(null, e);
             }
-
-            final InputBuffer headerInputBuffer = new BasicInputBuffer(result);
-
-            final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
-
-            pool.done(result);
-
-            if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
-                callback.onResult(new ResponseBuffers(replyHeader, null, System.nanoTime() - start), null);
-            }
             else {
-                fillAndFlipBuffer(pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH), new ResponseBodyCallback(replyHeader));
+                final InputBuffer headerInputBuffer = new BasicInputBuffer(result);
+
+                final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
+
+                pool.done(result);
+
+                if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
+                    callback.onResult(new ResponseBuffers(replyHeader, null, System.nanoTime() - start), null);
+                }
+                else {
+                    fillAndFlipBuffer(pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH), new ResponseBodyCallback(replyHeader));
+                }
             }
         }
 
@@ -258,11 +259,13 @@ public class MongoAsynchronousSocketChannelGateway {
                 if (e != null) {
                     callback.onResult(null, e);
                 }
-                PooledInputBuffer bodyInputBuffer = new PooledInputBuffer(result, pool);
-                try {
-                    callback.onResult(new ResponseBuffers(replyHeader, bodyInputBuffer, System.nanoTime() - start), null);
-                } catch (Throwable t) {
-                    callback.onResult(null, new MongoException("", t)); // TODO: proper subclass
+                else {
+                    PooledInputBuffer bodyInputBuffer = new PooledInputBuffer(result, pool);
+                    try {
+                        callback.onResult(new ResponseBuffers(replyHeader, bodyInputBuffer, System.nanoTime() - start), null);
+                    } catch (Throwable t) {
+                        callback.onResult(null, new MongoException("", t)); // TODO: proper subclass
+                    }
                 }
             }
         }
