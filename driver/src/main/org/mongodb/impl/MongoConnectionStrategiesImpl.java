@@ -17,6 +17,7 @@
 package org.mongodb.impl;
 
 
+import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.ServerAddress;
 
@@ -29,11 +30,13 @@ public final class MongoConnectionStrategiesImpl {
     private MongoConnectionStrategiesImpl() {
     }
 
-    public static MongoConnectionStrategy replicaSet(final List<ServerAddress> serverAddressSeedList) {
-       return new ReplicaSetConnectionStrategy(serverAddressSeedList);
+    public static MongoConnectionStrategy replicaSet(final List<ServerAddress> serverAddressSeedList,
+                                                     final MongoClientOptions options) {
+       return new ReplicaSetConnectionStrategy(serverAddressSeedList, options);
     }
 
-    public static MongoConnectionStrategy mongosHighAvailability(final List<ServerAddress> serverAddressList) {
-        return new MongosHighAvailabilityConnectionStrategy(serverAddressList);
+    public static MongoConnectionStrategy mongosHighAvailability(final List<ServerAddress> serverAddressList,
+                                                                 final MongoClientOptions options) {
+        return new MongosHighAvailabilityConnectionStrategy(serverAddressList, options);
     }
 }

@@ -16,6 +16,7 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
@@ -26,8 +27,8 @@ public class MongosHighAvailabilityConnectionStrategy implements MongoConnection
 
     private final MongosSetMonitor mongosSetMonitor;
 
-    public MongosHighAvailabilityConnectionStrategy(final List<ServerAddress> serverAddressList) {
-        mongosSetMonitor = new MongosSetMonitor(serverAddressList);
+    public MongosHighAvailabilityConnectionStrategy(final List<ServerAddress> serverAddressList, final MongoClientOptions options) {
+        mongosSetMonitor = new MongosSetMonitor(serverAddressList, options);
     }
 
     @Override

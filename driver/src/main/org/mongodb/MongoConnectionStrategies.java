@@ -25,11 +25,12 @@ public final class MongoConnectionStrategies {
     private MongoConnectionStrategies() {
     }
 
-    public static MongoConnectionStrategy replicaSet(final List<ServerAddress> serverAddressSeedList) {
-        return MongoConnectionStrategiesImpl.replicaSet(serverAddressSeedList);
+    public static MongoConnectionStrategy replicaSet(final List<ServerAddress> serverAddressSeedList, final MongoClientOptions options) {
+        return MongoConnectionStrategiesImpl.replicaSet(serverAddressSeedList, options);
     }
 
-    public static MongoConnectionStrategy mongosHighAvailability(final List<ServerAddress> serverAddressList) {
-        return MongoConnectionStrategiesImpl.mongosHighAvailability(serverAddressList);
+    public static MongoConnectionStrategy mongosHighAvailability(final List<ServerAddress> serverAddressList,
+                                                                 final MongoClientOptions options) {
+        return MongoConnectionStrategiesImpl.mongosHighAvailability(serverAddressList, options);
     }
 }

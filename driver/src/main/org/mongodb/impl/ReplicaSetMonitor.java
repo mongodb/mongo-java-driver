@@ -16,6 +16,7 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.rs.ReplicaSet;
@@ -48,11 +49,12 @@ class ReplicaSetMonitor extends Thread {
 
     private final Holder holder = new Holder(CLIENT_OPTIONS_DEFAULTS.getConnectTimeout());
 
-    ReplicaSetMonitor(final List<ServerAddress> seedList) {
+    // TODO: merge CLIENT_OPTIONS_DEFAULTS into options
+    ReplicaSetMonitor(final List<ServerAddress> seedList, final MongoClientOptions options) {
         super("ReplicaSetMonitor: " + seedList);
         setDaemon(true);
         replicaSetStateGenerator = new ReplicaSetStateGenerator(seedList,
-                new MongoConnectionIsMasterExecutorFactory(CLIENT_OPTIONS_DEFAULTS), LATENCY_SMOOTH_FACTOR);
+                new MongoConnectionIsMasterExecutorFactory(options), LATENCY_SMOOTH_FACTOR);
 //        nextResolveTime = System.currentTimeMillis() + INET_ADDRESS_CACHE_MS;
     }
 

@@ -16,6 +16,7 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
 
 import java.util.List;
@@ -34,11 +35,12 @@ public class MongosSetMonitor extends Thread {
     private final MongosSetStateGenerator mongosSetStateGenerator;
     private final Holder holder = new Holder(CLIENT_OPTIONS_DEFAULTS.getConnectTimeout());
 
-    MongosSetMonitor(final List<ServerAddress> serverAddressList) {
+    // TODO: merge CLIENT_OPTIONS_DEFAULTS into options
+    MongosSetMonitor(final List<ServerAddress> serverAddressList, final MongoClientOptions options) {
         super("MongosSetMonitor: " + serverAddressList);
         setDaemon(true);
         mongosSetStateGenerator = new MongosSetStateGenerator(serverAddressList,
-                new MongoConnectionIsMasterExecutorFactory(CLIENT_OPTIONS_DEFAULTS), LATENCY_SMOOTH_FACTOR);
+                new MongoConnectionIsMasterExecutorFactory(options), LATENCY_SMOOTH_FACTOR);
     }
 
     MongosSet getCurrentState() {

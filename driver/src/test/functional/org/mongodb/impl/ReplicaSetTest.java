@@ -16,40 +16,15 @@
 
 package org.mongodb.impl;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoClient;
-import org.mongodb.MongoClients;
-import org.mongodb.MongoCollection;
-import org.mongodb.MongoConnectionStrategies;
 import org.mongodb.MongoReadPreferenceException;
 import org.mongodb.ReadPreference;
-import org.mongodb.ServerAddress;
-
-import java.net.UnknownHostException;
-import java.util.Arrays;
 
 @Ignore
-public class ReplicaSetTest {
-    private MongoClient client;
-    private MongoCollection<Document> collection;
-
-    @Before
-    public void before() throws UnknownHostException {
-        client = MongoClients.create(MongoConnectionStrategies.replicaSet(Arrays.asList(new ServerAddress())));
-        collection = client.getDatabase("ReplicaSetMongoClientTest")
-                           .getCollection("Collection" + System.currentTimeMillis());
-        collection.tools().drop();
-    }
-
-    @After
-    public void after() {
-        client.close();
-    }
-
+public class ReplicaSetTest extends DatabaseTestCase {
     @Test
     public void shouldFindPrimary() {
         collection.insert(new Document("a", 1));

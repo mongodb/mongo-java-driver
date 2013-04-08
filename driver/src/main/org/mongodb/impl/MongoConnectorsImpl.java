@@ -41,12 +41,12 @@ public final class MongoConnectorsImpl {
     }
 
     public static MultipleServerMongoConnector create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MultipleServerMongoConnector(new ReplicaSetConnectionStrategy(seedList), null, options);
+        return new MultipleServerMongoConnector(new ReplicaSetConnectionStrategy(seedList, options), null, options);
     }
 
     public static MultipleServerMongoConnector create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                                       final MongoClientOptions options) {
-        return new MultipleServerMongoConnector(new ReplicaSetConnectionStrategy(seedList), credentialList, options);
+        return new MultipleServerMongoConnector(new ReplicaSetConnectionStrategy(seedList, options), credentialList, options);
     }
 
     static SingleServerMongoConnector create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,

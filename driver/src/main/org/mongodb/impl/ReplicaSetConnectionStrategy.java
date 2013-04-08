@@ -16,6 +16,7 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.MongoNoPrimaryException;
 import org.mongodb.MongoReadPreferenceException;
@@ -30,8 +31,8 @@ import java.util.List;
 public class ReplicaSetConnectionStrategy implements MongoConnectionStrategy {
     private final ReplicaSetMonitor replicaSetMonitor;
 
-    public ReplicaSetConnectionStrategy(final List<ServerAddress> seedList) {
-        replicaSetMonitor = new ReplicaSetMonitor(seedList);
+    public ReplicaSetConnectionStrategy(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        replicaSetMonitor = new ReplicaSetMonitor(seedList, options);
         replicaSetMonitor.start();
     }
 
