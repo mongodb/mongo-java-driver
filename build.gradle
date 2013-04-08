@@ -250,6 +250,7 @@ project(':driver') {
     dependencies {
         compile project(':bson')
         unitCompile 'junit:junit:4.11'
+        unitCompile 'org.mockito:mockito-all:1.9.5'
         unitCompile sourceSets.main.runtimeClasspath
         functionalCompile 'junit:junit:4.11'
         functionalCompile sourceSets.main.runtimeClasspath

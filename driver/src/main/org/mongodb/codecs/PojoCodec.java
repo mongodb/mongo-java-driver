@@ -81,6 +81,8 @@ public class PojoCodec implements CollectibleCodec<Object> {
 
 
     private class EncodingException extends MongoClientException {
+        private static final long serialVersionUID = -8147079320437509154L;
+
         public EncodingException(final String message, final IllegalAccessException e) {
             super(message, e);
         }

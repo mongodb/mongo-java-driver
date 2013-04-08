@@ -95,7 +95,9 @@ public class PojoCodecTest {
 
 
     private class SimpleObject {
+        //CHECKSTYLE:OFF
         public final String name;
+        //CHECKSTYLE:ON
 
         public SimpleObject(final String name) {
             this.name = name;
