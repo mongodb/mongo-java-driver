@@ -18,6 +18,7 @@ package org.mongodb.impl;
 
 import org.mongodb.MongoClosedException;
 import org.mongodb.MongoInterruptedException;
+import org.mongodb.MongoTimeoutException;
 import org.mongodb.annotations.ThreadSafe;
 
 // Simple abstraction over a volatile Object reference that starts as null.  The get method blocks until held
@@ -34,15 +35,19 @@ class Holder {
 
     // blocks until replica set is set, or a timeout occurs
     synchronized Object get() {
-        while (held == null) {
+        if (held == null) {
             try {
                 wait(timeout);
             } catch (InterruptedException e) {
                 throw new MongoInterruptedException("Interrupted while waiting for next update to replica set status", e);
             }
-            if (closed) {
-                throw new MongoClosedException("Already closed");
-            }
+        }
+        if (closed) {
+            throw new MongoClosedException("Already closed");
+        }
+
+        if (held == null) {
+            throw new MongoTimeoutException("Timeout waiting for response from replica set or sharded cluster");
         }
         return held;
     }
