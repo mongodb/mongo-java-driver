@@ -305,6 +305,11 @@ project(':driver') {
     task acceptanceTest(type: Test, dependsOn: functionalTest) {
         testClassesDir = sourceSets.acceptance.output.classesDir
         classpath = sourceSets.acceptance.runtimeClasspath
+        useJUnit(){
+            if (project.hasProperty('ssl.enabled')) {
+                excludeCategories 'category.MongoClientConstructor'
+            }
+        }
     }
 
     sourcesJar {
