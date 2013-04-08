@@ -21,13 +21,17 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mongodb.json.JSONWriter;
+
+import java.io.StringWriter;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 public class PojoCodecTest {
     private PojoCodec pojoCodec;
-    private BSONWriter bsonWriter = mock(BSONWriter.class);
+    private BSONWriter bsonWriter = mock(BSONWriter.class, Mockito.withSettings().verboseLogging());
     private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
 
     @Before
@@ -50,9 +54,51 @@ public class PojoCodecTest {
     }
 
     @Test
-    @Ignore("Not implemented")
+    @Ignore("not implemented")
     public void shouldEncodeSimplePojo() {
-        Assert.fail("not implemented");
+        pojoCodec.encode(bsonWriter, new SimpleObject("MyName"));
+
+        verify(bsonWriter).writeStartDocument();
+        verify(bsonWriter).writeName("name");
+        verify(bsonWriter).writeString("MyName");
+        verify(bsonWriter).writeEndDocument();
     }
 
+    @Test
+    @Ignore("not implemented")
+    public void shouldEncodeSimplePojo2() {
+        final StringWriter writer = new StringWriter();
+        pojoCodec.encode(new JSONWriter(writer), new SimpleObject("MyName"));
+
+        System.out.println(writer.toString());
+        verify(bsonWriter).writeName("name");
+        verify(bsonWriter).writeString("MyName");
+    }
+
+    @Test
+    @Ignore("not implemented")
+    public void shouldSupportArrays() {
+        Assert.fail("Not implemented");
+    }
+
+    @Test
+    @Ignore("not implemented")
+    public void shouldEncodeIds() {
+        Assert.fail("Not implemented");
+    }
+
+    @Test
+    @Ignore("not implemented")
+    public void shouldThrowAnExceptionWhenItCannotEncodeAField() {
+        Assert.fail("Not implemented");
+    }
+
+
+    private class SimpleObject {
+        public final String name;
+
+        public SimpleObject(final String name) {
+            this.name = name;
+        }
+    }
 }

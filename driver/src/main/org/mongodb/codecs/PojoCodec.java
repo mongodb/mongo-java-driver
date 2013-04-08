@@ -19,6 +19,9 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.mongodb.CollectibleCodec;
+import org.mongodb.MongoClientException;
+
+import java.lang.reflect.Field;
 
 public class PojoCodec implements CollectibleCodec<Object> {
     private final PrimitiveCodecs primitiveCodecs;
@@ -38,7 +41,7 @@ public class PojoCodec implements CollectibleCodec<Object> {
             primitiveCodecs.encode(bsonWriter, value);
         }
         else {
-            throw new UnsupportedOperationException("Not implemented yet!");
+            encodePojo(bsonWriter, value);
         }
     }
 
@@ -52,7 +55,34 @@ public class PojoCodec implements CollectibleCodec<Object> {
         throw new UnsupportedOperationException("Not implemented yet!");
     }
 
+    private void encodePojo(final BSONWriter bsonWriter, final Object value) {
+        System.out.println("encodePojo");
+        bsonWriter.writeStartDocument();
+
+        for (Field field : value.getClass().getFields()) {
+            bsonWriter.writeName(field.getName());
+
+            try {
+                primitiveCodecs.encode(bsonWriter, field.get(value));
+            } catch (IllegalAccessException e) {
+                //TODO: this is really going to bugger up the writer if it throws an exception halfway through writing
+                throw new EncodingException("Could not encode field '" + field.getName() + "' from " + value, e);
+            }
+
+            encode(bsonWriter, value);
+        }
+
+        bsonWriter.writeEndDocument();
+    }
+
     private boolean isBSONPrimitive(final Object value) {
         return primitiveCodecs.canEncode(value.getClass());
+    }
+
+
+    private class EncodingException extends MongoClientException {
+        public EncodingException(final String message, final IllegalAccessException e) {
+            super(message, e);
+        }
     }
 }
