@@ -85,6 +85,14 @@ subprojects {
         maxParallelForks = 16
         systemProperty 'org.mongodb.test.uri', System.getProperty('org.mongodb.test.uri', null)
         systemProperty 'org.mongodb.useSocket', System.getProperty('org.mongodb.useSocket', "false")
+        if (project.hasProperty('ssl.enabled')){
+            systemProperty 'javax.net.ssl.keyStoreType', project.property('ssl.keyStoreType')
+            systemProperty 'javax.net.ssl.keyStore', project.property('ssl.keyStore')
+            systemProperty 'javax.net.ssl.keyStorePassword', project.property('ssl.keyStorePassword')
+            systemProperty 'javax.net.ssl.trustStoreType', project.property('ssl.trustStoreType')
+            systemProperty 'javax.net.ssl.trustStore', project.property('ssl.trustStore')
+            systemProperty 'javax.net.ssl.trustStorePassword', project.property('ssl.trustStorePassword')
+        }
         jacoco { enabled = false }
     }
 
@@ -288,7 +296,7 @@ project(':driver') {
         testClassesDir = sourceSets.functional.output.classesDir
         classpath = sourceSets.functional.runtimeClasspath
         useJUnit(){
-            if (!JavaVersion.current().isJava7Compatible()) {
+            if (!JavaVersion.current().isJava7Compatible() || project.hasProperty('ssl.enabled')) {
                 excludeCategories 'category.Async'
             }
         }
