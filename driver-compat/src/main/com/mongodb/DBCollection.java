@@ -251,17 +251,17 @@ public class DBCollection implements IDBCollection {
      *
      * @param documents    a list of {@code DBObject}'s to be inserted
      * @param aWriteConcern {@code WriteConcern} to be used during operation
-     * @param encoder      {@code DBEncoder} to be used
+     * @param dbEncoder      {@code DBEncoder} to be used
      * @return the result of the operation
      * @throws MongoException if the operation fails
      */
     @Override
-    public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder encoder) {
-        final Codec<DBObject> serializer = toDBObjectCodec(encoder);
+    public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder dbEncoder) {
+        final Encoder<DBObject> encoder = toDBObjectCodec(dbEncoder);
 
         final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
                 .writeConcern(this.writeConcern.toNew());
-        return new WriteResult(insertInternal(mongoInsert, serializer), aWriteConcern);
+        return new WriteResult(insertInternal(mongoInsert, encoder), aWriteConcern);
     }
 
     private Codec<DBObject> toDBObjectCodec(DBEncoder encoder) {
@@ -276,9 +276,9 @@ public class DBCollection implements IDBCollection {
         return codec;
     }
 
-    private org.mongodb.result.WriteResult insertInternal(final MongoInsert<DBObject> mongoInsert, Codec<DBObject> codec) {
+    private org.mongodb.result.WriteResult insertInternal(final MongoInsert<DBObject> mongoInsert, Encoder<DBObject> encoder) {
         try {
-            return getConnector().insert(getNamespace(), mongoInsert, codec);
+            return getConnector().insert(getNamespace(), mongoInsert, encoder);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
         }
@@ -1392,14 +1392,14 @@ public class DBCollection implements IDBCollection {
             }
         }
 
-        final FindAndModifyCommandResultCodec<DBObject> serializer = new
+        final FindAndModifyCommandResultCodec<DBObject> findAndModifyCommandResultCodec = new
                 FindAndModifyCommandResultCodec<DBObject>(
                 PrimitiveCodecs.createDefault(),
                 getCodec()
         );
 
         final FindAndModifyCommandResult<DBObject> commandResult =
-                new FindAndModifyCommandResult<DBObject>(getConnector().command(getDB().getName(), mongoCommand, serializer));
+                new FindAndModifyCommandResult<DBObject>(getConnector().command(getDB().getName(), mongoCommand, findAndModifyCommandResultCodec));
 
         return commandResult.getValue();
     }
