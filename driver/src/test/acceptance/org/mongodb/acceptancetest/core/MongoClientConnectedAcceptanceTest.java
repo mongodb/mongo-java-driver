@@ -16,8 +16,10 @@
 
 package org.mongodb.acceptancetest.core;
 
+import category.MongoClientConstructor;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClients;
 import org.mongodb.ServerAddress;
@@ -28,6 +30,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
+@Category(MongoClientConstructor.class)
 public class MongoClientConnectedAcceptanceTest {
 
     private static final String SERVER_NAME = "localhost";
