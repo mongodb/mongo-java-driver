@@ -38,6 +38,7 @@ class MongoSocketChannelGateway extends MongoGateway {
                 socketChannel.socket().setTcpNoDelay(true);
             }
         } catch (IOException e) {
+            close();
             throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
         }
     }
@@ -47,6 +48,7 @@ class MongoSocketChannelGateway extends MongoGateway {
         try {
             buffer.pipeAndClose(socketChannel);
         } catch (IOException e) {
+            close();
             throw new MongoSocketWriteException("Exception sending message", getAddress(), e);
         }
     }

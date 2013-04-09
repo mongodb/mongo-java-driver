@@ -41,6 +41,7 @@ class MongoSocketGateway extends MongoGateway {
                 socket.setTcpNoDelay(true);
             }
         } catch (IOException e) {
+            close();
             throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
         }
     }
@@ -50,11 +51,12 @@ class MongoSocketGateway extends MongoGateway {
         try {
             buffer.pipeAndClose(socket);
         } catch (IOException e) {
+            close();
             throw new MongoSocketWriteException("Exception sending message", getAddress(), e);
         }
     }
 
-    protected void fillAndFlipBuffer(final ByteBuffer buffer)  {
+    protected void fillAndFlipBuffer(final ByteBuffer buffer) {
         try {
             if (buffer.isDirect()) {
                 throw new IllegalArgumentException("Only works with non-direct buffers, so something must be misconfigured");

@@ -91,6 +91,7 @@ public abstract class MongoGateway {
     protected abstract void fillAndFlipBuffer(final ByteBuffer buffer);
 
     protected void handleIOException(final IOException e) {
+        close();
         if (e instanceof SocketTimeoutException) {
             throw new MongoSocketReadTimeoutException("Exception receiving message", address, (SocketTimeoutException) e);
         }
