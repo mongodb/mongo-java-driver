@@ -121,6 +121,16 @@ public class Mongo {
     }
 
     /**
+     * Gets a list of all server addresses used when this Mongo was created
+     * @return list of server addresses
+     * @throws MongoException
+     */
+    public List<ServerAddress> getAllAddress() {
+        //TODO It should return the address list without auto-discovered nodes. Not sure if it's required. Maybe users confused with name.
+        return getServerAddressList();
+    }
+
+    /**
      * Gets the list of server addresses currently seen by the connector. This includes addresses auto-discovered from a
      * replica set.
      *
@@ -133,6 +143,14 @@ public class Mongo {
             retVal.add(new ServerAddress(serverAddress));
         }
         return retVal;
+    }
+
+    /**
+     * Get the status of the replica set cluster.
+     * @return replica set status information
+     */
+    public ReplicaSetStatus getReplicaSetStatus() {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
 
@@ -209,8 +227,6 @@ public class Mongo {
         getConnector().close();
     }
 
-    //******* Missing functionality from the old driver *******//
-
     void requestStart() {
         throw new UnsupportedOperationException("Not implemented yet!");
     }
@@ -219,6 +235,36 @@ public class Mongo {
         throw new UnsupportedOperationException("Not implemented yet!");
     }
 
+    /**
+     * Makes it possible to run read queries on secondary nodes
+     *
+     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
+     * @see ReadPreference#secondaryPreferred()
+     */
+    @Deprecated
+    public void slaveOk() {
+        addOption(Bytes.QUERYOPTION_SLAVEOK);
+    }
+
+    /**
+     * Set the default query options.
+     * @param options value to be set
+     */
+    public void setOptions(final int options) {
+        optionHolder.set(options);
+    }
+
+    /**
+     * Reset the default query options.
+     */
+    public void resetOptions() {
+        optionHolder.reset();
+    }
+
+    /**
+     * Add the default query option.
+     * @param option value to be added to current options
+     */
     public void addOption(final int option) {
         optionHolder.add(option);
     }
@@ -250,11 +296,11 @@ public class Mongo {
         }
     }
 
-    protected MongoConnector getConnector() {
+    MongoConnector getConnector() {
         return connector;
     }
 
-    protected Bytes.OptionHolder getOptionHolder() {
+    Bytes.OptionHolder getOptionHolder() {
         return optionHolder;
     }
 

@@ -19,19 +19,19 @@ package com.mongodb;
 public class WriteResult {
 
     private final com.mongodb.WriteConcern writeConcern;
-    private final CommandResult getLastErrorResult;
+    private final CommandResult lastErrorResult;
 
     WriteResult(final org.mongodb.result.WriteResult result, final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
         if (result.getGetLastErrorResult() != null) {
             // TODO: need command and server address fer realz
-            getLastErrorResult = DBObjects
+            lastErrorResult = DBObjects
                                  .toCommandResult(DBObjects.toDBObject(result.getGetLastErrorResult().getCommand()),
                                                  new ServerAddress(result.getGetLastErrorResult().getAddress()),
                                                  result.getGetLastErrorResult().getResponse());
         }
         else {
-            getLastErrorResult = null;
+            lastErrorResult = null;
         }
     }
 
@@ -45,6 +45,16 @@ public class WriteResult {
     }
 
     public CommandResult getCachedLastError() {
-        return getLastErrorResult;
+        return lastErrorResult;
+    }
+
+    /**
+     * Gets the "n" field, which contains the number of documents
+     * affected in the write operation.
+     * @return number of documents affected in the write operation
+     * @throws MongoException
+     */
+    public int getN() {
+        return lastErrorResult.getInt("n");
     }
 }

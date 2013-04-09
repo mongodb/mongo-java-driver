@@ -509,7 +509,11 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public ServerAddress getServerAddress() {
-        return currentResult != null ? new ServerAddress(currentResult.getAddress()) : null;
+        if (currentResult != null && currentResult.getAddress() != null) {
+            return new ServerAddress(currentResult.getAddress());
+        } else {
+            return null;
+        }
     }
 
     /**
