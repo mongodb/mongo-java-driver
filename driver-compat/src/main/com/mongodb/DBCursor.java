@@ -25,6 +25,7 @@ import org.mongodb.result.QueryResult;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -65,6 +66,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     private boolean closed;
     private final Bytes.OptionHolder optionHolder;
     private final List<DBObject> all = new ArrayList<DBObject>();
+    private final List<Integer> sizes = new ArrayList<Integer>();
 
     /**
      * Initializes a new database cursor
@@ -219,7 +221,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return same DBCursort for chaining operations
      */
     public DBCursor hint(final String indexName) {
-        throw new UnsupportedOperationException();  // TODO
+        find.hintIndex(indexName);
+        return this;
     }
 
     /**
@@ -326,21 +329,21 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
     /**
-     * gets the number of times, so far, that the cursor retrieved a batch from the database
+     * Gets the number of times, so far, that the cursor retrieved a batch from the database
      *
      * @return
      */
     public int numGetMores() {
-        throw new UnsupportedOperationException();  // TODO
+        return sizes.size() - 1;
     }
 
     /**
-     * gets a list containing the number of items received in each batch
+     * Gets a list containing the number of items received in each batch
      *
      * @return
      */
     public List<Integer> getSizes() {
-        throw new UnsupportedOperationException();  // TODO
+        return Collections.unmodifiableList(sizes);
     }
 
 
@@ -506,11 +509,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public ServerAddress getServerAddress() {
-        if (currentResult == null || currentResult.getCursor() == null) {
-            return null;
-        } else {
-            return new ServerAddress(currentResult.getCursor().getAddress());
-        }
+        return currentResult != null ? new ServerAddress(currentResult.getAddress()) : null;
     }
 
     /**
@@ -594,7 +593,9 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
                         numSeen)
                 ),
                 collection.getCodec());
-        currentIterator = currentResult.getResults().iterator();
+        final List<DBObject> results = currentResult.getResults();
+        currentIterator = results.iterator();
+        sizes.add(results.size());
     }
 
     private void query() {
@@ -603,7 +604,9 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
                 find,
                 collection.getDocumentCodec(),
                 collection.getCodec());
-        currentIterator = currentResult.getResults().iterator();
+        final List<DBObject> results = currentResult.getResults();
+        currentIterator = results.iterator();
+        sizes.add(results.size());
     }
 
     private int chooseNumberToReturn(final int batchSize, final int limit, final int fetched) {

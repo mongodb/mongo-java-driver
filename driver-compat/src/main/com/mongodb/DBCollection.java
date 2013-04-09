@@ -1618,23 +1618,24 @@ public class DBCollection implements IDBCollection {
     }
 
     private Index getIndexFromName(final String name) {
-        //Yuk, string manipulation, my favourite...
-        //Should be a better way to do this, now we're turning string into object back into string
-        final String[] keysAndTypes = name.split("_");
-        final Index.Key[] keys = new Index.Key[keysAndTypes.length / 2];
-        for (int i = 0; i < keysAndTypes.length; i = i + 2) {
-            final String keyField = keysAndTypes[i];
-            final String keyType = keysAndTypes[i + 1];
-            final Index.Key key;
-            //Possible problems with 'text' index
-            if (keyType.equals("2d")) {
-                key = new Index.GeoKey(keyField);
-            } else {
-                key = new Index.OrderedKey(keyField, OrderBy.fromInt(Integer.valueOf(keyType)));
-            }
-            keys[i / 2] = key;
-        }
-        return new Index(keys);
+//        //Yuk, string manipulation, my favourite...
+//        //Should be a better way to do this, now we're turning string into object back into string
+//        final String[] keysAndTypes = name.split("_");
+//        final Index.Key[] keys = new Index.Key[keysAndTypes.length / 2];
+//        for (int i = 0; i < keysAndTypes.length; i = i + 2) {
+//            final String keyField = keysAndTypes[i];
+//            final String keyType = keysAndTypes[i + 1];
+//            final Index.Key key;
+//            //Possible problems with 'text' index
+//            if (keyType.equals("2d")) {
+//                key = new Index.GeoKey(keyField);
+//            } else {
+//                key = new Index.OrderedKey(keyField, OrderBy.fromInt(Integer.valueOf(keyType)));
+//            }
+//            keys[i / 2] = key;
+//        }
+        return new Index(new Index.OrderedKey(name, OrderBy.ASC));
+//        return new Index(keys);
     }
 
     private void updateObjectCodec(final Class<? extends DBObject> objectClass) {
