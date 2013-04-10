@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.mongodb.Codec;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoConnector;
@@ -24,37 +25,34 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
 import org.mongodb.command.GetLastError;
-import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoCommand;
+import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.result.QueryResult;
-import org.mongodb.Codec;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.mongodb.DBObjects.toCommandResult;
+import static com.mongodb.DBObjects.toDocument;
+
 
 @ThreadSafe
-@SuppressWarnings("deprecation")
 public class DB implements IDB {
     private final Mongo mongo;
     private final String name;
-    private final ConcurrentHashMap<String, DBCollection> collectionCache =
-            new ConcurrentHashMap<String, DBCollection>();
+    private final ConcurrentHashMap<String, DBCollection> collectionCache;
+    private final Bytes.OptionHolder optionHolder;
+    private final Codec<Document> documentCodec;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
-
-    private final Bytes.OptionHolder optionHolder;
-
-    private final Codec<Document> documentCodec;
 
 
     DB(final Mongo mongo, final String dbName, final Codec<Document> documentCodec) {
         this.mongo = mongo;
         this.name = dbName;
         this.documentCodec = documentCodec;
+        this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
         this.optionHolder = new Bytes.OptionHolder(mongo.getOptionHolder());
     }
 
@@ -63,22 +61,27 @@ public class DB implements IDB {
      *
      * @return the mongo instance that this database was created from.
      */
+    @Override
     public Mongo getMongo() {
         return mongo;
     }
 
+    @Override
     public void setReadPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
     }
 
+    @Override
     public void setWriteConcern(final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
     }
 
+    @Override
     public ReadPreference getReadPreference() {
         return readPreference != null ? readPreference : mongo.getReadPreference();
     }
 
+    @Override
     public WriteConcern getWriteConcern() {
         return writeConcern != null ? writeConcern : mongo.getWriteConcern();
     }
@@ -88,6 +91,7 @@ public class DB implements IDB {
      * should use the same underlying connection. This is useful to ensure that operations happen in a certain order
      * with predictable results.
      */
+    @Override
     public void requestStart() {
         mongo.requestStart();
     }
@@ -95,6 +99,7 @@ public class DB implements IDB {
     /**
      * Ends the current "consistent request"
      */
+    @Override
     public void requestDone() {
         mongo.requestDone();
     }
@@ -103,11 +108,12 @@ public class DB implements IDB {
      * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a
      * replica set)
      */
+    @Override
     public void requestEnsureConnection() {
         requestStart();
     }
 
-
+    @Override
     public DBCollection getCollection(final String name) {
         DBCollection collection = collectionCache.get(name);
         if (collection != null) {
@@ -124,6 +130,7 @@ public class DB implements IDB {
      *
      * @throws MongoException
      */
+    @Override
     public void dropDatabase() {
         executeCommand(new DropDatabase());
     }
@@ -134,27 +141,12 @@ public class DB implements IDB {
      * @param s the name of the collection
      * @return the collection
      */
-    public DBCollection getCollectionFromString(String s) {
-        DBCollection foo = null;
-
-        int idx = s.indexOf(".");
-        while (idx >= 0) {
-            final String b = s.substring(0, idx);
-            s = s.substring(idx + 1);
-            if (foo == null) {
-                foo = getCollection(b);
-            } else {
-                foo = foo.getCollection(b);
-            }
-            idx = s.indexOf(".");
-        }
-
-        if (foo != null) {
-            return foo.getCollection(s);
-        }
+    @Override
+    public DBCollection getCollectionFromString(final String s) {
         return getCollection(s);
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -165,6 +157,7 @@ public class DB implements IDB {
      * @return the names of collections in this database
      * @throws MongoException
      */
+    @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         final MongoFind findAll = new MongoFind().readPreference(org.mongodb.ReadPreference.primary());
@@ -187,37 +180,49 @@ public class DB implements IDB {
         return collections;
     }
 
-    public DBCollection createCollection(final String collName, final DBObject options) {
-        boolean capped = false;
-        int sizeInBytes = 0;
-        boolean autoIndex = true;
-        int maxDocuments = 0;
-        if (options.get("capped") != null) {
-            capped = Boolean.valueOf(options.get("capped").toString());
-        }
-        if (options.get("size") != null) {
-            sizeInBytes = ((Number) options.get("size")).intValue();
-        }
-        if (options.get("autoIndexId") != null) {
-            autoIndex = (Boolean) options.get("autoIndexId");
-        }
-        if (options.get("max") != null) {
-            maxDocuments = ((Number) options.get("max")).intValue();
-        }
-        final CreateCollectionOptions createCollectionOptions =
-                new CreateCollectionOptions(collName, capped, sizeInBytes, autoIndex, maxDocuments);
-
+    @Override
+    public DBCollection createCollection(final String collectionName, final DBObject options) {
+        final CreateCollectionOptions createCollectionOptions = toCreateCollectionOptions(collectionName, options);
         try {
             executeCommand(new Create(createCollectionOptions));
-            return getCollection(collName);
+            return getCollection(collectionName);
         } catch (MongoCommandFailureException ex) {
             throw new MongoException(ex);
         }
 
     }
 
-    public boolean authenticate(final String username, final char[] password) {
-        return false;  // TODO: Implement authentication!!!!
+    private CreateCollectionOptions toCreateCollectionOptions(final String collectionName, final DBObject options) {
+        if (options.get("size") != null && !(options.get("size") instanceof Integer)) {
+            throw new IllegalArgumentException("'size' should be Integer");
+        }
+        if (options.get("max") != null && !(options.get("max") instanceof Integer)) {
+            throw new IllegalArgumentException("'max' should be Integer");
+        }
+        if (options.get("capped") != null && !(options.get("capped") instanceof Boolean)) {
+            throw new IllegalArgumentException("'capped' should be Boolean");
+        }
+        if (options.get("autoIndexId") != null && !(options.get("capped") instanceof Boolean)) {
+            throw new IllegalArgumentException("'capped' should be Boolean");
+        }
+
+        boolean capped = false;
+        boolean autoIndex = true;
+        int sizeInBytes = 0;
+        int maxDocuments = 0;
+        if (options.get("capped") != null) {
+            capped = (Boolean) options.get("capped");
+        }
+        if (options.get("size") != null) {
+            sizeInBytes = (Integer) options.get("size");
+        }
+        if (options.get("autoIndexId") != null) {
+            autoIndex = (Boolean) options.get("autoIndexId");
+        }
+        if (options.get("max") != null) {
+            maxDocuments = (Integer) options.get("max");
+        }
+        return new CreateCollectionOptions(collectionName, capped, sizeInBytes, autoIndex, maxDocuments);
     }
 
     /**
@@ -230,7 +235,12 @@ public class DB implements IDB {
      * @mongodb.driver.manual tutorial/use-database-commands commands
      */
     public CommandResult command(final String cmd) {
-        return command(new BasicDBObject(cmd, Boolean.TRUE));
+        return command(new BasicDBObject(cmd, Boolean.TRUE), 0, getReadPreference());
+    }
+
+    @Override
+    public CommandResult command(final String cmd, final int options) {
+        return command(new BasicDBObject(cmd, Boolean.TRUE), options, getReadPreference());
     }
 
     /**
@@ -242,16 +252,12 @@ public class DB implements IDB {
      * @mongodb.driver.manual tutorial/use-database-commands commands
      */
     public CommandResult command(final DBObject cmd) {
-        final MongoCommand command = new MongoCommand(DBObjects.toDocument(cmd))
-                .readPreference(getReadPreference().toNew());
-        final org.mongodb.result.CommandResult baseCommandResult;
-        try {
-            baseCommandResult = executeCommand(command);
-        } catch (MongoCommandFailureException ex) {
-            throw new MongoException(ex);
-        }
+        return command(cmd, 0, getReadPreference());
+    }
 
-        return toCommandResult(cmd, new ServerAddress(baseCommandResult.getAddress()), baseCommandResult.getResponse());
+    @Override
+    public CommandResult command(final DBObject cmd, final int options) {
+        return command(cmd, options, getReadPreference());
     }
 
     /**
@@ -265,21 +271,30 @@ public class DB implements IDB {
      * @mongodb.driver.manual tutorial/use-database-commands commands
      */
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs) {
-        //        readPrefs = getCommandReadPreference(cmd, readPrefs);
-        //        cmd = wrapCommand(cmd, readPrefs);
-        //
-        //        Iterator<DBObject> i =
-        //                getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, readPrefs ,
-        //                                             DefaultDBDecoder.FACTORY.create(), encoder);
-        //        if ( i == null || ! i.hasNext() )
-        //            return null;
-        //
-        //        DBObject res = i.next();
-        //        ServerAddress sa = (i instanceof Result) ? ((Result) i).getServerAddress() : null;
-        //        CommandResult cr = new CommandResult(cmd, sa);
-        //        cr.putAll( res );
-        //        return cr;
-        throw new UnsupportedOperationException();
+        //TODO options is not used.
+        final MongoCommand mongoCommand = new MongoCommand(toDocument(cmd));
+        mongoCommand.readPreference(readPrefs.toNew());
+        return new CommandResult(executeCommand(mongoCommand));
+    }
+
+    @Override
+    public CommandResult command(final DBObject cmd, final DBEncoder encoder) {
+        return command(cmd, 0, getReadPreference(), encoder);
+    }
+
+    @Override
+    public CommandResult command(final DBObject cmd, final int options, final DBEncoder encoder) {
+        return command(cmd, options, getReadPreference(), encoder);
+    }
+
+    @Override
+    public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs,
+                                 final DBEncoder encoder) {
+        //TODO options is not used.
+        final Document document = toDocument(cmd, encoder, documentCodec);
+        final MongoCommand mongoCommand = new MongoCommand(document);
+        mongoCommand.readPreference(readPrefs.toNew());
+        return new CommandResult(executeCommand(mongoCommand));
     }
 
     /**
@@ -305,60 +320,9 @@ public class DB implements IDB {
 
     @Override
     public CommandResult getLastError(final WriteConcern concern) {
-        //TODO: this should be reflected somewhere in the new API?
         final GetLastError getLastErrorCommand = new GetLastError(concern.toNew());
         org.mongodb.result.CommandResult commandResult = executeCommand(getLastErrorCommand);
-        commandResult = getLastErrorCommand.parseGetLastErrorResponse(commandResult);
-
         return new CommandResult(commandResult);
-    }
-
-    // ********* Missing functionality.  Sadly, also missing tests....
-
-    @Override
-    public CommandResult command(final DBObject cmd, final DBEncoder encoder) {
-        throw new IllegalStateException("Not implemented yet!");
-    }
-
-    @Override
-    public CommandResult command(final DBObject cmd, final int options, final DBEncoder encoder) {
-        throw new IllegalStateException("Not implemented yet!");
-    }
-
-    @Override
-    public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs,
-                                 final DBEncoder encoder) {
-        throw new IllegalStateException("Not implemented yet!");
-    }
-
-    @Override
-    public CommandResult command(final DBObject cmd, final int options) {
-        throw new IllegalStateException("Not implemented yet!");
-    }
-
-    @Override
-    public CommandResult command(final String cmd, final int options) {
-        throw new IllegalStateException("Not implemented yet!");
-    }
-
-    @Override
-    public CommandResult doEval(final String code, final Object... args) {
-        throw new IllegalStateException("Not implemented yet!");
-    }
-
-    @Override
-    public Object eval(final String code, final Object... args) {
-        throw new IllegalStateException("Not implemented yet!");
-    }
-
-    @Override
-    public CommandResult getStats() {
-        throw new IllegalStateException("Not implemented yet!");
-    }
-
-    @Override
-    public void setReadOnly(final Boolean b) {
-        throw new IllegalStateException("Not implemented yet!");
     }
 
     @Override
@@ -368,52 +332,91 @@ public class DB implements IDB {
 
     @Override
     public CommandResult getLastError(final int w, final int wtimeout, final boolean fsync) {
-        throw new IllegalStateException("Not implemented yet!");
+        return getLastError(new WriteConcern(w, wtimeout, fsync));
     }
 
     @Override
-    public boolean isAuthenticated() {
-        throw new IllegalStateException("Not implemented yet!");
+    public CommandResult doEval(final String code, final Object... args) {
+        final MongoCommand mongoCommand = new MongoCommand(new Document("$eval", code).append("args", args));
+        return new CommandResult(executeCommand(mongoCommand));
     }
 
     @Override
-    public CommandResult authenticateCommand(final String username, final char[] password) {
-        throw new IllegalStateException("Not implemented yet!");
+    public Object eval(final String code, final Object... args) {
+        final CommandResult result = doEval(code, args);
+        result.throwOnError();
+        return result.get("retval");
     }
 
     @Override
-    public WriteResult addUser(final String username, final char[] passwd) {
-        throw new IllegalStateException("Not implemented yet!");
-    }
-
-    @Override
-    public WriteResult addUser(final String username, final char[] passwd, final boolean readOnly) {
-        throw new IllegalStateException("Not implemented yet!");
-    }
-
-    @Override
-    public WriteResult removeUser(final String username) {
-        throw new IllegalStateException("Not implemented yet!");
+    public CommandResult getStats() {
+        final MongoCommand mongoCommand = new MongoCommand(new Document("dbStats", 1).append("scale", 1));
+        return new CommandResult(executeCommand(mongoCommand));
     }
 
     @Override
     public CommandResult getPreviousError() {
-        throw new IllegalStateException("Not implemented yet!");
+        final MongoCommand mongoCommand = new MongoCommand(new Document("getPrevError", 1));
+        return new CommandResult(executeCommand(mongoCommand));
     }
 
     @Override
     public void resetError() {
-        throw new IllegalStateException("Not implemented yet!");
+        final MongoCommand mongoCommand = new MongoCommand(new Document("resetError", 1));
+        executeCommand(mongoCommand);
     }
 
     @Override
     public void forceError() {
-        throw new IllegalStateException("Not implemented yet!");
+        final MongoCommand mongoCommand = new MongoCommand(new Document("forceError", 1));
+        executeCommand(mongoCommand);
     }
 
     @Override
+    public void cleanCursors(final boolean force) {
+        //TODO is it needs to be implemented? Needs to check other drivers behavior.
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
+    public void setReadOnly(final Boolean b) {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
+    public boolean authenticate(final String username, final char[] password) {
+        return false;  // TODO: Implement authentication!!!!
+    }
+
+    @Override
+    public boolean isAuthenticated() {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
+    public CommandResult authenticateCommand(final String username, final char[] password) {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
+    public WriteResult addUser(final String username, final char[] passwd) {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
+    public WriteResult addUser(final String username, final char[] passwd, final boolean readOnly) {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
+    public WriteResult removeUser(final String username) {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
+    @Deprecated
     public void slaveOk() {
-        throw new IllegalStateException("Not implemented yet!");
+        addOption(Bytes.QUERYOPTION_SLAVEOK);
     }
 
     @Override
@@ -436,20 +439,15 @@ public class DB implements IDB {
         return optionHolder.get();
     }
 
-    @Override
-    public void cleanCursors(final boolean force) {
-        throw new IllegalStateException("Not implemented yet!");
-    }
-
     MongoConnector getConnector() {
         return getMongo().getConnector();
     }
 
     org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
-        return new org.mongodb.result.CommandResult(getConnector().command(getName(), commandOperation, documentCodec));
-
+        return getConnector().command(getName(), commandOperation, documentCodec);
     }
+
 
     Bytes.OptionHolder getOptionHolder() {
         return optionHolder;

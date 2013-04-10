@@ -5,31 +5,30 @@ import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-import java.util.Map;
-import java.util.Set;
-
 public class DBObjectMatchers {
 
     @Factory
-    public static Matcher<DBObject> hasFields(Set<Map.Entry<String, Object>> fields) {
+    public static Matcher<DBObject> hasFields(final String[] fields) {
         return new HasFieldsMatcher(fields);
+    }
+
+    @Factory
+    public static Matcher<DBObject> hasSubdocument(final DBObject subdocument) {
+        return new HasSubdocumentMatcher(subdocument);
     }
 
     public static class HasFieldsMatcher extends TypeSafeMatcher<DBObject> {
 
-        private Set<Map.Entry<String, Object>> entries;
+        private String[] fieldNames;
 
-        public HasFieldsMatcher(final Set<Map.Entry<String, Object>> entries) {
-            this.entries = entries;
+        public HasFieldsMatcher(final String[] fieldNames) {
+            this.fieldNames = fieldNames;
         }
 
         @Override
         protected boolean matchesSafely(DBObject item) {
-            for (Map.Entry<String, Object> entry : entries) {
-                if (entry.getValue() != null && item.get(entry.getKey()) == null) {
-                    return false;
-                }
-                if (entry.getValue() != null && !entry.getValue().equals(item.get(entry.getKey()))) {
+            for (String fieldName : fieldNames) {
+                if (!item.containsField(fieldName)) {
                     return false;
                 }
             }
@@ -40,7 +39,35 @@ public class DBObjectMatchers {
         public void describeTo(Description description) {
             description
                     .appendText(" has fields ")
-                    .appendValue(entries);
+                    .appendValue(fieldNames);
+        }
+    }
+
+    public static class HasSubdocumentMatcher extends TypeSafeMatcher<DBObject> {
+        private final DBObject document;
+
+        public HasSubdocumentMatcher(DBObject document) {
+            this.document = document;
+        }
+
+        @Override
+        protected boolean matchesSafely(DBObject item) {
+            for (String key : document.keySet()) {
+                if (document.get(key) != null && item.get(key) == null) {
+                    return false;
+                }
+                if (document.get(key) != null && !document.get(key).equals(item.get(key))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            description
+                    .appendText(" has subdocument ")
+                    .appendValue(document);
         }
     }
 }

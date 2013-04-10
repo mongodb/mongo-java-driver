@@ -115,8 +115,7 @@ public class DBCollection implements IDBCollection {
     private static final String NAMESPACE_KEY_NAME = "ns";
     private final DB database;
     private final String name;
-    private final Map<String, Class<? extends DBObject>> pathToClassMap =
-            new HashMap<String, Class<? extends DBObject>>();
+    private final Map<String, Class<? extends DBObject>> pathToClassMap;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
@@ -133,7 +132,8 @@ public class DBCollection implements IDBCollection {
         this.name = name;
         this.database = database;
         this.documentCodec = documentCodec;
-        optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
+        this.optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
+        this.pathToClassMap = new HashMap<String, Class<? extends DBObject>>();
         updateObjectCodec(BasicDBObject.class);
     }
 
@@ -1227,7 +1227,7 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public void ensureIndex(final String name) {
-        final Index index = getIndexFromName(name);
+        final Index index = new Index(new Index.OrderedKey(name, OrderBy.ASC));
         final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
         final MongoInsert<Document> insertIndexOperation
@@ -1615,27 +1615,6 @@ public class DBCollection implements IDBCollection {
      */
     public synchronized void setInternalClass(final String path, final Class<? extends DBObject> clazz) {
         pathToClassMap.put(path, clazz);
-    }
-
-    private Index getIndexFromName(final String name) {
-//        //Yuk, string manipulation, my favourite...
-//        //Should be a better way to do this, now we're turning string into object back into string
-//        final String[] keysAndTypes = name.split("_");
-//        final Index.Key[] keys = new Index.Key[keysAndTypes.length / 2];
-//        for (int i = 0; i < keysAndTypes.length; i = i + 2) {
-//            final String keyField = keysAndTypes[i];
-//            final String keyType = keysAndTypes[i + 1];
-//            final Index.Key key;
-//            //Possible problems with 'text' index
-//            if (keyType.equals("2d")) {
-//                key = new Index.GeoKey(keyField);
-//            } else {
-//                key = new Index.OrderedKey(keyField, OrderBy.fromInt(Integer.valueOf(keyType)));
-//            }
-//            keys[i / 2] = key;
-//        }
-        return new Index(new Index.OrderedKey(name, OrderBy.ASC));
-//        return new Index(keys);
     }
 
     private void updateObjectCodec(final Class<? extends DBObject> objectClass) {

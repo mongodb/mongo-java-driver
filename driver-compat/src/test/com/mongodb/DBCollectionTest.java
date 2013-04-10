@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.mongodb.DBObjectMatchers.hasFields;
+import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
@@ -148,13 +148,12 @@ public class DBCollectionTest extends DatabaseTestCase {
         );
 
 
-        final Map<String, Object> map = new HashMap<String, Object>();
-        map.put("name", "z_1");
-        map.put("ns", collection.getFullName());
-        map.put("key", new BasicDBObject("z", 1));
-        map.put("unique", true);
+        final DBObject document = new BasicDBObject("name", "z_1")
+                .append("ns", collection.getFullName())
+                .append("key", new BasicDBObject("z", 1))
+                .append("unique", true);
 
-        assertThat(collection.getIndexInfo(), hasItem(hasFields(map.entrySet())));
+        assertThat(collection.getIndexInfo(), hasItem(hasSubdocument(document)));
     }
 
     @Test
@@ -252,9 +251,7 @@ public class DBCollectionTest extends DatabaseTestCase {
                 true
         );
         assertNotNull(newDoc);
-        Map<String, Object> fields = new HashMap<String, Object>();
-        fields.put("x", false);
-        assertThat(newDoc, hasFields(fields.entrySet()));
+        assertThat(newDoc, hasSubdocument(new BasicDBObject("x", false)));
     }
 
     public static class MyDBObject extends BasicDBObject {
