@@ -242,7 +242,10 @@ public class MongoAsynchronousSocketChannelGateway {
                     callback.onResult(new ResponseBuffers(replyHeader, null, System.nanoTime() - start), null);
                 }
                 else {
-                    fillAndFlipBuffer(pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH), new ResponseBodyCallback(replyHeader));
+                    fillAndFlipBuffer(
+                            pool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH),
+                            new ResponseBodyCallback(replyHeader)
+                    );
                 }
             }
         }
