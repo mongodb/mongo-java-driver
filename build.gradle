@@ -18,7 +18,7 @@ def configDir = new File(rootDir, 'config')
 
 buildscript {
     repositories { mavenCentral() }
-    dependencies { classpath 'org.ajoberstar:gradle-jacoco:0.2.0' }
+    dependencies { classpath 'org.ajoberstar:gradle-jacoco:0.3.0' }
 }
 
 //////////////////////////////////////////
