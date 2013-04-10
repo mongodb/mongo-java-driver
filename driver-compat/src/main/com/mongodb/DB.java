@@ -374,8 +374,6 @@ public class DB implements IDB {
 
     @Override
     public void cleanCursors(final boolean force) {
-        //TODO is it needs to be implemented? Needs to check other drivers behavior.
-        throw new UnsupportedOperationException("Not implemented yet!");
     }
 
     @Override
