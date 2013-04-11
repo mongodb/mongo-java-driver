@@ -28,6 +28,7 @@ public final class Fixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
 
+    private static MongoClientURI mongoClientURI;
     private static MongoClientImpl mongoClient;
 
     private Fixture() {
@@ -35,16 +36,24 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            final String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-            final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
-                                          ? DEFAULT_URI : mongoURIProperty;
+            final MongoClientURI mongoURI = getMongoClientURI();
             try {
-                mongoClient = MongoClientsImpl.create(new MongoClientURI(mongoURIString));
+                mongoClient = MongoClientsImpl.create(mongoURI);
             } catch (UnknownHostException e) {
-                throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURIString, e);
+                throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURI.getURI(), e);
             }
         }
         return mongoClient;
+    }
+
+    public static synchronized MongoClientURI getMongoClientURI() {
+        if (mongoClientURI == null) {
+            final String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+            final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
+                    ? DEFAULT_URI : mongoURIProperty;
+            mongoClientURI = new MongoClientURI(mongoURIString);
+        }
+        return mongoClientURI;
     }
 
 

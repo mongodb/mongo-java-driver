@@ -16,10 +16,10 @@
 
 package org.mongodb.acceptancetest.core;
 
-import category.MongoClientConstructor;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.mongodb.Fixture;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClients;
 import org.mongodb.ServerAddress;
@@ -30,21 +30,23 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-@Category(MongoClientConstructor.class)
 public class MongoClientConnectedAcceptanceTest {
 
-    private static final String SERVER_NAME = "localhost";
-    private static final int PORT = 27017;
-    private ServerAddress serverAddress;
+    private MongoClient mongoClient;
 
     @Before
     public void setUp() throws UnknownHostException {
-        serverAddress = new ServerAddress(SERVER_NAME, PORT);
+        mongoClient = MongoClients.create(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
+                Fixture.getMongoClientURI().getOptions());
+    }
+
+    @After
+    public void tearDown() {
+        mongoClient.close();
     }
 
     @Test
     public void shouldBeConnectedToMongoAsSoonAsNewSingleServerMongoClientIsCreated() {
-        final MongoClient mongoClient = MongoClients.create(serverAddress);
 
         final double pingValue = mongoClient.tools().ping();
 
@@ -53,8 +55,6 @@ public class MongoClientConnectedAcceptanceTest {
 
     @Test(expected = IllegalStateException.class)
     public void shouldDisconnectFromServerWhenRequested() {
-        final MongoClient mongoClient = MongoClients.create(serverAddress);
-
         mongoClient.close();
 
         final double pingValue = mongoClient.tools().ping();
