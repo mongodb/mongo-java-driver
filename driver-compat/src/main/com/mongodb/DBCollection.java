@@ -17,7 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.codecs.CollectibleDBObjectCodec;
-import com.mongodb.codecs.DBEncoderDecoderCodec;
+import com.mongodb.codecs.DBEncoderAdapter;
 import org.bson.types.ObjectId;
 import org.mongodb.Codec;
 import org.mongodb.CollectibleCodec;
@@ -257,23 +257,23 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder dbEncoder) {
-        final Encoder<DBObject> encoder = toDBObjectCodec(dbEncoder);
+        final Encoder<DBObject> encoder = toEncoder(dbEncoder);
 
         final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
                 .writeConcern(this.writeConcern.toNew());
         return new WriteResult(insertInternal(mongoInsert, encoder), aWriteConcern);
     }
 
-    private Codec<DBObject> toDBObjectCodec(DBEncoder encoder) {
-        Codec<DBObject> codec;
-        if (encoder != null) {
-            codec = new DBEncoderDecoderCodec(encoder, null, null, null);
+    private Encoder<DBObject> toEncoder(DBEncoder dbEncoder) {
+        Encoder<DBObject> encoder;
+        if (dbEncoder != null) {
+            encoder = new DBEncoderAdapter(dbEncoder);
         } else if (encoderFactory != null) {
-            codec = new DBEncoderDecoderCodec(encoderFactory.create(), null, null, null);
+            encoder = new DBEncoderAdapter(encoderFactory.create());
         } else {
-            codec = this.codec;
+            encoder = this.codec;
         }
-        return codec;
+        return encoder;
     }
 
     private org.mongodb.result.WriteResult insertInternal(final MongoInsert<DBObject> mongoInsert, Encoder<DBObject> encoder) {
@@ -1266,7 +1266,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public void createIndex(final DBObject keys, final DBObject options, final DBEncoder dbEncoder) {
 
-        final Encoder<DBObject> encoder = toDBObjectCodec(dbEncoder);
+        final Encoder<DBObject> encoder = toEncoder(dbEncoder);
         final Document indexDetails = toIndexDetailsDocument(keys, options);
 
         final MongoInsert<DBObject> insertIndexOperation = new MongoInsert<DBObject>(toDBObject(indexDetails));
