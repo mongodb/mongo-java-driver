@@ -21,7 +21,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.mongodb.json.JSONWriter;
 
 import java.io.StringWriter;
@@ -31,7 +30,7 @@ import static org.mockito.Mockito.verify;
 
 public class PojoCodecTest {
     private PojoCodec pojoCodec;
-    private BSONWriter bsonWriter = mock(BSONWriter.class, Mockito.withSettings().verboseLogging());
+    private BSONWriter bsonWriter = mock(BSONWriter.class);
     private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
 
     @Before
