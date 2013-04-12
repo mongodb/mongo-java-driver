@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
+import static com.mongodb.Fixture.getMongoClient;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
@@ -51,9 +52,10 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldDropItself() {
-        assertThat(getClient().getDatabaseNames(), hasItem(database.getName()));
-        database.dropDatabase();
-        assertThat(getClient().getDatabaseNames(), not(hasItem(database.getName())));
+        final DB db = getMongoClient().getDB("test-" + System.nanoTime());
+        assertThat(getClient().getDatabaseNames(), hasItem(db.getName()));
+        db.dropDatabase();
+        assertThat(getClient().getDatabaseNames(), not(hasItem(db.getName())));
     }
 
 
