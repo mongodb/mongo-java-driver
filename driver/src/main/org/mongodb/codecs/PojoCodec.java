@@ -37,12 +37,9 @@ public class PojoCodec implements CollectibleCodec<Object> {
 
     @Override
     public void encode(final BSONWriter bsonWriter, final Object value) {
-        if (isBSONPrimitive(value)) {
-            primitiveCodecs.encode(bsonWriter, value);
-        }
-        else {
-            encodePojo(bsonWriter, value);
-        }
+        bsonWriter.writeStartDocument();
+        encodePojo(bsonWriter, value);
+        bsonWriter.writeEndDocument();
     }
 
     @Override
@@ -56,23 +53,32 @@ public class PojoCodec implements CollectibleCodec<Object> {
     }
 
     private void encodePojo(final BSONWriter bsonWriter, final Object value) {
-        System.out.println("encodePojo");
-        bsonWriter.writeStartDocument();
 
         for (Field field : value.getClass().getDeclaredFields()) {
-            final String fieldName = field.getName();
-            bsonWriter.writeName(fieldName);
-
-            try {
-                final Object fieldValue = field.get(value);
-                primitiveCodecs.encode(bsonWriter, fieldValue);
-            } catch (IllegalAccessException e) {
-                //TODO: this is really going to bugger up the writer if it throws an exception halfway through writing
-                throw new EncodingException("Could not encode field '" + fieldName + "' from " + value, e);
-            }
+            encodeField(bsonWriter, value, field);
         }
 
-        bsonWriter.writeEndDocument();
+    }
+
+    private void encodeField(final BSONWriter bsonWriter, final Object value, final Field field) {
+        final String fieldName = field.getName();
+        try {
+            field.setAccessible(true);
+            final Object fieldValue = field.get(value);
+            if (isBSONPrimitive(fieldValue)) {
+                bsonWriter.writeName(fieldName);
+                primitiveCodecs.encode(bsonWriter, fieldValue);
+            }
+            else {
+                bsonWriter.writeStartDocument(fieldName);
+                encodePojo(bsonWriter, fieldValue);
+                bsonWriter.writeEndDocument();
+            }
+            field.setAccessible(false);
+        } catch (IllegalAccessException e) {
+            //TODO: this is really going to bugger up the writer if it throws an exception halfway through writing
+            throw new EncodingException("Could not encode field '" + fieldName + "' from " + value, e);
+        }
     }
 
     private boolean isBSONPrimitive(final Object value) {
