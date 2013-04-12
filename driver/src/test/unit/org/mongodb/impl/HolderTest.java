@@ -20,17 +20,11 @@ package org.mongodb.impl;
 import org.junit.Test;
 import org.mongodb.MongoTimeoutException;
 
-import static org.junit.Assert.fail;
-
 public class HolderTest {
-    @Test
+
+    @Test(expected = MongoTimeoutException.class)
     public void testHolderTimeout() {
         Holder holder = new Holder(1);
-        try {
-            holder.get();
-            fail();
-        } catch (MongoTimeoutException e) {
-            // expected
-        }
+        holder.get();
     }
 }
