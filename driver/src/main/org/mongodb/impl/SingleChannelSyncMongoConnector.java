@@ -249,7 +249,10 @@ final class SingleChannelSyncMongoConnector implements MongoPoolableConnector {
                                            final WriteConcern writeConcern) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
         try {
-            writeMessage.encode(buffer);
+            MongoRequestMessage nextMessage = writeMessage.encode(buffer);
+            while (nextMessage != null) {
+                nextMessage = nextMessage.encode(buffer);
+            }
             if (writeConcern.callGetLastError()) {
                 final GetLastError getLastError = new GetLastError(writeConcern);
                 final DocumentCodec codec = new DocumentCodec(options.getPrimitiveCodecs());

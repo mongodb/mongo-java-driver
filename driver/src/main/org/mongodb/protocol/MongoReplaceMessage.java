@@ -34,9 +34,10 @@ public class MongoReplaceMessage<T> extends MongoUpdateBaseMessage {
     }
 
     @Override
-    protected void encodeMessageBody(final ChannelAwareOutputBuffer buffer) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
         addDocument(replace.getReplacement(), encoder, buffer);
+        return null;
     }
 
     @Override

@@ -29,11 +29,12 @@ public class MongoKillCursorsMessage extends MongoRequestMessage {
     }
 
     @Override
-    protected void encodeMessageBody(final ChannelAwareOutputBuffer buffer) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeKillCursorsPrologue(killCursor.getServerCursors().size(), buffer);
         for (final ServerCursor curServerCursor : killCursor.getServerCursors()) {
             buffer.writeLong(curServerCursor.getId());
         }
+        return null;
     }
 
     private void writeKillCursorsPrologue(final int numCursors, final ChannelAwareOutputBuffer buffer) {

@@ -18,10 +18,12 @@ package org.mongodb;
 
 import org.mongodb.result.WriteResult;
 
+import java.util.List;
+
 public interface MongoSyncWritableStream<T> {
     WriteResult insert(T document);
 
-    WriteResult insert(Iterable<T> document);
+    WriteResult insert(List<T> document);
 
     WriteResult save(T document);
 

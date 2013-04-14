@@ -32,8 +32,9 @@ public class MongoDeleteMessage extends MongoRequestMessage {
     }
 
     @Override
-    protected void encodeMessageBody(final ChannelAwareOutputBuffer buffer) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeDelete(buffer);
+        return null;
     }
 
     private void writeDelete(final ChannelAwareOutputBuffer buffer) {

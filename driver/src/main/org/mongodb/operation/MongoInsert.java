@@ -19,20 +19,26 @@ package org.mongodb.operation;
 import org.mongodb.WriteConcern;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class MongoInsert<T> extends MongoWrite {
-    private final Iterable<T> documents;
+    private final List<T> documents;
 
     @SuppressWarnings("unchecked")
     public MongoInsert(final T document) {
         this(Arrays.asList(document));
     }
 
-    public MongoInsert(final Iterable<T> documents) {
+    public MongoInsert(final List<T> documents) {
         this.documents = documents;
     }
 
-    public Iterable<T> getDocuments() {
+    public MongoInsert(final MongoInsert<T> insert, final int startPos) {
+        writeConcern(insert.getWriteConcern());
+        documents = insert.getDocuments().subList(startPos, insert.getDocuments().size());
+    }
+
+    public List<T> getDocuments() {
         return documents;
     }
 

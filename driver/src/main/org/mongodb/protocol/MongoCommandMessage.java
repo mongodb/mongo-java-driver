@@ -32,8 +32,9 @@ public class MongoCommandMessage extends MongoQueryBaseMessage {
     }
 
     @Override
-    protected void encodeMessageBody(final ChannelAwareOutputBuffer buffer) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeQueryPrologue(commandOperation, buffer);
         addDocument(commandOperation.toDocument(), encoder, buffer);
+        return null;
     }
 }

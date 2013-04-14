@@ -32,8 +32,9 @@ public class MongoGetMoreMessage extends MongoRequestMessage {
     }
 
     @Override
-    protected void encodeMessageBody(final ChannelAwareOutputBuffer buffer) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeGetMore(buffer);
+        return null;
     }
 
     private void writeGetMore(final ChannelAwareOutputBuffer buffer) {

@@ -144,7 +144,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public WriteResult insert(final Iterable<T> documents) {
+    public WriteResult insert(final List<T> documents) {
         return new MongoCollectionStream().insert(documents);
     }
 
@@ -531,7 +531,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public WriteResult insert(final Iterable<T> documents) {
+        public WriteResult insert(final List<T> documents) {
             return connector.insert(getNamespace(),
                     new MongoInsert<T>(documents).writeConcern(writeConcern),
                     getCodec());

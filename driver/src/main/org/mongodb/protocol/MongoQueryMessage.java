@@ -32,12 +32,13 @@ public class MongoQueryMessage extends MongoQueryBaseMessage {
     }
 
     @Override
-    protected void encodeMessageBody(final ChannelAwareOutputBuffer buffer) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeQueryPrologue(find, buffer);
         addDocument(getQueryDocument(), encoder, buffer);
         if (find.getFields() != null) {
             addDocument(find.getFields(), encoder, buffer);
         }
+        return null;
     }
 
     private Document getQueryDocument() {

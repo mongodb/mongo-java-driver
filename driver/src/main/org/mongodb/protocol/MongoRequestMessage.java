@@ -62,14 +62,15 @@ public abstract class MongoRequestMessage {
         return getCollectionName() != null ? getCollectionName() : null;
     }
 
-    public void encode(final ChannelAwareOutputBuffer buffer) {
+    public MongoRequestMessage encode(final ChannelAwareOutputBuffer buffer) {
         int messageStartPosition = buffer.getPosition();
         writeMessagePrologue(buffer);
-        encodeMessageBody(buffer);
+        MongoRequestMessage nextMessage = encodeMessageBody(buffer, messageStartPosition);
         backpatchMessageLength(messageStartPosition, buffer);
+        return nextMessage;
     }
 
-    protected abstract void encodeMessageBody(final ChannelAwareOutputBuffer buffer);
+    protected abstract MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition);
 
     protected <T> void addDocument(final T obj, final Encoder<T> encoder, final ChannelAwareOutputBuffer buffer) {
         final BSONBinaryWriter writer = new BSONBinaryWriter(buffer);
