@@ -16,5 +16,6 @@
 
 package com.mongodb;
 
-public class DBDecoderFactory {
+public interface DBDecoderFactory {
+    DBDecoder create();
 }
