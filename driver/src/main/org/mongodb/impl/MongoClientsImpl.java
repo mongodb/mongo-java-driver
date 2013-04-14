@@ -19,13 +19,11 @@ package org.mongodb.impl;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
 import org.mongodb.MongoConnectionStrategy;
-import org.mongodb.MongoCredential;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -53,18 +51,16 @@ public final class MongoClientsImpl {
 
     public static MongoClientImpl create(final MongoClientURI mongoURI, final MongoClientOptions options)
             throws UnknownHostException {
-        final List<MongoCredential> credentialList
-                = mongoURI.getCredentials() != null ? Arrays.asList(mongoURI.getCredentials()) : null;
         if (mongoURI.getHosts().size() == 1) {
             return new MongoClientImpl(options, MongoConnectorsImpl.create(new ServerAddress(mongoURI.getHosts().get(0)),
-                    credentialList, options));
+                    mongoURI.getCredentials(), options));
         }
         else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(cur));
             }
-            return new MongoClientImpl(options, MongoConnectorsImpl.create(seedList, credentialList, options));
+            return new MongoClientImpl(options, MongoConnectorsImpl.create(seedList, mongoURI.getCredentials(), options));
         }
     }
 }

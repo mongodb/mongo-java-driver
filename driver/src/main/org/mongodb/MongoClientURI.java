@@ -19,6 +19,7 @@ package org.mongodb;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -600,8 +601,8 @@ public class MongoClientURI {
      *
      * @return the credentials
      */
-    public MongoCredential getCredentials() {
-        return credentials;
+    public List<MongoCredential> getCredentials() {
+        return credentials != null ? Arrays.asList(credentials) : new ArrayList<MongoCredential>();
     }
 
     /**

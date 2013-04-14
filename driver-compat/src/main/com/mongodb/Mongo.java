@@ -19,7 +19,6 @@ package com.mongodb;
 import org.mongodb.Codec;
 import org.mongodb.Document;
 import org.mongodb.MongoConnector;
-import org.mongodb.MongoCredential;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
@@ -28,7 +27,6 @@ import org.mongodb.impl.MongoConnectorsImpl;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -282,17 +280,15 @@ public class Mongo {
     }
 
     private static MongoConnector createConnector(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
-        final List<MongoCredential> credentialList
-                = mongoURI.getCredentials() != null ? Arrays.asList(mongoURI.getCredentials()) : null;
         if (mongoURI.getHosts().size() == 1) {
             return MongoConnectorsImpl.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)),
-                    credentialList, mongoURI.getOptions());
+                    mongoURI.getCredentials(), mongoURI.getOptions());
         } else {
             List<org.mongodb.ServerAddress> seedList = new ArrayList<org.mongodb.ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new org.mongodb.ServerAddress(cur));
             }
-            return MongoConnectorsImpl.create(seedList, credentialList, mongoURI.getOptions());
+            return MongoConnectorsImpl.create(seedList, mongoURI.getCredentials(), mongoURI.getOptions());
         }
     }
 
