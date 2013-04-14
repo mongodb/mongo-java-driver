@@ -18,6 +18,8 @@ package org.mongodb.io;
 
 public abstract class BufferPool<T> {
 
+    public abstract int getMaximumBufferSize();
+
     public abstract T get(int size);
 
     public abstract void done(T buffer);
@@ -25,4 +27,5 @@ public abstract class BufferPool<T> {
     public abstract T createNew(int size);
 
     public abstract void close();
+
 }

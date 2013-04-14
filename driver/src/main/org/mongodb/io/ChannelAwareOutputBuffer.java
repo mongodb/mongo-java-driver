@@ -49,4 +49,5 @@ public abstract class ChannelAwareOutputBuffer extends OutputBuffer {
      */
     public abstract void pipeAndClose(final AsyncWritableByteChannel channel, AsyncCompletionHandler handler);
 
+    public abstract void truncateToPosition(final int pos);
 }

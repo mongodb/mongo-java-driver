@@ -75,7 +75,7 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
 
     private ByteBuffer getByteBufferAtIndex(final int index) {
         if (bufferList.size() < index + 1) {
-            bufferList.add(pool.get(INITIAL_BUFFER_SIZE << index));
+            bufferList.add(pool.get(Math.min(INITIAL_BUFFER_SIZE << index, pool.getMaximumBufferSize())));
         }
         return bufferList.get(index);
     }
@@ -110,9 +110,7 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
     public void pipe(final OutputStream out) throws IOException {
         for (final ByteBuffer cur : bufferList) {
             cur.flip();
-            byte[] bytes = new byte[cur.limit()];
-            cur.get(bytes);
-            out.write(bytes);
+            out.write(cur.array(), 0, cur.limit());
         }
     }
 
@@ -163,6 +161,25 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
         });
     }
 
+    @Override
+    public void truncateToPosition(final int newPosition) {
+        if (newPosition > position || newPosition < 0) {
+            throw new IllegalArgumentException();
+        }
+
+        BufferPositionPair bufferPositionPair = getBufferPositionPair(newPosition);
+
+        bufferList.get(bufferPositionPair.bufferIndex).position(bufferPositionPair.position);
+
+        while (bufferList.size() > bufferPositionPair.bufferIndex + 1) {
+            ByteBuffer buffer = bufferList.remove(bufferList.size() - 1);
+            pool.done(buffer);
+        }
+
+        curBufferIndex = bufferPositionPair.bufferIndex;
+        position = newPosition;
+    }
+
     private void pipeOneBuffer(final AsyncWritableByteChannel channel, final ByteBuffer byteBuffer,
                                final AsyncCompletionHandler outerHandler) {
         byteBuffer.flip();
@@ -194,19 +211,22 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
 
     // TODO: desperately seeking unit test
     private void backpatchSizeWithOffset(final int size, final int additionalOffset) {
-        final int backpatchPosition = position - size - additionalOffset;
-        int backpatchPositionInBuffer = backpatchPosition;
+        getBufferPositionPair(position - size - additionalOffset).putInt(size);
+    }
+
+    private BufferPositionPair getBufferPositionPair(final int absolutePosition) {
+        int positionInBuffer = absolutePosition;
         int bufferIndex = 0;
         int bufferSize = INITIAL_BUFFER_SIZE;
         int startPositionOfBuffer = 0;
-        while (startPositionOfBuffer + bufferSize <= backpatchPosition) {
+        while (startPositionOfBuffer + bufferSize <= absolutePosition) {
             bufferIndex++;
             startPositionOfBuffer += bufferSize;
-            backpatchPositionInBuffer -= bufferSize;
-            bufferSize <<= 1;
+            positionInBuffer -= bufferSize;
+            bufferSize = bufferList.get(bufferIndex).limit();
         }
 
-        new BufferPositionPair(bufferIndex, backpatchPositionInBuffer).putInt(size);
+        return new BufferPositionPair(bufferIndex, positionInBuffer);
     }
 
     class BufferPositionPair {
