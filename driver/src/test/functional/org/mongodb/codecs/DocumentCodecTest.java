@@ -50,7 +50,7 @@ public class DocumentCodecTest extends DatabaseTestCase {
     private BSONWriter writer;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         super.setUp();
         buffer = new BasicOutputBuffer();
         writer = new BSONBinaryWriter(new BSONWriterSettings(100), new BSONBinaryWriterSettings(1024 * 1024), buffer);

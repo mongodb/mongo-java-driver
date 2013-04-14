@@ -42,7 +42,7 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
     private CountDownLatch latch;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         super.setUp();
         latch = new CountDownLatch(1);
     }

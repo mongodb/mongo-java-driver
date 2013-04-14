@@ -39,7 +39,7 @@ public class DatabaseTestCase {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         collectionName = getClass().getName();
         collection = database.getCollection(collectionName);
         collection.tools().drop();

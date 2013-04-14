@@ -16,7 +16,6 @@
 
 package org.mongodb.acceptancetest.index;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
@@ -39,10 +38,6 @@ import static org.mongodb.OrderBy.fromInt;
  * currently supported by the updated driver.
  */
 public class AddIndexAcceptanceTest extends DatabaseTestCase {
-    @Before
-    public void setUp() {
-        super.setUp();
-    }
 
     @Test
     public void shouldGetExistingIndexesOnDatabase() {

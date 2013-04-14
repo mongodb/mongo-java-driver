@@ -33,7 +33,7 @@ public class MongoCursorTest extends DatabaseTestCase {
     private MongoCursor<Document> cursor;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         super.setUp();
         for (int i = 0; i < 10; i++) {
             collection.insert(new Document("_id", i));
