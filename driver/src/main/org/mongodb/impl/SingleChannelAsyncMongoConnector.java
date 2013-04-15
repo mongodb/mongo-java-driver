@@ -560,7 +560,7 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
                 else {
                     MongoReplyMessage<Document> replyMessage = new MongoReplyMessage<Document>(responseBuffers, decoder);
                     callCallback(new CommandResult(commandOperation.toDocument(), serverAddress,
-                            replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds()), e);
+                            replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds()), null);
                 }
             } finally {
                 if (responseBuffers != null) {
