@@ -294,8 +294,7 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
         final MongoCommandMessage message = new MongoCommandMessage(database + ".$cmd", commandOperation,
                 withDocumentEncoder(codec));
         encodeMessageToBuffer(message, buffer);
-        channel.sendAndReceiveMessage(buffer, new MongoCommandResultCallback(callback, commandOperation, this,
-                withDocumentCodec(codec)));
+        channel.sendAndReceiveMessage(buffer, new MongoCommandResultCallback(callback, commandOperation, withDocumentCodec(codec)));
     }
 
     @Override
@@ -314,7 +313,7 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
         final MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find, withDocumentEncoder(queryEncoder));
         encodeMessageToBuffer(message, buffer);
-        channel.sendAndReceiveMessage(buffer, new MongoQueryResultCallback<T>(callback, this, resultDecoder));
+        channel.sendAndReceiveMessage(buffer, new MongoQueryResultCallback<T>(callback, resultDecoder));
     }
 
     @Override
@@ -333,7 +332,7 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
         final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore);
         encodeMessageToBuffer(message, buffer);
-        channel.sendAndReceiveMessage(buffer, new MongoGetMoreResultCallback<T>(callback, this, resultDecoder,
+        channel.sendAndReceiveMessage(buffer, new MongoGetMoreResultCallback<T>(callback, resultDecoder,
                 getMore.getServerCursor().getId()));
     }
 
@@ -421,12 +420,11 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
             MongoCommandMessage getLastErrorMessage =
                     new MongoCommandMessage(namespace.getDatabaseName() + ".$cmd", getLastError, withDocumentEncoder(encoder));
             encodeMessageToBuffer(getLastErrorMessage, buffer);
-            channel.sendAndReceiveMessage(buffer, new MongoWriteResultCallback(callback, write, getLastError, this,
-                    getDocumentDecoder(), namespace, nextMessage));
+            channel.sendAndReceiveMessage(buffer, new MongoWriteResultCallback(callback, write, getLastError, getDocumentDecoder(),
+                    namespace, nextMessage));
         }
         else {
-            channel.sendMessage(buffer, new MongoWriteResultCallback(callback, write, null, this, getDocumentDecoder(), namespace,
-                    nextMessage));
+            channel.sendMessage(buffer, new MongoWriteResultCallback(callback, write, null, getDocumentDecoder(), namespace, nextMessage));
         }
     }
 
@@ -456,13 +454,11 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
     }
 
 
-    private abstract static class MongoResponseCallback implements SingleResultCallback<ResponseBuffers> {
-        private final SingleChannelAsyncMongoConnector connection;
+    private abstract class MongoResponseCallback implements SingleResultCallback<ResponseBuffers> {
         private volatile boolean closed;
 
-        public MongoResponseCallback(final SingleChannelAsyncMongoConnector connection) {
-            this.connection = connection;
-            this.connection.activeAsyncCall = true;
+        public MongoResponseCallback() {
+            activeAsyncCall = true;
         }
 
         @Override
@@ -471,45 +467,37 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
                 throw new MongoInternalException("This should not happen", null);
             }
             closed = true;
-            final ServerAddress address = connection.getServerAddress();
-            connection.releaseIfPending();
+            releaseIfPending();
             if (responseBuffers != null) {
-                callCallback(address, responseBuffers, e);
+                callCallback(responseBuffers, e);
             }
             else {
-                callCallback(address, null, e);
+                callCallback(null, e);
             }
         }
 
-        public SingleChannelAsyncMongoConnector getConnection() {
-            return connection;
-        }
-
-        protected abstract void callCallback(ServerAddress serverAddress, ResponseBuffers responseBuffers, MongoException e);
+        protected abstract void callCallback(ResponseBuffers responseBuffers, MongoException e);
     }
 
-    private static class MongoQueryResultCallback<T> extends MongoResponseCallback {
+    private class MongoQueryResultCallback<T> extends MongoResponseCallback {
         private final SingleResultCallback<QueryResult<T>> callback;
         private final Decoder<T> decoder;
 
-        public MongoQueryResultCallback(final SingleResultCallback<QueryResult<T>> callback,
-                                        final SingleChannelAsyncMongoConnector connection,
-                                        final Decoder<T> decoder) {
-            super(connection);
+        public MongoQueryResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder) {
             this.callback = callback;
             this.decoder = decoder;
         }
 
         @Override
-        protected void callCallback(final ServerAddress serverAddress, final ResponseBuffers responseBuffers, final MongoException e) {
+        protected void callCallback(final ResponseBuffers responseBuffers, final MongoException e) {
             try {
                 if (e != null) {
                     callback.onResult(null, e);
                 }
                 else if (responseBuffers.getReplyHeader().isQueryFailure()) {
                     final Document errorDocument = new MongoReplyMessage<Document>(responseBuffers,
-                            getConnection().withDocumentCodec(null)).getDocuments().get(0);
-                    callback.onResult(null, new MongoQueryFailureException(getConnection().channel.getAddress(), errorDocument));
+                            withDocumentCodec(null)).getDocuments().get(0);
+                    callback.onResult(null, new MongoQueryFailureException(channel.getAddress(), errorDocument));
                 }
                 else {
                     callback.onResult(new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, decoder), serverAddress), null);
@@ -522,30 +510,27 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
         }
     }
 
-    private static class MongoGetMoreResultCallback<T> extends MongoResponseCallback {
+    private class MongoGetMoreResultCallback<T> extends MongoResponseCallback {
         private final SingleResultCallback<QueryResult<T>> callback;
         private final Decoder<T> decoder;
         private final long cursorId;
 
-        public MongoGetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback,
-                                          final SingleChannelAsyncMongoConnector connection,
-                                          final Decoder<T> decoder,
+        public MongoGetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder,
                                           final long cursorId) {
-            super(connection);
             this.callback = callback;
             this.decoder = decoder;
             this.cursorId = cursorId;
         }
 
         @Override
-        protected void callCallback(final ServerAddress serverAddress, final ResponseBuffers responseBuffers, final MongoException e) {
+        protected void callCallback(final ResponseBuffers responseBuffers, final MongoException e) {
             try {
                 if (e != null) {
                     callback.onResult(null, e);
                 }
                 else if (responseBuffers.getReplyHeader().isCursorNotFound()) {
                     callback.onResult(null, new MongoCursorNotFoundException(
-                            new ServerCursor(cursorId, getConnection().channel.getAddress())));
+                            new ServerCursor(cursorId, channel.getAddress())));
                 }
                 else {
                     callback.onResult(new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, decoder), serverAddress), null);
@@ -558,28 +543,25 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
         }
     }
 
-    private abstract static class MongoCommandResultBaseCallback extends MongoResponseCallback {
+    private abstract class MongoCommandResultBaseCallback extends MongoResponseCallback {
         private final MongoCommand commandOperation;
         private final Decoder<Document> decoder;
 
-        public MongoCommandResultBaseCallback(final MongoCommand commandOperation,
-                                              final SingleChannelAsyncMongoConnector client, final Decoder<Document> decoder) {
-            super(client);
+        public MongoCommandResultBaseCallback(final MongoCommand commandOperation, final Decoder<Document> decoder) {
             this.commandOperation = commandOperation;
             this.decoder = decoder;
         }
 
-        protected void callCallback(final ServerAddress serverAddress, final ResponseBuffers responseBuffers,
-                                    final MongoException e) {
+        protected void callCallback(final ResponseBuffers responseBuffers, final MongoException e) {
             try {
-            if (responseBuffers != null) {
-                MongoReplyMessage<Document> replyMessage = new MongoReplyMessage<Document>(responseBuffers, decoder);
-                callCallback(new CommandResult(commandOperation.toDocument(), serverAddress,
-                        replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds()), e);
-            }
-            else {
-                callCallback(null, e);
-            }
+                if (e != null || responseBuffers == null) {
+                    callCallback((CommandResult) null, e);
+                }
+                else {
+                    MongoReplyMessage<Document> replyMessage = new MongoReplyMessage<Document>(responseBuffers, decoder);
+                    callCallback(new CommandResult(commandOperation.toDocument(), serverAddress,
+                            replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds()), e);
+                }
             } finally {
                 if (responseBuffers != null) {
                     responseBuffers.close();
@@ -590,13 +572,12 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
         protected abstract void callCallback(final CommandResult commandResult, final MongoException e);
     }
 
-    private static class MongoCommandResultCallback extends MongoCommandResultBaseCallback {
+    private class MongoCommandResultCallback extends MongoCommandResultBaseCallback {
         private final SingleResultCallback<CommandResult> callback;
 
         public MongoCommandResultCallback(final SingleResultCallback<CommandResult> callback,
-                                          final MongoCommand commandOperation, final SingleChannelAsyncMongoConnector client,
-                                          final Decoder<Document> decoder) {
-            super(commandOperation, client, decoder);
+                                          final MongoCommand commandOperation, final Decoder<Document> decoder) {
+            super(commandOperation, decoder);
             this.callback = callback;
         }
 
@@ -623,10 +604,9 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
 
         public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback,
                                         final MongoWrite writeOperation, final GetLastError getLastError,
-                                        final SingleChannelAsyncMongoConnector client,
                                         final Decoder<Document> decoder, final MongoNamespace namespace,
                                         final MongoRequestMessage nextMessage) {
-            super(getLastError, client, decoder);
+            super(getLastError, decoder);
             this.callback = callback;
             this.writeOperation = writeOperation;
             this.getLastError = getLastError;
