@@ -64,10 +64,17 @@ public class PojoCodec implements CollectibleCodec<Object> {
         final String fieldName = field.getName();
         try {
             field.setAccessible(true);
+            System.out.println("value: " + value);
             final Object fieldValue = field.get(value);
+            System.out.println("fieldValue:" + fieldValue);
             if (isBSONPrimitive(fieldValue)) {
                 bsonWriter.writeName(fieldName);
                 primitiveCodecs.encode(bsonWriter, fieldValue);
+            }
+            else if (fieldValue.getClass().isArray()) {
+                bsonWriter.writeStartArray(fieldName);
+                encodeArray(bsonWriter, fieldValue, fieldName);
+                bsonWriter.writeEndArray();
             }
             else {
                 bsonWriter.writeStartDocument(fieldName);
@@ -78,6 +85,19 @@ public class PojoCodec implements CollectibleCodec<Object> {
         } catch (IllegalAccessException e) {
             //TODO: this is really going to bugger up the writer if it throws an exception halfway through writing
             throw new EncodingException("Could not encode field '" + fieldName + "' from " + value, e);
+        } catch (NoSuchFieldException e) {
+            //TODO: this is really going to bugger up the writer if it throws an exception halfway through writing
+            throw new EncodingException("Could not encode field '" + fieldName + "' from " + value, e);
+        }
+    }
+
+    private void encodeArray(final BSONWriter bsonWriter, final Object fieldValue, final String fieldName)
+    throws NoSuchFieldException {
+        final Object[] array = (Object[]) fieldValue;
+        for (int i = 0; i < array.length; i++) {
+            final Object value = array[i];
+            encodeField(bsonWriter, value, null);
+
         }
     }
 
@@ -88,7 +108,7 @@ public class PojoCodec implements CollectibleCodec<Object> {
     private static class EncodingException extends MongoClientException {
         private static final long serialVersionUID = -8147079320437509154L;
 
-        public EncodingException(final String message, final IllegalAccessException e) {
+        public EncodingException(final String message, final Exception e) {
             super(message, e);
         }
     }
