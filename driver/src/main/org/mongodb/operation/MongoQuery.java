@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import org.mongodb.ReadPreference;
+import org.mongodb.protocol.QueryFlags;
 
 public abstract class MongoQuery {
     private ReadPreference readPreference;
@@ -25,6 +26,7 @@ public abstract class MongoQuery {
     //CHECKSTYLE:ON
     private int skip;
     private int limit;
+    private int flags;
 
     public MongoQuery() {
     }
@@ -45,7 +47,7 @@ public abstract class MongoQuery {
     //TODO: I hate this
     public MongoQuery readPreferenceIfAbsent(final ReadPreference readPreference) {
         if (this.readPreference == null) {
-            this.readPreference = readPreference;
+            readPreference(readPreference);
         }
         return this;
     }
@@ -64,10 +66,19 @@ public abstract class MongoQuery {
         this.batchSize = batchSize;
         return this;
     }
+
+    public MongoQuery flags(final int flags) {
+        this.flags = flags;
+        return this;
+    }
     //CHECKSTYLE:ON
 
-    public int getOptions() {
-        return 0;
+    public int getFlags() {
+        if (readPreference != null && readPreference.isSlaveOk()) {
+            return flags | QueryFlags.SLAVEOK;
+        } else {
+            return flags;
+        }
     }
 
     public ReadPreference getReadPreference() {

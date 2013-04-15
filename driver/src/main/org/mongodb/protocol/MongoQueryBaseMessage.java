@@ -25,14 +25,8 @@ public abstract class MongoQueryBaseMessage extends MongoRequestMessage {
         super(collectionName, OpCode.OP_QUERY);
     }
 
-    // TODO: options?
     protected void writeQueryPrologue(final MongoQuery query, final ChannelAwareOutputBuffer buffer) {
-        int allOptions = 0;
-        if (query.getReadPreference().isSlaveOk()) {
-            allOptions |= QueryOptions.SLAVEOK;
-        }
-
-        buffer.writeInt(allOptions);
+        buffer.writeInt(query.getFlags());
         buffer.writeCString(getCollectionName());
 
         buffer.writeInt(query.getSkip());

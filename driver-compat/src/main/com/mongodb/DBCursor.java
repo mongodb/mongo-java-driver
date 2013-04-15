@@ -64,7 +64,6 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     private DBObject currentObject;
     private int numSeen;
     private boolean closed;
-    private final Bytes.OptionHolder optionHolder;
     private final List<DBObject> all = new ArrayList<DBObject>();
     private final List<Integer> sizes = new ArrayList<Integer>();
 
@@ -81,17 +80,15 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             throw new IllegalArgumentException("Collection can't be null");
         }
         this.collection = collection;
-        optionHolder = new Bytes.OptionHolder(collection.getOptionHolder());
         find = new MongoFind()
                 .where(toDocument(query))
                 .select(DBObjects.toFieldSelectorDocument(fields))
                 .readPreference(readPreference.toNew());
     }
 
-    private DBCursor(final DBCollection collection, final MongoFind find, final Bytes.OptionHolder optionHolder) {
+    private DBCursor(final DBCollection collection, final MongoFind find) {
         this.collection = collection;
         this.find = new MongoFind(find);
-        this.optionHolder = optionHolder;
     }
 
     /**
@@ -100,7 +97,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return the new cursor
      */
     public DBCursor copy() {
-        return new DBCursor(collection, find, optionHolder);
+        return new DBCursor(collection, find);
     }
 
     public boolean hasNext() {
@@ -109,7 +106,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             throw new IllegalStateException("Cursor has been closed");
         }
 
-        if (currentResult == null && currentIterator == null) {
+        if (currentResult == null || currentIterator == null) {
             query();
         }
 
@@ -160,7 +157,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public DBCursor addOption(final int option) {
-        optionHolder.add(option);
+        find.flags(find.getFlags() | option);
         return this;
     }
 
@@ -170,7 +167,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @param options
      */
     public DBCursor setOptions(final int options) {
-        optionHolder.set(options);
+        find.flags(options);
         return this;
     }
 
@@ -178,7 +175,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * resets the query options
      */
     public DBCursor resetOptions() {
-        optionHolder.reset();
+        find.flags(0);
         return this;
     }
 
@@ -188,7 +185,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public int getOptions() {
-        return optionHolder.get();
+        return find.getFlags();
     }
 
     /**

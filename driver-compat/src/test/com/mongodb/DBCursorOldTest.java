@@ -102,7 +102,6 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
 
     @Test
-    @Ignore
     public void testTailable() {
         database.getCollection("tail1").drop();
         final DBCollection c = database.createCollection(
@@ -148,7 +147,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
                             return obj.get("x");
                         }
                     }
-
+                    System.out.println("I'm done!");
                     return null;
                 } catch (Throwable e) {
                     return e;
@@ -160,7 +159,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         Future<Object> future = es.submit(callable);
 
         Thread.sleep(5000);
-        assertTrue(!future.isDone());
+        assertFalse(future.isDone());
 
         // this doc should unblock thread
         c.save(new BasicDBObject("x", 10), WriteConcern.SAFE);

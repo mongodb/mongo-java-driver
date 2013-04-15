@@ -17,8 +17,8 @@
 package org.mongodb.protocol;
 
 // TODO: This needs re-thinking
-public final class QueryOptions {
-    private QueryOptions() {
+public final class QueryFlags {
+    private QueryFlags() {
     }
 
     /**
