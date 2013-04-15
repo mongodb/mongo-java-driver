@@ -53,7 +53,6 @@ subprojects {
 
     dependencies {
         testCompile 'junit:junit:4.11'
-        testCompile 'org.mockito:mockito-core:1.9.5'
     }
 
     sourceSets {
@@ -257,8 +256,13 @@ project(':driver') {
 
     dependencies {
         compile project(':bson')
+//        testCompile 'org.jmock:jmock:2.6.0'
+        testCompile 'org.jmock:jmock-legacy:2.6.0'
+        testCompile 'org.jmock:jmock-junit4:2.6.0'
         unitCompile 'junit:junit:4.11'
-        unitCompile 'org.mockito:mockito-all:1.9.5'
+//        unitCompile 'org.jmock:jmock:2.6.0'
+        unitCompile 'org.jmock:jmock-legacy:2.6.0'
+        unitCompile 'org.jmock:jmock-junit4:2.6.0'
         unitCompile sourceSets.main.runtimeClasspath
         functionalCompile 'junit:junit:4.11'
         functionalCompile sourceSets.main.runtimeClasspath

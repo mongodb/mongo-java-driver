@@ -17,50 +17,61 @@
 package org.mongodb.codecs;
 
 import org.bson.BSONWriter;
-import org.junit.Assert;
+import org.jmock.Expectations;
+import org.jmock.integration.junit4.JUnitRuleMockery;
+import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mongodb.json.JSONWriter;
 
 import java.io.StringWriter;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.Assert.fail;
 
 public class PojoCodecTest {
+    //CHECKSTYLE:OFF
+    @Rule public JUnitRuleMockery context = new JUnitRuleMockery();
+    //CHECKSTYLE:ON
+
+    private BSONWriter bsonWriter;
     private PojoCodec pojoCodec;
-    private BSONWriter bsonWriter = mock(BSONWriter.class);
-    private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
 
     @Before
     public void setUp() {
-        pojoCodec = new PojoCodec(primitiveCodecs);
+        context.setImposteriser(ClassImposteriser.INSTANCE);
+        bsonWriter = context.mock(BSONWriter.class);
+        pojoCodec = new PojoCodec(PrimitiveCodecs.createDefault());
     }
 
     @Test
-    public void shouldEncodeString() {
-        pojoCodec.encode(bsonWriter, "Bob");
-
-        verify(bsonWriter).writeString("Bob");
-    }
-
-    @Test
-    public void shouldEncodeInt() {
-        pojoCodec.encode(bsonWriter, 32);
-
-        verify(bsonWriter).writeInt32(32);
-    }
-
-    @Test
-    @Ignore("not implemented")
     public void shouldEncodeSimplePojo() {
-        pojoCodec.encode(bsonWriter, new SimpleObject("MyName"));
+        context.checking(new Expectations() {{
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeName("name");
+            oneOf(bsonWriter).writeString("MyName");
+            oneOf(bsonWriter).writeEndDocument();
 
-        verify(bsonWriter).writeStartDocument();
-        verify(bsonWriter).writeName("name");
-        verify(bsonWriter).writeString("MyName");
-        verify(bsonWriter).writeEndDocument();
+        }});
+        ignoreJacocoInvocations(bsonWriter);
+
+        pojoCodec.encode(bsonWriter, new SimpleObject("MyName"));
+    }
+
+    @Test
+    public void shouldEncodePojoContainingOtherPojos() {
+        context.checking(new Expectations() {{
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeStartDocument("mySimpleObject");
+            oneOf(bsonWriter).writeName("name");
+            oneOf(bsonWriter).writeString("AnotherName");
+            exactly(2).of(bsonWriter).writeEndDocument();
+
+        }});
+        ignoreJacocoInvocations(bsonWriter);
+
+        pojoCodec.encode(bsonWriter, new NestedObject(new SimpleObject("AnotherName")));
     }
 
     @Test
@@ -70,36 +81,54 @@ public class PojoCodecTest {
         pojoCodec.encode(new JSONWriter(writer), new SimpleObject("MyName"));
 
         System.out.println(writer.toString());
-        verify(bsonWriter).writeName("name");
-        verify(bsonWriter).writeString("MyName");
+    }
+
+    @Test
+    @Ignore("not implemented")
+    public void shouldEncodePojoContainingOtherPojos2() {
+        final StringWriter writer = new StringWriter();
+        pojoCodec.encode(new JSONWriter(writer), new NestedObject(new SimpleObject("AnotherName")));
+        System.out.println(writer.toString());
     }
 
     @Test
     @Ignore("not implemented")
     public void shouldSupportArrays() {
-        Assert.fail("Not implemented");
+        fail("Not implemented");
     }
 
     @Test
     @Ignore("not implemented")
     public void shouldEncodeIds() {
-        Assert.fail("Not implemented");
+        fail("Not implemented");
     }
 
     @Test
     @Ignore("not implemented")
     public void shouldThrowAnExceptionWhenItCannotEncodeAField() {
-        Assert.fail("Not implemented");
+        fail("Not implemented");
     }
 
+    private void ignoreJacocoInvocations(final BSONWriter writer) {
+        context.checking(new Expectations() {{
+            ignoring(writer).writeStartDocument("$jacocoData");
+            ignoring(writer).writeEndDocument();
+        }});
+    }
 
     private static class SimpleObject {
-        //CHECKSTYLE:OFF
         private final String name;
-        //CHECKSTYLE:ON
 
         public SimpleObject(final String name) {
             this.name = name;
+        }
+    }
+
+    private static class NestedObject {
+        private final SimpleObject mySimpleObject;
+
+        public NestedObject(final SimpleObject mySimpleObject) {
+            this.mySimpleObject = mySimpleObject;
         }
     }
 }
