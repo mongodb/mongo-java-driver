@@ -18,7 +18,6 @@ package org.mongodb.impl;
 
 import category.Async;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 import org.mongodb.Fixture;
 import org.mongodb.ServerAddress;
@@ -26,7 +25,6 @@ import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.pool.SimplePool;
 
 @Category(Async.class)
-@Ignore
 public class SingleChannelAsyncMongoConnectorTest extends AbstractMongoConnectorTest {
     @Before
     public void setUp() throws Exception {

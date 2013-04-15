@@ -352,7 +352,7 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
                                 final SingleResultCallback<WriteResult> callback) {
         insert.writeConcernIfAbsent(options.getWriteConcern());
         final MongoInsertMessage<T> message = new MongoInsertMessage<T>(namespace.getFullName(), insert, encoder);
-        sendAsyncWriteMessage(namespace, insert, withDocumentCodec(null), callback, message);
+        sendAsyncWriteMessage(namespace, insert, withDocumentEncoder(null), callback, message);
     }
 
     @Override
@@ -415,23 +415,24 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
                                        final SingleResultCallback<WriteResult> callback, final MongoRequestMessage message) {
 
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
-        encodeMessageToBuffer(message, buffer);
+        MongoRequestMessage nextMessage = encodeMessageToBuffer(message, buffer);
         if (write.getWriteConcern().callGetLastError()) {
             final GetLastError getLastError = new GetLastError(write.getWriteConcern());
             MongoCommandMessage getLastErrorMessage =
                     new MongoCommandMessage(namespace.getDatabaseName() + ".$cmd", getLastError, withDocumentEncoder(encoder));
             encodeMessageToBuffer(getLastErrorMessage, buffer);
             channel.sendAndReceiveMessage(buffer, new MongoWriteResultCallback(callback, write, getLastError, this,
-                    getDocumentDecoder()));
+                    getDocumentDecoder(), namespace, nextMessage));
         }
         else {
-            channel.sendMessage(buffer, new MongoWriteResultCallback(callback, write, null, this, getDocumentDecoder()));
+            channel.sendMessage(buffer, new MongoWriteResultCallback(callback, write, null, this, getDocumentDecoder(), namespace,
+                    nextMessage));
         }
     }
 
-    private void encodeMessageToBuffer(final MongoRequestMessage message, final PooledByteBufferOutputBuffer buffer) {
+    private MongoRequestMessage encodeMessageToBuffer(final MongoRequestMessage message, final PooledByteBufferOutputBuffer buffer) {
         try {
-            message.encode(buffer);
+            return message.encode(buffer);
         } catch (RuntimeException e) {
             buffer.close();
             throw e;
@@ -613,20 +614,24 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
         }
     }
 
-
-    private static class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
+    private class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
         private final SingleResultCallback<WriteResult> callback;
         private final MongoWrite writeOperation;
         private final GetLastError getLastError;
+        private final MongoNamespace namespace;
+        private final MongoRequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
 
         public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback,
                                         final MongoWrite writeOperation, final GetLastError getLastError,
                                         final SingleChannelAsyncMongoConnector client,
-                                        final Decoder<Document> decoder) {
+                                        final Decoder<Document> decoder, final MongoNamespace namespace,
+                                        final MongoRequestMessage nextMessage) {
             super(getLastError, client, decoder);
             this.callback = callback;
             this.writeOperation = writeOperation;
             this.getLastError = getLastError;
+            this.namespace = namespace;
+            this.nextMessage = nextMessage;
         }
 
         @Override
@@ -645,6 +650,9 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
 
                 if (commandException != null) {
                     callback.onResult(null, commandException);
+                }
+                else if (nextMessage != null) {
+                    sendAsyncWriteMessage(namespace, writeOperation, null, callback, nextMessage);
                 }
                 else {
                     callback.onResult(new WriteResult(writeOperation, commandResult), null);
