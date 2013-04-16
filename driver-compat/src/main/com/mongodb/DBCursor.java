@@ -83,7 +83,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         find = new MongoFind()
                 .where(toDocument(query))
                 .select(DBObjects.toFieldSelectorDocument(fields))
-                .readPreference(readPreference.toNew());
+                .readPreference(readPreference.toNew())
+                .flags(collection.getOptions());
     }
 
     private DBCursor(final DBCollection collection, final MongoFind find) {
@@ -175,7 +176,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * resets the query options
      */
     public DBCursor resetOptions() {
-        find.flags(0);
+        find.flags(collection.getOptions());
         return this;
     }
 

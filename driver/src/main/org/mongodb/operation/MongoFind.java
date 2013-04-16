@@ -88,6 +88,12 @@ public class MongoFind extends MongoQuery {
         return this;
     }
 
+    @Override
+    public MongoFind flags(final int flags) {
+        super.flags(flags);
+        return this;
+    }
+
     public MongoFind hintIndex(final String indexName) {
         throw new UnsupportedOperationException();      // TODO
     }
