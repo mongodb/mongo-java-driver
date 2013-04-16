@@ -906,9 +906,11 @@ public class JSONReader extends BSONReader {
         }
         verifyToken("}");
 
-        for (BSONBinarySubType subType : BSONBinarySubType.values()) {
-            if (subType.getValue() == subTypeToken.getValue(Integer.class)) {
-                return new Binary(subType, DatatypeConverter.parseBase64Binary(bytesToken.getValue(String.class)));
+        final byte subType = Byte.parseByte(subTypeToken.getValue(String.class));
+
+        for (BSONBinarySubType st : BSONBinarySubType.values()) {
+            if (st.getValue() == subType) {
+                return new Binary(st, DatatypeConverter.parseBase64Binary(bytesToken.getValue(String.class)));
             }
         }
 
