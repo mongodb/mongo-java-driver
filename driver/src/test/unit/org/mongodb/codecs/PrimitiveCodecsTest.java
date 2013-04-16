@@ -140,9 +140,9 @@ public class PrimitiveCodecsTest {
 
     @Test
     public void testOtherDecoder() {
-        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder() {
+        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder<byte[]>() {
             @Override
-            public Object decode(final BSONReader reader) {
+            public byte[] decode(final BSONReader reader) {
                 return reader.readBinaryData().getData();
             }
         }).build();
@@ -160,9 +160,9 @@ public class PrimitiveCodecsTest {
 
     @Test
     public void testOtherDecoder1() {
-        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder() {
+        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder<byte[]>() {
             @Override
-            public Object decode(final BSONReader reader) {
+            public byte[] decode(final BSONReader reader) {
                 return reader.readBinaryData().getData();
             }
         }).build();
