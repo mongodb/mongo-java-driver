@@ -16,14 +16,10 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONBinaryReader;
 import org.bson.BSONBinarySubType;
-import org.bson.BSONBinaryWriter;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
-import org.bson.io.BasicInputBuffer;
-import org.bson.io.BasicOutputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -36,7 +32,6 @@ import org.mongodb.json.JSONReader;
 import org.mongodb.json.JSONWriter;
 
 import java.io.StringWriter;
-import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.regex.Pattern;
 
@@ -139,30 +134,10 @@ public class PrimitiveCodecsTest {
     }
 
     @Test
-    public void testOtherDecoder() {
-        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder<byte[]>() {
+    public void testOtherDecoderMethod() {
+        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder() {
             @Override
-            public byte[] decode(final BSONReader reader) {
-                return reader.readBinaryData().getData();
-            }
-        }).build();
-        final BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
-        BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer);
-        final Binary binaryValue = new Binary(BSONBinarySubType.Binary, new byte[]{1, 2, 3});
-        bsonWriter.writeStartDocument();
-        bsonWriter.writeBinaryData("binary", binaryValue);
-        bsonWriter.writeEndDocument();
-        BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(outputBuffer.toByteArray())));
-        bsonReader.readStartDocument();
-        bsonReader.readName();
-        assertArrayEquals(binaryValue.getData(), (byte[]) codecs.decode(bsonReader));
-    }
-
-    @Test
-    public void testOtherDecoder1() {
-        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder<byte[]>() {
-            @Override
-            public byte[] decode(final BSONReader reader) {
+            public Object decode(final BSONReader reader) {
                 return reader.readBinaryData().getData();
             }
         }).build();
@@ -177,37 +152,4 @@ public class PrimitiveCodecsTest {
         bsonReader.readName();
         assertArrayEquals(binaryValue.getData(), (byte[]) codecs.decode(bsonReader));
     }
-
-//    @Test
-//    public void testOtherDecoder2() {
-//        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder() {
-//            @Override
-//            public Object decode(final BSONReader reader) {
-//                return reader.readBinaryData().getData();
-//            }
-//        }).build();
-//        final BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
-//        BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer);
-//        final Binary binaryValue = new Binary(BSONBinarySubType.Binary, new byte[]{1, 2, 3});
-//        bsonWriter.writeBinaryData(binaryValue);
-//        BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(outputBuffer.toByteArray())));
-//        assertArrayEquals(binaryValue.getData(), (byte[]) codecs.decode(bsonReader));
-//    }
-//
-//    @Test
-//    public void testOtherDecoder3() {
-//        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder() {
-//            @Override
-//            public Object decode(final BSONReader reader) {
-//                return reader.readBinaryData().getData();
-//            }
-//        }).build();
-//        final StringWriter stringWriter = new StringWriter();
-//        BSONWriter bsonWriter = new JSONWriter(stringWriter);
-//        final Binary binaryValue = new Binary(BSONBinarySubType.Binary, new byte[]{1, 2, 3});
-//        bsonWriter.writeBinaryData(binaryValue);
-//        System.out.println(stringWriter.toString());
-//        BSONReader bsonReader = new JSONReader(stringWriter.toString());
-//        assertArrayEquals(binaryValue.getData(), (byte[]) codecs.decode(bsonReader));
-//    }
 }
