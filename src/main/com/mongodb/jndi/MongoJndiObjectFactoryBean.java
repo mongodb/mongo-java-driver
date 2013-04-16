@@ -53,7 +53,7 @@ public class MongoJndiObjectFactoryBean implements ObjectFactory {
 		Enumeration<RefAddr> props = ((Reference) obj).getAll();
 		
 		while (props.hasMoreElements()) {
-			RefAddr addr = (RefAddr) props.nextElement();
+			RefAddr addr = props.nextElement();
 			if (addr != null) {
 				if (MONGO_CLIENT_URI.equals(addr.getType())) {
 					mongoURI = (String) addr.getContent();
