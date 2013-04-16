@@ -16,6 +16,14 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BSONBinaryReader;
+import org.bson.BSONBinarySubType;
+import org.bson.BSONBinaryWriter;
+import org.bson.BSONReader;
+import org.bson.BSONType;
+import org.bson.BSONWriter;
+import org.bson.io.BasicInputBuffer;
+import org.bson.io.BasicOutputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -23,105 +31,179 @@ import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.junit.Test;
+import org.mongodb.Decoder;
 
+import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.regex.Pattern;
 
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThat;
 
 public class PrimitiveCodecsTest {
     private final PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
 
     @Test
-    public void shouldBeAbleToSerializeString() {
+    public void shouldBeAbleToEncodeString() {
         assertThat(primitiveCodecs.canEncode(String.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeObjectId() {
+    public void shouldBeAbleToEncodeObjectId() {
         assertThat(primitiveCodecs.canEncode(ObjectId.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeInteger() {
+    public void shouldBeAbleToEncodeInteger() {
         System.out.println(Integer.class);
         assertThat(primitiveCodecs.canEncode(Integer.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeLong() {
+    public void shouldBeAbleToEncodeLong() {
         assertThat(primitiveCodecs.canEncode(Long.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeDouble() {
+    public void shouldBeAbleToEncodeDouble() {
         assertThat(primitiveCodecs.canEncode(Double.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeBinary() {
+    public void shouldBeAbleToEncodeBinary() {
         assertThat(primitiveCodecs.canEncode(Binary.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeDate() {
+    public void shouldBeAbleToEncodeDate() {
         assertThat(primitiveCodecs.canEncode(Date.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeTimestamp() {
+    public void shouldBeAbleToEncodeTimestamp() {
         assertThat(primitiveCodecs.canEncode(BSONTimestamp.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeBoolean() {
+    public void shouldBeAbleToEncodeBoolean() {
         assertThat(primitiveCodecs.canEncode(Boolean.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializePattern() {
+    public void shouldBeAbleToEncodePattern() {
         assertThat(primitiveCodecs.canEncode(Pattern.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeMinKey() {
+    public void shouldBeAbleToEncodeMinKey() {
         assertThat(primitiveCodecs.canEncode(MinKey.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeMaxKey() {
+    public void shouldBeAbleToEncodeMaxKey() {
         assertThat(primitiveCodecs.canEncode(MaxKey.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeCode() {
+    public void shouldBeAbleToEncodeCode() {
         assertThat(primitiveCodecs.canEncode(Code.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeNull() {
+    public void shouldBeAbleToEncodeNull() {
         assertThat(primitiveCodecs.canEncode(null), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeFloat() {
+    public void shouldBeAbleToEncodeFloat() {
         assertThat(primitiveCodecs.canEncode(Float.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeShort() {
+    public void shouldBeAbleToEncodeShort() {
         assertThat(primitiveCodecs.canEncode(Short.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeByte() {
+    public void shouldBeAbleToEncodeByte() {
         assertThat(primitiveCodecs.canEncode(Byte.class), is(true));
     }
 
     @Test
-    public void shouldBeAbleToSerializeByteArray() {
+    public void shouldBeAbleToEncodeByteArray() {
         assertThat(primitiveCodecs.canEncode(byte[].class), is(true));
     }
 
+    @Test
+    public void testOtherDecoder() {
+        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder() {
+            @Override
+            public Object decode(final BSONReader reader) {
+                return reader.readBinaryData().getData();
+            }
+        }).build();
+        final BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
+        BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer);
+        final Binary binaryValue = new Binary(BSONBinarySubType.Binary, new byte[]{1, 2, 3});
+        bsonWriter.writeStartDocument();
+        bsonWriter.writeBinaryData("binary", binaryValue);
+        bsonWriter.writeEndDocument();
+        BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(outputBuffer.toByteArray())));
+        bsonReader.readStartDocument();
+        bsonReader.readName();
+        assertArrayEquals(binaryValue.getData(), (byte[]) codecs.decode(bsonReader));
+    }
+
+//    @Test
+//    public void testOtherDecoder() {
+//        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder() {
+//            @Override
+//            public Object decode(final BSONReader reader) {
+//                return reader.readBinaryData().getData();
+//            }
+//        }).build();
+//        final StringWriter stringWriter = new StringWriter();
+//        BSONWriter bsonWriter = new JSONWriter(stringWriter);
+//        final Binary binaryValue = new Binary(BSONBinarySubType.Binary, new byte[]{1, 2, 3});
+//        bsonWriter.writeStartDocument();
+//        bsonWriter.writeBinaryData("binary", binaryValue);
+//        bsonWriter.writeEndDocument();
+//        BSONReader bsonReader = new JSONReader(stringWriter.toString());
+//        bsonReader.readStartDocument();
+//        bsonReader.readName();
+//        assertArrayEquals(binaryValue.getData(), (byte[]) codecs.decode(bsonReader));
+//    }
+
+//    @Test
+//    public void testOtherDecoder2() {
+//        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder() {
+//            @Override
+//            public Object decode(final BSONReader reader) {
+//                return reader.readBinaryData().getData();
+//            }
+//        }).build();
+//        final BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
+//        BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer);
+//        final Binary binaryValue = new Binary(BSONBinarySubType.Binary, new byte[]{1, 2, 3});
+//        bsonWriter.writeBinaryData(binaryValue);
+//        BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(outputBuffer.toByteArray())));
+//        assertArrayEquals(binaryValue.getData(), (byte[]) codecs.decode(bsonReader));
+//    }
+//
+//    @Test
+//    public void testOtherDecoder3() {
+//        PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder() {
+//            @Override
+//            public Object decode(final BSONReader reader) {
+//                return reader.readBinaryData().getData();
+//            }
+//        }).build();
+//        final StringWriter stringWriter = new StringWriter();
+//        BSONWriter bsonWriter = new JSONWriter(stringWriter);
+//        final Binary binaryValue = new Binary(BSONBinarySubType.Binary, new byte[]{1, 2, 3});
+//        bsonWriter.writeBinaryData(binaryValue);
+//        BSONReader bsonReader = new JSONReader(stringWriter.toString());
+//        assertArrayEquals(binaryValue.getData(), (byte[]) codecs.decode(bsonReader));
+//    }
 }

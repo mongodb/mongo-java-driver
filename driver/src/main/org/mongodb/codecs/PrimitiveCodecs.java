@@ -206,6 +206,18 @@ public final class PrimitiveCodecs implements Codec<Object> {
             return this;
         }
 
+        /**
+         * Used to register a decoder for which does not have the same type as the encoder.
+         *
+         * @param bsonType the bson type to decode
+         * @param decoder the decoder
+         * @return this
+         */
+        public Builder otherDecoder(final BSONType bsonType, final Decoder decoder) {
+            bsonTypeDecoderMap.put(bsonType, decoder);
+            return this;
+        }
+
         public PrimitiveCodecs build() {
             return new PrimitiveCodecs(classEncoderMap, bsonTypeDecoderMap);
         }
