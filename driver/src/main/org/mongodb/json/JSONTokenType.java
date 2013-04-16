@@ -63,11 +63,6 @@ public enum JSONTokenType {
     COMMA,
 
     /**
-     * A DateTime token.
-     */
-    DATE_TIME,
-
-    /**
      * A Double token.
      */
     DOUBLE,
@@ -81,11 +76,6 @@ public enum JSONTokenType {
      * And Int64 token.
      */
     INT64,
-
-    /**
-     * An ObjectId token.
-     */
-    OBJECT_ID,
 
     /**
      * A regular expression token.

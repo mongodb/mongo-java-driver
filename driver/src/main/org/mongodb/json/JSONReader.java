@@ -149,10 +149,6 @@ public class JSONReader extends BSONReader {
             case BEGIN_OBJECT:
                 visitExtendedJSON();
                 break;
-            case DATE_TIME:
-                setCurrentBSONType(BSONType.DATE_TIME);
-                currentValue = token.getValue();
-                break;
             case DOUBLE:
                 setCurrentBSONType(BSONType.DOUBLE);
                 currentValue = token.getValue();
@@ -166,10 +162,6 @@ public class JSONReader extends BSONReader {
                 break;
             case INT64:
                 setCurrentBSONType(BSONType.INT64);
-                currentValue = token.getValue();
-                break;
-            case OBJECT_ID:
-                setCurrentBSONType(BSONType.OBJECT_ID);
                 currentValue = token.getValue();
                 break;
             case REGULAR_EXPRESSION:
@@ -200,7 +192,7 @@ public class JSONReader extends BSONReader {
                     setCurrentBSONType(BSONType.BINARY);
                     currentValue = visitBinDataConstructor();
                 } else if ("Date".equals(value)) {
-                    setCurrentBSONType(BSONType.STRING);
+                    setCurrentBSONType(BSONType.DATE_TIME);
                     currentValue = visitDateTimeConstructor(); // withNew = false
                 } else if ("HexData".equals(value)) {
                     setCurrentBSONType(BSONType.BINARY);
@@ -449,7 +441,7 @@ public class JSONReader extends BSONReader {
 
     @Override
     public BSONTimestamp readTimestamp() {
-        checkPreconditions("readTimestamp", BSONType.TIMESTAMP);
+        checkPreconditions("readg", BSONType.TIMESTAMP);
         setState(getNextState());
         return (BSONTimestamp) currentValue;
     }
@@ -609,7 +601,7 @@ public class JSONReader extends BSONReader {
             currentValue = visitBinDataConstructor();
             setCurrentBSONType(BSONType.BINARY);
         } else if ("Date".equals(value)) {
-            currentValue = visitDateTimeConstructorWithNew();
+            currentValue = visitDateTimeConstructor();
             setCurrentBSONType(BSONType.DATE_TIME);
         } else if ("HexData".equals(value)) {
             currentValue = visitHexDataConstructor();
@@ -696,7 +688,7 @@ public class JSONReader extends BSONReader {
         }
         verifyToken(",");
         final JSONToken bytesToken = popToken();
-        if (bytesToken.getType() != JSONTokenType.STRING) {
+        if (bytesToken.getType() != JSONTokenType.UNQUOTED_STRING) {
             throw new JSONParseException("JSON reader expected a string but found '%s'.", bytesToken.getValue());
         }
         verifyToken(")");
@@ -826,7 +818,7 @@ public class JSONReader extends BSONReader {
         return new Binary(DatatypeConverter.parseHexBinary(hex));
     }
 
-    private long visitDateTimeConstructorWithNew() {
+    private long visitDateTimeConstructor() {
         final DateFormat df = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss z");
 
         verifyToken("(");
@@ -882,13 +874,6 @@ public class JSONReader extends BSONReader {
         } else {
             throw new JSONParseException("JSON reader expected an integer or a string but found '%s'.", token.getValue());
         }
-    }
-
-    private String visitDateTimeConstructor() {
-        verifyToken("(");
-        verifyToken(")");
-        final DateFormat df = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss z");
-        return df.format(new Date());
     }
 
     private Binary visitBinDataExtendedJson() {

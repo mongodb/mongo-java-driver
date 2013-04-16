@@ -173,7 +173,7 @@ class JSONScanner {
                     return new JSONToken(JSONTokenType.REGULAR_EXPRESSION, regex);
                 case INVALID:
                     throw new JSONParseException("Invalid JSON regular expression. Position: %d.", buffer.getPosition());
-                 default:
+                default:
             }
         }
     }
@@ -274,7 +274,9 @@ class JSONScanner {
                             state = NumberState.DONE;
                             break;
                         default:
-                            if (Character.isWhitespace(c)) {
+                            if (Character.isDigit(c)){
+                                state = NumberState.SAW_INTEGER_DIGITS;
+                            }else if (Character.isWhitespace(c)) {
                                 state = NumberState.DONE;
                             } else {
                                 state = NumberState.INVALID;
@@ -419,6 +421,8 @@ class JSONScanner {
             }
 
             switch (state) {
+                case INVALID:
+                    throw new JSONParseException("Invalid JSON number");
                 case DONE:
                     buffer.unread(c);
                     final String lexeme = buffer.substring(start, buffer.getPosition());
@@ -432,8 +436,7 @@ class JSONScanner {
                             return new JSONToken(JSONTokenType.INT32, (int) value);
                         }
                     }
-                case INVALID:
-                    throw new JSONParseException("Invalid JSON number");
+                default:
             }
         }
 
