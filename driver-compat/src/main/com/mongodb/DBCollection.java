@@ -18,9 +18,14 @@ package com.mongodb;
 
 import com.mongodb.codecs.CollectibleDBObjectCodec;
 import com.mongodb.codecs.DBEncoderAdapter;
+import org.bson.BSONBinarySubType;
+import org.bson.BSONReader;
+import org.bson.BSONType;
+import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.mongodb.Codec;
 import org.mongodb.CollectibleCodec;
+import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.Get;
@@ -1392,11 +1397,8 @@ public class DBCollection implements IDBCollection {
             }
         }
 
-        final FindAndModifyCommandResultCodec<DBObject> findAndModifyCommandResultCodec = new
-                FindAndModifyCommandResultCodec<DBObject>(
-                PrimitiveCodecs.createDefault(),
-                getCodec()
-        );
+        final FindAndModifyCommandResultCodec<DBObject> findAndModifyCommandResultCodec =
+                new FindAndModifyCommandResultCodec<DBObject>(getPrimitiveCodecs(), getCodec());
 
         final FindAndModifyCommandResult<DBObject> commandResult =
                 new FindAndModifyCommandResult<DBObject>(getConnector().command(getDB().getName(), mongoCommand, findAndModifyCommandResultCodec));
@@ -1620,7 +1622,22 @@ public class DBCollection implements IDBCollection {
     private void updateObjectCodec(final Class<? extends DBObject> objectClass) {
         final HashMap<String, Class<? extends DBObject>> map = new HashMap<String, Class<? extends DBObject>>(pathToClassMap);
         this.codec = new CollectibleDBObjectCodec(database,
-                PrimitiveCodecs.createDefault(), new ObjectIdGenerator(), objectClass, map);
+                getPrimitiveCodecs(), new ObjectIdGenerator(), objectClass, map);
+    }
+
+    private PrimitiveCodecs getPrimitiveCodecs() {
+        return PrimitiveCodecs.builder(PrimitiveCodecs.createDefault()).otherDecoder(BSONType.BINARY, new Decoder() {
+            @Override
+            public Object decode(final BSONReader reader) {
+                Binary binary = reader.readBinaryData();
+                if (binary.getType() == BSONBinarySubType.Binary.getValue()) {
+                    return binary.getData();
+                }
+                else {
+                    return binary;
+                }
+            }
+        }).build();
     }
 
     private Document toIndexDetailsDocument(DBObject keys, DBObject options) {

@@ -20,7 +20,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
-import org.bson.types.Binary;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -105,7 +104,7 @@ public class GridFSDBFile extends GridFSFile {
             throw new MongoException("can't find a chunk!  file id: " + _id + " chunk: " + i);
         }
 
-        return ((Binary) chunk.get("data")).getData();
+        return (byte[]) chunk.get("data");
     }
 
     class MyInputStream extends InputStream {

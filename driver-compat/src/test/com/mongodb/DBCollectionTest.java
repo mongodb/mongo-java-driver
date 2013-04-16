@@ -16,10 +16,12 @@
 
 package com.mongodb;
 
+import org.bson.BSONBinarySubType;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONObject;
 import org.bson.BSONWriter;
 import org.bson.io.OutputBuffer;
+import org.bson.types.Binary;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -30,6 +32,7 @@ import java.util.Map;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
@@ -253,6 +256,23 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertNotNull(newDoc);
         assertThat(newDoc, hasSubdocument(new BasicDBObject("x", false)));
     }
+
+    @Test
+    public void testGenericBinary() {
+        final byte[] data = {1, 2, 3};
+        collection.insert(new BasicDBObject("binary", new Binary(data)));
+        assertArrayEquals(data, (byte[]) collection.findOne().get("binary"));
+    }
+
+    @Test
+    public void testOtherBinary() {
+        final byte[] data = {1, 2, 3};
+        final Binary binaryValue = new Binary(BSONBinarySubType.UserDefined, data);
+        collection.insert(new BasicDBObject("binary", binaryValue));
+        assertEquals(binaryValue, collection.findOne().get("binary"));
+    }
+
+
 
     public static class MyDBObject extends BasicDBObject {
         private static final long serialVersionUID = 3352369936048544621L;
