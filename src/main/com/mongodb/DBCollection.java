@@ -1283,6 +1283,26 @@ public abstract class DBCollection {
     }
     
     /**
+     * Performs an aggregation operation.
+     *
+     * @param pipelineOps
+     *          Operations to be performed in the aggregation pipeline
+     * @return The aggregation operation's result set
+     * 
+     */
+    public AggregationOutput aggregate( List<DBObject> pipelineOps ){
+        if (pipelineOps.isEmpty())
+            throw new IllegalArgumentException("aggregate can not accept empty operation pipeline");
+        
+        DBObject command = new BasicDBObject("aggregate", _name );
+        command.put( "pipeline", pipelineOps );
+        
+        CommandResult res = _db.command( command, getOptions(), getReadPreference() );
+        res.throwOnError();
+        return new AggregationOutput( command, res );
+    }
+
+    /**
      * performs an aggregation operation
      *
      * @param firstOp
@@ -1293,20 +1313,15 @@ public abstract class DBCollection {
      * @return The aggregation operation's result set
      * 
      */
-    public AggregationOutput aggregate( DBObject firstOp, DBObject ... additionalOps){
+    public AggregationOutput aggregate( DBObject firstOp, DBObject ... additionalOps ){
         if (firstOp == null)
             throw new IllegalArgumentException("aggregate can not accept null pipeline operation");
-        
-        DBObject command = new BasicDBObject("aggregate", _name );
         
         List<DBObject> pipelineOps = new ArrayList<DBObject>();
         pipelineOps.add(firstOp);
         Collections.addAll(pipelineOps, additionalOps);
-        command.put( "pipeline", pipelineOps );
         
-        CommandResult res = _db.command( command, getOptions(), getReadPreference() );
-        res.throwOnError();
-        return new AggregationOutput( command, res );
+        return aggregate(pipelineOps);
     }
 
     /**
