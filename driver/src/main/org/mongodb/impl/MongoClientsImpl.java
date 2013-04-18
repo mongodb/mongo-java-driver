@@ -42,7 +42,8 @@ public final class MongoClientsImpl {
 
     public static MongoClientImpl create(final MongoConnectionStrategy connectionStrategy,
                                          final MongoClientOptions options) {
-        return new MongoClientImpl(options, new MultipleServerMongoConnector(connectionStrategy, null, options));
+        return new MongoClientImpl(options, new DelegatingMongoConnector(new MultiServerConnectorManager(connectionStrategy, null,
+                options)));
     }
 
     public static MongoClientImpl create(final MongoClientURI mongoURI) throws UnknownHostException {

@@ -16,14 +16,8 @@
 
 package org.mongodb;
 
-import org.mongodb.async.MongoAsyncConnector;
-
-import java.util.List;
-
-public interface MongoConnector extends MongoSyncConnector, MongoAsyncConnector {
-    void close();
-
-    List<ServerAddress> getServerAddressList();
-
-    MongoConnector getSession();
+public enum Consistency {
+    Eventual,
+    Monotonic,
+    Strong
 }

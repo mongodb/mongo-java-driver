@@ -69,6 +69,11 @@ public class SingleServerMongoConnector implements MongoConnector {
     }
 
     @Override
+    public MongoConnector getSession() {
+        return new MongoSessionFactory(this).getSession();
+    }
+
+    @Override
     public void close() {
         connectionPool.close();
     }

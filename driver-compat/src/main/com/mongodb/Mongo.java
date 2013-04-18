@@ -18,11 +18,11 @@ package com.mongodb;
 
 import org.mongodb.Codec;
 import org.mongodb.Document;
-import org.mongodb.MongoConnector;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
+import org.mongodb.impl.DelegatingMongoConnector;
 import org.mongodb.impl.MongoConnectorsImpl;
 
 import java.net.UnknownHostException;
@@ -46,7 +46,7 @@ public class Mongo {
     private final Bytes.OptionHolder optionHolder;
 
     private final Codec<Document> documentCodec;
-    private final MongoConnector connector;
+    private final DelegatingMongoConnector connector;
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
         this(MongoConnectorsImpl.create(createNewSeedList(seedList), mongoOptions.toNew()), mongoOptions);
@@ -60,7 +60,7 @@ public class Mongo {
         this(MongoConnectorsImpl.create(serverAddress.toNew(), mongoOptions.toNew()), mongoOptions);
     }
 
-    Mongo(final MongoConnector connector, final MongoClientOptions options) {
+    Mongo(final DelegatingMongoConnector connector, final MongoClientOptions options) {
         this.connector = connector;
         this.documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
         this.readPreference = options.getReadPreference() != null ?
@@ -280,7 +280,7 @@ public class Mongo {
         return retVal;
     }
 
-    private static MongoConnector createConnector(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
+    private static DelegatingMongoConnector createConnector(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
             return MongoConnectorsImpl.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)),
                     mongoURI.getCredentials(), mongoURI.getOptions());
@@ -293,7 +293,7 @@ public class Mongo {
         }
     }
 
-    MongoConnector getConnector() {
+    DelegatingMongoConnector getConnector() {
         return connector;
     }
 

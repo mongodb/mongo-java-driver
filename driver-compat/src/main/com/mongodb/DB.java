@@ -27,6 +27,8 @@ import org.mongodb.command.DropDatabase;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
+import org.mongodb.impl.DelegatingMongoConnector;
+import org.mongodb.impl.MonotonicallyConsistentServerConnectorManager;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.result.QueryResult;
@@ -47,7 +49,7 @@ public class DB implements IDB {
     private final Codec<Document> documentCodec;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
-
+    private final ThreadLocal<MongoConnector> pinnedConnector = new ThreadLocal<MongoConnector>();
 
     DB(final Mongo mongo, final String dbName, final Codec<Document> documentCodec) {
         this.mongo = mongo;
@@ -94,7 +96,11 @@ public class DB implements IDB {
      */
     @Override
     public void requestStart() {
-        //TODO implement this
+        if (pinnedConnector.get() != null) {
+            throw new IllegalStateException();
+        }
+        pinnedConnector.set(new DelegatingMongoConnector(
+                new MonotonicallyConsistentServerConnectorManager(getMongo().getConnector().getConnectorManager())));
     }
 
     /**
@@ -102,7 +108,12 @@ public class DB implements IDB {
      */
     @Override
     public void requestDone() {
-        //TODO implement this
+        MongoConnector connector = pinnedConnector.get();
+        if (connector == null) {
+            throw new IllegalStateException();
+        }
+        connector.close();
+        pinnedConnector.remove();
     }
 
     /**
@@ -111,7 +122,7 @@ public class DB implements IDB {
      */
     @Override
     public void requestEnsureConnection() {
-        requestStart();
+        // do nothing for now
     }
 
     @Override
@@ -439,6 +450,9 @@ public class DB implements IDB {
     }
 
     MongoConnector getConnector() {
+        if (pinnedConnector.get() != null) {
+            return pinnedConnector.get();
+        }
         return getMongo().getConnector();
     }
 
@@ -454,7 +468,6 @@ public class DB implements IDB {
             return ex.getCommandResult();
         }
     }
-
 
     Bytes.OptionHolder getOptionHolder() {
         return optionHolder;

@@ -21,6 +21,7 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoConnector;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoException;
@@ -122,6 +123,11 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
     @Override
     public List<ServerAddress> getServerAddressList() {
         return Arrays.asList(channel.getAddress());
+    }
+
+    @Override
+    public MongoConnector getSession() {
+        return this;
     }
 
     private Codec<Document> withDocumentCodec(final Codec<Document> codec) {

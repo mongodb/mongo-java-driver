@@ -31,31 +31,34 @@ public final class MongoConnectorsImpl {
     private MongoConnectorsImpl() {
     }
 
-    public static SingleServerMongoConnector create(final ServerAddress serverAddress, final MongoClientOptions options) {
+    public static DelegatingMongoConnector create(final ServerAddress serverAddress, final MongoClientOptions options) {
         return create(serverAddress, null, options);
     }
 
-    public static SingleServerMongoConnector create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+    public static DelegatingMongoConnector create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                                     final MongoClientOptions options) {
-        return create(serverAddress, credentialList, options, new PowerOfTwoByteBufferPool());
+        return new DelegatingMongoConnector(new SingleServerConnectorManager(create(serverAddress, credentialList, options,
+                new PowerOfTwoByteBufferPool())));
     }
 
-    public static MultipleServerMongoConnector create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MultipleServerMongoConnector(new ReplicaSetConnectionStrategy(seedList, options), null, options);
+    public static DelegatingMongoConnector create(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        return new DelegatingMongoConnector(new MultiServerConnectorManager(new ReplicaSetConnectionStrategy(seedList, options), null,
+                options));
     }
 
-    public static MultipleServerMongoConnector create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
+    public static DelegatingMongoConnector create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                                       final MongoClientOptions options) {
-        return new MultipleServerMongoConnector(new ReplicaSetConnectionStrategy(seedList, options), credentialList, options);
+        return new DelegatingMongoConnector(new MultiServerConnectorManager(new ReplicaSetConnectionStrategy(seedList, options),
+                credentialList, options));
     }
 
-    static SingleServerMongoConnector create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+    static PoolableConnectionManagerImpl create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                              final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
         if (options.isAsyncEnabled()
                 && !options.isSSLEnabled()
                 && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            return new SingleServerMongoConnector(options, serverAddress,
-                    new SimplePool<MongoPoolableConnector>(serverAddress.toString(), options.getConnectionsPerHost()) {
+            return new PoolableConnectionManagerImpl(serverAddress, new SimplePool<MongoPoolableConnector>(serverAddress.toString(),
+                    options.getConnectionsPerHost()) {
                         @Override
                         protected MongoPoolableConnector createNew() {
                             return new SingleChannelAsyncMongoConnector(serverAddress, credentialList, this, bufferPool, options);
@@ -69,8 +72,8 @@ public final class MongoConnectorsImpl {
                     });
         }
         else {
-            return new SingleServerMongoConnector(options, serverAddress,
-                    new SimplePool<MongoPoolableConnector>(serverAddress.toString(), options.getConnectionsPerHost()) {
+            return new PoolableConnectionManagerImpl(serverAddress, new SimplePool<MongoPoolableConnector>(serverAddress.toString(),
+                    options.getConnectionsPerHost()) {
                         @Override
                         protected MongoPoolableConnector createNew() {
                             return new SingleChannelSyncMongoConnector(serverAddress, credentialList, this, bufferPool, options);

@@ -16,13 +16,13 @@
 
 package com.mongodb;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -130,12 +130,30 @@ public class DBOldTest extends DatabaseTestCase {
 //        }
 
     @Test
-    @Ignore("not sure we're going to support this functionality, probably not at the client level at least")
     public void testEnsureConnection() throws UnknownHostException {
         //it doesn't fail, I'll give you that....
         database.requestStart();
         try {
             database.requestEnsureConnection();
+        } finally {
+            database.requestDone();
+        }
+    }
+
+    @Test
+    public void testRequestPinning() throws UnknownHostException {
+        database.requestStart();
+        try {
+            DBCursor cursorBefore = collection.find().setReadPreference(ReadPreference.secondary());
+            cursorBefore.hasNext();
+
+            WriteResult result = collection.insert(new BasicDBObject());
+
+            DBCursor cursorAfter = collection.find().setReadPreference(ReadPreference.secondary());
+            cursorAfter.hasNext();
+            assertNotEquals(cursorBefore.getServerAddress(), cursorAfter.getServerAddress());
+            assertEquals(result.getLastError().getServerUsed(), cursorAfter.getServerAddress());
+
         } finally {
             database.requestDone();
         }

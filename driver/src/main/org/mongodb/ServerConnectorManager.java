@@ -16,14 +16,16 @@
 
 package org.mongodb;
 
-import org.mongodb.async.MongoAsyncConnector;
-
 import java.util.List;
 
-public interface MongoConnector extends MongoSyncConnector, MongoAsyncConnector {
+public interface ServerConnectorManager {
+    PoolableConnectionManager getConnectionManagerForWrite();
+
+    PoolableConnectionManager getConnectionManagerForRead(ReadPreference readPreference);
+
+    PoolableConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress);
+
+    List<ServerAddress> getAllServerAddresses();
+
     void close();
-
-    List<ServerAddress> getServerAddressList();
-
-    MongoConnector getSession();
 }
