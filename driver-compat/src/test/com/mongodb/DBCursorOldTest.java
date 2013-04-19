@@ -388,9 +388,10 @@ public class DBCursorOldTest extends DatabaseTestCase {
     }
 
     private void insertTestData(final DBCollection dbCollection, final int numberOfDocuments) {
-        for (int i = 0; i < numberOfDocuments; i++) {
-            dbCollection.insert(new BasicDBObject("x", i));
+        for (int i = 0; i < numberOfDocuments - 1; i++) {
+            dbCollection.insert(new BasicDBObject("x", i), WriteConcern.UNACKNOWLEDGED);
         }
+        dbCollection.insert(new BasicDBObject("x", numberOfDocuments - 1), WriteConcern.ACKNOWLEDGED);
     }
 
 //    @Test
