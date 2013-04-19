@@ -36,6 +36,7 @@ import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
+import org.mongodb.codecs.UUIDCodec;
 import org.mongodb.command.CollStats;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
@@ -1633,6 +1634,9 @@ public class DBCollection implements IDBCollection {
                 if (binary.getType() == BSONBinarySubType.Binary.getValue()) {
                     return binary.getData();
                 }
+                else if (binary.getType() == BSONBinarySubType.UuidLegacy.getValue()) {
+                    return new UUIDCodec().toUUID(binary.getData());
+                }
                 else {
                     return binary;
                 }
@@ -1641,7 +1645,8 @@ public class DBCollection implements IDBCollection {
     }
 
     private Document toIndexDetailsDocument(DBObject keys, DBObject options) {
-        // TODO: Check if these are all the supported options. driver:index still not supports all options. Waiting for https://trello.com/card/additional-index-functionality-that-isn-t-supported-yet/50c237ecaad6596f2f001a3e/127
+        // TODO: Check if these are all the supported options. driver:index still not supports all options.
+        // Waiting for https://trello.com/card/additional-index-functionality-that-isn-t-supported-yet/50c237ecaad6596f2f001a3e/127
         String name = null;
         boolean unique = false;
 

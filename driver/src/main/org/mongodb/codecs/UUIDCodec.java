@@ -29,7 +29,7 @@ public class UUIDCodec implements Codec<UUID> {
     public UUID decode(final BSONReader reader) {
         final Binary binary = reader.readBinaryData();
         final byte[] binaryData = binary.getData();
-        return new UUID(readLongFromArrayLittleEndian(binaryData, 0), readLongFromArrayLittleEndian(binaryData, 8));
+        return toUUID(binaryData);
     }
 
     @Override
@@ -45,6 +45,10 @@ public class UUIDCodec implements Codec<UUID> {
     @Override
     public Class<UUID> getEncoderClass() {
         return UUID.class;
+    }
+
+    public UUID toUUID(final byte[] binaryData) {
+        return new UUID(readLongFromArrayLittleEndian(binaryData, 0), readLongFromArrayLittleEndian(binaryData, 8));
     }
 
     private static void writeLongToArrayLittleEndian(final byte[] bytes, final int offset, final long x) {

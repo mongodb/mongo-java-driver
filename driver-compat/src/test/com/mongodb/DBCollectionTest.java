@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -272,7 +273,12 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertEquals(binaryValue, collection.findOne().get("binary"));
     }
 
-
+    @Test
+    public void testUUID() {
+        UUID uuid = UUID.randomUUID();
+        collection.insert(new BasicDBObject("uuid", uuid));
+        assertEquals(uuid, collection.findOne().get("uuid"));
+    }
 
     public static class MyDBObject extends BasicDBObject {
         private static final long serialVersionUID = 3352369936048544621L;
