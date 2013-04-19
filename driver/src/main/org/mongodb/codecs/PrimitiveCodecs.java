@@ -105,6 +105,7 @@ public final class PrimitiveCodecs implements Codec<Object> {
                .otherEncoder(new ShortCodec())
                .otherEncoder(new ByteCodec())
                .otherEncoder(new ByteArrayCodec())
+               .otherEncoder(new UUIDCodec())
                .build();
     }
 
