@@ -22,6 +22,7 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoNamespace;
+import org.mongodb.PoolableConnectionManager;
 import org.mongodb.ServerAddress;
 import org.mongodb.ServerConnectorManager;
 import org.mongodb.async.SingleResultCallback;
@@ -55,159 +56,179 @@ public class DelegatingMongoConnector implements MongoConnector {
     @Override
     public CommandResult command(final String database, final MongoCommand commandOperation,
                                  final Codec<Document> codec) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForRead(commandOperation.getReadPreference()).getConnection();
+        PoolableConnectionManager connectionManager =
+                connectorManager.getConnectionManagerForRead(commandOperation.getReadPreference());
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.command(database, commandOperation, codec);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
                                     final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForRead(find.getReadPreference()).getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForRead(find.getReadPreference());
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.query(namespace, find, queryEncoder, resultDecoder);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                       final Decoder<T> resultDecoder) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForServer(getMore.getServerCursor().getAddress()).getConnection();
+        PoolableConnectionManager connectionManager =
+                connectorManager.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.getMore(namespace, getMore, resultDecoder);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public void killCursors(final MongoKillCursor killCursor) {
         for (ServerCursor cursor : killCursor.getServerCursors()) {
-            MongoPoolableConnector connector = connectorManager.getConnectionManagerForServer(cursor.getAddress()).getConnection();
+            PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForServer(cursor.getAddress());
+            MongoConnector connector = connectionManager.getConnection();
             try {
                 connector.killCursors(new MongoKillCursor(cursor));
             } finally {
-                connector.release();
+                connectionManager.releaseConnection(connector);
             }
         }
     }
 
     @Override
     public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert, final Encoder<T> encoder) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForWrite().getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.insert(namespace, insert, encoder);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public WriteResult update(final MongoNamespace namespace, final MongoUpdate update, final Encoder<Document> queryEncoder) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForWrite().getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.update(namespace, update, queryEncoder);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public <T> WriteResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
                                    final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForWrite().getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.replace(namespace, replace, queryEncoder, encoder);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove, final Encoder<Document> queryEncoder) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForWrite().getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.remove(namespace, remove, queryEncoder);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public Future<CommandResult> asyncCommand(final String database, final MongoCommand commandOperation,
                                               final Codec<Document> codec) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForRead(commandOperation.getReadPreference()).getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForRead(commandOperation.getReadPreference());
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.asyncCommand(database, commandOperation, codec);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public void asyncCommand(final String database, final MongoCommand commandOperation, final Codec<Document> codec,
                              final SingleResultCallback<CommandResult> callback) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForRead(commandOperation.getReadPreference()).getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForRead(commandOperation.getReadPreference());
+        MongoConnector connector =
+                connectionManager.getConnection();
         try {
             connector.asyncCommand(database, commandOperation, codec, callback);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
                                                  final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForRead(find.getReadPreference()).getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForRead(find.getReadPreference());
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.asyncQuery(namespace, find, queryEncoder, resultDecoder);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
                                final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForRead(find.getReadPreference()).getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForRead(find.getReadPreference());
+        MongoConnector connector = connectionManager.getConnection();
         try {
             connector.asyncQuery(namespace, find, queryEncoder, resultDecoder, callback);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                                    final Decoder<T> resultDecoder) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForServer(getMore.getServerCursor().getAddress()).getConnection();
+        PoolableConnectionManager connectionManager =
+                connectorManager.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoConnector connector =
+                connectionManager.getConnection();
         try {
             return connector.asyncGetMore(namespace, getMore, resultDecoder);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore, final Decoder<T> resultDecoder,
                                  final SingleResultCallback<QueryResult<T>> callback) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForServer(getMore.getServerCursor().getAddress()).getConnection();
+        MongoConnector connector =
+                connectorManager.getConnectionManagerForServer(getMore.getServerCursor().getAddress()).getConnection();
         connector.asyncGetMore(namespace, getMore, resultDecoder, callback);
     }
 
     @Override
     public <T> Future<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
                                                final Encoder<T> encoder) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForWrite().getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.asyncInsert(namespace, insert, encoder);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
@@ -215,22 +236,24 @@ public class DelegatingMongoConnector implements MongoConnector {
     public <T> void asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
                                 final Encoder<T> encoder,
                                 final SingleResultCallback<WriteResult> callback) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForWrite().getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
+        MongoConnector connector = connectionManager.getConnection();
         try {
             connector.asyncInsert(namespace, insert, encoder, callback);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public Future<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
                                            final Encoder<Document> queryEncoder) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForWrite().getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.asyncUpdate(namespace, update, queryEncoder);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
@@ -238,11 +261,12 @@ public class DelegatingMongoConnector implements MongoConnector {
     public void asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
                             final Encoder<Document> queryEncoder,
                             final SingleResultCallback<WriteResult> callback) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForWrite().getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
+        MongoConnector connector = connectionManager.getConnection();
         try {
             connector.asyncUpdate(namespace, update, queryEncoder, callback);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
@@ -250,11 +274,12 @@ public class DelegatingMongoConnector implements MongoConnector {
     public <T> Future<WriteResult> asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
                                                 final Encoder<Document> queryEncoder,
                                                 final Encoder<T> encoder) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForWrite().getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.asyncReplace(namespace, replace, queryEncoder, encoder);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
@@ -262,22 +287,24 @@ public class DelegatingMongoConnector implements MongoConnector {
     public <T> void asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
                                  final Encoder<Document> queryEncoder, final Encoder<T> encoder,
                                  final SingleResultCallback<WriteResult> callback) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForWrite().getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
+        MongoConnector connector = connectionManager.getConnection();
         try {
             connector.asyncReplace(namespace, replace, queryEncoder, encoder, callback);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
     @Override
     public Future<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
                                            final Encoder<Document> queryEncoder) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForWrite().getConnection();
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
+        MongoConnector connector = connectionManager.getConnection();
         try {
             return connector.asyncRemove(namespace, remove, queryEncoder);
         } finally {
-            connector.release();
+            connectionManager.releaseConnection(connector);
         }
     }
 
@@ -285,8 +312,13 @@ public class DelegatingMongoConnector implements MongoConnector {
     public void asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
                             final Encoder<Document> queryEncoder,
                             final SingleResultCallback<WriteResult> callback) {
-        MongoPoolableConnector connector = connectorManager.getConnectionManagerForWrite().getConnection();
-        connector.asyncRemove(namespace, remove, queryEncoder, callback);
+        PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
+        MongoConnector connector = connectionManager.getConnection();
+        try {
+            connector.asyncRemove(namespace, remove, queryEncoder, callback);
+        } finally {
+            connectionManager.releaseConnection(connector);
+        }
     }
 
     @Override
