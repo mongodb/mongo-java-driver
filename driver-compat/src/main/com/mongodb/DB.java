@@ -112,8 +112,8 @@ public class DB implements IDB {
         if (connector == null) {
             throw new IllegalStateException();
         }
-        connector.close();
         pinnedConnector.remove();
+        connector.close();
     }
 
     /**
