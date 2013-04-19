@@ -299,8 +299,4 @@ public class DelegatingMongoConnector implements MongoConnector {
         return connectorManager.getAllServerAddresses();
     }
 
-    @Override
-    public MongoConnector getSession() {
-        return new MongoSessionFactory(this).getSession();
-    }
 }

@@ -24,6 +24,4 @@ public interface MongoConnector extends MongoSyncConnector, MongoAsyncConnector 
     void close();
 
     List<ServerAddress> getServerAddressList();
-
-    MongoConnector getSession();
 }

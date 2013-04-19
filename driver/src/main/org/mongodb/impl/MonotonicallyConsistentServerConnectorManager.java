@@ -21,7 +21,6 @@ import org.mongodb.Codec;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.MongoConnector;
 import org.mongodb.MongoNamespace;
 import org.mongodb.PoolableConnectionManager;
 import org.mongodb.ReadPreference;
@@ -161,11 +160,6 @@ public class MonotonicallyConsistentServerConnectorManager implements ServerConn
         @Override
         public List<ServerAddress> getServerAddressList() {
             return proxy.getServerAddressList();
-        }
-
-        @Override
-        public MongoConnector getSession() {
-            throw new UnsupportedOperationException();
         }
 
         @Override
