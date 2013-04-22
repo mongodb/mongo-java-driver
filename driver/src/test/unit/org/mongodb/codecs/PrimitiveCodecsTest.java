@@ -135,6 +135,7 @@ public class PrimitiveCodecsTest {
 
     @Test
     public void testOtherDecoderMethod() {
+        @SuppressWarnings("rawtypes")
         PrimitiveCodecs codecs = PrimitiveCodecs.builder(primitiveCodecs).otherDecoder(BSONType.BINARY, new Decoder() {
             @Override
             public Object decode(final BSONReader reader) {
