@@ -16,6 +16,7 @@
 
 package com.mongodb.codecs;
 
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.DatabaseTestCase;
@@ -105,6 +106,15 @@ public class DBObjectCodecTest extends DatabaseTestCase {
         assertEquals(String.class, collection.findOne().get("x").getClass());
         BSON.clearAllHooks();
         assertEquals(Double.class, collection.findOne().get("x").getClass());
+    }
+
+    @Test
+    public void testDBListEncoding() {
+        final BasicDBList list = new BasicDBList();
+        list.add(new BasicDBObject("a", 1).append("b", true));
+        list.add(new BasicDBObject("c", "string").append("d", 0.1));
+        collection.save(new BasicDBObject("l", list));
+        assertEquals(list, collection.findOne().get("l"));
     }
 
     public static class TopLevelDBObject extends BasicDBObject {

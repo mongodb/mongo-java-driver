@@ -28,6 +28,7 @@ import org.bson.BSON;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
+import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
 import org.mongodb.Codec;
 import org.mongodb.codecs.PrimitiveCodecs;
@@ -124,6 +125,9 @@ public class DBObjectCodec implements Codec<DBObject> {
         final Object value = BSON.applyEncodingHooks(initialValue);
         if (value instanceof DBRefBase) {
             encodeDBRef(bsonWriter, (DBRefBase) value);
+        }
+        else if (value instanceof BasicBSONList) {
+            encodeIterable(bsonWriter, (BasicBSONList) value);
         }
         else if (value instanceof DBObject) {
             encodeEmbeddedDBObject(bsonWriter, (DBObject) value);

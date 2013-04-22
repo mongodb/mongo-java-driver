@@ -147,7 +147,7 @@ public class Mongo {
      * Gets the address of the current master
      * @return the address
      */
-    public ServerAddress getAddress(){
+    public ServerAddress getAddress() {
         //TODO this needs to return a master. Currently not.
         return new ServerAddress(getConnector().getServerAddressList().get(0));
     }
