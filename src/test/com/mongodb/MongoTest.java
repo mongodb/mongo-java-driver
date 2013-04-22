@@ -19,12 +19,16 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
+import org.mockito.Mockito;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @SuppressWarnings("deprecation")
 public class MongoTest extends TestCase {
@@ -78,6 +82,22 @@ public class MongoTest extends TestCase {
         assertEquals(Bytes.QUERYOPTION_SLAVEOK, m.getOptions() & Bytes.QUERYOPTION_SLAVEOK);
         m.close();
 
+    }
+
+    /**
+     * Assert that isMongosConnection method returns value
+     * without NPE even without appropriate initialization, for example
+     * after using Mockito.
+     *
+     * This is a live testcase from Fongo project see https://github.com/foursquare/fongo/blob/master/src/main/java/com/foursquare/fongo/Fongo.java
+     * lines 111-139
+     *
+     * For some reason NPE is reproduced not every time on my machine.
+     */
+    @Test
+    public void testMockitoIntegration () {
+        Mongo mongo = Mockito.mock(Mongo.class);
+        assertThat(mongo.isMongosConnection(), is(false));
     }
 
     @Test

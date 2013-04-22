@@ -615,7 +615,12 @@ public class Mongo {
     }
 
     boolean isMongosConnection() {
-        return _connector.isMongosConnection();
+//
+        if (_connector != null) {
+            return _connector.isMongosConnection();
+        } else {
+            return Boolean.FALSE;
+        }
     }
 
     private static MongoAuthority getMongoAuthorityFromURI(final MongoURI uri) throws UnknownHostException {
