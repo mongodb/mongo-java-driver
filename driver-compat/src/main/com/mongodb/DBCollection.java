@@ -231,7 +231,7 @@ public class DBCollection implements IDBCollection {
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern) {
         final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
                 .writeConcern(aWriteConcern.toNew());
-        return new WriteResult(insertInternal(mongoInsert, codec), aWriteConcern);
+        return new WriteResult(insertInternal(mongoInsert, codec), aWriteConcern, getDB());
     }
 
     /**
@@ -267,7 +267,7 @@ public class DBCollection implements IDBCollection {
 
         final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
                 .writeConcern(this.writeConcern.toNew());
-        return new WriteResult(insertInternal(mongoInsert, encoder), aWriteConcern);
+        return new WriteResult(insertInternal(mongoInsert, encoder), aWriteConcern, getDB());
     }
 
     private Encoder<DBObject> toEncoder(DBEncoder dbEncoder) {
@@ -340,7 +340,7 @@ public class DBCollection implements IDBCollection {
                 .writeConcern(wc.toNew());
 
         return new WriteResult(getConnector().replace(getNamespace(), replace, getDocumentCodec(),
-                getCodec()), wc);
+                getCodec()), wc, getDB());
     }
 
     /**
@@ -370,7 +370,7 @@ public class DBCollection implements IDBCollection {
                 .multi(multi)
                 .writeConcern(aWriteConcern.toNew());
 
-        return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
+        return new WriteResult(updateInternal(mongoUpdate), aWriteConcern, getDB());
     }
 
     private org.mongodb.result.WriteResult updateInternal(MongoUpdate mongoUpdate) {
@@ -412,7 +412,7 @@ public class DBCollection implements IDBCollection {
                 .multi(multi)
                 .writeConcern(aWriteConcern.toNew());
 
-        return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
+        return new WriteResult(updateInternal(mongoUpdate), aWriteConcern, getDB());
     }
 
     /**
@@ -482,7 +482,7 @@ public class DBCollection implements IDBCollection {
 
         final org.mongodb.result.WriteResult result = getConnector().remove(getNamespace(), mongoRemove, documentCodec);
 
-        return new WriteResult(result, writeConcern);
+        return new WriteResult(result, writeConcern, getDB());
     }
 
     /**
@@ -501,7 +501,7 @@ public class DBCollection implements IDBCollection {
 
         final org.mongodb.result.WriteResult result = getConnector().remove(getNamespace(), mongoRemove, getDocumentCodec());
 
-        return new WriteResult(result, writeConcern);
+        return new WriteResult(result, writeConcern, getDB());
     }
 
     /**

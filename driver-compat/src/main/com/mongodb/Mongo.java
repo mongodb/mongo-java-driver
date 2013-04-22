@@ -144,6 +144,15 @@ public class Mongo {
     }
 
     /**
+     * Gets the address of the current master
+     * @return the address
+     */
+    public ServerAddress getAddress(){
+        //TODO this needs to return a master. Currently not.
+        return new ServerAddress(getConnector().getServerAddressList().get(0));
+    }
+
+    /**
      * Get the status of the replica set cluster.
      * @return replica set status information
      */
@@ -223,14 +232,6 @@ public class Mongo {
      */
     public void close() {
         getConnector().close();
-    }
-
-    void requestStart() {
-        throw new UnsupportedOperationException("Not implemented yet!");
-    }
-
-    void requestDone() {
-        throw new UnsupportedOperationException("Not implemented yet!");
     }
 
     /**

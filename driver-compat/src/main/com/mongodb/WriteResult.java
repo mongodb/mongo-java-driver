@@ -16,28 +16,40 @@
 
 package com.mongodb;
 
+
+import org.mongodb.command.GetLastError;
+
 public class WriteResult {
 
     private final com.mongodb.WriteConcern writeConcern;
-    private final CommandResult lastErrorResult;
+    private final DB db;
+    private CommandResult getLastErrorResult;
 
-    WriteResult(final org.mongodb.result.WriteResult result, final WriteConcern writeConcern) {
+    WriteResult(final org.mongodb.result.WriteResult result, final WriteConcern writeConcern, final DB db) {
         this.writeConcern = writeConcern;
+        this.db = db;
         if (result.getGetLastErrorResult() != null) {
-            // TODO: need command and server address fer realz
-            lastErrorResult = DBObjects
-                                 .toCommandResult(DBObjects.toDBObject(result.getGetLastErrorResult().getCommand()),
-                                                 new ServerAddress(result.getGetLastErrorResult().getAddress()),
-                                                 result.getGetLastErrorResult().getResponse());
-        }
-        else {
-            lastErrorResult = null;
+            getLastErrorResult = toGetLastErrorResult(result.getGetLastErrorResult());
         }
     }
 
 
     public com.mongodb.CommandResult getLastError() {
-        return getCachedLastError();  // TODO: Support getasterror after write op is already done?  Maybe not
+        if (getLastErrorResult == null) {
+            org.mongodb.result.CommandResult commandResult
+                    = db.executeCommand(new GetLastError(writeConcern.toNew()));
+            getLastErrorResult = toGetLastErrorResult(commandResult);
+        }
+
+        return getLastErrorResult;
+    }
+
+    private CommandResult toGetLastErrorResult(final org.mongodb.result.CommandResult commandResult) {
+        // TODO: need command and server address fer realz
+        return DBObjects
+                .toCommandResult(DBObjects.toDBObject(commandResult.getCommand()),
+                        new ServerAddress(commandResult.getAddress()),
+                        commandResult.getResponse());
     }
 
     public WriteConcern getLastConcern() {
@@ -45,16 +57,17 @@ public class WriteResult {
     }
 
     public CommandResult getCachedLastError() {
-        return lastErrorResult;
+        return getLastErrorResult;
     }
 
     /**
      * Gets the "n" field, which contains the number of documents
      * affected in the write operation.
+     *
      * @return number of documents affected in the write operation
      * @throws MongoException
      */
     public int getN() {
-        return lastErrorResult.getInt("n");
+        return getLastErrorResult.getInt("n");
     }
 }

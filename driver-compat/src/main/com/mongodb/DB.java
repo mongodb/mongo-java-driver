@@ -93,7 +93,7 @@ public class DB implements IDB {
      */
     @Override
     public void requestStart() {
-        mongo.requestStart();
+        //TODO implement this
     }
 
     /**
@@ -101,7 +101,7 @@ public class DB implements IDB {
      */
     @Override
     public void requestDone() {
-        mongo.requestDone();
+        //TODO implement this
     }
 
     /**
