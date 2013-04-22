@@ -21,6 +21,8 @@
 package com.mongodb;
 
 
+import static com.mongodb.DBObjects.toDBObject;
+
 /**
  * A simple wrapper for the result of getLastError() calls and other commands
  */
@@ -41,7 +43,7 @@ public class CommandResult extends BasicDBObject {
     }
 
     CommandResult(final org.mongodb.result.CommandResult commandResult) {
-        this(new BasicDBObject(commandResult.getResponse()), new ServerAddress(commandResult.getAddress()));
+        this(toDBObject(commandResult.getResponse()), new ServerAddress(commandResult.getAddress()));
     }
 
     /**
@@ -100,20 +102,23 @@ public class CommandResult extends BasicDBObject {
             buf.append(toString());
 
             return new CommandFailure(this, buf.toString());
-        }
-        else {
-            // GLE check
-            if (hasErr()) {
-                final Object errObj = get("err");
-
-                final int code = getCode();
-
-                return new MongoException(code, errObj.toString());
-            }
+        } else if (hasErr()) { // getLastError check
+            return createException(getCode(), get("err").toString());
         }
 
         //all good, should never get here.
         return null;
+    }
+
+    private MongoException createException(final int code, final String message) {
+        switch (code) {
+            case 11000:
+            case 11001:
+            case 12582:
+                return new MongoException.DuplicateKey(code, message);
+            default:
+                return new MongoException(code, message);
+        }
     }
 
     /**

@@ -68,6 +68,6 @@ public class WriteResult {
      * @throws MongoException
      */
     public int getN() {
-        return getLastErrorResult.getInt("n");
+        return getLastError().getInt("n");
     }
 }

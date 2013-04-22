@@ -1036,7 +1036,7 @@ public class DBCollection implements IDBCollection {
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
         final MongoFind mongoFind = new MongoFind()
                 .filter(toDocument(query))
-                .readPreference(this.readPreference.toNew());
+                .readPreference(readPreference.toNew());
         final Distinct distinctOperation = new Distinct(getName(), fieldName, mongoFind);
         return new DistinctCommandResult(getDB().executeCommand(distinctOperation)).getValue();
     }
