@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @SuppressWarnings("deprecation")
@@ -97,6 +98,7 @@ public class MongoTest extends TestCase {
     @Test
     public void testMockitoIntegration () {
         Mongo mongo = Mockito.mock(Mongo.class);
+        assertThat(mongo.getConnector(),is(nullValue()));
         assertThat(mongo.isMongosConnection(), is(false));
     }
 
