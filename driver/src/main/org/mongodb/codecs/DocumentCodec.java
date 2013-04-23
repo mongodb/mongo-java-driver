@@ -87,7 +87,7 @@ public class DocumentCodec implements Codec<Document> {
         // TODO: is this a good idea to allow DBRef to be treated all special?
         // Trish: since it gets decoded as a document, not sure it needs its own encoder
         if (value instanceof DBRef) {
-            encodeDBRef(bsonWriter, (DBRef) value);
+            codecs.encode(bsonWriter, (DBRef) value);
         } else if (value instanceof CodeWithScope) {
             encodeCodeWithScope(bsonWriter, (CodeWithScope) value);
         } else if (value instanceof Map) {
@@ -103,12 +103,7 @@ public class DocumentCodec implements Codec<Document> {
 
     private void encodeCodeWithScope(final BSONWriter bsonWriter,
                                      final CodeWithScope codeWithScope) {
-        bsonWriter.writeJavaScriptWithScope(codeWithScope.getCode());
-        this.encode(bsonWriter, codeWithScope.getScope());
-    }
-
-    private void encodeDBRef(final BSONWriter bsonWriter, final DBRef dbRef) {
-        codecs.encode(bsonWriter, dbRef);
+        codecs.encode(bsonWriter, codeWithScope);
     }
 
     private void encodeIterable(final BSONWriter bsonWriter, final Iterable<?> iterable) {

@@ -28,6 +28,7 @@ import org.bson.io.BasicOutputBuffer;
 import org.bson.io.InputBuffer;
 import org.bson.types.Binary;
 import org.bson.types.Code;
+import org.bson.types.CodeWithScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
@@ -94,6 +95,18 @@ public class DocumentCodecTest {
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
                                                                            inputBuffer));
+        assertEquals(doc, decodedDocument);
+    }
+
+    @Test
+    public void testCodeWithScopeEncoding() throws IOException {
+        final Document doc = new Document();
+        doc.put("theCode", new CodeWithScope("javaScript code", new Document("fieldNameOfScope", "valueOfScope")));
+
+        codec.encode(writer, doc);
+
+        final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
+                                                                           createInputBuffer()));
         assertEquals(doc, decodedDocument);
     }
 
