@@ -60,7 +60,7 @@ public class DocumentCodec implements Codec<Document> {
         beforeFields(bsonWriter, document);
 
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
-            validateFieldName(entry.getKey());
+            fieldNameValidator.validate(entry.getKey());
 
             if (skipField(entry.getKey())) {
                 continue;
@@ -78,10 +78,6 @@ public class DocumentCodec implements Codec<Document> {
         return false;
     }
 
-    private void validateFieldName(final String key) {
-        fieldNameValidator.validate(key);
-    }
-
     @SuppressWarnings("unchecked")
     protected void writeValue(final BSONWriter bsonWriter, final Object value) {
         // TODO: is this a good idea to allow DBRef to be treated all special?
@@ -89,33 +85,16 @@ public class DocumentCodec implements Codec<Document> {
         if (value instanceof DBRef) {
             codecs.encode(bsonWriter, (DBRef) value);
         } else if (value instanceof CodeWithScope) {
-            encodeCodeWithScope(bsonWriter, (CodeWithScope) value);
+            codecs.encode(bsonWriter, (CodeWithScope) value);
         } else if (value instanceof Map) {
-            encodeMap(bsonWriter, (Map<String, Object>) value);
+            codecs.encode(bsonWriter, (Map<String, Object>) value);
         } else if (value instanceof Iterable<?>) {
-            encodeIterable(bsonWriter, (Iterable) value);
+            codecs.encode(bsonWriter, (Iterable) value);
         } else if (value != null && value.getClass().isArray()) {
-            encodeArray(bsonWriter, value);
+            codecs.encode(bsonWriter, value);
         } else {
             primitiveCodecs.encode(bsonWriter, value);
         }
-    }
-
-    private void encodeCodeWithScope(final BSONWriter bsonWriter,
-                                     final CodeWithScope codeWithScope) {
-        codecs.encode(bsonWriter, codeWithScope);
-    }
-
-    private void encodeIterable(final BSONWriter bsonWriter, final Iterable<?> iterable) {
-        codecs.encode(bsonWriter, iterable);
-    }
-
-    private void encodeArray(final BSONWriter bsonWriter, final Object value) {
-        codecs.encode(bsonWriter, value);
-    }
-
-    private void encodeMap(final BSONWriter bsonWriter, final Map<String, Object> map) {
-        codecs.encode(bsonWriter, map);
     }
 
     @Override
