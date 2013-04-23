@@ -61,11 +61,6 @@ public class Codecs {
             encode(bsonWriter, (Iterable) object);
         } else {
             defaultObjectCodec.encode(bsonWriter, object);
-            //throw new RuntimeException("AARRGGHH!  I have no idea what to do with a " + object.getClass());
-            //            System.out.println(Iterable.class.isAssignableFrom(value.getClass()));
-            //            final Codec codec = classToCodeMap.get(value.getClass());
-            //            if (Iterable.class.isAssignableFrom(value.getClass()))
-            //            codec.encode(bsonWriter, value);
         }
     }
 
