@@ -17,7 +17,6 @@
 package org.mongodb.impl;
 
 import org.mongodb.ClientAdmin;
-import org.mongodb.Datastore;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnector;
@@ -93,11 +92,6 @@ public class MongoClientImpl implements MongoClient {
     @Override
     public List<ServerAddress> getServerAddressList() {
         return connector.getServerAddressList();
-    }
-
-    @Override
-    public Datastore getDatastore(final String databaseName) {
-        return new PojoDatastore(getDatabase(databaseName));
     }
 
     public MongoConnector getConnector() {

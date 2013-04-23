@@ -74,9 +74,4 @@ public interface MongoClient extends Closeable {
     ClientAdmin tools();
 
     List<ServerAddress> getServerAddressList();
-
-    //This will change - I need a way to separate morphia-like functionality from standard Collection functionality
-    //I'm using morphia terminology at the moment, and will refactor when it becomes clearer what the correct
-    //approach is
-    Datastore getDatastore(final String databaseName);
 }
