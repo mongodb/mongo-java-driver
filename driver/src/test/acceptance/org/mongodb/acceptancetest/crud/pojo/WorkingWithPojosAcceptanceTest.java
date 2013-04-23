@@ -20,11 +20,11 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
-import org.mongodb.Datastore;
 import org.mongodb.Document;
 import org.mongodb.Fixture;
-import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
+import org.mongodb.codecs.Codecs;
+import org.mongodb.codecs.PojoCodec;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,34 +32,34 @@ import java.util.List;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-@Ignore("Outline acceptance test to drive behaviour for working with POJOs - not implemented")
+@Ignore("Rather oddly, this passes in IntelliJ but not on the command line.")
+//TODO:might be our old friend jacoco
 public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
-    private MongoClient mongoClient;
+    private static final String COLLECTION_NAME = "PojoCollectionName";
+    private MongoCollection<Person> pojoCollection;
 
     @Before
     public void setUp() {
-        mongoClient = Fixture.getMongoClient();
+        pojoCollection = Fixture.getMongoClient()
+                                .getDatabase(getDatabaseName())
+                                .getCollection(COLLECTION_NAME, new PojoCodec<Person>(Codecs.createDefault()));
+        pojoCollection.tools().drop();
     }
 
     @Test
     public void shouldInsertASimplePojoIntoMongoDB() {
-        //This will change - I need a way to separate morphia-like functionality from standard Collection functionality
-        //I'm using morphia terminology at the moment, and will refactor when it becomes clearer what the correct
-        //approach is
-        final Datastore datastore = mongoClient.getDatastore(getDatabaseName());
-
         final Person person = new Person("Eric", "Smith");
-        datastore.insert(person);
+        pojoCollection.insert(person);
 
         assertInsertedIntoDatabase(person);
     }
 
     private void assertInsertedIntoDatabase(final Person person) {
-        final MongoCollection<Document> personCollection = database.getCollection("person");
+        final MongoCollection<Document> personCollection = database.getCollection(COLLECTION_NAME);
 
         final List<Document> results = new ArrayList<Document>();
         personCollection.filter(new Document("firstName", person.getFirstName())
-                                     .append("lastName", person.getLastName())).into(results);
+                                .append("lastName", person.getLastName())).into(results);
 
         assertThat(results.size(), is(1));
     }

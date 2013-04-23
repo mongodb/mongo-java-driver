@@ -47,7 +47,9 @@ public class DatabaseTestCase {
 
     @After
     public void tearDown() {
-        collection.tools().drop();
+        if (collection != null) {
+            collection.tools().drop();
+        }
     }
 
     protected String getDatabaseName() {

@@ -39,14 +39,14 @@ public class PojoCodecTest {
     //CHECKSTYLE:ON
 
     private BSONWriter bsonWriter;
-    private PojoCodec pojoCodec;
+    private PojoCodec<Object> pojoCodec;
     private Codecs codecs = Codecs.createDefault();
 
     @Before
     public void setUp() {
         context.setImposteriser(ClassImposteriser.INSTANCE);
         bsonWriter = context.mock(BSONWriter.class);
-        pojoCodec = new PojoCodec(codecs);
+        pojoCodec = new PojoCodec<Object>(codecs);
     }
 
     @Test

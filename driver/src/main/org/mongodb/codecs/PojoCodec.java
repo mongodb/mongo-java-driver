@@ -22,7 +22,7 @@ import org.mongodb.CollectibleCodec;
 
 import java.lang.reflect.Field;
 
-public class PojoCodec implements CollectibleCodec<Object> {
+public class PojoCodec<T> implements CollectibleCodec<T> {
     private final Codecs codecs;
 
     public PojoCodec(final Codecs codecs) {
@@ -44,12 +44,12 @@ public class PojoCodec implements CollectibleCodec<Object> {
     }
 
     @Override
-    public Object decode(final BSONReader reader) {
+    public T decode(final BSONReader reader) {
         throw new UnsupportedOperationException("Not implemented yet!");
     }
 
     @Override
-    public Class<Object> getEncoderClass() {
+    public Class<T> getEncoderClass() {
         throw new UnsupportedOperationException("Not implemented yet!");
     }
 

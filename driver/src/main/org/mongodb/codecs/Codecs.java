@@ -92,7 +92,7 @@ public class Codecs {
         return new Builder();
     }
 
-    public void setDefaultObjectCodec(final Codec<Object> codec) {
+    public void setDefaultObjectCodec(final Codec codec) {
         this.defaultObjectCodec = codec;
     }
 
