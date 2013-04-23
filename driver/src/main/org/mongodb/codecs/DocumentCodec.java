@@ -19,7 +19,6 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
-import org.bson.types.Binary;
 import org.bson.types.CodeWithScope;
 import org.mongodb.Codec;
 import org.mongodb.DBRef;
@@ -42,7 +41,7 @@ public class DocumentCodec implements Codec<Document> {
     }
 
     public DocumentCodec(final PrimitiveCodecs primitiveCodecs) {
-        this (primitiveCodecs, new QueryFieldNameValidator());
+        this(primitiveCodecs, new QueryFieldNameValidator());
     }
 
     protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator) {
@@ -86,6 +85,7 @@ public class DocumentCodec implements Codec<Document> {
     @SuppressWarnings("unchecked")
     protected void writeValue(final BSONWriter bsonWriter, final Object value) {
         // TODO: is this a good idea to allow DBRef to be treated all special?
+        // Trish: since it gets decoded as a document, not sure it needs its own encoder
         if (value instanceof DBRef) {
             encodeDBRef(bsonWriter, (DBRef) value);
         } else if (value instanceof CodeWithScope) {
@@ -94,10 +94,6 @@ public class DocumentCodec implements Codec<Document> {
             encodeMap(bsonWriter, (Map<String, Object>) value);
         } else if (value instanceof Iterable<?>) {
             encodeIterable(bsonWriter, (Iterable) value);
-        }
-        // TODO: Is this a good idea to allow byte[] to be treated all special?
-        else if (value instanceof byte[]) {
-            primitiveCodecs.encode(bsonWriter, new Binary((byte[]) value));
         } else if (value != null && value.getClass().isArray()) {
             encodeArray(bsonWriter, value);
         } else {
@@ -105,20 +101,14 @@ public class DocumentCodec implements Codec<Document> {
         }
     }
 
-    private void encodeDBRef(final BSONWriter bsonWriter, final DBRef dbRef) {
-        bsonWriter.writeStartDocument();
-
-        bsonWriter.writeString("$ref", dbRef.getRef());
-        bsonWriter.writeName("$id");
-        writeValue(bsonWriter, dbRef.getId());
-
-        bsonWriter.writeEndDocument();
-    }
-
     private void encodeCodeWithScope(final BSONWriter bsonWriter,
                                      final CodeWithScope codeWithScope) {
         bsonWriter.writeJavaScriptWithScope(codeWithScope.getCode());
         this.encode(bsonWriter, codeWithScope.getScope());
+    }
+
+    private void encodeDBRef(final BSONWriter bsonWriter, final DBRef dbRef) {
+        codecs.encode(bsonWriter, dbRef);
     }
 
     private void encodeIterable(final BSONWriter bsonWriter, final Iterable<?> iterable) {
@@ -131,15 +121,6 @@ public class DocumentCodec implements Codec<Document> {
 
     private void encodeMap(final BSONWriter bsonWriter, final Map<String, Object> map) {
         codecs.encode(bsonWriter, map);
-
-//        bsonWriter.writeStartDocument();
-//
-//        for (final Map.Entry<String, Object> entry : map.entrySet()) {
-//            validateFieldName(entry.getKey());
-//            bsonWriter.writeName(entry.getKey());
-//            writeValue(bsonWriter, entry.getValue());
-//        }
-//        bsonWriter.writeEndDocument();
     }
 
     @Override

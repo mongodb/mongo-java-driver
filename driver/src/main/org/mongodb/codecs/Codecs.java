@@ -18,6 +18,7 @@ package org.mongodb.codecs;
 
 import org.bson.BSONWriter;
 import org.mongodb.Codec;
+import org.mongodb.DBRef;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.codecs.validators.Validator;
 
@@ -28,6 +29,7 @@ public class Codecs {
     private final IterableCodec iterableCodec;
     private final ArrayCodec arrayCodec;
     private final MapCodec mapCodec;
+    private final DBRefCodec dbRefCodec;
     private Codec<Object> defaultObjectCodec = new NoOpCodec();
 
     public Codecs(final PrimitiveCodecs primitiveCodecs) {
@@ -40,6 +42,7 @@ public class Codecs {
         arrayCodec = new ArrayCodec(this);
         iterableCodec = new IterableCodec(this);
         mapCodec = new MapCodec(this, fieldNameValidator);
+        dbRefCodec = new DBRefCodec(this);
     }
 
     public static Codecs createDefault() {
@@ -72,6 +75,10 @@ public class Codecs {
 
     public void encode(final BSONWriter bsonWriter, final Map<String, Object> value) {
         mapCodec.encode(bsonWriter, value);
+    }
+
+    public void encode(final BSONWriter bsonWriter, final DBRef value) {
+        dbRefCodec.encode(bsonWriter, value);
     }
 
     private boolean isBSONPrimitive(final Object value) {
