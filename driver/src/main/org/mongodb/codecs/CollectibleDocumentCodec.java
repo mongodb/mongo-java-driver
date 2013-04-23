@@ -20,6 +20,7 @@ import org.bson.BSONWriter;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.Document;
 import org.mongodb.IdGenerator;
+import org.mongodb.codecs.validators.FieldNameValidator;
 
 /**
  * Codec for documents that go in collections, and therefore have an _id.  Ensures that the _id field is written
@@ -31,7 +32,7 @@ public class CollectibleDocumentCodec extends DocumentCodec implements Collectib
 
     public CollectibleDocumentCodec(final PrimitiveCodecs primitiveCodecs,
                                     final IdGenerator idGenerator) {
-        super(primitiveCodecs);
+        super(primitiveCodecs, new FieldNameValidator());
         if (idGenerator == null) {
             throw new IllegalArgumentException("idGenerator is null");
         }
@@ -50,21 +51,6 @@ public class CollectibleDocumentCodec extends DocumentCodec implements Collectib
     @Override
     protected boolean skipField(final String key) {
         return key.equals(ID_FIELD_NAME);
-    }
-
-    @Override
-    protected void validateFieldName(final String key) {
-        if (key == null) {
-            throw new IllegalArgumentException("key can not be null");
-        }
-
-        if (key.contains(".")) {
-            throw new IllegalArgumentException(
-                    "fields stored in the db can't have . in them. (Bad Key: '" + key + "')");
-        }
-        if (key.startsWith("$")) {
-            throw new IllegalArgumentException("fields stored in the db can't start with '$' (Bad Key: '" + key + "')");
-        }
     }
 
     @Override

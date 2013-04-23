@@ -19,7 +19,7 @@ package org.mongodb.impl;
 import org.mongodb.Datastore;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
-import org.mongodb.codecs.PrimitiveCodecs;
+import org.mongodb.codecs.Codecs;
 import org.mongodb.codecs.PojoCodec;
 
 //This will change - I need a way to separate morphia-like functionality from standard Collection functionality
@@ -27,18 +27,16 @@ import org.mongodb.codecs.PojoCodec;
 //approach is
 public class PojoDatastore implements Datastore {
     private final MongoDatabase database;
-    private final PrimitiveCodecs primitiveCodecs;
 
-    public PojoDatastore(final MongoDatabase database, final PrimitiveCodecs primitiveCodecs) {
+    public PojoDatastore(final MongoDatabase database) {
         this.database = database;
-        this.primitiveCodecs = primitiveCodecs;
     }
 
     @Override
     public void insert(final Object object) {
         final String collectionName = object.getClass().getSimpleName().toLowerCase();
         final MongoCollection<Object> collection = database.getCollection(collectionName,
-                                                                          new PojoCodec(primitiveCodecs));
+                                                                          new PojoCodec(Codecs.createDefault()));
         collection.insert(object);
     }
 }

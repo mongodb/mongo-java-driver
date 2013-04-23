@@ -24,8 +24,9 @@ import org.bson.types.CodeWithScope;
 import org.mongodb.Codec;
 import org.mongodb.DBRef;
 import org.mongodb.Document;
+import org.mongodb.codecs.validators.QueryFieldNameValidator;
+import org.mongodb.codecs.validators.Validator;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,16 +34,24 @@ import java.util.Map;
 // TODO: decode into DBRef?
 public class DocumentCodec implements Codec<Document> {
     private final PrimitiveCodecs primitiveCodecs;
+    private final Validator<String> fieldNameValidator;
+    private Codecs codecs;
 
     public DocumentCodec() {
         this(PrimitiveCodecs.createDefault());
     }
 
     public DocumentCodec(final PrimitiveCodecs primitiveCodecs) {
+        this (primitiveCodecs, new QueryFieldNameValidator());
+    }
+
+    protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator) {
         if (primitiveCodecs == null) {
             throw new IllegalArgumentException("primitiveCodecs is null");
         }
+        this.fieldNameValidator = fieldNameValidator;
         this.primitiveCodecs = primitiveCodecs;
+        codecs = new Codecs(primitiveCodecs, fieldNameValidator);
     }
 
     @Override
@@ -63,17 +72,6 @@ public class DocumentCodec implements Codec<Document> {
         bsonWriter.writeEndDocument();
     }
 
-    private void encodeMap(final BSONWriter bsonWriter, final Map<String, Object> document) {
-        bsonWriter.writeStartDocument();
-
-        for (final Map.Entry<String, Object> entry : document.entrySet()) {
-            validateFieldName(entry.getKey());
-            bsonWriter.writeName(entry.getKey());
-            writeValue(bsonWriter, entry.getValue());
-        }
-        bsonWriter.writeEndDocument();
-    }
-
     protected void beforeFields(final BSONWriter bsonWriter, final Document document) {
     }
 
@@ -81,7 +79,8 @@ public class DocumentCodec implements Codec<Document> {
         return false;
     }
 
-    protected void validateFieldName(final String key) {
+    private void validateFieldName(final String key) {
+        fieldNameValidator.validate(key);
     }
 
     @SuppressWarnings("unchecked")
@@ -116,30 +115,32 @@ public class DocumentCodec implements Codec<Document> {
         bsonWriter.writeEndDocument();
     }
 
-    private void encodeCodeWithScope(final BSONWriter bsonWriter, final CodeWithScope codeWithScope) {
+    private void encodeCodeWithScope(final BSONWriter bsonWriter,
+                                     final CodeWithScope codeWithScope) {
         bsonWriter.writeJavaScriptWithScope(codeWithScope.getCode());
         this.encode(bsonWriter, codeWithScope.getScope());
     }
 
     private void encodeIterable(final BSONWriter bsonWriter, final Iterable<?> iterable) {
-        bsonWriter.writeStartArray();
-        for (final Object cur : iterable) {
-            writeValue(bsonWriter, cur);
-        }
-        bsonWriter.writeEndArray();
+        codecs.encode(bsonWriter, iterable);
     }
 
     private void encodeArray(final BSONWriter bsonWriter, final Object value) {
-        bsonWriter.writeStartArray();
-
-        final int size = Array.getLength(value);
-        for (int i = 0; i < size; i++) {
-            writeValue(bsonWriter, Array.get(value, i));
-        }
-
-        bsonWriter.writeEndArray();
+        codecs.encode(bsonWriter, value);
     }
 
+    private void encodeMap(final BSONWriter bsonWriter, final Map<String, Object> map) {
+        codecs.encode(bsonWriter, map);
+
+//        bsonWriter.writeStartDocument();
+//
+//        for (final Map.Entry<String, Object> entry : map.entrySet()) {
+//            validateFieldName(entry.getKey());
+//            bsonWriter.writeName(entry.getKey());
+//            writeValue(bsonWriter, entry.getValue());
+//        }
+//        bsonWriter.writeEndDocument();
+    }
 
     @Override
     public Document decode(final BSONReader reader) {

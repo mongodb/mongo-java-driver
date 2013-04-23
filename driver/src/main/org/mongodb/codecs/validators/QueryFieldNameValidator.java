@@ -14,25 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.mongodb.codecs.validators;
 
-import org.bson.BSONWriter;
-
-//TODO probably needs to be a codec, not just an encoder
-public class IterableCodec implements ComplexTypeEncoder<Iterable<?>> {
-    private Codecs codecs;
-
-    public IterableCodec(final Codecs codecs) {
-        this.codecs = codecs;
-    }
-
+public class QueryFieldNameValidator implements Validator<String> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Iterable<?> iterable) {
-        bsonWriter.writeStartArray();
-        for (Object value : iterable) {
-            codecs.encode(bsonWriter, value);
-        }
-        bsonWriter.writeEndArray();
+    public void validate(final String value) {
+        //no-op
     }
-
 }

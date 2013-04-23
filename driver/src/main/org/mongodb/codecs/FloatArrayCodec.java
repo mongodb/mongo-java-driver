@@ -17,22 +17,26 @@
 package org.mongodb.codecs;
 
 import org.bson.BSONWriter;
+import org.mongodb.Encoder;
 
-//TODO probably needs to be a codec, not just an encoder
-public class IterableCodec implements ComplexTypeEncoder<Iterable<?>> {
-    private Codecs codecs;
+public class FloatArrayCodec implements Encoder<float[]> {
+    private final FloatCodec floatCodec;
 
-    public IterableCodec(final Codecs codecs) {
-        this.codecs = codecs;
+    public FloatArrayCodec() {
+        floatCodec = new FloatCodec();
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Iterable<?> iterable) {
+    public void encode(final BSONWriter bsonWriter, final float[] value) {
         bsonWriter.writeStartArray();
-        for (Object value : iterable) {
-            codecs.encode(bsonWriter, value);
+        for (float floatValue : value) {
+            floatCodec.encode(bsonWriter, floatValue);
         }
         bsonWriter.writeEndArray();
     }
 
+    @Override
+    public Class<float[]> getEncoderClass() {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
 }

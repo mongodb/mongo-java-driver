@@ -24,10 +24,11 @@ import org.mongodb.MongoClientException;
 import java.lang.reflect.Field;
 
 public class PojoCodec implements CollectibleCodec<Object> {
-    private final PrimitiveCodecs primitiveCodecs;
+    private final Codecs codecs;
 
-    public PojoCodec(final PrimitiveCodecs primitiveCodecs) {
-        this.primitiveCodecs = primitiveCodecs;
+    public PojoCodec(final Codecs codecs) {
+        this.codecs = codecs;
+        codecs.setDefaultObjectCodec(this);
     }
 
     @Override
@@ -37,6 +38,7 @@ public class PojoCodec implements CollectibleCodec<Object> {
 
     @Override
     public void encode(final BSONWriter bsonWriter, final Object value) {
+        System.out.println("Encoding Pojo: " + value.getClass());
         bsonWriter.writeStartDocument();
         encodePojo(bsonWriter, value);
         bsonWriter.writeEndDocument();
@@ -61,48 +63,22 @@ public class PojoCodec implements CollectibleCodec<Object> {
     }
 
     private void encodeField(final BSONWriter bsonWriter, final Object value, final Field field) {
+        System.out.println("Field: " + field);
         final String fieldName = field.getName();
         try {
             field.setAccessible(true);
             System.out.println("value: " + value);
             final Object fieldValue = field.get(value);
-            System.out.println("fieldValue:" + fieldValue);
-            if (isBSONPrimitive(fieldValue)) {
-                bsonWriter.writeName(fieldName);
-                primitiveCodecs.encode(bsonWriter, fieldValue);
-            }
-            else if (fieldValue.getClass().isArray()) {
-                bsonWriter.writeStartArray(fieldName);
-                encodeArray(bsonWriter, fieldValue, fieldName);
-                bsonWriter.writeEndArray();
-            }
-            else {
-                bsonWriter.writeStartDocument(fieldName);
-                encodePojo(bsonWriter, fieldValue);
-                bsonWriter.writeEndDocument();
-            }
+            System.out.println("fieldValue: " + fieldValue);
+            System.out.println("fieldName: " + fieldName);
+            bsonWriter.writeName(fieldName);
+            codecs.encode(bsonWriter, fieldValue);
             field.setAccessible(false);
         } catch (IllegalAccessException e) {
             //TODO: this is really going to bugger up the writer if it throws an exception halfway through writing
             throw new EncodingException("Could not encode field '" + fieldName + "' from " + value, e);
-        } catch (NoSuchFieldException e) {
-            //TODO: this is really going to bugger up the writer if it throws an exception halfway through writing
-            throw new EncodingException("Could not encode field '" + fieldName + "' from " + value, e);
         }
-    }
-
-    private void encodeArray(final BSONWriter bsonWriter, final Object fieldValue, final String fieldName)
-    throws NoSuchFieldException {
-        final Object[] array = (Object[]) fieldValue;
-        for (int i = 0; i < array.length; i++) {
-            final Object value = array[i];
-            encodeField(bsonWriter, value, null);
-
-        }
-    }
-
-    private boolean isBSONPrimitive(final Object value) {
-        return primitiveCodecs.canEncode(value.getClass());
+        System.out.println("\n");
     }
 
     private static class EncodingException extends MongoClientException {

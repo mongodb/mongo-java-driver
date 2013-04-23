@@ -21,13 +21,13 @@ import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mongodb.CollectibleCodec;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryBuilder;
-import org.mongodb.CollectibleCodec;
 
 import java.util.ArrayList;
 import java.util.List;

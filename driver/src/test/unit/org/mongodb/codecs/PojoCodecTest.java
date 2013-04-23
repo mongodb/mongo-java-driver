@@ -27,52 +27,58 @@ import org.junit.Test;
 import org.mongodb.json.JSONWriter;
 
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.fail;
 
-@Ignore("Doesn't work on the command line because code coverage tool pokes things onto my objects")
 public class PojoCodecTest {
     //CHECKSTYLE:OFF
-    @Rule public JUnitRuleMockery context = new JUnitRuleMockery();
+    @Rule
+    public JUnitRuleMockery context = new JUnitRuleMockery();
     //CHECKSTYLE:ON
 
     private BSONWriter bsonWriter;
     private PojoCodec pojoCodec;
+    private Codecs codecs = Codecs.createDefault();
 
     @Before
     public void setUp() {
         context.setImposteriser(ClassImposteriser.INSTANCE);
         bsonWriter = context.mock(BSONWriter.class);
-        pojoCodec = new PojoCodec(PrimitiveCodecs.createDefault());
+        pojoCodec = new PojoCodec(codecs);
     }
 
     @Test
     public void shouldEncodeSimplePojo() {
+        final String valueInSimpleObject = "MyName";
         context.checking(new Expectations() {{
             oneOf(bsonWriter).writeStartDocument();
             oneOf(bsonWriter).writeName("name");
-            oneOf(bsonWriter).writeString("MyName");
+            oneOf(bsonWriter).writeString(valueInSimpleObject);
             oneOf(bsonWriter).writeEndDocument();
 
         }});
         ignoreJacocoInvocations(bsonWriter);
 
-        pojoCodec.encode(bsonWriter, new SimpleObject("MyName"));
+        pojoCodec.encode(bsonWriter, new SimpleObject(valueInSimpleObject));
     }
 
     @Test
     public void shouldEncodePojoContainingOtherPojos() {
+        final String anotherName = "AnotherName";
         context.checking(new Expectations() {{
             oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeStartDocument("mySimpleObject");
+            oneOf(bsonWriter).writeName("mySimpleObject");
+            oneOf(bsonWriter).writeStartDocument();
             oneOf(bsonWriter).writeName("name");
-            oneOf(bsonWriter).writeString("AnotherName");
+            oneOf(bsonWriter).writeString(anotherName);
             exactly(2).of(bsonWriter).writeEndDocument();
 
         }});
         ignoreJacocoInvocations(bsonWriter);
 
-        pojoCodec.encode(bsonWriter, new NestedObject(new SimpleObject("AnotherName")));
+        pojoCodec.encode(bsonWriter, new NestedObject(new SimpleObject(anotherName)));
     }
 
     @Test
@@ -81,7 +87,8 @@ public class PojoCodecTest {
             oneOf(bsonWriter).writeStartDocument();
             oneOf(bsonWriter).writeName("intValue");
             oneOf(bsonWriter).writeInt32(98);
-            oneOf(bsonWriter).writeStartDocument("mySimpleObject");
+            oneOf(bsonWriter).writeName("mySimpleObject");
+            oneOf(bsonWriter).writeStartDocument();
             oneOf(bsonWriter).writeName("name");
             oneOf(bsonWriter).writeString("AnotherName");
             exactly(2).of(bsonWriter).writeEndDocument();
@@ -110,11 +117,11 @@ public class PojoCodecTest {
     }
 
     @Test
-    @Ignore("not implemented")
     public void shouldSupportArrays() {
         context.checking(new Expectations() {{
             oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeStartArray("theStringArray");
+            oneOf(bsonWriter).writeName("theStringArray");
+            oneOf(bsonWriter).writeStartArray();
             oneOf(bsonWriter).writeString("Uno");
             oneOf(bsonWriter).writeString("Dos");
             oneOf(bsonWriter).writeString("Tres");
@@ -125,6 +132,60 @@ public class PojoCodecTest {
         ignoreJacocoInvocations(bsonWriter);
 
         pojoCodec.encode(bsonWriter, new ObjectWithArray());
+    }
+
+    @Test
+    public void shouldEncodeMapsOfPrimitiveTypes() {
+        context.checking(new Expectations() {{
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeName("theMap");
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeName("first");
+            oneOf(bsonWriter).writeString("the first value");
+            oneOf(bsonWriter).writeName("second");
+            oneOf(bsonWriter).writeString("the second value");
+            exactly(2).of(bsonWriter).writeEndDocument();
+
+        }});
+        ignoreJacocoInvocations(bsonWriter);
+        pojoCodec.encode(bsonWriter, new ObjectWithMapOfStrings());
+    }
+
+    @Test
+    public void shouldEncodeMapsOfObjects() {
+        final String simpleObjectValue = "theValue";
+        context.checking(new Expectations() {{
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeName("theMap");
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeName("first");
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeName("name");
+            oneOf(bsonWriter).writeString(simpleObjectValue);
+            exactly(3).of(bsonWriter).writeEndDocument();
+
+        }});
+        ignoreJacocoInvocations(bsonWriter);
+
+        pojoCodec.encode(bsonWriter, new ObjectWithMapOfObjects(simpleObjectValue));
+    }
+
+    @Test
+    public void shouldEncodeMapsOfMaps() {
+        context.checking(new Expectations() {{
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeName("theMap");
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeName("theMapInsideTheMap");
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeName("innerMapField");
+            oneOf(bsonWriter).writeString("theInnerMapFieldValue");
+            exactly(3).of(bsonWriter).writeEndDocument();
+
+        }});
+        ignoreJacocoInvocations(bsonWriter);
+
+        pojoCodec.encode(bsonWriter, new ObjectWithMapOfMaps());
     }
 
     @Test
@@ -140,10 +201,9 @@ public class PojoCodecTest {
     }
 
     private void ignoreJacocoInvocations(final BSONWriter writer) {
+        //URGH
         context.checking(new Expectations() {{
-            ignoring(writer).writeStartDocument("$jacocoData");
-            ignoring(writer).writeStartArray("$jacocoData");
-            ignoring(writer).writeEndDocument();
+            ignoring(writer);
         }});
     }
 
@@ -173,7 +233,33 @@ public class PojoCodecTest {
         }
     }
 
-    private static class ObjectWithArray {
+    private static final class ObjectWithArray {
         private final String[] theStringArray = {"Uno", "Dos", "Tres"};
+    }
+
+    private static final class ObjectWithMapOfStrings {
+        private final Map<String, String> theMap = new HashMap<String, String>();
+        {
+            theMap.put("first", "the first value");
+            theMap.put("second", "the second value");
+        }
+    }
+
+    private static final class ObjectWithMapOfObjects {
+        private final Map<String, SimpleObject> theMap = new HashMap<String, SimpleObject>();
+
+        private ObjectWithMapOfObjects(final String theValue) {
+            theMap.put("first", new SimpleObject(theValue));
+        }
+    }
+
+    private static final class ObjectWithMapOfMaps{
+        private final Map<String, Map<String, String>> theMap = new HashMap<String, Map<String, String>>();
+
+        private ObjectWithMapOfMaps() {
+            final Map<String, String> innerMap = new HashMap<String, String>();
+            innerMap.put("innerMapField", "theInnerMapFieldValue");
+            theMap.put("theMapInsideTheMap", innerMap);
+        }
     }
 }

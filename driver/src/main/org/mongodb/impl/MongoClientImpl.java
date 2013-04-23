@@ -83,7 +83,7 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public Datastore getDatastore(final String databaseName) {
-        return new PojoDatastore(getDatabase(databaseName), primitiveCodecs);
+        return new PojoDatastore(getDatabase(databaseName));
     }
 
     public MongoConnector getConnector() {

@@ -96,6 +96,16 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         assertThat(database.tools().getCollectionNames().contains(collectionName), is(false));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldRejectDocumentsWithFieldNamesContainingDots() {
+        collection.save(new Document("x.y", 1));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldRejectNestedDocumentsWithFieldNamesContainingDots() {
+        collection.save(new Document("x", new Document("a.b", 1)));
+    }
+
     private void initialiseCollectionWithDocuments(final int numberOfDocuments) {
         for (int i = 0; i < numberOfDocuments; i++) {
             collection.writeConcern(WriteConcern.ACKNOWLEDGED).insert(new Document("_id", i));

@@ -63,26 +63,6 @@ public class CollectibleDocumentCodecTest {
     }
 
     @Test
-    public void testFieldValidationSuccess() {
-        codec.validateFieldName("ok");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testNullFieldNameValidation() {
-        codec.validateFieldName(null);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testFieldNameWithDotsValidation() {
-        codec.validateFieldName("1.2");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testFieldNameStartsWithDollarValidation() {
-        codec.validateFieldName("$1");
-    }
-
-    @Test
     public void testSkipField() {
         assertFalse(codec.skipField("ok"));
         assertTrue(codec.skipField("_id"));

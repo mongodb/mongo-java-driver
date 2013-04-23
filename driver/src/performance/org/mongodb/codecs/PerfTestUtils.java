@@ -16,23 +16,20 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONWriter;
+public final class PerfTestUtils {
+    static final double NUMBER_OF_NANO_SECONDS_IN_A_SECOND = 1000000000;
 
-//TODO probably needs to be a codec, not just an encoder
-public class IterableCodec implements ComplexTypeEncoder<Iterable<?>> {
-    private Codecs codecs;
+    private PerfTestUtils(){}
 
-    public IterableCodec(final Codecs codecs) {
-        this.codecs = codecs;
+    static void testCleanup() throws InterruptedException {
+        System.gc();
+        System.gc();
+        Thread.sleep(20L);
     }
 
-    @Override
-    public void encode(final BSONWriter bsonWriter, final Iterable<?> iterable) {
-        bsonWriter.writeStartArray();
-        for (Object value : iterable) {
-            codecs.encode(bsonWriter, value);
-        }
-        bsonWriter.writeEndArray();
+    static double calculateOperationsPerSecond(final long timeTakenInNanos, final int numberOfTimesRun) {
+        return (NUMBER_OF_NANO_SECONDS_IN_A_SECOND / timeTakenInNanos) * numberOfTimesRun;
     }
+
 
 }

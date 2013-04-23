@@ -32,26 +32,28 @@ import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import static java.util.Arrays.asList;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
-// straight up unit test
-public class DocumentCodecTest extends DatabaseTestCase {
+public class DocumentCodecTest {
     private BasicOutputBuffer buffer;
     private DocumentCodec codec;
     private BSONWriter writer;
 
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         buffer = new BasicOutputBuffer();
         writer = new BSONBinaryWriter(new BSONWriterSettings(100), new BSONBinaryWriterSettings(1024 * 1024), buffer);
         codec = new DocumentCodec(PrimitiveCodecs.createDefault());
@@ -71,28 +73,121 @@ public class DocumentCodecTest extends DatabaseTestCase {
         doc.put("code", new Code("var i = 0"));
         doc.put("minkey", new MinKey());
         doc.put("maxkey", new MaxKey());
-//        doc.put("pattern", Pattern.compile("^hello"));  // TODO: Pattern doesn't override equals method!
+        //        doc.put("pattern", Pattern.compile("^hello"));  // TODO: Pattern doesn't override equals method!
         doc.put("null", null);
 
         codec.encode(writer, doc);
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                inputBuffer));
+                                                                           inputBuffer));
         assertEquals(doc, decodedDocument);
     }
 
-
     @Test
-    public void testArrayEncoding() throws IOException {
+    public void testIterableEncoding() throws IOException {
         final Document doc = new Document();
-        doc.put("array", Arrays.asList(1, 2, 3, 4, 5));
+        doc.put("array", asList(1, 2, 3, 4, 5));
 
         codec.encode(writer, doc);
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                inputBuffer));
+                                                                           inputBuffer));
+        assertEquals(doc, decodedDocument);
+    }
+
+    @Test
+    public void testIterableContainingOtherIterableEncoding() throws IOException {
+        final Document doc = new Document();
+        @SuppressWarnings("unchecked")
+        final List<List<Integer>> listOfLists = asList(asList(1), asList(2));
+        doc.put("array", listOfLists);
+
+        codec.encode(writer, doc);
+
+        final InputBuffer inputBuffer = createInputBuffer();
+        final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
+                                                                           inputBuffer));
+        assertEquals(doc, decodedDocument);
+    }
+
+    @Test
+    public void testIterableContainingDocumentsEncoding() throws IOException {
+        final Document doc = new Document();
+        final List<Document> listOfDocuments = asList(new Document("intVal", 1), new Document("anotherInt", 2));
+        doc.put("array", listOfDocuments);
+
+        codec.encode(writer, doc);
+
+        final InputBuffer inputBuffer = createInputBuffer();
+        final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
+                                                                           inputBuffer));
+        assertEquals(doc, decodedDocument);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void shouldEncodeArrayContainingDocumentsAndDecodeAsList() throws IOException {
+        final Document doc = new Document();
+        final Document[] arrayOfDocuments = {new Document("intVal", 1), new Document("anotherInt", 2)};
+        doc.put("array", arrayOfDocuments);
+
+        codec.encode(writer, doc);
+
+        final InputBuffer inputBuffer = createInputBuffer();
+        final List<Document> expectedListOfDocuments = asList(new Document("intVal", 1),
+                                                              new Document("anotherInt", 2));
+        final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
+                                                                           inputBuffer));
+        assertThat((List<Document>) decodedDocument.get("array"), is(expectedListOfDocuments));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void shouldEncodeArrayOfIntsAndDecodeAsArrayListOfIntegers() throws IOException {
+        final Document doc = new Document();
+        doc.put("array", new int[]{1, 2, 3, 4, 5});
+
+        codec.encode(writer, doc);
+
+        final InputBuffer inputBuffer = createInputBuffer();
+        final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
+                                                                           inputBuffer));
+
+        final List<Integer> value = asList(1, 2, 3, 4, 5);
+        assertThat((List<Integer>) decodedDocument.get("array"), is(value));
+    }
+
+    @Test
+    public void testMapContainingDocumentsEncoding() throws IOException {
+        final Document doc = new Document();
+        final Map<String, Document> mapOfDocuments = new HashMap<String, Document>();
+        mapOfDocuments.put("firstDoc", new Document("intVal", 1));
+        mapOfDocuments.put("secondDoc", new Document("anotherInt", 2));
+        doc.put("theMap", mapOfDocuments);
+
+        codec.encode(writer, doc);
+
+        final InputBuffer inputBuffer = createInputBuffer();
+        final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
+                                                                           inputBuffer));
+        assertEquals(doc, decodedDocument);
+    }
+
+    @Test
+    public void testMapContainingStringsEncoding() throws IOException {
+        final Document doc = new Document();
+        final Map<String, String> mapOfStrings = new HashMap<String, String>();
+        mapOfStrings.put("firstString", "the first string");
+        mapOfStrings.put("secondString", "the second string");
+        doc.put("theMap", mapOfStrings);
+
+        codec.encode(writer, doc);
+
+        final InputBuffer inputBuffer = createInputBuffer();
+        final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
+                                                                           inputBuffer));
         assertEquals(doc, decodedDocument);
     }
 
@@ -105,18 +200,32 @@ public class DocumentCodecTest extends DatabaseTestCase {
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                inputBuffer));
+                                                                           inputBuffer));
         assertEquals(doc, decodedDocument);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testDotsInKeys() {
-        collection.save(new Document("x.y", 1));
+    @Test
+    public void shouldNotThrowAnExceptionForValidQueryDocumentFieldNames() throws IOException {
+        final Document document = new Document("x.y", 1);
+
+        codec.encode(writer, document);
+
+        final InputBuffer inputBuffer = createInputBuffer();
+        final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
+                                                                           inputBuffer));
+        assertEquals(document, decodedDocument);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testDotsInKeysInNestedDocuments() {
-        collection.save(new Document("x", new Document("a.b", 1)));
+    @Test
+    public void shouldNotThrowAnExceptionForValidNestedQueryDocumentFieldNames() throws IOException {
+        final Document document = new Document("x", new Document("a.b", 1));
+
+        codec.encode(writer, document);
+
+        final InputBuffer inputBuffer = createInputBuffer();
+        final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
+                                                                           inputBuffer));
+        assertEquals(document, decodedDocument);
     }
 
     // TODO: factor into common base class;

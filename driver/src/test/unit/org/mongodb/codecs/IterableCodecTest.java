@@ -23,31 +23,35 @@ import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mongodb.Document;
 
-import java.util.Arrays;
 import java.util.List;
 
+import static java.util.Arrays.asList;
+
 public class IterableCodecTest {
-    private static final List<String> STRING_LIST = Arrays.asList("Uno", "Dos", "Tres");
 
     //CHECKSTYLE:OFF
     @Rule
     public JUnitRuleMockery context = new JUnitRuleMockery();
     //CHECKSTYLE:ON
 
-    private BSONWriter bsonWriter;
-    private IterableCodec iterableCodec;
+    private final Codecs codecs = Codecs.createDefault();
+    private final IterableCodec iterableCodec = new IterableCodec(codecs);
 
+    private BSONWriter bsonWriter;
+
+    @SuppressWarnings("unchecked")
     @Before
     public void setUp() {
         context.setImposteriser(ClassImposteriser.INSTANCE);
         bsonWriter = context.mock(BSONWriter.class);
-        iterableCodec = new IterableCodec(PrimitiveCodecs.createDefault());
     }
 
     @Test
-    //TODO: Trish - should be able to set a name on the array
-    public void shouldEncloseEncodingInStartAndEndArray() {
+    public void shouldEncodeListOfStrings() {
+        final List<String> stringList = asList("Uno", "Dos", "Tres");
+
         context.checking(new Expectations() {{
             oneOf(bsonWriter).writeStartArray();
             oneOf(bsonWriter).writeString("Uno");
@@ -56,7 +60,40 @@ public class IterableCodecTest {
             oneOf(bsonWriter).writeEndArray();
         }});
 
-        iterableCodec.encode(bsonWriter, STRING_LIST);
+        iterableCodec.encode(bsonWriter, stringList);
+    }
+
+    @Test
+    public void shouldEncodeListOfIntegers() {
+        final List<Integer> stringList = asList(1, 2, 3);
+
+        context.checking(new Expectations() {{
+            oneOf(bsonWriter).writeStartArray();
+            oneOf(bsonWriter).writeInt32(1);
+            oneOf(bsonWriter).writeInt32(2);
+            oneOf(bsonWriter).writeInt32(3);
+            oneOf(bsonWriter).writeEndArray();
+        }});
+
+        iterableCodec.encode(bsonWriter, stringList);
+    }
+
+    @Test
+    public void shouldDelegateEncodingOfComplexTypesToCodecs() {
+        // different setup means this should be in a different test class
+        final Codecs mockCodecs = context.mock(Codecs.class);
+        final IterableCodec iterableCodecWithMock = new IterableCodec(mockCodecs);
+
+        final Object document = new Document("field", "value");
+        final List<Object> stringList = asList(document);
+
+        context.checking(new Expectations() {{
+            oneOf(bsonWriter).writeStartArray();
+            oneOf(mockCodecs).encode(bsonWriter, document);
+            oneOf(bsonWriter).writeEndArray();
+        }});
+
+        iterableCodecWithMock.encode(bsonWriter, stringList);
     }
 
 }

@@ -18,15 +18,15 @@ package org.mongodb.impl;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.Document;
 import org.bson.types.ObjectId;
 import org.junit.Test;
+import org.mongodb.CollectibleCodec;
 import org.mongodb.DatabaseTestCase;
+import org.mongodb.Document;
 import org.mongodb.Get;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.result.WriteResult;
-import org.mongodb.CollectibleCodec;
 
 import java.util.ArrayList;
 import java.util.List;
