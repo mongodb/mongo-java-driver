@@ -19,7 +19,6 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.mongodb.CollectibleCodec;
-import org.mongodb.MongoClientException;
 
 import java.lang.reflect.Field;
 
@@ -81,11 +80,4 @@ public class PojoCodec implements CollectibleCodec<Object> {
         System.out.println("\n");
     }
 
-    private static class EncodingException extends MongoClientException {
-        private static final long serialVersionUID = -8147079320437509154L;
-
-        public EncodingException(final String message, final Exception e) {
-            super(message, e);
-        }
-    }
 }

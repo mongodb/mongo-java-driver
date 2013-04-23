@@ -30,7 +30,7 @@ public class Codecs {
     private final ArrayCodec arrayCodec;
     private final MapCodec mapCodec;
     private final DBRefCodec dbRefCodec;
-    private Codec<Object> defaultObjectCodec = new NoOpCodec();
+    private Codec<Object> defaultObjectCodec = new NoCodec();
 
     public Codecs(final PrimitiveCodecs primitiveCodecs) {
         this(primitiveCodecs, new QueryFieldNameValidator());

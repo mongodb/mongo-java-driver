@@ -23,7 +23,9 @@ import org.mongodb.Codec;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class NoOpCodec implements Codec<Object> {
+import static java.lang.String.format;
+
+public class NoCodec implements Codec<Object> {
     private static final Logger LOGGER = Logger.getLogger("org.mongodb.codecs.NoOpCodec");
 
     @Override
@@ -34,11 +36,11 @@ public class NoOpCodec implements Codec<Object> {
 
     @Override
     public void encode(final BSONWriter bsonWriter, final Object value) {
-        //TODO: should this be an error?  Otherwise you can only tell by looking at the logs that you're
-        //not actually saving objects into the database.
         LOGGER.log(Level.WARNING, "NoOpCodec used to encode object:" + value + " of type: " + value.getClass()
                                   + ".  You should call Codecs.setDefaultObjectCodec with a custom Codec for this type"
                                   + ", or try PojoCodec.");
+        throw new EncodingException(format("Could not find an encoder for object '%s' of class '%s'.",
+                                           value, value.getClass()));
     }
 
     @Override
