@@ -419,6 +419,10 @@ task wrapper(type: Wrapper) {
     distributionUrl = 'https://s3.amazonaws.com/trnl/gradle-1.6.zip'
 }
 
+gradle.buildFinished { BuildResult result ->
+    if (result.failure && !JavaVersion.current().isJava7Compatible())
+        gradle.rootProject.logger.error("\n* Warning:\nJDK ${JavaVersion.VERSION_1_7} is minimal requirement for building the driver. You have ${JavaVersion.current()}.")
+}
 
 idea {
     project {
