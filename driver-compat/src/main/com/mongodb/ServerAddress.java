@@ -112,4 +112,14 @@ public class ServerAddress {
     org.mongodb.ServerAddress toNew() {
         return proxied;
     }
+
+    /**
+     * Determines whether this address is the same as a given host.
+     *
+     * @param host the address to compare
+     * @return if they are the same
+     */
+    public boolean sameHost(String host) {
+        return proxied.sameHost(host);
+    }
 }
