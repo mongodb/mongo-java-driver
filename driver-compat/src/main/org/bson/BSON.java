@@ -240,7 +240,7 @@ public class BSON {
      * @param bytes a document encoded as BSON
      * @return the document as a DBObject
      */
-    public static DBObject decode(final byte[] bytes) {
+    public static BSONObject decode(final byte[] bytes) {
         final InputBuffer buffer = new BasicInputBuffer(ByteBuffer.wrap(bytes));
         return new DBObjectCodec(PrimitiveCodecs.createDefault()).decode(new BSONBinaryReader(buffer));
     }
