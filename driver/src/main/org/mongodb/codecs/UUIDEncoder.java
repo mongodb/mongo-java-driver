@@ -17,21 +17,13 @@
 package org.mongodb.codecs;
 
 import org.bson.BSONBinarySubType;
-import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.Binary;
-import org.mongodb.Codec;
+import org.mongodb.Encoder;
 
 import java.util.UUID;
 
-public class UUIDCodec implements Codec<UUID> {
-    @Override
-    public UUID decode(final BSONReader reader) {
-        final Binary binary = reader.readBinaryData();
-        final byte[] binaryData = binary.getData();
-        return toUUID(binaryData);
-    }
-
+public class UUIDEncoder implements Encoder<UUID> {
     @Override
     public void encode(final BSONWriter bsonWriter, final UUID value) {
         final byte[] bytes = new byte[16];
@@ -47,10 +39,6 @@ public class UUIDCodec implements Codec<UUID> {
         return UUID.class;
     }
 
-    public UUID toUUID(final byte[] binaryData) {
-        return new UUID(readLongFromArrayLittleEndian(binaryData, 0), readLongFromArrayLittleEndian(binaryData, 8));
-    }
-
     private static void writeLongToArrayLittleEndian(final byte[] bytes, final int offset, final long x) {
         bytes[offset] = (byte) (0xFFL & (x));
         bytes[offset + 1] = (byte) (0xFFL & (x >> 8));
@@ -61,34 +49,4 @@ public class UUIDCodec implements Codec<UUID> {
         bytes[offset + 6] = (byte) (0xFFL & (x >> 48));
         bytes[offset + 7] = (byte) (0xFFL & (x >> 56));
     }
-
-    private static long readLongFromArrayLittleEndian(final byte[] bytes, final int offset) {
-        long x = 0;
-        x |= (0xFFL & bytes[offset]);
-        x |= (0xFFL & bytes[offset + 1]) << 8;
-        x |= (0xFFL & bytes[offset + 2]) << 16;
-        x |= (0xFFL & bytes[offset + 3]) << 24;
-        x |= (0xFFL & bytes[offset + 4]) << 32;
-        x |= (0xFFL & bytes[offset + 5]) << 40;
-        x |= (0xFFL & bytes[offset + 6]) << 48;
-        x |= (0xFFL & bytes[offset + 7]) << 56;
-        return x;
-    }
-
-    // Stuff from 2.x driver
-    //    _put( BINARY , name );
-    //    _buf.writeInt( 16 );
-    //    _buf.write( B_UUID );
-    //    _buf.writeLong( val.getMostSignificantBits());
-    //    _buf.writeLong( val.getLeastSignificantBits());
-
-    //    write( (byte)(0xFFL & ( x >> 0 ) ) );
-    //    write( (byte)(0xFFL & ( x >> 8 ) ) );
-    //    write( (byte)(0xFFL & ( x >> 16 ) ) );
-    //    write( (byte)(0xFFL & ( x >> 24 ) ) );
-    //    write( (byte)(0xFFL & ( x >> 32 ) ) );
-    //    write( (byte)(0xFFL & ( x >> 40 ) ) );
-    //    write( (byte)(0xFFL & ( x >> 48 ) ) );
-    //    write( (byte)(0xFFL & ( x >> 56 ) ) );
-
 }

@@ -18,14 +18,9 @@ package com.mongodb;
 
 import com.mongodb.codecs.CollectibleDBObjectCodec;
 import com.mongodb.codecs.DBEncoderAdapter;
-import org.bson.BSONBinarySubType;
-import org.bson.BSONReader;
-import org.bson.BSONType;
-import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.mongodb.Codec;
 import org.mongodb.CollectibleCodec;
-import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.Get;
@@ -36,7 +31,6 @@ import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.codecs.UUIDCodec;
 import org.mongodb.command.CollStats;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
@@ -1627,21 +1621,7 @@ public class DBCollection implements IDBCollection {
     }
 
     private PrimitiveCodecs getPrimitiveCodecs() {
-        return PrimitiveCodecs.builder(PrimitiveCodecs.createDefault()).otherDecoder(BSONType.BINARY, new Decoder() {
-            @Override
-            public Object decode(final BSONReader reader) {
-                Binary binary = reader.readBinaryData();
-                if (binary.getType() == BSONBinarySubType.Binary.getValue()) {
-                    return binary.getData();
-                }
-                else if (binary.getType() == BSONBinarySubType.UuidLegacy.getValue()) {
-                    return new UUIDCodec().toUUID(binary.getData());
-                }
-                else {
-                    return binary;
-                }
-            }
-        }).build();
+        return PrimitiveCodecs.createDefault();
     }
 
     private Document toIndexDetailsDocument(DBObject keys, DBObject options) {

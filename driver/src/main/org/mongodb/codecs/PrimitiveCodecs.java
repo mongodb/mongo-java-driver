@@ -41,8 +41,8 @@ public class PrimitiveCodecs implements Codec<Object> {
     private Map<Class, Encoder<?>> classEncoderMap = new HashMap<Class, Encoder<?>>();
     private Map<BSONType, Decoder<?>> bsonTypeDecoderMap = new HashMap<BSONType, Decoder<?>>();
 
-     PrimitiveCodecs(final Map<Class, Encoder<?>> classEncoderMap,
-                            final Map<BSONType, Decoder<?>> bsonTypeDecoderMap) {
+    PrimitiveCodecs(final Map<Class, Encoder<?>> classEncoderMap,
+                    final Map<BSONType, Decoder<?>> bsonTypeDecoderMap) {
         this.classEncoderMap = classEncoderMap;
         this.bsonTypeDecoderMap = bsonTypeDecoderMap;
     }
@@ -89,26 +89,27 @@ public class PrimitiveCodecs implements Codec<Object> {
     // TODO: find a proper way to do this...
     public static PrimitiveCodecs createDefault() {
         return builder()
-               .objectIdCodec(new ObjectIdCodec())
-               .integerCodec(new IntegerCodec())
-               .longCodec(new LongCodec())
-               .stringCodec(new StringCodec())
-               .doubleCodec(new DoubleCodec())
-               .binaryCodec(new BinaryCodec())
-               .dateCodec(new DateCodec())
-               .timestampCodec(new TimestampCodec())
-               .booleanCodec(new BooleanCodec())
-               .patternCodec(new PatternCodec())
-               .minKeyCodec(new MinKeyCodec())
-               .maxKeyCodec(new MaxKeyCodec())
-               .javascriptCodec(new CodeCodec())
-               .nullCodec(new NullCodec())
-               .otherEncoder(new FloatCodec())
-               .otherEncoder(new ShortCodec())
-               .otherEncoder(new ByteCodec())
-               .otherEncoder(new ByteArrayCodec())
-               .otherEncoder(new UUIDCodec())
-               .build();
+                .objectIdCodec(new ObjectIdCodec())
+                .integerCodec(new IntegerCodec())
+                .longCodec(new LongCodec())
+                .stringCodec(new StringCodec())
+                .doubleCodec(new DoubleCodec())
+                .dateCodec(new DateCodec())
+                .timestampCodec(new TimestampCodec())
+                .booleanCodec(new BooleanCodec())
+                .patternCodec(new PatternCodec())
+                .minKeyCodec(new MinKeyCodec())
+                .maxKeyCodec(new MaxKeyCodec())
+                .javascriptCodec(new CodeCodec())
+                .nullCodec(new NullCodec())
+                .otherEncoder(new FloatCodec())
+                .otherEncoder(new ShortCodec())
+                .otherEncoder(new ByteCodec())
+                .otherEncoder(new ByteArrayCodec())
+                .otherEncoder(new BinaryEncoder())
+                .otherEncoder(new UUIDEncoder())
+                .binaryDecoder(new TransformingBinaryDecoder())
+                .build();
     }
 
     boolean canEncode(final Class<?> aClass) {
@@ -153,8 +154,8 @@ public class PrimitiveCodecs implements Codec<Object> {
             return this;
         }
 
-        public Builder binaryCodec(final Codec codec) {
-            registerCodec(BSONType.BINARY, codec);
+        public Builder binaryDecoder(final Decoder decoder) {
+            bsonTypeDecoderMap.put(BSONType.BINARY, decoder);
             return this;
         }
 
@@ -213,7 +214,7 @@ public class PrimitiveCodecs implements Codec<Object> {
          * Used to register a decoder for which does not have the same type as the encoder.
          *
          * @param bsonType the bson type to decode
-         * @param decoder the decoder
+         * @param decoder  the decoder
          * @return this
          */
         public Builder otherDecoder(final BSONType bsonType, final Decoder decoder) {

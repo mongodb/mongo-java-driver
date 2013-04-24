@@ -16,10 +16,8 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONBinaryReader;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONWriter;
-import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,18 +25,17 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.UUID;
 
-import static java.nio.ByteBuffer.wrap;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class UUIDCodecTest {
+public class UUIDEncoderTest {
 
-    private UUIDCodec uuidCodec;
+    private UUIDEncoder uuidEncoder;
     private BasicOutputBuffer outputBuffer;
 
     @Before
     public void setUp() throws Exception {
-        uuidCodec = new UUIDCodec();
+        uuidEncoder = new UUIDEncoder();
         outputBuffer = new BasicOutputBuffer();
     }
 
@@ -51,7 +48,7 @@ public class UUIDCodecTest {
         bsonWriter.writeName("_id");
 
         // When
-        uuidCodec.encode(bsonWriter, uuid);
+        uuidEncoder.encode(bsonWriter, uuid);
 
         // Then
         final byte[] expectedList = {0, 0, 0, 0,       //Start of document
@@ -65,26 +62,4 @@ public class UUIDCodecTest {
         assertThat(outputBuffer.toByteArray(), is(expectedList));
     }
 
-    @Test
-    public void shouldReadLittleEndianEncodedLongs() {
-        // Given
-        final byte[] binaryTypeWithUUIDAsBytes = {
-                                                 0, 0, 0, 0,            // document
-                                                 5,                      // type (BINARY)
-                                                 95, 105, 100, 0,        // "_id"
-                                                 16, 0, 0, 0,            // int "16" (length)
-                                                 4,                      // type (B_UUID_STANDARD)
-                                                 2, 0, 0, 0, 0, 0, 0, 0, //
-                                                 1, 0, 0, 0, 0, 0, 0, 0, // 8 bytes for long, 2 longs for UUID
-                                                 0};                     // EOM
-        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(wrap(binaryTypeWithUUIDAsBytes)));
-        reader.readStartDocument();
-
-        // When
-        final UUID actualUUID = uuidCodec.decode(reader);
-
-        // Then
-        final UUID expectedUUID = new UUID(2L, 1L);
-        assertThat(actualUUID, is(expectedUUID));
-    }
 }

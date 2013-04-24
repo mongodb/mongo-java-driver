@@ -17,6 +17,7 @@
 package org.mongodb.codecs;
 
 import org.bson.BSONBinaryReader;
+import org.bson.BSONBinarySubType;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONBinaryWriterSettings;
 import org.bson.BSONReaderSettings;
@@ -67,7 +68,7 @@ public class DocumentCodecTest {
         doc.put("long", 2L);
         doc.put("string", "hello");
         doc.put("double", 3.2);
-        doc.put("binary", new Binary(new byte[]{0, 1, 2, 3}));
+        doc.put("binary", new Binary(BSONBinarySubType.UserDefined, new byte[]{0, 1, 2, 3}));
         doc.put("date", new Date(1000));
         doc.put("boolean", true);
         doc.put("code", new Code("var i = 0"));
@@ -79,8 +80,7 @@ public class DocumentCodecTest {
         codec.encode(writer, doc);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                           inputBuffer));
+        final Document decodedDocument = codec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer));
         assertEquals(doc, decodedDocument);
     }
 
