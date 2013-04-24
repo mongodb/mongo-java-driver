@@ -16,6 +16,7 @@
 
 package org.mongodb.json;
 
+import org.bson.BSONBinarySubType;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.types.BSONTimestamp;
@@ -506,6 +507,17 @@ public class JSONReaderTest {
     }
 
     @Test
+    public void testUserDefinedBinary() {
+        final String json = "{ \"$binary\" : \"AQID\", \"$type\" : \"80\" }";
+        bsonReader = new JSONReader(json);
+        assertEquals(BSONType.BINARY, bsonReader.readBSONType());
+        Binary binary = bsonReader.readBinaryData();
+        assertEquals(BSONBinarySubType.UserDefined.getValue(), binary.getType());
+        assertArrayEquals(new byte[]{1, 2, 3}, binary.getData());
+        assertEquals(BSONReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
     public void testInfinity() {
         final String json = "{ \"value\" : Infinity }";
         bsonReader = new JSONReader(json);
@@ -533,6 +545,19 @@ public class JSONReaderTest {
         assertEquals(BSONType.BINARY, bsonReader.readBSONType());
         Binary binary = bsonReader.readBinaryData();
         assertEquals(3, binary.getType());
+        assertArrayEquals(new byte[]{1, 2, 3}, binary.getData());
+        bsonReader.readEndDocument();
+        assertEquals(BSONReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testBinDataUserDefined() {
+        final String json = "{ \"a\" : BinData(128, AQID) }";
+        bsonReader = new JSONReader(json);
+        bsonReader.readStartDocument();
+        assertEquals(BSONType.BINARY, bsonReader.readBSONType());
+        Binary binary = bsonReader.readBinaryData();
+        assertEquals(BSONBinarySubType.UserDefined.getValue(), binary.getType());
         assertArrayEquals(new byte[]{1, 2, 3}, binary.getData());
         bsonReader.readEndDocument();
         assertEquals(BSONReader.State.DONE, bsonReader.getState());

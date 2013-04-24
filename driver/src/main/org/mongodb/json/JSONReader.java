@@ -694,8 +694,7 @@ public class JSONReader extends BSONReader {
         verifyToken(")");
 
         byte[] bytes = DatatypeConverter.parseBase64Binary(bytesToken.getValue(String.class));
-        BSONBinarySubType subType = BSONBinarySubType.values()[subTypeToken.getValue(Integer.class)];
-        return new Binary(subType, bytes);
+        return new Binary(subTypeToken.getValue(Integer.class).byteValue(), bytes);
     }
 
     private Binary visitUUIDConstructor(final String uuidConstructorName) {
@@ -891,7 +890,7 @@ public class JSONReader extends BSONReader {
         }
         verifyToken("}");
 
-        final byte subType = Byte.parseByte(subTypeToken.getValue(String.class));
+        final byte subType = (byte) Integer.parseInt(subTypeToken.getValue(String.class), 16);
 
         for (BSONBinarySubType st : BSONBinarySubType.values()) {
             if (st.getValue() == subType) {

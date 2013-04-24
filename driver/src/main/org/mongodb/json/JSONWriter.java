@@ -158,14 +158,14 @@ public class JSONWriter extends BSONWriter {
             switch (settings.getOutputMode()) {
                 case Shell:
                     writeNameHelper(getName());
-                    writer.write(String.format("new BinData(%s, \"%s\")", Integer.toHexString(binary.getType()),
+                    writer.write(String.format("new BinData(%s, \"%s\")", Integer.toString(binary.getType() & 0xFF),
                             DatatypeConverter.printBase64Binary(binary.getData())));
 
                     break;
                 default:
                     writeStartDocument();
                     writeString("$binary", DatatypeConverter.printBase64Binary(binary.getData()));
-                    writeString("$type", Integer.toHexString(binary.getType()));
+                    writeString("$type", Integer.toHexString(binary.getType() & 0xFF));
                     writeEndDocument();
             }
             setState(getNextState());

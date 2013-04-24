@@ -353,9 +353,9 @@ public class JSONWriterTest {
                                                     new TestData<Binary>(new Binary(new byte[]{1, 2, 3}),
                                                                          "{ \"$binary\" : \"AQID\", "
                                                                          + "\"$type\" : \"0\" }"),
-                                                    new TestData<Binary>(new Binary((byte) 10, new byte[]{1, 2, 3}),
+                                                    new TestData<Binary>(new Binary((byte) 0x80, new byte[]{1, 2, 3}),
                                                                          "{ \"$binary\" : \"AQID\", "
-                                                                         + "\"$type\" : \"a\" }"));
+                                                                         + "\"$type\" : \"80\" }"));
         for (final TestData<Binary> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.Strict));
@@ -377,8 +377,8 @@ public class JSONWriterTest {
                                                                          "new BinData(0, \"AQI=\")"),
                                                     new TestData<Binary>(new Binary(new byte[]{1, 2, 3}),
                                                                          "new BinData(0, \"AQID\")"),
-                                                    new TestData<Binary>(new Binary((byte) 10, new byte[]{1, 2, 3}),
-                                                                         "new BinData(a, \"AQID\")"));
+                                                    new TestData<Binary>(new Binary((byte) 0x80, new byte[]{1, 2, 3}),
+                                                                         "new BinData(128, \"AQID\")"));
         for (final TestData<Binary> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.Shell));
