@@ -274,7 +274,7 @@ public class DB implements IDB {
         final MongoCommand mongoCommand = new MongoCommand(toDocument(cmd))
                 .readPreference(readPrefs.toNew())
                 .flags(options);
-        return new CommandResult(executeCommand(mongoCommand));
+        return new CommandResult(executeCommandWithoutException(mongoCommand));
     }
 
     @Override
@@ -294,7 +294,7 @@ public class DB implements IDB {
         final MongoCommand mongoCommand = new MongoCommand(document)
                 .readPreference(readPrefs.toNew())
                 .flags(options);
-        return new CommandResult(executeCommand(mongoCommand));
+        return new CommandResult(executeCommandWithoutException(mongoCommand));
     }
 
     /**
@@ -443,8 +443,12 @@ public class DB implements IDB {
 
     org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
+        return getConnector().command(getName(), commandOperation, documentCodec);
+    }
+
+    org.mongodb.result.CommandResult executeCommandWithoutException(final MongoCommand mongoCommand) {
         try {
-            return getConnector().command(getName(), commandOperation, documentCodec);
+            return executeCommand(mongoCommand);
         } catch (MongoCommandFailureException ex) {
             return ex.getCommandResult();
         }
