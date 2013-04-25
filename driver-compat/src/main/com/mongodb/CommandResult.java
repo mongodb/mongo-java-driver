@@ -92,6 +92,7 @@ public class CommandResult extends BasicDBObject {
 
             final String cmdName;
             if (cmd != null) {
+                //TODO this is not correct to get first element from set
                 cmdName = cmd.keySet().iterator().next();
                 buf.append("command failed [").append(cmdName).append("]: ");
             }
@@ -101,7 +102,7 @@ public class CommandResult extends BasicDBObject {
 
             buf.append(toString());
 
-            return new CommandFailure(this, buf.toString());
+            return new CommandFailureException(this, buf.toString());
         } else if (hasErr()) { // getLastError check
             return createException(getCode(), get("err").toString());
         }
@@ -157,17 +158,5 @@ public class CommandResult extends BasicDBObject {
 
     public ServerAddress getServerUsed() {
         return host;
-    }
-
-    static class CommandFailure extends MongoException {
-        private static final long serialVersionUID = 3858350117192078001L;
-
-        /**
-         * @param res the result
-         * @param msg the message
-         */
-        public CommandFailure(final CommandResult res, final String msg) {
-            super(-1, msg);  // TODO: Pull out error code here.
-        }
     }
 }

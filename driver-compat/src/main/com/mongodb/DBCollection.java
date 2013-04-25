@@ -1565,7 +1565,6 @@ public class DBCollection implements IDBCollection {
     public void dropIndex(final String name) {
         final DropIndex dropIndex = new DropIndex(getName(), name);
         getDB().executeCommand(dropIndex);
-        //TODO: currently doesn't deal with errors
     }
 
     @Override

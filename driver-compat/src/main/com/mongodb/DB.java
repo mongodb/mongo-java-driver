@@ -271,9 +271,9 @@ public class DB implements IDB {
      * @mongodb.driver.manual tutorial/use-database-commands commands
      */
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs) {
-        //TODO options is not used.
-        final MongoCommand mongoCommand = new MongoCommand(toDocument(cmd));
-        mongoCommand.readPreference(readPrefs.toNew());
+        final MongoCommand mongoCommand = new MongoCommand(toDocument(cmd))
+                .readPreference(readPrefs.toNew())
+                .flags(options);
         return new CommandResult(executeCommand(mongoCommand));
     }
 
@@ -290,10 +290,10 @@ public class DB implements IDB {
     @Override
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs,
                                  final DBEncoder encoder) {
-        //TODO options is not used.
         final Document document = toDocument(cmd, encoder, documentCodec);
-        final MongoCommand mongoCommand = new MongoCommand(document);
-        mongoCommand.readPreference(readPrefs.toNew());
+        final MongoCommand mongoCommand = new MongoCommand(document)
+                .readPreference(readPrefs.toNew())
+                .flags(options);
         return new CommandResult(executeCommand(mongoCommand));
     }
 
@@ -443,7 +443,11 @@ public class DB implements IDB {
 
     org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
-        return getConnector().command(getName(), commandOperation, documentCodec);
+        try {
+            return getConnector().command(getName(), commandOperation, documentCodec);
+        } catch (MongoCommandFailureException ex) {
+            return ex.getCommandResult();
+        }
     }
 
 

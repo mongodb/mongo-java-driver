@@ -16,8 +16,8 @@
 
 package org.mongodb.command;
 
-import org.mongodb.Document;
 import org.mongodb.ConvertibleToDocument;
+import org.mongodb.Document;
 import org.mongodb.ReadPreference;
 import org.mongodb.operation.MongoQuery;
 
@@ -29,8 +29,16 @@ public class MongoCommand extends MongoQuery implements ConvertibleToDocument {
         batchSize = -1;
     }
 
+    @Override
     public MongoCommand readPreference(final ReadPreference readPreference) {
         super.readPreference(readPreference);
+        return this;
+    }
+
+
+    @Override
+    public MongoCommand flags(final int flags) {
+        super.flags(flags);
         return this;
     }
 

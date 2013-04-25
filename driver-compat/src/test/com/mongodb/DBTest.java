@@ -18,6 +18,7 @@ package com.mongodb;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mongodb.command.MongoCommandFailureException;
 
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
@@ -154,6 +155,12 @@ public class DBTest extends DatabaseTestCase {
     public void shouldExecuteCommandWithReadPreference() {
         final CommandResult commandResult = database.command(new BasicDBObject("dbStats", 1).append("scale", 1), 0, ReadPreference.secondary());
         assertThat(commandResult, hasFields(new String[]{"collections", "avgObjSize", "indexes", "db", "indexSize", "storageSize"}));
+    }
+
+    @Test
+    public void shouldNotThrowAnExceptionOnCommandFailure() {
+        final CommandResult commandResult = database.command(new BasicDBObject("collStats", "a" + System.currentTimeMillis()));
+        assertThat(commandResult, hasFields(new String[]{"serverUsed", "ok", "errmsg"}));
     }
 
 }
