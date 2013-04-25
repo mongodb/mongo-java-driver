@@ -18,12 +18,11 @@ package com.mongodb.codecs;
 
 import com.mongodb.DB;
 import com.mongodb.DBObject;
+import com.mongodb.TypeMapper;
 import org.bson.BSONWriter;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.IdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
-
-import java.util.HashMap;
 
 /**
  * Codec for documents that go in collections, and therefore have an _id.  Ensures that the _id field is written
@@ -35,9 +34,8 @@ public class CollectibleDBObjectCodec extends DBObjectCodec implements Collectib
 
     public CollectibleDBObjectCodec(final DB database, final PrimitiveCodecs primitiveCodecs,
                                     final IdGenerator idGenerator,
-                                    final Class<? extends DBObject> clazz,
-                                    final HashMap<String, Class<? extends DBObject>> pathToClassMap) {
-        super(database, primitiveCodecs, clazz, pathToClassMap);
+                                    final TypeMapper typeMapper) {
+        super(database, primitiveCodecs, typeMapper);
         this.idGenerator = idGenerator;
     }
 

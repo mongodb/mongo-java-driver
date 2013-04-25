@@ -22,8 +22,7 @@ import com.mongodb.DB;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
 import com.mongodb.DBRefBase;
-import com.mongodb.MongoInternalException;
-import com.mongodb.ReflectionDBObject;
+import com.mongodb.TypeMapper;
 import org.bson.BSON;
 import org.bson.BSONReader;
 import org.bson.BSONType;
@@ -35,40 +34,29 @@ import org.mongodb.codecs.PrimitiveCodecs;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("rawtypes")
 public class DBObjectCodec implements Codec<DBObject> {
-    private static final List<String> EMPTY_PATH = Collections.emptyList();
 
     private final PrimitiveCodecs primitiveCodecs;
     private final DB db;
-    private final Map<List<String>, Class<? extends DBObject>> pathToClassMap;
-    private final ReflectionDBObject.JavaWrapper wrapper;
+    private final TypeMapper typeMapper;
+
 
     public DBObjectCodec(final DB db, final PrimitiveCodecs primitiveCodecs,
-                         final Class<? extends DBObject> topLevelClass,
-                         final HashMap<String, Class<? extends DBObject>> stringPathToClassMap) {
+                         final TypeMapper typeMapper) {
         this.db = db;
         if (primitiveCodecs == null) {
             throw new IllegalArgumentException("primitiveCodecs is null");
         }
         this.primitiveCodecs = primitiveCodecs;
-        this.pathToClassMap = createPathToClassMap(topLevelClass, stringPathToClassMap);
-        if (ReflectionDBObject.class.isAssignableFrom(topLevelClass)) {
-            wrapper = ReflectionDBObject.getWrapper(topLevelClass);
-        }
-        else {
-            wrapper = null;
-        }
+        this.typeMapper = typeMapper;
     }
 
     public DBObjectCodec(final PrimitiveCodecs primitiveCodecs) {
-        this(null, primitiveCodecs, BasicDBObject.class, new HashMap<String, Class<? extends DBObject>>());
+        this(null, primitiveCodecs, new TypeMapper(BasicDBObject.class));
     }
 
     @Override
@@ -125,26 +113,19 @@ public class DBObjectCodec implements Codec<DBObject> {
         final Object value = BSON.applyEncodingHooks(initialValue);
         if (value instanceof DBRefBase) {
             encodeDBRef(bsonWriter, (DBRefBase) value);
-        }
-        else if (value instanceof BasicBSONList) {
+        } else if (value instanceof BasicBSONList) {
             encodeIterable(bsonWriter, (BasicBSONList) value);
-        }
-        else if (value instanceof DBObject) {
+        } else if (value instanceof DBObject) {
             encodeEmbeddedDBObject(bsonWriter, (DBObject) value);
-        }
-        else if (value instanceof Map) {
+        } else if (value instanceof Map) {
             encodeEmbeddedMap(bsonWriter, (Map<String, Object>) value);
-        }
-        else if (value instanceof Iterable) {
+        } else if (value instanceof Iterable) {
             encodeIterable(bsonWriter, (Iterable) value);
-        }
-        else if (value instanceof byte[]) {
+        } else if (value instanceof byte[]) {
             primitiveCodecs.encode(bsonWriter, new Binary((byte[]) value));
-        }
-        else if (value != null && value.getClass().isArray()) {
+        } else if (value != null && value.getClass().isArray()) {
             encodeArray(bsonWriter, value);
-        }
-        else {
+        } else {
             primitiveCodecs.encode(bsonWriter, value);
         }
     }
@@ -181,7 +162,7 @@ public class DBObjectCodec implements Codec<DBObject> {
     @Override
     public DBObject decode(final BSONReader reader) {
         final List<String> path = new ArrayList<String>(10);
-        final DBObject document = getNewInstance(path);
+        final DBObject document = typeMapper.getNewInstance(path);
 
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
@@ -207,36 +188,8 @@ public class DBObjectCodec implements Codec<DBObject> {
         return db;
     }
 
-    public Class<? extends DBObject> getTopLevelClass() {
-        return pathToClassMap.get(EMPTY_PATH);
-    }
-
-    public Map<List<String>, Class<? extends DBObject>> getPathToClassMap() {
-        return pathToClassMap;
-    }
-
-    private DBObject getNewInstance(final List<String> path) {
-        Class<? extends DBObject> newInstanceClass = null;
-        try {
-            newInstanceClass = pathToClassMap.get(path);
-            if (newInstanceClass == null) {
-                if (wrapper != null) {
-                    newInstanceClass = wrapper.getInternalClass(path);
-                }
-                if (newInstanceClass == null) {
-                    newInstanceClass = BasicDBObject.class;
-                }
-            }
-            return newInstanceClass.newInstance();
-        } catch (InstantiationException e) {
-            throw new MongoInternalException("can't create a new instance of class " + newInstanceClass, e);
-        } catch (IllegalAccessException e) {
-            throw new MongoInternalException("can't create a new instance of class " + newInstanceClass, e);
-        }
-    }
-
     private Object decodeDocument(final BSONReader reader, final List<String> path) {
-        final DBObject document = getNewInstance(path);
+        final DBObject document = typeMapper.getNewInstance(path);
 
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
@@ -274,8 +227,7 @@ public class DBObjectCodec implements Codec<DBObject> {
             if (fieldName != null) {
                 path.remove(path.size() - 1);
             }
-        }
-        else {
+        } else {
             initialRetVal = primitiveCodecs.decode(reader);
         }
 
@@ -291,23 +243,5 @@ public class DBObjectCodec implements Codec<DBObject> {
         reader.readEndArray();
         return list;
     }
-
-    private Map<List<String>, Class<? extends DBObject>> createPathToClassMap(
-            final Class<? extends DBObject>
-                    topLevelClass,
-            final HashMap<String,
-                    Class<? extends DBObject>>
-                    stringPathToClassMap) {
-        final Map<List<String>, Class<? extends DBObject>> pathToClassMap
-                = new HashMap<List<String>, Class<? extends DBObject>>();
-        pathToClassMap.put(EMPTY_PATH, topLevelClass);
-        for (final Map.Entry<String, Class<? extends DBObject>> cur : stringPathToClassMap.entrySet()) {
-            final List<String> path = Arrays.asList(cur.getKey().split("\\."));
-            pathToClassMap.put(path, cur.getValue());
-        }
-
-        return Collections.unmodifiableMap(pathToClassMap);
-    }
-
 }
 

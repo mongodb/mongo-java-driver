@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.codecs.LegacyBinaryDecoder;
 import com.mongodb.codecs.CollectibleDBObjectCodec;
 import com.mongodb.codecs.DBEncoderAdapter;
 import org.bson.types.ObjectId;
@@ -61,6 +62,7 @@ import org.mongodb.util.FieldHelpers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -216,7 +218,7 @@ public class DBCollection implements IDBCollection {
      * If the collection does not exists on the server, then it will be created.
      * If the new document does not contain an '_id' field, it will be added.
      *
-     * @param documents    list of {@code DBObject}'s to be inserted
+     * @param documents     list of {@code DBObject}'s to be inserted
      * @param aWriteConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
      * @throws MongoException if the operation fails
@@ -233,9 +235,9 @@ public class DBCollection implements IDBCollection {
      * If the collection does not exists on the server, then it will be created.
      * If the new document does not contain an '_id' field, it will be added.
      *
-     * @param documents    {@code DBObject}'s to be inserted
+     * @param documents     {@code DBObject}'s to be inserted
      * @param aWriteConcern {@code WriteConcern} to be used during operation
-     * @param encoder      {@code DBEncoder} to be used
+     * @param encoder       {@code DBEncoder} to be used
      * @return the result of the operation
      * @throws MongoException if the operation fails
      */
@@ -249,9 +251,9 @@ public class DBCollection implements IDBCollection {
      * If the collection does not exists on the server, then it will be created.
      * If the new document does not contain an '_id' field, it will be added.
      *
-     * @param documents    a list of {@code DBObject}'s to be inserted
+     * @param documents     a list of {@code DBObject}'s to be inserted
      * @param aWriteConcern {@code WriteConcern} to be used during operation
-     * @param dbEncoder      {@code DBEncoder} to be used
+     * @param dbEncoder     {@code DBEncoder} to be used
      * @return the result of the operation
      * @throws MongoException if the operation fails
      */
@@ -341,10 +343,10 @@ public class DBCollection implements IDBCollection {
      * Modify an existing document or documents in collection.
      * The query parameter employs the same query selectors, as used in {@code find()}.
      *
-     * @param query        the selection criteria for the update
-     * @param update       the modifications to apply
-     * @param upsert       insert a document if no document matches the update query criteria
-     * @param multi        update all documents in the collection that match the update query criteria
+     * @param query         the selection criteria for the update
+     * @param update        the modifications to apply
+     * @param upsert        insert a document if no document matches the update query criteria
+     * @param multi         update all documents in the collection that match the update query criteria
      * @param aWriteConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
      */
@@ -369,7 +371,7 @@ public class DBCollection implements IDBCollection {
 
     private org.mongodb.result.WriteResult updateInternal(MongoUpdate mongoUpdate) {
         try {
-            return  getConnector().update(getNamespace(), mongoUpdate, documentCodec);
+            return getConnector().update(getNamespace(), mongoUpdate, documentCodec);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
@@ -380,12 +382,12 @@ public class DBCollection implements IDBCollection {
      * By default the method updates a single document.
      * The query parameter employs the same query selectors, as used in {@code find()}.
      *
-     * @param query        the selection criteria for the update
-     * @param update       the modifications to apply
-     * @param upsert       insert a document if no document matches the update query criteria
-     * @param multi        update all documents in the collection that match the update query criteria
+     * @param query         the selection criteria for the update
+     * @param update        the modifications to apply
+     * @param upsert        insert a document if no document matches the update query criteria
+     * @param multi         update all documents in the collection that match the update query criteria
      * @param aWriteConcern {@code WriteConcern} to be used during operation
-     * @param encoder      {@code DBEncoder} to be used
+     * @param encoder       {@code DBEncoder} to be used
      * @return the result of the operation
      */
     @Override
@@ -1259,8 +1261,8 @@ public class DBCollection implements IDBCollection {
     /**
      * Deprecated. The {@link #ensureIndex(DBObject)} method is the preferred way to create indexes on collections.
      *
-     * @param keys    a document that contains pairs with the name of the field or fields to index and order of the index
-     * @param options a document that controls the creation of the index.
+     * @param keys      a document that contains pairs with the name of the field or fields to index and order of the index
+     * @param options   a document that controls the creation of the index.
      * @param dbEncoder specifies the encoder that used during operation
      */
     @Override
@@ -1413,20 +1415,6 @@ public class DBCollection implements IDBCollection {
     @Override
     public DB getDB() {
         return database;
-    }
-
-    @Override
-    public Class getObjectClass() {
-        return codec.getEncoderClass();
-    }
-
-    /**
-     * Sets a default class for objects in this collection; null resets the class to nothing.
-     *
-     * @param objectClass the class
-     */
-    public synchronized void setObjectClass(final Class<? extends DBObject> objectClass) {
-        updateObjectCodec(objectClass);
     }
 
     /**
@@ -1604,6 +1592,20 @@ public class DBCollection implements IDBCollection {
         return cappedField != null && (cappedField.equals(1) || cappedField.equals(true));
     }
 
+    @Override
+    public Class getObjectClass() {
+        return codec.getEncoderClass();
+    }
+
+    /**
+     * Sets a default class for objects in this collection; null resets the class to nothing.
+     *
+     * @param objectClass the class
+     */
+    public synchronized void setObjectClass(final Class<? extends DBObject> objectClass) {
+        updateObjectCodec(objectClass);
+    }
+
     /**
      * Sets the internal class for the given path in the document hierarchy
      *
@@ -1615,9 +1617,12 @@ public class DBCollection implements IDBCollection {
     }
 
     private void updateObjectCodec(final Class<? extends DBObject> objectClass) {
-        final HashMap<String, Class<? extends DBObject>> map = new HashMap<String, Class<? extends DBObject>>(pathToClassMap);
-        this.codec = new CollectibleDBObjectCodec(database,
-                getPrimitiveCodecs(), new ObjectIdGenerator(), objectClass, map);
+        this.codec = new CollectibleDBObjectCodec(
+                database,
+                getPrimitiveCodecs(),
+                new ObjectIdGenerator(),
+                new TypeMapper(objectClass, Collections.unmodifiableMap(pathToClassMap))
+        );
     }
 
     private PrimitiveCodecs getPrimitiveCodecs() {
