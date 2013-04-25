@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.codecs.LegacyBinaryDecoder;
 import com.mongodb.codecs.CollectibleDBObjectCodec;
 import com.mongodb.codecs.DBEncoderAdapter;
 import org.bson.types.ObjectId;

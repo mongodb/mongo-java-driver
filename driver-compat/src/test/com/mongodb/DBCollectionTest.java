@@ -25,6 +25,7 @@ import org.bson.types.Binary;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -280,6 +281,20 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertEquals(uuid, collection.findOne().get("uuid"));
     }
 
+    @Test
+    public void testPathToClassMapDecoding() {
+        collection.setObjectClass(TopLevelDBObject.class);
+        collection.setInternalClass("a", NestedOneDBObject.class);
+        collection.setInternalClass("a.b", NestedTwoDBObject.class);
+
+        final DBObject doc = new TopLevelDBObject()
+                .append("a", new NestedOneDBObject()
+                        .append("b", Arrays.asList(new NestedTwoDBObject()))
+                        .append("c", new BasicDBObject()));
+        collection.save(doc);
+        assertEquals(doc, collection.findOne());
+    }
+
     public static class MyDBObject extends BasicDBObject {
         private static final long serialVersionUID = 3352369936048544621L;
     }
@@ -332,5 +347,17 @@ public class DBCollectionTest extends DatabaseTestCase {
             bsonWriter.writeEndDocument();
             return outputBuffer.getPosition() - start;
         }
+    }
+
+    public static class TopLevelDBObject extends BasicDBObject {
+        private static final long serialVersionUID = 7029929727222305692L;
+    }
+
+    public static class NestedOneDBObject extends BasicDBObject {
+        private static final long serialVersionUID = -5821458746671670383L;
+    }
+
+    public static class NestedTwoDBObject extends BasicDBObject {
+        private static final long serialVersionUID = 5243874721805359328L;
     }
 }

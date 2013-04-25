@@ -31,6 +31,8 @@ import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
 import org.mongodb.Codec;
 import org.mongodb.codecs.PrimitiveCodecs;
+import org.mongodb.codecs.validators.QueryFieldNameValidator;
+import org.mongodb.codecs.validators.Validator;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -41,22 +43,24 @@ import java.util.Map;
 public class DBObjectCodec implements Codec<DBObject> {
 
     private final PrimitiveCodecs primitiveCodecs;
+    private final Validator<String> fieldNameValidator;
     private final DB db;
     private final TypeMapper typeMapper;
 
 
     public DBObjectCodec(final DB db, final PrimitiveCodecs primitiveCodecs,
-                         final TypeMapper typeMapper) {
-        this.db = db;
+                         final Validator<String> fieldNameValidator, final TypeMapper typeMapper) {
         if (primitiveCodecs == null) {
             throw new IllegalArgumentException("primitiveCodecs is null");
         }
         this.primitiveCodecs = primitiveCodecs;
+        this.db = db;
+        this.fieldNameValidator = fieldNameValidator;
         this.typeMapper = typeMapper;
     }
 
     public DBObjectCodec(final PrimitiveCodecs primitiveCodecs) {
-        this(null, primitiveCodecs, new TypeMapper(BasicDBObject.class));
+        this(null, primitiveCodecs, new QueryFieldNameValidator(), new TypeMapper(BasicDBObject.class));
     }
 
     @Override
@@ -76,28 +80,6 @@ public class DBObjectCodec implements Codec<DBObject> {
         bsonWriter.writeEndDocument();
     }
 
-    public void encodeEmbeddedDBObject(final BSONWriter bsonWriter, final DBObject document) {
-        bsonWriter.writeStartDocument();
-
-        for (final String key : document.keySet()) {
-            validateField(key);
-            bsonWriter.writeName(key);
-            writeValue(bsonWriter, document.get(key));
-        }
-        bsonWriter.writeEndDocument();
-    }
-
-    public void encodeEmbeddedMap(final BSONWriter bsonWriter, final Map<String, Object> document) {
-        bsonWriter.writeStartDocument();
-
-        for (final String key : document.keySet()) {
-            validateField(key);
-            bsonWriter.writeName(key);
-            writeValue(bsonWriter, document.get(key));
-        }
-        bsonWriter.writeEndDocument();
-    }
-
     protected void beforeFields(final BSONWriter bsonWriter, final DBObject document) {
     }
 
@@ -106,6 +88,7 @@ public class DBObjectCodec implements Codec<DBObject> {
     }
 
     protected void validateField(final String key) {
+        fieldNameValidator.validate(key);
     }
 
     @SuppressWarnings("unchecked")
@@ -116,9 +99,9 @@ public class DBObjectCodec implements Codec<DBObject> {
         } else if (value instanceof BasicBSONList) {
             encodeIterable(bsonWriter, (BasicBSONList) value);
         } else if (value instanceof DBObject) {
-            encodeEmbeddedDBObject(bsonWriter, (DBObject) value);
+            encodeEmbeddedObject(bsonWriter, ((DBObject) value).toMap());
         } else if (value instanceof Map) {
-            encodeEmbeddedMap(bsonWriter, (Map<String, Object>) value);
+            encodeEmbeddedObject(bsonWriter, (Map<String, Object>) value);
         } else if (value instanceof Iterable) {
             encodeIterable(bsonWriter, (Iterable) value);
         } else if (value instanceof byte[]) {
@@ -128,6 +111,17 @@ public class DBObjectCodec implements Codec<DBObject> {
         } else {
             primitiveCodecs.encode(bsonWriter, value);
         }
+    }
+
+    private void encodeEmbeddedObject(final BSONWriter bsonWriter, final Map<String, Object> document) {
+        bsonWriter.writeStartDocument();
+
+        for (final String key : document.keySet()) {
+            validateField(key);
+            bsonWriter.writeName(key);
+            writeValue(bsonWriter, document.get(key));
+        }
+        bsonWriter.writeEndDocument();
     }
 
     private void encodeArray(final BSONWriter bsonWriter, final Object value) {
@@ -180,14 +174,6 @@ public class DBObjectCodec implements Codec<DBObject> {
         return DBObject.class;
     }
 
-    public PrimitiveCodecs getPrimitiveCodecs() {
-        return primitiveCodecs;
-    }
-
-    public DB getDb() {
-        return db;
-    }
-
     private Object decodeDocument(final BSONReader reader, final List<String> path) {
         final DBObject document = typeMapper.getNewInstance(path);
 
@@ -207,8 +193,7 @@ public class DBObjectCodec implements Codec<DBObject> {
         return document;
     }
 
-    private Object readValue(final BSONReader reader, final String fieldName,
-                             final List<String> path) {
+    private Object readValue(final BSONReader reader, final String fieldName, final List<String> path) {
         final BSONType bsonType = reader.getCurrentBSONType();
         final Object initialRetVal;
         if (bsonType.isContainer()) {
