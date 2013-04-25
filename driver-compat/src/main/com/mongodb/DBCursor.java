@@ -16,10 +16,13 @@
 
 package com.mongodb;
 
+import com.mongodb.codecs.DBDecoderAdapter;
+import org.mongodb.Decoder;
 import org.mongodb.MongoConnector;
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.operation.MongoGetMore;
+import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.result.QueryResult;
 
@@ -58,6 +61,8 @@ import static com.mongodb.DBObjects.toDocument;
 public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeable {
     private final DBCollection collection;
     private final MongoFind find;
+    private Decoder<DBObject> resultDecoder;
+    private DBDecoderFactory decoderFactory;
     private CursorType cursorType;
     private QueryResult<DBObject> currentResult;
     private Iterator<DBObject> currentIterator;
@@ -76,19 +81,21 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @param readPreference the read preference for this query
      */
     public DBCursor(final DBCollection collection, final DBObject query, final DBObject fields, final ReadPreference readPreference) {
+        this(collection,
+                new MongoFind()
+                        .where(toDocument(query))
+                        .select(DBObjects.toFieldSelectorDocument(fields))
+                        .readPreference(readPreference.toNew())
+                        .flags(collection.getOptions())
+        );
+    }
+
+    private DBCursor(final DBCollection collection, final MongoFind find) {
         if (collection == null) {
             throw new IllegalArgumentException("Collection can't be null");
         }
         this.collection = collection;
-        find = new MongoFind()
-                .where(toDocument(query))
-                .select(DBObjects.toFieldSelectorDocument(fields))
-                .readPreference(readPreference.toNew())
-                .flags(collection.getOptions());
-    }
-
-    private DBCursor(final DBCollection collection, final MongoFind find) {
-        this.collection = collection;
+        this.resultDecoder = collection.getCodec();
         this.find = new MongoFind(find);
     }
 
@@ -144,7 +151,6 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     public DBObject curr() {
         return currentObject;
     }
-
 
     @Override
     public void remove() {
@@ -534,6 +540,16 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         return ReadPreference.fromNew(find.getReadPreference());
     }
 
+    public DBCursor setDecoderFactory(final DBDecoderFactory factory) {
+        this.decoderFactory = factory;
+        this.resultDecoder = new DBDecoderAdapter(factory.create(), collection, new PowerOfTwoByteBufferPool());
+        return this;
+    }
+
+    public DBDecoderFactory getDecoderFactory() {
+        return decoderFactory;
+    }
+
     @Override
     public String toString() {
         return "DBCursor{" +
@@ -543,15 +559,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
                 '}';
     }
 
-    /**
-     * Types of cursors: iterator or array.
-     */
-    static enum CursorType {
-        ITERATOR,
-        ARRAY
-    }
-
-    void checkCursorType(final CursorType type) {
+    private void checkCursorType(final CursorType type) {
         if (cursorType == null) {
             cursorType = type;
             return;
@@ -564,7 +572,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         throw new IllegalArgumentException("Can't switch cursor access methods");
     }
 
-    void fillArray(final int n) {
+    private void fillArray(final int n) {
         checkCursorType(CursorType.ARRAY);
         while (n >= all.size() && hasNext()) {
             all.add(nextInternal());
@@ -594,7 +602,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
                         find.getLimit(),
                         numSeen)
                 ),
-                collection.getCodec());
+                resultDecoder);
         final List<DBObject> results = currentResult.getResults();
         currentIterator = results.iterator();
         sizes.add(results.size());
@@ -605,7 +613,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
                 collection.getNamespace(),
                 find,
                 collection.getDocumentCodec(),
-                collection.getCodec());
+                resultDecoder);
         final List<DBObject> results = currentResult.getResults();
         currentIterator = results.iterator();
         sizes.add(results.size());
@@ -626,5 +634,13 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
     private MongoConnector getConnector() {
         return getCollection().getConnector();
+    }
+
+    /**
+     * Types of cursors: iterator or array.
+     */
+    private static enum CursorType {
+        ITERATOR,
+        ARRAY
     }
 }

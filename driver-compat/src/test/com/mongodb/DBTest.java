@@ -18,7 +18,6 @@ package com.mongodb;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mongodb.command.MongoCommandFailureException;
 
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;

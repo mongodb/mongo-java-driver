@@ -20,12 +20,17 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import static org.hamcrest.CoreMatchers.everyItem;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -231,5 +236,29 @@ public class DBCursorTest extends DatabaseTestCase {
             // all good
         }
     }
+
+    @Test
+    public void testDBDecoder() {
+        cursor.setDecoderFactory(new MyDBDecoderFactory());
+        final DBObject objectFromDecoder = new BasicDBObject("a", 1);
+        assertThat(cursor.toArray(), everyItem(is(objectFromDecoder)));
+    }
+
+    static class MyDBDecoder implements DBDecoder {
+
+        @Override
+        public DBObject decode(InputStream in, DBCollection collection) throws IOException {
+            return new BasicDBObject("a", 1);
+        }
+    }
+    static class MyDBDecoderFactory implements DBDecoderFactory {
+
+        @Override
+        public DBDecoder create() {
+            return new MyDBDecoder();
+        }
+    }
+
+
 
 }
