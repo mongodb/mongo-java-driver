@@ -34,7 +34,7 @@ public class DBAddressTest {
         DBAddress second = new DBAddress(first, "some.other.host");
         assertEquals(first.getSocketAddress().hashCode(), second.getSocketAddress().hashCode());
         assertEquals("some.other.host", second.getDBName());
-        DBAddress third = new DBAddress(InetAddress.getLocalHost(), 27017, "some.db");
+        DBAddress third = new DBAddress(InetAddress.getByName("localhost"), 27017, "some.db");
         assertEquals("some.db", third.getDBName());
 
         DBAddress fourth = third.getSister("some.other.db");
