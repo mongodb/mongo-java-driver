@@ -41,6 +41,7 @@ public class ArrayCodec implements ComplexTypeEncoder<Object> {
         stringArrayCodec = new StringArrayCodec();
     }
 
+    @Override
     public void encode(final BSONWriter bsonWriter, final Object object) {
         if (object instanceof int[]) {
             encode(bsonWriter, (int[]) object);
@@ -65,7 +66,6 @@ public class ArrayCodec implements ComplexTypeEncoder<Object> {
         }
     }
 
-    //TODO: maybe the codec needs to be an object codec specifically?
     public void encode(final BSONWriter bsonWriter, final Object[] array) {
         bsonWriter.writeStartArray();
         for (final Object value : array) {
