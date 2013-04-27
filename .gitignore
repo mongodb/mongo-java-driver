@@ -1,4 +1,5 @@
 commit-*
+.settings/
 .jsshell
 .js*shell
 
