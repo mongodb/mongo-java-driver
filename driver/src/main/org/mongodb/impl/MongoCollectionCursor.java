@@ -44,16 +44,18 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
         this.collection = collection;
         this.find = find;
         this.connector = connector;
-        currentResult = connector.query(collection.getNamespace(), find,
-                                        collection.getOptions().getDocumentCodec(),
-                                        collection.getCodec());
+        currentResult = connector.query(collection.getNamespace(), find, collection.getOptions().getDocumentCodec(), collection.getCodec());
         currentIterator = currentResult.getResults().iterator();
+        killCursorIfLimitReached();
     }
 
     @Override
     public void close() {
+        if (closed) {
+            return;
+        }
         closed = true;
-        if (currentResult != null && currentResult.getCursor() != null) {
+        if (currentResult.getCursor() != null && !limitReached()) {
             connector.killCursors(new MongoKillCursor(currentResult.getCursor()));
         }
         currentResult = null;
@@ -109,23 +111,9 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
 
     private void getMore() {
         currentResult = connector.getMore(collection.getNamespace(),
-                new MongoGetMore(currentResult.getCursor(),
-                        chooseNumberToReturn(find.getBatchSize(), find.getLimit(), (int) (nextCount))),
-                collection.getCodec());
+                new MongoGetMore(currentResult.getCursor(),  find.getLimit(), find.getBatchSize(), nextCount), collection.getCodec());
         currentIterator = currentResult.getResults().iterator();
-    }
-
-    private int chooseNumberToReturn(final int batchSize, final int limit, final int fetched) {
-        final int bs = Math.abs(batchSize);
-        final int remaining = limit > 0 ? limit - fetched : 0;
-        int res = bs * remaining != 0 ? Math.min(bs, remaining) : bs + remaining;
-
-        if (batchSize < 0) {
-            // force close
-            res = -res;
-        }
-
-        return res;
+        killCursorIfLimitReached();
     }
 
     @Override
@@ -137,5 +125,16 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
     public String toString() {
         return "MongoCollectionCursor{collection=" + collection + ", find=" + find + ", cursor="
                + currentResult.getCursor() + '}';
+    }
+
+    private void killCursorIfLimitReached() {
+        if (limitReached()) {
+            connector.killCursors(new MongoKillCursor(currentResult.getCursor()));
+        }
+    }
+
+    private boolean limitReached() {
+        return currentResult.getCursor() != null && find.getLimit() > 0
+                && find.getLimit() - (nextCount + currentResult.getResults().size()) <= 0;
     }
 }

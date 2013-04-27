@@ -18,7 +18,10 @@ package org.mongodb;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.mongodb.command.MongoCommand;
+import org.mongodb.result.CommandResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -120,6 +123,29 @@ public class MongoCursorTest extends DatabaseTestCase {
 
         cursor.next();
         cursor.close();
-            cursor.hasNext();
+        cursor.hasNext();
+    }
+
+    @Test
+    @Ignore("Won't work with replica sets or when tests are run in parallel")
+    public void shouldKillCursorIfLimitIsReachedOnInitialQuery() {
+        cursor = collection.limit(5).all();
+        CommandResult commandResult = Fixture.getMongoClient().getDatabase("admin").executeCommand(new MongoCommand(
+                new Document("serverStatus", 1)));
+        assertEquals(0, ((Document) commandResult.getResponse().get("cursors")).get("totalOpen"));
+    }
+
+    @Test
+    @Ignore("Won't work with replica sets or when tests are run in parallel")
+    public void shouldKillCursorIfLimitIsReachedOnGetMore() {
+        cursor = collection.batchSize(3).limit(5).all();
+        cursor.next();
+        cursor.next();
+        cursor.next();
+        cursor.next();
+
+        CommandResult commandResult = Fixture.getMongoClient().getDatabase("admin").executeCommand(new MongoCommand(
+                new Document("serverStatus", 1)));
+        assertEquals(0, ((Document) commandResult.getResponse().get("cursors")).get("totalOpen"));
     }
 }

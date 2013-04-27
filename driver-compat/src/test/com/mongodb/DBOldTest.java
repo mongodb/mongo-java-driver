@@ -24,6 +24,7 @@ import java.net.UnknownHostException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class DBOldTest extends DatabaseTestCase {
     @Test
@@ -56,10 +57,10 @@ public class DBOldTest extends DatabaseTestCase {
             DBObject o4 = BasicDBObjectBuilder.start().add("capped", true)
                                               .add("size", -20).get();
             database.createCollection("foo4", o4);
-        } catch (MongoException e) {
-            return;
+            fail();
+        } catch (MongoException e) { // NOPMD
+            // all good;
         }
-        assertEquals(0, 1);
     }
 
     @Test

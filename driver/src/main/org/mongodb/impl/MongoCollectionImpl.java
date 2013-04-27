@@ -879,9 +879,16 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
             private final AsyncBlock<? super T> block;
+            private long numFetchedSoFar;
 
             public QueryResultSingleResultCallback(final AsyncBlock<? super T> block) {
+                this(block, 0);
+            }
+
+            public QueryResultSingleResultCallback(final AsyncBlock<? super T> block, long numFetchedSoFar) {
+
                 this.block = block;
+                this.numFetchedSoFar = numFetchedSoFar;
             }
 
             @Override
@@ -900,8 +907,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 }
                 else {
                     connector
-                            .asyncGetMore(getNamespace(), new MongoGetMore(result.getCursor(), findOp.getBatchSize()),
-                                    getCodec(), new QueryResultSingleResultCallback(block));
+                            .asyncGetMore(getNamespace(),
+                                    new MongoGetMore(result.getCursor(), findOp.getLimit(), findOp.getBatchSize(), numFetchedSoFar),
+                                    getCodec(), new QueryResultSingleResultCallback(block, numFetchedSoFar + result.getResults().size()));
                 }
             }
         }

@@ -96,4 +96,36 @@ public abstract class MongoQuery {
     public int getLimit() {
         return limit;
     }
+
+    /**
+     * Gets the limit of the number of documents in the first OP_REPLY response to the query. A value of zero tells the server to use the
+     * default size. A negative value tells the server to return no more than that number and immediately close the cursor.  Otherwise, the
+     * server will return no more than that number and return a cursorId to allow the rest of the documents to be fetched,
+     * if it turns out there are more documents.
+     * <p>
+     * The value returned by this method is based on the limit and the batch size, both of which can be positive, negative, or zero.
+     *
+     * @return the value for numberToReturn in the OP_QUERY wire protocol message.
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public int getNumberToReturn() {
+        int numberToReturn;
+        if (getLimit() < 0) {
+            numberToReturn = getLimit();
+        }
+        else if (getLimit() == 0) {
+            numberToReturn = getBatchSize();
+        }
+        else if (getBatchSize() == 0) {
+            numberToReturn = getLimit();
+        }
+        else if (getLimit() < Math.abs(getBatchSize())) {
+            numberToReturn = getLimit();
+        }
+        else {
+            numberToReturn = getBatchSize();
+        }
+
+        return numberToReturn;
+    }
 }

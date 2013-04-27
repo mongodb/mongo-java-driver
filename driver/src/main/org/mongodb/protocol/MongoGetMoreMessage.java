@@ -40,7 +40,8 @@ public class MongoGetMoreMessage extends MongoRequestMessage {
     private void writeGetMore(final ChannelAwareOutputBuffer buffer) {
         buffer.writeInt(0);
         buffer.writeCString(getCollectionName());
-        buffer.writeInt(getMore.getBatchSize());
+        buffer.writeInt(getMore.getNumberToReturn());
         buffer.writeLong(getMore.getServerCursor().getId());
     }
+
 }

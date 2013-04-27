@@ -19,19 +19,57 @@ package org.mongodb.operation;
 import org.mongodb.result.ServerCursor;
 
 public class MongoGetMore {
+    private final int limit;
     private final int batchSize;
+    private final long numFetchedSoFar;
     private final ServerCursor serverCursor;
 
-    public MongoGetMore(final ServerCursor serverCursor, final int batchSize) {
+    public MongoGetMore(final ServerCursor serverCursor, final int limit, final int batchSize, final long numFetchedSoFar) {
         this.serverCursor = serverCursor;
+        this.limit = limit;
         this.batchSize = batchSize;
+        this.numFetchedSoFar = numFetchedSoFar;
+    }
+
+    public int getLimit() {
+        return limit;
     }
 
     public int getBatchSize() {
         return batchSize;
     }
 
+    public long getNumFetchedSoFar() {
+        return numFetchedSoFar;
+    }
+
     public ServerCursor getServerCursor() {
         return serverCursor;
+    }
+
+    /**
+     * Gets the limit of the number of documents in the OP_REPLY response to the get more request. A value of zero tells the server to use
+     * the default size. A negative value tells the server to return no more than that number and immediately close the cursor.
+     * Otherwise, the server will return no more than that number and return the same cursorId to allow the rest of the documents to be
+     * fetched, if it turns out there are more documents.
+     * <p>
+     * The value returned by this method is based on the limit, the batch size, both of which can be positive, negative, or zero,
+     * and the number of documents fetched so far.
+     *
+     * @return the value for numberToReturn in the OP_GET_MORE wire protocol message.
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-get-more OP_GET_MORE
+     */
+    public int getNumberToReturn() {
+        int numberToReturn;
+        if (Math.abs(limit) != 0) {
+            numberToReturn = Math.abs(limit) - (int) numFetchedSoFar;
+            if (batchSize != 0 && numberToReturn > Math.abs(batchSize)) {
+                numberToReturn = batchSize;
+            }
+        }
+        else {
+            numberToReturn = batchSize;
+        }
+        return numberToReturn;
     }
 }
