@@ -13,59 +13,57 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
- *   
+ *
  *   Author:
  *   Juan Luis Melo
- *   
+ *
  */
 
 
 package com.mongodb.jndi;
 
-import java.util.Enumeration;
-import java.util.Hashtable;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
+import com.mongodb.MongoException;
 
 import javax.naming.Context;
 import javax.naming.Name;
 import javax.naming.RefAddr;
 import javax.naming.Reference;
 import javax.naming.spi.ObjectFactory;
-
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
-import com.mongodb.MongoException;
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 /**
- * 
  * Mongo factory bean to help configuring Mongodb using Jndi.
- * 
- * @author jmelo
  *
+ * @author jmelo
  */
 public class MongoJndiObjectFactoryBean implements ObjectFactory {
 
-	private static final String MONGO_CLIENT_URI = "mongoClientURI";
+    public static final String MONGO_CLIENT_URI = "mongoClientURI";
 
 
-	public Object getObjectInstance(Object obj, Name name, Context nameCtx, Hashtable<?, ?> environment) throws Exception {
+    public Object getObjectInstance(Object obj, Name name, Context nameCtx, Hashtable<?, ?> environment) throws Exception {
 
-		String mongoURI = null;
-		Enumeration<RefAddr> props = ((Reference) obj).getAll();
-		
-		while (props.hasMoreElements()) {
-			RefAddr addr = props.nextElement();
-			if (addr != null) {
-				if (MONGO_CLIENT_URI.equals(addr.getType())) {
-					mongoURI = (String) addr.getContent();
-				}
-			}
-		}
-		
-		if (mongoURI == null || mongoURI.isEmpty()) {
-			throw new MongoException(MONGO_CLIENT_URI + " resource property is empty");
-		}
-		
-		return new MongoClient(new MongoClientURI(mongoURI));
-	}
+        String mongoURI = null;
+        Enumeration<RefAddr> props = ((Reference) obj).getAll();
+
+        while (props.hasMoreElements()) {
+            RefAddr addr = props.nextElement();
+            if (addr != null) {
+                if (MONGO_CLIENT_URI.equals(addr.getType())) {
+                    mongoURI = (String) addr.getContent();
+                    break;
+                }
+            }
+        }
+
+        if (mongoURI == null || mongoURI.isEmpty()) {
+            throw new MongoException(MONGO_CLIENT_URI + " resource property is empty");
+        }
+
+        return new MongoClient(new MongoClientURI(mongoURI));
+    }
 
 }
