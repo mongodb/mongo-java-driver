@@ -60,15 +60,9 @@ public class MongoJndiObjectFactoryBeanTest extends TestCase {
         mc.close();
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class,expectedExceptionsMessageRegExp = "uri needs to start with mongodb://")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "uri needs to start with mongodb://")
     public void testGetObjectInstanceInvalidURI() throws Exception {
         MongoJndiObjectFactoryBean bean = new MongoJndiObjectFactoryBean();
-        MongoClientOptions customClientOptions = new MongoClientOptions.Builder().readPreference(ReadPreference.secondary()).connectTimeout(150).socketTimeout(300).connectionsPerHost(500).build();
-        MongoOptions customOptions = new MongoOptions(customClientOptions);
-        final List<MongoCredential> credentialsList = Arrays.asList(
-                MongoCredential.createMongoCRCredential("user1", "test", "pwd".toCharArray()));
-
-
         final Reference obj = new Reference(MongoClient.class.getCanonicalName(), new RefAddr(MongoJndiObjectFactoryBean.MONGO_CLIENT_URI) {
             @Override
             public Object getContent() {
@@ -76,15 +70,7 @@ public class MongoJndiObjectFactoryBeanTest extends TestCase {
             }
         });
 
-
-        MongoClient mc = (MongoClient) bean.getObjectInstance(obj, null, null, null);
-        assertNotNull(mc);
-        assertEquals("secondary", mc.getReadPreference().getName());
-        assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
-        assertEquals(customOptions, mc.getMongoOptions());
-        assertEquals(credentialsList, mc.getCredentialsList());
-        assertEquals(customClientOptions, mc.getMongoClientOptions());
-        mc.close();
+        bean.getObjectInstance(obj, null, null, null);
     }
 
 
