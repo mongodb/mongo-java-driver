@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.command.MongoCommand;
+import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.result.CommandResult;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import java.util.NoSuchElementException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 public class MongoCursorTest extends DatabaseTestCase {
 
@@ -124,6 +126,21 @@ public class MongoCursorTest extends DatabaseTestCase {
         cursor.next();
         cursor.close();
         cursor.hasNext();
+    }
+
+    @Test
+    public void shouldThrowCursorNotFoundException() {
+        cursor = collection.batchSize(2).all();
+        Fixture.getMongoConnector().killCursors(new MongoKillCursor(cursor.getServerCursor()));
+        cursor.next();
+        cursor.next();
+        try {
+            cursor.next();
+        } catch (MongoCursorNotFoundException e) {
+            assertEquals(cursor.getServerCursor(), e.getCursor());
+        } catch (NoSuchElementException e) {
+            fail();
+        }
     }
 
     @Test
