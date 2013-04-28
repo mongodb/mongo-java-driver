@@ -16,23 +16,7 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.Block;
-import org.mongodb.CollectionAdmin;
-import org.mongodb.ConvertibleToDocument;
-import org.mongodb.Document;
-import org.mongodb.Function;
-import org.mongodb.Get;
-import org.mongodb.MongoCollection;
-import org.mongodb.MongoCollectionOptions;
-import org.mongodb.MongoConnector;
-import org.mongodb.MongoCursor;
-import org.mongodb.MongoDatabase;
-import org.mongodb.MongoException;
-import org.mongodb.MongoIterable;
-import org.mongodb.MongoNamespace;
-import org.mongodb.MongoStream;
-import org.mongodb.ReadPreference;
-import org.mongodb.WriteConcern;
+import org.mongodb.*;
 import org.mongodb.async.AsyncBlock;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.Count;
@@ -56,8 +40,6 @@ import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
-import org.mongodb.Codec;
-import org.mongodb.CollectibleCodec;
 
 import java.util.Collection;
 import java.util.List;
@@ -459,7 +441,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoCursor<T> all() {
-            return new MongoCollectionCursor<T>(MongoCollectionImpl.this, findOp, connector);
+            return new MongoQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), connector);
         }
 
         @Override

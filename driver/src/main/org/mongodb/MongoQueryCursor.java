@@ -14,38 +14,42 @@
  * limitations under the License.
  */
 
-package org.mongodb.impl;
+package org.mongodb;
 
-import org.mongodb.MongoCollection;
-import org.mongodb.MongoConnector;
-import org.mongodb.MongoCursor;
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.ServerCursor;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @NotThreadSafe
-class MongoCollectionCursor<T> implements MongoCursor<T> {
-    private final MongoCollection<T> collection;
+public class MongoQueryCursor<T> implements MongoCursor<T> {
     private final MongoFind find;
     private final MongoConnector connector;
+    private final MongoNamespace namespace;
+    private final Decoder<T> decoder;
     private QueryResult<T> currentResult;
     private Iterator<T> currentIterator;
     private long nextCount;
+    private final List<Integer> sizes = new ArrayList<Integer>();
     private boolean closed;
 
-    public MongoCollectionCursor(final MongoCollection<T> collection, final MongoFind find,
-                                 final MongoConnector connector) {
-        this.collection = collection;
+    public MongoQueryCursor(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
+                            final Decoder<T> decoder, final MongoConnector connector) {
+        this.namespace = namespace;
+        this.decoder = decoder;
         this.find = find;
         this.connector = connector;
-        currentResult = connector.query(collection.getNamespace(), find, collection.getOptions().getDocumentCodec(), collection.getCodec());
+        currentResult = connector.query(namespace, find, queryEncoder, decoder);
         currentIterator = currentResult.getResults().iterator();
+        sizes.add(currentResult.getResults().size());
         killCursorIfLimitReached();
     }
 
@@ -109,10 +113,33 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
         return currentResult.getCursor();
     }
 
+    public ServerAddress getServerAddress() {
+        return currentResult.getAddress();
+    }
+
+    /**
+     * Gets the number of OP_GET_MORE operations sent to the server so far.
+     *
+     * @return number of get more operations
+     */
+    public int getNumGetMores() {
+        return sizes.size() - 1;
+    }
+
+    /**
+     * Gets a list containing the number of items received in each batch
+     *
+     * @return the sizes of each batch
+     */
+    public List<Integer> getSizes() {
+        return Collections.unmodifiableList(sizes);
+    }
+
     private void getMore() {
-        currentResult = connector.getMore(collection.getNamespace(),
-                new MongoGetMore(currentResult.getCursor(),  find.getLimit(), find.getBatchSize(), nextCount), collection.getCodec());
+        currentResult = connector.getMore(namespace,
+                new MongoGetMore(currentResult.getCursor(),  find.getLimit(), find.getBatchSize(), nextCount), decoder);
         currentIterator = currentResult.getResults().iterator();
+        sizes.add(currentResult.getResults().size());
         killCursorIfLimitReached();
     }
 
@@ -123,8 +150,7 @@ class MongoCollectionCursor<T> implements MongoCursor<T> {
 
     @Override
     public String toString() {
-        return "MongoCollectionCursor{collection=" + collection + ", find=" + find + ", cursor="
-               + currentResult.getCursor() + '}';
+        return "MongoQueryCursor{namespace=" + namespace + ", find=" + find + ", cursor=" + currentResult.getCursor() + '}';
     }
 
     private void killCursorIfLimitReached() {
