@@ -20,11 +20,9 @@ import com.mongodb.codecs.DBDecoderAdapter;
 import org.mongodb.Decoder;
 import org.mongodb.MongoConnector;
 import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.MongoQueryCursor;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoGetMore;
-import org.mongodb.operation.MongoKillCursor;
-import org.mongodb.result.QueryResult;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -64,13 +62,11 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     private Decoder<DBObject> resultDecoder;
     private DBDecoderFactory decoderFactory;
     private CursorType cursorType;
-    private QueryResult<DBObject> currentResult;
-    private Iterator<DBObject> currentIterator;
     private DBObject currentObject;
     private int numSeen;
     private boolean closed;
     private final List<DBObject> all = new ArrayList<DBObject>();
-    private final List<Integer> sizes = new ArrayList<Integer>();
+    private MongoQueryCursor<DBObject> cursor;
 
     /**
      * Initializes a new database cursor
@@ -114,24 +110,11 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             throw new IllegalStateException("Cursor has been closed");
         }
 
-        if (currentResult == null || currentIterator == null) {
+        if (cursor == null) {
             query();
         }
 
-        if (currentIterator.hasNext()) {
-            return true;
-        }
-
-        if (find.getLimit() > 0 && find.getLimit() <= numSeen) {
-            return false;
-        }
-
-        if (currentResult.getCursor() == null) {
-            return false;
-        }
-
-        getMore();
-        return currentIterator.hasNext();
+        return cursor.hasNext();
     }
 
     public DBObject next() {
@@ -324,9 +307,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return the cursor id, or 0 if there is no active cursor.
      */
     public long getCursorId() {
-
-        if (currentResult != null && currentResult.getCursor() != null) {
-            return currentResult.getCursor().getId();
+        if (cursor != null) {
+            return cursor.getServerCursor().getId();
         } else {
             return 0;
         }
@@ -335,21 +317,20 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     /**
      * Gets the number of times, so far, that the cursor retrieved a batch from the database
      *
-     * @return
+     * @return the number of get more operations
      */
     public int numGetMores() {
-        return sizes.size() - 1;
+        return cursor != null ? cursor.getNumGetMores() : 0;
     }
 
     /**
      * Gets a list containing the number of items received in each batch
      *
-     * @return
+     * @return the size of each batch
      */
     public List<Integer> getSizes() {
-        return Collections.unmodifiableList(sizes);
+        return cursor != null ? cursor.getSizes() : Collections.<Integer>emptyList();
     }
-
 
     /**
      * Returns the number of objects through which the cursor has iterated.
@@ -366,12 +347,10 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     @Override
     public void close() {
         closed = true;
-
-        if (currentResult != null && currentResult.getCursor() != null) {
-            getConnector().killCursors(new MongoKillCursor(currentResult.getCursor()));
+        if (cursor != null) {
+            cursor.close();
         }
-        currentResult = null;
-        currentIterator = null;
+
         currentObject = null;
     }
 
@@ -513,8 +492,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public ServerAddress getServerAddress() {
-        if (currentResult != null && currentResult.getAddress() != null) {
-            return new ServerAddress(currentResult.getAddress());
+        if (cursor != null) {
+            return new ServerAddress(cursor.getServerAddress());
         } else {
             return null;
         }
@@ -555,7 +534,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         return "DBCursor{" +
                 "collection=" + collection +
                 ", find=" + find +
-                (currentResult != null ? (", cursor=" + currentResult.getCursor()) : "") +
+                (cursor != null ? (", cursor=" + cursor.getServerCursor()) : "") +
                 '}';
     }
 
@@ -584,7 +563,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             checkCursorType(CursorType.ITERATOR);
         }
 
-        currentObject = currentIterator.next();
+        currentObject = cursor.next();
         numSeen++;
 
         if (find.getFields() != null && !find.getFields().isEmpty()) {
@@ -594,23 +573,10 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         return currentObject;
     }
 
-    private void getMore() {
-        currentResult = getConnector().getMore(collection.getNamespace(),
-                new MongoGetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), numSeen), resultDecoder);
-        final List<DBObject> results = currentResult.getResults();
-        currentIterator = results.iterator();
-        sizes.add(results.size());
-    }
-
-    private void query() {
-        currentResult = getConnector().query(
-                collection.getNamespace(),
-                find,
-                collection.getDocumentCodec(),
-                resultDecoder);
-        final List<DBObject> results = currentResult.getResults();
-        currentIterator = results.iterator();
-        sizes.add(results.size());
+   private void query() {
+        cursor = new MongoQueryCursor<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
+                getConnector());
+//        sizes.add(results.size());
     }
 
     private MongoConnector getConnector() {
