@@ -16,7 +16,26 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.*;
+import org.mongodb.Block;
+import org.mongodb.Codec;
+import org.mongodb.CollectibleCodec;
+import org.mongodb.CollectionAdmin;
+import org.mongodb.ConvertibleToDocument;
+import org.mongodb.Document;
+import org.mongodb.Function;
+import org.mongodb.Get;
+import org.mongodb.MongoCollection;
+import org.mongodb.MongoCollectionOptions;
+import org.mongodb.MongoConnector;
+import org.mongodb.MongoCursor;
+import org.mongodb.MongoDatabase;
+import org.mongodb.MongoException;
+import org.mongodb.MongoIterable;
+import org.mongodb.MongoNamespace;
+import org.mongodb.MongoQueryCursor;
+import org.mongodb.MongoStream;
+import org.mongodb.ReadPreference;
+import org.mongodb.WriteConcern;
 import org.mongodb.async.AsyncBlock;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.Count;
