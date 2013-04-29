@@ -51,7 +51,7 @@ public class BasicBSONCallback implements BSONCallback {
         return new BasicBSONCallback();
     }
 
-    public BSONObject create(boolean array, List<String> path) {
+    public BSONObject create(final boolean array, final List<String> path) {
         if (array) {
             return createList();
         }
@@ -59,34 +59,34 @@ public class BasicBSONCallback implements BSONCallback {
     }
 
     public void objectStart() {
-        if (_stack.size() > 0) {
+        if (stack.size() > 0) {
             throw new IllegalStateException("something is wrong");
         }
 
         objectStart(false);
     }
 
-    public void objectStart(boolean array) {
-        _root = create(array, null);
-        _stack.add((BSONObject) _root);
+    public void objectStart(final boolean array) {
+        root = create(array, null);
+        stack.add((BSONObject) root);
     }
 
-    public void objectStart(String name) {
+    public void objectStart(final String name) {
         objectStart(false, name);
     }
 
-    public void objectStart(boolean array, String name) {
-        _nameStack.addLast(name);
-        final BSONObject o = create(array, _nameStack);
-        _stack.getLast().put(name, o);
-        _stack.addLast(o);
+    public void objectStart(final boolean array, final String name) {
+        nameStack.addLast(name);
+        final BSONObject o = create(array, nameStack);
+        stack.getLast().put(name, o);
+        stack.addLast(o);
     }
 
     public Object objectDone() {
-        final BSONObject o = _stack.removeLast();
-        if (_nameStack.size() > 0) {
-            _nameStack.removeLast();
-        } else if (_stack.size() > 0) {
+        final BSONObject o = stack.removeLast();
+        if (nameStack.size() > 0) {
+            nameStack.removeLast();
+        } else if (stack.size() > 0) {
             throw new IllegalStateException("something is wrong");
         }
 
@@ -97,7 +97,7 @@ public class BasicBSONCallback implements BSONCallback {
         objectStart(true);
     }
 
-    public void arrayStart(String name) {
+    public void arrayStart(final String name) {
         objectStart(true, name);
     }
 
@@ -105,22 +105,22 @@ public class BasicBSONCallback implements BSONCallback {
         return objectDone();
     }
 
-    public void gotNull(String name) {
+    public void gotNull(final String name) {
         cur().put(name, null);
     }
 
-    public void gotUndefined(String name) {
+    public void gotUndefined(final String name) {
     }
 
-    public void gotMinKey(String name) {
+    public void gotMinKey(final String name) {
         cur().put(name, new MinKey());
     }
 
-    public void gotMaxKey(String name) {
+    public void gotMaxKey(final String name) {
         cur().put(name, new MaxKey());
     }
 
-    public void gotBoolean(String name, boolean v) {
+    public void gotBoolean(final String name, final boolean v) {
         _put(name, v);
     }
 
@@ -136,11 +136,11 @@ public class BasicBSONCallback implements BSONCallback {
         _put(name, v);
     }
 
-    public void gotDate(String name, long millis) {
+    public void gotDate(final String name, final long millis) {
         _put(name, new Date(millis));
     }
 
-    public void gotRegex(String name, String pattern, String flags) {
+    public void gotRegex(final String name, final String pattern, final String flags) {
         _put(name, Pattern.compile(pattern, BSON.regexFlags(flags)));
     }
 
@@ -148,28 +148,28 @@ public class BasicBSONCallback implements BSONCallback {
         _put(name, v);
     }
 
-    public void gotSymbol(String name, String v) {
+    public void gotSymbol(final String name, final String v) {
         _put(name, v);
     }
 
-    public void gotTimestamp(String name, int time, int inc) {
+    public void gotTimestamp(final String name, final int time, final int inc) {
         _put(name, new BSONTimestamp(time, inc));
     }
 
-    public void gotObjectId(String name, ObjectId id) {
+    public void gotObjectId(final String name, final ObjectId id) {
         _put(name, id);
     }
 
-    public void gotDBRef(String name, String ns, ObjectId id) {
+    public void gotDBRef(final String name, final String ns, final ObjectId id) {
         _put(name, new BasicBSONObject("$ns", ns).append("$id", id));
     }
 
     @Deprecated
-    public void gotBinaryArray(String name, byte[] data) {
+    public void gotBinaryArray(final String name, final byte[] data) {
         gotBinary(name, BSON.B_GENERAL, data);
     }
 
-    public void gotBinary(String name, byte type, byte[] data) {
+    public void gotBinary(final String name, final byte type, final byte[] data) {
         if (type == BSON.B_GENERAL || type == BSON.B_BINARY) {
             _put(name, data);
         } else {
@@ -177,15 +177,15 @@ public class BasicBSONCallback implements BSONCallback {
         }
     }
 
-    public void gotUUID(String name, long part1, long part2) {
+    public void gotUUID(final String name, final long part1, final long part2) {
         _put(name, new UUID(part1, part2));
     }
 
-    public void gotCode(String name, String code) {
+    public void gotCode(final String name, final String code) {
         _put(name, new Code(code));
     }
 
-    public void gotCodeWScope(String name, String code, Object scope) {
+    public void gotCodeWScope(final String name, final String code, final Object scope) {
         _put(name, new CodeWScope(code, (BSONObject) scope));
     }
 
@@ -194,32 +194,32 @@ public class BasicBSONCallback implements BSONCallback {
     }
 
     protected BSONObject cur() {
-        return _stack.getLast();
+        return stack.getLast();
     }
 
     protected String curName() {
-        return (!_nameStack.isEmpty()) ? _nameStack.getLast() : null;
+        return (!nameStack.isEmpty()) ? nameStack.getLast() : null;
     }
 
     public Object get() {
-        return _root;
+        return root;
     }
 
-    protected void setRoot(Object o) {
-        _root = o;
+    protected void setRoot(final Object o) {
+        root = o;
     }
 
     protected boolean isStackEmpty() {
-        return _stack.size() < 1;
+        return stack.size() < 1;
     }
 
     public void reset() {
-        _root = null;
-        _stack.clear();
-        _nameStack.clear();
+        root = null;
+        stack.clear();
+        nameStack.clear();
     }
 
-    private Object _root;
-    private final LinkedList<BSONObject> _stack = new LinkedList<BSONObject>();
-    private final LinkedList<String> _nameStack = new LinkedList<String>();
+    private Object root;
+    private final LinkedList<BSONObject> stack = new LinkedList<BSONObject>();
+    private final LinkedList<String> nameStack = new LinkedList<String>();
 }
