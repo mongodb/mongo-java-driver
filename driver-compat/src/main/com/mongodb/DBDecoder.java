@@ -15,12 +15,18 @@
  */
 package com.mongodb;
 
+import org.bson.BSONDecoder;
+
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
- *
+ * TODO Documentation needed.
  */
-public interface DBDecoder {
-    DBObject decode(InputStream in, DBCollection collection) throws IOException;
+public interface DBDecoder extends BSONDecoder {
+    DBObject decode(final InputStream in, final DBCollection collection) throws IOException;
+
+    DBCallback getDBCallback(final DBCollection collection);
+
+    DBObject decode(final byte[] b, final DBCollection collection);
 }

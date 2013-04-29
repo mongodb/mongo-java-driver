@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import org.bson.BSONCallback;
+import org.bson.BSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -249,6 +251,36 @@ public class DBCursorTest extends DatabaseTestCase {
         @Override
         public DBObject decode(InputStream in, DBCollection collection) throws IOException {
             return new BasicDBObject("a", 1);
+        }
+
+        @Override
+        public DBCallback getDBCallback(DBCollection collection) {
+            return null; //TODO
+        }
+
+        @Override
+        public DBObject decode(byte[] b, DBCollection collection) {
+            return new BasicDBObject("a", 1); //TODO
+        }
+
+        @Override
+        public BSONObject readObject(byte[] bytes) {
+            return null; //TODO
+        }
+
+        @Override
+        public BSONObject readObject(InputStream in) throws IOException {
+            return null; //TODO
+        }
+
+        @Override
+        public int decode(byte[] bytes, BSONCallback callback) {
+            return 0; //TODO
+        }
+
+        @Override
+        public int decode(InputStream in, BSONCallback callback) throws IOException {
+            return 0; //TODO
         }
     }
     static class MyDBDecoderFactory implements DBDecoderFactory {

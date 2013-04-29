@@ -20,6 +20,9 @@ package org.bson;
 
 import org.bson.types.ObjectId;
 
+/**
+ * TODO Documentation
+ */
 public interface BSONCallback {
     
     void objectStart();

@@ -26,7 +26,6 @@ import org.mongodb.MongoInternalException;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -51,7 +50,7 @@ public class DBDecoderAdapter implements Decoder<DBObject> {
             final BufferExposingByteArrayOutputStream byteArrayOutputStream =
                     new BufferExposingByteArrayOutputStream(binaryWriter.getBuffer().size());
             binaryWriter.getBuffer().pipe(byteArrayOutputStream);
-            return decoder.decode(new ByteArrayInputStream(byteArrayOutputStream.getInternalBytes()), collection);
+            return decoder.decode(byteArrayOutputStream.getInternalBytes(), collection);
         } catch (IOException e) {
             // impossible with a byte array output stream
             throw new MongoInternalException("impossible", e);

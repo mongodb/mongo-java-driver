@@ -573,26 +573,34 @@ public abstract class BSONWriter implements Closeable {
 
     private void pipeDocument(final BSONReader reader) {
         reader.readStartDocument();
+        writeStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             writeName(reader.readName());
             pipeValue(reader);
         }
-
         reader.readEndDocument();
+        writeEndDocument();
     }
 
     private void pipeArray(final BSONReader reader) {
+        reader.readStartArray();
         writeStartArray();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             pipeValue(reader);
         }
+        reader.readEndArray();
         writeEndArray();
+    }
+
+    private void pipeJavascriptWithScope(final BSONReader reader) {
+        writeJavaScriptWithScope(reader.readJavaScriptWithScope());
+        pipeDocument(reader);
     }
 
     private void pipeValue(final BSONReader reader) {
         switch (reader.getCurrentBSONType()) {
             case DOCUMENT:
-                pipe(reader);
+                pipeDocument(reader);
                 break;
             case ARRAY:
                 pipeArray(reader);
@@ -607,6 +615,7 @@ public abstract class BSONWriter implements Closeable {
                 writeBinaryData(reader.readBinaryData());
                 break;
             case UNDEFINED:
+                reader.readUndefined();
                 writeUndefined();
                 break;
             case OBJECT_ID:
@@ -619,6 +628,7 @@ public abstract class BSONWriter implements Closeable {
                 writeDateTime(reader.readDateTime());
                 break;
             case NULL:
+                reader.readNull();
                 writeNull();
                 break;
             case REGULAR_EXPRESSION:
@@ -631,7 +641,7 @@ public abstract class BSONWriter implements Closeable {
                 writeSymbol(reader.readSymbol());
                 break;
             case JAVASCRIPT_WITH_SCOPE:
-                writeJavaScriptWithScope(reader.readJavaScriptWithScope());
+                pipeJavascriptWithScope(reader);
                 break;
             case INT32:
                 writeInt32(reader.readInt32());
@@ -643,10 +653,12 @@ public abstract class BSONWriter implements Closeable {
                 writeInt64(reader.readInt64());
                 break;
             case MIN_KEY:
-                writeMaxKey();
+                reader.readMinKey();
+                writeMinKey();
                 break;
             case MAX_KEY:
-                writeMinKey();
+                reader.readMaxKey();
+                writeMaxKey();
                 break;
             default:
                 throw new IllegalArgumentException("unhandled BSON type: " + reader.getCurrentBSONType());
