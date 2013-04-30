@@ -464,7 +464,7 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
         @Override
         public void onResult(final ResponseBuffers responseBuffers, final MongoException e) {
             if (closed) {
-                throw new MongoInternalException("This should not happen", null);
+                throw new MongoInternalException("Callback should not be invoked more than once", null);
             }
             closed = true;
             releaseIfPending();

@@ -264,11 +264,7 @@ public class MongoAsynchronousSocketChannelGateway {
                 }
                 else {
                     PooledInputBuffer bodyInputBuffer = new PooledInputBuffer(result, pool);
-                    try {
-                        callback.onResult(new ResponseBuffers(replyHeader, bodyInputBuffer, System.nanoTime() - start), null);
-                    } catch (Throwable t) {
-                        callback.onResult(null, new MongoException("", t)); // TODO: proper subclass
-                    }
+                    callback.onResult(new ResponseBuffers(replyHeader, bodyInputBuffer, System.nanoTime() - start), null);
                 }
             }
         }
