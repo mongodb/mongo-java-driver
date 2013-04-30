@@ -24,6 +24,7 @@ import org.mongodb.Decoder;
 import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,7 +40,7 @@ import java.util.Map;
 public class PrimitiveCodecs implements Codec<Object> {
     //CHECKSTYLE:ON
     private Map<Class, Encoder<?>> classEncoderMap = new HashMap<Class, Encoder<?>>();
-    private Map<BSONType, Decoder<?>> bsonTypeDecoderMap = new HashMap<BSONType, Decoder<?>>();
+    private Map<BSONType, Decoder<?>> bsonTypeDecoderMap = new EnumMap<BSONType, Decoder<?>>(BSONType.class);
 
     PrimitiveCodecs(final Map<Class, Encoder<?>> classEncoderMap,
                     final Map<BSONType, Decoder<?>> bsonTypeDecoderMap) {
