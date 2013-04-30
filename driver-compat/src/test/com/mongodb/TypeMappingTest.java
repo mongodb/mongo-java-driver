@@ -10,16 +10,16 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
-public class TypeMapperTest {
+public class TypeMappingTest {
 
     @Test
     public void testGetters() {
-        final TypeMapper typeMapper = new TypeMapper(BasicDBObject.class);
-        assertEquals(BasicDBObject.class, typeMapper.getTopLevelClass());
+        final TypeMapping typeMapping = new TypeMapping(BasicDBObject.class);
+        assertEquals(BasicDBObject.class, typeMapping.getTopLevelClass());
         final HashMap<List<String>, Class<? extends DBObject>> expected
                 = new HashMap<List<String>, Class<? extends DBObject>>();
         expected.put(new ArrayList<String>(), BasicDBObject.class);
-        assertEquals(expected, typeMapper.getPathToClassMap());
+        assertEquals(expected, typeMapping.getPathToClassMap());
     }
 
     @Test
@@ -29,14 +29,14 @@ public class TypeMapperTest {
         stringPathToClassMap.put("a", NestedOneDBObject.class);
         stringPathToClassMap.put("a.b", NestedTwoDBObject.class);
 
-        final TypeMapper typeMapper = new TypeMapper(TopLevelDBObject.class, stringPathToClassMap);
+        final TypeMapping typeMapping = new TypeMapping(TopLevelDBObject.class, stringPathToClassMap);
 
         final Map<List<String>, Class<? extends DBObject>> pathToClassMap
                 = new HashMap<List<String>, Class<? extends DBObject>>();
         pathToClassMap.put(new ArrayList<String>(), TopLevelDBObject.class);
         pathToClassMap.put(Arrays.asList("a"), NestedOneDBObject.class);
         pathToClassMap.put(Arrays.asList("a", "b"), NestedTwoDBObject.class);
-        assertEquals(pathToClassMap, typeMapper.getPathToClassMap());
+        assertEquals(pathToClassMap, typeMapping.getPathToClassMap());
     }
 
     public static class TopLevelDBObject extends BasicDBObject {

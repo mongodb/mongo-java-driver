@@ -61,10 +61,7 @@ import org.mongodb.util.FieldHelpers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.mongodb.DBObjects.toDBObject;
 import static com.mongodb.DBObjects.toDocument;
@@ -116,7 +113,6 @@ public class DBCollection implements IDBCollection {
     private static final String NAMESPACE_KEY_NAME = "ns";
     private final DB database;
     private final String name;
-    private final Map<String, Class<? extends DBObject>> pathToClassMap;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
@@ -125,6 +121,7 @@ public class DBCollection implements IDBCollection {
 
     private DBEncoderFactory encoderFactory;
     private DBDecoderFactory decoderFactory;
+    private TypeMapping typeMapping;
 
     private final Codec<Document> documentCodec;
     private CollectibleCodec<DBObject> codec;
@@ -134,8 +131,13 @@ public class DBCollection implements IDBCollection {
         this.database = database;
         this.documentCodec = documentCodec;
         this.optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
-        this.pathToClassMap = new HashMap<String, Class<? extends DBObject>>();
-        updateObjectCodec(BasicDBObject.class);
+        this.typeMapping = new TypeMapping(BasicDBObject.class);
+        this.codec = new CollectibleDBObjectCodec(
+                database,
+                getPrimitiveCodecs(),
+                new ObjectIdGenerator(),
+                typeMapping
+        );
     }
 
     /**
@@ -647,7 +649,7 @@ public class DBCollection implements IDBCollection {
                 .batchSize(-1);
 
         final QueryResult<DBObject> res = getConnector().query(getNamespace(), mongoFind,
-                documentCodec, getCodec());
+                documentCodec, codec);
         if (res.getResults().isEmpty()) {
             return null;
         }
@@ -1598,29 +1600,28 @@ public class DBCollection implements IDBCollection {
     /**
      * Sets a default class for objects in this collection; null resets the class to nothing.
      *
-     * @param objectClass the class
+     * @param cls the class
      */
-    public synchronized void setObjectClass(final Class<? extends DBObject> objectClass) {
-        updateObjectCodec(objectClass);
+    public void setObjectClass(final Class<? extends DBObject> cls) {
+        typeMapping.setTopLevelClass(cls);
     }
 
     /**
      * Sets the internal class for the given path in the document hierarchy
      *
      * @param path  the path to map the given Class to
-     * @param clazz the Class to map the given path to
+     * @param cls the Class to map the given path to
      */
-    public synchronized void setInternalClass(final String path, final Class<? extends DBObject> clazz) {
-        pathToClassMap.put(path, clazz);
+    public void setInternalClass(final String path, final Class<? extends DBObject> cls) {
+        typeMapping.setInternalClass(Arrays.asList(path.split("\\.")), cls);
     }
 
-    private void updateObjectCodec(final Class<? extends DBObject> objectClass) {
-        this.codec = new CollectibleDBObjectCodec(
-                database,
-                getPrimitiveCodecs(),
-                new ObjectIdGenerator(),
-                new TypeMapper(objectClass, Collections.unmodifiableMap(pathToClassMap))
-        );
+    /**
+     * Gets the type mapping for a document hierarchy.
+     * @return
+     */
+    TypeMapping getTypeMapping() {
+        return typeMapping; //TODO Make unmodifiable
     }
 
     private PrimitiveCodecs getPrimitiveCodecs() {

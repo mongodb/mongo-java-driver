@@ -118,7 +118,7 @@ public class JSONCallback extends BasicBSONCallback {
         }
 
         if (!isStackEmpty()) {
-            _put(name, o);
+            put(name, o);
         } else {
             o = !BSON.hasDecodeHooks() ? o : BSON.applyDecodingHooks(o);
             setRoot(o);

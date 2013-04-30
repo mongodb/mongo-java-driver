@@ -25,7 +25,7 @@ import org.mongodb.DBRef;
  */
 public class DBRefBase {
 
-    private final DB _db;
+    private final DB db;
     private final org.mongodb.DBRef proxied;
 
     /**
@@ -37,7 +37,7 @@ public class DBRefBase {
      */
     public DBRefBase(final DB db, final String ns, final Object id) {
         proxied = new DBRef(id, ns);
-        _db = db;
+        this.db = db;
     }
 
     /**
@@ -64,7 +64,7 @@ public class DBRefBase {
      * @return the database
      */
     public DB getDB() {
-        return _db;
+        return db;
     }
 
 
@@ -75,10 +75,38 @@ public class DBRefBase {
      * @throws MongoException
      */
     public DBObject fetch() {
-        if (_db == null) {
+        if (db == null) {
             throw new RuntimeException("no db");
         }
 
-        return _db.getCollectionFromString(proxied.getRef()).findOne(proxied.getId());
+        return db.getCollectionFromString(proxied.getRef()).findOne(proxied.getId());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof DBRefBase)) {
+            return false;
+        }
+
+        DBRefBase dbRefBase = (DBRefBase) o;
+
+        if (db != null ? !db.equals(dbRefBase.db) : dbRefBase.db != null) {
+            return false;
+        }
+        if (proxied != null ? !proxied.equals(dbRefBase.proxied) : dbRefBase.proxied != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = db.hashCode();
+        result = 31 * result + proxied.hashCode();
+        return result;
     }
 }

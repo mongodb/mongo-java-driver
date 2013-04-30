@@ -24,9 +24,10 @@ import java.io.InputStream;
  * TODO Documentation needed.
  */
 public interface DBDecoder extends BSONDecoder {
-    DBObject decode(final InputStream in, final DBCollection collection) throws IOException;
 
     DBCallback getDBCallback(final DBCollection collection);
 
-    DBObject decode(final byte[] b, final DBCollection collection);
+    DBObject decode(final InputStream in, final DBCollection collection) throws IOException;
+
+    DBObject decode(final byte[] bytes, final DBCollection collection);
 }

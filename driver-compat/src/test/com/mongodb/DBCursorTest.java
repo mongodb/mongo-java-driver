@@ -259,7 +259,7 @@ public class DBCursorTest extends DatabaseTestCase {
         }
 
         @Override
-        public DBObject decode(byte[] b, DBCollection collection) {
+        public DBObject decode(byte[] bytes, DBCollection collection) {
             return new BasicDBObject("a", 1); //TODO
         }
 

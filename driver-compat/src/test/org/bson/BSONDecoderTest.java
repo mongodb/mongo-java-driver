@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.bson;
 
-import org.bson.BSONDecoder;
-import org.bson.BSONObject;
-import org.bson.BasicBSONDecoder;
-import org.bson.BasicBSONObject;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;

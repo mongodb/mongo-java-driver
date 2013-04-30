@@ -14,19 +14,10 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb;
 
-import com.mongodb.BasicDBObject;
-import org.bson.BSON;
-import org.junit.Test;
+public interface DBCallbackFactory {
 
-import static org.junit.Assert.assertEquals;
+    DBCallback create(final DBCollection collection);
 
-public class BSONTest {
-    @Test
-    public void testEncodingDecode() {
-        final BasicDBObject inputDoc = new BasicDBObject("_id", 1);
-        final byte[] encoded = BSON.encode(inputDoc);
-        assertEquals(inputDoc, BSON.decode(encoded));
-    }
 }

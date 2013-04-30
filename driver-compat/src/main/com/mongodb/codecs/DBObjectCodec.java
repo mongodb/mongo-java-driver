@@ -22,7 +22,7 @@ import com.mongodb.DB;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
 import com.mongodb.DBRefBase;
-import com.mongodb.TypeMapper;
+import com.mongodb.TypeMapping;
 import org.bson.BSON;
 import org.bson.BSONReader;
 import org.bson.BSONType;
@@ -45,22 +45,22 @@ public class DBObjectCodec implements Codec<DBObject> {
     private final PrimitiveCodecs primitiveCodecs;
     private final Validator<String> fieldNameValidator;
     private final DB db;
-    private final TypeMapper typeMapper;
+    private final TypeMapping typeMapping;
 
 
     public DBObjectCodec(final DB db, final PrimitiveCodecs primitiveCodecs,
-                         final Validator<String> fieldNameValidator, final TypeMapper typeMapper) {
+                         final Validator<String> fieldNameValidator, final TypeMapping typeMapping) {
         if (primitiveCodecs == null) {
             throw new IllegalArgumentException("primitiveCodecs is null");
         }
         this.primitiveCodecs = primitiveCodecs;
         this.db = db;
         this.fieldNameValidator = fieldNameValidator;
-        this.typeMapper = typeMapper;
+        this.typeMapping = typeMapping;
     }
 
     public DBObjectCodec(final PrimitiveCodecs primitiveCodecs) {
-        this(null, primitiveCodecs, new QueryFieldNameValidator(), new TypeMapper(BasicDBObject.class));
+        this(null, primitiveCodecs, new QueryFieldNameValidator(), new TypeMapping(BasicDBObject.class));
     }
 
     @Override
@@ -156,7 +156,7 @@ public class DBObjectCodec implements Codec<DBObject> {
     @Override
     public DBObject decode(final BSONReader reader) {
         final List<String> path = new ArrayList<String>(10);
-        final DBObject document = typeMapper.getNewInstance(path);
+        final DBObject document = typeMapping.getNewInstance(path);
 
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
@@ -175,7 +175,7 @@ public class DBObjectCodec implements Codec<DBObject> {
     }
 
     private Object decodeDocument(final BSONReader reader, final List<String> path) {
-        final DBObject document = typeMapper.getNewInstance(path);
+        final DBObject document = typeMapping.getNewInstance(path);
 
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {

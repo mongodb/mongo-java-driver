@@ -22,21 +22,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TypeMapper {
+/**
+ * TODO This needs to be rethinked.
+ */
+public class TypeMapping {
     private static final List<String> EMPTY_PATH = Collections.emptyList();
 
     private final Map<List<String>, Class<? extends DBObject>> pathToClassMap;
-    private final ReflectionDBObject.JavaWrapper wrapper;
+    private ReflectionDBObject.JavaWrapper wrapper;
 
-    public TypeMapper(final Class<? extends DBObject> topLevelClass) {
+    public TypeMapping(final Class<? extends DBObject> topLevelClass) {
         this(topLevelClass, new HashMap<String, Class<? extends DBObject>>());
     }
 
-    public TypeMapper(final Class<? extends DBObject> topLevelClass,
-                      final Map<String, Class<? extends DBObject>> stringPathToClassMap
-    ) {
+    public TypeMapping(final Class<? extends DBObject> topLevelClass,
+                       final Map<String, Class<? extends DBObject>> stringPathToClassMap) {
         this.pathToClassMap = createPathToClassMap(topLevelClass, stringPathToClassMap);
 
+        updateWrapper(topLevelClass);
+    }
+
+    private void updateWrapper(final Class<? extends DBObject> topLevelClass) {
         if (ReflectionDBObject.class.isAssignableFrom(topLevelClass)) {
             wrapper = ReflectionDBObject.getWrapper(topLevelClass);
         } else {
@@ -48,34 +54,50 @@ public class TypeMapper {
         return pathToClassMap.get(EMPTY_PATH);
     }
 
+    public synchronized void setTopLevelClass(final Class<? extends DBObject> cls) {
+        setInternalClass(EMPTY_PATH, cls);
+        updateWrapper(cls);
+    }
+
+    public synchronized void setInternalClass(final List<String> path, final Class<? extends DBObject> cls) {
+        pathToClassMap.put(path, cls);
+    }
+
+    public Class<? extends DBObject> getInternalClass(final List<String> path) {
+        return pathToClassMap.get(path);
+    }
+
     public Map<List<String>, Class<? extends DBObject>> getPathToClassMap() {
         return pathToClassMap;
     }
 
     public DBObject getNewInstance(final List<String> path) {
-        Class<? extends DBObject> newInstanceClass = null;
+        final Class<? extends DBObject> cls = getClassForNewObject(path);
         try {
-            newInstanceClass = pathToClassMap.get(path);
-            if (newInstanceClass == null) {
-                if (wrapper != null) {
-                    newInstanceClass = wrapper.getInternalClass(path);
-                }
-                if (newInstanceClass == null) {
-                    newInstanceClass = BasicDBObject.class;
-                }
+            return cls.newInstance();
+        } catch (ReflectiveOperationException e) {
+            throw new MongoInternalException("Can't create a new instance of class " + cls, e);
+        }
+    }
+
+    private Class<? extends DBObject> getClassForNewObject(final List<String> path) {
+        if (pathToClassMap.containsKey(path)) {
+            return pathToClassMap.get(path);
+        } else {
+            Class<? extends DBObject> cls = null;
+            if (wrapper != null) {
+                cls = wrapper.getInternalClass(path);
             }
-            return newInstanceClass.newInstance();
-        } catch (InstantiationException e) {
-            throw new MongoInternalException("can't create a new instance of class " + newInstanceClass, e);
-        } catch (IllegalAccessException e) {
-            throw new MongoInternalException("can't create a new instance of class " + newInstanceClass, e);
+            if (cls == null) {
+                cls = BasicDBObject.class;
+            }
+            return cls;
         }
     }
 
     private Map<List<String>, Class<? extends DBObject>> createPathToClassMap(
             final Class<? extends DBObject> topLevelClass,
-            final Map<String, Class<? extends DBObject>> stringPathToClassMap
-    ) {
+            final Map<String, Class<? extends DBObject>> stringPathToClassMap) {
         final Map<List<String>, Class<? extends DBObject>> pathToClassMap
                 = new HashMap<List<String>, Class<? extends DBObject>>();
         pathToClassMap.put(EMPTY_PATH, topLevelClass);
@@ -84,7 +106,6 @@ public class TypeMapper {
             pathToClassMap.put(path, cur.getValue());
         }
 
-        return Collections.unmodifiableMap(pathToClassMap);
+        return pathToClassMap;
     }
-
 }
