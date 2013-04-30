@@ -105,9 +105,9 @@ public class MongoClientOptions {
         /**
          * Sets the maximum time that a thread will block waiting for a connection.
          *
-         * @param maxWaitTime the maximum wait time
+         * @param maxWaitTime the maximum wait time (in milliseconds)
          * @return {@code this}
-         * @throws IllegalArgumentException if <code>maxWaitTime < 0</code>
+         * @throws IllegalArgumentException if <code>maxWaitTime &lt; 0</code>
          * @see com.mongodb.MongoClientOptions#getMaxWaitTime()
          */
         public Builder maxWaitTime(final int maxWaitTime) {
@@ -121,7 +121,7 @@ public class MongoClientOptions {
         /**
          * Sets the connection timeout.
          *
-         * @param connectTimeout the connection timeout
+         * @param connectTimeout the connection timeout (in milliseconds)
          * @return {@code this}
          * @see com.mongodb.MongoClientOptions#getConnectTimeout()
          */
@@ -136,7 +136,7 @@ public class MongoClientOptions {
         /**
          * Sets the socket timeout.
          *
-         * @param socketTimeout the socket timeout
+         * @param socketTimeout the socket timeout (in milliseconds)
          * @return {@code this}
          * @see com.mongodb.MongoClientOptions#getSocketTimeout()
          */
