@@ -75,8 +75,10 @@ public class TypeMapping {
         final Class<? extends DBObject> cls = getClassForNewObject(path);
         try {
             return cls.newInstance();
-        } catch (ReflectiveOperationException e) {
-            throw new MongoInternalException("Can't create a new instance of class " + cls, e);
+        } catch (InstantiationException e) {
+            throw new MongoInternalException("can't create a new instance of class " + cls, e);
+        } catch (IllegalAccessException e) {
+            throw new MongoInternalException("can't create a new instance of class " + cls, e);
         }
     }
 
