@@ -16,7 +16,9 @@
 
 package com.mongodb;
 
+import category.ReplicaSet;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.net.UnknownHostException;
 
@@ -141,6 +143,7 @@ public class DBOldTest extends DatabaseTestCase {
     }
 
     @Test
+    @Category(ReplicaSet.class)
     public void testRequestPinning() throws UnknownHostException {
         database.requestStart();
         try {
