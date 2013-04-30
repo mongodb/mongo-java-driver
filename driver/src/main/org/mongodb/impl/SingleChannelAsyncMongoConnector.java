@@ -490,23 +490,30 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
 
         @Override
         protected void callCallback(final ResponseBuffers responseBuffers, final MongoException e) {
+            QueryResult<T> result = null;
+            MongoException exceptionResult = null;
             try {
                 if (e != null) {
-                    callback.onResult(null, e);
+                    throw e;
                 }
                 else if (responseBuffers.getReplyHeader().isQueryFailure()) {
-                    final Document errorDocument = new MongoReplyMessage<Document>(responseBuffers,
+                    Document errorDocument = new MongoReplyMessage<Document>(responseBuffers,
                             withDocumentCodec(null)).getDocuments().get(0);
-                    callback.onResult(null, new MongoQueryFailureException(channel.getAddress(), errorDocument));
+                    throw new MongoQueryFailureException(channel.getAddress(), errorDocument);
                 }
                 else {
-                    callback.onResult(new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, decoder), serverAddress), null);
+                    result = new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, decoder), serverAddress);
                 }
+            } catch (MongoException me) {
+                exceptionResult = me;
+            } catch (Throwable t) {
+                exceptionResult = new MongoInternalException("Internal exception", t);
             } finally {
                 if (responseBuffers != null) {
                     responseBuffers.close();
                 }
             }
+            callback.onResult(result, exceptionResult);
         }
     }
 
@@ -524,22 +531,28 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
 
         @Override
         protected void callCallback(final ResponseBuffers responseBuffers, final MongoException e) {
+            QueryResult<T> result = null;
+            MongoException exceptionResult = null;
             try {
                 if (e != null) {
-                    callback.onResult(null, e);
+                    throw e;
                 }
                 else if (responseBuffers.getReplyHeader().isCursorNotFound()) {
-                    callback.onResult(null, new MongoCursorNotFoundException(
-                            new ServerCursor(cursorId, channel.getAddress())));
+                    throw new MongoCursorNotFoundException(new ServerCursor(cursorId, channel.getAddress()));
                 }
                 else {
-                    callback.onResult(new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, decoder), serverAddress), null);
+                    result = new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, decoder), serverAddress);
                 }
+            } catch (MongoException me) {
+                exceptionResult = me;
+            } catch (Throwable t) {
+                exceptionResult = new MongoInternalException("Internal exception", t);
             } finally {
                 if (responseBuffers != null) {
                     responseBuffers.close();
                 }
             }
+            callback.onResult(result, exceptionResult);
         }
     }
 
