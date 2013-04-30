@@ -19,7 +19,6 @@ package org.mongodb.impl;
 import org.mongodb.Document;
 import org.mongodb.DatabaseAdmin;
 import org.mongodb.MongoCollectionOptions;
-import org.mongodb.MongoConnector;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.command.MongoCommand;
@@ -32,16 +31,16 @@ import org.mongodb.codecs.ObjectIdGenerator;
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;
     private final String name;
-    private final MongoConnector connector;
+    private final MongoClientImpl client;
     private final DatabaseAdmin admin;
     private final Codec<Document> documentCodec;
 
-    public MongoDatabaseImpl(final String name, final MongoConnector connector, final MongoDatabaseOptions options) {
+    public MongoDatabaseImpl(final String name, final MongoClientImpl client, final MongoDatabaseOptions options) {
         this.name = name;
-        this.connector = connector;
+        this.client = client;
         this.options = options;
         documentCodec = options.getDocumentCodec();
-        this.admin = new DatabaseAdminImpl(name, connector, documentCodec);
+        this.admin = new DatabaseAdminImpl(name, client, documentCodec);
     }
 
     @Override
@@ -74,8 +73,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
                                                     final CollectibleCodec<T> codec,
                                                     final MongoCollectionOptions operationOptions) {
-        return new MongoCollectionImpl<T>(collectionName, this, codec, operationOptions.withDefaults(options),
-                connector);
+        return new MongoCollectionImpl<T>(collectionName, this, codec, operationOptions.withDefaults(options), client);
     }
 
     @Override
@@ -86,7 +84,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
-        return new CommandResult(connector.command(getName(), commandOperation, documentCodec));
+        return new CommandResult(client.getConnector().command(getName(), commandOperation, documentCodec));
     }
 
 //    @Override

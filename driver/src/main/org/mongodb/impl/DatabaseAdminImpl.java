@@ -19,7 +19,6 @@ package org.mongodb.impl;
 import org.mongodb.Document;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseAdmin;
-import org.mongodb.MongoConnector;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.command.Create;
@@ -47,25 +46,24 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
 
     private final String databaseName;
     private final Codec<Document> documentCodec;
-    private final MongoConnector connector;
+    private final MongoClientImpl client;
 
-    public DatabaseAdminImpl(final String databaseName, final MongoConnector connector,
-                             final Codec<Document> documentCodec) {
+    public DatabaseAdminImpl(final String databaseName, final MongoClientImpl client, final Codec<Document> documentCodec) {
         this.databaseName = databaseName;
-        this.connector = connector;
+        this.client = client;
         this.documentCodec = documentCodec;
     }
 
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        new CommandResult(connector.command(databaseName, DROP_DATABASE, documentCodec));
+        new CommandResult(client.getConnector().command(databaseName, DROP_DATABASE, documentCodec));
     }
 
     @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
-        final QueryResult<Document> query = connector.query(namespacesCollection, FIND_ALL,
+        final QueryResult<Document> query = client.getConnector().query(namespacesCollection, FIND_ALL,
                 documentCodec, documentCodec);
 
         final HashSet<String> collections = new HashSet<String>();
@@ -88,7 +86,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         final CommandResult commandResult = new CommandResult(
-                connector.command(databaseName, new Create(createCollectionOptions), documentCodec));
+                client.getConnector().command(databaseName, new Create(createCollectionOptions), documentCodec));
         handleErrors(commandResult);
     }
 
@@ -100,7 +98,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
         final RenameCollection rename = new RenameCollection(renameCollectionOptions, databaseName);
-        final CommandResult commandResult = connector.command("admin", rename, documentCodec);
+        final CommandResult commandResult = client.getConnector().command("admin", rename, documentCodec);
         handleErrors(commandResult);
     }
 }

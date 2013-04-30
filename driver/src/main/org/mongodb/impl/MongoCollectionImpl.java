@@ -26,7 +26,6 @@ import org.mongodb.Function;
 import org.mongodb.Get;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCollectionOptions;
-import org.mongodb.MongoConnector;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoException;
@@ -72,7 +71,7 @@ import java.util.concurrent.TimeoutException;
 class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     private final CollectionAdmin admin;
-    private final MongoConnector connector;
+    private final MongoClientImpl client;
     private final String name;
     private final MongoDatabase database;
     private final MongoCollectionOptions options;
@@ -80,15 +79,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
                                final CollectibleCodec<T> codec, final MongoCollectionOptions options,
-                               final MongoConnector connector) {
+                               final MongoClientImpl client) {
 
         this.codec = codec;
         this.name = name;
         this.database = database;
         this.options = options;
-        this.connector = connector;
-        admin = new CollectionAdminImpl(connector, options.getPrimitiveCodecs(),
-                getNamespace(), getDatabase());
+        this.client = client;
+        admin = new CollectionAdminImpl(client, options.getPrimitiveCodecs(), getNamespace(), getDatabase());
     }
 
     @Override
@@ -484,12 +482,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoCursor<T> all() {
-            return new MongoQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), connector);
+            return new MongoQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getConnector());
         }
 
         @Override
         public T one() {
-            final QueryResult<T> res = connector.query(getNamespace(), findOp.batchSize(-1),
+            final QueryResult<T> res = client.getConnector().query(getNamespace(), findOp.batchSize(-1),
                     getDocumentCodec(), getCodec());
             if (res.getResults().isEmpty()) {
                 return null;
@@ -550,14 +548,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult insert(final T document) {
-            return connector.insert(getNamespace(),
+            return client.getConnector().insert(getNamespace(),
                     new MongoInsert<T>(document).writeConcern(writeConcern),
                     getCodec());
         }
 
         @Override
         public WriteResult insert(final List<T> documents) {
-            return connector.insert(getNamespace(),
+            return client.getConnector().insert(getNamespace(),
                     new MongoInsert<T>(documents).writeConcern(writeConcern),
                     getCodec());
         }
@@ -577,14 +575,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public WriteResult remove() {
             final MongoRemove remove = new MongoRemove(findOp.getFilter()).multi(getMultiFromLimit(UpdateType.remove))
                     .writeConcern(writeConcern);
-            return connector.remove(getNamespace(), remove, getDocumentCodec());
+            return client.getConnector().remove(getNamespace(), remove, getDocumentCodec());
         }
 
         @Override
         public WriteResult modify(final Document updateOperations) {
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).multi(getMultiFromLimit(UpdateType.modify))
                     .writeConcern(writeConcern);
-            return connector.update(getNamespace(), update, getDocumentCodec());
+            return client.getConnector().update(getNamespace(), update, getDocumentCodec());
         }
 
         @Override
@@ -592,7 +590,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             final MongoUpdate update = new MongoUpdate(findOp.getFilter(), updateOperations).upsert(true)
                     .multi(getMultiFromLimit(UpdateType.modify))
                     .writeConcern(writeConcern);
-            return connector.update(getNamespace(), update, getDocumentCodec());
+            return client.getConnector().update(getNamespace(), update, getDocumentCodec());
         }
 
         @Override
@@ -604,7 +602,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public WriteResult replace(final T replacement) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement)
                     .writeConcern(writeConcern);
-            return connector.replace(getNamespace(), replace, getDocumentCodec(),
+            return client.getConnector().replace(getNamespace(), replace, getDocumentCodec(),
                     getCodec());
         }
 
@@ -613,7 +611,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement)
                     .upsert(true)
                     .writeConcern(writeConcern);
-            return connector.replace(getNamespace(), replace, getDocumentCodec(),
+            return client.getConnector().replace(getNamespace(), replace, getDocumentCodec(),
                     getCodec());
         }
 
@@ -635,7 +633,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     getOptions()
                             .getPrimitiveCodecs(),
                     getCodec());
-            return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
+            return new FindAndModifyCommandResult<T>(client.getConnector().command(getDatabase().getName(),
                     findAndUpdateCommand,
                     codec)).getValue();
         }
@@ -656,7 +654,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                             findOp
                                     .getOrder());
             return new FindAndModifyCommandResult<T>(
-                    connector.command(
+                    client.getConnector().command(
                             getDatabase().getName(),
                             new FindAndUpdate<T>(findAndUpdate, getName()),
                             new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec())
@@ -680,7 +678,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     .sortBy(
                             findOp
                                     .getOrder());
-            return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
+            return new FindAndModifyCommandResult<T>(client.getConnector().command(getDatabase().getName(),
                     new FindAndReplace<T>(findAndReplace,getName()),
                     new FindAndModifyCommandResultCodec<T>(
                             getOptions()
@@ -702,7 +700,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     .sortBy(
                             findOp
                                     .getOrder());
-            return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
+            return new FindAndModifyCommandResult<T>(client.getConnector().command(getDatabase().getName(),
                     new FindAndReplace<T>(findAndReplace, getName()),
                     new FindAndModifyCommandResultCodec<T>(
                             getOptions()
@@ -720,7 +718,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             final FindAndModifyCommandResultCodec<T> codec
                     = new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(),
                     getCodec());
-            return new FindAndModifyCommandResult<T>(connector.command(getDatabase().getName(),
+            return new FindAndModifyCommandResult<T>(client.getConnector().command(getDatabase().getName(),
                     new FindAndRemove<T>(findAndRemove,getName()),
                     codec))
                     .getValue();
@@ -730,13 +728,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public Future<WriteResult> asyncReplaceOrInsert(final T replacement) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
-            return connector.asyncReplace(getNamespace(), replace, getDocumentCodec(), getCodec());
+            return client.getConnector().asyncReplace(getNamespace(), replace, getDocumentCodec(), getCodec());
         }
 
         @Override
         public void asyncReplaceOrInsert(final T replacement, final SingleResultCallback<WriteResult> callback) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
-            connector.asyncReplace(getNamespace(), replace, getDocumentCodec(), getCodec(), callback);
+            client.getConnector().asyncReplace(getNamespace(), replace, getDocumentCodec(), getCodec(), callback);
         }
 
         boolean asBoolean(final Get get) {
@@ -746,7 +744,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public Future<T> asyncOne() {
             final Future<QueryResult<T>> queryResultFuture =
-                    connector.asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentCodec(),
+                    client.getConnector().asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentCodec(),
                             getCodec());
             return new Future<T>() {
                 @Override
@@ -790,7 +788,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public void asyncOne(final SingleResultCallback<T> callback) {
-            connector.asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentCodec(),
+            client.getConnector().asyncQuery(getNamespace(), findOp.batchSize(-1), getDocumentCodec(),
                     getCodec(), new SingleResultCallback<QueryResult<T>>() {
                 @Override
                 public void onResult(final QueryResult<T> result, final MongoException e) {
@@ -808,7 +806,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public Future<Long> asyncCount() {
-            final Future<CommandResult> commandResultFuture = connector
+            final Future<CommandResult> commandResultFuture = client.getConnector()
                     .asyncCommand(getDatabase().getName(), new Count(findOp, getName()), getDocumentCodec());
             return new Future<Long>() {
                 @Override
@@ -842,7 +840,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public void asyncCount(final SingleResultCallback<Long> callback) {
-            connector.asyncCommand(getDatabase().getName(), new Count(findOp, getName()),
+            client.getConnector().asyncCommand(getDatabase().getName(), new Count(findOp, getName()),
                     getDocumentCodec(),
                     new SingleResultCallback<CommandResult>() {
                         @Override
@@ -874,7 +872,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public void asyncForEach(final AsyncBlock<? super T> block) {
-            connector.asyncQuery(getNamespace(), findOp, getDocumentCodec(),
+            client.getConnector().asyncQuery(getNamespace(), findOp, getDocumentCodec(),
                     getCodec(), new QueryResultSingleResultCallback(block));
         }
 
@@ -931,7 +929,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     block.done();
                 }
                 else {
-                    connector
+                    client.getConnector()
                             .asyncGetMore(getNamespace(),
                                     new MongoGetMore(result.getCursor(), findOp.getLimit(), findOp.getBatchSize(), numFetchedSoFar),
                                     getCodec(), new QueryResultSingleResultCallback(block, numFetchedSoFar + result.getResults().size()));

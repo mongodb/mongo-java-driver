@@ -19,7 +19,6 @@ package org.mongodb.impl;
 import org.mongodb.CollectionAdmin;
 import org.mongodb.Document;
 import org.mongodb.Index;
-import org.mongodb.MongoConnector;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
@@ -47,7 +46,7 @@ import static org.mongodb.impl.ErrorHandling.handleErrors;
 public class CollectionAdminImpl implements CollectionAdmin {
     private static final String NAMESPACE_KEY_NAME = "ns";
 
-    private final MongoConnector connector;
+    private final MongoClientImpl client;
     private final MongoDatabase database;
     //TODO: need to do something about these default serialisers, they're created everywhere
     private final DocumentCodec documentCodec;
@@ -58,11 +57,11 @@ public class CollectionAdminImpl implements CollectionAdmin {
     private final CollStats collStatsCommand;
     private final Drop dropCollectionCommand;
 
-    CollectionAdminImpl(final MongoConnector connector,
+    CollectionAdminImpl(final MongoClientImpl client,
                         final PrimitiveCodecs primitiveCodecs,
                         final MongoNamespace collectionNamespace,
                         final MongoDatabase database) {
-        this.connector = connector;
+        this.client = client;
         this.database = database;
         this.documentCodec = new DocumentCodec(primitiveCodecs);
         indexesNamespace = new MongoNamespace(database.getName(), "system.indexes");
@@ -82,12 +81,12 @@ public class CollectionAdminImpl implements CollectionAdmin {
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
         insertIndexOperation.writeConcern(WriteConcern.ACKNOWLEDGED);
 
-        connector.insert(indexesNamespace, insertIndexOperation, documentCodec);
+        client.getConnector().insert(indexesNamespace, insertIndexOperation, documentCodec);
     }
 
     @Override
     public List<Document> getIndexes() {
-        final QueryResult<Document> systemCollection = connector.query(indexesNamespace, queryForCollectionNamespace,
+        final QueryResult<Document> systemCollection = client.getConnector().query(indexesNamespace, queryForCollectionNamespace,
                 documentCodec, documentCodec);
         return systemCollection.getResults();
     }

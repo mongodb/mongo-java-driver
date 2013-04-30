@@ -32,11 +32,12 @@ import java.util.concurrent.ExecutionException;
 
 public class MongoClientImpl implements MongoClient {
 
-    private final MongoConnector connector;
+    private final DelegatingMongoConnector connector;
     private final MongoClientOptions clientOptions;
     private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
+    private final ThreadLocal<MongoConnector> pinnedConnector = new ThreadLocal<MongoConnector>();
 
-    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoConnector connector) {
+    public MongoClientImpl(final MongoClientOptions clientOptions, final DelegatingMongoConnector connector) {
         this.clientOptions = clientOptions;
         this.connector = connector;
     }
@@ -48,17 +49,29 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoDatabase getDatabase(final String databaseName, final MongoDatabaseOptions options) {
-        return new MongoDatabaseImpl(databaseName, connector, options.withDefaults(clientOptions));
+        return new MongoDatabaseImpl(databaseName, this, options.withDefaults(clientOptions));
     }
 
     @Override
     public void withConnection(final Runnable runnable) {
-        throw new UnsupportedOperationException();
+        pinConnection();
+        try {
+            runnable.run();
+        } finally {
+            pinnedConnector.remove();
+        }
     }
 
     @Override
     public <T> T withConnection(final Callable<T> callable) throws ExecutionException {
-        throw new UnsupportedOperationException();
+        pinConnection();
+        try {
+            return callable.call();
+        } catch (Exception e) {
+            throw new ExecutionException(e);
+        } finally {
+            pinnedConnector.remove();
+        }
     }
 
     @Override
@@ -87,6 +100,17 @@ public class MongoClientImpl implements MongoClient {
     }
 
     public MongoConnector getConnector() {
+        if (pinnedConnector.get() != null) {
+            return pinnedConnector.get();
+        }
         return connector;
+    }
+
+    private void pinConnection() {
+        if (pinnedConnector.get() != null) {
+            throw new IllegalStateException();
+        }
+        pinnedConnector.set(new DelegatingMongoConnector(new MonotonicallyConsistentServerConnectorManager(
+                connector.getConnectorManager())));
     }
 }
