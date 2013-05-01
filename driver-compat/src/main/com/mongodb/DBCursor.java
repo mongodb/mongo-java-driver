@@ -17,13 +17,16 @@
 package com.mongodb;
 
 import com.mongodb.codecs.DBDecoderAdapter;
+import com.mongodb.codecs.DBObjectCodec;
 import org.mongodb.Decoder;
 import org.mongodb.MongoConnector;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.MongoQueryCursor;
+import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
+import org.mongodb.result.QueryResult;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -228,16 +231,27 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
     /**
      * Returns an object containing basic information about the execution of the query that created this cursor This
-     * creates a <code>DBObject</code> with the key/value pairs: "cursor" : cursor type "nScanned" : number of records
-     * examined by the database for this query "n" : the number of records that the database returned "millis" : how
-     * long it took the database to execute the query
+     * creates a <code>DBObject</code> with a number of fields, including but not limited to:
+     * cursor : cursor type
+     * nScanned number of records examined by the database for this query
+     * n : the number of records that the database returned
+     * millis : how long it took the database to execute the query
      *
-     * @return a <code>DBObject</code>
+     * @return a <code>DBObject</code> containing the explain output for this DBCursor's query
      * @throws MongoException
      * @mongodb.driver.manual reference/explain Explain Output
      */
     public DBObject explain() {
-        throw new UnsupportedOperationException();  // TODO
+        MongoFind copy = new MongoFind(find);
+        copy.explain();
+        if (copy.getLimit() > 0) {
+            // need to pass a negative batchSize as limit for explain
+            copy.batchSize(copy.getLimit() * -1);
+            copy.limit(0);
+        }
+        QueryResult<DBObject> queryResult = getConnector().query(collection.getNamespace(), copy, collection.getDocumentCodec(),
+                new DBObjectCodec(PrimitiveCodecs.createDefault()));
+        return queryResult.getResults().get(0);
     }
 
     /**

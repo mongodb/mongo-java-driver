@@ -206,7 +206,6 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
 
     @Test
-    @Ignore
     public void testExplain() {
         insertTestData(collection, 100);
 
@@ -231,7 +230,6 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
         assertEquals(20, collection.find(q).limit(20).explain().get("n"));
         assertEquals(20, collection.find(q).limit(-20).explain().get("n"));
-
     }
 
     @Test
