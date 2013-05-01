@@ -16,15 +16,21 @@
 
 package org.mongodb;
 
+import category.Slow;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.QueryOption;
 import org.mongodb.result.CommandResult;
 
+import java.util.EnumSet;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MongoQueryCursorTest extends DatabaseTestCase {
     private MongoQueryCursor<Document> cursor;
@@ -63,6 +69,38 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         assertEquals(2, cursor.getNumGetMores());
         assertEquals(3, cursor.getSizes().size());
         assertEquals(2, (int) cursor.getSizes().get(2));
+    }
+
+    @Test
+    @Category(Slow.class)
+    public void testTailableAwait() {
+        collection.tools().drop();
+        database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
+
+        collection.insert(new Document("_id", 1));
+
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind()
+                .batchSize(2)
+                .addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData)),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), Fixture.getMongoConnector());
+        assertTrue(cursor.hasNext());
+        assertEquals(new Document("_id", 1), cursor.next());
+        assertTrue(cursor.hasNext());
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(5000);
+                    collection.insert(new Document("_id", 2));
+                } catch (InterruptedException e) { // NOPMD
+                    // all good
+                }
+            }
+        }).start();
+
+        // Note: this test is racy.  There is no guarantee that we're testing what we're trying to, which is the loop in the next() method.
+        assertEquals(new Document("_id", 2), cursor.next());
     }
 
     @Test

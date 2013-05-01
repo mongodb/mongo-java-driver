@@ -20,11 +20,13 @@ import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoKillCursor;
+import org.mongodb.operation.QueryOption;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.ServerCursor;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -84,7 +86,12 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
             return false;
         }
 
+        if (isTailableAwait()) {
+            return true;
+        }
+
         getMore();
+
         return currentIterator.hasNext();
     }
 
@@ -94,8 +101,11 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
             throw new NoSuchElementException();
         }
 
-        nextCount++;
+        while (!currentIterator.hasNext() && isTailableAwait()) {
+            getMore();
+        }
 
+        nextCount++;
         return currentIterator.next();
     }
 
@@ -162,5 +172,9 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     private boolean limitReached() {
         return currentResult.getCursor() != null && find.getLimit() > 0
                 && find.getLimit() - (nextCount + currentResult.getResults().size()) <= 0;
+    }
+
+    private boolean isTailableAwait() {
+        return find.getOptions().containsAll(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData));
     }
 }
