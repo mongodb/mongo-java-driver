@@ -40,7 +40,7 @@ import java.util.Set;
  * <p>
  * This class also exposes a command line interface modeled after mongostat.  For usage, run:
 
- * <pre>   java -cp mongo.jar com.mongodb.util.management.jmx.ConnectionPoolStat --help}</pre>
+ * <pre>   java -cp mongo.jar com.mongodb.util.tools.ConnectionPoolStat --help}</pre>
  *
  * @mongodb.driver.manual reference/mongostat  mongostat
  *
