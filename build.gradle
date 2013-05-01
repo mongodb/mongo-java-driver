@@ -340,6 +340,7 @@ project(':driver-compat') {
 
     dependencies {
         compile project(':driver')
+        testCompile project(':driver').sourceSets.test.output
     }
 
     clirr {
