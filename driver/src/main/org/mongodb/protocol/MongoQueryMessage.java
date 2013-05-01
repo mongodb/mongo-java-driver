@@ -17,9 +17,9 @@
 package org.mongodb.protocol;
 
 import org.mongodb.Document;
+import org.mongodb.Encoder;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoFind;
-import org.mongodb.Encoder;
 
 public class MongoQueryMessage extends MongoQueryBaseMessage {
     private final MongoFind find;
@@ -43,12 +43,15 @@ public class MongoQueryMessage extends MongoQueryBaseMessage {
 
     private Document getQueryDocument() {
         final Document document = new Document();
-        document.put("query", find.getFilter());
+        document.put("$query", find.getFilter());
         if (find.getOrder() != null && !find.getOrder().isEmpty()) {
-            document.put("orderby", find.getOrder());
+            document.put("$orderby", find.getOrder());
         }
         if (find.isSnapshotMode()) {
             document.put("$snapshot", true);
+        }
+        if (find.isExplain()) {
+            document.put("$explain", true);
         }
         // TODO: only to mongos according to spec
         if (find.getReadPreference() != null) {

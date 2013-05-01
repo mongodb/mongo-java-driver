@@ -26,6 +26,7 @@ public class MongoFind extends MongoQuery {
     private Document fields;
     private Document sortCriteria;
     private boolean snapshotMode;
+    private boolean explain;
 
     public MongoFind() {
         this.filter = new Document();
@@ -53,6 +54,10 @@ public class MongoFind extends MongoQuery {
 
     public boolean isSnapshotMode() {
         return snapshotMode;
+    }
+
+    public boolean isExplain() {
+        return explain;
     }
 
     //CHECKSTYLE:OFF
@@ -136,6 +141,11 @@ public class MongoFind extends MongoQuery {
     @Override
     public MongoFind skip(final int skip) {
         super.skip(skip);
+        return this;
+    }
+
+    public MongoFind explain() {
+        explain = true;
         return this;
     }
 }
