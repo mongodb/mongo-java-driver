@@ -16,17 +16,15 @@
 
 package com.mongodb;
 
+import category.Slow;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.util.Arrays;
 import java.util.NoSuchElementException;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
@@ -125,7 +123,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
     }
 
     @Test
-    @Ignore
+    @Category(Slow.class)
     public void testTailableAwait() throws ExecutionException, TimeoutException, InterruptedException {
         database.getCollection("tail1").drop();
         final DBCollection c = database.createCollection("tail1",
@@ -134,37 +132,30 @@ public class DBCursorOldTest extends DatabaseTestCase {
         insertTestData(c, 10);
 
         final DBCursor cur = c.find().sort(new BasicDBObject("$natural", 1)).addOption(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA);
-        Callable<Object> callable = new Callable<Object>() {
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        new Thread(new Runnable() {
             @Override
-            public Object call() throws Exception {
-                try {
-                    // the following call will block on the last hasNext
-                    int i = 0;
-                    while (cur.hasNext()) {
-                        DBObject obj = cur.next();
-                        i++;
-                        if (i > 10) {
-                            return obj.get("x");
-                        }
+            public void run() {
+                // the following call will block on the last hasNext
+                int i = 0;
+                while (cur.hasNext()) {
+                    DBObject obj = cur.next();
+                    i++;
+                    if (i > 10) {
+                        obj.get("x");
+                        latch.countDown();
+                        return;
                     }
-                    System.out.println("I'm done!");
-                    return null;
-                } catch (Throwable e) {
-                    return e;
                 }
             }
-        };
+        }).start();
 
-        ExecutorService es = Executors.newSingleThreadExecutor();
-        Future<Object> future = es.submit(callable);
 
         Thread.sleep(5000);
-        assertFalse(future.isDone());
-
         // this doc should unblock thread
-        c.save(new BasicDBObject("x", 10), WriteConcern.SAFE);
-        Object retVal = future.get(5, TimeUnit.SECONDS);
-        assertEquals(10, retVal);
+        c.save(new BasicDBObject("x", 10));
+        latch.await();
     }
 
     @Test
