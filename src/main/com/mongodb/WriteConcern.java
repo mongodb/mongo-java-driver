@@ -329,8 +329,11 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Sets the w value (the write strategy)
-     * @param w
+     * Sets the w value (the write strategy).
+     *
+     * @param w  the value of w.
+     * @deprecated construct a new instance instead.  This method will be removed in a future major release, as instances of this class
+     * should really be immutable.
      */
     public void setWObject(Object w) {
         if ( ! (w instanceof Integer) && ! (w instanceof String) )
@@ -510,11 +513,11 @@ public class WriteConcern implements Serializable {
     }
 
 
-    Object _w = 0;
-    int _wtimeout = 0;
-    boolean _fsync = false;
-    boolean _j = false;
-    boolean _continueOnErrorForInsert = false;
+    Object _w;  // this should be final, but can't be because of inadvertent public setter
+    final int _wtimeout;
+    final boolean _fsync;
+    final boolean _j;
+    final boolean _continueOnErrorForInsert ;
 
     public static class Majority extends WriteConcern {
 
