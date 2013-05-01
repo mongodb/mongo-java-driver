@@ -29,9 +29,11 @@ import org.mongodb.operation.QueryOption;
 import org.mongodb.result.CommandResult;
 
 import java.util.EnumSet;
+import java.util.concurrent.CountDownLatch;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class MongoQueryCursorTest extends DatabaseTestCase {
     private MongoQueryCursor<Document> cursor;
@@ -103,6 +105,38 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
 
         // Note: this test is racy.  There is no guarantee that we're testing what we're trying to, which is the loop in the next() method.
         assertEquals(2, cursor.next().get("_id"));
+    }
+
+    @Test
+    @Category(Slow.class)
+    public void testTailableAwaitInterrupt() throws InterruptedException {
+        collection.tools().drop();
+        database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
+
+        collection.insert(new Document("_id", 1));
+
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind()
+                .batchSize(2)
+                .addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData)),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), Fixture.getMongoConnector());
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    cursor.next();
+                    cursor.next();
+                    fail();
+                } catch (MongoInterruptedException e) {
+                    latch.countDown();
+                }
+            }
+        });
+        t.start();
+        Thread.sleep(1000);  // Note: this is racy, as where the interrupted exception is actually thrown from depends on timing.
+        t.interrupt();
+        latch.await();
     }
 
     @Test
