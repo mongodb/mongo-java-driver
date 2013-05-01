@@ -28,6 +28,7 @@ import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.QueryOption;
 import org.mongodb.result.QueryResult;
 
 import java.util.HashSet;
@@ -273,7 +274,7 @@ public class DB implements IDB {
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs) {
         final MongoCommand mongoCommand = new MongoCommand(toDocument(cmd))
                 .readPreference(readPrefs.toNew())
-                .flags(options);
+                .addOptions(QueryOption.toSet(options));
         return new CommandResult(executeCommandWithoutException(mongoCommand));
     }
 
@@ -293,7 +294,7 @@ public class DB implements IDB {
         final Document document = toDocument(cmd, encoder, documentCodec);
         final MongoCommand mongoCommand = new MongoCommand(document)
                 .readPreference(readPrefs.toNew())
-                .flags(options);
+                .addOptions(QueryOption.toSet(options));
         return new CommandResult(executeCommandWithoutException(mongoCommand));
     }
 

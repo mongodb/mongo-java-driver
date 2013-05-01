@@ -17,7 +17,8 @@
 package org.mongodb.operation;
 
 import org.mongodb.ReadPreference;
-import org.mongodb.protocol.QueryFlags;
+
+import java.util.EnumSet;
 
 public abstract class MongoQuery {
     private ReadPreference readPreference;
@@ -26,7 +27,7 @@ public abstract class MongoQuery {
     //CHECKSTYLE:ON
     private int skip;
     private int limit;
-    private int flags;
+    private EnumSet<QueryOption> flags = EnumSet.noneOf(QueryOption.class);
 
     public MongoQuery() {
     }
@@ -67,15 +68,29 @@ public abstract class MongoQuery {
         return this;
     }
 
-    public MongoQuery flags(final int flags) {
-        this.flags = flags;
+    public MongoQuery addOptions(final EnumSet<QueryOption> options) {
+        if (options == null) {
+            throw new IllegalArgumentException();
+        }
+        this.flags.addAll(options);
+        return this;
+    }
+
+    public MongoQuery options(final EnumSet<QueryOption> options) {
+        if (options == null) {
+            throw new IllegalArgumentException();
+        }
+        this.flags = options;
         return this;
     }
     //CHECKSTYLE:ON
 
-    public int getFlags() {
+
+    public EnumSet<QueryOption> getOptions() {
         if (readPreference != null && readPreference.isSlaveOk()) {
-            return flags | QueryFlags.SLAVEOK;
+            EnumSet<QueryOption> retVal = EnumSet.copyOf(flags);
+            retVal.add(QueryOption.SlaveOk);
+            return retVal;
         } else {
             return flags;
         }

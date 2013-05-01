@@ -20,6 +20,9 @@ import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 import org.mongodb.ReadPreference;
 import org.mongodb.operation.MongoQuery;
+import org.mongodb.operation.QueryOption;
+
+import java.util.EnumSet;
 
 public class MongoCommand extends MongoQuery implements ConvertibleToDocument {
     private final Document command;
@@ -37,8 +40,8 @@ public class MongoCommand extends MongoQuery implements ConvertibleToDocument {
 
 
     @Override
-    public MongoCommand flags(final int flags) {
-        super.flags(flags);
+    public MongoCommand addOptions(final EnumSet<QueryOption> options) {
+        super.addOptions(options);
         return this;
     }
 

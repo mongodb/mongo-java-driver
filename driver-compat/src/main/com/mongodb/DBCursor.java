@@ -23,6 +23,7 @@ import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.MongoQueryCursor;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.QueryOption;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -82,8 +83,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
                         .where(toDocument(query))
                         .select(DBObjects.toFieldSelectorDocument(fields))
                         .readPreference(readPreference.toNew())
-                        .flags(collection.getOptions())
-        );
+                        .addOptions(QueryOption.toSet(collection.getOptions())));
     }
 
     private DBCursor(final DBCollection collection, final MongoFind find) {
@@ -147,7 +147,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public DBCursor addOption(final int option) {
-        find.flags(find.getFlags() | option);
+        find.addOptions(QueryOption.toSet(option));
         return this;
     }
 
@@ -157,7 +157,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @param options
      */
     public DBCursor setOptions(final int options) {
-        find.flags(options);
+        find.options(QueryOption.toSet(options));
         return this;
     }
 
@@ -165,7 +165,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * resets the query options
      */
     public DBCursor resetOptions() {
-        find.flags(collection.getOptions());
+        find.options(QueryOption.toSet(collection.getOptions()));
         return this;
     }
 
@@ -175,7 +175,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public int getOptions() {
-        return find.getFlags();
+        return QueryOption.fromSet(find.getOptions());
     }
 
     /**

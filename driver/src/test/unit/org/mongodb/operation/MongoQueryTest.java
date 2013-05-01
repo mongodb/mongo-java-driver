@@ -15,13 +15,14 @@
  *
  */
 
-package org.mongodb;
+package org.mongodb.operation;
 
 import org.junit.Test;
-import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoQuery;
+
+import java.util.EnumSet;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class MongoQueryTest {
     @Test
@@ -49,5 +50,34 @@ public class MongoQueryTest {
 
         query = new MongoFind().limit(10).batchSize(-7);
         assertEquals(-7, query.getNumberToReturn());
+    }
+
+    @Test
+    public void testOptions() {
+        MongoQuery query = new MongoFind();
+        assertEquals(EnumSet.noneOf(QueryOption.class), query.getOptions());
+
+        query.addOptions(EnumSet.of(QueryOption.Tailable));
+        assertEquals(EnumSet.of(QueryOption.Tailable), query.getOptions());
+
+        query.addOptions(EnumSet.of(QueryOption.SlaveOk));
+        assertEquals(EnumSet.of(QueryOption.Tailable, QueryOption.SlaveOk), query.getOptions());
+
+        query.options(EnumSet.of(QueryOption.Exhaust));
+        assertEquals(EnumSet.of(QueryOption.Exhaust), query.getOptions());
+
+        try {
+            query.options(null);
+            fail();
+        } catch (IllegalArgumentException e) {  // NOPMD
+            // all good
+        }
+
+        try {
+            query.addOptions(null);
+            fail();
+        } catch (IllegalArgumentException e) { // NOPMD
+            // all good
+        }
     }
 }

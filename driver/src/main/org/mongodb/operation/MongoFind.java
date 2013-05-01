@@ -19,6 +19,8 @@ package org.mongodb.operation;
 import org.mongodb.Document;
 import org.mongodb.ReadPreference;
 
+import java.util.EnumSet;
+
 public class MongoFind extends MongoQuery {
     private Document filter;
     private Document fields;
@@ -89,8 +91,14 @@ public class MongoFind extends MongoQuery {
     }
 
     @Override
-    public MongoFind flags(final int flags) {
-        super.flags(flags);
+    public MongoFind addOptions(final EnumSet<QueryOption> options) {
+        super.addOptions(options);
+        return this;
+    }
+
+    @Override
+    public MongoFind options(final EnumSet<QueryOption> options) {
+        super.options(options);
         return this;
     }
 
