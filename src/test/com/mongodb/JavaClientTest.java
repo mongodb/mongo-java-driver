@@ -914,10 +914,10 @@ public class JavaClientTest extends TestCase {
         c.drop();
 
         c.insert( new BasicDBObject( "x" , 5) );
-        assertEquals( Integer.class , c.findOne().get("x").getClass() );
-        assertEquals(5, c.findOne().get("x") );
+        assertEquals(Integer.class, c.findOne().get("x").getClass());
+        assertEquals(5, c.findOne().get("x"));
 
-        c.update( new BasicDBObject() , new BasicDBObject( "$set" , new BasicDBObject( "x" , 5.6D ) ) );
+        c.update(new BasicDBObject(), new BasicDBObject("$set", new BasicDBObject("x", 5.6D)));
         assertEquals( Double.class , c.findOne().get("x").getClass() );
         assertEquals( 5.6 , c.findOne().get("x") );
 
@@ -931,8 +931,8 @@ public class JavaClientTest extends TestCase {
 
         c.insert( new BasicDBObject( "x" , 1 ) );
         c.insert( new BasicDBObject( "x" , 2 ) );
-        c.insert( new BasicDBObject( "x" , 3 ) );
-        c.insert( new BasicDBObject( "x" , 4 ) );
+        c.insert(new BasicDBObject("x", 3));
+        c.insert(new BasicDBObject("x", 4));
 
         List<DBObject> a = c.find( new BasicDBObject( "x" , new BasicDBObject( "$in" , new Integer[]{ 2 , 3 } ) ) ).toArray();
         assertEquals( 2 , a.size() );
@@ -950,7 +950,7 @@ public class JavaClientTest extends TestCase {
 
         CommandResult cr = res.getLastError( WriteConcern.FSYNC_SAFE );
         assertEquals( 1 , cr.getInt( "n" ) );
-        assertTrue( cr.containsField( "fsyncFiles" ) || cr.containsField( "waited" ));
+        assertTrue(cr.containsField("fsyncFiles") || cr.containsField("waited"));
 
         CommandResult cr2 = res.getLastError( WriteConcern.FSYNC_SAFE );
         assertTrue( cr == cr2 );
@@ -984,11 +984,11 @@ public class JavaClientTest extends TestCase {
         c.insert( new BasicDBObject( "_id" , 1 ) );
         WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
         assertEquals( 1 , res.getN() );
-        assertTrue( res.isLazy() );
+        assertTrue(res.isLazy());
 
         res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) , false , false , WriteConcern.SAFE);
         assertEquals( 1 , res.getN() );
-        assertFalse( res.isLazy() );
+        assertFalse(res.isLazy());
     }
 
     @Test
@@ -1101,33 +1101,50 @@ public class JavaClientTest extends TestCase {
 
         try {
             c.insert(new BasicDBObject("a.b", 1));
-            assertTrue(false, "Bad key was accepted");
-        } catch (Exception e) {}
+            fail("Bad key was accepted");
+        } catch (IllegalArgumentException e) {}
+
         try {
             Map<String, Integer> data = new HashMap<String, Integer>();
             data.put("a.b", 1);
             c.insert(new BasicDBObject("data", data));
-            assertTrue(false, "Bad key was accepted");
-        } catch (Exception e) {}
+            fail("Bad key was accepted");
+        } catch (IllegalArgumentException e) {}
+
         try {
             c.insert(new BasicDBObject("$a", 1));
-            assertTrue(false, "Bad key was accepted");
-        } catch (Exception e) {}
+            fail("Bad key was accepted");
+        } catch (IllegalArgumentException e) {}
 
         try {
             c.save(new BasicDBObject("a.b", 1));
-            assertTrue(false, "Bad key was accepted");
-        } catch (Exception e) {}
+            fail("Bad key was accepted");
+        } catch (IllegalArgumentException e) {}
+
         try {
             c.save(new BasicDBObject("$a", 1));
-            assertTrue(false, "Bad key was accepted");
-        } catch (Exception e) {}
+            fail("Bad key was accepted");
+        } catch (IllegalArgumentException e) {}
+
+        try {
+            final BasicDBList list = new BasicDBList();
+            list.add(new BasicDBObject("$a", 1));
+            c.save(new BasicDBObject("a", list));
+            fail("Bad key was accepted");
+        } catch (IllegalArgumentException e) {}
+
+//        try {
+//            c.save(new BasicDBObject("a", Arrays.asList(new BasicDBObject("$a", 1))));
+//            fail("Bad key was accepted");
+//        } catch (IllegalArgumentException e) {}
 
         c.insert(new BasicDBObject("a", 1));
         try {
             c.update(new BasicDBObject("a", 1), new BasicDBObject("a.b", 1));
-            assertTrue(false, "Bad key was accepted");
-        } catch (Exception e) {}
+            fail("Bad key was accepted");
+        } catch (IllegalArgumentException e) {}
+
+        // this should work because it's a query
         c.update(new BasicDBObject("a", 1), new BasicDBObject("$set", new BasicDBObject("a.b", 1)));
     }
 
