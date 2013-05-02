@@ -22,6 +22,7 @@ import com.mongodb.util.ConnectionPoolStatisticsBean;
 import com.mongodb.util.SimplePool;
 import com.mongodb.util.management.JMException;
 import com.mongodb.util.management.MBeanServerFactory;
+import java.io.IOException;
 
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
@@ -66,7 +67,7 @@ public class DBPortPool extends SimplePool<DBPort> {
             _options = options;
         }
 
-        DBPortPool get( ServerAddress addr ){
+        DBPortPool get( Mongo mongo, ServerAddress addr ){
 
             DBPortPool p = _pools.get( addr );
 
@@ -79,7 +80,7 @@ public class DBPortPool extends SimplePool<DBPort> {
                     return p;
                 }
 
-                p = createPool(addr);
+                p = createPool(mongo, addr);
                 _pools.put( addr , p);
 
                 try {
@@ -102,11 +103,11 @@ public class DBPortPool extends SimplePool<DBPort> {
             return p;
         }
 
-        private DBPortPool createPool(final ServerAddress addr) {
+        private DBPortPool createPool(final Mongo mongo, final ServerAddress addr) {
             if (isJava5 || _options.isAlwaysUseMBeans()) {
-                return new Java5MongoConnectionPool(addr, _options);
+                return new Java5MongoConnectionPool(mongo, addr, _options);
             } else {
-                return new MongoConnectionPool(addr, _options);
+                return new MongoConnectionPool(mongo, addr, _options);
             }
         }
 
@@ -153,8 +154,8 @@ public class DBPortPool extends SimplePool<DBPort> {
         private static final long serialVersionUID = -4415279469780082174L;
 
         NoMoreConnection( String msg ){
-	        super( msg );
-	    }
+            super( msg );
+        }
     }
 
     public static class SemaphoresOut extends NoMoreConnection {
@@ -178,10 +179,11 @@ public class DBPortPool extends SimplePool<DBPort> {
 
     // ----
 
-    DBPortPool( ServerAddress addr , MongoOptions options ){
+    DBPortPool( Mongo mongo, ServerAddress addr , MongoOptions options ){
         super( "DBPortPool-" + addr.toString() + ", options = " +  options.toString() , options.connectionsPerHost );
         _options = options;
         _addr = addr;
+        _mongo = mongo;
         _waitingSem = new Semaphore( _options.connectionsPerHost * _options.threadsAllowedToBlockForConnectionMultiplier );
     }
 
@@ -210,16 +212,38 @@ public class DBPortPool extends SimplePool<DBPort> {
         if ( ! _waitingSem.tryAcquire() )
             throw new SemaphoresOut(_options.connectionsPerHost * _options.threadsAllowedToBlockForConnectionMultiplier);
 
-        try {
-            port = get( _options.maxWaitTime );
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException(e);
-        } finally {
-            _waitingSem.release();
-        }
+        while (true) {
+            try {
+                port = get( _options.maxWaitTime );
+            } catch (InterruptedException e) {
+                throw new MongoInterruptedException(e);
+            } finally {
+                _waitingSem.release();
+            }
 
-        if ( port == null )
-            throw new ConnectionWaitTimeOut( _options.maxWaitTime );
+            if ( port == null )
+                throw new ConnectionWaitTimeOut( _options.maxWaitTime );
+
+            // ensure that the connection is open. this will prevent loops
+            // below in case there is a problem with the creation of the connection
+            try {
+                port.ensureOpen();
+            } catch (IOException e) {
+                port.close();
+                done(port);
+                throw new MongoException("error while creating connection", e);
+            }
+
+            try {
+                CommandResult res = port.runCommand(_mongo.getDB("admin"), new BasicDBObject("isMaster", 1));
+                break;
+            } catch(Exception e) {
+                // there is a problem with the connection, close it and wait again
+                // this guarantees that the executing thread will not get a broken port
+                port.close();
+                done(port);
+            }
+        }
 
         port._lastThread = System.identityHashCode(Thread.currentThread());
         return port;
@@ -278,5 +302,6 @@ public class DBPortPool extends SimplePool<DBPort> {
     final MongoOptions _options;
     final private Semaphore _waitingSem;
     final ServerAddress _addr;
+    final Mongo _mongo;
     boolean _everWorked = false;
 }
