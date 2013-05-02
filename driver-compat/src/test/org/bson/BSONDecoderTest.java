@@ -46,11 +46,11 @@ public class BSONDecoderTest {
     @Test
     public void testDecodingNumbers() {
         testDecoder(new byte[]{
-                45, 0, 0, 0, 16, 105, 49, 0, -12,
+                41, 0, 0, 0, 16, 105, 49, 0, -12,
                 -1, -1, -1, 16, 105, 50, 0, 0, 0,
                 0, -128, 18, 105, 51, 0, -1, -1, -1,
-                -1, -1, -1, -1, 127, 18, 105, 52, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0
+                -1, -1, -1, -1, 127, 16, 105, 52, 0,
+                0, 0, 0, 0, 0
         },
                 new BasicBSONObject("i1", -12)
                         .append("i2", Integer.MIN_VALUE)
