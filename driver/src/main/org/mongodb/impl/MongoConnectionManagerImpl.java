@@ -16,15 +16,15 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.PoolableConnectionManager;
+import org.mongodb.MongoConnectionManager;
 import org.mongodb.ServerAddress;
 import org.mongodb.pool.SimplePool;
 
-public class PoolableConnectionManagerImpl implements PoolableConnectionManager {
+public class MongoConnectionManagerImpl implements MongoConnectionManager {
     private ServerAddress serverAddress;
     private final SimplePool<MongoConnection> connectionPool;
 
-    public PoolableConnectionManagerImpl(final ServerAddress serverAddress, final SimplePool<MongoConnection> connectionPool) {
+    public MongoConnectionManagerImpl(final ServerAddress serverAddress, final SimplePool<MongoConnection> connectionPool) {
         this.serverAddress = serverAddress;
         this.connectionPool = connectionPool;
     }

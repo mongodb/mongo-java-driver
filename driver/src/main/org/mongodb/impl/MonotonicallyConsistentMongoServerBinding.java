@@ -17,8 +17,8 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoServerBinding;
-import org.mongodb.PoolableConnectionManager;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 
@@ -27,8 +27,8 @@ import java.util.List;
 class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
     private final MongoServerBinding serverConnectorManager;
     private ReadPreference lastRequestedReadPreference;
-    private PoolableConnectionManager connectionManagerForReads;
-    private PoolableConnectionManager connectionManagerForWrites;
+    private MongoConnectionManager connectionManagerForReads;
+    private MongoConnectionManager connectionManagerForWrites;
     private MongoConnection connectorForReads;
     private MongoConnection connectorForWrites;
 
@@ -37,17 +37,17 @@ class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
     }
 
     @Override
-    public PoolableConnectionManager getConnectionManagerForWrite() {
-        return new PoolableConnectionManagerForWrites();
+    public MongoConnectionManager getConnectionManagerForWrite() {
+        return new MongoConnectionManagerForWrites();
     }
 
     @Override
-    public PoolableConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
-        return new PoolableConnectionManagerForReads(readPreference);
+    public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
+        return new MongoConnectionManagerForReads(readPreference);
     }
 
     @Override
-    public PoolableConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
+    public MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
         return serverConnectorManager.getConnectionManagerForServer(serverAddress);
     }
 
@@ -99,7 +99,7 @@ class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
     }
 
 
-    private abstract class AbstractConnectionManager implements PoolableConnectionManager {
+    private abstract class AbstractConnectionManager implements MongoConnectionManager {
         @Override
         public void releaseConnection(final MongoConnection connection) {
             // Do nothing.  Release when the containing instance is closed.
@@ -115,10 +115,10 @@ class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
         }
     }
 
-    private final class PoolableConnectionManagerForReads extends AbstractConnectionManager {
+    private final class MongoConnectionManagerForReads extends AbstractConnectionManager {
         private final ReadPreference readPreference;
 
-        private PoolableConnectionManagerForReads(final ReadPreference readPreference) {
+        private MongoConnectionManagerForReads(final ReadPreference readPreference) {
             this.readPreference = readPreference;
         }
 
@@ -128,7 +128,7 @@ class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
         }
     }
 
-    private final class PoolableConnectionManagerForWrites extends AbstractConnectionManager {
+    private final class MongoConnectionManagerForWrites extends AbstractConnectionManager {
         @Override
         public MongoConnection getConnection() {
             return getConnectorForWrites();

@@ -21,4 +21,6 @@ import org.mongodb.async.MongoAsyncOperations;
 
 public interface MongoSession extends MongoSyncOperations, MongoAsyncOperations {
     void close();
+
+    MongoServerBinding getServerBinding();
 }

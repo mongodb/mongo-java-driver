@@ -52,12 +52,12 @@ public final class MongoConnectorsImpl {
                 credentialList, options));
     }
 
-    static PoolableConnectionManagerImpl create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+    static MongoConnectionManagerImpl create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                              final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
         if (options.isAsyncEnabled()
                 && !options.isSSLEnabled()
                 && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            return new PoolableConnectionManagerImpl(serverAddress, new SimplePool<MongoConnection>(serverAddress.toString(),
+            return new MongoConnectionManagerImpl(serverAddress, new SimplePool<MongoConnection>(serverAddress.toString(),
                     options.getConnectionsPerHost()) {
                         @Override
                         protected MongoConnection createNew() {
@@ -72,7 +72,7 @@ public final class MongoConnectorsImpl {
                     });
         }
         else {
-            return new PoolableConnectionManagerImpl(serverAddress, new SimplePool<MongoConnection>(serverAddress.toString(),
+            return new MongoConnectionManagerImpl(serverAddress, new SimplePool<MongoConnection>(serverAddress.toString(),
                     options.getConnectionsPerHost()) {
                         @Override
                         protected MongoConnection createNew() {

@@ -19,11 +19,11 @@ package org.mongodb;
 import java.util.List;
 
 public interface MongoServerBinding {
-    PoolableConnectionManager getConnectionManagerForWrite();
+    MongoConnectionManager getConnectionManagerForWrite();
 
-    PoolableConnectionManager getConnectionManagerForRead(ReadPreference readPreference);
+    MongoConnectionManager getConnectionManagerForRead(ReadPreference readPreference);
 
-    PoolableConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress);
+    MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress);
 
     List<ServerAddress> getAllServerAddresses();
 

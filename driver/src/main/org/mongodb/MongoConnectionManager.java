@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.mongodb.impl.MongoConnection;
 
-public interface PoolableConnectionManager {
+public interface MongoConnectionManager {
     MongoConnection getConnection();
 
     void releaseConnection(MongoConnection connection);

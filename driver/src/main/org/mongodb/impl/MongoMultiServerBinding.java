@@ -17,10 +17,10 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoServerBinding;
-import org.mongodb.PoolableConnectionManager;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
@@ -35,7 +35,7 @@ public class MongoMultiServerBinding implements MongoServerBinding {
     private final List<MongoCredential> credentialList;
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
-    private final Map<ServerAddress, PoolableConnectionManager> mongoClientMap = new HashMap<ServerAddress, PoolableConnectionManager>();
+    private final Map<ServerAddress, MongoConnectionManager> mongoClientMap = new HashMap<ServerAddress, MongoConnectionManager>();
     private final MongoConnectionStrategy connectionStrategy;
 
     public MongoMultiServerBinding(final MongoConnectionStrategy connectionStrategy, final List<MongoCredential> credentialList,
@@ -47,13 +47,13 @@ public class MongoMultiServerBinding implements MongoServerBinding {
     }
 
     @Override
-    public PoolableConnectionManager getConnectionManagerForWrite() {
+    public MongoConnectionManager getConnectionManagerForWrite() {
         final ServerAddress serverAddress = connectionStrategy.getAddressOfPrimary();
         return getConnectionManagerForServer(serverAddress);
     }
 
     @Override
-    public PoolableConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
+    public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
         final ServerAddress serverAddress = connectionStrategy.getAddressForReadPreference(readPreference);
 
         return getConnectionManagerForServer(serverAddress);
@@ -65,8 +65,8 @@ public class MongoMultiServerBinding implements MongoServerBinding {
     }
 
     @Override
-    public synchronized PoolableConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
-        PoolableConnectionManager connection = mongoClientMap.get(serverAddress);
+    public synchronized MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
+        MongoConnectionManager connection = mongoClientMap.get(serverAddress);
         if (connection == null) {
             connection = MongoConnectorsImpl.create(serverAddress, credentialList, options, bufferPool);
             mongoClientMap.put(serverAddress, connection);
@@ -76,7 +76,7 @@ public class MongoMultiServerBinding implements MongoServerBinding {
 
     @Override
     public void close() {
-        for (PoolableConnectionManager cur : mongoClientMap.values()) {
+        for (MongoConnectionManager cur : mongoClientMap.values()) {
             cur.close();
         }
         connectionStrategy.close();

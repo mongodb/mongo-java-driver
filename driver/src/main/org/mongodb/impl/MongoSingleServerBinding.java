@@ -16,8 +16,8 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoServerBinding;
-import org.mongodb.PoolableConnectionManager;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 
@@ -25,24 +25,24 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MongoSingleServerBinding implements MongoServerBinding {
-    private final PoolableConnectionManager connectionManager;
+    private final MongoConnectionManager connectionManager;
 
-    public MongoSingleServerBinding(final PoolableConnectionManager connectionManager) {
+    public MongoSingleServerBinding(final MongoConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
     }
 
     @Override
-    public PoolableConnectionManager getConnectionManagerForWrite() {
+    public MongoConnectionManager getConnectionManagerForWrite() {
         return connectionManager;
     }
 
     @Override
-    public PoolableConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
+    public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
         return connectionManager;
     }
 
     @Override
-    public PoolableConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
+    public MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
         return connectionManager;
     }
 
