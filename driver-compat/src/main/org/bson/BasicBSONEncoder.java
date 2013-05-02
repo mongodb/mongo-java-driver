@@ -16,13 +16,9 @@
 
 package org.bson;
 
-import com.mongodb.MongoInternalException;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
 import org.mongodb.codecs.PrimitiveCodecs;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 /**
  * This is meant to be pooled or cached
@@ -50,15 +46,9 @@ public class BasicBSONEncoder implements BSONEncoder {
      */
     @Override
     public int putObject(final BSONObject document) {
-        try {
-            new BSONObjectEncoder(PrimitiveCodecs.createDefault()).encode(new BSONBinaryWriter(outputBuffer), document);
-            final BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
-            outputBuffer.pipe(stream);
-            return stream.getInternalBytes().length;
-        } catch (IOException e) {
-            // impossible with a byte array output stream
-            throw new MongoInternalException("Received considered as impossible IOException from ByteArrayOutputStream", e);
-        }
+        int startPosition = outputBuffer.getPosition();
+        new BSONObjectEncoder(PrimitiveCodecs.createDefault()).encode(new BSONBinaryWriter(outputBuffer), document);
+        return outputBuffer.getPosition() - startPosition;
     }
 
     @Override
@@ -72,17 +62,5 @@ public class BasicBSONEncoder implements BSONEncoder {
             throw new IllegalStateException("Performing another operation at this moment");
         }
         this.outputBuffer = out;
-    }
-
-
-    // Just so we don't have to copy the buffer
-    static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
-        BufferExposingByteArrayOutputStream() {
-            super(512);
-        }
-
-        byte[] getInternalBytes() {
-            return buf;
-        }
     }
 }
