@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package org.bson;
+package com.mongodb;
 
+import org.bson.BSONObject;
+import org.bson.BasicBSONEncoder;
 import org.bson.io.OutputBuffer;
 
-public interface BSONEncoder {
+public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
 
-    byte[] encode(final BSONObject o);
-
-    int putObject(final BSONObject o);
-
-    void done();
-
-    void set(final OutputBuffer out);
+    @Override
+    public int writeObject(final OutputBuffer outputBuffer, final BSONObject document) {
+        set(outputBuffer);
+        int x = super.putObject(document);
+        done();
+        return x;
+    }
 }

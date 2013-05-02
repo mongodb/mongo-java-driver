@@ -1,0 +1,179 @@
+/*
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.bson.codecs;
+
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.DBRefBase;
+import org.bson.BSON;
+import org.bson.BSONObject;
+import org.bson.BSONReader;
+import org.bson.BSONType;
+import org.bson.BSONWriter;
+import org.bson.types.BasicBSONList;
+import org.bson.types.Binary;
+import org.mongodb.Codec;
+import org.mongodb.codecs.PrimitiveCodecs;
+
+import java.lang.reflect.Array;
+import java.util.List;
+import java.util.Map;
+
+public class BSONObjectCodec implements Codec<BSONObject> {
+
+    private final PrimitiveCodecs primitiveCodecs;
+
+    public BSONObjectCodec(PrimitiveCodecs primitiveCodecs) {
+        this.primitiveCodecs = primitiveCodecs;
+    }
+
+    @Override
+    public void encode(BSONWriter bsonWriter, BSONObject document) {
+        bsonWriter.writeStartDocument();
+
+        for (final String key : document.keySet()) {
+            bsonWriter.writeName(key);
+            writeValue(bsonWriter, document.get(key));
+        }
+        bsonWriter.writeEndDocument();
+    }
+
+    @Override
+    public Class<BSONObject> getEncoderClass() {
+        return BSONObject.class;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void writeValue(final BSONWriter bsonWriter, final Object initialValue) {
+        final Object value = BSON.applyEncodingHooks(initialValue);
+        if (value instanceof DBRefBase) {
+            encodeDBRef(bsonWriter, (DBRefBase) value);
+        } else if (value instanceof BasicBSONList) {
+            encodeIterable(bsonWriter, (BasicBSONList) value);
+        } else if (value instanceof DBObject) {
+            encodeEmbeddedObject(bsonWriter, ((DBObject) value).toMap());
+        } else if (value instanceof Map) {
+            encodeEmbeddedObject(bsonWriter, (Map<String, Object>) value);
+        } else if (value instanceof Iterable) {
+            encodeIterable(bsonWriter, (Iterable) value);
+        } else if (value instanceof byte[]) {
+            primitiveCodecs.encode(bsonWriter, new Binary((byte[]) value));
+        } else if (value != null && value.getClass().isArray()) {
+            encodeArray(bsonWriter, value);
+        } else {
+            primitiveCodecs.encode(bsonWriter, value);
+        }
+    }
+
+    private void encodeEmbeddedObject(final BSONWriter bsonWriter, final Map<String, Object> document) {
+        bsonWriter.writeStartDocument();
+
+        for (final String key : document.keySet()) {
+            bsonWriter.writeName(key);
+            writeValue(bsonWriter, document.get(key));
+        }
+        bsonWriter.writeEndDocument();
+    }
+
+    private void encodeArray(final BSONWriter bsonWriter, final Object value) {
+        bsonWriter.writeStartArray();
+
+        final int size = Array.getLength(value);
+        for (int i = 0; i < size; i++) {
+            writeValue(bsonWriter, Array.get(value, i));
+        }
+
+        bsonWriter.writeEndArray();
+    }
+
+    private void encodeDBRef(final BSONWriter bsonWriter, final DBRefBase dbRef) {
+        bsonWriter.writeStartDocument();
+
+        bsonWriter.writeString("$ref", dbRef.getRef());
+        bsonWriter.writeName("$id");
+        writeValue(bsonWriter, dbRef.getId());
+
+        bsonWriter.writeEndDocument();
+    }
+
+    private void encodeIterable(final BSONWriter bsonWriter, final Iterable iterable) {
+        bsonWriter.writeStartArray();
+        for (final Object cur : iterable) {
+            writeValue(bsonWriter, cur);
+        }
+        bsonWriter.writeEndArray();
+    }
+
+    @Override
+    public BSONObject decode(final BSONReader reader) {
+        final BSONObject document = new BasicDBObject();
+
+        reader.readStartDocument();
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+            final String fieldName = reader.readName();
+            document.put(fieldName, readValue(reader, fieldName));
+        }
+
+        reader.readEndDocument();
+
+        return document;
+    }
+
+
+    protected Object decodeDocument(final BSONReader reader) {
+        final BSONObject document = new BasicDBObject();
+
+        reader.readStartDocument();
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+            final String fieldName = reader.readName();
+            document.put(fieldName, readValue(reader, fieldName));
+        }
+
+        reader.readEndDocument();
+
+        return document;
+    }
+
+    private Object readValue(final BSONReader reader, final String fieldName) {
+        final BSONType bsonType = reader.getCurrentBSONType();
+        final Object initialRetVal;
+        if (bsonType.isContainer()) {
+            if (bsonType.equals(BSONType.DOCUMENT)) {
+                initialRetVal = decodeDocument(reader);
+            }
+            // Must be an array, since there are only two container types
+            else {
+                initialRetVal = readArray(reader);
+            }
+        } else {
+            initialRetVal = primitiveCodecs.decode(reader);
+        }
+
+        return BSON.applyDecodingHooks(initialRetVal);
+    }
+
+    private List readArray(final BSONReader reader) {
+        reader.readStartArray();
+        final BasicDBList list = new BasicDBList();
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+            list.add(readValue(reader, null));
+        }
+        reader.readEndArray();
+        return list;
+    }
+}
