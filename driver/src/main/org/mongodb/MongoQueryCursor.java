@@ -39,7 +39,7 @@ import java.util.NoSuchElementException;
 @NotThreadSafe
 public class MongoQueryCursor<T> implements MongoCursor<T> {
     private final MongoFind find;
-    private final MongoConnector connector;
+    private final MongoSession connector;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private QueryResult<T> currentResult;
@@ -49,7 +49,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     private boolean closed;
 
     public MongoQueryCursor(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
-                            final Decoder<T> decoder, final MongoConnector connector) {
+                            final Decoder<T> decoder, final MongoSession connector) {
         this.namespace = namespace;
         this.decoder = decoder;
         this.find = find;

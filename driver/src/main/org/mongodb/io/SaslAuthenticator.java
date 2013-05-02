@@ -18,13 +18,13 @@ package org.mongodb.io;
 
 import org.bson.types.Binary;
 import org.mongodb.Document;
-import org.mongodb.MongoConnector;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.MongoSecurityException;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.MongoCommand;
+import org.mongodb.impl.MongoPoolableConnector;
 import org.mongodb.result.CommandResult;
 
 import javax.security.sasl.SaslClient;
@@ -33,7 +33,7 @@ import javax.security.sasl.SaslException;
 abstract class SaslAuthenticator extends Authenticator {
     public static final String MONGODB_PROTOCOL = "mongodb";
 
-    SaslAuthenticator(final MongoCredential credential, final MongoConnector connector) {
+    SaslAuthenticator(final MongoCredential credential, final MongoPoolableConnector connector) {
         super(credential, connector);
     }
 

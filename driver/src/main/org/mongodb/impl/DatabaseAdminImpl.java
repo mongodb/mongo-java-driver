@@ -57,13 +57,13 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        new CommandResult(client.getConnector().command(databaseName, DROP_DATABASE, documentCodec));
+        new CommandResult(client.getSession().command(databaseName, DROP_DATABASE, documentCodec));
     }
 
     @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
-        final QueryResult<Document> query = client.getConnector().query(namespacesCollection, FIND_ALL,
+        final QueryResult<Document> query = client.getSession().query(namespacesCollection, FIND_ALL,
                 documentCodec, documentCodec);
 
         final HashSet<String> collections = new HashSet<String>();
@@ -86,7 +86,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         final CommandResult commandResult = new CommandResult(
-                client.getConnector().command(databaseName, new Create(createCollectionOptions), documentCodec));
+                client.getSession().command(databaseName, new Create(createCollectionOptions), documentCodec));
         handleErrors(commandResult);
     }
 
@@ -98,7 +98,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
         final RenameCollection rename = new RenameCollection(renameCollectionOptions, databaseName);
-        final CommandResult commandResult = client.getConnector().command("admin", rename, documentCodec);
+        final CommandResult commandResult = client.getSession().command("admin", rename, documentCodec);
         handleErrors(commandResult);
     }
 }

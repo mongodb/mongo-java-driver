@@ -16,12 +16,10 @@
 
 package org.mongodb;
 
-import org.mongodb.async.MongoAsyncConnector;
-
 import java.util.List;
 
-public interface MongoConnector extends MongoSyncConnector, MongoAsyncConnector {
-    void close();
-
+public interface MongoConnector extends MongoSession {
     List<ServerAddress> getServerAddressList();
+
+    MongoSession getSession();
 }

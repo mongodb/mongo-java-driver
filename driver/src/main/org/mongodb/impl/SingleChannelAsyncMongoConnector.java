@@ -64,7 +64,6 @@ import org.mongodb.result.ServerCursor;
 import org.mongodb.result.WriteResult;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -78,7 +77,7 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
     private volatile boolean activeAsyncCall;
     private volatile boolean releasePending;
 
-    SingleChannelAsyncMongoConnector(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+    public SingleChannelAsyncMongoConnector(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                      final SimplePool<MongoPoolableConnector> channelPool, final BufferPool<ByteBuffer> bufferPool,
                                      final MongoClientOptions options) {
         this.serverAddress = serverAddress;
@@ -117,11 +116,6 @@ public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector 
             releasePending = false;
             channelPool.done(this);
         }
-    }
-
-    @Override
-    public List<ServerAddress> getServerAddressList() {
-        return Arrays.asList(channel.getAddress());
     }
 
     private Codec<Document> withDocumentCodec(final Codec<Document> codec) {

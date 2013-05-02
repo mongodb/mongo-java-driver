@@ -23,6 +23,7 @@ import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
+import org.mongodb.MongoSession;
 import org.mongodb.ServerAddress;
 import org.mongodb.codecs.PrimitiveCodecs;
 
@@ -32,12 +33,12 @@ import java.util.concurrent.ExecutionException;
 
 public class MongoClientImpl implements MongoClient {
 
-    private final DelegatingMongoConnector connector;
+    private final MongoConnector connector;
     private final MongoClientOptions clientOptions;
     private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
-    private final ThreadLocal<MongoConnector> pinnedConnector = new ThreadLocal<MongoConnector>();
+    private final ThreadLocal<MongoSession> pinnedSession = new ThreadLocal<MongoSession>();
 
-    public MongoClientImpl(final MongoClientOptions clientOptions, final DelegatingMongoConnector connector) {
+    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoConnector connector) {
         this.clientOptions = clientOptions;
         this.connector = connector;
     }
@@ -58,7 +59,7 @@ public class MongoClientImpl implements MongoClient {
         try {
             runnable.run();
         } finally {
-            pinnedConnector.remove();
+            pinnedSession.remove();
         }
     }
 
@@ -70,7 +71,7 @@ public class MongoClientImpl implements MongoClient {
         } catch (Exception e) {
             throw new ExecutionException(e);
         } finally {
-            pinnedConnector.remove();
+            pinnedSession.remove();
         }
     }
 
@@ -100,17 +101,20 @@ public class MongoClientImpl implements MongoClient {
     }
 
     public MongoConnector getConnector() {
-        if (pinnedConnector.get() != null) {
-            return pinnedConnector.get();
+        return connector;
+    }
+
+    public MongoSession getSession() {
+        if (pinnedSession.get() != null) {
+            return pinnedSession.get();
         }
         return connector;
     }
 
     private void pinConnection() {
-        if (pinnedConnector.get() != null) {
+        if (pinnedSession.get() != null) {
             throw new IllegalStateException();
         }
-        pinnedConnector.set(new DelegatingMongoConnector(new MonotonicallyConsistentServerConnectorManager(
-                connector.getConnectorManager())));
+        pinnedSession.set(connector.getSession());
     }
 }

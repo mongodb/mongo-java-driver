@@ -17,11 +17,23 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoConnector;
+import org.mongodb.MongoSyncConnector;
+import org.mongodb.ServerAddress;
+import org.mongodb.async.MongoAsyncConnector;
 
-public interface MongoPoolableConnector extends MongoConnector {
+public interface MongoPoolableConnector extends MongoSyncConnector, MongoAsyncConnector {
     /**
-     * Releases the connection back to the pool
+     * Releases the connection back to the pool.
      */
     void release();
+
+    /**
+     * Closes the connection.
+     */
+    void close();
+
+    /**
+     * Gets the server address of this connector
+     */
+    ServerAddress getServerAddress();
 }

@@ -19,7 +19,6 @@ package org.mongodb.impl;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoConnector;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.Count;
@@ -34,9 +33,9 @@ import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractMongoConnectorTest extends DatabaseTestCase {
 
-    private MongoConnector connector;
+    private MongoPoolableConnector connector;
 
-    protected void setConnector(final MongoConnector connector) {
+    protected void setConnector(final MongoPoolableConnector connector) {
         this.connector = connector;
     }
 

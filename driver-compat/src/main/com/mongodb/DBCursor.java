@@ -19,9 +19,9 @@ package com.mongodb;
 import com.mongodb.codecs.DBDecoderAdapter;
 import com.mongodb.codecs.DBObjectCodec;
 import org.mongodb.Decoder;
-import org.mongodb.MongoConnector;
-import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.MongoQueryCursor;
+import org.mongodb.MongoSession;
+import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.MongoFind;
@@ -249,7 +249,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             copy.batchSize(copy.getLimit() * -1);
             copy.limit(0);
         }
-        QueryResult<DBObject> queryResult = getConnector().query(collection.getNamespace(), copy, collection.getDocumentCodec(),
+        QueryResult<DBObject> queryResult = getSession().query(collection.getNamespace(), copy, collection.getDocumentCodec(),
                 new DBObjectCodec(PrimitiveCodecs.createDefault()));
         return queryResult.getResults().get(0);
     }
@@ -589,12 +589,12 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
    private void query() {
         cursor = new MongoQueryCursor<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
-                getConnector());
+                getSession());
 //        sizes.add(results.size());
     }
 
-    private MongoConnector getConnector() {
-        return getCollection().getConnector();
+    private MongoSession getSession() {
+        return getCollection().getSession();
     }
 
     /**

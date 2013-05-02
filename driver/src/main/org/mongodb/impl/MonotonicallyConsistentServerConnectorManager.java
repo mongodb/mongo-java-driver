@@ -17,7 +17,6 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoConnector;
 import org.mongodb.PoolableConnectionManager;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
@@ -25,13 +24,13 @@ import org.mongodb.ServerConnectorManager;
 
 import java.util.List;
 
-public class MonotonicallyConsistentServerConnectorManager implements ServerConnectorManager {
+class MonotonicallyConsistentServerConnectorManager implements ServerConnectorManager {
     private final ServerConnectorManager serverConnectorManager;
     private ReadPreference lastRequestedReadPreference;
     private PoolableConnectionManager connectionManagerForReads;
     private PoolableConnectionManager connectionManagerForWrites;
-    private MongoConnector connectorForReads;
-    private MongoConnector connectorForWrites;
+    private MongoPoolableConnector connectorForReads;
+    private MongoPoolableConnector connectorForWrites;
 
     public MonotonicallyConsistentServerConnectorManager(final ServerConnectorManager serverConnectorManager) {
         this.serverConnectorManager = serverConnectorManager;
@@ -71,7 +70,7 @@ public class MonotonicallyConsistentServerConnectorManager implements ServerConn
         }
     }
 
-    private synchronized MongoConnector getConnectorForWrites() {
+    private synchronized MongoPoolableConnector getConnectorForWrites() {
         if (connectorForWrites == null) {
             connectionManagerForWrites = serverConnectorManager.getConnectionManagerForWrite();
             connectorForWrites = connectionManagerForWrites.getConnection();
@@ -84,7 +83,7 @@ public class MonotonicallyConsistentServerConnectorManager implements ServerConn
         return connectorForWrites;
     }
 
-    private synchronized MongoConnector getConnectorForReads(final ReadPreference readPreference) {
+    private synchronized MongoPoolableConnector getConnectorForReads(final ReadPreference readPreference) {
         if (connectorForWrites != null) {
             return connectorForWrites;
         }
@@ -102,13 +101,13 @@ public class MonotonicallyConsistentServerConnectorManager implements ServerConn
 
     private abstract class AbstractConnectionManager implements PoolableConnectionManager {
         @Override
-        public void releaseConnection(final MongoConnector connection) {
+        public void releaseConnection(final MongoPoolableConnector connection) {
             // Do nothing.  Release when the containing instance is closed.
         }
 
         @Override
         public ServerAddress getServerAddress() {
-            return getConnection().getServerAddressList().get(0);
+            return getConnection().getServerAddress();
         }
 
         @Override
@@ -124,14 +123,14 @@ public class MonotonicallyConsistentServerConnectorManager implements ServerConn
         }
 
         @Override
-        public MongoConnector getConnection() {
+        public MongoPoolableConnector getConnection() {
             return getConnectorForReads(readPreference);
         }
     }
 
     private final class PoolableConnectionManagerForWrites extends AbstractConnectionManager {
         @Override
-        public MongoConnector getConnection() {
+        public MongoPoolableConnector getConnection() {
             return getConnectorForWrites();
         }
     }

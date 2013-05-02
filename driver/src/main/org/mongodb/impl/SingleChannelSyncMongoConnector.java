@@ -61,7 +61,6 @@ import org.mongodb.result.ServerCursor;
 import org.mongodb.result.WriteResult;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -215,6 +214,11 @@ final class SingleChannelSyncMongoConnector implements MongoPoolableConnector {
     }
 
     @Override
+    public ServerAddress getServerAddress() {
+        return channel.getAddress();
+    }
+
+    @Override
     public void release() {
         if (channel == null) {
             throw new IllegalStateException("Can not release a channel that's already closed");
@@ -224,11 +228,6 @@ final class SingleChannelSyncMongoConnector implements MongoPoolableConnector {
         }
 
         channelPool.done(this);
-    }
-
-    @Override
-    public List<ServerAddress> getServerAddressList() {
-        return Arrays.asList(channel.getAddress());
     }
 
     private Codec<Document> withDocumentSerializer(final Codec<Document> codec) {

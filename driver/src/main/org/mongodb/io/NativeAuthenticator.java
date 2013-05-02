@@ -16,17 +16,17 @@
 
 package org.mongodb.io;
 
-import org.mongodb.MongoConnector;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.MongoCommand;
+import org.mongodb.impl.MongoPoolableConnector;
 import org.mongodb.result.CommandResult;
 
 public class NativeAuthenticator extends Authenticator {
-    NativeAuthenticator(final MongoCredential credential, final MongoConnector connector) {
+    NativeAuthenticator(final MongoCredential credential, final MongoPoolableConnector connector) {
         super(credential, connector);
     }
 

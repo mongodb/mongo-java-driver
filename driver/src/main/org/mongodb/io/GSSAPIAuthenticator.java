@@ -21,9 +21,9 @@ import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
-import org.mongodb.MongoConnector;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
+import org.mongodb.impl.MongoPoolableConnector;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
@@ -35,7 +35,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     public static final String GSSAPI_OID = "1.2.840.113554.1.2.2";
     public static final String GSSAPI_MECHANISM = MongoCredential.GSSAPI_MECHANISM;
 
-    GSSAPIAuthenticator(final MongoCredential credential, final MongoConnector connector) {
+    GSSAPIAuthenticator(final MongoCredential credential, final MongoPoolableConnector connector) {
         super(credential, connector);
 
         if (!this.getCredential().getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
@@ -50,7 +50,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
             props.put(Sasl.CREDENTIALS, getGSSCredential(getCredential().getUserName()));
 
             return Sasl.createSaslClient(new String[]{GSSAPI_MECHANISM}, getCredential().getUserName(), MONGODB_PROTOCOL,
-                    getConnector().getServerAddressList().get(0).getHost(), props, null);
+                    getConnector().getServerAddress().getHost(), props, null);
         } catch (SaslException e) {
             throw new MongoException("Exception initializing SASL client", e);
         } catch (GSSException e) {

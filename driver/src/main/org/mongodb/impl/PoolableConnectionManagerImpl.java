@@ -31,13 +31,13 @@ public class PoolableConnectionManagerImpl implements PoolableConnectionManager 
     }
 
     @Override
-    public MongoConnector getConnection() {
+    public MongoPoolableConnector getConnection() {
         return connectionPool.get();
     }
 
     @Override
-    public void releaseConnection(final MongoConnector connection) {
-        ((MongoPoolableConnector) connection).release();
+    public void releaseConnection(final MongoPoolableConnector connection) {
+        connection.release();
     }
 
     @Override

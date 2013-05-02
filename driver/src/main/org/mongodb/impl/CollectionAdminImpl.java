@@ -81,12 +81,12 @@ public class CollectionAdminImpl implements CollectionAdmin {
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
         insertIndexOperation.writeConcern(WriteConcern.ACKNOWLEDGED);
 
-        client.getConnector().insert(indexesNamespace, insertIndexOperation, documentCodec);
+        client.getSession().insert(indexesNamespace, insertIndexOperation, documentCodec);
     }
 
     @Override
     public List<Document> getIndexes() {
-        final QueryResult<Document> systemCollection = client.getConnector().query(indexesNamespace, queryForCollectionNamespace,
+        final QueryResult<Document> systemCollection = client.getSession().query(indexesNamespace, queryForCollectionNamespace,
                 documentCodec, documentCodec);
         return systemCollection.getResults();
     }

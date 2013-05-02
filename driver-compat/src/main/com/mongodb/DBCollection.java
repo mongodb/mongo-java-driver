@@ -25,8 +25,8 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.Get;
 import org.mongodb.Index;
-import org.mongodb.MongoConnector;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoSession;
 import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
@@ -281,7 +281,7 @@ public class DBCollection implements IDBCollection {
 
     private org.mongodb.result.WriteResult insertInternal(final MongoInsert<DBObject> mongoInsert, Encoder<DBObject> encoder) {
         try {
-            return getConnector().insert(getNamespace(), mongoInsert, encoder);
+            return getSession().insert(getNamespace(), mongoInsert, encoder);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
         }
@@ -336,7 +336,7 @@ public class DBCollection implements IDBCollection {
                 .upsert(true)
                 .writeConcern(wc.toNew());
 
-        return new WriteResult(getConnector().replace(getNamespace(), replace, getDocumentCodec(),
+        return new WriteResult(getSession().replace(getNamespace(), replace, getDocumentCodec(),
                 getCodec()), wc, getDB());
     }
 
@@ -372,7 +372,7 @@ public class DBCollection implements IDBCollection {
 
     private org.mongodb.result.WriteResult updateInternal(MongoUpdate mongoUpdate) {
         try {
-            return getConnector().update(getNamespace(), mongoUpdate, documentCodec);
+            return getSession().update(getNamespace(), mongoUpdate, documentCodec);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
@@ -477,7 +477,7 @@ public class DBCollection implements IDBCollection {
         final MongoRemove mongoRemove = new MongoRemove(toDocument(query))
                 .writeConcern(writeConcern.toNew());
 
-        final org.mongodb.result.WriteResult result = getConnector().remove(getNamespace(), mongoRemove, documentCodec);
+        final org.mongodb.result.WriteResult result = getSession().remove(getNamespace(), mongoRemove, documentCodec);
 
         return new WriteResult(result, writeConcern, getDB());
     }
@@ -496,7 +496,7 @@ public class DBCollection implements IDBCollection {
         final MongoRemove mongoRemove = new MongoRemove(filter)
                 .writeConcern(writeConcern.toNew());
 
-        final org.mongodb.result.WriteResult result = getConnector().remove(getNamespace(), mongoRemove, getDocumentCodec());
+        final org.mongodb.result.WriteResult result = getSession().remove(getNamespace(), mongoRemove, getDocumentCodec());
 
         return new WriteResult(result, writeConcern, getDB());
     }
@@ -648,7 +648,7 @@ public class DBCollection implements IDBCollection {
                 .readPreference(readPreference.toNew())
                 .batchSize(-1);
 
-        final QueryResult<DBObject> res = getConnector().query(getNamespace(), mongoFind,
+        final QueryResult<DBObject> res = getSession().query(getNamespace(), mongoFind,
                 documentCodec, codec);
         if (res.getResults().isEmpty()) {
             return null;
@@ -891,7 +891,7 @@ public class DBCollection implements IDBCollection {
         final RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
         final RenameCollection renameCommand = new RenameCollection(renameCollectionOptions, getDB().getName());
         try {
-            getConnector().command("admin", renameCommand, getDocumentCodec());
+            getSession().command("admin", renameCommand, getDocumentCodec());
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
@@ -1279,7 +1279,7 @@ public class DBCollection implements IDBCollection {
     private <T> void insertIndex(final MongoInsert<T> insertIndexOperation, final Encoder<T> encoder) {
         insertIndexOperation.writeConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
         try {
-            getConnector().insert(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, encoder);
+            getSession().insert(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, encoder);
         } catch (MongoDuplicateKeyException exception) {
             throw new MongoException.DuplicateKey(exception);
         }
@@ -1399,7 +1399,7 @@ public class DBCollection implements IDBCollection {
                 new FindAndModifyCommandResultCodec<DBObject>(getPrimitiveCodecs(), getCodec());
 
         final FindAndModifyCommandResult<DBObject> commandResult =
-                new FindAndModifyCommandResult<DBObject>(getConnector().command(getDB().getName(), mongoCommand, findAndModifyCommandResultCodec));
+                new FindAndModifyCommandResult<DBObject>(getSession().command(getDB().getName(), mongoCommand, findAndModifyCommandResultCodec));
 
         return commandResult.getValue();
     }
@@ -1543,7 +1543,7 @@ public class DBCollection implements IDBCollection {
                 new Document(NAMESPACE_KEY_NAME, getNamespace().getFullName()))
                 .readPreference(org.mongodb.ReadPreference.primary());
 
-        final QueryResult<Document> systemCollection = getConnector().query(
+        final QueryResult<Document> systemCollection = getSession().query(
                 new MongoNamespace(database.getName(), "system.indexes"),
                 queryForCollectionNamespace,
                 documentCodec, documentCodec);
@@ -1665,8 +1665,8 @@ public class DBCollection implements IDBCollection {
         return keys;
     }
 
-    MongoConnector getConnector() {
-        return getDB().getConnector();
+    MongoSession getSession() {
+        return getDB().getSession();
     }
 
     CollectibleCodec<DBObject> getCodec() {

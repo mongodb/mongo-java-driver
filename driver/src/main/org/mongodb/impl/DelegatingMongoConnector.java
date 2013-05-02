@@ -42,7 +42,7 @@ import org.mongodb.result.WriteResult;
 import java.util.List;
 import java.util.concurrent.Future;
 
-public class DelegatingMongoConnector implements MongoConnector {
+class DelegatingMongoConnector implements MongoConnector {
     private final ServerConnectorManager connectorManager;
 
     public DelegatingMongoConnector(final ServerConnectorManager connectorManager) {
@@ -58,7 +58,7 @@ public class DelegatingMongoConnector implements MongoConnector {
                                  final Codec<Document> codec) {
         PoolableConnectionManager connectionManager =
                 connectorManager.getConnectionManagerForRead(commandOperation.getReadPreference());
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.command(database, commandOperation, codec);
         } finally {
@@ -70,7 +70,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
                                     final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForRead(find.getReadPreference());
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.query(namespace, find, queryEncoder, resultDecoder);
         } finally {
@@ -83,7 +83,7 @@ public class DelegatingMongoConnector implements MongoConnector {
                                       final Decoder<T> resultDecoder) {
         PoolableConnectionManager connectionManager =
                 connectorManager.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.getMore(namespace, getMore, resultDecoder);
         } finally {
@@ -95,7 +95,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     public void killCursors(final MongoKillCursor killCursor) {
         for (ServerCursor cursor : killCursor.getServerCursors()) {
             PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForServer(cursor.getAddress());
-            MongoConnector connector = connectionManager.getConnection();
+            MongoPoolableConnector connector = connectionManager.getConnection();
             try {
                 connector.killCursors(new MongoKillCursor(cursor));
             } finally {
@@ -107,7 +107,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     @Override
     public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert, final Encoder<T> encoder) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.insert(namespace, insert, encoder);
         } finally {
@@ -118,7 +118,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     @Override
     public WriteResult update(final MongoNamespace namespace, final MongoUpdate update, final Encoder<Document> queryEncoder) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.update(namespace, update, queryEncoder);
         } finally {
@@ -130,7 +130,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     public <T> WriteResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
                                    final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.replace(namespace, replace, queryEncoder, encoder);
         } finally {
@@ -141,7 +141,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     @Override
     public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove, final Encoder<Document> queryEncoder) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.remove(namespace, remove, queryEncoder);
         } finally {
@@ -153,7 +153,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     public Future<CommandResult> asyncCommand(final String database, final MongoCommand commandOperation,
                                               final Codec<Document> codec) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForRead(commandOperation.getReadPreference());
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.asyncCommand(database, commandOperation, codec);
         } finally {
@@ -165,7 +165,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     public void asyncCommand(final String database, final MongoCommand commandOperation, final Codec<Document> codec,
                              final SingleResultCallback<CommandResult> callback) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForRead(commandOperation.getReadPreference());
-        MongoConnector connector =
+        MongoPoolableConnector connector =
                 connectionManager.getConnection();
         try {
             connector.asyncCommand(database, commandOperation, codec, callback);
@@ -178,7 +178,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     public <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
                                                  final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForRead(find.getReadPreference());
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.asyncQuery(namespace, find, queryEncoder, resultDecoder);
         } finally {
@@ -190,7 +190,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
                                final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForRead(find.getReadPreference());
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             connector.asyncQuery(namespace, find, queryEncoder, resultDecoder, callback);
         } finally {
@@ -203,7 +203,7 @@ public class DelegatingMongoConnector implements MongoConnector {
                                                    final Decoder<T> resultDecoder) {
         PoolableConnectionManager connectionManager =
                 connectorManager.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-        MongoConnector connector =
+        MongoPoolableConnector connector =
                 connectionManager.getConnection();
         try {
             return connector.asyncGetMore(namespace, getMore, resultDecoder);
@@ -215,7 +215,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     @Override
     public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore, final Decoder<T> resultDecoder,
                                  final SingleResultCallback<QueryResult<T>> callback) {
-        MongoConnector connector =
+        MongoPoolableConnector connector =
                 connectorManager.getConnectionManagerForServer(getMore.getServerCursor().getAddress()).getConnection();
         connector.asyncGetMore(namespace, getMore, resultDecoder, callback);
     }
@@ -224,7 +224,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     public <T> Future<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
                                                final Encoder<T> encoder) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.asyncInsert(namespace, insert, encoder);
         } finally {
@@ -237,7 +237,7 @@ public class DelegatingMongoConnector implements MongoConnector {
                                 final Encoder<T> encoder,
                                 final SingleResultCallback<WriteResult> callback) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             connector.asyncInsert(namespace, insert, encoder, callback);
         } finally {
@@ -249,7 +249,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     public Future<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
                                            final Encoder<Document> queryEncoder) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.asyncUpdate(namespace, update, queryEncoder);
         } finally {
@@ -262,7 +262,7 @@ public class DelegatingMongoConnector implements MongoConnector {
                             final Encoder<Document> queryEncoder,
                             final SingleResultCallback<WriteResult> callback) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             connector.asyncUpdate(namespace, update, queryEncoder, callback);
         } finally {
@@ -275,7 +275,7 @@ public class DelegatingMongoConnector implements MongoConnector {
                                                 final Encoder<Document> queryEncoder,
                                                 final Encoder<T> encoder) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.asyncReplace(namespace, replace, queryEncoder, encoder);
         } finally {
@@ -288,7 +288,7 @@ public class DelegatingMongoConnector implements MongoConnector {
                                  final Encoder<Document> queryEncoder, final Encoder<T> encoder,
                                  final SingleResultCallback<WriteResult> callback) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             connector.asyncReplace(namespace, replace, queryEncoder, encoder, callback);
         } finally {
@@ -300,7 +300,7 @@ public class DelegatingMongoConnector implements MongoConnector {
     public Future<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
                                            final Encoder<Document> queryEncoder) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             return connector.asyncRemove(namespace, remove, queryEncoder);
         } finally {
@@ -313,7 +313,7 @@ public class DelegatingMongoConnector implements MongoConnector {
                             final Encoder<Document> queryEncoder,
                             final SingleResultCallback<WriteResult> callback) {
         PoolableConnectionManager connectionManager = connectorManager.getConnectionManagerForWrite();
-        MongoConnector connector = connectionManager.getConnection();
+        MongoPoolableConnector connector = connectionManager.getConnection();
         try {
             connector.asyncRemove(namespace, remove, queryEncoder, callback);
         } finally {
@@ -329,6 +329,11 @@ public class DelegatingMongoConnector implements MongoConnector {
     @Override
     public List<ServerAddress> getServerAddressList() {
         return connectorManager.getAllServerAddresses();
+    }
+
+    @Override
+    public MongoConnector getSession() {
+        return new DelegatingMongoConnector(new MonotonicallyConsistentServerConnectorManager(getConnectorManager()));
     }
 
 }

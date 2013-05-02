@@ -19,16 +19,14 @@ package com.mongodb;
 import org.mongodb.Codec;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
-import org.mongodb.MongoConnector;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoSession;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.impl.DelegatingMongoConnector;
-import org.mongodb.impl.MonotonicallyConsistentServerConnectorManager;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.result.QueryResult;
@@ -49,7 +47,7 @@ public class DB implements IDB {
     private final Codec<Document> documentCodec;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
-    private final ThreadLocal<MongoConnector> pinnedConnector = new ThreadLocal<MongoConnector>();
+    private final ThreadLocal<MongoSession> pinnedConnector = new ThreadLocal<MongoSession>();
 
     DB(final Mongo mongo, final String dbName, final Codec<Document> documentCodec) {
         this.mongo = mongo;
@@ -99,8 +97,7 @@ public class DB implements IDB {
         if (pinnedConnector.get() != null) {
             throw new IllegalStateException();
         }
-        pinnedConnector.set(new DelegatingMongoConnector(
-                new MonotonicallyConsistentServerConnectorManager(getMongo().getConnector().getConnectorManager())));
+        pinnedConnector.set(getMongo().getConnector().getSession());
     }
 
     /**
@@ -108,12 +105,12 @@ public class DB implements IDB {
      */
     @Override
     public void requestDone() {
-        MongoConnector connector = pinnedConnector.get();
-        if (connector == null) {
+        MongoSession session = pinnedConnector.get();
+        if (session == null) {
             throw new IllegalStateException();
         }
         pinnedConnector.remove();
-        connector.close();
+        session.close();
     }
 
     /**
@@ -173,7 +170,7 @@ public class DB implements IDB {
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         final MongoFind findAll = new MongoFind().readPreference(org.mongodb.ReadPreference.primary());
-        final QueryResult<Document> query = getConnector().query(
+        final QueryResult<Document> query = getSession().query(
                 namespacesCollection,
                 findAll,
                 documentCodec,
@@ -449,7 +446,7 @@ public class DB implements IDB {
         return optionHolder.get();
     }
 
-    MongoConnector getConnector() {
+    MongoSession getSession() {
         if (pinnedConnector.get() != null) {
             return pinnedConnector.get();
         }
@@ -458,7 +455,7 @@ public class DB implements IDB {
 
     org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
-        return getConnector().command(getName(), commandOperation, documentCodec);
+        return getSession().command(getName(), commandOperation, documentCodec);
     }
 
     org.mongodb.result.CommandResult executeCommandWithoutException(final MongoCommand mongoCommand) {

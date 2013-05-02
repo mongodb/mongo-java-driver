@@ -16,16 +16,16 @@
 
 package org.mongodb.io;
 
-import org.mongodb.MongoConnector;
 import org.mongodb.MongoCredential;
 import org.mongodb.async.SingleResultCallback;
+import org.mongodb.impl.MongoPoolableConnector;
 import org.mongodb.result.CommandResult;
 
 abstract class Authenticator {
     private final MongoCredential credential;
-    private final MongoConnector connector;
+    private final MongoPoolableConnector connector;
 
-    Authenticator(final MongoCredential credential, final MongoConnector connector) {
+    Authenticator(final MongoCredential credential, final MongoPoolableConnector connector) {
         this.credential = credential;
         this.connector = connector;
     }
@@ -34,7 +34,7 @@ abstract class Authenticator {
         return credential;
     }
 
-    public MongoConnector getConnector() {
+    public MongoPoolableConnector getConnector() {
         return connector;
     }
 
