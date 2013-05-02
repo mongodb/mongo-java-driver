@@ -29,8 +29,8 @@ class MonotonicallyConsistentServerConnectorManager implements ServerConnectorMa
     private ReadPreference lastRequestedReadPreference;
     private PoolableConnectionManager connectionManagerForReads;
     private PoolableConnectionManager connectionManagerForWrites;
-    private MongoPoolableConnector connectorForReads;
-    private MongoPoolableConnector connectorForWrites;
+    private MongoConnection connectorForReads;
+    private MongoConnection connectorForWrites;
 
     public MonotonicallyConsistentServerConnectorManager(final ServerConnectorManager serverConnectorManager) {
         this.serverConnectorManager = serverConnectorManager;
@@ -70,7 +70,7 @@ class MonotonicallyConsistentServerConnectorManager implements ServerConnectorMa
         }
     }
 
-    private synchronized MongoPoolableConnector getConnectorForWrites() {
+    private synchronized MongoConnection getConnectorForWrites() {
         if (connectorForWrites == null) {
             connectionManagerForWrites = serverConnectorManager.getConnectionManagerForWrite();
             connectorForWrites = connectionManagerForWrites.getConnection();
@@ -83,7 +83,7 @@ class MonotonicallyConsistentServerConnectorManager implements ServerConnectorMa
         return connectorForWrites;
     }
 
-    private synchronized MongoPoolableConnector getConnectorForReads(final ReadPreference readPreference) {
+    private synchronized MongoConnection getConnectorForReads(final ReadPreference readPreference) {
         if (connectorForWrites != null) {
             return connectorForWrites;
         }
@@ -101,7 +101,7 @@ class MonotonicallyConsistentServerConnectorManager implements ServerConnectorMa
 
     private abstract class AbstractConnectionManager implements PoolableConnectionManager {
         @Override
-        public void releaseConnection(final MongoPoolableConnector connection) {
+        public void releaseConnection(final MongoConnection connection) {
             // Do nothing.  Release when the containing instance is closed.
         }
 
@@ -123,14 +123,14 @@ class MonotonicallyConsistentServerConnectorManager implements ServerConnectorMa
         }
 
         @Override
-        public MongoPoolableConnector getConnection() {
+        public MongoConnection getConnection() {
             return getConnectorForReads(readPreference);
         }
     }
 
     private final class PoolableConnectionManagerForWrites extends AbstractConnectionManager {
         @Override
-        public MongoPoolableConnector getConnection() {
+        public MongoConnection getConnection() {
             return getConnectorForWrites();
         }
     }

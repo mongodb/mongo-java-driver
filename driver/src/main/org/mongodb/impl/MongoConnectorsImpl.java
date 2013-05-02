@@ -57,11 +57,11 @@ public final class MongoConnectorsImpl {
         if (options.isAsyncEnabled()
                 && !options.isSSLEnabled()
                 && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            return new PoolableConnectionManagerImpl(serverAddress, new SimplePool<MongoPoolableConnector>(serverAddress.toString(),
+            return new PoolableConnectionManagerImpl(serverAddress, new SimplePool<MongoConnection>(serverAddress.toString(),
                     options.getConnectionsPerHost()) {
                         @Override
-                        protected MongoPoolableConnector createNew() {
-                            return new SingleChannelAsyncMongoConnector(serverAddress, credentialList, this, bufferPool, options);
+                        protected MongoConnection createNew() {
+                            return new MongoAsyncConnection(serverAddress, credentialList, this, bufferPool, options);
                         }
 
                         @Override
@@ -72,11 +72,11 @@ public final class MongoConnectorsImpl {
                     });
         }
         else {
-            return new PoolableConnectionManagerImpl(serverAddress, new SimplePool<MongoPoolableConnector>(serverAddress.toString(),
+            return new PoolableConnectionManagerImpl(serverAddress, new SimplePool<MongoConnection>(serverAddress.toString(),
                     options.getConnectionsPerHost()) {
                         @Override
-                        protected MongoPoolableConnector createNew() {
-                            return new SingleChannelSyncMongoConnector(serverAddress, credentialList, this, bufferPool, options);
+                        protected MongoConnection createNew() {
+                            return new MongoSyncConnection(serverAddress, credentialList, this, bufferPool, options);
                         }
 
                         @Override

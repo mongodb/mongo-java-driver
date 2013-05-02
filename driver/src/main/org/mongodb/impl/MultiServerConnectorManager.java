@@ -38,7 +38,8 @@ public class MultiServerConnectorManager implements ServerConnectorManager {
     private final Map<ServerAddress, PoolableConnectionManager> mongoClientMap = new HashMap<ServerAddress, PoolableConnectionManager>();
     private final MongoConnectionStrategy connectionStrategy;
 
-    public MultiServerConnectorManager(final MongoConnectionStrategy connectionStrategy, final List<MongoCredential> credentialList, final MongoClientOptions options) {
+    public MultiServerConnectorManager(final MongoConnectionStrategy connectionStrategy, final List<MongoCredential> credentialList,
+                                       final MongoClientOptions options) {
         this.connectionStrategy = connectionStrategy;
         this.credentialList = credentialList;
         this.options = options;

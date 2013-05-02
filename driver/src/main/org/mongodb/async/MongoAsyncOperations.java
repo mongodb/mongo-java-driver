@@ -35,7 +35,7 @@ import org.mongodb.Codec;
 
 import java.util.concurrent.Future;
 
-public interface MongoAsyncConnector {
+public interface MongoAsyncOperations {
     Future<CommandResult> asyncCommand(String database, MongoCommand commandOperation, Codec<Document> codec);
 
     void asyncCommand(String database, MongoCommand commandOperation, Codec<Document> codec,

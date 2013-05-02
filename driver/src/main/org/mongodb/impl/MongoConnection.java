@@ -17,11 +17,11 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoSyncConnector;
+import org.mongodb.MongoSyncOperations;
 import org.mongodb.ServerAddress;
-import org.mongodb.async.MongoAsyncConnector;
+import org.mongodb.async.MongoAsyncOperations;
 
-public interface MongoPoolableConnector extends MongoSyncConnector, MongoAsyncConnector {
+public interface MongoConnection extends MongoSyncOperations, MongoAsyncOperations {
     /**
      * Releases the connection back to the pool.
      */

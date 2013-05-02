@@ -16,20 +16,23 @@
 
 package org.mongodb.impl;
 
+import category.Async;
 import org.junit.Before;
+import org.junit.experimental.categories.Category;
 import org.mongodb.Fixture;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.pool.SimplePool;
 
-public class SingleChannelSyncMongoConnectorTest extends AbstractMongoConnectorTest {
+@Category(Async.class)
+public class MongoAsyncConnectionTest extends AbstractMongoConnectorTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        setConnector(new SingleChannelSyncMongoConnector(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
-                Fixture.getMongoClientURI().getCredentials(), new SimplePool<MongoPoolableConnector>("test", 1) {
+        setConnector(new MongoAsyncConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
+                Fixture.getMongoClientURI().getCredentials(), new SimplePool<MongoConnection>("test", 1) {
             @Override
-            protected MongoPoolableConnector createNew() {
+            protected MongoConnection createNew() {
                 throw new UnsupportedOperationException();
             }
         }, new PowerOfTwoByteBufferPool(), Fixture.getMongoClientURI().getOptions()));

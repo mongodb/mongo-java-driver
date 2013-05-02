@@ -16,27 +16,26 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoConnector;
 import org.mongodb.PoolableConnectionManager;
 import org.mongodb.ServerAddress;
 import org.mongodb.pool.SimplePool;
 
 public class PoolableConnectionManagerImpl implements PoolableConnectionManager {
     private ServerAddress serverAddress;
-    private final SimplePool<MongoPoolableConnector> connectionPool;
+    private final SimplePool<MongoConnection> connectionPool;
 
-    public PoolableConnectionManagerImpl(final ServerAddress serverAddress, final SimplePool<MongoPoolableConnector> connectionPool) {
+    public PoolableConnectionManagerImpl(final ServerAddress serverAddress, final SimplePool<MongoConnection> connectionPool) {
         this.serverAddress = serverAddress;
         this.connectionPool = connectionPool;
     }
 
     @Override
-    public MongoPoolableConnector getConnection() {
+    public MongoConnection getConnection() {
         return connectionPool.get();
     }
 
     @Override
-    public void releaseConnection(final MongoPoolableConnector connection) {
+    public void releaseConnection(final MongoConnection connection) {
         connection.release();
     }
 

@@ -17,8 +17,8 @@
 
 package org.mongodb;
 
-import org.mongodb.async.MongoAsyncConnector;
+import org.mongodb.async.MongoAsyncOperations;
 
-public interface MongoSession extends MongoSyncConnector, MongoAsyncConnector {
+public interface MongoSession extends MongoSyncOperations, MongoAsyncOperations {
     void close();
 }

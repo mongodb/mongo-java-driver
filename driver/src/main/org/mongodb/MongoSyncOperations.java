@@ -29,7 +29,7 @@ import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
 
-public interface MongoSyncConnector {
+public interface MongoSyncOperations {
     CommandResult command(String database, MongoCommand commandOperation, Codec<Document> codec);
 
     <T> QueryResult<T> query(final MongoNamespace namespace, MongoFind find, Encoder<Document> queryEncoder,

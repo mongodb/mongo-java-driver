@@ -27,9 +27,9 @@ import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.MongoCommandFailureException;
+import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.MongoConnection;
 import org.mongodb.impl.MongoCredentialsStore;
-import org.mongodb.impl.MongoPoolableConnector;
-import org.mongodb.impl.SingleChannelAsyncMongoConnector;
 import org.mongodb.pool.SimplePool;
 
 import java.util.ArrayList;
@@ -45,16 +45,16 @@ import static org.junit.Assert.assertThat;
 public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
 
     private CountDownLatch latch;
-    private MongoPoolableConnector poolableConnector;
+    private MongoConnection poolableConnector;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
         latch = new CountDownLatch(1);
-        poolableConnector = new SingleChannelAsyncMongoConnector(connector.getServerAddressList().get(0), null,
-                new SimplePool<MongoPoolableConnector>("test", 1) {
+        poolableConnector = new MongoAsyncConnection(connector.getServerAddressList().get(0), null,
+                new SimplePool<MongoConnection>("test", 1) {
             @Override
-            protected MongoPoolableConnector createNew() {
+            protected MongoConnection createNew() {
                 throw new UnsupportedOperationException();
             }
         }, new PowerOfTwoByteBufferPool(), MongoClientOptions.builder().build());

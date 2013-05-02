@@ -19,8 +19,8 @@ package org.mongodb.io;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.async.SingleResultCallback;
+import org.mongodb.impl.MongoConnection;
 import org.mongodb.impl.MongoCredentialsStore;
-import org.mongodb.impl.MongoPoolableConnector;
 import org.mongodb.result.CommandResult;
 
 import java.util.Collections;
@@ -33,11 +33,11 @@ import java.util.Set;
  */
 public class CachingAuthenticator {
     private final MongoCredentialsStore credentialsStore;
-    private final MongoPoolableConnector connector;
+    private final MongoConnection connector;
     // needs synchronization to ensure that modifications are published.
     private final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());
 
-    public CachingAuthenticator(final MongoCredentialsStore credentialsStore, final MongoPoolableConnector connector) {
+    public CachingAuthenticator(final MongoCredentialsStore credentialsStore, final MongoConnection connector) {
         this.credentialsStore = credentialsStore;
         this.connector = connector;
     }

@@ -33,9 +33,9 @@ import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractMongoConnectorTest extends DatabaseTestCase {
 
-    private MongoPoolableConnector connector;
+    private MongoConnection connector;
 
-    protected void setConnector(final MongoPoolableConnector connector) {
+    protected void setConnector(final MongoConnection connector) {
         this.connector = connector;
     }
 

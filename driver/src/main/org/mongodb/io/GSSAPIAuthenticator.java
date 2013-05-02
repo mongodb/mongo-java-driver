@@ -23,7 +23,7 @@ import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
-import org.mongodb.impl.MongoPoolableConnector;
+import org.mongodb.impl.MongoConnection;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
@@ -35,7 +35,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     public static final String GSSAPI_OID = "1.2.840.113554.1.2.2";
     public static final String GSSAPI_MECHANISM = MongoCredential.GSSAPI_MECHANISM;
 
-    GSSAPIAuthenticator(final MongoCredential credential, final MongoPoolableConnector connector) {
+    GSSAPIAuthenticator(final MongoCredential credential, final MongoConnection connector) {
         super(credential, connector);
 
         if (!this.getCredential().getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {

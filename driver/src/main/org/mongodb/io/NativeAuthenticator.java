@@ -22,11 +22,11 @@ import org.mongodb.async.SingleResultCallback;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.MongoCommand;
-import org.mongodb.impl.MongoPoolableConnector;
+import org.mongodb.impl.MongoConnection;
 import org.mongodb.result.CommandResult;
 
 public class NativeAuthenticator extends Authenticator {
-    NativeAuthenticator(final MongoCredential credential, final MongoPoolableConnector connector) {
+    NativeAuthenticator(final MongoCredential credential, final MongoConnection connector) {
         super(credential, connector);
     }
 

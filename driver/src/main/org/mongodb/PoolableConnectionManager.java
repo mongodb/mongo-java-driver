@@ -16,12 +16,12 @@
 
 package org.mongodb;
 
-import org.mongodb.impl.MongoPoolableConnector;
+import org.mongodb.impl.MongoConnection;
 
 public interface PoolableConnectionManager {
-    MongoPoolableConnector getConnection();
+    MongoConnection getConnection();
 
-    void releaseConnection(MongoPoolableConnector connection);
+    void releaseConnection(MongoConnection connection);
 
     ServerAddress getServerAddress();
 

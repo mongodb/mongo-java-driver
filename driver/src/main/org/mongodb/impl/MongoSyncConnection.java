@@ -64,15 +64,15 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.Future;
 
-final class SingleChannelSyncMongoConnector implements MongoPoolableConnector {
+final class MongoSyncConnection implements MongoConnection {
     private final BufferPool<ByteBuffer> bufferPool;
     private final MongoClientOptions options;
-    private final SimplePool<MongoPoolableConnector> channelPool;
+    private final SimplePool<MongoConnection> channelPool;
     private MongoGateway channel;
 
-    SingleChannelSyncMongoConnector(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                    final SimplePool<MongoPoolableConnector> channelPool, final BufferPool<ByteBuffer> bufferPool,
-                                    final MongoClientOptions options) {
+    MongoSyncConnection(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+                        final SimplePool<MongoConnection> channelPool, final BufferPool<ByteBuffer> bufferPool,
+                        final MongoClientOptions options) {
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.options = options;

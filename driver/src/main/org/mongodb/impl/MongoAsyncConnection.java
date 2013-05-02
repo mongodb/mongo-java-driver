@@ -68,18 +68,18 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class SingleChannelAsyncMongoConnector implements MongoPoolableConnector {
+public class MongoAsyncConnection implements MongoConnection {
     private final ServerAddress serverAddress;
-    private final SimplePool<MongoPoolableConnector> channelPool;
+    private final SimplePool<MongoConnection> channelPool;
     private final BufferPool<ByteBuffer> bufferPool;
     private final MongoClientOptions options;
     private volatile MongoAsynchronousSocketChannelGateway channel;
     private volatile boolean activeAsyncCall;
     private volatile boolean releasePending;
 
-    public SingleChannelAsyncMongoConnector(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                     final SimplePool<MongoPoolableConnector> channelPool, final BufferPool<ByteBuffer> bufferPool,
-                                     final MongoClientOptions options) {
+    public MongoAsyncConnection(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+                                final SimplePool<MongoConnection> channelPool, final BufferPool<ByteBuffer> bufferPool,
+                                final MongoClientOptions options) {
         this.serverAddress = serverAddress;
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
