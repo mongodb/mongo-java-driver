@@ -16,22 +16,13 @@
 
 package org.bson;
 
-import org.bson.codecs.BSONObjectCodec;
-import org.bson.io.BasicInputBuffer;
-import org.bson.io.BasicOutputBuffer;
-import org.bson.io.InputBuffer;
-import org.bson.io.OutputBuffer;
 import org.bson.util.ClassMap;
-import org.mongodb.codecs.PrimitiveCodecs;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({ "rawtypes" })
+@SuppressWarnings({"rawtypes"})
 public class BSON {
 
     public static final byte EOO = 0;
@@ -220,16 +211,7 @@ public class BSON {
      * @return the document encoded as BSON
      */
     public static byte[] encode(final BSONObject doc) {
-        try {
-            final OutputBuffer buffer = new BasicOutputBuffer();
-            new BSONObjectCodec(PrimitiveCodecs.createDefault()).encode(new BSONBinaryWriter(buffer), doc);
-            final BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
-            buffer.pipe(stream);
-            return stream.getInternalBytes();
-        } catch (IOException e) {
-            // impossible with a byte array output stream
-            throw new BSONException("Received considered as impossible IOException from ByteArrayOutputStream", e);
-        }
+        return new BasicBSONEncoder().encode(doc);
     }
 
     /**
@@ -239,8 +221,7 @@ public class BSON {
      * @return the document as a DBObject
      */
     public static BSONObject decode(final byte[] bytes) {
-        final InputBuffer buffer = new BasicInputBuffer(ByteBuffer.wrap(bytes));
-        return new BSONObjectCodec(PrimitiveCodecs.createDefault()).decode(new BSONBinaryReader(buffer));
+        return new BasicBSONDecoder().readObject(bytes);
     }
 
     /**
@@ -305,17 +286,5 @@ public class BSON {
         }
 
         return buf.toString();
-    }
-
-
-    // Just so we don't have to copy the buffer
-    static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
-        BufferExposingByteArrayOutputStream() {
-            super(512);
-        }
-
-        byte[] getInternalBytes() {
-            return buf;
-        }
     }
 }

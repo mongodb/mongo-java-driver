@@ -24,7 +24,10 @@ import static org.junit.Assert.assertEquals;
 
 public class NewBSONDecoderOldTest {
 
-    public void testDecoder(final String pName, final BSONDecoder pDecoder) throws Exception {
+
+    @Test
+    public void testNewDecoder2() throws Exception {
+        final NewBSONDecoder decoder = new NewBSONDecoder();
 
         final BasicDBObject origDoc = new BasicDBObject("_id", ObjectId.get());
         origDoc.put("long", Long.MAX_VALUE);
@@ -39,71 +42,20 @@ public class NewBSONDecoderOldTest {
 
         final byte[] orig = BSON.encode(origDoc);
 
-        int count = 500000;
-        //int count = 1000000;
-        //int count = 100;
+        final BasicBSONObject doc = (BasicBSONObject) decoder.readObject(orig);
+        assertEquals(origDoc.getLong("long"), doc.getLong("long"));
+        assertEquals(origDoc.getInt("int"), doc.getInt("int"));
 
-        long startTime = System.currentTimeMillis();
+        assertEquals(origDoc.getString("string"), doc.getString("string"));
 
-        for (int idx = 0; idx < count; idx++) {
-            final BasicBSONObject doc = (BasicBSONObject) pDecoder.readObject(orig);
-            assertEquals(origDoc.getLong("long"), doc.getLong("long"));
-            assertEquals(origDoc.getInt("int"), doc.getInt("int"));
+        //System.out.println("--- ok: " + doc.getString("string"));
 
-            assertEquals(origDoc.getString("string"), doc.getString("string"));
+        assertEquals(origDoc.getObjectId("_id"), doc.getObjectId("_id"));
 
-            //System.out.println("--- ok: " + doc.getString("string"));
+        final BasicBSONObject nested = (BasicBSONObject) doc.get("nested");
 
-            assertEquals(origDoc.getObjectId("_id"), doc.getObjectId("_id"));
-
-            final BasicBSONObject nested = (BasicBSONObject) doc.get("nested");
-
-            assertEquals(origNested.getLong("long"), nested.getLong("long"));
-            assertEquals(origNested.getInt("int"), nested.getInt("int"));
-            assertEquals(origNested.getObjectId("_id"), nested.getObjectId("_id"));
-        }
-        //System.out.println(pName + ": " + (System.currentTimeMillis() - startTime));
-    }
-
-    @Test
-    public void testNewDecoder1() throws Exception {
-        final NewBSONDecoder decoder = new NewBSONDecoder();
-        testDecoder("new", decoder);
-    }
-
-    @Test
-    public void testNewDecoderCreate1() throws Exception {
-        long startTime = System.currentTimeMillis();
-        for (int idx = 0; idx < 1000000; idx++) {
-            final NewBSONDecoder decoder = new NewBSONDecoder();
-        }
-        //System.out.println("new create 1: " + (System.currentTimeMillis() - startTime));
-    }
-
-    @Test
-    public void testCurrentDecoderCreate1() throws Exception {
-        long startTime = System.currentTimeMillis();
-        for (int idx = 0; idx < 1000000; idx++) {
-            final BasicBSONDecoder decoder = new BasicBSONDecoder();
-        }
-        //System.out.println("current create 1: " + (System.currentTimeMillis() - startTime));
-    }
-
-    @Test
-    public void testCurrent1() throws Exception {
-        final BasicBSONDecoder decoder = new BasicBSONDecoder();
-        testDecoder("current", decoder);
-    }
-
-    @Test
-    public void testNewDecoder2() throws Exception {
-        final NewBSONDecoder decoder = new NewBSONDecoder();
-        testDecoder("new", decoder);
-    }
-
-    @Test
-    public void testCurrent2() throws Exception {
-        final BasicBSONDecoder decoder = new BasicBSONDecoder();
-        testDecoder("current", decoder);
+        assertEquals(origNested.getLong("long"), nested.getLong("long"));
+        assertEquals(origNested.getInt("int"), nested.getInt("int"));
+        assertEquals(origNested.getObjectId("_id"), nested.getObjectId("_id"));
     }
 }

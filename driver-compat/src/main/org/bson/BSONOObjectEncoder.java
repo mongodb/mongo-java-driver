@@ -14,31 +14,22 @@
  * limitations under the License.
  */
 
-package org.bson.codecs;
+package org.bson;
 
-import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import com.mongodb.DBRefBase;
-import org.bson.BSON;
-import org.bson.BSONObject;
-import org.bson.BSONReader;
-import org.bson.BSONType;
-import org.bson.BSONWriter;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
-import org.mongodb.Codec;
+import org.bson.types.Symbol;
+import org.mongodb.Encoder;
 import org.mongodb.codecs.PrimitiveCodecs;
 
 import java.lang.reflect.Array;
-import java.util.List;
 import java.util.Map;
 
-public class BSONObjectCodec implements Codec<BSONObject> {
+class BSONOObjectEncoder implements Encoder<BSONObject> {
 
     private final PrimitiveCodecs primitiveCodecs;
 
-    public BSONObjectCodec(PrimitiveCodecs primitiveCodecs) {
+    public BSONOObjectEncoder(PrimitiveCodecs primitiveCodecs) {
         this.primitiveCodecs = primitiveCodecs;
     }
 
@@ -59,14 +50,12 @@ public class BSONObjectCodec implements Codec<BSONObject> {
     }
 
     @SuppressWarnings("unchecked")
-    protected void writeValue(final BSONWriter bsonWriter, final Object initialValue) {
+    private void writeValue(final BSONWriter bsonWriter, final Object initialValue) {
         final Object value = BSON.applyEncodingHooks(initialValue);
-        if (value instanceof DBRefBase) {
-            encodeDBRef(bsonWriter, (DBRefBase) value);
-        } else if (value instanceof BasicBSONList) {
+        if (value instanceof BasicBSONList) {
             encodeIterable(bsonWriter, (BasicBSONList) value);
-        } else if (value instanceof DBObject) {
-            encodeEmbeddedObject(bsonWriter, ((DBObject) value).toMap());
+        } else if (value instanceof BSONObject) {
+            encodeEmbeddedObject(bsonWriter, ((BSONObject) value).toMap());
         } else if (value instanceof Map) {
             encodeEmbeddedObject(bsonWriter, (Map<String, Object>) value);
         } else if (value instanceof Iterable) {
@@ -75,6 +64,8 @@ public class BSONObjectCodec implements Codec<BSONObject> {
             primitiveCodecs.encode(bsonWriter, new Binary((byte[]) value));
         } else if (value != null && value.getClass().isArray()) {
             encodeArray(bsonWriter, value);
+        } else if (value instanceof Symbol) {
+            bsonWriter.writeSymbol(((Symbol) initialValue).getSymbol());
         } else {
             primitiveCodecs.encode(bsonWriter, value);
         }
@@ -101,80 +92,11 @@ public class BSONObjectCodec implements Codec<BSONObject> {
         bsonWriter.writeEndArray();
     }
 
-    private void encodeDBRef(final BSONWriter bsonWriter, final DBRefBase dbRef) {
-        bsonWriter.writeStartDocument();
-
-        bsonWriter.writeString("$ref", dbRef.getRef());
-        bsonWriter.writeName("$id");
-        writeValue(bsonWriter, dbRef.getId());
-
-        bsonWriter.writeEndDocument();
-    }
-
-
     private void encodeIterable(final BSONWriter bsonWriter, final Iterable<?> iterable) {
         bsonWriter.writeStartArray();
         for (final Object cur : iterable) {
             writeValue(bsonWriter, cur);
         }
         bsonWriter.writeEndArray();
-    }
-
-    @Override
-    public BSONObject decode(final BSONReader reader) {
-        final BSONObject document = new BasicDBObject();
-
-        reader.readStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final String fieldName = reader.readName();
-            document.put(fieldName, readValue(reader, fieldName));
-        }
-
-        reader.readEndDocument();
-
-        return document;
-    }
-
-
-    protected Object decodeDocument(final BSONReader reader) {
-        final BSONObject document = new BasicDBObject();
-
-        reader.readStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final String fieldName = reader.readName();
-            document.put(fieldName, readValue(reader, fieldName));
-        }
-
-        reader.readEndDocument();
-
-        return document;
-    }
-
-    private Object readValue(final BSONReader reader, final String fieldName) {
-        final BSONType bsonType = reader.getCurrentBSONType();
-        final Object initialRetVal;
-        if (bsonType.isContainer()) {
-            if (bsonType.equals(BSONType.DOCUMENT)) {
-                initialRetVal = decodeDocument(reader);
-            }
-            // Must be an array, since there are only two container types
-            else {
-                initialRetVal = readArray(reader);
-            }
-        } else {
-            initialRetVal = primitiveCodecs.decode(reader);
-        }
-
-        return BSON.applyDecodingHooks(initialRetVal);
-    }
-
-    private List<?> readArray(final BSONReader reader) {
-        reader.readStartArray();
-        final BasicDBList list = new BasicDBList();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            list.add(readValue(reader, null));
-        }
-        reader.readEndArray();
-        return list;
     }
 }

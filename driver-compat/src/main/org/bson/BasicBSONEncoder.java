@@ -17,7 +17,6 @@
 package org.bson;
 
 import com.mongodb.MongoInternalException;
-import org.bson.codecs.BSONObjectCodec;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
 import org.mongodb.codecs.PrimitiveCodecs;
@@ -52,7 +51,7 @@ public class BasicBSONEncoder implements BSONEncoder {
     @Override
     public int putObject(final BSONObject document) {
         try {
-            new BSONObjectCodec(PrimitiveCodecs.createDefault()).encode(new BSONBinaryWriter(outputBuffer), document);
+            new BSONOObjectEncoder(PrimitiveCodecs.createDefault()).encode(new BSONBinaryWriter(outputBuffer), document);
             final BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
             outputBuffer.pipe(stream);
             return stream.getInternalBytes().length;

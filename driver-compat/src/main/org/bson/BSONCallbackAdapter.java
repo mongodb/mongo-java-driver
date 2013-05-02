@@ -21,7 +21,7 @@ import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 
-public class BSONCallbackAdapter extends BSONWriter {
+class BSONCallbackAdapter extends BSONWriter {
 
     private BSONCallback bsonCallback;
 

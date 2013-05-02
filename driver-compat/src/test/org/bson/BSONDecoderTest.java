@@ -17,6 +17,7 @@
 package org.bson;
 
 import org.bson.types.BSONTimestamp;
+import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
@@ -25,10 +26,17 @@ import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
+import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class BSONDecoderTest {
     private BSONDecoder bsonDecoder;
@@ -41,6 +49,12 @@ public class BSONDecoderTest {
     private void testDecoder(final byte[] bytes, final BSONObject expectedObject) {
         final BSONObject receivedObject = bsonDecoder.readObject(bytes);
         assertEquals(expectedObject, receivedObject);
+    }
+
+    @Test
+    public void testDecodingFromInputStream() throws IOException {
+        final InputStream is = new ByteArrayInputStream(new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0});
+        assertEquals(new BasicBSONObject("a", 1), bsonDecoder.readObject(is));
     }
 
     @Test
@@ -185,4 +199,56 @@ public class BSONDecoderTest {
                 new BasicBSONObject("d1", new BasicBSONObject("b", true))
                         .append("d2", new BasicBSONObject("b", false))));
     }
+
+    @Test
+    public void testDecodingBinary() {
+        final byte[] bytes = {
+                29, 0, 0, 0, 5, 98, 49, 0, 3, 0, 0,
+                0, 1, 115, 116, 114, 5, 98, 50, 0,
+                3, 0, 0, 0, 0, 102, 111, 111, 0
+        };
+
+        final BSONObject document = new BasicBSONDecoder().readObject(bytes);
+        assertTrue(document.containsField("b1"));
+        assertTrue(document.containsField("b2"));
+        assertEquals(new Binary((byte) 0x01, new byte[]{115, 116, 114}), document.get("b1"));
+        assertTrue(document.get("b2") instanceof byte[]);
+        assertArrayEquals(new byte[]{102, 111, 111}, (byte[]) document.get("b2"));
+    }
+
+    @Test
+    public void testDecodingDateTime() {
+        testDecoder(new byte[]{
+                17, 0, 0, 0, 9, 100, 116, 0, 0, 27, -77, 34, 0, 0, 0, 0, 0
+        }, new BasicBSONObject("dt", new Date(582163200)));
+    }
+
+    @Test
+    public void testDecodingDouble() {
+        testDecoder(new byte[]{
+                53, 0, 0, 0, 1, 100, 49, 0, 41, 92, -113,
+                -62, -11, 40, -16, -65, 1, 100, 50, 0, 0,
+                0, 0, 0, 0, 0, -96, 54, 1, 100, 51, 0, -1,
+                -1, -1, -1, -1, -1, -17, 127, 1, 100, 52,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        }, new BasicBSONObject("d1", -1.01)
+                .append("d2", Float.MIN_VALUE)
+                .append("d3", Double.MAX_VALUE)
+                .append("d4", 0.0));
+    }
+
+    @Test
+    public void testDecodingRegularExpression() {
+        testDecoder(new byte[]{
+                16, 0, 0, 0, 11, 114, 120, 0, 91, 97, 93, 42, 0, 105, 0, 0
+        }, new BasicBSONObject("rx", Pattern.compile("[a]*", Pattern.CASE_INSENSITIVE)));
+    }
+
+    @Test
+    public void testDecodingSymbol() {
+        testDecoder(new byte[]{
+                14, 0, 0, 0, 14, 115, 0, 2, 0, 0, 0, 99, 0, 0
+        }, new BasicBSONObject("s", "c"));
+    }
+
 }
