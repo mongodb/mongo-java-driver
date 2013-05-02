@@ -18,11 +18,14 @@ package org.mongodb;
 
 import org.mongodb.async.MongoAsyncReadableStream;
 import org.mongodb.async.MongoAsyncWritableStream;
+import org.mongodb.operation.MongoFind;
 
 public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWritableStream<T>,
         MongoSyncReadableStream<T>, MongoAsyncReadableStream<T>, MongoIterable<T> {
 
     MongoStream<T> batchSize(int batchSize);   // TODO: what to do about this
+
+    MongoStream<T> tail();
 
     MongoStream<T> readPreference(ReadPreference readPreference);
 
@@ -45,4 +48,11 @@ public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWr
     MongoStream<T> select(Document selector);
 
     MongoStream<T> select(ConvertibleToDocument selector);
+
+    /**
+     * Returns a copy of the criteria for this stream.  Modifications to the copy will have no effect on the stream.
+     *
+     * @return the criteria
+     */
+    MongoFind getCriteria();
 }

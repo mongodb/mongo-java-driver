@@ -116,14 +116,6 @@ public class MongoFind extends MongoQuery {
         return this;
     }
 
-    public MongoFind disableTimeout() {
-        throw new UnsupportedOperationException();
-    }
-
-    public MongoFind enableTimeout() {
-        throw new UnsupportedOperationException();
-    }
-
     public Document getFields() {
         return fields;
     }
@@ -147,5 +139,35 @@ public class MongoFind extends MongoQuery {
     public MongoFind explain() {
         explain = true;
         return this;
+    }
+
+    // CHECKSTYLE:OFF
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        final MongoFind mongoFind = (MongoFind) o;
+
+        if (explain != mongoFind.explain) return false;
+        if (snapshotMode != mongoFind.snapshotMode) return false;
+        if (fields != null ? !fields.equals(mongoFind.fields) : mongoFind.fields != null) return false;
+        if (filter != null ? !filter.equals(mongoFind.filter) : mongoFind.filter != null) return false;
+        if (sortCriteria != null ? !sortCriteria.equals(mongoFind.sortCriteria) : mongoFind.sortCriteria != null) return false;
+
+        return true;
+    }
+    // CHECKSTYLE:ON
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (filter != null ? filter.hashCode() : 0);
+        result = 31 * result + (fields != null ? fields.hashCode() : 0);
+        result = 31 * result + (sortCriteria != null ? sortCriteria.hashCode() : 0);
+        result = 31 * result + (snapshotMode ? 1 : 0);
+        result = 31 * result + (explain ? 1 : 0);
+        return result;
     }
 }

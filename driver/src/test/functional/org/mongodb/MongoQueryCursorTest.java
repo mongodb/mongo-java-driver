@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import category.Slow;
+import org.bson.types.BSONTimestamp;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -77,14 +78,15 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         collection.tools().drop();
         database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
 
-        collection.insert(new Document("_id", 1));
+        collection.insert(new Document("_id", 1).append("ts", new BSONTimestamp(5, 0)));
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind()
+                .filter(new Document("ts", new Document("$gte", new BSONTimestamp(5, 0))))
                 .batchSize(2)
                 .addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), Fixture.getMongoConnector());
         assertTrue(cursor.hasNext());
-        assertEquals(new Document("_id", 1), cursor.next());
+        assertEquals(1, cursor.next().get("_id"));
         assertTrue(cursor.hasNext());
 
         new Thread(new Runnable() {
@@ -92,7 +94,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
             public void run() {
                 try {
                     Thread.sleep(5000);
-                    collection.insert(new Document("_id", 2));
+                    collection.insert(new Document("_id", 2).append("ts", new BSONTimestamp(6, 0)));
                 } catch (InterruptedException e) { // NOPMD
                     // all good
                 }
@@ -100,7 +102,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         }).start();
 
         // Note: this test is racy.  There is no guarantee that we're testing what we're trying to, which is the loop in the next() method.
-        assertEquals(new Document("_id", 2), cursor.next());
+        assertEquals(2, cursor.next().get("_id"));
     }
 
     @Test

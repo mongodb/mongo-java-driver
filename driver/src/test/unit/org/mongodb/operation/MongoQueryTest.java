@@ -18,6 +18,7 @@
 package org.mongodb.operation;
 
 import org.junit.Test;
+import org.mongodb.ReadPreference;
 
 import java.util.EnumSet;
 
@@ -79,5 +80,17 @@ public class MongoQueryTest {
         } catch (IllegalArgumentException e) { // NOPMD
             // all good
         }
+    }
+
+    @Test
+    public void testCopyConstructor() {
+        MongoFind query = new MongoFind();
+        query.addOptions(EnumSet.allOf(QueryOption.class)).readPreference(ReadPreference.primary()).batchSize(2).limit(5).skip(1);
+        MongoQuery copy = new MongoFind(query);
+        assertEquals(EnumSet.allOf(QueryOption.class), copy.getOptions());
+        assertEquals(ReadPreference.primary(), copy.getReadPreference());
+        assertEquals(2, copy.getBatchSize());
+        assertEquals(5, copy.getLimit());
+        assertEquals(1, copy.getSkip());
     }
 }

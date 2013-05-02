@@ -26,9 +26,14 @@ import org.mongodb.Document;
 import org.mongodb.Get;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
+import org.mongodb.MongoStream;
+import org.mongodb.ReadPreference;
+import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.QueryOption;
 import org.mongodb.result.WriteResult;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -67,7 +72,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(new Document("_id", 1));
 
         collection.filter(new Document("_id", 1))
-                  .modify(new Document("$set", new Document("x", 1)));
+                .modify(new Document("$set", new Document("x", 1)));
 
         assertEquals(1, collection.filter(new Document("_id", 1).append("x", 1)).count());
     }
@@ -144,6 +149,17 @@ public class MongoCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    public void testFindCriteria() {
+        MongoFind find = new MongoFind()
+                .options(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData))
+                .skip(2).limit(5).batchSize(3).select(new Document("y", 1)).filter(new Document("x", 5)).order(new Document("x", 1))
+                .readPreference(ReadPreference.secondary());
+        MongoStream<Document> stream = collection.readPreference(find.getReadPreference())
+                .skip(2).limit(5).batchSize(3).filter(find.getFilter()).select(find.getFields()).sort(find.getOrder()).tail();
+        assertEquals(find, stream.getCriteria());
+    }
+
+    @Test
     public void testFind() {
 
         for (int i = 0; i < 101; i++) {
@@ -193,8 +209,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(new Document("_id", 1).append("x", true));
 
         final Document newDoc = collection.filter(new Document("x", true))
-                                          .modifyAndGet(new Document("$set", new Document("x", false)),
-                                                       Get.BeforeChangeApplied);
+                .modifyAndGet(new Document("$set", new Document("x", false)),
+                        Get.BeforeChangeApplied);
 
         assertNotNull(newDoc);
         assertEquals(new Document("_id", 1).append("x", true), newDoc);
@@ -208,8 +224,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(doc);
 
         final Concrete newDoc = collection.filter(new Document("x", true))
-                                          .modifyAndGet(new Document("$set", new Document("x", false)),
-                                                       Get.BeforeChangeApplied);
+                .modifyAndGet(new Document("$set", new Document("x", false)),
+                        Get.BeforeChangeApplied);
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);

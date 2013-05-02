@@ -56,11 +56,13 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
+import org.mongodb.operation.QueryOption;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.WriteResult;
 
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -92,6 +94,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public MongoStream<T> batchSize(final int batchSize) {
         return new MongoCollectionStream().batchSize(batchSize);
+    }
+
+    @Override
+    public MongoStream<T> tail() {
+        return new MongoCollectionStream().tail();
     }
 
     @Override
@@ -197,6 +204,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public MongoStream<T> select(final ConvertibleToDocument selector) {
         return new MongoCollectionStream().select(selector);
+    }
+
+    @Override
+    public MongoFind getCriteria() {
+        return new MongoCollectionStream().getCriteria();
     }
 
     @Override
@@ -425,6 +437,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
+        public MongoFind getCriteria() {
+            return new MongoFind(findOp);
+        }
+
+        @Override
         public MongoStream<T> skip(final int skip) {
             final MongoCollectionStream newStream = new MongoCollectionStream(this);
             newStream.findOp.skip(skip);
@@ -450,6 +467,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             newStream.findOp.batchSize(batchSize);
             return newStream;
         }
+
+        @Override
+        public MongoStream<T> tail() {
+            final MongoCollectionStream newStream = new MongoCollectionStream(this);
+            newStream.findOp.addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData));
+            return newStream;
+       }
 
         @Override
         public MongoStream<T> readPreference(final ReadPreference readPreference) {

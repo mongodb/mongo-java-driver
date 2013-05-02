@@ -31,6 +31,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+/**
+ *
+ * @param <T> the document type of the cursor
+ * @since 3.0
+ */
 @NotThreadSafe
 public class MongoQueryCursor<T> implements MongoCursor<T> {
     private final MongoFind find;
@@ -143,6 +148,15 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
      */
     public List<Integer> getSizes() {
         return Collections.unmodifiableList(sizes);
+    }
+
+    /**
+     * Gets the criteria for this query
+     *
+     * @return the criteria
+     */
+    public MongoFind getCriteria() {
+        return new MongoFind(find);
     }
 
     private void getMore() {
