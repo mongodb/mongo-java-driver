@@ -83,9 +83,9 @@ public class BSONObjectCodec implements Codec<BSONObject> {
     private void encodeEmbeddedObject(final BSONWriter bsonWriter, final Map<String, Object> document) {
         bsonWriter.writeStartDocument();
 
-        for (final String key : document.keySet()) {
-            bsonWriter.writeName(key);
-            writeValue(bsonWriter, document.get(key));
+        for (final Map.Entry<String, Object> entry : document.entrySet()) {
+            bsonWriter.writeName(entry.getKey());
+            writeValue(bsonWriter, entry.getValue());
         }
         bsonWriter.writeEndDocument();
     }
@@ -111,7 +111,8 @@ public class BSONObjectCodec implements Codec<BSONObject> {
         bsonWriter.writeEndDocument();
     }
 
-    private void encodeIterable(final BSONWriter bsonWriter, final Iterable iterable) {
+
+    private void encodeIterable(final BSONWriter bsonWriter, final Iterable<?> iterable) {
         bsonWriter.writeStartArray();
         for (final Object cur : iterable) {
             writeValue(bsonWriter, cur);
@@ -167,7 +168,7 @@ public class BSONObjectCodec implements Codec<BSONObject> {
         return BSON.applyDecodingHooks(initialRetVal);
     }
 
-    private List readArray(final BSONReader reader) {
+    private List<?> readArray(final BSONReader reader) {
         reader.readStartArray();
         final BasicDBList list = new BasicDBList();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
