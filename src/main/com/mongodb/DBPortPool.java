@@ -22,6 +22,7 @@ import com.mongodb.util.ConnectionPoolStatisticsBean;
 import com.mongodb.util.SimplePool;
 import com.mongodb.util.management.JMException;
 import com.mongodb.util.management.MBeanServerFactory;
+import java.io.IOException;
 
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
@@ -222,6 +223,16 @@ public class DBPortPool extends SimplePool<DBPort> {
 
             if ( port == null )
                 throw new ConnectionWaitTimeOut( _options.maxWaitTime );
+
+            // ensure that the connection is open. this will prevent loops
+            // below in case there is a problem with the creation of the connection
+            try {
+                port.ensureOpen();
+            } catch (IOException e) {
+                port.close();
+                done(port);
+                throw new MongoException("error while creating connection", e);
+            }
 
             try {
                 CommandResult res = port.runCommand(_mongo.getDB("admin"), new BasicDBObject("isMaster", 1));
