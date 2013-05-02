@@ -25,11 +25,11 @@ import org.mongodb.codecs.PrimitiveCodecs;
 import java.lang.reflect.Array;
 import java.util.Map;
 
-class BSONOObjectEncoder implements Encoder<BSONObject> {
+class BSONObjectEncoder implements Encoder<BSONObject> {
 
     private final PrimitiveCodecs primitiveCodecs;
 
-    public BSONOObjectEncoder(PrimitiveCodecs primitiveCodecs) {
+    public BSONObjectEncoder(PrimitiveCodecs primitiveCodecs) {
         this.primitiveCodecs = primitiveCodecs;
     }
 

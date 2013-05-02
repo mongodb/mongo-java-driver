@@ -24,11 +24,11 @@ import static org.junit.Assert.assertEquals;
 
 public class BSONObjectEncoderTest {
 
-    private BSONOObjectEncoder codec;
+    private BSONObjectEncoder codec;
 
     @Before
     public void setUp() {
-        codec = new BSONOObjectEncoder(PrimitiveCodecs.createDefault());
+        codec = new BSONObjectEncoder(PrimitiveCodecs.createDefault());
     }
 
     @Test

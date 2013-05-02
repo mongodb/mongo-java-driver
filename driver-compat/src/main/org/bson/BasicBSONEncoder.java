@@ -51,7 +51,7 @@ public class BasicBSONEncoder implements BSONEncoder {
     @Override
     public int putObject(final BSONObject document) {
         try {
-            new BSONOObjectEncoder(PrimitiveCodecs.createDefault()).encode(new BSONBinaryWriter(outputBuffer), document);
+            new BSONObjectEncoder(PrimitiveCodecs.createDefault()).encode(new BSONBinaryWriter(outputBuffer), document);
             final BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
             outputBuffer.pipe(stream);
             return stream.getInternalBytes().length;
