@@ -22,7 +22,7 @@ package com.mongodb;
  */
 class MongoConnectionPool extends DBPortPool implements MongoConnectionPoolMXBean {
 
-    MongoConnectionPool(ServerAddress addr, MongoOptions options) {
-        super(addr, options);
+    MongoConnectionPool(Mongo mongo, ServerAddress addr, MongoOptions options) {
+        super(mongo, addr, options);
     }
 }

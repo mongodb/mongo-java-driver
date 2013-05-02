@@ -377,7 +377,7 @@ public class DBTCPConnector implements DBConnector {
                 }
 
                 // asked for a specific host
-                return _portHolder.get( hostNeeded ).get();
+                return _portHolder.get( _mongo, hostNeeded ).get();
             }
 
             if ( pinnedRequestPort != null ){
@@ -410,7 +410,7 @@ public class DBTCPConnector implements DBConnector {
                 if (node == null)
                     throw new MongoException("No replica set members available in " +  replicaSet + " for " + readPref.toDBObject().toString());
             
-                port = _portHolder.get(node.getServerAddress()).get();
+                port = _portHolder.get(_mongo, node.getServerAddress()).get();
             }
 
             // if within request, remember port to stick to same server
@@ -550,7 +550,7 @@ public class DBTCPConnector implements DBConnector {
 
 
     private synchronized boolean setMasterAddress(ServerAddress addr) {
-        DBPortPool newPool = _portHolder.get( addr );
+        DBPortPool newPool = _portHolder.get( _mongo, addr );
         if (newPool == _masterPortPool)
             return false;
 
@@ -605,7 +605,7 @@ public class DBTCPConnector implements DBConnector {
      * @return
      */
     public DBPortPool getDBPortPool(ServerAddress addr) {
-        return _portHolder.get(addr);
+        return _portHolder.get(_mongo, addr);
     }
 
     public boolean isOpen(){

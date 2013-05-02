@@ -23,7 +23,7 @@ package com.mongodb;
  */
 class Java5MongoConnectionPool extends DBPortPool implements Java5MongoConnectionPoolMBean {
 
-    Java5MongoConnectionPool(ServerAddress addr, MongoOptions options) {
-        super(addr, options);
+    Java5MongoConnectionPool(Mongo mongo, ServerAddress addr, MongoOptions options) {
+        super(mongo, addr, options);
     }
 }
