@@ -19,10 +19,10 @@ package org.mongodb.impl;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.MongoCredential;
+import org.mongodb.MongoServerBinding;
 import org.mongodb.PoolableConnectionManager;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
-import org.mongodb.ServerConnectorManager;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 
@@ -31,15 +31,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MultiServerConnectorManager implements ServerConnectorManager {
+public class MongoMultiServerBinding implements MongoServerBinding {
     private final List<MongoCredential> credentialList;
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
     private final Map<ServerAddress, PoolableConnectionManager> mongoClientMap = new HashMap<ServerAddress, PoolableConnectionManager>();
     private final MongoConnectionStrategy connectionStrategy;
 
-    public MultiServerConnectorManager(final MongoConnectionStrategy connectionStrategy, final List<MongoCredential> credentialList,
-                                       final MongoClientOptions options) {
+    public MongoMultiServerBinding(final MongoConnectionStrategy connectionStrategy, final List<MongoCredential> credentialList,
+                                   final MongoClientOptions options) {
         this.connectionStrategy = connectionStrategy;
         this.credentialList = credentialList;
         this.options = options;

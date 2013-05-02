@@ -18,7 +18,7 @@ package org.mongodb;
 
 import java.util.List;
 
-public interface ServerConnectorManager {
+public interface MongoServerBinding {
     PoolableConnectionManager getConnectionManagerForWrite();
 
     PoolableConnectionManager getConnectionManagerForRead(ReadPreference readPreference);

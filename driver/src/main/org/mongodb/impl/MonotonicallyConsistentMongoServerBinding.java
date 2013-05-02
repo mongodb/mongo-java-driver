@@ -17,22 +17,22 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoServerBinding;
 import org.mongodb.PoolableConnectionManager;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
-import org.mongodb.ServerConnectorManager;
 
 import java.util.List;
 
-class MonotonicallyConsistentServerConnectorManager implements ServerConnectorManager {
-    private final ServerConnectorManager serverConnectorManager;
+class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
+    private final MongoServerBinding serverConnectorManager;
     private ReadPreference lastRequestedReadPreference;
     private PoolableConnectionManager connectionManagerForReads;
     private PoolableConnectionManager connectionManagerForWrites;
     private MongoConnection connectorForReads;
     private MongoConnection connectorForWrites;
 
-    public MonotonicallyConsistentServerConnectorManager(final ServerConnectorManager serverConnectorManager) {
+    public MonotonicallyConsistentMongoServerBinding(final MongoServerBinding serverConnectorManager) {
         this.serverConnectorManager = serverConnectorManager;
     }
 

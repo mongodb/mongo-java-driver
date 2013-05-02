@@ -37,18 +37,18 @@ public final class MongoConnectorsImpl {
 
     public static DelegatingMongoConnector create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                                     final MongoClientOptions options) {
-        return new DelegatingMongoConnector(new SingleServerConnectorManager(create(serverAddress, credentialList, options,
+        return new DelegatingMongoConnector(new MongoSingleServerBinding(create(serverAddress, credentialList, options,
                 new PowerOfTwoByteBufferPool())));
     }
 
     public static DelegatingMongoConnector create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new DelegatingMongoConnector(new MultiServerConnectorManager(new ReplicaSetConnectionStrategy(seedList, options), null,
+        return new DelegatingMongoConnector(new MongoMultiServerBinding(new ReplicaSetConnectionStrategy(seedList, options), null,
                 options));
     }
 
     public static DelegatingMongoConnector create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                                       final MongoClientOptions options) {
-        return new DelegatingMongoConnector(new MultiServerConnectorManager(new ReplicaSetConnectionStrategy(seedList, options),
+        return new DelegatingMongoConnector(new MongoMultiServerBinding(new ReplicaSetConnectionStrategy(seedList, options),
                 credentialList, options));
     }
 

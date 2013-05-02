@@ -42,7 +42,7 @@ public final class MongoClientsImpl {
 
     public static MongoClientImpl create(final MongoConnectionStrategy connectionStrategy,
                                          final MongoClientOptions options) {
-        return new MongoClientImpl(options, new DelegatingMongoConnector(new MultiServerConnectorManager(connectionStrategy, null,
+        return new MongoClientImpl(options, new DelegatingMongoConnector(new MongoMultiServerBinding(connectionStrategy, null,
                 options)));
     }
 

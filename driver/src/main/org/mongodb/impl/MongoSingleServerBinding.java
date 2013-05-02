@@ -16,18 +16,18 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoServerBinding;
 import org.mongodb.PoolableConnectionManager;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
-import org.mongodb.ServerConnectorManager;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class SingleServerConnectorManager implements ServerConnectorManager {
+public class MongoSingleServerBinding implements MongoServerBinding {
     private final PoolableConnectionManager connectionManager;
 
-    public SingleServerConnectorManager(final PoolableConnectionManager connectionManager) {
+    public MongoSingleServerBinding(final PoolableConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
     }
 

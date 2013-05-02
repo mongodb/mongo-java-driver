@@ -22,9 +22,9 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoServerBinding;
 import org.mongodb.PoolableConnectionManager;
 import org.mongodb.ServerAddress;
-import org.mongodb.ServerConnectorManager;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
@@ -43,13 +43,13 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 class DelegatingMongoConnector implements MongoConnector {
-    private final ServerConnectorManager connectorManager;
+    private final MongoServerBinding connectorManager;
 
-    public DelegatingMongoConnector(final ServerConnectorManager connectorManager) {
+    public DelegatingMongoConnector(final MongoServerBinding connectorManager) {
         this.connectorManager = connectorManager;
     }
 
-    public ServerConnectorManager getConnectorManager() {
+    public MongoServerBinding getConnectorManager() {
         return connectorManager;
     }
 
@@ -333,7 +333,7 @@ class DelegatingMongoConnector implements MongoConnector {
 
     @Override
     public MongoConnector getSession() {
-        return new DelegatingMongoConnector(new MonotonicallyConsistentServerConnectorManager(getConnectorManager()));
+        return new DelegatingMongoConnector(new MonotonicallyConsistentMongoServerBinding(getConnectorManager()));
     }
 
 }
