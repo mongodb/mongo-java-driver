@@ -16,9 +16,7 @@
 
 package org.bson;
 
-import com.mongodb.DBObject;
-import com.mongodb.MongoInternalException;
-import com.mongodb.codecs.DBObjectCodec;
+import org.bson.codecs.BSONObjectCodec;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.InputBuffer;
@@ -221,16 +219,16 @@ public class BSON {
      * @param doc the document to encode
      * @return the document encoded as BSON
      */
-    public static byte[] encode(final DBObject doc) {
+    public static byte[] encode(final BSONObject doc) {
         try {
             final OutputBuffer buffer = new BasicOutputBuffer();
-            new DBObjectCodec(PrimitiveCodecs.createDefault()).encode(new BSONBinaryWriter(buffer), doc);
+            new BSONObjectCodec(PrimitiveCodecs.createDefault()).encode(new BSONBinaryWriter(buffer), doc);
             final BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
             buffer.pipe(stream);
             return stream.getInternalBytes();
         } catch (IOException e) {
             // impossible with a byte array output stream
-            throw new MongoInternalException("impossible", e);
+            throw new BSONException("Received considered as impossible IOException from ByteArrayOutputStream", e);
         }
     }
 
@@ -242,7 +240,7 @@ public class BSON {
      */
     public static BSONObject decode(final byte[] bytes) {
         final InputBuffer buffer = new BasicInputBuffer(ByteBuffer.wrap(bytes));
-        return new DBObjectCodec(PrimitiveCodecs.createDefault()).decode(new BSONBinaryReader(buffer));
+        return new BSONObjectCodec(PrimitiveCodecs.createDefault()).decode(new BSONBinaryReader(buffer));
     }
 
     /**
