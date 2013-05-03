@@ -19,6 +19,7 @@
 package com.mongodb;
 
 import com.mongodb.DBApiLayer.Result;
+import org.bson.util.annotations.NotThreadSafe;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -50,8 +51,10 @@ import java.util.Set;
  * List<DBObject> obj = collection.find( query ).skip( 1000 ).limit( 100 ).toArray();
  * </pre></blockquote>
  *
+ *
  * @dochub cursors
  */
+@NotThreadSafe
 public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closeable {
 
     /**
