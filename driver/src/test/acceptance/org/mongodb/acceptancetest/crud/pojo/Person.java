@@ -17,12 +17,20 @@
 package org.mongodb.acceptancetest.crud.pojo;
 
 public class Person {
-    private final String firstName;
-    private final String lastName;
+    private String firstName;
+    private String lastName;
+
+    //CHECKSTYLE:OFF
+    //necessary evil until we do smart stuff around identifying the ID
+    private String _id;
+    //CHECKSTYLE:ON
 
     public Person(final String firstName, final String lastName) {
         this.firstName = firstName;
         this.lastName = lastName;
+    }
+
+    public Person() {
     }
 
     public String getFirstName() {
@@ -31,5 +39,40 @@ public class Person {
 
     public String getLastName() {
         return lastName;
+    }
+
+    // *** boilerplate required for tests
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final Person person = (Person) o;
+
+        return !(_id != null ? !_id.equals(person._id) : person._id != null)
+               && firstName.equals(person.firstName)
+               && lastName.equals(person.lastName);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = firstName.hashCode();
+        result = 31 * result + lastName.hashCode();
+        result = 31 * result + (_id != null ? _id.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Person{"
+               + "firstName='" + firstName + '\''
+               + ", lastName='" + lastName + '\''
+               + ", _id='" + _id + '\''
+               + '}';
     }
 }

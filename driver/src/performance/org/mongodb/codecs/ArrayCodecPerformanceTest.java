@@ -208,7 +208,7 @@ public class ArrayCodecPerformanceTest {
         private int objectsEncoded = 0;
 
         private MyPrimitiveCodecs() {
-            super(null, null);
+            super(null, null, null);
         }
 
         @Override

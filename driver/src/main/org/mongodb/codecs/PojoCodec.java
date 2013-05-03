@@ -20,14 +20,16 @@ import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.mongodb.CollectibleCodec;
 
-import java.lang.reflect.Field;
-
 public class PojoCodec<T> implements CollectibleCodec<T> {
-    private final Codecs codecs;
+    private Class<T> theClass;
+    private PojoDecoder pojoDecoder;
+    private PojoEncoder pojoEncoder;
 
-    public PojoCodec(final Codecs codecs) {
-        this.codecs = codecs;
+    public PojoCodec(final Codecs codecs, final Class<T> theClass) {
+        this.theClass = theClass;
         codecs.setDefaultObjectCodec(this);
+        pojoDecoder = new PojoDecoder(codecs);
+        pojoEncoder = new PojoEncoder(codecs);
     }
 
     @Override
@@ -36,48 +38,18 @@ public class PojoCodec<T> implements CollectibleCodec<T> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Object value) {
-        System.out.println("Encoding Pojo: " + value.getClass());
-        bsonWriter.writeStartDocument();
-        encodePojo(bsonWriter, value);
-        bsonWriter.writeEndDocument();
+    public void encode(final BSONWriter bsonWriter, final T value) {
+        pojoEncoder.encode(bsonWriter, value);
     }
 
     @Override
     public T decode(final BSONReader reader) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return pojoDecoder.decode(reader, theClass);
     }
 
     @Override
     public Class<T> getEncoderClass() {
-        throw new UnsupportedOperationException("Not implemented yet!");
-    }
-
-    private void encodePojo(final BSONWriter bsonWriter, final Object value) {
-
-        for (Field field : value.getClass().getDeclaredFields()) {
-            encodeField(bsonWriter, value, field);
-        }
-
-    }
-
-    private void encodeField(final BSONWriter bsonWriter, final Object value, final Field field) {
-        System.out.println("Field: " + field);
-        final String fieldName = field.getName();
-        try {
-            field.setAccessible(true);
-            System.out.println("value: " + value);
-            final Object fieldValue = field.get(value);
-            System.out.println("fieldValue: " + fieldValue);
-            System.out.println("fieldName: " + fieldName);
-            bsonWriter.writeName(fieldName);
-            codecs.encode(bsonWriter, fieldValue);
-            field.setAccessible(false);
-        } catch (IllegalAccessException e) {
-            //TODO: this is really going to bugger up the writer if it throws an exception halfway through writing
-            throw new EncodingException("Could not encode field '" + fieldName + "' from " + value, e);
-        }
-        System.out.println("\n");
+        return theClass;
     }
 
 }

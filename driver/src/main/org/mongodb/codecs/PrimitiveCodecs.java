@@ -26,7 +26,9 @@ import org.mongodb.MongoException;
 
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 // TODO: this is getting better, but still not sure
 
@@ -41,11 +43,14 @@ public class PrimitiveCodecs implements Codec<Object> {
     //CHECKSTYLE:ON
     private Map<Class, Encoder<?>> classEncoderMap = new HashMap<Class, Encoder<?>>();
     private Map<BSONType, Decoder<?>> bsonTypeDecoderMap = new EnumMap<BSONType, Decoder<?>>(BSONType.class);
+    private Set<Class> supportedDecodeTypes = new HashSet<Class>();
 
     PrimitiveCodecs(final Map<Class, Encoder<?>> classEncoderMap,
-                    final Map<BSONType, Decoder<?>> bsonTypeDecoderMap) {
+                    final Map<BSONType, Decoder<?>> bsonTypeDecoderMap,
+                    final Set<Class> supportedDecodeTypes) {
         this.classEncoderMap = classEncoderMap;
         this.bsonTypeDecoderMap = bsonTypeDecoderMap;
+        this.supportedDecodeTypes = supportedDecodeTypes;
     }
 
     @Override
@@ -54,8 +59,7 @@ public class PrimitiveCodecs implements Codec<Object> {
         final Encoder codec;
         if (value == null) {
             codec = classEncoderMap.get(null);
-        }
-        else {
+        } else {
             codec = classEncoderMap.get(value.getClass());
         }
         if (codec == null) {
@@ -90,36 +94,45 @@ public class PrimitiveCodecs implements Codec<Object> {
     // TODO: find a proper way to do this...
     public static PrimitiveCodecs createDefault() {
         return builder()
-                .objectIdCodec(new ObjectIdCodec())
-                .integerCodec(new IntegerCodec())
-                .longCodec(new LongCodec())
-                .stringCodec(new StringCodec())
-                .doubleCodec(new DoubleCodec())
-                .dateCodec(new DateCodec())
-                .timestampCodec(new TimestampCodec())
-                .booleanCodec(new BooleanCodec())
-                .patternCodec(new PatternCodec())
-                .minKeyCodec(new MinKeyCodec())
-                .maxKeyCodec(new MaxKeyCodec())
-                .javascriptCodec(new CodeCodec())
-                .nullCodec(new NullCodec())
-                .otherEncoder(new FloatCodec())
-                .otherEncoder(new ShortCodec())
-                .otherEncoder(new ByteCodec())
-                .otherEncoder(new ByteArrayCodec())
-                .otherEncoder(new BinaryEncoder())
-                .otherEncoder(new UUIDEncoder())
-                .binaryDecoder(new TransformingBinaryDecoder())
-                .build();
+               .objectIdCodec(new ObjectIdCodec())
+               .integerCodec(new IntegerCodec())
+               .longCodec(new LongCodec())
+               .stringCodec(new StringCodec())
+               .doubleCodec(new DoubleCodec())
+               .dateCodec(new DateCodec())
+               .timestampCodec(new TimestampCodec())
+               .booleanCodec(new BooleanCodec())
+               .patternCodec(new PatternCodec())
+               .minKeyCodec(new MinKeyCodec())
+               .maxKeyCodec(new MaxKeyCodec())
+               .javascriptCodec(new CodeCodec())
+               .nullCodec(new NullCodec())
+               .otherEncoder(new FloatCodec())
+               .otherEncoder(new ShortCodec())
+               .otherEncoder(new ByteCodec())
+               .otherEncoder(new ByteArrayCodec())
+               .otherEncoder(new BinaryEncoder())
+               .otherEncoder(new UUIDEncoder())
+               .binaryDecoder(new TransformingBinaryDecoder())
+               .build();
     }
 
     boolean canEncode(final Class<?> aClass) {
         return classEncoderMap.containsKey(aClass);
     }
 
+    boolean canDecodeNextObject(final BSONReader reader) {
+        return bsonTypeDecoderMap.containsKey(reader.getCurrentBSONType());
+    }
+
+    boolean canDecode(final Class theClass) {
+        return supportedDecodeTypes.contains(theClass);
+    }
+
     public static class Builder {
         private final Map<Class, Encoder<?>> classEncoderMap = new HashMap<Class, Encoder<?>>();
         private final Map<BSONType, Decoder<?>> bsonTypeDecoderMap = new HashMap<BSONType, Decoder<?>>();
+        private final Set<Class> supportedDecodeTypes = new HashSet<Class>();
 
         public Builder() {
         }
@@ -127,6 +140,7 @@ public class PrimitiveCodecs implements Codec<Object> {
         public Builder(final PrimitiveCodecs base) {
             classEncoderMap.putAll(base.classEncoderMap);
             bsonTypeDecoderMap.putAll(base.bsonTypeDecoderMap);
+            supportedDecodeTypes.addAll(base.supportedDecodeTypes);
         }
 
 
@@ -224,13 +238,13 @@ public class PrimitiveCodecs implements Codec<Object> {
         }
 
         public PrimitiveCodecs build() {
-            return new PrimitiveCodecs(classEncoderMap, bsonTypeDecoderMap);
+            return new PrimitiveCodecs(classEncoderMap, bsonTypeDecoderMap, supportedDecodeTypes);
         }
-
 
         private void registerCodec(final BSONType bsonType, final Codec<?> codec) {
             bsonTypeDecoderMap.put(bsonType, codec);
             classEncoderMap.put(codec.getEncoderClass(), codec);
+            supportedDecodeTypes.add(codec.getEncoderClass());
         }
     }
 }

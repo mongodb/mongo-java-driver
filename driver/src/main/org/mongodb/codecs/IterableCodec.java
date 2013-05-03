@@ -16,18 +16,31 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BSONReader;
+import org.bson.BSONType;
 import org.bson.BSONWriter;
+import org.mongodb.Codec;
+import org.mongodb.Decoder;
 
-//TODO probably needs to be a codec, not just an encoder
-public class IterableCodec implements ComplexTypeEncoder<Iterable<?>> {
+import java.util.Collection;
+
+public class IterableCodec implements Codec<Iterable> {
+    private final CollectionFactory collectionFactory;
     private Codecs codecs;
+    private Decoder<?> decoder;
 
     public IterableCodec(final Codecs codecs) {
+        this(codecs, new ArrayListFactory(), codecs);
+    }
+
+    public IterableCodec(final Codecs codecs, final CollectionFactory collectionFactory, final Decoder<?> decoder) {
         this.codecs = codecs;
+        this.collectionFactory = collectionFactory;
+        this.decoder = decoder;
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Iterable<?> iterable) {
+    public void encode(final BSONWriter bsonWriter, final Iterable iterable) {
         bsonWriter.writeStartArray();
         for (Object value : iterable) {
             codecs.encode(bsonWriter, value);
@@ -35,4 +48,20 @@ public class IterableCodec implements ComplexTypeEncoder<Iterable<?>> {
         bsonWriter.writeEndArray();
     }
 
+    @Override
+    public <E> Iterable<E> decode(final BSONReader reader) {
+        reader.readStartArray();
+        final Collection<E> collection = collectionFactory.createCollection();
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+            //TODO: This is the only bit that's dangerous, I think
+            collection.add((E) decoder.decode(reader));
+        }
+        reader.readEndArray();
+        return collection;
+    }
+
+    @Override
+    public Class<Iterable> getEncoderClass() {
+        return Iterable.class;
+    }
 }

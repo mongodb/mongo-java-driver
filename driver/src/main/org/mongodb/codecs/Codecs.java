@@ -16,6 +16,8 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BSONReader;
+import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.types.CodeWithScope;
 import org.mongodb.CodeWithScopeCodec;
@@ -26,13 +28,16 @@ import org.mongodb.codecs.validators.Validator;
 
 import java.util.Map;
 
-public class Codecs {
+import static java.lang.String.format;
+
+public class Codecs implements Codec<Object> {
     private final PrimitiveCodecs primitiveCodecs;
     private final IterableCodec iterableCodec;
     private final ArrayCodec arrayCodec;
     private final MapCodec mapCodec;
     private final DBRefCodec dbRefCodec;
     private final CodeWithScopeCodec codeWithScopeCodec;
+    private final SimpleDocumentCodec simpleDocumentCodec;
     private Codec<Object> defaultObjectCodec = new NoCodec();
 
     public Codecs(final PrimitiveCodecs primitiveCodecs) {
@@ -47,6 +52,7 @@ public class Codecs {
         mapCodec = new MapCodec(this, fieldNameValidator);
         dbRefCodec = new DBRefCodec(this);
         codeWithScopeCodec = new CodeWithScopeCodec(this);
+        simpleDocumentCodec = new SimpleDocumentCodec(this);
     }
 
     public static Codecs createDefault() {
@@ -55,7 +61,7 @@ public class Codecs {
 
     @SuppressWarnings("unchecked") // going to have some unchecked warnings because of all the casting from Object
     public void encode(final BSONWriter bsonWriter, final Object object) {
-        if (isBSONPrimitive(object)) {
+        if (object == null || primitiveCodecs.canEncode(object.getClass())) {
             primitiveCodecs.encode(bsonWriter, object);
         } else if (object.getClass().isArray()) {
             arrayCodec.encode(bsonWriter, object);
@@ -63,9 +69,18 @@ public class Codecs {
             encode(bsonWriter, (Map) object);
         } else if (object instanceof Iterable) {
             encode(bsonWriter, (Iterable) object);
+        } else if (object instanceof CodeWithScope) {
+            encode(bsonWriter, (CodeWithScope) object);
+        } else if (object instanceof DBRef) {
+            encode(bsonWriter, (DBRef) object);
         } else {
             defaultObjectCodec.encode(bsonWriter, object);
         }
+    }
+
+    @Override
+    public Class<Object> getEncoderClass() {
+        return Object.class;
     }
 
     public void encode(final BSONWriter bsonWriter, final Iterable<?> value) {
@@ -84,16 +99,48 @@ public class Codecs {
         codeWithScopeCodec.encode(bsonWriter, value);
     }
 
-    private boolean isBSONPrimitive(final Object value) {
-        return primitiveCodecs.canEncode(value.getClass());
-    }
-
     public static Builder builder() {
         return new Builder();
     }
 
     public void setDefaultObjectCodec(final Codec codec) {
         this.defaultObjectCodec = codec;
+    }
+
+    //TODO: don't like this at all.  Feels like if it has a BSON type, it's a primitive
+    public Object decode(final BSONReader reader) {
+        if (primitiveCodecs.canDecodeNextObject(reader)) {
+            return primitiveCodecs.decode(reader);
+        } else if (reader.getCurrentBSONType() == BSONType.ARRAY) {
+            return iterableCodec.decode(reader);
+        } else if (reader.getCurrentBSONType() == BSONType.JAVASCRIPT_WITH_SCOPE) {
+            return codeWithScopeCodec.decode(reader);
+        } else if (reader.getCurrentBSONType() == BSONType.DOCUMENT) {
+            return simpleDocumentCodec.decode(reader);
+        } else {
+            throw new UnsupportedOperationException(format("The BSON type %s does not have a decoder associated with it.",
+                                                           reader.getCurrentBSONType()));
+        }
+    }
+
+    boolean canEncode(final Object object) {
+        return object == null
+               || primitiveCodecs.canEncode(object.getClass())
+               || object.getClass().isArray()
+               || object instanceof Map
+               || object instanceof Iterable
+               || object instanceof CodeWithScope
+               || object instanceof DBRef;
+    }
+
+    public boolean canDecode(final Class theClass) {
+        return theClass.getClass().isArray()
+               || primitiveCodecs.canDecode(theClass)
+               || iterableCodec.getEncoderClass().isInstance(theClass)
+               || mapCodec.getEncoderClass().isAssignableFrom(theClass)
+               || dbRefCodec.getEncoderClass().isInstance(theClass)
+               || codeWithScopeCodec.getEncoderClass().isInstance(theClass)
+               || simpleDocumentCodec.getEncoderClass().isInstance(theClass);
     }
 
     public static class Builder {

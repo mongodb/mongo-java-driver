@@ -26,52 +26,30 @@ import org.mongodb.codecs.validators.Validator;
 
 import java.util.Map;
 
-// TODO: decode into DBRef?
-public class DocumentCodec implements Codec<Document> {
-    private final PrimitiveCodecs primitiveCodecs;
+public class SimpleDocumentCodec implements Codec<Document> {
     private final Validator<String> fieldNameValidator;
     private final Codecs codecs;
 
-    public DocumentCodec() {
-        this(PrimitiveCodecs.createDefault());
+    public SimpleDocumentCodec(final Codecs codecs) {
+        this(codecs, new QueryFieldNameValidator());
     }
 
-    public DocumentCodec(final PrimitiveCodecs primitiveCodecs) {
-        this(primitiveCodecs, new QueryFieldNameValidator());
-    }
-
-    protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator) {
-        if (primitiveCodecs == null) {
-            throw new IllegalArgumentException("primitiveCodecs is null");
-        }
+    protected SimpleDocumentCodec(final Codecs codecs, final Validator<String> fieldNameValidator) {
+        this.codecs = codecs;
         this.fieldNameValidator = fieldNameValidator;
-        this.primitiveCodecs = primitiveCodecs;
-        codecs = new Codecs(primitiveCodecs, fieldNameValidator);
     }
 
     @Override
     public void encode(final BSONWriter bsonWriter, final Document document) {
         bsonWriter.writeStartDocument();
 
-        beforeFields(bsonWriter, document);
-
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
             fieldNameValidator.validate(entry.getKey());
 
-            if (skipField(entry.getKey())) {
-                continue;
-            }
             bsonWriter.writeName(entry.getKey());
             writeValue(bsonWriter, entry.getValue());
         }
         bsonWriter.writeEndDocument();
-    }
-
-    protected void beforeFields(final BSONWriter bsonWriter, final Document document) {
-    }
-
-    protected boolean skipField(final String key) {
-        return false;
     }
 
     @SuppressWarnings("unchecked")
@@ -86,21 +64,12 @@ public class DocumentCodec implements Codec<Document> {
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
-            document.put(fieldName, readValue(reader, fieldName));
+            final Object value = codecs.decode(reader);
+            document.put(fieldName, value);
         }
 
         reader.readEndDocument();
-
         return document;
-    }
-
-    private Object readValue(final BSONReader reader, final String fieldName) {
-        final BSONType bsonType = reader.getCurrentBSONType();
-        if (bsonType.equals(BSONType.DOCUMENT)) {
-            return getDocumentCodecForField(fieldName).decode(reader);
-        } else {
-            return codecs.decode(reader);
-        }
     }
 
     @Override
@@ -108,11 +77,4 @@ public class DocumentCodec implements Codec<Document> {
         return Document.class;
     }
 
-    protected PrimitiveCodecs getPrimitiveCodecs() {
-        return primitiveCodecs;
-    }
-
-    protected Codec<Document> getDocumentCodecForField(final String fieldName) {
-        return this;
-    }
 }

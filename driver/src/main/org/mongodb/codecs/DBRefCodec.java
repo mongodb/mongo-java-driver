@@ -40,6 +40,6 @@ public class DBRefCodec implements Encoder<DBRef> {
 
     @Override
     public Class<DBRef> getEncoderClass() {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return DBRef.class;
     }
 }

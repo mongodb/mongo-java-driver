@@ -20,17 +20,22 @@ import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.CodeWithScope;
 import org.mongodb.codecs.Codecs;
+import org.mongodb.codecs.SimpleDocumentCodec;
 
 public class CodeWithScopeCodec implements Codec<CodeWithScope> {
     private final Codecs codecs;
+    private final SimpleDocumentCodec simpleDocumentCodec;
 
     public CodeWithScopeCodec(final Codecs codecs) {
         this.codecs = codecs;
+        simpleDocumentCodec = new SimpleDocumentCodec(codecs);
     }
 
     @Override
-    public CodeWithScope decode(final BSONReader reader) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+    public CodeWithScope decode(final BSONReader bsonReader) {
+        final String code = bsonReader.readJavaScriptWithScope();
+        final Document scope = simpleDocumentCodec.decode(bsonReader);
+        return new CodeWithScope(code, scope);
     }
 
     @Override
@@ -41,6 +46,6 @@ public class CodeWithScopeCodec implements Codec<CodeWithScope> {
 
     @Override
     public Class<CodeWithScope> getEncoderClass() {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return CodeWithScope.class;
     }
 }

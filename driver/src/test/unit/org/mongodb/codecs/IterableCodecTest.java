@@ -16,6 +16,7 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
@@ -23,11 +24,19 @@ import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mongodb.Decoder;
 import org.mongodb.Document;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
+import static org.mongodb.codecs.CodecTestUtil.prepareReaderWithObjectToBeDecoded;
 
 public class IterableCodecTest {
 
@@ -96,4 +105,73 @@ public class IterableCodecTest {
         iterableCodecWithMock.encode(bsonWriter, stringList);
     }
 
+    @Test
+    @SuppressWarnings("rawtypes")
+    public void shouldDecodeArraysAsListsOfObjects() throws Exception {
+        final Iterable expectedList = asList(1, 2, 3);
+        final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
+
+        final Iterable actualDecodedObject = iterableCodec.decode(reader);
+
+        assertThat(actualDecodedObject, is(expectedList));
+        assertThat(actualDecodedObject, is(instanceOf(ArrayList.class)));
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"}) // don't think there's any way around the varargs warning in anything below Java 8
+    public void shouldDecodeArrayOfArrays() throws Exception {
+        final Iterable<List<Integer>> expectedList = asList(asList(1, 2), asList(3));
+        final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
+
+        final Iterable actualDecodedObject = iterableCodec.decode(reader);
+
+        assertThat((List<List<Integer>>) actualDecodedObject, is(expectedList));
+    }
+
+    @Test
+    public void shouldDecodeArrayOfDocuments() throws Exception {
+        final Object document = new Document("field", "value");
+        final Iterable<Object> expectedList = asList(document);
+        final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
+
+        final Iterable<Object> actualDecodedObject = iterableCodec.decode(reader);
+
+        assertThat(actualDecodedObject, is(expectedList));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeIntoSet() {
+        final IterableCodec iterableCodecForSet = new IterableCodec(codecs, new HashSetFactory(), codecs);
+
+        final Iterable<Integer> expectedSet = new HashSet<Integer>(asList(1, 2, 3));
+        final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedSet);
+
+        final Iterable<Integer> actualDecodedObject = iterableCodecForSet.decode(reader);
+
+        assertThat(actualDecodedObject, is(expectedSet));
+        assertThat(actualDecodedObject, is(instanceOf(Set.class)));
+    }
+
+    @Test
+    public void shouldBeAbleToPlugInCustomDecoder() {
+        final StubDecoder decoder = new StubDecoder();
+        final IterableCodec iterableCodecForSet = new IterableCodec(codecs, new HashSetFactory(), decoder);
+
+        final Iterable<Integer> expectedSet = new HashSet<Integer>(asList(1));
+        final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedSet);
+
+        iterableCodecForSet.decode(reader);
+
+        assertThat(decoder.timesCalled, is(1));
+    }
+
+    private static final class StubDecoder implements Decoder<Object> {
+        private int timesCalled;
+
+        @Override
+        public Object decode(final BSONReader reader) {
+            timesCalled++;
+            return reader.readInt32();
+        }
+    }
 }

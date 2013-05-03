@@ -17,7 +17,6 @@
 package org.mongodb.acceptancetest.crud.pojo;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
@@ -32,8 +31,6 @@ import java.util.List;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-@Ignore("Rather oddly, this passes in IntelliJ but not on the command line.")
-//TODO:might be our old friend jacoco
 public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
     private static final String COLLECTION_NAME = "PojoCollectionName";
     private MongoCollection<Person> pojoCollection;
@@ -42,7 +39,8 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
     public void setUp() {
         pojoCollection = Fixture.getMongoClient()
                                 .getDatabase(getDatabaseName())
-                                .getCollection(COLLECTION_NAME, new PojoCodec<Person>(Codecs.createDefault()));
+                                .getCollection(COLLECTION_NAME,
+                                               new PojoCodec<Person>(Codecs.createDefault(), Person.class));
         pojoCollection.tools().drop();
     }
 
@@ -52,6 +50,32 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
         pojoCollection.insert(person);
 
         assertInsertedIntoDatabase(person);
+    }
+
+    @Test
+    public void shouldInsertASimplePojoIntoDatabaseAndRetrieveAsPojo() {
+        final Person person = new Person("Ian", "Brown");
+        pojoCollection.insert(person);
+
+        final Person result = pojoCollection.filter(new Document("firstName", person.getFirstName())
+                                                    .append("lastName", person.getLastName())).one();
+        assertThat(result, is(person));
+    }
+
+    @Test
+    public void shouldCorrectlyInsertAndRetrievePojosContainingOtherPojos() {
+        MongoCollection<Address> addresses = Fixture.getMongoClient()
+                                .getDatabase(getDatabaseName())
+                                .getCollection("addresses",
+                                               new PojoCodec<Address>(Codecs.createDefault(), Address.class));
+        addresses.tools().drop();
+
+        final Address address = new Address("Address Line 1", "Town", new Postcode("W12"));
+
+        addresses.insert(address);
+
+        final Address result = addresses.one();
+        assertThat(result, is(address));
     }
 
     private void assertInsertedIntoDatabase(final Person person) {

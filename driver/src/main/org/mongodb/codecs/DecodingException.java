@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.codecs;
 
-import org.bson.BSONReader;
+import org.mongodb.MongoClientException;
 
-public interface Decoder<T> {
-    //how do we feel about passing an object into this, representing the object to decode into?
-    <E> T decode(BSONReader reader);
+class DecodingException extends MongoClientException {
+    private static final long serialVersionUID = 6553109430875671302L;
+
+    public DecodingException(final String message, final Exception t) {
+        super(message, t);
+    }
+
+    public DecodingException(final String message) {
+        super(message);
+    }
 }

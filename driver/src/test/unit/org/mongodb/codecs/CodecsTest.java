@@ -16,13 +16,26 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BSONBinaryReader;
 import org.bson.BSONWriter;
+import org.bson.types.CodeWithScope;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mongodb.DBRef;
+import org.mongodb.Document;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
+import static org.mongodb.codecs.CodecTestUtil.prepareReaderWithObjectToBeDecoded;
 
 public class CodecsTest {
     //CHECKSTYLE:OFF
@@ -31,31 +44,120 @@ public class CodecsTest {
     //CHECKSTYLE:ON
 
     private BSONWriter bsonWriter;
+
     private Codecs codecs;
-    private PrimitiveCodecs primitiveCodecs;
 
     @Before
     public void setUp() {
         context.setImposteriser(ClassImposteriser.INSTANCE);
         bsonWriter = context.mock(BSONWriter.class);
-        primitiveCodecs = context.mock(PrimitiveCodecs.class);
 
-        codecs = Codecs.builder().primitiveCodecs(primitiveCodecs)
-                                 .build();
+        codecs = Codecs.builder().primitiveCodecs(PrimitiveCodecs.createDefault())
+                       .build();
     }
 
     @Test
-    public void shouldDelegateEncodingOfPrimitiveTypes() {
-        final String stringToEncode = "A String";
+    public void shouldEncodeCodeWithScopeAsJavaScriptFollowedByDocumentOfScopeWhenPassedInAsObject() {
+        final String javascriptCode = "<javascript code>";
+        final Object codeWithScope = new CodeWithScope(javascriptCode, new Document("the", "scope"));
         context.checking(new Expectations() {{
-            //TODO: kinda pointless?
-            oneOf(primitiveCodecs).canEncode(String.class);
-            will(returnValue(true));
-
-            oneOf(primitiveCodecs).encode(bsonWriter, stringToEncode);
+            oneOf(bsonWriter).writeJavaScriptWithScope(javascriptCode);
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeName("the");
+            oneOf(bsonWriter).writeString("scope");
+            oneOf(bsonWriter).writeEndDocument();
         }});
 
-        codecs.encode(bsonWriter, stringToEncode);
+        codecs.encode(bsonWriter, codeWithScope);
+    }
+
+    @Test
+    public void shouldDecodeCodeWithScope() throws Exception {
+        final String javascriptCode = "{javascript code}";
+        final Document theScope = new Document("the", "scope");
+
+        final CodeWithScope codeWithScope = new CodeWithScope(javascriptCode, theScope);
+        final BSONBinaryReader reader = prepareReaderWithObjectToBeDecoded(codeWithScope);
+
+        final Object actualCodeWithScope = codecs.decode(reader);
+
+        final CodeWithScope expectedCodeWithScope = new CodeWithScope(javascriptCode, theScope);
+        assertThat((CodeWithScope) actualCodeWithScope, is(expectedCodeWithScope));
+    }
+
+    @Test
+    public void shouldEncodeDbRefWhenDisguisedAsAnObject() {
+        final String namespace = "theNamespace";
+        final String theId = "TheId";
+        final Object dbRef = new DBRef(theId, namespace);
+        context.checking(new Expectations() {{
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeString("$ref", namespace);
+            oneOf(bsonWriter).writeName("$id");
+            oneOf(bsonWriter).writeString(theId);
+            oneOf(bsonWriter).writeEndDocument();
+        }});
+
+        codecs.encode(bsonWriter, dbRef);
+    }
+
+    @Test
+    public void shouldEncodeNull() {
+        context.checking(new Expectations() {{
+            oneOf(bsonWriter).writeNull();
+        }});
+        codecs.encode(bsonWriter, (Object) null);
+    }
+
+    @Test
+    public void shouldBeAbleToEncodeMap() {
+        assertThat(codecs.canEncode(new HashMap<String, Object>()), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToEncodeArray() {
+        assertThat(codecs.canEncode(new String[]{}), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToEncodeList() {
+        assertThat(codecs.canEncode(new ArrayList<String>()), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToEncodePrimitive() {
+        assertThat(codecs.canEncode(1), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToEncodeCodeWithScope() {
+        assertThat(codecs.canEncode(new CodeWithScope(null, null)), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToEncodeDBRef() {
+        assertThat(codecs.canEncode(new DBRef(null, null)), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToEncodeNull() {
+        assertThat(codecs.canEncode(null), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeMap() {
+        assertThat(codecs.canDecode(Map.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeHashMap() {
+        assertThat(codecs.canDecode(HashMap.class), is(true));
+    }
+
+    @Test
+    @Ignore("not implemented yet")
+    public void shouldBeAbleToDecodePrimitive() {
+        assertThat(codecs.canDecode(int.class), is(true));
     }
 
 }

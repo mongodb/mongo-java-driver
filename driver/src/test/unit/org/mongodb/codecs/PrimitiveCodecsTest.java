@@ -54,7 +54,6 @@ public class PrimitiveCodecsTest {
 
     @Test
     public void shouldBeAbleToEncodeInteger() {
-        System.out.println(Integer.class);
         assertThat(primitiveCodecs.canEncode(Integer.class), is(true));
     }
 
@@ -131,6 +130,97 @@ public class PrimitiveCodecsTest {
     @Test
     public void shouldBeAbleToEncodeByteArray() {
         assertThat(primitiveCodecs.canEncode(byte[].class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeString() {
+        assertThat(primitiveCodecs.canDecode(String.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeObjectId() {
+        assertThat(primitiveCodecs.canDecode(ObjectId.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeInteger() {
+        assertThat(primitiveCodecs.canDecode(Integer.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeLong() {
+        assertThat(primitiveCodecs.canDecode(Long.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeDouble() {
+        assertThat(primitiveCodecs.canDecode(Double.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeDate() {
+        assertThat(primitiveCodecs.canDecode(Date.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeTimestamp() {
+        assertThat(primitiveCodecs.canDecode(BSONTimestamp.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeBoolean() {
+        assertThat(primitiveCodecs.canDecode(Boolean.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodePattern() {
+        assertThat(primitiveCodecs.canDecode(Pattern.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeMinKey() {
+        assertThat(primitiveCodecs.canDecode(MinKey.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeMaxKey() {
+        assertThat(primitiveCodecs.canDecode(MaxKey.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeCode() {
+        assertThat(primitiveCodecs.canDecode(Code.class), is(true));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeNull() {
+        assertThat(primitiveCodecs.canDecode(null), is(true));
+    }
+
+    //these are classes that have encoders but not decoders, not symmetrical
+    @Test
+    public void shouldNotBeAbleToDecodeByteArray() {
+        assertThat(primitiveCodecs.canDecode(byte[].class), is(false));
+    }
+
+    @Test
+    public void shouldNotBeAbleToDecodeShort() {
+        assertThat(primitiveCodecs.canDecode(Short.class), is(false));
+    }
+
+    @Test
+    public void shouldNotBeAbleToDecodeBinary() {
+        assertThat(primitiveCodecs.canDecode(Binary.class), is(false));
+    }
+
+    @Test
+    public void shouldNotBeAbleToDecodeFloat() {
+        assertThat(primitiveCodecs.canDecode(Float.class), is(false));
+    }
+
+    @Test
+    public void shouldNotBeAbleToDecodeByte() {
+        assertThat(primitiveCodecs.canDecode(Byte.class), is(false));
     }
 
     @Test

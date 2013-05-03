@@ -31,7 +31,7 @@ public class NoCodec implements Codec<Object> {
     @Override
     public Object decode(final BSONReader reader) {
         LOGGER.log(Level.WARNING, "NoOpCodec used to decode an Object.  This should not be registered for decoding.");
-        return null;
+        throw new DecodingException("NoOpCodec used to decode an Object.  This should not be registered for decoding.");
     }
 
     @Override

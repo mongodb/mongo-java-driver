@@ -19,6 +19,7 @@ package org.mongodb.codecs;
 import org.bson.BSONWriter;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
+import org.jmock.lib.concurrent.Synchroniser;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -32,7 +33,7 @@ import java.util.Map;
 
 import static org.junit.Assert.fail;
 
-public class PojoCodecTest {
+public class PojoCodecEncodingTest {
     //CHECKSTYLE:OFF
     @Rule
     public JUnitRuleMockery context = new JUnitRuleMockery();
@@ -45,8 +46,9 @@ public class PojoCodecTest {
     @Before
     public void setUp() {
         context.setImposteriser(ClassImposteriser.INSTANCE);
+        context.setThreadingPolicy(new Synchroniser());
         bsonWriter = context.mock(BSONWriter.class);
-        pojoCodec = new PojoCodec<Object>(codecs);
+        pojoCodec = new PojoCodec<Object>(codecs, null);
     }
 
     @Test
@@ -59,8 +61,6 @@ public class PojoCodecTest {
             oneOf(bsonWriter).writeEndDocument();
 
         }});
-        ignoreJacocoInvocations(bsonWriter);
-
         pojoCodec.encode(bsonWriter, new SimpleObject(valueInSimpleObject));
     }
 
@@ -76,8 +76,6 @@ public class PojoCodecTest {
             exactly(2).of(bsonWriter).writeEndDocument();
 
         }});
-        ignoreJacocoInvocations(bsonWriter);
-
         pojoCodec.encode(bsonWriter, new NestedObject(new SimpleObject(anotherName)));
     }
 
@@ -94,8 +92,6 @@ public class PojoCodecTest {
             exactly(2).of(bsonWriter).writeEndDocument();
 
         }});
-        ignoreJacocoInvocations(bsonWriter);
-
         pojoCodec.encode(bsonWriter, new NestedObjectWithFields(98, new SimpleObject("AnotherName")));
     }
 
@@ -129,8 +125,6 @@ public class PojoCodecTest {
             oneOf(bsonWriter).writeEndDocument();
 
         }});
-        ignoreJacocoInvocations(bsonWriter);
-
         pojoCodec.encode(bsonWriter, new ObjectWithArray());
     }
 
@@ -147,7 +141,6 @@ public class PojoCodecTest {
             exactly(2).of(bsonWriter).writeEndDocument();
 
         }});
-        ignoreJacocoInvocations(bsonWriter);
         pojoCodec.encode(bsonWriter, new ObjectWithMapOfStrings());
     }
 
@@ -165,8 +158,6 @@ public class PojoCodecTest {
             exactly(3).of(bsonWriter).writeEndDocument();
 
         }});
-        ignoreJacocoInvocations(bsonWriter);
-
         pojoCodec.encode(bsonWriter, new ObjectWithMapOfObjects(simpleObjectValue));
     }
 
@@ -183,10 +174,27 @@ public class PojoCodecTest {
             exactly(3).of(bsonWriter).writeEndDocument();
 
         }});
-        ignoreJacocoInvocations(bsonWriter);
-
         pojoCodec.encode(bsonWriter, new ObjectWithMapOfMaps());
     }
+
+    @Test
+    public void shouldNotEncodeSpecialFieldsLikeJacocoData() {
+        final JacocoDecoratedObject jacocoDecoratedObject = new JacocoDecoratedObject("thisName");
+        context.checking(new Expectations() {{
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeEndDocument();
+
+        }});
+
+        pojoCodec.encode(bsonWriter, jacocoDecoratedObject);
+    }
+
+    @Test
+    @Ignore("not implemented")
+    public void shouldHandleTransient() {
+        fail("Not implemented");
+    }
+
 
     @Test
     @Ignore("not implemented")
@@ -200,12 +208,21 @@ public class PojoCodecTest {
         fail("Not implemented");
     }
 
-    private void ignoreJacocoInvocations(final BSONWriter writer) {
-        //URGH
-        context.checking(new Expectations() {{
-            ignoring(writer);
-        }});
+    @Test
+    @Ignore("not implemented")
+    public void shouldEncodeEnumsAsStrings() {
+        fail("Not implemented");
     }
+
+    //CHECKSTYLE:OFF
+    private static class JacocoDecoratedObject {
+        private final String $name;
+
+        public JacocoDecoratedObject(final String name) {
+            this.$name = name;
+        }
+    }
+    //CHECKSTYLE:ON
 
     private static class SimpleObject {
         private final String name;
@@ -239,6 +256,7 @@ public class PojoCodecTest {
 
     private static final class ObjectWithMapOfStrings {
         private final Map<String, String> theMap = new HashMap<String, String>();
+
         {
             theMap.put("first", "the first value");
             theMap.put("second", "the second value");
@@ -253,7 +271,7 @@ public class PojoCodecTest {
         }
     }
 
-    private static final class ObjectWithMapOfMaps{
+    private static final class ObjectWithMapOfMaps {
         private final Map<String, Map<String, String>> theMap = new HashMap<String, Map<String, String>>();
 
         private ObjectWithMapOfMaps() {

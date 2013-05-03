@@ -44,6 +44,10 @@ public class MapCodec implements ComplexTypeEncoder<Map<String, ?>> {
         bsonWriter.writeEndDocument();
     }
 
+    public Class<Map> getEncoderClass() {
+        return Map.class;
+    }
+
     private void validateFieldName(final String fieldName) {
         validator.validate(fieldName);
     }

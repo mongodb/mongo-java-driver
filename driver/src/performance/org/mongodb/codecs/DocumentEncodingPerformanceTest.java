@@ -16,6 +16,10 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BSONBinaryWriter;
+import org.bson.BSONBinaryWriterSettings;
+import org.bson.BSONWriterSettings;
+import org.bson.io.BasicOutputBuffer;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
@@ -29,7 +33,7 @@ import static org.mongodb.codecs.PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECON
 import static org.mongodb.codecs.PerfTestUtils.calculateOperationsPerSecond;
 import static org.mongodb.codecs.PerfTestUtils.testCleanup;
 
-public class DocumentCodecPerformanceTest {
+public class DocumentEncodingPerformanceTest {
     private static final int NUMBER_OF_TIMES_FOR_WARMUP = 10000;
     private static final int NUMBER_OF_TIMES_TO_RUN = 100000000;
     private DocumentCodec documentCodec;
@@ -39,6 +43,16 @@ public class DocumentCodecPerformanceTest {
     public void setUp() throws Exception {
         documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
         bsonWriter = new StubBSONWriter();
+    }
+
+    @Test
+    public void gatherTestData() throws Exception {
+        BasicOutputBuffer buffer = new BasicOutputBuffer();
+        BSONBinaryWriter writer = new BSONBinaryWriter(new BSONWriterSettings(100),
+                                                       new BSONBinaryWriterSettings(1024 * 1024), buffer);
+
+        final Document document = new Document();
+            documentCodec.encode(writer, document);
     }
 
     @Test
@@ -61,6 +75,7 @@ public class DocumentCodecPerformanceTest {
     public void outputPerformanceForADocumentWithASingleIntField() throws Exception {
         //13,106,251 ops per second
         //for a single, primitive (int) field.  An order of magnitude slower than an empty doc
+        //33,437,167 ops per second when encoding goes straight to Codecs.  3x is not bad
         final Document document = new Document("anIntValue", 34);
         encodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, document);
 
@@ -78,6 +93,7 @@ public class DocumentCodecPerformanceTest {
     public void outputPerformanceForADocumentWithASingleStringField() throws Exception {
         //12,617,895 ops per second
         //for a single, String field.  An order of magnitude slower than an empty doc
+        //32,443,547 ops per second when encoding delegated to codecs
         final Document document = new Document("aString", "theValue");
         encodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, document);
 
@@ -93,9 +109,9 @@ public class DocumentCodecPerformanceTest {
 
     @Test
     public void outputPerformanceForIntArray() throws Exception {
-        //1,500,839 ops per second
-        //An order of magnitude slower than a primitive field
+        //1,500,839 ops per second, An order of magnitude slower than a primitive field
         //11,009,021 ops per second when you use the ArraysCodec
+        //32,075,750 ops per second when you delegate directly to codecs with no instanceof
         final Document document = new Document();
         document.append("theArray", new int[]{1, 2, 3});
 
@@ -115,6 +131,7 @@ public class DocumentCodecPerformanceTest {
     public void outputPerformanceForListOfPrimitives() throws Exception {
         //3,945,723 ops per second original version.  Ouch.  Only marginally better than a primitive array
         //6,375,324 ops per second when you use the IterableCodec.  Not a massive improvement
+        //7,700,641 ops per second when all encoding is delegated to Codecs.
         final Document document = new Document();
         document.append("theArray", Arrays.asList(1, 2, 3));
 
@@ -134,8 +151,7 @@ public class DocumentCodecPerformanceTest {
     public void outputPerformanceForSimpleMap() throws Exception {
         //7,789,176 ops per second initially - not much slower than a single primitive
         //10,171,206 ops per second when you use the MapsCodec - not much in it
-        //and probably because I've removed a load of validation
-        //actually I'm getting 12,597,417 ops per second after I've added validation
+        //10,186,710 ops per second with direct to Codecs encoding
         final Document document = new Document();
         final Map<String, String> map = new HashMap<String, String>();
         map.put("field1", "field 1 value");
