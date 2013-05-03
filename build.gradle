@@ -92,15 +92,6 @@ subprojects {
             systemProperty 'javax.net.ssl.trustStore', project.property('ssl.trustStore')
             systemProperty 'javax.net.ssl.trustStorePassword', project.property('ssl.trustStorePassword')
         }
-        useJUnit(){
-            if (!JavaVersion.current().isJava7Compatible()
-                    || (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean())) {
-                excludeCategories 'category.Async'
-            }
-            if (project.hasProperty('rs.enabled') && !project.property('rs.enabled').toBoolean()) {
-                excludeCategories 'category.ReplicaSet'
-            }
-        }
         jacoco { enabled = false }
     }
 
@@ -308,6 +299,15 @@ project(':driver') {
     task functionalTest(type: Test, dependsOn: unitTest) {
         testClassesDir = sourceSets.functional.output.classesDir
         classpath = sourceSets.functional.runtimeClasspath
+        useJUnit(){
+            if (!JavaVersion.current().isJava7Compatible()
+                    || (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean())) {
+             excludeCategories 'category.Async'
+            }
+            if (project.hasProperty('rs.enabled') && !project.property('rs.enabled').toBoolean()) {
+                excludeCategories 'category.ReplicaSet'
+            }
+        }
     }
 
     task acceptanceTest(type: Test, dependsOn: functionalTest) {
@@ -349,6 +349,18 @@ project(':driver-compat') {
         baseline 'org.mongodb:mongo-java-driver:2.11.0'
         failOnBinError = false
         failOnSrcError = false
+    }
+
+    test {
+        useJUnit(){
+            if (!JavaVersion.current().isJava7Compatible()
+                    || (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean())) {
+                excludeCategories 'category.Async'
+            }
+            if (project.hasProperty('rs.enabled') && !project.property('rs.enabled').toBoolean()) {
+                excludeCategories 'category.ReplicaSet'
+            }
+        }
     }
 
     jar {
