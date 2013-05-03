@@ -421,7 +421,7 @@ project(':driver-compat') {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    distributionUrl = 'https://s3.amazonaws.com/trnl/gradle-1.6.zip'
+    gradleVersion = "1.6-rc-1"
 }
 
 gradle.buildFinished { BuildResult result ->
