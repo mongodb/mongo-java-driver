@@ -17,13 +17,12 @@
 
 package org.mongodb;
 
+import category.Async;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.async.AsyncBlock;
 import org.mongodb.async.SingleResultCallback;
-import category.Async;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +60,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     @Test
     public void testCountCallback() throws InterruptedException {
         final List<Long> actual = new ArrayList<Long>();
-        collection.asyncCount(new SingleResultCallback<Long>() {
+        collection.asyncCount().register(new SingleResultCallback<Long>() {
             @Override
             public void onResult(final Long result, final MongoException e) {
                 actual.add(result);
@@ -80,12 +79,10 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     }
 
     @Test
-    @Ignore("False positive - this passes but it's actually throwing an error on the callback code")
-    // TODO: investigate
     public void testOneCallback() throws ExecutionException, InterruptedException {
         final List<Document> documentResultList = new ArrayList<Document>();
         final List<Exception> exceptionList = new ArrayList<Exception>();
-        collection.filter(new Document("_id", 11)).asyncOne(new SingleResultCallback<Document>() {
+        collection.filter(new Document("_id", 11)).asyncOne().register(new SingleResultCallback<Document>() {
             @Override
             public void onResult(final Document result, final MongoException e) {
                 documentResultList.add(result);
@@ -142,13 +139,12 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     @Test
     public void testIntoCallback() throws ExecutionException, InterruptedException {
         List<Document> results = new ArrayList<Document>();
-        collection.sort(new Document("_id", 1))
-                .asyncInto(results, new SingleResultCallback<List<Document>>() {
-                    @Override
-                    public void onResult(final List<Document> result, final MongoException e) {
-                        latch.countDown();
-                    }
-                });
+        collection.sort(new Document("_id", 1)).asyncInto(results).register(new SingleResultCallback<List<Document>>() {
+            @Override
+            public void onResult(final List<Document> result, final MongoException e) {
+                latch.countDown();
+            }
+        });
 
         latch.await();
         assertThat(results, is(documentList));

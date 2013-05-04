@@ -17,7 +17,7 @@
 
 package org.mongodb.async;
 
-import java.util.concurrent.Future;
+import org.mongodb.MongoFuture;
 
 /**
  * Interface describing the asynchronous read operations.
@@ -26,11 +26,7 @@ import java.util.concurrent.Future;
  */
 public interface MongoAsyncReadableStream<T> {
 
-    Future<T> asyncOne();
+    MongoFuture<T> asyncOne();
 
-    void asyncOne(SingleResultCallback<T> callback);
-
-    Future<Long> asyncCount();
-
-    void asyncCount(SingleResultCallback<Long> callback);
+    MongoFuture<Long> asyncCount();
 }

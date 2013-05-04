@@ -34,10 +34,10 @@ public class NativeAuthenticator extends Authenticator {
     public CommandResult authenticate() {
         CommandResult nonceResponse = getConnector().command(getCredential().getSource(),
                 new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
-                        new DocumentCodec(PrimitiveCodecs.createDefault()));
+                new DocumentCodec(PrimitiveCodecs.createDefault()));
         return getConnector().command(getCredential().getSource(),
                 new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
-                    getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
+                        getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
                 new DocumentCodec(PrimitiveCodecs.createDefault()));
     }
 
@@ -45,7 +45,7 @@ public class NativeAuthenticator extends Authenticator {
     public void asyncAuthenticate(final SingleResultCallback<CommandResult> callback) {
         getConnector().asyncCommand(getCredential().getSource(),
                 new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), new SingleResultCallback<CommandResult>() {
+                new DocumentCodec(PrimitiveCodecs.createDefault())).register(new SingleResultCallback<CommandResult>() {
             @Override
             public void onResult(final CommandResult result, final MongoException e) {
                 if (e != null) {
@@ -55,7 +55,7 @@ public class NativeAuthenticator extends Authenticator {
                     getConnector().asyncCommand(getCredential().getSource(),
                             new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                                     getCredential().getPassword(), (String) result.getResponse().get("nonce"))),
-                            new DocumentCodec(PrimitiveCodecs.createDefault()), new SingleResultCallback<CommandResult>() {
+                            new DocumentCodec(PrimitiveCodecs.createDefault())).register(new SingleResultCallback<CommandResult>() {
                         @Override
                         public void onResult(final CommandResult result, final MongoException e) {
                             callback.onResult(result, e);

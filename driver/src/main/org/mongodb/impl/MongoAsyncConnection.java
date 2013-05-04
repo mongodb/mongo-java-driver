@@ -24,6 +24,7 @@ import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.MongoNamespace;
@@ -66,7 +67,6 @@ import org.mongodb.result.WriteResult;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public class MongoAsyncConnection implements MongoConnection {
     private final ServerAddress serverAddress;
@@ -271,137 +271,96 @@ public class MongoAsyncConnection implements MongoConnection {
     }
 
     @Override
-    public Future<CommandResult> asyncCommand(final String database, final MongoCommand commandOperation,
-                                              final Codec<Document> codec) {
+    public MongoFuture<CommandResult> asyncCommand(final String database, final MongoCommand commandOperation,
+                                                   final Codec<Document> codec) {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
-        asyncCommand(database, commandOperation, codec, new SingleResultFutureCallback<CommandResult>(retVal));
-
-        return retVal;
-    }
-
-    @Override
-    public void asyncCommand(final String database, final MongoCommand commandOperation, final Codec<Document> codec,
-                             final SingleResultCallback<CommandResult> callback) {
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
         final MongoCommandMessage message = new MongoCommandMessage(database + ".$cmd", commandOperation,
                 withDocumentEncoder(codec));
         encodeMessageToBuffer(message, buffer);
-        channel.sendAndReceiveMessage(buffer, new MongoCommandResultCallback(callback, commandOperation, withDocumentCodec(codec)));
-    }
-
-    @Override
-    public <T> Future<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
-                                                 final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
-        final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-
-        asyncQuery(namespace, find, queryEncoder, resultDecoder, new SingleResultFutureCallback<QueryResult<T>>(retVal));
+        channel.sendAndReceiveMessage(buffer, new MongoCommandResultCallback(new SingleResultFutureCallback<CommandResult>(retVal),
+                commandOperation, withDocumentCodec(codec)));
 
         return retVal;
     }
 
     @Override
-    public <T> void asyncQuery(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
-                               final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
+    public <T> MongoFuture<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
+                                                      final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
+        final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
+
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
         final MongoQueryMessage message = new MongoQueryMessage(namespace.getFullName(), find, withDocumentEncoder(queryEncoder));
         encodeMessageToBuffer(message, buffer);
-        channel.sendAndReceiveMessage(buffer, new MongoQueryResultCallback<T>(callback, resultDecoder));
-    }
-
-    @Override
-    public <T> Future<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
-                                                   final Decoder<T> resultDecoder) {
-        final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-
-        asyncGetMore(namespace, getMore, resultDecoder, new SingleResultFutureCallback<QueryResult<T>>(retVal));
+        channel.sendAndReceiveMessage(buffer, new MongoQueryResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
+                resultDecoder));
 
         return retVal;
     }
 
     @Override
-    public <T> void asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore, final Decoder<T> resultDecoder,
-                                 final SingleResultCallback<QueryResult<T>> callback) {
+    public <T> MongoFuture<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
+                                                        final Decoder<T> resultDecoder) {
+        final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
+
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
         final MongoGetMoreMessage message = new MongoGetMoreMessage(namespace.getFullName(), getMore);
         encodeMessageToBuffer(message, buffer);
-        channel.sendAndReceiveMessage(buffer, new MongoGetMoreResultCallback<T>(callback, resultDecoder,
-                getMore.getServerCursor().getId()));
-    }
-
-    @Override
-    public <T> Future<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                               final Encoder<T> encoder) {
-        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
-
-        asyncInsert(namespace, insert, encoder, new SingleResultFutureCallback<WriteResult>(retVal));
+        channel.sendAndReceiveMessage(buffer, new MongoGetMoreResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
+                resultDecoder, getMore.getServerCursor().getId()));
 
         return retVal;
     }
 
     @Override
-    public <T> void asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert, final Encoder<T> encoder,
-                                final SingleResultCallback<WriteResult> callback) {
+    public <T> MongoFuture<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
+                                                    final Encoder<T> encoder) {
+        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
+
         insert.writeConcernIfAbsent(options.getWriteConcern());
         final MongoInsertMessage<T> message = new MongoInsertMessage<T>(namespace.getFullName(), insert, encoder);
-        sendAsyncWriteMessage(namespace, insert, withDocumentEncoder(null), callback, message);
-    }
-
-    @Override
-    public Future<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
-                                           final Encoder<Document> queryEncoder) {
-        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
-
-        asyncUpdate(namespace, update, queryEncoder, new SingleResultFutureCallback<WriteResult>(retVal));
+        sendAsyncWriteMessage(namespace, insert, withDocumentEncoder(null), new SingleResultFutureCallback<WriteResult>(retVal), message);
 
         return retVal;
     }
 
     @Override
-    public void asyncUpdate(final MongoNamespace namespace, final MongoUpdate replace, final Encoder<Document> queryEncoder,
-                            final SingleResultCallback<WriteResult> callback) {
-        replace.writeConcernIfAbsent(options.getWriteConcern());
-        final MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), replace, withDocumentEncoder(queryEncoder));
-        sendAsyncWriteMessage(namespace, replace, queryEncoder, callback, message);
-    }
-
-    @Override
-    public <T> Future<WriteResult> asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                                final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
+    public MongoFuture<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
+                                                final Encoder<Document> queryEncoder) {
         final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-        asyncReplace(namespace, replace, queryEncoder, encoder, new SingleResultFutureCallback<WriteResult>(retVal));
+        update.writeConcernIfAbsent(options.getWriteConcern());
+        final MongoUpdateMessage message = new MongoUpdateMessage(namespace.getFullName(), update, withDocumentEncoder(queryEncoder));
+        sendAsyncWriteMessage(namespace, update, queryEncoder, new SingleResultFutureCallback<WriteResult>(retVal), message);
 
         return retVal;
     }
 
     @Override
-    public <T> void asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                 final Encoder<Document> queryEncoder, final Encoder<T> encoder,
-                                 final SingleResultCallback<WriteResult> callback) {
+    public <T> MongoFuture<WriteResult> asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
+                                                     final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
+        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
+
         replace.writeConcernIfAbsent(options.getWriteConcern());
         final MongoReplaceMessage<T> message = new MongoReplaceMessage<T>(namespace.getFullName(), replace,
                 withDocumentEncoder(queryEncoder), encoder);
-        sendAsyncWriteMessage(namespace, replace, queryEncoder, callback, message);
-    }
-
-    @Override
-    public Future<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
-                                           final Encoder<Document> queryEncoder) {
-        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
-
-        asyncRemove(namespace, remove, queryEncoder, new SingleResultFutureCallback<WriteResult>(retVal));
+        sendAsyncWriteMessage(namespace, replace, queryEncoder, new SingleResultFutureCallback<WriteResult>(retVal), message);
 
         return retVal;
     }
 
     @Override
-    public void asyncRemove(final MongoNamespace namespace, final MongoRemove remove, final Encoder<Document> queryEncoder,
-                            final SingleResultCallback<WriteResult> callback) {
+    public MongoFuture<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
+                                                final Encoder<Document> queryEncoder) {
+        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
+
         remove.writeConcernIfAbsent(options.getWriteConcern());
         final MongoDeleteMessage message = new MongoDeleteMessage(namespace.getFullName(), remove, withDocumentEncoder(queryEncoder));
-        sendAsyncWriteMessage(namespace, remove, queryEncoder, callback, message);
+        sendAsyncWriteMessage(namespace, remove, queryEncoder, new SingleResultFutureCallback<WriteResult>(retVal), message);
+
+        return retVal;
     }
 
     private void sendAsyncWriteMessage(final MongoNamespace namespace, final MongoWrite write, final Encoder<Document> encoder,

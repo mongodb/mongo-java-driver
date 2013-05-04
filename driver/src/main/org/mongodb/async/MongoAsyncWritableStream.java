@@ -17,9 +17,8 @@
 
 package org.mongodb.async;
 
+import org.mongodb.MongoFuture;
 import org.mongodb.result.WriteResult;
-
-import java.util.concurrent.Future;
 
 /**
  * Asynchronous write operations.
@@ -29,7 +28,5 @@ import java.util.concurrent.Future;
  * @since 3.0
  */
 public interface MongoAsyncWritableStream<T> {
-    Future<WriteResult> asyncReplaceOrInsert(T replacement);
-
-    void asyncReplaceOrInsert(T replacement, SingleResultCallback<WriteResult> callback);
+    MongoFuture<WriteResult> asyncReplaceOrInsert(T replacement);
 }

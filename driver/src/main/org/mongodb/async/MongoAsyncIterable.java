@@ -17,14 +17,13 @@
 
 package org.mongodb.async;
 
+import org.mongodb.MongoFuture;
+
 import java.util.Collection;
-import java.util.concurrent.Future;
 
 public interface MongoAsyncIterable<T> {
 
     void asyncForEach(AsyncBlock<? super T> block);
 
-    <A extends Collection<? super T>> Future<A> asyncInto(A target);
-
-    <A extends Collection<? super T>> void asyncInto(A target, SingleResultCallback<A> callback);
+    <A extends Collection<? super T>> MongoFuture<A> asyncInto(A target);
 }
