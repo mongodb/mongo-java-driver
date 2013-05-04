@@ -19,6 +19,7 @@ package org.mongodb.impl;
 
 import org.junit.Test;
 import org.mongodb.MongoException;
+import org.mongodb.async.SingleResultCallback;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
@@ -36,12 +37,6 @@ public class SingleResultFutureTest {
     @Test
     public void testInitFailure() {
         SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
-        try {
-            future.init(null, null);
-            fail();
-        } catch (IllegalArgumentException e) {
-            assertFalse(future.isDone());
-        }
 
         try {
             future.init(1, new MongoException("bad"));
@@ -137,5 +132,82 @@ public class SingleResultFutureTest {
             fail();
         } catch (TimeoutException e) {
         }
+    }
+
+    @Test
+    public void testNullTimeUnit() throws InterruptedException, ExecutionException, TimeoutException {
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        try {
+            future.get(1, null);
+            fail();
+        } catch (IllegalArgumentException e) {
+        }
+    }
+
+    @Test
+    public void testNullCallback() throws InterruptedException {
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        try {
+            future.register(null);
+            fail();
+        } catch (IllegalArgumentException e) { // NOPMD
+            // all good
+        }
+    }
+    @Test
+    public void testMultipleCallbacks() throws InterruptedException {
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+
+        future.register(new SingleResultCallback<Integer>() {
+            @Override
+            public void onResult(final Integer result, final MongoException e) {
+            }
+        });
+
+        try {
+            future.register(new SingleResultCallback<Integer>() {
+                @Override
+                public void onResult(final Integer result, final MongoException e) {
+                }
+            });
+            fail();
+        } catch (IllegalStateException e) { // NOPMD
+            // all good
+        }
+    }
+
+
+    @Test
+    public void testCallbackRegisteredAfterInit() throws InterruptedException {
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        future.init(1, null);
+
+        future.register(new SingleResultCallback<Integer>() {
+            @Override
+            public void onResult(final Integer result, final MongoException e) {
+                latch.countDown();
+            }
+        });
+
+        latch.await();
+    }
+
+    @Test
+    public void testCallbackRegisteredBeforeInit() throws InterruptedException {
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        future.register(new SingleResultCallback<Integer>() {
+            @Override
+            public void onResult(final Integer result, final MongoException e) {
+                latch.countDown();
+            }
+        });
+
+        future.init(1, null);
+
+        latch.await();
     }
 }

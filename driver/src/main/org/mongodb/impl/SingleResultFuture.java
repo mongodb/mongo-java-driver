@@ -18,36 +18,42 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.async.SingleResultCallback;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @ThreadSafe
-class SingleResultFuture<T> implements Future<T> {
+class SingleResultFuture<T> implements MongoFuture<T> {
     private T result;
     private MongoException exception;
+    private boolean isDone;
     private boolean isCancelled;
+    private SingleResultCallback<T> callback;
 
     synchronized void init(final T newResult, final MongoException newException) {
-        if (result != null || exception != null) {
-            throw new IllegalArgumentException("can't call init twice");
-        }
 
-        if (newResult == null && newException == null) {
-            throw new IllegalArgumentException("result and exception can't both be null");
+        if (isDone()) {
+            throw new IllegalArgumentException("already done");
         }
 
         if (newResult != null && newException != null) {
             throw new IllegalArgumentException("result and exception can't both not be null");
         }
 
+        this.isDone = true;
         this.result = newResult;
         this.exception = newException;
+
         notifyAll();
+
+        if (callback != null) {
+            callback.onResult(result, exception);
+        }
     }
 
     @Override
@@ -56,7 +62,7 @@ class SingleResultFuture<T> implements Future<T> {
             return false;
         }
         if (!isCancelled) {
-            isCancelled = true;
+            isCancelled = isDone = true;
             notifyAll();
         }
         return true;
@@ -69,7 +75,7 @@ class SingleResultFuture<T> implements Future<T> {
 
     @Override
     public synchronized boolean isDone() {
-        return result != null || exception != null || isCancelled;
+        return isDone;
     }
 
     @Override
@@ -83,6 +89,10 @@ class SingleResultFuture<T> implements Future<T> {
 
     @Override
     public synchronized T get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        if (unit == null) {
+            throw new IllegalArgumentException("Time unit can not be null");
+
+        }
         if (!isDone()) {
             wait(unit.toMillis(timeout));
         }
@@ -99,5 +109,28 @@ class SingleResultFuture<T> implements Future<T> {
             throw new ExecutionException(exception);
         }
         return result;
+    }
+
+    @Override
+    public synchronized void register(final SingleResultCallback<T> newCallback) {
+        if (callback != null) {
+            throw new IllegalStateException("Can not register more than one callback");
+        }
+
+        if (newCallback == null) {
+            throw new IllegalArgumentException("Callback can not be null");
+        }
+
+        callback = newCallback;
+
+        if (!isDone()) {
+            return;
+        }
+
+        if (isCancelled()) {
+            throw new CancellationException();
+        }
+
+        newCallback.onResult(result, exception);
     }
 }
