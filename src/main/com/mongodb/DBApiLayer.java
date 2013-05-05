@@ -104,12 +104,18 @@ public class DBApiLayer extends DB {
         _connector.requestEnsureConnection();
     }
 
-    protected MyCollection doGetCollection( String name ){
+    protected MyCollection doGetCollection( String name){
+    	return doGetCollection(name, false);
+    }
+    protected MyCollection doGetCollection( String name,boolean translateKeys ){
         MyCollection c = _collections.get( name );
         if ( c != null )
             return c;
 
-        c = new MyCollection( name );
+        if (translateKeys)
+        	c = new DBApiTranslatedCollection(this, name );
+        else
+        	c=new MyCollection(name);
         MyCollection old = _collections.putIfAbsent(name, c);
         return old != null ? old : c;
     }
@@ -337,7 +343,7 @@ public class DBApiLayer extends DB {
                 full.put( k , options.get( k ) );
             full.put( "key" , keys );
 
-            DBApiLayer.this.doGetCollection( "system.indexes" ).insert(Arrays.asList(full), false, WriteConcern.SAFE, encoder);
+            DBApiLayer.this.doGetCollection( "system.indexes",false ).insert(Arrays.asList(full), false, WriteConcern.SAFE, encoder);
         }
 
         final String _fullNameSpace;
