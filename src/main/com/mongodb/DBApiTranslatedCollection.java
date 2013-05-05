@@ -19,7 +19,14 @@ public class DBApiTranslatedCollection extends DBApiLayer.MyCollection{
 	public class ObjKeyTranslator{
 
 		public ObjKeyTranslator(String collection) {
-			mKeymapColl = mDbApiLayer.new MyCollection("keymap");
+			mKeymapColl = mDbApiLayer.new MyCollection(collection+".keymap");
+			
+			
+			/**Unique index: we need this to get an exception if we have concurrent access to 
+			 * the collection and 2 clients add new fields.
+			 */
+			mKeymapColl.ensureIndex(new BasicDBObject("shortkey", 1), null, true);
+			
 			DBCursor cursor = mKeymapColl.find();
 			int maxKey=0;
 			while (cursor.hasNext()) {
@@ -56,9 +63,19 @@ public class DBApiTranslatedCollection extends DBApiLayer.MyCollection{
 		private String real2short(String key) {
 			String shortkey = mReal2shortMap.get(key);
 			if (shortkey==null){
-				shortkey=""+mNextIndex;
-				mKeymapColl.insert(BasicDBObjectBuilder.start("_id",key).add("shortkey", shortkey).get());
-				mNextIndex++;
+				while (true) {
+					try {
+						shortkey = "" + mNextIndex;
+						mKeymapColl.insert(BasicDBObjectBuilder
+								.start("_id", key).add("shortkey", shortkey)
+								.get());
+						mNextIndex++;
+						break;
+					} catch (MongoException.DuplicateKey e) {
+						//continue the search for a new shortkey!
+					}
+					mNextIndex++;
+				}
 				mReal2shortMap.put(key, shortkey);
 				mShort2realMap.put(shortkey,key);
 			}

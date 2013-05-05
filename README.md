@@ -1,4 +1,17 @@
 ## MongoDB Java Driver ##
+
+This fork adds experimental support for a new feature: "translated field names". 
+
+Field names can take up a significant amount of disk space (as well as bandwidth) in mongodb. 
+This fork to tries to remedy this by mapping all field names to short ones which are used in
+the collection. The mappings are then stored in a separate collection, only read when the driver first accesses the 
+database. 
+
+The code is very simple: A hasmap is used for the mapping, and each time a new field name is used it gets a numeric alias (e.g. "1","2", "3" etc)
+
+Right now there is no support for field name mappings of map/reduce code, but that might come in later. 
+
+
  * release notes: http://github.com/mongodb/mongo-java-driver/wiki/Release-Notes
  * driver home: http://github.com/mongodb/mongo-java-driver
  * mongodb home: http://www.mongodb.org/
