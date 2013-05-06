@@ -36,9 +36,12 @@ class SingleResultFuture<T> implements MongoFuture<T> {
     private SingleResultCallback<T> callback;
 
     synchronized void init(final T newResult, final MongoException newException) {
+        if (isCancelled()) {
+            return;
+        }
 
         if (isDone()) {
-            throw new IllegalArgumentException("already done");
+            throw new IllegalArgumentException("already initialized");
         }
 
         if (newResult != null && newException != null) {
@@ -62,7 +65,8 @@ class SingleResultFuture<T> implements MongoFuture<T> {
             return false;
         }
         if (!isCancelled) {
-            isCancelled = isDone = true;
+            isCancelled = true;
+            isDone = true;
             notifyAll();
         }
         return true;

@@ -113,9 +113,9 @@ public class SingleResultFutureTest {
                 } catch (CancellationException e) {
                     latch.countDown();
                 } catch (InterruptedException e) { // NOPMD
-
+                    // all good
                 } catch (ExecutionException e) { // NOPMD
-
+                    // all good
                 }
             }
         }).start();
@@ -125,12 +125,25 @@ public class SingleResultFutureTest {
     }
 
     @Test
+    public void testInitAfterCancel() throws ExecutionException, InterruptedException {
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        future.cancel(true);
+        future.init(1, null);
+        try {
+            future.get();
+        } catch (CancellationException e) { // NOPMD
+            // all good
+        }
+    }
+
+    @Test
     public void testGetTimeout() throws InterruptedException, ExecutionException, TimeoutException {
         final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         try {
             future.get(1, TimeUnit.MILLISECONDS);
             fail();
         } catch (TimeoutException e) {
+            // all good
         }
     }
 
@@ -141,6 +154,7 @@ public class SingleResultFutureTest {
             future.get(1, null);
             fail();
         } catch (IllegalArgumentException e) {
+            // all good
         }
     }
 
