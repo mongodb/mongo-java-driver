@@ -129,6 +129,8 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
                     cursor.next();
                     fail();
                 } catch (MongoInterruptedException e) {
+
+                } finally {
                     latch.countDown();
                 }
             }
