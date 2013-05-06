@@ -81,7 +81,7 @@ subprojects {
 
     /* Testing */
     tasks.withType(Test) {
-        maxParallelForks = 16
+        maxParallelForks = 1
         systemProperty 'org.mongodb.test.uri', System.getProperty('org.mongodb.test.uri', null)
         systemProperty 'org.mongodb.useSocket', System.getProperty('org.mongodb.useSocket', "false")
         if (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean()){
@@ -93,6 +93,10 @@ subprojects {
             systemProperty 'javax.net.ssl.trustStorePassword', project.property('ssl.trustStorePassword')
         }
         jacoco { enabled = false }
+
+        beforeTest{ descr ->
+            logger.info("Starting Test ${descr.className} : ${descr.name}")
+        }
     }
 
     gradle.taskGraph.whenReady { taskGraph ->
@@ -304,7 +308,7 @@ project(':driver') {
                     || (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean())) {
              excludeCategories 'category.Async'
             }
-            if (project.hasProperty('rs.enabled') && !project.property('rs.enabled').toBoolean()) {
+            if (!(project.hasProperty('rs.enabled') && project.property('rs.enabled').toBoolean())) {
                 excludeCategories 'category.ReplicaSet'
             }
         }
@@ -357,7 +361,7 @@ project(':driver-compat') {
                     || (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean())) {
                 excludeCategories 'category.Async'
             }
-            if (project.hasProperty('rs.enabled') && !project.property('rs.enabled').toBoolean()) {
+            if (!(project.hasProperty('rs.enabled') && project.property('rs.enabled').toBoolean())) {
                 excludeCategories 'category.ReplicaSet'
             }
         }
