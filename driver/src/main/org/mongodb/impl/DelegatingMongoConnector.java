@@ -53,11 +53,11 @@ class DelegatingMongoConnector implements MongoConnector {
                                  final Codec<Document> codec) {
         MongoConnectionManager connectionManager =
                 binding.getConnectionManagerForRead(commandOperation.getReadPreference());
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.command(database, commandOperation, codec);
+            return connection.command(database, commandOperation, codec);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
@@ -65,11 +65,11 @@ class DelegatingMongoConnector implements MongoConnector {
     public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
                                     final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(find.getReadPreference());
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.query(namespace, find, queryEncoder, resultDecoder);
+            return connection.query(namespace, find, queryEncoder, resultDecoder);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
@@ -78,11 +78,11 @@ class DelegatingMongoConnector implements MongoConnector {
                                       final Decoder<T> resultDecoder) {
         MongoConnectionManager connectionManager =
                 binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.getMore(namespace, getMore, resultDecoder);
+            return connection.getMore(namespace, getMore, resultDecoder);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
@@ -90,11 +90,11 @@ class DelegatingMongoConnector implements MongoConnector {
     public void killCursors(final MongoKillCursor killCursor) {
         for (ServerCursor cursor : killCursor.getServerCursors()) {
             MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(cursor.getAddress());
-            MongoConnection connector = connectionManager.getConnection();
+            MongoConnection connection = connectionManager.getConnection();
             try {
-                connector.killCursors(new MongoKillCursor(cursor));
+                connection.killCursors(new MongoKillCursor(cursor));
             } finally {
-                connectionManager.releaseConnection(connector);
+                connectionManager.releaseConnection(connection);
             }
         }
     }
@@ -102,22 +102,22 @@ class DelegatingMongoConnector implements MongoConnector {
     @Override
     public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert, final Encoder<T> encoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.insert(namespace, insert, encoder);
+            return connection.insert(namespace, insert, encoder);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
     @Override
     public WriteResult update(final MongoNamespace namespace, final MongoUpdate update, final Encoder<Document> queryEncoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.update(namespace, update, queryEncoder);
+            return connection.update(namespace, update, queryEncoder);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
@@ -125,22 +125,22 @@ class DelegatingMongoConnector implements MongoConnector {
     public <T> WriteResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
                                    final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.replace(namespace, replace, queryEncoder, encoder);
+            return connection.replace(namespace, replace, queryEncoder, encoder);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
     @Override
     public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove, final Encoder<Document> queryEncoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.remove(namespace, remove, queryEncoder);
+            return connection.remove(namespace, remove, queryEncoder);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
@@ -148,11 +148,11 @@ class DelegatingMongoConnector implements MongoConnector {
     public MongoFuture<CommandResult> asyncCommand(final String database, final MongoCommand commandOperation,
                                                    final Codec<Document> codec) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(commandOperation.getReadPreference());
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.asyncCommand(database, commandOperation, codec);
+            return connection.asyncCommand(database, commandOperation, codec);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
@@ -160,11 +160,11 @@ class DelegatingMongoConnector implements MongoConnector {
     public <T> MongoFuture<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
                                                       final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(find.getReadPreference());
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.asyncQuery(namespace, find, queryEncoder, resultDecoder);
+            return connection.asyncQuery(namespace, find, queryEncoder, resultDecoder);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
@@ -173,12 +173,12 @@ class DelegatingMongoConnector implements MongoConnector {
                                                         final Decoder<T> resultDecoder) {
         MongoConnectionManager connectionManager =
                 binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-        MongoConnection connector =
+        MongoConnection connection =
                 connectionManager.getConnection();
         try {
-            return connector.asyncGetMore(namespace, getMore, resultDecoder);
+            return connection.asyncGetMore(namespace, getMore, resultDecoder);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
@@ -186,11 +186,11 @@ class DelegatingMongoConnector implements MongoConnector {
     public <T> MongoFuture<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
                                                     final Encoder<T> encoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.asyncInsert(namespace, insert, encoder);
+            return connection.asyncInsert(namespace, insert, encoder);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
@@ -198,11 +198,11 @@ class DelegatingMongoConnector implements MongoConnector {
     public MongoFuture<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
                                                 final Encoder<Document> queryEncoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.asyncUpdate(namespace, update, queryEncoder);
+            return connection.asyncUpdate(namespace, update, queryEncoder);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
@@ -211,11 +211,11 @@ class DelegatingMongoConnector implements MongoConnector {
                                                      final Encoder<Document> queryEncoder,
                                                      final Encoder<T> encoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.asyncReplace(namespace, replace, queryEncoder, encoder);
+            return connection.asyncReplace(namespace, replace, queryEncoder, encoder);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
@@ -223,11 +223,11 @@ class DelegatingMongoConnector implements MongoConnector {
     public MongoFuture<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
                                                 final Encoder<Document> queryEncoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
-        MongoConnection connector = connectionManager.getConnection();
+        MongoConnection connection = connectionManager.getConnection();
         try {
-            return connector.asyncRemove(namespace, remove, queryEncoder);
+            return connection.asyncRemove(namespace, remove, queryEncoder);
         } finally {
-            connectionManager.releaseConnection(connector);
+            connectionManager.releaseConnection(connection);
         }
     }
 
@@ -250,5 +250,4 @@ class DelegatingMongoConnector implements MongoConnector {
     public MongoConnector getSession() {
         return new DelegatingMongoConnector(new MonotonicallyConsistentMongoServerBinding(getServerBinding()));
     }
-
 }
