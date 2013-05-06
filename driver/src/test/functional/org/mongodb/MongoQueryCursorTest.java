@@ -28,12 +28,14 @@ import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.result.CommandResult;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class MongoQueryCursorTest extends DatabaseTestCase {
     private MongoQueryCursor<Document> cursor;
@@ -121,15 +123,15 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), Fixture.getMongoConnector());
 
         final CountDownLatch latch = new CountDownLatch(1);
+        final List<Boolean> success = new ArrayList<Boolean>();
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     cursor.next();
                     cursor.next();
-                    fail();
                 } catch (MongoInterruptedException e) {
-
+                    success.add(true);
                 } finally {
                     latch.countDown();
                 }
@@ -139,6 +141,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         Thread.sleep(1000);  // Note: this is racy, as where the interrupted exception is actually thrown from depends on timing.
         t.interrupt();
         latch.await();
+        assertFalse(success.isEmpty());
     }
 
     @Test

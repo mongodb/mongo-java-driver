@@ -20,6 +20,7 @@ package org.mongodb.io;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoInterruptedException;
 import org.mongodb.ServerAddress;
 import org.mongodb.protocol.MongoReplyHeader;
 
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedByInterruptException;
 
 import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
@@ -95,8 +97,8 @@ public abstract class MongoGateway {
         if (e instanceof SocketTimeoutException) {
             throw new MongoSocketReadTimeoutException("Exception receiving message", address, (SocketTimeoutException) e);
         }
-        else if (e instanceof InterruptedIOException) {
-            throw new MongoSocketInterruptedReadException("Exception receiving message", address, (InterruptedIOException) e);
+        else if (e instanceof InterruptedIOException || e instanceof ClosedByInterruptException) {
+            throw new MongoInterruptedException("Exception receiving message", e);
         }
         else {
             throw new MongoSocketReadException("Exception receiving message", address, e);
