@@ -767,10 +767,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                 newCallback.onResult(null, e);
                             }
                             else if (queryResult.getResults().isEmpty()) {
-                                newCallback.onResult(null, e);
+                                newCallback.onResult(null, null);
                             }
                             else {
-                                newCallback.onResult(queryResult.getResults().get(0), e);
+                                newCallback.onResult(queryResult.getResults().get(0), null);
                             }
                         }
                     });
