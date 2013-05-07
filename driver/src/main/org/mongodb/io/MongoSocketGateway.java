@@ -81,6 +81,7 @@ class MongoSocketGateway extends MongoGateway {
             if (socket != null) {
                 socket.close();
                 socket = null;
+                super.close();
             }
         } catch (IOException e) { // NOPMD
             // ignoreBSON

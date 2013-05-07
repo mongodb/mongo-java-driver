@@ -79,7 +79,9 @@ public abstract class MongoGateway {
         return receiveMessage(start);
     }
 
-    public abstract void close();
+    public void close() {
+        authenticator.reset();
+    }
 
     protected MongoGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool,
                            final CachingAuthenticator authenticator) {

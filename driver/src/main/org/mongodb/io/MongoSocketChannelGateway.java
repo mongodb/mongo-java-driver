@@ -75,6 +75,7 @@ class MongoSocketChannelGateway extends MongoGateway {
             if (socketChannel != null) {
                 socketChannel.close();
                 socketChannel = null;
+                super.close();
             }
         } catch (IOException e) {  //NOPMD
             // ignore

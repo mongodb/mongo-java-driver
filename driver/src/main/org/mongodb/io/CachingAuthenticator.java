@@ -51,14 +51,21 @@ public class CachingAuthenticator {
         }
     }
 
+    public void asyncAuthenticateAll(final SingleResultCallback<Void> callback) {
+        new IteratingAuthenticator(callback).start();
+    }
+
+    /**
+     * Clears the cache of authenticated databases.
+     */
+    public void reset() {
+        authenticatedDatabases.clear();
+    }
+
     private void authenticate(final MongoCredential credential) {
         Authenticator authenticator = createAuthenticator(credential);
         authenticator.authenticate();
         authenticatedDatabases.add(credential.getSource());
-    }
-
-    public void asyncAuthenticateAll(final SingleResultCallback<Void> callback) {
-        new IteratingAuthenticator(callback).start();
     }
 
     // get the difference between the set of credentialed databases and the set of authenticated databases on this connector
