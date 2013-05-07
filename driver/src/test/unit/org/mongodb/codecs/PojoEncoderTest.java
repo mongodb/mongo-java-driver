@@ -39,12 +39,13 @@ import static org.junit.Assert.fail;
 public class PojoEncoderTest {
     //CHECKSTYLE:OFF
     @Rule
-    public JUnitRuleMockery context = new JUnitRuleMockery();
+    public final JUnitRuleMockery context = new JUnitRuleMockery();
     //CHECKSTYLE:ON
 
     private BSONWriter bsonWriter;
+
     private PojoEncoder pojoEncoder;
-    private Codecs codecs = Codecs.createDefault();
+    private final Codecs codecs = Codecs.createDefault();
 
     @Before
     public void setUp() {
@@ -52,8 +53,6 @@ public class PojoEncoderTest {
         context.setThreadingPolicy(new Synchroniser());
         bsonWriter = context.mock(BSONWriter.class);
         pojoEncoder = new PojoEncoder(codecs);
-        //TODO: get rid of this
-        codecs.setDefaultObjectCodec(new PojoCodec(codecs, null));
     }
 
     @Test
@@ -151,6 +150,9 @@ public class PojoEncoderTest {
 
     @Test
     public void shouldEncodeMapsOfObjects() {
+        //TODO: get rid of this - default object codec is a bit of a smell
+        codecs.setDefaultObjectCodec(new PojoCodec<ObjectWithMapOfObjects>(codecs, null));
+
         final String simpleObjectValue = "theValue";
         context.checking(new Expectations() {{
             oneOf(bsonWriter).writeStartDocument();

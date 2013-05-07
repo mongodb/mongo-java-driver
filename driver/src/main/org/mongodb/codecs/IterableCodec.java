@@ -24,10 +24,12 @@ import org.mongodb.Decoder;
 
 import java.util.Collection;
 
+//Can't implement Codec<Iterable<?>> like we want to because getEncoderClass is unimplementable
+@SuppressWarnings("rawtypes")
 public class IterableCodec implements Codec<Iterable> {
     private final CollectionFactory collectionFactory;
-    private Codecs codecs;
-    private Decoder<?> decoder;
+    private final Codecs codecs;
+    private final Decoder<?> decoder;
 
     public IterableCodec(final Codecs codecs) {
         this(codecs, new ArrayListFactory(), codecs);
@@ -42,18 +44,20 @@ public class IterableCodec implements Codec<Iterable> {
     @Override
     public void encode(final BSONWriter bsonWriter, final Iterable iterable) {
         bsonWriter.writeStartArray();
-        for (Object value : iterable) {
+        for (final Object value : iterable) {
             codecs.encode(bsonWriter, value);
         }
         bsonWriter.writeEndArray();
     }
 
+    // The decode has to do an unchecked cast to turn the decoded object into the correct type
+    @SuppressWarnings("unchecked")
     @Override
     public <E> Iterable<E> decode(final BSONReader reader) {
         reader.readStartArray();
         final Collection<E> collection = collectionFactory.createCollection();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            //TODO: This is the only bit that's dangerous, I think
+            // Need to test under which circumstances a ClassCastException might be thrown
             collection.add((E) decoder.decode(reader));
         }
         reader.readEndArray();

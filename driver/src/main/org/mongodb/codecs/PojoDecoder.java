@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class PojoDecoder implements Decoder {
+public class PojoDecoder implements Decoder<Object> {
     private final Codecs codecs;
 
     public PojoDecoder(final Codecs codecs) {
@@ -27,7 +27,7 @@ public class PojoDecoder implements Decoder {
     }
 
     public <T> T decode(final BSONReader reader, final Class<T> theClass) {
-        T pojo;
+        final T pojo;
         try {
             reader.readStartDocument();
             pojo = decodePojo(reader, theClass);
@@ -42,7 +42,7 @@ public class PojoDecoder implements Decoder {
         final T pojo = createInstanceOfClass(theClass);
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             final Field fieldOnPojo = getPojoFieldForNextValue(reader.readName(), theClass);
-            Object decodedValue;
+            final Object decodedValue;
             if (reader.getCurrentBSONType() == BSONType.DOCUMENT && !codecs.canDecode(fieldOnPojo.getType())) {
                 decodedValue = decode(reader, fieldOnPojo.getType());
             } else if (reader.getCurrentBSONType() == BSONType.DOCUMENT) {
@@ -59,15 +59,17 @@ public class PojoDecoder implements Decoder {
         return pojo;
     }
 
-    private Map decodeMap(final BSONReader reader, final Field fieldOnPojo) {
+    // Need to cast into type E when decoding into a collection
+    @SuppressWarnings("unchecked")
+    private <E> Map<String, E> decodeMap(final BSONReader reader, final Field fieldOnPojo) {
         final Type[] actualTypeArguments = ((ParameterizedType) fieldOnPojo.getGenericType()).getActualTypeArguments();
         final Type typeOfItemsInMap = actualTypeArguments[1];
-        final Map map = new HashMap();
+        final Map<String, E> map = new HashMap<String, E>();
 
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
-            final Object value = decode(reader, (Class) typeOfItemsInMap);
+            final E value = (E) decode(reader, (Class) typeOfItemsInMap);
             map.put(fieldName, value);
         }
 
@@ -75,21 +77,22 @@ public class PojoDecoder implements Decoder {
         return map;
     }
 
-    private Iterable decodeIterable(final BSONReader reader, final Field fieldOnPojo) {
+    // Need to cast into type E when decoding into a collection
+    @SuppressWarnings("unchecked")
+    private <E> Iterable<E> decodeIterable(final BSONReader reader, final Field fieldOnPojo) {
+        final Collection<E> collection;
         if (Set.class.isAssignableFrom(fieldOnPojo.getType())) {
-            return decodeCollection(reader, fieldOnPojo, new HashSet());
+            collection = new HashSet<E>();
         } else {
-            return decodeCollection(reader, fieldOnPojo, new ArrayList());
+            collection = new ArrayList<E>();
         }
-    }
 
-    private Collection decodeCollection(final BSONReader reader, final Field fieldOnPojo, final Collection collection) {
         final Type[] actualTypeArguments = ((ParameterizedType) fieldOnPojo.getGenericType()).getActualTypeArguments();
         final Type typeOfItemsInList = actualTypeArguments[0];
 
         reader.readStartArray();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final Object value = decode(reader, (Class) typeOfItemsInList);
+            final E value = (E) decode(reader, (Class) typeOfItemsInList);
             collection.add(value);
         }
 

@@ -103,6 +103,8 @@ public class Codecs implements Codec<Object> {
         return new Builder();
     }
 
+    // needs to be a raw codec to support Pojo codec, but feels a bit wrong to do this
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void setDefaultObjectCodec(final Codec codec) {
         this.defaultObjectCodec = codec;
     }
@@ -133,7 +135,7 @@ public class Codecs implements Codec<Object> {
                || object instanceof DBRef;
     }
 
-    public boolean canDecode(final Class theClass) {
+    public boolean canDecode(final Class<?> theClass) {
         return theClass.getClass().isArray()
                || primitiveCodecs.canDecode(theClass)
                || iterableCodec.getEncoderClass().isInstance(theClass)

@@ -5,7 +5,7 @@ import java.util.Collection;
 
 public class ArrayListFactory implements CollectionFactory {
     @Override
-    public Collection createCollection() {
-        return new ArrayList();
+    public <E> Collection<E> createCollection() {
+        return new ArrayList<E>();
     }
 }
