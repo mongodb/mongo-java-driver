@@ -35,28 +35,27 @@ import static org.junit.Assert.fail;
 public class SingleResultFutureTest {
 
     @Test
-    public void testInitFailure() {
-        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+    public void testInitFailureWhenMongoExceptionThrown() {
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
 
         try {
             future.init(1, new MongoException("bad"));
-            fail();
+            fail("Should have thrown an IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertFalse(future.isDone());
         }
+    }
 
-        try {
-            future.init(1, null);
-            future.init(2, null);
-            fail();
-        } catch (IllegalArgumentException e) { // NOPMD
-            // all good
-        }
+    @Test(expected = IllegalArgumentException.class)
+    public void testInitFailure() {
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        future.init(1, null);
+        future.init(2, null);
     }
 
     @Test
     public void testInitSuccessWithResult() throws ExecutionException, InterruptedException {
-        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         future.init(1, null);
         assertTrue(future.isDone());
         assertEquals(1, (int) future.get());
@@ -64,7 +63,7 @@ public class SingleResultFutureTest {
 
     @Test
     public void testInitSuccessWithException() throws ExecutionException, InterruptedException {
-        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         final MongoException mongoException = new MongoException("bad");
         future.init(null, mongoException);
         try {
@@ -78,10 +77,10 @@ public class SingleResultFutureTest {
 
     @Test
     public void testSuccessfulCancel() throws ExecutionException, InterruptedException {
-        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         assertFalse(future.isDone());
         assertFalse(future.isCancelled());
-        boolean wasCancelled = future.cancel(true);
+        final boolean wasCancelled = future.cancel(true);
         assertTrue(wasCancelled);
         assertTrue(future.isCancelled());
         assertTrue(future.isDone());
@@ -93,9 +92,9 @@ public class SingleResultFutureTest {
 
     @Test
     public void testUnsuccessfulCancel() throws ExecutionException, InterruptedException {
-        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         future.init(1, null);
-        boolean wasCancelled = future.cancel(true);
+        final boolean wasCancelled = future.cancel(true);
         assertFalse(wasCancelled);
         assertFalse(future.isCancelled());
         assertEquals(1, (int) future.get());
@@ -126,7 +125,7 @@ public class SingleResultFutureTest {
 
     @Test
     public void testInitAfterCancel() throws ExecutionException, InterruptedException {
-        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         future.cancel(true);
         future.init(1, null);
         try {
@@ -136,38 +135,24 @@ public class SingleResultFutureTest {
         }
     }
 
-    @Test
+    @Test(expected = TimeoutException.class)
     public void testGetTimeout() throws InterruptedException, ExecutionException, TimeoutException {
         final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
-        try {
-            future.get(1, TimeUnit.MILLISECONDS);
-            fail();
-        } catch (TimeoutException e) {
-            // all good
-        }
+        future.get(1, TimeUnit.MILLISECONDS);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testNullTimeUnit() throws InterruptedException, ExecutionException, TimeoutException {
         final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
-        try {
-            future.get(1, null);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
+        future.get(1, null);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testNullCallback() throws InterruptedException {
         final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
-        try {
-            future.register(null);
-            fail();
-        } catch (IllegalArgumentException e) { // NOPMD
-            // all good
-        }
+        future.register(null);
     }
+
     @Test
     public void testMultipleCallbacks() throws InterruptedException {
         final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
