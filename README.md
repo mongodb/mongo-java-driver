@@ -44,3 +44,4 @@
 * Matthew Foemmel      git@foemmel.com
 * Jim Dickinson        jdickinson@shopwiki.com
 * Jorge Ortiz          jorge.ortiz@gmail.com
+* Caleb Jones          calebjones@gmail.com
