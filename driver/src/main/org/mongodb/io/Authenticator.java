@@ -23,19 +23,19 @@ import org.mongodb.result.CommandResult;
 
 abstract class Authenticator {
     private final MongoCredential credential;
-    private final MongoConnection connector;
+    private final MongoConnection connection;
 
-    Authenticator(final MongoCredential credential, final MongoConnection connector) {
+    Authenticator(final MongoCredential credential, final MongoConnection connection) {
         this.credential = credential;
-        this.connector = connector;
+        this.connection = connection;
     }
 
     MongoCredential getCredential() {
         return credential;
     }
 
-    public MongoConnection getConnector() {
-        return connector;
+    public MongoConnection getConnection() {
+        return connection;
     }
 
     abstract CommandResult authenticate();

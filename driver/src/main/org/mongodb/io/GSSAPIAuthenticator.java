@@ -50,7 +50,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
             props.put(Sasl.CREDENTIALS, getGSSCredential(getCredential().getUserName()));
 
             return Sasl.createSaslClient(new String[]{GSSAPI_MECHANISM}, getCredential().getUserName(), MONGODB_PROTOCOL,
-                    getConnector().getServerAddress().getHost(), props, null);
+                    getConnection().getServerAddress().getHost(), props, null);
         } catch (SaslException e) {
             throw new MongoException("Exception initializing SASL client", e);
         } catch (GSSException e) {

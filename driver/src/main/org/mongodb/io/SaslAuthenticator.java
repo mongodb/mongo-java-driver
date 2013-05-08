@@ -17,6 +17,7 @@
 package org.mongodb.io;
 
 import org.bson.types.Binary;
+import org.mongodb.CommandOperation;
 import org.mongodb.Document;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
@@ -111,21 +112,22 @@ abstract class SaslAuthenticator extends Authenticator {
     protected abstract SaslClient createSaslClient();
 
     private CommandResult sendSaslStart(final byte[] outToken) {
-        return getConnector().command(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec());
+        return new CommandOperation(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec(),
+                getConnection().getBufferPool()).execute(getConnection().getGateway());
     }
 
     private CommandResult sendSaslContinue(final int conversationId, final byte[] outToken) {
-        return getConnector().command(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
-                new DocumentCodec());
+        return new CommandOperation(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
+                new DocumentCodec(), getConnection().getBufferPool()).execute(getConnection().getGateway());
     }
 
     private void asyncSendSaslStart(final byte[] outToken, final SingleResultCallback<CommandResult> callback) {
-        getConnector().asyncCommand(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec()).register(callback);
+        getConnection().asyncCommand(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec()).register(callback);
     }
 
     private void asyncSendSaslContinue(final int conversationId, final byte[] outToken,
                                        final SingleResultCallback<CommandResult> callback) {
-        getConnector().asyncCommand(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
+        getConnection().asyncCommand(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
                 new DocumentCodec()).register(callback);
     }
 

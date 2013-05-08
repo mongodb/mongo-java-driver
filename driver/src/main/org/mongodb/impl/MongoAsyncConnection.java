@@ -26,7 +26,6 @@ import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoInternalException;
-import org.mongodb.MongoInterruptedException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoQueryFailureException;
 import org.mongodb.ServerAddress;
@@ -37,13 +36,13 @@ import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.CachingAuthenticator;
+import org.mongodb.io.MongoGateway;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
 import org.mongodb.io.async.MongoAsynchronousSocketChannelGateway;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
@@ -53,7 +52,6 @@ import org.mongodb.protocol.MongoCommandMessage;
 import org.mongodb.protocol.MongoDeleteMessage;
 import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.protocol.MongoInsertMessage;
-import org.mongodb.protocol.MongoKillCursorsMessage;
 import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplaceMessage;
 import org.mongodb.protocol.MongoReplyMessage;
@@ -90,6 +88,16 @@ public class MongoAsyncConnection implements MongoConnection {
 
     public ServerAddress getServerAddress() {
         return serverAddress;
+    }
+
+    @Override
+    public MongoGateway getGateway() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public BufferPool<ByteBuffer> getBufferPool() {
+        return bufferPool;
     }
 
     @Override
@@ -143,132 +151,124 @@ public class MongoAsyncConnection implements MongoConnection {
         }
     }
 
-    @Override
-    public CommandResult command(final String database, final MongoCommand commandOperation,
-                                 final Codec<Document> codec) {
-        try {
-            CommandResult result = asyncCommand(database, commandOperation, codec).get();
-            if (result == null) {
-                throw new MongoInternalException("Command result should not be null", null);
-            }
-            return result;
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("", e);
-        } catch (ExecutionException e) {
-            handleExecutionException(e);
-        }
-        throw new IllegalStateException("Should be unreachable");
-    }
-
-    @Override
-    public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                  final Encoder<T> encoder) {
-        try {
-            WriteResult result = asyncInsert(namespace, insert, encoder).get();
-            if (result == null) {
-                throw new MongoInternalException("Command result should not be null", null);
-            }
-            return result;
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("", e);
-        } catch (ExecutionException e) {
-            handleExecutionException(e);
-        }
-        throw new IllegalStateException("Should be unreachable");
-    }
-
-    @Override
-    public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
-                                    final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
-        try {
-            QueryResult<T> result = asyncQuery(namespace, find, queryEncoder, resultDecoder).get();
-            if (result == null) {
-                throw new MongoInternalException("Query result should not be null", null);
-            }
-            return result;
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("", e);
-        } catch (ExecutionException e) {
-            handleExecutionException(e);
-        }
-        throw new IllegalStateException("Should be unreachable");
-    }
-
-    @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore getMore,
-                                      final Decoder<T> resultDecoder) {
-        try {
-            QueryResult<T> result = asyncGetMore(namespace, getMore, resultDecoder).get();
-            if (result == null) {
-                throw new MongoInternalException("Query result should not be null", null);
-            }
-            return result;
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("", e);
-        } catch (ExecutionException e) {
-            handleExecutionException(e);
-        }
-        throw new IllegalStateException("Should be unreachable");
-    }
-
-    @Override
-    public WriteResult update(final MongoNamespace namespace, final MongoUpdate update, final Encoder<Document> queryEncoder) {
-        try {
-            WriteResult result = asyncUpdate(namespace, update, queryEncoder).get();
-            if (result == null) {
-                throw new MongoInternalException("Command result should not be null", null);
-            }
-            return result;
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("", e);
-        } catch (ExecutionException e) {
-            handleExecutionException(e);
-        }
-        throw new IllegalStateException("Should be unreachable");
-    }
-
-    @Override
-    public <T> WriteResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                   final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
-
-        try {
-            WriteResult result = asyncReplace(namespace, replace, queryEncoder, encoder).get();
-            if (result == null) {
-                throw new MongoInternalException("Command result should not be null", null);
-            }
-            return result;
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("", e);
-        } catch (ExecutionException e) {
-            handleExecutionException(e);
-        }
-        throw new IllegalStateException("Should be unreachable");
-    }
-
-    @Override
-    public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove,
-                              final Encoder<Document> queryEncoder) {
-        try {
-            WriteResult result = asyncRemove(namespace, remove, queryEncoder).get();
-            if (result == null) {
-                throw new MongoInternalException("Command result should not be null", null);
-            }
-            return result;
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("", e);
-        } catch (ExecutionException e) {
-            handleExecutionException(e);
-        }
-        throw new IllegalStateException("Should be unreachable");
-    }
-
-    @Override
-    public void killCursors(final MongoKillCursor killCursor) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
-        final MongoKillCursorsMessage message = new MongoKillCursorsMessage(killCursor);
-        encodeMessageToBuffer(message, buffer);
-        channel.sendMessage(buffer);
-    }
+//    public CommandResult command(final String database, final MongoCommand commandOperation,
+//                                 final Codec<Document> codec) {
+//        try {
+//            CommandResult result = asyncCommand(database, commandOperation, codec).get();
+//            if (result == null) {
+//                throw new MongoInternalException("Command result should not be null", null);
+//            }
+//            return result;
+//        } catch (InterruptedException e) {
+//            throw new MongoInterruptedException("", e);
+//        } catch (ExecutionException e) {
+//            handleExecutionException(e);
+//        }
+//        throw new IllegalStateException("Should be unreachable");
+//    }
+//
+//    public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert,
+//                                  final Encoder<T> encoder) {
+//        try {
+//            WriteResult result = asyncInsert(namespace, insert, encoder).get();
+//            if (result == null) {
+//                throw new MongoInternalException("Command result should not be null", null);
+//            }
+//            return result;
+//        } catch (InterruptedException e) {
+//            throw new MongoInterruptedException("", e);
+//        } catch (ExecutionException e) {
+//            handleExecutionException(e);
+//        }
+//        throw new IllegalStateException("Should be unreachable");
+//    }
+//
+//    public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
+//                                    final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
+//        try {
+//            QueryResult<T> result = asyncQuery(namespace, find, queryEncoder, resultDecoder).get();
+//            if (result == null) {
+//                throw new MongoInternalException("Query result should not be null", null);
+//            }
+//            return result;
+//        } catch (InterruptedException e) {
+//            throw new MongoInterruptedException("", e);
+//        } catch (ExecutionException e) {
+//            handleExecutionException(e);
+//        }
+//        throw new IllegalStateException("Should be unreachable");
+//    }
+//
+//    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore getMore,
+//                                      final Decoder<T> resultDecoder) {
+//        try {
+//            QueryResult<T> result = asyncGetMore(namespace, getMore, resultDecoder).get();
+//            if (result == null) {
+//                throw new MongoInternalException("Query result should not be null", null);
+//            }
+//            return result;
+//        } catch (InterruptedException e) {
+//            throw new MongoInterruptedException("", e);
+//        } catch (ExecutionException e) {
+//            handleExecutionException(e);
+//        }
+//        throw new IllegalStateException("Should be unreachable");
+//    }
+//
+//    public WriteResult update(final MongoNamespace namespace, final MongoUpdate update, final Encoder<Document> queryEncoder) {
+//        try {
+//            WriteResult result = asyncUpdate(namespace, update, queryEncoder).get();
+//            if (result == null) {
+//                throw new MongoInternalException("Command result should not be null", null);
+//            }
+//            return result;
+//        } catch (InterruptedException e) {
+//            throw new MongoInterruptedException("", e);
+//        } catch (ExecutionException e) {
+//            handleExecutionException(e);
+//        }
+//        throw new IllegalStateException("Should be unreachable");
+//    }
+//
+//    public <T> WriteResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
+//                                   final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
+//
+//        try {
+//            WriteResult result = asyncReplace(namespace, replace, queryEncoder, encoder).get();
+//            if (result == null) {
+//                throw new MongoInternalException("Command result should not be null", null);
+//            }
+//            return result;
+//        } catch (InterruptedException e) {
+//            throw new MongoInterruptedException("", e);
+//        } catch (ExecutionException e) {
+//            handleExecutionException(e);
+//        }
+//        throw new IllegalStateException("Should be unreachable");
+//    }
+//
+//     public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove,
+//                              final Encoder<Document> queryEncoder) {
+//        try {
+//            WriteResult result = asyncRemove(namespace, remove, queryEncoder).get();
+//            if (result == null) {
+//                throw new MongoInternalException("Command result should not be null", null);
+//            }
+//            return result;
+//        } catch (InterruptedException e) {
+//            throw new MongoInterruptedException("", e);
+//        } catch (ExecutionException e) {
+//            handleExecutionException(e);
+//        }
+//        throw new IllegalStateException("Should be unreachable");
+//    }
+//
+//    public void killCursors(final MongoKillCursor killCursor) {
+//        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
+//        final MongoKillCursorsMessage message = new MongoKillCursorsMessage(killCursor);
+//        encodeMessageToBuffer(message, buffer);
+//        channel.sendMessage(buffer);
+//    }
 
     @Override
     public MongoFuture<CommandResult> asyncCommand(final String database, final MongoCommand commandOperation,

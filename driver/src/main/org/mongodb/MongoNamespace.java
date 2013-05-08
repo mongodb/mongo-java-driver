@@ -21,6 +21,7 @@ import org.mongodb.annotations.Immutable;
 @Immutable
 public final class MongoNamespace {
     private static final String NAMESPACE_TEMPLATE = "%s.%s";
+    public static final String COMMAND_COLLECTION_NAME = "$cmd";
 
     private final String databaseName;
     private final String collectionName;

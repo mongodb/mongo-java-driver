@@ -17,16 +17,26 @@
 package org.mongodb.impl;
 
 import org.mongodb.Codec;
+import org.mongodb.CommandOperation;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.GetMoreOperation;
+import org.mongodb.InsertOperation;
+import org.mongodb.KillCursorOperation;
 import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoConnector;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoServerBinding;
+import org.mongodb.QueryOperation;
+import org.mongodb.RemoveOperation;
+import org.mongodb.ReplaceOperation;
 import org.mongodb.ServerAddress;
+import org.mongodb.UpdateOperation;
 import org.mongodb.command.MongoCommand;
+import org.mongodb.io.BufferPool;
+import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoInsert;
@@ -39,6 +49,7 @@ import org.mongodb.result.QueryResult;
 import org.mongodb.result.ServerCursor;
 import org.mongodb.result.WriteResult;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 class DelegatingMongoConnector implements MongoConnector {
@@ -55,7 +66,7 @@ class DelegatingMongoConnector implements MongoConnector {
                 binding.getConnectionManagerForRead(commandOperation.getReadPreference());
         MongoConnection connection = connectionManager.getConnection();
         try {
-            return connection.command(database, commandOperation, codec);
+            return new CommandOperation(database, commandOperation, codec, connection.getBufferPool()).execute(connection.getGateway());
         } finally {
             connectionManager.releaseConnection(connection);
         }
@@ -67,7 +78,7 @@ class DelegatingMongoConnector implements MongoConnector {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(find.getReadPreference());
         MongoConnection connection = connectionManager.getConnection();
         try {
-            return connection.query(namespace, find, queryEncoder, resultDecoder);
+            return new QueryOperation<T>(namespace, find, queryEncoder, resultDecoder, connection.getBufferPool()).execute(connection.getGateway());
         } finally {
             connectionManager.releaseConnection(connection);
         }
@@ -76,11 +87,10 @@ class DelegatingMongoConnector implements MongoConnector {
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                       final Decoder<T> resultDecoder) {
-        MongoConnectionManager connectionManager =
-                binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
         MongoConnection connection = connectionManager.getConnection();
         try {
-            return connection.getMore(namespace, getMore, resultDecoder);
+            return new GetMoreOperation<T>(namespace, getMore, resultDecoder, connection.getBufferPool()).execute(connection.getGateway());
         } finally {
             connectionManager.releaseConnection(connection);
         }
@@ -92,7 +102,7 @@ class DelegatingMongoConnector implements MongoConnector {
             MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(cursor.getAddress());
             MongoConnection connection = connectionManager.getConnection();
             try {
-                connection.killCursors(new MongoKillCursor(cursor));
+                new KillCursorOperation(new MongoKillCursor(cursor), connection.getBufferPool()).execute(connection.getGateway());
             } finally {
                 connectionManager.releaseConnection(connection);
             }
@@ -104,7 +114,7 @@ class DelegatingMongoConnector implements MongoConnector {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
         MongoConnection connection = connectionManager.getConnection();
         try {
-            return connection.insert(namespace, insert, encoder);
+            return new InsertOperation<T>(namespace, insert, encoder, connection.getBufferPool()).execute(connection.getGateway());
         } finally {
             connectionManager.releaseConnection(connection);
         }
@@ -115,7 +125,7 @@ class DelegatingMongoConnector implements MongoConnector {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
         MongoConnection connection = connectionManager.getConnection();
         try {
-            return connection.update(namespace, update, queryEncoder);
+            return new UpdateOperation(namespace, update, queryEncoder, connection.getBufferPool()).execute(connection.getGateway());
         } finally {
             connectionManager.releaseConnection(connection);
         }
@@ -127,7 +137,7 @@ class DelegatingMongoConnector implements MongoConnector {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
         MongoConnection connection = connectionManager.getConnection();
         try {
-            return connection.replace(namespace, replace, queryEncoder, encoder);
+            return new ReplaceOperation<T>(namespace, replace, queryEncoder, encoder, connection.getBufferPool()).execute(connection.getGateway());
         } finally {
             connectionManager.releaseConnection(connection);
         }
@@ -138,7 +148,7 @@ class DelegatingMongoConnector implements MongoConnector {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
         MongoConnection connection = connectionManager.getConnection();
         try {
-            return connection.remove(namespace, remove, queryEncoder);
+            return new RemoveOperation(namespace, remove, queryEncoder, connection.getBufferPool()).execute(connection.getGateway());
         } finally {
             connectionManager.releaseConnection(connection);
         }

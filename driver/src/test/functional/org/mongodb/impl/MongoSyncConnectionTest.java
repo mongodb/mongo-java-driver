@@ -26,7 +26,7 @@ public class MongoSyncConnectionTest extends AbstractMongoConnectorTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        setConnector(new MongoSyncConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
+        setConnection(new MongoSyncConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
                 Fixture.getMongoClientURI().getCredentials(), new SimplePool<MongoConnection>("test", 1) {
             @Override
             protected MongoConnection createNew() {

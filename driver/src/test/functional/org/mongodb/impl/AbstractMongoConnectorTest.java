@@ -17,8 +17,10 @@
 package org.mongodb.impl;
 
 import org.junit.Test;
+import org.mongodb.CommandOperation;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
+import org.mongodb.InsertOperation;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.Count;
@@ -33,10 +35,10 @@ import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractMongoConnectorTest extends DatabaseTestCase {
 
-    private MongoConnection connector;
+    private MongoConnection connection;
 
-    protected void setConnector(final MongoConnection connector) {
-        this.connector = connector;
+    protected void setConnection(final MongoConnection connection) {
+        this.connection = connection;
     }
 
     @Test
@@ -50,8 +52,10 @@ public abstract class AbstractMongoConnectorTest extends DatabaseTestCase {
         documents.add(new Document("bytes", hugeByteArray));
 
         final MongoInsert<Document> insert = new MongoInsert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
-        connector.insert(collection.getNamespace(), insert, new DocumentCodec());
-        assertEquals(documents.size(), new CountCommandResult(connector.command(database.getName(),
-                new Count(new MongoFind(), collectionName), new DocumentCodec())).getCount());
+        new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(),
+                connection.getBufferPool()).execute(connection.getGateway());
+        assertEquals(documents.size(), new CountCommandResult(new CommandOperation(database.getName(),
+                new Count(new MongoFind(), collectionName), new DocumentCodec(), connection.getBufferPool())
+                .execute(connection.getGateway())).getCount());
     }
 }

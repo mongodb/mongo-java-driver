@@ -16,6 +16,7 @@
 
 package org.mongodb.io;
 
+import org.mongodb.CommandOperation;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.async.SingleResultCallback;
@@ -26,24 +27,24 @@ import org.mongodb.impl.MongoConnection;
 import org.mongodb.result.CommandResult;
 
 public class NativeAuthenticator extends Authenticator {
-    NativeAuthenticator(final MongoCredential credential, final MongoConnection connector) {
-        super(credential, connector);
+    NativeAuthenticator(final MongoCredential credential, final MongoConnection connection) {
+        super(credential, connection);
     }
 
     @Override
     public CommandResult authenticate() {
-        CommandResult nonceResponse = getConnector().command(getCredential().getSource(),
+        CommandResult nonceResponse = new CommandOperation(getCredential().getSource(),
                 new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
-                new DocumentCodec(PrimitiveCodecs.createDefault()));
-        return getConnector().command(getCredential().getSource(),
+                new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection().getBufferPool()).execute(getConnection().getGateway());
+        return new CommandOperation(getCredential().getSource(),
                 new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                         getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
-                new DocumentCodec(PrimitiveCodecs.createDefault()));
+                new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection().getBufferPool()).execute(getConnection().getGateway());
     }
 
     @Override
     public void asyncAuthenticate(final SingleResultCallback<CommandResult> callback) {
-        getConnector().asyncCommand(getCredential().getSource(),
+        getConnection().asyncCommand(getCredential().getSource(),
                 new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
                 new DocumentCodec(PrimitiveCodecs.createDefault())).register(new SingleResultCallback<CommandResult>() {
             @Override
@@ -52,7 +53,7 @@ public class NativeAuthenticator extends Authenticator {
                     callback.onResult(result, e);
                 }
                 else {
-                    getConnector().asyncCommand(getCredential().getSource(),
+                    getConnection().asyncCommand(getCredential().getSource(),
                             new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                                     getCredential().getPassword(), (String) result.getResponse().get("nonce"))),
                             new DocumentCodec(PrimitiveCodecs.createDefault())).register(new SingleResultCallback<CommandResult>() {
