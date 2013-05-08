@@ -16,29 +16,41 @@
 
 package org.mongodb.impl;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.CommandOperation;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
+import org.mongodb.Fixture;
 import org.mongodb.InsertOperation;
+import org.mongodb.ServerAddress;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
+import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
+import org.mongodb.pool.SimplePool;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public abstract class AbstractMongoConnectorTest extends DatabaseTestCase {
-
+public class MongoBatchInsertTest extends DatabaseTestCase {
     private MongoConnection connection;
 
-    protected void setConnection(final MongoConnection connection) {
-        this.connection = connection;
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        connection = new MongoSyncConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
+                Fixture.getMongoClientURI().getCredentials(), new SimplePool<MongoConnection>("test", 1) {
+            @Override
+            protected MongoConnection createNew() {
+                throw new UnsupportedOperationException();
+            }
+        }, new PowerOfTwoByteBufferPool(), Fixture.getMongoClientURI().getOptions());
     }
 
     @Test
@@ -58,4 +70,5 @@ public abstract class AbstractMongoConnectorTest extends DatabaseTestCase {
                 new Count(new MongoFind(), collectionName), new DocumentCodec(), connection.getBufferPool())
                 .execute(connection.getGateway())).getCount());
     }
+
 }

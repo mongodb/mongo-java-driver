@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,23 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package org.mongodb.impl;
+package org.mongodb.io.async;
 
-import org.mongodb.MongoException;
+import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
+import org.mongodb.io.ChannelAwareOutputBuffer;
+import org.mongodb.io.ResponseBuffers;
 
-class SingleResultFutureCallback<T> implements SingleResultCallback<T> {
-    private final SingleResultFuture<T> retVal;
+public interface AsyncMongoGateway {
+    ServerAddress getAddress();
 
-    public SingleResultFutureCallback(final SingleResultFuture<T> retVal) {
-        this.retVal = retVal;
-    }
+    void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
 
-    @Override
-    public void onResult(final T result, final MongoException e) {
-        retVal.init(result, e);
-    }
+    void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
 }

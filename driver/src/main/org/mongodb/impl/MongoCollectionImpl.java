@@ -38,6 +38,8 @@ import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.async.AsyncBlock;
 import org.mongodb.async.SingleResultCallback;
+import org.mongodb.async.SingleResultFuture;
+import org.mongodb.async.SingleResultFutureCallback;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
 import org.mongodb.command.Distinct;

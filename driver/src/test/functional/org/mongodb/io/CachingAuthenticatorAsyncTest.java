@@ -22,14 +22,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
-import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.impl.MongoAsyncConnection;
-import org.mongodb.impl.MongoConnection;
 import org.mongodb.impl.MongoCredentialsStore;
+import org.mongodb.io.async.CachingAsyncAuthenticator;
 import org.mongodb.pool.SimplePool;
 
 import java.util.ArrayList;
@@ -45,19 +44,19 @@ import static org.junit.Assert.assertThat;
 public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
 
     private CountDownLatch latch;
-    private MongoConnection poolableConnector;
+    private MongoAsyncConnection poolableConnector;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
         latch = new CountDownLatch(1);
         poolableConnector = new MongoAsyncConnection(connector.getServerAddressList().get(0), null,
-                new SimplePool<MongoConnection>("test", 1) {
+                new SimplePool<MongoAsyncConnection>("test", 1) {
             @Override
-            protected MongoConnection createNew() {
+            protected MongoAsyncConnection createNew() {
                 throw new UnsupportedOperationException();
             }
-        }, new PowerOfTwoByteBufferPool(), MongoClientOptions.builder().build());
+        }, new PowerOfTwoByteBufferPool());
     }
 
     @After
@@ -68,7 +67,7 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
     @Test
     public void testEmpty() throws InterruptedException {
         MongoCredentialsStore credentialsStore = new MongoCredentialsStore();
-        CachingAuthenticator cachingAuthenticator = new CachingAuthenticator(credentialsStore, poolableConnector);
+        CachingAsyncAuthenticator cachingAuthenticator = new CachingAsyncAuthenticator(credentialsStore, poolableConnector);
 
         final List<Exception> exceptionList = new ArrayList<Exception>();
         cachingAuthenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
@@ -87,7 +86,7 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
     public void testException() throws InterruptedException {
         MongoCredentialsStore credentialsStore =
                 new MongoCredentialsStore(MongoCredential.createMongoCRCredential("noone", "nowhere", "nothing".toCharArray()));
-        CachingAuthenticator cachingAuthenticator = new CachingAuthenticator(credentialsStore, poolableConnector);
+        CachingAsyncAuthenticator cachingAuthenticator = new CachingAsyncAuthenticator(credentialsStore, poolableConnector);
 
         final List<Exception> exceptionList = new ArrayList<Exception>();
         cachingAuthenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {

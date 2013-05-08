@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package org.mongodb.io;
+package org.mongodb.io.async;
 
 import org.mongodb.MongoCredential;
-import org.mongodb.impl.MongoConnection;
+import org.mongodb.async.SingleResultCallback;
+import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.result.CommandResult;
 
-abstract class Authenticator {
+public abstract class AsyncAuthenticator {
     private final MongoCredential credential;
-    private final MongoConnection connection;
+    private final MongoAsyncConnection connection;
 
-    Authenticator(final MongoCredential credential, final MongoConnection connection) {
+    AsyncAuthenticator(final MongoCredential credential, final MongoAsyncConnection connection) {
         this.credential = credential;
         this.connection = connection;
     }
@@ -33,9 +34,9 @@ abstract class Authenticator {
         return credential;
     }
 
-    public MongoConnection getConnection() {
+    public MongoAsyncConnection getConnection() {
         return connection;
     }
 
-    abstract CommandResult authenticate();
+    abstract void authenticate(final SingleResultCallback<CommandResult> callback);
 }

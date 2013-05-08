@@ -126,12 +126,32 @@ class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
         public MongoConnection getConnection() {
             return getConnectorForReads(readPreference);
         }
+
+        @Override
+        public MongoAsyncConnection getAsyncConnection() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void releaseAsyncConnection(final MongoAsyncConnection connection) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     private final class MongoConnectionManagerForWrites extends AbstractConnectionManager {
         @Override
         public MongoConnection getConnection() {
             return getConnectorForWrites();
+        }
+
+        @Override
+        public MongoAsyncConnection getAsyncConnection() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void releaseAsyncConnection(final MongoAsyncConnection connection) {
+            throw new UnsupportedOperationException();
         }
     }
 }

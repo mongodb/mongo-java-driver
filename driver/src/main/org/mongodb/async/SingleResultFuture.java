@@ -15,27 +15,27 @@
  *
  */
 
-package org.mongodb.impl;
+package org.mongodb.async;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.async.SingleResultCallback;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+// TODO: Should this be public?
 @ThreadSafe
-class SingleResultFuture<T> implements MongoFuture<T> {
+public class SingleResultFuture<T> implements MongoFuture<T> {
     private T result;
     private MongoException exception;
     private boolean isDone;
     private boolean isCancelled;
     private SingleResultCallback<T> callback;
 
-    synchronized void init(final T newResult, final MongoException newException) {
+    public synchronized void init(final T newResult, final MongoException newException) {
         if (isCancelled()) {
             return;
         }

@@ -41,29 +41,4 @@ public class NativeAuthenticator extends Authenticator {
                         getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
                 new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection().getBufferPool()).execute(getConnection().getGateway());
     }
-
-    @Override
-    public void asyncAuthenticate(final SingleResultCallback<CommandResult> callback) {
-        getConnection().asyncCommand(getCredential().getSource(),
-                new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
-                new DocumentCodec(PrimitiveCodecs.createDefault())).register(new SingleResultCallback<CommandResult>() {
-            @Override
-            public void onResult(final CommandResult result, final MongoException e) {
-                if (e != null) {
-                    callback.onResult(result, e);
-                }
-                else {
-                    getConnection().asyncCommand(getCredential().getSource(),
-                            new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
-                                    getCredential().getPassword(), (String) result.getResponse().get("nonce"))),
-                            new DocumentCodec(PrimitiveCodecs.createDefault())).register(new SingleResultCallback<CommandResult>() {
-                        @Override
-                        public void onResult(final CommandResult result, final MongoException e) {
-                            callback.onResult(result, e);
-                        }
-                    });
-                }
-            }
-        });
-    }
 }

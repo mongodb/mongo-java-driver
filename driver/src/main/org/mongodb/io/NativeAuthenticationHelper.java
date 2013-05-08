@@ -24,11 +24,11 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-final class NativeAuthenticationHelper {
+public final class NativeAuthenticationHelper {
 
     private static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
 
-    static Document getAuthCommand(final String userName, final char[] password, final String nonce) {
+    public static Document getAuthCommand(final String userName, final char[] password, final String nonce) {
         return getAuthCommand(userName, createHash(userName, password), nonce);
     }
 
@@ -45,7 +45,7 @@ final class NativeAuthenticationHelper {
         return cmd;
     }
 
-    static Document getNonceCommand() {
+    public static Document getNonceCommand() {
         return new Document("getnonce", 1);
     }
 

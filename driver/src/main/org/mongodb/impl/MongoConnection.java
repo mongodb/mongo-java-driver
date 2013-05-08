@@ -18,13 +18,13 @@
 package org.mongodb.impl;
 
 import org.mongodb.ServerAddress;
-import org.mongodb.async.MongoAsyncOperations;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.MongoGateway;
+import org.mongodb.io.async.AsyncMongoGateway;
 
 import java.nio.ByteBuffer;
 
-public interface MongoConnection extends MongoAsyncOperations {
+public interface MongoConnection {
     /**
      * Releases the connection back to the pool.
      */
@@ -43,4 +43,6 @@ public interface MongoConnection extends MongoAsyncOperations {
     MongoGateway getGateway();
 
     BufferPool<ByteBuffer> getBufferPool();
+
+    AsyncMongoGateway getAsyncGateway();
 }

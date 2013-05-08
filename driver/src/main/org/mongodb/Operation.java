@@ -25,7 +25,7 @@ import org.mongodb.result.CommandResult;
 
 import java.nio.ByteBuffer;
 
-public class Operation {
+public abstract class Operation {
     private MongoNamespace namespace;
     private final BufferPool<ByteBuffer> bufferPool;
 

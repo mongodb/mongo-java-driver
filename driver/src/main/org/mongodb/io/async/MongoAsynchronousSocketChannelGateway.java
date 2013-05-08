@@ -23,7 +23,6 @@ import org.mongodb.MongoException;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.CachingAuthenticator;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.MongoSocketOpenException;
 import org.mongodb.io.PooledInputBuffer;
@@ -43,13 +42,13 @@ import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
  * <p/>
  * Note: This class is not part of the public API.  It may break binary compatibility even in minor releases.
  */
-public class MongoAsynchronousSocketChannelGateway {
+public class MongoAsynchronousSocketChannelGateway implements AsyncMongoGateway {
     private final ServerAddress address;
-    private CachingAuthenticator authenticator;
+    private CachingAsyncAuthenticator authenticator;
     private final BufferPool<ByteBuffer> pool;
     private volatile AsynchronousSocketChannel asynchronousSocketChannel;
 
-    public MongoAsynchronousSocketChannelGateway(final ServerAddress address, final CachingAuthenticator authenticator,
+    public MongoAsynchronousSocketChannelGateway(final ServerAddress address, final CachingAsyncAuthenticator authenticator,
                                                  final BufferPool<ByteBuffer> pool) {
         this.address = address;
         this.authenticator = authenticator;
@@ -80,10 +79,6 @@ public class MongoAsynchronousSocketChannelGateway {
 
     private void receiveMessage(final long start, final SingleResultCallback<ResponseBuffers> callback) {
         fillAndFlipBuffer(pool.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(callback, start));
-    }
-
-    public void sendMessage(final ChannelAwareOutputBuffer buffer) {
-        sendOneWayMessage(buffer, new NoOpAsyncCompletionHandler());
     }
 
     private void sendOneWayMessage(final ChannelAwareOutputBuffer buffer, final AsyncCompletionHandler handler) {

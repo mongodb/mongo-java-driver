@@ -16,29 +16,14 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.Codec;
-import org.mongodb.Decoder;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoFuture;
-import org.mongodb.MongoNamespace;
 import org.mongodb.ServerAddress;
-import org.mongodb.command.MongoCommand;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.CachingAuthenticator;
 import org.mongodb.io.MongoGateway;
-import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoGetMore;
-import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoRemove;
-import org.mongodb.operation.MongoReplace;
-import org.mongodb.operation.MongoUpdate;
+import org.mongodb.io.async.AsyncMongoGateway;
 import org.mongodb.pool.SimplePool;
-import org.mongodb.result.CommandResult;
-import org.mongodb.result.QueryResult;
-import org.mongodb.result.WriteResult;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -83,6 +68,11 @@ final class MongoSyncConnection implements MongoConnection {
     }
 
     @Override
+    public AsyncMongoGateway getAsyncGateway() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void release() {
         if (channel == null) {
             throw new IllegalStateException("Can not release a channel that's already closed");
@@ -93,47 +83,4 @@ final class MongoSyncConnection implements MongoConnection {
 
         channelPool.done(this);
     }
-
-    @Override
-    public MongoFuture<CommandResult> asyncCommand(final String database, final MongoCommand commandOperation,
-                                                   final Codec<Document> codec) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> MongoFuture<QueryResult<T>> asyncQuery(final MongoNamespace namespace, final MongoFind find,
-                                                      final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> MongoFuture<QueryResult<T>> asyncGetMore(final MongoNamespace namespace, final MongoGetMore getMore,
-                                                        final Decoder<T> resultDecoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> MongoFuture<WriteResult> asyncInsert(final MongoNamespace namespace, final MongoInsert<T> insert,
-                                                    final Encoder<T> encoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public MongoFuture<WriteResult> asyncUpdate(final MongoNamespace namespace, final MongoUpdate update,
-                                                final Encoder<Document> queryEncoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> MongoFuture<WriteResult> asyncReplace(final MongoNamespace namespace, final MongoReplace<T> replace,
-                                                     final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public MongoFuture<WriteResult> asyncRemove(final MongoNamespace namespace, final MongoRemove remove,
-                                                final Encoder<Document> queryEncoder) {
-        throw new UnsupportedOperationException();
-    }
-
 }

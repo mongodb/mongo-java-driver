@@ -17,15 +17,11 @@
 package org.mongodb.io;
 
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoException;
-import org.mongodb.async.SingleResultCallback;
 import org.mongodb.impl.MongoConnection;
 import org.mongodb.impl.MongoCredentialsStore;
-import org.mongodb.result.CommandResult;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -51,10 +47,6 @@ public class CachingAuthenticator {
         }
     }
 
-    public void asyncAuthenticateAll(final SingleResultCallback<Void> callback) {
-        new IteratingAuthenticator(callback).start();
-    }
-
     /**
      * Clears the cache of authenticated databases.
      */
@@ -75,44 +67,6 @@ public class CachingAuthenticator {
         return unauthenticatedDatabases;
     }
 
-    private final class IteratingAuthenticator implements SingleResultCallback<CommandResult> {
-        private final SingleResultCallback<Void> callback;
-        private volatile String curDatabaseName;
-        private final Iterator<String> iter;
-
-        private IteratingAuthenticator(final SingleResultCallback<Void> callback) {
-            this.callback = callback;
-            iter = getUnauthenticatedDatabases().iterator();
-        }
-
-        private void start() {
-            next();
-        }
-
-        private void next() {
-            if (!iter.hasNext()) {
-                callback.onResult(null, null);
-            }
-            else {
-                curDatabaseName = iter.next();
-                asyncAuthenticate(credentialsStore.get(curDatabaseName), this);
-            }
-        }
-
-        @Override
-        public void onResult(final CommandResult result, final MongoException e) {
-            if (e != null) {
-                callback.onResult(null, e);
-            }
-            else {
-                next();
-            }
-        }
-    }
-
-    private void asyncAuthenticate(final MongoCredential credential, final SingleResultCallback<CommandResult> callback) {
-        createAuthenticator(credential).asyncAuthenticate(callback);
-    }
 
     private Authenticator createAuthenticator(final MongoCredential credential) {
         Authenticator authenticator;

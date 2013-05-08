@@ -36,7 +36,7 @@ public final class MongoConnectorsImpl {
     }
 
     public static DelegatingMongoConnector create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                                    final MongoClientOptions options) {
+                                                  final MongoClientOptions options) {
         return new DelegatingMongoConnector(new MongoSingleServerBinding(create(serverAddress, credentialList, options,
                 new PowerOfTwoByteBufferPool())));
     }
@@ -47,44 +47,38 @@ public final class MongoConnectorsImpl {
     }
 
     public static DelegatingMongoConnector create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                                                      final MongoClientOptions options) {
+                                                  final MongoClientOptions options) {
         return new DelegatingMongoConnector(new MongoMultiServerBinding(new ReplicaSetConnectionStrategy(seedList, options),
                 credentialList, options));
     }
 
     static MongoConnectionManagerImpl create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                              final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        if (options.isAsyncEnabled()
-                && !options.isSSLEnabled()
-                && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            return new MongoConnectionManagerImpl(serverAddress, new SimplePool<MongoConnection>(serverAddress.toString(),
-                    options.getConnectionsPerHost()) {
-                        @Override
-                        protected MongoConnection createNew() {
-                            return new MongoAsyncConnection(serverAddress, credentialList, this, bufferPool, options);
-                        }
 
-                        @Override
-                        public void close() {
-                            super.close();
-                            bufferPool.close();
-                        }
-                    });
-        }
-        else {
-            return new MongoConnectionManagerImpl(serverAddress, new SimplePool<MongoConnection>(serverAddress.toString(),
-                    options.getConnectionsPerHost()) {
-                        @Override
-                        protected MongoConnection createNew() {
-                            return new MongoSyncConnection(serverAddress, credentialList, this, bufferPool, options);
-                        }
+        SimplePool<MongoConnection> connectionPool = new SimplePool<MongoConnection>(serverAddress.toString(),
+                options.getConnectionsPerHost()) {
+            @Override
+            protected MongoConnection createNew() {
+                return new MongoSyncConnection(serverAddress, credentialList, this, bufferPool, options);
+            }
 
-                        @Override
-                        public void close() {
-                            super.close();
-                            bufferPool.close();
-                        }
-                    });
+            @Override
+            public void close() {
+                super.close();
+                bufferPool.close();
+            }
+        };
+        SimplePool<MongoAsyncConnection> asyncConnectionPool = null;
+
+        if (options.isAsyncEnabled() && !options.isSSLEnabled() && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
+            asyncConnectionPool = new SimplePool<MongoAsyncConnection>(serverAddress.toString(), options.getConnectionsPerHost()) {
+                @Override
+                protected MongoAsyncConnection createNew() {
+                    return new MongoAsyncConnection(serverAddress, credentialList, this, bufferPool);
+                }
+            };
         }
+        return new MongoConnectionManagerImpl(serverAddress, connectionPool, asyncConnectionPool);
     }
 }
+
