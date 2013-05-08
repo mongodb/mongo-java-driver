@@ -23,6 +23,7 @@ package com.mongodb;
 import org.bson.LazyDBList;
 import org.bson.types.ObjectId;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1400,7 +1401,9 @@ public abstract class DBCollection {
     }
 
     /**
-     * Checks key strings for invalid characters.
+     * Checks key strings for invalid characters. Traverses any 
+     * embedded arrays/lists looking for {@link DBObject}s
+     * @param o {@link DBObject} to check keys for
      */
     private void _checkKeys( DBObject o ) {
         if ( o instanceof LazyDBObject || o instanceof LazyDBList )
@@ -1413,8 +1416,55 @@ public abstract class DBCollection {
                 _checkKeys( (DBObject)inner );
             } else if ( inner instanceof Map ) {
                 _checkKeys( (Map<String, Object>)inner );
+            } else if ( inner instanceof List ) {
+            	_checkListKeys( (List<Object>) inner );
+            } else if ( inner != null && inner.getClass().isArray() ) {
+            	_checkArrayKeys( inner );
             }
         }
+    }
+    
+    /**
+     * Checks key strings for any nested object or list/array.
+     * @param list The {@link List} to traverse
+     */
+    private void _checkListKeys( List<Object> list ) {
+    	if ( null == list )
+    		return;
+    	
+    	for ( Object elem : list ) {
+    		if ( elem instanceof DBObject ) {
+    			_checkKeys( (DBObject) elem );
+    		} else if ( elem instanceof Map ) {
+    			_checkKeys( (Map<String, Object>) elem );
+    		} else if ( elem instanceof List ) {
+    			_checkListKeys( (List<Object>) elem );
+    		} else if ( elem != null && elem.getClass().isArray() ) {
+    			_checkArrayKeys( elem );
+    		}
+    	}
+    }
+    
+    /**
+     * Checks key strings for any nested object or list/array.
+     * @param array The array to traverse
+     */
+    private void _checkArrayKeys( Object array ) {
+    	if ( null == array )
+    		return;
+    	
+    	for ( int i = 0; i < Array.getLength(array); i++) {
+    		Object elem = Array.get(array, i);
+    		if ( elem instanceof DBObject ) {
+    			_checkKeys( (DBObject) elem );
+    		} else if ( elem instanceof Map ) {
+    			_checkKeys( (Map<String, Object>) elem );
+    		} else if ( elem instanceof List ) {
+    			_checkListKeys( (List<Object>) elem );
+    		} else if ( elem != null && elem.getClass().isArray() ) {
+    			_checkArrayKeys( elem );
+    		}
+    	}
     }
 
     /**
