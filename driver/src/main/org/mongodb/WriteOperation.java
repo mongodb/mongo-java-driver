@@ -46,7 +46,9 @@ public abstract class WriteOperation extends Operation {
             if (getWrite().getWriteConcern().callGetLastError()) {
                 final GetLastError getLastError = new GetLastError(getWrite().getWriteConcern());
                 final DocumentCodec codec = new DocumentCodec();
-                MongoCommandMessage getLastErrorMessage = new MongoCommandMessage(getNamespace().getFullName(), getLastError, codec);
+                MongoCommandMessage getLastErrorMessage = new MongoCommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
+                        MongoNamespace.COMMAND_COLLECTION_NAME).getFullName(), getLastError,
+                        codec);
                 getLastErrorMessage.encode(buffer);
                 ResponseBuffers responseBuffers = connection.sendAndReceiveMessage(buffer);
                 try {

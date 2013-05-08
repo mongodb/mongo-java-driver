@@ -281,6 +281,7 @@ public class DBCollection implements IDBCollection {
 
     private org.mongodb.result.WriteResult insertInternal(final MongoInsert<DBObject> mongoInsert, Encoder<DBObject> encoder) {
         try {
+            mongoInsert.writeConcernIfAbsent(getWriteConcern().toNew());
             return getSession().insert(getNamespace(), mongoInsert, encoder);
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
