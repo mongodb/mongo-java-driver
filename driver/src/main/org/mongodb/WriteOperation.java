@@ -26,6 +26,7 @@ import org.mongodb.operation.MongoWrite;
 import org.mongodb.protocol.MongoCommandMessage;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.protocol.MongoRequestMessage;
+import org.mongodb.result.CommandResult;
 import org.mongodb.result.WriteResult;
 
 import java.nio.ByteBuffer;
@@ -39,6 +40,7 @@ public abstract class WriteOperation extends Operation {
     public WriteResult execute(final MongoGateway connection) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
+            CommandResult getLastErrorResult = null;
             MongoRequestMessage nextMessage = createRequestMessage().encode(buffer);
             while (nextMessage != null) {
                 nextMessage = nextMessage.encode(buffer);
@@ -52,16 +54,16 @@ public abstract class WriteOperation extends Operation {
                 getLastErrorMessage.encode(buffer);
                 ResponseBuffers responseBuffers = connection.sendAndReceiveMessage(buffer);
                 try {
-                    return new WriteResult(getWrite(), getLastError.parseGetLastErrorResponse(
-                            createCommandResult(getLastError, new MongoReplyMessage<Document>(responseBuffers, codec), connection)));
+                    getLastErrorResult = getLastError.parseGetLastErrorResponse(createCommandResult(getLastError,
+                            new MongoReplyMessage<Document>(responseBuffers, codec), connection));
                 } finally {
                     responseBuffers.close();
                 }
             }
             else {
                 connection.sendMessage(buffer);
-                return null;
             }
+            return new WriteResult(getWrite(), getLastErrorResult);
         } finally {
             buffer.close();
         }
