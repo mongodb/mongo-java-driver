@@ -39,11 +39,11 @@ public class MongoMultiServerBinding implements MongoServerBinding {
     private final MongoConnectionStrategy connectionStrategy;
 
     public MongoMultiServerBinding(final MongoConnectionStrategy connectionStrategy, final List<MongoCredential> credentialList,
-                                   final MongoClientOptions options) {
+                                   final MongoClientOptions options, final PowerOfTwoByteBufferPool bufferPool) {
         this.connectionStrategy = connectionStrategy;
         this.credentialList = credentialList;
         this.options = options;
-        bufferPool = new PowerOfTwoByteBufferPool();
+        this.bufferPool = bufferPool;
     }
 
     @Override
@@ -62,6 +62,11 @@ public class MongoMultiServerBinding implements MongoServerBinding {
     @Override
     public List<ServerAddress> getAllServerAddresses() {
         return connectionStrategy.getAllAddresses();
+    }
+
+    @Override
+    public BufferPool<ByteBuffer> getBufferPool() {
+        return bufferPool;
     }
 
     @Override

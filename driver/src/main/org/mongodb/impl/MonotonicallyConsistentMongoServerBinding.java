@@ -21,7 +21,9 @@ import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
+import org.mongodb.io.BufferPool;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
@@ -54,6 +56,11 @@ class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
     @Override
     public List<ServerAddress> getAllServerAddresses() {
         return serverConnectorManager.getAllServerAddresses();
+    }
+
+    @Override
+    public BufferPool<ByteBuffer> getBufferPool() {
+        return serverConnectorManager.getBufferPool();
     }
 
     @Override

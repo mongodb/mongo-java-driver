@@ -18,18 +18,14 @@ package org.mongodb.operation;
 
 import org.mongodb.result.ServerCursor;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class MongoKillCursor {
-    private final List<ServerCursor> serverCursors;
+    private final ServerCursor serverCursor;
 
     public MongoKillCursor(final ServerCursor serverCursor) {
-        serverCursors = Arrays.asList(serverCursor);
+        this.serverCursor = serverCursor;
     }
 
-
-    public List<ServerCursor> getServerCursors() {
-        return serverCursors;
+    public ServerCursor getServerCursor() {
+        return serverCursor;
     }
 }

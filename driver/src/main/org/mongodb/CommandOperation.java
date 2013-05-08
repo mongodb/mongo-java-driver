@@ -38,6 +38,17 @@ public class CommandOperation extends Operation {
         this.codec = codec;
     }
 
+    public CommandResult execute(final MongoServerBinding binding) {
+        MongoConnectionManager connectionManager =
+                binding.getConnectionManagerForRead(commandOperation.getReadPreference());
+        MongoSyncConnection connection = connectionManager.getConnection();
+        try {
+            return execute(connection);
+        } finally {
+            connectionManager.releaseConnection(connection);
+        }
+    }
+
     public CommandResult execute(final MongoSyncConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
@@ -53,6 +64,5 @@ public class CommandOperation extends Operation {
         } finally {
             buffer.close();
         }
-
     }
 }

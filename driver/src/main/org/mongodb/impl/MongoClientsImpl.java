@@ -21,6 +21,7 @@ import org.mongodb.MongoClientURI;
 import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.io.PowerOfTwoByteBufferPool;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public final class MongoClientsImpl {
     public static MongoClientImpl create(final MongoConnectionStrategy connectionStrategy,
                                          final MongoClientOptions options) {
         return new MongoClientImpl(options, new DelegatingMongoConnector(new MongoMultiServerBinding(connectionStrategy, null,
-                options)));
+                options, new PowerOfTwoByteBufferPool())));
     }
 
     public static MongoClientImpl create(final MongoClientURI mongoURI) throws UnknownHostException {

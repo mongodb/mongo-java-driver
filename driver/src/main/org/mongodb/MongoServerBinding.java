@@ -16,6 +16,9 @@
 
 package org.mongodb;
 
+import org.mongodb.io.BufferPool;
+
+import java.nio.ByteBuffer;
 import java.util.List;
 
 public interface MongoServerBinding {
@@ -26,6 +29,8 @@ public interface MongoServerBinding {
     MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress);
 
     List<ServerAddress> getAllServerAddresses();
+
+    BufferPool<ByteBuffer> getBufferPool();
 
     void close();
 }

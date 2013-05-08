@@ -20,15 +20,19 @@ import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
+import org.mongodb.io.BufferPool;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
 public class MongoSingleServerBinding implements MongoServerBinding {
     private final MongoConnectionManager connectionManager;
+    private BufferPool<ByteBuffer> bufferPool;
 
-    public MongoSingleServerBinding(final MongoConnectionManager connectionManager) {
+    public MongoSingleServerBinding(final MongoConnectionManager connectionManager, final BufferPool<ByteBuffer> bufferPool) {
         this.connectionManager = connectionManager;
+        this.bufferPool = bufferPool;
     }
 
     @Override
@@ -49,6 +53,11 @@ public class MongoSingleServerBinding implements MongoServerBinding {
     @Override
     public List<ServerAddress> getAllServerAddresses() {
         return Arrays.asList(connectionManager.getServerAddress());
+    }
+
+    @Override
+    public BufferPool<ByteBuffer> getBufferPool() {
+        return bufferPool;
     }
 
     @Override

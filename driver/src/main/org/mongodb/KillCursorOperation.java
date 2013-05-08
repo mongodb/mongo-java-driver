@@ -32,6 +32,17 @@ public class KillCursorOperation extends Operation {
         this.killCursor = killCursor;
     }
 
+    public void execute(final MongoServerBinding binding) {
+        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(killCursor.getServerCursor().getAddress());
+        MongoSyncConnection connection = connectionManager.getConnection();
+        try {
+            execute(connection);
+        } finally {
+            connectionManager.releaseConnection(connection);
+        }
+
+    }
+
     public void execute(final MongoSyncConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {

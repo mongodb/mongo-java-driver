@@ -37,6 +37,17 @@ public abstract class WriteOperation extends Operation {
         super(namespace, bufferPool);
     }
 
+    public WriteResult execute(final MongoServerBinding binding) {
+        MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
+        MongoSyncConnection connection = connectionManager.getConnection();
+        try {
+            return execute(connection);
+        } finally {
+            connectionManager.releaseConnection(connection);
+        }
+
+    }
+
     public WriteResult execute(final MongoSyncConnection connection) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
@@ -72,5 +83,4 @@ public abstract class WriteOperation extends Operation {
     public abstract MongoWrite getWrite();
 
     protected abstract MongoRequestMessage createRequestMessage();
-
 }

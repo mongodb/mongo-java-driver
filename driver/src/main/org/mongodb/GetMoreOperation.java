@@ -39,6 +39,17 @@ public class GetMoreOperation<T> extends Operation {
         this.resultDecoder = resultDecoder;
     }
 
+
+    public QueryResult<T> execute(final MongoServerBinding binding) {
+        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoSyncConnection connection = connectionManager.getConnection();
+        try {
+            return execute(connection);
+        } finally {
+            connectionManager.releaseConnection(connection);
+        }
+    }
+
     public QueryResult<T> execute(final MongoSyncConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {

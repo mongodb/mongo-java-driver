@@ -41,6 +41,16 @@ public class QueryOperation<T> extends Operation {
         this.resultDecoder = resultDecoder;
     }
 
+    public QueryResult<T> execute(final MongoServerBinding binding) {
+        MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(find.getReadPreference());
+        MongoSyncConnection connection = connectionManager.getConnection();
+        try {
+            return execute(connection);
+        } finally {
+            connectionManager.releaseConnection(connection);
+        }
+    }
+
     public QueryResult<T> execute(final MongoSyncConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
