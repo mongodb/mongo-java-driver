@@ -43,14 +43,14 @@ class ClirrPlugin implements Plugin<Project> {
     }
 
     void createConfigurations(Project project) {
-        clirrConfiguration = project.configurations.add('clirr').with {
+        clirrConfiguration = project.configurations.create('clirr').with {
             visible = false
             transitive = true
             description = "The Clirr libraries to be used for this project."
             return (Configuration) delegate
         }
 
-        baseConfiguration = project.configurations.add('base').with {
+        baseConfiguration = project.configurations.create('base').with {
             visible = false
             transitive = false
             return (Configuration) delegate
