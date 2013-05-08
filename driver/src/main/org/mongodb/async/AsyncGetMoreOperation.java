@@ -45,7 +45,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         final MongoGetMoreMessage message = new MongoGetMoreMessage(getNamespace().getFullName(), getMore);
         encodeMessageToBuffer(message, buffer);
-        connection.getAsyncGateway().sendAndReceiveMessage(buffer, new MongoGetMoreResultCallback<T>(
+        connection.sendAndReceiveMessage(buffer, new MongoGetMoreResultCallback<T>(
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection));
 
         return retVal;

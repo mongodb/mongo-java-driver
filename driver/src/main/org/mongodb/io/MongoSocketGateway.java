@@ -24,7 +24,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 
 // TODO: migrate all the DBPort configuration
-class MongoSocketGateway extends MongoGateway {
+class MongoSocketGateway extends DefaultMongoGateway {
     private final SocketFactory socketFactory;
     private volatile Socket socket;
 
@@ -37,12 +37,12 @@ class MongoSocketGateway extends MongoGateway {
     protected void ensureOpen() {
         try {
             if (socket == null) {
-                socket = socketFactory.createSocket(getAddress().getSocketAddress().getAddress(), getAddress().getPort());
+                socket = socketFactory.createSocket(getServerAddress().getSocketAddress().getAddress(), getServerAddress().getPort());
                 socket.setTcpNoDelay(true);
             }
         } catch (IOException e) {
             close();
-            throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
+            throw new MongoSocketOpenException("Exception opening socket", getServerAddress(), e);
         }
     }
 
@@ -52,7 +52,7 @@ class MongoSocketGateway extends MongoGateway {
             buffer.pipeAndClose(socket);
         } catch (IOException e) {
             close();
-            throw new MongoSocketWriteException("Exception sending message", getAddress(), e);
+            throw new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
         }
     }
 
@@ -66,7 +66,7 @@ class MongoSocketGateway extends MongoGateway {
             while (totalBytesRead < buffer.limit()) {
                 final int bytesRead = socket.getInputStream().read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
                 if (bytesRead == -1) {
-                    throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
+                    throw new MongoSocketReadException("Prematurely reached end of stream", getServerAddress());
                 }
                 totalBytesRead += bytesRead;
             }

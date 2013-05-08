@@ -16,8 +16,14 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.io.MongoGateway;
+import org.mongodb.ServerAddress;
+import org.mongodb.io.ChannelAwareOutputBuffer;
+import org.mongodb.io.ResponseBuffers;
 
 public interface MongoSyncConnection extends MongoConnection {
-    MongoGateway getGateway();
+    ServerAddress getServerAddress();
+
+    void sendMessage(ChannelAwareOutputBuffer buffer);
+
+    ResponseBuffers sendAndReceiveMessage(ChannelAwareOutputBuffer buffer);
 }

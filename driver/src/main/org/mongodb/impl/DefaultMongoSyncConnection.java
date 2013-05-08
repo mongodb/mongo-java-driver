@@ -21,7 +21,9 @@ import org.mongodb.MongoCredential;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.CachingAuthenticator;
-import org.mongodb.io.MongoGateway;
+import org.mongodb.io.ChannelAwareOutputBuffer;
+import org.mongodb.io.DefaultMongoGateway;
+import org.mongodb.io.ResponseBuffers;
 import org.mongodb.pool.SimplePool;
 
 import java.nio.ByteBuffer;
@@ -29,17 +31,15 @@ import java.util.List;
 
 class DefaultMongoSyncConnection implements MongoSyncConnection {
     private final BufferPool<ByteBuffer> bufferPool;
-    private final MongoClientOptions options;
     private final SimplePool<MongoSyncConnection> channelPool;
-    private MongoGateway channel;
+    private DefaultMongoGateway channel;
 
     DefaultMongoSyncConnection(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                final SimplePool<MongoSyncConnection> channelPool, final BufferPool<ByteBuffer> bufferPool,
                                final MongoClientOptions options) {
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
-        this.options = options;
-        this.channel = MongoGateway.create(serverAddress, bufferPool, options,
+        this.channel = DefaultMongoGateway.create(serverAddress, bufferPool, options,
                 new CachingAuthenticator(new MongoCredentialsStore(credentialList), this));
     }
 
@@ -53,12 +53,17 @@ class DefaultMongoSyncConnection implements MongoSyncConnection {
 
     @Override
     public ServerAddress getServerAddress() {
-        return channel.getAddress();
+        return channel.getServerAddress();
     }
 
     @Override
-    public MongoGateway getGateway() {
-        return channel;
+    public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+        channel.sendMessage(buffer);
+    }
+
+    @Override
+    public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
+        return channel.sendAndReceiveMessage(buffer);
     }
 
     @Override

@@ -43,7 +43,7 @@ public abstract class MongoCommandResultBaseCallback extends MongoResponseCallba
             }
             else {
                 MongoReplyMessage<Document> replyMessage = new MongoReplyMessage<Document>(responseBuffers, decoder);
-                callCallback(new CommandResult(commandOperation.toDocument(), getConnection().getAsyncGateway().getAddress(),
+                callCallback(new CommandResult(commandOperation.toDocument(), getConnection().getServerAddress(),
                         replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds()), null);
             }
         } finally {

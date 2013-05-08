@@ -16,8 +16,8 @@
 
 package org.mongodb;
 
+import org.mongodb.impl.MongoSyncConnection;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.MongoGateway;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.protocol.MongoKillCursorsMessage;
@@ -32,7 +32,7 @@ public class KillCursorOperation extends Operation {
         this.killCursor = killCursor;
     }
 
-    public void execute(final MongoGateway connection) {
+    public void execute(final MongoSyncConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             final MongoKillCursorsMessage message = new MongoKillCursorsMessage(killCursor);

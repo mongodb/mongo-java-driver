@@ -18,8 +18,8 @@ package org.mongodb;
 
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
+import org.mongodb.impl.MongoSyncConnection;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.MongoGateway;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
 import org.mongodb.operation.MongoWrite;
@@ -37,7 +37,7 @@ public abstract class WriteOperation extends Operation {
         super(namespace, bufferPool);
     }
 
-    public WriteResult execute(final MongoGateway connection) {
+    public WriteResult execute(final MongoSyncConnection connection) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             CommandResult getLastErrorResult = null;

@@ -18,8 +18,10 @@ package org.mongodb.impl;
 
 import org.mongodb.MongoCredential;
 import org.mongodb.ServerAddress;
+import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.async.AsyncMongoGateway;
+import org.mongodb.io.ChannelAwareOutputBuffer;
+import org.mongodb.io.ResponseBuffers;
 import org.mongodb.io.async.CachingAsyncAuthenticator;
 import org.mongodb.io.async.MongoAsynchronousSocketChannelGateway;
 import org.mongodb.pool.SimplePool;
@@ -48,11 +50,6 @@ public class DefaultMongoAsyncConnection implements MongoAsyncConnection {
     @Override
     public ServerAddress getServerAddress() {
         return serverAddress;
-    }
-
-    @Override
-    public AsyncMongoGateway getAsyncGateway() {
-        return channel;
     }
 
     @Override
@@ -97,5 +94,15 @@ public class DefaultMongoAsyncConnection implements MongoAsyncConnection {
     @Override
     public void setActiveAsyncCall() {
         activeAsyncCall = true;
+    }
+
+    @Override
+    public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+        channel.sendMessage(buffer, callback);
+    }
+
+    @Override
+    public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+        channel.sendAndReceiveMessage(buffer, callback);
     }
 }

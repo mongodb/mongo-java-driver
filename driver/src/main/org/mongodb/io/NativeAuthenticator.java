@@ -33,10 +33,10 @@ public class NativeAuthenticator extends Authenticator {
     public CommandResult authenticate() {
         CommandResult nonceResponse = new CommandOperation(getCredential().getSource(),
                 new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection().getBufferPool()).execute(getConnection().getGateway());
+                new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection().getBufferPool()).execute(getConnection());
         return new CommandOperation(getCredential().getSource(),
                 new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                         getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection().getBufferPool()).execute(getConnection().getGateway());
+                new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection().getBufferPool()).execute(getConnection());
     }
 }

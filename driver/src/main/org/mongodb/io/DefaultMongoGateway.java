@@ -40,13 +40,13 @@ import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
  * <p/>
  * Note: This class is not part of the public API.  It may break binary compatibility even in minor releases.
  */
-public abstract class MongoGateway {
+public abstract class DefaultMongoGateway {
     private final ServerAddress address;
     private final BufferPool<ByteBuffer> pool;
     private final CachingAuthenticator authenticator;
     private boolean authenticating = false;
 
-    public static MongoGateway create(final ServerAddress address, final BufferPool<ByteBuffer> pool,
+    public static DefaultMongoGateway create(final ServerAddress address, final BufferPool<ByteBuffer> pool,
                                       final MongoClientOptions options, final CachingAuthenticator authenticator) {
         if (options.isSSLEnabled()) {
             return new MongoSocketGateway(address, pool, SSLSocketFactory.getDefault(), authenticator);
@@ -59,7 +59,7 @@ public abstract class MongoGateway {
         }
     }
 
-    public ServerAddress getAddress() {
+    public ServerAddress getServerAddress() {
         return address;
     }
 
@@ -83,8 +83,8 @@ public abstract class MongoGateway {
         authenticator.reset();
     }
 
-    protected MongoGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool,
-                           final CachingAuthenticator authenticator) {
+    protected DefaultMongoGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool,
+                                  final CachingAuthenticator authenticator) {
         this.address = address;
         this.pool = pool;
         this.authenticator = authenticator;

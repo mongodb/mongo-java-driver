@@ -17,8 +17,8 @@
 package org.mongodb;
 
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.impl.MongoSyncConnection;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.MongoGateway;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
 import org.mongodb.operation.MongoFind;
@@ -41,7 +41,7 @@ public class QueryOperation<T> extends Operation {
         this.resultDecoder = resultDecoder;
     }
 
-    public QueryResult<T> execute(final MongoGateway connection) {
+    public QueryResult<T> execute(final MongoSyncConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             final MongoQueryMessage message = new MongoQueryMessage(getNamespace().getFullName(), find, queryEncoder);
@@ -52,10 +52,10 @@ public class QueryOperation<T> extends Operation {
                 if (responseBuffers.getReplyHeader().isQueryFailure()) {
                     final Document errorDocument =
                             new MongoReplyMessage<Document>(responseBuffers, new DocumentCodec()).getDocuments().get(0);
-                    throw new MongoQueryFailureException(connection.getAddress(), errorDocument);
+                    throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
                 }
                 final MongoReplyMessage<T> replyMessage = new MongoReplyMessage<T>(responseBuffers, resultDecoder);
-                return new QueryResult<T>(replyMessage, connection.getAddress());
+                return new QueryResult<T>(replyMessage, connection.getServerAddress());
             } finally {
                 responseBuffers.close();
             }

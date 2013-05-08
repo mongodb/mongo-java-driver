@@ -17,8 +17,8 @@
 package org.mongodb;
 
 import org.mongodb.command.MongoCommand;
+import org.mongodb.impl.MongoSyncConnection;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.MongoGateway;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
 import org.mongodb.protocol.MongoCommandMessage;
@@ -38,7 +38,7 @@ public class CommandOperation extends Operation {
         this.codec = codec;
     }
 
-    public CommandResult execute(final MongoGateway connection) {
+    public CommandResult execute(final MongoSyncConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             final MongoCommandMessage message = new MongoCommandMessage(getNamespace().getFullName(), commandOperation, codec);

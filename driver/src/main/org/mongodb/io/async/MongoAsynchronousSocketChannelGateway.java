@@ -42,7 +42,7 @@ import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
  * <p/>
  * Note: This class is not part of the public API.  It may break binary compatibility even in minor releases.
  */
-public class MongoAsynchronousSocketChannelGateway implements AsyncMongoGateway {
+public class MongoAsynchronousSocketChannelGateway {
     private final ServerAddress address;
     private CachingAsyncAuthenticator authenticator;
     private final BufferPool<ByteBuffer> pool;
@@ -55,7 +55,7 @@ public class MongoAsynchronousSocketChannelGateway implements AsyncMongoGateway 
         this.pool = pool;
     }
 
-    public ServerAddress getAddress() {
+    public ServerAddress getServerAddress() {
         return address;
     }
 
@@ -262,16 +262,6 @@ public class MongoAsynchronousSocketChannelGateway implements AsyncMongoGateway 
                     callback.onResult(new ResponseBuffers(replyHeader, bodyInputBuffer, System.nanoTime() - start), null);
                 }
             }
-        }
-    }
-
-    private static class NoOpAsyncCompletionHandler implements AsyncCompletionHandler {
-        @Override
-        public void completed(final int bytesWritten) {
-        }
-
-        @Override
-        public void failed(final Throwable t) {
         }
     }
 }

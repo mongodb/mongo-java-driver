@@ -48,11 +48,11 @@ public class MongoGetMoreResultCallback<T> extends MongoResponseCallback {
                 throw e;
             }
             else if (responseBuffers.getReplyHeader().isCursorNotFound()) {
-                throw new MongoCursorNotFoundException(new ServerCursor(cursorId, getConnection().getAsyncGateway().getAddress()));
+                throw new MongoCursorNotFoundException(new ServerCursor(cursorId, getConnection().getServerAddress()));
             }
             else {
                 result = new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, decoder),
-                        getConnection().getAsyncGateway().getAddress());
+                        getConnection().getServerAddress());
             }
         } catch (MongoException me) {
             exceptionResult = me;

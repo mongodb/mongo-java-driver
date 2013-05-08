@@ -48,11 +48,11 @@ public class MongoQueryResultCallback<T> extends MongoResponseCallback {
             }
             else if (responseBuffers.getReplyHeader().isQueryFailure()) {
                 Document errorDocument = new MongoReplyMessage<Document>(responseBuffers, new DocumentCodec()).getDocuments().get(0);
-                throw new MongoQueryFailureException(getConnection().getAsyncGateway().getAddress(), errorDocument);
+                throw new MongoQueryFailureException(getConnection().getServerAddress(), errorDocument);
             }
             else {
                 result = new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, decoder),
-                        getConnection().getAsyncGateway().getAddress());
+                        getConnection().getServerAddress());
             }
         } catch (MongoException me) {
             exceptionResult = me;

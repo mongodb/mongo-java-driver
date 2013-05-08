@@ -18,8 +18,8 @@ package org.mongodb;
 
 import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
+import org.mongodb.impl.MongoSyncConnection;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.MongoGateway;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.result.CommandResult;
 
@@ -43,8 +43,8 @@ public abstract class Operation {
     }
 
     protected CommandResult createCommandResult(final MongoCommand commandOperation, final MongoReplyMessage<Document> replyMessage,
-                                              final MongoGateway connection) {
-        CommandResult commandResult = new CommandResult(commandOperation.toDocument(), connection.getAddress(),
+                                              final MongoSyncConnection connection) {
+        CommandResult commandResult = new CommandResult(commandOperation.toDocument(), connection.getServerAddress(),
                 replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds());
         if (!commandResult.isOk()) {
             throw new MongoCommandFailureException(commandResult);

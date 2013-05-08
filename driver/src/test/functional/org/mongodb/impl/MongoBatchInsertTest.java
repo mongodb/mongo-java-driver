@@ -65,10 +65,10 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
 
         final MongoInsert<Document> insert = new MongoInsert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
         new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(),
-                connection.getBufferPool()).execute(connection.getGateway());
+                connection.getBufferPool()).execute(connection);
         assertEquals(documents.size(), new CountCommandResult(new CommandOperation(database.getName(),
-                new Count(new MongoFind(), collectionName), new DocumentCodec(), connection.getBufferPool())
-                .execute(connection.getGateway())).getCount());
+                new Count(new MongoFind(), collectionName), new DocumentCodec(), connection.getBufferPool()).execute(connection))
+                .getCount());
     }
 
 }

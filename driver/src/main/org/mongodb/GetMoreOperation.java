@@ -16,8 +16,8 @@
 
 package org.mongodb;
 
+import org.mongodb.impl.MongoSyncConnection;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.MongoGateway;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
 import org.mongodb.operation.MongoGetMore;
@@ -39,7 +39,7 @@ public class GetMoreOperation<T> extends Operation {
         this.resultDecoder = resultDecoder;
     }
 
-    public QueryResult<T> execute(final MongoGateway connection) {
+    public QueryResult<T> execute(final MongoSyncConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             final MongoGetMoreMessage message = new MongoGetMoreMessage(getNamespace().getFullName(), getMore);
@@ -47,11 +47,11 @@ public class GetMoreOperation<T> extends Operation {
             final ResponseBuffers responseBuffers = connection.sendAndReceiveMessage(buffer);
             try {
                 if (responseBuffers.getReplyHeader().isCursorNotFound()) {
-                    throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getAddress()));
+                    throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));
                 }
 
                 final MongoReplyMessage<T> replyMessage = new MongoReplyMessage<T>(responseBuffers, resultDecoder);
-                return new QueryResult<T>(replyMessage, connection.getAddress());
+                return new QueryResult<T>(replyMessage, connection.getServerAddress());
             } finally {
                 responseBuffers.close();
             }
