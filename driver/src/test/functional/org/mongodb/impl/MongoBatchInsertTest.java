@@ -39,15 +39,15 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class MongoBatchInsertTest extends DatabaseTestCase {
-    private MongoConnection connection;
+    private MongoSyncConnection connection;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        connection = new MongoSyncConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
-                Fixture.getMongoClientURI().getCredentials(), new SimplePool<MongoConnection>("test", 1) {
+        connection = new DefaultMongoSyncConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
+                Fixture.getMongoClientURI().getCredentials(), new SimplePool<MongoSyncConnection>("test", 1) {
             @Override
-            protected MongoConnection createNew() {
+            protected MongoSyncConnection createNew() {
                 throw new UnsupportedOperationException();
             }
         }, new PowerOfTwoByteBufferPool(), Fixture.getMongoClientURI().getOptions());

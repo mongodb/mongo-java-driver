@@ -29,8 +29,8 @@ class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
     private ReadPreference lastRequestedReadPreference;
     private MongoConnectionManager connectionManagerForReads;
     private MongoConnectionManager connectionManagerForWrites;
-    private MongoConnection connectorForReads;
-    private MongoConnection connectorForWrites;
+    private MongoSyncConnection connectorForReads;
+    private MongoSyncConnection connectorForWrites;
 
     public MonotonicallyConsistentMongoServerBinding(final MongoServerBinding serverConnectorManager) {
         this.serverConnectorManager = serverConnectorManager;
@@ -70,7 +70,7 @@ class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
         }
     }
 
-    private synchronized MongoConnection getConnectorForWrites() {
+    private synchronized MongoSyncConnection getConnectorForWrites() {
         if (connectorForWrites == null) {
             connectionManagerForWrites = serverConnectorManager.getConnectionManagerForWrite();
             connectorForWrites = connectionManagerForWrites.getConnection();
@@ -83,7 +83,7 @@ class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
         return connectorForWrites;
     }
 
-    private synchronized MongoConnection getConnectorForReads(final ReadPreference readPreference) {
+    private synchronized MongoSyncConnection getConnectorForReads(final ReadPreference readPreference) {
         if (connectorForWrites != null) {
             return connectorForWrites;
         }
@@ -101,7 +101,7 @@ class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
 
     private abstract class AbstractConnectionManager implements MongoConnectionManager {
         @Override
-        public void releaseConnection(final MongoConnection connection) {
+        public void releaseConnection(final MongoSyncConnection connection) {
             // Do nothing.  Release when the containing instance is closed.
         }
 
@@ -123,7 +123,7 @@ class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
         }
 
         @Override
-        public MongoConnection getConnection() {
+        public MongoSyncConnection getConnection() {
             return getConnectorForReads(readPreference);
         }
 
@@ -140,7 +140,7 @@ class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
 
     private final class MongoConnectionManagerForWrites extends AbstractConnectionManager {
         @Override
-        public MongoConnection getConnection() {
+        public MongoSyncConnection getConnection() {
             return getConnectorForWrites();
         }
 

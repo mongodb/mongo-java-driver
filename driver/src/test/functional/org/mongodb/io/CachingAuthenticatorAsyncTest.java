@@ -26,6 +26,7 @@ import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.MongoCommandFailureException;
+import org.mongodb.impl.DefaultMongoAsyncConnection;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.impl.MongoCredentialsStore;
 import org.mongodb.io.async.CachingAsyncAuthenticator;
@@ -50,7 +51,7 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
     public void setUp() throws Exception {
         super.setUp();
         latch = new CountDownLatch(1);
-        poolableConnector = new MongoAsyncConnection(connector.getServerAddressList().get(0), null,
+        poolableConnector = new DefaultMongoAsyncConnection(connector.getServerAddressList().get(0), null,
                 new SimplePool<MongoAsyncConnection>("test", 1) {
             @Override
             protected MongoAsyncConnection createNew() {

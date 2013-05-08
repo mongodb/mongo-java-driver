@@ -19,8 +19,6 @@ package org.mongodb.impl;
 
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.MongoGateway;
-import org.mongodb.io.async.AsyncMongoGateway;
 
 import java.nio.ByteBuffer;
 
@@ -40,9 +38,5 @@ public interface MongoConnection {
      */
     ServerAddress getServerAddress();
 
-    MongoGateway getGateway();
-
     BufferPool<ByteBuffer> getBufferPool();
-
-    AsyncMongoGateway getAsyncGateway();
 }

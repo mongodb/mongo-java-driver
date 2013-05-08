@@ -17,12 +17,12 @@
 package org.mongodb;
 
 import org.mongodb.impl.MongoAsyncConnection;
-import org.mongodb.impl.MongoConnection;
+import org.mongodb.impl.MongoSyncConnection;
 
 public interface MongoConnectionManager {
-    MongoConnection getConnection();
+    MongoSyncConnection getConnection();
 
-    void releaseConnection(MongoConnection connection);
+    void releaseConnection(MongoSyncConnection connection);
 
     ServerAddress getServerAddress();
 

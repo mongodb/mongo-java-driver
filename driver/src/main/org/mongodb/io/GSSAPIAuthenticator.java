@@ -18,12 +18,12 @@ package org.mongodb.io;
 
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
-import org.mongodb.impl.MongoConnection;
+import org.mongodb.impl.MongoSyncConnection;
 
 import javax.security.sasl.SaslClient;
 
 class GSSAPIAuthenticator extends SaslAuthenticator {
-    GSSAPIAuthenticator(final MongoCredential credential, final MongoConnection connector) {
+    GSSAPIAuthenticator(final MongoCredential credential, final MongoSyncConnection connector) {
         super(credential, connector);
 
         if (!this.getCredential().getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {

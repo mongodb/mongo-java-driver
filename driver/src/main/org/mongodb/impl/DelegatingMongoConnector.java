@@ -68,7 +68,7 @@ class DelegatingMongoConnector implements MongoConnector {
                                  final Codec<Document> codec) {
         MongoConnectionManager connectionManager =
                 binding.getConnectionManagerForRead(commandOperation.getReadPreference());
-        MongoConnection connection = connectionManager.getConnection();
+        MongoSyncConnection connection = connectionManager.getConnection();
         try {
             return new CommandOperation(database, commandOperation, codec, connection.getBufferPool()).execute(connection.getGateway());
         } finally {
@@ -80,7 +80,7 @@ class DelegatingMongoConnector implements MongoConnector {
     public <T> QueryResult<T> query(final MongoNamespace namespace, final MongoFind find,
                                     final Encoder<Document> queryEncoder, final Decoder<T> resultDecoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(find.getReadPreference());
-        MongoConnection connection = connectionManager.getConnection();
+        MongoSyncConnection connection = connectionManager.getConnection();
         try {
             return new QueryOperation<T>(namespace, find, queryEncoder, resultDecoder, connection.getBufferPool())
                     .execute(connection.getGateway());
@@ -93,7 +93,7 @@ class DelegatingMongoConnector implements MongoConnector {
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final MongoGetMore getMore,
                                       final Decoder<T> resultDecoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-        MongoConnection connection = connectionManager.getConnection();
+        MongoSyncConnection connection = connectionManager.getConnection();
         try {
             return new GetMoreOperation<T>(namespace, getMore, resultDecoder, connection.getBufferPool()).execute(connection.getGateway());
         } finally {
@@ -105,7 +105,7 @@ class DelegatingMongoConnector implements MongoConnector {
     public void killCursors(final MongoKillCursor killCursor) {
         for (ServerCursor cursor : killCursor.getServerCursors()) {
             MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(cursor.getAddress());
-            MongoConnection connection = connectionManager.getConnection();
+            MongoSyncConnection connection = connectionManager.getConnection();
             try {
                 new KillCursorOperation(new MongoKillCursor(cursor), connection.getBufferPool()).execute(connection.getGateway());
             } finally {
@@ -117,7 +117,7 @@ class DelegatingMongoConnector implements MongoConnector {
     @Override
     public <T> WriteResult insert(final MongoNamespace namespace, final MongoInsert<T> insert, final Encoder<T> encoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
-        MongoConnection connection = connectionManager.getConnection();
+        MongoSyncConnection connection = connectionManager.getConnection();
         try {
             return new InsertOperation<T>(namespace, insert, encoder, connection.getBufferPool()).execute(connection.getGateway());
         } finally {
@@ -128,7 +128,7 @@ class DelegatingMongoConnector implements MongoConnector {
     @Override
     public WriteResult update(final MongoNamespace namespace, final MongoUpdate update, final Encoder<Document> queryEncoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
-        MongoConnection connection = connectionManager.getConnection();
+        MongoSyncConnection connection = connectionManager.getConnection();
         try {
             return new UpdateOperation(namespace, update, queryEncoder, connection.getBufferPool()).execute(connection.getGateway());
         } finally {
@@ -140,7 +140,7 @@ class DelegatingMongoConnector implements MongoConnector {
     public <T> WriteResult replace(final MongoNamespace namespace, final MongoReplace<T> replace,
                                    final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
-        MongoConnection connection = connectionManager.getConnection();
+        MongoSyncConnection connection = connectionManager.getConnection();
         try {
             return new ReplaceOperation<T>(namespace, replace, queryEncoder, encoder, connection.getBufferPool())
                     .execute(connection.getGateway());
@@ -152,7 +152,7 @@ class DelegatingMongoConnector implements MongoConnector {
     @Override
     public WriteResult remove(final MongoNamespace namespace, final MongoRemove remove, final Encoder<Document> queryEncoder) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
-        MongoConnection connection = connectionManager.getConnection();
+        MongoSyncConnection connection = connectionManager.getConnection();
         try {
             return new RemoveOperation(namespace, remove, queryEncoder, connection.getBufferPool()).execute(connection.getGateway());
         } finally {

@@ -18,16 +18,14 @@ package org.mongodb.io;
 
 import org.mongodb.CommandOperation;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoException;
-import org.mongodb.async.SingleResultCallback;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.MongoCommand;
-import org.mongodb.impl.MongoConnection;
+import org.mongodb.impl.MongoSyncConnection;
 import org.mongodb.result.CommandResult;
 
 public class NativeAuthenticator extends Authenticator {
-    NativeAuthenticator(final MongoCredential credential, final MongoConnection connection) {
+    NativeAuthenticator(final MongoCredential credential, final MongoSyncConnection connection) {
         super(credential, connection);
     }
 

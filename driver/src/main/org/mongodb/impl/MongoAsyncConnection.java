@@ -16,88 +16,12 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoCredential;
-import org.mongodb.ServerAddress;
-import org.mongodb.io.BufferPool;
-import org.mongodb.io.MongoGateway;
 import org.mongodb.io.async.AsyncMongoGateway;
-import org.mongodb.io.async.CachingAsyncAuthenticator;
-import org.mongodb.io.async.MongoAsynchronousSocketChannelGateway;
-import org.mongodb.pool.SimplePool;
 
-import java.nio.ByteBuffer;
-import java.util.List;
+public interface MongoAsyncConnection extends MongoConnection {
+    AsyncMongoGateway getAsyncGateway();
 
-public class MongoAsyncConnection implements MongoConnection {
-    private final ServerAddress serverAddress;
-    private final SimplePool<MongoAsyncConnection> channelPool;
-    private final BufferPool<ByteBuffer> bufferPool;
-    private volatile MongoAsynchronousSocketChannelGateway channel;
-    private volatile boolean activeAsyncCall;
-    private volatile boolean releasePending;
+    void releaseIfPending();
 
-    public MongoAsyncConnection(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                final SimplePool<MongoAsyncConnection> channelPool, final BufferPool<ByteBuffer> bufferPool) {
-        this.serverAddress = serverAddress;
-        this.channelPool = channelPool;
-        this.bufferPool = bufferPool;
-        this.channel = new MongoAsynchronousSocketChannelGateway(serverAddress,
-                new CachingAsyncAuthenticator(new MongoCredentialsStore(credentialList), this), bufferPool);
-    }
-
-    public ServerAddress getServerAddress() {
-        return serverAddress;
-    }
-
-    @Override
-    public MongoGateway getGateway() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public AsyncMongoGateway getAsyncGateway() {
-        return channel;
-    }
-
-    @Override
-    public BufferPool<ByteBuffer> getBufferPool() {
-        return bufferPool;
-    }
-
-    @Override
-    public synchronized void close() {
-        if (channel != null) {
-            channel.close();
-            channel = null;
-        }
-    }
-
-    @Override
-    public synchronized void release() {
-        if (channel == null) {
-            throw new IllegalStateException("Can not release a channel that's already closed");
-        }
-        if (channelPool == null) {
-            throw new IllegalStateException("Can not release a channel not associated with a pool");
-        }
-
-        if (activeAsyncCall) {
-            releasePending = true;
-        }
-        else {
-            releasePending = false;
-            channelPool.done(this);
-        }
-    }
-
-    public synchronized void releaseIfPending() {
-        activeAsyncCall = false;
-        if (releasePending) {
-            release();
-        }
-    }
-
-    public void setActiveAsyncCall() {
-        activeAsyncCall = true;
-    }
+    void setActiveAsyncCall();
 }

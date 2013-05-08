@@ -44,7 +44,7 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        connection = new MongoAsyncConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
+        connection = new DefaultMongoAsyncConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
                 Fixture.getMongoClientURI().getCredentials(), new SimplePool<MongoAsyncConnection>("test", 1) {
             @Override
             protected MongoAsyncConnection createNew() {

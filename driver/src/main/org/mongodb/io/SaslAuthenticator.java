@@ -23,7 +23,7 @@ import org.mongodb.MongoCredential;
 import org.mongodb.MongoSecurityException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.MongoCommand;
-import org.mongodb.impl.MongoConnection;
+import org.mongodb.impl.MongoSyncConnection;
 import org.mongodb.result.CommandResult;
 
 import javax.security.sasl.SaslClient;
@@ -32,7 +32,7 @@ import javax.security.sasl.SaslException;
 abstract class SaslAuthenticator extends Authenticator {
     public static final String MONGODB_PROTOCOL = "mongodb";
 
-    SaslAuthenticator(final MongoCredential credential, final MongoConnection connector) {
+    SaslAuthenticator(final MongoCredential credential, final MongoSyncConnection connector) {
         super(credential, connector);
     }
 

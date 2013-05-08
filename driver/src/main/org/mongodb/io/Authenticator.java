@@ -17,14 +17,14 @@
 package org.mongodb.io;
 
 import org.mongodb.MongoCredential;
-import org.mongodb.impl.MongoConnection;
+import org.mongodb.impl.MongoSyncConnection;
 import org.mongodb.result.CommandResult;
 
 abstract class Authenticator {
     private final MongoCredential credential;
-    private final MongoConnection connection;
+    private final MongoSyncConnection connection;
 
-    Authenticator(final MongoCredential credential, final MongoConnection connection) {
+    Authenticator(final MongoCredential credential, final MongoSyncConnection connection) {
         this.credential = credential;
         this.connection = connection;
     }
@@ -33,7 +33,7 @@ abstract class Authenticator {
         return credential;
     }
 
-    public MongoConnection getConnection() {
+    public MongoSyncConnection getConnection() {
         return connection;
     }
 

@@ -17,8 +17,8 @@
 package org.mongodb.io;
 
 import org.mongodb.MongoCredential;
-import org.mongodb.impl.MongoConnection;
 import org.mongodb.impl.MongoCredentialsStore;
+import org.mongodb.impl.MongoSyncConnection;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -29,17 +29,17 @@ import java.util.Set;
  */
 public class CachingAuthenticator {
     private final MongoCredentialsStore credentialsStore;
-    private final MongoConnection connector;
+    private final MongoSyncConnection connection;
     // needs synchronization to ensure that modifications are published.
     private final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());
 
-    public CachingAuthenticator(final MongoCredentialsStore credentialsStore, final MongoConnection connector) {
+    public CachingAuthenticator(final MongoCredentialsStore credentialsStore, final MongoSyncConnection connection) {
         this.credentialsStore = credentialsStore;
-        this.connector = connector;
+        this.connection = connection;
     }
 
     public void authenticateAll() {
-        // get the difference between the set of credentialed databases and the set of authenticated databases on this connector
+        // get the difference between the set of credentialed databases and the set of authenticated databases on this connection
         Set<String> unauthenticatedDatabases = getUnauthenticatedDatabases();
 
         for (String databaseName : unauthenticatedDatabases) {
@@ -60,7 +60,7 @@ public class CachingAuthenticator {
         authenticatedDatabases.add(credential.getSource());
     }
 
-    // get the difference between the set of credentialed databases and the set of authenticated databases on this connector
+    // get the difference between the set of credentialed databases and the set of authenticated databases on this connection
     private Set<String> getUnauthenticatedDatabases() {
         Set<String> unauthenticatedDatabases = new HashSet<String>(credentialsStore.getDatabases());
         unauthenticatedDatabases.removeAll(authenticatedDatabases);
@@ -71,10 +71,10 @@ public class CachingAuthenticator {
     private Authenticator createAuthenticator(final MongoCredential credential) {
         Authenticator authenticator;
         if (credential.getMechanism().equals(MongoCredential.MONGODB_CR_MECHANISM)) {
-            authenticator = new NativeAuthenticator(credential, connector);
+            authenticator = new NativeAuthenticator(credential, connection);
         }
         else if (credential.getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
-            authenticator = new GSSAPIAuthenticator(credential, connector);
+            authenticator = new GSSAPIAuthenticator(credential, connection);
         }
         else {
             throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());

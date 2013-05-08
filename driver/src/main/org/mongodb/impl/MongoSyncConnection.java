@@ -16,71 +16,8 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoCredential;
-import org.mongodb.ServerAddress;
-import org.mongodb.io.BufferPool;
-import org.mongodb.io.CachingAuthenticator;
 import org.mongodb.io.MongoGateway;
-import org.mongodb.io.async.AsyncMongoGateway;
-import org.mongodb.pool.SimplePool;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-
-final class MongoSyncConnection implements MongoConnection {
-    private final BufferPool<ByteBuffer> bufferPool;
-    private final MongoClientOptions options;
-    private final SimplePool<MongoConnection> channelPool;
-    private MongoGateway channel;
-
-    MongoSyncConnection(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                        final SimplePool<MongoConnection> channelPool, final BufferPool<ByteBuffer> bufferPool,
-                        final MongoClientOptions options) {
-        this.channelPool = channelPool;
-        this.bufferPool = bufferPool;
-        this.options = options;
-        this.channel = MongoGateway.create(serverAddress, bufferPool, options,
-                new CachingAuthenticator(new MongoCredentialsStore(credentialList), this));
-    }
-
-    @Override
-    public void close() {
-        if (channel != null) {
-            channel.close();
-            channel = null;
-        }
-    }
-
-    @Override
-    public ServerAddress getServerAddress() {
-        return channel.getAddress();
-    }
-
-    @Override
-    public MongoGateway getGateway() {
-        return channel;
-    }
-
-    @Override
-    public BufferPool<ByteBuffer> getBufferPool() {
-        return bufferPool;
-    }
-
-    @Override
-    public AsyncMongoGateway getAsyncGateway() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void release() {
-        if (channel == null) {
-            throw new IllegalStateException("Can not release a channel that's already closed");
-        }
-        if (channelPool == null) {
-            throw new IllegalStateException("Can not release a channel not associated with a pool");
-        }
-
-        channelPool.done(this);
-    }
+public interface MongoSyncConnection extends MongoConnection {
+    MongoGateway getGateway();
 }
