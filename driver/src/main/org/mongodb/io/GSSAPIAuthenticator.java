@@ -23,8 +23,8 @@ import org.mongodb.impl.MongoSyncConnection;
 import javax.security.sasl.SaslClient;
 
 class GSSAPIAuthenticator extends SaslAuthenticator {
-    GSSAPIAuthenticator(final MongoCredential credential, final MongoSyncConnection connector) {
-        super(credential, connector);
+    GSSAPIAuthenticator(final MongoCredential credential, final MongoSyncConnection connection) {
+        super(credential, connection);
 
         if (!this.getCredential().getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
             throw new MongoException("Incorrect mechanism: " + this.getCredential().getMechanism());

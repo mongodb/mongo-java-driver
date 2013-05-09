@@ -34,7 +34,7 @@ public interface MongoConnection {
     void close();
 
     /**
-     * Gets the server address of this connector
+     * Gets the server address of this connection
      */
     ServerAddress getServerAddress();
 

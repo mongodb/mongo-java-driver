@@ -53,7 +53,7 @@ public class Mongo {
     }
 
     Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
-        this(createConnector(mongoURI.toNew()), mongoURI.getOptions());
+        this(createBinding(mongoURI.toNew()), mongoURI.getOptions());
     }
 
     Mongo(final ServerAddress serverAddress, final MongoClientOptions mongoOptions) {
@@ -129,7 +129,7 @@ public class Mongo {
     }
 
     /**
-     * Gets the list of server addresses currently seen by the connector. This includes addresses auto-discovered from a
+     * Gets the list of server addresses currently seen by this client. This includes addresses auto-discovered from a
      * replica set.
      *
      * @return list of server addresses
@@ -280,7 +280,7 @@ public class Mongo {
         return retVal;
     }
 
-    private static MongoServerBinding createConnector(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
+    private static MongoServerBinding createBinding(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
             return MongoServerBindings.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)),
                     mongoURI.getCredentials(), mongoURI.getOptions());

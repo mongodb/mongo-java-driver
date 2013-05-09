@@ -27,15 +27,15 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 public class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
-    private final MongoServerBinding serverConnectorManager;
+    private final MongoServerBinding binding;
     private ReadPreference lastRequestedReadPreference;
     private MongoConnectionManager connectionManagerForReads;
     private MongoConnectionManager connectionManagerForWrites;
-    private MongoSyncConnection connectorForReads;
-    private MongoSyncConnection connectorForWrites;
+    private MongoSyncConnection connectionForReads;
+    private MongoSyncConnection connectionForWrites;
 
-    public MonotonicallyConsistentMongoServerBinding(final MongoServerBinding serverConnectorManager) {
-        this.serverConnectorManager = serverConnectorManager;
+    public MonotonicallyConsistentMongoServerBinding(final MongoServerBinding binding) {
+        this.binding = binding;
     }
 
     @Override
@@ -50,59 +50,59 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
 
     @Override
     public MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
-        return serverConnectorManager.getConnectionManagerForServer(serverAddress);
+        return binding.getConnectionManagerForServer(serverAddress);
     }
 
     @Override
     public List<ServerAddress> getAllServerAddresses() {
-        return serverConnectorManager.getAllServerAddresses();
+        return binding.getAllServerAddresses();
     }
 
     @Override
     public BufferPool<ByteBuffer> getBufferPool() {
-        return serverConnectorManager.getBufferPool();
+        return binding.getBufferPool();
     }
 
     @Override
     public void close() {
-        if (connectorForReads != null) {
-            connectionManagerForReads.releaseConnection(connectorForReads);
+        if (connectionForReads != null) {
+            connectionManagerForReads.releaseConnection(connectionForReads);
             connectionManagerForReads = null;
-            connectorForReads = null;
+            connectionForReads = null;
         }
-        if (connectorForWrites != null) {
-            connectionManagerForWrites.releaseConnection(connectorForWrites);
+        if (connectionForWrites != null) {
+            connectionManagerForWrites.releaseConnection(connectionForWrites);
             connectionManagerForWrites = null;
-            connectorForWrites = null;
+            connectionForWrites = null;
         }
     }
 
-    private synchronized MongoSyncConnection getConnectorForWrites() {
-        if (connectorForWrites == null) {
-            connectionManagerForWrites = serverConnectorManager.getConnectionManagerForWrite();
-            connectorForWrites = connectionManagerForWrites.getConnection();
-            if (connectorForReads != null) {
-                connectionManagerForReads.releaseConnection(connectorForReads);
-                connectorForReads = null;
+    private synchronized MongoSyncConnection getConnectionForWrites() {
+        if (connectionForWrites == null) {
+            connectionManagerForWrites = binding.getConnectionManagerForWrite();
+            connectionForWrites = connectionManagerForWrites.getConnection();
+            if (connectionForReads != null) {
+                connectionManagerForReads.releaseConnection(connectionForReads);
+                connectionForReads = null;
                 connectionManagerForReads = null;
             }
         }
-        return connectorForWrites;
+        return connectionForWrites;
     }
 
-    private synchronized MongoSyncConnection getConnectorForReads(final ReadPreference readPreference) {
-        if (connectorForWrites != null) {
-            return connectorForWrites;
+    private synchronized MongoSyncConnection getConnectionForReads(final ReadPreference readPreference) {
+        if (connectionForWrites != null) {
+            return connectionForWrites;
         }
-        else if (connectorForReads == null || !readPreference.equals(lastRequestedReadPreference)) {
+        else if (connectionForReads == null || !readPreference.equals(lastRequestedReadPreference)) {
             lastRequestedReadPreference = readPreference;
-            if (connectorForReads != null) {
-                connectionManagerForReads.releaseConnection(connectorForReads);
+            if (connectionForReads != null) {
+                connectionManagerForReads.releaseConnection(connectionForReads);
             }
-            connectionManagerForReads = serverConnectorManager.getConnectionManagerForRead(readPreference);
-            connectorForReads = connectionManagerForReads.getConnection();
+            connectionManagerForReads = binding.getConnectionManagerForRead(readPreference);
+            connectionForReads = connectionManagerForReads.getConnection();
         }
-        return connectorForReads;
+        return connectionForReads;
     }
 
 
@@ -131,7 +131,7 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
 
         @Override
         public MongoSyncConnection getConnection() {
-            return getConnectorForReads(readPreference);
+            return getConnectionForReads(readPreference);
         }
 
         @Override
@@ -148,7 +148,7 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
     private final class MongoConnectionManagerForWrites extends AbstractConnectionManager {
         @Override
         public MongoSyncConnection getConnection() {
-            return getConnectorForWrites();
+            return getConnectionForWrites();
         }
 
         @Override

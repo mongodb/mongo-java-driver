@@ -46,13 +46,13 @@ import static org.mongodb.Fixture.getBinding;
 public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
 
     private CountDownLatch latch;
-    private MongoAsyncConnection poolableConnector;
+    private MongoAsyncConnection connection;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
         latch = new CountDownLatch(1);
-        poolableConnector = new DefaultMongoAsyncConnection(getBinding().getAllServerAddresses().get(0), null,
+        connection = new DefaultMongoAsyncConnection(getBinding().getAllServerAddresses().get(0), null,
                 new SimplePool<MongoAsyncConnection>("test", 1) {
             @Override
             protected MongoAsyncConnection createNew() {
@@ -63,13 +63,13 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
 
     @After
     public void tearDown() {
-        poolableConnector.close();
+        connection.close();
     }
 
     @Test
     public void testEmpty() throws InterruptedException {
         MongoCredentialsStore credentialsStore = new MongoCredentialsStore();
-        CachingAsyncAuthenticator cachingAuthenticator = new CachingAsyncAuthenticator(credentialsStore, poolableConnector);
+        CachingAsyncAuthenticator cachingAuthenticator = new CachingAsyncAuthenticator(credentialsStore, connection);
 
         final List<Exception> exceptionList = new ArrayList<Exception>();
         cachingAuthenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
@@ -88,7 +88,7 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
     public void testException() throws InterruptedException {
         MongoCredentialsStore credentialsStore =
                 new MongoCredentialsStore(MongoCredential.createMongoCRCredential("noone", "nowhere", "nothing".toCharArray()));
-        CachingAsyncAuthenticator cachingAuthenticator = new CachingAsyncAuthenticator(credentialsStore, poolableConnector);
+        CachingAsyncAuthenticator cachingAuthenticator = new CachingAsyncAuthenticator(credentialsStore, connection);
 
         final List<Exception> exceptionList = new ArrayList<Exception>();
         cachingAuthenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
