@@ -260,18 +260,6 @@ public class DBCursorOldTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testLargeBatch() {
-        final int total = 50000;
-        final int batch = 10000;
-
-        insertTestData(collection, total);
-
-        DBCursor cursor = collection.find().batchSize(batch);
-        assertEquals(total, cursor.itcount());
-        assertEquals(total / batch + 1, cursor.getSizes().size());
-    }
-
-    @Test
     @Ignore
     public void testSpecial() {
         insertTestData(collection, 3);
