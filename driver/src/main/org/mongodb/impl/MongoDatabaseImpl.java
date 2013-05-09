@@ -16,6 +16,7 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.CommandOperation;
 import org.mongodb.Document;
 import org.mongodb.DatabaseAdmin;
 import org.mongodb.MongoCollectionOptions;
@@ -84,7 +85,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
-        return new CommandResult(client.getSession().command(getName(), commandOperation, documentCodec));
+        return new CommandOperation(getName(), commandOperation, documentCodec, client.getBufferPool()).execute(client.getBinding());
     }
 
 //    @Override

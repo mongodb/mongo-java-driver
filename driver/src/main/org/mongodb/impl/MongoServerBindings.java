@@ -18,7 +18,9 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.MongoCredential;
+import org.mongodb.MongoServerBinding;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
@@ -27,32 +29,32 @@ import org.mongodb.pool.SimplePool;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public final class MongoConnectorsImpl {
-    private MongoConnectorsImpl() {
+public final class MongoServerBindings {
+    private MongoServerBindings() {
     }
 
-    public static DelegatingMongoConnector create(final ServerAddress serverAddress, final MongoClientOptions options) {
+    public static MongoServerBinding create(final ServerAddress serverAddress, final MongoClientOptions options) {
         return create(serverAddress, null, options);
     }
 
-    public static DelegatingMongoConnector create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+    public static MongoServerBinding create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                                   final MongoClientOptions options) {
         final PowerOfTwoByteBufferPool bufferPool = new PowerOfTwoByteBufferPool();
-        return new DelegatingMongoConnector(new MongoSingleServerBinding(create(serverAddress, credentialList, options, bufferPool),
-                bufferPool));
+        return new MongoSingleServerBinding(create(serverAddress, credentialList, options, bufferPool), bufferPool);
     }
 
-    public static DelegatingMongoConnector create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        final PowerOfTwoByteBufferPool bufferPool = new PowerOfTwoByteBufferPool();
-        return new DelegatingMongoConnector(new MongoMultiServerBinding(new ReplicaSetConnectionStrategy(seedList, options), null,
-                options, bufferPool));
+    public static MongoServerBinding create(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        return create(new ReplicaSetConnectionStrategy(seedList, options), null, options);
     }
 
-    public static DelegatingMongoConnector create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
+    public static MongoServerBinding create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                                   final MongoClientOptions options) {
-        final PowerOfTwoByteBufferPool bufferPool = new PowerOfTwoByteBufferPool();
-        return new DelegatingMongoConnector(new MongoMultiServerBinding(new ReplicaSetConnectionStrategy(seedList, options),
-                credentialList, options, bufferPool));
+        return create(new ReplicaSetConnectionStrategy(seedList, options), credentialList, options);
+    }
+
+    public static MongoServerBinding create(final MongoConnectionStrategy connectionStrategy, final List<MongoCredential> credentialList,
+                                            final MongoClientOptions options) {
+        return new MongoMultiServerBinding(connectionStrategy, credentialList, options, new PowerOfTwoByteBufferPool());
     }
 
     static MongoConnectionManagerImpl create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,

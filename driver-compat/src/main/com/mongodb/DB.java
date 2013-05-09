@@ -17,20 +17,25 @@
 package com.mongodb;
 
 import org.mongodb.Codec;
+import org.mongodb.CommandOperation;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoSession;
+import org.mongodb.MongoServerBinding;
+import org.mongodb.QueryOperation;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
+import org.mongodb.impl.MonotonicallyConsistentMongoServerBinding;
+import org.mongodb.io.BufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.result.QueryResult;
 
+import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,7 +52,7 @@ public class DB implements IDB {
     private final Codec<Document> documentCodec;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
-    private final ThreadLocal<MongoSession> pinnedConnector = new ThreadLocal<MongoSession>();
+    private final ThreadLocal<MongoServerBinding> pinnedBinding = new ThreadLocal<MongoServerBinding>();
 
     DB(final Mongo mongo, final String dbName, final Codec<Document> documentCodec) {
         this.mongo = mongo;
@@ -94,10 +99,10 @@ public class DB implements IDB {
      */
     @Override
     public void requestStart() {
-        if (pinnedConnector.get() != null) {
+        if (pinnedBinding.get() != null) {
             throw new IllegalStateException();
         }
-        pinnedConnector.set(getMongo().getConnector().getSession());
+        pinnedBinding.set(new MonotonicallyConsistentMongoServerBinding(getMongo().getBinding()));
     }
 
     /**
@@ -105,12 +110,12 @@ public class DB implements IDB {
      */
     @Override
     public void requestDone() {
-        MongoSession session = pinnedConnector.get();
-        if (session == null) {
+        MongoServerBinding binding = pinnedBinding.get();
+        if (binding == null) {
             throw new IllegalStateException();
         }
-        pinnedConnector.remove();
-        session.close();
+        pinnedBinding.remove();
+        binding.close();
     }
 
     /**
@@ -170,12 +175,8 @@ public class DB implements IDB {
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         final MongoFind findAll = new MongoFind().readPreference(org.mongodb.ReadPreference.primary());
-        final QueryResult<Document> query = getSession().query(
-                namespacesCollection,
-                findAll,
-                documentCodec,
-                documentCodec
-        );
+        final QueryResult<Document> query = new QueryOperation<Document>(namespacesCollection, findAll, documentCodec, documentCodec,
+                getBinding().getBufferPool()).execute(getBinding());
 
         final HashSet<String> collections = new HashSet<String>();
         final int lengthOfDatabaseName = getName().length();
@@ -446,16 +447,16 @@ public class DB implements IDB {
         return optionHolder.get();
     }
 
-    MongoSession getSession() {
-        if (pinnedConnector.get() != null) {
-            return pinnedConnector.get();
+    MongoServerBinding getBinding() {
+        if (pinnedBinding.get() != null) {
+            return pinnedBinding.get();
         }
-        return getMongo().getConnector();
+        return getMongo().getBinding();
     }
 
     org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
-        return getSession().command(getName(), commandOperation, documentCodec);
+        return new CommandOperation(getName(), commandOperation, documentCodec, getBufferPool()).execute(getBinding());
     }
 
     org.mongodb.result.CommandResult executeCommandWithoutException(final MongoCommand mongoCommand) {
@@ -468,5 +469,9 @@ public class DB implements IDB {
 
     Bytes.OptionHolder getOptionHolder() {
         return optionHolder;
+    }
+
+    BufferPool<ByteBuffer> getBufferPool() {
+        return getBinding().getBufferPool();
     }
 }

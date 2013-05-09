@@ -16,8 +16,10 @@
 
 package org.mongodb.async;
 
+import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoServerBinding;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
@@ -36,14 +38,24 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
         super(namespace, bufferPool);
     }
 
+    public MongoFuture<WriteResult> execute(final MongoServerBinding binding) {
+        MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
+        MongoAsyncConnection connection = connectionManager.getAsyncConnection();
+        try {
+            return execute(connection);
+        } finally {
+            connectionManager.releaseAsyncConnection(connection);
+        }
+    }
+
     public MongoFuture<WriteResult> execute(final MongoAsyncConnection connection) {
         SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
         execute(connection, new SingleResultFutureCallback<WriteResult>(retVal));
         return retVal;
     }
 
-    public void execute(final MongoAsyncConnection connection, final SingleResultCallback<WriteResult> callback) {
 
+    public void execute(final MongoAsyncConnection connection, final SingleResultCallback<WriteResult> callback) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         MongoRequestMessage nextMessage = encodeMessageToBuffer(createRequestMessage(), buffer);
         if (getWriteConcern().callGetLastError()) {

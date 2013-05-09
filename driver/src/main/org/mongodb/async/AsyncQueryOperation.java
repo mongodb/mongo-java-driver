@@ -19,8 +19,10 @@ package org.mongodb.async;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoServerBinding;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
@@ -41,6 +43,16 @@ public class AsyncQueryOperation<T> extends AsyncOperation {
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.resultDecoder = resultDecoder;
+    }
+
+    public MongoFuture<QueryResult<T>> execute(final MongoServerBinding binding) {
+        MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(find.getReadPreference());
+        MongoAsyncConnection connection = connectionManager.getAsyncConnection();
+        try {
+            return execute(connection);
+        } finally {
+            connectionManager.releaseAsyncConnection(connection);
+        }
     }
 
     public MongoFuture<QueryResult<T>> execute(final MongoAsyncConnection connection) {

@@ -59,8 +59,8 @@ public class DBObjectCodec implements Codec<DBObject> {
         this.typeMapping = typeMapping;
     }
 
-    public DBObjectCodec(final PrimitiveCodecs primitiveCodecs) {
-        this(null, primitiveCodecs, new QueryFieldNameValidator(), new TypeMapping(BasicDBObject.class));
+    public DBObjectCodec() {
+        this(null, PrimitiveCodecs.createDefault(), new QueryFieldNameValidator(), new TypeMapping(BasicDBObject.class));
     }
 
     @Override

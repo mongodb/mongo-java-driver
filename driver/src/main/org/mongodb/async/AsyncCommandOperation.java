@@ -18,8 +18,10 @@ package org.mongodb.async;
 
 import org.mongodb.Codec;
 import org.mongodb.Document;
+import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoServerBinding;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.io.BufferPool;
@@ -39,6 +41,17 @@ public class AsyncCommandOperation extends AsyncOperation {
         super(new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME), bufferPool);
         this.commandOperation = commandOperation;
         this.codec = codec;
+    }
+
+
+    public MongoFuture<CommandResult> execute(final MongoServerBinding binding) {
+        MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(commandOperation.getReadPreference());
+        MongoAsyncConnection connection = connectionManager.getAsyncConnection();
+        try {
+            return execute(connection);
+        } finally {
+            connectionManager.releaseAsyncConnection(connection);
+        }
     }
 
     public MongoFuture<CommandResult> execute(final MongoAsyncConnection connection) {

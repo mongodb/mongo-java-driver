@@ -40,6 +40,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.mongodb.Fixture.getBinding;
 
 @Category(Async.class)
 public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
@@ -51,7 +52,7 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
     public void setUp() throws Exception {
         super.setUp();
         latch = new CountDownLatch(1);
-        poolableConnector = new DefaultMongoAsyncConnection(connector.getServerAddressList().get(0), null,
+        poolableConnector = new DefaultMongoAsyncConnection(getBinding().getAllServerAddresses().get(0), null,
                 new SimplePool<MongoAsyncConnection>("test", 1) {
             @Override
             protected MongoAsyncConnection createNew() {

@@ -19,8 +19,10 @@ package org.mongodb.impl;
 import org.mongodb.CollectionAdmin;
 import org.mongodb.Document;
 import org.mongodb.Index;
+import org.mongodb.InsertOperation;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoNamespace;
+import org.mongodb.QueryOperation;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
@@ -81,13 +83,14 @@ public class CollectionAdminImpl implements CollectionAdmin {
         final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
         insertIndexOperation.writeConcern(WriteConcern.ACKNOWLEDGED);
 
-        client.getSession().insert(indexesNamespace, insertIndexOperation, documentCodec);
+        new InsertOperation<Document>(indexesNamespace, insertIndexOperation, documentCodec, client.getBufferPool())
+                .execute(client.getBinding());
     }
 
     @Override
     public List<Document> getIndexes() {
-        final QueryResult<Document> systemCollection = client.getSession().query(indexesNamespace, queryForCollectionNamespace,
-                documentCodec, documentCodec);
+        final QueryResult<Document> systemCollection = new QueryOperation<Document>(indexesNamespace, queryForCollectionNamespace,
+                documentCodec, documentCodec, client.getBufferPool()).execute(client.getBinding());
         return systemCollection.getResults();
     }
 

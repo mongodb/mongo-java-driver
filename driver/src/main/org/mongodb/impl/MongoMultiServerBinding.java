@@ -24,7 +24,6 @@ import org.mongodb.MongoServerBinding;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.PowerOfTwoByteBufferPool;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -39,7 +38,7 @@ public class MongoMultiServerBinding implements MongoServerBinding {
     private final MongoConnectionStrategy connectionStrategy;
 
     public MongoMultiServerBinding(final MongoConnectionStrategy connectionStrategy, final List<MongoCredential> credentialList,
-                                   final MongoClientOptions options, final PowerOfTwoByteBufferPool bufferPool) {
+                                   final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
         this.connectionStrategy = connectionStrategy;
         this.credentialList = credentialList;
         this.options = options;
@@ -73,7 +72,7 @@ public class MongoMultiServerBinding implements MongoServerBinding {
     public synchronized MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
         MongoConnectionManager connection = mongoClientMap.get(serverAddress);
         if (connection == null) {
-            connection = MongoConnectorsImpl.create(serverAddress, credentialList, options, bufferPool);
+            connection = MongoServerBindings.create(serverAddress, credentialList, options, bufferPool);
             mongoClientMap.put(serverAddress, connection);
         }
         return connection;

@@ -26,7 +26,7 @@ import org.mongodb.io.BufferPool;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
+public class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
     private final MongoServerBinding serverConnectorManager;
     private ReadPreference lastRequestedReadPreference;
     private MongoConnectionManager connectionManagerForReads;

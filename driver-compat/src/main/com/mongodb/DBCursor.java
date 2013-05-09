@@ -20,9 +20,9 @@ import com.mongodb.codecs.DBDecoderAdapter;
 import com.mongodb.codecs.DBObjectCodec;
 import org.mongodb.Decoder;
 import org.mongodb.MongoQueryCursor;
-import org.mongodb.MongoSession;
+import org.mongodb.MongoServerBinding;
+import org.mongodb.QueryOperation;
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
@@ -249,8 +249,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             copy.batchSize(copy.getLimit() * -1);
             copy.limit(0);
         }
-        QueryResult<DBObject> queryResult = getSession().query(collection.getNamespace(), copy, collection.getDocumentCodec(),
-                new DBObjectCodec(PrimitiveCodecs.createDefault()));
+    QueryResult<DBObject> queryResult = new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(),
+                new DBObjectCodec(), getBinding().getBufferPool()).execute(getBinding());
         return queryResult.getResults().get(0);
     }
 
@@ -589,12 +589,12 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
    private void query() {
         cursor = new MongoQueryCursor<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
-                getSession());
+                getBinding());
 //        sizes.add(results.size());
     }
 
-    private MongoSession getSession() {
-        return getCollection().getSession();
+    private MongoServerBinding getBinding() {
+        return getCollection().getBinding();
     }
 
     /**

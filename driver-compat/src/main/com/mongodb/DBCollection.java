@@ -21,13 +21,19 @@ import com.mongodb.codecs.DBEncoderAdapter;
 import org.bson.types.ObjectId;
 import org.mongodb.Codec;
 import org.mongodb.CollectibleCodec;
+import org.mongodb.CommandOperation;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.Get;
 import org.mongodb.Index;
+import org.mongodb.InsertOperation;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoSession;
+import org.mongodb.MongoServerBinding;
 import org.mongodb.OrderBy;
+import org.mongodb.QueryOperation;
+import org.mongodb.RemoveOperation;
+import org.mongodb.ReplaceOperation;
+import org.mongodb.UpdateOperation;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
@@ -48,6 +54,7 @@ import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
+import org.mongodb.io.BufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
 import org.mongodb.operation.MongoFindAndReplace;
@@ -59,6 +66,7 @@ import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.QueryResult;
 import org.mongodb.util.FieldHelpers;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -282,7 +290,7 @@ public class DBCollection implements IDBCollection {
     private org.mongodb.result.WriteResult insertInternal(final MongoInsert<DBObject> mongoInsert, Encoder<DBObject> encoder) {
         try {
             mongoInsert.writeConcernIfAbsent(getWriteConcern().toNew());
-            return getSession().insert(getNamespace(), mongoInsert, encoder);
+            return new InsertOperation<DBObject>(getNamespace(), mongoInsert, encoder, getBufferPool()).execute(getBinding());
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
         }
@@ -337,8 +345,8 @@ public class DBCollection implements IDBCollection {
                 .upsert(true)
                 .writeConcern(wc.toNew());
 
-        return new WriteResult(getSession().replace(getNamespace(), replace, getDocumentCodec(),
-                getCodec()), wc, getDB());
+        return new WriteResult(new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getCodec(), 
+                getBufferPool()).execute(getBinding()), wc, getDB());
     }
 
     /**
@@ -373,7 +381,7 @@ public class DBCollection implements IDBCollection {
 
     private org.mongodb.result.WriteResult updateInternal(MongoUpdate mongoUpdate) {
         try {
-            return getSession().update(getNamespace(), mongoUpdate, documentCodec);
+            return new UpdateOperation(getNamespace(), mongoUpdate, documentCodec, getBufferPool()).execute(getBinding());
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
@@ -478,7 +486,8 @@ public class DBCollection implements IDBCollection {
         final MongoRemove mongoRemove = new MongoRemove(toDocument(query))
                 .writeConcern(writeConcern.toNew());
 
-        final org.mongodb.result.WriteResult result = getSession().remove(getNamespace(), mongoRemove, documentCodec);
+        final org.mongodb.result.WriteResult result = new RemoveOperation(getNamespace(), mongoRemove, documentCodec, 
+                getBufferPool()).execute(getBinding());
 
         return new WriteResult(result, writeConcern, getDB());
     }
@@ -497,7 +506,8 @@ public class DBCollection implements IDBCollection {
         final MongoRemove mongoRemove = new MongoRemove(filter)
                 .writeConcern(writeConcern.toNew());
 
-        final org.mongodb.result.WriteResult result = getSession().remove(getNamespace(), mongoRemove, getDocumentCodec());
+        final org.mongodb.result.WriteResult result = new RemoveOperation(getNamespace(), mongoRemove, getDocumentCodec(), 
+                getBufferPool()).execute(getBinding());
 
         return new WriteResult(result, writeConcern, getDB());
     }
@@ -649,8 +659,8 @@ public class DBCollection implements IDBCollection {
                 .readPreference(readPreference.toNew())
                 .batchSize(-1);
 
-        final QueryResult<DBObject> res = getSession().query(getNamespace(), mongoFind,
-                documentCodec, codec);
+        final QueryResult<DBObject> res = new QueryOperation<DBObject>(getNamespace(), mongoFind, documentCodec, codec,
+                getBufferPool()).execute(getBinding());
         if (res.getResults().isEmpty()) {
             return null;
         }
@@ -892,7 +902,7 @@ public class DBCollection implements IDBCollection {
         final RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
         final RenameCollection renameCommand = new RenameCollection(renameCollectionOptions, getDB().getName());
         try {
-            getSession().command("admin", renameCommand, getDocumentCodec());
+            new CommandOperation("admin", renameCommand, getDocumentCodec(), getBufferPool()).execute(getBinding());
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
@@ -1280,7 +1290,8 @@ public class DBCollection implements IDBCollection {
     private <T> void insertIndex(final MongoInsert<T> insertIndexOperation, final Encoder<T> encoder) {
         insertIndexOperation.writeConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
         try {
-            getSession().insert(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, encoder);
+            new InsertOperation<T>(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, encoder,
+                    getBufferPool()).execute(getBinding());
         } catch (MongoDuplicateKeyException exception) {
             throw new MongoException.DuplicateKey(exception);
         }
@@ -1400,7 +1411,8 @@ public class DBCollection implements IDBCollection {
                 new FindAndModifyCommandResultCodec<DBObject>(getPrimitiveCodecs(), getCodec());
 
         final FindAndModifyCommandResult<DBObject> commandResult =
-                new FindAndModifyCommandResult<DBObject>(getSession().command(getDB().getName(), mongoCommand, findAndModifyCommandResultCodec));
+                new FindAndModifyCommandResult<DBObject>(new CommandOperation(getDB().getName(), mongoCommand,
+                        findAndModifyCommandResultCodec, getBufferPool()).execute(getBinding()));
 
         return commandResult.getValue();
     }
@@ -1544,10 +1556,8 @@ public class DBCollection implements IDBCollection {
                 new Document(NAMESPACE_KEY_NAME, getNamespace().getFullName()))
                 .readPreference(org.mongodb.ReadPreference.primary());
 
-        final QueryResult<Document> systemCollection = getSession().query(
-                new MongoNamespace(database.getName(), "system.indexes"),
-                queryForCollectionNamespace,
-                documentCodec, documentCodec);
+        final QueryResult<Document> systemCollection = new QueryOperation<Document>(new MongoNamespace(database.getName(), "system.indexes"),
+                queryForCollectionNamespace, documentCodec, documentCodec, getBufferPool()).execute(getBinding());
 
         final List<Document> indexes = systemCollection.getResults();
         for (final Document curIndex : indexes) {
@@ -1666,8 +1676,8 @@ public class DBCollection implements IDBCollection {
         return keys;
     }
 
-    MongoSession getSession() {
-        return getDB().getSession();
+    MongoServerBinding getBinding() {
+        return getDB().getBinding();
     }
 
     CollectibleCodec<DBObject> getCodec() {
@@ -1684,5 +1694,9 @@ public class DBCollection implements IDBCollection {
 
     Bytes.OptionHolder getOptionHolder() {
         return optionHolder;
+    }
+
+    BufferPool<ByteBuffer> getBufferPool() {
+        return getBinding().getBufferPool();
     }
 }

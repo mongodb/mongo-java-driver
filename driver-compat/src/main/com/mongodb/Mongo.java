@@ -18,12 +18,12 @@ package com.mongodb;
 
 import org.mongodb.Codec;
 import org.mongodb.Document;
-import org.mongodb.MongoConnector;
+import org.mongodb.MongoServerBinding;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
-import org.mongodb.impl.MongoConnectorsImpl;
+import org.mongodb.impl.MongoServerBindings;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentMap;
 
 @ThreadSafe
 public class Mongo {
-    private static final String ADMIN_DATABASE_NAME = "admin";
+    static final String ADMIN_DATABASE_NAME = "admin";
     private static final String VERSION = "3.0.0-SNAPSHOT";
 
     private final ConcurrentMap<String, DB> dbCache = new ConcurrentHashMap<String, DB>();
@@ -46,10 +46,10 @@ public class Mongo {
     private final Bytes.OptionHolder optionHolder;
 
     private final Codec<Document> documentCodec;
-    private final MongoConnector connector;
+    private final MongoServerBinding binding;
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
-        this(MongoConnectorsImpl.create(createNewSeedList(seedList), mongoOptions.toNew()), mongoOptions);
+        this(MongoServerBindings.create(createNewSeedList(seedList), mongoOptions.toNew()), mongoOptions);
     }
 
     Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -57,11 +57,11 @@ public class Mongo {
     }
 
     Mongo(final ServerAddress serverAddress, final MongoClientOptions mongoOptions) {
-        this(MongoConnectorsImpl.create(serverAddress.toNew(), mongoOptions.toNew()), mongoOptions);
+        this(MongoServerBindings.create(serverAddress.toNew(), mongoOptions.toNew()), mongoOptions);
     }
 
-    Mongo(final MongoConnector connector, final MongoClientOptions options) {
-        this.connector = connector;
+    Mongo(final MongoServerBinding binding, final MongoClientOptions options) {
+        this.binding = binding;
         this.documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
         this.readPreference = options.getReadPreference() != null ?
                 options.getReadPreference() : ReadPreference.primary();
@@ -137,7 +137,7 @@ public class Mongo {
      */
     public List<ServerAddress> getServerAddressList() {
         List<ServerAddress> retVal = new ArrayList<ServerAddress>();
-        for (org.mongodb.ServerAddress serverAddress : getConnector().getServerAddressList()) {
+        for (org.mongodb.ServerAddress serverAddress : getBinding().getAllServerAddresses()) {
             retVal.add(new ServerAddress(serverAddress));
         }
         return retVal;
@@ -149,7 +149,7 @@ public class Mongo {
      */
     public ServerAddress getAddress() {
         //TODO this needs to return a master. Currently not.
-        return new ServerAddress(getConnector().getServerAddressList().get(0));
+        return new ServerAddress(getBinding().getAllServerAddresses().get(0));
     }
 
     /**
@@ -170,7 +170,7 @@ public class Mongo {
     public List<String> getDatabaseNames() {
         final org.mongodb.result.CommandResult listDatabasesResult;
         try {
-            listDatabasesResult = getConnector().command(ADMIN_DATABASE_NAME, new ListDatabases(), documentCodec);
+            listDatabasesResult = getDB(ADMIN_DATABASE_NAME).executeCommand(new ListDatabases());
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
@@ -231,7 +231,7 @@ public class Mongo {
      * instance and any databases obtained from it can no longer be used.
      */
     public void close() {
-        getConnector().close();
+        binding.close();
     }
 
     /**
@@ -280,21 +280,21 @@ public class Mongo {
         return retVal;
     }
 
-    private static MongoConnector createConnector(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
+    private static MongoServerBinding createConnector(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return MongoConnectorsImpl.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)),
+            return MongoServerBindings.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)),
                     mongoURI.getCredentials(), mongoURI.getOptions());
         } else {
             List<org.mongodb.ServerAddress> seedList = new ArrayList<org.mongodb.ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new org.mongodb.ServerAddress(cur));
             }
-            return MongoConnectorsImpl.create(seedList, mongoURI.getCredentials(), mongoURI.getOptions());
+            return MongoServerBindings.create(seedList, mongoURI.getCredentials(), mongoURI.getOptions());
         }
     }
 
-    MongoConnector getConnector() {
-        return connector;
+    MongoServerBinding getBinding() {
+        return binding;
     }
 
     Bytes.OptionHolder getOptionHolder() {

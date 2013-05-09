@@ -18,8 +18,10 @@ package org.mongodb;
 
 import org.mongodb.impl.MongoClientImpl;
 import org.mongodb.impl.MongoClientsImpl;
+import org.mongodb.io.BufferPool;
 
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 
 /**
  * Helper class for the acceptance tests.  Considering replacing with MongoClientTestBase.
@@ -56,10 +58,9 @@ public final class Fixture {
         return mongoClientURI;
     }
 
-
-    public static MongoConnector getMongoConnector() {
+    public static MongoServerBinding getBinding() {
         getMongoClient();
-        return mongoClient.getConnector();
+        return mongoClient.getBinding();
     }
 
     // Note this is not safe for concurrent access - if you run multiple tests in parallel from the same class,
@@ -69,5 +70,9 @@ public final class Fixture {
 
         database.tools().drop();
         return database;
+    }
+
+    public static BufferPool<ByteBuffer> getBufferPool() {
+        return getBinding().getBufferPool();
     }
 }

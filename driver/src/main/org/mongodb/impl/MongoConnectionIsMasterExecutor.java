@@ -16,28 +16,28 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.CommandOperation;
 import org.mongodb.Document;
-import org.mongodb.MongoConnector;
+import org.mongodb.MongoServerBinding;
 import org.mongodb.ServerAddress;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.command.MongoCommand;
 
 class MongoConnectionIsMasterExecutor implements IsMasterExecutor {
-    private final MongoConnector connector;
+    private final MongoServerBinding binding;
     private final ServerAddress serverAddress;
 
-    MongoConnectionIsMasterExecutor(final MongoConnector connector, final ServerAddress serverAddress) {
-        this.connector = connector;
+    MongoConnectionIsMasterExecutor(final MongoServerBinding binding, final ServerAddress serverAddress) {
+        this.binding = binding;
         this.serverAddress = serverAddress;
     }
 
     @Override
     public IsMasterCommandResult execute() {
         return new IsMasterCommandResult(
-                connector.command("admin", new MongoCommand(new Document("ismaster", 1)),
-                        new DocumentCodec(PrimitiveCodecs.createDefault())));
+                new CommandOperation("admin", new MongoCommand(new Document("ismaster", 1)), new DocumentCodec(), binding.getBufferPool())
+                .execute(binding));
     }
 
     @Override
@@ -47,6 +47,6 @@ class MongoConnectionIsMasterExecutor implements IsMasterExecutor {
 
     @Override
     public void close() {
-        connector.close();
+        binding.close();
     }
 }

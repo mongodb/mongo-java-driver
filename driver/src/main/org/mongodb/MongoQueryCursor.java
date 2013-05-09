@@ -39,7 +39,7 @@ import java.util.NoSuchElementException;
 @NotThreadSafe
 public class MongoQueryCursor<T> implements MongoCursor<T> {
     private final MongoFind find;
-    private final MongoSession session;
+    private final MongoServerBinding binding;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private QueryResult<T> currentResult;
@@ -49,12 +49,12 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     private boolean closed;
 
     public MongoQueryCursor(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
-                            final Decoder<T> decoder, final MongoSession session) {
+                            final Decoder<T> decoder, final MongoServerBinding binding) {
         this.namespace = namespace;
         this.decoder = decoder;
         this.find = find;
-        this.session = session;
-        currentResult = session.query(namespace, find, queryEncoder, decoder);
+        this.binding = binding;
+        currentResult = new QueryOperation<T>(namespace, find, queryEncoder, decoder, binding.getBufferPool()).execute(binding);
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
         killCursorIfLimitReached();
@@ -67,7 +67,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         }
         closed = true;
         if (currentResult.getCursor() != null && !limitReached()) {
-            session.killCursors(new MongoKillCursor(currentResult.getCursor()));
+            new KillCursorOperation(new MongoKillCursor(currentResult.getCursor()), binding.getBufferPool()).execute(binding);
         }
         currentResult = null;
         currentIterator = null;
@@ -160,8 +160,9 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     }
 
     private void getMore() {
-        currentResult = session.getMore(namespace,
-                new MongoGetMore(currentResult.getCursor(),  find.getLimit(), find.getBatchSize(), nextCount), decoder);
+        currentResult = new GetMoreOperation<T>(namespace,
+                new MongoGetMore(currentResult.getCursor(),  find.getLimit(), find.getBatchSize(), nextCount), decoder,
+                binding.getBufferPool()).execute(binding);
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
         killCursorIfLimitReached();
@@ -179,7 +180,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void killCursorIfLimitReached() {
         if (limitReached()) {
-            session.killCursors(new MongoKillCursor(currentResult.getCursor()));
+            new KillCursorOperation(new MongoKillCursor(currentResult.getCursor()), binding.getBufferPool()).execute(binding);
         }
     }
 

@@ -16,10 +16,12 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.CommandOperation;
 import org.mongodb.Document;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseAdmin;
 import org.mongodb.MongoNamespace;
+import org.mongodb.QueryOperation;
 import org.mongodb.ReadPreference;
 import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
@@ -57,14 +59,14 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        new CommandResult(client.getSession().command(databaseName, DROP_DATABASE, documentCodec));
+        new CommandOperation(databaseName, DROP_DATABASE, documentCodec, client.getBufferPool()).execute(client.getBinding());
     }
 
     @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
-        final QueryResult<Document> query = client.getSession().query(namespacesCollection, FIND_ALL,
-                documentCodec, documentCodec);
+        final QueryResult<Document> query = new QueryOperation<Document>(namespacesCollection, FIND_ALL, documentCodec, documentCodec,
+                client.getBufferPool()).execute(client.getBinding());
 
         final HashSet<String> collections = new HashSet<String>();
         final int lengthOfDatabaseName = databaseName.length();
@@ -85,8 +87,8 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
 
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
-        final CommandResult commandResult = new CommandResult(
-                client.getSession().command(databaseName, new Create(createCollectionOptions), documentCodec));
+        final CommandResult commandResult = new CommandOperation(databaseName, new Create(createCollectionOptions), documentCodec,
+                client.getBufferPool()).execute(client.getBinding());
         handleErrors(commandResult);
     }
 
@@ -98,7 +100,8 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     @Override
     public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
         final RenameCollection rename = new RenameCollection(renameCollectionOptions, databaseName);
-        final CommandResult commandResult = client.getSession().command("admin", rename, documentCodec);
+        final CommandResult commandResult = new CommandOperation("admin", rename, documentCodec,
+                client.getBufferPool()).execute(client.getBinding());
         handleErrors(commandResult);
     }
 }

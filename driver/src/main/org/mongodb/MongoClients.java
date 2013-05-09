@@ -39,8 +39,7 @@ public final class MongoClients {
         return MongoClientsImpl.create(connectionStrategy, MongoClientOptions.builder().build());
     }
 
-    public static MongoClient create(final MongoConnectionStrategy connectionStrategy,
-                                     final MongoClientOptions options) {
+    public static MongoClient create(final MongoConnectionStrategy connectionStrategy, final MongoClientOptions options) {
         return MongoClientsImpl.create(connectionStrategy, options);
     }
 

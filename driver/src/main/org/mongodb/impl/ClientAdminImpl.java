@@ -17,14 +17,17 @@
 package org.mongodb.impl;
 
 import org.mongodb.ClientAdmin;
+import org.mongodb.CommandOperation;
 import org.mongodb.Document;
-import org.mongodb.MongoConnector;
+import org.mongodb.MongoServerBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
 import org.mongodb.command.Ping;
+import org.mongodb.io.BufferPool;
 import org.mongodb.result.CommandResult;
 
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -39,10 +42,10 @@ class ClientAdminImpl implements ClientAdmin {
     private static final ListDatabases LIST_DATABASES = new ListDatabases();
 
     private final DocumentCodec documentCodec;
-    private final MongoConnector connector;
+    private final MongoServerBinding binding;
 
-    ClientAdminImpl(final MongoConnector connector, final PrimitiveCodecs primitiveCodecs) {
-        this.connector = connector;
+    ClientAdminImpl(final MongoServerBinding binding, final PrimitiveCodecs primitiveCodecs) {
+        this.binding = binding;
         documentCodec = new DocumentCodec(primitiveCodecs);
     }
 
@@ -50,14 +53,16 @@ class ClientAdminImpl implements ClientAdmin {
     //http://docs.mongodb.org/manual/reference/command/ping/
     @Override
     public double ping() {
-        final CommandResult pingResult = connector.command(ADMIN_DATABASE, PING_COMMAND, documentCodec);
+        final CommandResult pingResult = new CommandOperation(ADMIN_DATABASE, PING_COMMAND, documentCodec,
+                getBufferPool()).execute(binding);
 
         return (Double) pingResult.getResponse().get("ok");
     }
 
     @Override
     public Set<String> getDatabaseNames() {
-        final CommandResult listDatabasesResult = connector.command(ADMIN_DATABASE, LIST_DATABASES, documentCodec);
+        final CommandResult listDatabasesResult = new CommandOperation(ADMIN_DATABASE, LIST_DATABASES, documentCodec,
+                getBufferPool()).execute(binding);
 
         @SuppressWarnings("unchecked")
         final List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
@@ -69,4 +74,7 @@ class ClientAdminImpl implements ClientAdmin {
         return Collections.unmodifiableSet(databaseNames);
     }
 
+    public BufferPool<ByteBuffer> getBufferPool() {
+        return binding.getBufferPool();
+    }
 }

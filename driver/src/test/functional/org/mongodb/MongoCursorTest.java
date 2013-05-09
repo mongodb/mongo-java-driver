@@ -29,6 +29,8 @@ import java.util.NoSuchElementException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
+import static org.mongodb.Fixture.getBinding;
+import static org.mongodb.Fixture.getBufferPool;
 
 public class MongoCursorTest extends DatabaseTestCase {
 
@@ -128,7 +130,7 @@ public class MongoCursorTest extends DatabaseTestCase {
     @Test
     public void shouldThrowCursorNotFoundException() {
         cursor = collection.batchSize(2).all();
-        Fixture.getMongoConnector().killCursors(new MongoKillCursor(cursor.getServerCursor()));
+        new KillCursorOperation(new MongoKillCursor(cursor.getServerCursor()), getBufferPool()).execute(getBinding());
         cursor.next();
         cursor.next();
         try {

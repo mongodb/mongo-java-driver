@@ -19,27 +19,28 @@ package org.mongodb.impl;
 import org.mongodb.ClientAdmin;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoConnector;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
-import org.mongodb.MongoSession;
+import org.mongodb.MongoServerBinding;
 import org.mongodb.ServerAddress;
 import org.mongodb.codecs.PrimitiveCodecs;
+import org.mongodb.io.BufferPool;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 public class MongoClientImpl implements MongoClient {
 
-    private final MongoConnector connector;
+    private final MongoServerBinding binding;
     private final MongoClientOptions clientOptions;
     private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
-    private final ThreadLocal<MongoSession> pinnedSession = new ThreadLocal<MongoSession>();
+    private final ThreadLocal<MongoServerBinding> pinnedBinding = new ThreadLocal<MongoServerBinding>();
 
-    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoConnector connector) {
+    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoServerBinding binding) {
         this.clientOptions = clientOptions;
-        this.connector = connector;
+        this.binding = binding;
     }
 
     @Override
@@ -54,29 +55,29 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public void withConnection(final Runnable runnable) {
-        pinConnection();
+        pinBinding();
         try {
             runnable.run();
         } finally {
-            pinnedSession.remove();
+            pinnedBinding.remove();
         }
     }
 
     @Override
     public <T> T withConnection(final Callable<T> callable) throws ExecutionException {
-        pinConnection();
+        pinBinding();
         try {
             return callable.call();
         } catch (Exception e) {
             throw new ExecutionException(e);
         } finally {
-            pinnedSession.remove();
+            pinnedBinding.remove();
         }
     }
 
     @Override
     public void close() {
-        connector.close();
+        binding.close();
     }
 
     @Override
@@ -86,29 +87,29 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public ClientAdmin tools() {
-        return new ClientAdminImpl(connector, primitiveCodecs);
+        return new ClientAdminImpl(getBinding(), primitiveCodecs);
     }
 
     @Override
     public List<ServerAddress> getServerAddressList() {
-        return connector.getServerAddressList();
+        return binding.getAllServerAddresses();
     }
 
-    public MongoConnector getConnector() {
-        return connector;
-    }
-
-    public MongoSession getSession() {
-        if (pinnedSession.get() != null) {
-            return pinnedSession.get();
+    public MongoServerBinding getBinding() {
+        if (pinnedBinding.get() != null) {
+            return pinnedBinding.get();
         }
-        return connector;
+        return binding;
     }
 
-    private void pinConnection() {
-        if (pinnedSession.get() != null) {
+    public BufferPool<ByteBuffer> getBufferPool() {
+        return binding.getBufferPool();
+    }
+
+    private void pinBinding() {
+        if (pinnedBinding.get() != null) {
             throw new IllegalStateException();
         }
-        pinnedSession.set(connector.getSession());
+        pinnedBinding.set(new MonotonicallyConsistentMongoServerBinding(binding));
     }
 }

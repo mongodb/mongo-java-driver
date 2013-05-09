@@ -21,7 +21,6 @@ import org.mongodb.MongoClientURI;
 import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.io.PowerOfTwoByteBufferPool;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -38,13 +37,12 @@ public final class MongoClientsImpl {
     }
 
     public static MongoClientImpl create(final ServerAddress serverAddress, final MongoClientOptions options) {
-        return new MongoClientImpl(options, MongoConnectorsImpl.create(serverAddress, options));
+        return new MongoClientImpl(options, MongoServerBindings.create(serverAddress, null, options));
     }
 
     public static MongoClientImpl create(final MongoConnectionStrategy connectionStrategy,
                                          final MongoClientOptions options) {
-        return new MongoClientImpl(options, new DelegatingMongoConnector(new MongoMultiServerBinding(connectionStrategy, null,
-                options, new PowerOfTwoByteBufferPool())));
+        return new MongoClientImpl(options, MongoServerBindings.create(connectionStrategy, null, options));
     }
 
     public static MongoClientImpl create(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -54,7 +52,7 @@ public final class MongoClientsImpl {
     public static MongoClientImpl create(final MongoClientURI mongoURI, final MongoClientOptions options)
             throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return new MongoClientImpl(options, MongoConnectorsImpl.create(new ServerAddress(mongoURI.getHosts().get(0)),
+            return new MongoClientImpl(options, MongoServerBindings.create(new ServerAddress(mongoURI.getHosts().get(0)),
                     mongoURI.getCredentials(), options));
         }
         else {
@@ -62,7 +60,7 @@ public final class MongoClientsImpl {
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(cur));
             }
-            return new MongoClientImpl(options, MongoConnectorsImpl.create(seedList, mongoURI.getCredentials(), options));
+            return new MongoClientImpl(options,  MongoServerBindings.create(seedList, mongoURI.getCredentials(), options));
         }
     }
 }

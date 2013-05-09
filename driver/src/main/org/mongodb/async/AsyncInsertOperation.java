@@ -43,7 +43,7 @@ public class AsyncInsertOperation<T> extends AsyncWriteOperation {
     }
 
     @Override
-    public MongoInsert getWrite() {
+    public MongoInsert<T> getWrite() {
         return insert;
     }
 

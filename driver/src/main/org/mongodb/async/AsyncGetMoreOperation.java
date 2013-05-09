@@ -17,8 +17,10 @@
 package org.mongodb.async;
 
 import org.mongodb.Decoder;
+import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoServerBinding;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
@@ -37,6 +39,16 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         super(namespace, bufferPool);
         this.getMore = getMore;
         this.resultDecoder = resultDecoder;
+    }
+
+    public MongoFuture<QueryResult<T>> execute(final MongoServerBinding binding) {
+        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoAsyncConnection connection = connectionManager.getAsyncConnection();
+        try {
+            return execute(connection);
+        } finally {
+            connectionManager.releaseAsyncConnection(connection);
+        }
     }
 
     public MongoFuture<QueryResult<T>> execute(final MongoAsyncConnection connection) {
