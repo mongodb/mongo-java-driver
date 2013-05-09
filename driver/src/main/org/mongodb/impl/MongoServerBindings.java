@@ -26,6 +26,8 @@ import org.mongodb.io.BufferPool;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.pool.SimplePool;
 
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocketFactory;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -64,7 +66,15 @@ public final class MongoServerBindings {
                 options.getConnectionsPerHost()) {
             @Override
             protected MongoSyncConnection createNew() {
-                return new DefaultMongoSyncConnection(serverAddress, credentialList, this, bufferPool, options);
+                if (options.isSSLEnabled()) {
+                    return new DefaultMongoSocketConnection(serverAddress, this, bufferPool, credentialList, SSLSocketFactory.getDefault());
+                }
+                else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
+                    return new DefaultMongoSocketConnection(serverAddress, this, bufferPool, credentialList, SocketFactory.getDefault());
+                }
+                else {
+                    return new DefaultMongoSocketChannelConnection(serverAddress, this, bufferPool, credentialList);
+                }
             }
 
             @Override

@@ -14,21 +14,29 @@
  * limitations under the License.
  */
 
-package org.mongodb.io;
+package org.mongodb.impl;
 
+import org.mongodb.MongoCredential;
 import org.mongodb.ServerAddress;
+import org.mongodb.io.BufferPool;
+import org.mongodb.io.ChannelAwareOutputBuffer;
+import org.mongodb.io.MongoSocketOpenException;
+import org.mongodb.io.MongoSocketReadException;
+import org.mongodb.io.MongoSocketWriteException;
+import org.mongodb.pool.SimplePool;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.List;
 
 // TODO: migrate all the DBPort configuration
-class MongoSocketChannelGateway extends DefaultMongoGateway {
+class DefaultMongoSocketChannelConnection extends DefaultMongoSyncConnection {
     private volatile SocketChannel socketChannel;
 
-    public MongoSocketChannelGateway(final ServerAddress address, final BufferPool<ByteBuffer> pool,
-                                     final CachingAuthenticator authenticator) {
-        super(address, pool, authenticator);
+    public DefaultMongoSocketChannelConnection(final ServerAddress address, final SimplePool<MongoSyncConnection> connectionPool,
+                                               final BufferPool<ByteBuffer> bufferPool, final List<MongoCredential> credentialList) {
+        super(address, connectionPool, bufferPool, credentialList);
     }
 
     protected void ensureOpen() {

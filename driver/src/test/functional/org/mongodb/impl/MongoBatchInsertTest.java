@@ -44,13 +44,13 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        connection = new DefaultMongoSyncConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
-                Fixture.getMongoClientURI().getCredentials(), new SimplePool<MongoSyncConnection>("test", 1) {
+        connection = new DefaultMongoSocketChannelConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
+                new SimplePool<MongoSyncConnection>("test", 1) {
             @Override
             protected MongoSyncConnection createNew() {
                 throw new UnsupportedOperationException();
             }
-        }, getBufferPool(), Fixture.getMongoClientURI().getOptions());
+        }, getBufferPool(), Fixture.getMongoClientURI().getCredentials());
     }
 
     @Test
