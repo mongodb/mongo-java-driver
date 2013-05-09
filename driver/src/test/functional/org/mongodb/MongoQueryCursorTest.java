@@ -99,7 +99,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(5000);
+                    Thread.sleep(500);
                     collection.insert(new Document("_id", 2).append("ts", new BSONTimestamp(6, 0)));
                 } catch (InterruptedException e) { // NOPMD
                     // all good
