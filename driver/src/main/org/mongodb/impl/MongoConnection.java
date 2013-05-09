@@ -18,9 +18,6 @@
 package org.mongodb.impl;
 
 import org.mongodb.ServerAddress;
-import org.mongodb.io.BufferPool;
-
-import java.nio.ByteBuffer;
 
 public interface MongoConnection {
     /**
@@ -37,6 +34,4 @@ public interface MongoConnection {
      * Gets the server address of this connection
      */
     ServerAddress getServerAddress();
-
-    BufferPool<ByteBuffer> getBufferPool();
 }

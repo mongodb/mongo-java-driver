@@ -28,7 +28,6 @@ import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
-import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.pool.SimplePool;
@@ -37,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.mongodb.Fixture.getBufferPool;
 
 public class MongoBatchInsertTest extends DatabaseTestCase {
     private MongoSyncConnection connection;
@@ -50,7 +50,7 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
             protected MongoSyncConnection createNew() {
                 throw new UnsupportedOperationException();
             }
-        }, new PowerOfTwoByteBufferPool(), Fixture.getMongoClientURI().getOptions());
+        }, getBufferPool(), Fixture.getMongoClientURI().getOptions());
     }
 
     @Test
@@ -64,10 +64,9 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
         documents.add(new Document("bytes", hugeByteArray));
 
         final MongoInsert<Document> insert = new MongoInsert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
-        new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(),
-                connection.getBufferPool()).execute(connection);
+        new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferPool()).execute(connection);
         assertEquals(documents.size(), new CountCommandResult(new CommandOperation(database.getName(),
-                new Count(new MongoFind(), collectionName), new DocumentCodec(), connection.getBufferPool()).execute(connection))
+                new Count(new MongoFind(), collectionName), new DocumentCodec(), getBufferPool()).execute(connection))
                 .getCount());
     }
 

@@ -176,7 +176,7 @@ public class DB implements IDB {
         final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         final MongoFind findAll = new MongoFind().readPreference(org.mongodb.ReadPreference.primary());
         final QueryResult<Document> query = new QueryOperation<Document>(namespacesCollection, findAll, documentCodec, documentCodec,
-                getBinding().getBufferPool()).execute(getBinding());
+                getBufferPool()).execute(getBinding());
 
         final HashSet<String> collections = new HashSet<String>();
         final int lengthOfDatabaseName = getName().length();

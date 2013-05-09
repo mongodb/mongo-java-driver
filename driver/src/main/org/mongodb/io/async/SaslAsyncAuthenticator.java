@@ -26,14 +26,20 @@ import org.mongodb.async.SingleResultCallback;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.io.BufferPool;
 import org.mongodb.result.CommandResult;
 
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
+import java.nio.ByteBuffer;
 
 public abstract class SaslAsyncAuthenticator extends AsyncAuthenticator {
-    SaslAsyncAuthenticator(final MongoCredential credential, final MongoAsyncConnection connection) {
+    private final BufferPool<ByteBuffer> bufferPool;
+
+    SaslAsyncAuthenticator(final MongoCredential credential, final MongoAsyncConnection connection,
+                           final BufferPool<ByteBuffer> bufferPool) {
         super(credential, connection);
+        this.bufferPool = bufferPool;
     }
 
     @Override
@@ -85,13 +91,13 @@ public abstract class SaslAsyncAuthenticator extends AsyncAuthenticator {
 
     private void asyncSendSaslStart(final byte[] outToken, final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec(),
-                getConnection().getBufferPool()).execute(getConnection()).register(callback);
+                bufferPool).execute(getConnection()).register(callback);
     }
 
     private void asyncSendSaslContinue(final int conversationId, final byte[] outToken,
                                        final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
-                new DocumentCodec(), getConnection().getBufferPool()).execute(getConnection()).register(callback);
+                new DocumentCodec(), bufferPool).execute(getConnection()).register(callback);
     }
 
     private MongoCommand createSaslStartCommand(final byte[] outToken) {

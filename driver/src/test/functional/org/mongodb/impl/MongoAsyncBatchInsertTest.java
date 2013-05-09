@@ -27,7 +27,6 @@ import org.mongodb.ServerAddress;
 import org.mongodb.WriteConcern;
 import org.mongodb.async.AsyncInsertOperation;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.MongoInsert;
 import org.mongodb.pool.SimplePool;
 
@@ -36,6 +35,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
+import static org.mongodb.Fixture.getBufferPool;
 
 @Category(Async.class)
 public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
@@ -50,7 +50,7 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
             protected MongoAsyncConnection createNew() {
                 throw new UnsupportedOperationException();
             }
-        }, new PowerOfTwoByteBufferPool());
+        }, getBufferPool());
     }
 
     @Test
@@ -64,8 +64,7 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
         documents.add(new Document("bytes", hugeByteArray));
 
         final MongoInsert<Document> insert = new MongoInsert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
-        new AsyncInsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(),
-                connection.getBufferPool()).execute(connection).get();
+        new AsyncInsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferPool()).execute(connection).get();
         assertEquals(documents.size(), collection.count());
     }
 }

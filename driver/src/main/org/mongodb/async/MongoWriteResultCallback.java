@@ -23,10 +23,13 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.io.BufferPool;
 import org.mongodb.operation.MongoWrite;
 import org.mongodb.protocol.MongoRequestMessage;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.WriteResult;
+
+import java.nio.ByteBuffer;
 
 public class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
     private final SingleResultCallback<WriteResult> callback;
@@ -34,18 +37,21 @@ public class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
     private final GetLastError getLastError;
     private final MongoNamespace namespace;
     private final MongoRequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
+    private final BufferPool<ByteBuffer> bufferPool;
 
     public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback,
                                     final MongoWrite writeOperation, final GetLastError getLastError,
                                     final Decoder<Document> decoder, final MongoNamespace namespace,
                                     final MongoRequestMessage nextMessage,
-                                    final MongoAsyncConnection connection) {
+                                    final MongoAsyncConnection connection,
+                                    final BufferPool<ByteBuffer> bufferPool) {
         super(getLastError, decoder, connection);
         this.callback = callback;
         this.writeOperation = writeOperation;
         this.getLastError = getLastError;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
+        this.bufferPool = bufferPool;
     }
 
     @Override
@@ -66,7 +72,7 @@ public class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
                 callback.onResult(null, commandException);
             }
             else if (nextMessage != null) {
-                new GenericAsyncWriteOperation(namespace, writeOperation, nextMessage, getConnection().getBufferPool())
+                new GenericAsyncWriteOperation(namespace, writeOperation, nextMessage, bufferPool)
                         .execute(getConnection(), callback);
             }
             else {

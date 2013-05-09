@@ -19,6 +19,7 @@ package org.mongodb;
 import org.mongodb.impl.MongoClientImpl;
 import org.mongodb.impl.MongoClientsImpl;
 import org.mongodb.io.BufferPool;
+import org.mongodb.io.PowerOfTwoByteBufferPool;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -32,7 +33,7 @@ public final class Fixture {
 
     private static MongoClientURI mongoClientURI;
     private static MongoClientImpl mongoClient;
-
+    private static BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool();
     private Fixture() {
     }
 
@@ -73,6 +74,6 @@ public final class Fixture {
     }
 
     public static BufferPool<ByteBuffer> getBufferPool() {
-        return getBinding().getBufferPool();
+        return bufferPool;
     }
 }

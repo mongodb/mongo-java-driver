@@ -33,7 +33,6 @@ import java.util.List;
 public class DefaultMongoAsyncConnection implements MongoAsyncConnection {
     private final ServerAddress serverAddress;
     private final SimplePool<MongoAsyncConnection> channelPool;
-    private final BufferPool<ByteBuffer> bufferPool;
     private volatile MongoAsynchronousSocketChannelGateway channel;
     private volatile boolean activeAsyncCall;
     private volatile boolean releasePending;
@@ -42,19 +41,13 @@ public class DefaultMongoAsyncConnection implements MongoAsyncConnection {
                                        final SimplePool<MongoAsyncConnection> channelPool, final BufferPool<ByteBuffer> bufferPool) {
         this.serverAddress = serverAddress;
         this.channelPool = channelPool;
-        this.bufferPool = bufferPool;
         this.channel = new MongoAsynchronousSocketChannelGateway(serverAddress,
-                new CachingAsyncAuthenticator(new MongoCredentialsStore(credentialList), this), bufferPool);
+                new CachingAsyncAuthenticator(new MongoCredentialsStore(credentialList), this, bufferPool), bufferPool);
     }
 
     @Override
     public ServerAddress getServerAddress() {
         return serverAddress;
-    }
-
-    @Override
-    public BufferPool<ByteBuffer> getBufferPool() {
-        return bufferPool;
     }
 
     @Override

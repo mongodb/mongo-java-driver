@@ -40,7 +40,7 @@ class DefaultMongoSyncConnection implements MongoSyncConnection {
         this.channelPool = channelPool;
         this.bufferPool = bufferPool;
         this.channel = DefaultMongoGateway.create(serverAddress, bufferPool, options,
-                new CachingAuthenticator(new MongoCredentialsStore(credentialList), this));
+                new CachingAuthenticator(new MongoCredentialsStore(credentialList), this, bufferPool));
     }
 
     @Override
@@ -64,11 +64,6 @@ class DefaultMongoSyncConnection implements MongoSyncConnection {
     @Override
     public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
         return channel.sendAndReceiveMessage(buffer);
-    }
-
-    @Override
-    public BufferPool<ByteBuffer> getBufferPool() {
-        return bufferPool;
     }
 
     @Override

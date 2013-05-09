@@ -23,7 +23,6 @@ import org.mongodb.MongoQueryCursor;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.QueryOperation;
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.result.QueryResult;
@@ -250,7 +249,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             copy.limit(0);
         }
     QueryResult<DBObject> queryResult = new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(),
-                new DBObjectCodec(), getBinding().getBufferPool()).execute(getBinding());
+                new DBObjectCodec(), getCollection().getBufferPool()).execute(getBinding());
         return queryResult.getResults().get(0);
     }
 
@@ -535,7 +534,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
     public DBCursor setDecoderFactory(final DBDecoderFactory factory) {
         this.decoderFactory = factory;
-        this.resultDecoder = new DBDecoderAdapter(factory.create(), collection, new PowerOfTwoByteBufferPool());
+        this.resultDecoder = new DBDecoderAdapter(factory.create(), collection, getCollection().getBufferPool());
         return this;
     }
 
@@ -589,7 +588,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
    private void query() {
         cursor = new MongoQueryCursor<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
-                getBinding());
+                getBinding(), getCollection().getBufferPool());
 //        sizes.add(results.size());
     }
 

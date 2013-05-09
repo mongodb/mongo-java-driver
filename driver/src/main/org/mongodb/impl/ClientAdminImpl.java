@@ -19,7 +19,6 @@ package org.mongodb.impl;
 import org.mongodb.ClientAdmin;
 import org.mongodb.CommandOperation;
 import org.mongodb.Document;
-import org.mongodb.MongoServerBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
@@ -42,10 +41,10 @@ class ClientAdminImpl implements ClientAdmin {
     private static final ListDatabases LIST_DATABASES = new ListDatabases();
 
     private final DocumentCodec documentCodec;
-    private final MongoServerBinding binding;
+    private final MongoClientImpl client;
 
-    ClientAdminImpl(final MongoServerBinding binding, final PrimitiveCodecs primitiveCodecs) {
-        this.binding = binding;
+    ClientAdminImpl(final MongoClientImpl client, final PrimitiveCodecs primitiveCodecs) {
+        this.client = client;
         documentCodec = new DocumentCodec(primitiveCodecs);
     }
 
@@ -54,7 +53,7 @@ class ClientAdminImpl implements ClientAdmin {
     @Override
     public double ping() {
         final CommandResult pingResult = new CommandOperation(ADMIN_DATABASE, PING_COMMAND, documentCodec,
-                getBufferPool()).execute(binding);
+                getBufferPool()).execute(client.getBinding());
 
         return (Double) pingResult.getResponse().get("ok");
     }
@@ -62,7 +61,7 @@ class ClientAdminImpl implements ClientAdmin {
     @Override
     public Set<String> getDatabaseNames() {
         final CommandResult listDatabasesResult = new CommandOperation(ADMIN_DATABASE, LIST_DATABASES, documentCodec,
-                getBufferPool()).execute(binding);
+                getBufferPool()).execute(client.getBinding());
 
         @SuppressWarnings("unchecked")
         final List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
@@ -75,6 +74,6 @@ class ClientAdminImpl implements ClientAdmin {
     }
 
     public BufferPool<ByteBuffer> getBufferPool() {
-        return binding.getBufferPool();
+        return client.getBufferPool();
     }
 }

@@ -41,6 +41,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.Fixture.getBinding;
+import static org.mongodb.Fixture.getBufferPool;
 
 @Category(Async.class)
 public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
@@ -58,7 +59,7 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
             protected MongoAsyncConnection createNew() {
                 throw new UnsupportedOperationException();
             }
-        }, new PowerOfTwoByteBufferPool());
+        }, getBufferPool());
     }
 
     @After
@@ -69,7 +70,7 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
     @Test
     public void testEmpty() throws InterruptedException {
         MongoCredentialsStore credentialsStore = new MongoCredentialsStore();
-        CachingAsyncAuthenticator cachingAuthenticator = new CachingAsyncAuthenticator(credentialsStore, connection);
+        CachingAsyncAuthenticator cachingAuthenticator = new CachingAsyncAuthenticator(credentialsStore, connection, getBufferPool());
 
         final List<Exception> exceptionList = new ArrayList<Exception>();
         cachingAuthenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
@@ -88,7 +89,7 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
     public void testException() throws InterruptedException {
         MongoCredentialsStore credentialsStore =
                 new MongoCredentialsStore(MongoCredential.createMongoCRCredential("noone", "nowhere", "nothing".toCharArray()));
-        CachingAsyncAuthenticator cachingAuthenticator = new CachingAsyncAuthenticator(credentialsStore, connection);
+        CachingAsyncAuthenticator cachingAuthenticator = new CachingAsyncAuthenticator(credentialsStore, connection, getBufferPool());
 
         final List<Exception> exceptionList = new ArrayList<Exception>();
         cachingAuthenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {

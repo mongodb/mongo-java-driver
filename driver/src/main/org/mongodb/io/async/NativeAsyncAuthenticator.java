@@ -24,19 +24,26 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.io.BufferPool;
 import org.mongodb.io.NativeAuthenticationHelper;
 import org.mongodb.result.CommandResult;
 
+import java.nio.ByteBuffer;
+
 public class NativeAsyncAuthenticator extends AsyncAuthenticator {
-    NativeAsyncAuthenticator(final MongoCredential credential, final MongoAsyncConnection connection) {
+    private final BufferPool<ByteBuffer> bufferPool;
+
+    NativeAsyncAuthenticator(final MongoCredential credential, final MongoAsyncConnection connection,
+                             final BufferPool<ByteBuffer> bufferPool) {
         super(credential, connection);
+        this.bufferPool = bufferPool;
     }
 
     @Override
     public void authenticate(final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(),
                 new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection().getBufferPool()).execute(getConnection())
+                new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(getConnection())
                 .register(new SingleResultCallback<CommandResult>() {
                     @Override
                     public void onResult(final CommandResult result, final MongoException e) {
@@ -47,7 +54,7 @@ public class NativeAsyncAuthenticator extends AsyncAuthenticator {
                             new AsyncCommandOperation(getCredential().getSource(),
                                     new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                                             getCredential().getPassword(), (String) result.getResponse().get("nonce"))),
-                                    new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection().getBufferPool())
+                                    new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool)
                                     .execute(getConnection()).register(new SingleResultCallback<CommandResult>() {
                                 @Override
                                 public void onResult(final CommandResult result, final MongoException e) {

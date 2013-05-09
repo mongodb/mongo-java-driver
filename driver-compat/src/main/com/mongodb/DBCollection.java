@@ -1697,6 +1697,6 @@ public class DBCollection implements IDBCollection {
     }
 
     BufferPool<ByteBuffer> getBufferPool() {
-        return getBinding().getBufferPool();
+        return getDB().getBufferPool();
     }
 }

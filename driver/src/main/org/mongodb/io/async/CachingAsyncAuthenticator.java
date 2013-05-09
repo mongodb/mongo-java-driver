@@ -21,8 +21,10 @@ import org.mongodb.MongoException;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.impl.MongoCredentialsStore;
+import org.mongodb.io.BufferPool;
 import org.mongodb.result.CommandResult;
 
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -31,12 +33,15 @@ import java.util.Set;
 public class CachingAsyncAuthenticator {
     private final MongoCredentialsStore credentialsStore;
     private final MongoAsyncConnection connection;
+    private BufferPool<ByteBuffer> bufferPool;
     // needs synchronization to ensure that modifications are published.
     private final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());
 
-    public CachingAsyncAuthenticator(final MongoCredentialsStore credentialsStore, final MongoAsyncConnection connection) {
+    public CachingAsyncAuthenticator(final MongoCredentialsStore credentialsStore, final MongoAsyncConnection connection,
+                                     final BufferPool<ByteBuffer> bufferPool) {
         this.credentialsStore = credentialsStore;
         this.connection = connection;
+        this.bufferPool = bufferPool;
     }
 
     public void asyncAuthenticateAll(final SingleResultCallback<Void> callback) {
@@ -99,10 +104,10 @@ public class CachingAsyncAuthenticator {
     private AsyncAuthenticator createAuthenticator(final MongoCredential credential) {
         AsyncAuthenticator authenticator;
         if (credential.getMechanism().equals(MongoCredential.MONGODB_CR_MECHANISM)) {
-            authenticator = new NativeAsyncAuthenticator(credential, connection);
+            authenticator = new NativeAsyncAuthenticator(credential, connection, bufferPool);
         }
         else if (credential.getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
-            authenticator = new GSSAPIAsyncAuthenticator(credential, connection);
+            authenticator = new GSSAPIAsyncAuthenticator(credential, connection, bufferPool);
         }
         else {
             throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());

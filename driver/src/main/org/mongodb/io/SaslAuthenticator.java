@@ -28,12 +28,15 @@ import org.mongodb.result.CommandResult;
 
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
+import java.nio.ByteBuffer;
 
 abstract class SaslAuthenticator extends Authenticator {
     public static final String MONGODB_PROTOCOL = "mongodb";
+    private final BufferPool<ByteBuffer> bufferPool;
 
-    SaslAuthenticator(final MongoCredential credential, final MongoSyncConnection connection) {
+    SaslAuthenticator(final MongoCredential credential, final MongoSyncConnection connection, final BufferPool<ByteBuffer> bufferPool) {
         super(credential, connection);
+        this.bufferPool = bufferPool;
     }
 
     public CommandResult authenticate() {
@@ -68,12 +71,12 @@ abstract class SaslAuthenticator extends Authenticator {
 
     private CommandResult sendSaslStart(final byte[] outToken) {
         return new CommandOperation(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec(),
-                getConnection().getBufferPool()).execute(getConnection());
+                bufferPool).execute(getConnection());
     }
 
     private CommandResult sendSaslContinue(final int conversationId, final byte[] outToken) {
         return new CommandOperation(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
-                new DocumentCodec(), getConnection().getBufferPool()).execute(getConnection());
+                new DocumentCodec(), bufferPool).execute(getConnection());
     }
 
     private MongoCommand createSaslStartCommand(final byte[] outToken) {

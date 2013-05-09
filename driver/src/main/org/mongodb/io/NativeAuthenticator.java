@@ -24,19 +24,24 @@ import org.mongodb.command.MongoCommand;
 import org.mongodb.impl.MongoSyncConnection;
 import org.mongodb.result.CommandResult;
 
+import java.nio.ByteBuffer;
+
 public class NativeAuthenticator extends Authenticator {
-    NativeAuthenticator(final MongoCredential credential, final MongoSyncConnection connection) {
+    private final BufferPool<ByteBuffer> bufferPool;
+
+    NativeAuthenticator(final MongoCredential credential, final MongoSyncConnection connection, final BufferPool<ByteBuffer> bufferPool) {
         super(credential, connection);
+        this.bufferPool = bufferPool;
     }
 
     @Override
     public CommandResult authenticate() {
         CommandResult nonceResponse = new CommandOperation(getCredential().getSource(),
                 new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection().getBufferPool()).execute(getConnection());
+                new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(getConnection());
         return new CommandOperation(getCredential().getSource(),
                 new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                         getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection().getBufferPool()).execute(getConnection());
+                new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(getConnection());
     }
 }
