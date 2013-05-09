@@ -59,7 +59,7 @@ public class MongoClientImpl implements MongoClient {
         try {
             runnable.run();
         } finally {
-            pinnedBinding.remove();
+            unpinBinding();
         }
     }
 
@@ -71,7 +71,7 @@ public class MongoClientImpl implements MongoClient {
         } catch (Exception e) {
             throw new ExecutionException(e);
         } finally {
-            pinnedBinding.remove();
+            unpinBinding();
         }
     }
 
@@ -111,5 +111,11 @@ public class MongoClientImpl implements MongoClient {
             throw new IllegalStateException();
         }
         pinnedBinding.set(new MonotonicallyConsistentMongoServerBinding(binding));
+    }
+
+    private void unpinBinding() {
+        MongoServerBinding bindingToUnpin = this.pinnedBinding.get();
+        this.pinnedBinding.remove();
+        bindingToUnpin.close();
     }
 }
