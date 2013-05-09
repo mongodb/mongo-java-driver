@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -159,44 +160,6 @@ public class DBCursorOldTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testBig() {
-        final int numToInsert = (15 * 1024 * 1024) / 16000;
-
-        char[] array = new char[16000];
-        Arrays.fill(array, 'x');
-
-        final String bigString = new String(array);
-
-        for (int i = 0; i < numToInsert; i++) {
-            collection.save(new BasicDBObject("_id", i).append("s", bigString));
-        }
-
-        assertEquals(numToInsert, collection.find().count());
-        assertEquals(numToInsert, collection.find().toArray().size());
-        assertEquals(numToInsert, collection.find().limit(800).count());
-        assertEquals(800, collection.find().limit(800).toArray().size());
-
-        // negative limit works like negative batchsize, for legacy reason
-        int x = collection.find().limit(-800).toArray().size();
-        assertTrue(800 > x);
-
-        DBCursor a = collection.find();
-        assertEquals(numToInsert, a.itcount());
-
-        DBCursor b = collection.find().batchSize(10);
-        assertEquals(numToInsert, b.itcount());
-        assertEquals(10, b.getSizes().get(0).intValue());
-
-        assertTrue(a.numGetMores() < b.numGetMores());
-
-        assertEquals(numToInsert, collection.find().batchSize(2).itcount());
-
-        assertEquals(numToInsert, collection.find(null, null).skip(0).batchSize(5).itcount());
-        assertEquals(5, collection.find(null, null).skip(0).batchSize(-5).itcount());
-    }
-
-
-    @Test
     public void testExplain() {
         insertTestData(collection, 100);
 
@@ -230,22 +193,29 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
         try {
             DBCursor cursor = collection.find().batchSize(2); // setting to 1, actually sets to 2 (why, oh why?)
+            assertEquals(0, cursor.numGetMores());
+            assertEquals(Collections.<Integer>emptyList(), cursor.getSizes());
             cursor.next(); //creates real cursor on server.
             cursor.next();
             assertEquals(0, cursor.numGetMores());
+            assertEquals(Arrays.asList(2), cursor.getSizes());
             cursor.next();
             assertEquals(1, cursor.numGetMores());
+            assertEquals(Arrays.asList(2, 2), cursor.getSizes());
             cursor.next();
             cursor.next();
             assertEquals(2, cursor.numGetMores());
+            assertEquals(Arrays.asList(2, 2, 2), cursor.getSizes());
             cursor.next();
             cursor.next();
             assertEquals(3, cursor.numGetMores());
+            assertEquals(Arrays.asList(2, 2, 2, 2), cursor.getSizes());
             cursor.batchSize(20);
             cursor.next();
             cursor.next();
             cursor.next();
             assertEquals(4, cursor.numGetMores());
+            assertEquals(Arrays.asList(2, 2, 2, 2, 20), cursor.getSizes());
         } catch (IllegalStateException e) {
             assertNotNull(e); // there must be a better way to detect this.
         }

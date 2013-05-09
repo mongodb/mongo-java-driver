@@ -20,22 +20,27 @@ import category.Slow;
 import org.bson.types.BSONTimestamp;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.result.CommandResult;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CountDownLatch;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mongodb.Fixture.getBinding;
 import static org.mongodb.Fixture.getBufferPool;
 
@@ -56,6 +61,114 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         if (cursor != null) {
             cursor.close();
         }
+    }
+
+    @Test
+    public void testServerCursor() {
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().batchSize(2),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+        assertNotNull(cursor.getServerCursor());
+    }
+
+    @Test
+    public void testServerAddress() {
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind(),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+        assertNull(cursor.getServerCursor());
+        assertNotNull(cursor.getServerAddress());
+    }
+
+    @Test
+    public void testGetCriteria() {
+        final MongoFind find = new MongoFind().batchSize(2);
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), find ,
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+        assertEquals(find, cursor.getCriteria());
+    }
+
+    @Test
+    public void testClosedState() {
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind(),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+        cursor.close();
+        cursor.close();
+        try {
+            cursor.next();
+            fail();
+        } catch (Exception e) { // NOPMD
+            // all good
+        }
+
+        try {
+            cursor.hasNext();
+            fail();
+        } catch (IllegalStateException e) {  // NOPMD
+            // all good
+        }
+
+        try {
+            cursor.getServerCursor();
+            fail();
+        } catch (IllegalStateException e) {  // NOPMD
+            // all good
+        }
+    }
+
+    @Test
+    public void testGoingPastTheEnd() {
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().limit(2),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+        cursor.next();
+        cursor.next();
+        try {
+            cursor.next();
+            fail();
+        } catch (NoSuchElementException e) { // NOPMD
+            // all good
+        }
+    }
+
+    @Test
+    public void testNormalExhaustion() {
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind(),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+        int i = 0;
+        while (cursor.hasNext()) {
+            cursor.next();
+            i++;
+        }
+        assertEquals(10, i);
+    }
+
+    @Test
+    public void testLimitExhaustion() {
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().limit(5),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+        int i = 0;
+        while (cursor.hasNext()) {
+            cursor.next();
+            i++;
+        }
+        assertEquals(5, i);
+    }
+
+    @Test
+    public void testRemove() {
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().limit(2),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+        try {
+            cursor.remove();
+            fail();
+        } catch (UnsupportedOperationException e) { // NOPMD
+            // all good
+        }
+    }
+
+    @Test
+    public void testToString() {
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().limit(2),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+        assertTrue(cursor.toString().startsWith("MongoQueryCursor"));
     }
 
     @Test
@@ -147,7 +260,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     }
 
     @Test
-    @Ignore("Won't work with replica sets or when tests are run in parallel")
+//    @Ignore("Won't work with replica sets or when tests are run in parallel")
     public void shouldKillCursorIfLimitIsReachedOnInitialQuery() {
         int openCursors = getTotalOpenCursors();
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().limit(5),
@@ -156,7 +269,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     }
 
     @Test
-    @Ignore("Won't work with replica sets or when tests are run in parallel")
+//    @Ignore("Won't work with replica sets or when tests are run in parallel")
     public void shouldKillCursorIfLimitIsReachedOnGetMore() {
         int openCursors = getTotalOpenCursors();
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().batchSize(3).limit(5),
@@ -168,6 +281,77 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
 
         assertEquals(openCursors, getTotalOpenCursors());
     }
+
+    @Test
+    public void testLimitWithGetMore() {
+        final List<Document> list = new ArrayList<Document>();
+        collection.batchSize(2).limit(5).into(list);
+        assertEquals(5, list.size());
+    }
+
+    @Test
+    public void testLimitWithLargeDocuments() {
+        char[] array = new char[16000];
+        Arrays.fill(array, 'x');
+        final String bigString = new String(array);
+
+        for (int i = 11; i < 1000; i++) {
+            collection.insert(new Document("_id", i).append("s", bigString));
+        }
+
+        final List<Document> list = new ArrayList<Document>();
+        collection.limit(300).into(list);
+        assertEquals(300, list.size());
+    }
+
+    @Test
+    public void testNormalLoopWithGetMore() {
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind()
+                .batchSize(2).order(new Document("_id", 1)),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+        try {
+            int i = 0;
+            while (cursor.hasNext()) {
+                final Document cur = cursor.next();
+                assertEquals(i++, cur.get("_id"));
+            }
+            assertEquals(10, i);
+            assertFalse(cursor.hasNext());
+        } finally {
+            cursor.close();
+        }
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void testNextWithoutHasNextWithGetMore() {
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind()
+                .batchSize(2).order(new Document("_id", 1)),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+        for (int i = 0; i < 10; i++) {
+            final Document cur = cursor.next();
+            assertEquals(i, cur.get("_id"));
+        }
+        assertFalse(cursor.hasNext());
+        assertFalse(cursor.hasNext());
+        cursor.next();
+    }
+
+    @Test
+    public void shouldThrowCursorNotFoundException() {
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().batchSize(2),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+        new KillCursorOperation(new MongoKillCursor(cursor.getServerCursor()), getBufferPool()).execute(getBinding());
+        cursor.next();
+        cursor.next();
+        try {
+            cursor.next();
+        } catch (MongoCursorNotFoundException e) {
+            assertEquals(cursor.getServerCursor(), e.getCursor());
+        } catch (NoSuchElementException e) {
+            fail();
+        }
+    }
+
 
     private int getTotalOpenCursors() {
         CommandResult commandResult = Fixture.getMongoClient().getDatabase("admin").executeCommand(new MongoCommand(
