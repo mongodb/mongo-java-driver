@@ -20,6 +20,8 @@ import org.mongodb.MongoConnectionManager;
 import org.mongodb.ServerAddress;
 import org.mongodb.pool.Pool;
 
+import static org.mongodb.assertions.Assertions.notNull;
+
 public class MongoConnectionManagerImpl implements MongoConnectionManager {
     private ServerAddress serverAddress;
     private final Pool<MongoSyncConnection> connectionPool;
@@ -27,8 +29,8 @@ public class MongoConnectionManagerImpl implements MongoConnectionManager {
 
     public MongoConnectionManagerImpl(final ServerAddress serverAddress, final Pool<MongoSyncConnection> connectionPool,
                                       final Pool<MongoAsyncConnection> asyncConnectionPool) {
-        this.serverAddress = serverAddress;
-        this.connectionPool = connectionPool;
+        this.serverAddress = notNull("serverAddress", serverAddress);
+        this.connectionPool = notNull("connectionPool", connectionPool);
         this.asyncConnectionPool = asyncConnectionPool;
     }
 
@@ -39,6 +41,9 @@ public class MongoConnectionManagerImpl implements MongoConnectionManager {
 
     @Override
     public MongoAsyncConnection getAsyncConnection() {
+        if (asyncConnectionPool == null) {
+            throw new UnsupportedOperationException("Asynchronous connections not supported in this version of Java");
+        }
         return asyncConnectionPool.get();
     }
 
@@ -50,9 +55,11 @@ public class MongoConnectionManagerImpl implements MongoConnectionManager {
     @Override
     public void close() {
         try {
-            connectionPool.close();
+            if (asyncConnectionPool != null) {
+                asyncConnectionPool.close();
+            }
         } finally {
-            asyncConnectionPool.close();
+            connectionPool.close();
         }
     }
 }
