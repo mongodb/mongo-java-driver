@@ -24,10 +24,9 @@ import org.mongodb.MongoServerBinding;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
+import org.mongodb.pool.Pool;
 import org.mongodb.pool.SimplePool;
 
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocketFactory;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -62,28 +61,9 @@ public final class MongoServerBindings {
     static MongoConnectionManagerImpl create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                              final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
 
-        SimplePool<MongoSyncConnection> connectionPool = new SimplePool<MongoSyncConnection>(serverAddress.toString(),
-                options.getConnectionsPerHost()) {
-            @Override
-            protected MongoSyncConnection createNew() {
-                if (options.isSSLEnabled()) {
-                    return new DefaultMongoSocketConnection(serverAddress, this, bufferPool, credentialList, SSLSocketFactory.getDefault());
-                }
-                else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-                    return new DefaultMongoSocketConnection(serverAddress, this, bufferPool, credentialList, SocketFactory.getDefault());
-                }
-                else {
-                    return new DefaultMongoSocketChannelConnection(serverAddress, this, bufferPool, credentialList);
-                }
-            }
-
-            @Override
-            public void close() {
-                super.close();
-                bufferPool.close();
-            }
-        };
-        SimplePool<MongoAsyncConnection> asyncConnectionPool = null;
+        Pool<MongoSyncConnection> connectionPool = new DefaultMongoConnectionPool(new DefaultMongoSyncConnectionFactory(options,
+                serverAddress, bufferPool, credentialList), options);
+        Pool<MongoAsyncConnection> asyncConnectionPool = null;
 
         if (options.isAsyncEnabled() && !options.isSSLEnabled() && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
             asyncConnectionPool = new SimplePool<MongoAsyncConnection>(serverAddress.toString(), options.getConnectionsPerHost()) {

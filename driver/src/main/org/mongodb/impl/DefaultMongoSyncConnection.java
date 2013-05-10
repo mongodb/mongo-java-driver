@@ -28,7 +28,6 @@ import org.mongodb.io.MongoSocketReadException;
 import org.mongodb.io.MongoSocketReadTimeoutException;
 import org.mongodb.io.PooledInputBuffer;
 import org.mongodb.io.ResponseBuffers;
-import org.mongodb.pool.SimplePool;
 import org.mongodb.protocol.MongoReplyHeader;
 
 import java.io.IOException;
@@ -41,46 +40,38 @@ import java.util.List;
 import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
 abstract class DefaultMongoSyncConnection implements MongoSyncConnection {
-    private final SimplePool<MongoSyncConnection> connectionPool;
     private final ServerAddress serverAddress;
     private final BufferPool<ByteBuffer> bufferPool;
     private final CachingAuthenticator authenticator;
     private boolean authenticating = false;
+    private volatile boolean isClosed;
 
-    DefaultMongoSyncConnection(final ServerAddress serverAddress, final SimplePool<MongoSyncConnection> connectionPool,
-                               final BufferPool<ByteBuffer> bufferPool, final List<MongoCredential> credentialList) {
+    DefaultMongoSyncConnection(final ServerAddress serverAddress, final BufferPool<ByteBuffer> bufferPool,
+                               final List<MongoCredential> credentialList) {
         this.serverAddress = serverAddress;
-        this.connectionPool = connectionPool;
         this.bufferPool = bufferPool;
         this.authenticator = new CachingAuthenticator(new MongoCredentialsStore(credentialList), this, bufferPool);
     }
 
     @Override
     public void close() {
+        isClosed = true;
         authenticator.reset();
     }
 
     @Override
-    public void release() {
-        if (connectionPool == null) {
-            throw new IllegalStateException("Can not release a channel not associated with a pool");
-        }
-
-        connectionPool.done(this);
+    public boolean isClosed() {
+        return isClosed;
     }
 
     public ServerAddress getServerAddress() {
         return serverAddress;
     }
 
-
     public void sendMessage(final ChannelAwareOutputBuffer buffer) {
         check();
         sendOneWayMessage(buffer);
     }
-
-    protected abstract void sendOneWayMessage(final ChannelAwareOutputBuffer buffer);
-
 
     public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
         check();
@@ -90,6 +81,8 @@ abstract class DefaultMongoSyncConnection implements MongoSyncConnection {
     }
 
     protected abstract void ensureOpen();
+
+    protected abstract void sendOneWayMessage(final ChannelAwareOutputBuffer buffer);
 
     protected abstract void fillAndFlipBuffer(final ByteBuffer buffer);
 

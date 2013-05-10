@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
  */
-public abstract class SimplePool<T> {
+public abstract class SimplePool<T> implements Pool<T> {
 
     private final String name;
     private final int size;
@@ -58,29 +58,27 @@ public abstract class SimplePool<T> {
     protected abstract T createNew();
 
     /**
-     * override this if you need to do any cleanup
+     * Override this if you need to do any cleanup of items when the pool is closed.
      */
-    public void cleanup(final T t) {
+    protected void cleanup(final T t) {
     }
 
     /**
-     * Pick a member of {@code available}.  This method is called with a lock held on {@code available}, so it may be used
-     * safely.
+     * call done when you are done with an object from the pool if there is room and the object is ok will get added
      *
-     * @param recommended the recommended member to choose.
-     * @param couldCreate true if there is room in the pool to create a new object
-     * @return >= 0 the one to use, -1 create a new one
-     */
-    protected int pick(final int recommended, final boolean couldCreate) {
-        return recommended;
-    }
-
-    /**
-     * call done when you are done with an object form the pool if there is room and the object is ok will get added
-     *
-     * @param t Object to add
+     * @param t item to return to the pool
      */
     public void done(final T t) {
+        done(t, false);
+    }
+
+    /**
+     * call done when you are done with an object from the pool if there is room and the object is ok will get added
+     *
+     * @param t       item to return to the pool
+     * @param discard true if the item should be discarded, false if it should be back in the pool
+     */
+    public void done(final T t, final boolean discard) {
         if (t == null) {
             throw new IllegalArgumentException("Can not return a null item to the pool");
         }
@@ -93,11 +91,12 @@ public abstract class SimplePool<T> {
             assertConditions();
 
             if (!out.remove(t)) {
-                throw new RuntimeException("trying to put something back in the pool wasn't checked out");
+                return;
             }
 
-            available.add(t);
-
+            if (!discard) {
+                available.add(t);
+            }
         }
         semaphore.release();
     }
@@ -106,41 +105,42 @@ public abstract class SimplePool<T> {
         assert getTotal() <= getMaxSize();
     }
 
-    public void remove(final T t) {
-        done(t);
-    }
-
     /**
      * Gets an object from the pool - will block if none are available
      *
      * @return An object from the pool
      */
+    @Override
     public T get() {
-        return get(-1);
+        return get(-1, TimeUnit.MILLISECONDS);
     }
 
     /**
      * Gets an object from the pool - will block if none are available
      *
-     * @param waitTime negative - forever 0        - return immediately no matter what positive ms to wait
+     * @param timeout  negative - forever 0        - return immediately no matter what positive ms to wait
+     * @param timeUnit
      * @return An object from the pool, or null if can't get one in the given waitTime
      */
-    public T get(final long waitTime) {
+    @Override
+    public T get(final long timeout, final TimeUnit timeUnit) {
         if (closed) {
             throw new IllegalStateException("The pool is closed");
         }
-        if (!permitAcquired(waitTime)) {
+
+        if (!permitAcquired(timeout, timeUnit)) {
             return null;
         }
 
         synchronized (this) {
             assertConditions();
 
-            final int toTake = pick(available.size() - 1, getTotal() < getMaxSize());
+            final int toTake = available.size() - 1;
             final T t;
             if (toTake >= 0) {
                 t = available.remove(toTake);
-            } else {
+            }
+            else {
                 t = createNewAndReleasePermitIfFailure();
             }
             out.put(t, true);
@@ -165,14 +165,16 @@ public abstract class SimplePool<T> {
         }
     }
 
-    private boolean permitAcquired(final long waitTime) {
+    private boolean permitAcquired(final long timeout, final TimeUnit timeUnit) {
         try {
-            if (waitTime > 0) {
-                return semaphore.tryAcquire(waitTime, TimeUnit.MILLISECONDS);
-            } else if (waitTime < 0) {
+            if (timeout > 0) {
+                return semaphore.tryAcquire(timeout, timeUnit);
+            }
+            else if (timeout < 0) {
                 semaphore.acquire();
                 return true;
-            } else {
+            }
+            else {
                 return semaphore.tryAcquire();
             }
         } catch (InterruptedException e) {
@@ -183,8 +185,13 @@ public abstract class SimplePool<T> {
     /**
      * Clears the pool of all objects.
      */
+    @Override
     public synchronized void close() {
         closed = true;
+        clear();
+    }
+
+    public void clear() {
         for (final T t : available) {
             cleanup(t);
         }

@@ -18,15 +18,15 @@ package org.mongodb.impl;
 
 import org.mongodb.MongoConnectionManager;
 import org.mongodb.ServerAddress;
-import org.mongodb.pool.SimplePool;
+import org.mongodb.pool.Pool;
 
 public class MongoConnectionManagerImpl implements MongoConnectionManager {
     private ServerAddress serverAddress;
-    private final SimplePool<MongoSyncConnection> connectionPool;
-    private SimplePool<MongoAsyncConnection> asyncConnectionPool;
+    private final Pool<MongoSyncConnection> connectionPool;
+    private Pool<MongoAsyncConnection> asyncConnectionPool;
 
-    public MongoConnectionManagerImpl(final ServerAddress serverAddress, final SimplePool<MongoSyncConnection> connectionPool,
-                                      final SimplePool<MongoAsyncConnection> asyncConnectionPool) {
+    public MongoConnectionManagerImpl(final ServerAddress serverAddress, final Pool<MongoSyncConnection> connectionPool,
+                                      final Pool<MongoAsyncConnection> asyncConnectionPool) {
         this.serverAddress = serverAddress;
         this.connectionPool = connectionPool;
         this.asyncConnectionPool = asyncConnectionPool;
@@ -39,7 +39,7 @@ public class MongoConnectionManagerImpl implements MongoConnectionManager {
 
     @Override
     public void releaseConnection(final MongoSyncConnection connection) {
-        connection.release();
+        connection.close();
     }
 
     @Override

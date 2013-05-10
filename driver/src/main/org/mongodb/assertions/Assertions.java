@@ -14,36 +14,25 @@
  * limitations under the License.
  */
 
-package org.bson.util;
+package org.mongodb.assertions;
 
 /**
  * Design by contract assertions.
  */
-final class Assertions {
+public final class Assertions {
     public static <T> T notNull(final String name, final T notNull) {
         if (notNull == null) {
-            throw new NullArgumentException(name);
+            throw new IllegalArgumentException(name + " can not be null");
         }
         return notNull;
     }
 
     public static void isTrue(final String name, final boolean check) {
         if (!check) {
-            throw new IllegalArgumentException(name);
+            throw new IllegalStateException("state should be: " + name);
         }
     }
 
-    // /CLOVER:OFF
     private Assertions() {
-    }
-
-    // /CLOVER:ON
-
-    static class NullArgumentException extends IllegalArgumentException {
-        private static final long serialVersionUID = 6178592463723624585L;
-
-        NullArgumentException(final String name) {
-            super(name + " should not be null!");
-        }
     }
 }

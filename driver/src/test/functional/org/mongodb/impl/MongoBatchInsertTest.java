@@ -30,7 +30,6 @@ import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.pool.SimplePool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,12 +44,7 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
     public void setUp() throws Exception {
         super.setUp();
         connection = new DefaultMongoSocketChannelConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
-                new SimplePool<MongoSyncConnection>("test", 1) {
-            @Override
-            protected MongoSyncConnection createNew() {
-                throw new UnsupportedOperationException();
-            }
-        }, getBufferPool(), Fixture.getMongoClientURI().getCredentials());
+                getBufferPool(), Fixture.getMongoClientURI().getCredentials());
     }
 
     @Test

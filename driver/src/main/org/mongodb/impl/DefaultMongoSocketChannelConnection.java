@@ -23,7 +23,6 @@ import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.MongoSocketOpenException;
 import org.mongodb.io.MongoSocketReadException;
 import org.mongodb.io.MongoSocketWriteException;
-import org.mongodb.pool.SimplePool;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -34,9 +33,9 @@ import java.util.List;
 class DefaultMongoSocketChannelConnection extends DefaultMongoSyncConnection {
     private volatile SocketChannel socketChannel;
 
-    public DefaultMongoSocketChannelConnection(final ServerAddress address, final SimplePool<MongoSyncConnection> connectionPool,
-                                               final BufferPool<ByteBuffer> bufferPool, final List<MongoCredential> credentialList) {
-        super(address, connectionPool, bufferPool, credentialList);
+    public DefaultMongoSocketChannelConnection(final ServerAddress address, final BufferPool<ByteBuffer> bufferPool,
+                                               final List<MongoCredential> credentialList) {
+        super(address, bufferPool, credentialList);
     }
 
     protected void ensureOpen() {

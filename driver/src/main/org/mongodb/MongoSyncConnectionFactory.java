@@ -14,27 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb.impl;
+package org.mongodb;
 
-import org.mongodb.ServerAddress;
-import org.mongodb.async.SingleResultCallback;
-import org.mongodb.io.ChannelAwareOutputBuffer;
-import org.mongodb.io.ResponseBuffers;
+import org.mongodb.impl.MongoSyncConnection;
 
-public interface MongoAsyncConnection extends MongoConnection {
-
-    /**
-     * Releases the connection back to the pool.
-     */
-    void release();
-
+public interface MongoSyncConnectionFactory {
     ServerAddress getServerAddress();
-
-    void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
-
-    void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
-
-    void releaseIfPending();
-
-    void setActiveAsyncCall();
+    MongoSyncConnection create();
 }

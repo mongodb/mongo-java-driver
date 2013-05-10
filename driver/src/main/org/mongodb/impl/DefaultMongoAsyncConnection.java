@@ -32,15 +32,15 @@ import java.util.List;
 // TODO: Take this class private
 public class DefaultMongoAsyncConnection implements MongoAsyncConnection {
     private final ServerAddress serverAddress;
-    private final SimplePool<MongoAsyncConnection> channelPool;
+    private final SimplePool<MongoAsyncConnection> connectionPool;
     private volatile MongoAsynchronousSocketChannelGateway channel;
     private volatile boolean activeAsyncCall;
     private volatile boolean releasePending;
 
     public DefaultMongoAsyncConnection(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                       final SimplePool<MongoAsyncConnection> channelPool, final BufferPool<ByteBuffer> bufferPool) {
+                                       final SimplePool<MongoAsyncConnection> connectionPool, final BufferPool<ByteBuffer> bufferPool) {
         this.serverAddress = serverAddress;
-        this.channelPool = channelPool;
+        this.connectionPool = connectionPool;
         this.channel = new MongoAsynchronousSocketChannelGateway(serverAddress,
                 new CachingAsyncAuthenticator(new MongoCredentialsStore(credentialList), this, bufferPool), bufferPool);
     }
@@ -59,11 +59,16 @@ public class DefaultMongoAsyncConnection implements MongoAsyncConnection {
     }
 
     @Override
+    public boolean isClosed() {
+        return channel == null;
+    }
+
+    @Override
     public synchronized void release() {
         if (channel == null) {
             throw new IllegalStateException("Can not release a channel that's already closed");
         }
-        if (channelPool == null) {
+        if (connectionPool == null) {
             throw new IllegalStateException("Can not release a channel not associated with a pool");
         }
 
@@ -72,7 +77,7 @@ public class DefaultMongoAsyncConnection implements MongoAsyncConnection {
         }
         else {
             releasePending = false;
-            channelPool.done(this);
+            connectionPool.done(this);
         }
     }
 

@@ -29,7 +29,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static java.util.Collections.unmodifiableCollection;
 import static java.util.Collections.unmodifiableSet;
-import static org.bson.util.Assertions.notNull;
+import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * Abstract base class for COW {@link java.util.Map} implementations that delegate to an internal map.

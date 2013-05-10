@@ -16,6 +16,7 @@
 
 package org.mongodb.io;
 
+import org.mongodb.pool.Pool;
 import org.mongodb.pool.SimplePool;
 
 import java.nio.ByteBuffer;
@@ -55,9 +56,9 @@ public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
 
     @Override
     public ByteBuffer get(final int size) {
-        final SimplePool<ByteBuffer> simplePool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
+        final Pool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
         final ByteBuffer byteBuffer;
-        byteBuffer = simplePool.get();
+        byteBuffer = pool.get();
         byteBuffer.clear();
         byteBuffer.limit(size);
         return byteBuffer;
@@ -77,7 +78,7 @@ public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
 
     @Override
     public void close() {
-        for (SimplePool<ByteBuffer> cur : powerOfTwoToPoolMap.values()) {
+        for (Pool<ByteBuffer> cur : powerOfTwoToPoolMap.values()) {
             cur.close();
         }
     }
