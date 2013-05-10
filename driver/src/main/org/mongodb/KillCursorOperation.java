@@ -38,7 +38,7 @@ public class KillCursorOperation extends Operation {
         try {
             execute(connection);
         } finally {
-            connectionManager.releaseConnection(connection);
+            connection.close();
         }
 
     }

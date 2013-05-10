@@ -45,7 +45,7 @@ public class CommandOperation extends Operation {
         try {
             return execute(connection);
         } finally {
-            connectionManager.releaseConnection(connection);
+            connection.close();
         }
     }
 

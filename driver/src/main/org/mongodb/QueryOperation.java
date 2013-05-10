@@ -47,7 +47,7 @@ public class QueryOperation<T> extends Operation {
         try {
             return execute(connection);
         } finally {
-            connectionManager.releaseConnection(connection);
+            connection.close();
         }
     }
 

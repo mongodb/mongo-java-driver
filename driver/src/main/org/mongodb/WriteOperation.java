@@ -43,9 +43,8 @@ public abstract class WriteOperation extends Operation {
         try {
             return execute(connection);
         } finally {
-            connectionManager.releaseConnection(connection);
+            connection.close();
         }
-
     }
 
     public WriteResult execute(final MongoSyncConnection connection) {

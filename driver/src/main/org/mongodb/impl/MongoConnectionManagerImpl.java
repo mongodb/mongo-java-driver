@@ -38,11 +38,6 @@ public class MongoConnectionManagerImpl implements MongoConnectionManager {
     }
 
     @Override
-    public void releaseConnection(final MongoSyncConnection connection) {
-        connection.close();
-    }
-
-    @Override
     public MongoAsyncConnection getAsyncConnection() {
         return asyncConnectionPool.get();
     }

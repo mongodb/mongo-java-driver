@@ -21,11 +21,18 @@ import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
+import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.io.BufferPool;
+import org.mongodb.io.ChannelAwareOutputBuffer;
+import org.mongodb.io.ResponseBuffers;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import static org.mongodb.assertions.Assertions.isTrue;
+import static org.mongodb.assertions.Assertions.notNull;
+
+@NotThreadSafe
 public class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
     private final MongoServerBinding binding;
     private ReadPreference lastRequestedReadPreference;
@@ -33,6 +40,7 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
     private MongoConnectionManager connectionManagerForWrites;
     private MongoSyncConnection connectionForReads;
     private MongoSyncConnection connectionForWrites;
+    private boolean isClosed;
 
     public MonotonicallyConsistentMongoServerBinding(final MongoServerBinding binding) {
         this.binding = binding;
@@ -40,40 +48,48 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
 
     @Override
     public MongoConnectionManager getConnectionManagerForWrite() {
+        isTrue("open", !isClosed);
         return new MongoConnectionManagerForWrites();
     }
 
     @Override
     public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
+        isTrue("open", !isClosed);
         return new MongoConnectionManagerForReads(readPreference);
     }
 
     @Override
     public MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
+        isTrue("open", !isClosed);
         return binding.getConnectionManagerForServer(serverAddress);
     }
 
     @Override
     public List<ServerAddress> getAllServerAddresses() {
+        isTrue("open", !isClosed);
         return binding.getAllServerAddresses();
     }
 
     @Override
     public BufferPool<ByteBuffer> getBufferPool() {
+        isTrue("open", !isClosed);
         return binding.getBufferPool();
     }
 
     @Override
     public void close() {
-        if (connectionForReads != null) {
-            connectionManagerForReads.releaseConnection(connectionForReads);
+        if (!isClosed) {
+            isClosed = true;
             connectionManagerForReads = null;
-            connectionForReads = null;
-        }
-        if (connectionForWrites != null) {
-            connectionManagerForWrites.releaseConnection(connectionForWrites);
             connectionManagerForWrites = null;
-            connectionForWrites = null;
+            if (connectionForReads != null) {
+                connectionForReads.close();
+                connectionForReads = null;
+            }
+            if (connectionForWrites != null) {
+                connectionForWrites.close();
+                connectionForWrites = null;
+            }
         }
     }
 
@@ -82,12 +98,12 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
             connectionManagerForWrites = binding.getConnectionManagerForWrite();
             connectionForWrites = connectionManagerForWrites.getConnection();
             if (connectionForReads != null) {
-                connectionManagerForReads.releaseConnection(connectionForReads);
+                connectionForReads.close();
                 connectionForReads = null;
                 connectionManagerForReads = null;
             }
         }
-        return connectionForWrites;
+        return new DelayedCloseMongoSyncConnection(connectionForWrites);
     }
 
     private synchronized MongoSyncConnection getConnectionForReads(final ReadPreference readPreference) {
@@ -97,20 +113,16 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
         else if (connectionForReads == null || !readPreference.equals(lastRequestedReadPreference)) {
             lastRequestedReadPreference = readPreference;
             if (connectionForReads != null) {
-                connectionManagerForReads.releaseConnection(connectionForReads);
+                connectionForReads.close();
             }
             connectionManagerForReads = binding.getConnectionManagerForRead(readPreference);
             connectionForReads = connectionManagerForReads.getConnection();
         }
-        return connectionForReads;
+        return new DelayedCloseMongoSyncConnection(connectionForReads);
     }
 
 
     private abstract class AbstractConnectionManager implements MongoConnectionManager {
-        @Override
-        public void releaseConnection(final MongoSyncConnection connection) {
-            // Do nothing.  Release when the containing instance is closed.
-        }
 
         @Override
         public ServerAddress getServerAddress() {
@@ -152,5 +164,41 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
             throw new UnsupportedOperationException();
         }
 
+    }
+
+    private class DelayedCloseMongoSyncConnection implements MongoSyncConnection {
+        private volatile MongoSyncConnection wrapped;
+
+        private DelayedCloseMongoSyncConnection(final MongoSyncConnection wrapped) {
+            this.wrapped = notNull("wrapped", wrapped);
+        }
+
+        @Override
+        public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+            isTrue("open", !isClosed());
+            wrapped.sendAndReceiveMessage(buffer);
+        }
+
+        @Override
+        public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
+            isTrue("open", !isClosed());
+            return wrapped.sendAndReceiveMessage(buffer);
+        }
+
+        @Override
+        public void close() {
+            wrapped = null;
+        }
+
+        @Override
+        public boolean isClosed() {
+            return wrapped == null;
+        }
+
+        @Override
+        public ServerAddress getServerAddress() {
+            isTrue("open", !isClosed());
+            return wrapped.getServerAddress();
+        }
     }
 }
