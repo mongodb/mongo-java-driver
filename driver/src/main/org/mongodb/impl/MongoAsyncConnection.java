@@ -34,7 +34,7 @@ public interface MongoAsyncConnection extends MongoConnection {
 
     void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
 
-    void releaseIfPending();
+    void operationCompleted();
 
-    void setActiveAsyncCall();
+    void startOperation();
 }

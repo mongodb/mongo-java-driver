@@ -27,7 +27,7 @@ public abstract class MongoResponseCallback implements SingleResultCallback<Resp
 
     public MongoResponseCallback(final MongoAsyncConnection connection) {
         this.connection = connection;
-        connection.setActiveAsyncCall();
+        connection.startOperation();
     }
 
     protected MongoAsyncConnection getConnection() {
@@ -40,7 +40,7 @@ public abstract class MongoResponseCallback implements SingleResultCallback<Resp
             throw new MongoInternalException("Callback should not be invoked more than once", null);
         }
         closed = true;
-        connection.releaseIfPending();
+        connection.operationCompleted();
         if (responseBuffers != null) {
             callCallback(responseBuffers, e);
         }
