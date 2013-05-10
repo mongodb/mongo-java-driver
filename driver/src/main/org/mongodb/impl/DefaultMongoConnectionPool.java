@@ -82,7 +82,7 @@ class DefaultMongoConnectionPool implements Pool<MongoSyncConnection> {
     }
 
     private class PooledMongoSyncConnection implements MongoSyncConnection {
-        private MongoSyncConnection wrapped;
+        private volatile MongoSyncConnection wrapped;
 
         public PooledMongoSyncConnection(final MongoSyncConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
