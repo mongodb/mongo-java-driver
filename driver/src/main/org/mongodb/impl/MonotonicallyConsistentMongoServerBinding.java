@@ -166,7 +166,7 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
 
     }
 
-    private class DelayedCloseMongoSyncConnection implements MongoSyncConnection {
+    private final class DelayedCloseMongoSyncConnection implements MongoSyncConnection {
         private volatile MongoSyncConnection wrapped;
 
         private DelayedCloseMongoSyncConnection(final MongoSyncConnection wrapped) {
