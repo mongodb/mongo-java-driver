@@ -19,7 +19,7 @@ package org.mongodb;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.impl.MongoSyncConnection;
 
-public interface MongoConnectionManager extends AutoCloseable {
+public interface MongoConnectionManager {
     MongoSyncConnection getConnection();
 
     MongoAsyncConnection getAsyncConnection();
