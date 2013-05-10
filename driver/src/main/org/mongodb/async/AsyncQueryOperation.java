@@ -48,11 +48,11 @@ public class AsyncQueryOperation<T> extends AsyncOperation {
     public MongoFuture<QueryResult<T>> execute(final MongoServerBinding binding) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(find.getReadPreference());
         MongoAsyncConnection connection = connectionManager.getAsyncConnection();
-        try {
-            return execute(connection);
-        } finally {
-            connectionManager.releaseAsyncConnection(connection);
-        }
+
+        MongoFuture<QueryResult<T>> wrapped = execute(connection);
+        SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
+        wrapped.register(new ConnectionClosingSingleResultCallback<QueryResult<T>>(connection, retVal));
+        return retVal;
     }
 
     public MongoFuture<QueryResult<T>> execute(final MongoAsyncConnection connection) {

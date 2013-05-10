@@ -139,10 +139,6 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
             throw new UnsupportedOperationException();
         }
 
-        @Override
-        public void releaseAsyncConnection(final MongoAsyncConnection connection) {
-            throw new UnsupportedOperationException();
-        }
     }
 
     private final class MongoConnectionManagerForWrites extends AbstractConnectionManager {
@@ -156,9 +152,5 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
             throw new UnsupportedOperationException();
         }
 
-        @Override
-        public void releaseAsyncConnection(final MongoAsyncConnection connection) {
-            throw new UnsupportedOperationException();
-        }
     }
 }

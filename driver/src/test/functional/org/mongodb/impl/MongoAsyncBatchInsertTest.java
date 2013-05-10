@@ -28,7 +28,6 @@ import org.mongodb.WriteConcern;
 import org.mongodb.async.AsyncInsertOperation;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.MongoInsert;
-import org.mongodb.pool.SimplePool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,13 +43,7 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        connection = new DefaultMongoAsyncConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
-                Fixture.getMongoClientURI().getCredentials(), new SimplePool<MongoAsyncConnection>("test", 1) {
-            @Override
-            protected MongoAsyncConnection createNew() {
-                throw new UnsupportedOperationException();
-            }
-        }, getBufferPool());
+        connection = new DefaultMongoAsyncConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)), getBufferPool());
     }
 
     @Test

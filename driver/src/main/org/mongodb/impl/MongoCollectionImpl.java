@@ -841,6 +841,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             @Override
             public void onResult(final QueryResult<T> result, final MongoException e) {
                 if (e != null) { // NOPMD
+                    e.printStackTrace();
                     // TODO: Error handling.  Call done with an ExecutionException...
                 }
 

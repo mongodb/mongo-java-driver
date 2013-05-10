@@ -30,7 +30,6 @@ import org.mongodb.impl.DefaultMongoAsyncConnection;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.impl.MongoCredentialsStore;
 import org.mongodb.io.async.CachingAsyncAuthenticator;
-import org.mongodb.pool.SimplePool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,13 +52,7 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
     public void setUp() throws Exception {
         super.setUp();
         latch = new CountDownLatch(1);
-        connection = new DefaultMongoAsyncConnection(getBinding().getAllServerAddresses().get(0), null,
-                new SimplePool<MongoAsyncConnection>("test", 1) {
-            @Override
-            protected MongoAsyncConnection createNew() {
-                throw new UnsupportedOperationException();
-            }
-        }, getBufferPool());
+        connection = new DefaultMongoAsyncConnection(getBinding().getAllServerAddresses().get(0), getBufferPool());
     }
 
     @After

@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.async;
 
+import org.mongodb.MongoException;
 import org.mongodb.impl.MongoAsyncConnection;
-import org.mongodb.impl.MongoSyncConnection;
 
-public interface MongoConnectionManager {
-    MongoSyncConnection getConnection();
+class ConnectionClosingSingleResultCallback<T> implements SingleResultCallback<T> {
+    private final MongoAsyncConnection connection;
+    private final SingleResultFuture<T> retVal;
 
-    void releaseConnection(MongoSyncConnection connection);
+    public ConnectionClosingSingleResultCallback(final MongoAsyncConnection connection, final SingleResultFuture<T> retVal) {
+        this.connection = connection;
+        this.retVal = retVal;
+    }
 
-    ServerAddress getServerAddress();
-
-    void close();
-
-    MongoAsyncConnection getAsyncConnection();
-
+    @Override
+    public void onResult(final T result, final MongoException e) {
+        connection.close();
+        retVal.init(result, e);
+    }
 }

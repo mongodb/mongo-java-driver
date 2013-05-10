@@ -47,11 +47,11 @@ public class AsyncCommandOperation extends AsyncOperation {
     public MongoFuture<CommandResult> execute(final MongoServerBinding binding) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(commandOperation.getReadPreference());
         MongoAsyncConnection connection = connectionManager.getAsyncConnection();
-        try {
-            return execute(connection);
-        } finally {
-            connectionManager.releaseAsyncConnection(connection);
-        }
+
+        MongoFuture<CommandResult> wrapped = execute(connection);
+        SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
+        wrapped.register(new ConnectionClosingSingleResultCallback<CommandResult>(connection, retVal));
+        return retVal;
     }
 
     public MongoFuture<CommandResult> execute(final MongoAsyncConnection connection) {

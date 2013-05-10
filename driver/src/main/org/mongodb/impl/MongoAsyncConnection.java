@@ -16,25 +16,13 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
 
 public interface MongoAsyncConnection extends MongoConnection {
 
-    /**
-     * Releases the connection back to the pool.
-     */
-    void release();
-
-    ServerAddress getServerAddress();
-
     void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
 
     void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
-
-    void operationCompleted();
-
-    void startOperation();
 }

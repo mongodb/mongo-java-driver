@@ -25,7 +25,6 @@ import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 import org.mongodb.pool.Pool;
-import org.mongodb.pool.SimplePool;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -66,12 +65,8 @@ public final class MongoServerBindings {
         Pool<MongoAsyncConnection> asyncConnectionPool = null;
 
         if (options.isAsyncEnabled() && !options.isSSLEnabled() && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            asyncConnectionPool = new SimplePool<MongoAsyncConnection>(serverAddress.toString(), options.getConnectionsPerHost()) {
-                @Override
-                protected MongoAsyncConnection createNew() {
-                    return new DefaultMongoAsyncConnection(serverAddress, credentialList, this, bufferPool);
-                }
-            };
+            asyncConnectionPool = new DefaultMongoAsyncConnectionPool(new DefaultMongoAsyncConnectionFactory(options, serverAddress,
+                    bufferPool, credentialList), options);
         }
         return new MongoConnectionManagerImpl(serverAddress, connectionPool, asyncConnectionPool);
     }

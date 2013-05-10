@@ -41,11 +41,11 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
     public MongoFuture<WriteResult> execute(final MongoServerBinding binding) {
         MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
         MongoAsyncConnection connection = connectionManager.getAsyncConnection();
-        try {
-            return execute(connection);
-        } finally {
-            connectionManager.releaseAsyncConnection(connection);
-        }
+
+        MongoFuture<WriteResult> wrapped = execute(connection);
+        SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
+        wrapped.register(new ConnectionClosingSingleResultCallback<WriteResult>(connection, retVal));
+        return retVal;
     }
 
     public MongoFuture<WriteResult> execute(final MongoAsyncConnection connection) {

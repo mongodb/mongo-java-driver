@@ -16,12 +16,10 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.ServerAddress;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
 
 public interface MongoSyncConnection extends MongoConnection {
-    ServerAddress getServerAddress();
 
     void sendMessage(ChannelAwareOutputBuffer buffer);
 

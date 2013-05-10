@@ -48,17 +48,16 @@ public class MongoConnectionManagerImpl implements MongoConnectionManager {
     }
 
     @Override
-    public void releaseAsyncConnection(final MongoAsyncConnection connection) {
-        connection.release();
-    }
-
-    @Override
     public ServerAddress getServerAddress() {
         return serverAddress;
     }
 
     @Override
     public void close() {
-        connectionPool.close();
+        try {
+            connectionPool.close();
+        } finally {
+            asyncConnectionPool.close();
+        }
     }
 }

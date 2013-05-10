@@ -18,7 +18,6 @@ package org.mongodb.impl;
 
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
-import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
@@ -29,8 +28,6 @@ import org.mongodb.io.PooledInputBuffer;
 import org.mongodb.io.ResponseBuffers;
 import org.mongodb.io.async.AsyncCompletionHandler;
 import org.mongodb.io.async.AsyncWritableByteChannel;
-import org.mongodb.io.async.CachingAsyncAuthenticator;
-import org.mongodb.pool.SimplePool;
 import org.mongodb.protocol.MongoReplyHeader;
 
 import java.io.IOException;
@@ -38,7 +35,6 @@ import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
@@ -46,19 +42,12 @@ import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 // TODO: Take this class private
 public class DefaultMongoAsyncConnection implements MongoAsyncConnection {
     private final ServerAddress serverAddress;
-    private final SimplePool<MongoAsyncConnection> connectionPool;
-    private CachingAsyncAuthenticator authenticator;
     private final BufferPool<ByteBuffer> bufferPool;
     private volatile AsynchronousSocketChannel channel;
-    private volatile boolean operationInProgress;
-    private volatile boolean releasePending;
     private volatile boolean isClosed;
 
-    public DefaultMongoAsyncConnection(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                       final SimplePool<MongoAsyncConnection> connectionPool, final BufferPool<ByteBuffer> bufferPool) {
+    public DefaultMongoAsyncConnection(final ServerAddress serverAddress, final BufferPool<ByteBuffer> bufferPool) {
         this.serverAddress = serverAddress;
-        this.connectionPool = connectionPool;
-        authenticator = new CachingAsyncAuthenticator(new MongoCredentialsStore(credentialList), this, bufferPool);
         this.bufferPool = bufferPool;
     }
 
@@ -67,55 +56,23 @@ public class DefaultMongoAsyncConnection implements MongoAsyncConnection {
         return serverAddress;
     }
 
-    //CHECKSTYLE:OFF
+    @Override
     public void close() {
         try {
             if (channel != null) {
                 channel.close();
-                channel = null;
-                isClosed = true;
             }
         } catch (IOException e) { // NOPMD
             // ignore
+        } finally {
+            channel = null;
+            isClosed = true;
         }
     }
-    //CHECKSTYLE:ON
-
 
     @Override
     public boolean isClosed() {
         return isClosed;
-    }
-
-    @Override
-    public synchronized void release() {
-        if (channel == null) {
-            throw new IllegalStateException("Can not release a channel that's already closed");
-        }
-        if (connectionPool == null) {
-            throw new IllegalStateException("Can not release a channel not associated with a pool");
-        }
-
-        if (operationInProgress) {
-            releasePending = true;
-        }
-        else {
-            releasePending = false;
-            connectionPool.done(this);
-        }
-    }
-
-    @Override
-    public synchronized void operationCompleted() {
-        operationInProgress = false;
-        if (releasePending) {
-            release();
-        }
-    }
-
-    @Override
-    public void startOperation() {
-        operationInProgress = true;
     }
 
     public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
@@ -188,17 +145,7 @@ public class DefaultMongoAsyncConnection implements MongoAsyncConnection {
                 channel.connect(serverAddress.getSocketAddress(), null, new CompletionHandler<Void, Object>() {
                     @Override
                     public void completed(final Void result, final Object attachment) {
-                        authenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
-                            @Override
-                            public void onResult(final Void result, final MongoException e) {
-                                if (e != null) {
-                                    handler.failed(e);
-                                }
-                                else {
-                                    handler.completed(0);
-                                }
-                            }
-                        });
+                        handler.completed(0);
                     }
 
                     @Override
