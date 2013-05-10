@@ -30,12 +30,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.mongodb.assertions.Assertions.isTrue;
+
 public class MongoMultiServerBinding implements MongoServerBinding {
     private final List<MongoCredential> credentialList;
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
     private final Map<ServerAddress, MongoConnectionManager> mongoClientMap = new HashMap<ServerAddress, MongoConnectionManager>();
     private final MongoConnectionStrategy connectionStrategy;
+    private boolean isClosed;
 
     public MongoMultiServerBinding(final MongoConnectionStrategy connectionStrategy, final List<MongoCredential> credentialList,
                                    final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
@@ -47,12 +50,15 @@ public class MongoMultiServerBinding implements MongoServerBinding {
 
     @Override
     public MongoConnectionManager getConnectionManagerForWrite() {
+        isTrue("open", !isClosed());
         final ServerAddress serverAddress = connectionStrategy.getAddressOfPrimary();
         return getConnectionManagerForServer(serverAddress);
     }
 
     @Override
     public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
+        isTrue("open", !isClosed());
+
         final ServerAddress serverAddress = connectionStrategy.getAddressForReadPreference(readPreference);
 
         return getConnectionManagerForServer(serverAddress);
@@ -60,16 +66,22 @@ public class MongoMultiServerBinding implements MongoServerBinding {
 
     @Override
     public List<ServerAddress> getAllServerAddresses() {
+        isTrue("open", !isClosed());
+
         return connectionStrategy.getAllAddresses();
     }
 
     @Override
     public BufferPool<ByteBuffer> getBufferPool() {
+        isTrue("open", !isClosed());
+
         return bufferPool;
     }
 
     @Override
     public synchronized MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
+        isTrue("open", !isClosed());
+
         MongoConnectionManager connection = mongoClientMap.get(serverAddress);
         if (connection == null) {
             connection = MongoServerBindings.create(serverAddress, credentialList, options, bufferPool);
@@ -80,9 +92,17 @@ public class MongoMultiServerBinding implements MongoServerBinding {
 
     @Override
     public void close() {
-        for (MongoConnectionManager cur : mongoClientMap.values()) {
-            cur.close();
+        if (!isClosed()) {
+            isClosed = true;
+            for (MongoConnectionManager cur : mongoClientMap.values()) {
+                cur.close();
+            }
+            connectionStrategy.close();
         }
-        connectionStrategy.close();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
     }
 }

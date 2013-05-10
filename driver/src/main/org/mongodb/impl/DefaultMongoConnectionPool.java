@@ -129,6 +129,17 @@ class DefaultMongoConnectionPool implements Pool<MongoSyncConnection> {
             }
         }
 
+        @Override
+        public ResponseBuffers receiveMessage() {
+            isTrue("open", wrapped != null);
+            try {
+                return wrapped.receiveMessage();
+            } catch (MongoException e) {
+                handleException(e);
+                throw e;
+            }
+        }
+
         /**
          * If there was a socket exception that wasn't some form of interrupted read, clear the pool.
          * @param e the exception

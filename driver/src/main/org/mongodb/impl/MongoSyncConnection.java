@@ -24,4 +24,6 @@ public interface MongoSyncConnection extends MongoConnection {
     void sendMessage(ChannelAwareOutputBuffer buffer);
 
     ResponseBuffers sendAndReceiveMessage(ChannelAwareOutputBuffer buffer);
+
+    ResponseBuffers receiveMessage();
 }

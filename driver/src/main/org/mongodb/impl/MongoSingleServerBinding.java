@@ -26,9 +26,12 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.mongodb.assertions.Assertions.isTrue;
+
 public class MongoSingleServerBinding implements MongoServerBinding {
     private final MongoConnectionManager connectionManager;
-    private BufferPool<ByteBuffer> bufferPool;
+    private final BufferPool<ByteBuffer> bufferPool;
+    private volatile boolean isClosed;
 
     public MongoSingleServerBinding(final MongoConnectionManager connectionManager, final BufferPool<ByteBuffer> bufferPool) {
         this.connectionManager = connectionManager;
@@ -37,31 +40,49 @@ public class MongoSingleServerBinding implements MongoServerBinding {
 
     @Override
     public MongoConnectionManager getConnectionManagerForWrite() {
+        isTrue("open", !isClosed());
+
         return connectionManager;
     }
 
     @Override
     public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
+        isTrue("open", !isClosed());
+
         return connectionManager;
     }
 
     @Override
     public MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
+        isTrue("open", !isClosed());
+
         return connectionManager;
     }
 
     @Override
     public List<ServerAddress> getAllServerAddresses() {
+        isTrue("open", !isClosed());
+
         return Arrays.asList(connectionManager.getServerAddress());
     }
 
     @Override
     public BufferPool<ByteBuffer> getBufferPool() {
+        isTrue("open", !isClosed());
+
         return bufferPool;
     }
 
     @Override
     public void close() {
-        connectionManager.close();
+        if (!isClosed()) {
+            isClosed = true;
+            connectionManager.close();
+        }
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
     }
 }

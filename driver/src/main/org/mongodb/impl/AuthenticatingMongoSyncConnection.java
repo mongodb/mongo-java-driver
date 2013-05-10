@@ -71,4 +71,11 @@ class AuthenticatingMongoSyncConnection implements MongoSyncConnection {
         authenticator.authenticateAll();
         return wrapped.sendAndReceiveMessage(buffer);
     }
+
+    @Override
+    public ResponseBuffers receiveMessage() {
+        isTrue("open", wrapped != null);
+        authenticator.authenticateAll();
+        return wrapped.receiveMessage();
+    }
 }

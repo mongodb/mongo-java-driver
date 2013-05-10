@@ -23,18 +23,15 @@ import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.ChannelAwareOutputBuffer;
-import org.mongodb.io.ResponseBuffers;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.assertions.Assertions.notNull;
 
 @NotThreadSafe
 public class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
-    private final MongoServerBinding binding;
+    private final MongoServerBinding wrapped;
     private ReadPreference lastRequestedReadPreference;
     private MongoConnectionManager connectionManagerForReads;
     private MongoConnectionManager connectionManagerForWrites;
@@ -43,7 +40,7 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
     private boolean isClosed;
 
     public MonotonicallyConsistentMongoServerBinding(final MongoServerBinding binding) {
-        this.binding = binding;
+        this.wrapped = binding;
     }
 
     @Override
@@ -61,19 +58,19 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
     @Override
     public MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed);
-        return binding.getConnectionManagerForServer(serverAddress);
+        return wrapped.getConnectionManagerForServer(serverAddress);
     }
 
     @Override
     public List<ServerAddress> getAllServerAddresses() {
         isTrue("open", !isClosed);
-        return binding.getAllServerAddresses();
+        return wrapped.getAllServerAddresses();
     }
 
     @Override
     public BufferPool<ByteBuffer> getBufferPool() {
         isTrue("open", !isClosed);
-        return binding.getBufferPool();
+        return wrapped.getBufferPool();
     }
 
     @Override
@@ -93,9 +90,14 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
         }
     }
 
+    @Override
+    public boolean isClosed() {
+        return isClosed;
+    }
+
     private synchronized MongoSyncConnection getConnectionForWrites() {
         if (connectionForWrites == null) {
-            connectionManagerForWrites = binding.getConnectionManagerForWrite();
+            connectionManagerForWrites = wrapped.getConnectionManagerForWrite();
             connectionForWrites = connectionManagerForWrites.getConnection();
             if (connectionForReads != null) {
                 connectionForReads.close();
@@ -115,7 +117,7 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
             if (connectionForReads != null) {
                 connectionForReads.close();
             }
-            connectionManagerForReads = binding.getConnectionManagerForRead(readPreference);
+            connectionManagerForReads = wrapped.getConnectionManagerForRead(readPreference);
             connectionForReads = connectionManagerForReads.getConnection();
         }
         return new DelayedCloseMongoSyncConnection(connectionForReads);
@@ -164,41 +166,5 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
             throw new UnsupportedOperationException();
         }
 
-    }
-
-    private final class DelayedCloseMongoSyncConnection implements MongoSyncConnection {
-        private volatile MongoSyncConnection wrapped;
-
-        private DelayedCloseMongoSyncConnection(final MongoSyncConnection wrapped) {
-            this.wrapped = notNull("wrapped", wrapped);
-        }
-
-        @Override
-        public void sendMessage(final ChannelAwareOutputBuffer buffer) {
-            isTrue("open", !isClosed());
-            wrapped.sendAndReceiveMessage(buffer);
-        }
-
-        @Override
-        public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
-            isTrue("open", !isClosed());
-            return wrapped.sendAndReceiveMessage(buffer);
-        }
-
-        @Override
-        public void close() {
-            wrapped = null;
-        }
-
-        @Override
-        public boolean isClosed() {
-            return wrapped == null;
-        }
-
-        @Override
-        public ServerAddress getServerAddress() {
-            isTrue("open", !isClosed());
-            return wrapped.getServerAddress();
-        }
     }
 }

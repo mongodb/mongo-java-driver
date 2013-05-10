@@ -73,7 +73,6 @@ class DefaultMongoSocketChannelConnection extends DefaultMongoSyncConnection {
         }
     }
 
-    //CHECKSTYLE:OFF
     public void close() {
         try {
             if (socketChannel != null) {
@@ -85,5 +84,4 @@ class DefaultMongoSocketChannelConnection extends DefaultMongoSyncConnection {
             // ignore
         }
     }
-    //CHECKSTYLE:ON
 }

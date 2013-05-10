@@ -72,6 +72,12 @@ abstract class DefaultMongoSyncConnection implements MongoSyncConnection {
         return receiveMessage(start);
     }
 
+    @Override
+    public ResponseBuffers receiveMessage() {
+        check();
+        return receiveMessage(System.nanoTime());
+    }
+
     protected abstract void ensureOpen();
 
     protected abstract void sendOneWayMessage(final ChannelAwareOutputBuffer buffer);

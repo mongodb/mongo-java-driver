@@ -14,25 +14,30 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.impl;
 
-import org.mongodb.io.BufferPool;
+import org.mongodb.ServerAddress;
 
-import java.nio.ByteBuffer;
-import java.util.List;
+import static org.mongodb.assertions.Assertions.isTrue;
 
-public interface MongoServerBinding {
-    MongoConnectionManager getConnectionManagerForWrite();
+public abstract class DelayedCloseMongoConnection implements MongoConnection {
+    private boolean isClosed;
 
-    MongoConnectionManager getConnectionManagerForRead(ReadPreference readPreference);
+    @Override
+    public void close() {
+        isClosed = true;
+    }
 
-    MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress);
+    @Override
+    public boolean isClosed() {
+        return isClosed;
+    }
 
-    List<ServerAddress> getAllServerAddresses();
+    @Override
+    public ServerAddress getServerAddress() {
+        isTrue("open", !isClosed());
+        return getWrapped().getServerAddress();
+    }
 
-    BufferPool<ByteBuffer> getBufferPool();
-
-    void close();
-
-    boolean isClosed();
+    protected abstract MongoConnection getWrapped();
 }
