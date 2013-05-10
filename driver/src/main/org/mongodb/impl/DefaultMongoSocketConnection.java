@@ -16,7 +16,6 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoCredential;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.ChannelAwareOutputBuffer;
@@ -28,7 +27,6 @@ import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.util.List;
 
 // TODO: migrate all the DBPort configuration
 class DefaultMongoSocketConnection extends DefaultMongoSyncConnection {
@@ -36,8 +34,8 @@ class DefaultMongoSocketConnection extends DefaultMongoSyncConnection {
     private volatile Socket socket;
 
     public DefaultMongoSocketConnection(final ServerAddress address, final BufferPool<ByteBuffer> bufferPool,
-                                        final List<MongoCredential> credentialList, final SocketFactory socketFactory) {
-        super(address, bufferPool, credentialList);
+                                        final SocketFactory socketFactory) {
+        super(address, bufferPool);
         this.socketFactory = socketFactory;
     }
 

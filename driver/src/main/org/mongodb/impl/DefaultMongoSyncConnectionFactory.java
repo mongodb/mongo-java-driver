@@ -48,14 +48,16 @@ public class DefaultMongoSyncConnectionFactory implements MongoSyncConnectionFac
 
     @Override
     public MongoSyncConnection create() {
+        MongoSyncConnection socketConnection;
         if (options.isSSLEnabled()) {
-            return new DefaultMongoSocketConnection(serverAddress, bufferPool, credentialList, SSLSocketFactory.getDefault());
+            socketConnection = new DefaultMongoSocketConnection(serverAddress, bufferPool, SSLSocketFactory.getDefault());
         }
         else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            return new DefaultMongoSocketConnection(serverAddress, bufferPool, credentialList, SocketFactory.getDefault());
+            socketConnection = new DefaultMongoSocketConnection(serverAddress, bufferPool, SocketFactory.getDefault());
         }
         else {
-            return new DefaultMongoSocketChannelConnection(serverAddress, bufferPool, credentialList);
+            socketConnection = new DefaultMongoSocketChannelConnection(serverAddress, bufferPool);
         }
+        return new AuthenticatingMongoSyncConnection(socketConnection, credentialList, bufferPool);
     }
 }

@@ -18,11 +18,9 @@ package org.mongodb.impl;
 
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
-import org.mongodb.MongoCredential;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
-import org.mongodb.io.CachingAuthenticator;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.MongoSocketReadException;
 import org.mongodb.io.MongoSocketReadTimeoutException;
@@ -35,28 +33,22 @@ import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
-import java.util.List;
 
 import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
 abstract class DefaultMongoSyncConnection implements MongoSyncConnection {
     private final ServerAddress serverAddress;
     private final BufferPool<ByteBuffer> bufferPool;
-    private final CachingAuthenticator authenticator;
-    private boolean authenticating = false;
     private volatile boolean isClosed;
 
-    DefaultMongoSyncConnection(final ServerAddress serverAddress, final BufferPool<ByteBuffer> bufferPool,
-                               final List<MongoCredential> credentialList) {
+    DefaultMongoSyncConnection(final ServerAddress serverAddress, final BufferPool<ByteBuffer> bufferPool) {
         this.serverAddress = serverAddress;
         this.bufferPool = bufferPool;
-        this.authenticator = new CachingAuthenticator(new MongoCredentialsStore(credentialList), this, bufferPool);
     }
 
     @Override
     public void close() {
         isClosed = true;
-        authenticator.reset();
     }
 
     @Override
@@ -126,13 +118,5 @@ abstract class DefaultMongoSyncConnection implements MongoSyncConnection {
 
     private void check() {
         ensureOpen();
-        if (!authenticating) {
-            try {
-                authenticating = true;
-                authenticator.authenticateAll();
-            } finally {
-                authenticating = false;
-            }
-        }
     }
 }
