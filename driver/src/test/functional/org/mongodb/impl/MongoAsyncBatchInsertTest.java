@@ -64,7 +64,8 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
         documents.add(new Document("bytes", hugeByteArray));
 
         final MongoInsert<Document> insert = new MongoInsert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
-        new AsyncInsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferPool()).execute(connection).get();
+        new AsyncInsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(),
+                getBufferPool()).execute(connection).get();
         assertEquals(documents.size(), collection.count());
     }
 }
