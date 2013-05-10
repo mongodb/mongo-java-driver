@@ -30,6 +30,10 @@
         <Method name="&lt;init&gt;" />
         <Bug pattern="EI_EXPOSE_REP2" />
     </Match>
+    <Match>
+        <Class name="org.mongodb.codecs.pojo.ArrayWrapper" />
+        <Bug pattern="EI_EXPOSE_REP2" />
+    </Match>
 
     <!-- All bugs in test classes, except for JUnit-specific bugs -->
     <Match>
