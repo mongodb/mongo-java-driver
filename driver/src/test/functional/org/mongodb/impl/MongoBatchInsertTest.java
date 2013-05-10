@@ -16,6 +16,7 @@
 
 package org.mongodb.impl;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.CommandOperation;
@@ -43,9 +44,17 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        connection = new DefaultMongoSocketChannelConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
-                getBufferPool(), Fixture.getMongoClientURI().getCredentials());
+        connection = new DefaultMongoSyncConnectionFactory(Fixture.getMongoClientURI().getOptions(),
+                new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)), getBufferPool(),
+                Fixture.getMongoClientURI().getCredentials()).create();
     }
+
+    @After
+    public void tearDown() {
+        super.tearDown();
+        connection.close();
+    }
+
 
     @Test
     public void testBatchInsert() {
