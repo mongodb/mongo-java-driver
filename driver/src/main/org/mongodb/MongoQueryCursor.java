@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.impl.SingleConnectionMongoServerBinding;
 import org.mongodb.io.BufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoGetMore;
@@ -34,7 +35,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
- *
  * @param <T> the document type of the cursor
  * @since 3.0
  */
@@ -56,9 +56,14 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         this.namespace = namespace;
         this.decoder = decoder;
         this.find = find;
-        this.binding = binding;
+        if (find.getOptions().contains(QueryOption.Exhaust)) {
+            this.binding = new SingleConnectionMongoServerBinding(binding);
+        }
+        else {
+            this.binding = binding;
+        }
         this.bufferPool = bufferPool;
-        currentResult = new QueryOperation<T>(namespace, find, queryEncoder, decoder, bufferPool).execute(binding);
+        currentResult = new QueryOperation<T>(namespace, find, queryEncoder, decoder, bufferPool).execute(this.binding);
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
         killCursorIfLimitReached();
@@ -70,7 +75,11 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
             return;
         }
         closed = true;
-        if (currentResult.getCursor() != null && !limitReached()) {
+        if (find.getOptions().contains(QueryOption.Exhaust)) {
+            discardRemainingGetMoreResponses();
+            binding.close();
+        }
+        else if (currentResult.getCursor() != null && !limitReached()) {
             new KillCursorOperation(new MongoKillCursor(currentResult.getCursor()), bufferPool).execute(binding);
         }
         currentResult = null;
@@ -164,12 +173,22 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     }
 
     private void getMore() {
-        currentResult = new GetMoreOperation<T>(namespace,
-                new MongoGetMore(currentResult.getCursor(),  find.getLimit(), find.getBatchSize(), nextCount), decoder,
-                bufferPool).execute(binding);
+        final GetMoreOperation<T> getMoreOperation = new GetMoreOperation<T>(namespace,
+                new MongoGetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount), decoder, bufferPool);
+        if (find.getOptions().contains(QueryOption.Exhaust)) {
+            currentResult = getMoreOperation.executeReceive(binding);
+        }
+        else {
+            currentResult = getMoreOperation.execute(binding);
+        }
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
         killCursorIfLimitReached();
+    }
+
+    private void discardRemainingGetMoreResponses() {
+        new GetMoreOperation<T>(namespace,  new MongoGetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount),
+                decoder, bufferPool).executeDiscard(binding);
     }
 
     @Override

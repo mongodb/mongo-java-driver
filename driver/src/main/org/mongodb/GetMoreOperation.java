@@ -50,6 +50,26 @@ public class GetMoreOperation<T> extends Operation {
         }
     }
 
+    public QueryResult<T> executeReceive(final MongoServerBinding binding) {
+        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoSyncConnection connection = connectionManager.getConnection();
+        try {
+            return executeReceive(connection);
+        } finally {
+            connection.close();
+        }
+    }
+
+    public void executeDiscard(final MongoServerBinding binding) {
+        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoSyncConnection connection = connectionManager.getConnection();
+        try {
+            executeDiscard(connection);
+        } finally {
+            connection.close();
+        }
+    }
+
     public QueryResult<T> execute(final MongoSyncConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
@@ -61,13 +81,33 @@ public class GetMoreOperation<T> extends Operation {
                     throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));
                 }
 
-                final MongoReplyMessage<T> replyMessage = new MongoReplyMessage<T>(responseBuffers, resultDecoder);
-                return new QueryResult<T>(replyMessage, connection.getServerAddress());
+                return new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, resultDecoder), connection.getServerAddress());
             } finally {
                 responseBuffers.close();
             }
         } finally {
             buffer.close();
+        }
+    }
+
+    public QueryResult<T> executeReceive(final MongoSyncConnection connection) {
+        final ResponseBuffers responseBuffers = connection.receiveMessage();
+        try {
+            return new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, resultDecoder), connection.getServerAddress());
+        } finally {
+            responseBuffers.close();
+        }
+    }
+
+    public void executeDiscard(final MongoSyncConnection connection) {
+        long cursorId = getMore.getServerCursor().getId();
+        while (cursorId != 0) {
+            final ResponseBuffers responseBuffers = connection.receiveMessage();
+            try {
+               cursorId = responseBuffers.getReplyHeader().getCursorId();
+            } finally {
+                responseBuffers.close();
+            }
         }
     }
 }
