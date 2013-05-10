@@ -26,7 +26,6 @@ import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.impl.DefaultMongoAsyncConnection;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.impl.MongoCredentialsStore;
 import org.mongodb.io.async.CachingAsyncAuthenticator;
@@ -39,7 +38,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Fixture.getBinding;
+import static org.mongodb.Fixture.getAsyncConnectionFactory;
 import static org.mongodb.Fixture.getBufferPool;
 
 @Category(Async.class)
@@ -52,11 +51,12 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
     public void setUp() throws Exception {
         super.setUp();
         latch = new CountDownLatch(1);
-        connection = new DefaultMongoAsyncConnection(getBinding().getAllServerAddresses().get(0), getBufferPool());
+        connection =  getAsyncConnectionFactory().create();
     }
 
     @After
     public void tearDown() {
+        super.tearDown();
         connection.close();
     }
 

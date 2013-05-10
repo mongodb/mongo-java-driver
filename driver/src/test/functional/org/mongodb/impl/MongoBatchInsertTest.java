@@ -22,9 +22,7 @@ import org.junit.Test;
 import org.mongodb.CommandOperation;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.Fixture;
 import org.mongodb.InsertOperation;
-import org.mongodb.ServerAddress;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.Count;
@@ -37,6 +35,9 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getCredentialList;
+import static org.mongodb.Fixture.getOptions;
+import static org.mongodb.Fixture.getPrimary;
 
 public class MongoBatchInsertTest extends DatabaseTestCase {
     private MongoSyncConnection connection;
@@ -44,9 +45,8 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        connection = new DefaultMongoSyncConnectionFactory(Fixture.getMongoClientURI().getOptions(),
-                new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)), getBufferPool(),
-                Fixture.getMongoClientURI().getCredentials()).create();
+        connection = new DefaultMongoSyncConnectionFactory(getOptions(), getPrimary(), getBufferPool(),
+                getCredentialList()).create();
     }
 
     @After

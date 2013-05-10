@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import org.mongodb.impl.DefaultMongoAsyncConnectionFactory;
+import org.mongodb.impl.DefaultMongoSyncConnectionFactory;
 import org.mongodb.impl.MongoClientImpl;
 import org.mongodb.impl.MongoClientsImpl;
 import org.mongodb.io.BufferPool;
@@ -23,6 +25,7 @@ import org.mongodb.io.PowerOfTwoByteBufferPool;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * Helper class for the acceptance tests.  Considering replacing with MongoClientTestBase.
@@ -75,5 +78,25 @@ public final class Fixture {
 
     public static BufferPool<ByteBuffer> getBufferPool() {
         return bufferPool;
+    }
+
+    public static MongoClientOptions getOptions() {
+        return getMongoClientURI().getOptions();
+    }
+
+    public static ServerAddress getPrimary() throws UnknownHostException {
+        return new ServerAddress(getMongoClientURI().getHosts().get(0));
+    }
+
+    public static List<MongoCredential> getCredentialList() {
+        return getMongoClientURI().getCredentials();
+    }
+
+    public static MongoSyncConnectionFactory getSyncConnectionFactory() throws UnknownHostException {
+        return new DefaultMongoSyncConnectionFactory(getOptions(), getPrimary(), getBufferPool(), getCredentialList());
+    }
+
+    public static MongoAsyncConnectionFactory getAsyncConnectionFactory() throws UnknownHostException {
+        return new DefaultMongoAsyncConnectionFactory(getOptions(), getPrimary(), getBufferPool(), getCredentialList());
     }
 }

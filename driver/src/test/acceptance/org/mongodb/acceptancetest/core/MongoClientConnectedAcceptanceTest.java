@@ -19,16 +19,16 @@ package org.mongodb.acceptancetest.core;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.Fixture;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClients;
-import org.mongodb.ServerAddress;
 
 import java.net.UnknownHostException;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.mongodb.Fixture.getOptions;
+import static org.mongodb.Fixture.getPrimary;
 
 public class MongoClientConnectedAcceptanceTest {
 
@@ -36,8 +36,7 @@ public class MongoClientConnectedAcceptanceTest {
 
     @Before
     public void setUp() throws UnknownHostException {
-        mongoClient = MongoClients.create(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)),
-                Fixture.getMongoClientURI().getOptions());
+        mongoClient = MongoClients.create(getPrimary(), getOptions());
     }
 
     @After

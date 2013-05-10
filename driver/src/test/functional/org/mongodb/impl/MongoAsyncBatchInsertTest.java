@@ -17,13 +17,12 @@
 package org.mongodb.impl;
 
 import category.Async;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.Fixture;
-import org.mongodb.ServerAddress;
 import org.mongodb.WriteConcern;
 import org.mongodb.async.AsyncInsertOperation;
 import org.mongodb.codecs.DocumentCodec;
@@ -34,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
+import static org.mongodb.Fixture.getAsyncConnectionFactory;
 import static org.mongodb.Fixture.getBufferPool;
 
 @Category(Async.class)
@@ -43,7 +43,13 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        connection = new DefaultMongoAsyncConnection(new ServerAddress(Fixture.getMongoClientURI().getHosts().get(0)), getBufferPool());
+        connection = getAsyncConnectionFactory().create();
+    }
+
+    @After
+    public void tearDown() {
+        super.tearDown();
+        connection.close();
     }
 
     @Test
