@@ -83,13 +83,13 @@ class DefaultMongoSocketConnection extends DefaultMongoSyncConnection {
     //CHECKSTYLE:OFF
     public void close() {
         try {
+            super.close();
             if (socket != null) {
                 socket.close();
                 socket = null;
-                super.close();
             }
         } catch (IOException e) { // NOPMD
-            // ignoreBSON
+            // ignore
         }
     }
 }
