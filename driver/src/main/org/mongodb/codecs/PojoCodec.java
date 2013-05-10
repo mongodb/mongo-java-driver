@@ -23,13 +23,13 @@ import org.mongodb.CollectibleCodec;
 public class PojoCodec<T> implements CollectibleCodec<T> {
     private Class<T> theClass;
     private PojoDecoder pojoDecoder;
-    private PojoEncoder pojoEncoder;
+    private PojoEncoder<T> pojoEncoder;
 
     public PojoCodec(final Codecs codecs, final Class<T> theClass) {
         this.theClass = theClass;
         codecs.setDefaultObjectCodec(this);
         pojoDecoder = new PojoDecoder(codecs);
-        pojoEncoder = new PojoEncoder(codecs);
+        pojoEncoder = new PojoEncoder<T>(codecs);
     }
 
     @Override

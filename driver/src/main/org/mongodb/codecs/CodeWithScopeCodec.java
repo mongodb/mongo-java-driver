@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.CodeWithScope;
-import org.mongodb.codecs.Codecs;
-import org.mongodb.codecs.SimpleDocumentCodec;
+import org.mongodb.Codec;
+import org.mongodb.Document;
 
 public class CodeWithScopeCodec implements Codec<CodeWithScope> {
     private final Codecs codecs;

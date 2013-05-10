@@ -20,6 +20,7 @@ import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
+import org.jmock.lib.concurrent.Synchroniser;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,7 +43,7 @@ public class IterableCodecTest {
 
     //CHECKSTYLE:OFF
     @Rule
-    public JUnitRuleMockery context = new JUnitRuleMockery();
+    public final JUnitRuleMockery context = new JUnitRuleMockery();
     //CHECKSTYLE:ON
 
     private final Codecs codecs = Codecs.createDefault();
@@ -54,6 +55,7 @@ public class IterableCodecTest {
     @Before
     public void setUp() {
         context.setImposteriser(ClassImposteriser.INSTANCE);
+        context.setThreadingPolicy(new Synchroniser());
         bsonWriter = context.mock(BSONWriter.class);
     }
 
@@ -107,7 +109,7 @@ public class IterableCodecTest {
 
     @Test
     @SuppressWarnings("rawtypes")
-    public void shouldDecodeArraysAsListsOfObjects() throws Exception {
+    public void shouldDecodeArraysAsListsOfObjects() {
         final Iterable expectedList = asList(1, 2, 3);
         final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
 
@@ -119,7 +121,7 @@ public class IterableCodecTest {
 
     @Test
     @SuppressWarnings({"unchecked", "rawtypes"}) // don't think there's any way around the varargs warning in anything below Java 8
-    public void shouldDecodeArrayOfArrays() throws Exception {
+    public void shouldDecodeArrayOfArrays() {
         final Iterable<List<Integer>> expectedList = asList(asList(1, 2), asList(3));
         final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
 
@@ -129,7 +131,7 @@ public class IterableCodecTest {
     }
 
     @Test
-    public void shouldDecodeArrayOfDocuments() throws Exception {
+    public void shouldDecodeArrayOfDocuments() {
         final Object document = new Document("field", "value");
         final Iterable<Object> expectedList = asList(document);
         final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);

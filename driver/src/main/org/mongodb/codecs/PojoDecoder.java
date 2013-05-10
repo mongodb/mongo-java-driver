@@ -17,6 +17,10 @@ import java.util.Set;
 public class PojoDecoder implements Decoder<Object> {
     private final Codecs codecs;
 
+    //at this time, this seems to be the only way to
+    @SuppressWarnings("rawtypes")
+    private final Map<Class<?>, ClassModel> fieldsForClass = new HashMap<Class<?>, ClassModel>();
+
     public PojoDecoder(final Codecs codecs) {
         this.codecs = codecs;
     }
@@ -38,10 +42,16 @@ public class PojoDecoder implements Decoder<Object> {
         return pojo;
     }
 
+    @SuppressWarnings("unchecked") // bah
     private <T> T decodePojo(final BSONReader reader, final Class<T> theClass) throws IllegalAccessException {
-        final T pojo = createInstanceOfClass(theClass);
+        ClassModel<T> classModel = fieldsForClass.get(theClass);
+        if (classModel == null) {
+            classModel = new ClassModel<T>(theClass);
+            fieldsForClass.put(theClass, classModel);
+        }
+        final T pojo = classModel.createInstanceOfClass();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final Field fieldOnPojo = getPojoFieldForNextValue(reader.readName(), theClass);
+            final Field fieldOnPojo = getPojoFieldForNextValue(reader.readName(), classModel);
             final Object decodedValue;
             if (reader.getCurrentBSONType() == BSONType.DOCUMENT && !codecs.canDecode(fieldOnPojo.getType())) {
                 decodedValue = decode(reader, fieldOnPojo.getType());
@@ -59,8 +69,6 @@ public class PojoDecoder implements Decoder<Object> {
         return pojo;
     }
 
-    // Need to cast into type E when decoding into a collection
-    @SuppressWarnings("unchecked")
     private <E> Map<String, E> decodeMap(final BSONReader reader, final Field fieldOnPojo) {
         final Type[] actualTypeArguments = ((ParameterizedType) fieldOnPojo.getGenericType()).getActualTypeArguments();
         final Type typeOfItemsInMap = actualTypeArguments[1];
@@ -69,7 +77,7 @@ public class PojoDecoder implements Decoder<Object> {
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             final String fieldName = reader.readName();
-            final E value = (E) decode(reader, (Class) typeOfItemsInMap);
+            final E value = getValue(reader, (Class) typeOfItemsInMap);
             map.put(fieldName, value);
         }
 
@@ -77,11 +85,14 @@ public class PojoDecoder implements Decoder<Object> {
         return map;
     }
 
-    // Need to cast into type E when decoding into a collection
-    @SuppressWarnings("unchecked")
     private <E> Iterable<E> decodeIterable(final BSONReader reader, final Field fieldOnPojo) {
+        final Class<?> classOfIterable = fieldOnPojo.getType();
+        if (classOfIterable.isArray()) {
+            throw new DecodingException("Decoding into arrays is not supported.  Either provide a custom decoder, or use a List.");
+        }
+
         final Collection<E> collection;
-        if (Set.class.isAssignableFrom(fieldOnPojo.getType())) {
+        if (Set.class.isAssignableFrom(classOfIterable)) {
             collection = new HashSet<E>();
         } else {
             collection = new ArrayList<E>();
@@ -91,8 +102,9 @@ public class PojoDecoder implements Decoder<Object> {
         final Type typeOfItemsInList = actualTypeArguments[0];
 
         reader.readStartArray();
+        //TODO: this is still related to the problem that we can't reuse the IterableCodec, or tell it to call back to here
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final E value = (E) decode(reader, (Class) typeOfItemsInList);
+            final E value = getValue(reader, (Class) typeOfItemsInList);
             collection.add(value);
         }
 
@@ -100,19 +112,23 @@ public class PojoDecoder implements Decoder<Object> {
         return collection;
     }
 
-    private <T> T createInstanceOfClass(final Class<T> classToCreate) throws IllegalAccessException {
-        try {
-            return classToCreate.newInstance();
-        } catch (InstantiationException e) {
-            throw new DecodingException(String.format("Can't create an instance of %s", classToCreate), e);
+    // Need to cast into type E when decoding into a collection
+    @SuppressWarnings("unchecked")
+    private <E> E getValue(final BSONReader reader, final Class<?> typeOfItemsInList) {
+        final E value;
+        if (codecs.canDecode(typeOfItemsInList)) {
+            value = (E) codecs.decode(reader);
+        } else {
+            value = (E) decode(reader, typeOfItemsInList);
         }
+        return value;
     }
 
-    private Field getPojoFieldForNextValue(final String nameOfField, final Class<?> classCurrentlyBeingDecoded) {
+    private <T> Field getPojoFieldForNextValue(final String nameOfField, final ClassModel<T> classModel) {
         try {
-            return classCurrentlyBeingDecoded.getDeclaredField(nameOfField);
+            return classModel.getDeclaredField(nameOfField);
         } catch (NoSuchFieldException e) {
-            throw new DecodingException(String.format("Could not decode field '%s' into '%s'", nameOfField, classCurrentlyBeingDecoded), e);
+            throw new DecodingException(String.format("Could not decode field '%s' into '%s'", nameOfField, classModel), e);
         }
     }
 }

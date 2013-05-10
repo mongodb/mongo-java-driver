@@ -19,6 +19,7 @@ package org.mongodb.codecs;
 import org.bson.BSONWriter;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
+import org.jmock.lib.concurrent.Synchroniser;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.Rule;
@@ -28,7 +29,7 @@ public class ArrayCodecWithObjectArrayTest {
 
     //CHECKSTYLE:OFF
     @Rule
-    public JUnitRuleMockery context = new JUnitRuleMockery();
+    public final JUnitRuleMockery context = new JUnitRuleMockery();
     //CHECKSTYLE:ON
 
     //Mocks
@@ -41,6 +42,7 @@ public class ArrayCodecWithObjectArrayTest {
     @Before
     public void setUp() {
         context.setImposteriser(ClassImposteriser.INSTANCE);
+        context.setThreadingPolicy(new Synchroniser());
         bsonWriter = context.mock(BSONWriter.class);
         codecs = context.mock(Codecs.class);
         arrayCodec = new ArrayCodec(codecs);

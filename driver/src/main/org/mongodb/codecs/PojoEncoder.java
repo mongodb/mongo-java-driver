@@ -4,44 +4,55 @@ import org.bson.BSONWriter;
 import org.mongodb.Encoder;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
-public class PojoEncoder implements Encoder<Object> {
+public class PojoEncoder<T> implements Encoder<T> {
     private final Codecs codecs;
+
+    //at this time, this seems to be the only way to
+    @SuppressWarnings("rawtypes")
+    private final Map<Class<?>, ClassModel> fieldsForClass = new HashMap<Class<?>, ClassModel>();
 
     public PojoEncoder(final Codecs codecs) {
         this.codecs = codecs;
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Object value) {
+    public void encode(final BSONWriter bsonWriter, final T value) {
         bsonWriter.writeStartDocument();
         encodePojo(bsonWriter, value);
         bsonWriter.writeEndDocument();
     }
 
-    private void encodePojo(final BSONWriter bsonWriter, final Object value) {
-        for (Field field : value.getClass().getDeclaredFields()) {
-            encodeField(bsonWriter, value, field);
+    @SuppressWarnings({"unchecked", "rawtypes"}) //bah.  maybe this isn't even correct
+    private void encodePojo(final BSONWriter bsonWriter, final T value) {
+        ClassModel<T> classModel = fieldsForClass.get(value.getClass());
+        if (classModel == null) {
+            classModel = new ClassModel(value.getClass());
+            fieldsForClass.put(value.getClass(), classModel);
+        }
+        for (final Field field : classModel.getFields()) {
+            encodeField(bsonWriter, value, field, field.getName());
         }
     }
 
-    private void encodeField(final BSONWriter bsonWriter, final Object value, final Field field) {
-        final String fieldName = field.getName();
-        if (isValidFieldName(fieldName)) {
-            try {
-                field.setAccessible(true);
-                final Object fieldValue = field.get(value);
-                bsonWriter.writeName(fieldName);
-                encodeValue(bsonWriter, fieldValue);
-                field.setAccessible(false);
-            } catch (IllegalAccessException e) {
-                //TODO: this is really going to bugger up the writer if it throws an exception halfway through writing
-                throw new EncodingException("Could not encode field '" + fieldName + "' from " + value, e);
-            }
+    // need to cast the field
+    @SuppressWarnings("unchecked")
+    private void encodeField(final BSONWriter bsonWriter, final T value, final Field field, final String fieldName) {
+        try {
+            field.setAccessible(true);
+            final T fieldValue = (T) field.get(value);
+            bsonWriter.writeName(fieldName);
+            encodeValue(bsonWriter, fieldValue);
+            field.setAccessible(false);
+        } catch (IllegalAccessException e) {
+            //TODO: this is really going to bugger up the writer if it throws an exception halfway through writing
+            throw new EncodingException("Could not encode field '" + fieldName + "' from " + value, e);
         }
     }
 
-    private void encodeValue(final BSONWriter bsonWriter, final Object fieldValue) {
+    private void encodeValue(final BSONWriter bsonWriter, final T fieldValue) {
         if (codecs.canEncode(fieldValue)) {
             codecs.encode(bsonWriter, fieldValue);
         } else {
@@ -49,14 +60,8 @@ public class PojoEncoder implements Encoder<Object> {
         }
     }
 
-    private boolean isValidFieldName(final String fieldName) {
-        //We need to document that fields starting with a $ will be ignored
-        //and we probably need to be able to either disable this validation or make it pluggable
-        return fieldName.matches("([a-zA-Z_][\\w$]*)");
-    }
-
     @Override
-    public Class<Object> getEncoderClass() {
+    public Class<T> getEncoderClass() {
         throw new UnsupportedOperationException("Not implemented yet!");
     }
 }

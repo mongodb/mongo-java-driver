@@ -21,6 +21,7 @@ import org.bson.BSONWriter;
 import org.bson.types.CodeWithScope;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
+import org.jmock.lib.concurrent.Synchroniser;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -40,7 +41,7 @@ import static org.mongodb.codecs.CodecTestUtil.prepareReaderWithObjectToBeDecode
 public class CodecsTest {
     //CHECKSTYLE:OFF
     @Rule
-    public JUnitRuleMockery context = new JUnitRuleMockery();
+    public final JUnitRuleMockery context = new JUnitRuleMockery();
     //CHECKSTYLE:ON
 
     private BSONWriter bsonWriter;
@@ -50,6 +51,7 @@ public class CodecsTest {
     @Before
     public void setUp() {
         context.setImposteriser(ClassImposteriser.INSTANCE);
+        context.setThreadingPolicy(new Synchroniser());
         bsonWriter = context.mock(BSONWriter.class);
 
         codecs = Codecs.builder().primitiveCodecs(PrimitiveCodecs.createDefault())
@@ -72,7 +74,7 @@ public class CodecsTest {
     }
 
     @Test
-    public void shouldDecodeCodeWithScope() throws Exception {
+    public void shouldDecodeCodeWithScope() {
         final String javascriptCode = "{javascript code}";
         final Document theScope = new Document("the", "scope");
 

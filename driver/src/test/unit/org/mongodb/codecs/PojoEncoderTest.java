@@ -28,9 +28,7 @@ import org.junit.Test;
 import org.mongodb.codecs.pojo.Address;
 import org.mongodb.codecs.pojo.Name;
 import org.mongodb.codecs.pojo.Person;
-import org.mongodb.json.JSONWriter;
 
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,7 +42,6 @@ public class PojoEncoderTest {
 
     private BSONWriter bsonWriter;
 
-    private PojoEncoder pojoEncoder;
     private final Codecs codecs = Codecs.createDefault();
 
     @Before
@@ -52,11 +49,12 @@ public class PojoEncoderTest {
         context.setImposteriser(ClassImposteriser.INSTANCE);
         context.setThreadingPolicy(new Synchroniser());
         bsonWriter = context.mock(BSONWriter.class);
-        pojoEncoder = new PojoEncoder(codecs);
     }
 
     @Test
     public void shouldEncodeSimplePojo() {
+        final PojoEncoder<SimpleObject> pojoEncoder = new PojoEncoder<SimpleObject>(codecs);
+
         final String valueInSimpleObject = "MyName";
         context.checking(new Expectations() {{
             oneOf(bsonWriter).writeStartDocument();
@@ -70,6 +68,8 @@ public class PojoEncoderTest {
 
     @Test
     public void shouldEncodePojoContainingOtherPojos() {
+        final PojoEncoder<NestedObject> pojoEncoder = new PojoEncoder<NestedObject>(codecs);
+
         final String anotherName = "AnotherName";
         context.checking(new Expectations() {{
             oneOf(bsonWriter).writeStartDocument();
@@ -85,6 +85,8 @@ public class PojoEncoderTest {
 
     @Test
     public void shouldEncodePojoContainingOtherPojosAndFields() {
+        final PojoEncoder<NestedObjectWithFields> pojoEncoder = new PojoEncoder<NestedObjectWithFields>(codecs);
+
         context.checking(new Expectations() {{
             oneOf(bsonWriter).writeStartDocument();
             oneOf(bsonWriter).writeName("intValue");
@@ -100,24 +102,9 @@ public class PojoEncoderTest {
     }
 
     @Test
-    @Ignore("should be able to use the JSON form to check the object")
-    public void shouldEncodeSimplePojo2() {
-        final StringWriter writer = new StringWriter();
-        pojoEncoder.encode(new JSONWriter(writer), new SimpleObject("MyName"));
-
-        System.out.println(writer.toString());
-    }
-
-    @Test
-    @Ignore("not implemented")
-    public void shouldEncodePojoContainingOtherPojos2() {
-        final StringWriter writer = new StringWriter();
-        pojoEncoder.encode(new JSONWriter(writer), new NestedObject(new SimpleObject("AnotherName")));
-        System.out.println(writer.toString());
-    }
-
-    @Test
     public void shouldSupportArrays() {
+        final PojoEncoder<ObjectWithArray> pojoEncoder = new PojoEncoder<ObjectWithArray>(codecs);
+
         context.checking(new Expectations() {{
             oneOf(bsonWriter).writeStartDocument();
             oneOf(bsonWriter).writeName("theStringArray");
@@ -134,6 +121,8 @@ public class PojoEncoderTest {
 
     @Test
     public void shouldEncodeMapsOfPrimitiveTypes() {
+        final PojoEncoder<ObjectWithMapOfStrings> pojoEncoder = new PojoEncoder<ObjectWithMapOfStrings>(codecs);
+
         context.checking(new Expectations() {{
             oneOf(bsonWriter).writeStartDocument();
             oneOf(bsonWriter).writeName("theMap");
@@ -150,6 +139,7 @@ public class PojoEncoderTest {
 
     @Test
     public void shouldEncodeMapsOfObjects() {
+        final PojoEncoder<ObjectWithMapOfObjects> pojoEncoder = new PojoEncoder<ObjectWithMapOfObjects>(codecs);
         //TODO: get rid of this - default object codec is a bit of a smell
         codecs.setDefaultObjectCodec(new PojoCodec<ObjectWithMapOfObjects>(codecs, null));
 
@@ -170,6 +160,7 @@ public class PojoEncoderTest {
 
     @Test
     public void shouldEncodeMapsOfMaps() {
+        final PojoEncoder<ObjectWithMapOfMaps> pojoEncoder = new PojoEncoder<ObjectWithMapOfMaps>(codecs);
         context.checking(new Expectations() {{
             oneOf(bsonWriter).writeStartDocument();
             oneOf(bsonWriter).writeName("theMap");
@@ -186,6 +177,7 @@ public class PojoEncoderTest {
 
     @Test
     public void shouldNotEncodeSpecialFieldsLikeJacocoData() {
+        final PojoEncoder<JacocoDecoratedObject> pojoEncoder = new PojoEncoder<JacocoDecoratedObject>(codecs);
         final JacocoDecoratedObject jacocoDecoratedObject = new JacocoDecoratedObject("thisName");
         context.checking(new Expectations() {{
             oneOf(bsonWriter).writeStartDocument();
@@ -198,6 +190,7 @@ public class PojoEncoderTest {
 
     @Test
     public void shouldEncodeComplexPojo() {
+        final PojoEncoder<Person> pojoEncoder = new PojoEncoder<Person>(codecs);
         final Address address = new Address();
         final Name name = new Name();
         final Person person = new Person(address, name);

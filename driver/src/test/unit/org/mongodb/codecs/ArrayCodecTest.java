@@ -20,6 +20,7 @@ import org.bson.BSONWriter;
 import org.bson.types.Binary;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
+import org.jmock.lib.concurrent.Synchroniser;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -29,7 +30,7 @@ import org.junit.Test;
 public class ArrayCodecTest {
     //CHECKSTYLE:OFF
     @Rule
-    public JUnitRuleMockery context = new JUnitRuleMockery();
+    public final JUnitRuleMockery context = new JUnitRuleMockery();
     //CHECKSTYLE:ON
 
     //Mocks
@@ -40,6 +41,7 @@ public class ArrayCodecTest {
     @Before
     public void setUp() {
         context.setImposteriser(ClassImposteriser.INSTANCE);
+        context.setThreadingPolicy(new Synchroniser());
         bsonWriter = context.mock(BSONWriter.class);
         arrayCodec = new ArrayCodec(null);
     }
@@ -266,7 +268,7 @@ public class ArrayCodecTest {
     @Test
     public void shouldWriteStartAndEndForArrayOfObjectsAndDelegateEncodingOfObject() {
         final Codecs codecToEncodeObjects = context.mock(Codecs.class);
-        ArrayCodec arrayCodecWithMock = new ArrayCodec(codecToEncodeObjects);
+        final ArrayCodec arrayCodecWithMock = new ArrayCodec(codecToEncodeObjects);
         final Object object1 = new Object();
         final Object object2 = new Object();
         final Object[] arrayOfObjects = {object1, object2};
@@ -283,7 +285,7 @@ public class ArrayCodecTest {
     @Test
     public void shouldWriteStartAndEndForArrayOfObjectsAndDelegateEncodingOfObjectWhenArrayDisguisedAsObject() {
         final Codecs codecToEncodeObjects = context.mock(Codecs.class);
-        ArrayCodec arrayCodecWithMock = new ArrayCodec(codecToEncodeObjects);
+        final ArrayCodec arrayCodecWithMock = new ArrayCodec(codecToEncodeObjects);
         final Object object1 = new Object();
         final Object object2 = new Object();
         final Object arrayOfObjects = new Object[]{object1, object2};

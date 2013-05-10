@@ -4,6 +4,7 @@ import org.bson.BSONBinaryReader;
 import org.bson.BSONWriter;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
+import org.jmock.lib.concurrent.Synchroniser;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -16,7 +17,7 @@ import static org.mongodb.codecs.CodecTestUtil.prepareReaderWithObjectToBeDecode
 public class DBRefCodecTest {
     //CHECKSTYLE:OFF
     @Rule
-    public JUnitRuleMockery context = new JUnitRuleMockery();
+    public final JUnitRuleMockery context = new JUnitRuleMockery();
     //CHECKSTYLE:ON
 
     private BSONWriter bsonWriter;
@@ -27,6 +28,7 @@ public class DBRefCodecTest {
     @Before
     public void setUp() {
         context.setImposteriser(ClassImposteriser.INSTANCE);
+        context.setThreadingPolicy(new Synchroniser());
         bsonWriter = context.mock(BSONWriter.class);
         codecs = context.mock(Codecs.class);
         dbRefCodec = new DBRefCodec(codecs);
@@ -50,7 +52,7 @@ public class DBRefCodecTest {
 
     @Test
     @Ignore("decoding not implemented yet")
-    public void shouldDecodeCodeWithScope() throws Exception {
+    public void shouldDecodeCodeWithScope() {
         final String namespace = "theNamespace";
         final String theId = "TheId";
         final DBRef dbRef = new DBRef(theId, namespace);

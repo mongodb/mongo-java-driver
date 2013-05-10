@@ -16,10 +16,6 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONBinaryWriter;
-import org.bson.BSONBinaryWriterSettings;
-import org.bson.BSONWriterSettings;
-import org.bson.io.BasicOutputBuffer;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
@@ -43,16 +39,6 @@ public class DocumentEncodingPerformanceTest {
     public void setUp() throws Exception {
         documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
         bsonWriter = new StubBSONWriter();
-    }
-
-    @Test
-    public void gatherTestData() throws Exception {
-        BasicOutputBuffer buffer = new BasicOutputBuffer();
-        BSONBinaryWriter writer = new BSONBinaryWriter(new BSONWriterSettings(100),
-                                                       new BSONBinaryWriterSettings(1024 * 1024), buffer);
-
-        final Document document = new Document();
-            documentCodec.encode(writer, document);
     }
 
     @Test
@@ -181,7 +167,6 @@ public class DocumentEncodingPerformanceTest {
     }
 
     private void encodeDocument(final int numberOfTimesForWarmup, final Document document) {
-        //13,106,251 ops per second
         for (int i = 0; i < numberOfTimesForWarmup; i++) {
             documentCodec.encode(bsonWriter, document);
         }

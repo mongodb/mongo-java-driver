@@ -41,7 +41,6 @@ public class DocumentDecodingPerformanceTest {
     private static final int NUMBER_OF_TIMES_FOR_WARMUP = 10000;
     private static final int NUMBER_OF_TIMES_TO_RUN = 100000000;
     private DocumentCodec documentCodec;
-    private BSONBinaryReader bsonReader;
 
     @Before
     public void setUp() throws Exception {
@@ -51,7 +50,7 @@ public class DocumentDecodingPerformanceTest {
     @Test
     public void outputBaselinePerformanceForEmptyDocument() throws Exception {
         // 9,223,774 ops per second - about the same scale as encoding when encoding uses the real reader (10,837,117 ops per second)
-        // 23,595,719 ops per second baseline (no decode)
+        // 23,595,719 ops per second baseline (no decode) - so the constant creation of readers doesn't hurt us
         final Document documentToRead = new Document();
         final byte[] emptyDocumentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
 
@@ -224,8 +223,7 @@ public class DocumentDecodingPerformanceTest {
 
     private void decodeDocument(final int timesToRun, final byte[] inputAsByteArray) {
         for (int i = 0; i < timesToRun; i++) {
-            bsonReader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(inputAsByteArray)));
-            documentCodec.decode(bsonReader);
+            documentCodec.decode(new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(inputAsByteArray))));
         }
     }
 

@@ -8,14 +8,18 @@ import org.junit.Test;
 import org.mongodb.Document;
 import org.mongodb.codecs.pojo.Address;
 import org.mongodb.codecs.pojo.AllPrimitiveTypes;
+import org.mongodb.codecs.pojo.ArrayWrapper;
 import org.mongodb.codecs.pojo.ListPojo;
+import org.mongodb.codecs.pojo.ListWrapper;
 import org.mongodb.codecs.pojo.MapPojo;
+import org.mongodb.codecs.pojo.MapWrapper;
 import org.mongodb.codecs.pojo.Name;
 import org.mongodb.codecs.pojo.Person;
 import org.mongodb.codecs.pojo.SetPojo;
 import org.mongodb.codecs.pojo.SingleFieldPojo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,16 +34,16 @@ import static org.mongodb.codecs.CodecTestUtil.prepareReaderWithObjectToBeDecode
 
 public class PojoDecoderTest {
 
-    private Codecs codecs = Codecs.createDefault();
+    private final Codecs codecs = Codecs.createDefault();
     private PojoDecoder pojoDecoder;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         pojoDecoder = new PojoDecoder(codecs);
     }
 
     @Test
-    public void shouldDecodeComplexType() throws Exception {
+    public void shouldDecodeComplexType() {
         final Person person = new Person(new Address(), new Name());
         final BSONReader reader = prepareReaderWithObjectToBeDecoded(person, new PojoCodec<Person>(codecs, Person.class));
 
@@ -49,7 +53,7 @@ public class PojoDecoderTest {
     }
 
     @Test
-    public void shouldDecodeSimplePojoContainingSingleObject() throws Exception {
+    public void shouldDecodeSimplePojoContainingSingleObject() {
         // given
         final SingleFieldPojo singleValuePojo = new SingleFieldPojo("A Value");
         final BSONReader reader = prepareReaderWithObjectToBeDecoded(singleValuePojo,
@@ -63,7 +67,7 @@ public class PojoDecoderTest {
     }
 
     @Test
-    public void shouldDecodePojoWithBsonPrimitiveFields() throws Exception {
+    public void shouldDecodePojoWithBsonPrimitiveFields() {
         // given
         final AllPrimitiveTypes pojo = new AllPrimitiveTypes();
         final BSONReader reader = prepareReaderWithObjectToBeDecoded(pojo,
@@ -77,7 +81,7 @@ public class PojoDecoderTest {
     }
 
     @Test
-    public void shouldDecodePattern() throws Exception {
+    public void shouldDecodePattern() {
         //Pattern doesn't implement equals, so we have to jump through some hoops
         final Pattern expectedDecodedPattern = Pattern.compile("^hello");
         final SingleFieldPojo pojo = new SingleFieldPojo(expectedDecodedPattern);
@@ -94,7 +98,7 @@ public class PojoDecoderTest {
     }
 
     @Test
-    public void shouldDecodeCodeWithScope() throws Exception {
+    public void shouldDecodeCodeWithScope() {
         final SingleFieldPojo pojo = new SingleFieldPojo(new CodeWithScope("javaScript code",
                                                                            new Document("fieldNameOfScope", "valueOfScope")));
 
@@ -125,6 +129,22 @@ public class PojoDecoderTest {
     }
 
     @Test
+    public void shouldDecodePojoWithMapContainingPrimitives() {
+        final MapWrapper pojo = new MapWrapper();
+        final Map<String, String> map = new HashMap<String, String>();
+        map.put("field1", "field 1 value");
+        pojo.setTheMap(map);
+
+        final BSONReader reader = prepareReaderWithObjectToBeDecoded(pojo, new PojoCodec<MapWrapper>(codecs, MapWrapper.class));
+
+        // when
+        final MapWrapper decodedPojo = pojoDecoder.decode(reader, MapWrapper.class);
+
+        // then
+        assertThat(decodedPojo, is(pojo));
+    }
+
+    @Test
     public void shouldDecodePojoWithListContainingPojos() {
         final List<Person> list = new ArrayList<Person>();
         list.add(new Person(new Address(), new Name()));
@@ -138,6 +158,30 @@ public class PojoDecoderTest {
 
         // then
         assertThat(decodedPojo, is(pojo));
+    }
+
+    @Test
+    public void shouldDecodePojoWithListContainingPrimitives() {
+        final ListWrapper pojo = new ListWrapper(Arrays.asList(1, 2, 3));
+
+        final BSONReader reader = prepareReaderWithObjectToBeDecoded(pojo, new PojoCodec<ListWrapper>(codecs, ListWrapper.class));
+
+        // when
+        final ListWrapper decodedPojo = pojoDecoder.decode(reader, ListWrapper.class);
+
+        // then
+        assertThat(decodedPojo, is(pojo));
+    }
+
+    @Test (expected = DecodingException.class)
+    public void shouldNotDecodePojoWithArray() {
+        final ArrayWrapper pojo = new ArrayWrapper(new int[]{1, 2, 3});
+
+        final BSONReader reader = prepareReaderWithObjectToBeDecoded(pojo,
+                                                                     new PojoCodec<ArrayWrapper>(codecs, ArrayWrapper.class));
+
+        // exception thrown here
+        pojoDecoder.decode(reader, ArrayWrapper.class);
     }
 
     @Test
@@ -169,7 +213,7 @@ public class PojoDecoderTest {
 
     static class IncorrectFieldPojo {
         @SuppressWarnings("UnusedDeclaration")
-        private Object incorrectFieldName = "Some value";
+        private final Object incorrectFieldName = "Some value";
     }
 
     @Test(expected = DecodingException.class)
