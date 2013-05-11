@@ -35,6 +35,13 @@ public class SingleResultFuture<T> implements MongoFuture<T> {
     private boolean isCancelled;
     private SingleResultCallback<T> callback;
 
+    public SingleResultFuture() {
+    }
+
+    public SingleResultFuture(final T result, final MongoException newException) {
+        init(result, newException);
+    }
+
     public synchronized void init(final T newResult, final MongoException newException) {
         if (isCancelled()) {
             return;

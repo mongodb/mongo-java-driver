@@ -63,6 +63,13 @@ public class SingleResultFutureTest {
     }
 
     @Test
+    public void testConstructorSuccessWithResult() throws ExecutionException, InterruptedException {
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>(1, null);
+        assertTrue(future.isDone());
+        assertEquals(1, (int) future.get());
+    }
+
+    @Test
     public void testInitSuccessWithException() throws ExecutionException, InterruptedException {
         final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         final MongoException mongoException = new MongoException("bad");
