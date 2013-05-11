@@ -95,6 +95,11 @@ public class DefaultMongoAsyncConnection implements MongoAsyncConnection {
         sendOneWayMessage(buffer, new ReceiveMessageCompletionHandler(System.nanoTime(), callback));
     }
 
+    @Override
+    public void receiveMessage(final SingleResultCallback<ResponseBuffers> callback) {
+        fillAndFlipBuffer(bufferPool.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(callback, System.nanoTime()));
+    }
+
     private void receiveMessage(final long start, final SingleResultCallback<ResponseBuffers> callback) {
         fillAndFlipBuffer(bufferPool.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(callback, start));
     }

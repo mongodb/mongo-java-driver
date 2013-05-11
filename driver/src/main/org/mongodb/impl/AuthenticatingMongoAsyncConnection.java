@@ -92,4 +92,20 @@ public class AuthenticatingMongoAsyncConnection implements MongoAsyncConnection 
             }
         });
     }
+
+    @Override
+    public void receiveMessage(final SingleResultCallback<ResponseBuffers> callback) {
+        isTrue("open", !isClosed());
+        authenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final MongoException e) {
+                if (e != null) {
+                    callback.onResult(null, e);
+                }
+                else {
+                    wrapped.receiveMessage(callback);
+                }
+            }
+        });
+    }
 }

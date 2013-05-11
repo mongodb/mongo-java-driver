@@ -118,5 +118,11 @@ public class DefaultMongoAsyncConnectionPool implements Pool<MongoAsyncConnectio
             isTrue("open", !isClosed());
             wrapped.sendAndReceiveMessage(buffer, callback);
         }
+
+        @Override
+        public void receiveMessage(final SingleResultCallback<ResponseBuffers> callback) {
+            isTrue("open", !isClosed());
+            wrapped.receiveMessage(callback);
+        }
     }
 }
