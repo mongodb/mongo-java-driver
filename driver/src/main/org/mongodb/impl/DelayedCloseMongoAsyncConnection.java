@@ -32,7 +32,7 @@ class DelayedCloseMongoAsyncConnection extends DelayedCloseMongoConnection imple
     @Override
     public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
-        wrapped.sendAndReceiveMessage(buffer, callback);
+        wrapped.sendMessage(buffer, callback);
     }
 
     @Override
