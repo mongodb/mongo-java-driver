@@ -19,11 +19,16 @@ package org.mongodb;
 import org.mongodb.async.MongoAsyncReadableStream;
 import org.mongodb.async.MongoAsyncWritableStream;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.QueryOption;
+
+import java.util.EnumSet;
 
 public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWritableStream<T>,
         MongoSyncReadableStream<T>, MongoAsyncReadableStream<T>, MongoIterable<T> {
 
     MongoStream<T> batchSize(int batchSize);   // TODO: what to do about this
+
+    MongoStream<T> withOptions(EnumSet<QueryOption> options);
 
     MongoStream<T> tail();
 

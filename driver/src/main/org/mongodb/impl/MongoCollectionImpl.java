@@ -17,6 +17,7 @@
 package org.mongodb.impl;
 
 // CHECKSTYLE:OFF
+
 import org.mongodb.*;
 import org.mongodb.async.*;
 import org.mongodb.command.*;
@@ -55,6 +56,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public MongoStream<T> batchSize(final int batchSize) {
         return new MongoCollectionStream().batchSize(batchSize);
+    }
+
+    @Override
+    public MongoStream<T> withOptions(final EnumSet<QueryOption> queryOptions) {
+        return new MongoCollectionStream().withOptions(queryOptions);
     }
 
     @Override
@@ -410,6 +416,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
+        public MongoStream<T> withOptions(final EnumSet<QueryOption> queryOptions) {
+            final MongoCollectionStream newStream = new MongoCollectionStream(this);
+            newStream.findOp.addOptions(queryOptions);
+            return newStream;
+        }
+
+        @Override
         public MongoStream<T> tail() {
             final MongoCollectionStream newStream = new MongoCollectionStream(this);
             newStream.findOp.addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData));
@@ -618,8 +631,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                             findOp
                                     .getOrder());
             return new FindAndModifyCommandResult<T>(
-                    new CommandOperation(getDatabase().getName(),  new FindAndReplace<T>(findAndReplace, getName()),
-                    new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(),getCodec()),
+                    new CommandOperation(getDatabase().getName(), new FindAndReplace<T>(findAndReplace, getName()),
+                            new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec()),
                             client.getBufferPool()).execute(client.getBinding()))
                     .getValue();
         }
@@ -639,7 +652,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                     .getOrder());
             return new FindAndModifyCommandResult<T>(
                     new CommandOperation(getDatabase().getName(), new FindAndReplace<T>(findAndReplace, getName()),
-                    new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(),getCodec()),
+                            new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec()),
                             client.getBufferPool()).execute(client.getBinding())).getValue();
         }
 
@@ -797,8 +810,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public void asyncForEach(final AsyncBlock<? super T> block) {
-            new AsyncQueryOperation<T>(getNamespace(), findOp, getDocumentCodec(),
-                    getCodec(), client.getBufferPool()).execute(client.getBinding()).register(new QueryResultSingleResultCallback(block));
+            new MongoAsyncQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getBinding(),
+                    client.getBufferPool(), block).start();
         }
 
         @Override
@@ -822,44 +835,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     return true;
                 }
             });
-        }
-
-        private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
-            private final AsyncBlock<? super T> block;
-            private final long numFetchedSoFar;
-
-            public QueryResultSingleResultCallback(final AsyncBlock<? super T> block) {
-                this(block, 0);
-            }
-
-            public QueryResultSingleResultCallback(final AsyncBlock<? super T> block, final long numFetchedSoFar) {
-
-                this.block = block;
-                this.numFetchedSoFar = numFetchedSoFar;
-            }
-
-            @Override
-            public void onResult(final QueryResult<T> result, final MongoException e) {
-                if (e != null) { // NOPMD
-                    e.printStackTrace();
-                    // TODO: Error handling.  Call done with an ExecutionException...
-                }
-
-                for (final T cur : result.getResults()) {
-                    if (!block.run(cur)) {
-                        break;
-                    }
-                }
-                if (result.getCursor() == null) {
-                    block.done();
-                }
-                else {
-                    new AsyncGetMoreOperation<T>(getNamespace(),
-                            new MongoGetMore(result.getCursor(), findOp.getLimit(), findOp.getBatchSize(),
-                                    numFetchedSoFar), getCodec(), client.getBufferPool()).execute(client.getBinding())
-                            .register(new QueryResultSingleResultCallback(block, numFetchedSoFar + result.getResults().size()));
-                }
-            }
         }
     }
 

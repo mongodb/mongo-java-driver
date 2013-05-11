@@ -18,12 +18,14 @@ package org.mongodb.async;
 
 import org.mongodb.Decoder;
 import org.mongodb.MongoConnectionManager;
+import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
+import org.mongodb.io.ResponseBuffers;
 import org.mongodb.operation.MongoGetMore;
 import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.result.QueryResult;
@@ -51,6 +53,33 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         return retVal;
     }
 
+
+    public MongoFuture<QueryResult<T>> executeReceive(final MongoServerBinding binding) {
+        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoAsyncConnection connection = connectionManager.getAsyncConnection();
+
+        MongoFuture<QueryResult<T>> wrapped = executeReceive(connection);
+        SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
+        wrapped.register(new ConnectionClosingSingleResultCallback<QueryResult<T>>(connection, retVal));
+        return retVal;
+    }
+
+    public MongoFuture<Void> executeDiscard(final MongoServerBinding binding) {
+        if (getMore.getServerCursor() == null) {
+            return new SingleResultFuture<Void>(null, null);
+        }
+        else {
+            MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+            MongoAsyncConnection connection = connectionManager.getAsyncConnection();
+
+            MongoFuture<Void> wrapped = executeDiscard(connection);
+            SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
+            wrapped.register(new ConnectionClosingSingleResultCallback<Void>(connection, retVal));
+            return retVal;
+        }
+    }
+
+
     public MongoFuture<QueryResult<T>> execute(final MongoAsyncConnection connection) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
@@ -61,5 +90,47 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection));
 
         return retVal;
+    }
+
+    public MongoFuture<QueryResult<T>> executeReceive(final MongoAsyncConnection connection) {
+        final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
+        connection.receiveMessage(new MongoGetMoreResultCallback<T>(
+                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection));
+
+        return retVal;
+    }
+
+    public MongoFuture<Void> executeDiscard(final MongoAsyncConnection connection) {
+        final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
+
+        if (getMore.getServerCursor() == null) {
+            retVal.init(null, null);
+        }
+        else {
+            connection.receiveMessage(new DiscardCallback(connection, retVal));
+        }
+
+        return retVal;
+    }
+
+    private static class DiscardCallback implements SingleResultCallback<ResponseBuffers> {
+
+        private MongoAsyncConnection connection;
+        private SingleResultFuture<Void> future;
+
+        public DiscardCallback(final MongoAsyncConnection connection, final SingleResultFuture<Void> future) {
+            this.connection = connection;
+            this.future = future;
+        }
+
+        @Override
+        public void onResult(final ResponseBuffers result, final MongoException e) {
+            if (result.getReplyHeader().getCursorId() == 0) {
+                future.init(null, null);
+            }
+            else {
+                connection.receiveMessage(new DiscardCallback(connection, future));
+            }
+        }
     }
 }

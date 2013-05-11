@@ -98,7 +98,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     @Test
     public void testForEach() throws InterruptedException {
         final List<Document> documentResultList = new ArrayList<Document>();
-        collection.batchSize(2).sort(new Document("_id", 1)).asyncForEach(new AsyncBlock<Document>() {
+        collection.sort(new Document("_id", 1)).asyncForEach(new AsyncBlock<Document>() {
             @Override
             public void done() {
                 latch.countDown();
