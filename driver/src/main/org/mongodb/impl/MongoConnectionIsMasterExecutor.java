@@ -18,35 +18,50 @@ package org.mongodb.impl;
 
 import org.mongodb.CommandOperation;
 import org.mongodb.Document;
-import org.mongodb.MongoServerBinding;
+import org.mongodb.MongoException;
+import org.mongodb.MongoSyncConnectionFactory;
 import org.mongodb.ServerAddress;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.command.MongoCommand;
+import org.mongodb.io.BufferPool;
+
+import java.nio.ByteBuffer;
 
 class MongoConnectionIsMasterExecutor implements IsMasterExecutor {
-    private final MongoServerBinding binding;
-    private final ServerAddress serverAddress;
+    private final MongoSyncConnectionFactory connectionFactory;
+    private final BufferPool<ByteBuffer> bufferPool;
+    private MongoSyncConnection connection;
 
-    MongoConnectionIsMasterExecutor(final MongoServerBinding binding, final ServerAddress serverAddress) {
-        this.binding = binding;
-        this.serverAddress = serverAddress;
+    MongoConnectionIsMasterExecutor(final MongoSyncConnectionFactory connectionFactory, final BufferPool<ByteBuffer> bufferPool) {
+        this.connectionFactory = connectionFactory;
+        this.bufferPool = bufferPool;
     }
 
     @Override
     public IsMasterCommandResult execute() {
-        return new IsMasterCommandResult(
-                new CommandOperation("admin", new MongoCommand(new Document("ismaster", 1)), new DocumentCodec(), binding.getBufferPool())
-                .execute(binding));
+        if (connection == null) {
+            connection = connectionFactory.create();
+        }
+        try {
+            return new IsMasterCommandResult(new CommandOperation("admin", new MongoCommand(new Document("ismaster", 1)),
+                    new DocumentCodec(), bufferPool).execute(connection));
+        } catch (MongoException e) {
+            connection.close();
+            connection = null;
+            throw e;
+        }
     }
 
     @Override
     public ServerAddress getServerAddress() {
-        return serverAddress;
+        return connectionFactory.getServerAddress();
     }
 
     @Override
     public void close() {
-        binding.close();
+        if (connection != null) {
+            connection.close();
+        }
     }
 }

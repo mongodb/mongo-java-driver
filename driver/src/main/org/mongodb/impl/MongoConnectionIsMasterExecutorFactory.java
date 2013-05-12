@@ -18,10 +18,15 @@ package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
+import org.mongodb.io.BufferPool;
+import org.mongodb.io.PowerOfTwoByteBufferPool;
+
+import java.nio.ByteBuffer;
 
 class MongoConnectionIsMasterExecutorFactory implements IsMasterExecutorFactory {
 
     private final MongoClientOptions options;
+    private final BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool();
 
     MongoConnectionIsMasterExecutorFactory(final MongoClientOptions options) {
         this.options = options;
@@ -29,6 +34,8 @@ class MongoConnectionIsMasterExecutorFactory implements IsMasterExecutorFactory 
 
     @Override
     public IsMasterExecutor create(final ServerAddress serverAddress) {
-        return new MongoConnectionIsMasterExecutor(MongoServerBindings.create(serverAddress, options), serverAddress);
+
+        return new MongoConnectionIsMasterExecutor(new DefaultMongoSyncConnectionFactory(options, serverAddress, bufferPool, null),
+                bufferPool);
     }
 }
