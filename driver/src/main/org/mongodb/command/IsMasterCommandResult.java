@@ -21,43 +21,55 @@ import org.mongodb.result.CommandResult;
 
 import java.util.List;
 
-public class IsMasterCommandResult extends CommandResult {
-    public IsMasterCommandResult(final CommandResult baseResult) {
-        super(baseResult);
+import static org.mongodb.assertions.Assertions.notNull;
+
+public class IsMasterCommandResult {
+    private CommandResult commandResult;
+
+    public IsMasterCommandResult(final CommandResult commandResult) {
+        this.commandResult = notNull("commandResult", commandResult);
     }
 
     public boolean isMaster() {
-        return (Boolean) getResponse().get("ismaster");
+        return (Boolean) commandResult.getResponse().get("ismaster");
     }
 
     public boolean isSecondary() {
-        Boolean isSecondary = (Boolean) getResponse().get("secondary");
+        Boolean isSecondary = (Boolean) commandResult.getResponse().get("secondary");
         return isSecondary == null ? false : isSecondary;
     }
 
     @SuppressWarnings("unchecked")
     public List<String> getHosts() {
-        return (List<String>) getResponse().get("hosts");
+        return (List<String>) commandResult.getResponse().get("hosts");
     }
 
     @SuppressWarnings("unchecked")
     public List<String> getPassives() {
-        return (List<String>) getResponse().get("passives");
+        return (List<String>) commandResult.getResponse().get("passives");
     }
 
     public String getPrimary() {
-        return (String) getResponse().get("primary");
+        return (String) commandResult.getResponse().get("primary");
     }
 
     public int getMaxBSONObjectSize() {
-        return (Integer) getResponse().get("maxBsonObjectSize");
+        return (Integer) commandResult.getResponse().get("maxBsonObjectSize");
     }
 
     public Document getTags() {
-        return (Document) getResponse().get("tags");
+        return (Document) commandResult.getResponse().get("tags");
     }
 
     public String getSetName() {
-        return (String) getResponse().get("setName");
+        return (String) commandResult.getResponse().get("setName");
+    }
+
+    public long getElapsedNanoseconds() {
+        return commandResult.getElapsedNanoseconds();
+    }
+
+    public boolean isOk() {
+        return commandResult.isOk();
     }
 }
