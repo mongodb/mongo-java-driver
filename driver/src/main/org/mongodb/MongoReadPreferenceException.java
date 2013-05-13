@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.rs.ReplicaSet;
+import org.mongodb.rs.ReplicaSetDescription;
 
 /**
  * An exception indicating a failure to find a replica set member that satisfies the requested read preference.
@@ -30,11 +30,11 @@ public class MongoReadPreferenceException extends MongoReplicaSetException {
     /**
      * Construct a new instance with the given read preference and replica set state.
      * @param readPreference the read preference
-     * @param replicaSetState the replica set
+     * @param replicaSetDescription the replica set
      */
-    public MongoReadPreferenceException(final ReadPreference readPreference, final ReplicaSet replicaSetState) {
+    public MongoReadPreferenceException(final ReadPreference readPreference, final ReplicaSetDescription replicaSetDescription) {
         super(String.format("Unable to find a replica set member in %s that satisfies a read preference of %s",
-                replicaSetState, readPreference), replicaSetState);
+                replicaSetDescription, readPreference), replicaSetDescription);
         this.readPreference = readPreference;
     }
 

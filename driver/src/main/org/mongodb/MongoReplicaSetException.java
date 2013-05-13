@@ -16,17 +16,17 @@
 
 package org.mongodb;
 
-import org.mongodb.rs.ReplicaSet;
+import org.mongodb.rs.ReplicaSetDescription;
 
 public class MongoReplicaSetException extends MongoClientException {
 
     private static final long serialVersionUID = 6557484831390294566L;
 
-    private final ReplicaSet replicaSetState;
+    private final ReplicaSetDescription replicaSetDescription;
 
-    public MongoReplicaSetException(final String msg, final ReplicaSet replicaSetState) {
+    public MongoReplicaSetException(final String msg, final ReplicaSetDescription replicaSetDescription) {
         super(msg);
-        this.replicaSetState = replicaSetState;
+        this.replicaSetDescription = replicaSetDescription;
     }
 
     /**
@@ -34,7 +34,7 @@ public class MongoReplicaSetException extends MongoClientException {
      *
      * @return the replica set state
      */
-    public ReplicaSet getReplicaSetState() {
-        return replicaSetState;
+    public ReplicaSetDescription getReplicaSetDescription() {
+        return replicaSetDescription;
     }
 }

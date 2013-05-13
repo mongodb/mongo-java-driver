@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
-import org.mongodb.rs.ReplicaSet;
+import org.mongodb.rs.ReplicaSetDescription;
 import org.mongodb.rs.ReplicaSetMemberDescription;
 
 /**
@@ -49,7 +49,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
      */
     public abstract String getName();
 
-    public abstract ReplicaSetMemberDescription chooseReplicaSetMember(ReplicaSet set);
+    public abstract ReplicaSetMemberDescription chooseReplicaSetMember(ReplicaSetDescription replicaSetDescription);
 
     /**
      * Preference to read from primary only. Cannot be combined with tags.
@@ -79,8 +79,8 @@ public abstract class ReadPreference implements ConvertibleToDocument {
         }
 
         @Override
-        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSet set) {
-            return set.getPrimary();
+        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSetDescription replicaSetDescription) {
+            return replicaSetDescription.getPrimary();
         }
 
         @Override

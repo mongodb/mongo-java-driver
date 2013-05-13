@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.rs.ReplicaSet;
+import org.mongodb.rs.ReplicaSetDescription;
 import org.mongodb.rs.ReplicaSetMemberDescription;
 import org.mongodb.rs.Tag;
 
@@ -40,9 +40,9 @@ public class ReadPreferenceTest {
     private static final String HOST = "localhost";
 
     private ReplicaSetMemberDescription primary, secondary, otherSecondary;
-    private ReplicaSet set;
-    private ReplicaSet setNoSecondary;
-    private ReplicaSet setNoPrimary;
+    private ReplicaSetDescription set;
+    private ReplicaSetDescription setNoSecondary;
+    private ReplicaSetDescription setNoPrimary;
 
     @Before
     public void setUp() throws IOException {
@@ -80,10 +80,10 @@ public class ReadPreferenceTest {
         nodeList.add(secondary);
         nodeList.add(otherSecondary);
 
-        set = new ReplicaSet(nodeList, (new Random()), (int) acceptableLatencyMS);
-        setNoPrimary = new ReplicaSet(Arrays.asList(secondary, otherSecondary), (new Random()),
+        set = new ReplicaSetDescription(nodeList, (new Random()), (int) acceptableLatencyMS);
+        setNoPrimary = new ReplicaSetDescription(Arrays.asList(secondary, otherSecondary), (new Random()),
                                       (int) acceptableLatencyMS);
-        setNoSecondary = new ReplicaSet(Arrays.asList(primary), (new Random()), (int) acceptableLatencyMS);
+        setNoSecondary = new ReplicaSetDescription(Arrays.asList(primary), (new Random()), (int) acceptableLatencyMS);
     }
 
 

@@ -24,7 +24,7 @@ import org.mongodb.MongoServer;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
-import org.mongodb.rs.ReplicaSet;
+import org.mongodb.rs.ReplicaSetDescription;
 import org.mongodb.rs.ReplicaSetMemberDescription;
 
 import java.nio.ByteBuffer;
@@ -70,8 +70,8 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
         isTrue("open", !isClosed());
 
         List<ServerAddress> addressList = new ArrayList<ServerAddress>();
-        ReplicaSet currentState = replicaSetMonitor.getCurrentState();
-        for (ReplicaSetMemberDescription cur : currentState.getAll()) {
+        ReplicaSetDescription currentReplicaSetDescription = replicaSetMonitor.getCurrentReplicaSetDescription();
+        for (ReplicaSetMemberDescription cur : currentReplicaSetDescription.getAll()) {
             addressList.add(cur.getAddress());
         }
         return addressList;
@@ -84,10 +84,10 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
     }
 
     private ServerAddress getAddressOfPrimary() {
-        ReplicaSet currentState = replicaSetMonitor.getCurrentState();
-        ReplicaSetMemberDescription primary = currentState.getPrimary();
+        ReplicaSetDescription currentDescription = replicaSetMonitor.getCurrentReplicaSetDescription();
+        ReplicaSetMemberDescription primary = currentDescription.getPrimary();
         if (primary == null) {
-            throw new MongoNoPrimaryException(currentState);
+            throw new MongoNoPrimaryException(currentDescription);
         }
         return primary.getServerAddress();
     }
@@ -95,10 +95,10 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
     private ServerAddress getAddressForReadPreference(final ReadPreference readPreference) {
         // TODO: this is hiding potential bugs.  ReadPreference should not be null
         ReadPreference appliedReadPreference = readPreference == null ? ReadPreference.primary() : readPreference;
-        final ReplicaSet replicaSet = replicaSetMonitor.getCurrentState();
-        final ReplicaSetMemberDescription replicaSetMemberDescription = appliedReadPreference.chooseReplicaSetMember(replicaSet);
+        final ReplicaSetDescription replicaSetDescription = replicaSetMonitor.getCurrentReplicaSetDescription();
+        final ReplicaSetMemberDescription replicaSetMemberDescription = appliedReadPreference.chooseReplicaSetMember(replicaSetDescription);
         if (replicaSetMemberDescription == null) {
-            throw new MongoReadPreferenceException(readPreference, replicaSet);
+            throw new MongoReadPreferenceException(readPreference, replicaSetDescription);
         }
         return replicaSetMemberDescription.getServerAddress();
     }

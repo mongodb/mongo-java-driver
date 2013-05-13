@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.rs.ReplicaSet;
+import org.mongodb.rs.ReplicaSetDescription;
 
 /**
  * An exception indicating a failure to find a member of the replica set that is the current primary.
@@ -27,10 +27,10 @@ public class MongoNoPrimaryException extends MongoReplicaSetException {
 
     /**
      * Constructs a new instance with the given replica set state.
-     * @param replicaSetState the replica set state
+     * @param replicaSetDescription the replica set state
      */
-    public MongoNoPrimaryException(final ReplicaSet replicaSetState) {
-        super(String.format("The MongoClient is unable to find a primary member of the replica set: %s", replicaSetState),
-                replicaSetState);
+    public MongoNoPrimaryException(final ReplicaSetDescription replicaSetDescription) {
+        super(String.format("The MongoClient is unable to find a primary member of the replica set: %s", replicaSetDescription),
+                replicaSetDescription);
     }
 }

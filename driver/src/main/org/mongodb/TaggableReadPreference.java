@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
-import org.mongodb.rs.ReplicaSet;
+import org.mongodb.rs.ReplicaSetDescription;
 import org.mongodb.rs.ReplicaSetMemberDescription;
 import org.mongodb.rs.Tag;
 
@@ -133,15 +133,15 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSet set) {
+        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSetDescription replicaSetDescription) {
 
             if (getTags().isEmpty()) {
-                return set.getASecondary();
+                return replicaSetDescription.getASecondary();
             }
 
             for (final Document curTagSet : getTags()) {
                 final List<Tag> tagList = getTagListFromMongoDocument(curTagSet);
-                final ReplicaSetMemberDescription node = set.getASecondary(tagList);
+                final ReplicaSetMemberDescription node = replicaSetDescription.getASecondary(tagList);
                 if (node != null) {
                     return node;
                 }
@@ -170,9 +170,9 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSet set) {
-            final ReplicaSetMemberDescription node = super.chooseReplicaSetMember(set);
-            return (node != null) ? node : set.getPrimary();
+        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSetDescription replicaSetDescription) {
+            final ReplicaSetMemberDescription node = super.chooseReplicaSetMember(replicaSetDescription);
+            return (node != null) ? node : replicaSetDescription.getPrimary();
         }
     }
 
@@ -196,15 +196,15 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
 
         @Override
-        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSet set) {
+        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSetDescription replicaSetDescription) {
 
             if (getTags().isEmpty()) {
-                return set.getAMember();
+                return replicaSetDescription.getAMember();
             }
 
             for (final Document curTagSet : getTags()) {
                 final List<Tag> tagList = getTagListFromMongoDocument(curTagSet);
-                final ReplicaSetMemberDescription node = set.getAMember(tagList);
+                final ReplicaSetMemberDescription node = replicaSetDescription.getAMember(tagList);
                 if (node != null) {
                     return node;
                 }
@@ -231,9 +231,9 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSet set) {
-            final ReplicaSetMemberDescription node = set.getPrimary();
-            return (node != null) ? node : super.chooseReplicaSetMember(set);
+        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSetDescription replicaSetDescription) {
+            final ReplicaSetMemberDescription node = replicaSetDescription.getPrimary();
+            return (node != null) ? node : super.chooseReplicaSetMember(replicaSetDescription);
         }
     }
 }

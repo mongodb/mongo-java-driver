@@ -89,8 +89,8 @@ public class ReplicaSetMonitorTest {
         stateNotifier.isMasterCommandResult = IsMasterCommandResult.builder().ok(true).primary(true).setName("test").build();
         replicaSetMonitor.start(serverStateNotifierFactory, scheduledExecutorService);
         scheduledExecutorService.runAll();
-        assertTrue(replicaSetMonitor.getCurrentState().hasPrimary());
-        assertEquals(seedAddress, replicaSetMonitor.getCurrentState().getPrimary().getServerAddress());
+        assertTrue(replicaSetMonitor.getCurrentReplicaSetDescription().hasPrimary());
+        assertEquals(seedAddress, replicaSetMonitor.getCurrentReplicaSetDescription().getPrimary().getServerAddress());
     }
 
     @Test
@@ -120,9 +120,9 @@ public class ReplicaSetMonitorTest {
         replicaSetMonitor.start(serverStateNotifierFactory, scheduledExecutorService);
         scheduledExecutorService.runAll();
         scheduledExecutorService.runAll();
-        assertTrue(replicaSetMonitor.getCurrentState().hasPrimary());
-        assertEquals(primaryAddress, replicaSetMonitor.getCurrentState().getPrimary().getServerAddress());
-        assertNotNull(replicaSetMonitor.getCurrentState().getMember(new ServerAddress("localhost:27019")));
+        assertTrue(replicaSetMonitor.getCurrentReplicaSetDescription().hasPrimary());
+        assertEquals(primaryAddress, replicaSetMonitor.getCurrentReplicaSetDescription().getPrimary().getServerAddress());
+        assertNotNull(replicaSetMonitor.getCurrentReplicaSetDescription().getMember(new ServerAddress("localhost:27019")));
     }
 
     @Test
@@ -159,7 +159,7 @@ public class ReplicaSetMonitorTest {
 
     private boolean holderTimedOut() {
         try {
-            replicaSetMonitor.getCurrentState(1, TimeUnit.MILLISECONDS);
+            replicaSetMonitor.getCurrentReplicaSetDescription(1, TimeUnit.MILLISECONDS);
             return false;
         } catch (MongoTimeoutException e) {
             return true;
@@ -176,10 +176,10 @@ public class ReplicaSetMonitorTest {
                 .build();
         replicaSetMonitor.start(serverStateNotifierFactory, scheduledExecutorService);
         scheduledExecutorService.runAll();
-        assertTrue(replicaSetMonitor.getCurrentState().hasPrimary());
+        assertTrue(replicaSetMonitor.getCurrentReplicaSetDescription().hasPrimary());
         stateNotifier.exception = new MongoInternalException("uh oh", new Throwable());
         scheduledExecutorService.runAll();
-        assertTrue(replicaSetMonitor.getCurrentState().getAll().isEmpty());
+        assertTrue(replicaSetMonitor.getCurrentReplicaSetDescription().getAll().isEmpty());
     }
 
     @Test

@@ -20,7 +20,7 @@ import org.mongodb.MongoException;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.IsMasterCommandResult;
-import org.mongodb.rs.ReplicaSet;
+import org.mongodb.rs.ReplicaSetDescription;
 import org.mongodb.rs.ReplicaSetMemberDescription;
 
 import java.net.UnknownHostException;
@@ -65,7 +65,8 @@ class ReplicaSetMonitor implements MongoServerStateListener {
 
     private MongoServerStateNotifierFactory serverStateNotifierFactory;
     private ScheduledExecutorService scheduledExecutorService;
-    private final Holder<ReplicaSet> holder = new Holder<ReplicaSet>(CLIENT_OPTIONS_DEFAULTS.getConnectTimeout(), TimeUnit.MILLISECONDS);
+    private final Holder<ReplicaSetDescription> holder = new Holder<ReplicaSetDescription>(CLIENT_OPTIONS_DEFAULTS.getConnectTimeout(),
+            TimeUnit.MILLISECONDS);
     private List<ServerAddress> serverList;
     private final Map<ServerAddress, ReplicaSetMemberDescription> mostRecentStateMap =
             new HashMap<ServerAddress, ReplicaSetMemberDescription>();
@@ -88,12 +89,12 @@ class ReplicaSetMonitor implements MongoServerStateListener {
         addNewServerAddresses(serverList);
     }
 
-    ReplicaSet getCurrentState() {
+    ReplicaSetDescription getCurrentReplicaSetDescription() {
         isTrue("open", !isShutdown());
         return holder.get();
     }
 
-    ReplicaSet getCurrentState(final long timeout, final TimeUnit timeUnit) {
+    ReplicaSetDescription getCurrentReplicaSetDescription(final long timeout, final TimeUnit timeUnit) {
         isTrue("open", !isShutdown());
         return holder.get(timeout, timeUnit);
     }
@@ -192,7 +193,7 @@ class ReplicaSetMonitor implements MongoServerStateListener {
     }
 
     private void setHolder() {
-        holder.set(new ReplicaSet(new ArrayList<ReplicaSetMemberDescription>(mostRecentStateMap.values()), random,
+        holder.set(new ReplicaSetDescription(new ArrayList<ReplicaSetMemberDescription>(mostRecentStateMap.values()), random,
                 SLAVE_ACCEPTABLE_LATENCY_MS));
     }
 
