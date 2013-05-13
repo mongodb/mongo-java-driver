@@ -17,15 +17,15 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoNoPrimaryException;
 import org.mongodb.MongoReadPreferenceException;
+import org.mongodb.MongoServer;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 import org.mongodb.rs.ReplicaSet;
-import org.mongodb.rs.ReplicaSetMember;
+import org.mongodb.rs.ReplicaSetMemberDescription;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -52,14 +52,14 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForWrite() {
+    public MongoServer getConnectionManagerForWrite() {
         isTrue("open", !isClosed());
 
         return getConnectionManagerForServer(getAddressOfPrimary());
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
+    public MongoServer getConnectionManagerForRead(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
 
         return getConnectionManagerForServer(getAddressForReadPreference(readPreference));
@@ -71,8 +71,8 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
 
         List<ServerAddress> addressList = new ArrayList<ServerAddress>();
         ReplicaSet currentState = replicaSetMonitor.getCurrentState();
-        for (ReplicaSetMember cur : currentState.getAll()) {
-             addressList.add(cur.getAddress());
+        for (ReplicaSetMemberDescription cur : currentState.getAll()) {
+            addressList.add(cur.getAddress());
         }
         return addressList;
     }
@@ -85,7 +85,7 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
 
     private ServerAddress getAddressOfPrimary() {
         ReplicaSet currentState = replicaSetMonitor.getCurrentState();
-        ReplicaSetMember primary = currentState.getPrimary();
+        ReplicaSetMemberDescription primary = currentState.getPrimary();
         if (primary == null) {
             throw new MongoNoPrimaryException(currentState);
         }
@@ -96,10 +96,10 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
         // TODO: this is hiding potential bugs.  ReadPreference should not be null
         ReadPreference appliedReadPreference = readPreference == null ? ReadPreference.primary() : readPreference;
         final ReplicaSet replicaSet = replicaSetMonitor.getCurrentState();
-        final ReplicaSetMember replicaSetMember = appliedReadPreference.chooseReplicaSetMember(replicaSet);
-        if (replicaSetMember == null) {
+        final ReplicaSetMemberDescription replicaSetMemberDescription = appliedReadPreference.chooseReplicaSetMember(replicaSet);
+        if (replicaSetMemberDescription == null) {
             throw new MongoReadPreferenceException(readPreference, replicaSet);
         }
-        return replicaSetMember.getServerAddress();
+        return replicaSetMemberDescription.getServerAddress();
     }
 }

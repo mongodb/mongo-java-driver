@@ -16,9 +16,9 @@
 
 package org.mongodb.async;
 
-import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoServer;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
@@ -39,7 +39,7 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
     }
 
     public MongoFuture<WriteResult> execute(final MongoServerBinding binding) {
-        MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
+        MongoServer connectionManager = binding.getConnectionManagerForWrite();
         MongoAsyncConnection connection = connectionManager.getAsyncConnection();
 
         MongoFuture<WriteResult> wrapped = execute(connection);

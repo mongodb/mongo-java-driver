@@ -17,8 +17,8 @@
 package org.mongodb.rs;
 
 import org.mongodb.Document;
-import org.mongodb.Node;
 import org.mongodb.ServerAddress;
+import org.mongodb.ServerDescription;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.command.IsMasterCommandResult;
 
@@ -34,16 +34,16 @@ import java.util.Set;
  * NOT PART OF PUBLIC API YET
  */
 @Immutable
-public class ReplicaSetMember extends Node {
+public class ReplicaSetMemberDescription extends ServerDescription {
     private final Set<Tag> tags;
     private final boolean isPrimary;
     private final boolean isSecondary;
     private final String setName;
 
-    public ReplicaSetMember(final ServerAddress serverAddress, final String setName, final float pingTime,
-                            final boolean ok, final boolean isPrimary, final boolean isSecondary,
-                            final Set<Tag> tags, final int maxBSONObjectSize, final float latencySmoothFactor,
-                            final ReplicaSetMember previous) {
+    public ReplicaSetMemberDescription(final ServerAddress serverAddress, final String setName, final float pingTime,
+                                       final boolean ok, final boolean isPrimary, final boolean isSecondary,
+                                       final Set<Tag> tags, final int maxBSONObjectSize, final float latencySmoothFactor,
+                                       final ReplicaSetMemberDescription previous) {
         super(pingTime, serverAddress, maxBSONObjectSize, ok, latencySmoothFactor, previous);
         this.setName = setName;
         this.isPrimary = isPrimary;
@@ -51,8 +51,8 @@ public class ReplicaSetMember extends Node {
         this.tags = Collections.unmodifiableSet(new HashSet<Tag>(tags));
     }
 
-    public ReplicaSetMember(final ServerAddress serverAddress, final IsMasterCommandResult isMasterCommandResult,
-                            final float latencySmoothFactor, final ReplicaSetMember previous) {
+    public ReplicaSetMemberDescription(final ServerAddress serverAddress, final IsMasterCommandResult isMasterCommandResult,
+                                       final float latencySmoothFactor, final ReplicaSetMemberDescription previous) {
         super(isMasterCommandResult.getElapsedNanoseconds(), serverAddress, isMasterCommandResult.getMaxBSONObjectSize(),
                 isMasterCommandResult.isOk(), latencySmoothFactor, previous);
         this.setName = isMasterCommandResult.getSetName();
@@ -61,7 +61,7 @@ public class ReplicaSetMember extends Node {
         this.tags = Collections.unmodifiableSet(new HashSet<Tag>(isMasterCommandResult.getTags()));
     }
 
-    public ReplicaSetMember(final ServerAddress serverAddress) {
+    public ReplicaSetMemberDescription(final ServerAddress serverAddress) {
         this(serverAddress, null, 0, false, false, false, new HashSet<Tag>(), 0, 0, null);
     }
 
@@ -116,7 +116,7 @@ public class ReplicaSetMember extends Node {
             return false;
         }
 
-        final ReplicaSetMember that = (ReplicaSetMember) o;
+        final ReplicaSetMemberDescription that = (ReplicaSetMemberDescription) o;
 
         if (isPrimary != that.isPrimary) {
             return false;
@@ -146,7 +146,7 @@ public class ReplicaSetMember extends Node {
 
     @Override
     public String toString() {
-        return "ReplicaSetMember{"
+        return "ReplicaSetMemberDescription{"
                 + "tags=" + tags
                 + ", isPrimary=" + isPrimary
                 + ", isSecondary=" + isSecondary

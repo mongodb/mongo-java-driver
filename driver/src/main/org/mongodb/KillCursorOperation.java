@@ -33,7 +33,7 @@ public class KillCursorOperation extends Operation {
     }
 
     public void execute(final MongoServerBinding binding) {
-        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(killCursor.getServerCursor().getAddress());
+        MongoServer connectionManager = binding.getConnectionManagerForServer(killCursor.getServerCursor().getAddress());
         MongoSyncConnection connection = connectionManager.getConnection();
         try {
             execute(connection);

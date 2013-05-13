@@ -22,11 +22,11 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 public interface MongoServerBinding {
-    MongoConnectionManager getConnectionManagerForWrite();
+    MongoServer getConnectionManagerForWrite();
 
-    MongoConnectionManager getConnectionManagerForRead(ReadPreference readPreference);
+    MongoServer getConnectionManagerForRead(ReadPreference readPreference);
 
-    MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress);
+    MongoServer getConnectionManagerForServer(final ServerAddress serverAddress);
 
     List<ServerAddress> getAllServerAddresses();
 

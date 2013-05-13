@@ -39,7 +39,7 @@ public class CommandOperation extends Operation {
     }
 
     public CommandResult execute(final MongoServerBinding binding) {
-        MongoConnectionManager connectionManager =
+        MongoServer connectionManager =
                 binding.getConnectionManagerForRead(commandOperation.getReadPreference());
         MongoSyncConnection connection = connectionManager.getConnection();
         try {

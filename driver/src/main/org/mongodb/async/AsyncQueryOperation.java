@@ -19,9 +19,9 @@ package org.mongodb.async;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoServer;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.io.BufferPool;
@@ -46,7 +46,7 @@ public class AsyncQueryOperation<T> extends AsyncOperation {
     }
 
     public MongoFuture<QueryResult<T>> execute(final MongoServerBinding binding) {
-        MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(find.getReadPreference());
+        MongoServer connectionManager = binding.getConnectionManagerForRead(find.getReadPreference());
         MongoAsyncConnection connection = connectionManager.getAsyncConnection();
 
         MongoFuture<QueryResult<T>> wrapped = execute(connection);

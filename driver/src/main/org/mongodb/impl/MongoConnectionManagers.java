@@ -17,8 +17,8 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoCredential;
+import org.mongodb.MongoServer;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 import org.mongodb.pool.Pool;
@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 public final class MongoConnectionManagers {
-    static MongoConnectionManager createConnectionManager(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+    static MongoServer createConnectionManager(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                                           final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
 
         Pool<MongoSyncConnection> connectionPool = new DefaultMongoConnectionPool(new DefaultMongoSyncConnectionFactory(options,
@@ -38,7 +38,7 @@ public final class MongoConnectionManagers {
             asyncConnectionPool = new DefaultMongoAsyncConnectionPool(new DefaultMongoAsyncConnectionFactory(options, serverAddress,
                     bufferPool, credentialList), options);
         }
-        return new DefaultMongoConnectionManager(serverAddress, connectionPool, asyncConnectionPool);
+        return new DefaultMongoServer(serverAddress, connectionPool, asyncConnectionPool);
     }
 
     private MongoConnectionManagers() {

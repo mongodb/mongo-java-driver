@@ -19,15 +19,15 @@ package org.mongodb;
 import org.mongodb.annotations.Immutable;
 
 @Immutable
-public abstract class Node {
+public abstract class ServerDescription {
 
     private final ServerAddress address;
     private final float normalizedPingTime;
     private final boolean ok;
     private final int maxBSONObjectSize;
 
-    protected Node(final float pingTime, final ServerAddress serverAddress, final int maxBSONObjectSize, final boolean ok,
-                   final float latencySmoothFactor, final Node previous) {
+    protected ServerDescription(final float pingTime, final ServerAddress serverAddress, final int maxBSONObjectSize, final boolean ok,
+                                final float latencySmoothFactor, final ServerDescription previous) {
         this.address = serverAddress;
         this.maxBSONObjectSize = maxBSONObjectSize;
         this.ok = ok;
@@ -65,18 +65,18 @@ public abstract class Node {
             return false;
         }
 
-        final Node node = (Node) o;
+        final ServerDescription serverDescription = (ServerDescription) o;
 
-        if (getMaxBSONObjectSize() != node.getMaxBSONObjectSize()) {
+        if (getMaxBSONObjectSize() != serverDescription.getMaxBSONObjectSize()) {
             return false;
         }
-        if (isOk() != node.isOk()) {
+        if (isOk() != serverDescription.isOk()) {
             return false;
         }
-        if (Float.compare(node.getNormalizedPingTime(), getNormalizedPingTime()) != 0) {
+        if (Float.compare(serverDescription.getNormalizedPingTime(), getNormalizedPingTime()) != 0) {
             return false;
         }
-        if (!getAddress().equals(node.getAddress())) {
+        if (!getAddress().equals(serverDescription.getAddress())) {
             return false;
         }
 
@@ -106,7 +106,7 @@ public abstract class Node {
 
     @Override
     public String toString() {
-        return "Node{"
+        return "ServerDescription{"
                 + "address=" + address
                 + ", normalizedPingTime=" + normalizedPingTime
                 + ", ok=" + ok

@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,12 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoConnectionManager;
+import org.mongodb.MongoServer;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
@@ -33,8 +32,8 @@ import static org.mongodb.assertions.Assertions.isTrue;
 public class MonotonicallyConsistentMongoServerBinding implements MongoServerBinding {
     private final MongoServerBinding wrapped;
     private ReadPreference lastRequestedReadPreference;
-    private MongoConnectionManager connectionManagerForReads;
-    private MongoConnectionManager connectionManagerForWrites;
+    private MongoServer connectionManagerForReads;
+    private MongoServer connectionManagerForWrites;
     private MongoSyncConnection connectionForReads;
     private MongoSyncConnection connectionForWrites;
     private boolean isClosed;
@@ -44,19 +43,19 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForWrite() {
+    public MongoServer getConnectionManagerForWrite() {
         isTrue("open", !isClosed);
-        return new MongoConnectionManagerForWrites();
+        return new MongoServerForWrites();
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
+    public MongoServer getConnectionManagerForRead(final ReadPreference readPreference) {
         isTrue("open", !isClosed);
-        return new MongoConnectionManagerForReads(readPreference);
+        return new MongoServerForReads(readPreference);
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
+    public MongoServer getConnectionManagerForServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed);
         return wrapped.getConnectionManagerForServer(serverAddress);
     }
@@ -124,7 +123,7 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
     }
 
 
-    private abstract class AbstractConnectionManager implements MongoConnectionManager {
+    private abstract class AbstractServer implements MongoServer {
 
         @Override
         public ServerAddress getServerAddress() {
@@ -136,10 +135,10 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
         }
     }
 
-    private final class MongoConnectionManagerForReads extends AbstractConnectionManager {
+    private final class MongoServerForReads extends AbstractServer {
         private final ReadPreference readPreference;
 
-        private MongoConnectionManagerForReads(final ReadPreference readPreference) {
+        private MongoServerForReads(final ReadPreference readPreference) {
             this.readPreference = readPreference;
         }
 
@@ -155,7 +154,7 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
 
     }
 
-    private final class MongoConnectionManagerForWrites extends AbstractConnectionManager {
+    private final class MongoServerForWrites extends AbstractServer {
         @Override
         public MongoSyncConnection getConnection() {
             return getConnectionForWrites();

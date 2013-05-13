@@ -16,19 +16,19 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoConnectionManager;
+import org.mongodb.MongoServer;
 import org.mongodb.ServerAddress;
 import org.mongodb.pool.Pool;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class DefaultMongoConnectionManager implements MongoConnectionManager {
+public class DefaultMongoServer implements MongoServer {
     private ServerAddress serverAddress;
     private final Pool<MongoSyncConnection> connectionPool;
     private Pool<MongoAsyncConnection> asyncConnectionPool;
 
-    public DefaultMongoConnectionManager(final ServerAddress serverAddress, final Pool<MongoSyncConnection> connectionPool,
-                                         final Pool<MongoAsyncConnection> asyncConnectionPool) {
+    public DefaultMongoServer(final ServerAddress serverAddress, final Pool<MongoSyncConnection> connectionPool,
+                              final Pool<MongoAsyncConnection> asyncConnectionPool) {
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.connectionPool = notNull("connectionPool", connectionPool);
         this.asyncConnectionPool = asyncConnectionPool;

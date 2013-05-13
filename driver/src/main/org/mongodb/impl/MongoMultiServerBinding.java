@@ -17,8 +17,8 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoCredential;
+import org.mongodb.MongoServer;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
@@ -34,7 +34,7 @@ public abstract class MongoMultiServerBinding implements MongoServerBinding {
     private final List<MongoCredential> credentialList;
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
-    private final Map<ServerAddress, MongoConnectionManager> mongoClientMap = new HashMap<ServerAddress, MongoConnectionManager>();
+    private final Map<ServerAddress, MongoServer> mongoClientMap = new HashMap<ServerAddress, MongoServer>();
     private boolean isClosed;
 
     protected MongoMultiServerBinding(final List<MongoCredential> credentialList,
@@ -52,10 +52,10 @@ public abstract class MongoMultiServerBinding implements MongoServerBinding {
     }
 
     @Override
-    public synchronized MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
+    public synchronized MongoServer getConnectionManagerForServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
-        MongoConnectionManager connection = mongoClientMap.get(serverAddress);
+        MongoServer connection = mongoClientMap.get(serverAddress);
         if (connection == null) {
             connection = MongoConnectionManagers.createConnectionManager(serverAddress, credentialList, options, bufferPool);
             mongoClientMap.put(serverAddress, connection);
@@ -67,7 +67,7 @@ public abstract class MongoMultiServerBinding implements MongoServerBinding {
     public void close() {
         if (!isClosed()) {
             isClosed = true;
-            for (MongoConnectionManager cur : mongoClientMap.values()) {
+            for (MongoServer cur : mongoClientMap.values()) {
                 cur.close();
             }
         }

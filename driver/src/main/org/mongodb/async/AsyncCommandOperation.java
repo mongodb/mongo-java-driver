@@ -18,9 +18,9 @@ package org.mongodb.async;
 
 import org.mongodb.Codec;
 import org.mongodb.Document;
-import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoServer;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.impl.MongoAsyncConnection;
@@ -45,7 +45,7 @@ public class AsyncCommandOperation extends AsyncOperation {
 
 
     public MongoFuture<CommandResult> execute(final MongoServerBinding binding) {
-        MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(commandOperation.getReadPreference());
+        MongoServer connectionManager = binding.getConnectionManagerForRead(commandOperation.getReadPreference());
         MongoAsyncConnection connection = connectionManager.getAsyncConnection();
 
         MongoFuture<CommandResult> wrapped = execute(connection);

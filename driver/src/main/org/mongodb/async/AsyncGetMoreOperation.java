@@ -17,10 +17,10 @@
 package org.mongodb.async;
 
 import org.mongodb.Decoder;
-import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoServer;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.io.BufferPool;
@@ -44,7 +44,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
     }
 
     public MongoFuture<QueryResult<T>> execute(final MongoServerBinding binding) {
-        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoServer connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
         MongoAsyncConnection connection = connectionManager.getAsyncConnection();
 
         MongoFuture<QueryResult<T>> wrapped = execute(connection);
@@ -55,7 +55,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
 
 
     public MongoFuture<QueryResult<T>> executeReceive(final MongoServerBinding binding) {
-        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoServer connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
         MongoAsyncConnection connection = connectionManager.getAsyncConnection();
 
         MongoFuture<QueryResult<T>> wrapped = executeReceive(connection);
@@ -69,7 +69,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
             return new SingleResultFuture<Void>(null, null);
         }
         else {
-            MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+            MongoServer connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
             MongoAsyncConnection connection = connectionManager.getAsyncConnection();
 
             MongoFuture<Void> wrapped = executeDiscard(connection);

@@ -38,7 +38,7 @@ public abstract class WriteOperation extends Operation {
     }
 
     public WriteResult execute(final MongoServerBinding binding) {
-        MongoConnectionManager connectionManager = binding.getConnectionManagerForWrite();
+        MongoServer connectionManager = binding.getConnectionManagerForWrite();
         MongoSyncConnection connection = connectionManager.getConnection();
         try {
             return execute(connection);

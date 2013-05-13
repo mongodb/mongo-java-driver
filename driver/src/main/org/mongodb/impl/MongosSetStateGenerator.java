@@ -31,7 +31,8 @@ class MongosSetStateGenerator {
     private static final Logger LOGGER = Logger.getLogger("org.mongodb.MongosSetMonitor");
     private final float latencySmoothFactor;
     private final Map<ServerAddress, IsMasterExecutor> isMasterExecutorMap = new LinkedHashMap<ServerAddress, IsMasterExecutor>();
-    private final Map<ServerAddress, MongosSetMember> mostRecentStateMap = new HashMap<ServerAddress, MongosSetMember>();
+    private final Map<ServerAddress, MongosSetMemberDescription> mostRecentStateMap =
+            new HashMap<ServerAddress, MongosSetMemberDescription>();
     private MongosSet currentMongosSet;
 
     MongosSetStateGenerator(final List<ServerAddress> serverAddressList, final IsMasterExecutorFactory isMasterExecutorFactory,
@@ -46,7 +47,7 @@ class MongosSetStateGenerator {
         for (IsMasterExecutor executor : isMasterExecutorMap.values()) {
             updateMemberState(executor);
         }
-        currentMongosSet = new MongosSet(new ArrayList<MongosSetMember>(mostRecentStateMap.values()), currentMongosSet);
+        currentMongosSet = new MongosSet(new ArrayList<MongosSetMemberDescription>(mostRecentStateMap.values()), currentMongosSet);
         return currentMongosSet;
     }
 
@@ -64,11 +65,11 @@ class MongosSetStateGenerator {
         try {
             IsMasterCommandResult res = executor.execute();
 
-            mostRecentStateMap.put(executor.getServerAddress(), new MongosSetMember(executor.getServerAddress(),
+            mostRecentStateMap.put(executor.getServerAddress(), new MongosSetMemberDescription(executor.getServerAddress(),
                     res.getElapsedNanoseconds() / 1000000F, res.isOk(), res.getMaxBSONObjectSize(), latencySmoothFactor,
                     mostRecentStateMap.get(executor.getServerAddress())));
         } catch (Exception e) {
-            mostRecentStateMap.put(executor.getServerAddress(), new MongosSetMember(executor.getServerAddress()));
+            mostRecentStateMap.put(executor.getServerAddress(), new MongosSetMemberDescription(executor.getServerAddress()));
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.log(Level.FINE, "Exception reaching mongos at: " + executor.getServerAddress(), e);
             }

@@ -22,18 +22,18 @@ import java.util.List;
 // TODO: Should this be public and move out of impl?
 class MongosSet {
 
-    private final MongosSetMember best;
-    private final List<MongosSetMember> members;
+    private final MongosSetMemberDescription best;
+    private final List<MongosSetMemberDescription> members;
 
-    public MongosSet(final List<MongosSetMember> members, final MongosSet previous) {
+    public MongosSet(final List<MongosSetMemberDescription> members, final MongosSet previous) {
         this.members = Collections.unmodifiableList(members);
         best = calculatePreferred(previous);
     }
 
-    private MongosSetMember calculatePreferred(final MongosSet previous) {
-        MongosSetMember retVal = null;
-        MongosSetMember preferredFromPrevious = previous == null ? null : previous.getPreferred();
-        for (MongosSetMember cur : members) {
+    private MongosSetMemberDescription calculatePreferred(final MongosSet previous) {
+        MongosSetMemberDescription retVal = null;
+        MongosSetMemberDescription preferredFromPrevious = previous == null ? null : previous.getPreferred();
+        for (MongosSetMemberDescription cur : members) {
             if (cur.isOk()) {
                 if (preferredFromPrevious != null && preferredFromPrevious.getServerAddress().equals(cur.getServerAddress())) {
                     retVal = cur;
@@ -47,11 +47,11 @@ class MongosSet {
         return retVal;
     }
 
-    public MongosSetMember getPreferred() {
+    public MongosSetMemberDescription getPreferred() {
         return best;
     }
 
-    public List<MongosSetMember> getAll() {
+    public List<MongosSetMemberDescription> getAll() {
         return members;
     }
 }

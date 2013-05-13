@@ -17,16 +17,17 @@
 package org.mongodb.impl;
 
 import org.mongodb.ServerAddress;
-import org.mongodb.Node;
+import org.mongodb.ServerDescription;
 
 // TODO: Should this be public and move out of impl?
-class MongosSetMember extends Node {
-    public MongosSetMember(final ServerAddress serverAddress, final float pingTime, final boolean ok, final int maxBSONObjectSize,
-                           final float latencySmoothFactor, final MongosSetMember previous) {
+class MongosSetMemberDescription extends ServerDescription {
+    public MongosSetMemberDescription(final ServerAddress serverAddress, final float pingTime, final boolean ok,
+                                      final int maxBSONObjectSize, final float latencySmoothFactor,
+                                      final MongosSetMemberDescription previous) {
         super(pingTime, serverAddress, maxBSONObjectSize, ok, latencySmoothFactor, previous);
     }
 
-    public MongosSetMember(final ServerAddress serverAddress) {
+    public MongosSetMemberDescription(final ServerAddress serverAddress) {
         this(serverAddress, 0, false, 0, 0, null);
     }
 }

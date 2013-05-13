@@ -17,8 +17,8 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoConnectionManager;
 import org.mongodb.MongoCredential;
+import org.mongodb.MongoServer;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
@@ -38,12 +38,12 @@ public class MongosHighAvailabilityServerBinding extends MongoMultiServerBinding
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForWrite() {
+    public MongoServer getConnectionManagerForWrite() {
         return getConnectionManagerForServer(getPreferred());
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
+    public MongoServer getConnectionManagerForRead(final ReadPreference readPreference) {
         return getConnectionManagerForServer(getPreferred());
     }
 
@@ -59,7 +59,7 @@ public class MongosHighAvailabilityServerBinding extends MongoMultiServerBinding
     }
 
     private ServerAddress getPreferred() {
-        final MongosSetMember preferred = mongosSetMonitor.getCurrentState().getPreferred();
+        final MongosSetMemberDescription preferred = mongosSetMonitor.getCurrentState().getPreferred();
         return preferred == null ? null : preferred.getServerAddress();
     }
 }

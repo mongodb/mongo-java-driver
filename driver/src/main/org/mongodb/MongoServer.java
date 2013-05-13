@@ -19,7 +19,7 @@ package org.mongodb;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.impl.MongoSyncConnection;
 
-public interface MongoConnectionManager {
+public interface MongoServer {
     MongoSyncConnection getConnection();
 
     MongoAsyncConnection getAsyncConnection();

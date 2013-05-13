@@ -35,20 +35,20 @@ import java.util.Random;
  */
 @Immutable
 public class ReplicaSet {
-    private final List<ReplicaSetMember> all;
+    private final List<ReplicaSetMemberDescription> all;
     private final Random random;
-    private final List<ReplicaSetMember> goodSecondaries;
-    private final List<ReplicaSetMember> goodMembers;
-    private final ReplicaSetMember primary;
+    private final List<ReplicaSetMemberDescription> goodSecondaries;
+    private final List<ReplicaSetMemberDescription> goodMembers;
+    private final ReplicaSetMemberDescription primary;
     private final String setName;
     private final ReplicaSetErrorStatus errorStatus;
 
     private final int acceptableLatencyMS;
 
-    public ReplicaSet(final List<ReplicaSetMember> nodeList, final Random random, final int acceptableLatencyMS) {
+    public ReplicaSet(final List<ReplicaSetMemberDescription> nodeList, final Random random, final int acceptableLatencyMS) {
 
         this.random = random;
-        this.all = Collections.unmodifiableList(new ArrayList<ReplicaSetMember>(nodeList));
+        this.all = Collections.unmodifiableList(new ArrayList<ReplicaSetMemberDescription>(nodeList));
         this.acceptableLatencyMS = acceptableLatencyMS;
 
         errorStatus = validate();
@@ -61,15 +61,15 @@ public class ReplicaSet {
         primary = findPrimary();
     }
 
-    public List<ReplicaSetMember> getAll() {
+    public List<ReplicaSetMemberDescription> getAll() {
         checkStatus();
 
         return all;
     }
 
-    public ReplicaSetMember getMember(final ServerAddress serverAddress) {
+    public ReplicaSetMemberDescription getMember(final ServerAddress serverAddress) {
         checkStatus();
-        for (ReplicaSetMember cur : all) {
+        for (ReplicaSetMemberDescription cur : all) {
             if (cur.getServerAddress().equals(serverAddress)) {
                 return cur;
             }
@@ -81,7 +81,7 @@ public class ReplicaSet {
         return getPrimary() != null;
     }
 
-    public ReplicaSetMember getPrimary() {
+    public ReplicaSetMemberDescription getPrimary() {
         checkStatus();
 
         return primary;
@@ -95,7 +95,7 @@ public class ReplicaSet {
     //        }
     //    }
 
-    public ReplicaSetMember getASecondary() {
+    public ReplicaSetMemberDescription getASecondary() {
         checkStatus();
 
         if (goodSecondaries.isEmpty()) {
@@ -104,7 +104,7 @@ public class ReplicaSet {
         return goodSecondaries.get(random.nextInt(goodSecondaries.size()));
     }
 
-    public ReplicaSetMember getASecondary(final List<Tag> tags) {
+    public ReplicaSetMemberDescription getASecondary(final List<Tag> tags) {
         checkStatus();
 
         // optimization
@@ -112,7 +112,7 @@ public class ReplicaSet {
             return getASecondary();
         }
 
-        final List<ReplicaSetMember> acceptableTaggedSecondaries = getGoodSecondariesByTags(tags);
+        final List<ReplicaSetMemberDescription> acceptableTaggedSecondaries = getGoodSecondariesByTags(tags);
 
         if (acceptableTaggedSecondaries.isEmpty()) {
             return null;
@@ -120,7 +120,7 @@ public class ReplicaSet {
         return acceptableTaggedSecondaries.get(random.nextInt(acceptableTaggedSecondaries.size()));
     }
 
-    public ReplicaSetMember getAMember() {
+    public ReplicaSetMemberDescription getAMember() {
         checkStatus();
 
         if (goodMembers.isEmpty()) {
@@ -129,14 +129,14 @@ public class ReplicaSet {
         return goodMembers.get(random.nextInt(goodMembers.size()));
     }
 
-    public ReplicaSetMember getAMember(final List<Tag> tags) {
+    public ReplicaSetMemberDescription getAMember(final List<Tag> tags) {
         checkStatus();
 
         if (tags.isEmpty()) {
             return getAMember();
         }
 
-        final List<ReplicaSetMember> acceptableTaggedMembers = getGoodMembersByTags(tags);
+        final List<ReplicaSetMemberDescription> acceptableTaggedMembers = getGoodMembersByTags(tags);
 
         if (acceptableTaggedMembers.isEmpty()) {
             return null;
@@ -145,23 +145,23 @@ public class ReplicaSet {
         return acceptableTaggedMembers.get(random.nextInt(acceptableTaggedMembers.size()));
     }
 
-    public List<ReplicaSetMember> getGoodSecondariesByTags(final List<Tag> tags) {
+    public List<ReplicaSetMemberDescription> getGoodSecondariesByTags(final List<Tag> tags) {
         checkStatus();
 
-        final List<ReplicaSetMember> taggedSecondaries = getMembersByTags(all, tags);
+        final List<ReplicaSetMemberDescription> taggedSecondaries = getMembersByTags(all, tags);
         return calculateGoodSecondaries(taggedSecondaries,
                                        calculateBestPingTime(taggedSecondaries), acceptableLatencyMS);
     }
 
-    public List<ReplicaSetMember> getGoodMembersByTags(final List<Tag> tags) {
+    public List<ReplicaSetMemberDescription> getGoodMembersByTags(final List<Tag> tags) {
         checkStatus();
 
-        final List<ReplicaSetMember> taggedMembers = getMembersByTags(all, tags);
+        final List<ReplicaSetMemberDescription> taggedMembers = getMembersByTags(all, tags);
         return calculateGoodMembers(taggedMembers,
                                    calculateBestPingTime(taggedMembers), acceptableLatencyMS);
     }
 
-    public List<ReplicaSetMember> getGoodMembers() {
+    public List<ReplicaSetMemberDescription> getGoodMembers() {
         checkStatus();
 
         return calculateGoodMembers(all, calculateBestPingTime(all), acceptableLatencyMS);
@@ -181,7 +181,7 @@ public class ReplicaSet {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("[ ");
-        for (final ReplicaSetMember node : getAll()) {
+        for (final ReplicaSetMemberDescription node : getAll()) {
             sb.append(node.toJSON()).append(",");
         }
         sb.setLength(sb.length() - 1); //remove last comma
@@ -195,8 +195,8 @@ public class ReplicaSet {
         }
     }
 
-    private ReplicaSetMember findPrimary() {
-        for (final ReplicaSetMember node : all) {
+    private ReplicaSetMemberDescription findPrimary() {
+        for (final ReplicaSetMemberDescription node : all) {
             if (node.primary()) {
                 return node;
             }
@@ -205,7 +205,7 @@ public class ReplicaSet {
     }
 
     private String determineSetName() {
-        for (final ReplicaSetMember node : all) {
+        for (final ReplicaSetMemberDescription node : all) {
             final String nodeSetName = node.getSetName();
 
             if (nodeSetName != null && !nodeSetName.equals("")) {
@@ -220,7 +220,7 @@ public class ReplicaSet {
         //make sure all nodes have the same set name
         final HashSet<String> nodeNames = new HashSet<String>();
 
-        for (final ReplicaSetMember node : all) {
+        for (final ReplicaSetMemberDescription node : all) {
             final String nodeSetName = node.getSetName();
 
             if (nodeSetName != null && !nodeSetName.equals("")) {
@@ -236,9 +236,9 @@ public class ReplicaSet {
         }
     }
 
-    static float calculateBestPingTime(final List<ReplicaSetMember> members) {
+    static float calculateBestPingTime(final List<ReplicaSetMemberDescription> members) {
         float bestPingTime = Float.MAX_VALUE;
-        for (final ReplicaSetMember cur : members) {
+        for (final ReplicaSetMemberDescription cur : members) {
             if (!cur.secondary()) {
                 continue;
             }
@@ -249,10 +249,10 @@ public class ReplicaSet {
         return bestPingTime;
     }
 
-    static List<ReplicaSetMember> calculateGoodMembers(final List<ReplicaSetMember> members, final float bestPingTime,
+    static List<ReplicaSetMemberDescription> calculateGoodMembers(final List<ReplicaSetMemberDescription> members, final float bestPingTime,
                                                      final int acceptableLatencyMS) {
-        final List<ReplicaSetMember> goodSecondaries = new ArrayList<ReplicaSetMember>(members.size());
-        for (final ReplicaSetMember cur : members) {
+        final List<ReplicaSetMemberDescription> goodSecondaries = new ArrayList<ReplicaSetMemberDescription>(members.size());
+        for (final ReplicaSetMemberDescription cur : members) {
             if (!cur.isOk()) {
                 continue;
             }
@@ -263,10 +263,10 @@ public class ReplicaSet {
         return goodSecondaries;
     }
 
-    static List<ReplicaSetMember> calculateGoodSecondaries(final List<ReplicaSetMember> members, final float bestPingTime,
-                                                         final int acceptableLatencyMS) {
-        final List<ReplicaSetMember> goodSecondaries = new ArrayList<ReplicaSetMember>(members.size());
-        for (final ReplicaSetMember cur : members) {
+    static List<ReplicaSetMemberDescription> calculateGoodSecondaries(final List<ReplicaSetMemberDescription> members,
+                                                                      final float bestPingTime, final int acceptableLatencyMS) {
+        final List<ReplicaSetMemberDescription> goodSecondaries = new ArrayList<ReplicaSetMemberDescription>(members.size());
+        for (final ReplicaSetMemberDescription cur : members) {
             if (!cur.secondary()) {
                 continue;
             }
@@ -277,11 +277,11 @@ public class ReplicaSet {
         return goodSecondaries;
     }
 
-    static List<ReplicaSetMember> getMembersByTags(final List<ReplicaSetMember> members, final List<Tag> tags) {
+    static List<ReplicaSetMemberDescription> getMembersByTags(final List<ReplicaSetMemberDescription> members, final List<Tag> tags) {
 
-        final List<ReplicaSetMember> membersByTag = new ArrayList<ReplicaSetMember>();
+        final List<ReplicaSetMemberDescription> membersByTag = new ArrayList<ReplicaSetMemberDescription>();
 
-        for (final ReplicaSetMember cur : members) {
+        for (final ReplicaSetMemberDescription cur : members) {
             if (tags != null && cur.getTags() != null && cur.getTags().containsAll(tags)) {
                 membersByTag.add(cur);
             }

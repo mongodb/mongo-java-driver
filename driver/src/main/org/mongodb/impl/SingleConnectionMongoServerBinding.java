@@ -16,7 +16,7 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoConnectionManager;
+import org.mongodb.MongoServer;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
@@ -40,21 +40,21 @@ public class SingleConnectionMongoServerBinding implements MongoServerBinding {
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForWrite() {
+    public MongoServer getConnectionManagerForWrite() {
         isTrue("open", !isClosed());
-        return new SingleConnectionConnectionManager(wrapped.getConnectionManagerForWrite());
+        return new SingleConnectionServer(wrapped.getConnectionManagerForWrite());
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
+    public MongoServer getConnectionManagerForRead(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
-        return new SingleConnectionConnectionManager(wrapped.getConnectionManagerForRead(readPreference));
+        return new SingleConnectionServer(wrapped.getConnectionManagerForRead(readPreference));
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
+    public MongoServer getConnectionManagerForServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
-        return new SingleConnectionConnectionManager(wrapped.getConnectionManagerForServer(serverAddress));
+        return new SingleConnectionServer(wrapped.getConnectionManagerForServer(serverAddress));
     }
 
     @Override
@@ -85,10 +85,10 @@ public class SingleConnectionMongoServerBinding implements MongoServerBinding {
         return isClosed;
     }
 
-    private class SingleConnectionConnectionManager implements MongoConnectionManager {
-        private final MongoConnectionManager wrapped;
+    private class SingleConnectionServer implements MongoServer {
+        private final MongoServer wrapped;
 
-        public SingleConnectionConnectionManager(final MongoConnectionManager connectionManager) {
+        public SingleConnectionServer(final MongoServer connectionManager) {
             wrapped = connectionManager;
         }
 

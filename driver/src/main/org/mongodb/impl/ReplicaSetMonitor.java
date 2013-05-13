@@ -21,7 +21,7 @@ import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.rs.ReplicaSet;
-import org.mongodb.rs.ReplicaSetMember;
+import org.mongodb.rs.ReplicaSetMemberDescription;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -67,7 +67,8 @@ class ReplicaSetMonitor implements MongoServerStateListener {
     private ScheduledExecutorService scheduledExecutorService;
     private final Holder<ReplicaSet> holder = new Holder<ReplicaSet>(CLIENT_OPTIONS_DEFAULTS.getConnectTimeout(), TimeUnit.MILLISECONDS);
     private List<ServerAddress> serverList;
-    private final Map<ServerAddress, ReplicaSetMember> mostRecentStateMap = new HashMap<ServerAddress, ReplicaSetMember>();
+    private final Map<ServerAddress, ReplicaSetMemberDescription> mostRecentStateMap =
+            new HashMap<ServerAddress, ReplicaSetMemberDescription>();
     private final Map<ServerAddress, ScheduledFuture<?>> futureMap = new HashMap<ServerAddress, ScheduledFuture<?>>();
     private final Map<ServerAddress, MongoServerStateNotifier> notifierMap = new HashMap<ServerAddress, MongoServerStateNotifier>();
     private final Map<ServerAddress, Boolean> activeMemberNotifications = new HashMap<ServerAddress, Boolean>();
@@ -115,7 +116,7 @@ class ReplicaSetMonitor implements MongoServerStateListener {
             removeExtras(isMasterCommandResult);
         }
 
-        mostRecentStateMap.put(serverAddress, new ReplicaSetMember(serverAddress, isMasterCommandResult, LATENCY_SMOOTH_FACTOR,
+        mostRecentStateMap.put(serverAddress, new ReplicaSetMemberDescription(serverAddress, isMasterCommandResult, LATENCY_SMOOTH_FACTOR,
                 mostRecentStateMap.get(serverAddress)));
 
         addToHolder();
@@ -191,7 +192,8 @@ class ReplicaSetMonitor implements MongoServerStateListener {
     }
 
     private void setHolder() {
-        holder.set(new ReplicaSet(new ArrayList<ReplicaSetMember>(mostRecentStateMap.values()), random, SLAVE_ACCEPTABLE_LATENCY_MS));
+        holder.set(new ReplicaSet(new ArrayList<ReplicaSetMemberDescription>(mostRecentStateMap.values()), random,
+                SLAVE_ACCEPTABLE_LATENCY_MS));
     }
 
     private void addNewServerAddresses(final List<ServerAddress> hosts) {

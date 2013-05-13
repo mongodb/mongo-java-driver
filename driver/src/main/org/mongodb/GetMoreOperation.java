@@ -41,7 +41,7 @@ public class GetMoreOperation<T> extends Operation {
 
 
     public QueryResult<T> execute(final MongoServerBinding binding) {
-        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoServer connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
         MongoSyncConnection connection = connectionManager.getConnection();
         try {
             return execute(connection);
@@ -51,7 +51,7 @@ public class GetMoreOperation<T> extends Operation {
     }
 
     public QueryResult<T> executeReceive(final MongoServerBinding binding) {
-        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoServer connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
         MongoSyncConnection connection = connectionManager.getConnection();
         try {
             return executeReceive(connection);
@@ -61,7 +61,7 @@ public class GetMoreOperation<T> extends Operation {
     }
 
     public void executeDiscard(final MongoServerBinding binding) {
-        MongoConnectionManager connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoServer connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
         MongoSyncConnection connection = connectionManager.getConnection();
         try {
             executeDiscard(connection);

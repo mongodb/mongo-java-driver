@@ -19,7 +19,7 @@ package org.mongodb;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.rs.ReplicaSet;
-import org.mongodb.rs.ReplicaSetMember;
+import org.mongodb.rs.ReplicaSetMemberDescription;
 import org.mongodb.rs.Tag;
 
 import java.io.IOException;
@@ -39,7 +39,7 @@ public class ReadPreferenceTest {
     private static final int FOUR_MEG = 4 * 1024 * 1024;
     private static final String HOST = "localhost";
 
-    private ReplicaSetMember primary, secondary, otherSecondary;
+    private ReplicaSetMemberDescription primary, secondary, otherSecondary;
     private ReplicaSet set;
     private ReplicaSet setNoSecondary;
     private ReplicaSet setNoPrimary;
@@ -66,16 +66,16 @@ public class ReadPreferenceTest {
         final float acceptablePingTime = bestPingTime + (acceptableLatencyMS / 2);
         final float unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
 
-        primary = new ReplicaSetMember(new ServerAddress(HOST, 27017), "", acceptablePingTime, true, true,
+        primary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27017), "", acceptablePingTime, true, true,
                                      false, tagSet1, FOUR_MEG, 0, null);
 
-        secondary = new ReplicaSetMember(new ServerAddress(HOST, 27018), "", bestPingTime, true, false,
+        secondary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27018), "", bestPingTime, true, false,
                                        true, tagSet2, FOUR_MEG, 0, null);
 
-        otherSecondary = new ReplicaSetMember(new ServerAddress(HOST, 27019), "", unacceptablePingTime,
+        otherSecondary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27019), "", unacceptablePingTime,
                                             true, false, true, tagSet3, FOUR_MEG, 0, null);
 
-        final List<ReplicaSetMember> nodeList = new ArrayList<ReplicaSetMember>();
+        final List<ReplicaSetMemberDescription> nodeList = new ArrayList<ReplicaSetMemberDescription>();
         nodeList.add(primary);
         nodeList.add(secondary);
         nodeList.add(otherSecondary);
@@ -106,7 +106,7 @@ public class ReadPreferenceTest {
     public void testSecondaryReadPreference() {
         assertTrue(ReadPreference.secondary().toString().startsWith("secondary"));
 
-        ReplicaSetMember candidate = ReadPreference.secondary().chooseReplicaSetMember(set);
+        ReplicaSetMemberDescription candidate = ReadPreference.secondary().chooseReplicaSetMember(set);
         assertTrue(!candidate.primary());
 
         candidate = ReadPreference.secondary().chooseReplicaSetMember(setNoSecondary);
@@ -134,7 +134,7 @@ public class ReadPreferenceTest {
     @Test
     public void testPrimaryPreferredMode() {
         ReadPreference pref = ReadPreference.primaryPreferred();
-        final ReplicaSetMember candidate = pref.chooseReplicaSetMember(set);
+        final ReplicaSetMemberDescription candidate = pref.chooseReplicaSetMember(set);
         assertEquals(primary, candidate);
 
         assertNotNull(ReadPreference.primaryPreferred().chooseReplicaSetMember(setNoPrimary));
@@ -154,7 +154,7 @@ public class ReadPreferenceTest {
         assertTrue(pref.chooseReplicaSetMember(set).equals(primary));
 
         pref = ReadPreference.secondaryPreferred();
-        final ReplicaSetMember candidate = pref.chooseReplicaSetMember(set);
+        final ReplicaSetMemberDescription candidate = pref.chooseReplicaSetMember(set);
         assertTrue((candidate.equals(secondary) || candidate.equals(otherSecondary)) && !candidate.equals(primary));
 
         assertEquals(primary, ReadPreference.secondaryPreferred().chooseReplicaSetMember(setNoSecondary));

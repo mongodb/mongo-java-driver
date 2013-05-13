@@ -16,7 +16,7 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoConnectionManager;
+import org.mongodb.MongoServer;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
@@ -29,31 +29,31 @@ import java.util.List;
 import static org.mongodb.assertions.Assertions.isTrue;
 
 public class MongoSingleServerBinding implements MongoServerBinding {
-    private final MongoConnectionManager connectionManager;
+    private final MongoServer connectionManager;
     private final BufferPool<ByteBuffer> bufferPool;
     private volatile boolean isClosed;
 
-    public MongoSingleServerBinding(final MongoConnectionManager connectionManager, final BufferPool<ByteBuffer> bufferPool) {
+    public MongoSingleServerBinding(final MongoServer connectionManager, final BufferPool<ByteBuffer> bufferPool) {
         this.connectionManager = connectionManager;
         this.bufferPool = bufferPool;
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForWrite() {
+    public MongoServer getConnectionManagerForWrite() {
         isTrue("open", !isClosed());
 
         return connectionManager;
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
+    public MongoServer getConnectionManagerForRead(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
 
         return connectionManager;
     }
 
     @Override
-    public MongoConnectionManager getConnectionManagerForServer(final ServerAddress serverAddress) {
+    public MongoServer getConnectionManagerForServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
         return connectionManager;

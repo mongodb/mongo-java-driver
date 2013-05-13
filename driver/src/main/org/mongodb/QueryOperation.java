@@ -42,7 +42,7 @@ public class QueryOperation<T> extends Operation {
     }
 
     public QueryResult<T> execute(final MongoServerBinding binding) {
-        MongoConnectionManager connectionManager = binding.getConnectionManagerForRead(find.getReadPreference());
+        MongoServer connectionManager = binding.getConnectionManagerForRead(find.getReadPreference());
         MongoSyncConnection connection = connectionManager.getConnection();
         try {
             return execute(connection);
