@@ -42,6 +42,7 @@ public abstract class Operation {
         return bufferPool;
     }
 
+    // TODO: this should move somewhere else.
     protected CommandResult createCommandResult(final MongoCommand commandOperation, final MongoReplyMessage<Document> replyMessage,
                                               final MongoSyncConnection connection) {
         CommandResult commandResult = new CommandResult(commandOperation.toDocument(), connection.getServerAddress(),
