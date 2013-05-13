@@ -90,7 +90,7 @@ public abstract class SimplePool<T> implements Pool<T> {
 
             assertConditions();
 
-            if (!out.remove(t)) {
+            if (Boolean.TRUE.equals(out.remove(t))) {
                 return;
             }
 
@@ -191,7 +191,7 @@ public abstract class SimplePool<T> implements Pool<T> {
         clear();
     }
 
-    public void clear() {
+    public synchronized void clear() {
         for (final T t : available) {
             cleanup(t);
         }
