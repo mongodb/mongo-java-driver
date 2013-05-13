@@ -20,19 +20,40 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class SimplePoolTest {
     private SimplePool<ByteBuffer> pool;
 
     @Before
     public void setUp() {
-       pool = new SimplePool<ByteBuffer>("test", 5) {
-           @Override
-           protected ByteBuffer createNew() {
-               return ByteBuffer.allocate(10);
-           }
-       };
+        pool = new SimplePool<ByteBuffer>("test", 3) {
+            @Override
+            protected ByteBuffer createNew() {
+                return ByteBuffer.allocate(10);
+            }
+        };
     }
+
+    @Test
+    public void testThatGetDecreasesAvailability() {
+        pool.get();
+        pool.get();
+        pool.get();
+        assertNull(pool.get(1, TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    public void testThatDoneIncreasesAvailability() {
+        pool.get();
+        pool.get();
+        pool.done(pool.get());
+        assertNotNull(pool.get());
+    }
+
 
     // this is just testing that you can call done after clear without getting an error
     @Test
