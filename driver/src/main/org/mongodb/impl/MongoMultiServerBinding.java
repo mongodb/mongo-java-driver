@@ -18,10 +18,8 @@ package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoConnectionManager;
-import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoServerBinding;
-import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 
@@ -32,43 +30,18 @@ import java.util.Map;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
-public class MongoMultiServerBinding implements MongoServerBinding {
+public abstract class MongoMultiServerBinding implements MongoServerBinding {
     private final List<MongoCredential> credentialList;
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
     private final Map<ServerAddress, MongoConnectionManager> mongoClientMap = new HashMap<ServerAddress, MongoConnectionManager>();
-    private final MongoConnectionStrategy connectionStrategy;
     private boolean isClosed;
 
-    public MongoMultiServerBinding(final MongoConnectionStrategy connectionStrategy, final List<MongoCredential> credentialList,
-                                   final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        this.connectionStrategy = connectionStrategy;
+    protected MongoMultiServerBinding(final List<MongoCredential> credentialList,
+                                      final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
         this.credentialList = credentialList;
         this.options = options;
         this.bufferPool = bufferPool;
-    }
-
-    @Override
-    public MongoConnectionManager getConnectionManagerForWrite() {
-        isTrue("open", !isClosed());
-        final ServerAddress serverAddress = connectionStrategy.getAddressOfPrimary();
-        return getConnectionManagerForServer(serverAddress);
-    }
-
-    @Override
-    public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
-        isTrue("open", !isClosed());
-
-        final ServerAddress serverAddress = connectionStrategy.getAddressForReadPreference(readPreference);
-
-        return getConnectionManagerForServer(serverAddress);
-    }
-
-    @Override
-    public List<ServerAddress> getAllServerAddresses() {
-        isTrue("open", !isClosed());
-
-        return connectionStrategy.getAllAddresses();
     }
 
     @Override
@@ -97,7 +70,6 @@ public class MongoMultiServerBinding implements MongoServerBinding {
             for (MongoConnectionManager cur : mongoClientMap.values()) {
                 cur.close();
             }
-            connectionStrategy.close();
         }
     }
 

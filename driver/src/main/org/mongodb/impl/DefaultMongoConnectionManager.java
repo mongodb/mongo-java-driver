@@ -22,13 +22,13 @@ import org.mongodb.pool.Pool;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class MongoConnectionManagerImpl implements MongoConnectionManager {
+public class DefaultMongoConnectionManager implements MongoConnectionManager {
     private ServerAddress serverAddress;
     private final Pool<MongoSyncConnection> connectionPool;
     private Pool<MongoAsyncConnection> asyncConnectionPool;
 
-    public MongoConnectionManagerImpl(final ServerAddress serverAddress, final Pool<MongoSyncConnection> connectionPool,
-                                      final Pool<MongoAsyncConnection> asyncConnectionPool) {
+    public DefaultMongoConnectionManager(final ServerAddress serverAddress, final Pool<MongoSyncConnection> connectionPool,
+                                         final Pool<MongoAsyncConnection> asyncConnectionPool) {
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.connectionPool = notNull("connectionPool", connectionPool);
         this.asyncConnectionPool = asyncConnectionPool;

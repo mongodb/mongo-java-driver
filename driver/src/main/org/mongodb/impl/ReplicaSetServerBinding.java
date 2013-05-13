@@ -17,7 +17,8 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoConnectionStrategy;
+import org.mongodb.MongoConnectionManager;
+import org.mongodb.MongoCredential;
 import org.mongodb.MongoNoPrimaryException;
 import org.mongodb.MongoReadPreferenceException;
 import org.mongodb.ReadPreference;
@@ -31,13 +32,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
+import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class ReplicaSetConnectionStrategy implements MongoConnectionStrategy {
+public class ReplicaSetServerBinding extends MongoMultiServerBinding {
     private final ReplicaSetMonitor replicaSetMonitor;
 
-    public ReplicaSetConnectionStrategy(final List<ServerAddress> seedList, final MongoClientOptions options,
-                                        final BufferPool<ByteBuffer> bufferPool) {
+    public ReplicaSetServerBinding(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
+                                   final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
+        super(credentialList, options, bufferPool);
         notNull("seedList", seedList);
         notNull("options", options);
         notNull("bufferPool", bufferPool);
@@ -49,29 +52,23 @@ public class ReplicaSetConnectionStrategy implements MongoConnectionStrategy {
     }
 
     @Override
-    public ServerAddress getAddressOfPrimary() {
-        ReplicaSet currentState = replicaSetMonitor.getCurrentState();
-        ReplicaSetMember primary = currentState.getPrimary();
-        if (primary == null) {
-            throw new MongoNoPrimaryException(currentState);
-        }
-        return primary.getServerAddress();
+    public MongoConnectionManager getConnectionManagerForWrite() {
+        isTrue("open", !isClosed());
+
+        return getConnectionManagerForServer(getAddressOfPrimary());
     }
 
     @Override
-    public ServerAddress getAddressForReadPreference(final ReadPreference readPreference) {
-        // TODO: this is hiding potential bugs.  ReadPreference should not be null
-        ReadPreference appliedReadPreference = readPreference == null ? ReadPreference.primary() : readPreference;
-        final ReplicaSet replicaSet = replicaSetMonitor.getCurrentState();
-        final ReplicaSetMember replicaSetMember = appliedReadPreference.chooseReplicaSetMember(replicaSet);
-        if (replicaSetMember == null) {
-            throw new MongoReadPreferenceException(readPreference, replicaSet);
-        }
-        return replicaSetMember.getServerAddress();
+    public MongoConnectionManager getConnectionManagerForRead(final ReadPreference readPreference) {
+        isTrue("open", !isClosed());
+
+        return getConnectionManagerForServer(getAddressForReadPreference(readPreference));
     }
 
     @Override
-    public List<ServerAddress> getAllAddresses() {
+    public List<ServerAddress> getAllServerAddresses() {
+        isTrue("open", !isClosed());
+
         List<ServerAddress> addressList = new ArrayList<ServerAddress>();
         ReplicaSet currentState = replicaSetMonitor.getCurrentState();
         for (ReplicaSetMember cur : currentState.getAll()) {
@@ -83,5 +80,26 @@ public class ReplicaSetConnectionStrategy implements MongoConnectionStrategy {
     @Override
     public void close() {
         replicaSetMonitor.shutdownNow();
+        super.close();
+    }
+
+    private ServerAddress getAddressOfPrimary() {
+        ReplicaSet currentState = replicaSetMonitor.getCurrentState();
+        ReplicaSetMember primary = currentState.getPrimary();
+        if (primary == null) {
+            throw new MongoNoPrimaryException(currentState);
+        }
+        return primary.getServerAddress();
+    }
+
+    private ServerAddress getAddressForReadPreference(final ReadPreference readPreference) {
+        // TODO: this is hiding potential bugs.  ReadPreference should not be null
+        ReadPreference appliedReadPreference = readPreference == null ? ReadPreference.primary() : readPreference;
+        final ReplicaSet replicaSet = replicaSetMonitor.getCurrentState();
+        final ReplicaSetMember replicaSetMember = appliedReadPreference.chooseReplicaSetMember(replicaSet);
+        if (replicaSetMember == null) {
+            throw new MongoReadPreferenceException(readPreference, replicaSet);
+        }
+        return replicaSetMember.getServerAddress();
     }
 }

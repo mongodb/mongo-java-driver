@@ -17,7 +17,6 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.ServerAddress;
@@ -48,12 +47,7 @@ public final class MongoServerBindings {
 
     public static MongoServerBinding create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                             final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        return create(new ReplicaSetConnectionStrategy(seedList, options, bufferPool), credentialList, options, bufferPool);
-    }
-
-    public static MongoServerBinding create(final MongoConnectionStrategy connectionStrategy, final List<MongoCredential> credentialList,
-                                            final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        return new MongoMultiServerBinding(connectionStrategy, credentialList, options, bufferPool);
+        return new ReplicaSetServerBinding(seedList, credentialList, options, bufferPool);
     }
 }
 

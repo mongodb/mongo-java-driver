@@ -18,7 +18,6 @@ package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
-import org.mongodb.MongoConnectionStrategy;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
@@ -41,8 +40,8 @@ public final class MongoClientsImpl {
         return new MongoClientImpl(options, MongoServerBindings.create(serverAddress, null, options, new PowerOfTwoByteBufferPool()));
     }
 
-    public static MongoClientImpl create(final MongoConnectionStrategy connectionStrategy, final MongoClientOptions options) {
-        return new MongoClientImpl(options, MongoServerBindings.create(connectionStrategy, null, options, new PowerOfTwoByteBufferPool()));
+    public static MongoClientImpl create(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        return new MongoClientImpl(options, MongoServerBindings.create(seedList, null, options, new PowerOfTwoByteBufferPool()));
     }
 
     public static MongoClientImpl create(final MongoClientURI mongoURI) throws UnknownHostException {

@@ -20,6 +20,7 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.impl.MongoClientsImpl;
 
 import java.net.UnknownHostException;
+import java.util.List;
 
 @ThreadSafe
 public final class MongoClients {
@@ -35,12 +36,12 @@ public final class MongoClients {
     }
 
     // TODO: there needs to be an easier way to create a MongoClient for a replica set
-    public static MongoClient create(final MongoConnectionStrategy connectionStrategy) {
-        return MongoClientsImpl.create(connectionStrategy, MongoClientOptions.builder().build());
+    public static MongoClient create(final List<ServerAddress> seedList) {
+        return create(seedList, MongoClientOptions.builder().build());
     }
 
-    public static MongoClient create(final MongoConnectionStrategy connectionStrategy, final MongoClientOptions options) {
-        return MongoClientsImpl.create(connectionStrategy, options);
+    public static MongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        return MongoClientsImpl.create(seedList, options);
     }
 
     public static MongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
