@@ -20,6 +20,7 @@ import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,7 +34,7 @@ public class MongosSetMonitor extends Thread {
     private static final Logger LOGGER = Logger.getLogger("org.mongodb.MongosSetMonitor");
 
     private final MongosSetStateGenerator mongosSetStateGenerator;
-    private final Holder holder = new Holder(CLIENT_OPTIONS_DEFAULTS.getConnectTimeout());
+    private final Holder<MongosSet> holder = new Holder<MongosSet>(CLIENT_OPTIONS_DEFAULTS.getConnectTimeout(), TimeUnit.MILLISECONDS);
 
     // TODO: merge CLIENT_OPTIONS_DEFAULTS into options
     MongosSetMonitor(final List<ServerAddress> serverAddressList, final MongoClientOptions options) {
@@ -45,7 +46,7 @@ public class MongosSetMonitor extends Thread {
 
     MongosSet getCurrentState() {
         checkClosed();
-        return (MongosSet) holder.get();
+        return holder.get();
     }
 
     @Override

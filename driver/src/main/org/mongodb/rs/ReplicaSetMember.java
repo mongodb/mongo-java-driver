@@ -20,6 +20,7 @@ import org.mongodb.Document;
 import org.mongodb.Node;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.Immutable;
+import org.mongodb.command.IsMasterCommandResult;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,6 +49,16 @@ public class ReplicaSetMember extends Node {
         this.isPrimary = isPrimary;
         this.isSecondary = isSecondary;
         this.tags = Collections.unmodifiableSet(new HashSet<Tag>(tags));
+    }
+
+    public ReplicaSetMember(final ServerAddress serverAddress, final IsMasterCommandResult isMasterCommandResult,
+                            final float latencySmoothFactor, final ReplicaSetMember previous) {
+        super(isMasterCommandResult.getElapsedNanoseconds(), serverAddress, isMasterCommandResult.getMaxBSONObjectSize(),
+                isMasterCommandResult.isOk(), latencySmoothFactor, previous);
+        this.setName = isMasterCommandResult.getSetName();
+        this.isPrimary = isMasterCommandResult.isPrimary();
+        this.isSecondary = isMasterCommandResult.isSecondary();
+        this.tags = Collections.unmodifiableSet(new HashSet<Tag>(isMasterCommandResult.getTags()));
     }
 
     public ReplicaSetMember(final ServerAddress serverAddress) {

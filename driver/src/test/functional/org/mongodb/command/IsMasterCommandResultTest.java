@@ -16,9 +16,9 @@
 
 package org.mongodb.command;
 
-import org.mongodb.Document;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
+import org.mongodb.Document;
 import org.mongodb.Fixture;
 import org.mongodb.MongoDatabase;
 
@@ -35,7 +35,7 @@ public class IsMasterCommandResultTest extends DatabaseTestCase {
     public void testIsPrimary() {
         IsMasterCommandResult result =
         new IsMasterCommandResult(adminDatabase.executeCommand(command));
-        assertTrue(result.isMaster());
+        assertTrue(result.isPrimary());
     }
 
     @Test

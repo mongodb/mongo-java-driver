@@ -84,7 +84,7 @@ public class MongoMultiServerBinding implements MongoServerBinding {
 
         MongoConnectionManager connection = mongoClientMap.get(serverAddress);
         if (connection == null) {
-            connection = MongoServerBindings.create(serverAddress, credentialList, options, bufferPool);
+            connection = MongoConnectionManagers.createConnectionManager(serverAddress, credentialList, options, bufferPool);
             mongoClientMap.put(serverAddress, connection);
         }
         return connection;

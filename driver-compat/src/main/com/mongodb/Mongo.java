@@ -24,6 +24,7 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
 import org.mongodb.impl.MongoServerBindings;
+import org.mongodb.io.PowerOfTwoByteBufferPool;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class Mongo {
     private final MongoServerBinding binding;
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
-        this(MongoServerBindings.create(createNewSeedList(seedList), mongoOptions.toNew()), mongoOptions);
+        this(MongoServerBindings.create(createNewSeedList(seedList), mongoOptions.toNew(), new PowerOfTwoByteBufferPool()), mongoOptions);
     }
 
     Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -57,7 +58,7 @@ public class Mongo {
     }
 
     Mongo(final ServerAddress serverAddress, final MongoClientOptions mongoOptions) {
-        this(MongoServerBindings.create(serverAddress.toNew(), mongoOptions.toNew()), mongoOptions);
+        this(MongoServerBindings.create(serverAddress.toNew(), mongoOptions.toNew(), new PowerOfTwoByteBufferPool()), mongoOptions);
     }
 
     Mongo(final MongoServerBinding binding, final MongoClientOptions options) {
@@ -283,13 +284,13 @@ public class Mongo {
     private static MongoServerBinding createBinding(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
             return MongoServerBindings.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)),
-                    mongoURI.getCredentials(), mongoURI.getOptions());
+                    mongoURI.getCredentials(), mongoURI.getOptions(), new PowerOfTwoByteBufferPool());
         } else {
             List<org.mongodb.ServerAddress> seedList = new ArrayList<org.mongodb.ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new org.mongodb.ServerAddress(cur));
             }
-            return MongoServerBindings.create(seedList, mongoURI.getCredentials(), mongoURI.getOptions());
+            return MongoServerBindings.create(seedList, mongoURI.getCredentials(), mongoURI.getOptions(), new PowerOfTwoByteBufferPool());
         }
     }
 

@@ -22,18 +22,30 @@ import org.mongodb.MongoNoPrimaryException;
 import org.mongodb.MongoReadPreferenceException;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
+import org.mongodb.io.BufferPool;
 import org.mongodb.rs.ReplicaSet;
 import org.mongodb.rs.ReplicaSetMember;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+
+import static org.mongodb.assertions.Assertions.notNull;
 
 public class ReplicaSetConnectionStrategy implements MongoConnectionStrategy {
     private final ReplicaSetMonitor replicaSetMonitor;
 
-    public ReplicaSetConnectionStrategy(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        replicaSetMonitor = new ReplicaSetMonitor(seedList, options);
-        replicaSetMonitor.start();
+    public ReplicaSetConnectionStrategy(final List<ServerAddress> seedList, final MongoClientOptions options,
+                                        final BufferPool<ByteBuffer> bufferPool) {
+        notNull("seedList", seedList);
+        notNull("options", options);
+        notNull("bufferPool", bufferPool);
+
+        replicaSetMonitor = new ReplicaSetMonitor(seedList);
+
+        replicaSetMonitor.start(new DefaultMongoServerStateNotifierFactory(bufferPool, options, replicaSetMonitor),
+                Executors.newScheduledThreadPool(seedList.size()));
     }
 
     @Override
@@ -70,11 +82,6 @@ public class ReplicaSetConnectionStrategy implements MongoConnectionStrategy {
 
     @Override
     public void close() {
-        replicaSetMonitor.close();
-        try {
-            replicaSetMonitor.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException();
-        }
+        replicaSetMonitor.shutdownNow();
     }
 }
