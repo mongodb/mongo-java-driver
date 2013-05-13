@@ -21,23 +21,31 @@ import org.mongodb.MongoInterruptedException;
 import org.mongodb.MongoTimeoutException;
 import org.mongodb.annotations.ThreadSafe;
 
+import java.util.concurrent.TimeUnit;
+
 // Simple abstraction over a volatile Object reference that starts as null.  The get method blocks until held
 // is not null. The set method notifies all, thus waking up all getters.
 @ThreadSafe
-class Holder {
-    private volatile Object held;
+class Holder<T> {
+    private volatile T held;
     private volatile boolean closed;
-    private final int timeout;
+    private final long defaultTimeout;
+    private TimeUnit defaultTimeUnit;
 
-    Holder(final int timeout) {
-        this.timeout = timeout;
+    Holder(final long defaultTimeout, final TimeUnit defaultTimeUnit) {
+        this.defaultTimeout = defaultTimeout;
+        this.defaultTimeUnit = defaultTimeUnit;
     }
 
     // blocks until replica set is set, or a timeout occurs
-    synchronized Object get() {
+    synchronized T get() {
+        return get(defaultTimeout, defaultTimeUnit);
+    }
+
+    synchronized T get(final long timeout, final TimeUnit timeUnit) {
         if (held == null) {
             try {
-                wait(timeout);
+                wait(timeUnit.toMillis(timeout));
             } catch (InterruptedException e) {
                 throw new MongoInterruptedException("Interrupted while waiting for next update to replica set status", e);
             }
@@ -52,8 +60,9 @@ class Holder {
         return held;
     }
 
+
     // set the replica set to a non-null value and notifies all threads waiting.
-    synchronized void set(final Object newHeld) {
+    synchronized void set(final T newHeld) {
         if (newHeld == null) {
             throw new IllegalArgumentException("held can not be null");
         }
@@ -62,10 +71,14 @@ class Holder {
         notifyAll();
     }
 
+    public T peek() {
+        return held;
+    }
+
     // blocks until the replica set is set again
 //    synchronized void waitForNextUpdate() {  // TODO: currently unused
 //        try {
-//            wait(timeout);
+//            wait(defaultTimeout);
 //        } catch (InterruptedException e) {
 //            throw new MongoInterruptedException("Interrupted while waiting for next update to replica set status", e);
 //        }
@@ -83,7 +96,7 @@ class Holder {
 
     @Override
     public String toString() {
-        Object cur = this.held;
+        T cur = peek();
         if (cur != null) {
             return cur.toString();
         }
